@@ -46,4 +46,7 @@ __all__ = [
     "get_jobs_for_user",
     "update_job_status",
     "delete_job",
+
+    # UserSetting CRUD
+    "get_user_setting", "create_user_setting", "update_user_setting", "delete_user_setting",
 ]

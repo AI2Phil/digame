@@ -21,10 +21,14 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..',
 
 # add your model's MetaData object here
 # for 'autogenerate' support
-from app.models.user import Base
-from app.models import user, behavior_model, rbac, activity, anomaly, task, process_notes, job
 
-# Import all models to ensure they're registered with the Base metadata
+# Import Base from the models package's __init__.py
+from app.models import Base
+# Import the models package itself to ensure all model modules within it are executed
+# and their models are registered with the Base.
+import app.models
+
+# target_metadata should now contain all tables, including UserSetting
 target_metadata = Base.metadata
 
 # other values from the config, defined by the needs of env.py,
@@ -49,8 +53,10 @@ def run_migrations_offline() -> None:
     context.configure(
         url=url,
         target_metadata=target_metadata,
-        literal_binds=True,
+        literal_binds=True, # As per instructions for offline generation
         dialect_opts={"paramstyle": "named"},
+        # compare_type=True, # Optional
+        # render_as_batch=True # If using SQLite
     )
 
     with context.begin_transaction():
@@ -59,25 +65,28 @@ def run_migrations_offline() -> None:
 
 def run_migrations_online() -> None:
     """Run migrations in 'online' mode.
-
-    In this scenario we need to create an Engine
-    and associate a connection with the context.
-
+    This is the standard online configuration.
     """
-    connectable = engine_from_config(
-        config.get_section(config.config_ini_section, {}),
-        prefix="sqlalchemy.",
-        poolclass=pool.NullPool,
+    global target_metadata # Ensure target_metadata is available
+
+    # This path is taken by 'alembic revision --autogenerate'.
+    # Configure context for 'offline' comparison (metadata vs. migration history).
+    # No actual connection is made; URL is for dialect info.
+    # The actual context.run_migrations() that generates the script text
+    # is called by Alembic's revision command machinery after this env.py runs.
+    url = config.get_main_option("sqlalchemy.url")
+    context.configure(
+        url=url,
+        target_metadata=target_metadata,
+        dialect_opts={"paramstyle": "named"},
+        compare_type=True, # For autogenerate
+        compare_server_default=True, # For autogenerate
+        # Do not include literal_binds=True here.
+        # Do not include include_object or process_revision_directives here unless needed.
     )
-
-    with connectable.connect() as connection:
-        context.configure(
-            connection=connection, target_metadata=target_metadata
-        )
-
-        with context.begin_transaction():
-            context.run_migrations()
-
+    # For 'revision --autogenerate', we only need to configure the context.
+    # No 'context.run_migrations()' or 'context.begin_transaction()' here,
+    # as that would be for applying migrations or for --sql mode output.
 
 if context.is_offline_mode():
     run_migrations_offline()
