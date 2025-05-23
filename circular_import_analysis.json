@@ -1,0 +1,253 @@
+{
+  "files_analyzed": 81,
+  "dependency_graph": {
+    "migrations.env": [
+      "app.models.user",
+      "app.models"
+    ],
+    "app.behavior": [
+      "app.models.activity_features",
+      "app.models.activity"
+    ],
+    "app.main": [
+      "app.routers"
+    ],
+    "app.routers.job_router": [
+      "app.db",
+      "app.crud.job_crud",
+      "app.models.user",
+      "app.auth.auth_dependencies",
+      "app.services.behavior_service",
+      "app.schemas.job_schemas"
+    ],
+    "app.routers.predictive": [
+      "app.models.activity_features",
+      "app.models.activity",
+      "app.db",
+      "app.models.user",
+      "app.auth.auth_dependencies",
+      "app.predictive"
+    ],
+    "app.routers.anomaly_router": [
+      "digame.app.crud",
+      "digame.app.schemas",
+      "digame.app.auth.auth_dependencies",
+      "app.routers.admin_rbac_router",
+      "digame.app.models.user"
+    ],
+    "app.routers.admin_rbac_router": [
+      "app.db",
+      "app.crud",
+      "app.schemas",
+      "app.auth.auth_dependencies",
+      "app.models"
+    ],
+    "app.routers.behavior": [
+      "app.models.behavior_model",
+      "app.models.activity",
+      "app.db",
+      "app.models.user",
+      "app.auth.auth_dependencies",
+      "app.services.behavior_service"
+    ],
+    "app.routers.monitoring": [
+      "app.auth.auth_dependencies",
+      "app.routers.admin_rbac_router"
+    ],
+    "app.routers.pattern_recognition_router": [
+      "app.models.behavior_model",
+      "app.services.pattern_recognition_service",
+      "app.db",
+      "app.models.user",
+      "app.crud.behavior_model_crud",
+      "app.auth.auth_dependencies",
+      "app.services.visualization_service"
+    ],
+    "app.routers.publish_router": [
+      "app.crud.behavior_model_crud",
+      "app.db"
+    ],
+    "app.routers.task_router": [
+      "digame.app.services",
+      "digame.app.models.task",
+      "digame.app.crud",
+      "digame.app.schemas",
+      "digame.app.auth.auth_dependencies",
+      "app.routers.admin_rbac_router",
+      "digame.app.models.user"
+    ],
+    "app.routers.process_notes_router": [
+      "app.db",
+      "app.models.user",
+      "app.crud",
+      "app.schemas",
+      "app.auth.auth_dependencies",
+      "app.services"
+    ],
+    "app.auth.auth_dependencies": [
+      "app.db",
+      "app.models.user",
+      "app.services.rbac_service",
+      "app.crud",
+      "app.schemas.user_schemas"
+    ],
+    "app.models.task": [
+      "app.models.process_notes",
+      "app.models.user"
+    ],
+    "app.models.process_notes": [
+      "app.models.user"
+    ],
+    "app.models.job": [
+      "app.models.user"
+    ],
+    "app.models.activity": [
+      "app.models.user"
+    ],
+    "app.models.rbac": [
+      "app.models.user"
+    ],
+    "app.models.__init__": [
+      "app.models.process_notes",
+      "app.models.activity_features",
+      "app.models.task",
+      "app.models.activity",
+      "app.models.user",
+      "app.models.anomaly",
+      "app.models.rbac"
+    ],
+    "app.models.activity_features": [
+      "app.models.user"
+    ],
+    "app.models.anomaly": [
+      "app.models.user"
+    ],
+    "app.models.behavior_model": [
+      "app.models.user"
+    ],
+    "app.schemas.__init__": [
+      "app.schemas.process_note_schemas",
+      "app.schemas.anomaly_schemas",
+      "app.schemas.task_schemas",
+      "app.schemas.rbac_schemas"
+    ],
+    "app.crud.process_notes_crud": [
+      "digame.app.models.process_notes"
+    ],
+    "app.crud.job_crud": [
+      "app.models.job"
+    ],
+    "app.crud.anomaly_crud": [
+      "digame.app.models.anomaly"
+    ],
+    "app.crud.rbac_crud": [
+      "digame.app.schemas.rbac_schemas",
+      "digame.app.models.rbac",
+      "digame.app.models.user"
+    ],
+    "app.crud.__init__": [
+      "app.crud.user_crud",
+      "app.crud.rbac_crud",
+      "app.crud.job_crud",
+      "app.crud.process_notes_crud"
+    ],
+    "app.crud.behavior_model_crud": [
+      "app.models.behavior_model",
+      "app.models.user"
+    ],
+    "app.crud.user_crud": [
+      "app.models.user",
+      "app.schemas.user_schemas"
+    ],
+    "app.services.task_suggestion_service": [
+      "digame.app.models.task",
+      "digame.app.models.process_notes"
+    ],
+    "app.services.behavior_service": [
+      "app.models.behavior_model",
+      "app.crud.behavior_model_crud",
+      "app.models.activity_features",
+      "app.models.activity"
+    ],
+    "app.services.activity_feature_service": [
+      "app.models.activity_features",
+      "app.models.activity"
+    ],
+    "app.services.visualization_service": [
+      "app.models.behavior_model",
+      "app.services.pattern_recognition_service",
+      "app.models.activity_features",
+      "app.models.activity",
+      "app.crud.behavior_model_crud"
+    ],
+    "app.services.process_note_service": [
+      "digame.app.models.activity",
+      "digame.app.models.process_notes",
+      "digame.app.models.user"
+    ],
+    "app.services.__init__": [
+      "app.services.process_note_service",
+      "app.services.anomaly_service",
+      "app.services.activity_feature_service",
+      "app.services.rbac_service"
+    ],
+    "app.services.anomaly_service": [
+      "digame.app.models.activity",
+      "digame.app.models.activity_features",
+      "digame.app.models.anomaly",
+      "digame.app.models.user"
+    ],
+    "app.services.pattern_recognition_service": [
+      "app.models.behavior_model",
+      "app.crud.behavior_model_crud",
+      "app.models.activity_features",
+      "app.models.activity"
+    ],
+    "app.services.rbac_service": [
+      "digame.app.models.rbac",
+      "digame.app.models.user"
+    ],
+    "tests.conftest": [
+      "digame.app.main",
+      "digame.app.models.rbac",
+      "digame.app.routers.admin_rbac_router",
+      "digame.app.predictive",
+      "digame.app.auth.auth_dependencies",
+      "digame.app.models.user"
+    ],
+    "tests.test_predictive_persistence": [
+      "digame.app.predictive"
+    ],
+    "tests.routers.test_behavior_routing": [
+      "digame.app.main",
+      "digame.app.auth.auth_dependencies"
+    ],
+    "tests.routers.test_process_notes_router": [
+      "digame.app.models.process_notes",
+      "digame.app.main",
+      "digame.app.schemas.process_note_schemas",
+      "digame.app.auth.auth_dependencies",
+      "digame.app.models.user"
+    ],
+    "tests.routers.test_monitoring_routing": [
+      "digame.app.main",
+      "digame.app.auth.auth_dependencies"
+    ],
+    "tests.services.test_rbac_service": [
+      "digame.app.services.rbac_service"
+    ],
+    "tests.services.test_process_note_service": [
+      "digame.app.models.activity",
+      "digame.app.models.process_notes",
+      "digame.app.services.process_note_service",
+      "digame.app.models.user"
+    ],
+    "tests.services.test_activity_feature_service": [
+      "digame.app.models.activity",
+      "digame.app.services.activity_feature_service",
+      "digame.app.models.activity_features",
+      "digame.app.models.user"
+    ]
+  },
+  "cycles": []
+}

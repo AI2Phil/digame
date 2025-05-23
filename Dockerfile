@@ -34,14 +34,20 @@ COPY digame $APP_HOME/digame
 # For this Dockerfile, we follow the explicit instruction.
 COPY models $APP_HOME/digame/app/models/
 
+# Copy entrypoint script
+COPY digame/entrypoint.sh $APP_HOME/entrypoint.sh
+
 # Create and switch to a non-root user
 RUN addgroup --system app && adduser --system --ingroup app --home /home/app --shell /bin/bash app
 RUN chown -R app:app $APP_HOME
+RUN chmod +x $APP_HOME/entrypoint.sh
 USER app
 
 # Expose port
 EXPOSE 8000
 
-# Keep container running for development
-# The application can be started manually or via VS Code tasks
-CMD ["sleep", "infinity"]
+# Set entrypoint
+ENTRYPOINT ["/app/entrypoint.sh"]
+
+# Default command for development (can be overridden)
+CMD ["sleep"]

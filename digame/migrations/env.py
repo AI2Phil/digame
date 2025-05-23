@@ -16,14 +16,16 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..')))
+# Add the app directory to Python path for imports
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
+
 # add your model's MetaData object here
 # for 'autogenerate' support
-# from myapp import mymodel
-# target_metadata = mymodel.Base.metadata
-# target_metadata = None
-from digame.app.models.user import Base as UserBase
-target_metadata = UserBase.metadata
+from app.models.user import Base
+from app.models import user, behavior_model, rbac, activity, anomaly, task, process_notes, job
+
+# Import all models to ensure they're registered with the Base metadata
+target_metadata = Base.metadata
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:

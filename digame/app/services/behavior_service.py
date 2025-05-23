@@ -18,10 +18,7 @@ from ..crud.behavior_model_crud import (
     get_patterns_for_model
 )
 # Import specific functions from behavior module to avoid circular dependencies
-from ..behavior import (
-    preprocess_activity_logs,
-    cluster_activity_logs
-)
+# Removed circular import - functions implemented locally
 
 # Define extract_cluster_patterns function locally to avoid circular imports
 def extract_cluster_patterns(raw_df, cluster_labels):
@@ -284,3 +281,8 @@ def get_behavior_patterns_for_user(db: Session, user_id: int) -> List[Dict[str, 
                 result.append(activity_dict)
     
     return result
+
+# Alias for backward compatibility
+def train_behavioral_model(*args, **kwargs):
+    """Alias for train_and_save_behavior_model for backward compatibility."""
+    return train_and_save_behavior_model(*args, **kwargs)

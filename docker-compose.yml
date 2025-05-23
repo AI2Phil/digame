@@ -10,12 +10,14 @@ services:
       - DATABASE_URL=postgresql://digame_user:digame_password@db:5432/digame_db
       # Add other backend-specific environment variables here if needed
       # For example, if predictive.py needs specific model paths configurable via env vars:
-      # - MODEL_PATH_PRIMARY=models/predictive_model.pth 
+      # - MODEL_PATH_PRIMARY=models/predictive_model.pth
       # - MODEL_PATH_CUSTOM_EXAMPLE=digame/app/models/example_custom_model.pth
     depends_on:
       - db
     networks:
       - digame_network
+    # Use development mode by default (includes automatic migrations)
+    command: ["dev"]
 
   db:
     container_name: digame_db

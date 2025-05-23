@@ -13,7 +13,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision: str = '20250523_behavioral_models'
-down_revision: Union[str, None] = None  # Set to the previous migration if there is one
+down_revision: Union[str, None] = '001_initial_schema'  # Depends on the initial schema
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
