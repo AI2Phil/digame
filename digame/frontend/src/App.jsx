@@ -2,11 +2,12 @@ import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import HomePage from './pages/HomePage';
 import DashboardPage from './pages/DashboardPage';
+import ComponentDemoPage from './pages/ComponentDemoPage';
 import './App.css';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isDemoMode, setIsDemoMode] = useState(false);
+  const [isDemoMode, setIsDemoMode] = useState(true); // Default to demo mode for testing
 
   const handleDemoAccess = () => {
     setIsDemoMode(true);
@@ -25,27 +26,27 @@ function App() {
     <Router>
       <div className="App">
         <Routes>
-          <Route 
-            path="/" 
+          <Route
+            path="/"
             element={
-              <HomePage 
+              <HomePage
                 onDemoAccess={handleDemoAccess}
                 onLogin={handleLogin}
               />
-            } 
+            }
           />
-          <Route 
-            path="/dashboard" 
+          <Route
+            path="/dashboard"
             element={
-              (isAuthenticated || isDemoMode) ? (
-                <DashboardPage 
-                  isDemoMode={isDemoMode}
-                  onLogout={handleLogout}
-                />
-              ) : (
-                <Navigate to="/" replace />
-              )
-            } 
+              <DashboardPage
+                isDemoMode={isDemoMode}
+                onLogout={handleLogout}
+              />
+            }
+          />
+          <Route
+            path="/components"
+            element={<ComponentDemoPage />}
           />
         </Routes>
       </div>
