@@ -1,0 +1,78 @@
+{
+    "name": "Digame Development Environment",
+    "image": "mcr.microsoft.com/devcontainers/python:3.11",
+    "workspaceFolder": "/workspaces/digame",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "roo-cline.roo-cline",
+                "ms-python.python",
+                "ms-python.pylint",
+                "ms-python.black-formatter",
+                "ms-python.isort",
+                "bradlc.vscode-tailwindcss",
+                "esbenp.prettier-vscode",
+                "ms-vscode.vscode-json",
+                "redhat.vscode-yaml",
+                "ms-vscode-remote.remote-containers",
+                "eamodio.gitlens",
+                "mhutchie.git-graph"
+            ],
+            "settings": {
+                "python.defaultInterpreterPath": "/usr/local/bin/python",
+                "python.linting.enabled": true,
+                "python.linting.pylintEnabled": true,
+                "python.formatting.provider": "black",
+                "editor.formatOnSave": true,
+                "editor.codeActionsOnSave": {
+                    "source.organizeImports": "explicit"
+                },
+                "git.enabled": true,
+                "git.autofetch": true,
+                "git.enableSmartCommit": true,
+                "git.confirmSync": false,
+                "git.defaultCloneDirectory": "/workspaces",
+                "terminal.integrated.defaultProfile.linux": "bash"
+            }
+        }
+    },
+    "forwardPorts": [
+        8000,
+        3000,
+        5432
+    ],
+    "portsAttributes": {
+        "8000": {
+            "label": "Backend API",
+            "onAutoForward": "notify"
+        },
+        "3000": {
+            "label": "Frontend",
+            "onAutoForward": "notify"
+        },
+        "5432": {
+            "label": "PostgreSQL",
+            "onAutoForward": "silent"
+        }
+    },
+    "postCreateCommand": "echo 'Post-create command starting...' && pip install --upgrade pip && pip install fastapi uvicorn sqlalchemy alembic psycopg2-binary && echo 'Checking Git installation...' && which git && git --version && chmod +x .devcontainer/setup-git.sh && .devcontainer/setup-git.sh",
+    "postStartCommand": "echo 'Dev Container started successfully! Roo extension should now be available.'",
+    "remoteUser": "vscode",
+    "features": {
+        "ghcr.io/devcontainers/features/git:1": {
+            "ppa": true,
+            "version": "latest"
+        },
+        "ghcr.io/devcontainers/features/github-cli:1": {},
+        "ghcr.io/devcontainers/features/node:1": {
+            "version": "20"
+        }
+    },
+    "mounts": [
+        "source=${localEnv:HOME}/.gitconfig,target=/home/vscode/.gitconfig,type=bind,consistency=cached",
+        "source=${localEnv:HOME}/.ssh,target=/home/vscode/.ssh,type=bind,consistency=cached"
+    ],
+    "containerEnv": {
+        "GIT_EDITOR": "code --wait"
+    }
+}
