@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { 
-  User, Bell, Shield, Palette, Globe, Database, 
-  Download, Trash2, Save, RotateCcw, Eye, Moon, Sun 
+import {
+  User, Bell, Shield, Palette, Globe, Database, Key,
+  Download, Trash2, Save, RotateCcw, Eye, Moon, Sun, Plus, Copy, EyeOff
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -65,11 +65,20 @@ const SettingsPage = () => {
       dateFormat: 'MM/DD/YYYY',
       timeFormat: '12h',
       currency: 'USD'
-    }
+    },
+    
+    // API Keys Settings
+    apiKeys: {}
   });
 
   const [hasChanges, setHasChanges] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  
+  // API Key Management State
+  const [apiKeys, setApiKeys] = useState({});
+  const [newApiKey, setNewApiKey] = useState({ name: '', value: '' });
+  const [showApiKey, setShowApiKey] = useState({});
+  const [isLoadingApiKeys, setIsLoadingApiKeys] = useState(false);
 
   const updateSetting = (category, key, value) => {
     setSettings(prev => ({
@@ -116,6 +125,96 @@ const SettingsPage = () => {
     alert('Account deletion would be implemented here');
   };
 
+  // API Key Management Functions
+  const fetchApiKeys = async () => {
+    setIsLoadingApiKeys(true);
+    try {
+      const response = await fetch('/api/settings/api-keys', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setApiKeys(data.api_keys || {});
+      }
+    } catch (error) {
+      console.error('Failed to fetch API keys:', error);
+    } finally {
+      setIsLoadingApiKeys(false);
+    }
+  };
+
+  const addApiKey = async () => {
+    if (!newApiKey.name || !newApiKey.value) return;
+    
+    setIsLoadingApiKeys(true);
+    try {
+      const updatedKeys = { ...apiKeys, [newApiKey.name]: newApiKey.value };
+      const response = await fetch('/api/settings/api-keys', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({ api_keys: updatedKeys })
+      });
+      
+      if (response.ok) {
+        setApiKeys(updatedKeys);
+        setNewApiKey({ name: '', value: '' });
+      }
+    } catch (error) {
+      console.error('Failed to add API key:', error);
+    } finally {
+      setIsLoadingApiKeys(false);
+    }
+  };
+
+  const deleteApiKey = async (keyName) => {
+    setIsLoadingApiKeys(true);
+    try {
+      const response = await fetch(`/api/settings/api-keys/${keyName}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      
+      if (response.ok) {
+        const updatedKeys = { ...apiKeys };
+        delete updatedKeys[keyName];
+        setApiKeys(updatedKeys);
+      }
+    } catch (error) {
+      console.error('Failed to delete API key:', error);
+    } finally {
+      setIsLoadingApiKeys(false);
+    }
+  };
+
+  const toggleApiKeyVisibility = (keyName) => {
+    setShowApiKey(prev => ({
+      ...prev,
+      [keyName]: !prev[keyName]
+    }));
+  };
+
+  const copyApiKey = (value) => {
+    navigator.clipboard.writeText(value);
+    // toast.success('API key copied to clipboard');
+  };
+
+  const maskApiKey = (key) => {
+    if (key.length <= 8) return '••••••••';
+    return key.substring(0, 4) + '••••••••' + key.substring(key.length - 4);
+  };
+
+  // Load API keys on component mount
+  React.useEffect(() => {
+    fetchApiKeys();
+  }, []);
+
   return (
     <div className="container mx-auto p-6 max-w-4xl">
       {/* Header */}
@@ -150,7 +249,7 @@ const SettingsPage = () => {
 
       {/* Settings Tabs */}
       <Tabs defaultValue="profile" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="profile" className="flex items-center space-x-2">
             <User className="h-4 w-4" />
             <span>Profile</span>
@@ -170,6 +269,10 @@ const SettingsPage = () => {
           <TabsTrigger value="localization" className="flex items-center space-x-2">
             <Globe className="h-4 w-4" />
             <span>Language</span>
+          </TabsTrigger>
+          <TabsTrigger value="api-keys" className="flex items-center space-x-2">
+            <Key className="h-4 w-4" />
+            <span>API Keys</span>
           </TabsTrigger>
         </TabsList>
 
@@ -590,6 +693,152 @@ const SettingsPage = () => {
                     <option value="12h">12 Hour</option>
                     <option value="24h">24 Hour</option>
                   </Select>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* API Keys Settings */}
+        <TabsContent value="api-keys" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>API Key Management</CardTitle>
+              <CardDescription>
+                Manage your API keys for external services and integrations
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Add New API Key */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium">Add New API Key</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="api-key-name">Service Name</Label>
+                    <Input
+                      id="api-key-name"
+                      placeholder="e.g., OpenAI, Google, AWS"
+                      value={newApiKey.name}
+                      onChange={(e) => setNewApiKey(prev => ({ ...prev, name: e.target.value }))}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="api-key-value">API Key</Label>
+                    <Input
+                      id="api-key-value"
+                      type="password"
+                      placeholder="Enter your API key"
+                      value={newApiKey.value}
+                      onChange={(e) => setNewApiKey(prev => ({ ...prev, value: e.target.value }))}
+                    />
+                  </div>
+                  <div className="flex items-end">
+                    <Button
+                      onClick={addApiKey}
+                      disabled={!newApiKey.name || !newApiKey.value || isLoadingApiKeys}
+                      className="w-full"
+                    >
+                      <Plus className="mr-2 h-4 w-4" />
+                      {isLoadingApiKeys ? 'Adding...' : 'Add Key'}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Existing API Keys */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-medium">Your API Keys</h3>
+                  <Badge variant="secondary">
+                    {Object.keys(apiKeys).length} key{Object.keys(apiKeys).length !== 1 ? 's' : ''}
+                  </Badge>
+                </div>
+
+                {Object.keys(apiKeys).length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Key className="mx-auto h-12 w-12 mb-4 opacity-50" />
+                    <p>No API keys configured yet</p>
+                    <p className="text-sm">Add your first API key above to get started</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {Object.entries(apiKeys).map(([keyName, keyValue]) => (
+                      <div key={keyName} className="flex items-center justify-between p-4 border rounded-lg">
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-3">
+                            <Key className="h-4 w-4 text-muted-foreground" />
+                            <div>
+                              <p className="font-medium">{keyName}</p>
+                              <p className="text-sm text-muted-foreground font-mono">
+                                {showApiKey[keyName] ? keyValue : maskApiKey(keyValue)}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => toggleApiKeyVisibility(keyName)}
+                          >
+                            {showApiKey[keyName] ? (
+                              <EyeOff className="h-4 w-4" />
+                            ) : (
+                              <Eye className="h-4 w-4" />
+                            )}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => copyApiKey(keyValue)}
+                          >
+                            <Copy className="h-4 w-4" />
+                          </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="ghost" size="sm" className="text-destructive">
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Delete API Key</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Are you sure you want to delete the API key for "{keyName}"?
+                                  This action cannot be undone.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => deleteApiKey(keyName)}
+                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                >
+                                  Delete
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Security Notice */}
+              <div className="bg-muted/50 p-4 rounded-lg">
+                <div className="flex items-start space-x-3">
+                  <Shield className="h-5 w-5 text-muted-foreground mt-0.5" />
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium">Security Notice</p>
+                    <p className="text-sm text-muted-foreground">
+                      API keys are stored securely and encrypted. Only you can view and manage your keys.
+                      Never share your API keys with others or include them in public repositories.
+                    </p>
+                  </div>
                 </div>
               </div>
             </CardContent>
