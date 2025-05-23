@@ -1,6 +1,9 @@
 # Base image
 FROM python:3.11-slim
 
+# Update system packages to reduce vulnerabilities
+RUN apt-get update && apt-get upgrade -y && apt-get clean && rm -rf /var/lib/apt/lists/*
+
 # Environment variables
 ENV PYTHONUNBUFFERED=1
 ENV APP_HOME=/app
@@ -39,7 +42,6 @@ USER app
 # Expose port
 EXPOSE 8000
 
-# Command to run the application
-# Since WORKDIR is /app, and the main module is in digame/app/main.py,
-# the path to the app is digame.app.main
-CMD ["uvicorn", "digame.app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Keep container running for development
+# The application can be started manually or via VS Code tasks
+CMD ["sleep", "infinity"]
