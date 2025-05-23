@@ -13,6 +13,7 @@ from .routers import pattern_recognition_router
 from .routers import job_router
 from .routers import publish_router
 from .routers import auth_router  # Import the new authentication router
+from .routers import onboarding_router
 
 # Import authentication components
 from .auth.middleware import configure_auth_middleware
@@ -102,6 +103,7 @@ app.include_router(behavior_router.router, prefix="/behavior", tags=["Behavior R
 app.include_router(pattern_recognition_router.router, prefix="/pattern-recognition", tags=["Pattern Recognition"])
 app.include_router(job_router.router, prefix="/api", tags=["Background Jobs"])
 app.include_router(publish_router.router, prefix="/publish", tags=["Publishing"])
+app.include_router(onboarding_router.router, tags=["Onboarding"])
 
 # Startup and shutdown events
 @app.on_event("startup")

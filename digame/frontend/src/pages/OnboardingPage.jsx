@@ -1,229 +1,163 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import OnboardingFlow from '../components/onboarding/OnboardingFlow';
+import OnboardingWizard from '../components/onboarding/OnboardingWizard';
 import onboardingService from '../services/onboardingService';
 import { Toast } from '../components/ui/Toast';
 
 const OnboardingPage = () => {
   const navigate = useNavigate();
-  const [isLoading, setIsLoading] = useState(false);
-  const [toast, setToast] = useState(null);
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    // Check if user is authenticated
-    const token = localStorage.getItem('access_token');
-    if (!token) {
-      navigate('/');
-      return;
-    }
+    initializeOnboarding();
+  }, []);
 
-    // Check if onboarding is already completed
-    checkOnboardingStatus();
-  }, [navigate]);
-
-  const checkOnboardingStatus = async () => {
+  const initializeOnboarding = async () => {
     try {
-      const status = await onboardingService.getOnboardingStatus();
-      if (status.onboarding_completed) {
-        // User has already completed onboarding, redirect to dashboard
-        navigate('/dashboard');
+      // Get user data from localStorage or API
+      const userData = localStorage.getItem('user');
+      if (userData) {
+        setUser(JSON.parse(userData));
       }
+
+      // Check if onboarding is already completed
+      const isCompleted = onboardingService.isOnboardingCompleted();
+      if (isCompleted) {
+        navigate('/dashboard');
+        return;
+      }
+
+      setLoading(false);
     } catch (error) {
-      console.error('Error checking onboarding status:', error);
-      // Continue with onboarding if we can't check status
+      console.error('Failed to initialize onboarding:', error);
+      setError('Failed to load onboarding. Please try again.');
+      setLoading(false);
     }
   };
 
   const handleOnboardingComplete = async (onboardingData) => {
-    setIsLoading(true);
-    
     try {
-      // Track onboarding start
-      await onboardingService.trackOnboardingEvent('onboarding_completed', {
-        goals_count: onboardingData.goals.length,
-        work_style: onboardingData.workStyle,
-        skill_level: onboardingData.skillLevel,
-        focus_areas_count: onboardingData.focusAreas.length
-      });
+      setLoading(true);
 
-      // Validate data before submission
-      const validation = onboardingService.validateOnboardingData(onboardingData);
-      if (!validation.isValid) {
-        throw new Error(`Validation failed: ${validation.errors.join(', ')}`);
+      // Validate the data
+      const profileValidation = onboardingService.validateProfileData(onboardingData.profile);
+      const goalsValidation = onboardingService.validateGoalsData(onboardingData.goals);
+
+      if (!profileValidation.isValid) {
+        setError(profileValidation.errors.join(', '));
+        setLoading(false);
+        return;
       }
 
-      // Save onboarding data
-      await onboardingService.saveOnboardingData(onboardingData);
-
-      // Initialize behavioral model
-      try {
-        await onboardingService.initializeBehavioralModel(onboardingData);
-      } catch (error) {
-        console.warn('Behavioral model initialization failed:', error);
-        // Continue even if this fails
+      if (!goalsValidation.isValid) {
+        setError(goalsValidation.errors.join(', '));
+        setLoading(false);
+        return;
       }
-
-      // Create initial goals
-      try {
-        await onboardingService.createInitialGoals(onboardingData.goals);
-      } catch (error) {
-        console.warn('Initial goals creation failed:', error);
-        // Continue even if this fails
-      }
-
-      // Generate dashboard configuration
-      const dashboardConfig = onboardingService.generateDashboardConfig(onboardingData);
-      localStorage.setItem('dashboard_config', JSON.stringify(dashboardConfig));
-
-      // Get recommended content
-      try {
-        const recommendations = await onboardingService.getRecommendedContent(onboardingData);
-        localStorage.setItem('initial_recommendations', JSON.stringify(recommendations));
-      } catch (error) {
-        console.warn('Failed to get recommendations:', error);
-        // Continue even if this fails
-      }
-
-      // Show success message
-      setToast({
-        type: 'success',
-        title: 'Welcome to Digame!',
-        message: 'Your digital twin has been successfully configured.',
-        duration: 3000
-      });
 
       // Track completion
-      await onboardingService.trackOnboardingEvent('onboarding_success', {
-        completion_time: Date.now(),
+      onboardingService.trackOnboardingCompletion(onboardingData);
+
+      // Try to save to backend
+      try {
+        await onboardingService.saveOnboardingData(onboardingData);
+        
+        // Also save user preferences and goals separately
+        await onboardingService.updateUserPreferences(onboardingData.preferences);
+        await onboardingService.createUserGoals(onboardingData.goals);
+        
+      } catch (apiError) {
+        console.warn('Failed to save to backend, saving locally:', apiError);
+        // Fallback to local storage
+        onboardingService.saveOnboardingDataLocally(onboardingData);
+      }
+
+      // Update user data in localStorage
+      const updatedUser = {
+        ...user,
+        ...onboardingData.profile,
+        onboarding_completed: true,
+        preferences: onboardingData.preferences,
         goals: onboardingData.goals,
-        work_style: onboardingData.workStyle
-      });
-
-      // Redirect to dashboard after a short delay
-      setTimeout(() => {
-        navigate('/dashboard', { 
-          state: { 
-            isNewUser: true, 
-            onboardingData 
-          } 
-        });
-      }, 2000);
-
-    } catch (error) {
-      console.error('Onboarding completion error:', error);
-      
-      // Track error
-      await onboardingService.trackOnboardingEvent('onboarding_error', {
-        error: error.message,
-        step: 'completion'
-      });
-
-      setToast({
-        type: 'error',
-        title: 'Setup Error',
-        message: 'There was an issue completing your setup. Please try again.',
-        duration: 5000
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleOnboardingSkip = async () => {
-    try {
-      // Track skip event
-      await onboardingService.trackOnboardingEvent('onboarding_skipped');
-
-      // Set minimal default configuration
-      const defaultData = {
-        goals: ['productivity'],
-        workStyle: 'flexible',
-        skillLevel: 'intermediate',
-        focusAreas: ['General'],
-        preferences: {
-          notifications: true,
-          dataCollection: true,
-          publicProfile: false
-        }
+        features: onboardingData.features
       };
+      
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+      localStorage.setItem('onboardingCompleted', 'true');
 
-      // Save minimal onboarding data
-      await onboardingService.saveOnboardingData(defaultData);
+      // Show success message
+      Toast.success('Welcome to Digame! Your account is now set up.');
 
-      // Generate basic dashboard configuration
-      const dashboardConfig = onboardingService.generateDashboardConfig(defaultData);
-      localStorage.setItem('dashboard_config', JSON.stringify(dashboardConfig));
-
-      setToast({
-        type: 'info',
-        title: 'Setup Skipped',
-        message: 'You can complete your profile setup anytime in settings.',
-        duration: 3000
-      });
-
-      // Redirect to dashboard
-      setTimeout(() => {
-        navigate('/dashboard', { 
-          state: { 
-            isNewUser: true, 
-            skippedOnboarding: true 
-          } 
-        });
-      }, 1500);
+      // Navigate to dashboard
+      navigate('/dashboard', { replace: true });
 
     } catch (error) {
-      console.error('Error skipping onboarding:', error);
-      
-      setToast({
-        type: 'error',
-        title: 'Error',
-        message: 'Unable to skip setup. Please try again.',
-        duration: 5000
-      });
+      console.error('Failed to complete onboarding:', error);
+      setError('Failed to complete setup. Please try again.');
+      setLoading(false);
     }
   };
 
-  const closeToast = () => {
-    setToast(null);
+  const handleSkipOnboarding = () => {
+    // Allow users to skip onboarding with default settings
+    const defaultData = onboardingService.getDefaultOnboardingData(user);
+    handleOnboardingComplete(defaultData);
   };
 
-  if (isLoading) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
-          <div className="space-y-2">
-            <h2 className="text-xl font-semibold text-gray-900">Setting up your Digital Twin...</h2>
-            <p className="text-gray-600">This will just take a moment</p>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading your onboarding experience...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
+        <div className="text-center max-w-md mx-auto p-6">
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+            {error}
           </div>
-          <div className="space-y-1 text-sm text-gray-500">
-            <p>✓ Saving your preferences</p>
-            <p>✓ Initializing behavioral model</p>
-            <p>✓ Creating personalized goals</p>
-            <p>✓ Configuring your dashboard</p>
-          </div>
+          <button
+            onClick={() => window.location.reload()}
+            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 mr-2"
+          >
+            Try Again
+          </button>
+          <button
+            onClick={handleSkipOnboarding}
+            className="bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400"
+          >
+            Skip Setup
+          </button>
         </div>
       </div>
     );
   }
 
   return (
-    <>
-      <OnboardingFlow
+    <div className="onboarding-page">
+      <OnboardingWizard 
         onComplete={handleOnboardingComplete}
-        onSkip={handleOnboardingSkip}
+        user={user}
       />
       
-      {toast && (
-        <Toast
-          type={toast.type}
-          title={toast.title}
-          message={toast.message}
-          duration={toast.duration}
-          onClose={closeToast}
-        />
-      )}
-    </>
+      {/* Skip option */}
+      <div className="fixed bottom-4 right-4">
+        <button
+          onClick={handleSkipOnboarding}
+          className="text-sm text-gray-500 hover:text-gray-700 underline"
+        >
+          Skip setup for now
+        </button>
+      </div>
+    </div>
   );
 };
 

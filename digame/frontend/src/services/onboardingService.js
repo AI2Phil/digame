@@ -1,39 +1,18 @@
-/**
- * Onboarding Service
- * Handles user onboarding flow data and API integration
- */
-
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
-
 class OnboardingService {
   constructor() {
-    this.baseURL = API_BASE_URL;
+    this.baseURL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
   }
 
-  /**
-   * Save onboarding data to user profile
-   * @param {Object} onboardingData - Complete onboarding data
-   * @returns {Promise<Object>} API response
-   */
-  async saveOnboardingData(onboardingData) {
+  async saveOnboardingData(data) {
     try {
-      const token = localStorage.getItem('access_token');
-      
-      const response = await fetch(`${this.baseURL}/auth/me/onboarding`, {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${this.baseURL}/api/onboarding/complete`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({
-          goals: onboardingData.goals,
-          work_style: onboardingData.workStyle,
-          skill_level: onboardingData.skillLevel,
-          focus_areas: onboardingData.focusAreas,
-          preferences: onboardingData.preferences,
-          onboarding_completed: true,
-          completed_at: new Date().toISOString()
-        })
+        body: JSON.stringify(data)
       });
 
       if (!response.ok) {
@@ -42,20 +21,15 @@ class OnboardingService {
 
       return await response.json();
     } catch (error) {
-      console.error('Error saving onboarding data:', error);
+      console.error('Failed to save onboarding data:', error);
       throw error;
     }
   }
 
-  /**
-   * Get user's onboarding status
-   * @returns {Promise<Object>} Onboarding status and data
-   */
   async getOnboardingStatus() {
     try {
-      const token = localStorage.getItem('access_token');
-      
-      const response = await fetch(`${this.baseURL}/auth/me/onboarding`, {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${this.baseURL}/api/onboarding/status`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -68,32 +42,21 @@ class OnboardingService {
 
       return await response.json();
     } catch (error) {
-      console.error('Error fetching onboarding status:', error);
-      throw error;
+      console.error('Failed to get onboarding status:', error);
+      return { completed: false };
     }
   }
 
-  /**
-   * Initialize user's behavioral model based on onboarding data
-   * @param {Object} onboardingData - Onboarding data
-   * @returns {Promise<Object>} Behavioral model initialization response
-   */
-  async initializeBehavioralModel(onboardingData) {
+  async updateUserPreferences(preferences) {
     try {
-      const token = localStorage.getItem('access_token');
-      
-      const response = await fetch(`${this.baseURL}/behavior/initialize`, {
-        method: 'POST',
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${this.baseURL}/api/user/preferences`, {
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({
-          work_style: onboardingData.workStyle,
-          skill_level: onboardingData.skillLevel,
-          focus_areas: onboardingData.focusAreas,
-          goals: onboardingData.goals
-        })
+        body: JSON.stringify(preferences)
       });
 
       if (!response.ok) {
@@ -102,88 +65,21 @@ class OnboardingService {
 
       return await response.json();
     } catch (error) {
-      console.error('Error initializing behavioral model:', error);
+      console.error('Failed to update user preferences:', error);
       throw error;
     }
   }
 
-  /**
-   * Create initial goals based on onboarding selections
-   * @param {Array} goals - Selected goal IDs
-   * @returns {Promise<Object>} Goals creation response
-   */
-  async createInitialGoals(goals) {
+  async createUserGoals(goals) {
     try {
-      const token = localStorage.getItem('access_token');
-      
-      const goalTemplates = {
-        'productivity': {
-          title: 'Increase Daily Productivity',
-          description: 'Improve focus time and task completion rate',
-          target_value: 85,
-          metric_type: 'percentage',
-          deadline: this.getDateInDays(90)
-        },
-        'skills': {
-          title: 'Develop New Skills',
-          description: 'Complete learning modules and skill assessments',
-          target_value: 3,
-          metric_type: 'count',
-          deadline: this.getDateInDays(180)
-        },
-        'leadership': {
-          title: 'Build Leadership Skills',
-          description: 'Improve team collaboration and communication',
-          target_value: 80,
-          metric_type: 'percentage',
-          deadline: this.getDateInDays(120)
-        },
-        'collaboration': {
-          title: 'Enhance Team Collaboration',
-          description: 'Increase team interaction quality and frequency',
-          target_value: 90,
-          metric_type: 'percentage',
-          deadline: this.getDateInDays(60)
-        },
-        'work-life': {
-          title: 'Improve Work-Life Balance',
-          description: 'Maintain healthy work hours and break patterns',
-          target_value: 8,
-          metric_type: 'hours',
-          deadline: this.getDateInDays(30)
-        },
-        'career': {
-          title: 'Advance Career Development',
-          description: 'Complete career milestone objectives',
-          target_value: 5,
-          metric_type: 'count',
-          deadline: this.getDateInDays(365)
-        },
-        'efficiency': {
-          title: 'Optimize Workflow Efficiency',
-          description: 'Reduce time spent on routine tasks',
-          target_value: 25,
-          metric_type: 'percentage',
-          deadline: this.getDateInDays(90)
-        },
-        'networking': {
-          title: 'Expand Professional Network',
-          description: 'Connect with new professionals in your field',
-          target_value: 20,
-          metric_type: 'count',
-          deadline: this.getDateInDays(180)
-        }
-      };
-
-      const goalsToCreate = goals.map(goalId => goalTemplates[goalId]).filter(Boolean);
-
-      const response = await fetch(`${this.baseURL}/goals/batch`, {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${this.baseURL}/api/user/goals`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ goals: goalsToCreate })
+        body: JSON.stringify(goals)
       });
 
       if (!response.ok) {
@@ -192,224 +88,172 @@ class OnboardingService {
 
       return await response.json();
     } catch (error) {
-      console.error('Error creating initial goals:', error);
+      console.error('Failed to create user goals:', error);
       throw error;
     }
   }
 
-  /**
-   * Generate personalized dashboard configuration
-   * @param {Object} onboardingData - Complete onboarding data
-   * @returns {Object} Dashboard configuration
-   */
-  generateDashboardConfig(onboardingData) {
-    const config = {
-      widgets: [],
-      layout: 'default',
-      theme: 'professional'
-    };
-
-    // Add widgets based on goals
-    if (onboardingData.goals.includes('productivity')) {
-      config.widgets.push({
-        type: 'productivity-chart',
-        position: { row: 1, col: 1, span: 2 },
-        priority: 'high'
-      });
-    }
-
-    if (onboardingData.goals.includes('skills')) {
-      config.widgets.push({
-        type: 'learning-progress',
-        position: { row: 1, col: 3, span: 1 },
-        priority: 'high'
-      });
-    }
-
-    if (onboardingData.goals.includes('collaboration')) {
-      config.widgets.push({
-        type: 'team-insights',
-        position: { row: 2, col: 1, span: 1 },
-        priority: 'medium'
-      });
-    }
-
-    // Add work style specific widgets
-    if (onboardingData.workStyle === 'focused') {
-      config.widgets.push({
-        type: 'focus-time-tracker',
-        position: { row: 2, col: 2, span: 1 },
-        priority: 'high'
-      });
-    }
-
-    if (onboardingData.workStyle === 'collaborative') {
-      config.widgets.push({
-        type: 'collaboration-metrics',
-        position: { row: 2, col: 2, span: 1 },
-        priority: 'high'
-      });
-    }
-
-    // Always include essential widgets
-    config.widgets.push(
-      {
-        type: 'goal-progress',
-        position: { row: 3, col: 1, span: 2 },
-        priority: 'high'
-      },
-      {
-        type: 'recent-insights',
-        position: { row: 3, col: 3, span: 1 },
-        priority: 'medium'
-      },
-      {
-        type: 'quick-actions',
-        position: { row: 4, col: 1, span: 1 },
-        priority: 'medium'
-      }
-    );
-
-    return config;
-  }
-
-  /**
-   * Track onboarding analytics
-   * @param {string} event - Event name
-   * @param {Object} data - Event data
-   */
-  async trackOnboardingEvent(event, data = {}) {
+  // Local storage helpers for offline support
+  saveOnboardingDataLocally(data) {
     try {
-      const token = localStorage.getItem('access_token');
-      
-      await fetch(`${this.baseURL}/analytics/events`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          event_type: 'onboarding',
-          event_name: event,
-          event_data: data,
-          timestamp: new Date().toISOString()
-        })
-      });
+      localStorage.setItem('onboardingData', JSON.stringify(data));
+      localStorage.setItem('onboardingCompleted', 'true');
+      return true;
     } catch (error) {
-      console.error('Error tracking onboarding event:', error);
-      // Don't throw error for analytics failures
+      console.error('Failed to save onboarding data locally:', error);
+      return false;
     }
   }
 
-  /**
-   * Get recommended learning content based on onboarding data
-   * @param {Object} onboardingData - Onboarding data
-   * @returns {Promise<Array>} Recommended content
-   */
-  async getRecommendedContent(onboardingData) {
+  getLocalOnboardingData() {
     try {
-      const token = localStorage.getItem('access_token');
-      
-      const response = await fetch(`${this.baseURL}/recommendations/content`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          goals: onboardingData.goals,
-          skill_level: onboardingData.skillLevel,
-          focus_areas: onboardingData.focusAreas,
-          work_style: onboardingData.workStyle
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      return await response.json();
+      const data = localStorage.getItem('onboardingData');
+      return data ? JSON.parse(data) : null;
     } catch (error) {
-      console.error('Error fetching recommended content:', error);
-      // Return fallback recommendations
-      return this.getFallbackRecommendations(onboardingData);
+      console.error('Failed to get local onboarding data:', error);
+      return null;
     }
   }
 
-  /**
-   * Get fallback recommendations when API is unavailable
-   * @param {Object} onboardingData - Onboarding data
-   * @returns {Array} Fallback recommendations
-   */
-  getFallbackRecommendations(onboardingData) {
-    const recommendations = [];
+  isOnboardingCompleted() {
+    return localStorage.getItem('onboardingCompleted') === 'true';
+  }
 
-    if (onboardingData.goals.includes('productivity')) {
-      recommendations.push({
-        type: 'article',
-        title: 'Time Management Techniques for Professionals',
-        description: 'Learn proven strategies to boost your daily productivity',
-        estimated_time: '15 min read',
-        priority: 'high'
+  clearOnboardingData() {
+    localStorage.removeItem('onboardingData');
+    localStorage.removeItem('onboardingCompleted');
+  }
+
+  // Analytics helpers
+  trackOnboardingStep(step, data = {}) {
+    // Track onboarding progress for analytics
+    console.log(`Onboarding step: ${step}`, data);
+    
+    // You can integrate with analytics services here
+    if (window.gtag) {
+      window.gtag('event', 'onboarding_step', {
+        step_name: step,
+        ...data
       });
     }
+  }
 
-    if (onboardingData.goals.includes('skills')) {
-      recommendations.push({
-        type: 'course',
-        title: 'Professional Development Fundamentals',
-        description: 'Essential skills for career advancement',
-        estimated_time: '2 hours',
-        priority: 'high'
+  trackOnboardingCompletion(data) {
+    console.log('Onboarding completed', data);
+    
+    if (window.gtag) {
+      window.gtag('event', 'onboarding_complete', {
+        goals_count: data.goals?.primaryGoals?.length || 0,
+        features_enabled: data.features?.enabledFeatures?.length || 0,
+        notification_frequency: data.preferences?.notifications?.frequency || 'moderate'
       });
     }
-
-    return recommendations;
   }
 
-  /**
-   * Helper method to get date in specified number of days
-   * @param {number} days - Number of days from now
-   * @returns {string} ISO date string
-   */
-  getDateInDays(days) {
-    const date = new Date();
-    date.setDate(date.getDate() + days);
-    return date.toISOString().split('T')[0];
-  }
-
-  /**
-   * Validate onboarding data before submission
-   * @param {Object} data - Onboarding data to validate
-   * @returns {Object} Validation result
-   */
-  validateOnboardingData(data) {
+  // Validation helpers
+  validateProfileData(profile) {
     const errors = [];
-
-    if (!data.goals || data.goals.length === 0) {
-      errors.push('At least one goal must be selected');
+    
+    if (!profile.displayName || profile.displayName.trim().length < 2) {
+      errors.push('Display name must be at least 2 characters long');
     }
-
-    if (!data.workStyle) {
-      errors.push('Work style must be selected');
+    
+    if (!profile.role) {
+      errors.push('Please select your role');
     }
-
-    if (!data.skillLevel) {
-      errors.push('Skill level must be selected');
-    }
-
-    if (!data.focusAreas || data.focusAreas.length === 0) {
-      errors.push('At least one focus area must be selected');
-    }
-
-    if (data.focusAreas && data.focusAreas.length > 5) {
-      errors.push('Maximum 5 focus areas can be selected');
-    }
-
+    
     return {
       isValid: errors.length === 0,
       errors
     };
+  }
+
+  validateGoalsData(goals) {
+    const errors = [];
+    
+    if (!goals.primaryGoals || goals.primaryGoals.length === 0) {
+      errors.push('Please select at least one primary goal');
+    }
+    
+    if (goals.productivityTargets) {
+      const { dailyHours, focusTime, breakFrequency } = goals.productivityTargets;
+      
+      if (dailyHours < 1 || dailyHours > 16) {
+        errors.push('Daily work hours must be between 1 and 16');
+      }
+      
+      if (focusTime < 1 || focusTime > dailyHours) {
+        errors.push('Focus time must be between 1 and your daily work hours');
+      }
+      
+      if (breakFrequency < 1 || breakFrequency > 10) {
+        errors.push('Break frequency must be between 1 and 10');
+      }
+    }
+    
+    return {
+      isValid: errors.length === 0,
+      errors
+    };
+  }
+
+  // Default data generators
+  getDefaultOnboardingData(user = {}) {
+    return {
+      profile: {
+        displayName: user.name || '',
+        role: '',
+        department: '',
+        experience: '',
+        avatar: user.avatar || null
+      },
+      goals: {
+        primaryGoals: [],
+        productivityTargets: {
+          dailyHours: 8,
+          focusTime: 4,
+          breakFrequency: 2
+        },
+        learningObjectives: []
+      },
+      preferences: {
+        notifications: {
+          productivity: true,
+          achievements: true,
+          reminders: true,
+          frequency: 'moderate'
+        },
+        dashboard: {
+          defaultView: 'overview',
+          widgets: ['productivity', 'goals', 'insights'],
+          theme: 'light'
+        },
+        privacy: {
+          dataSharing: false,
+          analytics: true,
+          publicProfile: false
+        }
+      },
+      features: {
+        enabledFeatures: ['productivity-tracking', 'goal-management'],
+        interestedFeatures: []
+      }
+    };
+  }
+
+  // Feature recommendations based on role
+  getRecommendedFeatures(role) {
+    const recommendations = {
+      developer: ['productivity-tracking', 'time-tracking', 'automation'],
+      designer: ['productivity-tracking', 'collaboration', 'insights-ai'],
+      manager: ['goal-management', 'collaboration', 'insights-ai'],
+      analyst: ['productivity-tracking', 'insights-ai', 'time-tracking'],
+      consultant: ['time-tracking', 'goal-management', 'collaboration'],
+      researcher: ['productivity-tracking', 'insights-ai', 'goal-management'],
+      default: ['productivity-tracking', 'goal-management']
+    };
+
+    return recommendations[role] || recommendations.default;
   }
 }
 
