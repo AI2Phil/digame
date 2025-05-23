@@ -5,6 +5,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Alert, AppState } from 'react-native';
 
 // Import screens
 import LoginScreen from './src/screens/LoginScreen';
@@ -16,6 +17,9 @@ import OnboardingScreen from './src/screens/OnboardingScreen';
 
 // Import services
 import { AuthService } from './src/services/AuthService';
+import notificationService from './src/services/notificationService';
+import biometricService from './src/services/biometricService';
+import offlineService from './src/services/offlineService';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -72,10 +76,62 @@ export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
+  const [servicesInitialized, setServicesInitialized] = useState(false);
 
   useEffect(() => {
-    checkAuthStatus();
+    initializeApp();
   }, []);
+
+  useEffect(() => {
+    const handleAppStateChange = (nextAppState) => {
+      if (nextAppState === 'active' && servicesInitialized) {
+        // App came to foreground, sync data if online
+        offlineService.syncData();
+      }
+    };
+
+    const subscription = AppState.addEventListener('change', handleAppStateChange);
+    return () => subscription?.remove();
+  }, [servicesInitialized]);
+
+  const initializeApp = async () => {
+    try {
+      // Initialize enhanced services
+      await initializeServices();
+      
+      // Check authentication status
+      await checkAuthStatus();
+    } catch (error) {
+      console.error('Error initializing app:', error);
+      setIsLoading(false);
+    }
+  };
+
+  const initializeServices = async () => {
+    try {
+      // Initialize offline service first
+      await offlineService.initialize();
+      
+      // Initialize notifications
+      const pushToken = await notificationService.initialize();
+      if (pushToken) {
+        console.log('Push token:', pushToken);
+        // TODO: Send token to backend when user logs in
+      }
+      
+      // Initialize biometric service
+      const biometricStatus = await biometricService.initialize();
+      console.log('Biometric status:', biometricStatus);
+      
+      // Schedule productivity reminders
+      await notificationService.scheduleProductivityReminders();
+      
+      setServicesInitialized(true);
+    } catch (error) {
+      console.error('Failed to initialize services:', error);
+      setServicesInitialized(true); // Continue even if some services fail
+    }
+  };
 
   const checkAuthStatus = async () => {
     try {
@@ -102,14 +158,66 @@ export default function App() {
   const handleLogin = async (token, user) => {
     await AsyncStorage.setItem('authToken', token);
     await AsyncStorage.setItem('user', JSON.stringify(user));
+    
+    // Register push token with backend if available
+    if (notificationService.expoPushToken) {
+      try {
+        await notificationService.registerTokenWithBackend(
+          notificationService.expoPushToken,
+          user.id
+        );
+      } catch (error) {
+        console.error('Failed to register push token:', error);
+      }
+    }
+    
+    // Check if user wants to enable biometric login
+    const biometricStatus = await biometricService.initialize();
+    if (biometricStatus.isAvailable && biometricStatus.isEnrolled) {
+      const shouldEnable = await biometricService.showBiometricSetupPrompt();
+      if (shouldEnable) {
+        try {
+          await biometricService.enableBiometricLogin({
+            email: user.email,
+            token: token,
+          });
+          Alert.alert(
+            'Success',
+            'Biometric login has been enabled for your account.'
+          );
+        } catch (error) {
+          console.error('Failed to enable biometric login:', error);
+        }
+      }
+    }
+    
     setIsAuthenticated(true);
     setNeedsOnboarding(!user.onboarding_completed);
   };
 
   const handleLogout = async () => {
-    await AsyncStorage.multiRemove(['authToken', 'user']);
-    setIsAuthenticated(false);
-    setNeedsOnboarding(false);
+    try {
+      // Clean up biometric data
+      await biometricService.disableBiometricLogin();
+      
+      // Cancel all scheduled notifications
+      await notificationService.cancelAllNotifications();
+      
+      // Clear offline cache
+      await offlineService.clearCache();
+      
+      // Remove stored data
+      await AsyncStorage.multiRemove(['authToken', 'user']);
+      
+      setIsAuthenticated(false);
+      setNeedsOnboarding(false);
+    } catch (error) {
+      console.error('Error during logout:', error);
+      // Still proceed with logout even if cleanup fails
+      await AsyncStorage.multiRemove(['authToken', 'user']);
+      setIsAuthenticated(false);
+      setNeedsOnboarding(false);
+    }
   };
 
   const handleOnboardingComplete = async () => {

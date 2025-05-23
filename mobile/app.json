@@ -16,20 +16,55 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.digame.mobile"
+      "bundleIdentifier": "com.digame.mobile",
+      "infoPlist": {
+        "NSFaceIDUsageDescription": "Use Face ID to authenticate and securely access your Digame account.",
+        "NSCameraUsageDescription": "Camera access is required for Face ID authentication."
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#FFFFFF"
       },
-      "package": "com.digame.mobile"
+      "package": "com.digame.mobile",
+      "permissions": [
+        "USE_FINGERPRINT",
+        "USE_BIOMETRIC",
+        "RECEIVE_BOOT_COMPLETED",
+        "VIBRATE",
+        "ACCESS_NETWORK_STATE",
+        "INTERNET"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
+    "plugins": [
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#ffffff",
+          "sounds": ["./assets/notification-sound.wav"]
+        }
+      ],
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "Allow Digame to use Face ID for secure authentication."
+        }
+      ]
+    ],
+    "notification": {
+      "icon": "./assets/notification-icon.png",
+      "color": "#007AFF"
+    },
     "extra": {
-      "apiUrl": "http://localhost:8000"
+      "apiUrl": "http://localhost:8000",
+      "eas": {
+        "projectId": "your-project-id-here"
+      }
     }
   }
 }
