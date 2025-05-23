@@ -1,344 +1,315 @@
+import logging
+import os
+import joblib
+import numpy as np
+import pandas as pd
 import torch
 import torch.nn as nn
 import torch.optim as optim
-import os
-import pandas as pd
-import numpy as np
+from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder, StandardScaler
-from typing import List, Tuple, Dict, Any, Optional
-import json # For saving/loading encoders and params
+from torch.utils.data import DataLoader, TensorDataset
 
-# Assuming Activity and ActivityEnrichedFeature models are accessible
-from .models.activity import Activity
-from .models.activity_features import ActivityEnrichedFeature
-from sqlalchemy.orm import Session, joinedload
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-# --- Constants ---
-# Define file paths for encoders and model parameters, relative to where model.pth is saved.
-# These will be saved in the same directory as the model.
-ENCODER_FILE_PATH_TEMPLATE = "{model_dir}/encoders.json"
-MODEL_PARAMS_FILE_PATH_TEMPLATE = "{model_dir}/model_params.json"
-DEFAULT_MODEL_DIR = "digame/app/models" # Default directory for predictive models
+# Default directory for saving models if only a filename is provided
+DEFAULT_MODEL_DIR = "digame/app/models"
+os.makedirs(DEFAULT_MODEL_DIR, exist_ok=True)
 
-# --- Data Preparation ---
-
-# Define categorical and numerical features to be used
-CATEGORICAL_FEATURES = ['activity_type', 'app_category', 'project_context', 'website_category']
-NUMERICAL_FEATURES = ['hour_of_day', 'day_of_week', 'is_context_switch_numeric'] # is_context_switch will be converted to numeric
-
-def prepare_predictive_data(
-    db: Session,
-    user_id: int,
-    sequence_length: int = 5,
-    fit_encoders: bool = False,
-    encoders: Optional[Dict[str, LabelEncoder]] = None,
-    scaler: Optional[StandardScaler] = None,
-    fitted_categories: Optional[Dict[str, List[Any]]] = None
-) -> Tuple[Optional[torch.Tensor], Optional[torch.Tensor], Optional[Dict[str, LabelEncoder]], Optional[StandardScaler], Optional[Dict[str, List[Any]]], Optional[int]]:
-    """
-    Prepares sequential data for LSTM model using Activity and ActivityEnrichedFeature.
-    
-    Args:
-        db: SQLAlchemy session.
-        user_id: ID of the user.
-        sequence_length: Length of input sequences.
-        fit_encoders: If True, fits new LabelEncoders and StandardScaler. Otherwise, uses provided ones.
-        encoders: Pre-fitted LabelEncoders (if fit_encoders=False).
-        scaler: Pre-fitted StandardScaler (if fit_encoders=False).
-        fitted_categories: Categories for each LabelEncoder (used if fit_encoders=False to handle unseen labels).
-
-    Returns:
-        A tuple: (sequences_tensor, targets_tensor, fitted_encoders, fitted_scaler, all_fitted_categories, num_features)
-        Returns (None, None, None, None, None, None) if data is insufficient.
-    """
-    query = (
-        db.query(Activity, ActivityEnrichedFeature)
-        .outerjoin(ActivityEnrichedFeature, Activity.id == ActivityEnrichedFeature.activity_id)
-        .filter(Activity.user_id == user_id)
-        .order_by(Activity.timestamp.asc()) # Important for sequence generation
-    )
-    results = query.all()
-
-    if len(results) < sequence_length + 1: # Need enough data for at least one sequence and target
-        return None, None, None, None, None, None
-
-    activities_data = []
-    for activity, feature in results:
-        record = {
-            "activity_id": activity.id,
-            "activity_type": activity.activity_type,
-            "timestamp": activity.timestamp,
-            "app_category": feature.app_category if feature else "Missing_AppCategory",
-            "project_context": feature.project_context if feature else "Missing_ProjectContext",
-            "website_category": feature.website_category if feature else "Missing_WebsiteCategory",
-            "is_context_switch": feature.is_context_switch if feature else False,
-        }
-        activities_data.append(record)
-    
-    raw_df = pd.DataFrame(activities_data)
-    if raw_df.empty:
-        return None, None, None, None, None, None
-
-    # Feature Engineering
-    raw_df["hour_of_day"] = raw_df["timestamp"].dt.hour
-    raw_df["day_of_week"] = raw_df["timestamp"].dt.dayofweek
-    raw_df["is_context_switch_numeric"] = raw_df["is_context_switch"].astype(int)
-
-    # Initialize or use provided encoders/scaler
-    if fit_encoders:
-        encoders = {col: LabelEncoder() for col in CATEGORICAL_FEATURES}
-        scaler = StandardScaler()
-        all_fitted_categories = {} # To store categories for each encoder
-    elif encoders is None or scaler is None or fitted_categories is None:
-        # This case should ideally not happen if fit_encoders=False.
-        # Raise error or handle by attempting to fit, though that's not the intent of fit_encoders=False.
-        raise ValueError("Encoders, scaler, and fitted_categories must be provided if fit_encoders is False.")
-
-    # Apply Label Encoding for categorical features
-    for col in CATEGORICAL_FEATURES:
-        if fit_encoders:
-            raw_df[col] = encoders[col].fit_transform(raw_df[col].astype(str)) # Ensure string type
-            all_fitted_categories[col] = list(encoders[col].classes_)
-        else:
-            # Handle unseen labels during transform: map to a special "unknown" index or use a default.
-            # For simplicity, map unseen to a new category index (len(classes_)).
-            # More robust: Add "Unknown" to classes_ during fit if possible, or handle missing keys.
-            current_categories = fitted_categories.get(col, [])
-            raw_df[col] = raw_df[col].astype(str).apply(
-                lambda x: current_categories.index(x) if x in current_categories else len(current_categories) 
-            )
-            # Note: If len(current_categories) is used for unseen, the model's embedding layer needs to account for this extra index.
-
-    # Target variable: next activity_type (encoded)
-    # We use the 'activity_type' column *after* it has been label encoded by the loop above.
-    # This means the target is also an integer.
-    raw_df['target_activity_type_encoded'] = raw_df['activity_type'].shift(-1)
-    raw_df.dropna(subset=['target_activity_type_encoded'], inplace=True) # Remove last row where target is NaN
-    
-    if raw_df.empty: # After removing NaN target, check if still valid
-        return None, None, encoders, scaler, fitted_categories if not fit_encoders else all_fitted_categories, None
-
-
-    # Select features for LSTM input
-    feature_columns = NUMERICAL_FEATURES + CATEGORICAL_FEATURES 
-    features_df = raw_df[feature_columns]
-
-    # Normalize numerical features
-    if fit_encoders:
-        features_df[NUMERICAL_FEATURES] = scaler.fit_transform(features_df[NUMERICAL_FEATURES])
-    else:
-        features_df[NUMERICAL_FEATURES] = scaler.transform(features_df[NUMERICAL_FEATURES])
-    
-    num_features = features_df.shape[1]
-
-    # Create sequences
-    sequences, targets = [], []
-    for i in range(len(features_df) - sequence_length):
-        sequences.append(features_df.iloc[i:i+sequence_length].values)
-        # Target is the encoded 'activity_type' of the activity immediately following the sequence
-        targets.append(raw_df['target_activity_type_encoded'].iloc[i+sequence_length-1]) # Target corresponds to last element of sequence's next step
-
-    if not sequences:
-        return None, None, encoders, scaler, fitted_categories if not fit_encoders else all_fitted_categories, num_features
-
-    sequences_tensor = torch.tensor(np.array(sequences), dtype=torch.float32)
-    targets_tensor = torch.tensor(np.array(targets), dtype=torch.long) # Assuming classification target
-
-    return sequences_tensor, targets_tensor, encoders, scaler, fitted_categories if not fit_encoders else all_fitted_categories, num_features
-
+# Default path for the primary model, used by core functions.
+PRIMARY_MODEL_PATH = "models/predictive_model.pth"
 
 # --- Model Definition ---
 class PredictiveModel(nn.Module):
-    def __init__(self, input_size, hidden_size, num_layers, output_size, num_embeddings_map: Optional[Dict[str, int]] = None):
+    def __init__(self, input_dim, hidden_dim, output_dim, num_layers=1, dropout_prob=0.2):
         super(PredictiveModel, self).__init__()
-        self.input_size = input_size # This will be the total number of features after encoding and scaling
-        self.hidden_size = hidden_size
+        self.hidden_dim = hidden_dim
         self.num_layers = num_layers
-        self.output_size = output_size # Number of unique activity_types to predict
-
-        # If using embeddings for categorical features (more advanced, not implemented in current data prep)
-        # self.num_embeddings_map = num_embeddings_map if num_embeddings_map else {}
-        # self.embeddings = nn.ModuleDict()
-        # current_input_size = 0
-        # for feature_name, num_categories in self.num_embeddings_map.items():
-        #     embedding_dim = max(1, num_categories // 2) # Example heuristic
-        #     self.embeddings[feature_name] = nn.Embedding(num_categories, embedding_dim)
-        #     current_input_size += embedding_dim
-        # current_input_size += (input_size - len(self.num_embeddings_map)) # Add numerical features count
-
-        self.lstm = nn.LSTM(self.input_size, hidden_size, num_layers, batch_first=True)
-        self.fc = nn.Linear(hidden_size, output_size) # Output layer predicts next activity_type
+        self.lstm = nn.LSTM(input_dim, hidden_dim, num_layers, batch_first=True, dropout=dropout_prob if num_layers > 1 else 0)
+        self.fc = nn.Linear(hidden_dim, output_dim)
+        self.dropout = nn.Dropout(dropout_prob)
 
     def forward(self, x):
-        # x shape: (batch_size, sequence_length, input_size)
-        h0 = torch.zeros(self.num_layers, x.size(0), self.hidden_size).to(x.device)
-        c0 = torch.zeros(self.num_layers, x.size(0), self.hidden_size).to(x.device)
-        
-        out, _ = self.lstm(x, (h0, c0)) # out shape: (batch_size, sequence_length, hidden_size)
-        out = self.fc(out[:, -1, :]) # Use output of last time step for prediction, shape: (batch_size, output_size)
+        h0 = torch.zeros(self.num_layers, x.size(0), self.hidden_dim).to(x.device)
+        c0 = torch.zeros(self.num_layers, x.size(0), self.hidden_dim).to(x.device)
+        out, _ = self.lstm(x, (h0, c0))
+        out = self.dropout(out[:, -1, :])
+        out = self.fc(out)
         return out
 
-# --- Training Logic ---
-def train_predictive_model(
-    db: Session, # Added db session
-    user_id: int, # Added user_id
-    model_path: str, # Path to save the final model and related artifacts
-    num_epochs: int = 10, 
-    learning_rate: float = 0.001,
-    sequence_length: int = 5,
-    hidden_size: int = 128, # Added hyperparameter
-    num_layers: int = 2     # Added hyperparameter
-):
-    model_dir = os.path.dirname(model_path)
-    os.makedirs(model_dir, exist_ok=True) # Ensure model directory exists
+# --- Data Preparation ---
+def prepare_sequences(df, sequence_length=10):
+    df['timestamp'] = pd.to_datetime(df['timestamp'])
+    df = df.sort_values(by=['user_id', 'timestamp'])
+    all_features = []
+    all_targets = []
+    activity_encoder = LabelEncoder()
+    df['activity_type_encoded'] = activity_encoder.fit_transform(df['activity_type'])
+    user_encoder = LabelEncoder()
 
-    # Prepare data
-    sequences, targets, encoders, scaler, fitted_categories, num_features = prepare_predictive_data(
-        db, user_id, sequence_length=sequence_length, fit_encoders=True
-    )
+    if 'cluster_label' not in df.columns:
+        logger.warning("Missing 'cluster_label' in data, using 'activity_type_encoded' as target.")
+        df['cluster_label'] = df['activity_type_encoded'] 
+    if not pd.api.types.is_numeric_dtype(df['cluster_label']):
+        cluster_encoder = LabelEncoder()
+        df['cluster_label'] = cluster_encoder.fit_transform(df['cluster_label'])
+    else:
+        cluster_encoder = None
 
-    if sequences is None or targets is None or num_features is None:
-        print(f"Not enough data to train model for user {user_id}.")
-        return None # Or raise an error
+    df['hour_of_day'] = df['timestamp'].dt.hour
+    df['day_of_week'] = df['timestamp'].dt.dayofweek
+    features_to_scale = ['hour_of_day'] 
+    scaler = StandardScaler()
+    df[features_to_scale] = scaler.fit_transform(df[features_to_scale])
 
-    # Determine output_size (number of unique activity_types)
-    # This should come from the label encoder for 'activity_type'
-    output_size = len(encoders['activity_type'].classes_) if 'activity_type' in encoders else 0
-    if output_size == 0:
-        print("Error: Could not determine output size (number of activity types).")
-        return None
+    for user_id, group in df.groupby('user_id'):
+        if len(group) < sequence_length + 1:
+            continue
+        user_features = group[['activity_type_encoded', 'hour_of_day']].values
+        user_targets = group['cluster_label'].values 
+        for i in range(len(user_features) - sequence_length):
+            all_features.append(user_features[i:i + sequence_length])
+            all_targets.append(user_targets[i + sequence_length])
+            
+    if not all_features: 
+        logger.warning("No sequences were generated. Check sequence_length and data availability.")
+        return np.empty((0, sequence_length, 2)), np.empty((0,)), {'activity_encoder': activity_encoder, 'user_encoder': user_encoder, 'cluster_encoder': cluster_encoder, 'scaler': scaler}
+    return np.array(all_features), np.array(all_targets), {'activity_encoder': activity_encoder, 'user_encoder': user_encoder, 'cluster_encoder': cluster_encoder, 'scaler': scaler}
 
-    # Instantiate model
-    model = PredictiveModel(input_size=num_features, hidden_size=hidden_size, num_layers=num_layers, output_size=output_size)
+# --- Model Training ---
+def train_predictive_model(df_train, sequence_length=10, hidden_dim=50, num_layers=2, output_dim=None,
+                           epochs=20, batch_size=32, learning_rate=0.001, dropout_prob=0.2, model_path=PRIMARY_MODEL_PATH):
+    X_train, y_train, encoders_scalers = prepare_sequences(df_train, sequence_length)
+    if X_train.size == 0:
+        logger.error("Training data is empty after sequence preparation. Aborting training.")
+        return None, None
+    input_dim = X_train.shape[2] 
+    if output_dim is None:
+        output_dim = len(np.unique(y_train))
+        if output_dim <= 1 and len(y_train) > 0: 
+             logger.warning(f"Target variable has only {output_dim} unique value(s). Model might not learn effectively.")
+             output_dim = max(2, output_dim) 
+    X_train_tensor = torch.tensor(X_train, dtype=torch.float32)
+    y_train_tensor = torch.tensor(y_train, dtype=torch.long) 
+    train_dataset = TensorDataset(X_train_tensor, y_train_tensor)
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+    model = PredictiveModel(input_dim, hidden_dim, output_dim, num_layers, dropout_prob)
+    criterion = nn.CrossEntropyLoss() 
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
-    criterion = nn.CrossEntropyLoss() # Suitable for multi-class classification (predicting next activity_type)
-
-    # Create DataLoader
-    dataset = torch.utils.data.TensorDataset(sequences, targets)
-    train_loader = torch.utils.data.DataLoader(dataset, batch_size=32, shuffle=True)
-
-    print(f"Starting training for {num_epochs} epochs... Input features: {num_features}, Output classes: {output_size}")
-    model.train()
-    for epoch in range(num_epochs):
-        for batch_idx, (data_batch, target_batch) in enumerate(train_loader):
+    logger.info(f"Starting training: epochs={epochs}, batch_size={batch_size}, lr={learning_rate}")
+    logger.info(f"Model parameters: input_dim={input_dim}, hidden_dim={hidden_dim}, output_dim={output_dim}, num_layers={num_layers}")
+    for epoch in range(epochs):
+        model.train()
+        epoch_loss = 0
+        for batch_X, batch_y in train_loader:
             optimizer.zero_grad()
-            output = model(data_batch)
-            loss = criterion(output, target_batch)
+            outputs = model(batch_X)
+            loss = criterion(outputs, batch_y)
             loss.backward()
             optimizer.step()
-            if batch_idx % 10 == 0: # Log every 10 batches
-                print(f"Epoch {epoch+1}/{num_epochs}, Batch {batch_idx}/{len(train_loader)}, Loss: {loss.item()}")
-    print("Training complete.")
-
-    # Save model, encoders, scaler, and model parameters
+            epoch_loss += loss.item()
+        avg_epoch_loss = epoch_loss / len(train_loader)
+        logger.info(f"Epoch [{epoch+1}/{epochs}], Loss: {avg_epoch_loss:.4f}")
     model_params_to_save = {
-        "input_size": num_features,
-        "hidden_size": hidden_size,
-        "num_layers": num_layers,
-        "output_size": output_size,
-        "sequence_length": sequence_length,
-        "fitted_categories": fitted_categories # Save categories for each label encoder
+        'input_dim': input_dim, 'hidden_dim': hidden_dim, 'output_dim': output_dim,
+        'num_layers': num_layers, 'sequence_length': sequence_length, 'dropout_prob': dropout_prob
     }
-    save_model(model, optimizer, encoders, scaler, model_params_to_save, model_path)
-    
-    return model # Return trained model
+    save_model(model, optimizer, encoders_scalers, model_params_to_save, model_path)
+    logger.info("Training complete.")
+    return model, encoders_scalers
 
-# --- Model Saving/Loading ---
-def save_model(
-    model: PredictiveModel, 
-    optimizer: optim.Optimizer, 
-    encoders: Dict[str, LabelEncoder], 
-    scaler: StandardScaler,
-    model_params: Dict[str, Any],
-    file_path: str = "models/predictive_model.pth" # Path to the .pth file
-):
+# --- Model Saving ---
+def save_model(model, optimizer, encoders_scalers, model_params, file_path=PRIMARY_MODEL_PATH):
+    # If a plain filename (no directory part) is given, save it into DEFAULT_MODEL_DIR.
+    # Otherwise, use the provided path as is (e.g., "models/predictive_model.pth").
+    if os.path.dirname(file_path) == "" and DEFAULT_MODEL_DIR:
+        file_path = os.path.join(DEFAULT_MODEL_DIR, file_path)
+    
     model_dir = os.path.dirname(file_path)
-    if not model_dir: # If file_path is just a filename, use default model dir
-        model_dir = DEFAULT_MODEL_DIR
     os.makedirs(model_dir, exist_ok=True)
-    
-    actual_model_path = os.path.join(model_dir, os.path.basename(file_path))
-    encoder_file = ENCODER_FILE_PATH_TEMPLATE.format(model_dir=model_dir)
-    model_params_file = MODEL_PARAMS_FILE_PATH_TEMPLATE.format(model_dir=model_dir)
-
-    # Save model state
-    torch.save({
-        'model_state_dict': model.state_dict(),
-        'optimizer_state_dict': optimizer.state_dict(),
-    }, actual_model_path)
-
-    # Save encoders (their classes_) and scaler (mean_, scale_)
-    # LabelEncoder stores classes in `classes_` (a numpy array)
-    encoders_serializable = {key: list(le.classes_) for key, le in encoders.items()}
-    scaler_params = {
-        'mean_': scaler.mean_.tolist() if scaler.mean_ is not None else None,
-        'scale_': scaler.scale_.tolist() if scaler.scale_ is not None else None,
+    state = {
+        'model_state_dict': model.state_dict(), 'optimizer_state_dict': optimizer.state_dict(),
+        'model_params': model_params,
     }
-    with open(encoder_file, 'w') as f:
-        json.dump({'encoders': encoders_serializable, 'scaler': scaler_params}, f)
+    torch.save(state, file_path)
+    scaler = encoders_scalers.pop('scaler', None) 
+    joblib.dump(encoders_scalers.get('activity_encoder'), os.path.join(model_dir, 'activity_encoder.joblib'))
+    if encoders_scalers.get('user_encoder'):
+        joblib.dump(encoders_scalers.get('user_encoder'), os.path.join(model_dir, 'user_encoder.joblib'))
+    if encoders_scalers.get('cluster_encoder'):
+        joblib.dump(encoders_scalers.get('cluster_encoder'), os.path.join(model_dir, 'cluster_encoder.joblib'))
+    if scaler:
+        joblib.dump(scaler, os.path.join(model_dir, 'scaler.joblib'))
+    logger.info(f"Model and preprocessors saved to {model_dir}")
 
-    # Save model parameters (input_size, output_size, etc.)
-    with open(model_params_file, 'w') as f:
-        json.dump(model_params, f)
-        
-    print(f"Model, encoders, and params saved to directory: {model_dir}")
+# --- Model Loading ---
+def load_model_components(model_path=PRIMARY_MODEL_PATH):
+    # Resolve path: if plain filename, use DEFAULT_MODEL_DIR. Otherwise, use as is.
+    if os.path.dirname(model_path) == "" and DEFAULT_MODEL_DIR:
+        model_path = os.path.join(DEFAULT_MODEL_DIR, model_path)
 
-def load_model(
-    model_path_base: str = "models/predictive_model" # Base path, e.g., "models/user_1_model" (no .pth)
-                                                      # Or full path to .pth file, then derive dir
-) -> Tuple[Optional[PredictiveModel], Optional[optim.Optimizer], Optional[Dict[str, LabelEncoder]], Optional[StandardScaler], Optional[Dict[str, Any]]]:
-    
-    if model_path_base.endswith(".pth"):
-        actual_model_path = model_path_base
-        model_dir = os.path.dirname(model_path_base)
-    else: # Assume it's a base name and default .pth is used
-        model_dir = os.path.dirname(model_path_base) if os.path.dirname(model_path_base) else DEFAULT_MODEL_DIR
-        actual_model_path = os.path.join(model_dir, os.path.basename(model_path_base) + ".pth")
-        if not os.path.exists(actual_model_path) and not model_path_base.startswith(DEFAULT_MODEL_DIR):
-             # Try with default dir if path was just a name like "predictive_model"
-            actual_model_path = os.path.join(DEFAULT_MODEL_DIR, os.path.basename(model_path_base) + ".pth")
-
-
-    encoder_file = ENCODER_FILE_PATH_TEMPLATE.format(model_dir=model_dir)
-    model_params_file = MODEL_PARAMS_FILE_PATH_TEMPLATE.format(model_dir=model_dir)
-
-    if not os.path.exists(actual_model_path) or not os.path.exists(encoder_file) or not os.path.exists(model_params_file):
-        print(f"Error: Model artifacts not found in directory {model_dir}. Searched for {actual_model_path}, {encoder_file}, {model_params_file}")
+    if not os.path.exists(model_path):
+        logger.error(f"Model file not found at {model_path}")
+        return None, None, None, None, None
+    model_dir = os.path.dirname(model_path)
+    try:
+        state = torch.load(model_path) 
+        model_params = state['model_params']
+        loaded_model = PredictiveModel( 
+            input_dim=model_params['input_dim'], hidden_dim=model_params['hidden_dim'],
+            output_dim=model_params['output_dim'], num_layers=model_params['num_layers'],
+            dropout_prob=model_params.get('dropout_prob', 0.2)
+        )
+        loaded_model.load_state_dict(state['model_state_dict'])
+        optimizer = optim.Adam(loaded_model.parameters()) 
+        optimizer.load_state_dict(state['optimizer_state_dict'])
+        activity_encoder = joblib.load(os.path.join(model_dir, 'activity_encoder.joblib')) if os.path.exists(os.path.join(model_dir, 'activity_encoder.joblib')) else None
+        user_encoder = joblib.load(os.path.join(model_dir, 'user_encoder.joblib')) if os.path.exists(os.path.join(model_dir, 'user_encoder.joblib')) else None
+        cluster_encoder = joblib.load(os.path.join(model_dir, 'cluster_encoder.joblib')) if os.path.exists(os.path.join(model_dir, 'cluster_encoder.joblib')) else None
+        scaler = joblib.load(os.path.join(model_dir, 'scaler.joblib')) if os.path.exists(os.path.join(model_dir, 'scaler.joblib')) else None
+        encoders = {'activity_encoder': activity_encoder, 'user_encoder': user_encoder, 'cluster_encoder': cluster_encoder}
+        logger.info(f"Model and preprocessors loaded from {model_dir}")
+        return loaded_model, optimizer, encoders, scaler, model_params
+    except Exception as e:
+        logger.error(f"Error loading model from {model_path}: {e}")
         return None, None, None, None, None
 
-    # Load model parameters first
-    with open(model_params_file, 'r') as f:
-        model_params = json.load(f)
+# --- Prediction/Inference ---
+_cached_model_assets = None
 
-    # Instantiate model and optimizer
-    model = PredictiveModel(
-        input_size=model_params['input_size'],
-        hidden_size=model_params['hidden_size'],
-        num_layers=model_params['num_layers'],
-        output_size=model_params['output_size']
+def get_loaded_model_assets(model_path=PRIMARY_MODEL_PATH):
+    global _cached_model_assets
+    
+    # Determine the effective path (resolving via DEFAULT_MODEL_DIR if path is a plain filename)
+    effective_model_path = model_path
+    if os.path.dirname(effective_model_path) == "" and DEFAULT_MODEL_DIR:
+        effective_model_path = os.path.join(DEFAULT_MODEL_DIR, effective_model_path)
+
+    # Cache validation: if model path changed or cache empty
+    if _cached_model_assets is None or _cached_model_assets.get("model_path") != effective_model_path:
+        logger.info(f"Loading model assets from: {effective_model_path}")
+        loaded_model, _, loaded_encoders, loaded_scaler, model_params = load_model_components(effective_model_path) 
+        if loaded_model and loaded_encoders and loaded_scaler and model_params: # Ensure model_params is also checked
+            loaded_model.eval() 
+            _cached_model_assets = {
+                "model": loaded_model, "encoders": loaded_encoders, "scaler": loaded_scaler,
+                "sequence_length": model_params.get('sequence_length', 10), # Correctly from model_params
+                "model_path": effective_model_path # Store resolved path for cache validation
+            }
+        else:
+            logger.error(f"Failed to load model assets from {effective_model_path}. Predictions cannot be made.")
+            _cached_model_assets = None # Ensure cache is cleared on failure
+            return None # Explicitly return None on failure
+    return _cached_model_assets
+
+def predict_next_action(user_id, current_sequence_df, model_path=PRIMARY_MODEL_PATH):
+    model_assets = get_loaded_model_assets(model_path)
+    if not model_assets:
+        return None, None
+    model = model_assets["model"]
+    encoders = model_assets["encoders"]
+    scaler = model_assets["scaler"]
+    sequence_length = model_assets["sequence_length"]
+    processed_sequence_df = current_sequence_df.copy()
+    if 'activity_encoder' in encoders and encoders['activity_encoder']:
+        processed_sequence_df['activity_type_encoded'] = encoders['activity_encoder'].transform(processed_sequence_df['activity_type'])
+    else:
+        logger.error("Activity encoder not found or not fitted for prediction.")
+        return None, None
+    processed_sequence_df['hour_of_day'] = pd.to_datetime(processed_sequence_df['timestamp']).dt.hour
+    processed_sequence_df['day_of_week'] = pd.to_datetime(processed_sequence_df['timestamp']).dt.dayofweek
+    features_to_scale = ['hour_of_day'] 
+    if scaler:
+        processed_sequence_df[features_to_scale] = scaler.transform(processed_sequence_df[features_to_scale])
+    else:
+        logger.error("Scaler not found or not fitted for prediction.")
+        return None, None
+    sequence_features = processed_sequence_df[['activity_type_encoded', 'hour_of_day']].values
+    if len(sequence_features) < sequence_length:
+        logger.warning(f"Input sequence for user {user_id} is shorter ({len(sequence_features)}) than required ({sequence_length}).")
+        return None, None 
+    sequence_to_predict = sequence_features[-sequence_length:]
+    sequence_tensor = torch.tensor([sequence_to_predict], dtype=torch.float32).to(next(model.parameters()).device)
+    with torch.no_grad():
+        output = model(sequence_tensor)
+        probabilities = torch.softmax(output, dim=1)
+        predicted_label = torch.argmax(probabilities, dim=1).item()
+    original_prediction = predicted_label
+    if encoders.get('cluster_encoder') and encoders['cluster_encoder'] is not None:
+        try:
+            original_prediction = encoders['cluster_encoder'].inverse_transform([predicted_label])[0]
+        except Exception as e:
+            logger.error(f"Error inverse transforming prediction: {e}. Predicted label was {predicted_label}")
+    return original_prediction, probabilities
+
+# --- Example Usage (Illustrative) ---
+if __name__ == '__main__':
+    num_samples = 200
+    data = {
+        'user_id': np.random.choice(['user1', 'user2', 'user3'], num_samples),
+        'timestamp': pd.to_datetime(np.random.randint(1609459200, 1640995200, num_samples), unit='s'),
+        'activity_type': np.random.choice(['login', 'logout', 'view_page', 'edit_document', 'send_email'], num_samples),
+        'description': ['sample description'] * num_samples,
+        'cluster_label': np.random.randint(0, 5, num_samples) 
+    }
+    df = pd.DataFrame(data)
+
+    logger.info("Starting dummy training process using PRIMARY_MODEL_PATH...")
+    # Example training, saving to the PRIMARY_MODEL_PATH
+    trained_model, _ = train_predictive_model(
+        df, sequence_length=5, hidden_dim=64, num_layers=2, epochs=5, 
+        batch_size=16, learning_rate=0.005, model_path=PRIMARY_MODEL_PATH # Explicitly using PRIMARY_MODEL_PATH
     )
-    optimizer = optim.Adam(model.parameters()) # LR is not saved in state_dict, set again if needed
 
-    # Load model and optimizer state
-    checkpoint = torch.load(actual_model_path)
-    model.load_state_dict(checkpoint['model_state_dict'])
-    if 'optimizer_state_dict' in checkpoint: # Make it optional if optimizer state not always needed
-        optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
-    
-    # Load encoders and scaler
-    with open(encoder_file, 'r') as f:
-        encoder_scaler_data = json.load(f)
-    
-    loaded_encoders = {}
-    for key, classes_list in encoder_scaler_data['encoders'].items():
-        le = LabelEncoder()
-        le.classes_ = np.array(classes_list)
-        loaded_encoders[key] = le
+    if trained_model:
+        logger.info(f"Dummy training finished. Model saved to {PRIMARY_MODEL_PATH}")
+        user_to_predict = 'user1'
+        user_data_for_prediction = df[df['user_id'] == user_to_predict].tail(10)
         
-    loaded_scaler = StandardScaler()
-    scaler_params = encoder_scaler_data['scaler']
-    loaded_scaler.mean_ = np.array(scaler_params['mean_']) if scaler_params['mean_'] is not None else None
-    loaded_scaler.scale_ = np.array(scaler_params['scale_']) if scaler_params['scale_'] is not None else None
-    
-    print(f"Model, encoders, and params loaded from directory: {model_dir}")
-    return model, optimizer, loaded_encoders, loaded_scaler, model_params
+        if len(user_data_for_prediction) < 5: # Check against known training sequence length
+             logger.warning(f"Not enough data for user {user_to_predict} to form a sequence of length 5.")
+        else:
+            logger.info(f"Making prediction for user: {user_to_predict} using model from: {PRIMARY_MODEL_PATH}")
+            # Prediction will use PRIMARY_MODEL_PATH by default from predict_next_action
+            predicted_action_label, action_probabilities = predict_next_action(
+                user_id=user_to_predict,
+                current_sequence_df=user_data_for_prediction
+            )
+            if predicted_action_label is not None:
+                logger.info(f"Predicted next action for {user_to_predict}: {predicted_action_label}")
+                if action_probabilities is not None:
+                     logger.info(f"Probabilities: {action_probabilities.numpy()}")
+            else:
+                logger.warning(f"Prediction failed for user {user_to_predict}.")
+    else:
+        logger.error(f"Dummy training failed or did not produce a model for {PRIMARY_MODEL_PATH}.")
+
+    logger.info("\nStarting dummy training process using DEFAULT_MODEL_DIR for a custom model name...")
+    example_model_filename_only = "example_custom_model.pth"
+    trained_model_custom, _ = train_predictive_model(
+        df, sequence_length=7, hidden_dim=32, num_layers=1, epochs=3,
+        batch_size=16, learning_rate=0.01, model_path=example_model_filename_only # Pass filename only
+    )
+    if trained_model_custom:
+        expected_custom_path = os.path.join(DEFAULT_MODEL_DIR, example_model_filename_only)
+        logger.info(f"Dummy training finished. Model saved to {expected_custom_path}")
+        user_to_predict_custom = 'user2' # Changed variable name to avoid conflict
+        user_data_for_prediction_custom = df[df['user_id'] == user_to_predict_custom].tail(15)
+
+        if len(user_data_for_prediction_custom) < 7: # Check against known training sequence length
+            logger.warning(f"Not enough data for user {user_to_predict_custom} to form a sequence of length 7.")
+        else:
+            logger.info(f"Making prediction for user: {user_to_predict_custom} using model: {example_model_filename_only}")
+            predicted_action_label_custom, _ = predict_next_action(
+                user_id=user_to_predict_custom,
+                current_sequence_df=user_data_for_prediction_custom,
+                model_path=example_model_filename_only # Pass filename only, will be resolved by get_loaded_model_assets
+            )
+            if predicted_action_label_custom is not None:
+                logger.info(f"Predicted next action for {user_to_predict_custom} (custom model): {predicted_action_label_custom}")
+            else:
+                logger.warning(f"Prediction failed for user {user_to_predict_custom} (custom model).")
+    else:
+        logger.error(f"Dummy training for custom model {example_model_filename_only} failed.")
