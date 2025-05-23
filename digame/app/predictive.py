@@ -21,6 +21,10 @@ os.makedirs(DEFAULT_MODEL_DIR, exist_ok=True)
 # Default path for the primary model, used by core functions.
 PRIMARY_MODEL_PATH = "models/predictive_model.pth"
 
+# Define constants for feature columns
+NUMERICAL_FEATURES = ["hour_of_day", "day_of_week", "is_context_switch_numeric"]
+CATEGORICAL_FEATURES = ["activity_type", "app_category", "project_context", "website_category"]
+
 # --- Model Definition ---
 class PredictiveModel(nn.Module):
     def __init__(self, input_dim, hidden_dim, output_dim, num_layers=1, dropout_prob=0.2):
@@ -260,33 +264,84 @@ def predict_next_action(user_id, current_sequence_df, model_path=PRIMARY_MODEL_P
     scaler = model_assets["scaler"]
     sequence_length = model_assets["sequence_length"]
     processed_sequence_df = current_sequence_df.copy()
-    if 'activity_encoder' in encoders and encoders['activity_encoder']:
-        processed_sequence_df['activity_type_encoded'] = encoders['activity_encoder'].transform(processed_sequence_df['activity_type'])
+    if 'activity_encoder' in encoders and encoders['activity_encoder'] is not None:
+        # Check if the encoder is a LabelEncoder or a dictionary
+        if hasattr(encoders['activity_encoder'], 'transform'):
+            processed_sequence_df['activity_type_encoded'] = encoders['activity_encoder'].transform(processed_sequence_df['activity_type'])
+        elif isinstance(encoders['activity_encoder'], dict):
+            # If it's a dictionary mapping, use it directly
+            processed_sequence_df['activity_type_encoded'] = processed_sequence_df['activity_type'].map(encoders['activity_encoder'])
+        else:
+            # Fallback to string representation
+            logger.warning("Activity encoder is not a LabelEncoder or dictionary. Using string representation.")
+            processed_sequence_df['activity_type_encoded'] = processed_sequence_df['activity_type'].astype(str)
     else:
         logger.error("Activity encoder not found or not fitted for prediction.")
         return None, None
     processed_sequence_df['hour_of_day'] = pd.to_datetime(processed_sequence_df['timestamp']).dt.hour
     processed_sequence_df['day_of_week'] = pd.to_datetime(processed_sequence_df['timestamp']).dt.dayofweek
     features_to_scale = ['hour_of_day']
-    if scaler:
-        processed_sequence_df[features_to_scale] = scaler.transform(processed_sequence_df[features_to_scale])
+    if scaler is not None:
+        # Check if the scaler is a StandardScaler or a dictionary
+        if hasattr(scaler, 'transform'):
+            processed_sequence_df[features_to_scale] = scaler.transform(processed_sequence_df[features_to_scale])
+        elif isinstance(scaler, dict):
+            # If it's a dictionary with scaling parameters
+            for feature in features_to_scale:
+                if feature in scaler:
+                    mean = scaler[feature].get('mean', 0)
+                    scale = scaler[feature].get('scale', 1)
+                    processed_sequence_df[feature] = (processed_sequence_df[feature] - mean) / scale
+        else:
+            logger.warning("Scaler is not a StandardScaler or dictionary. Using raw values.")
     else:
         logger.error("Scaler not found or not fitted for prediction.")
         return None, None
     sequence_features = processed_sequence_df[['activity_type_encoded', 'hour_of_day']].values
-    if len(sequence_features) < sequence_length:
+    # Ensure sequence_length is treated as an integer
+    try:
+        seq_len = int(sequence_length) if isinstance(sequence_length, (str, int, float)) else 5
+        if len(sequence_features) < seq_len:
+            logger.warning(f"Input sequence for user {user_id} is shorter ({len(sequence_features)}) than required ({sequence_length}).")
+            return None, None
+    except Exception as e:
+        logger.error(f"Error processing sequence length: {e}")
+        return None, None
         logger.warning(f"Input sequence for user {user_id} is shorter ({len(sequence_features)}) than required ({sequence_length}).")
         return None, None
     sequence_to_predict = sequence_features[-sequence_length:]
-    sequence_tensor = torch.tensor([sequence_to_predict], dtype=torch.float32).to(next(model.parameters()).device)
+    # Ensure model is a PyTorch model with parameters
+    if not isinstance(model, nn.Module):
+        logger.error(f"Model is not a PyTorch model: {type(model)}")
+        return None, None
+        
+    try:
+        device = next(model.parameters()).device
+        sequence_tensor = torch.tensor([sequence_to_predict], dtype=torch.float32).to(device)
+    except (StopIteration, AttributeError) as e:
+        logger.error(f"Error accessing model parameters: {e}")
+        # Fallback to CPU if we can't get the device
+        sequence_tensor = torch.tensor([sequence_to_predict], dtype=torch.float32)
     with torch.no_grad():
-        output = model(sequence_tensor)
-        probabilities = torch.softmax(output, dim=1)
-        predicted_label = torch.argmax(probabilities, dim=1).item()
-    original_prediction = predicted_label
-    if encoders.get('cluster_encoder') and encoders['cluster_encoder'] is not None:
         try:
-            original_prediction = encoders['cluster_encoder'].inverse_transform([predicted_label])[0]
+            output = model(sequence_tensor)
+            probabilities = torch.softmax(output, dim=1)
+            predicted_label = torch.argmax(probabilities, dim=1).item()
+        except Exception as e:
+            logger.error(f"Error during model prediction: {e}")
+            return None, None
+    original_prediction = predicted_label
+    # Handle different types of encoders for inverse transformation
+    if isinstance(encoders, dict) and 'cluster_encoder' in encoders:
+        try:
+            cluster_encoder = encoders['cluster_encoder']
+            if cluster_encoder is not None:
+                if hasattr(cluster_encoder, 'inverse_transform'):
+                    original_prediction = cluster_encoder.inverse_transform([predicted_label])[0]
+                elif isinstance(cluster_encoder, dict) and str(predicted_label) in cluster_encoder:
+                    original_prediction = cluster_encoder[str(predicted_label)]
+                else:
+                    logger.warning(f"Cannot inverse transform prediction with available encoder. Using raw label: {predicted_label}")
         except Exception as e:
             logger.error(f"Error inverse transforming prediction: {e}. Predicted label was {predicted_label}")
     return original_prediction, probabilities

@@ -6,6 +6,7 @@ from datetime import datetime
 from sqlalchemy.orm import Session
 
 from ..models.user import User as SQLAlchemyUser
+from ..models.behavior_model import BehavioralModel, BehavioralPattern
 from ..auth.auth_dependencies import PermissionChecker, get_current_active_user
 from ..db import get_db
 from ..services.pattern_recognition_service import (

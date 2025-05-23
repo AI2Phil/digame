@@ -6,8 +6,8 @@ from typing import Optional, Dict, Any, List, Tuple
 from sqlalchemy.orm import Session, joinedload, selectinload
 from sqlalchemy import desc
 
-from digame.app.models.activity import Activity
-from digame.app.models.activity_features import ActivityEnrichedFeature
+from ..models.activity import Activity
+from ..models.activity_features import ActivityEnrichedFeature
 
 # --- Mappings (can be moved to a config file or database later) ---
 

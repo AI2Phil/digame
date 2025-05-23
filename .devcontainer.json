@@ -1,0 +1,17 @@
+{
+    "name": "Digame Development",
+    "dockerComposeFile": ["docker-compose.yml"],
+    "service": "backend",
+    "workspaceFolder": "/app",
+    "extensions": [
+        "ms-python.python",
+        "ms-azuretools.vscode-docker"
+    ],
+    "settings": {
+        "python.defaultInterpreterPath": "/usr/local/bin/python",
+        "python.linting.enabled": true,
+        "python.linting.pylintEnabled": true,
+        "python.formatting.provider": "black",
+        "editor.formatOnSave": true
+    }
+}

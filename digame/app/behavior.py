@@ -7,8 +7,14 @@ from sqlalchemy.orm import Session, joinedload
 from typing import List, Tuple, Dict, Any, Optional
 import numpy as np # For NaN handling if needed
 
-from digame.app.models.activity import Activity
-from digame.app.models.activity_features import ActivityEnrichedFeature # Import the new model
+# Use relative imports to avoid circular dependencies
+from .models.activity import Activity
+from .models.activity_features import ActivityEnrichedFeature # Import the new model
+
+# Configure logging
+import logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # --- Data Preprocessing with Enriched Features ---
 def preprocess_activity_logs(

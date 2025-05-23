@@ -1,0 +1,71 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "digame"
+version = "0.1.0"
+description = "Digame Platform"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {file = "LICENSE"}
+authors = [
+    {name = "Digame Team", email = "info@example.com"}
+]
+dependencies = [
+    "fastapi==0.95.2",
+    "uvicorn[standard]==0.23.0",
+    "pydantic==1.10.8",
+    "SQLAlchemy==2.0.18",
+    "asyncpg==0.27.0",
+    "python-dotenv==1.0.0",
+    "torch==2.7.0",
+    "scikit-learn==1.3.0",
+    "pandas==2.0.3",
+    "numpy==1.25.0",
+    "joblib==1.3.2",
+    "alembic==1.11.1",
+    "python-jose[cryptography]==3.3.0",
+    "python-multipart==0.0.6",
+    "passlib[bcrypt]==1.7.4",
+    "email-validator==2.0.0",
+    "matplotlib==3.7.1",
+    "seaborn==0.12.2",
+    "plotly==5.14.1",
+    "scipy==1.10.1",
+    "networkx==3.1.0",
+    "pyarrow==12.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "black>=23.0.0",
+    "isort>=5.12.0",
+    "mypy>=1.0.0",
+    "flake8>=6.0.0",
+]
+
+[tool.setuptools]
+packages = ["digame"]
+
+[tool.black]
+line-length = 100
+target-version = ["py38"]
+include = '\.pyi?$'
+
+[tool.isort]
+profile = "black"
+line_length = 100
+
+[tool.mypy]
+python_version = "3.8"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+
+[[tool.mypy.overrides]]
+module = ["torch.*", "pandas.*", "numpy.*", "sklearn.*", "joblib.*", "matplotlib.*", "seaborn.*", "plotly.*", "scipy.*", "networkx.*", "pyarrow.*"]
+ignore_missing_imports = true

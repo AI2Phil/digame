@@ -17,7 +17,21 @@ from ..crud.behavior_model_crud import (
     create_behavioral_pattern,
     get_patterns_for_model
 )
-from .. import behavior as behavior_module
+# Import specific functions from behavior module to avoid circular dependencies
+from ..behavior import (
+    preprocess_activity_logs,
+    cluster_activity_logs
+)
+
+# Define extract_cluster_patterns function locally to avoid circular imports
+def extract_cluster_patterns(raw_df, cluster_labels):
+    """
+    Extract patterns from clusters.
+    This is a simplified version to avoid circular imports.
+    """
+    raw_df_with_clusters = raw_df.copy()
+    raw_df_with_clusters['cluster_label'] = cluster_labels
+    return raw_df_with_clusters
 
 def save_clustering_model(
     db: Session,
@@ -101,10 +115,10 @@ def save_clustering_model(
             activity_distribution = {str(k): v for k, v in activity_counts.items()}
         
         # Calculate context features
-        context_features = None
+        context_features = {}  # Initialize as empty dict instead of None
         context_columns = ['app_category', 'project_context', 'website_category', 'is_context_switch']
         if all(col in cluster_df.columns for col in context_columns):
-            context_features = {}
+            # context_features already initialized as empty dict
             for col in context_columns:
                 if col == 'is_context_switch':
                     # For boolean column, calculate percentage of True values
@@ -158,7 +172,7 @@ def train_and_save_behavior_model(
         - Error message if failed, None otherwise
     """
     # Step 1: Preprocess data
-    raw_df, processed_df = behavior_module.preprocess_activity_logs(
+    raw_df, processed_df = preprocess_activity_logs(
         db,
         user_id=user_id,
         include_enriched_features=include_enriched_features
@@ -168,7 +182,7 @@ def train_and_save_behavior_model(
         return None, "failed", "Preprocessing failed or no data available for clustering."
     
     # Step 2: Cluster the data
-    cluster_labels, silhouette = behavior_module.cluster_activity_logs(
+    cluster_labels, silhouette = cluster_activity_logs(
         processed_df,
         n_clusters=n_clusters,
         algorithm=algorithm,

@@ -4,16 +4,21 @@ from typing import List, Any, Optional, Dict
 
 from sqlalchemy.orm import Session
 
-# Import services and models
-from digame.app import behavior as behavior_module # To call preprocess_activity_logs, cluster_activity_logs
-from digame.app.services.behavior_service import train_and_save_behavior_model, get_behavior_patterns_for_user
-from digame.app.models.activity import Activity as SQLAlchemyActivity # For type hinting if needed
-from digame.app.models.user import User as SQLAlchemyUser # For current_user type hint
-from digame.app.models.behavior_model import BehavioralModel # For type hinting
+# Import services and models - avoid circular imports
+# Instead of importing the behavior module directly, import specific functions from behavior_service
+from ..services.behavior_service import (
+    train_and_save_behavior_model,
+    get_behavior_patterns_for_user,
+    preprocess_activity_logs,
+    cluster_activity_logs
+)
+from ..models.activity import Activity as SQLAlchemyActivity # For type hinting if needed
+from ..models.user import User as SQLAlchemyUser # For current_user type hint
+from ..models.behavior_model import BehavioralModel # For type hinting
 
 # Import PermissionChecker and dependencies
 from ..auth.auth_dependencies import PermissionChecker, get_current_active_user
-from digame.app.db import get_db # Import get_db directly from the db module
+from ..db import get_db # Import get_db directly from the db module
 
 router = APIRouter(
     tags=["Behavior Recognition"],
@@ -81,7 +86,7 @@ async def train_behavior_model_for_user(
     user_id = training_request.user_id
     
     # Train and save the behavior model using the persistent storage service
-    db_model, status, error_message = train_and_save_behavior_model(
+    db_model, result_status, error_message = train_and_save_behavior_model(
         db=db,
         user_id=user_id,
         n_clusters=training_request.n_clusters,
@@ -91,20 +96,25 @@ async def train_behavior_model_for_user(
         name=f"Behavioral Model for User {user_id}"
     )
     
-    if status == "failed":
+    if result_status == "failed":
         return BehaviorTrainingResponse(
             user_id=user_id,
             status="failed",
             message=error_message
         )
     
+    # Handle the case where db_model might be None
+    clusters_found = getattr(db_model, 'num_clusters', None)
+    silhouette = getattr(db_model, 'silhouette_score', None)
+    algorithm_used = getattr(db_model, 'algorithm', training_request.algorithm)
+    
     return BehaviorTrainingResponse(
         user_id=user_id,
         status="success",
         message="Behavior model training completed and saved to database.",
-        clusters_found=db_model.num_clusters,
-        silhouette_score=db_model.silhouette_score,
-        algorithm=db_model.algorithm,
+        clusters_found=clusters_found,
+        silhouette_score=silhouette,
+        algorithm=algorithm_used,
         auto_optimized=training_request.auto_optimize
     )
 
@@ -122,7 +132,7 @@ async def get_user_behavior_patterns(
     """
     if current_user.id != user_id:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
+            status_code=403,  # Use integer directly to avoid conflict with status variable
             detail="Not authorized to view behavior patterns for this user."
         )
         
@@ -131,7 +141,7 @@ async def get_user_behavior_patterns(
     
     if not patterns_data:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
+            status_code=404,  # Use integer directly to avoid conflict with status variable
             detail="No behavior patterns found. Please train the model first using POST /behavior/train."
         )
 

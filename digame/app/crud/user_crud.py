@@ -2,8 +2,8 @@ from sqlalchemy.orm import Session
 from typing import List, Optional
 from passlib.context import CryptContext
 
-from digame.app.models.user import User
-from digame.app.schemas.user_schemas import UserCreate, UserUpdate
+from ..models.user import User
+from ..schemas.user_schemas import UserCreate, UserUpdate
 
 # Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")

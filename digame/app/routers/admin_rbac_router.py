@@ -2,12 +2,12 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
 
-from digame.app.crud import rbac_crud
-from digame.app.schemas import rbac_schemas
-from digame.app.models import user as user_model_sqla # SQLAlchemy model for User
-from digame.app.db import get_db # Import get_db from the new db module
+from ..crud import rbac_crud
+from ..schemas import rbac_schemas
+from ..models import user as user_model_sqla # SQLAlchemy model for User
+from ..db import get_db # Import get_db from the new db module
 # For now, we won't have current_user dependency as we are not protecting routes yet.
-from digame.app.auth.auth_dependencies import get_current_active_admin_user # Import the protection dependency
+from ..auth.auth_dependencies import get_current_active_admin_user # Import the protection dependency
 
 # --- Database Dependency ---
 # We now import get_db from digame.app.db to avoid circular imports

@@ -16,6 +16,13 @@ from .process_notes_crud import (
     get_process_notes_by_user_id,
     update_process_note_feedback_tags # Added new function
 )
+from .job_crud import (
+    create_job,
+    get_job_by_id,
+    get_jobs_for_user,
+    update_job_status,
+    delete_job
+)
 
 __all__ = [
     # User CRUD
@@ -32,4 +39,11 @@ __all__ = [
     "get_process_note_by_id",
     "get_process_notes_by_user_id",
     "update_process_note_feedback_tags", # Added new function
+    
+    # Job CRUD
+    "create_job",
+    "get_job_by_id",
+    "get_jobs_for_user",
+    "update_job_status",
+    "delete_job",
 ]

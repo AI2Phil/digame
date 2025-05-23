@@ -1,25 +1,32 @@
-from fastapi import APIRouter, HTTPException, Body, Depends, Query
+from fastapi import APIRouter, HTTPException, Body, Depends, Query, status
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 import torch
 import os
 import numpy as np # For predict endpoint processing
+import pandas as pd # For DataFrame operations
 from typing import List, Dict, Any, Optional
 
-# Updated imports from predictive.py
-from ..predictive import (
-    PredictiveModel, 
-    train_predictive_model as service_train_model, # Renamed to avoid confusion
-    load_model as service_load_model, # Renamed
-    prepare_predictive_data # For predict endpoint
-)
+# Import specific functions to avoid circular imports
+from ..predictive import train_predictive_model as service_train_model
+from ..predictive import load_model as service_load_model
+from ..predictive import prepare_predictive_data
+
+# Define model paths directly to avoid circular imports
+MODEL_PATH_BASE = "models/predictive_model"
 from ..auth.auth_dependencies import PermissionChecker, get_current_active_user
 from ..models.user import User as SQLAlchemyUser # For current_user type hint
 from ..db import get_db # Import get_db from the shared db module
+from ..models.activity import Activity
+from ..models.activity_features import ActivityEnrichedFeature
 
 router = APIRouter(
     tags=["Predictive Modeling"]
 )
+
+# Define constants for feature columns
+NUMERICAL_FEATURES = ["hour_of_day", "day_of_week", "is_context_switch_numeric"]
+CATEGORICAL_FEATURES = ["activity_type", "app_category", "project_context", "website_category"]
 
 # --- Schemas ---
 class TrainRequest(BaseModel):
@@ -86,15 +93,30 @@ async def train_model_endpoint(
     # For consistency, let's assume `model_path_base` is the name without extension, and .pth is standard.
     
     try:
+        # Create a DataFrame for training
+        activities = db.query(Activity).filter(Activity.user_id == request_body.user_id).all()
+        if not activities:
+            raise HTTPException(status_code=404, detail=f"No activities found for user {request_body.user_id}")
+            
+        # Convert activities to DataFrame
+        activities_data = []
+        for activity in activities:
+            activities_data.append({
+                'user_id': activity.user_id,
+                'timestamp': activity.timestamp,
+                'activity_type': activity.activity_type,
+            })
+        
+        df_train = pd.DataFrame(activities_data)
+        
         trained_model = service_train_model(
-            db=db,
-            user_id=request_body.user_id,
-            model_path=model_path_base + ".pth", # Pass the full .pth path for clarity
-            num_epochs=request_body.num_epochs,
-            learning_rate=request_body.learning_rate,
+            df_train=df_train,
             sequence_length=request_body.sequence_length,
-            hidden_size=request_body.hidden_size,
-            num_layers=request_body.num_layers
+            hidden_dim=request_body.hidden_size,
+            num_layers=request_body.num_layers,
+            epochs=request_body.num_epochs,
+            learning_rate=request_body.learning_rate,
+            model_path=model_path_base + ".pth" # Pass the full .pth path for clarity
         )
         if trained_model is None:
             raise HTTPException(status_code=500, detail="Model training failed or not enough data.")
@@ -165,7 +187,7 @@ async def predict_endpoint(
 
     if len(request_body.recent_activity_types) != sequence_length:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
+            status_code=400,
             detail=f"Input sequence length must be {sequence_length}."
         )
 
@@ -230,22 +252,33 @@ async def predict_endpoint(
     # 3. Make prediction
     model.eval() # Set model to evaluation mode
     with torch.no_grad():
-        output_logits = model(sequence_tensor)
-        # output_probs = torch.softmax(output_logits, dim=1) # If confidence is needed
-        # confidence, predicted_idx = torch.max(output_probs, dim=1)
-        predicted_idx = torch.argmax(output_logits, dim=1).item()
+        try:
+            output_logits = model(sequence_tensor)
+            # output_probs = torch.softmax(output_logits, dim=1) # If confidence is needed
+            # confidence, predicted_idx = torch.max(output_probs, dim=1)
+            predicted_idx = torch.argmax(output_logits, dim=1).item()
+        except Exception as e:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Error during prediction: {str(e)}"
+            )
 
     # 4. Decode prediction
     # The `activity_type` encoder is needed here.
-    activity_type_encoder = encoders.get('activity_type')
+    activity_type_encoder = encoders.get('activity_encoder')  # Changed from 'activity_type' to match predictive.py
     if not activity_type_encoder:
         raise HTTPException(status_code=500, detail="Activity type encoder not found with the model.")
 
     predicted_activity_type_str = "unknown_activity_type"
-    if predicted_idx < len(activity_type_encoder.classes_):
-        predicted_activity_type_str = activity_type_encoder.classes_[predicted_idx]
-    else: # Handle case where predicted_idx might be for "unknown" if that was added
-        print(f"Warning: Predicted index {predicted_idx} is out of bounds for known activity types.")
+    try:
+        if hasattr(activity_type_encoder, 'classes_') and predicted_idx < len(activity_type_encoder.classes_):
+            predicted_activity_type_str = activity_type_encoder.classes_[predicted_idx]
+        elif isinstance(activity_type_encoder, dict) and str(predicted_idx) in activity_type_encoder:
+            predicted_activity_type_str = activity_type_encoder[str(predicted_idx)]
+        else:
+            print(f"Warning: Predicted index {predicted_idx} is out of bounds for known activity types.")
+    except Exception as e:
+        print(f"Error decoding prediction: {str(e)}")
 
     return PredictResponse(
         predicted_next_activity_type=predicted_activity_type_str

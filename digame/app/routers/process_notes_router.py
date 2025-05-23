@@ -2,14 +2,14 @@ from fastapi import APIRouter, Depends, HTTPException, status, Path, Body
 from sqlalchemy.orm import Session
 from typing import List
 
-from digame.app.schemas import process_note_schemas
-from digame.app.crud import process_notes_crud
-from digame.app.services import process_note_service
-from digame.app.auth.auth_dependencies import PermissionChecker, get_current_active_user
-from digame.app.models.user import User as SQLAlchemyUser # For current_user type hint
+from ..schemas import process_note_schemas
+from ..crud import process_notes_crud
+from ..services import process_note_service
+from ..auth.auth_dependencies import PermissionChecker, get_current_active_user
+from ..models.user import User as SQLAlchemyUser # For current_user type hint
 
 # Import get_db directly from the db module
-from digame.app.db import get_db
+from ..db import get_db
 
 router = APIRouter(
     tags=["Process Notes"],
