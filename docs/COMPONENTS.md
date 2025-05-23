@@ -288,5 +288,303 @@ function UserDialog({ open, onClose }) {
 
 ---
 
+## 🎯 **Component Usage Guide by Page**
+
+This section provides a comprehensive guide for optimal component usage across all Digame platform pages, ensuring complete utilization of the UI library.
+
+### 🏠 **HomePage** (`/digame/frontend/src/pages/HomePage.jsx`)
+**Current Status**: ✅ Implemented
+
+**Basic Usage Components**:
+- `Button` - Hero CTA buttons, navigation actions
+- `Card` - Feature highlight cards, testimonial cards
+- `Badge` - Feature labels, status indicators
+- `Separator` - Section dividers
+- `Avatar` - Team member photos, user testimonials
+
+**Advanced Composition**:
+- `NavigationMenu` + `Menubar` - Main site navigation
+- `Carousel` - Feature showcase, testimonial rotation
+- `HoverCard` - Feature details on hover
+- `Accordion` - FAQ section, feature details
+
+### 📊 **DashboardPage** (`/digame/frontend/src/pages/DashboardPage.jsx`)
+**Current Status**: ✅ Implemented
+
+**Basic Usage Components**:
+- `Card` - Metric cards, widget containers
+- `Progress` - Goal completion, loading states
+- `Badge` - Status indicators, notification counts
+- `Button` - Action buttons, filters
+- `Skeleton` - Loading placeholders
+
+**Advanced Composition**:
+- `Chart` + `Card` - Analytics widgets
+- `Tabs` + `Table` - Data organization
+- `Sheet` + `Form` - Quick actions panel
+- `Popover` + `Calendar` - Date range selection
+- `Toaster` - Success/error notifications
+
+### 📈 **AnalyticsDashboardPage** (`/digame/frontend/src/pages/AnalyticsDashboardPage.jsx`)
+**Current Status**: ✅ Implemented
+
+**Basic Usage Components**:
+- `Chart` - All visualization types
+- `Card` - Chart containers, KPI cards
+- `Table` - Data tables with sorting
+- `Progress` - Performance indicators
+- `Badge` - Metric status, alerts
+
+**Advanced Composition**:
+- `Resizable` + `Chart` - Adjustable chart layouts
+- `Tabs` + `ScrollArea` - Multi-dataset views
+- `DropdownMenu` + `Checkbox` - Filter controls
+- `Dialog` + `Form` - Report configuration
+- `ContextMenu` + `Table` - Data actions
+
+### 👤 **UserProfilePage** (`/digame/frontend/src/pages/UserProfilePage.jsx`)
+**Current Status**: ✅ Implemented
+
+**Basic Usage Components**:
+- `Avatar` - Profile photo, user image
+- `Input` - Profile form fields
+- `Button` - Save, edit, cancel actions
+- `Label` - Form field labels
+- `Switch` - Preference toggles
+
+**Advanced Composition**:
+- `Form` + `Tabs` - Multi-section profile
+- `Dialog` + `Input` - Password change
+- `AlertDialog` - Account deletion confirmation
+- `HoverCard` + `Avatar` - Profile preview
+- `Separator` - Section dividers
+
+### 🛠 **AdminDashboardPage** (`/digame/frontend/src/pages/AdminDashboardPage.jsx`)
+**Current Status**: ✅ Implemented
+
+**Basic Usage Components**:
+- `Table` - User management, system logs
+- `Button` - Admin actions, bulk operations
+- `Badge` - User roles, system status
+- `Input` - Search, filters
+- `Select` - Role assignment, bulk actions
+
+**Advanced Composition**:
+- `DataTable` + `Pagination` - Large dataset management
+- `ContextMenu` + `Table` - Row-level actions
+- `Dialog` + `Form` - User creation/editing
+- `AlertDialog` - Destructive action confirmations
+- `Toaster` - Operation feedback
+
+### 🎯 **OnboardingPage** (`/digame/frontend/src/pages/OnboardingPage.jsx`)
+**Current Status**: ✅ Implemented
+
+**Basic Usage Components**:
+- `Button` - Navigation, completion actions
+- `Progress` - Step completion indicator
+- `Input` - Setup form fields
+- `Card` - Step containers
+- `Label` - Field descriptions
+
+**Advanced Composition**:
+- `Stepper` + `Form` - Multi-step setup (🔄 **Pending**: Stepper component)
+- `Collapsible` + `Card` - Optional setup sections
+- `Tooltip` + `Input` - Field help text
+- `Dialog` + `Form` - Additional setup options
+
+### 🧪 **ComponentDemoPage** (`/digame/frontend/src/pages/ComponentDemoPage.jsx`)
+**Current Status**: ✅ Implemented
+
+**Basic Usage Components**:
+- All 47 components for demonstration
+- `Tabs` - Component category organization
+- `Card` - Component showcase containers
+- `Code` - Usage examples (🔄 **Pending**: Code component)
+
+**Advanced Composition**:
+- `ScrollArea` + `Sidebar` - Component navigation
+- `Command` - Component search
+- `Accordion` - Grouped component demos
+
+---
+
+## 📋 **Pending Pages & Component Integration**
+
+### 🔄 **Pages Requiring Implementation**
+
+#### **LoginPage** (🚧 **Pending Implementation**)
+**Planned Components**:
+- `Form` + `Input` - Login credentials
+- `Button` - Submit, forgot password
+- `Alert` - Error messages
+- `Card` - Login container
+- `Separator` - Social login divider
+- `Checkbox` - Remember me option
+
+#### **SettingsPage** (🚧 **Pending Implementation**)
+**Planned Components**:
+- `Tabs` - Settings categories
+- `Switch` - Preference toggles
+- `Select` - Dropdown preferences
+- `Slider` - Numeric preferences
+- `Button` - Save, reset actions
+- `AlertDialog` - Destructive confirmations
+
+#### **ReportsPage** (🚧 **Pending Implementation**)
+**Planned Components**:
+- `Table` + `Pagination` - Report listings
+- `Calendar` - Date range selection
+- `DropdownMenu` - Export options
+- `Progress` - Report generation
+- `Dialog` + `Form` - Custom report builder
+
+#### **NotificationsPage** (🚧 **Pending Implementation**)
+**Planned Components**:
+- `Card` - Notification items
+- `Badge` - Unread indicators
+- `Button` - Mark as read, actions
+- `Separator` - Date grouping
+- `ContextMenu` - Notification actions
+
+#### **HelpPage** (🚧 **Pending Implementation**)
+**Planned Components**:
+- `Accordion` - FAQ sections
+- `Input` - Search help articles
+- `Card` - Help article cards
+- `Breadcrumb` - Help navigation
+- `Command` - Quick help search
+
+#### **TeamPage** (🚧 **Pending Implementation**)
+**Planned Components**:
+- `Avatar` - Team member photos
+- `Card` - Member profile cards
+- `Table` - Team directory
+- `Dialog` + `Form` - Member invitation
+- `HoverCard` - Member details
+
+---
+
+## 🎨 **Component Composition Patterns**
+
+### **Pattern 1: Data Entry Forms**
+```jsx
+<Card>
+  <Form>
+    <Label>Field Name</Label>
+    <Input placeholder="Enter value" />
+    <Button type="submit">Save</Button>
+  </Form>
+</Card>
+```
+**Used in**: UserProfilePage, AdminDashboardPage, OnboardingPage
+
+### **Pattern 2: Data Display Tables**
+```jsx
+<Card>
+  <Table>
+    <TableHeader>...</TableHeader>
+    <TableBody>...</TableBody>
+  </Table>
+  <Pagination />
+</Card>
+```
+**Used in**: AdminDashboardPage, ReportsPage (pending)
+
+### **Pattern 3: Dashboard Widgets**
+```jsx
+<Card>
+  <CardHeader>
+    <Badge variant="success">Status</Badge>
+  </CardHeader>
+  <CardContent>
+    <Chart data={data} />
+    <Progress value={75} />
+  </CardContent>
+</Card>
+```
+**Used in**: DashboardPage, AnalyticsDashboardPage
+
+### **Pattern 4: Navigation Layouts**
+```jsx
+<div className="flex">
+  <Sidebar>
+    <NavigationMenu />
+  </Sidebar>
+  <main>
+    <Breadcrumb />
+    <Tabs>...</Tabs>
+  </main>
+</div>
+```
+**Used in**: All main application pages
+
+### **Pattern 5: Modal Workflows**
+```jsx
+<Dialog>
+  <DialogContent>
+    <DialogHeader>
+      <DialogTitle>Action Title</DialogTitle>
+    </DialogHeader>
+    <Form>...</Form>
+    <DialogFooter>
+      <Button variant="outline">Cancel</Button>
+      <Button>Confirm</Button>
+    </DialogFooter>
+  </DialogContent>
+</Dialog>
+```
+**Used in**: AdminDashboardPage, UserProfilePage, SettingsPage (pending)
+
+---
+
+## 📊 **Component Usage Statistics**
+
+### **Most Frequently Used Components**
+1. `Button` - Used on all 10+ pages
+2. `Card` - Used on all dashboard and content pages
+3. `Input` - Used on all form-containing pages
+4. `Badge` - Used for status indicators across platform
+5. `Table` - Used on all data-heavy pages
+
+### **Specialized Usage Components**
+- `Chart` - Analytics and dashboard pages only
+- `Calendar` - Date selection contexts
+- `Carousel` - Marketing and showcase pages
+- `Command` - Search and quick action contexts
+- `Resizable` - Advanced layout pages
+
+### **Accessibility-Critical Components**
+- `Label` - Required for all form inputs
+- `AlertDialog` - Required for destructive actions
+- `Toast` - Required for user feedback
+- `Progress` - Required for loading states
+- `Skeleton` - Required for loading placeholders
+
+---
+
+## 🚀 **Implementation Roadmap**
+
+### **Phase 1: Complete Pending Pages** (🔄 **In Progress**)
+- [ ] LoginPage implementation
+- [ ] SettingsPage implementation
+- [ ] ReportsPage implementation
+- [ ] NotificationsPage implementation
+- [ ] HelpPage implementation
+- [ ] TeamPage implementation
+
+### **Phase 2: Enhanced Component Integration** (📋 **Planned**)
+- [ ] Add missing Stepper component for OnboardingPage
+- [ ] Add Code component for ComponentDemoPage
+- [ ] Implement advanced Table features (sorting, filtering)
+- [ ] Add DataTable component for complex data scenarios
+
+### **Phase 3: Mobile Optimization** (📋 **Planned**)
+- [ ] Mobile-specific component variants
+- [ ] Touch-optimized interactions
+- [ ] Responsive component behaviors
+- [ ] Mobile navigation patterns
+
+---
+
 *Last Updated: May 23, 2025*
 *Next Review: June 23, 2025*
