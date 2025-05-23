@@ -4,11 +4,11 @@ from typing import Dict, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from digame.app.db import get_db
-from digame.app.auth.auth_dependencies import get_current_active_user
-from digame.app.models.user import User as UserModel # Renamed to avoid confusion with User schema
-from digame.app.schemas import user_setting_schemas as schemas # Alias for clarity
-from digame.app.crud import user_setting_crud as crud # Alias for clarity
+from ..db import get_db
+from ..auth.auth_dependencies import get_current_active_user
+from ..models.user import User as UserModel # Renamed to avoid confusion with User schema
+from ..schemas import user_setting_schemas as schemas # Alias for clarity
+from ..crud import user_setting_crud as crud # Alias for clarity
 
 router = APIRouter(
     prefix="/settings",

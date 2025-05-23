@@ -3,8 +3,8 @@ from typing import Optional, Dict
 
 from sqlalchemy.orm import Session
 
-from digame.app import models # Assuming models.__init__ exports UserSetting
-from digame.app import schemas # Assuming schemas.__init__ exports UserSetting schemas
+from .. import models # Assuming models.__init__ exports UserSetting
+from .. import schemas # Assuming schemas.__init__ exports UserSetting schemas
 
 def get_user_setting(db: Session, user_id: int) -> Optional[models.UserSetting]:
     """
