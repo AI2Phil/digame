@@ -11,23 +11,23 @@ from .process_notes import ProcessNote # Renamed
 class Task(Base):
     __tablename__ = "tasks"
 
-    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    id = Column(Integer(), primary_key=True, index=True, autoincrement=True)
     
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
-    process_note_id = Column(Integer, ForeignKey("process_notes.id"), nullable=True, index=True) # Optional link
+    user_id = Column(Integer(), ForeignKey("users.id"), nullable=False, index=True)
+    process_note_id = Column(Integer(), ForeignKey("process_notes.id"), nullable=True, index=True) # Optional link
 
-    description = Column(Text, nullable=False)
+    description = Column(Text(), nullable=False)
     source_type = Column(String(50), nullable=True) # e.g., 'system_generated', 'user_manual', 'prediction', 'process_note'
     source_identifier = Column(String(255), nullable=True) # e.g., stores process_note.id or a prediction model's internal ID
     
-    priority_score = Column(Float, nullable=True, default=0.5)
+    priority_score = Column(Float(), nullable=True, default=0.5)
     status = Column(String(50), nullable=False, default='suggested') # e.g., 'suggested', 'accepted', 'in_progress', 'completed', 'archived'
     
-    notes = Column(Text, nullable=True)
-    due_date_inferred = Column(DateTime, nullable=True)
+    notes = Column(Text(), nullable=True)
+    due_date_inferred = Column(DateTime(), nullable=True)
     
-    created_at = Column(DateTime, server_default=func.now(), nullable=False)
-    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=False)
+    created_at = Column(DateTime(), server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime(), server_default=func.now(), onupdate=func.now(), nullable=False)
 
     # Relationship to User model
     user = relationship("User", back_populates="tasks")

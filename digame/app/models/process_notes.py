@@ -10,25 +10,25 @@ from .user import User # For establishing relationship
 class ProcessNote(Base):
     __tablename__ = "process_notes"
 
-    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    id = Column(Integer(), primary_key=True, index=True, autoincrement=True)
     
     # Assuming User.id is Integer. If it's String/UUID, this type needs to match.
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    user_id = Column(Integer(), ForeignKey("users.id"), nullable=False, index=True)
     
-    inferred_task_name = Column(String, nullable=True)
-    process_steps_description = Column(Text, nullable=False) # Using Text for longer descriptions or JSON string
+    inferred_task_name = Column(String(), nullable=True)
+    process_steps_description = Column(Text(), nullable=False) # Using Text for longer descriptions or JSON string
     # Alternatively, if the DB supports JSON type natively and it's preferred:
-    # process_steps_description_json = Column(JSON, nullable=False) 
+    # process_steps_description_json = Column(JSON(), nullable=False)
     
-    source_activity_ids = Column(JSON, nullable=True) # Array of integers
+    source_activity_ids = Column(JSON(), nullable=True) # Array of integers
     
-    occurrence_count = Column(Integer, default=1, nullable=False)
+    occurrence_count = Column(Integer(), default=1, nullable=False)
     
-    first_observed_at = Column(DateTime, server_default=func.now(), nullable=False)
-    last_observed_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=False)
+    first_observed_at = Column(DateTime(), server_default=func.now(), nullable=False)
+    last_observed_at = Column(DateTime(), server_default=func.now(), onupdate=func.now(), nullable=False)
     
-    user_feedback = Column(String, nullable=True) # e.g., "accurate", "inaccurate"
-    user_tags = Column(JSON, nullable=True) # Array of strings
+    user_feedback = Column(String(), nullable=True) # e.g., "accurate", "inaccurate"
+    user_tags = Column(JSON(), nullable=True) # Array of strings
 
     # Relationship to User model
     # This allows accessing the User object from a ProcessNote instance

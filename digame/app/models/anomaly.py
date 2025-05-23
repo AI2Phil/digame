@@ -10,18 +10,18 @@ from .user import User # Renamed to avoid potential confusion if UserModel was a
 class DetectedAnomaly(Base):
     __tablename__ = "detected_anomalies"
 
-    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    id = Column(Integer(), primary_key=True, index=True, autoincrement=True)
     
     # Assuming User.id is Integer based on existing User model.
     # If User.id were String/UUID, this Column type and ForeignKey target would change.
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    user_id = Column(Integer(), ForeignKey("users.id"), nullable=False, index=True)
     
-    timestamp = Column(DateTime, server_default=func.now(), nullable=False)
-    anomaly_type = Column(String, nullable=False, index=True) # e.g., "UnusualActivitySequence", "HighErrorRate"
-    description = Column(Text, nullable=False) # Human-readable description
-    severity_score = Column(Float, nullable=True) # 0.0 to 1.0
-    related_activity_ids = Column(JSON, nullable=True) # Array of integers (IDs from digital_activity)
-    status = Column(String, default="new", nullable=False, index=True) # e.g., "new", "acknowledged", "resolved"
+    timestamp = Column(DateTime(), server_default=func.now(), nullable=False)
+    anomaly_type = Column(String(), nullable=False, index=True) # e.g., "UnusualActivitySequence", "HighErrorRate"
+    description = Column(Text(), nullable=False) # Human-readable description
+    severity_score = Column(Float(), nullable=True) # 0.0 to 1.0
+    related_activity_ids = Column(JSON(), nullable=True) # Array of integers (IDs from digital_activity)
+    status = Column(String(), default="new", nullable=False, index=True) # e.g., "new", "acknowledged", "resolved"
 
     # Relationship to User model
     # This allows accessing the User object from a DetectedAnomaly instance

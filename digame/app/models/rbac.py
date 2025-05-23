@@ -7,26 +7,26 @@ from datetime import datetime
 # Association Table: user_roles
 # Connects Users and Roles (Many-to-Many)
 user_roles_table = Table('user_roles', Base.metadata,
-    Column('user_id', Integer, ForeignKey('users.id'), primary_key=True),
-    Column('role_id', Integer, ForeignKey('roles.id'), primary_key=True)
+    Column('user_id', Integer(), ForeignKey('users.id'), primary_key=True),
+    Column('role_id', Integer(), ForeignKey('roles.id'), primary_key=True)
 )
 
 # Association Table: role_permissions
 # Connects Roles and Permissions (Many-to-Many)
 role_permissions_table = Table('role_permissions', Base.metadata,
-    Column('role_id', Integer, ForeignKey('roles.id'), primary_key=True),
-    Column('permission_id', Integer, ForeignKey('permissions.id'), primary_key=True)
+    Column('role_id', Integer(), ForeignKey('roles.id'), primary_key=True),
+    Column('permission_id', Integer(), ForeignKey('permissions.id'), primary_key=True)
 )
 
 class Role(Base):
     __tablename__ = "roles"
 
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, unique=True, index=True, nullable=False)
-    description = Column(String, nullable=True)
-    
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    id = Column(Integer(), primary_key=True, index=True)
+    name = Column(String(), unique=True, index=True, nullable=False)
+    description = Column(String(), nullable=True)
+
+    created_at = Column(DateTime(), default=datetime.utcnow)
+    updated_at = Column(DateTime(), default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # Many-to-Many relationship with User
     users = relationship(
@@ -48,12 +48,12 @@ class Role(Base):
 class Permission(Base):
     __tablename__ = "permissions"
 
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, unique=True, index=True, nullable=False) # e.g., "view_own_activity_logs"
-    description = Column(String, nullable=True)
+    id = Column(Integer(), primary_key=True, index=True)
+    name = Column(String(), unique=True, index=True, nullable=False) # e.g., "view_own_activity_logs"
+    description = Column(String(), nullable=True)
 
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime(), default=datetime.utcnow)
+    updated_at = Column(DateTime(), default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # Many-to-Many relationship with Role
     roles = relationship(

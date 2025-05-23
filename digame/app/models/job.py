@@ -14,15 +14,15 @@ class Job(Base):
     """
     __tablename__ = "jobs"
     
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
-    job_type = Column(String, nullable=False, index=True)  # e.g., "model_training", "pattern_recognition"
-    status = Column(String, nullable=False, index=True)  # "pending", "running", "completed", "failed"
-    progress = Column(Float, nullable=False, default=0.0)  # 0-100
-    result = Column(JSON, nullable=True)  # Store any result data
-    error = Column(Text, nullable=True)  # Store error message if job fails
-    created_at = Column(DateTime, server_default=func.now(), nullable=False)
-    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=False)
+    id = Column(Integer(), primary_key=True, index=True)
+    user_id = Column(Integer(), ForeignKey("users.id"), nullable=False, index=True)
+    job_type = Column(String(), nullable=False, index=True)  # e.g., "model_training", "pattern_recognition"
+    status = Column(String(), nullable=False, index=True)  # "pending", "running", "completed", "failed"
+    progress = Column(Float(), nullable=False, default=0.0)  # 0-100
+    result = Column(JSON(), nullable=True)  # Store any result data
+    error = Column(Text(), nullable=True)  # Store error message if job fails
+    created_at = Column(DateTime(), server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime(), server_default=func.now(), onupdate=func.now(), nullable=False)
     
     # Relationships
     user = relationship("User", back_populates="jobs")

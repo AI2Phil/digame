@@ -9,16 +9,16 @@ from .user import User # For establishing relationship
 class Activity(Base):
     __tablename__ = "digital_activities" # As per problem description context
 
-    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    id = Column(Integer(), primary_key=True, index=True, autoincrement=True)
     
     # Assuming User.id is Integer.
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    user_id = Column(Integer(), ForeignKey("users.id"), nullable=False, index=True)
     
-    activity_type = Column(String, nullable=False, index=True) # e.g., "opened_email_client", "read_email"
-    timestamp = Column(DateTime, server_default=func.now(), nullable=False, index=True)
+    activity_type = Column(String(), nullable=False, index=True) # e.g., "opened_email_client", "read_email"
+    timestamp = Column(DateTime(), server_default=func.now(), nullable=False, index=True)
     
     # Optional field for more details about the activity
-    details = Column(JSON, nullable=True) 
+    details = Column(JSON(), nullable=True)
     
     # Relationship to User model (optional, but good practice)
     # This allows accessing the User object from an Activity instance

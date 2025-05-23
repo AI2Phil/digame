@@ -9,18 +9,18 @@ from .user import Base
 class ActivityEnrichedFeature(Base):
     __tablename__ = "activity_enriched_features"
 
-    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    id = Column(Integer(), primary_key=True, index=True, autoincrement=True)
     
     # One-to-one relationship with digital_activities table:
     # ActivityEnrichedFeature will have one entry per Activity, and each Activity can have one EnrichedFeature.
     # The ForeignKey points to digital_activities.id.
     # The unique=True constraint on activity_id ensures the one-to-one nature from this side.
-    activity_id = Column(Integer, ForeignKey("digital_activities.id"), unique=True, nullable=False, index=True)
+    activity_id = Column(Integer(), ForeignKey("digital_activities.id"), unique=True, nullable=False, index=True)
     
-    app_category = Column(String, nullable=True)
-    project_context = Column(String, nullable=True)
-    website_category = Column(String, nullable=True)
-    is_context_switch = Column(Boolean, nullable=True, default=False) # Defaulting to False seems reasonable
+    app_category = Column(String(), nullable=True)
+    project_context = Column(String(), nullable=True)
+    website_category = Column(String(), nullable=True)
+    is_context_switch = Column(Boolean(), nullable=True, default=False) # Defaulting to False seems reasonable
 
     # Relationship to Activity model
     # This allows accessing the Activity object from an ActivityEnrichedFeature instance.
