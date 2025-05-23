@@ -9,8 +9,7 @@ from sqlalchemy.orm import Session
 from ..services.behavior_service import (
     train_and_save_behavior_model,
     get_behavior_patterns_for_user,
-    preprocess_activity_logs,
-    cluster_activity_logs
+    get_latest_behavior_model_for_user
 )
 from ..models.activity import Activity as SQLAlchemyActivity # For type hinting if needed
 from ..models.user import User as SQLAlchemyUser # For current_user type hint
