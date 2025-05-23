@@ -201,6 +201,17 @@ npm test
 2. **iOS simulator not starting**: Reset simulator
 3. **Android build failures**: Check Android SDK configuration
 4. **API connection issues**: Verify backend is running and accessible
+5. **"EMFILE: too many open files" error (macOS)**:
+   ```bash
+   # Increase file limit temporarily
+   ulimit -n 65536
+   
+   # Or permanently add to ~/.zshrc or ~/.bash_profile
+   echo 'ulimit -n 65536' >> ~/.zshrc
+   
+   # Alternative: Use web version for development
+   npm run web
+   ```
 
 ### Debug Mode
 
