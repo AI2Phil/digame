@@ -5,8 +5,8 @@ from sqlalchemy.sql import func
 # Import Base from user.py to ensure all tables use the same metadata declaration
 from .user import Base
 # Import User and ProcessNote models for establishing relationships
-from .user import User as UserModel # Renamed to avoid potential confusion
-from .process_notes import ProcessNote as ProcessNoteModel # Renamed
+from .user import User # Renamed to avoid potential confusion
+from .process_notes import ProcessNote # Renamed
 
 class Task(Base):
     __tablename__ = "tasks"
@@ -30,10 +30,10 @@ class Task(Base):
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=False)
 
     # Relationship to User model
-    user = relationship("UserModel", back_populates="tasks")
+    user = relationship("User", back_populates="tasks")
     
     # Relationship to ProcessNote model (optional)
-    process_note = relationship("ProcessNoteModel", back_populates="generated_tasks")
+    process_note = relationship("ProcessNote", back_populates="generated_tasks")
 
     def __repr__(self):
         return f"<Task(id={self.id}, user_id={self.user_id}, description='{self.description[:30]}...', status='{self.status}')>"

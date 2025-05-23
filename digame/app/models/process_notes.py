@@ -5,7 +5,7 @@ from sqlalchemy.sql import func # For server_default=func.now()
 # Import Base from user.py to ensure all tables use the same metadata declaration
 from .user import Base 
 # Assuming User model is also in .user or accessible via this Base
-from .user import User as UserModel # For establishing relationship
+from .user import User # For establishing relationship
 
 class ProcessNote(Base):
     __tablename__ = "process_notes"
@@ -32,7 +32,7 @@ class ProcessNote(Base):
 
     # Relationship to User model
     # This allows accessing the User object from a ProcessNote instance
-    user = relationship("UserModel", back_populates="process_notes")
+    user = relationship("User", back_populates="process_notes")
 
     # Relationship to Task model (one-to-many: one ProcessNote can generate multiple Tasks)
     generated_tasks = relationship(

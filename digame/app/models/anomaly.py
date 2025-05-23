@@ -5,7 +5,7 @@ from sqlalchemy.sql import func # For server_default=func.now()
 # Import Base from user.py to ensure all tables use the same metadata declaration
 from .user import Base 
 # Import User model for establishing relationship
-from .user import User as UserModel # Renamed to avoid potential confusion if UserModel was also a Pydantic model
+from .user import User # Renamed to avoid potential confusion if UserModel was also a Pydantic model
 
 class DetectedAnomaly(Base):
     __tablename__ = "detected_anomalies"
@@ -25,7 +25,7 @@ class DetectedAnomaly(Base):
 
     # Relationship to User model
     # This allows accessing the User object from a DetectedAnomaly instance
-    user = relationship("UserModel", back_populates="anomalies")
+    user = relationship("User", back_populates="anomalies")
 
     def __repr__(self):
         return f"<DetectedAnomaly(id={self.id}, user_id={self.user_id}, type='{self.anomaly_type}', status='{self.status}')>"

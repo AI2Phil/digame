@@ -4,7 +4,7 @@ from sqlalchemy.sql import func
 
 # Import Base from user.py to ensure all tables use the same metadata declaration
 from .user import Base 
-from .user import User as UserModel
+from .user import User
 
 class BehavioralModel(Base):
     """
@@ -34,7 +34,7 @@ class BehavioralModel(Base):
     model_data = Column(LargeBinary, nullable=True)  # Serialized model (pickle or joblib)
     
     # Relationship to User model
-    user = relationship("UserModel", back_populates="behavioral_models")
+    user = relationship("User", back_populates="behavioral_models")
     
     # Relationship to BehavioralPattern model
     patterns = relationship("BehavioralPattern", back_populates="model", cascade="all, delete-orphan")

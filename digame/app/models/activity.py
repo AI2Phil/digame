@@ -4,7 +4,7 @@ from sqlalchemy.sql import func
 
 # Import Base from user.py to ensure all tables use the same metadata declaration
 from .user import Base 
-from .user import User as UserModel # For establishing relationship
+from .user import User # For establishing relationship
 
 class Activity(Base):
     __tablename__ = "digital_activities" # As per problem description context
@@ -22,7 +22,7 @@ class Activity(Base):
     
     # Relationship to User model (optional, but good practice)
     # This allows accessing the User object from an Activity instance
-    user = relationship("UserModel", back_populates="activities")
+    user = relationship("User", back_populates="activities")
 
     # One-to-one relationship with ActivityEnrichedFeature
     # `uselist=False` makes this a scalar attribute (one-to-one)
