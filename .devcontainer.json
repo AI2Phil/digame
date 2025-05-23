@@ -3,6 +3,7 @@
     "dockerComposeFile": ["./docker-compose.yml"],
     "service": "backend",
     "workspaceFolder": "/app/digame",
+    "remoteUser": "app",
     "extensions": [
         "ms-python.python",
         "ms-azuretools.vscode-docker"
