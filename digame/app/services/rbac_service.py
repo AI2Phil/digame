@@ -1,6 +1,6 @@
-from typing import Set
-from digame.app.models.user import User
-from digame.app.models.rbac import Role, Permission # Assuming Role, Permission are in rbac.py
+from typing import Set, Optional
+from ..models.user import User
+from ..models.rbac import Role, Permission # Assuming Role, Permission are in rbac.py
 
 def get_user_roles(user: User) -> Set[str]:
     """
@@ -24,13 +24,13 @@ def get_user_permissions(user: User) -> Set[str]:
                 permissions.add(perm.name)
     return permissions
 
-def user_has_permission(user: User, permission_name: str) -> bool:
+def user_has_permission(user: User, permission_name: Optional[str]) -> bool:
     """
     Checks if a user has a specific permission through any of their roles.
 
     Args:
         user: The User SQLAlchemy object. Should be session-attached with roles and permissions loaded.
-        permission_name: The name of the permission to check (string).
+        permission_name: The name of the permission to check (string or None).
 
     Returns:
         True if the user has the permission, False otherwise.

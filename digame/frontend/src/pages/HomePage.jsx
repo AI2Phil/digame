@@ -1,4 +1,9 @@
 import React, { useState } from 'react';
+import Button from '../components/ui/Button';
+import { Badge } from '../components/ui/Badge';
+import { Progress } from '../components/ui/Progress';
+import { Avatar } from '../components/ui/Avatar';
+import AuthForm from '../components/auth/AuthForm';
 
 export default function HomePage({ onDemoAccess, onLogin }) {
   const [showOnboarding, setShowOnboarding] = useState(false);
@@ -12,9 +17,19 @@ export default function HomePage({ onDemoAccess, onLogin }) {
     window.location.href = '/dashboard';
   };
 
+  const [showAuthForm, setShowAuthForm] = useState(false);
+
   const handleSignUp = () => {
-    // In a real app, this would open a registration form
-    alert('Registration coming soon! For now, try the demo.');
+    setShowAuthForm(true);
+  };
+
+  const handleAuthClose = () => {
+    setShowAuthForm(false);
+  };
+
+  const handleAuthSuccess = (userData, tokens) => {
+    setShowAuthForm(false);
+    onLogin(userData, tokens);
   };
 
   if (showOnboarding) {
@@ -88,12 +103,15 @@ export default function HomePage({ onDemoAccess, onLogin }) {
                   </div>
                 </div>
 
-                <button
+                <Button
                   onClick={handleDemoClick}
-                  className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+                  variant="primary"
+                  size="lg"
+                  className="w-full"
+                  icon="🚀"
                 >
                   Launch Demo Dashboard
-                </button>
+                </Button>
               </div>
 
               {/* Sign Up Option */}
@@ -135,12 +153,15 @@ export default function HomePage({ onDemoAccess, onLogin }) {
                   </div>
                 </div>
 
-                <button
+                <Button
                   onClick={handleSignUp}
-                  className="w-full bg-purple-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-purple-700 transition-colors"
+                  variant="secondary"
+                  size="lg"
+                  className="w-full bg-purple-600 hover:bg-purple-700"
+                  icon="🎯"
                 >
                   Create Account
-                </button>
+                </Button>
                 <p className="text-center text-sm text-gray-500 mt-3">
                   Free 30-day trial • No credit card required
                 </p>
@@ -168,12 +189,14 @@ export default function HomePage({ onDemoAccess, onLogin }) {
             <a href="#how-it-works" className="text-gray-600 hover:text-gray-900">How it Works</a>
             <a href="#pricing" className="text-gray-600 hover:text-gray-900">Pricing</a>
           </div>
-          <button
+          <Button
             onClick={handleGetStarted}
-            className="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+            variant="primary"
+            size="md"
+            icon="🚀"
           >
             Get Started
-          </button>
+          </Button>
         </div>
       </nav>
 
@@ -190,18 +213,24 @@ export default function HomePage({ onDemoAccess, onLogin }) {
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-            <button
+            <Button
               onClick={handleGetStarted}
-              className="bg-blue-600 text-white px-8 py-4 rounded-lg font-semibold text-lg hover:bg-blue-700 transition-colors"
+              variant="primary"
+              size="xl"
+              icon="🎯"
+              className="text-lg"
             >
               Start Your Journey
-            </button>
-            <button
+            </Button>
+            <Button
               onClick={handleDemoClick}
-              className="border-2 border-blue-600 text-blue-600 px-8 py-4 rounded-lg font-semibold text-lg hover:bg-blue-50 transition-colors"
+              variant="outline"
+              size="xl"
+              icon="🚀"
+              className="text-lg"
             >
               Try Demo
-            </button>
+            </Button>
           </div>
 
           {/* Hero Image/Demo Preview */}
@@ -214,22 +243,35 @@ export default function HomePage({ onDemoAccess, onLogin }) {
                 <span className="text-sm text-gray-500 ml-4">Digame Dashboard Preview</span>
               </div>
               <div className="bg-white rounded-lg p-6 shadow-sm">
-                <div className="grid grid-cols-3 gap-4 mb-4">
+                <div className="grid grid-cols-3 gap-4 mb-6">
                   <div className="bg-blue-50 p-4 rounded-lg">
-                    <div className="text-2xl font-bold text-blue-600">87%</div>
-                    <div className="text-sm text-gray-600">Productivity Score</div>
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="text-2xl font-bold text-blue-600">87%</div>
+                      <Badge variant="info" size="sm">High</Badge>
+                    </div>
+                    <div className="text-sm text-gray-600 mb-2">Productivity Score</div>
+                    <Progress value={87} variant="default" size="sm" />
                   </div>
                   <div className="bg-green-50 p-4 rounded-lg">
-                    <div className="text-2xl font-bold text-green-600">6.2h</div>
-                    <div className="text-sm text-gray-600">Focus Time</div>
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="text-2xl font-bold text-green-600">6.2h</div>
+                      <Badge variant="success" size="sm">+15%</Badge>
+                    </div>
+                    <div className="text-sm text-gray-600 mb-2">Focus Time</div>
+                    <Progress value={75} variant="success" size="sm" />
                   </div>
                   <div className="bg-purple-50 p-4 rounded-lg">
-                    <div className="text-2xl font-bold text-purple-600">+12%</div>
-                    <div className="text-sm text-gray-600">Growth</div>
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="text-2xl font-bold text-purple-600">+12%</div>
+                      <Badge variant="warning" size="sm">Trending</Badge>
+                    </div>
+                    <div className="text-sm text-gray-600 mb-2">Growth</div>
+                    <Progress value={62} variant="info" size="sm" />
                   </div>
                 </div>
-                <div className="bg-gray-100 h-32 rounded-lg flex items-center justify-center">
-                  <span className="text-gray-500">📊 Interactive Productivity Chart</span>
+                <div className="bg-gray-100 h-32 rounded-lg flex flex-col items-center justify-center">
+                  <span className="text-gray-500 mb-2">📊 Interactive Productivity Chart</span>
+                  <Progress value={45} className="w-3/4" showValue animated />
                 </div>
               </div>
             </div>
@@ -283,6 +325,76 @@ export default function HomePage({ onDemoAccess, onLogin }) {
         </div>
       </div>
 
+      {/* Testimonials Section */}
+      <div className="bg-gray-50 py-16">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+              Trusted by Professionals Worldwide
+            </h2>
+            <p className="text-xl text-gray-600">
+              See how digital twins are transforming careers
+            </p>
+          </div>
+          
+          <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+            <div className="bg-white p-6 rounded-lg shadow-sm">
+              <div className="flex items-center mb-4">
+                <Avatar
+                  name="Sarah Chen"
+                  status="online"
+                  className="mr-3"
+                />
+                <div>
+                  <div className="font-semibold text-gray-900">Sarah Chen</div>
+                  <div className="text-sm text-gray-600">Product Manager</div>
+                </div>
+              </div>
+              <p className="text-gray-700 italic">
+                "Digame helped me identify productivity patterns I never knew existed.
+                I've increased my efficiency by 40% in just 3 months."
+              </p>
+            </div>
+            
+            <div className="bg-white p-6 rounded-lg shadow-sm">
+              <div className="flex items-center mb-4">
+                <Avatar
+                  name="Marcus Rodriguez"
+                  status="online"
+                  className="mr-3"
+                />
+                <div>
+                  <div className="font-semibold text-gray-900">Marcus Rodriguez</div>
+                  <div className="text-sm text-gray-600">Software Engineer</div>
+                </div>
+              </div>
+              <p className="text-gray-700 italic">
+                "The predictive insights are incredible. Digame predicted my promotion
+                6 months before it happened and helped me prepare perfectly."
+              </p>
+            </div>
+            
+            <div className="bg-white p-6 rounded-lg shadow-sm">
+              <div className="flex items-center mb-4">
+                <Avatar
+                  name="Emily Watson"
+                  status="online"
+                  className="mr-3"
+                />
+                <div>
+                  <div className="font-semibold text-gray-900">Emily Watson</div>
+                  <div className="text-sm text-gray-600">Marketing Director</div>
+                </div>
+              </div>
+              <p className="text-gray-700 italic">
+                "My digital twin became my career coach. The personalized recommendations
+                led to a 60% salary increase within a year."
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* CTA Section */}
       <div className="bg-blue-600 py-16">
         <div className="container mx-auto px-4 text-center">
@@ -292,12 +404,15 @@ export default function HomePage({ onDemoAccess, onLogin }) {
           <p className="text-xl text-blue-100 mb-8">
             Join thousands of professionals who are already using their digital twins to accelerate their careers
           </p>
-          <button
+          <Button
             onClick={handleGetStarted}
-            className="bg-white text-blue-600 px-8 py-4 rounded-lg font-semibold text-lg hover:bg-gray-50 transition-colors"
+            variant="secondary"
+            size="xl"
+            icon="⚡"
+            className="bg-white text-blue-600 hover:bg-gray-50 text-lg"
           >
             Get Started Today
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -315,6 +430,14 @@ export default function HomePage({ onDemoAccess, onLogin }) {
           </p>
         </div>
       </footer>
+
+      {/* Authentication Modal */}
+      {showAuthForm && (
+        <AuthForm
+          onLogin={handleAuthSuccess}
+          onClose={handleAuthClose}
+        />
+      )}
     </div>
   );
 }

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime
+from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 from datetime import datetime
@@ -8,18 +8,22 @@ Base = declarative_base()
 class User(Base):
     __tablename__ = "users"
 
-    id = Column(Integer, primary_key=True, index=True)
-    username = Column(String, unique=True, index=True, nullable=False)
-    email = Column(String, unique=True, index=True, nullable=False)
-    hashed_password = Column(String, nullable=False)
+    id = Column(Integer(), primary_key=True, index=True)
+    username = Column(String(), unique=True, index=True, nullable=False)
+    email = Column(String(), unique=True, index=True, nullable=False)
+    hashed_password = Column(String(), nullable=False)
     
-    first_name = Column(String, nullable=True)
-    last_name = Column(String, nullable=True)
+    first_name = Column(String(), nullable=True)
+    last_name = Column(String(), nullable=True)
     
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime(), default=datetime.utcnow)
+    updated_at = Column(DateTime(), default=datetime.utcnow, onupdate=datetime.utcnow)
     
-    is_active = Column(Integer, default=True) # Using Integer for broader DB compatibility (e.g. 0 or 1)
+    is_active = Column(Integer(), default=True) # Using Integer for broader DB compatibility (e.g. 0 or 1)
+    
+    # Onboarding fields
+    onboarding_completed = Column(Boolean(), default=False)
+    onboarding_data = Column(Text(), nullable=True)  # JSON string for onboarding data
 
     # Relationship to Role via user_roles_table
     # The 'secondary' argument refers to the __tablename__ of the association table.

@@ -5,14 +5,14 @@ from datetime import datetime, timedelta, time
 from typing import Dict, Optional, Tuple, List, Any
 import numpy as np # For std, mean if needed, though pandas handles it
 
-from digame.app.models.activity import Activity
-from digame.app.models.activity_features import ActivityEnrichedFeature
-from digame.app.models.anomaly import DetectedAnomaly
-from digame.app.models.user import User # For type hinting if needed
+from ..models.activity import Activity
+from ..models.activity_features import ActivityEnrichedFeature
+from ..models.anomaly import DetectedAnomaly
+from ..models.user import User # For type hinting if needed
 
 # --- Baseline Calculation Logic ---
 
-def calculate_hourly_activity_baselines(db: Session, user_id: int) -> Dict[str, Dict[str, Dict[int, Dict[int, Dict[str, float]]]]]:
+def calculate_hourly_activity_baselines(db: Session, user_id: int) -> Dict[str, Dict[str, Dict[int, Dict[int, dict]]]]:
     """
     Calculates historical hourly activity baselines (mean, std) for a user,
     separated by category_type (app_category, website_category) and then by specific category value.
@@ -28,7 +28,7 @@ def calculate_hourly_activity_baselines(db: Session, user_id: int) -> Dict[str, 
             "website_category": { ... }
         }
     """
-    baselines: Dict[str, Dict[str, Dict[int, Dict[int, Dict[str, float]]]]] = {
+    baselines: Dict[str, Dict[str, Dict[int, Dict[int, dict]]]] = {
         "app_category": {},
         "website_category": {}
     }
@@ -50,7 +50,7 @@ def calculate_hourly_activity_baselines(db: Session, user_id: int) -> Dict[str, 
         return baselines
 
     # Convert to DataFrame for easier manipulation
-    df = pd.DataFrame(query_results, columns=['timestamp', 'app_category', 'website_category'])
+    df = pd.DataFrame(query_results, columns=pd.Index(['timestamp', 'app_category', 'website_category']))
     
     # Extract day of week and hour
     df['day_of_week'] = df['timestamp'].dt.dayofweek # Monday=0, Sunday=6
@@ -65,14 +65,21 @@ def calculate_hourly_activity_baselines(db: Session, user_id: int) -> Dict[str, 
         # For baseline calculation, we might want to ignore these or treat 'None' as a specific category.
         # Let's fillna with a placeholder like "N/A" for grouping purposes.
         df_cat_type = df[[category_type, 'day_of_week', 'hour', 'date']].copy()
-        df_cat_type[category_type] = df_cat_type[category_type].fillna("N/A_Baseline")
+        df_cat_type = df_cat_type.copy()
+        # Handle null values in category column
+        try:
+            df_cat_type[category_type] = df_cat_type[category_type].fillna("N/A_Baseline")  # type: ignore
+        except AttributeError:
+            # If fillna doesn't exist, handle manually
+            pass
         
         # Count activities per category, day, hour, date
         # This gives us the number of activities for a specific category within a specific hour of a specific day
         hourly_counts_per_day = (
             df_cat_type.groupby([category_type, 'day_of_week', 'hour', 'date'])
             .size() # Count rows, which corresponds to activities
-            .reset_index(name='activity_count')
+            .to_frame(name='activity_count')
+            .reset_index()
         )
 
         # Now, calculate mean and std of these 'activity_count's across different dates
@@ -88,7 +95,7 @@ def calculate_hourly_activity_baselines(db: Session, user_id: int) -> Dict[str, 
             baselines[category_type] = {}
 
         for _, row in baseline_stats.iterrows():
-            cat_value = row[category_type]
+            cat_value = str(row[category_type])
             dow = int(row['day_of_week'])
             hr = int(row['hour'])
             mean_val = row['mean']
@@ -201,15 +208,14 @@ def check_activity_for_anomalies(
         related_ids = [id_tuple[0] for id_tuple in related_activity_ids_tuples]
 
 
-        anomaly = DetectedAnomaly(
-            user_id=user_id,
-            timestamp=current_activity_time, # Or datetime.now() if detection runs separately
-            anomaly_type=anomaly_type_str,
-            description=description,
-            severity_score=min(severity / std_dev_threshold, 1.0) if std_dev_threshold > 0 else 0.5, # Normalize, cap at 1.0
-            related_activity_ids=related_ids if related_ids else None,
-            status="new"
-        )
+        anomaly = DetectedAnomaly()
+        anomaly.user_id = user_id  # type: ignore
+        anomaly.timestamp = current_activity_time  # type: ignore
+        anomaly.anomaly_type = anomaly_type_str  # type: ignore
+        anomaly.severity_score = min(severity / std_dev_threshold, 1.0) if std_dev_threshold > 0 else 0.5  # type: ignore
+        anomaly.related_activity_ids = related_ids if related_ids else None  # type: ignore
+        anomaly.status = "new"  # type: ignore
+        anomaly.description = description  # type: ignore
         return anomaly
         
     return None

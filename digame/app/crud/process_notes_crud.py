@@ -1,7 +1,8 @@
 from sqlalchemy.orm import Session
 from typing import List, Optional
 
-from digame.app.models.process_notes import ProcessNote
+from ..models.process_notes import ProcessNote
+from ..schemas.process_note_schemas import ProcessNoteFeedbackUpdate
 # Assuming User.id is an integer based on previous model definitions
 # If User.id is string/UUID, the user_id type hint below should change.
 
@@ -28,11 +29,10 @@ def get_process_notes_by_user_id(
         .limit(limit)
         .all()
     )
-
 def update_process_note_feedback_tags(
     db: Session, 
     note_id: int, 
-    data: "ProcessNoteFeedbackUpdate" # Forward reference for Pydantic model if not imported directly
+    data: ProcessNoteFeedbackUpdate
 ) -> Optional[ProcessNote]:
     """
     Updates the user_feedback and/or user_tags for a specific ProcessNote.
@@ -41,21 +41,18 @@ def update_process_note_feedback_tags(
     if db_note:
         updated = False
         if data.user_feedback is not None:
-            db_note.user_feedback = data.user_feedback
+            db_note.user_feedback = data.user_feedback  # type: ignore
             updated = True
         
         # For user_tags, allow setting to new list or clearing (if data.user_tags is an empty list or None and model allows null)
         # If data.user_tags is None, it means "no change" to tags in a PATCH-like update.
         # If data.user_tags is an empty list [], it means "clear existing tags".
         if data.user_tags is not None: # Field is present in the request
-            db_note.user_tags = data.user_tags # Assigns the new list (can be empty)
+            db_note.user_tags = data.user_tags  # type: ignore
             updated = True
         
         if updated:
             db.commit()
             db.refresh(db_note)
     return db_note
-
-# Need to import ProcessNoteFeedbackUpdate for the type hint if not using forward reference
-# from digame.app.schemas.process_note_schemas import ProcessNoteFeedbackUpdate
 # For now, using forward reference as it's common in CRUD files.

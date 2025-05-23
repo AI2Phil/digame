@@ -5,9 +5,9 @@ from typing import List, Dict, Tuple, Any
 from collections import defaultdict, Counter
 from datetime import datetime
 
-from digame.app.models.activity import Activity
-from digame.app.models.process_notes import ProcessNote
-from digame.app.models.user import User # For type hinting user_id if needed, though service takes user_id directly
+from ..models.activity import Activity
+from ..models.process_notes import ProcessNote
+from ..models.user import User # For type hinting user_id if needed, though service takes user_id directly
 
 # --- Helper Function for Sequence to String ---
 
@@ -113,15 +113,14 @@ def identify_and_update_process_notes(
                     notes_updated += 1
             else:
                 # Create new note
-                new_note = ProcessNote(
-                    user_id=user_id,
-                    inferred_task_name=_generate_task_name(sequence_str),
-                    process_steps_description=sequence_str,
-                    source_activity_ids=source_activity_ids_list, # Store as JSON
-                    occurrence_count=occurrence_count,
-                    first_observed_at=first_observed_at_ts,
-                    last_observed_at=last_observed_at_ts,
-                )
+                new_note = ProcessNote()
+                new_note.user_id = user_id
+                new_note.inferred_task_name = _generate_task_name(sequence_str)
+                new_note.process_steps_description = sequence_str
+                new_note.source_activity_ids = source_activity_ids_list  # Store as JSON
+                new_note.occurrence_count = occurrence_count
+                new_note.first_observed_at = first_observed_at_ts
+                new_note.last_observed_at = last_observed_at_ts
                 db.add(new_note)
                 new_notes_created += 1
                 

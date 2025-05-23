@@ -2,23 +2,26 @@ from sqlalchemy.orm import Session, joinedload
 from sqlalchemy.exc import IntegrityError
 from typing import List, Optional
 
-from digame.app.models.user import User
-from digame.app.models.rbac import Role, Permission
-from digame.app.schemas.rbac_schemas import RoleCreate, RoleUpdate, PermissionCreate, PermissionUpdate
+from ..models.user import User
+from ..models.rbac import Role, Permission
+from ..schemas.rbac_schemas import RoleCreate, RoleUpdate, PermissionCreate, PermissionUpdate
 
 # --- Role CRUD Operations ---
 
 def get_role(db: Session, role_id: int) -> Optional[Role]:
-    return db.query(Role).options(joinedload(Role.permissions)).filter(Role.id == role_id).first()
+    return db.query(Role).options(joinedload("permissions")).filter(Role.id == role_id).first()
 
 def get_role_by_name(db: Session, role_name: str) -> Optional[Role]:
-    return db.query(Role).options(joinedload(Role.permissions)).filter(Role.name == role_name).first()
+    return db.query(Role).options(joinedload("permissions")).filter(Role.name == role_name).first()
 
 def get_roles(db: Session, skip: int = 0, limit: int = 100) -> List[Role]:
-    return db.query(Role).options(joinedload(Role.permissions)).offset(skip).limit(limit).all()
+    return db.query(Role).options(joinedload("permissions")).offset(skip).limit(limit).all()
 
 def create_role(db: Session, role: RoleCreate) -> Role:
-    db_role = Role(name=role.name, description=role.description)
+    db_role = Role()
+    setattr(db_role, "name", role.name)
+    if hasattr(db_role, "description") and not isinstance(getattr(type(db_role), "description", None), property):
+        setattr(db_role, "description", role.description)
     db.add(db_role)
     db.commit()
     db.refresh(db_role)
@@ -28,9 +31,9 @@ def update_role(db: Session, role_id: int, role_update: RoleUpdate) -> Optional[
     db_role = get_role(db, role_id)
     if db_role:
         if role_update.name is not None:
-            db_role.name = role_update.name
+            setattr(db_role, "name", role_update.name)
         if role_update.description is not None:
-            db_role.description = role_update.description
+            setattr(db_role, "description", role_update.description)
         # Note: Updating permissions list directly here would require more logic (e.g., fetching Permission objects by ID)
         # This basic update only handles name and description.
         db.commit()
@@ -60,7 +63,9 @@ def get_permissions(db: Session, skip: int = 0, limit: int = 100) -> List[Permis
     return db.query(Permission).offset(skip).limit(limit).all()
 
 def create_permission(db: Session, permission: PermissionCreate) -> Permission:
-    db_permission = Permission(name=permission.name, description=permission.description)
+    db_permission = Permission()
+    setattr(db_permission, "name", permission.name)
+    setattr(db_permission, "description", permission.description)
     db.add(db_permission)
     db.commit()
     db.refresh(db_permission)
@@ -70,9 +75,9 @@ def update_permission(db: Session, permission_id: int, permission_update: Permis
     db_permission = get_permission(db, permission_id)
     if db_permission:
         if permission_update.name is not None:
-            db_permission.name = permission_update.name
+            setattr(db_permission, "name", permission_update.name)
         if permission_update.description is not None:
-            db_permission.description = permission_update.description
+            setattr(db_permission, "description", permission_update.description)
         db.commit()
         db.refresh(db_permission)
     return db_permission
@@ -89,7 +94,7 @@ def delete_permission(db: Session, permission_id: int) -> bool:
 # --- Assignment Operations ---
 
 def assign_role_to_user(db: Session, user_id: int, role_id: int) -> Optional[User]:
-    user = db.query(User).options(joinedload(User.roles)).filter(User.id == user_id).first()
+    user = db.query(User).options(joinedload("roles")).filter(User.id == user_id).first()
     role = get_role(db, role_id)
     if user and role:
         if role not in user.roles:
@@ -100,7 +105,7 @@ def assign_role_to_user(db: Session, user_id: int, role_id: int) -> Optional[Use
     return None
 
 def remove_role_from_user(db: Session, user_id: int, role_id: int) -> Optional[User]:
-    user = db.query(User).options(joinedload(User.roles)).filter(User.id == user_id).first()
+    user = db.query(User).options(joinedload("roles")).filter(User.id == user_id).first()
     role = get_role(db, role_id) # Fetch the role to ensure it exists
     if user and role:
         if role in user.roles:
@@ -134,7 +139,7 @@ def remove_permission_from_role(db: Session, role_id: int, permission_id: int) -
 
 # Helper for assigning by name (used by endpoints that take names)
 def assign_role_to_user_by_names(db: Session, user_id: int, role_name: str) -> Optional[User]:
-    user = db.query(User).options(joinedload(User.roles)).filter(User.id == user_id).first()
+    user = db.query(User).options(joinedload("roles")).filter(User.id == user_id).first()
     role = get_role_by_name(db, role_name)
     if user and role:
         if role not in user.roles:
@@ -145,7 +150,7 @@ def assign_role_to_user_by_names(db: Session, user_id: int, role_name: str) -> O
     return None
 
 def remove_role_from_user_by_names(db: Session, user_id: int, role_name: str) -> Optional[User]:
-    user = db.query(User).options(joinedload(User.roles)).filter(User.id == user_id).first()
+    user = db.query(User).options(joinedload("roles")).filter(User.id == user_id).first()
     role = get_role_by_name(db, role_name)
     if user and role:
         if role in user.roles:

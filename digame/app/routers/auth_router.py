@@ -284,6 +284,84 @@ async def verify_token(
         "email": getattr(current_user, 'email')
     }
 
+@router.post("/me/onboarding", status_code=status.HTTP_200_OK)
+async def save_onboarding_data(
+    onboarding_data: Dict[str, Any],
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+) -> Dict[str, Any]:
+    """
+    Save user onboarding data
+    """
+    try:
+        # Update user with onboarding data
+        user_id = getattr(current_user, 'id')
+        user = db.query(User).filter(User.id == user_id).first()
+        
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found"
+            )
+        
+        # Store onboarding data in user onboarding_data field
+        # For now, we'll store it as JSON in the onboarding_data field
+        import json
+        user.onboarding_data = json.dumps(onboarding_data)
+        user.onboarding_completed = onboarding_data.get('onboarding_completed', True)
+        
+        db.commit()
+        db.refresh(user)
+        
+        return {
+            "message": "Onboarding data saved successfully",
+            "onboarding_completed": user.onboarding_completed
+        }
+    except Exception as e:
+        logger.error(f"Error saving onboarding data: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to save onboarding data"
+        )
+
+@router.get("/me/onboarding", status_code=status.HTTP_200_OK)
+async def get_onboarding_status(
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+) -> Dict[str, Any]:
+    """
+    Get user onboarding status and data
+    """
+    try:
+        user_id = getattr(current_user, 'id')
+        user = db.query(User).filter(User.id == user_id).first()
+        
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found"
+            )
+        
+        # Parse onboarding data from onboarding_data field
+        onboarding_data = {}
+        if hasattr(user, 'onboarding_data') and user.onboarding_data:
+            try:
+                import json
+                onboarding_data = json.loads(user.onboarding_data)
+            except json.JSONDecodeError:
+                onboarding_data = {}
+        
+        return {
+            "onboarding_completed": getattr(user, 'onboarding_completed', False),
+            "onboarding_data": onboarding_data
+        }
+    except Exception as e:
+        logger.error(f"Error getting onboarding status: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to get onboarding status"
+        )
+
 # Health check endpoint
 @router.get("/health", status_code=status.HTTP_200_OK)
 async def auth_health_check() -> Dict[str, str]:
