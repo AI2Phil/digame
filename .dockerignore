@@ -1,0 +1,54 @@
+# Git / Version Control
+.git
+.gitignore
+
+# Python specific
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+pip-wheel-metadata/
+
+# Virtual environments
+venv/
+.venv/
+env/
+.env # Local environment configurations not for image
+
+# IDE / Editor specific
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Log files
+*.log
+
+# Docker files (not needed in context if copied explicitly or not part of APP_CODE)
+Dockerfile
+docker-compose.yml
+# We don't need to ignore README.md typically
+
+# OS specific
+.DS_Store
+Thumbs.db
+
+# Local instance data / test outputs that might be generated in project
+instance/
+htmlcov/
+.pytest_cache/
+.tox/
+# Add other project-specific temporary or output directories if known
+
+# If models are explicitly copied from a specific source (e.g. root ./models)
+# and we don't want other versions from the main app code copy to interfere
+# or be unnecessarily included if they are just dev artifacts.
+# The Dockerfile currently copies ./digame to /app/digame
+# and ./models to /app/digame/app/models.
+# If ./digame/app/models exists on the host and contains e.g. example models,
+# they would first be copied by `COPY digame /app/digame`, then the contents of
+# ./models would be copied into /app/digame/app/models.
+# To keep it clean and ensure only models from root ./models are used,
+# we can ignore the host's ./digame/app/models.
+digame/app/models/

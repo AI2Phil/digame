@@ -2450,3 +2450,59 @@ Next Steps
 These enhancements would transform the digital twin from a personal productivity tool into a true enterprise asset that captures, preserves, and extends your organization's human capital in unprecedented ways. 
 The system would effectively create an institutional knowledge layer that persists beyond individual employment tenure.
 
+## Running with Docker
+
+This section describes how to run the Digame application using Docker and Docker Compose.
+
+### Prerequisites
+
+- **Docker**: Ensure Docker is installed on your system. You can find installation instructions at [https://docs.docker.com/get-docker/](https://docs.docker.com/get-docker/).
+- **Docker Compose**: Ensure Docker Compose is installed. Installation instructions are available at [https://docs.docker.com/compose/install/](https://docs.docker.com/compose/install/).
+
+### Building and Running
+
+1.  **Build the Docker images**:
+    Open your terminal in the root directory of the project (where `docker-compose.yml` is located) and run:
+    ```bash
+    docker-compose build
+    ```
+    This command builds the Docker image for the `backend` service as defined in the `Dockerfile`.
+
+2.  **Start the application services**:
+    Once the build is complete, start the application and database services using:
+    ```bash
+    docker-compose up -d
+    ```
+    The `-d` flag runs the services in detached mode (in the background). If you want to see the logs directly in your terminal, you can omit the `-d` flag:
+    ```bash
+    docker-compose up
+    ```
+
+### Accessing the Application
+
+-   **API Documentation (Swagger UI)**: Once the services are running, you can access the API documentation at `http://localhost:8000/docs`.
+-   **Backend API**: The backend API will be available at `http://localhost:8000`.
+-   **Database**: The PostgreSQL database service (`db`) is mapped to port `5433` on your host machine. You can connect to it using a PostgreSQL client with the following details:
+    -   Host: `localhost`
+    -   Port: `5433`
+    -   Username: `digame_user`
+    -   Password: `digame_password`
+    -   Database name: `digame_db`
+
+### Stopping the Application
+
+To stop all running services and remove the containers, networks, and volumes created by `docker-compose up` (except for named volumes like `postgres_data`), run:
+```bash
+docker-compose down
+```
+If you only want to stop the services without removing them, you can use `docker-compose stop`.
+
+### Data Persistence
+
+The PostgreSQL database data is persisted in a Docker named volume called `postgres_data`. This means that even if you stop and remove the database container using `docker-compose down`, the data will remain intact in this volume. When you next run `docker-compose up`, the database service will reuse this existing volume.
+
+If you need to completely remove the data (e.g., for a fresh start), you can remove the volume using `docker volume rm postgres_data` after stopping the services with `docker-compose down`.
+
+### Models
+
+The predictive models required by the application (e.g., `predictive_model.pth` and associated files) are copied into the Docker image during the build process. The application loads these models from within the container.
