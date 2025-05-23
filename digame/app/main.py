@@ -5,6 +5,8 @@ import logging
 # Import routers
 from .routers import predictive as predictive_router
 from .routers import admin_rbac_router
+from .routers import admin_router
+from .routers import analytics_router
 from .routers import process_notes_router
 from .routers import behavior as behavior_router
 from .routers import pattern_recognition_router
@@ -93,6 +95,8 @@ app.include_router(auth_router.router, tags=["Authentication"])
 # Include other routers (these will be protected by authentication middleware)
 app.include_router(predictive_router.router, prefix="/predictive", tags=["Predictive Modeling"])
 app.include_router(admin_rbac_router.router, prefix="/admin/rbac", tags=["Admin RBAC Management"])
+app.include_router(admin_router.router, prefix="/api", tags=["Admin Dashboard"])
+app.include_router(analytics_router.router, prefix="/api", tags=["Analytics"])
 app.include_router(process_notes_router.router, prefix="/process-notes", tags=["Process Notes"])
 app.include_router(behavior_router.router, prefix="/behavior", tags=["Behavior Recognition"])
 app.include_router(pattern_recognition_router.router, prefix="/pattern-recognition", tags=["Pattern Recognition"])
