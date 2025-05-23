@@ -61,6 +61,14 @@ class User(Base):
         back_populates="user", # Corresponds to the 'user' attribute in Task
         cascade="all, delete-orphan" # If a user is deleted, their tasks are also deleted.
     )
+    
+    # Relationship to BehavioralModel model
+    # Allows accessing all behavioral models created for a user.
+    behavioral_models = relationship(
+        "BehavioralModel", # String reference to the BehavioralModel class
+        back_populates="user", # Corresponds to the 'user' attribute in BehavioralModel
+        cascade="all, delete-orphan" # If a user is deleted, their behavioral models are also deleted.
+    )
 
     def __repr__(self):
         return f"<User(id={self.id}, username='{self.username}', email='{self.email}')>"

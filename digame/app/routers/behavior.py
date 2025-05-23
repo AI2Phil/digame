@@ -5,24 +5,27 @@ from typing import List, Any, Optional, Dict
 from sqlalchemy.orm import Session
 
 # Import services and models
-from digame.app import behavior as behavior_service # To call preprocess_activity_logs, cluster_activity_logs
+from digame.app import behavior as behavior_module # To call preprocess_activity_logs, cluster_activity_logs
+from digame.app.services.behavior_service import train_and_save_behavior_model, get_behavior_patterns_for_user
 from digame.app.models.activity import Activity as SQLAlchemyActivity # For type hinting if needed
-# from digame.app.models.user import User as SQLAlchemyUser # For current_user type hint
+from digame.app.models.user import User as SQLAlchemyUser # For current_user type hint
+from digame.app.models.behavior_model import BehavioralModel # For type hinting
 
 # Import PermissionChecker and dependencies
 from ..auth.auth_dependencies import PermissionChecker, get_current_active_user
-from .admin_rbac_router import get_db # Placeholder: using get_db from another router
+from digame.app.db import get_db # Import get_db directly from the db module
 
 router = APIRouter(
-    prefix="/behavior",
     tags=["Behavior Recognition"],
 )
 
 # --- Schemas (redefined here for clarity, could be in a behavior_schemas.py) ---
 class BehaviorTrainingRequest(BaseModel):
     user_id: int # Specify for which user to train, admin might do this
-    n_clusters: Optional[int] = 5 # Default number of clusters, can be optimized
-    include_enriched_features: bool = True # New flag
+    n_clusters: Optional[int] = None # Default is None to use automatic optimization
+    include_enriched_features: bool = True # Whether to include enriched features
+    algorithm: str = "kmeans" # Options: "kmeans", "dbscan", "hierarchical"
+    auto_optimize: bool = True # Whether to automatically optimize the number of clusters
 
 class BehaviorTrainingResponse(BaseModel):
     user_id: int
@@ -30,6 +33,8 @@ class BehaviorTrainingResponse(BaseModel):
     message: Optional[str] = None
     clusters_found: Optional[int] = None
     silhouette_score: Optional[float] = None
+    algorithm: Optional[str] = None  # The algorithm used for clustering
+    auto_optimized: Optional[bool] = None  # Whether the number of clusters was automatically optimized
     # Optionally, return a sample of data with clusters, or store it and provide an ID
     # For now, keeping it simple
 
@@ -75,57 +80,38 @@ async def train_behavior_model_for_user(
 
     user_id = training_request.user_id
     
-    # Step 1: Preprocess data including enriched features based on flag
-    raw_df, processed_df = behavior_service.preprocess_activity_logs(
-        db, 
-        user_id=user_id, 
-        include_enriched_features=training_request.include_enriched_features
+    # Train and save the behavior model using the persistent storage service
+    db_model, status, error_message = train_and_save_behavior_model(
+        db=db,
+        user_id=user_id,
+        n_clusters=training_request.n_clusters,
+        include_enriched_features=training_request.include_enriched_features,
+        algorithm=training_request.algorithm,
+        auto_optimize=training_request.auto_optimize,
+        name=f"Behavioral Model for User {user_id}"
     )
-
-    if raw_df is None or processed_df is None or processed_df.empty:
-        TEMP_CLUSTER_RESULTS_STORAGE.pop(user_id, None) # Clear any old results
+    
+    if status == "failed":
         return BehaviorTrainingResponse(
             user_id=user_id,
             status="failed",
-            message="Preprocessing failed or no data available for clustering."
+            message=error_message
         )
-
-    # Step 2: Cluster the data
-    n_clusters = training_request.n_clusters
-    cluster_labels, silhouette = behavior_service.cluster_activity_logs(
-        processed_df, 
-        n_clusters=n_clusters
-    )
-
-    if cluster_labels is None:
-        TEMP_CLUSTER_RESULTS_STORAGE.pop(user_id, None) # Clear any old results
-        return BehaviorTrainingResponse(
-            user_id=user_id,
-            status="failed",
-            message="Clustering process failed."
-        )
-
-    # Step 3: Store results (temporarily for this example)
-    # Add cluster labels back to the raw_df for context
-    raw_df['cluster_label'] = cluster_labels
-    TEMP_CLUSTER_RESULTS_STORAGE[user_id] = {
-        "raw_df_with_clusters": raw_df, # Storing the DataFrame directly is not scalable for production
-        "silhouette_score": silhouette,
-        "n_clusters": len(set(cluster_labels)) # Actual number of clusters formed
-    }
     
     return BehaviorTrainingResponse(
         user_id=user_id,
         status="success",
-        message="Behavior model training completed.",
-        clusters_found=len(set(cluster_labels)),
-        silhouette_score=silhouette
+        message="Behavior model training completed and saved to database.",
+        clusters_found=db_model.num_clusters,
+        silhouette_score=db_model.silhouette_score,
+        algorithm=db_model.algorithm,
+        auto_optimized=training_request.auto_optimize
     )
 
-@router.get("/patterns", 
+@router.get("/patterns",
             response_model=List[ActivityPatternResponse],
             dependencies=[Depends(PermissionChecker("view_own_behavior_patterns"))])
-async def get_behavior_patterns_for_user(
+async def get_user_behavior_patterns(
     user_id: int, # Path parameter to specify user, or get from current_user
     db: Session = Depends(get_db), # db might be needed if fetching from DB
     current_user: "SQLAlchemyUser" = Depends(get_current_active_user)
@@ -140,28 +126,28 @@ async def get_behavior_patterns_for_user(
             detail="Not authorized to view behavior patterns for this user."
         )
         
-    user_results = TEMP_CLUSTER_RESULTS_STORAGE.get(user_id)
-    if not user_results or "raw_df_with_clusters" not in user_results:
+    # Get patterns from the database using the behavior service
+    patterns_data = get_behavior_patterns_for_user(db, user_id)
+    
+    if not patterns_data:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="No behavior patterns found. Please train the model first using POST /behavior/train."
         )
 
-    df_with_clusters = user_results["raw_df_with_clusters"]
-    
-    # Convert DataFrame rows to list of ActivityPatternResponse objects
+    # Convert data to ActivityPatternResponse objects
     response_patterns = []
-    for _, row in df_with_clusters.iterrows():
+    for pattern in patterns_data:
         response_patterns.append(
             ActivityPatternResponse(
-                activity_id=row["activity_id"],
-                timestamp=row["timestamp"],
-                activity_type=row["activity_type"],
-                cluster_label=row["cluster_label"],
-                app_category=row.get("app_category"), # Use .get() for safety if column might be missing
-                project_context=row.get("project_context"),
-                website_category=row.get("website_category"),
-                is_context_switch=row.get("is_context_switch")
+                activity_id=pattern["activity_id"],
+                timestamp=pattern["timestamp"],
+                activity_type=pattern["activity_type"],
+                cluster_label=pattern["cluster_label"],
+                app_category=pattern.get("app_category"),
+                project_context=pattern.get("project_context"),
+                website_category=pattern.get("website_category"),
+                is_context_switch=pattern.get("is_context_switch")
             )
         )
     return response_patterns

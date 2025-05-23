@@ -1,7 +1,7 @@
 import pandas as pd
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.compose import ColumnTransformer
-from sklearn.cluster import KMeans
+from sklearn.cluster import KMeans, DBSCAN, AgglomerativeClustering
 from sklearn.metrics import silhouette_score
 from sqlalchemy.orm import Session, joinedload
 from typing import List, Tuple, Dict, Any, Optional
@@ -126,21 +126,46 @@ def preprocess_activity_logs(
 
 # --- Clustering Logic (Placeholder - can be kept as is if it just takes processed_data) ---
 def cluster_activity_logs(
-    processed_data: pd.DataFrame, 
-    n_clusters: int = 5 # Default, can be optimized
+    processed_data: pd.DataFrame,
+    n_clusters: Optional[int] = None, # Default is None to use automatic optimization
+    algorithm: str = "kmeans", # Options: "kmeans", "dbscan", "hierarchical"
+    auto_optimize: bool = True # Whether to automatically optimize the number of clusters
 ) -> Tuple[Optional[np.ndarray], Optional[float]]:
     """
-    Performs K-Means clustering on the preprocessed activity data.
+    Performs clustering on the preprocessed activity data using the specified algorithm.
+    
+    Args:
+        processed_data: Preprocessed activity data
+        n_clusters: Number of clusters (for KMeans and Hierarchical)
+        algorithm: Clustering algorithm to use ("kmeans", "dbscan", "hierarchical")
+        auto_optimize: Whether to automatically optimize the number of clusters
+        
+    Returns:
+        Tuple containing cluster labels and silhouette score (if applicable)
     """
     if processed_data is None or processed_data.empty:
         return None, None
     
-    if processed_data.shape[0] < n_clusters: # Not enough samples to form n_clusters
+    # Determine the optimal number of clusters if auto_optimize is True and algorithm supports it
+    if auto_optimize and algorithm in ["kmeans", "hierarchical"] and n_clusters is None:
+        n_clusters = optimize_clusters(processed_data)
+        print(f"Automatically determined optimal number of clusters: {n_clusters}")
+    elif n_clusters is None:
+        # Default to 5 clusters if not specified and not auto-optimized
+        n_clusters = 5
+    
+    if processed_data.shape[0] < n_clusters and algorithm in ["kmeans", "hierarchical"]:
         # Handle this case: maybe return error, or reduce n_clusters, or skip clustering
-        print(f"Warning: Number of samples ({processed_data.shape[0]}) is less than n_clusters ({n_clusters}). Skipping clustering.")
-        return None, None
-
-    kmeans = KMeans(n_clusters=n_clusters, random_state=42, n_init='auto')
+        print(f"Warning: Number of samples ({processed_data.shape[0]}) is less than n_clusters ({n_clusters}). Adjusting.")
+        n_clusters = max(2, processed_data.shape[0] // 2)
+    
+    # Choose the appropriate clustering algorithm
+    if algorithm == "dbscan":
+        return dbscan_cluster_activity_logs(processed_data)
+    elif algorithm == "hierarchical":
+        return hierarchical_cluster_activity_logs(processed_data, n_clusters)
+    else:  # Default to KMeans
+        kmeans = KMeans(n_clusters=n_clusters, random_state=42, n_init='auto')
     try:
         cluster_labels = kmeans.fit_predict(processed_data)
         
@@ -177,7 +202,156 @@ def cluster_activity_logs(
 #     else:
 #         return {"error": "Clustering failed."}
 
-# Placeholder for optimization logic (if needed)
-# def optimize_clusters(processed_data: pd.DataFrame, max_k: int = 10):
-#     # ... logic to find best k ...
-#     pass
+# Optimization logic for finding the best number of clusters
+def optimize_clusters(processed_data: pd.DataFrame, min_k: int = 2, max_k: int = 10) -> int:
+    """
+    Determines the optimal number of clusters using both the Elbow Method and Silhouette Score.
+    
+    Args:
+        processed_data: Preprocessed activity data
+        min_k: Minimum number of clusters to try
+        max_k: Maximum number of clusters to try
+        
+    Returns:
+        The optimal number of clusters
+    """
+    if processed_data is None or processed_data.empty:
+        return 5  # Default if no data
+    
+    # Ensure we don't try more clusters than we have samples
+    max_possible_k = min(max_k, processed_data.shape[0] - 1)
+    if max_possible_k < min_k:
+        return min(5, processed_data.shape[0] // 2)  # Fallback
+    
+    # Initialize metrics
+    inertia_values = []
+    silhouette_values = []
+    k_values = range(min_k, max_possible_k + 1)
+    
+    # Calculate metrics for each k
+    for k in k_values:
+        # KMeans clustering
+        kmeans = KMeans(n_clusters=k, random_state=42, n_init='auto')
+        cluster_labels = kmeans.fit_predict(processed_data)
+        
+        # Inertia (sum of squared distances to closest centroid)
+        inertia_values.append(kmeans.inertia_)
+        
+        # Silhouette score (measure of how similar an object is to its own cluster compared to other clusters)
+        if len(np.unique(cluster_labels)) > 1:
+            silhouette_avg = silhouette_score(processed_data, cluster_labels)
+            silhouette_values.append(silhouette_avg)
+        else:
+            silhouette_values.append(-1)  # Invalid score for single cluster
+    
+    # Find optimal k using the Elbow Method
+    # Calculate the rate of decrease in inertia
+    inertia_diffs = np.diff(inertia_values)
+    inertia_diffs = np.append(inertia_diffs, inertia_diffs[-1])  # Pad to match length
+    inertia_rate = inertia_diffs / inertia_values
+    elbow_k = k_values[np.argmax(inertia_rate)]
+    
+    # Find optimal k using Silhouette Score
+    silhouette_k = k_values[np.argmax(silhouette_values)]
+    
+    # Combine both methods (prefer silhouette if it's valid)
+    if max(silhouette_values) > 0.1:  # Threshold for a reasonable silhouette score
+        optimal_k = silhouette_k
+    else:
+        optimal_k = elbow_k
+    
+    print(f"Optimal number of clusters determined: {optimal_k} (Elbow: {elbow_k}, Silhouette: {silhouette_k})")
+    return optimal_k
+
+# Function to implement DBSCAN clustering as an alternative to KMeans
+def dbscan_cluster_activity_logs(
+    processed_data: pd.DataFrame,
+    eps: float = 0.5,  # Maximum distance between two samples to be considered in the same neighborhood
+    min_samples: int = 5  # Minimum number of samples in a neighborhood for a point to be a core point
+) -> Tuple[Optional[np.ndarray], Optional[float]]:
+    """
+    Performs DBSCAN clustering on the preprocessed activity data.
+    DBSCAN is density-based and can find clusters of arbitrary shape.
+    It can also identify outliers as noise.
+    
+    Args:
+        processed_data: Preprocessed activity data
+        eps: Maximum distance between two samples to be considered in the same neighborhood
+        min_samples: Minimum number of samples in a neighborhood for a point to be a core point
+        
+    Returns:
+        Tuple containing cluster labels and silhouette score (if applicable)
+    """
+    if processed_data is None or processed_data.empty:
+        return None, None
+    
+    # Adjust min_samples if we have few data points
+    if processed_data.shape[0] < min_samples * 2:
+        min_samples = max(2, processed_data.shape[0] // 4)
+    
+    try:
+        # Apply DBSCAN
+        dbscan = DBSCAN(eps=eps, min_samples=min_samples)
+        cluster_labels = dbscan.fit_predict(processed_data)
+        
+        # Calculate silhouette score if we have more than one cluster and no noise points (-1)
+        unique_labels = np.unique(cluster_labels)
+        if len(unique_labels) > 1 and -1 not in unique_labels:
+            score = silhouette_score(processed_data, cluster_labels)
+        else:
+            # If we have noise points, calculate silhouette only on clustered points
+            if -1 in unique_labels and len(unique_labels) > 2:
+                mask = cluster_labels != -1
+                score = silhouette_score(processed_data[mask], cluster_labels[mask])
+            else:
+                score = None
+                print("Silhouette score cannot be computed for DBSCAN results.")
+        
+        return cluster_labels, score
+    except Exception as e:
+        print(f"Error during DBSCAN clustering: {e}")
+        return None, None
+
+# Function to implement Hierarchical Clustering as another alternative
+def hierarchical_cluster_activity_logs(
+    processed_data: pd.DataFrame,
+    n_clusters: int = 5,  # Number of clusters
+    linkage: str = 'ward'  # Linkage criterion: 'ward', 'complete', 'average', or 'single'
+) -> Tuple[Optional[np.ndarray], Optional[float]]:
+    """
+    Performs Hierarchical Clustering on the preprocessed activity data.
+    Hierarchical clustering creates a tree of clusters and can reveal
+    the hierarchical structure in the data.
+    
+    Args:
+        processed_data: Preprocessed activity data
+        n_clusters: Number of clusters
+        linkage: Linkage criterion to use
+        
+    Returns:
+        Tuple containing cluster labels and silhouette score
+    """
+    if processed_data is None or processed_data.empty:
+        return None, None
+    
+    if processed_data.shape[0] < n_clusters:
+        print(f"Warning: Number of samples ({processed_data.shape[0]}) is less than n_clusters ({n_clusters}). Adjusting.")
+        n_clusters = max(2, processed_data.shape[0] // 2)
+    
+    try:
+        # Apply Hierarchical Clustering
+        hierarchical = AgglomerativeClustering(n_clusters=n_clusters, linkage=linkage)
+        cluster_labels = hierarchical.fit_predict(processed_data)
+        
+        # Calculate silhouette score
+        unique_labels = np.unique(cluster_labels)
+        if len(unique_labels) > 1 and processed_data.shape[0] > len(unique_labels):
+            score = silhouette_score(processed_data, cluster_labels)
+        else:
+            score = None
+            print("Silhouette score cannot be computed for hierarchical clustering results.")
+        
+        return cluster_labels, score
+    except Exception as e:
+        print(f"Error during hierarchical clustering: {e}")
+        return None, None
