@@ -6,6 +6,7 @@ from .routers import process_notes_router # Import the new Process Notes router
 from .routers import behavior as behavior_router # Import the Behavior router
 from .routers import pattern_recognition_router # Import the Pattern Recognition router
 from .routers import job_router # Import the Job router for asynchronous processing
+from .routers import publish_router # Import the Publish router
 
 app = FastAPI(
     title="Digame API",
@@ -20,6 +21,7 @@ app.include_router(process_notes_router.router, prefix="/process-notes", tags=["
 app.include_router(behavior_router.router, prefix="/behavior", tags=["Behavior Recognition"]) # Added Behavior router
 app.include_router(pattern_recognition_router.router, prefix="/pattern-recognition", tags=["Pattern Recognition"]) # Added Pattern Recognition router
 app.include_router(job_router.router, prefix="/api", tags=["Background Jobs"]) # Added Job router for asynchronous processing
+app.include_router(publish_router.router, prefix="/publish", tags=["Publishing"]) # Added Publish router
 
 # Optional: Add a root endpoint for basic health check or info
 @app.get("/")
