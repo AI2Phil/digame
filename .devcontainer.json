@@ -4,7 +4,12 @@
     "service": "backend",
     "workspaceFolder": "/app/digame",
     "remoteUser": "app",
+    "updateRemoteUserUID": true,
+    "containerEnv": {
+        "SHELL": "/bin/bash"
+    },
     "postCreateCommand": "echo 'Container setup complete'",
+    "postStartCommand": "sudo chsh -s /bin/bash app || echo 'Shell change attempted'",
     "customizations": {
         "vscode": {
             "extensions": [
@@ -17,7 +22,8 @@
                 "python.linting.enabled": true,
                 "python.linting.pylintEnabled": true,
                 "python.formatting.provider": "black",
-                "editor.formatOnSave": true
+                "editor.formatOnSave": true,
+                "terminal.integrated.defaultProfile.linux": "bash"
             }
         }
     }

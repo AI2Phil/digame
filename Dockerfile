@@ -35,7 +35,7 @@ COPY digame $APP_HOME/digame
 COPY models $APP_HOME/digame/app/models/
 
 # Create and switch to a non-root user
-RUN addgroup --system app && adduser --system --ingroup app --home /home/app app
+RUN addgroup --system app && adduser --system --ingroup app --home /home/app --shell /bin/bash app
 RUN chown -R app:app $APP_HOME
 USER app
 
