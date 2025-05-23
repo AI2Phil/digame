@@ -36,7 +36,7 @@ def get_anomalies_for_user(db: Session, user_id: int):
 # Try to import the actual functions, use fallbacks if they fail
 # Try to import the actual functions, use fallbacks if they fail
 # Import directly to avoid circular dependencies
-from ..crud.anomaly_crud import create_anomaly, get_anomalies_for_user
+# Note: create_anomaly and get_anomalies_for_user are defined locally in this file
 
 class PatternCategory:
     """Enum-like class for pattern categories"""
