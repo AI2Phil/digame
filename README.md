@@ -98,6 +98,41 @@ The Digame platform leverages cutting-edge technologies optimized for performanc
 - **Local LLM**: Quantized models optimized for device capabilities
 - **Background Services**: OS-specific APIs for continuous monitoring
 
+### Publish Behavioral Model to Git
+The Digame platform includes a feature to publish behavioral models directly to a Git repository. This allows for version control, sharing, and auditing of models.
+
+**Purpose:**
+-   To save a snapshot of a specific behavioral model's definition and its associated patterns as a structured JSON file.
+-   These JSON files are stored in the `published_models/` directory within the project.
+-   Each published model is then automatically added, committed, and pushed to the configured remote Git repository.
+
+**User Interface Interaction:**
+1.  Navigate to the "Behavioral Pattern Visualizations" dashboard in the frontend application.
+2.  Select the desired user and the specific behavioral model you wish to publish from the dropdown menus.
+3.  Click the "Publish Model" button (usually styled as an outlined, secondary color button).
+4.  The system will then process the model, serialize it to JSON, and attempt to commit and push it to the Git repository.
+5.  Feedback regarding the success or failure of the publishing process will be displayed on the dashboard (e.g., "Model published successfully" or an error message detailing any issues encountered).
+
+**Backend Configuration Prerequisites:**
+For the "Publish to Git" feature to function correctly, the backend server environment where the Digame application is running **must** meet the following prerequisites:
+
+1.  **Git Installed:** Git must be installed on the server.
+2.  **Git Global Configuration:** Git needs to be configured globally with a user name and email. This can be done using the following commands on the server:
+    ```bash
+    git config --global user.name "Your Name"
+    git config --global user.email "you@example.com"
+    ```
+    Replace `"Your Name"` and `"you@example.com"` with appropriate values, typically a service account or a designated bot user if preferred for automated commits.
+3.  **Repository Access & Authentication:** The server must have push access to the remote Git repository. This is typically configured via:
+    *   **SSH Keys:** An SSH key pair should be generated on the server, and the public key added to the Git hosting provider (e.g., GitHub, GitLab, Bitbucket) with write permissions for the target repository. An SSH agent (`ssh-agent`) might be needed to manage the key's passphrase if it's encrypted.
+    *   **HTTPS with Credential Helper:** Alternatively, Git can be configured to use a credential helper to store credentials (e.g., a Personal Access Token) for HTTPS authentication.
+    This setup is manual and highly dependent on the server's operating system and the Git hosting provider.
+4.  **File System Permissions:**
+    *   The application process (the user running the backend server) needs write permissions to the `published_models/` directory at the root of the project to create and write the JSON model files.
+    *   The application process also needs execute permissions for the `git` command.
+
+Failure to meet these prerequisites will result in errors when attempting to publish models.
+
 ### DevOps & Infrastructure
 - **Container Orchestration**: Kubernetes with dedicated operator
 - **Infrastructure as Code**: Terraform with composable modules

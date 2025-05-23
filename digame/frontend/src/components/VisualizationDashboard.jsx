@@ -13,6 +13,7 @@ import {
   Button,
   CircularProgress,
   Alert,
+  AlertTitle, // Added AlertTitle
   Tabs,
   Tab
 } from '@mui/material';
@@ -21,7 +22,8 @@ import {
   getSankeyData, 
   getRadarData, 
   getTimelineData,
-  getUserModels
+  getUserModels,
+  publishModel // Imported publishModel
 } from '../services/visualizationService';
 import HeatmapChart from './visualizations/HeatmapChart';
 import SankeyChart from './visualizations/SankeyChart';
@@ -48,8 +50,11 @@ const VisualizationDashboard = () => {
   
   // State for UI
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [publishing, setPublishing] = useState(false); 
+  const [error, setError] = useState(null); // General error for data fetching
   const [activeTab, setActiveTab] = useState(0);
+  const [publishSuccess, setPublishSuccess] = useState(null); // For publish success message
+  const [publishError, setPublishError] = useState(null); // For publish error message
   
   // Fetch user models on component mount
   useEffect(() => {
@@ -155,6 +160,38 @@ const VisualizationDashboard = () => {
   const handleRefresh = () => {
     fetchVisualizationData();
   };
+
+  /**
+   * Handle publishing the selected model
+   */
+  const handlePublishModel = async () => {
+    if (!selectedModel) {
+      setPublishError("No model selected to publish.");
+      return;
+    }
+    setPublishing(true);
+    setPublishSuccess(null);
+    setPublishError(null);
+
+    publishModel(selectedModel)
+      .then(response => {
+        setPublishSuccess(response.message || 'Model published successfully!');
+        setPublishError(null);
+      })
+      .catch(err => {
+        if (err.response && err.response.data && err.response.data.detail) {
+          setPublishError(err.response.data.detail);
+        } else if (err.message) {
+          setPublishError(err.message);
+        } else {
+          setPublishError('An unexpected error occurred while publishing.');
+        }
+        setPublishSuccess(null);
+      })
+      .finally(() => {
+        setPublishing(false);
+      });
+  };
   
   return (
     <Container maxWidth="xl">
@@ -219,7 +256,7 @@ const VisualizationDashboard = () => {
               />
             </Grid>
             
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid item xs={12} sm={6} md={1.5}> 
               <Button
                 fullWidth
                 variant="contained"
@@ -230,12 +267,40 @@ const VisualizationDashboard = () => {
                 {loading ? <CircularProgress size={24} /> : 'Refresh Data'}
               </Button>
             </Grid>
+            <Grid item xs={12} sm={6} md={1.5}>
+              <Button
+                fullWidth
+                variant="outlined"
+                color="secondary"
+                onClick={handlePublishModel}
+                disabled={loading || publishing || selectedModel === null}
+              >
+                {publishing ? <CircularProgress size={24} /> : 'Publish Model'}
+              </Button>
+            </Grid>
           </Grid>
         </Paper>
         
+        {/* General error for data fetching */}
         {error && (
-          <Alert severity="error" sx={{ mb: 4 }}>
+          <Alert severity="error" sx={{ mt: 2, mb: 2 }}> 
             {error}
+          </Alert>
+        )}
+
+        {/* Publish Success Alert */}
+        {publishSuccess && (
+          <Alert severity="success" onClose={() => setPublishSuccess(null)} sx={{ mt: 2, mb: 2 }}>
+            <AlertTitle>Success</AlertTitle>
+            {publishSuccess}
+          </Alert>
+        )}
+
+        {/* Publish Error Alert */}
+        {publishError && (
+          <Alert severity="error" onClose={() => setPublishError(null)} sx={{ mt: 2, mb: 2 }}>
+            <AlertTitle>Error</AlertTitle>
+            {publishError}
           </Alert>
         )}
         

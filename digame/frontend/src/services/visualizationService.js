@@ -123,5 +123,32 @@ export default {
   getSankeyData,
   getRadarData,
   getTimelineData,
-  getUserModels
+  getUserModels,
+  publishModel // Added publishModel
+};
+
+/**
+ * Publish a behavioral model
+ * @param {number} modelId - The ID of the model to publish
+ * @returns {Promise} - Promise with the response from the server
+ */
+export const publishModel = async (modelId) => {
+  const token = localStorage.getItem('token');
+  const headers = {
+    'Content-Type': 'application/json',
+  };
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
+  // Use axios.post directly for a path outside the instance's baseURL
+  // This ensures the request goes to /publish/model/{modelId}
+  // instead of /pattern-recognition/publish/model/{modelId}
+  try {
+    const response = await axios.post(`/publish/model/${modelId}`, null, { headers });
+    return response.data; // Return response.data directly for consistency with other services
+  } catch (error) {
+    console.error(`Error publishing model ${modelId}:`, error.response || error);
+    throw error; // Re-throw the error to be caught by the calling component
+  }
 };
