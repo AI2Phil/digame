@@ -11,6 +11,7 @@ from .activity import Activity
 from .activity_features import ActivityEnrichedFeature
 from .anomaly import DetectedAnomaly
 from .task import Task # Added new model
+from .user_setting import UserSetting # Import the new UserSetting model
 
 # Optionally, define __all__ to specify what is exported when 'from .models import *' is used
 __all__ = [
@@ -25,4 +26,5 @@ __all__ = [
     "ActivityEnrichedFeature",
     "DetectedAnomaly",
     "Task", # Added new model
+    "UserSetting", # Add UserSetting to __all__
 ]

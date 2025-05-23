@@ -6,6 +6,7 @@ from .rbac_schemas import RoleCreate, RoleResponse, PermissionCreate, Permission
 from .process_note_schemas import ProcessNoteResponse, ProcessDiscoveryResponse, ProcessNoteFeedbackUpdate
 from .anomaly_schemas import DetectedAnomalyResponse, DetectedAnomalyBase
 from .task_schemas import TaskBase, TaskCreate, TaskUpdate, TaskResponse # Added new task schemas
+from .user_setting_schemas import UserSettingBase, UserSettingCreate, UserSettingUpdate, UserSetting # Import new UserSetting schemas
 
 __all__ = [
     "RoleCreate", "RoleResponse",
@@ -15,7 +16,8 @@ __all__ = [
     "ProcessNoteResponse",
     "ProcessDiscoveryResponse",
     "ProcessNoteFeedbackUpdate",
-    "DetectedAnomalyBase", 
+    "DetectedAnomalyBase",
     "DetectedAnomalyResponse",
     "TaskBase", "TaskCreate", "TaskUpdate", "TaskResponse", # Added new task schemas
+    "UserSettingBase", "UserSettingCreate", "UserSettingUpdate", "UserSetting", # Add UserSetting schemas to __all__
 ]

@@ -3,6 +3,8 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 from datetime import datetime
 
+# Removed: from .user_setting import UserSetting # This caused a circular import
+
 Base = declarative_base()
 
 class User(Base):
@@ -72,6 +74,15 @@ class User(Base):
         "BehavioralModel", # String reference to the BehavioralModel class
         back_populates="user", # Corresponds to the 'user' attribute in BehavioralModel
         cascade="all, delete-orphan" # If a user is deleted, their behavioral models are also deleted.
+    )
+
+    # Relationship to UserSetting model
+    # This allows accessing the user's settings.
+    settings = relationship(
+        "UserSetting",
+        back_populates="user",
+        uselist=False, # One-to-one relationship
+        cascade="all, delete-orphan" # If a user is deleted, their settings are also deleted.
     )
 
     def __repr__(self):
