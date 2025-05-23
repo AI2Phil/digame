@@ -8,15 +8,7 @@ from digame.app.models.user import User as SQLAlchemyUser # Renamed to avoid Pyd
 from digame.app.schemas.user_schemas import User as PydanticUser # Assuming User schema for response
 from digame.app.crud import user_crud # Assuming user_crud exists for fetching user by username/id
 from digame.app.services.rbac_service import user_has_permission
-# Placeholder for get_db dependency
-# from digame.app.db.session import SessionLocal # Replace with your actual SessionLocal
-# def get_db():
-#     db = SessionLocal()
-#     try:
-#         yield db
-#     finally:
-#         db.close()
-from digame.app.routers.admin_rbac_router import get_db # Temporary: using get_db from rbac_router
+from digame.app.db import get_db # Import get_db from the shared db module
 
 # --- Configuration ---
 # In a real app, get these from config settings

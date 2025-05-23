@@ -1,7 +1,7 @@
 import re
 import json
 from urllib.parse import urlparse
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict, Any, List, Tuple
 
 from sqlalchemy.orm import Session, joinedload, selectinload
 from sqlalchemy import desc

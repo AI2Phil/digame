@@ -179,6 +179,26 @@ def load_model_components(model_path=PRIMARY_MODEL_PATH):
 # --- Prediction/Inference ---
 _cached_model_assets = None
 
+# Wrapper function for compatibility with router imports
+def load_model(model_path_base=PRIMARY_MODEL_PATH):
+    """
+    Wrapper function to maintain compatibility with router imports.
+    Loads a model and its associated components from the specified path.
+    
+    Args:
+        model_path_base: Base path for the model file (without .pth extension)
+        
+    Returns:
+        Tuple of (model, optimizer, encoders, scaler, model_params)
+    """
+    # Ensure .pth extension is added if not present
+    if not model_path_base.endswith('.pth'):
+        model_path = model_path_base + '.pth'
+    else:
+        model_path = model_path_base
+        
+    return load_model_components(model_path)
+
 def get_loaded_model_assets(model_path=PRIMARY_MODEL_PATH):
     global _cached_model_assets
     
@@ -190,9 +210,9 @@ def get_loaded_model_assets(model_path=PRIMARY_MODEL_PATH):
     # Cache validation: if model path changed or cache empty
     if _cached_model_assets is None or _cached_model_assets.get("model_path") != effective_model_path:
         logger.info(f"Loading model assets from: {effective_model_path}")
-        loaded_model, _, loaded_encoders, loaded_scaler, model_params = load_model_components(effective_model_path) 
+        loaded_model, _, loaded_encoders, loaded_scaler, model_params = load_model_components(effective_model_path)
         if loaded_model and loaded_encoders and loaded_scaler and model_params: # Ensure model_params is also checked
-            loaded_model.eval() 
+            loaded_model.eval()
             _cached_model_assets = {
                 "model": loaded_model, "encoders": loaded_encoders, "scaler": loaded_scaler,
                 "sequence_length": model_params.get('sequence_length', 10), # Correctly from model_params
@@ -203,6 +223,33 @@ def get_loaded_model_assets(model_path=PRIMARY_MODEL_PATH):
             _cached_model_assets = None # Ensure cache is cleared on failure
             return None # Explicitly return None on failure
     return _cached_model_assets
+
+# Function to prepare data for predictive modeling
+def prepare_predictive_data(df, sequence_length=10):
+    """
+    Prepares data for predictive modeling by creating sequences from activity data.
+    This is a simplified version of prepare_sequences that focuses on prediction preparation.
+    
+    Args:
+        df: DataFrame containing activity data
+        sequence_length: Length of sequences to create
+        
+    Returns:
+        Processed DataFrame ready for prediction
+    """
+    # This is a simplified implementation - in a real system, this would do more processing
+    processed_df = df.copy()
+    
+    # Ensure timestamp is datetime
+    if 'timestamp' in processed_df.columns:
+        processed_df['timestamp'] = pd.to_datetime(processed_df['timestamp'])
+    
+    # Add time-based features
+    if 'timestamp' in processed_df.columns:
+        processed_df['hour_of_day'] = processed_df['timestamp'].dt.hour
+        processed_df['day_of_week'] = processed_df['timestamp'].dt.dayofweek
+    
+    return processed_df
 
 def predict_next_action(user_id, current_sequence_df, model_path=PRIMARY_MODEL_PATH):
     model_assets = get_loaded_model_assets(model_path)
@@ -220,7 +267,7 @@ def predict_next_action(user_id, current_sequence_df, model_path=PRIMARY_MODEL_P
         return None, None
     processed_sequence_df['hour_of_day'] = pd.to_datetime(processed_sequence_df['timestamp']).dt.hour
     processed_sequence_df['day_of_week'] = pd.to_datetime(processed_sequence_df['timestamp']).dt.dayofweek
-    features_to_scale = ['hour_of_day'] 
+    features_to_scale = ['hour_of_day']
     if scaler:
         processed_sequence_df[features_to_scale] = scaler.transform(processed_sequence_df[features_to_scale])
     else:
@@ -229,7 +276,7 @@ def predict_next_action(user_id, current_sequence_df, model_path=PRIMARY_MODEL_P
     sequence_features = processed_sequence_df[['activity_type_encoded', 'hour_of_day']].values
     if len(sequence_features) < sequence_length:
         logger.warning(f"Input sequence for user {user_id} is shorter ({len(sequence_features)}) than required ({sequence_length}).")
-        return None, None 
+        return None, None
     sequence_to_predict = sequence_features[-sequence_length:]
     sequence_tensor = torch.tensor([sequence_to_predict], dtype=torch.float32).to(next(model.parameters()).device)
     with torch.no_grad():

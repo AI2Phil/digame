@@ -5,44 +5,17 @@ from typing import List
 from digame.app.crud import rbac_crud
 from digame.app.schemas import rbac_schemas
 from digame.app.models import user as user_model_sqla # SQLAlchemy model for User
+from digame.app.db import get_db # Import get_db from the new db module
 # For now, we won't have current_user dependency as we are not protecting routes yet.
 from digame.app.auth.auth_dependencies import get_current_active_admin_user # Import the protection dependency
 
-# --- Database Dependency (Simplified) ---
-# In a real application, this would come from a shared db setup, e.g., digame.app.db.session
-# For now, let's define a placeholder. This MUST be replaced with actual DB session management.
-# This placeholder will not work without a proper database engine and SessionLocal.
-# For the purpose of this task, we'll assume the `get_db` dependency will be provided
-# correctly when the app is run.
-
-# Example of how it might look (if SessionLocal is defined elsewhere):
-# from digame.app.db.session import SessionLocal
-# def get_db():
-#     db = SessionLocal()
-#     try:
-#         yield db
-#     finally:
-#         db.close()
-
-# Placeholder get_db: This will need to be correctly implemented for the app to run.
-# For testing, this can be overridden.
-def get_db():
-    # This is a placeholder. In a real app, it should yield a SQLAlchemy session.
-    # For example:
-    # from my_project.database import SessionLocal
-    # db = SessionLocal()
-    # try:
-    #     yield db
-    # finally:
-    #     db.close()
-    # For now, to make the code type-check, we'll make it look like it returns a session,
-    # but it won't be functional without a real database setup.
-    # raise NotImplementedError("get_db dependency is not implemented. This needs a real DB session.")
-    pass # This will cause runtime errors if not overridden or properly implemented.
+# --- Database Dependency ---
+# We now import get_db from digame.app.db to avoid circular imports
+# This is just a comment block explaining the dependency injection pattern
+# The actual get_db function is imported from digame.app.db
 
 
 router = APIRouter(
-    prefix="/admin/rbac",
     tags=["Admin RBAC Management"],
     dependencies=[Depends(get_current_active_admin_user)], # Protect all routes in this router
 )
@@ -205,13 +178,15 @@ def remove_permission_from_role_endpoint(assignment: rbac_schemas.RolePermission
 # The `from digame.app import crud, schemas` might work if `digame/app/__init__.py` exports them.
 # For clarity, direct imports are often better. I'll adjust the imports in the file to be direct.I've created `digame/app/routers/admin_rbac_router.py` with the initial set of unprotected RBAC management endpoints in the previous step. I also defined a placeholder `get_db` dependency within that file.
 
-Now, I will refine the imports in `admin_rbac_router.py` to be more direct and explicit, as noted at the end of the previous file creation. This improves clarity and avoids reliance on `__init__.py` files exporting modules.
+# Now, I will refine the imports in `admin_rbac_router.py` to be more direct and explicit, as noted at the end of the previous file creation.
+# This improves clarity and avoids reliance on `__init__.py` files exporting modules.
 
-Specifically, I will change:
-`from digame.app import crud, schemas`
-to:
-`from digame.app.crud import rbac_crud`
-`from digame.app.schemas import rbac_schemas`
-
-And `from digame.app.models import user as user_model` to `from digame.app.models import user as user_model_sqla` (or similar to distinguish from Pydantic user models if they were in the same file, though here it's just for SQLAlchemy type hinting).
-The `schemas.rbac_schemas` and `crud.rbac_crud` will then be used directly.
+# Specifically, I will change:
+# `from digame.app import crud, schemas`
+# to:
+# `from digame.app.crud import rbac_crud`
+# `from digame.app.schemas import rbac_schemas`
+#
+# And `from digame.app.models import user as user_model` to `from digame.app.models import user as user_model_sqla`
+# (or similar to distinguish from Pydantic user models if they were in the same file, though here it's just for SQLAlchemy type hinting).
+# The `schemas.rbac_schemas` and `crud.rbac_crud` will then be used directly.

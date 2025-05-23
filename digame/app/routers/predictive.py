@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, Body, Depends, Query
-from pydantic import BaseModel, conlist
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 import torch
 import os
@@ -15,10 +15,9 @@ from ..predictive import (
 )
 from ..auth.auth_dependencies import PermissionChecker, get_current_active_user
 from ..models.user import User as SQLAlchemyUser # For current_user type hint
-from .admin_rbac_router import get_db # Placeholder, replace with actual get_db path
+from ..db import get_db # Import get_db from the shared db module
 
 router = APIRouter(
-    prefix="/predictive",
     tags=["Predictive Modeling"]
 )
 
@@ -49,7 +48,7 @@ class PredictRequest(BaseModel):
     # The length of this list should ideally be `sequence_length` used during training.
     # For simplicity, let's assume it's a list of activity_type strings.
     # The API will need to convert these to full feature vectors.
-    recent_activity_types: conlist(str, min_length=1) 
+    recent_activity_types: List[str]
     # model_path_base: str = "models/predictive_model" # Base path for model artifacts
 
 class PredictResponse(BaseModel):
