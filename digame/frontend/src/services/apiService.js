@@ -526,6 +526,112 @@ class ApiService {
       method: 'POST',
     });
   }
+
+  // Performance Monitoring & Analytics methods
+  async getPerformanceMetrics(timeRange = '24h') {
+    return this.request(`/analytics/performance?range=${timeRange}`);
+  }
+
+  async getUserBehaviorAnalytics(timeRange = '24h') {
+    return this.request(`/analytics/user-behavior?range=${timeRange}`);
+  }
+
+  async getApiUsageMetrics(timeRange = '24h') {
+    return this.request(`/analytics/api-usage?range=${timeRange}`);
+  }
+
+  async getDatabaseMetrics(timeRange = '24h') {
+    return this.request(`/analytics/database?range=${timeRange}`);
+  }
+
+  async getMobileAnalytics(timeRange = '24h') {
+    return this.request(`/analytics/mobile?range=${timeRange}`);
+  }
+
+  async exportAnalyticsData(timeRange = '24h') {
+    const response = await fetch(`${this.baseURL}/analytics/export?range=${timeRange}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${this.token}`,
+      },
+    });
+    
+    if (response.ok) {
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `analytics-${timeRange}-${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    }
+    
+    return this.handleResponse(response);
+  }
+
+  // Real-time analytics methods
+  async getRealtimeMetrics() {
+    return this.request('/analytics/realtime');
+  }
+
+  async getSystemHealth() {
+    return this.request('/analytics/system-health');
+  }
+
+  async getApiEndpointMetrics() {
+    return this.request('/analytics/api-endpoints');
+  }
+
+  async getUserJourneyAnalytics() {
+    return this.request('/analytics/user-journey');
+  }
+
+  async getConversionMetrics() {
+    return this.request('/analytics/conversion');
+  }
+
+  async getGeographicAnalytics() {
+    return this.request('/analytics/geographic');
+  }
+
+  async getDeviceAnalytics() {
+    return this.request('/analytics/devices');
+  }
+
+  async getAppVersionAnalytics() {
+    return this.request('/analytics/app-versions');
+  }
+
+  async getPerformanceAlerts() {
+    return this.request('/analytics/alerts');
+  }
+
+  async acknowledgeAlert(alertId) {
+    return this.request(`/analytics/alerts/${alertId}/acknowledge`, {
+      method: 'POST',
+    });
+  }
+
+  // Custom analytics queries
+  async runCustomQuery(query) {
+    return this.request('/analytics/custom', {
+      method: 'POST',
+      body: JSON.stringify({ query }),
+    });
+  }
+
+  async saveAnalyticsDashboard(dashboardConfig) {
+    return this.request('/analytics/dashboards', {
+      method: 'POST',
+      body: JSON.stringify(dashboardConfig),
+    });
+  }
+
+  async getAnalyticsDashboards() {
+    return this.request('/analytics/dashboards');
+  }
 }
 
 // Create and export a singleton instance
