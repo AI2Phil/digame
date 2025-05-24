@@ -22,4 +22,9 @@ __all__ = [
     "TaskBase", "TaskCreate", "TaskUpdate", "TaskResponse", # Added new task schemas
     "UserSettingBase", "UserSettingCreate", "UserSettingUpdate", "UserSetting", # Add UserSetting schemas to __all__
     "OnboardingDataBase", "OnboardingDataCreate", "OnboardingDataUpdate", "OnboardingDataResponse", "OnboardingStep", # Add onboarding schemas to __all__
+    "writing_assistance_schemas",
+    "communication_style_schemas",
 ]
+
+from . import writing_assistance_schemas
+from . import communication_style_schemas
