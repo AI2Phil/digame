@@ -1,39 +1,34 @@
-// Service Worker for Push Notifications and Offline Capability
-const CACHE_NAME = 'digame-v1';
-const OFFLINE_URL = '/offline.html';
+/**
+ * Service Worker for Push Notifications
+ * Handles background push notifications and notification interactions
+ */
 
-// Files to cache for offline functionality
-const CACHE_URLS = [
-  '/',
-  '/static/js/bundle.js',
-  '/static/css/main.css',
-  '/manifest.json',
-  '/offline.html',
-  '/icon-192x192.png',
-  '/icon-512x512.png'
+const CACHE_NAME = 'digame-notifications-v1';
+const urlsToCache = [
+  '/icons/notification-icon.png',
+  '/icons/badge-icon.png',
+  '/sounds/notification-default.mp3',
+  '/sounds/notification-achievement.mp3',
+  '/sounds/notification-milestone.mp3',
+  '/sounds/notification-alert.mp3'
 ];
 
-// Install event - cache resources
+// Install event - cache notification assets
 self.addEventListener('install', (event) => {
-  console.log('Service Worker installing...');
-  
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => {
-        console.log('Caching app shell');
-        return cache.addAll(CACHE_URLS);
+        console.log('Opened cache');
+        return cache.addAll(urlsToCache);
       })
-      .then(() => {
-        // Force the waiting service worker to become the active service worker
-        return self.skipWaiting();
+      .catch((error) => {
+        console.error('Failed to cache notification assets:', error);
       })
   );
 });
 
 // Activate event - clean up old caches
 self.addEventListener('activate', (event) => {
-  console.log('Service Worker activating...');
-  
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
@@ -44,290 +39,356 @@ self.addEventListener('activate', (event) => {
           }
         })
       );
-    }).then(() => {
-      // Ensure the new service worker takes control immediately
-      return self.clients.claim();
     })
   );
 });
 
-// Fetch event - serve from cache when offline
-self.addEventListener('fetch', (event) => {
-  // Skip non-GET requests
-  if (event.request.method !== 'GET') {
-    return;
-  }
-
-  // Skip chrome-extension requests
-  if (event.request.url.startsWith('chrome-extension://')) {
-    return;
-  }
-
-  event.respondWith(
-    caches.match(event.request)
-      .then((response) => {
-        // Return cached version or fetch from network
-        if (response) {
-          return response;
-        }
-
-        return fetch(event.request)
-          .then((response) => {
-            // Don't cache non-successful responses
-            if (!response || response.status !== 200 || response.type !== 'basic') {
-              return response;
-            }
-
-            // Clone the response for caching
-            const responseToCache = response.clone();
-
-            caches.open(CACHE_NAME)
-              .then((cache) => {
-                cache.put(event.request, responseToCache);
-              });
-
-            return response;
-          })
-          .catch(() => {
-            // If both cache and network fail, show offline page for navigation requests
-            if (event.request.destination === 'document') {
-              return caches.match(OFFLINE_URL);
-            }
-          });
-      })
-  );
-});
-
-// Push event - handle push notifications
+// Push event - handle incoming push notifications
 self.addEventListener('push', (event) => {
-  console.log('Push notification received:', event);
+  console.log('Push event received:', event);
 
   let notificationData = {
     title: 'Digame Notification',
     body: 'You have a new notification',
-    icon: '/icon-192x192.png',
-    badge: '/badge-72x72.png',
+    icon: '/icons/notification-icon.png',
+    badge: '/icons/badge-icon.png',
     tag: 'default',
     requireInteraction: false,
-    actions: [
-      {
-        action: 'view',
-        title: 'View',
-        icon: '/icon-view.png'
-      },
-      {
-        action: 'dismiss',
-        title: 'Dismiss',
-        icon: '/icon-dismiss.png'
-      }
-    ],
-    data: {
-      url: '/',
-      timestamp: Date.now()
-    }
+    actions: []
   };
 
   // Parse push data if available
   if (event.data) {
     try {
-      const pushData = event.data.json();
-      notificationData = { ...notificationData, ...pushData };
+      const data = event.data.json();
+      notificationData = { ...notificationData, ...data };
     } catch (error) {
-      console.error('Error parsing push data:', error);
-      notificationData.body = event.data.text();
+      console.error('Failed to parse push data:', error);
+      notificationData.body = event.data.text() || notificationData.body;
     }
   }
 
-  event.waitUntil(
-    self.registration.showNotification(notificationData.title, {
+  // Customize notification based on type
+  if (notificationData.type) {
+    switch (notificationData.type) {
+      case 'achievement':
+        notificationData.icon = '/icons/achievement-icon.png';
+        notificationData.badge = '/icons/trophy-badge.png';
+        notificationData.tag = 'achievement';
+        notificationData.requireInteraction = true;
+        notificationData.actions = [
+          {
+            action: 'view',
+            title: 'View Achievement',
+            icon: '/icons/view-icon.png'
+          },
+          {
+            action: 'share',
+            title: 'Share',
+            icon: '/icons/share-icon.png'
+          }
+        ];
+        break;
+
+      case 'goal_progress':
+        notificationData.icon = '/icons/goal-icon.png';
+        notificationData.badge = '/icons/target-badge.png';
+        notificationData.tag = 'goal_progress';
+        notificationData.actions = [
+          {
+            action: 'view_goal',
+            title: 'View Goal',
+            icon: '/icons/view-icon.png'
+          },
+          {
+            action: 'update_progress',
+            title: 'Update Progress',
+            icon: '/icons/edit-icon.png'
+          }
+        ];
+        break;
+
+      case 'system_alert':
+        notificationData.icon = '/icons/alert-icon.png';
+        notificationData.badge = '/icons/warning-badge.png';
+        notificationData.tag = 'system_alert';
+        notificationData.requireInteraction = true;
+        notificationData.actions = [
+          {
+            action: 'acknowledge',
+            title: 'Acknowledge',
+            icon: '/icons/check-icon.png'
+          },
+          {
+            action: 'view_details',
+            title: 'View Details',
+            icon: '/icons/details-icon.png'
+          }
+        ];
+        break;
+
+      case 'social_activity':
+        notificationData.icon = '/icons/social-icon.png';
+        notificationData.badge = '/icons/users-badge.png';
+        notificationData.tag = 'social_activity';
+        notificationData.actions = [
+          {
+            action: 'view_profile',
+            title: 'View Profile',
+            icon: '/icons/profile-icon.png'
+          }
+        ];
+        break;
+    }
+  }
+
+  // Show notification
+  const notificationPromise = self.registration.showNotification(
+    notificationData.title,
+    {
       body: notificationData.body,
       icon: notificationData.icon,
       badge: notificationData.badge,
       tag: notificationData.tag,
       requireInteraction: notificationData.requireInteraction,
       actions: notificationData.actions,
-      data: notificationData.data,
-      vibrate: [200, 100, 200],
-      timestamp: Date.now()
-    })
+      data: notificationData.data || {},
+      timestamp: Date.now(),
+      vibrate: notificationData.vibrate || [200, 100, 200],
+      silent: notificationData.silent || false
+    }
   );
+
+  event.waitUntil(notificationPromise);
 });
 
-// Notification click event
+// Notification click event - handle user interactions
 self.addEventListener('notificationclick', (event) => {
   console.log('Notification clicked:', event);
 
-  event.notification.close();
-
+  const notification = event.notification;
   const action = event.action;
-  const data = event.notification.data || {};
+  const data = notification.data || {};
+
+  // Close the notification
+  notification.close();
 
   // Handle different actions
-  let url = '/';
-  
-  switch (action) {
-    case 'view':
-      url = data.url || '/dashboard';
-      break;
-    case 'dismiss':
-      // Just close the notification
-      return;
-    default:
-      // Default click action
-      url = data.url || '/';
-  }
+  let urlToOpen = '/';
 
-  event.waitUntil(
-    clients.matchAll({ type: 'window', includeUncontrolled: true })
-      .then((clientList) => {
-        // Check if there's already a window/tab open with the target URL
-        for (const client of clientList) {
-          if (client.url === url && 'focus' in client) {
-            return client.focus();
-          }
+  if (action) {
+    switch (action) {
+      case 'view':
+      case 'view_achievement':
+        urlToOpen = '/profile?tab=achievements';
+        if (data.achievement_id) {
+          urlToOpen += `&highlight=${data.achievement_id}`;
         }
+        break;
 
-        // If no existing window/tab, open a new one
-        if (clients.openWindow) {
-          return clients.openWindow(url);
+      case 'view_goal':
+        urlToOpen = '/profile?tab=goals';
+        if (data.goal_id) {
+          urlToOpen += `&highlight=${data.goal_id}`;
         }
-      })
-      .then(() => {
-        // Send message to client about notification click
-        return self.clients.matchAll().then((clients) => {
-          clients.forEach((client) => {
-            client.postMessage({
-              type: 'NOTIFICATION_CLICK',
-              action: action,
-              notification: event.notification.data
-            });
+        break;
+
+      case 'update_progress':
+        urlToOpen = '/profile?tab=goals';
+        if (data.goal_id) {
+          urlToOpen += `&edit=${data.goal_id}`;
+        }
+        break;
+
+      case 'acknowledge':
+        // Send acknowledgment to server
+        if (data.alert_id) {
+          fetch('/api/notifications/system-alerts/' + data.alert_id + '/acknowledge', {
+            method: 'POST',
+            headers: {
+              'Authorization': 'Bearer ' + (data.token || ''),
+              'Content-Type': 'application/json'
+            }
+          }).catch(error => {
+            console.error('Failed to acknowledge alert:', error);
           });
-        });
-      })
-  );
-});
-
-// Background sync event (for offline data sync)
-self.addEventListener('sync', (event) => {
-  console.log('Background sync triggered:', event.tag);
-
-  if (event.tag === 'background-sync') {
-    event.waitUntil(doBackgroundSync());
-  }
-});
-
-// Background sync function
-async function doBackgroundSync() {
-  try {
-    // Get pending sync data from IndexedDB
-    const pendingData = await getPendingSyncData();
-    
-    if (pendingData.length > 0) {
-      console.log('Syncing', pendingData.length, 'pending items');
-      
-      for (const item of pendingData) {
-        try {
-          await syncDataItem(item);
-          await removePendingSyncData(item.id);
-        } catch (error) {
-          console.error('Failed to sync item:', item.id, error);
         }
+        return; // Don't open a window
+
+      case 'view_details':
+        urlToOpen = '/admin?tab=alerts';
+        if (data.alert_id) {
+          urlToOpen += `&highlight=${data.alert_id}`;
+        }
+        break;
+
+      case 'view_profile':
+        urlToOpen = '/social';
+        if (data.user_id) {
+          urlToOpen += `?user=${data.user_id}`;
+        }
+        break;
+
+      case 'share':
+        // Handle sharing
+        if (navigator.share && data.share_data) {
+          navigator.share(data.share_data).catch(error => {
+            console.error('Failed to share:', error);
+          });
+        }
+        return; // Don't open a window
+
+      default:
+        // Default action based on notification type
+        switch (notification.tag) {
+          case 'achievement':
+            urlToOpen = '/profile?tab=achievements';
+            break;
+          case 'goal_progress':
+            urlToOpen = '/profile?tab=goals';
+            break;
+          case 'system_alert':
+            urlToOpen = '/admin';
+            break;
+          case 'social_activity':
+            urlToOpen = '/social';
+            break;
+        }
+    }
+  } else {
+    // No specific action, use default based on type
+    switch (notification.tag) {
+      case 'achievement':
+        urlToOpen = '/profile?tab=achievements';
+        break;
+      case 'goal_progress':
+        urlToOpen = '/profile?tab=goals';
+        break;
+      case 'system_alert':
+        urlToOpen = '/admin';
+        break;
+      case 'social_activity':
+        urlToOpen = '/social';
+        break;
+    }
+  }
+
+  // Open or focus the app window
+  const openWindow = clients.matchAll({
+    type: 'window',
+    includeUncontrolled: true
+  }).then((clientList) => {
+    // Check if there's already a window open
+    for (let i = 0; i < clientList.length; i++) {
+      const client = clientList[i];
+      if (client.url.includes(self.location.origin)) {
+        // Focus existing window and navigate
+        client.focus();
+        return client.navigate(urlToOpen);
       }
     }
-  } catch (error) {
-    console.error('Background sync failed:', error);
-  }
-}
 
-// Helper functions for IndexedDB operations
-async function getPendingSyncData() {
-  return new Promise((resolve, reject) => {
-    const request = indexedDB.open('DigameOfflineDB', 1);
-    
-    request.onerror = () => reject(request.error);
-    
-    request.onsuccess = () => {
-      const db = request.result;
-      const transaction = db.transaction(['pendingSync'], 'readonly');
-      const store = transaction.objectStore('pendingSync');
-      const getAllRequest = store.getAll();
-      
-      getAllRequest.onsuccess = () => resolve(getAllRequest.result);
-      getAllRequest.onerror = () => reject(getAllRequest.error);
-    };
-    
-    request.onupgradeneeded = (event) => {
-      const db = event.target.result;
-      if (!db.objectStoreNames.contains('pendingSync')) {
-        const store = db.createObjectStore('pendingSync', { keyPath: 'id' });
-        store.createIndex('timestamp', 'timestamp', { unique: false });
+    // Open new window
+    return clients.openWindow(urlToOpen);
+  });
+
+  event.waitUntil(openWindow);
+});
+
+// Notification close event - track dismissals
+self.addEventListener('notificationclose', (event) => {
+  console.log('Notification closed:', event);
+
+  const notification = event.notification;
+  const data = notification.data || {};
+
+  // Track notification dismissal
+  if (data.track_dismissal) {
+    fetch('/api/notifications/track-dismissal', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer ' + (data.token || ''),
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        notification_id: data.notification_id,
+        type: notification.tag,
+        dismissed_at: new Date().toISOString()
+      })
+    }).catch(error => {
+      console.error('Failed to track notification dismissal:', error);
+    });
+  }
+});
+
+// Background sync for offline notifications
+self.addEventListener('sync', (event) => {
+  if (event.tag === 'background-sync-notifications') {
+    event.waitUntil(syncNotifications());
+  }
+});
+
+// Sync notifications when back online
+async function syncNotifications() {
+  try {
+    const response = await fetch('/api/notifications/sync', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
       }
-    };
-  });
-}
+    });
 
-async function syncDataItem(item) {
-  const response = await fetch(item.url, {
-    method: item.method,
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${item.token}`
-    },
-    body: item.data ? JSON.stringify(item.data) : undefined
-  });
-
-  if (!response.ok) {
-    throw new Error(`Sync failed: ${response.status} ${response.statusText}`);
-  }
-
-  return response.json();
-}
-
-async function removePendingSyncData(id) {
-  return new Promise((resolve, reject) => {
-    const request = indexedDB.open('DigameOfflineDB', 1);
-    
-    request.onsuccess = () => {
-      const db = request.result;
-      const transaction = db.transaction(['pendingSync'], 'readwrite');
-      const store = transaction.objectStore('pendingSync');
-      const deleteRequest = store.delete(id);
+    if (response.ok) {
+      const notifications = await response.json();
       
-      deleteRequest.onsuccess = () => resolve();
-      deleteRequest.onerror = () => reject(deleteRequest.error);
-    };
-  });
+      // Show any missed notifications
+      notifications.forEach(notification => {
+        self.registration.showNotification(notification.title, {
+          body: notification.body,
+          icon: notification.icon || '/icons/notification-icon.png',
+          badge: notification.badge || '/icons/badge-icon.png',
+          tag: notification.tag || 'sync',
+          data: notification.data || {}
+        });
+      });
+    }
+  } catch (error) {
+    console.error('Failed to sync notifications:', error);
+  }
 }
 
 // Message event - handle messages from main thread
 self.addEventListener('message', (event) => {
-  console.log('Service Worker received message:', event.data);
+  console.log('Service worker received message:', event.data);
 
-  if (event.data && event.data.type === 'SKIP_WAITING') {
-    self.skipWaiting();
+  const { type, payload } = event.data;
+
+  switch (type) {
+    case 'SKIP_WAITING':
+      self.skipWaiting();
+      break;
+
+    case 'GET_VERSION':
+      event.ports[0].postMessage({ version: CACHE_NAME });
+      break;
+
+    case 'CLEAR_NOTIFICATIONS':
+      // Clear all notifications
+      self.registration.getNotifications().then(notifications => {
+        notifications.forEach(notification => notification.close());
+      });
+      break;
+
+    case 'SHOW_TEST_NOTIFICATION':
+      self.registration.showNotification('Test Notification', {
+        body: 'This is a test notification from Digame',
+        icon: '/icons/notification-icon.png',
+        badge: '/icons/badge-icon.png',
+        tag: 'test'
+      });
+      break;
+
+    default:
+      console.log('Unknown message type:', type);
   }
 });
-
-// Periodic background sync (if supported)
-self.addEventListener('periodicsync', (event) => {
-  console.log('Periodic sync triggered:', event.tag);
-
-  if (event.tag === 'content-sync') {
-    event.waitUntil(doPeriodicSync());
-  }
-});
-
-async function doPeriodicSync() {
-  try {
-    // Sync critical data periodically
-    console.log('Performing periodic sync...');
-    
-    // You can implement periodic data fetching here
-    // For example, sync user preferences, goals, etc.
-    
-  } catch (error) {
-    console.error('Periodic sync failed:', error);
-  }
-}
-
-console.log('Service Worker loaded');

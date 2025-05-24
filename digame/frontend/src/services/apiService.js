@@ -632,6 +632,142 @@ class ApiService {
   async getAnalyticsDashboards() {
     return this.request('/analytics/dashboards');
   }
+
+  // Real-time Notifications & Alerts methods
+  async getNotificationPreferences() {
+    return this.request('/notifications/preferences');
+  }
+
+  async updateNotificationPreferences(preferences) {
+    return this.request('/notifications/preferences', {
+      method: 'PUT',
+      body: JSON.stringify(preferences),
+    });
+  }
+
+  async getNotifications(filter = {}) {
+    const params = new URLSearchParams(filter);
+    return this.request(`/notifications?${params}`);
+  }
+
+  async markNotificationAsRead(notificationId) {
+    return this.request(`/notifications/${notificationId}/read`, {
+      method: 'POST',
+    });
+  }
+
+  async markAllNotificationsAsRead() {
+    return this.request('/notifications/mark-all-read', {
+      method: 'POST',
+    });
+  }
+
+  async deleteNotification(notificationId) {
+    return this.request(`/notifications/${notificationId}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async clearAllNotifications() {
+    return this.request('/notifications/clear-all', {
+      method: 'DELETE',
+    });
+  }
+
+  // Push Notification methods
+  async subscribeToPushNotifications(subscription) {
+    return this.request('/notifications/push/subscribe', {
+      method: 'POST',
+      body: JSON.stringify(subscription),
+    });
+  }
+
+  async unsubscribeFromPushNotifications() {
+    return this.request('/notifications/push/unsubscribe', {
+      method: 'POST',
+    });
+  }
+
+  async sendTestNotification() {
+    return this.request('/notifications/test', {
+      method: 'POST',
+    });
+  }
+
+  // Achievement notification methods
+  async triggerAchievementCheck(userId) {
+    return this.request('/achievements/check', {
+      method: 'POST',
+      body: JSON.stringify({ user_id: userId }),
+    });
+  }
+
+  async getAchievementNotifications() {
+    return this.request('/notifications/achievements');
+  }
+
+  // Goal progress notification methods
+  async updateGoalProgress(goalId, progress) {
+    return this.request(`/goals/${goalId}/progress`, {
+      method: 'PUT',
+      body: JSON.stringify({ progress }),
+    });
+  }
+
+  async getGoalProgressNotifications() {
+    return this.request('/notifications/goals');
+  }
+
+  // System alert methods
+  async getSystemAlerts() {
+    return this.request('/notifications/system-alerts');
+  }
+
+  async acknowledgeSystemAlert(alertId) {
+    return this.request(`/notifications/system-alerts/${alertId}/acknowledge`, {
+      method: 'POST',
+    });
+  }
+
+  // Mobile push notification methods
+  async registerMobileDevice(deviceInfo) {
+    return this.request('/notifications/mobile/register', {
+      method: 'POST',
+      body: JSON.stringify(deviceInfo),
+    });
+  }
+
+  async updateMobileDeviceToken(deviceId, token) {
+    return this.request(`/notifications/mobile/${deviceId}/token`, {
+      method: 'PUT',
+      body: JSON.stringify({ token }),
+    });
+  }
+
+  async sendMobilePushNotification(deviceId, notification) {
+    return this.request(`/notifications/mobile/${deviceId}/send`, {
+      method: 'POST',
+      body: JSON.stringify(notification),
+    });
+  }
+
+  // Notification analytics methods
+  async getNotificationAnalytics(timeRange = '7d') {
+    return this.request(`/notifications/analytics?range=${timeRange}`);
+  }
+
+  async getNotificationEngagementStats() {
+    return this.request('/notifications/engagement');
+  }
+
+  // Real-time connection methods
+  async getWebSocketToken() {
+    return this.request('/auth/websocket-token');
+  }
+
+  async validateWebSocketConnection() {
+    return this.request('/websocket/validate');
+  }
 }
 
 // Create and export a singleton instance
