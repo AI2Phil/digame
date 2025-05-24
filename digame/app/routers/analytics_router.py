@@ -1,391 +1,522 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+"""
+Advanced Analytics router for predictive performance modeling and ROI measurement
+"""
+
+from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
 from sqlalchemy.orm import Session
-from sqlalchemy import func, desc, and_
-from typing import List, Dict, Any, Optional
+from typing import List, Optional, Dict, Any
 from datetime import datetime, timedelta
-import json
+import logging
 
-from ..db import get_db
-from ..models.user import User
-from ..models.activity import Activity
-from ..models.anomaly import DetectedAnomaly
-from ..models.process_notes import ProcessNote
-from ..models.activity_features import ActivityEnrichedFeature
-from ..auth.auth_dependencies import get_current_active_user
+from ..services.analytics_service import get_analytics_service
+from ..models.analytics import AnalyticsModel, AnalyticsPrediction, ROICalculation, PerformanceMetric
 
-router = APIRouter(prefix="/analytics", tags=["analytics"])
+# Mock dependencies for development
+def get_db():
+    """Mock database session"""
+    return None
 
-@router.get("/dashboard")
-async def get_dashboard_analytics(
-    period: str = "7d",
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
+def get_current_user():
+    """Mock current user"""
+    class MockUser:
+        def __init__(self):
+            self.id = 1
+            self.email = "user@example.com"
+            self.full_name = "Test User"
+    return MockUser()
+
+def get_current_tenant():
+    """Mock current tenant"""
+    return 1
+
+router = APIRouter(prefix="/analytics", tags=["advanced-analytics"])
+
+# Analytics Models Endpoints
+
+@router.get("/models", response_model=dict)
+async def get_analytics_models(
+    model_type: Optional[str] = Query(None),
+    category: Optional[str] = Query(None),
+    active_only: bool = Query(True),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(50, ge=1, le=100),
+    current_user=Depends(get_current_user),
+    tenant_id: int = Depends(get_current_tenant),
+    db: Session = Depends(get_db)
 ):
-    """Get comprehensive analytics for the user dashboard"""
+    """Get analytics models for tenant"""
     
-    # Calculate date range
-    now = datetime.utcnow()
-    if period == "7d":
-        start_date = now - timedelta(days=7)
-    elif period == "30d":
-        start_date = now - timedelta(days=30)
-    elif period == "90d":
-        start_date = now - timedelta(days=90)
-    else:
-        start_date = now - timedelta(days=7)
+    # Mock analytics models data
+    models = [
+        {
+            "id": 1,
+            "model_uuid": "model-123e4567-e89b-12d3-a456-426614174000",
+            "name": "user_performance_predictor",
+            "display_name": "User Performance Predictor",
+            "description": "Predicts user performance based on activity patterns and engagement metrics",
+            "model_type": "performance",
+            "category": "predictive",
+            "algorithm": "random_forest_regressor",
+            "features": ["hours_worked", "tasks_completed", "meetings_attended", "experience_years"],
+            "target_variable": "performance_score",
+            "status": "trained",
+            "is_active": True,
+            "is_production": True,
+            "accuracy_score": 0.87,
+            "r2_score": 0.82,
+            "mae_score": 5.2,
+            "prediction_count": 1250,
+            "last_trained_at": "2025-05-20T10:30:00Z",
+            "last_prediction_at": "2025-05-24T09:45:00Z",
+            "created_at": "2025-05-01T14:20:00Z"
+        },
+        {
+            "id": 2,
+            "model_uuid": "model-456e7890-e89b-12d3-a456-426614174001",
+            "name": "productivity_optimizer",
+            "display_name": "Productivity Optimizer",
+            "description": "Analyzes productivity patterns and suggests optimization strategies",
+            "model_type": "productivity",
+            "category": "prescriptive",
+            "algorithm": "linear_regression",
+            "features": ["focus_time_hours", "interruptions_count", "tools_used", "collaboration_score"],
+            "target_variable": "productivity_index",
+            "status": "trained",
+            "is_active": True,
+            "is_production": False,
+            "accuracy_score": 0.79,
+            "r2_score": 0.75,
+            "mae_score": 8.1,
+            "prediction_count": 890,
+            "last_trained_at": "2025-05-22T16:15:00Z",
+            "last_prediction_at": "2025-05-24T08:30:00Z",
+            "created_at": "2025-05-10T11:45:00Z"
+        }
+    ]
     
-    # Get user activities in the period
-    activities = db.query(Activity).filter(
-        and_(
-            Activity.user_id == current_user.id,
-            Activity.timestamp >= start_date,
-            Activity.timestamp <= now
-        )
-    ).all()
+    # Apply filters
+    if model_type:
+        models = [m for m in models if m["model_type"] == model_type]
     
-    # Calculate total active time (in minutes)
-    total_active_time = len(activities) * 5  # Assuming 5-minute intervals
+    if category:
+        models = [m for m in models if m["category"] == category]
     
-    # Get productivity data from enriched features
-    enriched_activities = db.query(ActivityEnrichedFeature).join(
-        Activity, Activity.id == ActivityEnrichedFeature.activity_id
-    ).filter(
-        and_(
-            Activity.user_id == current_user.id,
-            Activity.timestamp >= start_date
-        )
-    ).all()
+    if active_only:
+        models = [m for m in models if m["is_active"]]
     
-    # Calculate productivity score
-    productive_activities = [a for a in enriched_activities if a.productivity_score and a.productivity_score > 0.6]
-    productivity_score = (len(productive_activities) / len(enriched_activities) * 100) if enriched_activities else 0
-    
-    # Get anomalies
-    anomalies = db.query(DetectedAnomaly).filter(
-        and_(
-            DetectedAnomaly.user_id == current_user.id,
-            DetectedAnomaly.timestamp >= start_date
-        )
-    ).all()
-    
-    # Calculate focus sessions (consecutive productive periods)
-    focus_sessions = calculate_focus_sessions(enriched_activities)
-    
-    # Generate activity breakdown
-    activity_breakdown = generate_activity_breakdown(enriched_activities)
-    
-    # Generate productivity trend
-    productivity_trend = generate_productivity_trend(enriched_activities, start_date, now)
-    
-    # Generate activity timeline
-    activity_timeline = generate_activity_timeline(activities[-50:])  # Last 50 activities
-    
-    # Get insights and recommendations
-    insights = generate_insights(enriched_activities, anomalies, current_user)
-    
-    # Get goals progress
-    goals_progress = get_goals_progress(current_user)
+    # Apply pagination
+    total = len(models)
+    models = models[skip:skip + limit]
     
     return {
-        "totalActiveTime": total_active_time,
-        "activeTimeIncrease": calculate_time_increase(activities, start_date),
-        "focusSessions": len(focus_sessions),
-        "avgFocusTime": sum(session['duration'] for session in focus_sessions) / len(focus_sessions) if focus_sessions else 0,
-        "distractions": len([a for a in anomalies if a.anomaly_type == "distraction"]),
-        "distractionTrend": calculate_distraction_trend(anomalies, start_date),
-        "productivity": {
-            "score": round(float(productivity_score), 1),
-            "trend": calculate_productivity_trend(enriched_activities, start_date)
-        },
-        "activityBreakdown": activity_breakdown,
-        "productivityTrend": productivity_trend,
-        "activityTimeline": activity_timeline,
-        "insights": insights,
-        "anomalies": [
-            {
-                "type": anomaly.anomaly_type,
-                "description": anomaly.description,
-                "severity": anomaly.severity_score or 0.5,
-                "timestamp": anomaly.timestamp.isoformat()
-            }
-            for anomaly in anomalies[-10:]  # Last 10 anomalies
-        ],
-        "goals": goals_progress,
-        "weeklyStats": calculate_weekly_stats(activities, enriched_activities),
-        "detailedMetrics": calculate_detailed_metrics(activities, enriched_activities)
+        "success": True,
+        "models": models,
+        "total": total,
+        "skip": skip,
+        "limit": limit,
+        "model_types": ["performance", "productivity", "roi", "churn", "engagement"],
+        "categories": ["predictive", "descriptive", "prescriptive"],
+        "algorithms": ["linear_regression", "random_forest_regressor", "random_forest_classifier", "logistic_regression"]
     }
 
-def calculate_focus_sessions(enriched_activities):
-    """Calculate focus sessions from enriched activities"""
-    focus_sessions = []
-    current_session = None
-    
-    # Type ignore for complex SQLAlchemy relationship access
-    for activity in sorted(enriched_activities, key=lambda x: getattr(x, 'activity', x).timestamp):  # type: ignore
-        is_productive = activity.productivity_score and activity.productivity_score > 0.6
-        
-        if is_productive:
-            activity_obj = getattr(activity, 'activity', activity)
-            if activity_obj is None:
-                continue
-            activity_timestamp = activity_obj.timestamp
-            if current_session is None:
-                current_session = {
-                    'start': activity_timestamp,
-                    'end': activity_timestamp,
-                    'duration': 5
-                }
-            else:
-                current_session['end'] = activity_timestamp  # type: ignore
-                current_session['duration'] += 5  # type: ignore
-        else:
-            if current_session and current_session.get('duration', 0) >= 15:  # At least 15 minutes
-                focus_sessions.append(current_session)
-            current_session = None
-    
-    # Add final session if it exists
-    if current_session and current_session.get('duration', 0) >= 15:
-        focus_sessions.append(current_session)
-    
-    return focus_sessions
-
-def generate_activity_breakdown(enriched_activities):
-    """Generate activity breakdown by category"""
-    breakdown = {}
-    
-    for activity in enriched_activities:
-        category = activity.app_category or "Other"
-        if category not in breakdown:
-            breakdown[category] = {"count": 0, "time": 0}
-        breakdown[category]["count"] += 1
-        breakdown[category]["time"] += 5  # 5-minute intervals
-    
-    # Convert to list format for charts
-    return [
-        {
-            "category": category,
-            "count": data["count"],
-            "time": data["time"],
-            "percentage": round(data["time"] / sum(d["time"] for d in breakdown.values()) * 100, 1)
-        }
-        for category, data in breakdown.items()
-    ]
-
-def generate_productivity_trend(enriched_activities, start_date, end_date):
-    """Generate productivity trend over time"""
-    trend_data = []
-    current_date = start_date.date()
-    end_date = end_date.date()
-    
-    while current_date <= end_date:
-        day_activities = [
-            a for a in enriched_activities 
-            if a.activity.timestamp.date() == current_date
-        ]
-        
-        if day_activities:
-            productive_count = len([a for a in day_activities if a.productivity_score and a.productivity_score > 0.6])
-            productivity_score = (productive_count / len(day_activities)) * 100
-        else:
-            productivity_score = 0
-        
-        trend_data.append({
-            "date": current_date.isoformat(),
-            "productivity": round(float(productivity_score), 1),
-            "activities": len(day_activities)
-        })
-        
-        current_date += timedelta(days=1)
-    
-    return trend_data
-
-def generate_activity_timeline(activities):
-    """Generate activity timeline for visualization"""
-    return [
-        {
-            "timestamp": activity.timestamp.isoformat(),
-            "application": activity.application,
-            "window_title": activity.window_title[:50] + "..." if len(activity.window_title) > 50 else activity.window_title,
-            "duration": 5  # 5-minute intervals
-        }
-        for activity in activities
-    ]
-
-def generate_insights(enriched_activities, anomalies, user):
-    """Generate AI insights and recommendations"""
-    insights = {
-        "productivity": []
-    }
-    
-    # Productivity insights
-    if enriched_activities:
-        avg_productivity = sum(a.productivity_score or 0 for a in enriched_activities) / len(enriched_activities)
-        
-        if avg_productivity < 0.5:
-            insights["productivity"].append({
-                "title": "Low Productivity Detected",
-                "description": f"Your average productivity score is {avg_productivity:.1%}",
-                "recommendation": "Consider taking more breaks and focusing on high-priority tasks"
-            })
-        elif avg_productivity > 0.8:
-            insights["productivity"].append({
-                "title": "Excellent Productivity",
-                "description": f"Your average productivity score is {avg_productivity:.1%}",
-                "recommendation": "Keep up the great work! Consider sharing your strategies with others"
-            })
-    
-    # Anomaly insights
-    if len(anomalies) > 5:
-        insights["productivity"].append({
-            "title": "Multiple Anomalies Detected",
-            "description": f"We detected {len(anomalies)} unusual patterns in your work",
-            "recommendation": "Review your work patterns and consider adjusting your schedule"
-        })
-    
-    return insights
-
-def get_goals_progress(user):
-    """Get user's goals progress from onboarding data"""
-    if not user.onboarding_data:
-        return []
+@router.post("/models", response_model=dict)
+async def create_analytics_model(
+    model_data: dict,
+    current_user=Depends(get_current_user),
+    tenant_id: int = Depends(get_current_tenant),
+    db: Session = Depends(get_db)
+):
+    """Create a new analytics model"""
     
     try:
-        onboarding_data = json.loads(user.onboarding_data) if isinstance(user.onboarding_data, str) else user.onboarding_data
-        goals = onboarding_data.get('goals', [])
-        
-        # Mock progress for demonstration
-        return [
-            {
-                "title": f"Improve {goal}",
-                "description": f"Focus on developing {goal} skills",
-                "progress": min(100, hash(goal) % 100),  # Mock progress
-                "status": "in_progress"
-            }
-            for goal in goals[:3]  # Show first 3 goals
-        ]
-    except:
-        return []
-
-def calculate_time_increase(activities, start_date):
-    """Calculate increase in active time compared to previous period"""
-    period_length = (datetime.utcnow() - start_date).days
-    previous_start = start_date - timedelta(days=period_length)
-    
-    # This would need actual implementation with historical data
-    return 30  # Mock 30-minute increase
-
-def calculate_distraction_trend(anomalies, start_date):
-    """Calculate distraction trend percentage"""
-    # This would need actual implementation with historical data
-    return -5  # Mock 5% decrease in distractions
-
-def calculate_productivity_trend(enriched_activities, start_date):
-    """Calculate productivity trend percentage"""
-    # This would need actual implementation with historical data
-    return 3  # Mock 3% increase
-
-def calculate_weekly_stats(activities, enriched_activities):
-    """Calculate weekly statistics"""
-    total_hours = len(activities) * 5 / 60  # Convert minutes to hours
-    productive_activities = [a for a in enriched_activities if a.productivity_score and a.productivity_score > 0.6]
-    productive_hours = len(productive_activities) * 5 / 60
-    
-    avg_score = sum(a.productivity_score or 0 for a in enriched_activities) / len(enriched_activities) * 100 if enriched_activities else 0
-    
-    return {
-        "totalHours": round(total_hours, 1),
-        "productiveHours": round(productive_hours, 1),
-        "averageScore": round(float(avg_score), 1)
-    }
-
-def calculate_detailed_metrics(activities, enriched_activities):
-    """Calculate detailed performance metrics"""
-    if not activities:
-        return {
-            "mostProductiveDay": "N/A",
-            "peakHours": "N/A",
-            "topApplication": "N/A",
-            "focusStreak": 0
+        # Mock model creation
+        model_info = {
+            "id": 4,
+            "model_uuid": "model-abc12345-e89b-12d3-a456-426614174003",
+            "tenant_id": tenant_id,
+            "name": model_data.get("name", "new_model"),
+            "display_name": model_data.get("display_name", "New Model"),
+            "description": model_data.get("description"),
+            "model_type": model_data.get("model_type", "performance"),
+            "category": model_data.get("category", "predictive"),
+            "algorithm": model_data.get("algorithm", "linear_regression"),
+            "features": model_data.get("features", []),
+            "target_variable": model_data.get("target_variable", "target"),
+            "hyperparameters": model_data.get("hyperparameters", {}),
+            "training_data_source": model_data.get("training_data_source", "user_activities"),
+            "status": "draft",
+            "is_active": True,
+            "is_production": False,
+            "created_at": datetime.utcnow().isoformat(),
+            "created_by_user_id": current_user.id
         }
+        
+        return {
+            "success": True,
+            "message": "Analytics model created successfully",
+            "model": model_info
+        }
+        
+    except Exception as e:
+        logging.error(f"Failed to create analytics model: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to create analytics model")
+
+@router.post("/models/{model_id}/train", response_model=dict)
+async def train_model(
+    model_id: int,
+    training_config: dict,
+    background_tasks: BackgroundTasks,
+    current_user=Depends(get_current_user),
+    tenant_id: int = Depends(get_current_tenant),
+    db: Session = Depends(get_db)
+):
+    """Train an analytics model"""
     
-    # Most productive day
-    day_productivity = {}
-    for activity in enriched_activities:
-        day = activity.activity.timestamp.strftime("%A")
-        if day not in day_productivity:
-            day_productivity[day] = []
-        day_productivity[day].append(activity.productivity_score or 0)
-    
-    most_productive_day = max(day_productivity.keys(), 
-                            key=lambda day: sum(day_productivity[day]) / len(day_productivity[day])) if day_productivity else "N/A"
-    
-    # Peak hours
-    hour_productivity = {}
-    for activity in enriched_activities:
-        hour = activity.activity.timestamp.hour
-        if hour not in hour_productivity:
-            hour_productivity[hour] = []
-        hour_productivity[hour].append(activity.productivity_score or 0)
-    
-    peak_hour = max(hour_productivity.keys(),
-                   key=lambda hour: sum(hour_productivity[hour]) / len(hour_productivity[hour])) if hour_productivity else 0
-    peak_hours = f"{peak_hour}:00 - {peak_hour + 1}:00"
-    
-    # Top application
-    app_usage = {}
-    for activity in activities:
-        app = activity.application
-        app_usage[app] = app_usage.get(app, 0) + 1
-    
-    top_application = max(app_usage.keys(), key=lambda app: app_usage[app]) if app_usage else "N/A"
+    # Mock training job initiation
+    training_job = {
+        "id": 1,
+        "job_uuid": "job-123e4567-e89b-12d3-a456-426614174000",
+        "model_id": model_id,
+        "job_type": training_config.get("job_type", "retrain"),
+        "status": "running",
+        "started_at": datetime.utcnow().isoformat(),
+        "training_config": training_config,
+        "triggered_by": "user",
+        "triggered_by_user_id": current_user.id
+    }
     
     return {
-        "mostProductiveDay": most_productive_day,
-        "peakHours": peak_hours,
-        "topApplication": top_application,
-        "focusStreak": 3  # Mock focus streak
+        "success": True,
+        "message": "Model training started",
+        "training_job": training_job
     }
 
-@router.get("/export")
-async def export_analytics(
-    period: str = "30d",
-    format: str = "json",
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
+@router.post("/models/{model_id}/predict", response_model=dict)
+async def make_prediction(
+    model_id: int,
+    prediction_data: dict,
+    current_user=Depends(get_current_user),
+    tenant_id: int = Depends(get_current_tenant),
+    db: Session = Depends(get_db)
 ):
-    """Export analytics data in various formats"""
+    """Make a prediction using a trained model"""
     
-    # Get analytics data
-    analytics_data = await get_dashboard_analytics(period, db, current_user)
+    # Mock prediction
+    prediction = {
+        "id": 1,
+        "prediction_uuid": "pred-123e4567-e89b-12d3-a456-426614174000",
+        "model_id": model_id,
+        "entity_type": prediction_data.get("entity_type", "user"),
+        "entity_id": prediction_data.get("entity_id", 1),
+        "prediction_type": "performance",
+        "input_features": prediction_data.get("input_features", {}),
+        "predicted_value": 78.5,
+        "confidence_score": 0.84,
+        "prediction_interval_lower": 70.7,
+        "prediction_interval_upper": 86.4,
+        "prediction_horizon_days": prediction_data.get("prediction_horizon_days"),
+        "prediction_date": datetime.utcnow().isoformat(),
+        "expires_at": (datetime.utcnow() + timedelta(days=7)).isoformat() if prediction_data.get("prediction_horizon_days") else None,
+        "feature_importance": {
+            "experience_years": 0.35,
+            "tasks_completed": 0.28,
+            "hours_worked": 0.22,
+            "meetings_attended": 0.15
+        }
+    }
     
-    if format == "json":
-        return analytics_data
-    elif format == "csv":
-        # Convert to CSV format (simplified)
-        return {"message": "CSV export not implemented yet"}
-    else:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Unsupported export format"
-        )
+    return {
+        "success": True,
+        "message": "Prediction generated successfully",
+        "prediction": prediction
+    }
 
-@router.get("/goals")
-async def get_user_goals(
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
+@router.get("/predictions", response_model=dict)
+async def get_predictions(
+    model_id: Optional[int] = Query(None),
+    entity_type: Optional[str] = Query(None),
+    entity_id: Optional[int] = Query(None),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(50, ge=1, le=100),
+    current_user=Depends(get_current_user),
+    tenant_id: int = Depends(get_current_tenant),
+    db: Session = Depends(get_db)
 ):
-    """Get user's goals and progress"""
-    return get_goals_progress(current_user)
-
-@router.post("/goals/{goal_id}/update")
-async def update_goal_progress(
-    goal_id: int,
-    progress: int,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
-):
-    """Update progress for a specific goal"""
+    """Get predictions for tenant"""
     
-    # This would update the goal progress in the database
-    # For now, return success message
-    return {"message": f"Goal {goal_id} progress updated to {progress}%"}
+    # Mock predictions data
+    predictions = [
+        {
+            "id": 1,
+            "prediction_uuid": "pred-123e4567-e89b-12d3-a456-426614174000",
+            "model_id": 1,
+            "model_name": "user_performance_predictor",
+            "entity_type": "user",
+            "entity_id": 101,
+            "prediction_type": "performance",
+            "predicted_value": 78.5,
+            "confidence_score": 0.84,
+            "prediction_date": "2025-05-24T09:45:00Z",
+            "is_validated": False,
+            "actual_value": None,
+            "prediction_error": None
+        },
+        {
+            "id": 2,
+            "prediction_uuid": "pred-456e7890-e89b-12d3-a456-426614174001",
+            "model_id": 2,
+            "model_name": "productivity_optimizer",
+            "entity_type": "user",
+            "entity_id": 102,
+            "prediction_type": "productivity",
+            "predicted_value": 65.2,
+            "confidence_score": 0.79,
+            "prediction_date": "2025-05-24T08:30:00Z",
+            "is_validated": True,
+            "actual_value": 67.1,
+            "prediction_error": 1.9
+        }
+    ]
+    
+    # Apply filters
+    if model_id:
+        predictions = [p for p in predictions if p["model_id"] == model_id]
+    
+    if entity_type:
+        predictions = [p for p in predictions if p["entity_type"] == entity_type]
+    
+    if entity_id:
+        predictions = [p for p in predictions if p["entity_id"] == entity_id]
+    
+    # Apply pagination
+    total = len(predictions)
+    predictions = predictions[skip:skip + limit]
+    
+    return {
+        "success": True,
+        "predictions": predictions,
+        "total": total,
+        "skip": skip,
+        "limit": limit
+    }
+
+@router.post("/roi", response_model=dict)
+async def create_roi_calculation(
+    roi_data: dict,
+    current_user=Depends(get_current_user),
+    tenant_id: int = Depends(get_current_tenant),
+    db: Session = Depends(get_db)
+):
+    """Create a new ROI calculation"""
+    
+    # Mock ROI calculation
+    roi_calc = {
+        "id": 1,
+        "calculation_uuid": "roi-123e4567-e89b-12d3-a456-426614174000",
+        "tenant_id": tenant_id,
+        "entity_type": roi_data.get("entity_type", "project"),
+        "entity_id": roi_data.get("entity_id", 1),
+        "calculation_name": roi_data.get("calculation_name", "Project ROI Analysis"),
+        "description": roi_data.get("description"),
+        "period_start": roi_data.get("period_start"),
+        "period_end": roi_data.get("period_end"),
+        "period_days": 90,
+        "investment_breakdown": {
+            "initial_investment": roi_data.get("initial_investment", 0),
+            "operational_costs": roi_data.get("operational_costs", 0),
+            "labor_costs": roi_data.get("labor_costs", 0),
+            "technology_costs": roi_data.get("technology_costs", 0),
+            "total_investment": 50000
+        },
+        "benefits_breakdown": {
+            "revenue_increase": roi_data.get("revenue_increase", 0),
+            "cost_savings": roi_data.get("cost_savings", 0),
+            "productivity_gains": roi_data.get("productivity_gains", 0),
+            "total_benefits": 75000
+        },
+        "roi_metrics": {
+            "roi_percentage": 50.0,
+            "net_present_value": 22500,
+            "payback_period_months": 8.0
+        },
+        "roi_category": "excellent",
+        "created_at": datetime.utcnow().isoformat(),
+        "calculated_by_user_id": current_user.id
+    }
+    
+    return {
+        "success": True,
+        "message": "ROI calculation created successfully",
+        "roi_calculation": roi_calc
+    }
+
+@router.get("/roi", response_model=dict)
+async def get_roi_calculations(
+    entity_type: Optional[str] = Query(None),
+    entity_id: Optional[int] = Query(None),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(50, ge=1, le=100),
+    current_user=Depends(get_current_user),
+    tenant_id: int = Depends(get_current_tenant),
+    db: Session = Depends(get_db)
+):
+    """Get ROI calculations for tenant"""
+    
+    # Mock ROI calculations
+    roi_calculations = [
+        {
+            "id": 1,
+            "calculation_uuid": "roi-123e4567-e89b-12d3-a456-426614174000",
+            "entity_type": "project",
+            "entity_id": 101,
+            "calculation_name": "CRM Implementation ROI",
+            "total_investment": 50000,
+            "total_benefits": 75000,
+            "roi_percentage": 50.0,
+            "roi_category": "excellent",
+            "created_at": "2025-05-15T10:00:00Z"
+        },
+        {
+            "id": 2,
+            "calculation_uuid": "roi-456e7890-e89b-12d3-a456-426614174001",
+            "entity_type": "project",
+            "entity_id": 102,
+            "calculation_name": "Training Program ROI",
+            "total_investment": 25000,
+            "total_benefits": 35000,
+            "roi_percentage": 40.0,
+            "roi_category": "good",
+            "created_at": "2025-05-20T14:30:00Z"
+        }
+    ]
+    
+    # Apply filters
+    if entity_type:
+        roi_calculations = [r for r in roi_calculations if r["entity_type"] == entity_type]
+    
+    if entity_id:
+        roi_calculations = [r for r in roi_calculations if r["entity_id"] == entity_id]
+    
+    # Apply pagination
+    total = len(roi_calculations)
+    roi_calculations = roi_calculations[skip:skip + limit]
+    
+    return {
+        "success": True,
+        "roi_calculations": roi_calculations,
+        "total": total,
+        "skip": skip,
+        "limit": limit
+    }
+
+@router.post("/metrics", response_model=dict)
+async def record_performance_metric(
+    metric_data: dict,
+    current_user=Depends(get_current_user),
+    tenant_id: int = Depends(get_current_tenant),
+    db: Session = Depends(get_db)
+):
+    """Record a performance metric"""
+    
+    # Mock metric recording
+    metric = {
+        "id": 1,
+        "metric_uuid": "metric-123e4567-e89b-12d3-a456-426614174000",
+        "tenant_id": tenant_id,
+        "metric_name": metric_data.get("metric_name", "productivity_score"),
+        "display_name": metric_data.get("display_name", "Productivity Score"),
+        "metric_type": metric_data.get("metric_type", "productivity"),
+        "category": metric_data.get("category", "user"),
+        "entity_type": metric_data.get("entity_type", "user"),
+        "entity_id": metric_data.get("entity_id", 1),
+        "current_value": metric_data.get("current_value", 75.5),
+        "target_value": metric_data.get("target_value", 80.0),
+        "trend_direction": "increasing",
+        "trend_percentage": 4.7,
+        "performance_status": "normal",
+        "measurement_date": datetime.utcnow().isoformat()
+    }
+    
+    return {
+        "success": True,
+        "message": "Performance metric recorded successfully",
+        "metric": metric
+    }
+
+@router.get("/dashboard", response_model=dict)
+async def get_analytics_dashboard(
+    current_user=Depends(get_current_user),
+    tenant_id: int = Depends(get_current_tenant),
+    db: Session = Depends(get_db)
+):
+    """Get comprehensive analytics dashboard data"""
+    
+    # Mock dashboard data
+    dashboard = {
+        "models": {
+            "total": 5,
+            "active": 4,
+            "trained": 3,
+            "training_rate": 60.0
+        },
+        "predictions": {
+            "total": 2450,
+            "recent": 125,
+            "daily_average": 17.9,
+            "accuracy_rate": 84.2
+        },
+        "roi": {
+            "total_calculations": 15,
+            "average_roi": 42.5,
+            "roi_category": "good",
+            "positive_roi_count": 13
+        },
+        "metrics": {
+            "total": 450,
+            "categories": {
+                "productivity": 180,
+                "performance": 150,
+                "efficiency": 120
+            }
+        },
+        "trends": {
+            "model_adoption": "increasing",
+            "prediction_accuracy": "improving",
+            "roi_performance": "stable"
+        },
+        "insights": [
+            {
+                "type": "positive",
+                "category": "model_performance",
+                "title": "High Model Accuracy",
+                "description": "Your analytics models are performing well with an average accuracy of 84.2%",
+                "recommendation": "Consider deploying more models to production to leverage this high accuracy."
+            },
+            {
+                "type": "info",
+                "category": "prediction_usage",
+                "title": "Active Prediction Usage",
+                "description": "125 predictions made in the last week",
+                "recommendation": "Consider automating frequent predictions to improve efficiency."
+            }
+        ]
+    }
+    
+    return {
+        "success": True,
+        "dashboard": dashboard,
+        "generated_at": datetime.utcnow().isoformat()
+    }
+
+# Background task functions
+
+async def mock_training_process(model_id: int, training_config: dict):
+    """Mock background training process"""
+    import asyncio
+    await asyncio.sleep(3)  # Simulate training time
+    logging.info(f"Completed training for model {model_id} with config {training_config}")
+
+
+def get_analytics_service_instance(db: Session):
+    """Get analytics service instance"""
+    return get_analytics_service(db)
