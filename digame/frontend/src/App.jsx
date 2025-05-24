@@ -7,6 +7,7 @@ import OnboardingPage from './pages/OnboardingPage';
 import AdvancedWebAnalyticsDashboard from './pages/AdvancedWebAnalyticsDashboard';
 import AdvancedMobileAnalyticsDashboard from './pages/AdvancedMobileAnalyticsDashboard';
 import EnhancedSocialCollaborationDashboard from './pages/EnhancedSocialCollaborationDashboard';
+import AiToolsPage from './pages/AiToolsPage';
 import './App.css';
 
 function App() {
@@ -200,6 +201,20 @@ function App() {
             element={
               isAuthenticated || isDemoMode ? (
                 <EnhancedSocialCollaborationDashboard />
+              ) : (
+                <Navigate to="/" replace />
+              )
+            }
+          />
+          
+          <Route
+            path="/ai-tools"
+            element={
+              isAuthenticated || isDemoMode ? (
+                <AiToolsPage
+                  isDemoMode={isDemoMode}
+                  onLogout={handleLogout}
+                />
               ) : (
                 <Navigate to="/" replace />
               )
