@@ -17,6 +17,12 @@ from .routers import onboarding_router
 from .routers import user_setting_router # Import the user setting router
 from .routers import admin_simple_router # Import the admin dashboard router
 from .routers import writing_assistance_router # Import the new writing assistance router
+from .routers import task_router # Import the task management router
+from .routers import enterprise_dashboard_router # Import the enterprise dashboard router
+from .routers import market_intelligence_router # Import the market intelligence router
+from .routers import workflow_automation_router # Import the workflow automation router
+from .routers import integration_router # Import the integration router
+from .routers import tenant_router # Import the tenant router
 
 # Import authentication components
 from .auth.middleware import configure_auth_middleware
@@ -84,6 +90,30 @@ app = FastAPI(
         {
             "name": "Publishing",
             "description": "Model and data publishing"
+        },
+        {
+            "name": "Task Management",
+            "description": "AI-powered task suggestions and management"
+        },
+        {
+            "name": "Enterprise Dashboard",
+            "description": "Enterprise-wide dashboard and feature management"
+        },
+        {
+            "name": "Market Intelligence",
+            "description": "Market analysis and intelligence reporting"
+        },
+        {
+            "name": "Workflow Automation",
+            "description": "Automated workflow and process management"
+        },
+        {
+            "name": "Integrations",
+            "description": "Third-party service integrations and APIs"
+        },
+        {
+            "name": "Tenant Management",
+            "description": "Multi-tenant organization management"
         }
     ]
 )
@@ -110,6 +140,12 @@ app.include_router(pattern_recognition_router.router, prefix="/pattern-recogniti
 app.include_router(job_router.router, prefix="/api", tags=["Background Jobs"])
 app.include_router(publish_router.router, prefix="/publish", tags=["Publishing"])
 app.include_router(onboarding_router.router, tags=["Onboarding"])
+app.include_router(task_router.router, tags=["Task Management"])
+app.include_router(enterprise_dashboard_router.router, tags=["Enterprise Dashboard"])
+app.include_router(market_intelligence_router.router, tags=["Market Intelligence"])
+app.include_router(workflow_automation_router.router, tags=["Workflow Automation"])
+app.include_router(integration_router.router, tags=["Integrations"])
+app.include_router(tenant_router.router, tags=["Tenant Management"])
 
 # Startup and shutdown events
 @app.on_event("startup")

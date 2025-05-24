@@ -8,6 +8,8 @@ import AdvancedWebAnalyticsDashboard from './pages/AdvancedWebAnalyticsDashboard
 import AdvancedMobileAnalyticsDashboard from './pages/AdvancedMobileAnalyticsDashboard';
 import EnhancedSocialCollaborationDashboard from './pages/EnhancedSocialCollaborationDashboard';
 import AiToolsPage from './pages/AiToolsPage';
+import TaskManagementPage from './pages/TaskManagementPage';
+import EnterpriseDashboardPage from './pages/EnterpriseDashboardPage';
 import './App.css';
 
 function App() {
@@ -212,6 +214,34 @@ function App() {
             element={
               isAuthenticated || isDemoMode ? (
                 <AiToolsPage
+                  isDemoMode={isDemoMode}
+                  onLogout={handleLogout}
+                />
+              ) : (
+                <Navigate to="/" replace />
+              )
+            }
+          />
+          
+          <Route
+            path="/tasks"
+            element={
+              isAuthenticated || isDemoMode ? (
+                <TaskManagementPage
+                  isDemoMode={isDemoMode}
+                  onLogout={handleLogout}
+                />
+              ) : (
+                <Navigate to="/" replace />
+              )
+            }
+          />
+          
+          <Route
+            path="/enterprise"
+            element={
+              isAuthenticated || isDemoMode ? (
+                <EnterpriseDashboardPage
                   isDemoMode={isDemoMode}
                   onLogout={handleLogout}
                 />

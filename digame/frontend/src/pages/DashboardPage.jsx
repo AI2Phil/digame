@@ -93,6 +93,14 @@ export default function DashboardPage({ isDemoMode, onLogout }) {
                         <span>✍️</span> Writing Assistance
                       </button>
                       <div className="border-t border-gray-100 my-1"></div>
+                      <div className="px-4 py-2 text-xs text-gray-500 font-medium">TASK MANAGEMENT</div>
+                      <button
+                        onClick={() => navigate('/tasks')}
+                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                      >
+                        <span>📋</span> AI Task Suggestions
+                      </button>
+                      <div className="border-t border-gray-100 my-1"></div>
                       <div className="px-4 py-2 text-xs text-gray-500 font-medium">INSIGHTS & ANALYTICS</div>
                       <button
                         onClick={() => navigate('/ai-tools?tab=insights')}
@@ -160,34 +168,35 @@ export default function DashboardPage({ isDemoMode, onLogout }) {
 
                 <div className="relative group">
                   <button className="text-gray-600 hover:text-gray-900 text-sm transition-colors flex items-center gap-1">
-                    <span>🤖</span> AI Tools ▼
+                    <span>📋</span> Tasks ▼
                   </button>
-                  <div className="absolute top-full left-0 mt-1 w-56 bg-white rounded-md shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                  <div className="absolute top-full left-0 mt-1 w-64 bg-white rounded-md shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
                     <div className="py-1">
                       <button
-                        onClick={() => navigate('/ai/insights')}
+                        onClick={() => navigate('/tasks')}
                         className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
                       >
-                        <span>💡</span> AI Insights
-                      </button>
-                      <button
-                        onClick={() => navigate('/ai/recommendations')}
-                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                      >
-                        <span>🎯</span> Smart Recommendations
-                      </button>
-                      <button
-                        onClick={() => navigate('/ai/coaching')}
-                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                      >
-                        <span>🏃</span> AI Coaching
+                        <span>📋</span> Task Management
                       </button>
                       <div className="border-t border-gray-100 my-1"></div>
+                      <div className="px-4 py-2 text-xs text-gray-500 font-medium">AI-POWERED FEATURES</div>
                       <button
-                        onClick={() => navigate('/ai/automation')}
+                        onClick={() => navigate('/tasks?tab=suggestions')}
                         className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
                       >
-                        <span>⚡</span> Workflow Automation
+                        <span>🤖</span> AI Task Suggestions
+                      </button>
+                      <button
+                        onClick={() => navigate('/tasks?tab=automation')}
+                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                      >
+                        <span>⚡</span> Process Automation
+                      </button>
+                      <button
+                        onClick={() => navigate('/tasks?tab=insights')}
+                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                      >
+                        <span>📊</span> Task Analytics
                       </button>
                     </div>
                   </div>
@@ -200,38 +209,38 @@ export default function DashboardPage({ isDemoMode, onLogout }) {
                   <div className="absolute top-full left-0 mt-1 w-64 bg-white rounded-md shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
                     <div className="py-1">
                       <button
-                        onClick={() => navigate('/enterprise/tenants')}
+                        onClick={() => navigate('/enterprise')}
+                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                      >
+                        <span>🏢</span> Enterprise Dashboard
+                      </button>
+                      <div className="border-t border-gray-100 my-1"></div>
+                      <div className="px-4 py-2 text-xs text-gray-500 font-medium">AI ENTERPRISE FEATURES</div>
+                      <button
+                        onClick={() => navigate('/enterprise?tab=ai-features')}
+                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                      >
+                        <span>🤖</span> AI Feature Management
+                      </button>
+                      <button
+                        onClick={() => navigate('/enterprise?tab=tenants')}
                         className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
                       >
                         <span>🏢</span> Tenant Management
                       </button>
                       <button
-                        onClick={() => navigate('/enterprise/security')}
+                        onClick={() => navigate('/enterprise?tab=security')}
                         className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
                       >
-                        <span>🔒</span> Security Framework
+                        <span>🔒</span> Security & Compliance
                       </button>
                       <div className="border-t border-gray-100 my-1"></div>
-                      <div className="px-4 py-2 text-xs text-gray-500 font-medium">INTEGRATIONS & AUTOMATION</div>
+                      <div className="px-4 py-2 text-xs text-gray-500 font-medium">ANALYTICS & INSIGHTS</div>
                       <button
-                        onClick={() => navigate('/enterprise/integrations')}
+                        onClick={() => navigate('/enterprise?tab=overview')}
                         className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
                       >
-                        <span>🔗</span> Integration APIs
-                      </button>
-                      <button
-                        onClick={() => navigate('/enterprise/workflows')}
-                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                      >
-                        <span>⚙️</span> Workflow Automation
-                      </button>
-                      <div className="border-t border-gray-100 my-1"></div>
-                      <div className="px-4 py-2 text-xs text-gray-500 font-medium">INTELLIGENCE & ANALYTICS</div>
-                      <button
-                        onClick={() => navigate('/enterprise/market-intelligence')}
-                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                      >
-                        <span>📊</span> Market Intelligence
+                        <span>📊</span> Enterprise Analytics
                       </button>
                     </div>
                   </div>
