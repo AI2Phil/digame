@@ -969,6 +969,174 @@ class ApiService {
   async getPersonalizedBenchmarks(userId) {
     return this.request(`/ai/analytics/benchmarks/${userId}`);
   }
+
+  // Social Collaboration methods
+  async getUserConnections(userId) {
+    return this.request(`/social/users/${userId}/connections`);
+  }
+
+  async getUserCommunityGroups(userId) {
+    return this.request(`/social/users/${userId}/communities`);
+  }
+
+  async findPeerMatches(criteria) {
+    return this.request('/social/peer-matching', {
+      method: 'POST',
+      body: JSON.stringify(criteria),
+    });
+  }
+
+  async sendConnectionRequest(userId) {
+    return this.request(`/social/connections/request/${userId}`, {
+      method: 'POST',
+    });
+  }
+
+  async acceptConnectionRequest(requestId) {
+    return this.request(`/social/connections/accept/${requestId}`, {
+      method: 'POST',
+    });
+  }
+
+  async getActiveCollaborationProjects() {
+    return this.request('/social/projects/active');
+  }
+
+  async joinCollaborationProject(projectId) {
+    return this.request(`/social/projects/${projectId}/join`, {
+      method: 'POST',
+    });
+  }
+
+  async createCollaborationProject(projectData) {
+    return this.request('/social/projects', {
+      method: 'POST',
+      body: JSON.stringify(projectData),
+    });
+  }
+
+  async requestMentorship(mentorId, type) {
+    return this.request('/social/mentorship/request', {
+      method: 'POST',
+      body: JSON.stringify({ mentor_id: mentorId, type }),
+    });
+  }
+
+  async getMentorshipOpportunities(userId) {
+    return this.request(`/social/mentorship/opportunities/${userId}`);
+  }
+
+  async joinCommunity(communityId) {
+    return this.request(`/social/communities/${communityId}/join`, {
+      method: 'POST',
+    });
+  }
+
+  async getCommunityRecommendations(userId) {
+    return this.request(`/social/communities/recommendations/${userId}`);
+  }
+
+  async getNetworkAnalytics(userId) {
+    return this.request(`/social/network/analytics/${userId}`);
+  }
+
+  async searchProfessionals(query, filters = {}) {
+    const params = new URLSearchParams({ q: query, ...filters });
+    return this.request(`/social/search/professionals?${params}`);
+  }
+
+  async getIndustryConnections(userId) {
+    return this.request(`/social/network/industry/${userId}`);
+  }
+
+  async getSkillBasedMatches(userId, skillId) {
+    return this.request(`/social/matching/skills/${userId}/${skillId}`);
+  }
+
+  // Advanced Mobile methods
+  async getMobileAnalytics(userId) {
+    return this.request(`/mobile/analytics/${userId}`);
+  }
+
+  async syncMobileData(syncData) {
+    return this.request('/mobile/sync', {
+      method: 'POST',
+      body: JSON.stringify(syncData),
+    });
+  }
+
+  async getUrgentNotifications(userId) {
+    return this.request(`/mobile/notifications/urgent/${userId}`);
+  }
+
+  async getPendingAiNotifications(userId) {
+    return this.request(`/mobile/notifications/ai-pending/${userId}`);
+  }
+
+  async updateMobilePreferences(userId, preferences) {
+    return this.request(`/mobile/preferences/${userId}`, {
+      method: 'PUT',
+      body: JSON.stringify(preferences),
+    });
+  }
+
+  async trackMobileAnalytics(userId, analyticsData) {
+    return this.request(`/mobile/analytics/${userId}/track`, {
+      method: 'POST',
+      body: JSON.stringify(analyticsData),
+    });
+  }
+
+  async getMobileInsights(userId) {
+    return this.request(`/mobile/insights/${userId}`);
+  }
+
+  async scheduleSmartNotification(userId, notificationData) {
+    return this.request(`/mobile/notifications/schedule/${userId}`, {
+      method: 'POST',
+      body: JSON.stringify(notificationData),
+    });
+  }
+
+  async processVoiceCommand(userId, command, audioData) {
+    return this.request(`/mobile/voice/command/${userId}`, {
+      method: 'POST',
+      body: JSON.stringify({ command, audio_data: audioData }),
+    });
+  }
+
+  async getOptimalNotificationTimes(userId) {
+    return this.request(`/mobile/notifications/optimal-times/${userId}`);
+  }
+
+  async updateBackgroundSyncStatus(userId, status) {
+    return this.request(`/mobile/background-sync/${userId}`, {
+      method: 'PUT',
+      body: JSON.stringify(status),
+    });
+  }
+
+  async getMobilePerformanceMetrics(userId) {
+    return this.request(`/mobile/performance/${userId}`);
+  }
+
+  async reportMobileError(userId, errorData) {
+    return this.request(`/mobile/errors/${userId}`, {
+      method: 'POST',
+      body: JSON.stringify(errorData),
+    });
+  }
+
+  async getVoiceCommandHistory(userId) {
+    return this.request(`/mobile/voice/history/${userId}`);
+  }
+
+  async updateVoicePreferences(userId, preferences) {
+    return this.request(`/mobile/voice/preferences/${userId}`, {
+      method: 'PUT',
+      body: JSON.stringify(preferences),
+    });
+  }
 }
 
 // Create and export a singleton instance
