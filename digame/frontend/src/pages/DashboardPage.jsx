@@ -1,9 +1,12 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import ProductivityChart from '../components/dashboard/ProductivityChart';
 import ActivityBreakdown from '../components/dashboard/ActivityBreakdown';
 import { EnhancedProductivityMetricCard } from '../components/dashboard/ProductivityMetricCard';
 
 export default function DashboardPage({ isDemoMode, onLogout }) {
+  const navigate = useNavigate();
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -26,14 +29,36 @@ export default function DashboardPage({ isDemoMode, onLogout }) {
             
             <div className="flex items-center space-x-6">
               <nav className="hidden md:flex space-x-8">
-                <button className="text-blue-600 font-medium text-sm hover:text-blue-700 transition-colors">
+                <button
+                  onClick={() => navigate('/dashboard')}
+                  className="text-blue-600 font-medium text-sm hover:text-blue-700 transition-colors"
+                >
                   Dashboard
                 </button>
-                <button className="text-gray-600 hover:text-gray-900 text-sm transition-colors">
-                  Analytics
-                </button>
-                <button className="text-gray-600 hover:text-gray-900 text-sm transition-colors">
-                  Goals
+                <div className="relative group">
+                  <button className="text-gray-600 hover:text-gray-900 text-sm transition-colors">
+                    Analytics ▼
+                  </button>
+                  <div className="absolute top-full left-0 mt-1 w-48 bg-white rounded-md shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                    <button
+                      onClick={() => navigate('/analytics/web')}
+                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                    >
+                      Web Analytics
+                    </button>
+                    <button
+                      onClick={() => navigate('/analytics/mobile')}
+                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                    >
+                      Mobile Analytics
+                    </button>
+                  </div>
+                </div>
+                <button
+                  onClick={() => navigate('/social')}
+                  className="text-gray-600 hover:text-gray-900 text-sm transition-colors"
+                >
+                  Social
                 </button>
                 <button className="text-gray-600 hover:text-gray-900 text-sm transition-colors">
                   Reports

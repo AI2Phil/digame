@@ -4,6 +4,9 @@ import HomePage from './pages/HomePage';
 import DashboardPage from './pages/DashboardPage';
 import ComponentDemoPage from './pages/ComponentDemoPage';
 import OnboardingPage from './pages/OnboardingPage';
+import AdvancedWebAnalyticsDashboard from './pages/AdvancedWebAnalyticsDashboard';
+import AdvancedMobileAnalyticsDashboard from './pages/AdvancedMobileAnalyticsDashboard';
+import SocialCollaborationDashboard from './pages/SocialCollaborationDashboard';
 import './App.css';
 
 function App() {
@@ -168,6 +171,39 @@ function App() {
           <Route
             path="/components"
             element={<ComponentDemoPage />}
+          />
+          
+          <Route
+            path="/analytics/web"
+            element={
+              isAuthenticated || isDemoMode ? (
+                <AdvancedWebAnalyticsDashboard />
+              ) : (
+                <Navigate to="/" replace />
+              )
+            }
+          />
+          
+          <Route
+            path="/analytics/mobile"
+            element={
+              isAuthenticated || isDemoMode ? (
+                <AdvancedMobileAnalyticsDashboard />
+              ) : (
+                <Navigate to="/" replace />
+              )
+            }
+          />
+          
+          <Route
+            path="/social"
+            element={
+              isAuthenticated || isDemoMode ? (
+                <SocialCollaborationDashboard />
+              ) : (
+                <Navigate to="/" replace />
+              )
+            }
           />
           
           {/* Catch all route */}
