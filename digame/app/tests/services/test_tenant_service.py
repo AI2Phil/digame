@@ -361,6 +361,108 @@ def test_update_tenant_tier_change_and_direct_comm_style_override(tenant_service
     assert updated_tenant_complex_comm.features.get("new_flag") == "active"
 
 
+# --- Tests for "meeting_insights" flag ---
+
+def test_create_tenant_meeting_insights_flag_professional_tier(tenant_service: TenantService, mock_db_session: MagicMock):
+    # Arrange
+    subscription_tier = "professional"
+    # Action
+    created_tenant = tenant_service.create_tenant(
+        name="MeetingPro Tenant", admin_email="meetpro@example.com", admin_name="MeetingPro Admin", subscription_tier=subscription_tier
+    )
+    # Assertion
+    assert created_tenant.features.get("meeting_insights") is True
+    assert created_tenant.features.get("writing_assistance") is True # Check other flags remain consistent
+    assert created_tenant.features.get("communication_style_analysis") is True
+
+def test_create_tenant_meeting_insights_flag_enterprise_tier(tenant_service: TenantService, mock_db_session: MagicMock):
+    # Arrange
+    subscription_tier = "enterprise"
+    # Action
+    created_tenant = tenant_service.create_tenant(
+        name="MeetingEnt Tenant", admin_email="meetent@example.com", admin_name="MeetingEnt Admin", subscription_tier=subscription_tier
+    )
+    # Assertion
+    assert created_tenant.features.get("meeting_insights") is True
+
+def test_create_tenant_meeting_insights_flag_basic_tier(tenant_service: TenantService, mock_db_session: MagicMock):
+    # Arrange
+    subscription_tier = "basic"
+    # Action
+    created_tenant = tenant_service.create_tenant(
+        name="MeetingBasic Tenant", admin_email="meetbasic@example.com", admin_name="MeetingBasic Admin", subscription_tier=subscription_tier
+    )
+    # Assertion
+    assert created_tenant.features.get("meeting_insights") is False
+
+def test_update_tenant_tier_updates_meeting_insights_flag(tenant_service: TenantService, mock_db_session: MagicMock):
+    # Arrange
+    initial_tenant_id = 8 # New ID
+    initial_tier = "basic"
+    mock_initial_tenant_meeting = TenantModel(
+        id=initial_tenant_id, name="MeetingUpdatable Tenant", subscription_tier=initial_tier,
+        features={"meeting_insights": False, "writing_assistance": False, "communication_style_analysis": False, "other_data": "persists"},
+        admin_email="meetupdate@example.com", admin_name="MeetUpdate Admin",
+        created_at=datetime.utcnow(), updated_at=datetime.utcnow()
+    )
+    mock_db_session.query(TenantModel).filter(TenantModel.id == initial_tenant_id).first.return_value = mock_initial_tenant_meeting
+    
+    # Action 1: Update to "enterprise"
+    updates_to_ent_meeting = {"subscription_tier": "enterprise"}
+    updated_tenant_ent_meeting = tenant_service.update_tenant(tenant_id=initial_tenant_id, updates=updates_to_ent_meeting, user_id=None)
+    # Assertion 1
+    assert updated_tenant_ent_meeting.subscription_tier == "enterprise"
+    assert updated_tenant_ent_meeting.features.get("meeting_insights") is True
+    assert updated_tenant_ent_meeting.features.get("writing_assistance") is True 
+    assert updated_tenant_ent_meeting.features.get("communication_style_analysis") is True
+    assert updated_tenant_ent_meeting.features.get("other_data") == "persists"
+
+    mock_db_session.commit.reset_mock() # Reset for next call if checking calls per update
+    mock_db_session.refresh.reset_mock()
+
+    # Action 2: Update back to "basic"
+    updates_to_basic_meeting = {"subscription_tier": "basic"}
+    updated_tenant_basic_meeting = tenant_service.update_tenant(tenant_id=initial_tenant_id, updates=updates_to_basic_meeting, user_id=None)
+    # Assertion 2
+    assert updated_tenant_basic_meeting.subscription_tier == "basic"
+    assert updated_tenant_basic_meeting.features.get("meeting_insights") is False
+    assert updated_tenant_basic_meeting.features.get("writing_assistance") is False
+    assert updated_tenant_basic_meeting.features.get("communication_style_analysis") is False
+    assert updated_tenant_basic_meeting.features.get("other_data") == "persists"
+
+def test_update_tenant_direct_feature_override_meeting_insights(tenant_service: TenantService, mock_db_session: MagicMock):
+    # Arrange
+    initial_tenant_id = 9 # New ID
+    initial_tier = "basic" # meeting_insights would be False by tier
+    mock_initial_tenant_override_meeting = TenantModel(
+        id=initial_tenant_id, name="MeetingOverride Tenant", subscription_tier=initial_tier,
+        features={"meeting_insights": False, "writing_assistance": False, "communication_style_analysis": False, "other_data": "test"},
+        admin_email="meetoverride@example.com", admin_name="MeetOverride Admin",
+        created_at=datetime.utcnow(), updated_at=datetime.utcnow()
+    )
+    mock_db_session.query(TenantModel).filter(TenantModel.id == initial_tenant_id).first.return_value = mock_initial_tenant_override_meeting
+
+    # Action: Update features directly to set meeting_insights to True, against tier logic
+    # Also, ensure other tier-based flags are NOT auto-enabled if not specified in this direct update.
+    updates_meeting_override = {"features": {"meeting_insights": True, "other_data": "updated_test"}}
+    updated_tenant_override_meeting = tenant_service.update_tenant(tenant_id=initial_tenant_id, updates=updates_meeting_override, user_id=None)
+
+    # Assertion
+    assert updated_tenant_override_meeting.subscription_tier == initial_tier # Tier didn't change
+    assert updated_tenant_override_meeting.features.get("meeting_insights") is True # Overridden
+    # Check that other tier-dependent flags that were not part of the direct update remain based on the *original* tier logic if not specified
+    # The current service logic for "features" update:
+    # _features = tenant.features.copy()
+    # _features.update(updates["features"])
+    # if "flagX" not in updates["features"]: _features["flagX"] = current_tier in [pro, ent]
+    # updates["features"] = _features
+    # This means if a flag (e.g. writing_assistance) is NOT in updates["features"], it will be re-evaluated based on current_tier.
+    # So, if current_tier is 'basic', writing_assistance should be False unless explicitly set True in updates["features"].
+    assert updated_tenant_override_meeting.features.get("writing_assistance") is False # Should remain False (based on 'basic' tier)
+    assert updated_tenant_override_meeting.features.get("communication_style_analysis") is False # Should remain False (based on 'basic' tier)
+    assert updated_tenant_override_meeting.features.get("other_data") == "updated_test" # Explicitly updated
+
+
 # Ensure that the TenantService is initialized with a mock DB session.
 # The create_tenant method involves several DB operations: add, commit, refresh, and query for slug uniqueness.
 # The mock_db_session in the fixture is set up to handle the slug uniqueness check by default.

@@ -33,7 +33,9 @@ __all__ = [
     "detect_frequency_anomalies_for_user", # Added new function
     "writing_assistance_service",
     "communication_style_service",
+    "meeting_insights_service",
 ]
 
 from . import writing_assistance_service
 from . import communication_style_service
+from . import meeting_insights_service

@@ -10,6 +10,8 @@ __all__ = [
     "user_setting_router", # Assuming this was meant to be exported
     "writing_assistance_router",
     "communication_style_router",
+    "meeting_insights_router",
 ]
 
 from . import communication_style_router
+from . import meeting_insights_router
