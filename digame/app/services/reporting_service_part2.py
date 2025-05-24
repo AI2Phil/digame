@@ -603,7 +603,7 @@ class ReportExportService:
         self,
         execution_id: int,
         export_format: str,
-        options: Dict[str, Any] = None
+        options: Optional[Dict[str, Any]] = None
     ) -> str:
         """Export report data in various formats"""
         
