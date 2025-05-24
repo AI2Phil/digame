@@ -1,559 +1,372 @@
 """
-Multi-tenancy API Router for Enterprise Features
+Multi-tenant API router for the Digame platform
 """
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from typing import List, Optional, Dict, Any
+from typing import List, Dict, Any
+from pydantic import BaseModel, EmailStr
 from datetime import datetime
-import logging
 
-from ..services.tenant_service import get_tenant_service, TenantService
-from ..models.tenant import Tenant, TenantUser, TenantInvitation
+from ..database import get_db
+from ..services.tenant_service import TenantService, UserService
+from ..models.tenant import Tenant, User, TenantSettings
 
-# Mock dependencies for development
-def get_db():
-    """Mock database session"""
-    return None
+router = APIRouter(prefix="/api/v1/tenants", tags=["tenants"])
 
-def get_current_user():
-    """Mock current user"""
-    class MockUser:
-        def __init__(self):
-            self.id = 1
-            self.email = "admin@example.com"
-            self.full_name = "Admin User"
-    return MockUser()
 
-def require_tenant_admin(tenant_id: int, current_user=None):
-    """Mock tenant admin check"""
-    return True
+# Pydantic models for request/response
+class TenantCreate(BaseModel):
+    name: str
+    domain: str
+    subdomain: str
+    subscription_tier: str = "basic"
+    settings: Dict[str, Any] = {}
+    admin_user: Dict[str, Any] = {}
 
-router = APIRouter(prefix="/tenants", tags=["multi-tenancy"])
 
-# Tenant Management Endpoints
+class TenantResponse(BaseModel):
+    id: int
+    name: str
+    domain: str
+    subdomain: str
+    subscription_tier: str
+    is_active: bool
+    created_at: datetime
+    
+    class Config:
+        from_attributes = True
 
-@router.post("/", response_model=dict)
+
+class UserCreate(BaseModel):
+    username: str
+    email: EmailStr
+    password: str
+    first_name: str = None
+    last_name: str = None
+    job_title: str = None
+    department: str = None
+    profile_data: Dict[str, Any] = {}
+    preferences: Dict[str, Any] = {}
+
+
+class UserResponse(BaseModel):
+    id: int
+    username: str
+    email: str
+    first_name: str = None
+    last_name: str = None
+    job_title: str = None
+    department: str = None
+    is_active: bool
+    created_at: datetime
+    last_login: datetime = None
+    
+    class Config:
+        from_attributes = True
+
+
+class TenantSettingsUpdate(BaseModel):
+    logo_url: str = None
+    primary_color: str = None
+    secondary_color: str = None
+    analytics_enabled: bool = None
+    integrations_enabled: bool = None
+    ai_features_enabled: bool = None
+    workflow_automation_enabled: bool = None
+    market_intelligence_enabled: bool = None
+    email_notifications: bool = None
+    session_timeout: int = None
+    mfa_required: bool = None
+
+
+class RoleAssignment(BaseModel):
+    user_id: int
+    role_id: int
+
+
+@router.post("/", response_model=TenantResponse)
 async def create_tenant(
-    tenant_data: dict,
-    current_user=Depends(get_current_user),
+    tenant_data: TenantCreate,
     db: Session = Depends(get_db)
 ):
-    """Create a new tenant (organization)"""
+    """
+    Create a new tenant with default settings and admin user
+    """
+    tenant_service = TenantService(db)
     
     try:
-        # Mock tenant creation for development
-        tenant_info = {
-            "id": 1,
-            "name": tenant_data.get("name", "Demo Tenant"),
-            "slug": tenant_data.get("name", "demo-tenant").lower().replace(" ", "-"),
-            "subscription_tier": tenant_data.get("subscription_tier", "basic"),
-            "admin_email": tenant_data.get("admin_email", current_user.email),
-            "admin_name": tenant_data.get("admin_name", current_user.full_name),
-            "is_trial": True,
-            "trial_ends_at": "2025-06-23T00:00:00Z",
-            "created_at": datetime.utcnow().isoformat(),
-            "features": {
-                "analytics": True,
-                "social_collaboration": True,
-                "ai_insights": tenant_data.get("subscription_tier") in ["professional", "enterprise"],
-                "advanced_reporting": tenant_data.get("subscription_tier") == "enterprise",
-                "api_access": tenant_data.get("subscription_tier") in ["professional", "enterprise"],
-                "sso": tenant_data.get("subscription_tier") == "enterprise",
-                "audit_logs": tenant_data.get("subscription_tier") == "enterprise"
-            }
-        }
-        
-        return {
-            "success": True,
-            "message": "Tenant created successfully",
-            "tenant": tenant_info
-        }
-        
+        tenant = tenant_service.create_tenant(tenant_data.dict())
+        return tenant
     except Exception as e:
-        logging.error(f"Failed to create tenant: {str(e)}")
-        raise HTTPException(status_code=500, detail="Failed to create tenant")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Failed to create tenant: {str(e)}"
+        )
 
-@router.get("/{tenant_id}", response_model=dict)
-async def get_tenant(
-    tenant_id: int,
-    current_user=Depends(get_current_user),
+
+@router.get("/domain/{domain}", response_model=TenantResponse)
+async def get_tenant_by_domain(
+    domain: str,
     db: Session = Depends(get_db)
 ):
-    """Get tenant information"""
+    """
+    Get tenant information by domain
+    """
+    tenant_service = TenantService(db)
+    tenant = tenant_service.get_tenant_by_domain(domain)
     
-    # Mock tenant data
-    tenant_info = {
-        "id": tenant_id,
-        "name": "Demo Organization",
-        "slug": "demo-org",
-        "domain": None,
-        "subscription_tier": "professional",
-        "max_users": 50,
-        "storage_limit_gb": 100,
-        "api_rate_limit": 5000,
-        "is_active": True,
-        "is_trial": True,
-        "trial_ends_at": "2025-06-23T00:00:00Z",
-        "admin_email": "admin@demo-org.com",
-        "admin_name": "Admin User",
-        "created_at": "2025-05-23T00:00:00Z",
-        "features": {
-            "analytics": True,
-            "social_collaboration": True,
-            "ai_insights": True,
-            "advanced_reporting": False,
-            "api_access": True,
-            "sso": False,
-            "audit_logs": False
-        },
-        "settings": {
-            "timezone": "UTC",
-            "date_format": "YYYY-MM-DD",
-            "currency": "USD",
-            "language": "en"
-        }
-    }
+    if not tenant:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Tenant not found"
+        )
     
-    return {
-        "success": True,
-        "tenant": tenant_info
-    }
+    return tenant
 
-@router.put("/{tenant_id}", response_model=dict)
-async def update_tenant(
-    tenant_id: int,
-    updates: dict,
-    current_user=Depends(get_current_user),
+
+@router.get("/subdomain/{subdomain}", response_model=TenantResponse)
+async def get_tenant_by_subdomain(
+    subdomain: str,
     db: Session = Depends(get_db)
 ):
-    """Update tenant information"""
+    """
+    Get tenant information by subdomain
+    """
+    tenant_service = TenantService(db)
+    tenant = tenant_service.get_tenant_by_subdomain(subdomain)
     
-    # Require admin access
-    require_tenant_admin(tenant_id, current_user)
+    if not tenant:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Tenant not found"
+        )
     
-    return {
-        "success": True,
-        "message": "Tenant updated successfully",
-        "updated_fields": list(updates.keys())
-    }
+    return tenant
 
-@router.get("/{tenant_id}/limits", response_model=dict)
-async def get_tenant_limits(
-    tenant_id: int,
-    current_user=Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    """Get tenant usage and limits"""
-    
-    # Mock usage data
-    limits_info = {
-        "users": {
-            "current": 12,
-            "limit": 50,
-            "percentage": 24.0
-        },
-        "storage": {
-            "used_gb": 15.7,
-            "limit_gb": 100,
-            "percentage": 15.7
-        },
-        "api": {
-            "requests_today": 1247,
-            "daily_limit": 5000,
-            "percentage": 24.9
-        },
-        "trial": {
-            "is_trial": True,
-            "days_remaining": 31,
-            "expires_at": "2025-06-23T00:00:00Z"
-        }
-    }
-    
-    return {
-        "success": True,
-        "limits": limits_info
-    }
 
-# User Management Endpoints
-
-@router.get("/{tenant_id}/users", response_model=dict)
-async def get_tenant_users(
-    tenant_id: int,
-    skip: int = Query(0, ge=0),
-    limit: int = Query(50, ge=1, le=100),
-    role: Optional[str] = None,
-    current_user=Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    """Get users in tenant"""
-    
-    # Mock user data
-    users = [
-        {
-            "user": {
-                "id": 1,
-                "email": "admin@demo-org.com",
-                "full_name": "Admin User",
-                "is_active": True
-            },
-            "role": "admin",
-            "permissions": {
-                "manage_users": True,
-                "manage_settings": True,
-                "view_analytics": True,
-                "manage_billing": True
-            },
-            "joined_at": "2025-05-01T00:00:00Z",
-            "last_active_at": "2025-05-23T10:30:00Z"
-        },
-        {
-            "user": {
-                "id": 2,
-                "email": "manager@demo-org.com",
-                "full_name": "Team Manager",
-                "is_active": True
-            },
-            "role": "manager",
-            "permissions": {
-                "manage_users": False,
-                "manage_settings": False,
-                "view_analytics": True,
-                "manage_billing": False
-            },
-            "joined_at": "2025-05-05T00:00:00Z",
-            "last_active_at": "2025-05-23T09:15:00Z"
-        }
-    ]
-    
-    # Apply role filter if provided
-    if role:
-        users = [u for u in users if u["role"] == role]
-    
-    return {
-        "success": True,
-        "users": users[skip:skip+limit],
-        "total": len(users),
-        "skip": skip,
-        "limit": limit
-    }
-
-@router.post("/{tenant_id}/users/{user_id}", response_model=dict)
-async def add_user_to_tenant(
-    tenant_id: int,
-    user_id: int,
-    user_data: dict,
-    current_user=Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    """Add user to tenant with specific role"""
-    
-    require_tenant_admin(tenant_id, current_user)
-    
-    role = user_data.get("role", "member")
-    permissions = user_data.get("permissions", {})
-    
-    return {
-        "success": True,
-        "message": f"User {user_id} added to tenant with role: {role}",
-        "tenant_user": {
-            "tenant_id": tenant_id,
-            "user_id": user_id,
-            "role": role,
-            "permissions": permissions,
-            "joined_at": datetime.utcnow().isoformat()
-        }
-    }
-
-@router.put("/{tenant_id}/users/{user_id}/role", response_model=dict)
-async def update_user_role(
-    tenant_id: int,
-    user_id: int,
-    role_data: dict,
-    current_user=Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    """Update user role in tenant"""
-    
-    require_tenant_admin(tenant_id, current_user)
-    
-    new_role = role_data.get("role")
-    new_permissions = role_data.get("permissions", {})
-    
-    return {
-        "success": True,
-        "message": f"User role updated to: {new_role}",
-        "updated_role": new_role,
-        "updated_permissions": new_permissions
-    }
-
-@router.delete("/{tenant_id}/users/{user_id}", response_model=dict)
-async def remove_user_from_tenant(
-    tenant_id: int,
-    user_id: int,
-    current_user=Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    """Remove user from tenant"""
-    
-    require_tenant_admin(tenant_id, current_user)
-    
-    return {
-        "success": True,
-        "message": f"User {user_id} removed from tenant"
-    }
-
-# Invitation Management Endpoints
-
-@router.post("/{tenant_id}/invitations", response_model=dict)
-async def invite_user_to_tenant(
-    tenant_id: int,
-    invitation_data: dict,
-    current_user=Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    """Invite user to join tenant"""
-    
-    require_tenant_admin(tenant_id, current_user)
-    
-    email = invitation_data.get("email")
-    role = invitation_data.get("role", "member")
-    
-    # Mock invitation creation
-    invitation_token = "mock_invitation_token_12345"
-    
-    return {
-        "success": True,
-        "message": f"Invitation sent to {email}",
-        "invitation": {
-            "id": 1,
-            "tenant_id": tenant_id,
-            "email": email,
-            "role": role,
-            "invitation_token": invitation_token,
-            "expires_at": "2025-05-30T00:00:00Z",
-            "created_at": datetime.utcnow().isoformat()
-        }
-    }
-
-@router.get("/{tenant_id}/invitations", response_model=dict)
-async def get_tenant_invitations(
-    tenant_id: int,
-    current_user=Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    """Get pending invitations for tenant"""
-    
-    # Mock invitations data
-    invitations = [
-        {
-            "id": 1,
-            "email": "newuser@example.com",
-            "role": "member",
-            "invited_by": "admin@demo-org.com",
-            "expires_at": "2025-05-30T00:00:00Z",
-            "created_at": "2025-05-23T00:00:00Z",
-            "status": "pending"
-        }
-    ]
-    
-    return {
-        "success": True,
-        "invitations": invitations
-    }
-
-@router.post("/invitations/{invitation_token}/accept", response_model=dict)
-async def accept_invitation(
-    invitation_token: str,
-    current_user=Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    """Accept tenant invitation"""
-    
-    return {
-        "success": True,
-        "message": "Invitation accepted successfully",
-        "tenant_user": {
-            "tenant_id": 1,
-            "user_id": current_user.id,
-            "role": "member",
-            "joined_at": datetime.utcnow().isoformat()
-        }
-    }
-
-# Settings Management Endpoints
-
-@router.get("/{tenant_id}/settings", response_model=dict)
-async def get_tenant_settings(
-    tenant_id: int,
-    category: Optional[str] = None,
-    current_user=Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    """Get tenant settings"""
-    
-    # Mock settings data
-    all_settings = {
-        "general": {
-            "timezone": "UTC",
-            "date_format": "YYYY-MM-DD",
-            "currency": "USD",
-            "language": "en"
-        },
-        "security": {
-            "password_policy": "strong",
-            "session_timeout": 3600,
-            "two_factor_required": False,
-            "ip_whitelist_enabled": False
-        },
-        "branding": {
-            "logo_url": None,
-            "primary_color": "#007bff",
-            "secondary_color": "#6c757d",
-            "custom_domain": None
-        },
-        "features": {
-            "analytics": True,
-            "social_collaboration": True,
-            "ai_insights": True,
-            "advanced_reporting": False,
-            "api_access": True,
-            "sso": False,
-            "audit_logs": False
-        }
-    }
-    
-    if category:
-        settings = all_settings.get(category, {})
-    else:
-        settings = all_settings
-    
-    return {
-        "success": True,
-        "settings": settings
-    }
-
-@router.put("/{tenant_id}/settings", response_model=dict)
+@router.put("/{tenant_id}/settings")
 async def update_tenant_settings(
     tenant_id: int,
-    settings_data: dict,
-    current_user=Depends(get_current_user),
+    settings_data: TenantSettingsUpdate,
     db: Session = Depends(get_db)
 ):
-    """Update tenant settings"""
+    """
+    Update tenant settings
+    """
+    tenant_service = TenantService(db)
     
-    require_tenant_admin(tenant_id, current_user)
-    
-    return {
-        "success": True,
-        "message": "Settings updated successfully",
-        "updated_settings": settings_data
-    }
+    try:
+        settings = tenant_service.update_tenant_settings(
+            tenant_id, 
+            settings_data.dict(exclude_unset=True)
+        )
+        return {"message": "Settings updated successfully"}
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Failed to update settings: {str(e)}"
+        )
 
-# Audit Log Endpoints
 
-@router.get("/{tenant_id}/audit-logs", response_model=dict)
-async def get_tenant_audit_logs(
+@router.get("/{tenant_id}/users", response_model=List[UserResponse])
+async def get_tenant_users(
     tenant_id: int,
-    skip: int = Query(0, ge=0),
-    limit: int = Query(50, ge=1, le=100),
-    action: Optional[str] = None,
-    user_id: Optional[int] = None,
-    start_date: Optional[str] = None,
-    end_date: Optional[str] = None,
-    current_user=Depends(get_current_user),
+    skip: int = 0,
+    limit: int = 100,
     db: Session = Depends(get_db)
 ):
-    """Get tenant audit logs"""
-    
-    require_tenant_admin(tenant_id, current_user)
-    
-    # Mock audit logs
-    audit_logs = [
-        {
-            "id": 1,
-            "action": "user_added_to_tenant",
-            "user_id": 1,
-            "user_email": "admin@demo-org.com",
-            "resource_type": "tenant_user",
-            "resource_id": "2",
-            "details": {"role": "member", "email": "newuser@example.com"},
-            "ip_address": "192.168.1.100",
-            "created_at": "2025-05-23T10:30:00Z"
-        },
-        {
-            "id": 2,
-            "action": "tenant_settings_updated",
-            "user_id": 1,
-            "user_email": "admin@demo-org.com",
-            "resource_type": "tenant",
-            "resource_id": str(tenant_id),
-            "details": {"category": "security", "changes": ["password_policy"]},
-            "ip_address": "192.168.1.100",
-            "created_at": "2025-05-23T09:15:00Z"
-        }
-    ]
-    
-    # Apply filters
-    if action:
-        audit_logs = [log for log in audit_logs if log["action"] == action]
-    if user_id:
-        audit_logs = [log for log in audit_logs if log["user_id"] == user_id]
-    
-    return {
-        "success": True,
-        "audit_logs": audit_logs[skip:skip+limit],
-        "total": len(audit_logs),
-        "skip": skip,
-        "limit": limit
-    }
+    """
+    Get all users for a tenant
+    """
+    tenant_service = TenantService(db)
+    users = tenant_service.get_tenant_users(tenant_id, skip, limit)
+    return users
 
-# User's Tenant Management
 
-@router.get("/user/tenants", response_model=dict)
-async def get_user_tenants(
-    current_user=Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    """Get all tenants for current user"""
-    
-    # Mock user tenants
-    user_tenants = [
-        {
-            "tenant": {
-                "id": 1,
-                "name": "Demo Organization",
-                "slug": "demo-org",
-                "subscription_tier": "professional",
-                "is_trial": True,
-                "trial_ends_at": "2025-06-23T00:00:00Z"
-            },
-            "role": "admin",
-            "permissions": {
-                "manage_users": True,
-                "manage_settings": True,
-                "view_analytics": True,
-                "manage_billing": True
-            },
-            "joined_at": "2025-05-01T00:00:00Z"
-        }
-    ]
-    
-    return {
-        "success": True,
-        "tenants": user_tenants
-    }
-
-@router.post("/switch/{tenant_id}", response_model=dict)
-async def switch_tenant_context(
+@router.post("/{tenant_id}/users", response_model=UserResponse)
+async def create_user(
     tenant_id: int,
-    current_user=Depends(get_current_user),
+    user_data: UserCreate,
     db: Session = Depends(get_db)
 ):
-    """Switch user's active tenant context"""
+    """
+    Create a new user within a tenant
+    """
+    tenant_service = TenantService(db)
+    
+    try:
+        user = tenant_service.create_user(tenant_id, user_data.dict())
+        return user
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Failed to create user: {str(e)}"
+        )
+
+
+@router.post("/{tenant_id}/roles/assign")
+async def assign_role(
+    tenant_id: int,
+    assignment: RoleAssignment,
+    db: Session = Depends(get_db)
+):
+    """
+    Assign a role to a user
+    """
+    tenant_service = TenantService(db)
+    
+    try:
+        user_role = tenant_service.assign_role(
+            assignment.user_id,
+            assignment.role_id,
+            assignment.user_id  # For now, users assign roles to themselves
+        )
+        return {"message": "Role assigned successfully"}
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Failed to assign role: {str(e)}"
+        )
+
+
+@router.get("/users/{user_id}/permissions")
+async def get_user_permissions(
+    user_id: int,
+    db: Session = Depends(get_db)
+):
+    """
+    Get all permissions for a user
+    """
+    tenant_service = TenantService(db)
+    permissions = tenant_service.get_user_permissions(user_id)
+    return {"permissions": permissions}
+
+
+@router.get("/users/{user_id}/permissions/{permission}")
+async def check_user_permission(
+    user_id: int,
+    permission: str,
+    db: Session = Depends(get_db)
+):
+    """
+    Check if a user has a specific permission
+    """
+    tenant_service = TenantService(db)
+    has_permission = tenant_service.check_permission(user_id, permission)
+    return {"has_permission": has_permission}
+
+
+@router.post("/authenticate")
+async def authenticate_user(
+    username: str,
+    password: str,
+    tenant_id: int,
+    db: Session = Depends(get_db)
+):
+    """
+    Authenticate a user within a specific tenant
+    """
+    user_service = UserService(db)
+    user = user_service.authenticate_user(username, password, tenant_id)
+    
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid credentials"
+        )
     
     return {
-        "success": True,
-        "message": f"Switched to tenant {tenant_id}",
-        "active_tenant_id": tenant_id
+        "user_id": user.id,
+        "username": user.username,
+        "tenant_id": user.tenant_id,
+        "message": "Authentication successful"
+    }
+
+
+@router.put("/users/{user_id}/profile")
+async def update_user_profile(
+    user_id: int,
+    profile_data: Dict[str, Any],
+    db: Session = Depends(get_db)
+):
+    """
+    Update user profile information
+    """
+    user_service = UserService(db)
+    
+    try:
+        user = user_service.update_user_profile(user_id, profile_data)
+        return {"message": "Profile updated successfully"}
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e)
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Failed to update profile: {str(e)}"
+        )
+
+
+@router.put("/users/{user_id}/password")
+async def change_password(
+    user_id: int,
+    old_password: str,
+    new_password: str,
+    db: Session = Depends(get_db)
+):
+    """
+    Change user password
+    """
+    user_service = UserService(db)
+    success = user_service.change_password(user_id, old_password, new_password)
+    
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Failed to change password. Check old password."
+        )
+    
+    return {"message": "Password changed successfully"}
+
+
+@router.delete("/users/{user_id}")
+async def deactivate_user(
+    user_id: int,
+    db: Session = Depends(get_db)
+):
+    """
+    Deactivate a user account
+    """
+    user_service = UserService(db)
+    success = user_service.deactivate_user(user_id)
+    
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    
+    return {"message": "User deactivated successfully"}
+
+
+# Health check endpoint for tenant system
+@router.get("/health")
+async def tenant_health_check():
+    """
+    Health check for tenant system
+    """
+    return {
+        "status": "healthy",
+        "service": "multi-tenant",
+        "timestamp": datetime.utcnow(),
+        "features": [
+            "tenant_management",
+            "user_management", 
+            "role_based_access_control",
+            "tenant_settings",
+            "authentication"
+        ]
     }

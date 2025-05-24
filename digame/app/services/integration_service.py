@@ -1,262 +1,165 @@
 """
-Integration APIs service for third-party productivity tools and services
+Integration service layer for third-party productivity tools and services
 """
 
-from typing import Optional, List, Dict, Any, Tuple
-from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
-from sqlalchemy import and_, or_, desc, asc, func
-import uuid
-import json
+from sqlalchemy import and_, or_, desc, func
+from typing import List, Optional, Dict, Any, Tuple
+from datetime import datetime, timedelta
 import asyncio
 import aiohttp
+import json
 import hashlib
 import hmac
-from urllib.parse import urlencode
 import base64
+from urllib.parse import urlencode
 
 from ..models.integration import (
     IntegrationProvider, IntegrationConnection, IntegrationSyncLog,
-    IntegrationDataMapping, IntegrationWebhook
+    IntegrationWebhook, IntegrationDataMapping, IntegrationAnalytics
 )
-from ..models.user import User
-from ..models.tenant import Tenant
+from ..database import get_db
 
 
 class IntegrationService:
-    """Service for managing third-party integrations"""
-
+    """
+    Core integration service for managing third-party connections
+    """
+    
     def __init__(self, db: Session):
         self.db = db
-        self.supported_providers = {
-            "slack": SlackIntegration,
-            "microsoft_teams": TeamsIntegration,
-            "google_workspace": GoogleWorkspaceIntegration,
-            "trello": TrelloIntegration,
-            "asana": AsanaIntegration,
-            "jira": JiraIntegration,
-            "github": GitHubIntegration,
-            "dropbox": DropboxIntegration,
-            "salesforce": SalesforceIntegration,
-            "hubspot": HubSpotIntegration
-        }
-
-    # Provider Management
-    def get_available_providers(self, category: Optional[str] = None) -> List[IntegrationProvider]:
-        """Get available integration providers"""
-        
+    
+    def get_providers(self, category: Optional[str] = None, is_active: bool = True) -> List[IntegrationProvider]:
+        """
+        Get available integration providers
+        """
         query = self.db.query(IntegrationProvider).filter(
-            IntegrationProvider.is_active == True
+            IntegrationProvider.is_active == is_active
         )
         
         if category:
             query = query.filter(IntegrationProvider.category == category)
         
         return query.order_by(IntegrationProvider.display_name).all()
-
-    def get_provider_by_name(self, provider_name: str) -> Optional[IntegrationProvider]:
-        """Get provider by name"""
-        
-        return self.db.query(IntegrationProvider).filter(
-            and_(
-                IntegrationProvider.name == provider_name,
-                IntegrationProvider.is_active == True
-            )
-        ).first()
-
+    
     def create_provider(self, provider_data: Dict[str, Any]) -> IntegrationProvider:
-        """Create a new integration provider"""
-        
+        """
+        Create a new integration provider
+        """
         provider = IntegrationProvider(
             name=provider_data["name"],
             display_name=provider_data["display_name"],
             description=provider_data.get("description"),
             category=provider_data["category"],
-            provider_type=provider_data["provider_type"],
             base_url=provider_data.get("base_url"),
-            api_version=provider_data.get("api_version"),
-            documentation_url=provider_data.get("documentation_url"),
+            auth_type=provider_data["auth_type"],
             auth_config=provider_data.get("auth_config", {}),
-            required_scopes=provider_data.get("required_scopes", []),
-            optional_scopes=provider_data.get("optional_scopes", []),
-            supported_features=provider_data.get("supported_features", []),
+            supported_operations=provider_data.get("supported_operations", []),
             rate_limits=provider_data.get("rate_limits", {}),
-            webhook_support=provider_data.get("webhook_support", False),
-            real_time_sync=provider_data.get("real_time_sync", False)
+            data_formats=provider_data.get("data_formats", ["json"]),
+            logo_url=provider_data.get("logo_url"),
+            documentation_url=provider_data.get("documentation_url"),
+            version=provider_data.get("version", "1.0")
         )
         
         self.db.add(provider)
         self.db.commit()
-        self.db.refresh(provider)
-        
         return provider
-
-    # Connection Management
+    
     def create_connection(
         self,
         tenant_id: int,
         user_id: int,
-        provider_name: str,
-        connection_name: str,
-        auth_data: Dict[str, Any],
-        sync_settings: Dict[str, Any] = None
+        provider_id: int,
+        connection_data: Dict[str, Any]
     ) -> IntegrationConnection:
-        """Create a new integration connection"""
-        
-        provider = self.get_provider_by_name(provider_name)
-        if not provider:
-            raise ValueError(f"Provider '{provider_name}' not found")
-        
-        # Encrypt sensitive auth data
-        encrypted_auth = self._encrypt_auth_data(auth_data)
-        
+        """
+        Create a new integration connection
+        """
         connection = IntegrationConnection(
             tenant_id=tenant_id,
             user_id=user_id,
-            provider_id=provider.id,
-            connection_name=connection_name,
-            auth_type=auth_data.get("auth_type", "oauth2"),
-            access_token=encrypted_auth.get("access_token"),
-            refresh_token=encrypted_auth.get("refresh_token"),
-            token_expires_at=auth_data.get("expires_at"),
-            api_key=encrypted_auth.get("api_key"),
-            granted_scopes=auth_data.get("scopes", []),
-            sync_settings=sync_settings or {},
-            external_user_id=auth_data.get("external_user_id"),
-            external_username=auth_data.get("external_username"),
-            external_email=auth_data.get("external_email"),
-            external_profile=auth_data.get("external_profile", {})
+            provider_id=provider_id,
+            connection_name=connection_data["connection_name"],
+            external_account_id=connection_data.get("external_account_id"),
+            external_account_name=connection_data.get("external_account_name"),
+            auth_data=connection_data.get("auth_data", {}),
+            refresh_token=connection_data.get("refresh_token"),
+            token_expires_at=connection_data.get("token_expires_at"),
+            sync_settings=connection_data.get("sync_settings", {}),
+            field_mappings=connection_data.get("field_mappings", {}),
+            filters=connection_data.get("filters", {})
         )
         
         self.db.add(connection)
         self.db.commit()
-        self.db.refresh(connection)
         
-        # Update provider statistics
-        provider.total_connections += 1
-        provider.active_connections += 1
-        self.db.commit()
+        # Test the connection
+        self._test_connection(connection)
         
         return connection
-
-    def get_user_connections(
+    
+    def get_connections(
         self,
         tenant_id: int,
-        user_id: int,
-        provider_name: Optional[str] = None,
-        active_only: bool = True
+        user_id: Optional[int] = None,
+        provider_id: Optional[int] = None,
+        status: Optional[str] = None
     ) -> List[IntegrationConnection]:
-        """Get user's integration connections"""
-        
+        """
+        Get integration connections for a tenant
+        """
         query = self.db.query(IntegrationConnection).filter(
-            and_(
-                IntegrationConnection.tenant_id == tenant_id,
-                IntegrationConnection.user_id == user_id
-            )
+            IntegrationConnection.tenant_id == tenant_id
         )
         
-        if active_only:
-            query = query.filter(IntegrationConnection.status == "active")
+        if user_id:
+            query = query.filter(IntegrationConnection.user_id == user_id)
         
-        if provider_name:
-            provider = self.get_provider_by_name(provider_name)
-            if provider:
-                query = query.filter(IntegrationConnection.provider_id == provider.id)
+        if provider_id:
+            query = query.filter(IntegrationConnection.provider_id == provider_id)
         
-        return query.order_by(desc(IntegrationConnection.created_at)).all()
-
-    def test_connection(self, connection_id: int) -> Dict[str, Any]:
-        """Test an integration connection"""
+        if status:
+            query = query.filter(IntegrationConnection.status == status)
         
+        return query.order_by(IntegrationConnection.created_at.desc()).all()
+    
+    def update_connection_status(
+        self,
+        connection_id: int,
+        status: str,
+        error_message: Optional[str] = None
+    ) -> bool:
+        """
+        Update connection status
+        """
         connection = self.db.query(IntegrationConnection).filter(
             IntegrationConnection.id == connection_id
         ).first()
         
         if not connection:
-            raise ValueError("Connection not found")
+            return False
         
-        provider_class = self.supported_providers.get(connection.provider.name)
-        if not provider_class:
-            raise ValueError(f"Provider '{connection.provider.name}' not supported")
-        
-        integration = provider_class(connection)
-        
-        try:
-            result = integration.test_connection()
-            
-            if result["success"]:
-                connection.status = "active"
-                connection.last_error = None
-                connection.error_count = 0
-            else:
-                connection.status = "error"
-                connection.last_error = result.get("error", "Connection test failed")
-                connection.error_count += 1
-            
-            connection.last_used_at = datetime.utcnow()
-            self.db.commit()
-            
-            return result
-            
-        except Exception as e:
-            connection.status = "error"
-            connection.last_error = str(e)
+        connection.status = status
+        if error_message:
+            connection.last_error = error_message
             connection.error_count += 1
-            self.db.commit()
-            
-            return {
-                "success": False,
-                "error": str(e),
-                "connection_id": connection_id
-            }
-
-    def refresh_connection_token(self, connection_id: int) -> bool:
-        """Refresh OAuth token for a connection"""
+        else:
+            connection.last_error = None
         
-        connection = self.db.query(IntegrationConnection).filter(
-            IntegrationConnection.id == connection_id
-        ).first()
-        
-        if not connection or not connection.refresh_token:
-            return False
-        
-        provider_class = self.supported_providers.get(connection.provider.name)
-        if not provider_class:
-            return False
-        
-        integration = provider_class(connection)
-        
-        try:
-            new_tokens = integration.refresh_token()
-            
-            if new_tokens:
-                # Encrypt and store new tokens
-                encrypted_tokens = self._encrypt_auth_data(new_tokens)
-                connection.access_token = encrypted_tokens.get("access_token")
-                connection.refresh_token = encrypted_tokens.get("refresh_token")
-                connection.token_expires_at = new_tokens.get("expires_at")
-                connection.status = "active"
-                connection.last_error = None
-                
-                self.db.commit()
-                return True
-                
-        except Exception as e:
-            connection.status = "error"
-            connection.last_error = f"Token refresh failed: {str(e)}"
-            self.db.commit()
-        
-        return False
-
-    # Data Synchronization
-    async def sync_data(
+        connection.updated_at = datetime.utcnow()
+        self.db.commit()
+        return True
+    
+    def sync_connection(
         self,
         connection_id: int,
-        sync_type: str = "incremental",
-        operations: List[str] = None
+        sync_type: str = "manual",
+        operation: str = "full_sync"
     ) -> IntegrationSyncLog:
-        """Synchronize data with external service"""
-        
+        """
+        Perform data synchronization for a connection
+        """
         connection = self.db.query(IntegrationConnection).filter(
             IntegrationConnection.id == connection_id
         ).first()
@@ -266,650 +169,457 @@ class IntegrationService:
         
         # Create sync log
         sync_log = IntegrationSyncLog(
-            tenant_id=connection.tenant_id,
             connection_id=connection_id,
-            provider_id=connection.provider_id,
             sync_type=sync_type,
-            sync_direction="bidirectional",
-            operation="sync_data",
-            triggered_by="manual",
-            user_id=connection.user_id
+            direction="inbound",  # Default to inbound
+            operation=operation,
+            status="in_progress"
         )
         
         self.db.add(sync_log)
-        self.db.commit()
-        self.db.refresh(sync_log)
-        
-        provider_class = self.supported_providers.get(connection.provider.name)
-        if not provider_class:
-            sync_log.status = "failed"
-            sync_log.error_message = f"Provider '{connection.provider.name}' not supported"
-            sync_log.mark_completed(False)
-            self.db.commit()
-            return sync_log
-        
-        integration = provider_class(connection)
+        self.db.flush()
         
         try:
-            # Execute synchronization
-            sync_results = await integration.sync_data(sync_type, operations or [])
+            # Perform the actual sync
+            sync_result = self._perform_sync(connection, sync_log)
             
             # Update sync log with results
-            sync_log.records_processed = sync_results.get("records_processed", 0)
-            sync_log.records_created = sync_results.get("records_created", 0)
-            sync_log.records_updated = sync_results.get("records_updated", 0)
-            sync_log.records_deleted = sync_results.get("records_deleted", 0)
-            sync_log.records_skipped = sync_results.get("records_skipped", 0)
-            sync_log.records_failed = sync_results.get("records_failed", 0)
-            sync_log.data_sent_bytes = sync_results.get("data_sent_bytes", 0)
-            sync_log.data_received_bytes = sync_results.get("data_received_bytes", 0)
-            sync_log.api_calls_made = sync_results.get("api_calls_made", 0)
-            sync_log.last_sync_cursor = sync_results.get("last_cursor")
+            sync_log.status = "success" if sync_result["success"] else "failed"
+            sync_log.records_processed = sync_result.get("records_processed", 0)
+            sync_log.records_created = sync_result.get("records_created", 0)
+            sync_log.records_updated = sync_result.get("records_updated", 0)
+            sync_log.records_failed = sync_result.get("records_failed", 0)
+            sync_log.duration_seconds = sync_result.get("duration_seconds", 0)
+            sync_log.api_calls_made = sync_result.get("api_calls_made", 0)
+            sync_log.completed_at = datetime.utcnow()
             
-            sync_log.mark_completed(True)
+            if not sync_result["success"]:
+                sync_log.error_message = sync_result.get("error_message")
+                sync_log.error_details = sync_result.get("error_details", {})
             
-            # Update connection statistics
+            # Update connection metrics
             connection.total_syncs += 1
-            connection.successful_syncs += 1
+            if sync_result["success"]:
+                connection.successful_syncs += 1
             connection.last_sync_at = datetime.utcnow()
-            connection.data_transferred_bytes += sync_log.data_sent_bytes + sync_log.data_received_bytes
+            
+            # Update average sync duration
+            if connection.total_syncs > 0:
+                total_duration = (connection.avg_sync_duration * (connection.total_syncs - 1)) + sync_log.duration_seconds
+                connection.avg_sync_duration = total_duration / connection.total_syncs
             
         except Exception as e:
             sync_log.status = "failed"
             sync_log.error_message = str(e)
-            sync_log.mark_completed(False)
+            sync_log.completed_at = datetime.utcnow()
             
-            # Update connection error statistics
-            connection.failed_syncs += 1
-            connection.last_error = str(e)
             connection.error_count += 1
+            connection.last_error = str(e)
         
         self.db.commit()
         return sync_log
-
-    def get_sync_history(
-        self,
-        connection_id: int,
-        limit: int = 50,
-        status: Optional[str] = None
-    ) -> List[IntegrationSyncLog]:
-        """Get synchronization history for a connection"""
-        
-        query = self.db.query(IntegrationSyncLog).filter(
-            IntegrationSyncLog.connection_id == connection_id
-        )
-        
-        if status:
-            query = query.filter(IntegrationSyncLog.status == status)
-        
-        return query.order_by(desc(IntegrationSyncLog.started_at)).limit(limit).all()
-
-    # Data Mapping Management
-    def create_data_mapping(
-        self,
-        connection_id: int,
-        tenant_id: int,
-        entity_type: str,
-        mapping_name: str,
-        field_mappings: Dict[str, str],
-        created_by_user_id: int,
-        **kwargs
-    ) -> IntegrationDataMapping:
-        """Create data field mapping"""
-        
-        mapping = IntegrationDataMapping(
-            connection_id=connection_id,
-            tenant_id=tenant_id,
-            entity_type=entity_type,
-            mapping_name=mapping_name,
-            description=kwargs.get("description"),
-            internal_fields=kwargs.get("internal_fields", {}),
-            external_fields=kwargs.get("external_fields", {}),
-            field_mappings=field_mappings,
-            transformations=kwargs.get("transformations", {}),
-            validation_rules=kwargs.get("validation_rules", {}),
-            default_values=kwargs.get("default_values", {}),
-            sync_direction=kwargs.get("sync_direction", "bidirectional"),
-            conflict_resolution=kwargs.get("conflict_resolution", "latest_wins"),
-            created_by_user_id=created_by_user_id
-        )
-        
-        self.db.add(mapping)
-        self.db.commit()
-        self.db.refresh(mapping)
-        
-        return mapping
-
-    def get_connection_mappings(self, connection_id: int) -> List[IntegrationDataMapping]:
-        """Get data mappings for a connection"""
-        
-        return self.db.query(IntegrationDataMapping).filter(
-            and_(
-                IntegrationDataMapping.connection_id == connection_id,
-                IntegrationDataMapping.is_active == True
-            )
-        ).order_by(IntegrationDataMapping.entity_type).all()
-
-    # Webhook Management
+    
     def create_webhook(
         self,
         connection_id: int,
-        tenant_id: int,
-        webhook_url: str,
-        events: List[str],
-        webhook_secret: Optional[str] = None
+        webhook_data: Dict[str, Any]
     ) -> IntegrationWebhook:
-        """Create webhook configuration"""
-        
+        """
+        Create a webhook for real-time updates
+        """
         webhook = IntegrationWebhook(
-            tenant_id=tenant_id,
             connection_id=connection_id,
-            webhook_url=webhook_url,
-            webhook_secret=webhook_secret,
-            events=events
+            webhook_url=webhook_data["webhook_url"],
+            webhook_secret=webhook_data.get("webhook_secret"),
+            events=webhook_data.get("events", []),
+            external_webhook_id=webhook_data.get("external_webhook_id"),
+            external_webhook_url=webhook_data.get("external_webhook_url"),
+            retry_config=webhook_data.get("retry_config", {}),
+            timeout_seconds=webhook_data.get("timeout_seconds", 30)
         )
         
         self.db.add(webhook)
         self.db.commit()
-        self.db.refresh(webhook)
-        
         return webhook
-
-    def handle_webhook(
+    
+    def process_webhook(
         self,
-        provider_name: str,
-        webhook_data: Dict[str, Any],
-        headers: Dict[str, str]
-    ) -> Dict[str, Any]:
-        """Handle incoming webhook from external service"""
-        
-        provider_class = self.supported_providers.get(provider_name)
-        if not provider_class:
-            return {"success": False, "error": "Provider not supported"}
-        
-        try:
-            # Verify webhook signature
-            if not self._verify_webhook_signature(provider_name, webhook_data, headers):
-                return {"success": False, "error": "Invalid webhook signature"}
-            
-            # Process webhook
-            result = provider_class.handle_webhook(webhook_data, headers)
-            
-            # Log webhook trigger
-            webhook_id = result.get("webhook_id")
-            if webhook_id:
-                webhook = self.db.query(IntegrationWebhook).filter(
-                    IntegrationWebhook.id == webhook_id
-                ).first()
-                
-                if webhook:
-                    webhook.record_trigger(result["success"], result.get("error"))
-                    self.db.commit()
-            
-            return result
-            
-        except Exception as e:
-            return {"success": False, "error": str(e)}
-
-    # Analytics and Reporting
-    def get_integration_analytics(self, tenant_id: int) -> Dict[str, Any]:
-        """Get integration analytics for tenant"""
-        
-        # Connection statistics
-        total_connections = self.db.query(IntegrationConnection).filter(
-            IntegrationConnection.tenant_id == tenant_id
-        ).count()
-        
-        active_connections = self.db.query(IntegrationConnection).filter(
-            and_(
-                IntegrationConnection.tenant_id == tenant_id,
-                IntegrationConnection.status == "active"
-            )
-        ).count()
-        
-        # Sync statistics
-        recent_syncs = self.db.query(IntegrationSyncLog).filter(
-            and_(
-                IntegrationSyncLog.tenant_id == tenant_id,
-                IntegrationSyncLog.started_at >= datetime.utcnow() - timedelta(days=30)
-            )
-        ).count()
-        
-        successful_syncs = self.db.query(IntegrationSyncLog).filter(
-            and_(
-                IntegrationSyncLog.tenant_id == tenant_id,
-                IntegrationSyncLog.status == "completed",
-                IntegrationSyncLog.started_at >= datetime.utcnow() - timedelta(days=30)
-            )
-        ).count()
-        
-        # Provider usage
-        provider_usage = self.db.query(
-            IntegrationProvider.name,
-            func.count(IntegrationConnection.id).label("connection_count")
-        ).join(IntegrationConnection).filter(
-            IntegrationConnection.tenant_id == tenant_id
-        ).group_by(IntegrationProvider.name).all()
-        
-        return {
-            "total_connections": total_connections,
-            "active_connections": active_connections,
-            "connection_health_rate": (active_connections / total_connections * 100) if total_connections > 0 else 0,
-            "recent_syncs": recent_syncs,
-            "successful_syncs": successful_syncs,
-            "sync_success_rate": (successful_syncs / recent_syncs * 100) if recent_syncs > 0 else 0,
-            "provider_usage": {usage.name: usage.connection_count for usage in provider_usage},
-            "data_volume": self._get_data_volume_stats(tenant_id),
-            "trends": self._get_integration_trends(tenant_id)
-        }
-
-    def _get_data_volume_stats(self, tenant_id: int) -> Dict[str, int]:
-        """Get data volume statistics"""
-        
-        result = self.db.query(
-            func.sum(IntegrationSyncLog.data_sent_bytes).label("total_sent"),
-            func.sum(IntegrationSyncLog.data_received_bytes).label("total_received"),
-            func.sum(IntegrationSyncLog.records_processed).label("total_records")
-        ).filter(
-            and_(
-                IntegrationSyncLog.tenant_id == tenant_id,
-                IntegrationSyncLog.started_at >= datetime.utcnow() - timedelta(days=30)
-            )
-        ).first()
-        
-        return {
-            "bytes_sent": result.total_sent or 0,
-            "bytes_received": result.total_received or 0,
-            "records_processed": result.total_records or 0
-        }
-
-    def _get_integration_trends(self, tenant_id: int) -> Dict[str, str]:
-        """Get integration trend analysis"""
-        
-        # Simple trend analysis (mock implementation)
-        return {
-            "connections_trend": "increasing",
-            "sync_frequency_trend": "stable",
-            "error_rate_trend": "decreasing",
-            "data_volume_trend": "increasing"
-        }
-
-    # Utility Methods
-    def _encrypt_auth_data(self, auth_data: Dict[str, Any]) -> Dict[str, str]:
-        """Encrypt sensitive authentication data"""
-        
-        # Mock encryption - in production, use proper encryption
-        encrypted = {}
-        
-        for key in ["access_token", "refresh_token", "api_key"]:
-            if key in auth_data and auth_data[key]:
-                # Simple base64 encoding as mock encryption
-                encrypted[key] = base64.b64encode(str(auth_data[key]).encode()).decode()
-        
-        return encrypted
-
-    def _decrypt_auth_data(self, encrypted_data: Dict[str, str]) -> Dict[str, str]:
-        """Decrypt authentication data"""
-        
-        # Mock decryption - in production, use proper decryption
-        decrypted = {}
-        
-        for key, value in encrypted_data.items():
-            if value:
-                try:
-                    decrypted[key] = base64.b64decode(value.encode()).decode()
-                except:
-                    decrypted[key] = value
-        
-        return decrypted
-
-    def _verify_webhook_signature(
-        self,
-        provider_name: str,
-        webhook_data: Dict[str, Any],
+        webhook_id: int,
+        payload: Dict[str, Any],
         headers: Dict[str, str]
     ) -> bool:
-        """Verify webhook signature"""
+        """
+        Process incoming webhook data
+        """
+        webhook = self.db.query(IntegrationWebhook).filter(
+            IntegrationWebhook.id == webhook_id
+        ).first()
         
-        # Mock signature verification - implement per provider
-        signature_header = headers.get("X-Signature") or headers.get("X-Hub-Signature-256")
-        
-        if not signature_header:
+        if not webhook or not webhook.is_active:
             return False
         
-        # In production, implement proper HMAC verification per provider
-        return True
-
-
-# Provider-specific integration classes
-class BaseIntegration:
-    """Base class for provider integrations"""
-    
-    def __init__(self, connection: IntegrationConnection):
-        self.connection = connection
-        self.provider = connection.provider
+        # Verify webhook signature if secret is configured
+        if webhook.webhook_secret:
+            if not self._verify_webhook_signature(payload, headers, webhook.webhook_secret):
+                return False
         
-    def test_connection(self) -> Dict[str, Any]:
-        """Test connection to external service"""
-        raise NotImplementedError
+        try:
+            # Process the webhook payload
+            self._process_webhook_payload(webhook, payload)
+            
+            # Update webhook metrics
+            webhook.total_triggers += 1
+            webhook.successful_triggers += 1
+            webhook.last_triggered_at = datetime.utcnow()
+            
+            self.db.commit()
+            return True
+            
+        except Exception as e:
+            webhook.failed_triggers += 1
+            self.db.commit()
+            return False
     
-    def refresh_token(self) -> Optional[Dict[str, Any]]:
-        """Refresh OAuth token"""
-        raise NotImplementedError
+    def create_data_mapping(
+        self,
+        connection_id: int,
+        mapping_data: Dict[str, Any]
+    ) -> IntegrationDataMapping:
+        """
+        Create field mapping between external and internal data
+        """
+        mapping = IntegrationDataMapping(
+            connection_id=connection_id,
+            resource_type=mapping_data["resource_type"],
+            external_field=mapping_data["external_field"],
+            internal_field=mapping_data["internal_field"],
+            transformation_type=mapping_data.get("transformation_type", "direct"),
+            transformation_config=mapping_data.get("transformation_config", {}),
+            validation_rules=mapping_data.get("validation_rules", {}),
+            is_required=mapping_data.get("is_required", False),
+            default_value=mapping_data.get("default_value"),
+            description=mapping_data.get("description")
+        )
+        
+        self.db.add(mapping)
+        self.db.commit()
+        return mapping
     
-    async def sync_data(self, sync_type: str, operations: List[str]) -> Dict[str, Any]:
-        """Synchronize data with external service"""
-        raise NotImplementedError
+    def get_analytics(
+        self,
+        tenant_id: int,
+        connection_id: Optional[int] = None,
+        period_type: str = "daily",
+        start_date: Optional[datetime] = None,
+        end_date: Optional[datetime] = None
+    ) -> List[IntegrationAnalytics]:
+        """
+        Get integration analytics and metrics
+        """
+        query = self.db.query(IntegrationAnalytics).filter(
+            IntegrationAnalytics.tenant_id == tenant_id,
+            IntegrationAnalytics.period_type == period_type
+        )
+        
+        if connection_id:
+            query = query.filter(IntegrationAnalytics.connection_id == connection_id)
+        
+        if start_date:
+            query = query.filter(IntegrationAnalytics.date >= start_date)
+        
+        if end_date:
+            query = query.filter(IntegrationAnalytics.date <= end_date)
+        
+        return query.order_by(IntegrationAnalytics.date.desc()).all()
     
-    @staticmethod
-    def handle_webhook(webhook_data: Dict[str, Any], headers: Dict[str, str]) -> Dict[str, Any]:
-        """Handle webhook from external service"""
-        raise NotImplementedError
-
-
-class SlackIntegration(BaseIntegration):
-    """Slack integration implementation"""
+    def generate_analytics(
+        self,
+        tenant_id: int,
+        date: datetime,
+        period_type: str = "daily"
+    ) -> IntegrationAnalytics:
+        """
+        Generate analytics for a specific period
+        """
+        # Calculate date range based on period type
+        if period_type == "daily":
+            start_date = date.replace(hour=0, minute=0, second=0, microsecond=0)
+            end_date = start_date + timedelta(days=1)
+        elif period_type == "weekly":
+            start_date = date - timedelta(days=date.weekday())
+            end_date = start_date + timedelta(days=7)
+        elif period_type == "monthly":
+            start_date = date.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+            next_month = start_date.replace(month=start_date.month + 1) if start_date.month < 12 else start_date.replace(year=start_date.year + 1, month=1)
+            end_date = next_month
+        else:
+            raise ValueError("Invalid period_type")
+        
+        # Aggregate sync logs for the period
+        sync_stats = self.db.query(
+            func.count(IntegrationSyncLog.id).label("total_syncs"),
+            func.sum(IntegrationSyncLog.api_calls_made).label("total_api_calls"),
+            func.sum(IntegrationSyncLog.data_size_bytes).label("total_data_bytes"),
+            func.sum(IntegrationSyncLog.records_processed).label("total_records"),
+            func.avg(IntegrationSyncLog.duration_seconds).label("avg_duration")
+        ).join(IntegrationConnection).filter(
+            IntegrationConnection.tenant_id == tenant_id,
+            IntegrationSyncLog.started_at >= start_date,
+            IntegrationSyncLog.started_at < end_date
+        ).first()
+        
+        # Calculate success rate
+        successful_syncs = self.db.query(func.count(IntegrationSyncLog.id)).join(IntegrationConnection).filter(
+            IntegrationConnection.tenant_id == tenant_id,
+            IntegrationSyncLog.status == "success",
+            IntegrationSyncLog.started_at >= start_date,
+            IntegrationSyncLog.started_at < end_date
+        ).scalar()
+        
+        total_syncs = sync_stats.total_syncs or 0
+        success_rate = (successful_syncs / total_syncs * 100) if total_syncs > 0 else 0
+        
+        # Count webhook triggers
+        webhook_triggers = self.db.query(func.sum(IntegrationWebhook.total_triggers)).join(IntegrationConnection).filter(
+            IntegrationConnection.tenant_id == tenant_id,
+            IntegrationWebhook.last_triggered_at >= start_date,
+            IntegrationWebhook.last_triggered_at < end_date
+        ).scalar() or 0
+        
+        # Count unique active users
+        unique_users = self.db.query(func.count(func.distinct(IntegrationConnection.user_id))).filter(
+            IntegrationConnection.tenant_id == tenant_id,
+            IntegrationConnection.last_sync_at >= start_date,
+            IntegrationConnection.last_sync_at < end_date
+        ).scalar() or 0
+        
+        # Create analytics record
+        analytics = IntegrationAnalytics(
+            tenant_id=tenant_id,
+            date=date,
+            period_type=period_type,
+            api_calls_made=sync_stats.total_api_calls or 0,
+            data_transferred_bytes=sync_stats.total_data_bytes or 0,
+            sync_operations=total_syncs,
+            webhook_triggers=webhook_triggers,
+            avg_response_time_ms=(sync_stats.avg_duration * 1000) if sync_stats.avg_duration else 0,
+            success_rate=success_rate,
+            error_rate=100 - success_rate,
+            uptime_percentage=95.0,  # Placeholder - would be calculated from actual uptime data
+            records_synchronized=sync_stats.total_records or 0,
+            unique_users_active=unique_users,
+            cost_savings_estimated=self._calculate_cost_savings(sync_stats.total_records or 0),
+            productivity_gain_hours=self._calculate_productivity_gain(sync_stats.total_records or 0)
+        )
+        
+        self.db.add(analytics)
+        self.db.commit()
+        return analytics
     
-    def test_connection(self) -> Dict[str, Any]:
-        # Mock Slack API test
-        return {
-            "success": True,
-            "provider": "slack",
-            "user_info": {
-                "id": "U123456",
-                "name": "Test User",
-                "team": "Test Team"
+    def _test_connection(self, connection: IntegrationConnection) -> bool:
+        """
+        Test an integration connection
+        """
+        try:
+            # This would implement actual connection testing logic
+            # For now, we'll simulate a successful test
+            connection.status = "active"
+            self.db.commit()
+            return True
+        except Exception as e:
+            connection.status = "error"
+            connection.last_error = str(e)
+            self.db.commit()
+            return False
+    
+    def _perform_sync(self, connection: IntegrationConnection, sync_log: IntegrationSyncLog) -> Dict[str, Any]:
+        """
+        Perform actual data synchronization
+        """
+        start_time = datetime.utcnow()
+        
+        try:
+            # This would implement actual sync logic based on the provider
+            # For now, we'll simulate a successful sync
+            
+            # Simulate processing time
+            import time
+            time.sleep(0.1)
+            
+            end_time = datetime.utcnow()
+            duration = (end_time - start_time).total_seconds()
+            
+            return {
+                "success": True,
+                "records_processed": 100,
+                "records_created": 20,
+                "records_updated": 75,
+                "records_failed": 5,
+                "duration_seconds": duration,
+                "api_calls_made": 5
             }
-        }
-    
-    async def sync_data(self, sync_type: str, operations: List[str]) -> Dict[str, Any]:
-        # Mock Slack data sync
-        await asyncio.sleep(1)  # Simulate API calls
-        
-        return {
-            "records_processed": 50,
-            "records_created": 10,
-            "records_updated": 30,
-            "records_deleted": 5,
-            "records_skipped": 5,
-            "records_failed": 0,
-            "data_sent_bytes": 1024,
-            "data_received_bytes": 2048,
-            "api_calls_made": 5
-        }
-
-
-class TeamsIntegration(BaseIntegration):
-    """Microsoft Teams integration implementation"""
-    
-    def test_connection(self) -> Dict[str, Any]:
-        return {
-            "success": True,
-            "provider": "microsoft_teams",
-            "user_info": {
-                "id": "user123",
-                "displayName": "Test User",
-                "mail": "test@example.com"
+            
+        except Exception as e:
+            end_time = datetime.utcnow()
+            duration = (end_time - start_time).total_seconds()
+            
+            return {
+                "success": False,
+                "error_message": str(e),
+                "duration_seconds": duration,
+                "api_calls_made": 1
             }
-        }
     
-    async def sync_data(self, sync_type: str, operations: List[str]) -> Dict[str, Any]:
-        await asyncio.sleep(1.5)
-        
-        return {
-            "records_processed": 75,
-            "records_created": 15,
-            "records_updated": 45,
-            "records_deleted": 10,
-            "records_skipped": 5,
-            "records_failed": 0,
-            "data_sent_bytes": 2048,
-            "data_received_bytes": 4096,
-            "api_calls_made": 8
-        }
+    def _verify_webhook_signature(
+        self,
+        payload: Dict[str, Any],
+        headers: Dict[str, str],
+        secret: str
+    ) -> bool:
+        """
+        Verify webhook signature for security
+        """
+        try:
+            signature = headers.get("X-Hub-Signature-256", "")
+            if not signature:
+                return False
+            
+            payload_bytes = json.dumps(payload, sort_keys=True).encode()
+            expected_signature = "sha256=" + hmac.new(
+                secret.encode(),
+                payload_bytes,
+                hashlib.sha256
+            ).hexdigest()
+            
+            return hmac.compare_digest(signature, expected_signature)
+        except Exception:
+            return False
+    
+    def _process_webhook_payload(self, webhook: IntegrationWebhook, payload: Dict[str, Any]):
+        """
+        Process webhook payload and trigger appropriate actions
+        """
+        # This would implement actual webhook processing logic
+        # For now, we'll just log the webhook event
+        pass
+    
+    def _calculate_cost_savings(self, records_processed: int) -> float:
+        """
+        Calculate estimated cost savings from automation
+        """
+        # Estimate: $0.10 per record processed manually
+        return records_processed * 0.10
+    
+    def _calculate_productivity_gain(self, records_processed: int) -> float:
+        """
+        Calculate estimated productivity gain in hours
+        """
+        # Estimate: 1 minute saved per record processed
+        return records_processed / 60.0
 
 
-class GoogleWorkspaceIntegration(BaseIntegration):
-    """Google Workspace integration implementation"""
+class IntegrationProviderService:
+    """
+    Service for managing integration provider configurations
+    """
     
-    def test_connection(self) -> Dict[str, Any]:
-        return {
-            "success": True,
-            "provider": "google_workspace",
-            "user_info": {
-                "id": "google123",
-                "name": "Test User",
-                "email": "test@gmail.com"
-            }
-        }
+    def __init__(self, db: Session):
+        self.db = db
     
-    async def sync_data(self, sync_type: str, operations: List[str]) -> Dict[str, Any]:
-        await asyncio.sleep(2)
-        
-        return {
-            "records_processed": 100,
-            "records_created": 20,
-            "records_updated": 60,
-            "records_deleted": 15,
-            "records_skipped": 5,
-            "records_failed": 0,
-            "data_sent_bytes": 3072,
-            "data_received_bytes": 6144,
-            "api_calls_made": 12
-        }
-
-
-# Additional provider classes would be implemented similarly
-class TrelloIntegration(BaseIntegration):
-    """Trello integration implementation"""
-    
-    def test_connection(self) -> Dict[str, Any]:
-        return {
-            "success": True,
-            "provider": "trello",
-            "user_info": {
-                "id": "trello123",
-                "username": "testuser",
-                "fullName": "Test User",
-                "email": "test@example.com"
-            }
-        }
-    
-    async def sync_data(self, sync_type: str, operations: List[str]) -> Dict[str, Any]:
-        await asyncio.sleep(1.2)
-        
-        return {
-            "records_processed": 35,
-            "records_created": 8,
-            "records_updated": 22,
-            "records_deleted": 3,
-            "records_skipped": 2,
-            "records_failed": 0,
-            "data_sent_bytes": 1536,
-            "data_received_bytes": 3072,
-            "api_calls_made": 7
-        }
-
-class AsanaIntegration(BaseIntegration):
-    """Asana integration implementation"""
-    
-    def test_connection(self) -> Dict[str, Any]:
-        return {
-            "success": True,
-            "provider": "asana",
-            "user_info": {
-                "gid": "asana456",
-                "name": "Test User",
-                "email": "test@example.com"
-            }
-        }
-    
-    async def sync_data(self, sync_type: str, operations: List[str]) -> Dict[str, Any]:
-        await asyncio.sleep(1.8)
-        
-        return {
-            "records_processed": 65,
-            "records_created": 12,
-            "records_updated": 40,
-            "records_deleted": 8,
-            "records_skipped": 5,
-            "records_failed": 0,
-            "data_sent_bytes": 2560,
-            "data_received_bytes": 5120,
-            "api_calls_made": 10
-        }
-
-class JiraIntegration(BaseIntegration):
-    """Jira integration implementation"""
-    
-    def test_connection(self) -> Dict[str, Any]:
-        return {
-            "success": True,
-            "provider": "jira",
-            "user_info": {
-                "accountId": "jira789",
-                "displayName": "Test User",
-                "emailAddress": "test@example.com"
-            }
-        }
-    
-    async def sync_data(self, sync_type: str, operations: List[str]) -> Dict[str, Any]:
-        await asyncio.sleep(2.5)
-        
-        return {
-            "records_processed": 85,
-            "records_created": 18,
-            "records_updated": 55,
-            "records_deleted": 7,
-            "records_skipped": 5,
-            "records_failed": 0,
-            "data_sent_bytes": 4096,
-            "data_received_bytes": 8192,
-            "api_calls_made": 15
-        }
-
-class GitHubIntegration(BaseIntegration):
-    """GitHub integration implementation"""
-    
-    def test_connection(self) -> Dict[str, Any]:
-        return {
-            "success": True,
-            "provider": "github",
-            "user_info": {
-                "id": 12345,
-                "login": "testuser",
-                "name": "Test User",
-                "email": "test@example.com"
-            }
-        }
-    
-    async def sync_data(self, sync_type: str, operations: List[str]) -> Dict[str, Any]:
-        await asyncio.sleep(1.5)
-        
-        return {
-            "records_processed": 45,
-            "records_created": 10,
-            "records_updated": 28,
-            "records_deleted": 4,
-            "records_skipped": 3,
-            "records_failed": 0,
-            "data_sent_bytes": 2048,
-            "data_received_bytes": 4096,
-            "api_calls_made": 8
-        }
-
-class DropboxIntegration(BaseIntegration):
-    """Dropbox integration implementation"""
-    
-    def test_connection(self) -> Dict[str, Any]:
-        return {
-            "success": True,
-            "provider": "dropbox",
-            "user_info": {
-                "account_id": "dbx123",
-                "name": {
-                    "display_name": "Test User"
+    def initialize_default_providers(self):
+        """
+        Initialize default integration providers
+        """
+        default_providers = [
+            {
+                "name": "slack",
+                "display_name": "Slack",
+                "description": "Team communication and collaboration platform",
+                "category": "communication",
+                "base_url": "https://slack.com/api",
+                "auth_type": "oauth2",
+                "auth_config": {
+                    "authorization_url": "https://slack.com/oauth/v2/authorize",
+                    "token_url": "https://slack.com/api/oauth.v2.access",
+                    "scopes": ["channels:read", "chat:write", "users:read"]
                 },
-                "email": "test@example.com"
+                "supported_operations": ["read", "write", "webhook"],
+                "rate_limits": {"requests_per_minute": 100},
+                "logo_url": "https://a.slack-edge.com/80588/img/icons/app-256.png"
+            },
+            {
+                "name": "trello",
+                "display_name": "Trello",
+                "description": "Visual project management with boards and cards",
+                "category": "project_management",
+                "base_url": "https://api.trello.com/1",
+                "auth_type": "oauth2",
+                "auth_config": {
+                    "authorization_url": "https://trello.com/1/authorize",
+                    "token_url": "https://trello.com/1/OAuthGetAccessToken",
+                    "scopes": ["read", "write"]
+                },
+                "supported_operations": ["read", "write", "webhook"],
+                "rate_limits": {"requests_per_second": 10},
+                "logo_url": "https://d2k1ftgv7pobq7.cloudfront.net/meta/c/p/res/images/trello-header-logos/167dc7b9900a5b241b15ba21f8037cf8/trello-logo-blue.svg"
+            },
+            {
+                "name": "github",
+                "display_name": "GitHub",
+                "description": "Code repository and development collaboration",
+                "category": "development",
+                "base_url": "https://api.github.com",
+                "auth_type": "oauth2",
+                "auth_config": {
+                    "authorization_url": "https://github.com/login/oauth/authorize",
+                    "token_url": "https://github.com/login/oauth/access_token",
+                    "scopes": ["repo", "user"]
+                },
+                "supported_operations": ["read", "write", "webhook"],
+                "rate_limits": {"requests_per_hour": 5000},
+                "logo_url": "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png"
+            },
+            {
+                "name": "google_workspace",
+                "display_name": "Google Workspace",
+                "description": "Gmail, Drive, Calendar, and Contacts integration",
+                "category": "productivity",
+                "base_url": "https://www.googleapis.com",
+                "auth_type": "oauth2",
+                "auth_config": {
+                    "authorization_url": "https://accounts.google.com/o/oauth2/auth",
+                    "token_url": "https://oauth2.googleapis.com/token",
+                    "scopes": ["https://www.googleapis.com/auth/gmail.readonly", "https://www.googleapis.com/auth/drive.readonly"]
+                },
+                "supported_operations": ["read", "write"],
+                "rate_limits": {"requests_per_day": 1000000},
+                "logo_url": "https://developers.google.com/workspace/images/workspace-logo.svg"
+            },
+            {
+                "name": "microsoft_teams",
+                "display_name": "Microsoft Teams",
+                "description": "Team collaboration and communication platform",
+                "category": "communication",
+                "base_url": "https://graph.microsoft.com/v1.0",
+                "auth_type": "oauth2",
+                "auth_config": {
+                    "authorization_url": "https://login.microsoftonline.com/common/oauth2/v2.0/authorize",
+                    "token_url": "https://login.microsoftonline.com/common/oauth2/v2.0/token",
+                    "scopes": ["https://graph.microsoft.com/Team.ReadBasic.All", "https://graph.microsoft.com/Chat.Read"]
+                },
+                "supported_operations": ["read", "write", "webhook"],
+                "rate_limits": {"requests_per_second": 10},
+                "logo_url": "https://upload.wikimedia.org/wikipedia/commons/c/c9/Microsoft_Office_Teams_%282018%E2%80%93present%29.svg"
             }
-        }
-    
-    async def sync_data(self, sync_type: str, operations: List[str]) -> Dict[str, Any]:
-        await asyncio.sleep(2.2)
+        ]
         
-        return {
-            "records_processed": 120,
-            "records_created": 25,
-            "records_updated": 80,
-            "records_deleted": 10,
-            "records_skipped": 5,
-            "records_failed": 0,
-            "data_sent_bytes": 10240,
-            "data_received_bytes": 20480,
-            "api_calls_made": 20
-        }
-
-class SalesforceIntegration(BaseIntegration):
-    """Salesforce integration implementation"""
-    
-    def test_connection(self) -> Dict[str, Any]:
-        return {
-            "success": True,
-            "provider": "salesforce",
-            "user_info": {
-                "Id": "sf123456",
-                "Name": "Test User",
-                "Email": "test@example.com",
-                "Username": "test@company.com"
-            }
-        }
-    
-    async def sync_data(self, sync_type: str, operations: List[str]) -> Dict[str, Any]:
-        await asyncio.sleep(3.0)
+        for provider_data in default_providers:
+            existing = self.db.query(IntegrationProvider).filter(
+                IntegrationProvider.name == provider_data["name"]
+            ).first()
+            
+            if not existing:
+                provider = IntegrationProvider(**provider_data)
+                self.db.add(provider)
         
-        return {
-            "records_processed": 200,
-            "records_created": 40,
-            "records_updated": 130,
-            "records_deleted": 20,
-            "records_skipped": 10,
-            "records_failed": 0,
-            "data_sent_bytes": 8192,
-            "data_received_bytes": 16384,
-            "api_calls_made": 25
-        }
-
-class HubSpotIntegration(BaseIntegration):
-    """HubSpot integration implementation"""
-    
-    def test_connection(self) -> Dict[str, Any]:
-        return {
-            "success": True,
-            "provider": "hubspot",
-            "user_info": {
-                "user": "hubspot789",
-                "firstName": "Test",
-                "lastName": "User",
-                "email": "test@example.com"
-            }
-        }
-    
-    async def sync_data(self, sync_type: str, operations: List[str]) -> Dict[str, Any]:
-        await asyncio.sleep(2.8)
-        
-        return {
-            "records_processed": 150,
-            "records_created": 30,
-            "records_updated": 95,
-            "records_deleted": 15,
-            "records_skipped": 10,
-            "records_failed": 0,
-            "data_sent_bytes": 6144,
-            "data_received_bytes": 12288,
-            "api_calls_made": 18
-        }
-
-
-def get_integration_service(db: Session) -> IntegrationService:
-    """Get integration service instance"""
-    return IntegrationService(db)
+        self.db.commit()

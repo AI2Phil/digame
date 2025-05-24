@@ -328,6 +328,92 @@ function App() {
             }
           />
           
+          {/* Enterprise Features Routes */}
+          <Route
+            path="/enterprise/tenants"
+            element={
+              isAuthenticated || isDemoMode ? (
+                <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                  <div className="text-center">
+                    <div className="text-6xl mb-4">🏢</div>
+                    <h1 className="text-2xl font-bold text-gray-900 mb-2">Tenant Management</h1>
+                    <p className="text-gray-600">Multi-tenant architecture management</p>
+                  </div>
+                </div>
+              ) : (
+                <Navigate to="/" replace />
+              )
+            }
+          />
+          
+          <Route
+            path="/enterprise/security"
+            element={
+              isAuthenticated || isDemoMode ? (
+                <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                  <div className="text-center">
+                    <div className="text-6xl mb-4">🔒</div>
+                    <h1 className="text-2xl font-bold text-gray-900 mb-2">Security Management</h1>
+                    <p className="text-gray-600">Enhanced security framework and monitoring</p>
+                  </div>
+                </div>
+              ) : (
+                <Navigate to="/" replace />
+              )
+            }
+          />
+          
+          <Route
+            path="/enterprise/integrations"
+            element={
+              isAuthenticated || isDemoMode ? (
+                <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                  <div className="text-center">
+                    <div className="text-6xl mb-4">🔗</div>
+                    <h1 className="text-2xl font-bold text-gray-900 mb-2">Integration APIs</h1>
+                    <p className="text-gray-600">Third-party productivity tool integrations</p>
+                  </div>
+                </div>
+              ) : (
+                <Navigate to="/" replace />
+              )
+            }
+          />
+          
+          <Route
+            path="/enterprise/workflows"
+            element={
+              isAuthenticated || isDemoMode ? (
+                <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                  <div className="text-center">
+                    <div className="text-6xl mb-4">⚙️</div>
+                    <h1 className="text-2xl font-bold text-gray-900 mb-2">Workflow Automation</h1>
+                    <p className="text-gray-600">Business process automation and management</p>
+                  </div>
+                </div>
+              ) : (
+                <Navigate to="/" replace />
+              )
+            }
+          />
+          
+          <Route
+            path="/enterprise/market-intelligence"
+            element={
+              isAuthenticated || isDemoMode ? (
+                <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                  <div className="text-center">
+                    <div className="text-6xl mb-4">📊</div>
+                    <h1 className="text-2xl font-bold text-gray-900 mb-2">Market Intelligence</h1>
+                    <p className="text-gray-600">Industry trends and competitive analysis</p>
+                  </div>
+                </div>
+              ) : (
+                <Navigate to="/" replace />
+              )
+            }
+          />
+
           {/* Catch all route */}
           <Route
             path="*"

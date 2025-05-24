@@ -1,386 +1,524 @@
 """
-Advanced Security Controls API Router for Enterprise Features
+Enhanced security API router for the Digame platform
 """
 
-from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
-from typing import List, Optional, Dict, Any
-from datetime import datetime, timedelta
-import logging
+from typing import List, Dict, Any, Optional
+from pydantic import BaseModel
+from datetime import datetime
 
-from ..services.security_service import get_security_service
-from ..models.security import SecurityPolicy, SecurityViolation, SecurityScan
+from ..database import get_db
+from ..services.security_service import SecurityService, MFAService, ApiKeyService
+from ..models.security import SecurityEvent, SecurityPolicy, UserSecurityProfile, SecurityAlert
 
-# Mock dependencies for development
-def get_db():
-    """Mock database session"""
-    return None
+router = APIRouter(prefix="/api/v1/security", tags=["security"])
 
-def get_current_user():
-    """Mock current user"""
-    class MockUser:
-        def __init__(self):
-            self.id = 1
-            self.email = "admin@example.com"
-            self.full_name = "Admin User"
-            self.roles = ["admin"]
-    return MockUser()
 
-def get_current_tenant():
-    """Mock current tenant"""
-    return 1
+# Pydantic models for request/response
+class SecurityPolicyCreate(BaseModel):
+    min_password_length: int = 8
+    require_uppercase: bool = True
+    require_lowercase: bool = True
+    require_numbers: bool = True
+    require_special_chars: bool = True
+    password_expiry_days: int = 90
+    password_history_count: int = 5
+    max_login_attempts: int = 5
+    lockout_duration_minutes: int = 30
+    auto_unlock: bool = True
+    session_timeout_minutes: int = 60
+    concurrent_sessions_limit: int = 3
+    require_mfa: bool = False
+    data_retention_days: int = 365
+    enable_audit_logging: bool = True
+    alert_on_suspicious_activity: bool = True
+    risk_threshold: str = "medium"
 
-def require_security_admin(tenant_id: int, current_user=None):
-    """Mock security admin check"""
-    return True
 
-router = APIRouter(prefix="/security", tags=["advanced-security"])
+class SecurityEventResponse(BaseModel):
+    id: int
+    event_type: str
+    event_description: str
+    risk_level: str
+    ip_address: str = None
+    success: bool
+    created_at: datetime
+    
+    class Config:
+        from_attributes = True
 
-# Security Policy Management Endpoints
 
-@router.post("/policies", response_model=dict)
+class SecurityAlertResponse(BaseModel):
+    id: int
+    alert_type: str
+    title: str
+    description: str
+    severity: str
+    status: str
+    created_at: datetime
+    
+    class Config:
+        from_attributes = True
+
+
+class PasswordValidationRequest(BaseModel):
+    password: str
+    tenant_id: int
+
+
+class MFASetupResponse(BaseModel):
+    secret: str
+    qr_code_url: str
+    backup_codes: List[str] = []
+
+
+class MFAVerificationRequest(BaseModel):
+    token: str
+
+
+class ApiKeyCreateRequest(BaseModel):
+    name: str
+    permissions: List[str] = []
+    scopes: List[str] = []
+    expires_in_days: Optional[int] = None
+
+
+class ApiKeyResponse(BaseModel):
+    id: int
+    name: str
+    key_prefix: str
+    permissions: List[str]
+    scopes: List[str]
+    is_active: bool
+    created_at: datetime
+    last_used: datetime = None
+    usage_count: int
+    
+    class Config:
+        from_attributes = True
+
+
+@router.post("/events/log")
+async def log_security_event(
+    tenant_id: int,
+    event_type: str,
+    user_id: Optional[int] = None,
+    success: bool = True,
+    error_message: Optional[str] = None,
+    metadata: Optional[Dict[str, Any]] = None,
+    request: Request = None,
+    db: Session = Depends(get_db)
+):
+    """
+    Log a security event for audit trail
+    """
+    security_service = SecurityService(db)
+    
+    # Extract request information
+    ip_address = None
+    user_agent = None
+    endpoint = None
+    method = None
+    
+    if request:
+        ip_address = request.client.host if request.client else None
+        user_agent = request.headers.get("user-agent")
+        endpoint = str(request.url.path)
+        method = request.method
+    
+    try:
+        event = security_service.log_security_event(
+            tenant_id=tenant_id,
+            event_type=event_type,
+            user_id=user_id,
+            ip_address=ip_address,
+            user_agent=user_agent,
+            endpoint=endpoint,
+            method=method,
+            success=success,
+            error_message=error_message,
+            metadata=metadata
+        )
+        return {"message": "Security event logged", "event_id": event.id}
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Failed to log security event: {str(e)}"
+        )
+
+
+@router.get("/events/{tenant_id}", response_model=List[SecurityEventResponse])
+async def get_security_events(
+    tenant_id: int,
+    skip: int = 0,
+    limit: int = 100,
+    event_type: Optional[str] = None,
+    risk_level: Optional[str] = None,
+    db: Session = Depends(get_db)
+):
+    """
+    Get security events for a tenant
+    """
+    query = db.query(SecurityEvent).filter(SecurityEvent.tenant_id == tenant_id)
+    
+    if event_type:
+        query = query.filter(SecurityEvent.event_type == event_type)
+    
+    if risk_level:
+        query = query.filter(SecurityEvent.risk_level == risk_level)
+    
+    events = query.order_by(SecurityEvent.created_at.desc()).offset(skip).limit(limit).all()
+    return events
+
+
+@router.post("/policies/{tenant_id}")
 async def create_security_policy(
-    policy_data: dict,
-    current_user=Depends(get_current_user),
-    tenant_id: int = Depends(get_current_tenant),
+    tenant_id: int,
+    policy_data: SecurityPolicyCreate,
     db: Session = Depends(get_db)
 ):
-    """Create a new security policy"""
+    """
+    Create or update security policy for a tenant
+    """
+    security_service = SecurityService(db)
     
     try:
-        require_security_admin(tenant_id, current_user)
-        
-        # Mock policy creation
-        policy_info = {
-            "id": 1,
-            "tenant_id": tenant_id,
-            "name": policy_data.get("name", "New Security Policy"),
-            "category": policy_data.get("category", "access"),
-            "policy_type": policy_data.get("policy_type", "access_control"),
-            "severity": policy_data.get("severity", "medium"),
-            "enforcement_mode": policy_data.get("enforcement_mode", "enforce"),
-            "is_active": True,
-            "priority": policy_data.get("priority", 100),
-            "created_at": datetime.utcnow().isoformat(),
-            "created_by_user_id": current_user.id
-        }
-        
-        return {
-            "success": True,
-            "message": "Security policy created successfully",
-            "policy": policy_info
-        }
-        
+        policy = security_service.create_security_policy(
+            tenant_id, 
+            policy_data.dict()
+        )
+        return {"message": "Security policy created/updated successfully"}
     except Exception as e:
-        logging.error(f"Failed to create security policy: {str(e)}")
-        raise HTTPException(status_code=500, detail="Failed to create security policy")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Failed to create security policy: {str(e)}"
+        )
 
-@router.get("/policies", response_model=dict)
-async def get_security_policies(
-    category: Optional[str] = Query(None),
-    policy_type: Optional[str] = Query(None),
-    active_only: bool = Query(True),
-    skip: int = Query(0, ge=0),
-    limit: int = Query(50, ge=1, le=100),
-    current_user=Depends(get_current_user),
-    tenant_id: int = Depends(get_current_tenant),
-    db: Session = Depends(get_db)
-):
-    """Get security policies for the tenant"""
-    
-    # Mock policies data
-    policies = [
-        {
-            "id": 1,
-            "name": "Strong Password Policy",
-            "category": "authentication",
-            "policy_type": "password_policy",
-            "severity": "high",
-            "enforcement_mode": "enforce",
-            "is_active": True,
-            "priority": 200,
-            "violations_count": 5,
-            "last_violation_at": "2025-05-23T14:30:00Z"
-        },
-        {
-            "id": 2,
-            "name": "Session Timeout Policy",
-            "category": "access",
-            "policy_type": "session_policy",
-            "severity": "medium",
-            "enforcement_mode": "enforce",
-            "is_active": True,
-            "priority": 150,
-            "violations_count": 12,
-            "last_violation_at": "2025-05-24T09:15:00Z"
-        },
-        {
-            "id": 3,
-            "name": "Data Encryption Policy",
-            "category": "data",
-            "policy_type": "data_protection",
-            "severity": "critical",
-            "enforcement_mode": "enforce",
-            "is_active": True,
-            "priority": 300,
-            "violations_count": 0,
-            "last_violation_at": None
-        },
-        {
-            "id": 4,
-            "name": "Network Access Control",
-            "category": "network",
-            "policy_type": "network_security",
-            "severity": "high",
-            "enforcement_mode": "warn",
-            "is_active": True,
-            "priority": 180,
-            "violations_count": 3,
-            "last_violation_at": "2025-05-22T16:45:00Z"
-        }
-    ]
-    
-    # Apply filters
-    if category:
-        policies = [p for p in policies if p["category"] == category]
-    if policy_type:
-        policies = [p for p in policies if p["policy_type"] == policy_type]
-    if active_only:
-        policies = [p for p in policies if p["is_active"]]
-    
-    return {
-        "success": True,
-        "policies": policies[skip:skip+limit],
-        "total": len(policies),
-        "skip": skip,
-        "limit": limit
-    }
 
-@router.get("/policies/{policy_id}", response_model=dict)
+@router.get("/policies/{tenant_id}")
 async def get_security_policy(
-    policy_id: int,
-    current_user=Depends(get_current_user),
-    tenant_id: int = Depends(get_current_tenant),
+    tenant_id: int,
     db: Session = Depends(get_db)
 ):
-    """Get detailed security policy information"""
+    """
+    Get security policy for a tenant
+    """
+    security_service = SecurityService(db)
+    policy = security_service.get_security_policy(tenant_id)
     
-    # Mock policy details
-    policy_details = {
-        "id": policy_id,
-        "tenant_id": tenant_id,
-        "name": "Strong Password Policy",
-        "description": "Enforces strong password requirements for all user accounts",
-        "category": "authentication",
-        "policy_type": "password_policy",
-        "severity": "high",
-        "enforcement_mode": "enforce",
-        "priority": 200,
-        "policy_rules": {
-            "min_length": 12,
-            "require_uppercase": True,
-            "require_lowercase": True,
-            "require_numbers": True,
-            "require_symbols": True,
-            "history_count": 5,
-            "max_age_days": 90
-        },
-        "applies_to": {
-            "global": True,
-            "roles": ["admin", "manager", "member"],
-            "users": []
-        },
-        "exceptions": [],
-        "is_active": True,
-        "is_default": False,
-        "violations_count": 5,
-        "last_violation_at": "2025-05-23T14:30:00Z",
-        "compliance_score": 95.2,
-        "created_at": "2025-05-01T10:00:00Z",
-        "updated_at": "2025-05-20T15:30:00Z",
-        "created_by": {
-            "user_id": current_user.id,
-            "email": current_user.email,
-            "name": current_user.full_name
-        }
-    }
+    if not policy:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Security policy not found"
+        )
+    
+    return policy
+
+
+@router.post("/password/validate")
+async def validate_password(
+    validation_request: PasswordValidationRequest,
+    db: Session = Depends(get_db)
+):
+    """
+    Validate password against tenant security policy
+    """
+    security_service = SecurityService(db)
+    
+    is_valid, errors = security_service.validate_password(
+        validation_request.password,
+        validation_request.tenant_id
+    )
     
     return {
-        "success": True,
-        "policy": policy_details
+        "is_valid": is_valid,
+        "errors": errors
     }
 
-@router.get("/dashboard", response_model=dict)
-async def get_security_dashboard(
-    current_user=Depends(get_current_user),
-    tenant_id: int = Depends(get_current_tenant),
+
+@router.get("/users/{user_id}/lockout-status")
+async def check_account_lockout(
+    user_id: int,
     db: Session = Depends(get_db)
 ):
-    """Get security dashboard analytics"""
-    
-    # Mock dashboard data
-    dashboard_data = {
-        "security_score": 87.5,
-        "compliance_score": 92.3,
-        "risk_level": "medium",
-        "violations_last_30_days": 15,
-        "active_policies": 8,
-        "scans_last_30_days": 4,
-        "critical_findings_open": 1,
-        "trends": {
-            "violations_trend": "decreasing",
-            "security_score_trend": "improving",
-            "compliance_trend": "stable"
-        },
-        "recent_violations": [
-            {
-                "id": 3,
-                "policy_name": "Network Access Control",
-                "severity": "critical",
-                "occurred_at": "2025-05-24T08:45:00Z"
-            },
-            {
-                "id": 1,
-                "policy_name": "Strong Password Policy",
-                "severity": "high",
-                "occurred_at": "2025-05-24T09:15:00Z"
-            }
-        ],
-        "policy_compliance": {
-            "total_policies": 8,
-            "compliant_policies": 7,
-            "non_compliant_policies": 1,
-            "compliance_rate": 87.5
-        },
-        "threat_indicators": {
-            "suspicious_logins": 3,
-            "failed_authentications": 12,
-            "blocked_ips": 2,
-            "policy_violations": 15
-        }
-    }
+    """
+    Check if user account is locked
+    """
+    security_service = SecurityService(db)
+    is_locked, unlock_time = security_service.check_account_lockout(user_id)
     
     return {
-        "success": True,
-        "dashboard": dashboard_data
+        "is_locked": is_locked,
+        "unlock_time": unlock_time
     }
 
-@router.post("/scans", response_model=dict)
-async def create_security_scan(
-    scan_data: dict,
-    background_tasks: BackgroundTasks,
-    current_user=Depends(get_current_user),
-    tenant_id: int = Depends(get_current_tenant),
+
+@router.post("/users/{user_id}/unlock")
+async def unlock_user_account(
+    user_id: int,
     db: Session = Depends(get_db)
 ):
-    """Create and start a security scan"""
+    """
+    Manually unlock user account
+    """
+    security_service = SecurityService(db)
+    success = security_service.unlock_user_account(user_id)
+    
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    
+    return {"message": "User account unlocked successfully"}
+
+
+@router.get("/users/{user_id}/risk-assessment")
+async def assess_user_risk(
+    user_id: int,
+    db: Session = Depends(get_db)
+):
+    """
+    Assess user risk score
+    """
+    security_service = SecurityService(db)
+    risk_score = security_service.assess_user_risk(user_id)
+    
+    return {
+        "user_id": user_id,
+        "risk_score": risk_score,
+        "risk_level": "high" if risk_score > 0.7 else "medium" if risk_score > 0.3 else "low"
+    }
+
+
+@router.get("/alerts/{tenant_id}", response_model=List[SecurityAlertResponse])
+async def get_security_alerts(
+    tenant_id: int,
+    skip: int = 0,
+    limit: int = 100,
+    status_filter: Optional[str] = None,
+    severity: Optional[str] = None,
+    db: Session = Depends(get_db)
+):
+    """
+    Get security alerts for a tenant
+    """
+    query = db.query(SecurityAlert).filter(SecurityAlert.tenant_id == tenant_id)
+    
+    if status_filter:
+        query = query.filter(SecurityAlert.status == status_filter)
+    
+    if severity:
+        query = query.filter(SecurityAlert.severity == severity)
+    
+    alerts = query.order_by(SecurityAlert.created_at.desc()).offset(skip).limit(limit).all()
+    return alerts
+
+
+# MFA Endpoints
+@router.post("/mfa/{user_id}/setup", response_model=MFASetupResponse)
+async def setup_mfa(
+    user_id: int,
+    db: Session = Depends(get_db)
+):
+    """
+    Setup MFA for a user
+    """
+    mfa_service = MFAService(db)
     
     try:
-        require_security_admin(tenant_id, current_user)
-        
-        scan_info = {
-            "id": 1,
-            "tenant_id": tenant_id,
-            "name": scan_data.get("name", "Security Scan"),
-            "scan_type": scan_data.get("scan_type", "vulnerability"),
-            "target_scope": scan_data.get("target_scope", {}),
-            "status": "running",
-            "started_at": datetime.utcnow().isoformat(),
-            "created_by_user_id": current_user.id
-        }
-        
-        # Simulate async scan execution
-        background_tasks.add_task(simulate_security_scan, scan_info)
-        
-        return {
-            "success": True,
-            "message": "Security scan started successfully",
-            "scan": scan_info,
-            "estimated_completion": (datetime.utcnow() + timedelta(minutes=5)).isoformat()
-        }
-        
+        secret, qr_code_url = mfa_service.setup_totp(user_id)
+        return MFASetupResponse(
+            secret=secret,
+            qr_code_url=qr_code_url
+        )
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e)
+        )
     except Exception as e:
-        logging.error(f"Failed to create security scan: {str(e)}")
-        raise HTTPException(status_code=500, detail="Failed to create security scan")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Failed to setup MFA: {str(e)}"
+        )
 
-@router.get("/violations", response_model=dict)
-async def get_security_violations(
-    severity: Optional[str] = Query(None),
-    status: Optional[str] = Query(None),
-    days: int = Query(30, ge=1, le=365),
-    skip: int = Query(0, ge=0),
-    limit: int = Query(50, ge=1, le=100),
-    current_user=Depends(get_current_user),
-    tenant_id: int = Depends(get_current_tenant),
+
+@router.post("/mfa/{user_id}/verify")
+async def verify_mfa_token(
+    user_id: int,
+    verification_request: MFAVerificationRequest,
     db: Session = Depends(get_db)
 ):
-    """Get security violations for the tenant"""
+    """
+    Verify MFA token
+    """
+    mfa_service = MFAService(db)
+    is_valid = mfa_service.verify_totp(user_id, verification_request.token)
     
-    # Mock violations data
-    violations = [
-        {
-            "id": 1,
-            "policy_name": "Strong Password Policy",
-            "violation_type": "password_policy_violation",
-            "severity": "high",
-            "description": "Password does not meet minimum complexity requirements",
-            "user_email": "user1@example.com",
-            "resource_type": "user_account",
-            "status": "open",
-            "occurred_at": "2025-05-24T09:15:00Z",
-            "ip_address": "192.168.1.100",
-            "risk_score": 7.5
-        },
-        {
-            "id": 2,
-            "policy_name": "Session Timeout Policy",
-            "violation_type": "session_timeout",
-            "severity": "medium",
-            "description": "User session exceeded maximum allowed duration",
-            "user_email": "user2@example.com",
-            "resource_type": "session",
-            "status": "resolved",
-            "occurred_at": "2025-05-23T16:30:00Z",
-            "resolved_at": "2025-05-23T16:31:00Z",
-            "ip_address": "10.0.1.50",
-            "risk_score": 4.0
-        },
-        {
-            "id": 3,
-            "policy_name": "Network Access Control",
-            "violation_type": "unauthorized_ip_access",
-            "severity": "critical",
-            "description": "Access attempt from blocked IP range",
-            "user_email": "user3@example.com",
-            "resource_type": "api_endpoint",
-            "status": "investigating",
-            "occurred_at": "2025-05-24T08:45:00Z",
-            "ip_address": "203.0.113.15",
-            "risk_score": 9.0
+    return {"is_valid": is_valid}
+
+
+@router.post("/mfa/{user_id}/enable")
+async def enable_mfa(
+    user_id: int,
+    verification_request: MFAVerificationRequest,
+    db: Session = Depends(get_db)
+):
+    """
+    Enable MFA after verifying setup token
+    """
+    mfa_service = MFAService(db)
+    success = mfa_service.enable_mfa(user_id, verification_request.token)
+    
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid verification token"
+        )
+    
+    return {"message": "MFA enabled successfully"}
+
+
+@router.post("/mfa/{user_id}/disable")
+async def disable_mfa(
+    user_id: int,
+    db: Session = Depends(get_db)
+):
+    """
+    Disable MFA for a user
+    """
+    mfa_service = MFAService(db)
+    success = mfa_service.disable_mfa(user_id)
+    
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    
+    return {"message": "MFA disabled successfully"}
+
+
+# API Key Management Endpoints
+@router.post("/api-keys/{tenant_id}")
+async def create_api_key(
+    tenant_id: int,
+    user_id: int,
+    key_request: ApiKeyCreateRequest,
+    db: Session = Depends(get_db)
+):
+    """
+    Create a new API key
+    """
+    api_key_service = ApiKeyService(db)
+    
+    try:
+        key, api_key_record = api_key_service.create_api_key(
+            tenant_id=tenant_id,
+            user_id=user_id,
+            name=key_request.name,
+            permissions=key_request.permissions,
+            scopes=key_request.scopes,
+            expires_in_days=key_request.expires_in_days
+        )
+        
+        return {
+            "api_key": key,  # Only returned once
+            "key_info": ApiKeyResponse.from_orm(api_key_record)
         }
-    ]
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Failed to create API key: {str(e)}"
+        )
+
+
+@router.get("/api-keys/{tenant_id}", response_model=List[ApiKeyResponse])
+async def get_api_keys(
+    tenant_id: int,
+    user_id: Optional[int] = None,
+    db: Session = Depends(get_db)
+):
+    """
+    Get API keys for a tenant
+    """
+    from ..models.security import ApiKey
     
-    # Apply filters
-    if severity:
-        violations = [v for v in violations if v["severity"] == severity]
-    if status:
-        violations = [v for v in violations if v["status"] == status]
+    query = db.query(ApiKey).filter(ApiKey.tenant_id == tenant_id)
+    
+    if user_id:
+        query = query.filter(ApiKey.user_id == user_id)
+    
+    api_keys = query.all()
+    return api_keys
+
+
+@router.delete("/api-keys/{api_key_id}")
+async def revoke_api_key(
+    api_key_id: int,
+    db: Session = Depends(get_db)
+):
+    """
+    Revoke an API key
+    """
+    api_key_service = ApiKeyService(db)
+    success = api_key_service.revoke_api_key(api_key_id)
+    
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="API key not found"
+        )
+    
+    return {"message": "API key revoked successfully"}
+
+
+@router.post("/api-keys/validate")
+async def validate_api_key(
+    api_key: str,
+    db: Session = Depends(get_db)
+):
+    """
+    Validate an API key
+    """
+    api_key_service = ApiKeyService(db)
+    key_record = api_key_service.validate_api_key(api_key)
+    
+    if not key_record:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired API key"
+        )
     
     return {
-        "success": True,
-        "violations": violations[skip:skip+limit],
-        "total": len(violations),
-        "skip": skip,
-        "limit": limit,
-        "period_days": days
+        "valid": True,
+        "tenant_id": key_record.tenant_id,
+        "user_id": key_record.user_id,
+        "permissions": key_record.permissions,
+        "scopes": key_record.scopes
     }
 
-# Utility Functions
 
-async def simulate_security_scan(scan_info: dict):
-    """Simulate background security scan execution"""
-    import asyncio
-    await asyncio.sleep(5)  # Simulate scan processing time
-    
-    # In production, this would update the scan status in the database
-    print(f"Security scan {scan_info['id']} completed")
+# Health check endpoint for security system
+@router.get("/health")
+async def security_health_check():
+    """
+    Health check for security system
+    """
+    return {
+        "status": "healthy",
+        "service": "enhanced_security",
+        "timestamp": datetime.utcnow(),
+        "features": [
+            "security_event_logging",
+            "security_policies",
+            "account_lockout_protection",
+            "multi_factor_authentication",
+            "api_key_management",
+            "risk_assessment",
+            "security_alerts",
+            "compliance_logging"
+        ]
+    }

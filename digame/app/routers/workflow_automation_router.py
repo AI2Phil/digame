@@ -1,442 +1,673 @@
 """
-Workflow Automation router for business process automation and workflow management
+Workflow Automation API router for business process automation and workflow management
 """
 
-from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks, Query
 from sqlalchemy.orm import Session
 from typing import List, Optional, Dict, Any
-from datetime import datetime, timedelta
-import logging
+from datetime import datetime
+from pydantic import BaseModel, Field
 
-from ..services.workflow_automation_service import get_workflow_automation_service
-from ..models.workflow_automation import WorkflowTemplate, WorkflowInstance, AutomationRule
+from ..database import get_db
+from ..services.workflow_automation_service import WorkflowAutomationService, WorkflowTemplateService
+from ..models.workflow_automation import (
+    WorkflowTemplate, WorkflowInstance, WorkflowStepExecution,
+    AutomationRule, WorkflowAction, WorkflowIntegration
+)
 
-# Mock dependencies for development
-def get_db():
-    """Mock database session"""
-    return None
+router = APIRouter(prefix="/api/workflow-automation", tags=["workflow-automation"])
 
-def get_current_user():
-    """Mock current user"""
-    class MockUser:
-        def __init__(self):
-            self.id = 1
-            self.email = "user@example.com"
-            self.full_name = "Test User"
-    return MockUser()
 
-def get_current_tenant():
-    """Mock current tenant"""
-    return 1
+# Pydantic models for request/response
+class WorkflowTemplateCreate(BaseModel):
+    name: str = Field(..., description="Template name")
+    description: Optional[str] = None
+    category: str = Field(..., description="Template category")
+    version: str = Field(default="1.0", description="Template version")
+    workflow_definition: Dict[str, Any] = Field(..., description="Workflow definition")
+    input_schema: Dict[str, Any] = Field(default={}, description="Input schema")
+    output_schema: Dict[str, Any] = Field(default={}, description="Output schema")
+    estimated_duration: Optional[int] = None
+    tags: List[str] = Field(default=[], description="Template tags")
+    is_public: bool = Field(default=False, description="Is template public")
+    requires_approval: bool = Field(default=False, description="Requires approval")
 
-router = APIRouter(prefix="/workflow-automation", tags=["workflow-automation"])
 
-# Workflow Template Endpoints
+class WorkflowTemplateResponse(BaseModel):
+    id: int
+    name: str
+    description: Optional[str] = None
+    category: str
+    version: str
+    complexity_level: str
+    estimated_duration: Optional[int] = None
+    tags: List[str]
+    is_public: bool
+    is_active: bool
+    requires_approval: bool
+    usage_count: int
+    success_rate: float
+    avg_execution_time: float
+    created_at: datetime
+    updated_at: Optional[datetime] = None
 
-@router.get("/templates", response_model=dict)
-async def get_workflow_templates(
-    category: Optional[str] = Query(None),
-    complexity_level: Optional[str] = Query(None),
-    active_only: bool = Query(True),
-    include_public: bool = Query(True),
-    skip: int = Query(0, ge=0),
-    limit: int = Query(50, ge=1, le=100),
-    current_user=Depends(get_current_user),
-    tenant_id: int = Depends(get_current_tenant),
-    db: Session = Depends(get_db)
-):
-    """Get workflow templates for tenant"""
-    
-    # Mock workflow templates data
-    templates = [
-        {
-            "id": 1,
-            "template_uuid": "template-123e4567-e89b-12d3-a456-426614174000",
-            "template_name": "employee_onboarding",
-            "display_name": "Employee Onboarding Workflow",
-            "description": "Complete employee onboarding process with document collection, system access, and training",
-            "category": "approval",
-            "version": "2.1.0",
-            "is_active": True,
-            "is_public": False,
-            "complexity_level": "medium",
-            "step_count": 8,
-            "estimated_duration_minutes": 45,
-            "success_rate": 94.5,
-            "usage_count": 127,
-            "last_used_at": "2025-05-23T14:30:00Z",
-            "tags": ["hr", "onboarding", "approval"],
-            "industry_tags": ["technology", "business_services"],
-            "use_cases": ["new_hire", "contractor_onboarding"],
-            "workflow_definition": {
-                "name": "Employee Onboarding",
-                "description": "Automated employee onboarding workflow",
-                "version": "2.1.0"
-            },
-            "input_schema": {
-                "employee_name": {"type": "string", "required": True},
-                "department": {"type": "string", "required": True},
-                "start_date": {"type": "date", "required": True},
-                "manager_email": {"type": "email", "required": True}
-            },
-            "output_schema": {
-                "onboarding_complete": {"type": "boolean"},
-                "employee_id": {"type": "string"},
-                "system_accounts": {"type": "array"}
-            },
-            "steps": [
-                {"name": "collect_documents", "type": "human_task", "order": 1},
-                {"name": "create_accounts", "type": "action", "order": 2},
-                {"name": "manager_approval", "type": "human_task", "order": 3},
-                {"name": "send_welcome_email", "type": "action", "order": 4}
-            ],
-            "is_validated": True,
-            "validation_date": "2025-05-15T10:00:00Z",
-            "created_at": "2025-04-01T09:00:00Z"
-        },
-        {
-            "id": 2,
-            "template_uuid": "template-456e7890-e89b-12d3-a456-426614174001",
-            "template_name": "invoice_approval",
-            "display_name": "Invoice Approval Process",
-            "description": "Multi-stage invoice approval workflow with automatic routing and notifications",
-            "category": "approval",
-            "version": "1.5.0",
-            "is_active": True,
-            "is_public": True,
-            "complexity_level": "simple",
-            "step_count": 5,
-            "estimated_duration_minutes": 20,
-            "success_rate": 98.2,
-            "usage_count": 342,
-            "last_used_at": "2025-05-24T09:15:00Z",
-            "tags": ["finance", "approval", "automation"],
-            "industry_tags": ["finance", "manufacturing", "retail"],
-            "use_cases": ["expense_approval", "vendor_payment"],
-            "workflow_definition": {
-                "name": "Invoice Approval",
-                "description": "Automated invoice approval workflow",
-                "version": "1.5.0"
-            },
-            "input_schema": {
-                "invoice_amount": {"type": "number", "required": True},
-                "vendor_name": {"type": "string", "required": True},
-                "department": {"type": "string", "required": True},
-                "invoice_date": {"type": "date", "required": True}
-            },
-            "output_schema": {
-                "approval_status": {"type": "string"},
-                "approved_amount": {"type": "number"},
-                "approval_date": {"type": "date"}
-            },
-            "steps": [
-                {"name": "validate_invoice", "type": "condition", "order": 1},
-                {"name": "department_approval", "type": "human_task", "order": 2},
-                {"name": "finance_approval", "type": "human_task", "order": 3},
-                {"name": "process_payment", "type": "action", "order": 4},
-                {"name": "notify_completion", "type": "action", "order": 5}
-            ],
-            "is_validated": True,
-            "validation_date": "2025-05-10T16:00:00Z",
-            "created_at": "2025-03-15T11:30:00Z"
-        }
-    ]
-    
-    # Apply filters
-    if category:
-        templates = [t for t in templates if t["category"] == category]
-    
-    if complexity_level:
-        templates = [t for t in templates if t["complexity_level"] == complexity_level]
-    
-    if active_only:
-        templates = [t for t in templates if t["is_active"]]
-    
-    # Apply pagination
-    total = len(templates)
-    templates = templates[skip:skip + limit]
-    
-    return {
-        "success": True,
-        "templates": templates,
-        "total": total,
-        "skip": skip,
-        "limit": limit,
-        "filters": {
-            "categories": ["approval", "notification", "data_processing", "integration"],
-            "complexity_levels": ["simple", "medium", "complex", "advanced"],
-            "industries": ["technology", "finance", "healthcare", "manufacturing", "retail"]
-        }
-    }
+    class Config:
+        from_attributes = True
 
-@router.post("/templates", response_model=dict)
+
+class WorkflowInstanceCreate(BaseModel):
+    name: str = Field(..., description="Instance name")
+    description: Optional[str] = None
+    input_data: Dict[str, Any] = Field(default={}, description="Input data")
+    context_data: Dict[str, Any] = Field(default={}, description="Context data")
+    priority: int = Field(default=5, description="Priority (1-10)")
+
+
+class WorkflowInstanceResponse(BaseModel):
+    id: int
+    name: str
+    description: Optional[str] = None
+    status: str
+    input_data: Dict[str, Any]
+    output_data: Dict[str, Any]
+    context_data: Dict[str, Any]
+    current_step_id: Optional[str] = None
+    progress_percentage: float
+    steps_completed: int
+    steps_total: int
+    execution_start_time: Optional[datetime] = None
+    execution_end_time: Optional[datetime] = None
+    execution_duration: Optional[float] = None
+    error_count: int
+    last_error: Optional[str] = None
+    retry_count: int
+    max_retries: int
+    triggered_by: Optional[str] = None
+    priority: int
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+class WorkflowStepExecutionResponse(BaseModel):
+    id: int
+    step_id: str
+    step_name: str
+    step_type: str
+    step_config: Dict[str, Any]
+    input_data: Dict[str, Any]
+    output_data: Dict[str, Any]
+    status: str
+    execution_order: int
+    start_time: Optional[datetime] = None
+    end_time: Optional[datetime] = None
+    execution_duration: Optional[float] = None
+    error_message: Optional[str] = None
+    error_details: Optional[Dict[str, Any]] = None
+    retry_count: int
+    assigned_to: Optional[int] = None
+    due_date: Optional[datetime] = None
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+class AutomationRuleCreate(BaseModel):
+    name: str = Field(..., description="Rule name")
+    description: Optional[str] = None
+    trigger_type: str = Field(..., description="Trigger type")
+    trigger_config: Dict[str, Any] = Field(..., description="Trigger configuration")
+    conditions: List[Dict[str, Any]] = Field(default=[], description="Rule conditions")
+    workflow_template_id: int = Field(..., description="Workflow template ID")
+    action_config: Dict[str, Any] = Field(default={}, description="Action configuration")
+    priority: int = Field(default=5, description="Priority (1-10)")
+    rate_limit: int = Field(default=100, description="Rate limit per hour")
+
+
+class AutomationRuleResponse(BaseModel):
+    id: int
+    name: str
+    description: Optional[str] = None
+    trigger_type: str
+    trigger_config: Dict[str, Any]
+    conditions: List[Dict[str, Any]]
+    workflow_template_id: int
+    action_config: Dict[str, Any]
+    is_active: bool
+    priority: int
+    rate_limit: int
+    total_executions: int
+    successful_executions: int
+    failed_executions: int
+    last_execution: Optional[datetime] = None
+    avg_execution_time: float
+    success_rate: float
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+class WorkflowActionCreate(BaseModel):
+    name: str = Field(..., description="Action name")
+    description: Optional[str] = None
+    category: str = Field(..., description="Action category")
+    action_type: str = Field(..., description="Action type")
+    config_schema: Dict[str, Any] = Field(..., description="Configuration schema")
+    default_config: Dict[str, Any] = Field(default={}, description="Default configuration")
+    is_system_action: bool = Field(default=False, description="Is system action")
+    requires_auth: bool = Field(default=False, description="Requires authentication")
+    test_config: Dict[str, Any] = Field(default={}, description="Test configuration")
+
+
+class WorkflowActionResponse(BaseModel):
+    id: int
+    name: str
+    description: Optional[str] = None
+    category: str
+    action_type: str
+    config_schema: Dict[str, Any]
+    default_config: Dict[str, Any]
+    is_system_action: bool
+    is_active: bool
+    requires_auth: bool
+    usage_count: int
+    success_rate: float
+    avg_execution_time: float
+    test_config: Dict[str, Any]
+    last_tested: Optional[datetime] = None
+    test_success: bool
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+class WorkflowAnalyticsResponse(BaseModel):
+    period: Dict[str, str]
+    workflow_instances: Dict[str, Any]
+    automation_rules: Dict[str, Any]
+    performance: Dict[str, Any]
+
+
+# Workflow Template endpoints
+@router.post("/templates", response_model=WorkflowTemplateResponse)
 async def create_workflow_template(
-    template_data: dict,
-    current_user=Depends(get_current_user),
-    tenant_id: int = Depends(get_current_tenant),
+    template_data: WorkflowTemplateCreate,
+    tenant_id: int = Query(..., description="Tenant ID"),
+    created_by: int = Query(..., description="Creator user ID"),
     db: Session = Depends(get_db)
 ):
-    """Create a new workflow template"""
-    
+    """
+    Create a new workflow template
+    """
     try:
-        # Mock template creation
-        template_info = {
-            "id": 4,
-            "template_uuid": "template-abc12345-e89b-12d3-a456-426614174003",
-            "tenant_id": tenant_id,
-            "template_name": template_data.get("template_name", "new_workflow"),
-            "display_name": template_data.get("display_name", "New Workflow"),
-            "description": template_data.get("description"),
-            "category": template_data.get("category", "approval"),
-            "version": template_data.get("version", "1.0.0"),
-            "complexity_level": template_data.get("complexity_level", "medium"),
-            "workflow_definition": template_data.get("workflow_definition", {}),
-            "input_schema": template_data.get("input_schema", {}),
-            "output_schema": template_data.get("output_schema", {}),
-            "steps": template_data.get("steps", []),
-            "step_count": len(template_data.get("steps", [])),
-            "estimated_duration_minutes": template_data.get("estimated_duration_minutes", 30),
-            "is_active": True,
-            "is_validated": False,
-            "created_at": datetime.utcnow().isoformat(),
-            "created_by_user_id": current_user.id
-        }
-        
-        return {
-            "success": True,
-            "message": "Workflow template created successfully",
-            "template": template_info
-        }
-        
+        service = WorkflowAutomationService(db)
+        template = service.create_workflow_template(
+            tenant_id=tenant_id,
+            created_by=created_by,
+            template_data=template_data.dict()
+        )
+        return WorkflowTemplateResponse.from_orm(template)
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except Exception as e:
-        logging.error(f"Failed to create workflow template: {str(e)}")
-        raise HTTPException(status_code=500, detail="Failed to create workflow template")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
-@router.get("/instances", response_model=dict)
+
+@router.get("/templates", response_model=List[WorkflowTemplateResponse])
+async def get_workflow_templates(
+    tenant_id: int = Query(..., description="Tenant ID"),
+    category: Optional[str] = Query(None, description="Filter by category"),
+    is_active: bool = Query(True, description="Filter by active status"),
+    is_public: Optional[bool] = Query(None, description="Filter by public status"),
+    db: Session = Depends(get_db)
+):
+    """
+    Get workflow templates for a tenant
+    """
+    try:
+        service = WorkflowAutomationService(db)
+        templates = service.get_workflow_templates(
+            tenant_id=tenant_id,
+            category=category,
+            is_active=is_active,
+            is_public=is_public
+        )
+        return [WorkflowTemplateResponse.from_orm(template) for template in templates]
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+
+@router.get("/templates/{template_id}", response_model=WorkflowTemplateResponse)
+async def get_workflow_template(
+    template_id: int,
+    tenant_id: int = Query(..., description="Tenant ID"),
+    db: Session = Depends(get_db)
+):
+    """
+    Get a specific workflow template
+    """
+    try:
+        template = db.query(WorkflowTemplate).filter(
+            WorkflowTemplate.id == template_id,
+            WorkflowTemplate.tenant_id == tenant_id
+        ).first()
+        
+        if not template:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Template not found")
+        
+        return WorkflowTemplateResponse.from_orm(template)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+
+@router.post("/templates/{template_id}/initialize-defaults")
+async def initialize_default_templates(
+    tenant_id: int = Query(..., description="Tenant ID"),
+    created_by: int = Query(..., description="Creator user ID"),
+    db: Session = Depends(get_db)
+):
+    """
+    Initialize default workflow templates for a tenant
+    """
+    try:
+        service = WorkflowTemplateService(db)
+        service.initialize_default_templates(tenant_id=tenant_id, created_by=created_by)
+        return {"message": "Default templates initialized successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+
+# Workflow Instance endpoints
+@router.post("/templates/{template_id}/instances", response_model=WorkflowInstanceResponse)
+async def create_workflow_instance(
+    template_id: int,
+    instance_data: WorkflowInstanceCreate,
+    tenant_id: int = Query(..., description="Tenant ID"),
+    triggered_by: str = Query("manual", description="Trigger source"),
+    db: Session = Depends(get_db)
+):
+    """
+    Create a new workflow instance from a template
+    """
+    try:
+        service = WorkflowAutomationService(db)
+        instance = service.create_workflow_instance(
+            tenant_id=tenant_id,
+            template_id=template_id,
+            instance_data=instance_data.dict(),
+            triggered_by=triggered_by
+        )
+        return WorkflowInstanceResponse.from_orm(instance)
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+
+@router.get("/instances", response_model=List[WorkflowInstanceResponse])
 async def get_workflow_instances(
-    template_id: Optional[int] = Query(None),
-    status: Optional[str] = Query(None),
-    priority: Optional[str] = Query(None),
-    skip: int = Query(0, ge=0),
-    limit: int = Query(50, ge=1, le=100),
-    current_user=Depends(get_current_user),
-    tenant_id: int = Depends(get_current_tenant),
+    tenant_id: int = Query(..., description="Tenant ID"),
+    template_id: Optional[int] = Query(None, description="Filter by template ID"),
+    status: Optional[str] = Query(None, description="Filter by status"),
     db: Session = Depends(get_db)
 ):
-    """Get workflow instances for tenant"""
-    
-    # Mock workflow instances data
-    instances = [
-        {
-            "id": 1,
-            "instance_uuid": "instance-123e4567-e89b-12d3-a456-426614174000",
-            "instance_name": "John Doe Onboarding",
-            "template_id": 1,
-            "template_name": "employee_onboarding",
-            "status": "running",
-            "priority": "medium",
-            "execution_mode": "automatic",
-            "progress_percentage": 62.5,
-            "current_step": 5,
-            "total_steps": 8,
-            "started_at": "2025-05-24T09:00:00Z",
-            "completed_at": None,
-            "duration_seconds": None,
-            "execution_time": 3420,
-            "input_data": {
-                "employee_name": "John Doe",
-                "department": "Engineering",
-                "start_date": "2025-05-27",
-                "manager_email": "manager@example.com"
-            },
-            "output_data": {},
-            "error_message": None,
-            "triggered_by_user_id": 1,
-            "created_at": "2025-05-24T09:00:00Z"
-        },
-        {
-            "id": 2,
-            "instance_uuid": "instance-456e7890-e89b-12d3-a456-426614174001",
-            "instance_name": "Invoice #INV-2025-001 Approval",
-            "template_id": 2,
-            "template_name": "invoice_approval",
-            "status": "completed",
-            "priority": "high",
-            "execution_mode": "automatic",
-            "progress_percentage": 100.0,
-            "current_step": 5,
-            "total_steps": 5,
-            "started_at": "2025-05-24T08:30:00Z",
-            "completed_at": "2025-05-24T08:45:00Z",
-            "duration_seconds": 900,
-            "execution_time": 900,
-            "input_data": {
-                "invoice_amount": 2500.00,
-                "vendor_name": "Tech Supplies Inc",
-                "department": "IT",
-                "invoice_date": "2025-05-20"
-            },
-            "output_data": {
-                "approval_status": "approved",
-                "approved_amount": 2500.00,
-                "approval_date": "2025-05-24"
-            },
-            "error_message": None,
-            "triggered_by_automation_id": 1,
-            "created_at": "2025-05-24T08:30:00Z"
-        }
-    ]
-    
-    # Apply filters
-    if template_id:
-        instances = [i for i in instances if i["template_id"] == template_id]
-    
-    if status:
-        instances = [i for i in instances if i["status"] == status]
-    
-    if priority:
-        instances = [i for i in instances if i["priority"] == priority]
-    
-    # Apply pagination
-    total = len(instances)
-    instances = instances[skip:skip + limit]
-    
-    return {
-        "success": True,
-        "instances": instances,
-        "total": total,
-        "skip": skip,
-        "limit": limit,
-        "statuses": ["pending", "running", "completed", "failed", "cancelled", "paused"],
-        "priorities": ["low", "medium", "high", "urgent"]
-    }
+    """
+    Get workflow instances for a tenant
+    """
+    try:
+        service = WorkflowAutomationService(db)
+        instances = service.get_workflow_instances(
+            tenant_id=tenant_id,
+            template_id=template_id,
+            status=status
+        )
+        return [WorkflowInstanceResponse.from_orm(instance) for instance in instances]
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
-@router.get("/dashboard", response_model=dict)
-async def get_workflow_dashboard(
-    current_user=Depends(get_current_user),
-    tenant_id: int = Depends(get_current_tenant),
+
+@router.get("/instances/{instance_id}", response_model=WorkflowInstanceResponse)
+async def get_workflow_instance(
+    instance_id: int,
+    tenant_id: int = Query(..., description="Tenant ID"),
     db: Session = Depends(get_db)
 ):
-    """Get workflow automation dashboard data"""
-    
-    # Mock dashboard data
-    dashboard = {
-        "templates": {
-            "total": 12,
-            "active": 10,
-            "inactive": 2,
-            "by_category": {
-                "approval": 5,
-                "notification": 3,
-                "data_processing": 2,
-                "integration": 2
-            }
-        },
-        "instances": {
-            "total": 156,
-            "running": 8,
-            "completed": 142,
-            "failed": 6,
-            "success_rate": 91.0,
-            "by_status": {
-                "pending": 2,
-                "running": 8,
-                "completed": 142,
-                "failed": 6,
-                "cancelled": 1,
-                "paused": 1
-            }
-        },
-        "activity": {
-            "recent_executions": 23,
-            "daily_average": 3.3,
-            "weekly_trend": [2, 4, 3, 5, 2, 4, 3]
-        },
-        "performance": {
-            "average_execution_time": 1847.5,
-            "most_used_templates": [
-                {
-                    "template_id": 2,
-                    "template_name": "invoice_approval",
-                    "usage_count": 342,
-                    "success_rate": 98.2
-                },
-                {
-                    "template_id": 1,
-                    "template_name": "employee_onboarding",
-                    "usage_count": 127,
-                    "success_rate": 94.5
-                },
-                {
-                    "template_id": 3,
-                    "template_name": "data_processing_pipeline",
-                    "usage_count": 89,
-                    "success_rate": 87.3
-                }
-            ],
-            "failure_analysis": {
-                "total_failures": 6,
-                "common_errors": {
-                    "Data validation failed": 3,
-                    "External API timeout": 2,
-                    "Human task timeout": 1
-                },
-                "failure_rate": 3.8
-            }
-        },
-        "automation_rules": {
-            "total": 8,
-            "active": 7,
-            "by_trigger_type": {
-                "event": 3,
-                "schedule": 2,
-                "condition": 2,
-                "webhook": 1
-            }
-        },
-        "insights": [
-            {
-                "type": "success",
-                "category": "performance",
-                "title": "High Success Rate",
-                "description": "Workflow success rate of 91% exceeds industry average",
-                "priority": "low",
-                "action_required": False
-            },
-            {
-                "type": "warning",
-                "category": "failures",
-                "title": "Data Validation Issues",
-                "description": "3 recent failures due to data validation - review input schemas",
-                "priority": "medium",
-                "action_required": True
-            },
-            {
-                "type": "info",
-                "category": "usage",
-                "title": "Invoice Approval Popular",
-                "description": "Invoice approval workflow accounts for 65% of all executions",
-                "priority": "low",
-                "action_required": False
-            }
+    """
+    Get a specific workflow instance
+    """
+    try:
+        instance = db.query(WorkflowInstance).filter(
+            WorkflowInstance.id == instance_id,
+            WorkflowInstance.tenant_id == tenant_id
+        ).first()
+        
+        if not instance:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Instance not found")
+        
+        return WorkflowInstanceResponse.from_orm(instance)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+
+@router.post("/instances/{instance_id}/execute")
+async def execute_workflow_instance(
+    instance_id: int,
+    tenant_id: int = Query(..., description="Tenant ID"),
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db)
+):
+    """
+    Execute a workflow instance
+    """
+    try:
+        # Verify instance exists and belongs to tenant
+        instance = db.query(WorkflowInstance).filter(
+            WorkflowInstance.id == instance_id,
+            WorkflowInstance.tenant_id == tenant_id
+        ).first()
+        
+        if not instance:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Instance not found")
+        
+        # Execute in background
+        service = WorkflowAutomationService(db)
+        background_tasks.add_task(service.execute_workflow_instance, instance_id)
+        
+        return {"message": "Workflow execution started", "instance_id": instance_id}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+
+@router.get("/instances/{instance_id}/steps", response_model=List[WorkflowStepExecutionResponse])
+async def get_workflow_instance_steps(
+    instance_id: int,
+    tenant_id: int = Query(..., description="Tenant ID"),
+    db: Session = Depends(get_db)
+):
+    """
+    Get workflow step executions for an instance
+    """
+    try:
+        # Verify instance exists and belongs to tenant
+        instance = db.query(WorkflowInstance).filter(
+            WorkflowInstance.id == instance_id,
+            WorkflowInstance.tenant_id == tenant_id
+        ).first()
+        
+        if not instance:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Instance not found")
+        
+        steps = db.query(WorkflowStepExecution).filter(
+            WorkflowStepExecution.workflow_instance_id == instance_id
+        ).order_by(WorkflowStepExecution.execution_order).all()
+        
+        return [WorkflowStepExecutionResponse.from_orm(step) for step in steps]
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+
+# Automation Rule endpoints
+@router.post("/automation-rules", response_model=AutomationRuleResponse)
+async def create_automation_rule(
+    rule_data: AutomationRuleCreate,
+    tenant_id: int = Query(..., description="Tenant ID"),
+    created_by: int = Query(..., description="Creator user ID"),
+    db: Session = Depends(get_db)
+):
+    """
+    Create a new automation rule
+    """
+    try:
+        service = WorkflowAutomationService(db)
+        rule = service.create_automation_rule(
+            tenant_id=tenant_id,
+            created_by=created_by,
+            rule_data=rule_data.dict()
+        )
+        return AutomationRuleResponse.from_orm(rule)
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+
+@router.get("/automation-rules", response_model=List[AutomationRuleResponse])
+async def get_automation_rules(
+    tenant_id: int = Query(..., description="Tenant ID"),
+    trigger_type: Optional[str] = Query(None, description="Filter by trigger type"),
+    is_active: bool = Query(True, description="Filter by active status"),
+    db: Session = Depends(get_db)
+):
+    """
+    Get automation rules for a tenant
+    """
+    try:
+        service = WorkflowAutomationService(db)
+        rules = service.get_automation_rules(
+            tenant_id=tenant_id,
+            trigger_type=trigger_type,
+            is_active=is_active
+        )
+        return [AutomationRuleResponse.from_orm(rule) for rule in rules]
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+
+@router.get("/automation-rules/{rule_id}", response_model=AutomationRuleResponse)
+async def get_automation_rule(
+    rule_id: int,
+    tenant_id: int = Query(..., description="Tenant ID"),
+    db: Session = Depends(get_db)
+):
+    """
+    Get a specific automation rule
+    """
+    try:
+        rule = db.query(AutomationRule).filter(
+            AutomationRule.id == rule_id,
+            AutomationRule.tenant_id == tenant_id
+        ).first()
+        
+        if not rule:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Rule not found")
+        
+        return AutomationRuleResponse.from_orm(rule)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+
+@router.post("/automation-rules/{rule_id}/trigger")
+async def trigger_automation_rule(
+    rule_id: int,
+    trigger_data: Dict[str, Any],
+    tenant_id: int = Query(..., description="Tenant ID"),
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db)
+):
+    """
+    Manually trigger an automation rule
+    """
+    try:
+        # Verify rule exists and belongs to tenant
+        rule = db.query(AutomationRule).filter(
+            AutomationRule.id == rule_id,
+            AutomationRule.tenant_id == tenant_id
+        ).first()
+        
+        if not rule:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Rule not found")
+        
+        # Trigger in background
+        service = WorkflowAutomationService(db)
+        background_tasks.add_task(service.trigger_automation_rule, rule_id, trigger_data)
+        
+        return {"message": "Automation rule triggered", "rule_id": rule_id}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+
+# Workflow Action endpoints
+@router.post("/actions", response_model=WorkflowActionResponse)
+async def create_workflow_action(
+    action_data: WorkflowActionCreate,
+    tenant_id: int = Query(..., description="Tenant ID"),
+    created_by: Optional[int] = Query(None, description="Creator user ID"),
+    db: Session = Depends(get_db)
+):
+    """
+    Create a new workflow action
+    """
+    try:
+        service = WorkflowAutomationService(db)
+        action = service.create_workflow_action(
+            tenant_id=tenant_id,
+            created_by=created_by,
+            action_data=action_data.dict()
+        )
+        return WorkflowActionResponse.from_orm(action)
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+
+@router.get("/actions", response_model=List[WorkflowActionResponse])
+async def get_workflow_actions(
+    tenant_id: int = Query(..., description="Tenant ID"),
+    category: Optional[str] = Query(None, description="Filter by category"),
+    action_type: Optional[str] = Query(None, description="Filter by action type"),
+    is_active: bool = Query(True, description="Filter by active status"),
+    db: Session = Depends(get_db)
+):
+    """
+    Get workflow actions for a tenant
+    """
+    try:
+        service = WorkflowAutomationService(db)
+        actions = service.get_workflow_actions(
+            tenant_id=tenant_id,
+            category=category,
+            action_type=action_type,
+            is_active=is_active
+        )
+        return [WorkflowActionResponse.from_orm(action) for action in actions]
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+
+@router.get("/actions/{action_id}", response_model=WorkflowActionResponse)
+async def get_workflow_action(
+    action_id: int,
+    tenant_id: int = Query(..., description="Tenant ID"),
+    db: Session = Depends(get_db)
+):
+    """
+    Get a specific workflow action
+    """
+    try:
+        action = db.query(WorkflowAction).filter(
+            WorkflowAction.id == action_id,
+            WorkflowAction.tenant_id == tenant_id
+        ).first()
+        
+        if not action:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Action not found")
+        
+        return WorkflowActionResponse.from_orm(action)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+
+@router.post("/actions/{action_id}/test")
+async def test_workflow_action(
+    action_id: int,
+    test_config: Dict[str, Any],
+    tenant_id: int = Query(..., description="Tenant ID"),
+    db: Session = Depends(get_db)
+):
+    """
+    Test a workflow action
+    """
+    try:
+        # Verify action exists and belongs to tenant
+        action = db.query(WorkflowAction).filter(
+            WorkflowAction.id == action_id,
+            WorkflowAction.tenant_id == tenant_id
+        ).first()
+        
+        if not action:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Action not found")
+        
+        service = WorkflowAutomationService(db)
+        result = service.test_workflow_action(action_id, test_config)
+        
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+
+# Analytics endpoints
+@router.get("/analytics", response_model=WorkflowAnalyticsResponse)
+async def get_workflow_analytics(
+    tenant_id: int = Query(..., description="Tenant ID"),
+    start_date: Optional[datetime] = Query(None, description="Start date for analytics"),
+    end_date: Optional[datetime] = Query(None, description="End date for analytics"),
+    db: Session = Depends(get_db)
+):
+    """
+    Get workflow analytics for a tenant
+    """
+    try:
+        service = WorkflowAutomationService(db)
+        analytics = service.get_workflow_analytics(
+            tenant_id=tenant_id,
+            start_date=start_date,
+            end_date=end_date
+        )
+        return WorkflowAnalyticsResponse(**analytics)
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+
+# Health check endpoint
+@router.get("/health")
+async def workflow_automation_health():
+    """
+    Health check for workflow automation service
+    """
+    return {
+        "status": "healthy",
+        "service": "workflow-automation",
+        "timestamp": datetime.utcnow().isoformat(),
+        "features": [
+            "workflow_templates",
+            "workflow_instances",
+            "automation_rules",
+            "workflow_actions",
+            "analytics"
         ]
     }
-    
-    return {
-        "success": True,
-        "dashboard": dashboard,
-        "generated_at": datetime.utcnow().isoformat()
-    }
-
-# Background task functions
-
-async def mock_workflow_execution(instance_id: int):
-    """Mock background workflow execution process"""
-    import asyncio
-    await asyncio.sleep(5)  # Simulate workflow execution time
-    logging.info(f"Completed workflow execution for instance {instance_id}")
-
-
-def get_workflow_automation_service_instance(db: Session):
-    """Get workflow automation service instance"""
-    return get_workflow_automation_service(db)

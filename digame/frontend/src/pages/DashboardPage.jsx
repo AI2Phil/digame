@@ -155,6 +155,50 @@ export default function DashboardPage({ isDemoMode, onLogout }) {
                   </div>
                 </div>
 
+                <div className="relative group">
+                  <button className="text-gray-600 hover:text-gray-900 text-sm transition-colors flex items-center gap-1">
+                    <span>🏢</span> Enterprise ▼
+                  </button>
+                  <div className="absolute top-full left-0 mt-1 w-64 bg-white rounded-md shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                    <div className="py-1">
+                      <button
+                        onClick={() => navigate('/enterprise/tenants')}
+                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                      >
+                        <span>🏢</span> Tenant Management
+                      </button>
+                      <button
+                        onClick={() => navigate('/enterprise/security')}
+                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                      >
+                        <span>🔒</span> Security Framework
+                      </button>
+                      <div className="border-t border-gray-100 my-1"></div>
+                      <div className="px-4 py-2 text-xs text-gray-500 font-medium">INTEGRATIONS & AUTOMATION</div>
+                      <button
+                        onClick={() => navigate('/enterprise/integrations')}
+                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                      >
+                        <span>🔗</span> Integration APIs
+                      </button>
+                      <button
+                        onClick={() => navigate('/enterprise/workflows')}
+                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                      >
+                        <span>⚙️</span> Workflow Automation
+                      </button>
+                      <div className="border-t border-gray-100 my-1"></div>
+                      <div className="px-4 py-2 text-xs text-gray-500 font-medium">INTELLIGENCE & ANALYTICS</div>
+                      <button
+                        onClick={() => navigate('/enterprise/market-intelligence')}
+                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                      >
+                        <span>📊</span> Market Intelligence
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
                 <button
                   onClick={() => navigate('/reports')}
                   className="text-gray-600 hover:text-gray-900 text-sm transition-colors flex items-center gap-1"
