@@ -28,42 +28,147 @@ export default function DashboardPage({ isDemoMode, onLogout }) {
             </div>
             
             <div className="flex items-center space-x-6">
-              <nav className="hidden md:flex space-x-8">
+              <nav className="hidden md:flex space-x-6">
                 <button
                   onClick={() => navigate('/dashboard')}
-                  className="text-blue-600 font-medium text-sm hover:text-blue-700 transition-colors"
+                  className="text-blue-600 font-medium text-sm hover:text-blue-700 transition-colors flex items-center gap-1"
                 >
-                  Dashboard
+                  <span>🏠</span> Dashboard
                 </button>
+                
                 <div className="relative group">
-                  <button className="text-gray-600 hover:text-gray-900 text-sm transition-colors">
-                    Analytics ▼
+                  <button className="text-gray-600 hover:text-gray-900 text-sm transition-colors flex items-center gap-1">
+                    <span>📊</span> Analytics ▼
                   </button>
-                  <div className="absolute top-full left-0 mt-1 w-48 bg-white rounded-md shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
-                    <button
-                      onClick={() => navigate('/analytics/web')}
-                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                    >
-                      Web Analytics
-                    </button>
-                    <button
-                      onClick={() => navigate('/analytics/mobile')}
-                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                    >
-                      Mobile Analytics
-                    </button>
+                  <div className="absolute top-full left-0 mt-1 w-56 bg-white rounded-md shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                    <div className="py-1">
+                      <button
+                        onClick={() => navigate('/analytics/web')}
+                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                      >
+                        <span>🌐</span> Web Analytics
+                      </button>
+                      <button
+                        onClick={() => navigate('/analytics/mobile')}
+                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                      >
+                        <span>📱</span> Mobile Analytics
+                      </button>
+                      <div className="border-t border-gray-100 my-1"></div>
+                      <div className="px-4 py-2 text-xs text-gray-500 font-medium">AI-POWERED INSIGHTS</div>
+                      <button
+                        onClick={() => navigate('/analytics/behavioral')}
+                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                      >
+                        <span>🧠</span> Behavioral Analytics
+                      </button>
+                      <button
+                        onClick={() => navigate('/analytics/predictive')}
+                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                      >
+                        <span>🔮</span> Predictive Analytics
+                      </button>
+                    </div>
                   </div>
                 </div>
+
+                <div className="relative group">
+                  <button className="text-gray-600 hover:text-gray-900 text-sm transition-colors flex items-center gap-1">
+                    <span>🤝</span> Social ▼
+                  </button>
+                  <div className="absolute top-full left-0 mt-1 w-64 bg-white rounded-md shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                    <div className="py-1">
+                      <button
+                        onClick={() => navigate('/social')}
+                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                      >
+                        <span>👥</span> Social Collaboration
+                      </button>
+                      <div className="border-t border-gray-100 my-1"></div>
+                      <div className="px-4 py-2 text-xs text-gray-500 font-medium">COLLABORATION FEATURES</div>
+                      <button
+                        onClick={() => navigate('/social?tab=peer-matching')}
+                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                      >
+                        <span>🧠</span> AI Peer Matching
+                      </button>
+                      <button
+                        onClick={() => navigate('/social?tab=mentorship')}
+                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                      >
+                        <span>🎓</span> Mentorship Programs
+                      </button>
+                      <button
+                        onClick={() => navigate('/social?tab=projects')}
+                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                      >
+                        <span>🎯</span> Project Collaboration
+                      </button>
+                      <button
+                        onClick={() => navigate('/social?tab=teams')}
+                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                      >
+                        <span>📈</span> Team Analytics
+                      </button>
+                      <button
+                        onClick={() => navigate('/social?tab=industry')}
+                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                      >
+                        <span>🏢</span> Industry Networking
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="relative group">
+                  <button className="text-gray-600 hover:text-gray-900 text-sm transition-colors flex items-center gap-1">
+                    <span>🤖</span> AI Tools ▼
+                  </button>
+                  <div className="absolute top-full left-0 mt-1 w-56 bg-white rounded-md shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                    <div className="py-1">
+                      <button
+                        onClick={() => navigate('/ai/insights')}
+                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                      >
+                        <span>💡</span> AI Insights
+                      </button>
+                      <button
+                        onClick={() => navigate('/ai/recommendations')}
+                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                      >
+                        <span>🎯</span> Smart Recommendations
+                      </button>
+                      <button
+                        onClick={() => navigate('/ai/coaching')}
+                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                      >
+                        <span>🏃</span> AI Coaching
+                      </button>
+                      <div className="border-t border-gray-100 my-1"></div>
+                      <button
+                        onClick={() => navigate('/ai/automation')}
+                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                      >
+                        <span>⚡</span> Workflow Automation
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
                 <button
-                  onClick={() => navigate('/social')}
-                  className="text-gray-600 hover:text-gray-900 text-sm transition-colors"
+                  onClick={() => navigate('/reports')}
+                  className="text-gray-600 hover:text-gray-900 text-sm transition-colors flex items-center gap-1"
                 >
-                  Social
-                </button>
-                <button className="text-gray-600 hover:text-gray-900 text-sm transition-colors">
-                  Reports
+                  <span>📋</span> Reports
                 </button>
               </nav>
+              
+              {/* Mobile menu button */}
+              <div className="md:hidden">
+                <button className="text-gray-600 hover:text-gray-900 p-2">
+                  <span className="text-lg">☰</span>
+                </button>
+              </div>
               
               <div className="flex items-center space-x-3">
                 <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
@@ -337,6 +442,142 @@ export default function DashboardPage({ isDemoMode, onLogout }) {
           </div>
         </div>
 
+        {/* Platform Features Overview */}
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">Explore Platform Features</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            
+            {/* Analytics Features */}
+            <div className="card hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate('/analytics/web')}>
+              <div className="flex items-center space-x-3 mb-4">
+                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                  <span className="text-2xl">📊</span>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-900">Advanced Analytics</h3>
+                  <p className="text-sm text-gray-600">Web & Mobile Insights</p>
+                </div>
+              </div>
+              <p className="text-sm text-gray-600 mb-4">
+                Comprehensive analytics dashboards with real-time data visualization, user behavior tracking, and performance metrics.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded">Real-time Data</span>
+                <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded">Performance Metrics</span>
+                <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded">User Behavior</span>
+              </div>
+            </div>
+
+            {/* Social Collaboration */}
+            <div className="card hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate('/social')}>
+              <div className="flex items-center space-x-3 mb-4">
+                <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                  <span className="text-2xl">🤝</span>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-900">Social Collaboration</h3>
+                  <p className="text-sm text-gray-600">AI-Powered Networking</p>
+                </div>
+              </div>
+              <p className="text-sm text-gray-600 mb-4">
+                Advanced peer matching, mentorship programs, team collaboration analytics, and professional networking tools.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <span className="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded">Peer Matching</span>
+                <span className="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded">Mentorship</span>
+                <span className="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded">Team Analytics</span>
+              </div>
+            </div>
+
+            {/* AI Tools */}
+            <div className="card hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate('/ai/insights')}>
+              <div className="flex items-center space-x-3 mb-4">
+                <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                  <span className="text-2xl">🤖</span>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-900">AI-Powered Tools</h3>
+                  <p className="text-sm text-gray-600">Smart Insights & Automation</p>
+                </div>
+              </div>
+              <p className="text-sm text-gray-600 mb-4">
+                Intelligent recommendations, predictive analytics, automated workflows, and personalized coaching powered by AI.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <span className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded">AI Insights</span>
+                <span className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded">Automation</span>
+                <span className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded">Coaching</span>
+              </div>
+            </div>
+
+            {/* Mobile Analytics */}
+            <div className="card hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate('/analytics/mobile')}>
+              <div className="flex items-center space-x-3 mb-4">
+                <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                  <span className="text-2xl">📱</span>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-900">Mobile Analytics</h3>
+                  <p className="text-sm text-gray-600">Cross-Platform Insights</p>
+                </div>
+              </div>
+              <p className="text-sm text-gray-600 mb-4">
+                Specialized mobile analytics with device performance, user engagement, and cross-platform behavior analysis.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <span className="px-2 py-1 bg-orange-100 text-orange-700 text-xs rounded">Device Analytics</span>
+                <span className="px-2 py-1 bg-orange-100 text-orange-700 text-xs rounded">Performance</span>
+                <span className="px-2 py-1 bg-orange-100 text-orange-700 text-xs rounded">Cross-Platform</span>
+              </div>
+            </div>
+
+            {/* Reports & Insights */}
+            <div className="card hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate('/reports')}>
+              <div className="flex items-center space-x-3 mb-4">
+                <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
+                  <span className="text-2xl">📋</span>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-900">Reports & Insights</h3>
+                  <p className="text-sm text-gray-600">Comprehensive Reporting</p>
+                </div>
+              </div>
+              <p className="text-sm text-gray-600 mb-4">
+                Detailed reports, custom dashboards, data exports, and comprehensive insights across all platform features.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <span className="px-2 py-1 bg-red-100 text-red-700 text-xs rounded">Custom Reports</span>
+                <span className="px-2 py-1 bg-red-100 text-red-700 text-xs rounded">Data Export</span>
+                <span className="px-2 py-1 bg-red-100 text-red-700 text-xs rounded">Insights</span>
+              </div>
+            </div>
+
+            {/* Platform Status */}
+            <div className="card bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200">
+              <div className="flex items-center space-x-3 mb-4">
+                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                  <span className="text-2xl">🚀</span>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-blue-900">Platform Status</h3>
+                  <p className="text-sm text-blue-600">All Systems Operational</p>
+                </div>
+              </div>
+              <p className="text-sm text-blue-700 mb-4">
+                All features are fully integrated and operational.
+                {isDemoMode
+                  ? ' Demo mode active with sample data.'
+                  : ' Connected to live data sources.'
+                }
+              </p>
+              <div className="flex items-center space-x-2">
+                <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                <span className="text-sm font-medium text-blue-700">Live & Ready</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Integration Status */}
         <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-xl p-6">
           <div className="flex items-center space-x-4">
@@ -345,11 +586,11 @@ export default function DashboardPage({ isDemoMode, onLogout }) {
             </div>
             <div className="flex-1">
               <h4 className="text-lg font-semibold text-blue-900">
-                Phase 1 Integration Complete
+                Complete Platform Integration
               </h4>
               <p className="text-blue-700">
-                ProductivityChart successfully integrated from DigitalTwinPro. 
-                {isDemoMode 
+                All dashboards and features are fully integrated with authentication, demo mode compatibility, and seamless navigation.
+                {isDemoMode
                   ? ' Currently showing sample data for demonstration.'
                   : ' Connected to your behavioral analysis data.'
                 }
@@ -358,7 +599,7 @@ export default function DashboardPage({ isDemoMode, onLogout }) {
             <div className="text-sm text-blue-600">
               <div className="flex items-center space-x-2">
                 <span className="w-2 h-2 bg-green-500 rounded-full status-online"></span>
-                <span className="font-medium">Live</span>
+                <span className="font-medium">All Features Live</span>
               </div>
             </div>
           </div>

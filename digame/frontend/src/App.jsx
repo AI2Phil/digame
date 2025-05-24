@@ -206,6 +206,128 @@ function App() {
             }
           />
           
+          {/* AI Tools Routes */}
+          <Route
+            path="/ai/insights"
+            element={
+              isAuthenticated || isDemoMode ? (
+                <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                  <div className="text-center">
+                    <div className="text-6xl mb-4">🤖</div>
+                    <h1 className="text-2xl font-bold text-gray-900 mb-2">AI Insights</h1>
+                    <p className="text-gray-600">Advanced AI-powered insights coming soon...</p>
+                  </div>
+                </div>
+              ) : (
+                <Navigate to="/" replace />
+              )
+            }
+          />
+          
+          <Route
+            path="/ai/recommendations"
+            element={
+              isAuthenticated || isDemoMode ? (
+                <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                  <div className="text-center">
+                    <div className="text-6xl mb-4">🎯</div>
+                    <h1 className="text-2xl font-bold text-gray-900 mb-2">Smart Recommendations</h1>
+                    <p className="text-gray-600">Personalized recommendations coming soon...</p>
+                  </div>
+                </div>
+              ) : (
+                <Navigate to="/" replace />
+              )
+            }
+          />
+          
+          <Route
+            path="/ai/coaching"
+            element={
+              isAuthenticated || isDemoMode ? (
+                <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                  <div className="text-center">
+                    <div className="text-6xl mb-4">🏃</div>
+                    <h1 className="text-2xl font-bold text-gray-900 mb-2">AI Coaching</h1>
+                    <p className="text-gray-600">Intelligent coaching features coming soon...</p>
+                  </div>
+                </div>
+              ) : (
+                <Navigate to="/" replace />
+              )
+            }
+          />
+          
+          <Route
+            path="/ai/automation"
+            element={
+              isAuthenticated || isDemoMode ? (
+                <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                  <div className="text-center">
+                    <div className="text-6xl mb-4">⚡</div>
+                    <h1 className="text-2xl font-bold text-gray-900 mb-2">Workflow Automation</h1>
+                    <p className="text-gray-600">Automated workflows coming soon...</p>
+                  </div>
+                </div>
+              ) : (
+                <Navigate to="/" replace />
+              )
+            }
+          />
+          
+          {/* Analytics Routes */}
+          <Route
+            path="/analytics/behavioral"
+            element={
+              isAuthenticated || isDemoMode ? (
+                <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                  <div className="text-center">
+                    <div className="text-6xl mb-4">🧠</div>
+                    <h1 className="text-2xl font-bold text-gray-900 mb-2">Behavioral Analytics</h1>
+                    <p className="text-gray-600">Advanced behavioral analysis coming soon...</p>
+                  </div>
+                </div>
+              ) : (
+                <Navigate to="/" replace />
+              )
+            }
+          />
+          
+          <Route
+            path="/analytics/predictive"
+            element={
+              isAuthenticated || isDemoMode ? (
+                <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                  <div className="text-center">
+                    <div className="text-6xl mb-4">🔮</div>
+                    <h1 className="text-2xl font-bold text-gray-900 mb-2">Predictive Analytics</h1>
+                    <p className="text-gray-600">Predictive insights coming soon...</p>
+                  </div>
+                </div>
+              ) : (
+                <Navigate to="/" replace />
+              )
+            }
+          />
+          
+          {/* Reports Route */}
+          <Route
+            path="/reports"
+            element={
+              isAuthenticated || isDemoMode ? (
+                <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                  <div className="text-center">
+                    <div className="text-6xl mb-4">📋</div>
+                    <h1 className="text-2xl font-bold text-gray-900 mb-2">Reports & Insights</h1>
+                    <p className="text-gray-600">Comprehensive reporting features coming soon...</p>
+                  </div>
+                </div>
+              ) : (
+                <Navigate to="/" replace />
+              )
+            }
+          />
+          
           {/* Catch all route */}
           <Route
             path="*"
