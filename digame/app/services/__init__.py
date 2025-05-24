@@ -31,4 +31,7 @@ __all__ = [
     "calculate_hourly_activity_baselines", # Added new function
     "check_activity_for_anomalies",        # Added new function
     "detect_frequency_anomalies_for_user", # Added new function
+    "writing_assistance_service",
 ]
+
+from . import writing_assistance_service

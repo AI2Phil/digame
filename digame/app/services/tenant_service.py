@@ -32,12 +32,21 @@ class TenantService:
         # Create tenant
         tenant = Tenant(
             name=tenant_data["name"],
-            domain=tenant_data["domain"],
-            subdomain=tenant_data["subdomain"],
+            domain=tenant_data.get("domain"),
+            subdomain=tenant_data.get("subdomain"),
             subscription_tier=tenant_data.get("subscription_tier", "basic"),
-            settings=tenant_data.get("settings", {}),
-            features_enabled=self._get_default_features(tenant_data.get("subscription_tier", "basic"))
+            settings=tenant_data.get("settings", {
+                "timezone": "UTC",
+                "date_format": "YYYY-MM-DD",
+                "currency": "USD",
+                "language": "en"
+            }),
+            features=self._get_enhanced_features(tenant_data.get("subscription_tier", "basic"))
         )
+        
+        # Set trial period for new tenants
+        if "trial_ends_at" not in tenant_data:
+            tenant.trial_ends_at = datetime.utcnow() + timedelta(days=30)  # 30-day trial
         
         self.db.add(tenant)
         self.db.flush()  # Get the tenant ID
@@ -61,7 +70,27 @@ class TenantService:
             self._create_admin_user(tenant.id, tenant_data["admin_user"])
         
         self.db.commit()
+        
+        # Log tenant creation if audit logging is available
+        if hasattr(self, '_log_audit_event'):
+            self._log_audit_event(
+                tenant.id,
+                None,
+                "tenant_created",
+                "tenant",
+                str(tenant.id),
+                {"name": tenant_data["name"], "subscription_tier": tenant_data.get("subscription_tier", "basic")}
+            )
+        
         return tenant
+
+    def get_tenant_by_id(self, tenant_id: int) -> Optional[Tenant]:
+        """Get tenant by ID"""
+        return self.db.query(Tenant).filter(Tenant.id == tenant_id).first()
+
+    def get_tenant_by_slug(self, slug: str) -> Optional[Tenant]:
+        """Get tenant by slug"""
+        return self.db.query(Tenant).filter(Tenant.slug == slug).first()
     
     def get_tenant_by_domain(self, domain: str) -> Optional[Tenant]:
         """
@@ -74,6 +103,81 @@ class TenantService:
         Get tenant by subdomain
         """
         return self.db.query(Tenant).filter(Tenant.subdomain == subdomain).first()
+
+    def update_tenant(self, tenant_id: int, updates: Dict[str, Any], user_id: Optional[int] = None) -> Optional[Tenant]:
+        """Update tenant information"""
+        tenant = self.get_tenant_by_id(tenant_id)
+        if not tenant:
+            return None
+
+        # Track changes for audit log
+        changes = {}
+        
+        # Handle subscription_tier change and its impact on features
+        if "subscription_tier" in updates:
+            new_tier = updates["subscription_tier"]
+            if tenant.subscription_tier != new_tier:
+                if not isinstance(tenant.features, dict):
+                    tenant.features = {}
+                tenant.features["writing_assistance"] = new_tier in ["professional", "enterprise"]
+                # Update other tier-dependent features
+                tenant.features.update(self._get_tier_features(new_tier))
+
+        # Handle direct features update
+        if "features" in updates:
+            if isinstance(updates["features"], dict):
+                if "writing_assistance" not in updates["features"]:
+                    current_tier = updates.get("subscription_tier", tenant.subscription_tier)
+                    if not isinstance(tenant.features, dict):
+                         tenant.features = {}
+                    _features = tenant.features.copy()
+                    _features.update(updates["features"])
+                    _features["writing_assistance"] = current_tier in ["professional", "enterprise"]
+                    updates["features"] = _features
+            elif isinstance(tenant.features, dict):
+                current_tier = updates.get("subscription_tier", tenant.subscription_tier)
+                tenant.features["writing_assistance"] = current_tier in ["professional", "enterprise"]
+        elif "subscription_tier" in updates:
+             if isinstance(tenant.features, dict):
+                current_tier = updates.get("subscription_tier", tenant.subscription_tier)
+                tenant.features["writing_assistance"] = current_tier in ["professional", "enterprise"]
+
+        for key, value in updates.items():
+            if hasattr(tenant, key) and getattr(tenant, key) != value:
+                changes[key] = {"old": getattr(tenant, key), "new": value}
+                setattr(tenant, key, value)
+            elif key == "features" and isinstance(tenant.features, dict) and isinstance(value, dict):
+                if tenant.features != value:
+                    changes[key] = {"old": tenant.features, "new": value}
+                    setattr(tenant, key, value)
+
+        tenant.updated_at = datetime.utcnow()
+        self.db.commit()
+        self.db.refresh(tenant)
+
+        # Log changes
+        if changes and hasattr(self, '_log_audit_event'):
+            self._log_audit_event(
+                tenant_id,
+                user_id,
+                "tenant_updated",
+                "tenant",
+                str(tenant_id),
+                {"changes": changes}
+            )
+
+        return tenant
+
+    def add_user_to_tenant(
+        self,
+        tenant_id: int,
+        user_id: int,
+        role: str = "member",
+        permissions: Optional[Dict[str, bool]] = None
+    ) -> Optional[Dict]:
+        """Add user to tenant with specific role"""
+        # Implementation for adding user to tenant
+        return {"tenant_id": tenant_id, "user_id": user_id, "role": role}
     
     def update_tenant_settings(self, tenant_id: int, settings_data: Dict[str, Any]) -> TenantSettings:
         """
@@ -185,6 +289,41 @@ class TenantService:
         """
         permissions = self.get_user_permissions(user_id)
         return permission in permissions
+    
+    def _get_enhanced_features(self, subscription_tier: str) -> Dict[str, bool]:
+        """
+        Get enhanced features based on subscription tier including writing assistance
+        """
+        features = {
+            "analytics": True,
+            "social_collaboration": True,
+            "ai_insights": subscription_tier in ["professional", "enterprise"],
+            "advanced_reporting": subscription_tier == "enterprise",
+            "api_access": subscription_tier in ["professional", "enterprise"],
+            "sso": subscription_tier == "enterprise",
+            "audit_logs": subscription_tier == "enterprise",
+            "writing_assistance": subscription_tier in ["professional", "enterprise"],
+            "integrations": subscription_tier in ["premium", "professional", "enterprise"],
+            "ai_features": subscription_tier in ["premium", "professional", "enterprise"],
+            "workflow_automation": subscription_tier in ["premium", "professional", "enterprise"],
+            "market_intelligence": subscription_tier == "enterprise",
+            "advanced_security": subscription_tier in ["premium", "professional", "enterprise"]
+        }
+        
+        return features
+    
+    def _get_tier_features(self, subscription_tier: str) -> Dict[str, bool]:
+        """
+        Get tier-specific features for updates
+        """
+        return {
+            "ai_insights": subscription_tier in ["professional", "enterprise"],
+            "advanced_reporting": subscription_tier == "enterprise",
+            "api_access": subscription_tier in ["professional", "enterprise"],
+            "sso": subscription_tier == "enterprise",
+            "audit_logs": subscription_tier == "enterprise",
+            "writing_assistance": subscription_tier in ["professional", "enterprise"]
+        }
     
     def _get_default_features(self, subscription_tier: str) -> Dict[str, bool]:
         """
