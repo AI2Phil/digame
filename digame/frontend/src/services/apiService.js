@@ -768,6 +768,207 @@ class ApiService {
   async validateWebSocketConnection() {
     return this.request('/websocket/validate');
   }
+
+  // AI-Powered Recommendations & Coaching methods
+  async getUserProfile(userId) {
+    return this.request(`/users/${userId}/profile`);
+  }
+
+  async getUserBehaviorData(userId) {
+    return this.request(`/users/${userId}/behavior-data`);
+  }
+
+  async getUserSkillsMatrix(userId) {
+    return this.request(`/users/${userId}/skills-matrix`);
+  }
+
+  async getIndustryBenchmarks(industry) {
+    return this.request(`/ai/benchmarks/${industry}`);
+  }
+
+  async getRoleRequirements(role) {
+    return this.request(`/ai/role-requirements/${role}`);
+  }
+
+  async getUserLearningHistory(userId) {
+    return this.request(`/users/${userId}/learning-history`);
+  }
+
+  async getSkillContent(skill, options = {}) {
+    const params = new URLSearchParams(options);
+    return this.request(`/ai/content/skill/${skill}?${params}`);
+  }
+
+  async acceptRecommendation(recommendationId) {
+    return this.request(`/ai/recommendations/${recommendationId}/accept`, {
+      method: 'POST',
+    });
+  }
+
+  // Coaching Service methods
+  async getCoachingHistory(userId) {
+    return this.request(`/users/${userId}/coaching-history`);
+  }
+
+  async getUserPerformanceMetrics(userId) {
+    return this.request(`/users/${userId}/performance-metrics`);
+  }
+
+  async getUserProductivityData(userId) {
+    return this.request(`/users/${userId}/productivity-data`);
+  }
+
+  async getUserBehaviorAnalytics(userId) {
+    return this.request(`/users/${userId}/behavior-analytics`);
+  }
+
+  async getUserGoalAnalytics(userId) {
+    return this.request(`/users/${userId}/goal-analytics`);
+  }
+
+  async startCoachingPlan(planId) {
+    return this.request(`/ai/coaching/plans/${planId}/start`, {
+      method: 'POST',
+    });
+  }
+
+  async updateCoachingProgress(planId, progress) {
+    return this.request(`/ai/coaching/plans/${planId}/progress`, {
+      method: 'PUT',
+      body: JSON.stringify(progress),
+    });
+  }
+
+  // Learning Path Optimization methods
+  async getOptimizedLearningPath(userId, skillGaps) {
+    return this.request('/ai/learning-paths/optimize', {
+      method: 'POST',
+      body: JSON.stringify({ user_id: userId, skill_gaps: skillGaps }),
+    });
+  }
+
+  async enrollInLearningPath(pathId) {
+    return this.request(`/ai/learning-paths/${pathId}/enroll`, {
+      method: 'POST',
+    });
+  }
+
+  async trackLearningProgress(pathId, moduleId, progress) {
+    return this.request(`/ai/learning-paths/${pathId}/modules/${moduleId}/progress`, {
+      method: 'PUT',
+      body: JSON.stringify({ progress }),
+    });
+  }
+
+  // Predictive Analytics methods
+  async getPredictiveInsights(userId) {
+    return this.request(`/ai/predictive/insights/${userId}`);
+  }
+
+  async getGoalCompletionPrediction(goalId) {
+    return this.request(`/ai/predictive/goal-completion/${goalId}`);
+  }
+
+  async getSkillDevelopmentPrediction(userId, skillId) {
+    return this.request(`/ai/predictive/skill-development/${userId}/${skillId}`);
+  }
+
+  async getOptimalLearningTimes(userId) {
+    return this.request(`/ai/predictive/optimal-times/${userId}`);
+  }
+
+  // Behavioral Analysis methods
+  async analyzeLearningStyle(userId) {
+    return this.request(`/ai/analysis/learning-style/${userId}`);
+  }
+
+  async analyzeProductivityPatterns(userId) {
+    return this.request(`/ai/analysis/productivity-patterns/${userId}`);
+  }
+
+  async analyzeMotivationFactors(userId) {
+    return this.request(`/ai/analysis/motivation-factors/${userId}`);
+  }
+
+  async getPersonalizedInsights(userId) {
+    return this.request(`/ai/insights/personalized/${userId}`);
+  }
+
+  // Content Curation methods
+  async getCuratedContent(userId, preferences = {}) {
+    return this.request('/ai/content/curated', {
+      method: 'POST',
+      body: JSON.stringify({ user_id: userId, preferences }),
+    });
+  }
+
+  async rateContent(contentId, rating, feedback = '') {
+    return this.request(`/ai/content/${contentId}/rate`, {
+      method: 'POST',
+      body: JSON.stringify({ rating, feedback }),
+    });
+  }
+
+  async getContentRecommendations(userId, skillId) {
+    return this.request(`/ai/content/recommendations/${userId}/${skillId}`);
+  }
+
+  // External Learning Platform Integration methods
+  async getExternalPlatforms() {
+    return this.request('/ai/external-platforms');
+  }
+
+  async connectExternalPlatform(platformId, credentials) {
+    return this.request(`/ai/external-platforms/${platformId}/connect`, {
+      method: 'POST',
+      body: JSON.stringify(credentials),
+    });
+  }
+
+  async syncExternalProgress(platformId) {
+    return this.request(`/ai/external-platforms/${platformId}/sync`, {
+      method: 'POST',
+    });
+  }
+
+  async getExternalContent(platformId, query) {
+    return this.request(`/ai/external-platforms/${platformId}/content?q=${encodeURIComponent(query)}`);
+  }
+
+  // AI Model Training and Feedback methods
+  async provideFeedback(type, itemId, feedback) {
+    return this.request('/ai/feedback', {
+      method: 'POST',
+      body: JSON.stringify({ type, item_id: itemId, feedback }),
+    });
+  }
+
+  async getModelAccuracy() {
+    return this.request('/ai/model/accuracy');
+  }
+
+  async requestModelRetrain(userId) {
+    return this.request(`/ai/model/retrain/${userId}`, {
+      method: 'POST',
+    });
+  }
+
+  // Advanced Analytics methods
+  async getSkillGapTrends(userId, timeRange = '6m') {
+    return this.request(`/ai/analytics/skill-gaps/${userId}?range=${timeRange}`);
+  }
+
+  async getLearningEffectiveness(userId) {
+    return this.request(`/ai/analytics/learning-effectiveness/${userId}`);
+  }
+
+  async getCoachingImpact(userId) {
+    return this.request(`/ai/analytics/coaching-impact/${userId}`);
+  }
+
+  async getPersonalizedBenchmarks(userId) {
+    return this.request(`/ai/analytics/benchmarks/${userId}`);
+  }
 }
 
 // Create and export a singleton instance
