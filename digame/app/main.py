@@ -16,6 +16,7 @@ from .routers import auth_router  # Import the new authentication router
 from .routers import onboarding_router
 from .routers import user_setting_router # Import the user setting router
 from .routers import admin_simple_router # Import the admin dashboard router
+from .routers import writing_assistance_router # Import the new writing assistance router
 
 # Import authentication components
 from .auth.middleware import configure_auth_middleware
@@ -97,6 +98,7 @@ app.include_router(auth_router.router, tags=["Authentication"])
 
 # Include other routers (these will be protected by authentication middleware)
 app.include_router(user_setting_router) # Add user setting router
+app.include_router(writing_assistance_router.router) # Add the writing assistance router
 app.include_router(admin_simple_router.router, tags=["Admin Dashboard"])
 app.include_router(predictive_router.router, prefix="/predictive", tags=["Predictive Modeling"])
 app.include_router(admin_rbac_router.router, prefix="/admin/rbac", tags=["Admin RBAC Management"])

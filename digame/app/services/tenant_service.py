@@ -57,7 +57,8 @@ class TenantService:
             "advanced_reporting": subscription_tier == "enterprise",
             "api_access": subscription_tier in ["professional", "enterprise"],
             "sso": subscription_tier == "enterprise",
-            "audit_logs": subscription_tier == "enterprise"
+            "audit_logs": subscription_tier == "enterprise",
+            "writing_assistance": subscription_tier in ["professional", "enterprise"]
         }
         
         self.db.add(tenant)
@@ -96,10 +97,59 @@ class TenantService:
 
         # Track changes for audit log
         changes = {}
+        
+        # Handle subscription_tier change and its impact on features
+        if "subscription_tier" in updates:
+            new_tier = updates["subscription_tier"]
+            if tenant.subscription_tier != new_tier:
+                if not isinstance(tenant.features, dict): # ensure features is a dict
+                    tenant.features = {}
+                tenant.features["writing_assistance"] = new_tier in ["professional", "enterprise"]
+                # Potentially re-evaluate other features as well if the logic requires
+                # For now, only updating writing_assistance as per specific instruction
+
+        # Handle direct features update
+        if "features" in updates:
+            if isinstance(updates["features"], dict):
+                if "writing_assistance" not in updates["features"]:
+                    # If writing_assistance is not being directly updated,
+                    # ensure it's set based on the current or new tier
+                    current_tier = updates.get("subscription_tier", tenant.subscription_tier)
+                    if not isinstance(tenant.features, dict): # ensure features is a dict
+                         tenant.features = {}
+                    # Merge existing features with updates, then update writing_assistance
+                    # This line ensures that tenant.features is updated with updates["features"]
+                    # and then writing_assistance is set according to tier, unless
+                    # writing_assistance was explicitly in updates["features"]
+                    # However, the setattr below will handle the direct update of features.
+                    # So, we just need to make sure writing_assistance is correct if not specified.
+                    _features = tenant.features.copy() # Start with existing features
+                    _features.update(updates["features"]) # Apply updates
+                    _features["writing_assistance"] = current_tier in ["professional", "enterprise"]
+                    updates["features"] = _features # Ensure updates["features"] has the correct writing_assistance
+            elif isinstance(tenant.features, dict): # if updates["features"] is not a dict, but tenant.features is
+                # This case might indicate an attempt to clear features or set to non-dict.
+                # We'll ensure writing_assistance is based on tier.
+                current_tier = updates.get("subscription_tier", tenant.subscription_tier)
+                tenant.features["writing_assistance"] = current_tier in ["professional", "enterprise"]
+        elif "subscription_tier" in updates: # features not in updates, but tier changed
+             if isinstance(tenant.features, dict):
+                current_tier = updates.get("subscription_tier", tenant.subscription_tier)
+                tenant.features["writing_assistance"] = current_tier in ["professional", "enterprise"]
+
+
         for key, value in updates.items():
             if hasattr(tenant, key) and getattr(tenant, key) != value:
                 changes[key] = {"old": getattr(tenant, key), "new": value}
                 setattr(tenant, key, value)
+            elif key == "features" and isinstance(tenant.features, dict) and isinstance(value, dict):
+                # Special handling for features dictionary to capture deep changes if necessary
+                # For now, simple setattr is used which replaces the whole dict.
+                # If granular changes within features dict are needed for audit, this needs enhancement.
+                if tenant.features != value:
+                    changes[key] = {"old": tenant.features, "new": value}
+                    setattr(tenant, key, value)
+
 
         tenant.updated_at = datetime.utcnow()
         self.db.commit()

@@ -57,8 +57,18 @@ These systems are already implemented and form the backbone of many user-facing 
 
 *   **Team Performance Analytics & Collaboration Pattern Analysis (Team Collaboration & Insights):**
     *   **User Journey Impact:** For users entering Mastery & Leadership (Phase 5), these AI-driven insights help them understand team dynamics, optimize collaboration, and identify skill gaps within their teams, fostering better leadership.
-*   **Natural Language Processing & Communication (Full Suite):**
-    *   **User Journey Impact:** In the Mastery & Leadership phase (Phase 5), features like communication style analysis, meeting insights, and writing assistance can significantly enhance a leader's effectiveness and impact.
+
+### AI-Powered Writing Assistance
+
+*   **User Journey Impact:** Enhances content creation across all platform interactions by providing real-time suggestions for clarity, grammar, and style, improving the quality and effectiveness of user-generated text. This is particularly beneficial during Phase 2 (Profile Creation), Phase 3 (Active Monitoring & Learning, e.g., writing process notes), and Phase 5 (Mastery & Leadership, e.g., drafting communications).
+*   **Implementation Details (Multi-Tenant Context):**
+    *   **Tenant Enablement:** This feature can be activated by tenant administrators if their subscription tier (typically 'Professional' or 'Enterprise') includes it. The availability is managed by the `writing_assistance` flag within the tenant's specific feature settings.
+    *   **User API Key Requirement:** For the feature to function, each user within an enabled tenant needs to supply their personal API key for the designated external writing assistance service. This key must be saved in their User Settings page, specifically under the key name `writing_service_key`.
+    *   **Functionality:** When the feature is active for the tenant and a user has provided their `writing_service_key`, the platform offers writing suggestions through the `/ai/writing-assistance/suggest` API endpoint.
+*   **Current Status:** The initial backend infrastructure for this feature is now implemented. This includes the ability for users to store the necessary `writing_service_key`, mechanisms for tenant administrators to enable the feature based on subscription tiers, and a functional API endpoint that currently connects to a mock external service for generating suggestions. Further frontend integration is required for user interaction.
+
+*   **Natural Language Processing & Communication (Broader Suite - Future):**
+    *   **User Journey Impact:** (Original text retained) In the Mastery & Leadership phase (Phase 5), features like communication style analysis and meeting insights can significantly enhance a leader's effectiveness and impact. The AI-Powered Writing Assistance is an initial component of this broader suite.
 *   **Workflow Automation & Task Management (Intelligent Prioritization, Process Optimization):**
     *   **User Journey Impact:** Helps users at all levels, but particularly those in Mastery & Leadership (Phase 5) managing complex projects or teams, to optimize workflows, automate routine tasks, and focus on strategic priorities.
 *   **Advanced Simulation & Decision Support:**
