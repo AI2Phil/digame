@@ -6,7 +6,7 @@ import ComponentDemoPage from './pages/ComponentDemoPage';
 import OnboardingPage from './pages/OnboardingPage';
 import AdvancedWebAnalyticsDashboard from './pages/AdvancedWebAnalyticsDashboard';
 import AdvancedMobileAnalyticsDashboard from './pages/AdvancedMobileAnalyticsDashboard';
-import SocialCollaborationDashboard from './pages/SocialCollaborationDashboard';
+import EnhancedSocialCollaborationDashboard from './pages/EnhancedSocialCollaborationDashboard';
 import './App.css';
 
 function App() {
@@ -199,7 +199,7 @@ function App() {
             path="/social"
             element={
               isAuthenticated || isDemoMode ? (
-                <SocialCollaborationDashboard />
+                <EnhancedSocialCollaborationDashboard />
               ) : (
                 <Navigate to="/" replace />
               )

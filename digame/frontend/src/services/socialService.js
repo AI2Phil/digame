@@ -464,6 +464,285 @@ class SocialService {
     // Identify areas where user needs improvement
     return Object.keys(skillProfile).filter(skill => skillProfile[skill] < 3);
   }
+
+  // Additional methods for dashboard integration
+  async getUserProfile(userId) {
+    try {
+      const response = await apiService.get(`/users/${userId}/profile`);
+      return response.data || {
+        id: userId,
+        name: 'John Doe',
+        title: 'Senior Software Engineer',
+        company: 'Tech Innovation Corp',
+        initials: 'JD',
+        experience: '5+ years',
+        location: 'San Francisco, CA',
+        industry: 'Technology',
+        skills: ['React', 'Node.js', 'Python', 'Machine Learning', 'Team Leadership'],
+        networkSize: 247,
+        industryRank: 15,
+        directConnections: 247,
+        secondDegreeNetwork: '12.5K',
+        industryInfluence: '8.7/10',
+        collaborationScore: '94%',
+        weeklyGrowth: 12
+      };
+    } catch (error) {
+      console.error('Failed to get user profile:', error);
+      // Return mock data for development
+      return {
+        id: userId,
+        name: 'John Doe',
+        title: 'Senior Software Engineer',
+        company: 'Tech Innovation Corp',
+        initials: 'JD',
+        experience: '5+ years',
+        location: 'San Francisco, CA',
+        industry: 'Technology',
+        skills: ['React', 'Node.js', 'Python', 'Machine Learning', 'Team Leadership'],
+        networkSize: 247,
+        industryRank: 15,
+        directConnections: 247,
+        secondDegreeNetwork: '12.5K',
+        industryInfluence: '8.7/10',
+        collaborationScore: '94%',
+        weeklyGrowth: 12
+      };
+    }
+  }
+
+  async findPeerMatches({ userId, limit = 10 }) {
+    try {
+      const response = await apiService.get(`/users/${userId}/peer-matches?limit=${limit}`);
+      return response.data || this.getMockPeerMatches();
+    } catch (error) {
+      console.error('Failed to find peer matches:', error);
+      return this.getMockPeerMatches();
+    }
+  }
+
+  async getMentorshipPrograms(userId) {
+    try {
+      const response = await apiService.get(`/users/${userId}/mentorship-programs`);
+      return response.data || [];
+    } catch (error) {
+      console.error('Failed to get mentorship programs:', error);
+      return [];
+    }
+  }
+
+  async getCollaborationProjects(userId) {
+    try {
+      const response = await apiService.get(`/users/${userId}/collaboration-projects`);
+      return response.data || this.getMockCollaborationProjects();
+    } catch (error) {
+      console.error('Failed to get collaboration projects:', error);
+      return this.getMockCollaborationProjects();
+    }
+  }
+
+  async getTeamAnalytics(userId) {
+    try {
+      const response = await apiService.get(`/users/${userId}/team-analytics`);
+      return response.data || this.getMockTeamAnalytics();
+    } catch (error) {
+      console.error('Failed to get team analytics:', error);
+      return this.getMockTeamAnalytics();
+    }
+  }
+
+  async getIndustryConnections(userId) {
+    try {
+      const response = await apiService.get(`/users/${userId}/industry-connections`);
+      return response.data || [];
+    } catch (error) {
+      console.error('Failed to get industry connections:', error);
+      return [];
+    }
+  }
+
+  async getSkillBasedMatches(userId) {
+    try {
+      const response = await apiService.get(`/users/${userId}/skill-matches`);
+      return response.data || this.getMockSkillMatches();
+    } catch (error) {
+      console.error('Failed to get skill-based matches:', error);
+      return this.getMockSkillMatches();
+    }
+  }
+
+  async sendConnectionRequest(peerId) {
+    try {
+      const response = await apiService.post(`/connections/request`, { peerId });
+      return response.data;
+    } catch (error) {
+      console.error('Failed to send connection request:', error);
+      throw error;
+    }
+  }
+
+  async joinCollaborationProject(projectId) {
+    try {
+      const response = await apiService.post(`/projects/${projectId}/join`);
+      return response.data;
+    } catch (error) {
+      console.error('Failed to join collaboration project:', error);
+      throw error;
+    }
+  }
+
+  async joinMentorshipProgram(programId) {
+    try {
+      const response = await apiService.post(`/mentorship/${programId}/join`);
+      return response.data;
+    } catch (error) {
+      console.error('Failed to join mentorship program:', error);
+      throw error;
+    }
+  }
+
+  // Mock data methods for development
+  getMockPeerMatches() {
+    return [
+      {
+        id: 1,
+        name: 'Alex Brown',
+        title: 'Product Manager',
+        initials: 'AB',
+        compatibilityScore: 94,
+        sharedSkills: 5,
+        skills: ['Product Strategy', 'User Research', 'Agile', 'Data Analysis']
+      },
+      {
+        id: 2,
+        name: 'Sarah Chen',
+        title: 'UX Designer',
+        initials: 'SC',
+        compatibilityScore: 89,
+        sharedSkills: 3,
+        skills: ['UI/UX Design', 'Figma', 'User Testing', 'Design Systems']
+      },
+      {
+        id: 3,
+        name: 'Mike Johnson',
+        title: 'DevOps Engineer',
+        initials: 'MJ',
+        compatibilityScore: 87,
+        sharedSkills: 4,
+        skills: ['AWS', 'Docker', 'Kubernetes', 'CI/CD']
+      }
+    ];
+  }
+
+  getMockSkillMatches() {
+    return [
+      {
+        id: 1,
+        name: 'Alex Brown',
+        title: 'Product Manager',
+        initials: 'AB',
+        compatibilityScore: 94,
+        sharedSkills: 5,
+        skills: ['Product Strategy', 'User Research', 'Agile', 'Data Analysis']
+      },
+      {
+        id: 2,
+        name: 'Sarah Chen',
+        title: 'UX Designer',
+        initials: 'SC',
+        compatibilityScore: 89,
+        sharedSkills: 3,
+        skills: ['UI/UX Design', 'Figma', 'User Testing', 'Design Systems']
+      },
+      {
+        id: 3,
+        name: 'Mike Johnson',
+        title: 'DevOps Engineer',
+        initials: 'MJ',
+        compatibilityScore: 87,
+        sharedSkills: 4,
+        skills: ['AWS', 'Docker', 'Kubernetes', 'CI/CD']
+      },
+      {
+        id: 4,
+        name: 'Emily Davis',
+        title: 'Data Scientist',
+        initials: 'ED',
+        compatibilityScore: 92,
+        sharedSkills: 6,
+        skills: ['Python', 'Machine Learning', 'TensorFlow', 'Statistics']
+      },
+      {
+        id: 5,
+        name: 'David Wilson',
+        title: 'Frontend Developer',
+        initials: 'DW',
+        compatibilityScore: 88,
+        sharedSkills: 4,
+        skills: ['React', 'TypeScript', 'CSS', 'JavaScript']
+      },
+      {
+        id: 6,
+        name: 'Lisa Garcia',
+        title: 'Backend Developer',
+        initials: 'LG',
+        compatibilityScore: 85,
+        sharedSkills: 3,
+        skills: ['Node.js', 'PostgreSQL', 'API Design', 'Microservices']
+      }
+    ];
+  }
+
+  getMockCollaborationProjects() {
+    return [
+      {
+        id: 1,
+        name: 'AI Research Project',
+        team: '5 members',
+        progress: 67,
+        status: 'active',
+        description: 'Collaborative research on machine learning applications',
+        skills: ['Python', 'TensorFlow', 'Research']
+      },
+      {
+        id: 2,
+        name: 'Open Source Library',
+        team: '8 members',
+        progress: 45,
+        status: 'active',
+        description: 'Building a React component library',
+        skills: ['React', 'TypeScript', 'Documentation']
+      },
+      {
+        id: 3,
+        name: 'Mobile App Development',
+        team: '6 members',
+        progress: 78,
+        status: 'active',
+        description: 'Cross-platform mobile application',
+        skills: ['React Native', 'Mobile Development', 'UI/UX']
+      }
+    ];
+  }
+
+  getMockTeamAnalytics() {
+    return {
+      efficiency: 87,
+      collaborationScore: 94,
+      successRate: 92,
+      teams: [
+        { id: 1, name: "Frontend Development", members: 8, efficiency: 92, projects: 3 },
+        { id: 2, name: "AI Research Group", members: 5, efficiency: 87, projects: 2 },
+        { id: 3, name: "Mobile Development", members: 6, efficiency: 89, projects: 4 }
+      ],
+      collaborationMetrics: {
+        totalCollaborations: 156,
+        successfulProjects: 23,
+        averageTeamSize: 6.3,
+        crossTeamProjects: 8
+      }
+    };
+  }
 }
 
 // Create singleton instance
