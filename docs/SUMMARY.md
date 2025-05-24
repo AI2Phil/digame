@@ -16,7 +16,8 @@ Status: SSO integration feature is complete with full multi-protocol support and
    - React dashboard for SSO administration with provider configuration and session management
    - Support for multiple identity providers, attribute mapping, role mapping, and auto-provisioning
    - Enterprise-grade security with session timeout, MFA integration, and comprehensive audit trails
-   
+- Pending to resolve Pyrefire errors.
+
 3. advanced security controls,
 4. Integration APIs for third-party productivity tools and services,
 5. Advanced Reporting with PDF generation and scheduled reports,
@@ -33,8 +34,6 @@ Status: SSO integration feature is complete with full multi-protocol support and
 3. **A/B Testing**: Test different onboarding flows
 4. **Internationalization**: Multi-language onboarding support
 
-
-proceed to any of the other tasks in /docs/SUMMARY.md that you like, and when updating SUMMARY.md preserve its structure and contents (without removing anything)
 
 ✅ **Multi-tenancy Enterprise Feature Implementation Complete**
 
