@@ -420,6 +420,112 @@ class ApiService {
   async getOnboardingAnalytics() {
     return this.request('/admin/onboarding/analytics');
   }
+
+  // User Profile Enhancement methods
+  async updateUserProfile(profileData) {
+    return this.request('/auth/profile', {
+      method: 'PUT',
+      body: JSON.stringify(profileData),
+    });
+  }
+
+  async uploadAvatar(formData) {
+    const response = await fetch(`${this.baseURL}/auth/avatar`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${this.token}`,
+      },
+      body: formData,
+    });
+    return this.handleResponse(response);
+  }
+
+  // Goals Management methods
+  async getUserGoals() {
+    return this.request('/goals');
+  }
+
+  async createGoal(goalData) {
+    return this.request('/goals', {
+      method: 'POST',
+      body: JSON.stringify(goalData),
+    });
+  }
+
+  async updateGoal(goalId, goalData) {
+    return this.request(`/goals/${goalId}`, {
+      method: 'PUT',
+      body: JSON.stringify(goalData),
+    });
+  }
+
+  async deleteGoal(goalId) {
+    return this.request(`/goals/${goalId}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // Achievements methods
+  async getUserAchievements() {
+    return this.request('/achievements');
+  }
+
+  async getAchievementProgress() {
+    return this.request('/achievements/progress');
+  }
+
+  // User Preferences methods
+  async updateUserPreferences(preferences) {
+    return this.request('/settings/preferences', {
+      method: 'PUT',
+      body: JSON.stringify(preferences),
+    });
+  }
+
+  async getUserPreferences() {
+    return this.request('/settings/preferences');
+  }
+
+  // Social Profile methods
+  async getConnections() {
+    return this.request('/social/connections');
+  }
+
+  async sendConnectionRequest(userId) {
+    return this.request('/social/connect', {
+      method: 'POST',
+      body: JSON.stringify({ user_id: userId }),
+    });
+  }
+
+  async updateSocialLinks(socialLinks) {
+    return this.request('/social/links', {
+      method: 'PUT',
+      body: JSON.stringify(socialLinks),
+    });
+  }
+
+  async getSocialActivity() {
+    return this.request('/social/activity');
+  }
+
+  async likeActivity(activityId) {
+    return this.request(`/social/activity/${activityId}/like`, {
+      method: 'POST',
+    });
+  }
+
+  async shareAchievement(achievementId) {
+    return this.request(`/social/share/achievement/${achievementId}`, {
+      method: 'POST',
+    });
+  }
+
+  async shareGoal(goalId) {
+    return this.request(`/social/share/goal/${goalId}`, {
+      method: 'POST',
+    });
+  }
 }
 
 // Create and export a singleton instance

@@ -1,453 +1,419 @@
 import React, { useState, useEffect } from 'react';
+import { 
+  User, Settings, Target, Trophy, Calendar, 
+  Edit, Save, X, Camera, Mail, Phone, MapPin,
+  Briefcase, GraduationCap, Star, Award,
+  Key, Bell, Shield, Palette, Globe
+} from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card';
-import { Form } from '../components/ui/Form';
-import Avatar from '../components/ui/Avatar';
+import { Button } from '../components/ui/Button';
+import { Input } from '../components/ui/Input';
+import { Avatar } from '../components/ui/Avatar';
 import { Badge } from '../components/ui/Badge';
-import Button from '../components/ui/Button';
-import Input from '../components/ui/Input';
-import { Tabs } from '../components/ui/Tabs';
 import { Progress } from '../components/ui/Progress';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/Tabs';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/Dialog';
+import { Toast } from '../components/ui/Toast';
+import apiService from '../services/apiService';
+import GoalsManagementSection from '../components/profile/GoalsManagementSection';
+import AchievementsSection from '../components/profile/AchievementsSection';
+import SettingsManagementSection from '../components/profile/SettingsManagementSection';
+import SocialProfileSection from '../components/profile/SocialProfileSection';
 
 const UserProfilePage = () => {
   const [user, setUser] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [editing, setEditing] = useState(false);
   const [activeTab, setActiveTab] = useState('profile');
-  const [formData, setFormData] = useState({
-    username: '',
-    email: '',
-    first_name: '',
-    last_name: '',
-    bio: '',
-    location: '',
-    website: '',
-    linkedin: '',
-    github: ''
-  });
+  const [editData, setEditData] = useState({});
+  const [goals, setGoals] = useState([]);
+  const [achievements, setAchievements] = useState([]);
+  const [apiKeys, setApiKeys] = useState([]);
 
   useEffect(() => {
-    fetchUserProfile();
+    loadUserProfile();
   }, []);
 
-  const fetchUserProfile = async () => {
+  const loadUserProfile = async () => {
+    setLoading(true);
     try {
-      setLoading(true);
-      const response = await fetch('/auth/me', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
+      const [userData, goalsData, achievementsData, apiKeysData] = await Promise.all([
+        apiService.getCurrentUser(),
+        apiService.getUserGoals(),
+        apiService.getUserAchievements(),
+        apiService.getApiKeys()
+      ]);
 
-      if (response.ok) {
-        const userData = await response.json();
-        setUser(userData);
-        setFormData({
-          username: userData.username || '',
-          email: userData.email || '',
-          first_name: userData.first_name || '',
-          last_name: userData.last_name || '',
-          bio: userData.bio || '',
-          location: userData.location || '',
-          website: userData.website || '',
-          linkedin: userData.linkedin || '',
-          github: userData.github || ''
-        });
-      }
+      setUser(userData);
+      setEditData(userData);
+      setGoals(goalsData || []);
+      setAchievements(achievementsData || []);
+      setApiKeys(apiKeysData || []);
     } catch (error) {
-      console.error('Error fetching user profile:', error);
+      console.error('Failed to load user profile:', error);
+      Toast.error('Failed to load profile data');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleInputChange = (field, value) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
-
   const handleSaveProfile = async () => {
     try {
-      const response = await fetch('/auth/me', {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(formData)
-      });
-
-      if (response.ok) {
-        const updatedUser = await response.json();
-        setUser(updatedUser);
-        setEditing(false);
-        // Show success message
-      }
+      const updatedUser = await apiService.updateUserProfile(editData);
+      setUser(updatedUser);
+      setIsEditing(false);
+      Toast.success('Profile updated successfully');
     } catch (error) {
-      console.error('Error updating profile:', error);
+      console.error('Failed to update profile:', error);
+      Toast.error('Failed to update profile');
     }
   };
 
   const handleCancelEdit = () => {
-    setEditing(false);
-    // Reset form data to original user data
-    setFormData({
-      username: user.username || '',
-      email: user.email || '',
-      first_name: user.first_name || '',
-      last_name: user.last_name || '',
-      bio: user.bio || '',
-      location: user.location || '',
-      website: user.website || '',
-      linkedin: user.linkedin || '',
-      github: user.github || ''
-    });
+    setEditData(user);
+    setIsEditing(false);
   };
 
-  const getOnboardingProgress = () => {
-    if (!user?.onboarding_data) return 0;
-    
-    try {
-      const onboardingData = typeof user.onboarding_data === 'string' 
-        ? JSON.parse(user.onboarding_data) 
-        : user.onboarding_data;
-      
-      const steps = ['goals', 'workStyle', 'skills', 'privacy'];
-      const completedSteps = steps.filter(step => onboardingData[step]).length;
-      return (completedSteps / steps.length) * 100;
-    } catch {
-      return 0;
+  const handleAvatarUpload = async (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      try {
+        const formData = new FormData();
+        formData.append('avatar', file);
+        const response = await apiService.uploadAvatar(formData);
+        setUser({ ...user, avatar: response.avatar_url });
+        Toast.success('Avatar updated successfully');
+      } catch (error) {
+        Toast.error('Failed to upload avatar');
+      }
     }
   };
-
-  const getSkillBadges = () => {
-    if (!user?.onboarding_data) return [];
-    
-    try {
-      const onboardingData = typeof user.onboarding_data === 'string' 
-        ? JSON.parse(user.onboarding_data) 
-        : user.onboarding_data;
-      
-      return onboardingData.skills || [];
-    } catch {
-      return [];
-    }
-  };
-
-  const ProfileTab = () => (
-    <div className="space-y-6">
-      {/* Profile Header */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex items-center space-x-6">
-            <Avatar
-              src={user?.avatar}
-              alt={user?.username}
-              fallback={user?.username?.charAt(0)?.toUpperCase() || 'U'}
-              size="lg"
-            />
-            <div className="flex-1">
-              <div className="flex items-center space-x-3">
-                <h2 className="text-2xl font-bold">
-                  {user?.first_name && user?.last_name 
-                    ? `${user.first_name} ${user.last_name}`
-                    : user?.username
-                  }
-                </h2>
-                <Badge variant={user?.is_active ? 'success' : 'secondary'}>
-                  {user?.is_active ? 'Active' : 'Inactive'}
-                </Badge>
-              </div>
-              <p className="text-gray-600">@{user?.username}</p>
-              <p className="text-gray-600">{user?.email}</p>
-              {user?.bio && (
-                <p className="mt-2 text-gray-700">{user.bio}</p>
-              )}
-            </div>
-            <div className="text-right">
-              <Button
-                variant={editing ? 'secondary' : 'primary'}
-                onClick={() => editing ? handleCancelEdit() : setEditing(true)}
-              >
-                {editing ? 'Cancel' : 'Edit Profile'}
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Profile Form */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Personal Information</CardTitle>
-          <CardDescription>
-            {editing ? 'Update your personal information' : 'Your personal information'}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Username
-              </label>
-              <Input
-                value={formData.username}
-                onChange={(e) => handleInputChange('username', e.target.value)}
-                disabled={!editing}
-                placeholder="Enter username"
-              />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Email
-              </label>
-              <Input
-                type="email"
-                value={formData.email}
-                onChange={(e) => handleInputChange('email', e.target.value)}
-                disabled={!editing}
-                placeholder="Enter email"
-              />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                First Name
-              </label>
-              <Input
-                value={formData.first_name}
-                onChange={(e) => handleInputChange('first_name', e.target.value)}
-                disabled={!editing}
-                placeholder="Enter first name"
-              />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Last Name
-              </label>
-              <Input
-                value={formData.last_name}
-                onChange={(e) => handleInputChange('last_name', e.target.value)}
-                disabled={!editing}
-                placeholder="Enter last name"
-              />
-            </div>
-            
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Bio
-              </label>
-              <textarea
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                rows={3}
-                value={formData.bio}
-                onChange={(e) => handleInputChange('bio', e.target.value)}
-                disabled={!editing}
-                placeholder="Tell us about yourself"
-              />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Location
-              </label>
-              <Input
-                value={formData.location}
-                onChange={(e) => handleInputChange('location', e.target.value)}
-                disabled={!editing}
-                placeholder="Enter location"
-              />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Website
-              </label>
-              <Input
-                type="url"
-                value={formData.website}
-                onChange={(e) => handleInputChange('website', e.target.value)}
-                disabled={!editing}
-                placeholder="https://yourwebsite.com"
-              />
-            </div>
-          </div>
-          
-          {editing && (
-            <div className="mt-6 flex space-x-3">
-              <Button onClick={handleSaveProfile}>
-                Save Changes
-              </Button>
-              <Button variant="outline" onClick={handleCancelEdit}>
-                Cancel
-              </Button>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    </div>
-  );
-
-  const OnboardingTab = () => (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Onboarding Progress</CardTitle>
-          <CardDescription>
-            Your setup progress and preferences
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div>
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-sm font-medium">Overall Progress</span>
-                <span className="text-sm text-gray-600">{Math.round(getOnboardingProgress())}%</span>
-              </div>
-              <Progress value={getOnboardingProgress()} />
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
-              <div className="p-4 border rounded-lg">
-                <h4 className="font-medium mb-2">Completion Status</h4>
-                <Badge variant={user?.onboarding_completed ? 'success' : 'warning'}>
-                  {user?.onboarding_completed ? 'Completed' : 'In Progress'}
-                </Badge>
-              </div>
-              
-              <div className="p-4 border rounded-lg">
-                <h4 className="font-medium mb-2">Member Since</h4>
-                <p className="text-sm text-gray-600">
-                  {user?.created_at ? new Date(user.created_at).toLocaleDateString() : 'Unknown'}
-                </p>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Skills & Interests */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Skills & Interests</CardTitle>
-          <CardDescription>
-            Skills and areas of focus from your onboarding
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap gap-2">
-            {getSkillBadges().length > 0 ? (
-              getSkillBadges().map((skill, index) => (
-                <Badge key={index} variant="secondary">
-                  {skill}
-                </Badge>
-              ))
-            ) : (
-              <p className="text-gray-500">No skills selected yet</p>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
-
-  const SecurityTab = () => (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Account Security</CardTitle>
-          <CardDescription>
-            Manage your account security settings
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="flex justify-between items-center p-4 border rounded-lg">
-              <div>
-                <h4 className="font-medium">Password</h4>
-                <p className="text-sm text-gray-600">Last updated: Never</p>
-              </div>
-              <Button variant="outline">
-                Change Password
-              </Button>
-            </div>
-            
-            <div className="flex justify-between items-center p-4 border rounded-lg">
-              <div>
-                <h4 className="font-medium">Two-Factor Authentication</h4>
-                <p className="text-sm text-gray-600">Add an extra layer of security</p>
-              </div>
-              <Button variant="outline">
-                Enable 2FA
-              </Button>
-            </div>
-            
-            <div className="flex justify-between items-center p-4 border rounded-lg">
-              <div>
-                <h4 className="font-medium">Active Sessions</h4>
-                <p className="text-sm text-gray-600">Manage your active sessions</p>
-              </div>
-              <Button variant="outline">
-                View Sessions
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
-
-  const tabs = [
-    { id: 'profile', label: 'Profile', content: <ProfileTab /> },
-    { id: 'onboarding', label: 'Onboarding', content: <OnboardingTab /> },
-    { id: 'security', label: 'Security', content: <SecurityTab /> }
-  ];
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading profile...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p>Loading profile...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="py-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900">User Profile</h1>
-                <p className="mt-1 text-sm text-gray-500">
-                  Manage your account settings and preferences
-                </p>
-              </div>
-              <div className="flex items-center space-x-4">
-                <Badge variant={user?.onboarding_completed ? 'success' : 'warning'}>
-                  {user?.onboarding_completed ? 'Setup Complete' : 'Setup Pending'}
-                </Badge>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <Tabs
-          tabs={tabs}
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
+    <div className="min-h-screen bg-gray-50 p-6">
+      <div className="max-w-6xl mx-auto">
+        {/* Profile Header */}
+        <ProfileHeader 
+          user={user}
+          isEditing={isEditing}
+          editData={editData}
+          setEditData={setEditData}
+          onEdit={() => setIsEditing(true)}
+          onSave={handleSaveProfile}
+          onCancel={handleCancelEdit}
+          onAvatarUpload={handleAvatarUpload}
         />
+
+        {/* Profile Tabs */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-8">
+          <TabsList className="grid w-full grid-cols-5">
+            <TabsTrigger value="profile">Profile</TabsTrigger>
+            <TabsTrigger value="goals">Goals & Progress</TabsTrigger>
+            <TabsTrigger value="achievements">Achievements</TabsTrigger>
+            <TabsTrigger value="settings">Settings</TabsTrigger>
+            <TabsTrigger value="social">Social</TabsTrigger>
+          </TabsList>
+
+          {/* Profile Tab */}
+          <TabsContent value="profile" className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <PersonalInfoCard 
+                user={user}
+                isEditing={isEditing}
+                editData={editData}
+                setEditData={setEditData}
+              />
+              <ProfessionalInfoCard 
+                user={user}
+                isEditing={isEditing}
+                editData={editData}
+                setEditData={setEditData}
+              />
+            </div>
+            <ActivitySummaryCard user={user} />
+          </TabsContent>
+
+          {/* Goals Tab */}
+          <TabsContent value="goals" className="space-y-6">
+            <GoalsManagementSection goals={goals} setGoals={setGoals} />
+          </TabsContent>
+
+          {/* Achievements Tab */}
+          <TabsContent value="achievements" className="space-y-6">
+            <AchievementsSection achievements={achievements} />
+          </TabsContent>
+
+          {/* Settings Tab */}
+          <TabsContent value="settings" className="space-y-6">
+            <SettingsManagementSection apiKeys={apiKeys} setApiKeys={setApiKeys} />
+          </TabsContent>
+
+          {/* Social Tab */}
+          <TabsContent value="social" className="space-y-6">
+            <SocialProfileSection user={user} />
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
 };
+
+// Profile Header Component
+const ProfileHeader = ({ 
+  user, 
+  isEditing, 
+  editData, 
+  setEditData, 
+  onEdit, 
+  onSave, 
+  onCancel, 
+  onAvatarUpload 
+}) => (
+  <Card>
+    <CardContent className="p-8">
+      <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
+        {/* Avatar Section */}
+        <div className="relative">
+          <Avatar
+            src={user.avatar}
+            alt={user.username}
+            fallback={user.username?.charAt(0).toUpperCase()}
+            size="xl"
+            className="w-24 h-24"
+          />
+          {isEditing && (
+            <label className="absolute bottom-0 right-0 bg-blue-600 text-white p-2 rounded-full cursor-pointer hover:bg-blue-700">
+              <Camera className="w-4 h-4" />
+              <input
+                type="file"
+                accept="image/*"
+                onChange={onAvatarUpload}
+                className="hidden"
+              />
+            </label>
+          )}
+        </div>
+
+        {/* User Info */}
+        <div className="flex-1">
+          {isEditing ? (
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Input
+                  value={editData.username || ''}
+                  onChange={(e) => setEditData(prev => ({ ...prev, username: e.target.value }))}
+                  placeholder="Username"
+                />
+                <Input
+                  value={editData.email || ''}
+                  onChange={(e) => setEditData(prev => ({ ...prev, email: e.target.value }))}
+                  placeholder="Email"
+                  type="email"
+                />
+              </div>
+              <Input
+                value={editData.bio || ''}
+                onChange={(e) => setEditData(prev => ({ ...prev, bio: e.target.value }))}
+                placeholder="Bio"
+              />
+            </div>
+          ) : (
+            <>
+              <h1 className="text-3xl font-bold text-gray-900">{user.username}</h1>
+              <p className="text-gray-600 mt-1">{user.email}</p>
+              {user.bio && <p className="text-gray-700 mt-2">{user.bio}</p>}
+              <div className="flex items-center gap-2 mt-4">
+                <Badge variant="default">{user.role || 'User'}</Badge>
+                <Badge variant={user.is_active ? 'success' : 'destructive'}>
+                  {user.is_active ? 'Active' : 'Inactive'}
+                </Badge>
+                {user.verified && <Badge variant="success">Verified</Badge>}
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex items-center gap-2">
+          {isEditing ? (
+            <>
+              <Button onClick={onSave}>
+                <Save className="w-4 h-4 mr-2" />
+                Save
+              </Button>
+              <Button variant="outline" onClick={onCancel}>
+                <X className="w-4 h-4 mr-2" />
+                Cancel
+              </Button>
+            </>
+          ) : (
+            <Button onClick={onEdit}>
+              <Edit className="w-4 h-4 mr-2" />
+              Edit Profile
+            </Button>
+          )}
+        </div>
+      </div>
+    </CardContent>
+  </Card>
+);
+
+// Personal Info Card Component
+const PersonalInfoCard = ({ user, isEditing, editData, setEditData }) => (
+  <Card>
+    <CardHeader>
+      <CardTitle className="flex items-center gap-2">
+        <User className="w-5 h-5" />
+        Personal Information
+      </CardTitle>
+    </CardHeader>
+    <CardContent className="space-y-4">
+      {isEditing ? (
+        <>
+          <div className="grid grid-cols-2 gap-4">
+            <Input
+              value={editData.first_name || ''}
+              onChange={(e) => setEditData(prev => ({ ...prev, first_name: e.target.value }))}
+              placeholder="First Name"
+            />
+            <Input
+              value={editData.last_name || ''}
+              onChange={(e) => setEditData(prev => ({ ...prev, last_name: e.target.value }))}
+              placeholder="Last Name"
+            />
+          </div>
+          <Input
+            value={editData.phone || ''}
+            onChange={(e) => setEditData(prev => ({ ...prev, phone: e.target.value }))}
+            placeholder="Phone Number"
+          />
+          <Input
+            value={editData.location || ''}
+            onChange={(e) => setEditData(prev => ({ ...prev, location: e.target.value }))}
+            placeholder="Location"
+          />
+          <Input
+            value={editData.timezone || ''}
+            onChange={(e) => setEditData(prev => ({ ...prev, timezone: e.target.value }))}
+            placeholder="Timezone"
+          />
+        </>
+      ) : (
+        <>
+          <InfoItem icon={User} label="Full Name" value={`${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Not provided'} />
+          <InfoItem icon={Phone} label="Phone" value={user.phone || 'Not provided'} />
+          <InfoItem icon={MapPin} label="Location" value={user.location || 'Not provided'} />
+          <InfoItem icon={Globe} label="Timezone" value={user.timezone || 'Not provided'} />
+          <InfoItem icon={Calendar} label="Member Since" value={new Date(user.created_at).toLocaleDateString()} />
+        </>
+      )}
+    </CardContent>
+  </Card>
+);
+
+// Professional Info Card Component
+const ProfessionalInfoCard = ({ user, isEditing, editData, setEditData }) => (
+  <Card>
+    <CardHeader>
+      <CardTitle className="flex items-center gap-2">
+        <Briefcase className="w-5 h-5" />
+        Professional Information
+      </CardTitle>
+    </CardHeader>
+    <CardContent className="space-y-4">
+      {isEditing ? (
+        <>
+          <Input
+            value={editData.job_title || ''}
+            onChange={(e) => setEditData(prev => ({ ...prev, job_title: e.target.value }))}
+            placeholder="Job Title"
+          />
+          <Input
+            value={editData.company || ''}
+            onChange={(e) => setEditData(prev => ({ ...prev, company: e.target.value }))}
+            placeholder="Company"
+          />
+          <Input
+            value={editData.industry || ''}
+            onChange={(e) => setEditData(prev => ({ ...prev, industry: e.target.value }))}
+            placeholder="Industry"
+          />
+          <Input
+            value={editData.experience_level || ''}
+            onChange={(e) => setEditData(prev => ({ ...prev, experience_level: e.target.value }))}
+            placeholder="Experience Level"
+          />
+        </>
+      ) : (
+        <>
+          <InfoItem icon={Briefcase} label="Job Title" value={user.job_title || 'Not provided'} />
+          <InfoItem icon={Briefcase} label="Company" value={user.company || 'Not provided'} />
+          <InfoItem icon={Briefcase} label="Industry" value={user.industry || 'Not provided'} />
+          <InfoItem icon={GraduationCap} label="Experience" value={user.experience_level || 'Not provided'} />
+          <InfoItem icon={Star} label="Skills" value={user.skills?.join(', ') || 'Not provided'} />
+        </>
+      )}
+    </CardContent>
+  </Card>
+);
+
+// Activity Summary Card Component
+const ActivitySummaryCard = ({ user }) => (
+  <Card>
+    <CardHeader>
+      <CardTitle>Activity Summary</CardTitle>
+    </CardHeader>
+    <CardContent>
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="text-center">
+          <div className="text-2xl font-bold text-blue-600">
+            {user.stats?.total_sessions || 0}
+          </div>
+          <p className="text-sm text-gray-600">Total Sessions</p>
+        </div>
+        <div className="text-center">
+          <div className="text-2xl font-bold text-green-600">
+            {user.stats?.goals_completed || 0}
+          </div>
+          <p className="text-sm text-gray-600">Goals Completed</p>
+        </div>
+        <div className="text-center">
+          <div className="text-2xl font-bold text-purple-600">
+            {user.stats?.achievements_earned || 0}
+          </div>
+          <p className="text-sm text-gray-600">Achievements</p>
+        </div>
+        <div className="text-center">
+          <div className="text-2xl font-bold text-orange-600">
+            {user.stats?.streak_days || 0}
+          </div>
+          <p className="text-sm text-gray-600">Day Streak</p>
+        </div>
+      </div>
+    </CardContent>
+  </Card>
+);
+
+// Info Item Component
+const InfoItem = ({ icon: Icon, label, value }) => (
+  <div className="flex items-center gap-3">
+    <Icon className="w-4 h-4 text-gray-500" />
+    <div>
+      <p className="text-sm text-gray-600">{label}</p>
+      <p className="font-medium">{value}</p>
+    </div>
+  </div>
+);
 
 export default UserProfilePage;
