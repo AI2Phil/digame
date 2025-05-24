@@ -277,7 +277,7 @@ const SSOManagementDashboard = ({ tenantId, userRole }) => {
 
           {/* Audit Logs Tab */}
           <TabsContent value="audit" className="space-y-6">
-            <SSO AuditLogsSection auditLogs={auditLogs} />
+            <SSOAuditLogsSection auditLogs={auditLogs} />
           </TabsContent>
         </Tabs>
       </div>

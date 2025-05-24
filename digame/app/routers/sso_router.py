@@ -202,7 +202,7 @@ async def delete_sso_provider(
 async def initiate_saml_login(
     provider_id: int,
     relay_state: Optional[str] = Query(None),
-    request: Request = None,
+    request: Optional[Request] = None,
     db: Session = Depends(get_db)
 ):
     """Initiate SAML authentication"""
@@ -223,7 +223,7 @@ async def saml_assertion_consumer_service(
     provider_id: int,
     SAMLResponse: str = Form(...),
     RelayState: Optional[str] = Form(None),
-    request: Request = None,
+    request: Optional[Request] = None,
     db: Session = Depends(get_db)
 ):
     """SAML Assertion Consumer Service (ACS) endpoint"""
@@ -281,7 +281,7 @@ async def saml_single_logout(
     SAMLRequest: Optional[str] = Form(None),
     SAMLResponse: Optional[str] = Form(None),
     RelayState: Optional[str] = Form(None),
-    request: Request = None,
+    request: Optional[Request] = None,
     db: Session = Depends(get_db)
 ):
     """SAML Single Logout endpoint"""
@@ -303,7 +303,7 @@ async def initiate_oauth_login(
     provider_id: int,
     redirect_uri: str = Query(...),
     state: Optional[str] = Query(None),
-    request: Request = None,
+    request: Optional[Request] = None,
     db: Session = Depends(get_db)
 ):
     """Initiate OAuth2/OIDC authentication"""
@@ -324,7 +324,7 @@ async def oauth_callback(
     code: str = Query(...),
     state: Optional[str] = Query(None),
     error: Optional[str] = Query(None),
-    request: Request = None,
+    request: Optional[Request] = None,
     db: Session = Depends(get_db)
 ):
     """OAuth2/OIDC callback endpoint"""
@@ -361,7 +361,7 @@ async def oauth_callback(
 async def ldap_authenticate(
     provider_id: int,
     credentials: dict,
-    request: Request = None,
+    request: Optional[Request] = None,
     db: Session = Depends(get_db)
 ):
     """Authenticate user against LDAP"""

@@ -13,6 +13,7 @@ try:
     from ..database import Base
 except ImportError:
     # Fallback for development
+    from sqlalchemy.ext.declarative import declarative_base
     Base = declarative_base()
 
 class SSOProvider(Base):
