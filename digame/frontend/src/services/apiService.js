@@ -368,11 +368,57 @@ class ApiService {
 
   // Batch operations helper
   async batchRequest(requests) {
-    const promises = requests.map(({ endpoint, options }) => 
+    const promises = requests.map(({ endpoint, options }) =>
       this.request(endpoint, options).catch(error => ({ error, endpoint }))
     );
 
     return Promise.all(promises);
+  }
+
+  // Admin-specific methods
+  async getUsers(params = {}) {
+    const queryString = new URLSearchParams(params).toString();
+    const endpoint = `/admin/users${queryString ? `?${queryString}` : ''}`;
+    return this.request(endpoint);
+  }
+
+  async performUserAction(userId, action, data = {}) {
+    return this.request(`/admin/users/${userId}/${action}`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getSystemStats() {
+    return this.request('/admin/system/stats');
+  }
+
+  async getAdminApiKeys() {
+    return this.request('/admin/api-keys');
+  }
+
+  async createAdminApiKey(keyData) {
+    return this.request('/admin/api-keys', {
+      method: 'POST',
+      body: JSON.stringify(keyData),
+    });
+  }
+
+  async updateAdminApiKey(keyId, keyData) {
+    return this.request(`/admin/api-keys/${keyId}`, {
+      method: 'PUT',
+      body: JSON.stringify(keyData),
+    });
+  }
+
+  async deleteAdminApiKey(keyId) {
+    return this.request(`/admin/api-keys/${keyId}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async getOnboardingAnalytics() {
+    return this.request('/admin/onboarding/analytics');
   }
 }
 
