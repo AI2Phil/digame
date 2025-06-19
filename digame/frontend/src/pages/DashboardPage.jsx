@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import ProductivityChart from '../components/dashboard/ProductivityChart';
 import ActivityBreakdown from '../components/dashboard/ActivityBreakdown';
+import RecentActivity from '../components/dashboard/RecentActivity'; // Import RecentActivity
 import { EnhancedProductivityMetricCard } from '../components/dashboard/ProductivityMetricCard';
 
 export default function DashboardPage({ isDemoMode, onLogout }) {
@@ -491,46 +492,8 @@ export default function DashboardPage({ isDemoMode, onLogout }) {
           {/* Activity Breakdown */}
           <ActivityBreakdown userId={1} />
           
-          {/* Recent Activities */}
-          <div className="card">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-semibold text-gray-900">
-                Recent Activities
-              </h3>
-              <button className="text-sm text-blue-600 hover:text-blue-700 font-medium">
-                View all
-              </button>
-            </div>
-            <div className="space-y-4">
-              <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                  <span className="text-blue-600 text-sm">💻</span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 truncate">Code Review Session</p>
-                  <p className="text-xs text-gray-600">2 hours ago</p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-                <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
-                  <span className="text-green-600 text-sm">📞</span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 truncate">Team Standup</p>
-                  <p className="text-xs text-gray-600">4 hours ago</p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-                <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
-                  <span className="text-purple-600 text-sm">📚</span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 truncate">Learning Session</p>
-                  <p className="text-xs text-gray-600">Yesterday</p>
-                </div>
-              </div>
-            </div>
-          </div>
+          {/* Recent Activities - Replaced with component */}
+          <RecentActivity userId={1} />
         </div>
 
         {/* Platform Features Overview */}

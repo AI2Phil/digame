@@ -1,41 +1,46 @@
 import React, { useState, useEffect } from 'react';
+import dashboardService from '../../services/dashboardService';
 
-const ActivityBreakdown = ({ userId }) => {
+const ActivityBreakdown = ({ userId = 1 }) => {
   const [activityData, setActivityData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Sample data for demo mode
-  const sampleData = {
-    categories: [
-      { name: 'Development', value: 45, color: '#2563eb', icon: '💻' },
-      { name: 'Meetings', value: 25, color: '#7c3aed', icon: '📞' },
-      { name: 'Learning', value: 15, color: '#16a34a', icon: '📚' },
-      { name: 'Planning', value: 10, color: '#ea580c', icon: '📋' },
-      { name: 'Break', value: 5, color: '#6b7280', icon: '☕' }
-    ],
-    totalHours: 8.5,
-    mostProductiveTime: '9:00 AM - 11:00 AM',
-    efficiency: 87
+  const categoryIcons = {
+    'Development': '💻',
+    'Meetings': '📞',
+    'Learning': '📚',
+    'Planning': '📋',
+    'Documentation': '📝',
+    'Testing': '🧪',
+    'Break': '☕',
+    'default': '📊'
+  };
+
+  const getCategoryIcon = (categoryName) => {
+    return categoryIcons[categoryName] || categoryIcons['default'];
   };
 
   useEffect(() => {
-    // Simulate API call
     const fetchActivityData = async () => {
       try {
         setLoading(true);
-        // In demo mode, use sample data
-        setTimeout(() => {
-          setActivityData(sampleData);
-          setLoading(false);
-        }, 500);
-      } catch (error) {
-        console.error('Error fetching activity data:', error);
-        setActivityData(sampleData);
+        setError(null);
+        const data = await dashboardService.getActivityBreakdown(userId);
+        setActivityData(data);
+      } catch (err) {
+        console.error('Error fetching activity data:', err);
+        setError('Failed to load activity breakdown. Please try again later.');
+        // Optionally, set some fallback data or leave it null
+        // setActivityData({ categories: [], totalHours: 0, mostProductiveTime: 'N/A', efficiency: 0 });
+      } finally {
         setLoading(false);
       }
     };
 
-    fetchActivityData();
+    if (userId) {
+      fetchActivityData();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
@@ -47,21 +52,42 @@ const ActivityBreakdown = ({ userId }) => {
           <span className="text-sm text-gray-500">Loading...</span>
         </div>
         <div className="animate-pulse">
-          <div className="h-4 bg-gray-200 rounded mb-4"></div>
-          <div className="h-4 bg-gray-200 rounded mb-4"></div>
-          <div className="h-4 bg-gray-200 rounded mb-4"></div>
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="mb-4">
+              <div className="h-4 bg-gray-200 rounded w-3/4 mb-1"></div>
+              <div className="h-2 bg-gray-200 rounded"></div>
+            </div>
+          ))}
         </div>
       </div>
     );
   }
 
-  if (!activityData) {
+  if (error) {
     return (
       <div className="card">
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-lg font-semibold text-gray-900">Activity Breakdown</h3>
+        </div>
+        <div className="text-center py-12">
+          <div className="text-4xl mb-4">😟</div>
+          <p className="text-red-600 mb-2 font-medium">Error</p>
+          <p className="text-sm text-gray-500">{error}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!activityData || activityData.categories.length === 0) {
+    return (
+      <div className="card">
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-lg font-semibold text-gray-900">Activity Breakdown</h3>
+        </div>
         <div className="text-center py-12">
           <div className="text-4xl mb-4">📊</div>
-          <p className="text-gray-600 mb-2 font-medium">No Activity Data</p>
-          <p className="text-sm text-gray-500">Start tracking to see your breakdown</p>
+          <p className="text-gray-600 mb-2 font-medium">No Activity Data Available</p>
+          <p className="text-sm text-gray-500">Start tracking your activities to see the breakdown here.</p>
         </div>
       </div>
     );
@@ -82,7 +108,7 @@ const ActivityBreakdown = ({ userId }) => {
           <div key={index} className="activity-item">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center space-x-3">
-                <span className="text-lg">{category.icon}</span>
+                <span className="text-lg">{getCategoryIcon(category.name)}</span>
                 <span className="text-sm font-medium text-gray-900">{category.name}</span>
               </div>
               <span className="text-sm font-semibold text-gray-900">{category.value}%</span>
@@ -104,16 +130,16 @@ const ActivityBreakdown = ({ userId }) => {
       <div className="border-t border-gray-200 pt-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="text-center">
-            <div className="text-2xl font-bold text-gray-900">{totalHours}h</div>
+            <div className="text-2xl font-bold text-gray-900">{totalHours !== undefined ? `${totalHours}h` : 'N/A'}</div>
             <div className="text-xs text-gray-600">Total Active</div>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-bold text-green-600">{efficiency}%</div>
+            <div className="text-2xl font-bold text-green-600">{efficiency !== undefined ? `${efficiency}%` : 'N/A'}</div>
             <div className="text-xs text-gray-600">Efficiency</div>
           </div>
           <div className="text-center">
             <div className="text-xs font-medium text-gray-900">Peak Time</div>
-            <div className="text-xs text-gray-600">{mostProductiveTime}</div>
+            <div className="text-xs text-gray-600">{mostProductiveTime || 'N/A'}</div>
           </div>
         </div>
       </div>
