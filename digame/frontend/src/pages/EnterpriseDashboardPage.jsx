@@ -30,6 +30,7 @@ import {
   Eye,
   RefreshCw
 } from 'lucide-react';
+import { Alert, AlertTitle, AlertDescription } from '../components/ui/Alert';
 
 export default function EnterpriseDashboardPage({ isDemoMode, onLogout }) {
   const navigate = useNavigate();
@@ -361,61 +362,69 @@ export default function EnterpriseDashboardPage({ isDemoMode, onLogout }) {
         <CardContent>
           <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="p-4 border rounded-lg">
-                <div className="flex items-center justify-between mb-2">
-                  <h4 className="font-medium">Task Management AI</h4>
-                  <Badge className="bg-green-100 text-green-800">Active</Badge>
-                </div>
-                <p className="text-sm text-gray-600 mb-3">
-                  AI-powered task suggestions based on process analysis
-                </p>
-                <div className="flex gap-2">
-                  <Button size="sm" variant="outline">Configure</Button>
-                  <Button size="sm" variant="outline">View Analytics</Button>
-                </div>
-              </div>
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="font-medium">Task Management AI</h4>
+                    <Badge className="bg-green-100 text-green-800">Active</Badge>
+                  </div>
+                  <p className="text-sm text-gray-600 mb-3">
+                    AI-powered task suggestions based on process analysis
+                  </p>
+                  <div className="flex gap-2">
+                    <Button size="sm" variant="outline">Configure</Button>
+                    <Button size="sm" variant="outline">View Analytics</Button>
+                  </div>
+                </CardContent>
+              </Card>
 
-              <div className="p-4 border rounded-lg">
-                <div className="flex items-center justify-between mb-2">
-                  <h4 className="font-medium">Writing Assistance</h4>
-                  <Badge className="bg-green-100 text-green-800">Active</Badge>
-                </div>
-                <p className="text-sm text-gray-600 mb-3">
-                  Real-time writing suggestions and improvements
-                </p>
-                <div className="flex gap-2">
-                  <Button size="sm" variant="outline">Configure</Button>
-                  <Button size="sm" variant="outline">View Usage</Button>
-                </div>
-              </div>
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="font-medium">Writing Assistance</h4>
+                    <Badge className="bg-green-100 text-green-800">Active</Badge>
+                  </div>
+                  <p className="text-sm text-gray-600 mb-3">
+                    Real-time writing suggestions and improvements
+                  </p>
+                  <div className="flex gap-2">
+                    <Button size="sm" variant="outline">Configure</Button>
+                    <Button size="sm" variant="outline">View Usage</Button>
+                  </div>
+                </CardContent>
+              </Card>
 
-              <div className="p-4 border rounded-lg">
-                <div className="flex items-center justify-between mb-2">
-                  <h4 className="font-medium">Behavioral Analytics</h4>
-                  <Badge className="bg-blue-100 text-blue-800">Beta</Badge>
-                </div>
-                <p className="text-sm text-gray-600 mb-3">
-                  Advanced pattern recognition and insights
-                </p>
-                <div className="flex gap-2">
-                  <Button size="sm" variant="outline">Enable</Button>
-                  <Button size="sm" variant="outline">Learn More</Button>
-                </div>
-              </div>
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="font-medium">Behavioral Analytics</h4>
+                    <Badge className="bg-blue-100 text-blue-800">Beta</Badge>
+                  </div>
+                  <p className="text-sm text-gray-600 mb-3">
+                    Advanced pattern recognition and insights
+                  </p>
+                  <div className="flex gap-2">
+                    <Button size="sm" variant="outline">Enable</Button>
+                    <Button size="sm" variant="outline">Learn More</Button>
+                  </div>
+                </CardContent>
+              </Card>
 
-              <div className="p-4 border rounded-lg">
-                <div className="flex items-center justify-between mb-2">
-                  <h4 className="font-medium">Workflow Automation</h4>
-                  <Badge className="bg-yellow-100 text-yellow-800">Coming Soon</Badge>
-                </div>
-                <p className="text-sm text-gray-600 mb-3">
-                  Intelligent process automation and optimization
-                </p>
-                <div className="flex gap-2">
-                  <Button size="sm" variant="outline" disabled>Configure</Button>
-                  <Button size="sm" variant="outline">Get Notified</Button>
-                </div>
-              </div>
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="font-medium">Workflow Automation</h4>
+                    <Badge className="bg-yellow-100 text-yellow-800">Coming Soon</Badge>
+                  </div>
+                  <p className="text-sm text-gray-600 mb-3">
+                    Intelligent process automation and optimization
+                  </p>
+                  <div className="flex gap-2">
+                    <Button size="sm" variant="outline" disabled>Configure</Button>
+                    <Button size="sm" variant="outline">Get Notified</Button>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           </div>
         </CardContent>
@@ -492,23 +501,29 @@ export default function EnterpriseDashboardPage({ isDemoMode, onLogout }) {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div className="text-center p-4 border rounded-lg">
-              <Lock className="h-8 w-8 text-green-600 mx-auto mb-2" />
-              <h4 className="font-medium">Data Encryption</h4>
-              <p className="text-sm text-green-600">Active</p>
-            </div>
+            <Card>
+              <CardContent className="text-center p-4">
+                <Lock className="h-8 w-8 text-green-600 mx-auto mb-2" />
+                <h4 className="font-medium">Data Encryption</h4>
+                <p className="text-sm text-green-600">Active</p>
+              </CardContent>
+            </Card>
             
-            <div className="text-center p-4 border rounded-lg">
-              <Key className="h-8 w-8 text-green-600 mx-auto mb-2" />
-              <h4 className="font-medium">SSO Integration</h4>
-              <p className="text-sm text-green-600">Configured</p>
-            </div>
+            <Card>
+              <CardContent className="text-center p-4">
+                <Key className="h-8 w-8 text-green-600 mx-auto mb-2" />
+                <h4 className="font-medium">SSO Integration</h4>
+                <p className="text-sm text-green-600">Configured</p>
+              </CardContent>
+            </Card>
             
-            <div className="text-center p-4 border rounded-lg">
-              <Eye className="h-8 w-8 text-green-600 mx-auto mb-2" />
-              <h4 className="font-medium">Audit Logging</h4>
-              <p className="text-sm text-green-600">Enabled</p>
-            </div>
+            <Card>
+              <CardContent className="text-center p-4">
+                <Eye className="h-8 w-8 text-green-600 mx-auto mb-2" />
+                <h4 className="font-medium">Audit Logging</h4>
+                <p className="text-sm text-green-600">Enabled</p>
+              </CardContent>
+            </Card>
           </div>
         </CardContent>
       </Card>
@@ -519,23 +534,31 @@ export default function EnterpriseDashboardPage({ isDemoMode, onLogout }) {
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            <div className="flex items-center gap-3 p-3 bg-yellow-50 rounded-lg">
-              <AlertTriangle className="h-5 w-5 text-yellow-600" />
-              <div className="flex-1">
-                <p className="text-sm font-medium">Unusual Login Pattern Detected</p>
-                <p className="text-xs text-gray-600">User: admin@acme.com - Multiple locations</p>
-              </div>
-              <span className="text-xs text-gray-500">1 hour ago</span>
-            </div>
+            <Alert variant="warning">
+              <AlertTriangle className="h-5 w-5" /> {/* Icon can be part of Alert by variant */}
+              <AlertDescription className="w-full">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <p className="font-medium">Unusual Login Pattern Detected</p>
+                    <p className="text-xs text-muted-foreground">User: admin@acme.com - Multiple locations</p>
+                  </div>
+                  <span className="text-xs text-muted-foreground">1 hour ago</span>
+                </div>
+              </AlertDescription>
+            </Alert>
             
-            <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg">
-              <CheckCircle className="h-5 w-5 text-green-600" />
-              <div className="flex-1">
-                <p className="text-sm font-medium">Security Scan Completed</p>
-                <p className="text-xs text-gray-600">No vulnerabilities found</p>
-              </div>
-              <span className="text-xs text-gray-500">6 hours ago</span>
-            </div>
+            <Alert variant="success"> {/* Or "info", "default" based on actual Alert component variants */}
+              <CheckCircle className="h-5 w-5" /> {/* Icon can be part of Alert by variant */}
+              <AlertDescription className="w-full">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <p className="font-medium">Security Scan Completed</p>
+                    <p className="text-xs text-muted-foreground">No vulnerabilities found</p>
+                  </div>
+                  <span className="text-xs text-muted-foreground">6 hours ago</span>
+                </div>
+              </AlertDescription>
+            </Alert>
           </div>
         </CardContent>
       </Card>

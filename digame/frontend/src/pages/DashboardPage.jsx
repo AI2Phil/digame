@@ -10,14 +10,16 @@ import { Badge } from '../components/ui/Badge';
 import { Avatar, AvatarFallback } from '../components/ui/Avatar';
 import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle, SheetClose, SheetFooter, SheetDescription } from '../components/ui/Sheet';
 import { Separator } from '../components/ui/Separator'; // For visual separation in the sheet
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '../components/ui/Tooltip';
 
 export default function DashboardPage({ isDemoMode, onLogout }) {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b border-gray-200">
+    <TooltipProvider delayDuration={300}>
+      <div className="min-h-screen bg-gray-50">
+        {/* Header */}
+        <header className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-4">
@@ -193,9 +195,16 @@ export default function DashboardPage({ isDemoMode, onLogout }) {
               <div className="md:hidden">
                 <Sheet>
                   <SheetTrigger asChild>
-                    <Button variant="ghost" size="icon" className="text-gray-600 hover:text-gray-900 p-2">
-                      <span className="text-lg">☰</span>
-                    </Button>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button variant="ghost" size="icon" className="text-gray-600 hover:text-gray-900 p-2">
+                          <span className="text-lg">☰</span>
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom">
+                        <p>Open Navigation</p>
+                      </TooltipContent>
+                    </Tooltip>
                   </SheetTrigger>
                   <SheetContent side="left" className="w-[300px] sm:w-[400px] p-0 flex flex-col">
                     <SheetHeader className="p-6 pb-4">
@@ -702,5 +711,6 @@ export default function DashboardPage({ isDemoMode, onLogout }) {
         </div>
       </main>
     </div>
+    </TooltipProvider>
   );
 }

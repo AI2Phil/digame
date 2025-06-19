@@ -17,6 +17,7 @@ import PerformanceMonitoringSection from '../components/analytics/PerformanceMon
 import UserBehaviorAnalyticsSection from '../components/analytics/UserBehaviorAnalyticsSection';
 import ApiAnalyticsSection from '../components/analytics/ApiAnalyticsSection';
 import MobileAnalyticsSection from '../components/analytics/MobileAnalyticsSection';
+import { Skeleton } from '../components/ui/Skeleton';
 
 const AnalyticsDashboardPage = () => {
   const [activeTab, setActiveTab] = useState('overview');
@@ -79,10 +80,66 @@ const AnalyticsDashboardPage = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p>Loading analytics dashboard...</p>
+      <div className="min-h-screen bg-gray-50 p-6">
+        <div className="max-w-7xl mx-auto">
+          {/* Header (rendered normally) */}
+          <div className="mb-8">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900 mb-2">Analytics Dashboard</h1>
+                <p className="text-gray-600">Real-time performance monitoring and user behavior analytics</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <Select value={timeRange} onValueChange={setTimeRange}>
+                  <SelectTrigger className="px-3 py-2 border border-gray-300 rounded-md text-sm w-[180px]">
+                    <SelectValue placeholder="Select time range" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1h">Last Hour</SelectItem>
+                    <SelectItem value="24h">Last 24 Hours</SelectItem>
+                    <SelectItem value="7d">Last 7 Days</SelectItem>
+                    <SelectItem value="30d">Last 30 Days</SelectItem>
+                    <SelectItem value="90d">Last 90 Days</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button variant="outline" disabled>
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  Refresh
+                </Button>
+                <Button variant="outline" disabled>
+                  <Download className="w-4 h-4 mr-2" />
+                  Export
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          {/* Key Metrics Overview Skeletons */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            {[...Array(4)].map((_, i) => (
+              <Card key={i}>
+                <CardContent className="p-6">
+                  <Skeleton className="h-4 w-3/4 mb-2" /> {/* Title */}
+                  <Skeleton className="h-8 w-1/2 mb-2" /> {/* Value */}
+                  <Skeleton className="h-3 w-1/2" />      {/* Change */}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {/* TabsList Skeleton */}
+          <div className="mb-8">
+            <Skeleton className="h-10 w-full rounded-md" />
+          </div>
+
+          {/* TabsContent Skeleton */}
+          <Card>
+            <CardContent className="p-6 space-y-4">
+              <Skeleton className="h-8 w-1/4 mb-4" /> {/* Section Title */}
+              <Skeleton className="h-32 w-full" />    {/* Placeholder for content/chart */}
+              <Skeleton className="h-20 w-full" />    {/* Another placeholder */}
+            </CardContent>
+          </Card>
         </div>
       </div>
     );
