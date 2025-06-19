@@ -3,11 +3,11 @@ import { Eye, EyeOff, Mail, Lock, Github, Chrome } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
-import { Label } from '../components/ui/Label';
+import { Label as UiLabel } from '../components/ui/Label'; // Alias to avoid conflict
 import { Checkbox } from '../components/ui/Checkbox';
 import { Separator } from '../components/ui/Separator';
 import { Alert, AlertDescription } from '../components/ui/Alert';
-import { Form } from '../components/ui/Form';
+import { Form, FormField, FormInput, FormLabel, FormSubmitButton, FormCheckbox } from '../components/ui/Form';
 import { Badge } from '../components/ui/Badge';
 
 const LoginPage = () => {
@@ -28,8 +28,9 @@ const LoginPage = () => {
     }));
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  // handleSubmit now receives form values from the Form component
+  const handleSubmit = async (values) => {
+    // e.preventDefault() is handled by the Form component internally
     setIsLoading(true);
     setError('');
 
@@ -37,7 +38,8 @@ const LoginPage = () => {
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1500));
       
-      if (formData.email === 'demo@digame.com' && formData.password === 'demo123') {
+      // Use 'values' from the Form component, not the local formData state
+      if (values.email === 'demo@digame.com' && values.password === 'demo123') {
         // Successful login - redirect to dashboard
         window.location.href = '/dashboard';
       } else {
@@ -93,38 +95,47 @@ const LoginPage = () => {
             )}
 
             {/* Login Form */}
-            <Form onSubmit={handleSubmit} className="space-y-4">
+            <Form
+              onSubmit={handleSubmit}
+              className="space-y-4"
+              defaultValues={{ email: formData.email, password: formData.password, rememberMe: formData.rememberMe }}
+              // Optional: Add validation schema if defined in Form.jsx's capabilities
+              // validation={{
+              //   email: { required: 'Email is required', pattern: /^\S+@\S+\.\S+$/, patternMessage: 'Invalid email format' },
+              //   password: { required: 'Password is required', minLength: 6 }
+              // }}
+            >
               {/* Email Field */}
-              <div className="space-y-2">
-                <Label htmlFor="email">Email Address</Label>
+              <FormField name="email" className="space-y-2">
+                <FormLabel htmlFor="email">Email Address</FormLabel>
                 <div className="relative">
                   <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                  <Input
+                  <FormInput
                     id="email"
-                    name="email"
+                    name="email" // FormInput uses name from FormField, but explicit doesn't hurt
                     type="email"
                     placeholder="Enter your email"
-                    value={formData.email}
-                    onChange={handleInputChange}
+                    // value={formData.email} // Handled by Form context
+                    // onChange={handleInputChange} // Handled by Form context
                     className="pl-10"
-                    required
+                    required // HTML5 required, Form component handles its own 'required' via validation prop
                     disabled={isLoading}
                   />
                 </div>
-              </div>
+              </FormField>
 
               {/* Password Field */}
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+              <FormField name="password" className="space-y-2">
+                <FormLabel htmlFor="password">Password</FormLabel>
                 <div className="relative">
                   <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                  <Input
+                  <FormInput
                     id="password"
                     name="password"
                     type={showPassword ? 'text' : 'password'}
                     placeholder="Enter your password"
-                    value={formData.password}
-                    onChange={handleInputChange}
+                    // value={formData.password} // Handled by Form context
+                    // onChange={handleInputChange} // Handled by Form context
                     className="pl-10 pr-10"
                     required
                     disabled={isLoading}
@@ -138,24 +149,22 @@ const LoginPage = () => {
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
-              </div>
+              </FormField>
 
               {/* Remember Me & Forgot Password */}
               <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <Checkbox
+                <FormField name="rememberMe" className="flex items-center space-x-2">
+                  <FormCheckbox
                     id="rememberMe"
                     name="rememberMe"
-                    checked={formData.rememberMe}
-                    onCheckedChange={(checked) => 
-                      setFormData(prev => ({ ...prev, rememberMe: checked }))
-                    }
+                    // checked={formData.rememberMe} // Handled by Form context
+                    // onCheckedChange handled by Form context
+                    label="Remember me"
                     disabled={isLoading}
+                    className="text-sm" // Applied to the label span inside FormCheckbox
                   />
-                  <Label htmlFor="rememberMe" className="text-sm">
-                    Remember me
-                  </Label>
-                </div>
+                  {/* UiLabel is removed as FormCheckbox handles its own label */}
+                </FormField>
                 <Button
                   type="button"
                   variant="link"
@@ -168,13 +177,9 @@ const LoginPage = () => {
               </div>
 
               {/* Sign In Button */}
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={isLoading}
-              >
+              <FormSubmitButton className="w-full" disabled={isLoading}>
                 {isLoading ? 'Signing in...' : 'Sign In'}
-              </Button>
+              </FormSubmitButton>
             </Form>
 
             {/* Separator */}
