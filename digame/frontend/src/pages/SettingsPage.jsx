@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../co
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Label } from '../components/ui/Label';
+import { Textarea } from '../components/ui/Textarea'; // Added Textarea import
 import { Switch } from '../components/ui/Switch';
 import { Select } from '../components/ui/Select';
 import { Slider } from '../components/ui/Slider';
@@ -340,12 +341,12 @@ const SettingsPage = () => {
               {/* Bio */}
               <div className="space-y-2">
                 <Label htmlFor="bio">Bio</Label>
-                <textarea
+                <Textarea
                   id="bio"
-                  className="w-full min-h-[100px] px-3 py-2 border border-input rounded-md"
                   value={settings.profile.bio}
                   onChange={(e) => updateSetting('profile', 'bio', e.target.value)}
                   placeholder="Tell us about yourself..."
+                  className="min-h-[100px]" // Ensure custom styling like min-height is preserved or adapted
                 />
               </div>
             </CardContent>

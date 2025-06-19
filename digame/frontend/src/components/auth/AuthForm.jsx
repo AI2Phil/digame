@@ -3,6 +3,7 @@ import Button from '../ui/Button';
 import Input from '../ui/Input';
 import { Card } from '../ui/Card';
 import { Toast } from '../ui/Toast';
+import Label from '../ui/Label'; // Added Label import
 
 const AuthForm = ({ onLogin, onClose }) => {
   const [isLogin, setIsLogin] = useState(true);
@@ -171,14 +172,11 @@ const AuthForm = ({ onLogin, onClose }) => {
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
         <Card className="w-full max-w-md p-6 relative">
           {/* Close button */}
-          <button
-            onClick={onClose}
-            className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <Button variant="ghost" size="icon" onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
-          </button>
+          </Button>
 
           {/* Header */}
           <div className="text-center mb-6">
@@ -202,9 +200,9 @@ const AuthForm = ({ onLogin, onClose }) => {
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
+              <Label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
                 Username
-              </label>
+              </Label>
               <Input
                 id="username"
                 name="username"
@@ -219,9 +217,9 @@ const AuthForm = ({ onLogin, onClose }) => {
 
             {!isLogin && (
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                <Label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
                   Email Address
-                </label>
+                </Label>
                 <Input
                   id="email"
                   name="email"
@@ -238,9 +236,9 @@ const AuthForm = ({ onLogin, onClose }) => {
             {!isLogin && (
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-1">
+                  <Label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-1">
                     First Name
-                  </label>
+                  </Label>
                   <Input
                     id="firstName"
                     name="firstName"
@@ -252,9 +250,9 @@ const AuthForm = ({ onLogin, onClose }) => {
                   />
                 </div>
                 <div>
-                  <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-1">
+                  <Label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-1">
                     Last Name
-                  </label>
+                  </Label>
                   <Input
                     id="lastName"
                     name="lastName"
@@ -269,9 +267,9 @@ const AuthForm = ({ onLogin, onClose }) => {
             )}
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+              <Label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
                 Password
-              </label>
+              </Label>
               <Input
                 id="password"
                 name="password"
@@ -286,9 +284,9 @@ const AuthForm = ({ onLogin, onClose }) => {
 
             {!isLogin && (
               <div>
-                <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
+                <Label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
                   Confirm Password
-                </label>
+                </Label>
                 <Input
                   id="confirmPassword"
                   name="confirmPassword"
