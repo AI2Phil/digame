@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import * as d3 from 'd3';
-import { Box, Typography, Paper } from '@mui/material';
+import { Card, CardHeader, CardTitle, CardContent } from '../../ui/Card'; // Added
 
 /**
  * Heatmap visualization component for behavioral patterns by hour and day
@@ -187,37 +187,40 @@ const HeatmapChart = ({ data, title = 'Activity Patterns by Hour and Day' }) => 
   
   if (!data || !data.data || data.data.length === 0) {
     return (
-      <Paper elevation={3} sx={{ p: 3, mb: 4 }}>
-        <Typography variant="h6" align="center">
-          No heatmap data available
-        </Typography>
-      </Paper>
+      <Card className="mb-4">
+        <CardHeader>
+          <CardTitle>{title}</CardTitle>
+        </CardHeader>
+        <CardContent className="p-6 text-center">
+          <p className="text-lg text-gray-500">No heatmap data available</p>
+        </CardContent>
+      </Card>
     );
   }
   
   return (
-    <Paper elevation={3} sx={{ p: 3, mb: 4 }}>
-      <Typography variant="h6" gutterBottom>
-        {title}
-      </Typography>
-      <Box sx={{ overflowX: 'auto' }}>
-        <svg ref={svgRef}></svg>
-      </Box>
-      {data.categories && (
-        <Box sx={{ mt: 2 }}>
-          <Typography variant="subtitle1" gutterBottom>
-            Pattern Categories:
-          </Typography>
-          {Object.entries(data.categories).map(([category, info]) => (
-            <Box key={category} sx={{ mb: 1 }}>
-              <Typography variant="body2">
-                <strong>{category}:</strong> Most active on {info.peak_day} at {info.peak_hour}:00
-              </Typography>
-            </Box>
-          ))}
-        </Box>
-      )}
-    </Paper>
+    <Card className="mb-4">
+      <CardHeader>
+        <CardTitle>{title}</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="overflow-x-auto">
+          <svg ref={svgRef}></svg>
+        </div>
+        {data.categories && (
+          <div className="mt-4"> {/* Replaced Box sx={{ mt: 2 }} */}
+            <h4 className="text-md font-semibold mb-2">Pattern Categories:</h4> {/* Replaced Typography subtitle1 */}
+            {Object.entries(data.categories).map(([category, info]) => (
+              <div key={category} className="mb-1"> {/* Replaced Box sx={{ mb: 1 }} */}
+                <p className="text-sm"> {/* Replaced Typography body2 */}
+                  <strong>{category}:</strong> Most active on {info.peak_day} at {info.peak_hour}:00
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 };
 

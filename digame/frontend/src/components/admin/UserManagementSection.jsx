@@ -7,6 +7,8 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
+import { Select } from '../ui/Select'; // Added
+import { Checkbox } from '../ui/Checkbox'; // Added
 import { Table } from '../ui/Table';
 import { Avatar } from '../ui/Avatar';
 import { Badge } from '../ui/Badge';
@@ -133,26 +135,29 @@ const UserManagementSection = ({
               />
             </div>
             <div className="flex gap-2">
-              <select
+              <Select
                 value={filterRole}
-                onChange={(e) => setFilterRole(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-md text-sm"
-              >
-                <option value="all">All Roles</option>
-                <option value="admin">Admin</option>
-                <option value="manager">Manager</option>
-                <option value="user">User</option>
-                <option value="viewer">Viewer</option>
-              </select>
-              <select
+                onChange={setFilterRole}
+                options={[
+                  { value: 'all', label: 'All Roles' },
+                  { value: 'admin', label: 'Admin' },
+                  { value: 'manager', label: 'Manager' },
+                  { value: 'user', label: 'User' },
+                  { value: 'viewer', label: 'Viewer' },
+                ]}
+                className="text-sm min-w-[120px]"
+              />
+              <Select
                 value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-md text-sm"
-              >
-                <option value="all">All Status</option>
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
-              </select>
+                onChange={setFilterStatus}
+                options={[
+                  { value: 'all', label: 'All Statuses' },
+                  { value: 'active', label: 'Active' },
+                  { value: 'inactive', label: 'Inactive' },
+                  // Note: 'pending' was in logic but not options; kept as per original options.
+                ]}
+                className="text-sm min-w-[120px]"
+              />
               <Button variant="outline" size="sm">
                 <Filter className="w-4 h-4" />
               </Button>
@@ -197,11 +202,10 @@ const UserManagementSection = ({
               <thead className="bg-gray-50">
                 <tr>
                   <th className="w-12 p-4">
-                    <input
-                      type="checkbox"
-                      checked={selectedUsers.length === filteredUsers.length && filteredUsers.length > 0}
-                      onChange={handleSelectAll}
-                      className="rounded border-gray-300"
+                    <Checkbox
+                      checked={selectedUsers.length === filteredUsers.length && filteredUsers.length > 0 && filteredUsers.length > 0}
+                      onCheckedChange={handleSelectAll}
+                      aria-label="Select all users"
                     />
                   </th>
                   <th className="text-left p-4 font-medium">User</th>
@@ -216,11 +220,10 @@ const UserManagementSection = ({
                 {filteredUsers.map((user) => (
                   <tr key={user.id} className="border-t hover:bg-gray-50">
                     <td className="p-4">
-                      <input
-                        type="checkbox"
+                      <Checkbox
                         checked={selectedUsers.includes(user.id)}
-                        onChange={() => handleSelectUser(user.id)}
-                        className="rounded border-gray-300"
+                        onCheckedChange={() => handleSelectUser(user.id)}
+                        aria-label={`Select user ${user.username}`}
                       />
                     </td>
                     <td className="p-4">
