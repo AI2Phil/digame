@@ -1,7 +1,7 @@
 """Multi-tenancy tables
 
 Revision ID: 20250523_multi_tenancy
-Revises: 20250523_behavioral_models
+Revises: manual_001
 Create Date: 2025-05-23 22:45:00.000000
 
 """
@@ -11,7 +11,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision = '20250523_multi_tenancy'
-down_revision = '20250523_behavioral_models'
+down_revision = 'manual_001' # Corrected from 20250523_behavioral_models
 branch_labels = None
 depends_on = None
 

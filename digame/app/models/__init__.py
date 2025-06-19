@@ -10,13 +10,24 @@ from .process_notes import ProcessNote
 from .activity import Activity 
 from .activity_features import ActivityEnrichedFeature
 from .anomaly import DetectedAnomaly
-from .task import Task # Added new model
-from .user_setting import UserSetting # Import the new UserSetting model
+from .task import Task
+from .user_setting import UserSetting
+# Import the actual models from the existing workflow_automation.py
+from .workflow_automation import (
+    WorkflowTemplate,
+    WorkflowInstance,
+    WorkflowStepExecution,
+    AutomationRule,
+    WorkflowAction,
+    WorkflowIntegration
+    # Note: The WorkflowLogStatus enum was part of the simpler model definition,
+    # the existing advanced models use strings for status fields.
+)
 
 # Optionally, define __all__ to specify what is exported when 'from .models import *' is used
 __all__ = [
     "User",
-    "Base", # Exporting Base can be useful
+    "Base",
     "Role",
     "Permission",
     "user_roles_table",
@@ -25,6 +36,12 @@ __all__ = [
     "Activity",
     "ActivityEnrichedFeature",
     "DetectedAnomaly",
-    "Task", # Added new model
-    "UserSetting", # Add UserSetting to __all__
+    "Task",
+    "UserSetting",
+    "WorkflowTemplate",
+    "WorkflowInstance",
+    "WorkflowStepExecution",
+    "AutomationRule",
+    "WorkflowAction",
+    "WorkflowIntegration",
 ]
