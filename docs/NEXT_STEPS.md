@@ -83,7 +83,7 @@ This document outlines the comprehensive development roadmap for the Digame Digi
 #### **Dashboard Enhancements & Testing Foundation** ✅ RECENTLY COMPLETED
 - ✅ **Dynamic User Data**: Dashboard components (Metric Cards, Recent Activity, Activity Breakdown, Productivity Chart) now fetch and display data dynamically based on the current user's ID.
 - ✅ **Improved Charting**: `ProductivityChart.jsx` refactored to use `Recharts` library for enhanced bar chart visualization (assumes library installation).
-- ✅ **Testing Initiated**: Introduced sample component tests for `ProductivityMetricCard.jsx` using Jest & React Testing Library, establishing a pattern for future test development.
+- ✅ **Expanded Test Coverage**: Added component tests for `RecentActivity.jsx`, `ActivityBreakdown.jsx`, and `ProductivityChart.jsx`, covering various states and data validation. This builds upon the initial sample for `ProductivityMetricCard.jsx`.
 
 ---
 
@@ -616,7 +616,7 @@ future improvements:
 
 #### 3. Testing & Quality Assurance ⏳ **MEDIUM PRIORITY**
 - **Test Coverage Expansion**:
-  - ✅ Sample component tests (Jest/RTL) introduced for dashboard components, establishing a baseline.
+  - ✅ **Component Test Coverage Progress**: Established a baseline with sample tests for `ProductivityMetricCard.jsx` and further expanded coverage to `RecentActivity.jsx`, `ActivityBreakdown.jsx`, and `ProductivityChart.jsx`, including mocking for external libraries like Recharts.
   - Increase unit test coverage to 90%+ for core modules
   - Add integration tests for all API endpoints
   - Implement end-to-end testing for critical user flows
