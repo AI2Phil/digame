@@ -20,11 +20,47 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Separator } from '../components/ui/Separator';
 import { Progress } from '../components/ui/Progress';
 import { Chart } from '../components/ui/Chart';
+import { Textarea } from '../components/ui/Textarea'; // Added
+import { Switch } from '../components/ui/Switch';   // Added
 
 const TeamsPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
+
+  // State for Invite Dialog
+  const [inviteData, setInviteData] = useState({
+    email: '',
+    role: 'member', // Default role
+    message: ''
+  });
+
+  const handleInviteChange = (e) => {
+    const { name, value } = e.target;
+    setInviteData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleInviteRoleChange = (value) => {
+    setInviteData(prev => ({ ...prev, role: value }));
+  };
+
+
+  // State for Team Settings
+  const [teamSettings, setTeamSettings] = useState({
+    teamName: "Product Development Team",
+    teamDescription: "A collaborative team focused on building innovative productivity solutions.",
+    defaultRole: "member",
+    publicProfile: false,
+    shareAnalytics: true
+  });
+
+  const handleTeamSettingsChange = (key, value) => {
+    setTeamSettings(prev => ({ ...prev, [key]: value }));
+  };
+
+  const handleTeamDescriptionChange = (e) => {
+     setTeamSettings(prev => ({ ...prev, teamDescription: e.target.value }));
+  };
 
   // Sample team data
   const teamMembers = [
@@ -195,25 +231,41 @@ const TeamsPage = () => {
               
               <div className="space-y-4 py-4">
                 <div className="space-y-2">
-                  <Label>Email Address</Label>
-                  <Input placeholder="colleague@company.com" type="email" />
+                  <Label htmlFor="inviteEmail">Email Address</Label>
+                  <Input
+                    id="inviteEmail"
+                    name="email"
+                    placeholder="colleague@company.com"
+                    type="email"
+                    value={inviteData.email}
+                    onChange={handleInviteChange}
+                  />
                 </div>
                 
                 <div className="space-y-2">
-                  <Label>Role</Label>
-                  <Select defaultValue="member">
-                    <option value="admin">Admin</option>
-                    <option value="team_lead">Team Lead</option>
-                    <option value="senior">Senior Member</option>
-                    <option value="member">Member</option>
-                  </Select>
+                  <Label htmlFor="inviteRole">Role</Label>
+                  <Select
+                    id="inviteRole"
+                    value={inviteData.role}
+                    onChange={handleInviteRoleChange}
+                    options={[
+                      { value: 'admin', label: 'Admin' },
+                      { value: 'team_lead', label: 'Team Lead' },
+                      { value: 'senior', label: 'Senior Member' },
+                      { value: 'member', label: 'Member' },
+                    ]}
+                  />
                 </div>
                 
                 <div className="space-y-2">
-                  <Label>Personal Message (Optional)</Label>
-                  <textarea
-                    className="w-full min-h-[80px] px-3 py-2 border border-input rounded-md"
+                  <Label htmlFor="inviteMessage">Personal Message (Optional)</Label>
+                  <Textarea
+                    id="inviteMessage"
+                    name="message"
+                    className="w-full min-h-[80px]"
                     placeholder="Welcome to our team! Looking forward to collaborating with you."
+                    value={inviteData.message}
+                    onChange={handleInviteChange}
                   />
                 </div>
               </div>
@@ -321,22 +373,30 @@ const TeamsPage = () => {
                 </div>
                 
                 <div className="w-full md:w-48">
-                  <Select value={roleFilter} onValueChange={setRoleFilter}>
-                    <option value="all">All Roles</option>
-                    <option value="lead">Team Lead</option>
-                    <option value="senior">Senior</option>
-                    <option value="developer">Developer</option>
-                    <option value="designer">Designer</option>
-                    <option value="manager">Manager</option>
-                  </Select>
+                  <Select
+                    value={roleFilter}
+                    onChange={setRoleFilter}
+                    options={[
+                      { value: 'all', label: 'All Roles' },
+                      { value: 'lead', label: 'Team Lead' },
+                      { value: 'senior', label: 'Senior' }, // Assuming 'senior developer' based on data
+                      { value: 'developer', label: 'Developer' },
+                      { value: 'designer', label: 'Designer' },
+                      { value: 'manager', label: 'Product Manager' }, // Assuming 'product manager'
+                    ]}
+                  />
                 </div>
                 
                 <div className="w-full md:w-48">
-                  <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <option value="all">All Status</option>
-                    <option value="active">Active</option>
-                    <option value="inactive">Inactive</option>
-                  </Select>
+                  <Select
+                    value={statusFilter}
+                    onChange={setStatusFilter}
+                    options={[
+                      { value: 'all', label: 'All Statuses' },
+                      { value: 'active', label: 'Active' },
+                      { value: 'inactive', label: 'Inactive' },
+                    ]}
+                  />
                 </div>
               </div>
             </CardContent>
@@ -566,26 +626,39 @@ const TeamsPage = () => {
             <CardContent className="space-y-6">
               <div className="space-y-4">
                 <div>
-                  <Label className="text-base font-medium">Team Name</Label>
-                  <Input defaultValue="Product Development Team" className="mt-2" />
-                </div>
-                
-                <div>
-                  <Label className="text-base font-medium">Team Description</Label>
-                  <textarea
-                    className="w-full min-h-[80px] px-3 py-2 border border-input rounded-md mt-2"
-                    defaultValue="A collaborative team focused on building innovative productivity solutions."
+                  <Label htmlFor="teamName" className="text-base font-medium">Team Name</Label>
+                  <Input
+                    id="teamName"
+                    value={teamSettings.teamName}
+                    onChange={(e) => handleTeamSettingsChange('teamName', e.target.value)}
+                    className="mt-2"
                   />
                 </div>
                 
                 <div>
-                  <Label className="text-base font-medium">Default Role for New Members</Label>
-                  <Select defaultValue="member" className="mt-2">
-                    <option value="admin">Admin</option>
-                    <option value="team_lead">Team Lead</option>
-                    <option value="senior">Senior Member</option>
-                    <option value="member">Member</option>
-                  </Select>
+                  <Label htmlFor="teamDescription" className="text-base font-medium">Team Description</Label>
+                  <Textarea
+                    id="teamDescription"
+                    className="w-full min-h-[80px] mt-2"
+                    value={teamSettings.teamDescription}
+                    onChange={handleTeamDescriptionChange} // Corrected to use specific handler if Textarea provides event
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="defaultRoleSettings" className="text-base font-medium">Default Role for New Members</Label>
+                  <Select
+                    id="defaultRoleSettings"
+                    value={teamSettings.defaultRole}
+                    onChange={(value) => handleTeamSettingsChange('defaultRole', value)}
+                    className="mt-2"
+                    options={[
+                      { value: 'admin', label: 'Admin' },
+                      { value: 'team_lead', label: 'Team Lead' },
+                      { value: 'senior', label: 'Senior Member' },
+                      { value: 'member', label: 'Member' },
+                    ]}
+                  />
                 </div>
               </div>
 
@@ -596,18 +669,26 @@ const TeamsPage = () => {
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <div>
-                      <Label>Public Team Profile</Label>
+                      <Label htmlFor="publicProfileSwitch">Public Team Profile</Label>
                       <p className="text-sm text-muted-foreground">Allow others to discover your team</p>
                     </div>
-                    <input type="checkbox" className="toggle" />
+                    <Switch
+                      id="publicProfileSwitch"
+                      checked={teamSettings.publicProfile}
+                      onCheckedChange={(isChecked) => handleTeamSettingsChange('publicProfile', isChecked)}
+                    />
                   </div>
                   
                   <div className="flex items-center justify-between">
                     <div>
-                      <Label>Share Team Analytics</Label>
+                      <Label htmlFor="shareAnalyticsSwitch">Share Team Analytics</Label>
                       <p className="text-sm text-muted-foreground">Share productivity insights with team members</p>
                     </div>
-                    <input type="checkbox" className="toggle" defaultChecked />
+                    <Switch
+                      id="shareAnalyticsSwitch"
+                      checked={teamSettings.shareAnalytics}
+                      onCheckedChange={(isChecked) => handleTeamSettingsChange('shareAnalytics', isChecked)}
+                    />
                   </div>
                 </div>
               </div>

@@ -30,6 +30,7 @@ const ReportsPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState('all');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [customReportDateRange, setCustomReportDateRange] = useState('last-30-days'); // State for dialog select
 
   // Sample report data
   const availableReports = [
@@ -205,13 +206,18 @@ const ReportsPage = () => {
                 </div>
                 
                 <div className="space-y-2">
-                  <Label>Date Range</Label>
-                  <Select defaultValue="last-30-days">
-                    <option value="last-7-days">Last 7 days</option>
-                    <option value="last-30-days">Last 30 days</option>
-                    <option value="last-90-days">Last 90 days</option>
-                    <option value="custom">Custom range</option>
-                  </Select>
+                  <Label htmlFor="customReportDateRangeSelect">Date Range</Label>
+                  <Select
+                    id="customReportDateRangeSelect"
+                    value={customReportDateRange}
+                    onChange={setCustomReportDateRange}
+                    options={[
+                      { value: 'last-7-days', label: 'Last 7 days' },
+                      { value: 'last-30-days', label: 'Last 30 days' },
+                      { value: 'last-90-days', label: 'Last 90 days' },
+                      { value: 'custom', label: 'Custom range' },
+                    ]}
+                  />
                 </div>
               </div>
               
@@ -243,15 +249,19 @@ const ReportsPage = () => {
             
             {/* Filter by Type */}
             <div className="w-full md:w-48">
-              <Select value={filterType} onValueChange={setFilterType}>
-                <option value="all">All Types</option>
-                <option value="productivity">Productivity</option>
-                <option value="time">Time Tracking</option>
-                <option value="goals">Goals</option>
-                <option value="team">Team</option>
-                <option value="activity">Activity</option>
-                <option value="insights">Insights</option>
-              </Select>
+              <Select
+                value={filterType}
+                onChange={setFilterType}
+                options={[
+                  { value: 'all', label: 'All Types' },
+                  { value: 'productivity', label: 'Productivity' },
+                  { value: 'time', label: 'Time Tracking' },
+                  { value: 'goals', label: 'Goals' },
+                  { value: 'team', label: 'Team' },
+                  { value: 'activity', label: 'Activity' },
+                  { value: 'insights', label: 'Insights' },
+                ]}
+              />
             </div>
             
             {/* Date Range */}

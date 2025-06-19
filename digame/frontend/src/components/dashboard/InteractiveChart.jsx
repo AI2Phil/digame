@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { Button } from '../../ui/Button'; // Added import
 
 const InteractiveChart = ({ 
   data = [], 
@@ -116,12 +117,14 @@ const InteractiveChart = ({
         <div className="flex items-center space-x-2">
           {interactive && (
             <>
-              <button
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-xs"
                 onClick={resetView}
-                className="text-xs px-2 py-1 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition-colors"
               >
                 Reset View
-              </button>
+              </Button>
               <span className="text-xs text-gray-500">
                 Zoom: {Math.round(zoomLevel * 100)}%
               </span>
@@ -309,18 +312,22 @@ const InteractiveChart = ({
       {interactive && (
         <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-200">
           <div className="flex items-center space-x-4">
-            <button
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-xs" // Attempting to keep text small. Original: bg-blue-100 text-blue-700
               onClick={() => setZoomLevel(prev => Math.min(3, prev * 1.2))}
-              className="text-xs px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors"
             >
               Zoom In
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-xs" // Attempting to keep text small. Original: bg-blue-100 text-blue-700
               onClick={() => setZoomLevel(prev => Math.max(0.5, prev * 0.8))}
-              className="text-xs px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors"
             >
               Zoom Out
-            </button>
+            </Button>
           </div>
           <div className="text-xs text-gray-500">
             Click and drag to pan • Scroll to zoom • Click points for details

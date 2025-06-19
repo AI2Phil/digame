@@ -11,6 +11,8 @@ import { Progress } from '../ui/Progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/Tabs';
 import { Input } from '../ui/Input';
 import { Select } from '../ui/Select';
+import { Switch } from '../ui/Switch'; // Added
+import { Label } from '../ui/Label';   // Added
 
 const SSOManagementDashboard = ({ tenantId, userRole }) => {
   const [activeTab, setActiveTab] = useState('overview');
@@ -520,32 +522,32 @@ const SSOConfigurationSection = ({ config, onUpdateConfig, userRole }) => (
         <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium mb-2">Authentication Settings</label>
+              <Label className="block text-sm font-medium mb-2">Authentication Settings</Label>
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm">Enable SSO</span>
-                  <input 
-                    type="checkbox" 
+                  <Label htmlFor="sso_enabled_switch" className="text-sm">Enable SSO</Label>
+                  <Switch
+                    id="sso_enabled_switch"
                     checked={config.sso_enabled}
-                    onChange={(e) => onUpdateConfig({ sso_enabled: e.target.checked })}
+                    onCheckedChange={(isChecked) => onUpdateConfig({ sso_enabled: isChecked })}
                     disabled={userRole !== 'admin'}
                   />
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm">Enforce SSO (disable local login)</span>
-                  <input 
-                    type="checkbox" 
+                  <Label htmlFor="enforce_sso_switch" className="text-sm">Enforce SSO (disable local login)</Label>
+                  <Switch
+                    id="enforce_sso_switch"
                     checked={config.enforce_sso}
-                    onChange={(e) => onUpdateConfig({ enforce_sso: e.target.checked })}
+                    onCheckedChange={(isChecked) => onUpdateConfig({ enforce_sso: isChecked })}
                     disabled={userRole !== 'admin'}
                   />
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm">Allow local fallback</span>
-                  <input 
-                    type="checkbox" 
+                  <Label htmlFor="allow_local_fallback_switch" className="text-sm">Allow local fallback</Label>
+                  <Switch
+                    id="allow_local_fallback_switch"
                     checked={config.allow_local_fallback}
-                    onChange={(e) => onUpdateConfig({ allow_local_fallback: e.target.checked })}
+                    onCheckedChange={(isChecked) => onUpdateConfig({ allow_local_fallback: isChecked })}
                     disabled={userRole !== 'admin'}
                   />
                 </div>
@@ -553,11 +555,12 @@ const SSOConfigurationSection = ({ config, onUpdateConfig, userRole }) => (
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">Session Settings</label>
+              <Label className="block text-sm font-medium mb-2">Session Settings</Label>
               <div className="space-y-3">
                 <div>
-                  <label className="block text-xs text-gray-600 mb-1">Session timeout (minutes)</label>
+                  <Label htmlFor="session_timeout_input" className="block text-xs text-gray-600 mb-1">Session timeout (minutes)</Label>
                   <Input 
+                    id="session_timeout_input"
                     type="number" 
                     value={config.session_timeout_minutes}
                     onChange={(e) => onUpdateConfig({ session_timeout_minutes: parseInt(e.target.value) })}
@@ -565,8 +568,9 @@ const SSOConfigurationSection = ({ config, onUpdateConfig, userRole }) => (
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-gray-600 mb-1">Max concurrent sessions</label>
+                  <Label htmlFor="max_concurrent_sessions_input" className="block text-xs text-gray-600 mb-1">Max concurrent sessions</Label>
                   <Input 
+                    id="max_concurrent_sessions_input"
                     type="number" 
                     value={config.max_concurrent_sessions}
                     onChange={(e) => onUpdateConfig({ max_concurrent_sessions: parseInt(e.target.value) })}
@@ -578,32 +582,32 @@ const SSOConfigurationSection = ({ config, onUpdateConfig, userRole }) => (
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">User Provisioning</label>
+            <Label className="block text-sm font-medium mb-2">User Provisioning</Label>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="flex items-center justify-between">
-                <span className="text-sm">Auto-create users</span>
-                <input 
-                  type="checkbox" 
+                <Label htmlFor="auto_create_users_switch" className="text-sm">Auto-create users</Label>
+                <Switch
+                  id="auto_create_users_switch"
                   checked={config.auto_create_users}
-                  onChange={(e) => onUpdateConfig({ auto_create_users: e.target.checked })}
+                  onCheckedChange={(isChecked) => onUpdateConfig({ auto_create_users: isChecked })}
                   disabled={userRole !== 'admin'}
                 />
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm">Auto-update attributes</span>
-                <input 
-                  type="checkbox" 
+                <Label htmlFor="auto_update_attributes_switch" className="text-sm">Auto-update attributes</Label>
+                <Switch
+                  id="auto_update_attributes_switch"
                   checked={config.auto_update_user_attributes}
-                  onChange={(e) => onUpdateConfig({ auto_update_user_attributes: e.target.checked })}
+                  onCheckedChange={(isChecked) => onUpdateConfig({ auto_update_user_attributes: isChecked })}
                   disabled={userRole !== 'admin'}
                 />
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm">Require MFA for SSO</span>
-                <input 
-                  type="checkbox" 
+                <Label htmlFor="require_mfa_for_sso_switch" className="text-sm">Require MFA for SSO</Label>
+                <Switch
+                  id="require_mfa_for_sso_switch"
                   checked={config.require_mfa_for_sso}
-                  onChange={(e) => onUpdateConfig({ require_mfa_for_sso: e.target.checked })}
+                  onCheckedChange={(isChecked) => onUpdateConfig({ require_mfa_for_sso: isChecked })}
                   disabled={userRole !== 'admin'}
                 />
               </div>
