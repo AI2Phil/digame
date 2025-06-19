@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
+// Step 1: Assume Recharts is installed and import necessary components.
+// In a real environment: npm install recharts
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
-// Helper function to format date as YYYY-MM-DD
+// Helper function to format date as YYYY-MM-DD (keep existing)
 const formatDate = (date) => {
   const d = new Date(date);
   let month = '' + (d.getMonth() + 1);
@@ -13,13 +16,19 @@ const formatDate = (date) => {
   return [year, month, day].join('-');
 };
 
-const ProductivityChart = ({ userId = 1 }) => {
+const ProductivityChart = ({ userId }) => { // Removed default for userId, expect it from DashboardPage
   const [chartData, setChartData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-  // No longer need processedDataForDisplay, will render chart directly
 
   useEffect(() => {
+    if (!userId) {
+      setIsLoading(false);
+      setError("User ID is required to fetch chart data.");
+      setChartData([]); // Clear data if no userId
+      return;
+    }
+
     const fetchChartData = async () => {
       setIsLoading(true);
       setError(null);
@@ -49,12 +58,17 @@ const ProductivityChart = ({ userId = 1 }) => {
         }, {});
 
         const formattedChartData = Object.entries(countsByDay)
-          .map(([date, count]) => ({ date, count }))
+          .map(([date, count]) => ({
+            date,
+            // Format date for XAxis display (e.g., "MM/DD")
+            displayDate: new Date(date).toLocaleDateString(undefined, { month: 'numeric', day: 'numeric' }),
+            count
+          }))
           .sort((a, b) => new Date(a.date) - new Date(b.date))
-          .slice(-7); // Keep only last 7 days for simplicity
+          .slice(-7); // Keep only last 7 days
 
         setChartData(formattedChartData);
-        console.log("Processed chart data for rendering:", formattedChartData);
+        console.log("Processed chart data for Recharts:", formattedChartData);
 
       } catch (e) {
         console.error("Failed to fetch or process chart data:", e);
@@ -64,55 +78,44 @@ const ProductivityChart = ({ userId = 1 }) => {
       }
     };
 
-    if (userId) {
-      fetchChartData();
-    }
+    fetchChartData();
   }, [userId]);
 
-  // Basic Bar Chart Rendering
-  const renderSimpleBarChart = () => {
-    if (!chartData || chartData.length === 0) return <p className="text-sm text-gray-500">No data for chart.</p>;
-
-    const maxValue = Math.max(...chartData.map(d => d.count), 0);
-    const chartHeight = 150; // px
-    const barWidthPercentage = 80 / chartData.length; // Distribute bars across 80% of width
-
-    return (
-      <div className="flex justify-around items-end h-full w-full pt-4 px-2 border-t border-gray-200">
-        {chartData.map((item, index) => {
-          const barHeight = maxValue > 0 ? (item.count / maxValue) * chartHeight : 0;
-          return (
-            <div
-              key={item.date}
-              className="flex flex-col items-center"
-              style={{ width: \`\${barWidthPercentage}%\` }}
-            >
-              <div className="text-xs text-gray-700 mb-1">{item.count}</div>
-              <div
-                className="bg-blue-500 rounded-t"
-                style={{ height: \`\${barHeight}px\`, minHeight: '1px' }} // minHeight to show 0-value bars
-                title={\`\${item.date}: \${item.count} activities\`}
-              ></div>
-              <div className="text-xs text-gray-500 mt-1 transform rotate-[-45deg] whitespace-nowrap">
-                {item.date.substring(5)} {/* Show MM-DD */}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    );
-  };
 
   return (
-    <div className="bg-white shadow rounded-lg p-4">
+    <div className="bg-white shadow rounded-lg p-4 h-full flex flex-col">
       <h3 className="text-lg font-semibold mb-2 text-gray-700">Productivity Trend (Activities per Day - Last 7 Days)</h3>
-      {isLoading && <p className="text-gray-500">Loading chart data...</p>}
-      {error && <p className="text-sm text-red-500">Could not load chart data. (`${error}`)</p>}
-      {!isLoading && !error && (
-        <div className="h-48 bg-gray-50 rounded p-2 mt-2"> {/* Fixed height container for chart area */}
-          {renderSimpleBarChart()}
-        </div>
-      )}
+      <div className="flex-grow" style={{ minHeight: '200px' }}> {/* Ensure container has height for ResponsiveContainer */}
+        {isLoading && <p className="text-gray-500 text-center pt-10">Loading chart data...</p>}
+        {error && <p className="text-sm text-red-500 text-center pt-10">Could not load chart data. (\`\${error}\`)</p>}
+        {!isLoading && !error && chartData.length === 0 && (
+          <p className="text-sm text-gray-500 text-center pt-10">No activity data to display chart for the last 7 days.</p>
+        )}
+        {!isLoading && !error && chartData.length > 0 && (
+          // Step 2: Use ResponsiveContainer for a responsive chart.
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart
+              data={chartData}
+              margin={{
+                top: 5, right: 20, left: -20, bottom: 5, // Adjusted left margin for YAxis
+              }}
+            >
+              <CartesianGrid strokeDasharray="3 3" vertical={false} />
+              <XAxis dataKey="displayDate" tick={{ fontSize: 12 }} />
+              <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
+              <Tooltip
+                contentStyle={{ backgroundColor: 'white', border: '1px solid #ccc', borderRadius: '4px' }}
+                labelStyle={{ fontWeight: 'bold', color: '#333' }}
+                formatter={(value, name, props) => [\`\${value} activities\`, null]}
+                labelFormatter={(label) => chartData.find(d => d.displayDate === label)?.date} // Show full date in tooltip
+              />
+              <Legend wrapperStyle={{ fontSize: '14px' }} />
+              {/* Step 3: Define the Bar. dataKey="count" should match your data structure. */}
+              <Bar dataKey="count" name="Activities" fill="#3B82F6" radius={[4, 4, 0, 0]} barSize={30} />
+            </BarChart>
+          </ResponsiveContainer>
+        )}
+      </div>
     </div>
   );
 };
