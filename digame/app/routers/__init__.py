@@ -11,7 +11,9 @@ __all__ = [
     "writing_assistance_router",
     "communication_style_router",
     "meeting_insights_router",
+    "email_analysis_router",
 ]
 
 from . import communication_style_router
 from . import meeting_insights_router
+from . import email_analysis_router

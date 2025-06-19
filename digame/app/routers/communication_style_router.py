@@ -6,7 +6,7 @@ from digame.app.services.communication_style_service import CommunicationStyleSe
 from digame.app.schemas import communication_style_schemas as schemas
 
 router = APIRouter(
-    prefix="/ai/communication-style", 
+    prefix="/ai/communication-style",
     tags=["AI - Communication Style Analysis"],
 )
 
@@ -23,7 +23,7 @@ def analyze_communication_style_endpoint(
     """
     try:
         analysis_result = service.get_communication_style_analysis(
-            current_user=current_user, 
+            current_user=current_user,
             text_input=request_data.text_input
         )
         return schemas.CommunicationStyleAnalysisResponse(
@@ -32,7 +32,7 @@ def analyze_communication_style_endpoint(
         )
     except HTTPException as e:
         # Re-raise HTTPExceptions directly from the service
-        raise e 
+        raise e
     except Exception as e:
         # Log the error e in a real application
         raise HTTPException(

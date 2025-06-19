@@ -37,11 +37,11 @@ def test_analyze_endpoint_success(client, mock_meeting_insights_service, mock_cu
         "text_length": 150
     }
     mock_meeting_insights_service.get_meeting_analysis = MagicMock(return_value=expected_analysis_result)
-    
+
     # Import dependency provider functions for overriding
     from digame.app.auth.auth_dependencies import get_current_active_user
     from digame.app.services.meeting_insights_service import get_meeting_insights_service
-    
+
     app.dependency_overrides[get_current_active_user] = lambda: mock_current_active_user_for_insights
     app.dependency_overrides[get_meeting_insights_service] = lambda: mock_meeting_insights_service
 
@@ -71,7 +71,7 @@ def test_analyze_endpoint_service_raises_http_exception(client, mock_meeting_ins
     from digame.app.services.meeting_insights_service import get_meeting_insights_service
     app.dependency_overrides[get_current_active_user] = lambda: mock_current_active_user_for_insights
     app.dependency_overrides[get_meeting_insights_service] = lambda: mock_meeting_insights_service
-    
+
     request_payload = {"meeting_text": "A sample meeting text for testing HTTP exception."}
 
     # Action

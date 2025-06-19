@@ -37,11 +37,11 @@ def test_create_tenant_writing_assistance_flag_professional_tier(tenant_service:
     # We need to ensure our mock_db_session handles this.
     # `mock_db_session.add` and `commit` are already part of MagicMock.
     # `mock_db_session.refresh` needs to be available if called.
-    
+
     # To simulate the tenant object being populated after db.add and db.commit,
     # we can have the service return a TenantModel instance.
     # The actual service creates a Tenant instance itself. We just need to check its properties.
-    
+
     # The _generate_slug part uses db.query. Ensure it's mocked if it interferes.
     # mock_db_session.query(TenantModel).filter().first.return_value = None # Handled in fixture for uniqueness
 
@@ -58,7 +58,7 @@ def test_create_tenant_writing_assistance_flag_professional_tier(tenant_service:
     assert created_tenant.subscription_tier == subscription_tier
     assert isinstance(created_tenant.features, dict)
     assert created_tenant.features.get("writing_assistance") is True
-    
+
     # Verify DB interactions (optional, but good for completeness)
     mock_db_session.add.assert_called_once_with(created_tenant)
     mock_db_session.commit.assert_called_once()
@@ -119,10 +119,10 @@ def test_update_tenant_tier_updates_writing_assistance_flag(tenant_service: Tena
         created_at=datetime.utcnow(),
         updated_at=datetime.utcnow()
     )
-    
+
     # Mock get_tenant_by_id to return this tenant
     mock_db_session.query(TenantModel).filter(TenantModel.id == initial_tenant_id).first.return_value = mock_initial_tenant
-    
+
     # Make tenant_service use this db session (already done by fixture)
 
     # Action 1: Update to "professional"
@@ -290,7 +290,7 @@ def test_update_tenant_tier_updates_communication_style_flag(tenant_service: Ten
         created_at=datetime.utcnow(), updated_at=datetime.utcnow()
     )
     mock_db_session.query(TenantModel).filter(TenantModel.id == initial_tenant_id).first.return_value = mock_initial_tenant_comm
-    
+
     # Action 1: Update to "enterprise"
     updates_to_ent = {"subscription_tier": "enterprise"}
     updated_tenant_ent = tenant_service.update_tenant(tenant_id=initial_tenant_id, updates=updates_to_ent, user_id=None)
@@ -406,14 +406,14 @@ def test_update_tenant_tier_updates_meeting_insights_flag(tenant_service: Tenant
         created_at=datetime.utcnow(), updated_at=datetime.utcnow()
     )
     mock_db_session.query(TenantModel).filter(TenantModel.id == initial_tenant_id).first.return_value = mock_initial_tenant_meeting
-    
+
     # Action 1: Update to "enterprise"
     updates_to_ent_meeting = {"subscription_tier": "enterprise"}
     updated_tenant_ent_meeting = tenant_service.update_tenant(tenant_id=initial_tenant_id, updates=updates_to_ent_meeting, user_id=None)
     # Assertion 1
     assert updated_tenant_ent_meeting.subscription_tier == "enterprise"
     assert updated_tenant_ent_meeting.features.get("meeting_insights") is True
-    assert updated_tenant_ent_meeting.features.get("writing_assistance") is True 
+    assert updated_tenant_ent_meeting.features.get("writing_assistance") is True
     assert updated_tenant_ent_meeting.features.get("communication_style_analysis") is True
     assert updated_tenant_ent_meeting.features.get("other_data") == "persists"
 
@@ -461,6 +461,97 @@ def test_update_tenant_direct_feature_override_meeting_insights(tenant_service: 
     assert updated_tenant_override_meeting.features.get("writing_assistance") is False # Should remain False (based on 'basic' tier)
     assert updated_tenant_override_meeting.features.get("communication_style_analysis") is False # Should remain False (based on 'basic' tier)
     assert updated_tenant_override_meeting.features.get("other_data") == "updated_test" # Explicitly updated
+
+
+# --- Tests for "email_pattern_analysis" flag ---
+
+def test_create_tenant_email_pattern_analysis_flag_professional_tier(tenant_service: TenantService, mock_db_session: MagicMock):
+    # Arrange
+    subscription_tier = "professional"
+    # Action
+    created_tenant = tenant_service.create_tenant(
+        name="EmailPro Tenant", admin_email="emailpro@example.com", admin_name="EmailPro Admin", subscription_tier=subscription_tier
+    )
+    # Assertion
+    assert created_tenant.features.get("email_pattern_analysis") is True
+    assert created_tenant.features.get("meeting_insights") is True # Check other flags
+
+def test_create_tenant_email_pattern_analysis_flag_enterprise_tier(tenant_service: TenantService, mock_db_session: MagicMock):
+    # Arrange
+    subscription_tier = "enterprise"
+    # Action
+    created_tenant = tenant_service.create_tenant(
+        name="EmailEnt Tenant", admin_email="emailent@example.com", admin_name="EmailEnt Admin", subscription_tier=subscription_tier
+    )
+    # Assertion
+    assert created_tenant.features.get("email_pattern_analysis") is True
+
+def test_create_tenant_email_pattern_analysis_flag_basic_tier(tenant_service: TenantService, mock_db_session: MagicMock):
+    # Arrange
+    subscription_tier = "basic"
+    # Action
+    created_tenant = tenant_service.create_tenant(
+        name="EmailBasic Tenant", admin_email="emailbasic@example.com", admin_name="EmailBasic Admin", subscription_tier=subscription_tier
+    )
+    # Assertion
+    assert created_tenant.features.get("email_pattern_analysis") is False
+
+def test_update_tenant_tier_updates_email_pattern_analysis_flag(tenant_service: TenantService, mock_db_session: MagicMock):
+    # Arrange
+    initial_tenant_id = 10 # New ID
+    initial_tier = "basic"
+    mock_initial_tenant_email = TenantModel(
+        id=initial_tenant_id, name="EmailUpdatable Tenant", subscription_tier=initial_tier,
+        features={"email_pattern_analysis": False, "meeting_insights": False, "other_flag": "value"},
+        admin_email="emailupdate@example.com", admin_name="EmailUpdate Admin",
+        created_at=datetime.utcnow(), updated_at=datetime.utcnow()
+    )
+    mock_db_session.query(TenantModel).filter(TenantModel.id == initial_tenant_id).first.return_value = mock_initial_tenant_email
+
+    # Action 1: Update to "professional"
+    updates_to_pro_email = {"subscription_tier": "professional"}
+    updated_tenant_pro_email = tenant_service.update_tenant(tenant_id=initial_tenant_id, updates=updates_to_pro_email, user_id=None)
+    # Assertion 1
+    assert updated_tenant_pro_email.subscription_tier == "professional"
+    assert updated_tenant_pro_email.features.get("email_pattern_analysis") is True
+    assert updated_tenant_pro_email.features.get("meeting_insights") is True # Also updated
+    assert updated_tenant_pro_email.features.get("other_flag") == "value"
+
+    mock_db_session.commit.reset_mock()
+    mock_db_session.refresh.reset_mock()
+
+    # Action 2: Update back to "basic"
+    updates_to_basic_email = {"subscription_tier": "basic"}
+    updated_tenant_basic_email = tenant_service.update_tenant(tenant_id=initial_tenant_id, updates=updates_to_basic_email, user_id=None)
+    # Assertion 2
+    assert updated_tenant_basic_email.subscription_tier == "basic"
+    assert updated_tenant_basic_email.features.get("email_pattern_analysis") is False
+    assert updated_tenant_basic_email.features.get("meeting_insights") is False # Also updated
+    assert updated_tenant_basic_email.features.get("other_flag") == "value"
+
+def test_update_tenant_direct_feature_override_email_pattern_analysis(tenant_service: TenantService, mock_db_session: MagicMock):
+    # Arrange
+    initial_tenant_id = 11 # New ID
+    initial_tier = "professional" # email_pattern_analysis would be True by tier
+    mock_initial_tenant_override_email = TenantModel(
+        id=initial_tenant_id, name="EmailOverride Tenant", subscription_tier=initial_tier,
+        features={"email_pattern_analysis": True, "meeting_insights": True, "other_data": "original"},
+        admin_email="emailoverride@example.com", admin_name="EmailOverride Admin",
+        created_at=datetime.utcnow(), updated_at=datetime.utcnow()
+    )
+    mock_db_session.query(TenantModel).filter(TenantModel.id == initial_tenant_id).first.return_value = mock_initial_tenant_override_email
+
+    # Action: Update features directly to set email_pattern_analysis to False, against tier logic.
+    # Ensure meeting_insights (also tier-dependent) remains True if not specified in this direct update.
+    updates_email_override = {"features": {"email_pattern_analysis": False, "other_data": "changed_value"}}
+    updated_tenant_override_email = tenant_service.update_tenant(tenant_id=initial_tenant_id, updates=updates_email_override, user_id=None)
+
+    # Assertion
+    assert updated_tenant_override_email.subscription_tier == initial_tier # Tier didn't change
+    assert updated_tenant_override_email.features.get("email_pattern_analysis") is False # Overridden
+    # meeting_insights was not in updates["features"], so it should be re-evaluated based on current_tier ("professional")
+    assert updated_tenant_override_email.features.get("meeting_insights") is True # Should remain True (based on 'professional' tier)
+    assert updated_tenant_override_email.features.get("other_data") == "changed_value" # Explicitly updated
 
 
 # Ensure that the TenantService is initialized with a mock DB session.

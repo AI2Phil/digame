@@ -25,8 +25,10 @@ __all__ = [
     "writing_assistance_schemas",
     "communication_style_schemas",
     "meeting_insights_schemas",
+    "email_analysis_schemas",
 ]
 
 from . import writing_assistance_schemas
 from . import communication_style_schemas
 from . import meeting_insights_schemas
+from . import email_analysis_schemas

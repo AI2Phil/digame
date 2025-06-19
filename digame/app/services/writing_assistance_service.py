@@ -55,7 +55,7 @@ class WritingAssistanceService:
         # Assuming the first tenant in the list is the active one for simplicity.
         # In a real system, there'd be a concept of an "active" tenant context.
         # Also assuming TenantUser model has a 'tenant' relationship to the Tenant model
-        user_tenant_link = current_user.tenants[0] 
+        user_tenant_link = current_user.tenants[0]
         if not hasattr(user_tenant_link, 'tenant'):
             # This means the TenantUser object doesn't have the 'tenant' attribute as expected.
             # This could be due to missing relationship in TenantUser model or it wasn't loaded.
@@ -66,7 +66,7 @@ class WritingAssistanceService:
                 tenant = None # Cannot find tenant
         else:
             tenant = user_tenant_link.tenant # This is the Tenant object
-        
+
         if not tenant:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Tenant information not found for user.")
 
@@ -82,7 +82,7 @@ class WritingAssistanceService:
 
         if not tenant_features.get("writing_assistance"):
             raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN, 
+                status_code=status.HTTP_403_FORBIDDEN,
                 detail="Writing Assistance feature is not enabled for your tenant. Please contact your tenant administrator or check your subscription."
             )
 
@@ -90,7 +90,7 @@ class WritingAssistanceService:
         user_settings = user_setting_crud.get_user_setting(self.db, user_id=current_user.id)
         if not user_settings or not user_settings.api_keys:
             raise HTTPException(
-                status_code=status.HTTP_402_PAYMENT_REQUIRED, 
+                status_code=status.HTTP_402_PAYMENT_REQUIRED,
                 detail="API key for Writing Assistance not found in your settings. Please add it to use this feature."
             )
 
@@ -106,7 +106,7 @@ class WritingAssistanceService:
         writing_service_key = api_keys_dict.get("writing_service_key")
         if not writing_service_key:
             raise HTTPException(
-                status_code=status.HTTP_402_PAYMENT_REQUIRED, 
+                status_code=status.HTTP_402_PAYMENT_REQUIRED,
                 detail="The 'writing_service_key' is missing from your API key settings. Please add it."
             )
 
@@ -145,7 +145,7 @@ def get_writing_assistance_service(db: Session = Depends()):
     # So, the parameter `db: Session = Depends(get_db)` is the standard pattern.
     # The issue is `Depends()` with no argument. It should be `Depends(actual_get_db_function)`.
     # Let's assume `get_db` is the actual dependency.
-    
+
     # Corrected based on typical FastAPI patterns:
     # The router will use `service: WritingAssistanceService = Depends(get_writing_assistance_service)`
     # and `get_writing_assistance_service` will in turn depend on `get_db`.
@@ -153,28 +153,28 @@ def get_writing_assistance_service(db: Session = Depends()):
     # The service itself is then instantiated with that db session.
     # The previous placeholder `db_instance = next(actual_get_db())` was a bit confused.
     # FastAPI handles the `Depends(get_db)` part.
-    
+
     # The function signature should be:
     # def get_writing_assistance_service(db: Session = Depends(get_db)):
     # return WritingAssistanceService(db)
     # This means the `get_db` callable must be imported.
-    
+
     # Assuming get_db is defined in digame.app.db
     # from digame.app.db import get_db as actual_get_db_for_injection
     # This function will be: service: MyService = Depends(get_my_service)
     # get_my_service(db: Session = Depends(get_db_dependency))
     # return MyService(db)
-    
+
     # Re-simplifying to what's usually expected by FastAPI:
     # The `db: Session = Depends(get_db)` in the router will provide the session.
     # This factory function is to construct the service with that session.
     # So, the signature `db: Session = Depends(get_db)` is for the function *itself*
     # if it were directly used as a dependency in path operations.
     # If this function is a helper to construct the service, it just needs db.
-    
+
     # Let's stick to the pattern where this function is the dependency resolver for the service.
     # It needs to get a DB session from FastAPI's dependency system.
-    
+
     # Final structure for the factory:
     # from digame.app.db import get_db # This should be the actual get_db dependency
     # def get_writing_assistance_service(db: Session = Depends(get_db)):
@@ -189,14 +189,14 @@ def get_writing_assistance_service(db: Session = Depends()):
     # The instance of the service is then created using this db.
     # This function is called by FastAPI, which resolves its dependencies.
     # This is the standard way: the factory function declares its own dependencies.
-    
+
     # This will be called as `Depends(get_writing_assistance_service)`
     # FastAPI will see `db: Session = Depends(get_db_dependency)` and provide it.
-    
+
     # The function signature should be:
     # def get_writing_assistance_service(db: Session = Depends(actual_get_db_callable)):
     #    return WritingAssistanceService(db)
-    
+
     # The original stub was:
     # def get_writing_assistance_service(db: Session = Depends(get_db)) -> WritingAssistanceService:
     #   from digame.app.db import get_db as actual_get_db # Ensure correct import for injector
@@ -204,7 +204,7 @@ def get_writing_assistance_service(db: Session = Depends()):
     #   return WritingAssistanceService(db_instance)
     # This is slightly redundant. `Depends(get_db)` means `get_db` is called by FastAPI and its result passed as `db`.
     # So, `return WritingAssistanceService(db)` is sufficient.
-    
+
     from digame.app.db import get_db # Assuming this is the dependency provider
     # The `db` parameter in this function's signature will be filled by FastAPI
     # by calling `get_db()` and passing its result.

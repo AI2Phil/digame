@@ -16,7 +16,7 @@ class MockExternalMeetingInsightsClient:
     def analyze_meeting_text(self, text: str) -> dict:
         if not text:
             return {"error": "Input meeting text cannot be empty."}
-        
+
         summary = f"This is a mock summary of the meeting: {text[:100]}..."
         key_points = [
             f"Mock key point 1 from text: {text[10:50]}",
@@ -32,15 +32,15 @@ class MockExternalMeetingInsightsClient:
 
         if self.api_key == "valid_meeting_key_premium":
             return {
-                "summary": summary, 
-                "key_points": key_points, 
+                "summary": summary,
+                "key_points": key_points,
                 "action_items": action_items,
                 "analysis_level": "premium",
                 "text_length": len(text)
             }
         elif self.api_key == "valid_meeting_key_standard":
             return {
-                "summary": summary, 
+                "summary": summary,
                 "key_points": key_points[:1], # Fewer key points for standard
                 "action_items": action_items[:1], # Fewer action items
                 "analysis_level": "standard",
@@ -48,7 +48,7 @@ class MockExternalMeetingInsightsClient:
             }
         elif self.api_key == "invalid_meeting_key":
             raise ValueError("Invalid API key provided to external meeting insights service.")
-        
+
         return {
             "summary": f"Basic mock summary of: {text[:50]}...",
             "key_points": [key_points[0]],
@@ -69,13 +69,13 @@ class MeetingInsightsService:
         # Proper error handling for these relationships would be important in a real app.
         if not hasattr(current_user, 'tenants') or not current_user.tenants:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User not associated with any tenant.")
-        
-        user_tenant_link = current_user.tenants[0] 
+
+        user_tenant_link = current_user.tenants[0]
         if not hasattr(user_tenant_link, 'tenant'):
              raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Tenant linkage error for user.")
-            
-        tenant = user_tenant_link.tenant 
-        
+
+        tenant = user_tenant_link.tenant
+
         if not tenant:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Tenant information not found for user.")
 
@@ -93,7 +93,7 @@ class MeetingInsightsService:
 
         if not tenant_features.get("meeting_insights"):
             raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN, 
+                status_code=status.HTTP_403_FORBIDDEN,
                 detail="Meeting Insights feature is not enabled for your tenant."
             )
 
@@ -123,7 +123,7 @@ class MeetingInsightsService:
         try:
             external_service_client = MockExternalMeetingInsightsClient(api_key=insights_service_key)
             analysis_result = external_service_client.analyze_meeting_text(text=meeting_text)
-            
+
             if analysis_result.get("error"): # Handle errors from the mock client's response
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
@@ -136,7 +136,7 @@ class MeetingInsightsService:
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Error with Meeting Insights service API key: {str(e)}"
             )
-        except Exception as e: 
+        except Exception as e:
             # Log the exception e (e.g., logger.error(f"Unexpected error: {e}"))
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

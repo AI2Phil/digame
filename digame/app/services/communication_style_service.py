@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from fastapi import HTTPException, status, Depends
 
 # Assuming standard locations for these modules
-from digame.app.crud import user_setting_crud 
+from digame.app.crud import user_setting_crud
 from digame.app.models.user import User as UserModel
 from digame.app.db import get_db # For the dependency injector
 
@@ -19,7 +19,7 @@ class MockExternalCommunicationStyleClient:
         # For now, it's a mock response.
         if not text:
             return {"error": "Input text cannot be empty."}
-        
+
         # Example mock analysis based on keywords or key
         if "please" in text.lower() or "could you" in text.lower():
             style = "polite"
@@ -36,7 +36,7 @@ class MockExternalCommunicationStyleClient:
             return {"style": style, "confidence": 0.75, "model_type": "standard", "raw_text_length": len(text)}
         elif self.api_key == "invalid_comm_key":
             raise ValueError("Invalid API key provided to external communication style service.")
-        
+
         return {"style": style, "confidence": 0.6, "model_type": "basic_mock", "raw_text_length": len(text)}
 
 class CommunicationStyleService:
@@ -52,14 +52,14 @@ class CommunicationStyleService:
         # Assuming current_user.tenants[0].tenant relationship exists as established in previous feature.
         if not hasattr(current_user, 'tenants') or not current_user.tenants:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User not associated with any tenant.")
-        
-        user_tenant_link = current_user.tenants[0] 
+
+        user_tenant_link = current_user.tenants[0]
         if not hasattr(user_tenant_link, 'tenant'):
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Tenant linkage error for user.")
-            
-        tenant = user_tenant_link.tenant 
-        
-        if not tenant: 
+
+        tenant = user_tenant_link.tenant
+
+        if not tenant:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Tenant information not found for user.")
 
         # 2. Check if the "communication_style_analysis" feature is enabled for the tenant.
@@ -68,7 +68,7 @@ class CommunicationStyleService:
                 tenant_features = json.loads(tenant.features or '{}')
             elif isinstance(tenant.features, dict):
                 tenant_features = tenant.features
-            else: 
+            else:
                 tenant_features = {}
         except json.JSONDecodeError:
             # Log error: Tenant features JSON is corrupted for tenant.id
@@ -76,7 +76,7 @@ class CommunicationStyleService:
 
         if not tenant_features.get("communication_style_analysis"):
             raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN, 
+                status_code=status.HTTP_403_FORBIDDEN,
                 detail="Communication Style Analysis feature is not enabled for your tenant."
             )
 
@@ -109,7 +109,7 @@ class CommunicationStyleService:
         try:
             external_service_client = MockExternalCommunicationStyleClient(api_key=communication_service_key)
             analysis_result = external_service_client.analyze_style(text=text_input)
-            
+
             if analysis_result.get("error"): # Handle errors from the mock client's response
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
@@ -122,7 +122,7 @@ class CommunicationStyleService:
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Error with Communication Style service API key: {str(e)}"
             )
-        except Exception as e: 
+        except Exception as e:
             # Log the exception e (e.g., logger.error(f"Unexpected error: {e}"))
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

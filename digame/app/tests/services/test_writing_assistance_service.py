@@ -33,8 +33,8 @@ def mock_user_model():
 @pytest.fixture
 def mock_tenant_model():
     tenant = TenantModel(
-        id=1, 
-        name="Test Tenant", 
+        id=1,
+        name="Test Tenant",
         admin_email="admin@tenant.com",
         features={"writing_assistance": True} # Default to enabled
     )
@@ -74,7 +74,7 @@ def test_get_suggestion_success(mock_db_session, mock_user_model, mock_tenant_mo
     with patch('digame.app.crud.user_crud.get_user', return_value=mock_user_model) as mock_get_user, \
          patch('digame.app.crud.user_setting_crud.get_user_setting', return_value=mock_user_setting_model) as mock_get_user_setting, \
          patch('digame.app.crud.tenant_crud.get_tenant_by_id', return_value=mock_tenant_model) as mock_get_tenant_by_id:
-        
+
         # Action
         suggestion = service.get_writing_suggestion(current_user=mock_user_model, text_input="Hello world")
 
@@ -101,7 +101,7 @@ def test_get_suggestion_feature_disabled(mock_db_session, mock_user_model, mock_
         # Action & Assertion
         with pytest.raises(HTTPException) as exc_info:
             service.get_writing_suggestion(current_user=mock_user_model, text_input="Test")
-        
+
         assert exc_info.value.status_code == 403
         assert "feature is not enabled" in exc_info.value.detail.lower()
 
@@ -120,7 +120,7 @@ def test_get_suggestion_no_user_settings(mock_db_session, mock_user_model, mock_
         # Action & Assertion
         with pytest.raises(HTTPException) as exc_info:
             service.get_writing_suggestion(current_user=mock_user_model, text_input="Test")
-        
+
         assert exc_info.value.status_code == 402 # As per service logic
         assert "api key for writing assistance not found" in exc_info.value.detail.lower()
         mock_get_user_setting.assert_called_once_with(mock_db_session, user_id=mock_user_model.id)
@@ -141,7 +141,7 @@ def test_get_suggestion_no_api_key_in_settings(mock_db_session, mock_user_model,
         # Action & Assertion
         with pytest.raises(HTTPException) as exc_info:
             service.get_writing_suggestion(current_user=mock_user_model, text_input="Test")
-        
+
         assert exc_info.value.status_code == 402
         assert "'writing_service_key' is missing" in exc_info.value.detail.lower()
 
@@ -161,7 +161,7 @@ def test_get_suggestion_empty_api_key_in_settings(mock_db_session, mock_user_mod
         # Action & Assertion
         with pytest.raises(HTTPException) as exc_info:
             service.get_writing_suggestion(current_user=mock_user_model, text_input="Test")
-        
+
         assert exc_info.value.status_code == 400 # Mock client raises ValueError for empty key
         assert "api key must be provided" in exc_info.value.detail.lower()
 
@@ -181,7 +181,7 @@ def test_get_suggestion_invalid_api_key_external_service_error(mock_db_session, 
         # Action & Assertion
         with pytest.raises(HTTPException) as exc_info:
             service.get_writing_suggestion(current_user=mock_user_model, text_input="Test")
-        
+
         assert exc_info.value.status_code == 400
         assert "invalid api key provided" in exc_info.value.detail.lower()
 
@@ -194,11 +194,11 @@ def test_get_suggestion_user_not_in_tenant(mock_db_session, mock_user_model):
 
     # We need to mock get_user to return this user whose `tenants` list is empty.
     with patch('digame.app.crud.user_crud.get_user', return_value=mock_user_model) as mock_get_user_db:
-        
+
         # Action & Assertion
         with pytest.raises(HTTPException) as exc_info:
             service.get_writing_suggestion(current_user=mock_user_model, text_input="Test")
-        
+
         assert exc_info.value.status_code == 403
         assert "user not associated with any tenant" in exc_info.value.detail.lower()
         # The service tries to reload the user if current_user.tenants is empty initially.
@@ -215,7 +215,7 @@ def test_get_suggestion_tenant_features_is_string(mock_db_session, mock_user_mod
     with patch('digame.app.crud.user_crud.get_user', return_value=mock_user_model), \
          patch('digame.app.crud.user_setting_crud.get_user_setting', return_value=mock_user_setting_model), \
          patch('digame.app.crud.tenant_crud.get_tenant_by_id', return_value=mock_tenant_model):
-        
+
         suggestion = service.get_writing_suggestion(current_user=mock_user_model, text_input="Hello JSON features")
         assert suggestion == "Premium AI suggestion for: 'Hello JSON features'"
 
@@ -232,7 +232,7 @@ def test_get_suggestion_tenant_features_malformed_json_string(mock_db_session, m
 
         with pytest.raises(HTTPException) as exc_info:
             service.get_writing_suggestion(current_user=mock_user_model, text_input="Test")
-        
+
         assert exc_info.value.status_code == 500
         assert "error parsing tenant features" in exc_info.value.detail.lower()
 
@@ -251,17 +251,17 @@ def test_get_suggestion_api_keys_malformed_json_string(mock_db_session, mock_use
 
         with pytest.raises(HTTPException) as exc_info:
             service.get_writing_suggestion(current_user=mock_user_model, text_input="Test")
-        
+
         assert exc_info.value.status_code == 500
         assert "error parsing your api key settings" in exc_info.value.detail.lower()
 
 def test_get_suggestion_user_tenant_link_no_tenant_attribute(mock_db_session, mock_user_model, mock_tenant_model, mock_user_setting_model):
     # Scenario where user_tenant_link.tenant is None, but user_tenant_link.tenant_id exists
     # This tests the fallback to tenant_crud.get_tenant_by_id
-    
+
     # Arrange
     mock_user_no_direct_tenant = UserModel(id=2, email="test2@example.com", full_name="Test User 2", tenants=[])
-    
+
     # Create a mock TenantUser link that does *not* have the .tenant attribute directly populated
     # but *does* have tenant_id.
     mock_link_no_direct_tenant_obj = MagicMock(spec=TenantUserModel)
@@ -270,7 +270,7 @@ def test_get_suggestion_user_tenant_link_no_tenant_attribute(mock_db_session, mo
     del mock_link_no_direct_tenant_obj.tenant # Ensure .tenant attribute is missing to trigger fallback
 
     mock_user_no_direct_tenant.tenants.append(mock_link_no_direct_tenant_obj)
-    
+
     mock_tenant_model.features = {"writing_assistance": True}
 
     service = WritingAssistanceService(db=mock_db_session)
@@ -278,7 +278,7 @@ def test_get_suggestion_user_tenant_link_no_tenant_attribute(mock_db_session, mo
     with patch('digame.app.crud.user_crud.get_user', return_value=mock_user_no_direct_tenant) as mock_get_user, \
          patch('digame.app.crud.user_setting_crud.get_user_setting', return_value=mock_user_setting_model) as mock_get_user_setting, \
          patch('digame.app.crud.tenant_crud.get_tenant_by_id', return_value=mock_tenant_model) as mock_get_tenant_by_id_call:
-        
+
         # Action
         suggestion = service.get_writing_suggestion(current_user=mock_user_no_direct_tenant, text_input="Hello fallback")
 
@@ -291,21 +291,21 @@ def test_get_suggestion_user_tenant_link_no_tenant_attribute(mock_db_session, mo
 def test_get_suggestion_user_tenant_link_no_tenant_id_either(mock_db_session, mock_user_model):
     # Scenario where user_tenant_link.tenant is None, AND tenant_id is also not on the link.
     # This should result in "Tenant information not found".
-    
+
     # Arrange
     mock_user_no_tenant_info = UserModel(id=3, email="test3@example.com", full_name="Test User 3", tenants=[])
-    
+
     mock_link_no_tenant_info_obj = MagicMock(spec=TenantUserModel)
     mock_link_no_tenant_info_obj.user_id = mock_user_no_tenant_info.id
     # Crucially, tenant_id is NOT set on this mock link object.
     # And .tenant attribute is also missing.
     if hasattr(mock_link_no_tenant_info_obj, 'tenant_id'): # defensive delete
-        del mock_link_no_tenant_info_obj.tenant_id 
+        del mock_link_no_tenant_info_obj.tenant_id
     if hasattr(mock_link_no_tenant_info_obj, 'tenant'): # defensive delete
-        del mock_link_no_tenant_info_obj.tenant 
+        del mock_link_no_tenant_info_obj.tenant
 
     mock_user_no_tenant_info.tenants.append(mock_link_no_tenant_info_obj)
-    
+
     service = WritingAssistanceService(db=mock_db_session)
 
     with patch('digame.app.crud.user_crud.get_user', return_value=mock_user_no_tenant_info), \
@@ -313,7 +313,7 @@ def test_get_suggestion_user_tenant_link_no_tenant_id_either(mock_db_session, mo
 
         with pytest.raises(HTTPException) as exc_info:
             service.get_writing_suggestion(current_user=mock_user_no_tenant_info, text_input="Test")
-        
+
         assert exc_info.value.status_code == 403
         assert "tenant information not found for user" in exc_info.value.detail.lower()
         # Because tenant_id is not on the link, get_tenant_by_id should NOT be called.
@@ -324,21 +324,21 @@ def test_get_suggestion_user_tenant_link_no_tenant_id_either(mock_db_session, mo
 def test_get_suggestion_no_user_tenants_after_reload(mock_db_session, mock_user_model):
     # Test the scenario where the initial current_user.tenants is empty,
     # and even after trying to reload the user from DB, the tenants list is still empty.
-    
+
     # Arrange
     mock_user_model.tenants = [] # Initial user object has no tenants
 
     # Mock user_crud.get_user to return a user that also has no tenants
     reloaded_user_still_no_tenants = UserModel(id=mock_user_model.id, email=mock_user_model.email, tenants=[])
-    
+
     service = WritingAssistanceService(db=mock_db_session)
 
     with patch('digame.app.crud.user_crud.get_user', return_value=reloaded_user_still_no_tenants) as mock_get_user_db:
-        
+
         # Action & Assertion
         with pytest.raises(HTTPException) as exc_info:
             service.get_writing_suggestion(current_user=mock_user_model, text_input="Test")
-        
+
         assert exc_info.value.status_code == 403
         assert "user not associated with any tenant or tenant info missing" in exc_info.value.detail.lower()
         mock_get_user_db.assert_called_once_with(mock_db_session, user_id=mock_user_model.id)

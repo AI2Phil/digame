@@ -19,6 +19,7 @@ from .routers import admin_simple_router # Import the admin dashboard router
 from .routers import writing_assistance_router # Import the new writing assistance router
 from .routers import communication_style_router # Import the new communication style router
 from .routers import meeting_insights_router # Import the new meeting insights router
+from .routers import email_analysis_router # Import the new email analysis router
 
 # Import authentication components
 from .auth.middleware import configure_auth_middleware
@@ -103,6 +104,7 @@ app.include_router(user_setting_router) # Add user setting router
 app.include_router(writing_assistance_router.router) # Add the writing assistance router
 app.include_router(communication_style_router.router) # Add the communication style router
 app.include_router(meeting_insights_router.router) # Add the meeting insights router
+app.include_router(email_analysis_router.router) # Add the email analysis router
 app.include_router(admin_simple_router.router, tags=["Admin Dashboard"])
 app.include_router(predictive_router.router, prefix="/predictive", tags=["Predictive Modeling"])
 app.include_router(admin_rbac_router.router, prefix="/admin/rbac", tags=["Admin RBAC Management"])

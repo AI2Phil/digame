@@ -7,7 +7,7 @@ from digame.app.services.writing_assistance_service import WritingAssistanceServ
 from digame.app.schemas import writing_assistance_schemas as schemas
 
 router = APIRouter(
-    prefix="/ai/writing-assistance", 
+    prefix="/ai/writing-assistance",
     tags=["AI - Writing Assistance"],
 )
 
@@ -24,7 +24,7 @@ def get_writing_suggestion_endpoint(
     """
     try:
         suggestion_text = service.get_writing_suggestion(
-            current_user=current_user, 
+            current_user=current_user,
             text_input=request_data.text_input
         )
         return schemas.WritingSuggestionResponse(
@@ -33,7 +33,7 @@ def get_writing_suggestion_endpoint(
         )
     except HTTPException as e:
         # Re-raise HTTPExceptions directly if they are from the service
-        raise e 
+        raise e
     except Exception as e:
         # Catch any other unexpected errors from the service
         # Remember to log the error e in a real application

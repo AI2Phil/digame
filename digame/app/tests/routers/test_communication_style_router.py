@@ -25,7 +25,7 @@ def mock_current_active_user_for_comm_style():
     # Ensure this mock user has `tenants` attribute if service relies on it, even if empty for some tests.
     # For router tests, the service is mocked, so direct user structure might be less critical
     # unless get_current_active_user itself does deep checks.
-    user.tenants = [] 
+    user.tenants = []
     return user
 
 # --- Router Tests ---
@@ -34,11 +34,11 @@ def test_analyze_endpoint_success(client, mock_communication_style_service, mock
     # Arrange
     expected_analysis_result = {"style": "assertive", "confidence": 0.9, "keywords": ["urgent"]}
     mock_communication_style_service.get_communication_style_analysis = MagicMock(return_value=expected_analysis_result)
-    
+
     # Import dependency provider functions for overriding
     from digame.app.auth.auth_dependencies import get_current_active_user
     from digame.app.services.communication_style_service import get_communication_style_service
-    
+
     app.dependency_overrides[get_current_active_user] = lambda: mock_current_active_user_for_comm_style
     app.dependency_overrides[get_communication_style_service] = lambda: mock_communication_style_service
 
@@ -70,7 +70,7 @@ def test_analyze_endpoint_service_raises_http_exception(client, mock_communicati
     from digame.app.services.communication_style_service import get_communication_style_service
     app.dependency_overrides[get_current_active_user] = lambda: mock_current_active_user_for_comm_style
     app.dependency_overrides[get_communication_style_service] = lambda: mock_communication_style_service
-    
+
     request_payload = {"text_input": "Some text for analysis here."}
 
     # Action

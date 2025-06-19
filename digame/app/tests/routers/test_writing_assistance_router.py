@@ -52,12 +52,12 @@ def test_suggest_endpoint_success(client, mock_writing_assistance_service, mock_
     # get_writing_assistance_service is from digame.app.services.writing_assistance_service
     app.dependency_overrides[app.router.dependencies[0].depends] = lambda: mock_current_active_user # Placeholder for actual get_current_active_user
     app.dependency_overrides[app.router.dependencies[1].depends] = lambda: mock_writing_assistance_service # Placeholder for actual get_writing_assistance_service
-    
+
     # Need to find the actual callables for dependency overrides.
     # Let's assume we can import them directly for clarity in patching.
     from digame.app.auth.auth_dependencies import get_current_active_user
     from digame.app.services.writing_assistance_service import get_writing_assistance_service
-    
+
     app.dependency_overrides[get_current_active_user] = lambda: mock_current_active_user
     app.dependency_overrides[get_writing_assistance_service] = lambda: mock_writing_assistance_service
 
@@ -92,7 +92,7 @@ def test_suggest_endpoint_service_raises_http_exception(client, mock_writing_ass
     from digame.app.services.writing_assistance_service import get_writing_assistance_service
     app.dependency_overrides[get_current_active_user] = lambda: mock_current_active_user
     app.dependency_overrides[get_writing_assistance_service] = lambda: mock_writing_assistance_service
-    
+
     request_payload = {"text_input": "Test input"}
 
     # Action
@@ -151,7 +151,7 @@ def test_suggest_endpoint_invalid_input_empty_text(client, mock_current_active_u
     assert "detail" in data
     # Check for a message indicating the text_input field error
     assert any("ensure this value has at least 1 character" in err["msg"].lower() for err in data["detail"] if err["loc"] == ["body", "text_input"])
-    
+
     # Clean up overrides
     app.dependency_overrides = {}
 
@@ -163,7 +163,7 @@ def test_suggest_endpoint_invalid_input_missing_text(client, mock_current_active
 
     response = client.post("/ai/writing-assistance/suggest", json=request_payload)
 
-    assert response.status_code == 422 
+    assert response.status_code == 422
     data = response.json()
     assert any("field required" in err["msg"].lower() for err in data["detail"] if err["loc"] == ["body", "text_input"])
 

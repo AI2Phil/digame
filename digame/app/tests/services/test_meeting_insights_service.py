@@ -28,8 +28,8 @@ def mock_user_model_insights(): # Renamed for clarity
 @pytest.fixture
 def mock_tenant_model_insights(): # Renamed
     tenant = TenantModel(
-        id=3, 
-        name="Insights Tenant", 
+        id=3,
+        name="Insights Tenant",
         admin_email="admin@insightstenant.com",
         features={"meeting_insights": True} # Default to enabled
     )
@@ -80,7 +80,7 @@ def test_get_analysis_feature_disabled(mock_db_session, mock_user_model_insights
     # Action & Assertion
     with pytest.raises(HTTPException) as exc_info:
         service.get_meeting_analysis(current_user=mock_user_model_insights, meeting_text="Test meeting text.")
-    
+
     assert exc_info.value.status_code == 403
     assert "feature is not enabled" in exc_info.value.detail.lower()
 
@@ -93,7 +93,7 @@ def test_get_analysis_no_user_settings(mock_db_session, mock_user_model_insights
         # Action & Assertion
         with pytest.raises(HTTPException) as exc_info:
             service.get_meeting_analysis(current_user=mock_user_model_insights, meeting_text="Test meeting text.")
-        
+
         assert exc_info.value.status_code == 402
         assert "api key for meeting insights not found" in exc_info.value.detail.lower()
         mock_get_settings.assert_called_once_with(mock_db_session, user_id=mock_user_model_insights.id)
@@ -108,7 +108,7 @@ def test_get_analysis_no_api_key_in_settings(mock_db_session, mock_user_model_in
         # Action & Assertion
         with pytest.raises(HTTPException) as exc_info:
             service.get_meeting_analysis(current_user=mock_user_model_insights, meeting_text="Test meeting text.")
-        
+
         assert exc_info.value.status_code == 402
         assert "'meeting_insights_service_key' is missing" in exc_info.value.detail.lower()
 
@@ -122,8 +122,8 @@ def test_get_analysis_empty_api_key(mock_db_session, mock_user_model_insights, m
         # Action & Assertion
         with pytest.raises(HTTPException) as exc_info:
             service.get_meeting_analysis(current_user=mock_user_model_insights, meeting_text="Test meeting text.")
-        
-        assert exc_info.value.status_code == 400 
+
+        assert exc_info.value.status_code == 400
         assert "api key must be provided" in exc_info.value.detail.lower()
 
 def test_get_analysis_invalid_api_key_external_error(mock_db_session, mock_user_model_insights, mock_tenant_model_insights, mock_user_setting_model_insights, mock_tenant_user_link_insights):
@@ -136,19 +136,19 @@ def test_get_analysis_invalid_api_key_external_error(mock_db_session, mock_user_
         # Action & Assertion
         with pytest.raises(HTTPException) as exc_info:
             service.get_meeting_analysis(current_user=mock_user_model_insights, meeting_text="Test meeting text.")
-        
+
         assert exc_info.value.status_code == 400
         assert "invalid api key provided" in exc_info.value.detail.lower()
 
 def test_get_analysis_user_not_in_tenant(mock_db_session, mock_user_model_insights):
     # Arrange
-    mock_user_model_insights.tenants = [] 
+    mock_user_model_insights.tenants = []
     service = MeetingInsightsService(db=mock_db_session)
-    
+
     # Action & Assertion
     with pytest.raises(HTTPException) as exc_info:
         service.get_meeting_analysis(current_user=mock_user_model_insights, meeting_text="Test meeting text.")
-    
+
     assert exc_info.value.status_code == 403
     assert "user not associated with any tenant" in exc_info.value.detail.lower()
 
@@ -160,7 +160,7 @@ def test_get_analysis_corrupted_tenant_features_json(mock_db_session, mock_user_
     # Action & Assertion
     with pytest.raises(HTTPException) as exc_info:
         service.get_meeting_analysis(current_user=mock_user_model_insights, meeting_text="Test meeting text.")
-    
+
     assert exc_info.value.status_code == 500
     assert "error reading tenant configuration" in exc_info.value.detail.lower()
 
@@ -174,7 +174,7 @@ def test_get_analysis_corrupted_user_settings_api_keys_json(mock_db_session, moc
         # Action & Assertion
         with pytest.raises(HTTPException) as exc_info:
             service.get_meeting_analysis(current_user=mock_user_model_insights, meeting_text="Test meeting text.")
-        
+
         assert exc_info.value.status_code == 500
         assert "error parsing your api key settings" in exc_info.value.detail.lower()
 
@@ -188,7 +188,7 @@ def test_get_analysis_empty_input_text_error_from_client(mock_db_session, mock_u
         # Action
         with pytest.raises(HTTPException) as exc_info:
             service.get_meeting_analysis(current_user=mock_user_model_insights, meeting_text=meeting_text)
-        
+
         # Assertion
         assert exc_info.value.status_code == 400 # As per service logic for client error
         assert "input meeting text cannot be empty" in exc_info.value.detail.lower()
@@ -197,7 +197,7 @@ def test_get_analysis_tenant_link_missing_tenant_attr(mock_db_session, mock_user
     # Arrange
     mock_bad_link = MagicMock(spec=TenantUserModel)
     mock_bad_link.user_id = mock_user_model_insights.id
-    mock_bad_link.tenant_id = 1 
+    mock_bad_link.tenant_id = 1
     del mock_bad_link.tenant # Simulate missing attribute
 
     mock_user_model_insights.tenants = [mock_bad_link]
@@ -206,6 +206,6 @@ def test_get_analysis_tenant_link_missing_tenant_attr(mock_db_session, mock_user
     # Action & Assertion
     with pytest.raises(HTTPException) as exc_info:
         service.get_meeting_analysis(current_user=mock_user_model_insights, meeting_text="Test meeting text.")
-    
-    assert exc_info.value.status_code == 500 
+
+    assert exc_info.value.status_code == 500
     assert "tenant linkage error" in exc_info.value.detail.lower()

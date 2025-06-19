@@ -28,8 +28,8 @@ def mock_user_model():
 @pytest.fixture
 def mock_tenant_model_comm_style(): # Renamed to avoid conflict if used in same scope as other test's tenant
     tenant = TenantModel(
-        id=1, 
-        name="Comm Style Tenant", 
+        id=1,
+        name="Comm Style Tenant",
         admin_email="admin@commtenant.com",
         features={"communication_style_analysis": True} # Default to enabled
     )
@@ -78,7 +78,7 @@ def test_get_analysis_feature_disabled(mock_db_session, mock_user_model, mock_te
     # Action & Assertion
     with pytest.raises(HTTPException) as exc_info:
         service.get_communication_style_analysis(current_user=mock_user_model, text_input="Test")
-    
+
     assert exc_info.value.status_code == 403
     assert "feature is not enabled" in exc_info.value.detail.lower()
 
@@ -91,7 +91,7 @@ def test_get_analysis_no_user_settings(mock_db_session, mock_user_model, mock_te
         # Action & Assertion
         with pytest.raises(HTTPException) as exc_info:
             service.get_communication_style_analysis(current_user=mock_user_model, text_input="Test")
-        
+
         assert exc_info.value.status_code == 402
         assert "api key for communication style analysis not found" in exc_info.value.detail.lower()
         mock_get_settings.assert_called_once_with(mock_db_session, user_id=mock_user_model.id)
@@ -106,7 +106,7 @@ def test_get_analysis_no_api_key_in_settings(mock_db_session, mock_user_model, m
         # Action & Assertion
         with pytest.raises(HTTPException) as exc_info:
             service.get_communication_style_analysis(current_user=mock_user_model, text_input="Test")
-        
+
         assert exc_info.value.status_code == 402
         assert "'communication_style_service_key' is missing" in exc_info.value.detail.lower()
 
@@ -120,8 +120,8 @@ def test_get_analysis_empty_api_key(mock_db_session, mock_user_model, mock_tenan
         # Action & Assertion
         with pytest.raises(HTTPException) as exc_info:
             service.get_communication_style_analysis(current_user=mock_user_model, text_input="Test")
-        
-        assert exc_info.value.status_code == 400 
+
+        assert exc_info.value.status_code == 400
         assert "api key must be provided" in exc_info.value.detail.lower() # From mock client's ValueError
 
 def test_get_analysis_invalid_api_key_external_error(mock_db_session, mock_user_model, mock_tenant_model_comm_style, mock_user_setting_model_comm_style, mock_tenant_user_link_comm_style):
@@ -134,7 +134,7 @@ def test_get_analysis_invalid_api_key_external_error(mock_db_session, mock_user_
         # Action & Assertion
         with pytest.raises(HTTPException) as exc_info:
             service.get_communication_style_analysis(current_user=mock_user_model, text_input="Test")
-        
+
         assert exc_info.value.status_code == 400
         assert "invalid api key provided" in exc_info.value.detail.lower() # From mock client's ValueError
 
@@ -142,14 +142,14 @@ def test_get_analysis_user_not_in_tenant(mock_db_session, mock_user_model):
     # Arrange
     mock_user_model.tenants = [] # User not associated with any tenant
     service = CommunicationStyleService(db=mock_db_session)
-    
+
     # No need to mock user_crud.get_user if current_user is taken as is and relationships are primary.
     # The service code directly checks `current_user.tenants`.
 
     # Action & Assertion
     with pytest.raises(HTTPException) as exc_info:
         service.get_communication_style_analysis(current_user=mock_user_model, text_input="Test")
-    
+
     assert exc_info.value.status_code == 403
     assert "user not associated with any tenant" in exc_info.value.detail.lower()
 
@@ -161,7 +161,7 @@ def test_get_analysis_corrupted_tenant_features_json(mock_db_session, mock_user_
     # Action & Assertion
     with pytest.raises(HTTPException) as exc_info:
         service.get_communication_style_analysis(current_user=mock_user_model, text_input="Test")
-    
+
     assert exc_info.value.status_code == 500
     assert "error reading tenant configuration" in exc_info.value.detail.lower()
 
@@ -175,7 +175,7 @@ def test_get_analysis_corrupted_user_settings_api_keys_json(mock_db_session, moc
         # Action & Assertion
         with pytest.raises(HTTPException) as exc_info:
             service.get_communication_style_analysis(current_user=mock_user_model, text_input="Test")
-        
+
         assert exc_info.value.status_code == 500
         assert "error parsing your api key settings" in exc_info.value.detail.lower()
 
@@ -193,7 +193,7 @@ def test_get_analysis_tenant_link_missing_tenant_attr(mock_db_session, mock_user
     # Action & Assertion
     with pytest.raises(HTTPException) as exc_info:
         service.get_communication_style_analysis(current_user=mock_user_model, text_input="Test")
-    
+
     assert exc_info.value.status_code == 500 # Or specific error based on implementation
     assert "tenant linkage error" in exc_info.value.detail.lower()
 
@@ -205,7 +205,7 @@ def test_get_analysis_tenant_features_none(mock_db_session, mock_user_model, moc
     # Action & Assertion
     with pytest.raises(HTTPException) as exc_info:
         service.get_communication_style_analysis(current_user=mock_user_model, text_input="Test")
-    
+
     assert exc_info.value.status_code == 403 # Because .get("communication_style_analysis") on {} will be None
     assert "feature is not enabled" in exc_info.value.detail.lower()
 
@@ -220,7 +220,7 @@ def test_get_analysis_input_text_empty_mock_client_error(mock_db_session, mock_u
         # Action
         with pytest.raises(HTTPException) as exc_info:
             service.get_communication_style_analysis(current_user=mock_user_model, text_input=text_input)
-        
+
         # Assertion
         assert exc_info.value.status_code == 400 # As per service logic for client error
         assert "input text cannot be empty" in exc_info.value.detail.lower()

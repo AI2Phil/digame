@@ -6,7 +6,7 @@ from digame.app.services.meeting_insights_service import MeetingInsightsService,
 from digame.app.schemas import meeting_insights_schemas as schemas
 
 router = APIRouter(
-    prefix="/ai/meeting-insights", 
+    prefix="/ai/meeting-insights",
     tags=["AI - Meeting Insights & Summaries"],
 )
 
@@ -23,7 +23,7 @@ def analyze_meeting_text_endpoint(
     """
     try:
         analysis_result = service.get_meeting_analysis(
-            current_user=current_user, 
+            current_user=current_user,
             meeting_text=request_data.meeting_text
         )
         return schemas.MeetingAnalysisResponse(
@@ -32,7 +32,7 @@ def analyze_meeting_text_endpoint(
         )
     except HTTPException as e:
         # Re-raise HTTPExceptions directly from the service
-        raise e 
+        raise e
     except Exception as e:
         # Log the error e in a real application
         raise HTTPException(
