@@ -9,6 +9,8 @@ import { Button } from '../ui/Button';
 import { Progress } from '../ui/Progress';
 import { Badge } from '../ui/Badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/Tabs';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../ui/Select';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../ui/Table';
 
 const SystemAnalyticsSection = ({ systemStats }) => {
   const [timeRange, setTimeRange] = useState('24h');
@@ -103,16 +105,17 @@ const SystemAnalyticsSection = ({ systemStats }) => {
               </CardDescription>
             </div>
             <div className="flex items-center gap-2">
-              <select
-                value={timeRange}
-                onChange={(e) => setTimeRange(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-md text-sm"
-              >
-                <option value="1h">Last Hour</option>
-                <option value="24h">Last 24 Hours</option>
-                <option value="7d">Last 7 Days</option>
-                <option value="30d">Last 30 Days</option>
-              </select>
+            <Select value={timeRange} onValueChange={setTimeRange}>
+              <SelectTrigger className="px-3 py-2 border border-gray-300 rounded-md text-sm w-[180px]">
+                <SelectValue placeholder="Select time range" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="1h">Last Hour</SelectItem>
+                <SelectItem value="24h">Last 24 Hours</SelectItem>
+                <SelectItem value="7d">Last 7 Days</SelectItem>
+                <SelectItem value="30d">Last 30 Days</SelectItem>
+              </SelectContent>
+            </Select>
               <Button
                 variant="outline"
                 size="sm"
@@ -316,40 +319,38 @@ const ApiEndpointsTable = ({ endpoints }) => (
       <CardTitle>API Endpoint Performance</CardTitle>
     </CardHeader>
     <CardContent>
-      <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead>
-            <tr className="border-b">
-              <th className="text-left p-3 font-medium">Endpoint</th>
-              <th className="text-left p-3 font-medium">Requests</th>
-              <th className="text-left p-3 font-medium">Avg Time</th>
-              <th className="text-left p-3 font-medium">Errors</th>
-              <th className="text-left p-3 font-medium">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {endpoints.map((endpoint, index) => (
-              <tr key={index} className="border-b hover:bg-gray-50">
-                <td className="p-3 font-mono text-sm">{endpoint.endpoint}</td>
-                <td className="p-3">{endpoint.requests.toLocaleString()}</td>
-                <td className="p-3">{endpoint.avgTime}ms</td>
-                <td className="p-3">
-                  {endpoint.errors > 0 ? (
-                    <span className="text-red-600">{endpoint.errors}</span>
-                  ) : (
-                    <span className="text-green-600">0</span>
-                  )}
-                </td>
-                <td className="p-3">
-                  <Badge variant={endpoint.errors > 0 ? 'destructive' : 'success'}>
-                    {endpoint.errors > 0 ? 'Issues' : 'Healthy'}
-                  </Badge>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Endpoint</TableHead>
+            <TableHead>Requests</TableHead>
+            <TableHead>Avg Time</TableHead>
+            <TableHead>Errors</TableHead>
+            <TableHead>Status</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {endpoints.map((endpoint, index) => (
+            <TableRow key={index}>
+              <TableCell className="font-mono text-sm">{endpoint.endpoint}</TableCell>
+              <TableCell>{endpoint.requests.toLocaleString()}</TableCell>
+              <TableCell>{endpoint.avgTime}ms</TableCell>
+              <TableCell>
+                {endpoint.errors > 0 ? (
+                  <span className="text-red-600">{endpoint.errors}</span>
+                ) : (
+                  <span className="text-green-600">0</span>
+                )}
+              </TableCell>
+              <TableCell>
+                <Badge variant={endpoint.errors > 0 ? 'destructive' : 'success'}>
+                  {endpoint.errors > 0 ? 'Issues' : 'Healthy'}
+                </Badge>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
     </CardContent>
   </Card>
 );

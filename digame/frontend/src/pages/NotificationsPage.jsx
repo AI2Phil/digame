@@ -15,7 +15,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Checkbox } from '../components/ui/Checkbox';
 import { Switch } from '../components/ui/Switch';
 import { Label } from '../components/ui/Label';
-import { Select } from '../components/ui/Select';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../components/ui/Select';
 import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/Avatar';
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from '../components/ui/ContextMenu';
 
@@ -295,22 +295,32 @@ const NotificationsPage = () => {
             {/* Filter by Type */}
             <div className="w-full md:w-48">
               <Select value={filterType} onValueChange={setFilterType}>
-                <option value="all">All Types</option>
-                <option value="goal">Goals</option>
-                <option value="reminder">Reminders</option>
-                <option value="achievement">Achievements</option>
-                <option value="team">Team</option>
-                <option value="system">System</option>
-                <option value="alert">Alerts</option>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Filter by type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Types</SelectItem>
+                  <SelectItem value="goal">Goals</SelectItem>
+                  <SelectItem value="reminder">Reminders</SelectItem>
+                  <SelectItem value="achievement">Achievements</SelectItem>
+                  <SelectItem value="team">Team</SelectItem>
+                  <SelectItem value="system">System</SelectItem>
+                  <SelectItem value="alert">Alerts</SelectItem>
+                </SelectContent>
               </Select>
             </div>
             
             {/* Filter by Read Status */}
             <div className="w-full md:w-48">
               <Select value={filterRead} onValueChange={setFilterRead}>
-                <option value="all">All</option>
-                <option value="unread">Unread</option>
-                <option value="read">Read</option>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Filter by status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All</SelectItem>
+                  <SelectItem value="unread">Unread</SelectItem>
+                  <SelectItem value="read">Read</SelectItem>
+                </SelectContent>
               </Select>
             </div>
             

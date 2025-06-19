@@ -7,8 +7,10 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
-import { Table } from '../ui/Table';
+import { Table } from '../ui/Table'; // Keep this, though not refactoring table structure itself here
 import { Avatar } from '../ui/Avatar';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../ui/Select';
+import { Checkbox } from '../ui/Checkbox';
 import { Badge } from '../ui/Badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../ui/Dialog';
 import { Toast } from '../ui/Toast';
@@ -133,26 +135,28 @@ const UserManagementSection = ({
               />
             </div>
             <div className="flex gap-2">
-              <select
-                value={filterRole}
-                onChange={(e) => setFilterRole(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-md text-sm"
-              >
-                <option value="all">All Roles</option>
-                <option value="admin">Admin</option>
-                <option value="manager">Manager</option>
-                <option value="user">User</option>
-                <option value="viewer">Viewer</option>
-              </select>
-              <select
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-md text-sm"
-              >
-                <option value="all">All Status</option>
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
-              </select>
+              <Select value={filterRole} onValueChange={setFilterRole}>
+                <SelectTrigger className="px-3 py-2 border border-gray-300 rounded-md text-sm w-[180px]">
+                  <SelectValue placeholder="Filter by role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Roles</SelectItem>
+                  <SelectItem value="admin">Admin</SelectItem>
+                  <SelectItem value="manager">Manager</SelectItem>
+                  <SelectItem value="user">User</SelectItem>
+                  <SelectItem value="viewer">Viewer</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={filterStatus} onValueChange={setFilterStatus}>
+                <SelectTrigger className="px-3 py-2 border border-gray-300 rounded-md text-sm w-[180px]">
+                  <SelectValue placeholder="Filter by status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="inactive">Inactive</SelectItem>
+                </SelectContent>
+              </Select>
               <Button variant="outline" size="sm">
                 <Filter className="w-4 h-4" />
               </Button>
@@ -197,11 +201,9 @@ const UserManagementSection = ({
               <thead className="bg-gray-50">
                 <tr>
                   <th className="w-12 p-4">
-                    <input
-                      type="checkbox"
+                    <Checkbox
                       checked={selectedUsers.length === filteredUsers.length && filteredUsers.length > 0}
-                      onChange={handleSelectAll}
-                      className="rounded border-gray-300"
+                      onCheckedChange={handleSelectAll}
                     />
                   </th>
                   <th className="text-left p-4 font-medium">User</th>
@@ -216,11 +218,9 @@ const UserManagementSection = ({
                 {filteredUsers.map((user) => (
                   <tr key={user.id} className="border-t hover:bg-gray-50">
                     <td className="p-4">
-                      <input
-                        type="checkbox"
+                      <Checkbox
                         checked={selectedUsers.includes(user.id)}
-                        onChange={() => handleSelectUser(user.id)}
-                        className="rounded border-gray-300"
+                        onCheckedChange={() => handleSelectUser(user.id)}
                       />
                     </td>
                     <td className="p-4">
