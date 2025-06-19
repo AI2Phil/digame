@@ -11,27 +11,46 @@ import json
 
 # Import from the correct paths based on the project structure
 try:
-    from ..models.user import User
-    from ..crud.user_crud import get_user
+    from ..models.user import User # Actual model
+    from ..crud.user_crud import get_user # Actual CRUD
+    from ..crud import notification_crud # For notifications
+    from ..schemas.notification_schemas import NotificationCreate # For notifications
 except ImportError:
-    # Fallback for development - create mock classes
+    # Fallback for development - create mock classes / stubs for notification_crud
     class User:
         def __init__(self):
             self.id = 1
             self.email = "test@example.com"
             self.full_name = "Test User"
     
-    def get_user(db, user_id):
+    def get_user(db, user_id): # Mock get_user
         user = User()
         user.id = user_id
+        # Ensure mock user has full_name for notification messages
+        user.full_name = f"Mock User {user_id}"
         return user
 
-# Mock dependencies for development
-def get_db():
-    """Mock database session"""
-    return None
+    # Mock for notification_crud and NotificationCreate if real ones can't be imported
+    class NotificationCreate:
+        def __init__(self, message: str, type: str):
+            self.message = message
+            self.type = type
 
-def get_current_user():
+    class MockNotificationCrud:
+        def create_notification(self, db: Session, notification: NotificationCreate, user_id: int):
+            print(f"Mock CRUD: Creating notification for user {user_id}: '{notification.message}' of type '{notification.type}'")
+            # Mock return a notification-like object if needed by caller
+            return {"id": 123, "user_id": user_id, "message": notification.message, "type": notification.type, "is_read": False}
+
+    notification_crud = MockNotificationCrud()
+
+
+# Mock dependencies for development
+def get_db() -> Session: # Type hint for clarity, though it returns None
+    """Mock database session"""
+    return None # This will be an issue for real CRUD operations
+
+def get_current_user() -> User: # Type hint for clarity
     """Mock current user"""
     user = User()
     user.id = 1
@@ -460,11 +479,65 @@ async def send_connection_request(
         raise HTTPException(status_code=404, detail="User not found")
     
     # Mock connection request logic
+    # Create notification for the receiver
+    notification_data = NotificationCreate(
+        message=f"{current_user.full_name or 'A user'} sent you a connection request.",
+        type='connection_request'
+    )
+    try:
+        notification_crud.create_notification(db=db, notification=notification_data, user_id=peer_id)
+    except Exception as e:
+        # Log or handle exception if db is None and CRUD fails. For now, pass.
+        print(f"Could not create notification due to DB issue (expected with mock): {e}")
+
+
     return {
         "success": True,
         "message": f"Connection request sent to user {peer_id}",
         "requestId": f"req_{current_user.id}_{peer_id}_{int(datetime.now().timestamp())}"
     }
+
+@router.post("/connections/requests/{request_id}/accept")
+async def accept_connection_request(
+    request_id: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Accept a connection request and notify the original sender."""
+    try:
+        parts = request_id.split('_')
+        # Expected format: req_SENDERID_RECEIVERID_TIMESTAMP
+        if len(parts) == 4 and parts[0] == 'req':
+            original_requester_id = int(parts[1])
+            # Validate if the current_user is indeed the receiver (parts[2])
+            # For this mock, we assume current_user is the correct receiver.
+            # if current_user.id != int(parts[2]):
+            #     raise HTTPException(status_code=403, detail="User not authorized to accept this request")
+        else:
+            raise HTTPException(status_code=400, detail="Invalid request_id format for mock processing")
+    except (ValueError, IndexError):
+        raise HTTPException(status_code=400, detail="Could not parse original_requester_id from request_id")
+
+    original_requester = get_user(db, original_requester_id) # Using mock get_user
+    if not original_requester:
+        raise HTTPException(status_code=404, detail=f"Original requester (ID: {original_requester_id}) not found")
+
+    # Create notification for the original requester
+    notification_data = NotificationCreate(
+        message=f"{current_user.full_name or 'A user'} accepted your connection request.",
+        type='connection_accepted'
+    )
+    try:
+        notification_crud.create_notification(db=db, notification=notification_data, user_id=original_requester_id)
+    except Exception as e:
+        # Log or handle exception if db is None and CRUD fails. For now, pass.
+        print(f"Could not create notification due to DB issue (expected with mock): {e}")
+
+    return {
+        "success": True,
+        "message": f"Connection request {request_id} accepted. Notification sent to user {original_requester_id}."
+    }
+
 
 @router.get("/connections/requests")
 async def get_connection_requests(

@@ -647,17 +647,20 @@ class ApiService {
 
   async getNotifications(filter = {}) {
     const params = new URLSearchParams(filter);
-    return this.request(`/notifications?${params}`);
+    // Ensure the endpoint is /api/notifications as defined in backend router
+    return this.request(`/api/notifications?${params.toString()}`);
   }
 
   async markNotificationAsRead(notificationId) {
-    return this.request(`/notifications/${notificationId}/read`, {
+    // Ensure the endpoint is /api/notifications/{notification_id}/read
+    return this.request(`/api/notifications/${notificationId}/read`, {
       method: 'POST',
     });
   }
 
   async markAllNotificationsAsRead() {
-    return this.request('/notifications/mark-all-read', {
+    // Ensure the endpoint is /api/notifications/all/read
+    return this.request('/api/notifications/all/read', {
       method: 'POST',
     });
   }

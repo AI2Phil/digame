@@ -23,6 +23,7 @@ from .job_crud import (
     update_job_status,
     delete_job
 )
+from . import notification_crud # Import notification_crud module
 
 __all__ = [
     # User CRUD
@@ -49,4 +50,7 @@ __all__ = [
 
     # UserSetting CRUD
     "get_user_setting", "create_user_setting", "update_user_setting", "delete_user_setting",
+
+    # Notification CRUD (exporting the module itself, or list individual functions)
+    "notification_crud",
 ]
