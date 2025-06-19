@@ -1,11 +1,14 @@
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text
+from sqlalchemy.types import JSON
 from sqlalchemy.orm import relationship
-from sqlalchemy.ext.declarative import declarative_base
+# from sqlalchemy.ext.declarative import declarative_base # Base will be imported
 from datetime import datetime
+
+# Import Base from the central location
+from digame.app.database import Base
 
 # Removed: from .user_setting import UserSetting # This caused a circular import
 
-Base = declarative_base()
 
 class User(Base):
     __tablename__ = "users"
@@ -26,6 +29,14 @@ class User(Base):
     # Onboarding fields
     onboarding_completed = Column(Boolean(), default=False)
     onboarding_data = Column(Text(), nullable=True)  # JSON string for onboarding data
+
+    # New fields for skills, learning goals, interests, projects, and mentorship
+    skills = Column(JSON(), nullable=False)  # List of strings
+    learning_goals = Column(JSON(), nullable=True)  # List of strings
+    interests = Column(JSON(), nullable=True)  # List of strings
+    current_projects = Column(JSON(), nullable=True)  # List of strings or objects
+    is_seeking_mentor = Column(Boolean(), default=False)
+    is_offering_mentorship = Column(Boolean(), default=False)
 
     # Relationship to Role via user_roles_table
     # The 'secondary' argument refers to the __tablename__ of the association table.
@@ -84,6 +95,10 @@ class User(Base):
         uselist=False, # One-to-one relationship
         cascade="all, delete-orphan" # If a user is deleted, their settings are also deleted.
     )
+
+    # Relationship to Project model (one-to-many: a user can own multiple projects)
+    # Using string "Project" to avoid circular import issues at load time
+    projects = relationship("Project", back_populates="owner", cascade="all, delete-orphan")
 
     def __repr__(self):
         return f"<User(id={self.id}, username='{self.username}', email='{self.email}')>"
