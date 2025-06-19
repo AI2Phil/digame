@@ -61,7 +61,8 @@ class TenantService:
             "writing_assistance": subscription_tier in ["professional", "enterprise"],
             "communication_style_analysis": subscription_tier in ["professional", "enterprise"],
             "meeting_insights": subscription_tier in ["professional", "enterprise"],
-            "email_pattern_analysis": subscription_tier in ["professional", "enterprise"]
+            "email_pattern_analysis": subscription_tier in ["professional", "enterprise"],
+            "language_learning_support": subscription_tier in ["professional", "enterprise"]
         }
         
         self.db.add(tenant)
@@ -111,6 +112,7 @@ class TenantService:
                 tenant.features["communication_style_analysis"] = new_tier in ["professional", "enterprise"]
                 tenant.features["meeting_insights"] = new_tier in ["professional", "enterprise"]
                 tenant.features["email_pattern_analysis"] = new_tier in ["professional", "enterprise"]
+                tenant.features["language_learning_support"] = new_tier in ["professional", "enterprise"]
                 # Potentially re-evaluate other features as well if the logic requires
 
         # Handle direct features update
@@ -132,6 +134,8 @@ class TenantService:
                     _features["meeting_insights"] = current_tier in ["professional", "enterprise"]
                 if "email_pattern_analysis" not in updates["features"]:
                     _features["email_pattern_analysis"] = current_tier in ["professional", "enterprise"]
+                if "language_learning_support" not in updates["features"]:
+                    _features["language_learning_support"] = current_tier in ["professional", "enterprise"]
 
                 updates["features"] = _features # Ensure updates["features"] has the correct flags
 
@@ -143,6 +147,7 @@ class TenantService:
                 tenant.features["communication_style_analysis"] = current_tier in ["professional", "enterprise"]
                 tenant.features["meeting_insights"] = current_tier in ["professional", "enterprise"]
                 tenant.features["email_pattern_analysis"] = current_tier in ["professional", "enterprise"]
+                tenant.features["language_learning_support"] = current_tier in ["professional", "enterprise"]
 
         elif "subscription_tier" in updates: # features not in updates, but tier changed
              if isinstance(tenant.features, dict):
@@ -151,6 +156,7 @@ class TenantService:
                 tenant.features["communication_style_analysis"] = current_tier in ["professional", "enterprise"]
                 tenant.features["meeting_insights"] = current_tier in ["professional", "enterprise"]
                 tenant.features["email_pattern_analysis"] = current_tier in ["professional", "enterprise"]
+                tenant.features["language_learning_support"] = current_tier in ["professional", "enterprise"]
 
 
         for key, value in updates.items():
