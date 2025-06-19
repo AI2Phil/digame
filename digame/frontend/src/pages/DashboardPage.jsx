@@ -4,6 +4,10 @@ import ProductivityChart from '../components/dashboard/ProductivityChart';
 import ActivityBreakdown from '../components/dashboard/ActivityBreakdown';
 import RecentActivity from '../components/dashboard/RecentActivity'; // Import RecentActivity
 import { EnhancedProductivityMetricCard } from '../components/dashboard/ProductivityMetricCard';
+import { Button } from '../components/ui/Button'; // Ensure Button is imported if not already default
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuLabel } from '../components/ui/DropdownMenu';
+import { Badge } from '../components/ui/Badge';
+import { Avatar, AvatarFallback } from '../components/ui/Avatar';
 
 export default function DashboardPage({ isDemoMode, onLogout }) {
   const navigate = useNavigate();
@@ -22,9 +26,7 @@ export default function DashboardPage({ isDemoMode, onLogout }) {
                 <span className="text-xl font-bold text-gray-900">Digame</span>
               </div>
               {isDemoMode && (
-                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                  Demo Mode
-                </span>
+                <Badge variant="info" className="text-xs">Demo Mode</Badge>
               )}
             </div>
             
@@ -37,215 +39,145 @@ export default function DashboardPage({ isDemoMode, onLogout }) {
                   <span>🏠</span> Dashboard
                 </button>
                 
-                <div className="relative group">
-                  <button className="text-gray-600 hover:text-gray-900 text-sm transition-colors flex items-center gap-1">
-                    <span>📊</span> Analytics ▼
-                  </button>
-                  <div className="absolute top-full left-0 mt-1 w-56 bg-white rounded-md shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
-                    <div className="py-1">
-                      <button
-                        onClick={() => navigate('/analytics/web')}
-                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                      >
-                        <span>🌐</span> Web Analytics
-                      </button>
-                      <button
-                        onClick={() => navigate('/analytics/mobile')}
-                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                      >
-                        <span>📱</span> Mobile Analytics
-                      </button>
-                      <div className="border-t border-gray-100 my-1"></div>
-                      <div className="px-4 py-2 text-xs text-gray-500 font-medium">AI-POWERED INSIGHTS</div>
-                      <button
-                        onClick={() => navigate('/analytics/behavioral')}
-                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                      >
-                        <span>🧠</span> Behavioral Analytics
-                      </button>
-                      <button
-                        onClick={() => navigate('/analytics/predictive')}
-                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                      >
-                        <span>🔮</span> Predictive Analytics
-                      </button>
-                    </div>
-                  </div>
-                </div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="text-gray-600 hover:text-gray-900 text-sm transition-colors flex items-center gap-1">
+                      <span>📊</span> Analytics ▼
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-56">
+                    <DropdownMenuItem onClick={() => navigate('/analytics/web')} className="flex items-center gap-2">
+                      <span>🌐</span> Web Analytics
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/analytics/mobile')} className="flex items-center gap-2">
+                      <span>📱</span> Mobile Analytics
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuLabel className="px-2 py-1.5 text-xs font-medium text-gray-500">
+                      AI-POWERED INSIGHTS
+                    </DropdownMenuLabel>
+                    <DropdownMenuItem onClick={() => navigate('/analytics/behavioral')} className="flex items-center gap-2">
+                      <span>🧠</span> Behavioral Analytics
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/analytics/predictive')} className="flex items-center gap-2">
+                      <span>🔮</span> Predictive Analytics
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
 
-                <div className="relative group">
-                  <button className="text-gray-600 hover:text-gray-900 text-sm transition-colors flex items-center gap-1">
-                    <span>🤖</span> AI Tools ▼
-                  </button>
-                  <div className="absolute top-full left-0 mt-1 w-64 bg-white rounded-md shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
-                    <div className="py-1">
-                      <button
-                        onClick={() => navigate('/ai-tools')}
-                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                      >
-                        <span>🛠️</span> AI Tools Hub
-                      </button>
-                      <div className="border-t border-gray-100 my-1"></div>
-                      <div className="px-4 py-2 text-xs text-gray-500 font-medium">WRITING & CONTENT</div>
-                      <button
-                        onClick={() => navigate('/ai-tools?tab=writing')}
-                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                      >
-                        <span>✍️</span> Writing Assistance
-                      </button>
-                      <div className="border-t border-gray-100 my-1"></div>
-                      <div className="px-4 py-2 text-xs text-gray-500 font-medium">TASK MANAGEMENT</div>
-                      <button
-                        onClick={() => navigate('/tasks')}
-                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                      >
-                        <span>📋</span> AI Task Suggestions
-                      </button>
-                      <div className="border-t border-gray-100 my-1"></div>
-                      <div className="px-4 py-2 text-xs text-gray-500 font-medium">INSIGHTS & ANALYTICS</div>
-                      <button
-                        onClick={() => navigate('/ai-tools?tab=insights')}
-                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                      >
-                        <span>🧠</span> AI Insights
-                      </button>
-                      <button
-                        onClick={() => navigate('/ai-tools?tab=coaching')}
-                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                      >
-                        <span>🎯</span> AI Coaching
-                      </button>
-                    </div>
-                  </div>
-                </div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="text-gray-600 hover:text-gray-900 text-sm transition-colors flex items-center gap-1">
+                      <span>🤖</span> AI Tools ▼
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-64">
+                    <DropdownMenuItem onClick={() => navigate('/ai-tools')} className="flex items-center gap-2">
+                      <span>🛠️</span> AI Tools Hub
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuLabel className="px-2 py-1.5 text-xs font-medium text-gray-500">WRITING & CONTENT</DropdownMenuLabel>
+                    <DropdownMenuItem onClick={() => navigate('/ai-tools?tab=writing')} className="flex items-center gap-2">
+                      <span>✍️</span> Writing Assistance
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuLabel className="px-2 py-1.5 text-xs font-medium text-gray-500">TASK MANAGEMENT</DropdownMenuLabel>
+                    <DropdownMenuItem onClick={() => navigate('/tasks')} className="flex items-center gap-2">
+                      <span>📋</span> AI Task Suggestions
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuLabel className="px-2 py-1.5 text-xs font-medium text-gray-500">INSIGHTS & ANALYTICS</DropdownMenuLabel>
+                    <DropdownMenuItem onClick={() => navigate('/ai-tools?tab=insights')} className="flex items-center gap-2">
+                      <span>🧠</span> AI Insights
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/ai-tools?tab=coaching')} className="flex items-center gap-2">
+                      <span>🎯</span> AI Coaching
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
 
-                <div className="relative group">
-                  <button className="text-gray-600 hover:text-gray-900 text-sm transition-colors flex items-center gap-1">
-                    <span>�</span> Social ▼
-                  </button>
-                  <div className="absolute top-full left-0 mt-1 w-64 bg-white rounded-md shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
-                    <div className="py-1">
-                      <button
-                        onClick={() => navigate('/social')}
-                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                      >
-                        <span>👥</span> Social Collaboration
-                      </button>
-                      <div className="border-t border-gray-100 my-1"></div>
-                      <div className="px-4 py-2 text-xs text-gray-500 font-medium">COLLABORATION FEATURES</div>
-                      <button
-                        onClick={() => navigate('/social?tab=peer-matching')}
-                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                      >
-                        <span>🧠</span> AI Peer Matching
-                      </button>
-                      <button
-                        onClick={() => navigate('/social?tab=mentorship')}
-                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                      >
-                        <span>🎓</span> Mentorship Programs
-                      </button>
-                      <button
-                        onClick={() => navigate('/social?tab=projects')}
-                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                      >
-                        <span>🎯</span> Project Collaboration
-                      </button>
-                      <button
-                        onClick={() => navigate('/social?tab=teams')}
-                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                      >
-                        <span>📈</span> Team Analytics
-                      </button>
-                      <button
-                        onClick={() => navigate('/social?tab=industry')}
-                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                      >
-                        <span>🏢</span> Industry Networking
-                      </button>
-                    </div>
-                  </div>
-                </div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="text-gray-600 hover:text-gray-900 text-sm transition-colors flex items-center gap-1">
+                      <span>🤝</span> Social ▼ {/* Corrected Icon */}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-64">
+                    <DropdownMenuItem onClick={() => navigate('/social')} className="flex items-center gap-2">
+                      <span>👥</span> Social Collaboration
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuLabel className="px-2 py-1.5 text-xs font-medium text-gray-500">COLLABORATION FEATURES</DropdownMenuLabel>
+                    <DropdownMenuItem onClick={() => navigate('/social?tab=peer-matching')} className="flex items-center gap-2">
+                      <span>🧠</span> AI Peer Matching
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/social?tab=mentorship')} className="flex items-center gap-2">
+                      <span>🎓</span> Mentorship Programs
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/social?tab=projects')} className="flex items-center gap-2">
+                      <span>🎯</span> Project Collaboration
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/social?tab=teams')} className="flex items-center gap-2">
+                      <span>📈</span> Team Analytics
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/social?tab=industry')} className="flex items-center gap-2">
+                      <span>🏢</span> Industry Networking
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
 
-                <div className="relative group">
-                  <button className="text-gray-600 hover:text-gray-900 text-sm transition-colors flex items-center gap-1">
-                    <span>📋</span> Tasks ▼
-                  </button>
-                  <div className="absolute top-full left-0 mt-1 w-64 bg-white rounded-md shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
-                    <div className="py-1">
-                      <button
-                        onClick={() => navigate('/tasks')}
-                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                      >
-                        <span>📋</span> Task Management
-                      </button>
-                      <div className="border-t border-gray-100 my-1"></div>
-                      <div className="px-4 py-2 text-xs text-gray-500 font-medium">AI-POWERED FEATURES</div>
-                      <button
-                        onClick={() => navigate('/tasks?tab=suggestions')}
-                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                      >
-                        <span>🤖</span> AI Task Suggestions
-                      </button>
-                      <button
-                        onClick={() => navigate('/tasks?tab=automation')}
-                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                      >
-                        <span>⚡</span> Process Automation
-                      </button>
-                      <button
-                        onClick={() => navigate('/tasks?tab=insights')}
-                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                      >
-                        <span>📊</span> Task Analytics
-                      </button>
-                    </div>
-                  </div>
-                </div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="text-gray-600 hover:text-gray-900 text-sm transition-colors flex items-center gap-1">
+                      <span>📋</span> Tasks ▼
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-64">
+                    <DropdownMenuItem onClick={() => navigate('/tasks')} className="flex items-center gap-2">
+                      <span>📋</span> Task Management
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuLabel className="px-2 py-1.5 text-xs font-medium text-gray-500">AI-POWERED FEATURES</DropdownMenuLabel>
+                    <DropdownMenuItem onClick={() => navigate('/tasks?tab=suggestions')} className="flex items-center gap-2">
+                      <span>🤖</span> AI Task Suggestions
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/tasks?tab=automation')} className="flex items-center gap-2">
+                      <span>⚡</span> Process Automation
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/tasks?tab=insights')} className="flex items-center gap-2">
+                      <span>📊</span> Task Analytics
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
 
-                <div className="relative group">
-                  <button className="text-gray-600 hover:text-gray-900 text-sm transition-colors flex items-center gap-1">
-                    <span>🏢</span> Enterprise ▼
-                  </button>
-                  <div className="absolute top-full left-0 mt-1 w-64 bg-white rounded-md shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
-                    <div className="py-1">
-                      <button
-                        onClick={() => navigate('/enterprise')}
-                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                      >
-                        <span>🏢</span> Enterprise Dashboard
-                      </button>
-                      <div className="border-t border-gray-100 my-1"></div>
-                      <div className="px-4 py-2 text-xs text-gray-500 font-medium">AI ENTERPRISE FEATURES</div>
-                      <button
-                        onClick={() => navigate('/enterprise?tab=ai-features')}
-                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                      >
-                        <span>🤖</span> AI Feature Management
-                      </button>
-                      <button
-                        onClick={() => navigate('/enterprise?tab=tenants')}
-                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                      >
-                        <span>🏢</span> Tenant Management
-                      </button>
-                      <button
-                        onClick={() => navigate('/enterprise?tab=security')}
-                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                      >
-                        <span>🔒</span> Security & Compliance
-                      </button>
-                      <div className="border-t border-gray-100 my-1"></div>
-                      <div className="px-4 py-2 text-xs text-gray-500 font-medium">ANALYTICS & INSIGHTS</div>
-                      <button
-                        onClick={() => navigate('/enterprise?tab=overview')}
-                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                      >
-                        <span>📊</span> Enterprise Analytics
-                      </button>
-                    </div>
-                  </div>
-                </div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="text-gray-600 hover:text-gray-900 text-sm transition-colors flex items-center gap-1">
+                      <span>🏢</span> Enterprise ▼
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-64">
+                    <DropdownMenuItem onClick={() => navigate('/enterprise')} className="flex items-center gap-2">
+                      <span>🏢</span> Enterprise Dashboard
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuLabel className="px-2 py-1.5 text-xs font-medium text-gray-500">AI ENTERPRISE FEATURES</DropdownMenuLabel>
+                    <DropdownMenuItem onClick={() => navigate('/enterprise?tab=ai-features')} className="flex items-center gap-2">
+                      <span>🤖</span> AI Feature Management
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/enterprise?tab=tenants')} className="flex items-center gap-2">
+                      <span>🏢</span> Tenant Management
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/enterprise?tab=security')} className="flex items-center gap-2">
+                      <span>🔒</span> Security & Compliance
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuLabel className="px-2 py-1.5 text-xs font-medium text-gray-500">ANALYTICS & INSIGHTS</DropdownMenuLabel>
+                    <DropdownMenuItem onClick={() => navigate('/enterprise?tab=overview')} className="flex items-center gap-2">
+                      <span>📊</span> Enterprise Analytics
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
 
                 <button
                   onClick={() => navigate('/reports')}
@@ -257,15 +189,15 @@ export default function DashboardPage({ isDemoMode, onLogout }) {
               
               {/* Mobile menu button */}
               <div className="md:hidden">
-                <button className="text-gray-600 hover:text-gray-900 p-2">
+                <Button variant="ghost" size="icon" className="text-gray-600 hover:text-gray-900 p-2">
                   <span className="text-lg">☰</span>
-                </button>
+                </Button>
               </div>
               
               <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
-                  <span className="text-gray-600 text-sm">👤</span>
-                </div>
+                <Avatar className="w-8 h-8">
+                  <AvatarFallback className="text-sm">👤</AvatarFallback>
+                </Avatar>
                 <button
                   onClick={onLogout}
                   className="text-gray-600 hover:text-gray-900 text-sm font-medium transition-colors"

@@ -12,6 +12,7 @@ import { Progress } from '../components/ui/Progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/Tabs';
 import { Toast } from '../components/ui/Toast';
 import apiService from '../services/apiService';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../components/ui/Select';
 import PerformanceMonitoringSection from '../components/analytics/PerformanceMonitoringSection';
 import UserBehaviorAnalyticsSection from '../components/analytics/UserBehaviorAnalyticsSection';
 import ApiAnalyticsSection from '../components/analytics/ApiAnalyticsSection';
@@ -98,17 +99,18 @@ const AnalyticsDashboardPage = () => {
               <p className="text-gray-600">Real-time performance monitoring and user behavior analytics</p>
             </div>
             <div className="flex items-center gap-3">
-              <select
-                value={timeRange}
-                onChange={(e) => setTimeRange(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-md text-sm"
-              >
-                <option value="1h">Last Hour</option>
-                <option value="24h">Last 24 Hours</option>
-                <option value="7d">Last 7 Days</option>
-                <option value="30d">Last 30 Days</option>
-                <option value="90d">Last 90 Days</option>
-              </select>
+              <Select value={timeRange} onValueChange={setTimeRange}>
+                <SelectTrigger className="px-3 py-2 border border-gray-300 rounded-md text-sm w-[180px]">
+                  <SelectValue placeholder="Select time range" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1h">Last Hour</SelectItem>
+                  <SelectItem value="24h">Last 24 Hours</SelectItem>
+                  <SelectItem value="7d">Last 7 Days</SelectItem>
+                  <SelectItem value="30d">Last 30 Days</SelectItem>
+                  <SelectItem value="90d">Last 90 Days</SelectItem>
+                </SelectContent>
+              </Select>
               <Button
                 variant="outline"
                 onClick={handleRefresh}

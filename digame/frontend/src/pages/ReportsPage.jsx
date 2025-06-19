@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../co
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Label } from '../components/ui/Label';
-import { Select } from '../components/ui/Select';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../components/ui/Select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/Table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/Tabs';
 import { Badge } from '../components/ui/Badge';
@@ -206,11 +206,17 @@ const ReportsPage = () => {
                 
                 <div className="space-y-2">
                   <Label>Date Range</Label>
-                  <Select defaultValue="last-30-days">
-                    <option value="last-7-days">Last 7 days</option>
-                    <option value="last-30-days">Last 30 days</option>
-                    <option value="last-90-days">Last 90 days</option>
-                    <option value="custom">Custom range</option>
+                  {/* TODO: This might need to be a controlled component if dialog state is managed */}
+                  <Select defaultValue="last-30-days" onValueChange={(value) => console.log('Dialog date range changed:', value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select date range" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="last-7-days">Last 7 days</SelectItem>
+                      <SelectItem value="last-30-days">Last 30 days</SelectItem>
+                      <SelectItem value="last-90-days">Last 90 days</SelectItem>
+                      <SelectItem value="custom">Custom range</SelectItem>
+                    </SelectContent>
                   </Select>
                 </div>
               </div>
@@ -244,13 +250,18 @@ const ReportsPage = () => {
             {/* Filter by Type */}
             <div className="w-full md:w-48">
               <Select value={filterType} onValueChange={setFilterType}>
-                <option value="all">All Types</option>
-                <option value="productivity">Productivity</option>
-                <option value="time">Time Tracking</option>
-                <option value="goals">Goals</option>
-                <option value="team">Team</option>
-                <option value="activity">Activity</option>
-                <option value="insights">Insights</option>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Filter by type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Types</SelectItem>
+                  <SelectItem value="productivity">Productivity</SelectItem>
+                  <SelectItem value="time">Time Tracking</SelectItem>
+                  <SelectItem value="goals">Goals</SelectItem>
+                  <SelectItem value="team">Team</SelectItem>
+                  <SelectItem value="activity">Activity</SelectItem>
+                  <SelectItem value="insights">Insights</SelectItem>
+                </SelectContent>
               </Select>
             </div>
             
