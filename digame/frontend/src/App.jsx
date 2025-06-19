@@ -10,6 +10,8 @@ import EnhancedSocialCollaborationDashboard from './pages/EnhancedSocialCollabor
 import AiToolsPage from './pages/AiToolsPage';
 import TaskManagementPage from './pages/TaskManagementPage';
 import EnterpriseDashboardPage from './pages/EnterpriseDashboardPage';
+import UserListPage from './pages/UserListPage';
+import UserProfileOverviewPage from './pages/UserProfileOverviewPage';
 import './App.css';
 
 function App() {
@@ -141,6 +143,28 @@ function App() {
             }
           />
           
+          {/* Community/User Routes */}
+          <Route
+            path="/community"
+            element={
+              isAuthenticated || isDemoMode ? (
+                <UserListPage />
+              ) : (
+                <Navigate to="/" replace />
+              )
+            }
+          />
+          <Route
+            path="/users/:userId/profile_overview"
+            element={
+              isAuthenticated || isDemoMode ? (
+                <UserProfileOverviewPage />
+              ) : (
+                <Navigate to="/" replace />
+              )
+            }
+          />
+
           <Route
             path="/onboarding"
             element={

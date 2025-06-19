@@ -120,7 +120,7 @@ export default function DashboardPage({ isDemoMode, onLogout }) {
 
                 <div className="relative group">
                   <button className="text-gray-600 hover:text-gray-900 text-sm transition-colors flex items-center gap-1">
-                    <span>�</span> Social ▼
+                    <span>🌐</span> Social & Community ▼
                   </button>
                   <div className="absolute top-full left-0 mt-1 w-64 bg-white rounded-md shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
                     <div className="py-1">
@@ -128,7 +128,13 @@ export default function DashboardPage({ isDemoMode, onLogout }) {
                         onClick={() => navigate('/social')}
                         className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
                       >
-                        <span>👥</span> Social Collaboration
+                        <span>👥</span> Social Dashboard
+                      </button>
+                      <button
+                        onClick={() => navigate('/community')}
+                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                      >
+                        <span>🧑‍🤝‍🧑</span> Community Users
                       </button>
                       <div className="border-t border-gray-100 my-1"></div>
                       <div className="px-4 py-2 text-xs text-gray-500 font-medium">COLLABORATION FEATURES</div>
