@@ -8,7 +8,7 @@ import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Label } from '../ui/Label';
 import { Switch } from '../ui/Switch';
-import { Select } from '../ui/Select';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../ui/Select';
 import { Progress } from '../ui/Progress';
 import { Badge } from '../ui/Badge';
 
@@ -372,9 +372,14 @@ const PreferencesStep = ({ data, updateData }) => {
               value={data.user_preferences.appearance.theme}
               onValueChange={(value) => updatePreference('appearance', 'theme', value)}
             >
-              <option value="light">Light</option>
-              <option value="dark">Dark</option>
-              <option value="system">System</option>
+              <SelectTrigger>
+                <SelectValue placeholder="Select theme" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="light">Light</SelectItem>
+                <SelectItem value="dark">Dark</SelectItem>
+                <SelectItem value="system">System</SelectItem>
+              </SelectContent>
             </Select>
           </div>
         </div>
@@ -427,7 +432,7 @@ const GoalsStep = ({ data, updateData }) => {
               key={level}
               variant={data.goals.productivity_target === level ? 'default' : 'outline'}
               onClick={() => updateGoal('productivity_target', level)}
-              className="capitalize"
+              className="capitalize w-full" // Added w-full for better layout
             >
               {level}
             </Button>
@@ -437,13 +442,14 @@ const GoalsStep = ({ data, updateData }) => {
 
       <div>
         <Label>Focus Areas (select all that apply)</Label>
-        <div className="grid grid-cols-2 gap-2 mt-2">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2"> {/* Adjusted grid for responsiveness */}
           {focusAreas.map((area) => (
             <Button
               key={area}
               variant={(data.goals.focus_areas || []).includes(area) ? 'default' : 'outline'}
               onClick={() => toggleFocusArea(area)}
               size="sm"
+              className="w-full" // Added w-full for better layout
             >
               {area}
             </Button>

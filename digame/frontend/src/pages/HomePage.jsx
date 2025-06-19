@@ -4,6 +4,7 @@ import { Badge } from '../components/ui/Badge';
 import { Progress } from '../components/ui/Progress';
 import { Avatar } from '../components/ui/Avatar';
 import AuthForm from '../components/auth/AuthForm';
+import { Card, CardContent } from '../components/ui/Card';
 
 export default function HomePage({ onDemoAccess, onLogin }) {
   const [showOnboarding, setShowOnboarding] = useState(false);
@@ -44,12 +45,9 @@ export default function HomePage({ onDemoAccess, onLogin }) {
               </div>
               <span className="text-xl font-bold text-gray-900">Digame</span>
             </div>
-            <button 
-              onClick={() => setShowOnboarding(false)}
-              className="text-gray-500 hover:text-gray-700"
-            >
+          <Button variant="link" onClick={() => setShowOnboarding(false)}>
               ← Back
-            </button>
+          </Button>
           </div>
 
           {/* Onboarding Content */}
@@ -65,7 +63,8 @@ export default function HomePage({ onDemoAccess, onLogin }) {
 
             <div className="grid md:grid-cols-2 gap-8">
               {/* Demo Option */}
-              <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100 hover:shadow-2xl transition-shadow">
+            <Card className="rounded-2xl shadow-xl border border-gray-100 hover:shadow-2xl transition-shadow">
+              <CardContent className="p-8">
                 <div className="text-center mb-6">
                   <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
                     <span className="text-2xl">🚀</span>
@@ -112,62 +111,58 @@ export default function HomePage({ onDemoAccess, onLogin }) {
                 >
                   Launch Demo Dashboard
                 </Button>
-              </div>
+              </CardContent>
+            </Card>
 
-              {/* Sign Up Option */}
-              <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100 hover:shadow-2xl transition-shadow">
+            {/* Sign Up Option */}
+            <Card className="rounded-2xl shadow-xl border border-gray-100 hover:shadow-2xl transition-shadow">
+              <CardContent className="p-8">
                 <div className="text-center mb-6">
                   <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
                     <span className="text-2xl">🎯</span>
                   </div>
-                  <h3 className="text-2xl font-bold text-gray-900 mb-2">Create Your Twin</h3>
+                  <h3 className="text-2xl font-bold text-gray-900 mb-2">Try the Demo</h3>
                   <p className="text-gray-600">
-                    Build your personal digital professional twin with your own data and insights
+                    Experience the full platform with sample data and see how your digital twin works
                   </p>
                 </div>
 
                 <div className="space-y-4 mb-8">
                   <div className="flex items-center space-x-3">
-                    <div className="w-5 h-5 bg-purple-100 rounded-full flex items-center justify-center">
-                      <span className="text-purple-600 text-xs">✓</span>
+                    <div className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center">
+                      <span className="text-green-600 text-xs">✓</span>
                     </div>
-                    <span className="text-gray-700">Personal data tracking and analysis</span>
+                    <span className="text-gray-700">Interactive productivity dashboard</span>
                   </div>
                   <div className="flex items-center space-x-3">
-                    <div className="w-5 h-5 bg-purple-100 rounded-full flex items-center justify-center">
-                      <span className="text-purple-600 text-xs">✓</span>
+                    <div className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center">
+                      <span className="text-green-600 text-xs">✓</span>
                     </div>
-                    <span className="text-gray-700">Custom behavioral models</span>
+                    <span className="text-gray-700">Behavioral pattern analysis</span>
                   </div>
                   <div className="flex items-center space-x-3">
-                    <div className="w-5 h-5 bg-purple-100 rounded-full flex items-center justify-center">
-                      <span className="text-purple-600 text-xs">✓</span>
+                    <div className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center">
+                      <span className="text-green-600 text-xs">✓</span>
                     </div>
-                    <span className="text-gray-700">Career development planning</span>
+                    <span className="text-gray-700">Predictive insights and recommendations</span>
                   </div>
                   <div className="flex items-center space-x-3">
-                    <div className="w-5 h-5 bg-purple-100 rounded-full flex items-center justify-center">
-                      <span className="text-purple-600 text-xs">✓</span>
+                    <div className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center">
+                      <span className="text-green-600 text-xs">✓</span>
                     </div>
-                    <span className="text-gray-700">Enterprise-grade security</span>
+                    <span className="text-gray-700">No registration required</span>
                   </div>
                 </div>
 
-                <Button
-                  onClick={handleSignUp}
-                  variant="secondary"
-                  size="lg"
-                  className="w-full bg-purple-600 hover:bg-purple-700"
-                  icon="🎯"
-                >
                   Create Account
                 </Button>
                 <p className="text-center text-sm text-gray-500 mt-3">
                   Free 30-day trial • No credit card required
                 </p>
+              </CardContent>
+            </Card>
               </div>
             </div>
-          </div>
         </div>
       </div>
     );
@@ -234,10 +229,11 @@ export default function HomePage({ onDemoAccess, onLogin }) {
           </div>
 
           {/* Hero Image/Demo Preview */}
-          <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-4xl mx-auto">
-            <div className="bg-gray-50 rounded-lg p-6">
-              <div className="flex items-center space-x-2 mb-4">
-                <div className="w-3 h-3 bg-red-400 rounded-full"></div>
+          <Card className="rounded-2xl shadow-2xl max-w-4xl mx-auto">
+            <CardContent className="p-8">
+              <div className="bg-gray-50 rounded-lg p-6">
+                <div className="flex items-center space-x-2 mb-4">
+                  <div className="w-3 h-3 bg-red-400 rounded-full"></div>
                 <div className="w-3 h-3 bg-yellow-400 rounded-full"></div>
                 <div className="w-3 h-3 bg-green-400 rounded-full"></div>
                 <span className="text-sm text-gray-500 ml-4">Digame Dashboard Preview</span>
@@ -274,7 +270,8 @@ export default function HomePage({ onDemoAccess, onLogin }) {
                   <Progress value={45} className="w-3/4" showValue animated />
                 </div>
               </div>
-            </div>
+            </CardContent>
+          </Card>
           </div>
         </div>
       </div>
@@ -338,59 +335,59 @@ export default function HomePage({ onDemoAccess, onLogin }) {
           </div>
           
           <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-            <div className="bg-white p-6 rounded-lg shadow-sm">
-              <div className="flex items-center mb-4">
-                <Avatar
-                  name="Sarah Chen"
-                  status="online"
-                  className="mr-3"
-                />
-                <div>
-                  <div className="font-semibold text-gray-900">Sarah Chen</div>
-                  <div className="text-sm text-gray-600">Product Manager</div>
+            <Card className="rounded-lg shadow-sm">
+              <CardContent className="p-6">
+                <div className="flex items-center mb-4">
+                  <Avatar
+                    name="Sarah Chen"
+                  />
+                  <div>
+                    <div className="font-semibold text-gray-900">Sarah Chen</div>
+                    <div className="text-sm text-gray-600">Product Manager</div>
+                  </div>
                 </div>
-              </div>
-              <p className="text-gray-700 italic">
-                "Digame helped me identify productivity patterns I never knew existed.
-                I've increased my efficiency by 40% in just 3 months."
-              </p>
-            </div>
+                <p className="text-gray-700 italic">
+                  "Digame helped me identify productivity patterns I never knew existed.
+                  I've increased my efficiency by 40% in just 3 months."
+                </p>
+              </CardContent>
+            </Card>
             
-            <div className="bg-white p-6 rounded-lg shadow-sm">
-              <div className="flex items-center mb-4">
-                <Avatar
-                  name="Marcus Rodriguez"
-                  status="online"
-                  className="mr-3"
-                />
-                <div>
-                  <div className="font-semibold text-gray-900">Marcus Rodriguez</div>
-                  <div className="text-sm text-gray-600">Software Engineer</div>
+            <Card className="rounded-lg shadow-sm">
+              <CardContent className="p-6">
+                <div className="flex items-center mb-4">
+                  <Avatar
+                    name="Marcus Rodriguez"
+                  />
+                  <div>
+                    <div className="font-semibold text-gray-900">Marcus Rodriguez</div>
+                    <div className="text-sm text-gray-600">Software Engineer</div>
+                  </div>
                 </div>
-              </div>
-              <p className="text-gray-700 italic">
-                "The predictive insights are incredible. Digame predicted my promotion
-                6 months before it happened and helped me prepare perfectly."
-              </p>
-            </div>
+                <p className="text-gray-700 italic">
+                  "The predictive insights are incredible. Digame predicted my promotion
+                  6 months before it happened and helped me prepare perfectly."
+                </p>
+              </CardContent>
+            </Card>
             
-            <div className="bg-white p-6 rounded-lg shadow-sm">
-              <div className="flex items-center mb-4">
-                <Avatar
-                  name="Emily Watson"
-                  status="online"
-                  className="mr-3"
-                />
-                <div>
-                  <div className="font-semibold text-gray-900">Emily Watson</div>
-                  <div className="text-sm text-gray-600">Marketing Director</div>
+            <Card className="rounded-lg shadow-sm">
+              <CardContent className="p-6">
+                <div className="flex items-center mb-4">
+                  <Avatar
+                    name="Emily Watson"
+                  />
+                  <div>
+                    <div className="font-semibold text-gray-900">Emily Watson</div>
+                    <div className="text-sm text-gray-600">Marketing Director</div>
+                  </div>
                 </div>
-              </div>
-              <p className="text-gray-700 italic">
-                "My digital twin became my career coach. The personalized recommendations
-                led to a 60% salary increase within a year."
-              </p>
-            </div>
+                <p className="text-gray-700 italic">
+                  "My digital twin became my career coach. The personalized recommendations
+                  led to a 60% salary increase within a year."
+                </p>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </div>
