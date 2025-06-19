@@ -17,8 +17,7 @@ const ProductivityChart = ({ userId = 1 }) => {
   const [chartData, setChartData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [processedDataForDisplay, setProcessedDataForDisplay] = useState('');
-
+  // No longer need processedDataForDisplay, will render chart directly
 
   useEffect(() => {
     const fetchChartData = async () => {
@@ -37,7 +36,6 @@ const ProductivityChart = ({ userId = 1 }) => {
           throw new Error("Invalid data format from API.");
         }
 
-        // Process data: Count activities per day
         const countsByDay = data.reduce((acc, activity) => {
           if (!activity.timestamp) return acc;
           try {
@@ -52,12 +50,11 @@ const ProductivityChart = ({ userId = 1 }) => {
 
         const formattedChartData = Object.entries(countsByDay)
           .map(([date, count]) => ({ date, count }))
-          .sort((a, b) => new Date(a.date) - new Date(b.date)); // Sort by date
+          .sort((a, b) => new Date(a.date) - new Date(b.date))
+          .slice(-7); // Keep only last 7 days for simplicity
 
         setChartData(formattedChartData);
-        // For now, just display the processed data as a string for verification
-        setProcessedDataForDisplay(JSON.stringify(formattedChartData, null, 2));
-        console.log("Processed chart data:", formattedChartData);
+        console.log("Processed chart data for rendering:", formattedChartData);
 
       } catch (e) {
         console.error("Failed to fetch or process chart data:", e);
@@ -72,21 +69,48 @@ const ProductivityChart = ({ userId = 1 }) => {
     }
   }, [userId]);
 
+  // Basic Bar Chart Rendering
+  const renderSimpleBarChart = () => {
+    if (!chartData || chartData.length === 0) return <p className="text-sm text-gray-500">No data for chart.</p>;
+
+    const maxValue = Math.max(...chartData.map(d => d.count), 0);
+    const chartHeight = 150; // px
+    const barWidthPercentage = 80 / chartData.length; // Distribute bars across 80% of width
+
+    return (
+      <div className="flex justify-around items-end h-full w-full pt-4 px-2 border-t border-gray-200">
+        {chartData.map((item, index) => {
+          const barHeight = maxValue > 0 ? (item.count / maxValue) * chartHeight : 0;
+          return (
+            <div
+              key={item.date}
+              className="flex flex-col items-center"
+              style={{ width: \`\${barWidthPercentage}%\` }}
+            >
+              <div className="text-xs text-gray-700 mb-1">{item.count}</div>
+              <div
+                className="bg-blue-500 rounded-t"
+                style={{ height: \`\${barHeight}px\`, minHeight: '1px' }} // minHeight to show 0-value bars
+                title={\`\${item.date}: \${item.count} activities\`}
+              ></div>
+              <div className="text-xs text-gray-500 mt-1 transform rotate-[-45deg] whitespace-nowrap">
+                {item.date.substring(5)} {/* Show MM-DD */}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
   return (
     <div className="bg-white shadow rounded-lg p-4">
-      <h3 className="text-lg font-semibold mb-2 text-gray-700">Productivity Trend (Activities per Day)</h3>
+      <h3 className="text-lg font-semibold mb-2 text-gray-700">Productivity Trend (Activities per Day - Last 7 Days)</h3>
       {isLoading && <p className="text-gray-500">Loading chart data...</p>}
-      {error && <p className="text-red-500">Error loading chart data: {error}</p>}
-      {!isLoading && !error && chartData.length === 0 && (
-        <p className="text-sm text-gray-500">No activity data to display chart.</p>
-      )}
-      {!isLoading && !error && chartData.length > 0 && (
-        <div className="h-64 bg-gray-100 flex flex-col items-center justify-center rounded p-2">
-          <p className="text-gray-600 text-sm mb-2">Chart rendering would happen here.</p>
-          <p className="text-gray-500 text-xs">Data prepared for chart (see console for structure):</p>
-          <pre className="text-xs bg-gray-200 p-2 rounded overflow-auto max-h-40 w-full">
-            {processedDataForDisplay || "No data processed."}
-          </pre>
+      {error && <p className="text-sm text-red-500">Could not load chart data. (`${error}`)</p>}
+      {!isLoading && !error && (
+        <div className="h-48 bg-gray-50 rounded p-2 mt-2"> {/* Fixed height container for chart area */}
+          {renderSimpleBarChart()}
         </div>
       )}
     </div>

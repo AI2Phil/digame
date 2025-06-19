@@ -46,7 +46,7 @@ const ProductivityMetricCard = ({ userId = 1 }) => { // Assuming userId prop or 
       } catch (e) {
         console.error("Failed to fetch or process activities:", e);
         setError(e.message);
-        setMetric({ title: 'Activities Today', value: 'Error', unit: '' });
+        setMetric({ title: 'Activities Today', value: 'N/A', unit: '' });
       }
     };
 
@@ -66,7 +66,7 @@ const ProductivityMetricCard = ({ userId = 1 }) => { // Assuming userId prop or 
           {metric.unit && <span className="text-lg font-normal ml-1">{metric.unit}</span>}
         </p>
       )}
-      {error && <p className="text-xs text-red-400 mt-1">Failed to load metric.</p>}
+      {error && <p className="text-sm text-red-500 mt-2">Could not load data. (`${error}`)</p>}
     </div>
   );
 };

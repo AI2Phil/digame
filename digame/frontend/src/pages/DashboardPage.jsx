@@ -2,7 +2,8 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import ProductivityChart from '../components/dashboard/ProductivityChart';
 import ActivityBreakdown from '../components/dashboard/ActivityBreakdown';
-import { EnhancedProductivityMetricCard } from '../components/dashboard/ProductivityMetricCard';
+import ProductivityMetricCard from '../components/dashboard/ProductivityMetricCard';
+import RecentActivity from '../components/dashboard/RecentActivity';
 
 export default function DashboardPage({ isDemoMode, onLogout }) {
   const navigate = useNavigate();
@@ -318,7 +319,7 @@ export default function DashboardPage({ isDemoMode, onLogout }) {
 
         {/* Enhanced Stats Overview */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <EnhancedProductivityMetricCard
+          <ProductivityMetricCard userId={1}
             title="Productivity Score"
             value="87%"
             target={90}
@@ -338,7 +339,7 @@ export default function DashboardPage({ isDemoMode, onLogout }) {
             ]}
           />
 
-          <EnhancedProductivityMetricCard
+          <ProductivityMetricCard userId={1}
             title="Focus Time"
             value="6.2h"
             target={8}
@@ -358,7 +359,7 @@ export default function DashboardPage({ isDemoMode, onLogout }) {
             ]}
           />
 
-          <EnhancedProductivityMetricCard
+          <ProductivityMetricCard userId={1}
             title="Collaboration"
             value="8.4"
             target={10}
@@ -378,7 +379,7 @@ export default function DashboardPage({ isDemoMode, onLogout }) {
             ]}
           />
 
-          <EnhancedProductivityMetricCard
+          <ProductivityMetricCard userId={1}
             title="Growth Rate"
             value="+12%"
             change="Above average"
@@ -502,33 +503,7 @@ export default function DashboardPage({ isDemoMode, onLogout }) {
               </button>
             </div>
             <div className="space-y-4">
-              <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                  <span className="text-blue-600 text-sm">💻</span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 truncate">Code Review Session</p>
-                  <p className="text-xs text-gray-600">2 hours ago</p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-                <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
-                  <span className="text-green-600 text-sm">📞</span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 truncate">Team Standup</p>
-                  <p className="text-xs text-gray-600">4 hours ago</p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-                <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
-                  <span className="text-purple-600 text-sm">📚</span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 truncate">Learning Session</p>
-                  <p className="text-xs text-gray-600">Yesterday</p>
-                </div>
-              </div>
+              <RecentActivity userId={1} />
             </div>
           </div>
         </div>

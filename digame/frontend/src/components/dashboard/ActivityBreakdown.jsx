@@ -81,7 +81,7 @@ const ActivityBreakdown = ({ userId = 1 }) => {
     return (
       <div className="bg-white shadow rounded-lg p-4">
         <h3 className="text-lg font-semibold mb-3 text-gray-700">Activity Breakdown</h3>
-        <p className="text-red-500">Error loading breakdown: {error}</p>
+        <p className="text-sm text-red-500">Could not load activity breakdown. (`${error}`)</p>
       </div>
     );
   }

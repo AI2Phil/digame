@@ -64,7 +64,7 @@ const RecentActivity = ({ userId = 1, maxItems = 5 }) => { // Assuming userId pr
     return (
       <div className="bg-white shadow rounded-lg p-4">
         <h3 className="text-lg font-semibold mb-2 text-gray-700">Recent Activity</h3>
-        <p className="text-red-500">Error loading activities: {error}</p>
+        <p className="text-sm text-red-500">Could not load recent activities. (`${error}`)</p>
       </div>
     );
   }
