@@ -614,6 +614,66 @@ def test_update_tenant_direct_feature_override_language_learning_flag(tenant_ser
     assert updated_tenant.features.get("other_stuff") == "new_value"
 
 
+# --- Tests for "intelligent_task_prioritization" flag ---
+
+def test_create_tenant_intelligent_task_prioritization_flag_professional_tier(tenant_service: TenantService, mock_db_session: MagicMock):
+    created_tenant = tenant_service.create_tenant(name="TaskPro Tenant", admin_email="taskpro@example.com", admin_name="TaskPro Admin", subscription_tier="professional")
+    assert created_tenant.features.get("intelligent_task_prioritization") is True
+    assert created_tenant.features.get("language_learning_support") is True # Check other flags
+
+def test_create_tenant_intelligent_task_prioritization_flag_enterprise_tier(tenant_service: TenantService, mock_db_session: MagicMock):
+    created_tenant = tenant_service.create_tenant(name="TaskEnt Tenant", admin_email="taskent@example.com", admin_name="TaskEnt Admin", subscription_tier="enterprise")
+    assert created_tenant.features.get("intelligent_task_prioritization") is True
+
+def test_create_tenant_intelligent_task_prioritization_flag_basic_tier(tenant_service: TenantService, mock_db_session: MagicMock):
+    created_tenant = tenant_service.create_tenant(name="TaskBasic Tenant", admin_email="taskbasic@example.com", admin_name="TaskBasic Admin", subscription_tier="basic")
+    assert created_tenant.features.get("intelligent_task_prioritization") is False
+
+def test_update_tenant_tier_updates_intelligent_task_prioritization_flag(tenant_service: TenantService, mock_db_session: MagicMock):
+    initial_tenant_id = 14 # New ID
+    initial_tier = "basic"
+    mock_initial_tenant = TenantModel(
+        id=initial_tenant_id, name="TaskUpdate Tenant", subscription_tier=initial_tier,
+        features={"intelligent_task_prioritization": False, "language_learning_support": False, "generic_feature": "active"},
+        created_at=datetime.utcnow(), updated_at=datetime.utcnow()
+    )
+    mock_db_session.query(TenantModel).filter(TenantModel.id == initial_tenant_id).first.return_value = mock_initial_tenant
+
+    updated_tenant_ent = tenant_service.update_tenant(tenant_id=initial_tenant_id, updates={"subscription_tier": "enterprise"}, user_id=None)
+    assert updated_tenant_ent.subscription_tier == "enterprise"
+    assert updated_tenant_ent.features.get("intelligent_task_prioritization") is True
+    assert updated_tenant_ent.features.get("language_learning_support") is True # Also updated
+    assert updated_tenant_ent.features.get("generic_feature") == "active"
+
+    mock_db_session.commit.reset_mock()
+    mock_db_session.refresh.reset_mock()
+
+    updated_tenant_basic = tenant_service.update_tenant(tenant_id=initial_tenant_id, updates={"subscription_tier": "basic"}, user_id=None)
+    assert updated_tenant_basic.subscription_tier == "basic"
+    assert updated_tenant_basic.features.get("intelligent_task_prioritization") is False
+    assert updated_tenant_basic.features.get("language_learning_support") is False # Also updated
+    assert updated_tenant_basic.features.get("generic_feature") == "active"
+
+def test_update_tenant_direct_feature_override_intelligent_task_prioritization(tenant_service: TenantService, mock_db_session: MagicMock):
+    initial_tenant_id = 15 # New ID
+    initial_tier = "basic" # intelligent_task_prioritization would be False
+    mock_initial_tenant = TenantModel(
+        id=initial_tenant_id, name="TaskOverride Tenant", subscription_tier=initial_tier,
+        features={"intelligent_task_prioritization": False, "language_learning_support": False, "other_data": "value"},
+        created_at=datetime.utcnow(), updated_at=datetime.utcnow()
+    )
+    mock_db_session.query(TenantModel).filter(TenantModel.id == initial_tenant_id).first.return_value = mock_initial_tenant
+
+    updates = {"features": {"intelligent_task_prioritization": True, "other_data": "new_value"}}
+    updated_tenant = tenant_service.update_tenant(tenant_id=initial_tenant_id, updates=updates, user_id=None)
+
+    assert updated_tenant.subscription_tier == initial_tier
+    assert updated_tenant.features.get("intelligent_task_prioritization") is True # Overridden
+    # language_learning_support was not in updates["features"], so it should be re-evaluated based on current_tier ("basic")
+    assert updated_tenant.features.get("language_learning_support") is False # Should remain False
+    assert updated_tenant.features.get("other_data") == "new_value"
+
+
 # Ensure that the TenantService is initialized with a mock DB session.
 # The create_tenant method involves several DB operations: add, commit, refresh, and query for slug uniqueness.
 # The mock_db_session in the fixture is set up to handle the slug uniqueness check by default.

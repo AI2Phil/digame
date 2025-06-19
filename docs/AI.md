@@ -106,10 +106,27 @@ These systems are already implemented and form the backbone of many user-facing 
         *   **Vocabulary Definition:** Accessible via the `/ai/language/define` API endpoint, providing definitions and usage examples for words in various supported languages.
 *   **Current Status:** The initial backend infrastructure for Language Learning Support is implemented. This includes the system for users to store the `language_learning_api_key`, the mechanism for tenant-level feature enablement, and functional API endpoints for translation and definition lookups. These endpoints currently interface with a mock external language service. Frontend development is needed to allow users to interact with these language tools.
 
+## Workflow Automation & Task Management (Future Development - Initial Components)
+
+This category focuses on AI features designed to streamline workflows, automate routine tasks, and assist users in managing their responsibilities more effectively.
+
+### Intelligent Task Prioritization
+
+*   **User Journey Impact:** Assists users in managing their workload more effectively by automatically suggesting priority scores for their tasks. This helps users focus on what's most critical and timely, improving productivity and reducing the cognitive load of manual prioritization. This is particularly useful in Phase 3 (Active Monitoring & Learning) and Phase 4 (Growth & Development) as users manage an increasing number of tasks and goals.
+*   **Implementation Details (Multi-Tenant Context):**
+    *   **Tenant Enablement:** The availability of this feature is determined by the tenant's subscription tier (typically 'Professional' or 'Enterprise') and can be activated by tenant administrators. It is controlled by the `intelligent_task_prioritization` flag in the tenant's specific feature settings.
+    *   **API Key Requirement:** The current version of this feature utilizes internal heuristics to analyze and suggest task priorities. It **does not** require users to provide an API key for an external service. Future iterations may explore integration with external AI-driven prioritization engines, which could then involve user-provided API keys.
+    *   **Functionality:** When the feature is active for the tenant, users can request a re-prioritization of their active (non-completed, non-archived) tasks. This is done via the `/ai/tasks/prioritization/prioritize` API endpoint. The service returns a list of these tasks, each with its original priority score and a newly suggested `priority_score`. The request can also specify if these suggested scores should be automatically saved back to the tasks in the database.
+    *   **Heuristics Used:** The initial set of internal heuristics considers factors such as:
+        *   **Due Date Proximity:** Tasks that are overdue or due very soon receive a higher priority.
+        *   **Keywords:** The presence of terms like "urgent," "asap," or "important" in the task description can increase its priority.
+        *   **Task Status:** For example, tasks already 'in_progress' might be prioritized slightly higher than newly 'suggested' tasks.
+*   **Current Status:** The initial backend infrastructure for Intelligent Task Prioritization is implemented. This includes the internal heuristic logic, the mechanism for tenant-level feature enablement, and a functional API endpoint for users to trigger prioritization and optionally save the results. Frontend development is needed to allow users to easily invoke this feature and see the suggestions.
+
 *   **Natural Language Processing & Communication (Broader Suite - Future):**
     *   **User Journey Impact:** (Original text retained) In the Mastery & Leadership phase (Phase 5), features like communication style analysis (now partially implemented), meeting insights (backend implemented), email pattern analysis (backend implemented), and language learning support (backend implemented) can significantly enhance a leader's effectiveness and impact. AI-Powered Writing Assistance, Communication Style Analysis, Meeting Insights & Summaries, Email Pattern Analysis, and Language Learning Support are initial components of this broader suite.
-*   **Workflow Automation & Task Management (Intelligent Prioritization, Process Optimization):**
-    *   **User Journey Impact:** Helps users at all levels, but particularly those in Mastery & Leadership (Phase 5) managing complex projects or teams, to optimize workflows, automate routine tasks, and focus on strategic priorities.
+*   **Workflow Automation & Task Management (Intelligent Prioritization, Process Optimization - Broader Suite):**
+    *   **User Journey Impact:** Helps users at all levels, but particularly those in Mastery & Leadership (Phase 5) managing complex projects or teams, to optimize workflows, automate routine tasks, and focus on strategic priorities. Intelligent Task Prioritization is an initial component of this broader suite.
 *   **Advanced Simulation & Decision Support:**
     *   **User Journey Impact:** Provides powerful tools for leaders in Phase 5 to conduct scenario planning, predict decision impacts, and make more informed strategic choices, leveraging their fully developed digital twin.
 

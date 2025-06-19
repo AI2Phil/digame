@@ -36,6 +36,7 @@ __all__ = [
     "meeting_insights_service",
     "email_analysis_service",
     "language_learning_service",
+    "task_prioritization_service",
 ]
 
 from . import writing_assistance_service
@@ -43,3 +44,4 @@ from . import communication_style_service
 from . import meeting_insights_service
 from . import email_analysis_service
 from . import language_learning_service
+from . import task_prioritization_service
