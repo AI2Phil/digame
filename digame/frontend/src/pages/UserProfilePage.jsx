@@ -8,6 +8,7 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
+import { Textarea } from '../components/ui/Textarea'; // Assuming Textarea component exists
 import { Avatar } from '../components/ui/Avatar';
 import { Badge } from '../components/ui/Badge';
 import { Progress } from '../components/ui/Progress';
@@ -19,6 +20,9 @@ import GoalsManagementSection from '../components/profile/GoalsManagementSection
 import AchievementsSection from '../components/profile/AchievementsSection';
 import SettingsManagementSection from '../components/profile/SettingsManagementSection';
 import SocialProfileSection from '../components/profile/SocialProfileSection';
+import ProjectsManagementSection from '../components/profile/ProjectsManagementSection';
+import ExperienceManagementSection from '../components/profile/ExperienceManagementSection';
+import EducationManagementSection from '../components/profile/EducationManagementSection';
 
 const UserProfilePage = () => {
   const [user, setUser] = useState(null);
@@ -44,8 +48,16 @@ const UserProfilePage = () => {
         apiService.getApiKeys()
       ]);
 
-      setUser(userData);
-      setEditData(userData);
+      const initialEditData = {
+        ...userData,
+        detailedBio: userData.detailedBio || '',
+        contactInfo: userData.contactInfo || { linkedin: '', website: '', professionalEmail: '' },
+        projects: userData.projects || [],
+        experience: userData.experience || [],
+        education: userData.education || [],
+      };
+      setUser(initialEditData); // User state should also reflect the full structure
+      setEditData(initialEditData);
       setGoals(goalsData || []);
       setAchievements(achievementsData || []);
       setApiKeys(apiKeysData || []);
@@ -70,6 +82,7 @@ const UserProfilePage = () => {
   };
 
   const handleCancelEdit = () => {
+    // User state should already have the full structure from loadUserProfile
     setEditData(user);
     setIsEditing(false);
   };
@@ -141,6 +154,25 @@ const UserProfilePage = () => {
                 setEditData={setEditData}
               />
             </div>
+            {/* New Repeatable Sections */}
+            <ProjectsManagementSection
+              projects={editData.projects}
+              setEditData={setEditData}
+              isEditing={isEditing}
+              userData={user}
+            />
+            <ExperienceManagementSection
+              experience={editData.experience}
+              setEditData={setEditData}
+              isEditing={isEditing}
+              userData={user}
+            />
+            <EducationManagementSection
+              education={editData.education}
+              setEditData={setEditData}
+              isEditing={isEditing}
+              userData={user}
+            />
             <ActivitySummaryCard user={user} />
           </TabsContent>
 
@@ -308,18 +340,55 @@ const PersonalInfoCard = ({ user, isEditing, editData, setEditData }) => (
             onChange={(e) => setEditData(prev => ({ ...prev, timezone: e.target.value }))}
             placeholder="Timezone"
           />
+          <Textarea
+            value={editData.detailedBio || ''}
+            onChange={(e) => setEditData(prev => ({ ...prev, detailedBio: e.target.value }))}
+            placeholder="Detailed Bio"
+            rows={4}
+          />
+          <h3 className="text-sm font-medium text-gray-700 pt-2">Contact Information</h3>
+          <Input
+            value={editData.contactInfo?.linkedin || ''}
+            onChange={(e) => setEditData(prev => ({ ...prev, contactInfo: { ...prev.contactInfo, linkedin: e.target.value } }))}
+            placeholder="LinkedIn Profile URL"
+          />
+          <Input
+            value={editData.contactInfo?.website || ''}
+            onChange={(e) => setEditData(prev => ({ ...prev, contactInfo: { ...prev.contactInfo, website: e.target.value } }))}
+            placeholder="Personal Website/Portfolio"
+          />
+          <Input
+            value={editData.contactInfo?.professionalEmail || ''}
+            onChange={(e) => setEditData(prev => ({ ...prev, contactInfo: { ...prev.contactInfo, professionalEmail: e.target.value } }))}
+            placeholder="Professional Email"
+            type="email"
+          />
         </>
       ) : (
         <>
           <InfoItem icon={User} label="Full Name" value={`${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Not provided'} />
           <InfoItem icon={Phone} label="Phone" value={user.phone || 'Not provided'} />
+          <InfoItem icon={Mail} label="Professional Email" value={user.contactInfo?.professionalEmail || 'Not provided'} />
           <InfoItem icon={MapPin} label="Location" value={user.location || 'Not provided'} />
           <InfoItem icon={Globe} label="Timezone" value={user.timezone || 'Not provided'} />
           <InfoItem icon={Calendar} label="Member Since" value={new Date(user.created_at).toLocaleDateString()} />
+          {user.detailedBio && <InfoSection title="Detailed Bio" content={user.detailedBio} />}
+          <h3 className="text-sm font-medium text-gray-700 pt-4">Contact Information</h3>
+          <InfoItem icon={Globe} label="Website" value={user.contactInfo?.website || 'Not provided'} />
+          <InfoItem icon={User} label="LinkedIn" value={user.contactInfo?.linkedin || 'Not provided'} />
+
         </>
       )}
     </CardContent>
   </Card>
+);
+
+// Helper for sections like Detailed Bio
+const InfoSection = ({ title, content }) => (
+  <div>
+    <h4 className="text-sm font-medium text-gray-600">{title}</h4>
+    <p className="text-gray-700 whitespace-pre-wrap">{content}</p>
+  </div>
 );
 
 // Professional Info Card Component
