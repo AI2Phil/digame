@@ -367,15 +367,19 @@ const PreferencesStep = ({ data, updateData }) => {
         </h3>
         <div className="space-y-4">
           <div>
-            <Label>Theme</Label>
+            <Label htmlFor="theme-preference">Theme</Label>
             <Select
+              id="theme-preference"
               value={data.user_preferences.appearance.theme}
-              onValueChange={(value) => updatePreference('appearance', 'theme', value)}
-            >
-              <option value="light">Light</option>
-              <option value="dark">Dark</option>
-              <option value="system">System</option>
-            </Select>
+              onChange={(value) => updatePreference('appearance', 'theme', value)}
+              options={[
+                { value: 'light', label: 'Light' },
+                { value: 'dark', label: 'Dark' },
+                { value: 'system', label: 'System' },
+              ]}
+              placeholder="Select a theme..."
+              // className="mt-1" // Add margin if Label doesn't provide enough or if Select needs it
+            />
           </div>
         </div>
       </div>

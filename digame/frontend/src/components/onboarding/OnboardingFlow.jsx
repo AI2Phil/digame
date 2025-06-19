@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import { Progress } from '../ui/Progress';
-import Button from '../ui/Button';
-import { Card } from '../ui/Card';
-import Input from '../ui/Input';
-import { Badge } from '../ui/Badge';
+import { Progress } from '../../ui/Progress'; // Path corrected
+import Button from '../../ui/Button';       // Path corrected
+import { Card } from '../../ui/Card';         // Path corrected
+import Input from '../../ui/Input';        // Path corrected
+import { Badge } from '../../ui/Badge';       // Path corrected
+import { Switch } from '../../ui/Switch';   // Added import
+import { Label } from '../../ui/Label';     // Added import
 
 const OnboardingFlow = ({ onComplete, onSkip }) => {
   const [currentStep, setCurrentStep] = useState(0);
@@ -489,67 +491,46 @@ const PreferencesStep = ({ data, onNext, onPrevious, canGoBack }) => {
         {/* Notifications */}
         <div className="flex items-start justify-between p-4 bg-gray-50 rounded-lg">
           <div className="flex-1">
-            <h3 className="font-medium text-gray-900">Smart Notifications</h3>
+            <Label className="font-medium text-gray-900">Smart Notifications</Label>
             <p className="text-sm text-gray-600 mt-1">
               Receive insights, reminders, and achievement notifications
             </p>
           </div>
-          <button
-            onClick={() => updatePreference('notifications', !preferences.notifications)}
-            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-              preferences.notifications ? 'bg-blue-600' : 'bg-gray-200'
-            }`}
-          >
-            <span
-              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                preferences.notifications ? 'translate-x-6' : 'translate-x-1'
-              }`}
-            />
-          </button>
+          <Switch
+            checked={preferences.notifications}
+            onCheckedChange={(isChecked) => updatePreference('notifications', isChecked)}
+            aria-label="Smart Notifications toggle"
+          />
         </div>
 
         {/* Data Collection */}
         <div className="flex items-start justify-between p-4 bg-gray-50 rounded-lg">
           <div className="flex-1">
-            <h3 className="font-medium text-gray-900">Enhanced Analytics</h3>
+            <Label className="font-medium text-gray-900">Enhanced Analytics</Label>
             <p className="text-sm text-gray-600 mt-1">
               Allow detailed activity tracking for better insights and recommendations
             </p>
           </div>
-          <button
-            onClick={() => updatePreference('dataCollection', !preferences.dataCollection)}
-            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-              preferences.dataCollection ? 'bg-blue-600' : 'bg-gray-200'
-            }`}
-          >
-            <span
-              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                preferences.dataCollection ? 'translate-x-6' : 'translate-x-1'
-              }`}
-            />
-          </button>
+          <Switch
+            checked={preferences.dataCollection}
+            onCheckedChange={(isChecked) => updatePreference('dataCollection', isChecked)}
+            aria-label="Enhanced Analytics toggle"
+          />
         </div>
 
         {/* Public Profile */}
         <div className="flex items-start justify-between p-4 bg-gray-50 rounded-lg">
           <div className="flex-1">
-            <h3 className="font-medium text-gray-900">Public Profile</h3>
+            <Label className="font-medium text-gray-900">Public Profile</Label>
             <p className="text-sm text-gray-600 mt-1">
               Make your achievements and progress visible to other users for networking
             </p>
           </div>
-          <button
-            onClick={() => updatePreference('publicProfile', !preferences.publicProfile)}
-            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-              preferences.publicProfile ? 'bg-blue-600' : 'bg-gray-200'
-            }`}
-          >
-            <span
-              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                preferences.publicProfile ? 'translate-x-6' : 'translate-x-1'
-              }`}
-            />
-          </button>
+          <Switch
+            checked={preferences.publicProfile}
+            onCheckedChange={(isChecked) => updatePreference('publicProfile', isChecked)}
+            aria-label="Public Profile toggle"
+          />
         </div>
       </div>
 

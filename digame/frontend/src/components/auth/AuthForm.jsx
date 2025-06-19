@@ -1,13 +1,19 @@
-import React, { useState } from 'react';
-import Button from '../ui/Button';
-import Input from '../ui/Input';
+import React, { useState, useMemo } from 'react';
+import { X } from 'lucide-react';
+import Button from '../ui/Button'; // Will be used for non-submit buttons
+// Input from '../ui/Input' is no longer needed directly, FormInput will be used.
 import { Card } from '../ui/Card';
 import { Toast } from '../ui/Toast';
+import { Form, FormField, FormLabel, FormInput, FormSubmitButton } from '../ui/Form';
 
 const AuthForm = ({ onLogin, onClose }) => {
   const [isLogin, setIsLogin] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [toast, setToast] = useState(null);
+
+  // formData state is still needed for defaultValues and for fields not directly part of the form schema at all times (like confirmPassword)
+  // Or, more cleanly, defaultValues can be set directly in the <Form> component.
+  // For simplicity, we'll keep formData for initializing defaultValues.
   const [formData, setFormData] = useState({
     username: '',
     email: '',
@@ -17,70 +23,49 @@ const AuthForm = ({ onLogin, onClose }) => {
     lastName: ''
   });
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  const validateForm = () => {
-    const errors = [];
-
-    if (!formData.username.trim()) {
-      errors.push('Username is required');
-    }
-
-    if (!isLogin && !formData.email.trim()) {
-      errors.push('Email is required');
-    }
-
-    if (!formData.password) {
-      errors.push('Password is required');
-    }
-
-    if (formData.password.length < 6) {
-      errors.push('Password must be at least 6 characters');
-    }
-
-    if (!isLogin && formData.password !== formData.confirmPassword) {
-      errors.push('Passwords do not match');
-    }
-
-    if (!isLogin && formData.email && !isValidEmail(formData.email)) {
-      errors.push('Please enter a valid email address');
-    }
-
-    return errors;
-  };
+  // handleInputChange is no longer needed as FormInput handles its own state via context.
 
   const isValidEmail = (email) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    const errors = validateForm();
-    if (errors.length > 0) {
-      setToast({
-        type: 'error',
-        title: 'Validation Error',
-        message: errors.join(', '),
-        duration: 5000
-      });
-      return;
+  // Define validation schema for the Form component
+  const authValidationSchema = useMemo(() => {
+    const schema = {
+      username: { required: 'Username is required' },
+      password: {
+        required: 'Password is required',
+        minLength: 6 // Assuming Form.jsx supports minLength like this
+      },
+    };
+    if (!isLogin) {
+      schema.email = {
+        required: 'Email is required',
+        pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, // Assuming Form.jsx supports pattern like this
+        patternMessage: 'Please enter a valid email address'
+      };
+      schema.confirmPassword = {
+        required: 'Confirm Password is required',
+        validate: (value, values) => value === values.password || 'Passwords do not match'
+      };
+      // firstName and lastName are optional, so no validation unless specified
     }
+    return schema;
+  }, [isLogin]);
 
+
+  // handleSubmit now receives values from the Form component
+  const handleSubmit = async (values) => {
+    // validateForm() is handled by the Form component via the validation schema.
+    // e.preventDefault() is handled by the Form component.
     setIsLoading(true);
 
     try {
       if (isLogin) {
-        await handleLogin();
+        await handleLogin(values);
       } else {
-        await handleRegister();
+        await handleRegister(values);
       }
     } catch (error) {
       console.error('Auth error:', error);
@@ -95,10 +80,10 @@ const AuthForm = ({ onLogin, onClose }) => {
     }
   };
 
-  const handleLogin = async () => {
+  const handleLogin = async (values) => {
     const loginData = new FormData();
-    loginData.append('username', formData.username);
-    loginData.append('password', formData.password);
+    loginData.append('username', values.username);
+    loginData.append('password', values.password);
 
     const response = await fetch('http://localhost:8000/auth/login', {
       method: 'POST',
@@ -125,13 +110,13 @@ const AuthForm = ({ onLogin, onClose }) => {
     }, 1000);
   };
 
-  const handleRegister = async () => {
+  const handleRegister = async (values) => {
     const registerData = {
-      username: formData.username,
-      email: formData.email,
-      password: formData.password,
-      first_name: formData.firstName || null,
-      last_name: formData.lastName || null
+      username: values.username,
+      email: values.email,
+      password: values.password,
+      first_name: values.firstName || null,
+      last_name: values.lastName || null
     };
 
     const response = await fetch('http://localhost:8000/auth/register', {
@@ -171,14 +156,15 @@ const AuthForm = ({ onLogin, onClose }) => {
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
         <Card className="w-full max-w-md p-6 relative">
           {/* Close button */}
-          <button
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={onClose}
             className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
+            aria-label="Close"
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
+            <X className="h-6 w-6" />
+          </Button>
 
           {/* Header */}
           <div className="text-center mb-6">
@@ -200,113 +186,84 @@ const AuthForm = ({ onLogin, onClose }) => {
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
-                Username
-              </label>
-              <Input
+          <Form
+            onSubmit={handleSubmit}
+            className="space-y-4"
+            defaultValues={formData}
+            validation={authValidationSchema}
+          >
+            <FormField name="username" className="space-y-1">
+              <FormLabel htmlFor="username">Username</FormLabel>
+              <FormInput
                 id="username"
-                name="username"
                 type="text"
-                value={formData.username}
-                onChange={handleInputChange}
                 placeholder="Enter your username"
                 required
                 disabled={isLoading}
               />
-            </div>
+            </FormField>
 
             {!isLogin && (
-              <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                  Email Address
-                </label>
-                <Input
+              <FormField name="email" className="space-y-1">
+                <FormLabel htmlFor="email">Email Address</FormLabel>
+                <FormInput
                   id="email"
-                  name="email"
                   type="email"
-                  value={formData.email}
-                  onChange={handleInputChange}
                   placeholder="Enter your email"
                   required
                   disabled={isLoading}
                 />
-              </div>
+              </FormField>
             )}
 
             {!isLogin && (
               <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-1">
-                    First Name
-                  </label>
-                  <Input
+                <FormField name="firstName" className="space-y-1">
+                  <FormLabel htmlFor="firstName">First Name</FormLabel>
+                  <FormInput
                     id="firstName"
-                    name="firstName"
                     type="text"
-                    value={formData.firstName}
-                    onChange={handleInputChange}
                     placeholder="First name"
                     disabled={isLoading}
                   />
-                </div>
-                <div>
-                  <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-1">
-                    Last Name
-                  </label>
-                  <Input
+                </FormField>
+                <FormField name="lastName" className="space-y-1">
+                  <FormLabel htmlFor="lastName">Last Name</FormLabel>
+                  <FormInput
                     id="lastName"
-                    name="lastName"
                     type="text"
-                    value={formData.lastName}
-                    onChange={handleInputChange}
                     placeholder="Last name"
                     disabled={isLoading}
                   />
-                </div>
+                </FormField>
               </div>
             )}
 
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-                Password
-              </label>
-              <Input
+            <FormField name="password" className="space-y-1">
+              <FormLabel htmlFor="password">Password</FormLabel>
+              <FormInput
                 id="password"
-                name="password"
                 type="password"
-                value={formData.password}
-                onChange={handleInputChange}
                 placeholder="Enter your password"
                 required
                 disabled={isLoading}
               />
-            </div>
+            </FormField>
 
             {!isLogin && (
-              <div>
-                <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
-                  Confirm Password
-                </label>
-                <Input
+              <FormField name="confirmPassword" className="space-y-1">
+                <FormLabel htmlFor="confirmPassword">Confirm Password</FormLabel>
+                <FormInput
                   id="confirmPassword"
-                  name="confirmPassword"
                   type="password"
-                  value={formData.confirmPassword}
-                  onChange={handleInputChange}
                   placeholder="Confirm your password"
                   required
                   disabled={isLoading}
                 />
-              </div>
+              </FormField>
             )}
 
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={isLoading}
-            >
+            <FormSubmitButton className="w-full" disabled={isLoading}>
               {isLoading ? (
                 <div className="flex items-center justify-center space-x-2">
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
@@ -315,21 +272,22 @@ const AuthForm = ({ onLogin, onClose }) => {
               ) : (
                 isLogin ? 'Sign In' : 'Create Account'
               )}
-            </Button>
-          </form>
+            </FormSubmitButton>
+          </Form>
 
           {/* Toggle between login and register */}
           <div className="mt-6 text-center">
             <p className="text-gray-600">
               {isLogin ? "Don't have an account?" : "Already have an account?"}
-              <button
+              <Button
                 type="button"
+                variant="link"
                 onClick={() => setIsLogin(!isLogin)}
-                className="ml-2 text-blue-600 hover:text-blue-700 font-medium transition-colors"
+                className="ml-2 font-medium" // text-blue-600 hover:text-blue-700 is handled by variant="link"
                 disabled={isLoading}
               >
                 {isLogin ? 'Create one' : 'Sign in'}
-              </button>
+              </Button>
             </p>
           </div>
 
