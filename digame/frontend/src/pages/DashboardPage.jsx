@@ -8,6 +8,8 @@ import { Button } from '../components/ui/Button'; // Ensure Button is imported i
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuLabel } from '../components/ui/DropdownMenu';
 import { Badge } from '../components/ui/Badge';
 import { Avatar, AvatarFallback } from '../components/ui/Avatar';
+import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle, SheetClose, SheetFooter, SheetDescription } from '../components/ui/Sheet';
+import { Separator } from '../components/ui/Separator'; // For visual separation in the sheet
 
 export default function DashboardPage({ isDemoMode, onLogout }) {
   const navigate = useNavigate();
@@ -189,9 +191,117 @@ export default function DashboardPage({ isDemoMode, onLogout }) {
               
               {/* Mobile menu button */}
               <div className="md:hidden">
-                <Button variant="ghost" size="icon" className="text-gray-600 hover:text-gray-900 p-2">
-                  <span className="text-lg">☰</span>
-                </Button>
+                <Sheet>
+                  <SheetTrigger asChild>
+                    <Button variant="ghost" size="icon" className="text-gray-600 hover:text-gray-900 p-2">
+                      <span className="text-lg">☰</span>
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent side="left" className="w-[300px] sm:w-[400px] p-0 flex flex-col">
+                    <SheetHeader className="p-6 pb-4">
+                      <SheetTitle>
+                        <div className="flex items-center space-x-2">
+                          <div className="digame-logo w-7 h-7">
+                            <span className="text-white font-bold text-xs">D</span>
+                          </div>
+                          <span className="text-lg font-bold text-gray-900">Digame Menu</span>
+                        </div>
+                      </SheetTitle>
+                    </SheetHeader>
+                    <Separator />
+                    <div className="flex-grow overflow-y-auto p-6 space-y-2">
+                      <SheetClose asChild>
+                        <Button variant="ghost" className="w-full justify-start text-base py-3" onClick={() => navigate('/dashboard')}>
+                          <span className="mr-3 text-lg">🏠</span> Dashboard
+                        </Button>
+                      </SheetClose>
+
+                      {/* Analytics Section */}
+                      <div className="pt-2">
+                        <h4 className="px-3 py-2 text-sm font-semibold text-gray-500">Analytics</h4>
+                        <SheetClose asChild><Button variant="ghost" className="w-full justify-start" onClick={() => navigate('/analytics/web')}><span className="mr-2">🌐</span> Web Analytics</Button></SheetClose>
+                        <SheetClose asChild><Button variant="ghost" className="w-full justify-start" onClick={() => navigate('/analytics/mobile')}><span className="mr-2">📱</span> Mobile Analytics</Button></SheetClose>
+                        <div className="px-3 py-2 text-xs font-medium text-gray-400">AI-POWERED INSIGHTS</div>
+                        <SheetClose asChild><Button variant="ghost" className="w-full justify-start" onClick={() => navigate('/analytics/behavioral')}><span className="mr-2">🧠</span> Behavioral Analytics</Button></SheetClose>
+                        <SheetClose asChild><Button variant="ghost" className="w-full justify-start" onClick={() => navigate('/analytics/predictive')}><span className="mr-2">🔮</span> Predictive Analytics</Button></SheetClose>
+                      </div>
+                      <Separator />
+
+                      {/* AI Tools Section */}
+                      <div className="pt-2">
+                        <h4 className="px-3 py-2 text-sm font-semibold text-gray-500">AI Tools</h4>
+                        <SheetClose asChild><Button variant="ghost" className="w-full justify-start" onClick={() => navigate('/ai-tools')}><span className="mr-2">🛠️</span> AI Tools Hub</Button></SheetClose>
+                        <div className="px-3 py-2 text-xs font-medium text-gray-400">WRITING & CONTENT</div>
+                        <SheetClose asChild><Button variant="ghost" className="w-full justify-start" onClick={() => navigate('/ai-tools?tab=writing')}><span className="mr-2">✍️</span> Writing Assistance</Button></SheetClose>
+                        <div className="px-3 py-2 text-xs font-medium text-gray-400">TASK MANAGEMENT</div>
+                        <SheetClose asChild><Button variant="ghost" className="w-full justify-start" onClick={() => navigate('/tasks')}><span className="mr-2">📋</span> AI Task Suggestions</Button></SheetClose>
+                        <div className="px-3 py-2 text-xs font-medium text-gray-400">INSIGHTS & ANALYTICS</div>
+                        <SheetClose asChild><Button variant="ghost" className="w-full justify-start" onClick={() => navigate('/ai-tools?tab=insights')}><span className="mr-2">🧠</span> AI Insights</Button></SheetClose>
+                        <SheetClose asChild><Button variant="ghost" className="w-full justify-start" onClick={() => navigate('/ai-tools?tab=coaching')}><span className="mr-2">🎯</span> AI Coaching</Button></SheetClose>
+                      </div>
+                      <Separator />
+
+                      {/* Social Section */}
+                      <div className="pt-2">
+                        <h4 className="px-3 py-2 text-sm font-semibold text-gray-500">Social</h4>
+                        <SheetClose asChild><Button variant="ghost" className="w-full justify-start" onClick={() => navigate('/social')}><span className="mr-2">👥</span> Social Collaboration</Button></SheetClose>
+                        <div className="px-3 py-2 text-xs font-medium text-gray-400">COLLABORATION FEATURES</div>
+                        <SheetClose asChild><Button variant="ghost" className="w-full justify-start" onClick={() => navigate('/social?tab=peer-matching')}><span className="mr-2">🧠</span> AI Peer Matching</Button></SheetClose>
+                        <SheetClose asChild><Button variant="ghost" className="w-full justify-start" onClick={() => navigate('/social?tab=mentorship')}><span className="mr-2">🎓</span> Mentorship Programs</Button></SheetClose>
+                        <SheetClose asChild><Button variant="ghost" className="w-full justify-start" onClick={() => navigate('/social?tab=projects')}><span className="mr-2">🎯</span> Project Collaboration</Button></SheetClose>
+                        <SheetClose asChild><Button variant="ghost" className="w-full justify-start" onClick={() => navigate('/social?tab=teams')}><span className="mr-2">📈</span> Team Analytics</Button></SheetClose>
+                        <SheetClose asChild><Button variant="ghost" className="w-full justify-start" onClick={() => navigate('/social?tab=industry')}><span className="mr-2">🏢</span> Industry Networking</Button></SheetClose>
+                      </div>
+                      <Separator />
+
+                      {/* Tasks Section */}
+                      <div className="pt-2">
+                        <h4 className="px-3 py-2 text-sm font-semibold text-gray-500">Tasks</h4>
+                        <SheetClose asChild><Button variant="ghost" className="w-full justify-start" onClick={() => navigate('/tasks')}><span className="mr-2">📋</span> Task Management</Button></SheetClose>
+                        <div className="px-3 py-2 text-xs font-medium text-gray-400">AI-POWERED FEATURES</div>
+                        <SheetClose asChild><Button variant="ghost" className="w-full justify-start" onClick={() => navigate('/tasks?tab=suggestions')}><span className="mr-2">🤖</span> AI Task Suggestions</Button></SheetClose>
+                        <SheetClose asChild><Button variant="ghost" className="w-full justify-start" onClick={() => navigate('/tasks?tab=automation')}><span className="mr-2">⚡</span> Process Automation</Button></SheetClose>
+                        <SheetClose asChild><Button variant="ghost" className="w-full justify-start" onClick={() => navigate('/tasks?tab=insights')}><span className="mr-2">📊</span> Task Analytics</Button></SheetClose>
+                      </div>
+                      <Separator />
+
+                      {/* Enterprise Section */}
+                      <div className="pt-2">
+                        <h4 className="px-3 py-2 text-sm font-semibold text-gray-500">Enterprise</h4>
+                        <SheetClose asChild><Button variant="ghost" className="w-full justify-start" onClick={() => navigate('/enterprise')}><span className="mr-2">🏢</span> Enterprise Dashboard</Button></SheetClose>
+                        <div className="px-3 py-2 text-xs font-medium text-gray-400">AI ENTERPRISE FEATURES</div>
+                        <SheetClose asChild><Button variant="ghost" className="w-full justify-start" onClick={() => navigate('/enterprise?tab=ai-features')}><span className="mr-2">🤖</span> AI Feature Management</Button></SheetClose>
+                        <SheetClose asChild><Button variant="ghost" className="w-full justify-start" onClick={() => navigate('/enterprise?tab=tenants')}><span className="mr-2">🏢</span> Tenant Management</Button></SheetClose>
+                        <SheetClose asChild><Button variant="ghost" className="w-full justify-start" onClick={() => navigate('/enterprise?tab=security')}><span className="mr-2">🔒</span> Security & Compliance</Button></SheetClose>
+                        <div className="px-3 py-2 text-xs font-medium text-gray-400">ANALYTICS & INSIGHTS</div>
+                        <SheetClose asChild><Button variant="ghost" className="w-full justify-start" onClick={() => navigate('/enterprise?tab=overview')}><span className="mr-2">📊</span> Enterprise Analytics</Button></SheetClose>
+                      </div>
+                      <Separator />
+
+                      <SheetClose asChild>
+                        <Button variant="ghost" className="w-full justify-start text-base py-3" onClick={() => navigate('/reports')}>
+                          <span className="mr-3 text-lg">📋</span> Reports
+                        </Button>
+                      </SheetClose>
+                    </div>
+                    <SheetFooter className="p-6 pt-4 border-t border-gray-200">
+                      <div className="flex items-center mb-4">
+                        <Avatar className="w-10 h-10 mr-3">
+                          <AvatarFallback className="text-base">👤</AvatarFallback>
+                        </Avatar>
+                        <div>
+                           <p className="text-sm font-medium text-gray-900">{isDemoMode ? "Demo User" : "User Name"}</p> {/* Replace with actual user name if available */}
+                           {isDemoMode && <Badge variant="outline">Demo Account</Badge>}
+                        </div>
+                      </div>
+                      <SheetClose asChild>
+                        <Button variant="outline" className="w-full" onClick={onLogout}>
+                          {isDemoMode ? 'Exit Demo' : 'Logout'}
+                        </Button>
+                      </SheetClose>
+                    </SheetFooter>
+                  </SheetContent>
+                </Sheet>
               </div>
               
               <div className="flex items-center space-x-3">

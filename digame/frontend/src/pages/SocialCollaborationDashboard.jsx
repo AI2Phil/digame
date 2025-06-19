@@ -355,10 +355,11 @@ const PeerMatchingSection = ({ peerMatches, onConnect }) => (
 
 // Peer Match Card Component
 const PeerMatchCard = ({ match, onConnect, compact = false }) => (
-  <div className={`p-4 border rounded-lg hover:shadow-md transition-shadow ${compact ? 'bg-gray-50' : 'bg-white'}`}>
-    <div className="flex items-start justify-between">
-      <div className="flex items-start gap-4">
-        <Avatar className="w-12 h-12">
+  <Card className={`hover:shadow-md transition-shadow ${compact ? 'bg-gray-50' : 'bg-white'}`}>
+    <CardContent className="p-4">
+      <div className="flex items-start justify-between">
+        <div className="flex items-start gap-4">
+          <Avatar className="w-12 h-12">
           <img src={match.avatar || '/default-avatar.png'} alt={match.name} />
         </Avatar>
         <div className="flex-1">
@@ -403,9 +404,10 @@ const PeerMatchCard = ({ match, onConnect, compact = false }) => (
             Message
           </Button>
         )}
+        </div>
       </div>
-    </div>
-  </div>
+    </CardContent>
+  </Card>
 );
 
 // Mentorship Section Component
@@ -480,38 +482,42 @@ const MentorshipSection = ({ mentorshipData, onStartMentorship }) => (
 
 // Mentor Card Component
 const MentorCard = ({ mentor, onStart }) => (
-  <div className="flex items-center justify-between p-3 border rounded-lg">
-    <div className="flex items-center gap-3">
-      <Avatar className="w-10 h-10">
-        <img src={mentor.avatar || '/default-avatar.png'} alt={mentor.name} />
-      </Avatar>
-      <div>
-        <h5 className="font-medium">{mentor.name}</h5>
-        <p className="text-sm text-gray-600">{mentor.expertise}</p>
+  <Card>
+    <CardContent className="flex items-center justify-between p-3">
+      <div className="flex items-center gap-3">
+        <Avatar className="w-10 h-10">
+          <img src={mentor.avatar || '/default-avatar.png'} alt={mentor.name} />
+        </Avatar>
+        <div>
+          <h5 className="font-medium">{mentor.name}</h5>
+          <p className="text-sm text-gray-600">{mentor.expertise}</p>
+        </div>
       </div>
-    </div>
-    <Button size="sm" onClick={onStart}>
-      Request
-    </Button>
-  </div>
+      <Button size="sm" onClick={onStart}>
+        Request
+      </Button>
+    </CardContent>
+  </Card>
 );
 
 // Mentee Card Component
 const MenteeCard = ({ mentee, onStart }) => (
-  <div className="flex items-center justify-between p-3 border rounded-lg">
-    <div className="flex items-center gap-3">
-      <Avatar className="w-10 h-10">
-        <img src={mentee.avatar || '/default-avatar.png'} alt={mentee.name} />
-      </Avatar>
-      <div>
-        <h5 className="font-medium">{mentee.name}</h5>
-        <p className="text-sm text-gray-600">Seeking guidance in {mentee.learningArea}</p>
+  <Card>
+    <CardContent className="flex items-center justify-between p-3">
+      <div className="flex items-center gap-3">
+        <Avatar className="w-10 h-10">
+          <img src={mentee.avatar || '/default-avatar.png'} alt={mentee.name} />
+        </Avatar>
+        <div>
+          <h5 className="font-medium">{mentee.name}</h5>
+          <p className="text-sm text-gray-600">Seeking guidance in {mentee.learningArea}</p>
+        </div>
       </div>
-    </div>
-    <Button size="sm" onClick={onStart}>
-      Mentor
-    </Button>
-  </div>
+      <Button size="sm" onClick={onStart}>
+        Mentor
+      </Button>
+    </CardContent>
+  </Card>
 );
 
 // Collaboration Projects Section Component
@@ -544,10 +550,11 @@ const CollaborationProjectsSection = ({ projects, onJoinProject }) => (
 
 // Project Card Component
 const ProjectCard = ({ project, onJoin, compact = false }) => (
-  <div className="p-4 border rounded-lg">
-    <div className="flex items-start justify-between mb-3">
-      <div>
-        <h4 className="font-semibold text-gray-900 mb-1">{project.title}</h4>
+  <Card>
+    <CardContent className="p-4">
+      <div className="flex items-start justify-between mb-3">
+        <div>
+          <h4 className="font-semibold text-gray-900 mb-1">{project.title}</h4>
         <p className="text-sm text-gray-600">{project.description}</p>
       </div>
       <Badge variant={project.urgency === 'high' ? 'destructive' : 'secondary'}>
@@ -588,7 +595,8 @@ const ProjectCard = ({ project, onJoin, compact = false }) => (
         Join Project
       </Button>
     </div>
-  </div>
+    </CardContent>
+  </Card>
 );
 
 // Communities Section Component
@@ -617,26 +625,28 @@ const CommunitiesSection = ({ communityData }) => (
 
 // Community Card Component
 const CommunityCard = ({ community }) => (
-  <div className="p-4 border rounded-lg">
-    <div className="flex items-center gap-3 mb-3">
-      <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-        <Globe className="w-6 h-6 text-white" />
+  <Card>
+    <CardContent className="p-4">
+      <div className="flex items-center gap-3 mb-3">
+        <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+          <Globe className="w-6 h-6 text-white" />
+        </div>
+        <div>
+          <h4 className="font-medium">{community.name}</h4>
+          <p className="text-sm text-gray-600">{community.memberCount} members</p>
+        </div>
       </div>
-      <div>
-        <h4 className="font-medium">{community.name}</h4>
-        <p className="text-sm text-gray-600">{community.memberCount} members</p>
+
+      <p className="text-sm text-gray-700 mb-3">{community.description}</p>
+
+      <div className="flex items-center justify-between">
+        <Badge variant="secondary" className="text-xs">
+          {community.activity} activity
+        </Badge>
+        <Button size="sm">Join Community</Button>
       </div>
-    </div>
-    
-    <p className="text-sm text-gray-700 mb-3">{community.description}</p>
-    
-    <div className="flex items-center justify-between">
-      <Badge variant="secondary" className="text-xs">
-        {community.activity} activity
-      </Badge>
-      <Button size="sm">Join Community</Button>
-    </div>
-  </div>
+    </CardContent>
+  </Card>
 );
 
 export default SocialCollaborationDashboard;
