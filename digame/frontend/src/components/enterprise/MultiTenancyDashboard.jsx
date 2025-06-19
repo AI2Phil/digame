@@ -11,10 +11,11 @@ import { Progress } from '../ui/Progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/Tabs';
 import { Input } from '../ui/Input';
 import { Select } from '../ui/Select';
+import { Label } from '../ui/Label'; // Added import
 
 const MultiTenancyDashboard = ({ currentTenant, userRole, onTenantSwitch }) => {
   const [activeTab, setActiveTab] = useState('overview');
-  const [tenantData, setTenantData] = useState({
+  const [tenantData, setTenantData] = useState({ // This is mostly for display/overview
     id: 1,
     name: "Demo Organization",
     slug: "demo-org",
@@ -117,6 +118,17 @@ const MultiTenancyDashboard = ({ currentTenant, userRole, onTenantSwitch }) => {
     setUsers(users.filter(user => user.id !== userId));
   };
 
+  // State for configurable settings in TenantSettingsSection
+  const [tenantConfigurableSettings, setTenantConfigurableSettings] = useState({
+    orgName: tenantData.name, // Initialize with tenantData, but keep it separate
+    timezone: 'America/Los_Angeles', // Default
+    dateFormat: 'YYYY-MM-DD',   // Default
+  });
+
+  const handleTenantConfigurableSettingChange = (key, value) => {
+    setTenantConfigurableSettings(prev => ({ ...prev, [key]: value }));
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-7xl mx-auto">
@@ -217,7 +229,10 @@ const MultiTenancyDashboard = ({ currentTenant, userRole, onTenantSwitch }) => {
 
           {/* Settings Tab */}
           <TabsContent value="settings" className="space-y-6">
-            <TenantSettingsSection tenantData={tenantData} />
+            <TenantSettingsSection
+              settings={tenantConfigurableSettings}
+              onSettingChange={handleTenantConfigurableSettingChange}
+            />
           </TabsContent>
 
           {/* Security Tab */}
@@ -360,15 +375,16 @@ const UserManagementSection = ({ users, invitations, onInviteUser, onUpdateUserR
                   onChange={(e) => setInviteEmail(e.target.value)}
                   required
                 />
-                <select
-                  className="border rounded px-3 py-2"
+                <Select
                   value={inviteRole}
-                  onChange={(e) => setInviteRole(e.target.value)}
-                >
-                  <option value="member">Member</option>
-                  <option value="manager">Manager</option>
-                  <option value="admin">Admin</option>
-                </select>
+                  onChange={setInviteRole}
+                  options={[
+                    { value: 'member', label: 'Member' },
+                    { value: 'manager', label: 'Manager' },
+                    { value: 'admin', label: 'Admin' },
+                  ]}
+                  className="text-sm" // Standard Select component should handle its own padding/border
+                />
                 <div className="flex gap-2">
                   <Button type="submit">Send Invite</Button>
                   <Button type="button" variant="outline" onClick={() => setShowInviteForm(false)}>
@@ -460,7 +476,7 @@ const InvitationRow = ({ invitation }) => (
   </div>
 );
 
-const TenantSettingsSection = ({ tenantData }) => (
+const TenantSettingsSection = ({ settings, onSettingChange }) => (
   <div className="space-y-6">
     <Card>
       <CardHeader>
@@ -469,24 +485,42 @@ const TenantSettingsSection = ({ tenantData }) => (
       <CardContent>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-2">Organization Name</label>
-            <Input defaultValue={tenantData.name} />
+            <Label htmlFor="orgNameInput" className="block text-sm font-medium mb-2">Organization Name</Label>
+            <Input
+              id="orgNameInput"
+              value={settings.orgName}
+              onChange={(e) => onSettingChange('orgName', e.target.value)}
+            />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-2">Timezone</label>
-            <select className="w-full border rounded px-3 py-2">
-              <option value="UTC">UTC</option>
-              <option value="America/New_York">Eastern Time</option>
-              <option value="America/Los_Angeles">Pacific Time</option>
-            </select>
+            <Label htmlFor="timezoneSelect" className="block text-sm font-medium mb-2">Timezone</Label>
+            <Select
+              id="timezoneSelect"
+              value={settings.timezone}
+              onChange={(value) => onSettingChange('timezone', value)}
+              options={[
+                { value: 'UTC', label: 'UTC' },
+                { value: 'America/New_York', label: '(GMT-05:00) Eastern Time' },
+                { value: 'America/Los_Angeles', label: '(GMT-08:00) Pacific Time' },
+                { value: 'Europe/London', label: '(GMT+00:00) London' },
+                { value: 'Europe/Berlin', label: '(GMT+01:00) Berlin' },
+              ]}
+              className="w-full text-sm"
+            />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-2">Date Format</label>
-            <select className="w-full border rounded px-3 py-2">
-              <option value="YYYY-MM-DD">YYYY-MM-DD</option>
-              <option value="MM/DD/YYYY">MM/DD/YYYY</option>
-              <option value="DD/MM/YYYY">DD/MM/YYYY</option>
-            </select>
+            <Label htmlFor="dateFormatSelect" className="block text-sm font-medium mb-2">Date Format</Label>
+            <Select
+              id="dateFormatSelect"
+              value={settings.dateFormat}
+              onChange={(value) => onSettingChange('dateFormat', value)}
+              options={[
+                { value: 'YYYY-MM-DD', label: 'YYYY-MM-DD' },
+                { value: 'MM/DD/YYYY', label: 'MM/DD/YYYY' },
+                { value: 'DD/MM/YYYY', label: 'DD/MM/YYYY' },
+              ]}
+              className="w-full text-sm"
+            />
           </div>
         </div>
       </CardContent>

@@ -10,6 +10,7 @@ import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
 import { Progress } from '../ui/Progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/Tabs';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../../ui/Table'; // Added
 
 const MobileAnalyticsSection = ({ data }) => {
   const [selectedPlatform, setSelectedPlatform] = useState('all');
@@ -440,32 +441,32 @@ const DeviceAnalyticsSection = ({ devices }) => (
     </CardHeader>
     <CardContent>
       <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead>
-            <tr className="border-b">
-              <th className="text-left p-3">Device</th>
-              <th className="text-right p-3">Users</th>
-              <th className="text-right p-3">Percentage</th>
-              <th className="text-right p-3">Performance Score</th>
-            </tr>
-          </thead>
-          <tbody>
+        <Table className="w-full">
+          <TableHeader>
+            <TableRow className="border-b">
+              <TableHead className="text-left p-3">Device</TableHead>
+              <TableHead className="text-right p-3">Users</TableHead>
+              <TableHead className="text-right p-3">Percentage</TableHead>
+              <TableHead className="text-right p-3">Performance Score</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {devices.map((device, index) => (
-              <tr key={index} className="border-b hover:bg-gray-50">
-                <td className="p-3 font-medium">{device.device}</td>
-                <td className="p-3 text-right">{device.users.toLocaleString()}</td>
-                <td className="p-3 text-right">
+              <TableRow key={index} className="border-b hover:bg-gray-50">
+                <TableCell className="p-3 font-medium">{device.device}</TableCell>
+                <TableCell className="p-3 text-right">{device.users.toLocaleString()}</TableCell>
+                <TableCell className="p-3 text-right">
                   <Badge variant="secondary">{device.percentage}%</Badge>
-                </td>
-                <td className="p-3 text-right">
+                </TableCell>
+                <TableCell className="p-3 text-right">
                   <Badge variant={device.performance >= 90 ? 'success' : device.performance >= 80 ? 'warning' : 'destructive'}>
                     {device.performance}/100
                   </Badge>
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             ))}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
     </CardContent>
   </Card>
