@@ -34,7 +34,7 @@ Digame delivers a powerful combination of established strengths in professional 
 - **Continuous learning** from user feedback and behavioral data
 
 ### 📊 **Comprehensive Analytics & Visualization**
-- **Interactive dashboards** with real-time productivity metrics and insights
+- **Interactive dashboards** with real-time productivity metrics and insights, now featuring enhanced data connectivity for key visualizations like productivity charts and activity breakdowns.
 - **Advanced visualizations** including heatmaps, Sankey diagrams, radar charts, and timelines
 - **Team performance analytics** with collaboration pattern analysis
 - **Professional development tracking** with skill progression and goal achievement
@@ -194,7 +194,7 @@ open http://localhost:8000
 
 ## 📈 **Current Focus & Future Direction**
 
-Digame is continuously evolving. Having established a robust core platform with significant advancements in UI/UX and mobile capabilities, current efforts are focused on:
+Digame is continuously evolving. Having established a robust core platform, recently enhanced key dashboard visualizations with live data integration, and made significant advancements in UI/UX and mobile capabilities, current efforts are focused on:
 - **Enhancing the mobile experience** with advanced features like AI-driven notifications and background synchronization.
 - **Expanding social collaboration features** to foster peer matching and mentorship programs.
 - **Rolling out comprehensive enterprise functionalities** including multi-tenancy and SSO integration.
