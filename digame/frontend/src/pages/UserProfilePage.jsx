@@ -2,18 +2,20 @@ import React, { useState, useEffect } from 'react';
 import { 
   User, Settings, Target, Trophy, Calendar, 
   Edit, Save, X, Camera, Mail, Phone, MapPin,
-  Briefcase, GraduationCap, Star, Award,
+  Briefcase, GraduationCap, Star, Award, PlusCircle, Trash2, // Added PlusCircle, Trash2
   Key, Bell, Shield, Palette, Globe
 } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../components/ui/Card'; // Added CardFooter
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
-import { Avatar } from '../components/ui/Avatar';
+import { Textarea } from '../components/ui/Textarea'; // Added Textarea
+import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/Avatar'; // Added AvatarFallback, AvatarImage
 import { Badge } from '../components/ui/Badge';
 import { Progress } from '../components/ui/Progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/Tabs';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/Dialog';
-import { Toast } from '../components/ui/Toast';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/Dialog'; // Added DialogFooter
+// Assuming Toast is available or use alert as fallback
+// import { useToast } from '../components/ui/use-toast';
 import apiService from '../services/apiService';
 import GoalsManagementSection from '../components/profile/GoalsManagementSection';
 import AchievementsSection from '../components/profile/AchievementsSection';
@@ -25,71 +27,135 @@ const UserProfilePage = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('profile');
-  const [editData, setEditData] = useState({});
+  const [editData, setEditData] = useState({}); // For main profile editing
+
+  // States for sub-sections
   const [goals, setGoals] = useState([]);
   const [achievements, setAchievements] = useState([]);
   const [apiKeys, setApiKeys] = useState([]);
+  const [userProjects, setUserProjects] = useState([]); // Added for projects
 
-  useEffect(() => {
-    loadUserProfile();
-  }, []);
+  // Loading/error states for projects
+  const [loadingProjects, setLoadingProjects] = useState(false);
+  const [projectsError, setProjectsError] = useState(null);
 
-  const loadUserProfile = async () => {
+  // Dialog and form states for Projects
+  const [isProjectDialogOpen, setIsProjectDialogOpen] = useState(false);
+  const [editingProject, setEditingProject] = useState(null); // null for new, project object for edit
+  const [projectFormMode, setProjectFormMode] = useState('add'); // 'add' or 'edit'
+
+  // const { toast } = useToast(); // Example
+  const showToast = (title, description, variant = "default") => {
+    alert(`${title}: ${description} (Variant: ${variant})`); // Placeholder for actual toast
+  };
+
+  const loadUserProfileAndSubSections = async () => {
     setLoading(true);
     try {
-      const [userData, goalsData, achievementsData, apiKeysData] = await Promise.all([
-        apiService.getCurrentUser(),
+      const promises = [
+        apiService.getCurrentUser(), // Fetches main user data
         apiService.getUserGoals(),
         apiService.getUserAchievements(),
-        apiService.getApiKeys()
-      ]);
+        apiService.getApiKeys(),
+        apiService.getUserProjects() // Fetch user projects
+      ];
+
+      const [userData, goalsData, achievementsData, apiKeysData, projectsData] = await Promise.all(promises);
 
       setUser(userData);
-      setEditData(userData);
+      setEditData(userData); // Initialize main profile edit form
       setGoals(goalsData || []);
       setAchievements(achievementsData || []);
       setApiKeys(apiKeysData || []);
+      setUserProjects(projectsData || []); // Set projects state
+
     } catch (error) {
-      console.error('Failed to load user profile:', error);
-      Toast.error('Failed to load profile data');
+      console.error('Failed to load user profile and sub-sections:', error);
+      showToast('Error', 'Failed to load profile data.', 'destructive');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSaveProfile = async () => {
+  useEffect(() => {
+    loadUserProfileAndSubSections();
+  }, []);
+
+
+  const handleSaveProfile = async () => { // For main profile
     try {
-      const updatedUser = await apiService.updateUserProfile(editData);
+      const updatedUser = await apiService.updateUserProfile(editData); // Uses /api/profile
       setUser(updatedUser);
       setIsEditing(false);
-      Toast.success('Profile updated successfully');
+      showToast('Success', 'Profile updated successfully.', 'success');
     } catch (error) {
       console.error('Failed to update profile:', error);
-      Toast.error('Failed to update profile');
+      showToast('Error', 'Failed to update profile.', 'destructive');
     }
   };
 
-  const handleCancelEdit = () => {
-    setEditData(user);
+  const handleCancelEdit = () => { // For main profile
+    setEditData(user); // Reset editData to current user state
     setIsEditing(false);
   };
 
-  const handleAvatarUpload = async (event) => {
+  const handleAvatarUpload = async (event) => { // For main profile avatar
     const file = event.target.files[0];
     if (file) {
       try {
         const formData = new FormData();
-        formData.append('avatar', file);
-        const response = await apiService.uploadAvatar(formData);
-        setUser({ ...user, avatar: response.avatar_url });
-        Toast.success('Avatar updated successfully');
+        formData.append('avatar', file); // Key should match backend expectation
+        const response = await apiService.uploadAvatar(formData); // Uses /api/profile/avatar
+        setUser(prevUser => ({ ...prevUser, avatar: response.avatar_url }));
+        showToast('Success', 'Avatar updated successfully.', 'success');
       } catch (error) {
-        Toast.error('Failed to upload avatar');
+        showToast('Error', 'Failed to upload avatar.', 'destructive');
       }
     }
   };
 
-  if (loading) {
+  // --- Project CRUD Handlers ---
+  const openProjectDialog = (mode = 'add', project = null) => {
+    setProjectFormMode(mode);
+    setEditingProject(project); // If 'add', project is null; if 'edit', project is the item
+    setIsProjectDialogOpen(true);
+  };
+
+  const handleProjectFormSubmit = async (formData) => {
+    try {
+      if (projectFormMode === 'edit' && editingProject) {
+        const updatedProject = await apiService.updateUserProject(editingProject.id, formData);
+        setUserProjects(userProjects.map(p => p.id === updatedProject.id ? updatedProject : p));
+        showToast('Success', 'Project updated successfully.', 'success');
+      } else {
+        const newProject = await apiService.addUserProject(formData);
+        setUserProjects([...userProjects, newProject]);
+        showToast('Success', 'Project added successfully.', 'success');
+      }
+      setIsProjectDialogOpen(false);
+      setEditingProject(null);
+    } catch (error) {
+      console.error('Failed to save project:', error);
+      showToast('Error', `Failed to save project: ${error.message}`, 'destructive');
+    }
+  };
+
+  const handleDeleteProject = async (projectId) => {
+    if (window.confirm('Are you sure you want to delete this project?')) {
+      try {
+        await apiService.deleteUserProject(projectId);
+        setUserProjects(userProjects.filter(p => p.id !== projectId));
+        showToast('Success', 'Project deleted successfully.', 'success');
+      } catch (error) {
+        console.error('Failed to delete project:', error);
+        showToast('Error', `Failed to delete project: ${error.message}`, 'destructive');
+      }
+    }
+  };
+  // --- End Project CRUD Handlers ---
+
+
+  if (loading && !user) { // Show loading only if user data isn't available yet
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
@@ -119,57 +185,81 @@ const UserProfilePage = () => {
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-8">
           <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="profile">Profile</TabsTrigger>
+            <TabsTrigger value="portfolio">Portfolio</TabsTrigger> {/* Renamed/Added for Projects etc. */}
             <TabsTrigger value="goals">Goals & Progress</TabsTrigger>
             <TabsTrigger value="achievements">Achievements</TabsTrigger>
             <TabsTrigger value="settings">Settings</TabsTrigger>
             <TabsTrigger value="social">Social</TabsTrigger>
           </TabsList>
 
-          {/* Profile Tab */}
           <TabsContent value="profile" className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <PersonalInfoCard 
-                user={user}
-                isEditing={isEditing}
-                editData={editData}
-                setEditData={setEditData}
+                user={user} // PersonalInfoCard unchanged for this task
+                isEditing={isEditing} // Main profile editing
+                editData={editData}   // Main profile editData
+                setEditData={setEditData} // Main profile setEditData
               />
               <ProfessionalInfoCard 
-                user={user}
-                isEditing={isEditing}
-                editData={editData}
-                setEditData={setEditData}
+                user={user} // ProfessionalInfoCard unchanged for this task
+                isEditing={isEditing} // Main profile editing
+                editData={editData}   // Main profile editData
+                setEditData={setEditData} // Main profile setEditData
               />
             </div>
-            <ActivitySummaryCard user={user} />
+            <ActivitySummaryCard user={user} /> {/* Unchanged */}
           </TabsContent>
 
-          {/* Goals Tab */}
+          {/* Portfolio Tab (New for Projects, Experience, Education) */}
+          <TabsContent value="portfolio" className="space-y-6">
+            <ProjectsSection
+              projects={userProjects}
+              loading={loadingProjects}
+              error={projectsError}
+              onAdd={() => openProjectDialog('add', null)}
+              onEdit={(project) => openProjectDialog('edit', project)}
+              onDelete={handleDeleteProject}
+            />
+            {/* Placeholder for Experience and Education sections */}
+            {/* <ExperienceSection ... /> */}
+            {/* <EducationSection ... /> */}
+          </TabsContent>
+
           <TabsContent value="goals" className="space-y-6">
-            <GoalsManagementSection goals={goals} setGoals={setGoals} />
+            <GoalsManagementSection goals={goals} setGoals={setGoals} /> {/* Unchanged */}
           </TabsContent>
 
-          {/* Achievements Tab */}
           <TabsContent value="achievements" className="space-y-6">
             <AchievementsSection achievements={achievements} />
           </TabsContent>
 
-          {/* Settings Tab */}
           <TabsContent value="settings" className="space-y-6">
-            <SettingsManagementSection apiKeys={apiKeys} setApiKeys={setApiKeys} />
+            <SettingsManagementSection apiKeys={apiKeys} setApiKeys={setApiKeys} /> {/* Unchanged */}
           </TabsContent>
 
-          {/* Social Tab */}
           <TabsContent value="social" className="space-y-6">
-            <SocialProfileSection user={user} />
+            <SocialProfileSection user={user} /> {/* Unchanged */}
           </TabsContent>
         </Tabs>
+
+        {/* Project Form Dialog */}
+        <ProjectFormDialog
+          isOpen={isProjectDialogOpen}
+          onClose={() => {
+            setIsProjectDialogOpen(false);
+            setEditingProject(null);
+          }}
+          onSubmit={handleProjectFormSubmit}
+          initialData={editingProject}
+          mode={projectFormMode}
+        />
+
       </div>
     </div>
   );
 };
 
-// Profile Header Component
+// Profile Header Component (Unchanged for this task's core logic)
 const ProfileHeader = ({ 
   user, 
   isEditing, 
@@ -415,5 +505,110 @@ const InfoItem = ({ icon: Icon, label, value }) => (
     </div>
   </div>
 );
+
+// --- Projects Section & Form Dialog (New Components for this task) ---
+const ProjectsSection = ({ projects, loading, error, onAdd, onEdit, onDelete }) => {
+  if (loading) return <p>Loading projects...</p>;
+  if (error) return <p className="text-red-500">Error loading projects: {error}</p>;
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <div>
+          <CardTitle>Projects</CardTitle>
+          <CardDescription>Showcase your work and contributions.</CardDescription>
+        </div>
+        <Button onClick={onAdd} size="sm"><PlusCircle className="w-4 h-4 mr-2" />Add Project</Button>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {projects && projects.length > 0 ? (
+          projects.map(project => (
+            <Card key={project.id} className="p-4 flex justify-between items-start">
+              <div>
+                <h4 className="font-semibold">{project.name}</h4>
+                <p className="text-sm text-gray-600">{project.description}</p>
+                {project.technologies && (
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {project.technologies.map(tech => <Badge key={tech} variant="secondary">{tech}</Badge>)}
+                  </div>
+                )}
+              </div>
+              <div className="flex space-x-2">
+                <Button variant="outline" size="sm" onClick={() => onEdit(project)}><Edit className="w-3 h-3 mr-1" /> Edit</Button> {/* Changed EditIcon to Edit */}
+                <Button variant="destructive" size="sm" onClick={() => onDelete(project.id)}><Trash2 className="w-3 h-3 mr-1" /> Delete</Button>
+              </div>
+            </Card>
+          ))
+        ) : (
+          <p>No projects added yet.</p>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
+
+const ProjectFormDialog = ({ isOpen, onClose, onSubmit, initialData, mode }) => {
+  const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
+  const [technologies, setTechnologies] = useState(''); // Comma-separated string
+
+  useEffect(() => {
+    if (isOpen) { // Only update form when dialog opens or initialData changes while open
+      if (initialData) {
+        setName(initialData.name || '');
+        setDescription(initialData.description || '');
+        setTechnologies(initialData.technologies ? initialData.technologies.join(', ') : '');
+      } else {
+        // Reset form for 'add' mode
+        setName('');
+        setDescription('');
+        setTechnologies('');
+      }
+    }
+  }, [initialData, isOpen, mode]); // Add mode to dependencies if reset logic depends on it
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const projectData = {
+      name,
+      description,
+      technologies: technologies.split(',').map(tech => tech.trim()).filter(tech => tech),
+    };
+    onSubmit(projectData);
+  };
+
+  // if (!isOpen) return null; // Dialog component handles its own visibility based on 'open' prop
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>{mode === 'edit' ? 'Edit Project' : 'Add New Project'}</DialogTitle>
+          <DialogDescription>
+            {mode === 'edit' ? "Update the details of your project." : "Add a new project to your profile."}
+          </DialogDescription>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4 py-4">
+          <div>
+            <label htmlFor="projectName" className="block text-sm font-medium text-gray-700">Project Name</label>
+            <Input id="projectName" value={name} onChange={(e) => setName(e.target.value)} required />
+          </div>
+          <div>
+            <label htmlFor="projectDescription" className="block text-sm font-medium text-gray-700">Description</label>
+            <Textarea id="projectDescription" value={description} onChange={(e) => setDescription(e.target.value)} />
+          </div>
+          <div>
+            <label htmlFor="projectTechnologies" className="block text-sm font-medium text-gray-700">Technologies (comma-separated)</label>
+            <Input id="projectTechnologies" value={technologies} onChange={(e) => setTechnologies(e.target.value)} />
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
+            <Button type="submit">{mode === 'edit' ? 'Save Changes' : 'Add Project'}</Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+};
 
 export default UserProfilePage;

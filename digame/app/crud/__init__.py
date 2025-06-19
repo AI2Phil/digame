@@ -23,6 +23,19 @@ from .job_crud import (
     update_job_status,
     delete_job
 )
+from .connection_crud import (
+    create_connection_request,
+    get_connection_request_by_id,
+    get_pending_connection_requests_for_user,
+    update_connection_request_status,
+    get_connections_for_user
+)
+from .notification_crud import (
+    create_notification,
+    get_notifications_for_user,
+    mark_notification_as_read,
+    mark_all_notifications_as_read_for_user
+)
 
 __all__ = [
     # User CRUD
@@ -49,4 +62,17 @@ __all__ = [
 
     # UserSetting CRUD
     "get_user_setting", "create_user_setting", "update_user_setting", "delete_user_setting",
+
+    # ConnectionRequest CRUD
+    "create_connection_request",
+    "get_connection_request_by_id",
+    "get_pending_connection_requests_for_user",
+    "update_connection_request_status",
+    "get_connections_for_user",
+
+    # Notification CRUD
+    "create_notification",
+    "get_notifications_for_user",
+    "mark_notification_as_read",
+    "mark_all_notifications_as_read_for_user",
 ]

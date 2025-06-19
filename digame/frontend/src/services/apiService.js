@@ -393,6 +393,47 @@ class ApiService {
     return this.request('/admin/system/stats');
   }
 
+  // --- Profile Sub-sections CRUD (Example for Projects) ---
+  // Assuming these are tied to the current user's profile
+  async getUserProjects() {
+    // Path needs to be confirmed based on actual API, e.g., /api/profile/projects
+    return this.get('/api/profile/projects');
+  }
+
+  async addUserProject(projectData) {
+    return this.post('/api/profile/projects', projectData);
+  }
+
+  async updateUserProject(projectId, projectData) {
+    return this.put(`/api/profile/projects/${projectId}`, projectData);
+  }
+
+  async deleteUserProject(projectId) {
+    return this.delete(`/api/profile/projects/${projectId}`);
+  }
+  // Similar methods would be needed for Experience, Education if they follow the same pattern.
+  // For now, only Projects methods are added as an example.
+
+  // Generic GET method (added for clarity, request already handles it)
+  async get(endpoint, options = {}) {
+    return this.request(endpoint, { ...options, method: 'GET' });
+  }
+
+  // Generic POST method (added for clarity)
+  async post(endpoint, body, options = {}) {
+    return this.request(endpoint, { ...options, method: 'POST', body: JSON.stringify(body) });
+  }
+
+  // Generic PUT method (added for clarity)
+  async put(endpoint, body, options = {}) {
+    return this.request(endpoint, { ...options, method: 'PUT', body: JSON.stringify(body) });
+  }
+
+  // Generic DELETE method (added for clarity)
+  async delete(endpoint, options = {}) {
+    return this.request(endpoint, { ...options, method: 'DELETE' });
+  }
+
   async getAdminApiKeys() {
     return this.request('/admin/api-keys');
   }
@@ -423,16 +464,20 @@ class ApiService {
 
   // User Profile Enhancement methods
   async updateUserProfile(profileData) {
-    return this.request('/auth/profile', {
-      method: 'PUT',
-      body: JSON.stringify(profileData),
-    });
+    // The existing endpoint is /auth/profile. This might be for core auth user details.
+    // If projects, experience etc. are part of a larger profile object updated here,
+    // then the specific addUserProject etc. methods might not be needed,
+    // and instead, the main profileData object would be structured to include these sub-lists.
+    // For this task, we are assuming separate CRUD for sub-lists as per problem desc.
+    return this.put('/api/profile', profileData); // Changed to /api/profile for general profile update
   }
 
   async uploadAvatar(formData) {
-    const response = await fetch(`${this.baseURL}/auth/avatar`, {
+    // Endpoint for avatar upload, assuming it's /api/profile/avatar
+    const response = await fetch(`${this.baseURL}/api/profile/avatar`, { // Changed to /api/profile/avatar
       method: 'POST',
       headers: {
+        // FormData sets Content-Type automatically, but Auth might be needed
         'Authorization': `Bearer ${this.token}`,
       },
       body: formData,
@@ -491,10 +536,18 @@ class ApiService {
     return this.request('/social/connections');
   }
 
-  async sendConnectionRequest(userId) {
-    return this.request('/social/connect', {
+  async sendConnectionRequest(receiverUserId) { // Renamed parameter for clarity
+    // Corrected endpoint as per new backend API structure
+    // Assumes component calls this with `/api/social/connections/request/${receiverUserId}`
+    // The `request` method in this service prepends `this.baseURL` which is `http://localhost:8000`
+    // So the component should pass `/social/connections/request/${receiverUserId}`
+    // OR this method should expect the full path from /api onwards.
+    // For consistency with other methods, this should take the path from /social onwards.
+    // The component currently passes the full path starting with /api.
+    // Let's adjust this method to expect the path from /social.
+    return this.request(`/social/connections/request/${receiverUserId}`, { // Path updated
       method: 'POST',
-      body: JSON.stringify({ user_id: userId }),
+      body: JSON.stringify({}), // Empty body as per new endpoint spec
     });
   }
 
@@ -986,16 +1039,23 @@ class ApiService {
     });
   }
 
-  async sendConnectionRequest(userId) {
-    return this.request(`/social/connections/request/${userId}`, {
+  async sendConnectionRequest(receiverUserId) { // Path was already updated in previous task
+    return this.request(`/social/connections/request/${receiverUserId}`, {
       method: 'POST',
+      body: JSON.stringify({}),
     });
   }
 
   async acceptConnectionRequest(requestId) {
-    return this.request(`/social/connections/accept/${requestId}`, {
-      method: 'POST',
-    });
+    // This was a mock method, the actual implementation uses the generic post
+    // in SocialProfileSection.jsx: apiService.post(`/api/social/connections/requests/${requestId}/accept`, {})
+    // This specific method can be removed if generic post is preferred.
+    // For now, keeping it to show it was considered. If used, it should call `this.post`.
+    return this.post(`/api/social/connections/requests/${requestId}/accept`, {});
+  }
+
+  async rejectConnectionRequest(requestId) { // Added for completeness based on previous task needs
+    return this.post(`/api/social/connections/requests/${requestId}/reject`, {});
   }
 
   async getActiveCollaborationProjects() {

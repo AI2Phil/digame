@@ -12,6 +12,8 @@ from .activity_features import ActivityEnrichedFeature
 from .anomaly import DetectedAnomaly
 from .task import Task # Added new model
 from .user_setting import UserSetting # Import the new UserSetting model
+from .connection import ConnectionRequest # Import the new ConnectionRequest model
+from .notification import Notification # Import the new Notification model
 
 # Optionally, define __all__ to specify what is exported when 'from .models import *' is used
 __all__ = [
@@ -27,4 +29,6 @@ __all__ = [
     "DetectedAnomaly",
     "Task", # Added new model
     "UserSetting", # Add UserSetting to __all__
+    "ConnectionRequest", # Add ConnectionRequest to __all__
+    "Notification", # Add Notification to __all__
 ]

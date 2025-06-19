@@ -85,5 +85,30 @@ class User(Base):
         cascade="all, delete-orphan" # If a user is deleted, their settings are also deleted.
     )
 
+    # Relationships for ConnectionRequest
+    # Using string "ConnectionRequest" to avoid circular imports
+    sent_connection_requests = relationship(
+        "ConnectionRequest",
+        foreign_keys="[ConnectionRequest.requester_id]", # Use string for foreign_keys
+        back_populates="requester",
+        cascade="all, delete-orphan"
+    )
+
+    received_connection_requests = relationship(
+        "ConnectionRequest",
+        foreign_keys="[ConnectionRequest.approver_id]", # Use string for foreign_keys
+        back_populates="approver",
+        cascade="all, delete-orphan"
+    )
+
+    # Relationship to Notification model
+    # Allows accessing all notifications for a user.
+    notifications = relationship(
+        "Notification",
+        back_populates="user",
+        cascade="all, delete-orphan",
+        order_by="desc(Notification.created_at)" # Optional: order notifications by creation date
+    )
+
     def __repr__(self):
         return f"<User(id={self.id}, username='{self.username}', email='{self.email}')>"
