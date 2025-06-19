@@ -5,6 +5,7 @@ import {
   Linkedin, Twitter, Globe, MapPin,
   Calendar, Award, Target, TrendingUp
 } from 'lucide-react';
+import { Link } from 'react-router-dom'; // Added Link import
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
@@ -294,9 +295,11 @@ const ConnectionCard = ({ connection }) => (
         <MessageCircle className="w-4 h-4 mr-1" />
         Message
       </Button>
-      <Button size="sm" variant="outline">
-        <Eye className="w-4 h-4 mr-1" />
-        View Profile
+      <Button size="sm" variant="outline" asChild>
+        <Link to={`/profile/${connection.id}`}>
+          <Eye className="w-4 h-4 mr-1" />
+          View Profile
+        </Link>
       </Button>
     </div>
   </div>
@@ -518,7 +521,7 @@ const SharingSection = ({ user }) => (
         </p>
         <div className="flex items-center gap-2">
           <Input
-            value={`https://digame.app/profile/${user.username}`}
+            value={`https://digame.app/profile/${user.id}`}
             readOnly
             className="flex-1"
           />

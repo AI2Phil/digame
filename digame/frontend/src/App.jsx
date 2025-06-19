@@ -10,6 +10,7 @@ import EnhancedSocialCollaborationDashboard from './pages/EnhancedSocialCollabor
 import AiToolsPage from './pages/AiToolsPage';
 import TaskManagementPage from './pages/TaskManagementPage';
 import EnterpriseDashboardPage from './pages/EnterpriseDashboardPage';
+import UserProfileOverviewPage from './pages/UserProfileOverviewPage'; // Import the new page
 import './App.css';
 
 function App() {
@@ -171,6 +172,18 @@ function App() {
             }
           />
           
+          {/* User Profile Overview Route */}
+          <Route
+            path="/profile/:userId"
+            element={
+              isAuthenticated || isDemoMode ? (
+                <UserProfileOverviewPage />
+              ) : (
+                <Navigate to="/" replace />
+              )
+            }
+          />
+
           <Route
             path="/components"
             element={<ComponentDemoPage />}

@@ -22,13 +22,23 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..',
 # add your model's MetaData object here
 # for 'autogenerate' support
 
-# Import Base from the models package's __init__.py
-from app.models import Base
-# Import the models package itself to ensure all model modules within it are executed
-# and their models are registered with the Base.
-import app.models
+# Explicitly import all models to ensure they are registered with Base
+# Assuming Base is defined in app.models.user and re-exported by app.models
+from app.models.user import Base, User  # Import Base here
+from app.models.project import Project
+from app.models.experience import Experience
+from app.models.education import Education
+# Also import any other models that might be relevant if they were missed by generic import
+# For example, if UserSetting was a separate file and not covered by app.models import:
+# from app.models.user_setting import UserSetting
+# However, app.models.__init__ should cover these. The explicit imports above are primary.
 
-# target_metadata should now contain all tables, including UserSetting
+# The original import app.models might still be useful if it does other setup,
+# or it could be redundant if all models are now explicitly imported.
+# For safety, keeping it commented out or removing if confident.
+# import app.models
+
+# target_metadata should now contain all tables due to explicit imports
 target_metadata = Base.metadata
 
 # other values from the config, defined by the needs of env.py,

@@ -27,6 +27,12 @@ class User(Base):
     onboarding_completed = Column(Boolean(), default=False)
     onboarding_data = Column(Text(), nullable=True)  # JSON string for onboarding data
 
+    # New profile fields
+    detailed_bio = Column(Text(), nullable=True)
+    contact_info = Column(Text(), nullable=True)  # JSON string for linkedin, website, professionalEmail
+    skills = Column(Text(), nullable=True)  # JSON string for list[str]
+    kudos_count = Column(Integer(), default=0)
+
     # Relationship to Role via user_roles_table
     # The 'secondary' argument refers to the __tablename__ of the association table.
     # This table (user_roles) will be defined in rbac.py.
@@ -74,6 +80,23 @@ class User(Base):
         "BehavioralModel", # String reference to the BehavioralModel class
         back_populates="user", # Corresponds to the 'user' attribute in BehavioralModel
         cascade="all, delete-orphan" # If a user is deleted, their behavioral models are also deleted.
+    )
+
+    # Relationships to new models
+    projects = relationship(
+        "Project",
+        back_populates="user",
+        cascade="all, delete-orphan"
+    )
+    experience_entries = relationship(
+        "Experience",
+        back_populates="user",
+        cascade="all, delete-orphan"
+    )
+    education_entries = relationship(
+        "Education",
+        back_populates="user",
+        cascade="all, delete-orphan"
     )
 
     # Relationship to UserSetting model

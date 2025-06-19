@@ -12,20 +12,46 @@ import { Avatar } from '../components/ui/Avatar';
 import { Badge } from '../components/ui/Badge';
 import { Progress } from '../components/ui/Progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/Tabs';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/Dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from '../components/ui/Dialog'; // Added DialogFooter, DialogClose
+import { Textarea } from '../components/ui/Textarea'; // Added Textarea
 import { Toast } from '../components/ui/Toast';
 import apiService from '../services/apiService';
 import GoalsManagementSection from '../components/profile/GoalsManagementSection';
 import AchievementsSection from '../components/profile/AchievementsSection';
 import SettingsManagementSection from '../components/profile/SettingsManagementSection';
 import SocialProfileSection from '../components/profile/SocialProfileSection';
+// Import the new editable list components
+import ProjectsListEditable from '../components/profile/ProjectsListEditable';
+import ExperienceListEditable from '../components/profile/ExperienceListEditable';
+import EducationListEditable from '../components/profile/EducationListEditable';
 
 const UserProfilePage = () => {
   const [user, setUser] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('profile');
-  const [editData, setEditData] = useState({});
+  // Initialize editData with the full structure expected
+  const [editData, setEditData] = useState({
+    username: '',
+    email: '',
+    bio: '',
+    first_name: '',
+    last_name: '',
+    phone: '',
+    location: '',
+    timezone: '',
+    job_title: '',
+    company: '',
+    industry: '',
+    experience_level: '',
+    detailedBio: '', // New field
+    contactInfo: { linkedin: '', website: '', professionalEmail: '' }, // New field
+    skills_input: '', // Temporary for comma-separated skills
+    skills: [], // New field
+    projects: [], // New field
+    experience: [], // New field for experience_entries
+    education: [], // New field for education_entries
+  });
   const [goals, setGoals] = useState([]);
   const [achievements, setAchievements] = useState([]);
   const [apiKeys, setApiKeys] = useState([]);
@@ -45,7 +71,29 @@ const UserProfilePage = () => {
       ]);
 
       setUser(userData);
-      setEditData(userData);
+      // Populate editData with user data, handling new fields
+      setEditData({
+        username: userData.username || '',
+        email: userData.email || '',
+        bio: userData.bio || '', // Assuming existing 'bio' is short bio in header
+        first_name: userData.first_name || '',
+        last_name: userData.last_name || '',
+        phone: userData.phone || '', // Assuming these existed
+        location: userData.location || '', // Assuming these existed
+        timezone: userData.timezone || '', // Assuming these existed
+        job_title: userData.job_title || '', // Assuming these existed
+        company: userData.company || '', // Assuming these existed
+        industry: userData.industry || '', // Assuming these existed
+        experience_level: userData.experience_level || '', // Assuming these existed
+
+        detailedBio: userData.detailed_bio || '',
+        contactInfo: userData.contact_info || { linkedin: '', website: '', professionalEmail: '' },
+        skills: userData.skills || [],
+        skills_input: (userData.skills || []).join(', '), // For Textarea input
+        projects: userData.projects || [],
+        experience: userData.experience_entries || [], // Map from backend name
+        education: userData.education_entries || [], // Map from backend name
+      });
       setGoals(goalsData || []);
       setAchievements(achievementsData || []);
       setApiKeys(apiKeysData || []);
@@ -59,18 +107,78 @@ const UserProfilePage = () => {
 
   const handleSaveProfile = async () => {
     try {
-      const updatedUser = await apiService.updateUserProfile(editData);
-      setUser(updatedUser);
+      // Prepare payload, parsing skills from skills_input
+      const payload = {
+        ...editData,
+        skills: editData.skills_input.split(',').map(s => s.trim()).filter(s => s),
+      };
+      delete payload.skills_input; // Remove temporary field
+
+      // Ensure contactInfo is an object, not null, if it was initially null and not edited
+      if (!payload.contactInfo) {
+        payload.contactInfo = { linkedin: '', website: '', professionalEmail: '' };
+      }
+
+      // Map experience back to experience_entries for the backend if needed,
+      // or ensure UserUpdate schema on backend expects 'experience'.
+      // Based on previous subtask, UserUpdate expects 'experience', 'projects', 'education'.
+      // So, payload.experience, payload.projects, payload.education are correctly named.
+
+      const updatedUser = await apiService.updateUserProfile(payload);
+      setUser(updatedUser); // This updatedUser should have the server-side representation
+      // Re-initialize editData based on the updatedUser to reflect server state (e.g. parsed JSON strings)
+      setEditData({
+        username: updatedUser.username || '',
+        email: updatedUser.email || '',
+        bio: updatedUser.bio || '',
+        first_name: updatedUser.first_name || '',
+        last_name: updatedUser.last_name || '',
+        phone: updatedUser.phone || '',
+        location: updatedUser.location || '',
+        timezone: updatedUser.timezone || '',
+        job_title: updatedUser.job_title || '',
+        company: updatedUser.company || '',
+        industry: updatedUser.industry || '',
+        experience_level: updatedUser.experience_level || '',
+        detailedBio: updatedUser.detailed_bio || '',
+        contactInfo: updatedUser.contact_info || { linkedin: '', website: '', professionalEmail: '' },
+        skills: updatedUser.skills || [],
+        skills_input: (updatedUser.skills || []).join(', '),
+        projects: updatedUser.projects || [],
+        experience: updatedUser.experience_entries || [],
+        education: updatedUser.education_entries || [],
+      });
       setIsEditing(false);
       Toast.success('Profile updated successfully');
     } catch (error) {
       console.error('Failed to update profile:', error);
-      Toast.error('Failed to update profile');
+      Toast.error(`Failed to update profile: ${error.message}`);
     }
   };
 
   const handleCancelEdit = () => {
-    setEditData(user);
+    // Reset editData from the current user state
+    setEditData({
+      username: user.username || '',
+      email: user.email || '',
+      bio: user.bio || '',
+      first_name: user.first_name || '',
+      last_name: user.last_name || '',
+      phone: user.phone || '',
+      location: user.location || '',
+      timezone: user.timezone || '',
+      job_title: user.job_title || '',
+      company: user.company || '',
+      industry: user.industry || '',
+      experience_level: user.experience_level || '',
+      detailedBio: user.detailed_bio || '',
+      contactInfo: user.contact_info || { linkedin: '', website: '', professionalEmail: '' },
+      skills: user.skills || [],
+      skills_input: (user.skills || []).join(', '),
+      projects: user.projects || [],
+      experience: user.experience_entries || [],
+      education: user.education_entries || [],
+    });
     setIsEditing(false);
   };
 
@@ -141,7 +249,26 @@ const UserProfilePage = () => {
                 setEditData={setEditData}
               />
             </div>
+            {/* Projects Section */}
+            <ProjectsListEditable
+              items={editData.projects}
+              setItems={(newProjects) => setEditData(prev => ({ ...prev, projects: newProjects }))}
+              isEditing={isEditing}
+            />
+            {/* Experience Section */}
+            <ExperienceListEditable
+              items={editData.experience}
+              setItems={(newExperience) => setEditData(prev => ({ ...prev, experience: newExperience }))}
+              isEditing={isEditing}
+            />
+            {/* Education Section */}
+            <EducationListEditable
+              items={editData.education}
+              setItems={(newEducation) => setEditData(prev => ({ ...prev, education: newEducation }))}
+              isEditing={isEditing}
+            />
             <ActivitySummaryCard user={user} />
+            {/* Kudos Count is displayed in ActivitySummaryCard and ProfileHeader */}
           </TabsContent>
 
           {/* Goals Tab */}
@@ -239,6 +366,7 @@ const ProfileHeader = ({
                   {user.is_active ? 'Active' : 'Inactive'}
                 </Badge>
                 {user.verified && <Badge variant="success">Verified</Badge>}
+                <Badge variant="outline">Kudos: {user.kudos_count || 0}</Badge>
               </div>
             </>
           )}
@@ -308,6 +436,34 @@ const PersonalInfoCard = ({ user, isEditing, editData, setEditData }) => (
             onChange={(e) => setEditData(prev => ({ ...prev, timezone: e.target.value }))}
             placeholder="Timezone"
           />
+          {/* New Fields for PersonalInfoCard */}
+          <Textarea
+            value={editData.detailedBio || ''}
+            onChange={(e) => setEditData(prev => ({ ...prev, detailedBio: e.target.value }))}
+            placeholder="Detailed Bio"
+            rows={4}
+          />
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Contact Info</label>
+            <Input
+              value={editData.contactInfo?.linkedin || ''}
+              onChange={(e) => setEditData(prev => ({ ...prev, contactInfo: { ...prev.contactInfo, linkedin: e.target.value } }))}
+              placeholder="LinkedIn Profile URL"
+              className="mb-2"
+            />
+            <Input
+              value={editData.contactInfo?.website || ''}
+              onChange={(e) => setEditData(prev => ({ ...prev, contactInfo: { ...prev.contactInfo, website: e.target.value } }))}
+              placeholder="Website URL"
+              className="mb-2"
+            />
+            <Input
+              value={editData.contactInfo?.professionalEmail || ''}
+              onChange={(e) => setEditData(prev => ({ ...prev, contactInfo: { ...prev.contactInfo, professionalEmail: e.target.value } }))}
+              placeholder="Professional Email"
+              type="email"
+            />
+          </div>
         </>
       ) : (
         <>
@@ -316,6 +472,11 @@ const PersonalInfoCard = ({ user, isEditing, editData, setEditData }) => (
           <InfoItem icon={MapPin} label="Location" value={user.location || 'Not provided'} />
           <InfoItem icon={Globe} label="Timezone" value={user.timezone || 'Not provided'} />
           <InfoItem icon={Calendar} label="Member Since" value={new Date(user.created_at).toLocaleDateString()} />
+          <InfoItem icon={User} label="Detailed Bio" value={user.detailed_bio || 'Not provided'} />
+          <h4 className="text-sm font-medium text-gray-700 mt-3 mb-1">Contact Info:</h4>
+          <InfoItem icon={Mail} label="LinkedIn" value={user.contact_info?.linkedin || 'Not provided'} />
+          <InfoItem icon={Globe} label="Website" value={user.contact_info?.website || 'Not provided'} />
+          <InfoItem icon={Mail} label="Professional Email" value={user.contact_info?.professionalEmail || 'Not provided'} />
         </>
       )}
     </CardContent>
@@ -354,6 +515,17 @@ const ProfessionalInfoCard = ({ user, isEditing, editData, setEditData }) => (
             onChange={(e) => setEditData(prev => ({ ...prev, experience_level: e.target.value }))}
             placeholder="Experience Level"
           />
+          {/* New Field for Skills */}
+          <div>
+            <label htmlFor="skills_input" className="block text-sm font-medium text-gray-700">Skills (comma-separated)</label>
+            <Textarea
+              id="skills_input"
+              value={editData.skills_input || ''}
+              onChange={(e) => setEditData(prev => ({ ...prev, skills_input: e.target.value }))}
+              placeholder="e.g., React, Node.js, Python"
+              rows={3}
+            />
+          </div>
         </>
       ) : (
         <>
@@ -361,21 +533,34 @@ const ProfessionalInfoCard = ({ user, isEditing, editData, setEditData }) => (
           <InfoItem icon={Briefcase} label="Company" value={user.company || 'Not provided'} />
           <InfoItem icon={Briefcase} label="Industry" value={user.industry || 'Not provided'} />
           <InfoItem icon={GraduationCap} label="Experience" value={user.experience_level || 'Not provided'} />
-          <InfoItem icon={Star} label="Skills" value={user.skills?.join(', ') || 'Not provided'} />
+          <div>
+            <p className="text-sm text-gray-600 flex items-center gap-3"><Star className="w-4 h-4 text-gray-500" /> Skills</p>
+            <div className="flex flex-wrap gap-2 mt-1">
+              {(user.skills && user.skills.length > 0) ? user.skills.map((skill, index) => (
+                <Badge key={index} variant="secondary">{skill}</Badge>
+              )) : <p className="font-medium">Not provided</p>}
+            </div>
+          </div>
         </>
       )}
     </CardContent>
   </Card>
 );
 
-// Activity Summary Card Component
+// Activity Summary Card Component (Display Kudos here)
 const ActivitySummaryCard = ({ user }) => (
   <Card>
     <CardHeader>
       <CardTitle>Activity Summary</CardTitle>
     </CardHeader>
     <CardContent>
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-6"> {/* Adjusted grid for kudos */}
+        <div className="text-center">
+          <div className="text-2xl font-bold text-blue-600">
+            {user.kudos_count || 0}
+          </div>
+          <p className="text-sm text-gray-600">Kudos Received</p>
+        </div>
         <div className="text-center">
           <div className="text-2xl font-bold text-blue-600">
             {user.stats?.total_sessions || 0}
@@ -394,12 +579,7 @@ const ActivitySummaryCard = ({ user }) => (
           </div>
           <p className="text-sm text-gray-600">Achievements</p>
         </div>
-        <div className="text-center">
-          <div className="text-2xl font-bold text-orange-600">
-            {user.stats?.streak_days || 0}
-          </div>
-          <p className="text-sm text-gray-600">Day Streak</p>
-        </div>
+        {/* Removed streak days to make space for kudos, or adjust grid as needed */}
       </div>
     </CardContent>
   </Card>

@@ -23,6 +23,19 @@ from .job_crud import (
     update_job_status,
     delete_job
 )
+# New CRUD imports
+from .project_crud import (
+    get_project, get_projects_by_user, create_user_project, update_project, delete_project
+)
+from .experience_crud import (
+    get_experience, get_experience_by_user, create_user_experience, update_experience, delete_experience
+)
+from .education_crud import (
+    get_education_entry, get_education_by_user, create_user_education, update_education_entry, delete_education_entry
+)
+# Assuming user_setting_crud is imported somewhere, or add it explicitly if needed.
+# from .user_setting_crud import get_user_setting, create_user_setting, update_user_setting, delete_user_setting
+
 
 __all__ = [
     # User CRUD
@@ -47,6 +60,13 @@ __all__ = [
     "update_job_status",
     "delete_job",
 
-    # UserSetting CRUD
+    # UserSetting CRUD (ensure it's imported if not already)
     "get_user_setting", "create_user_setting", "update_user_setting", "delete_user_setting",
+
+    # Project CRUD
+    "get_project", "get_projects_by_user", "create_user_project", "update_project", "delete_project",
+    # Experience CRUD
+    "get_experience", "get_experience_by_user", "create_user_experience", "update_experience", "delete_experience",
+    # Education CRUD
+    "get_education_entry", "get_education_by_user", "create_user_education", "update_education_entry", "delete_education_entry",
 ]

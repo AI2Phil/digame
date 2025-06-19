@@ -423,7 +423,8 @@ class ApiService {
 
   // User Profile Enhancement methods
   async updateUserProfile(profileData) {
-    return this.request('/auth/profile', {
+    // Path changed from /auth/profile to /api/users/me/profile
+    return this.request('/api/users/me/profile', {
       method: 'PUT',
       body: JSON.stringify(profileData),
     });
@@ -771,7 +772,8 @@ class ApiService {
 
   // AI-Powered Recommendations & Coaching methods
   async getUserProfile(userId) {
-    return this.request(`/users/${userId}/profile`);
+    // Path changed from /users/${userId}/profile to /api/users/${userId}/profile
+    return this.request(`/api/users/${userId}/profile`);
   }
 
   async getUserBehaviorData(userId) {
@@ -971,6 +973,20 @@ class ApiService {
   }
 
   // Social Collaboration methods
+  async giveKudos(userId) {
+    // Endpoint is POST /social/users/{userId}/kudos
+    return this.request(`/social/users/${userId}/kudos`, {
+      method: 'POST',
+      // No body is expected by the backend for this endpoint
+    });
+  }
+
+  async getPeerMatches() {
+    // Endpoint is GET /social/peer-matches (for the current user)
+    // Changed from getPeerMatches(userId) and updated endpoint
+    return this.request('/social/peer-matches');
+  }
+
   async getUserConnections(userId) {
     return this.request(`/social/users/${userId}/connections`);
   }

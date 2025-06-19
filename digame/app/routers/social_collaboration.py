@@ -9,128 +9,91 @@ from typing import List, Optional, Dict, Any
 from datetime import datetime, timedelta
 import json
 
-# Import from the correct paths based on the project structure
-try:
-    from ..models.user import User
-    from ..crud.user_crud import get_user
-except ImportError:
-    # Fallback for development - create mock classes
-    class User:
-        def __init__(self):
-            self.id = 1
-            self.email = "test@example.com"
-            self.full_name = "Test User"
-    
-    def get_user(db, user_id):
-        user = User()
-        user.id = user_id
-        return user
+from ..models.user import User as UserModel
+from ..schemas.user_schemas import User as UserSchema # Added UserSchema import
+from .. import crud
+from ..database import get_db
+from ..auth.auth_dependencies import get_current_active_user
+import json # Ensure json is imported
 
-# Mock dependencies for development
-def get_db():
-    """Mock database session"""
-    return None
-
-def get_current_user():
-    """Mock current user"""
-    user = User()
-    user.id = 1
-    user.email = "test@example.com"
-    user.full_name = "Test User"
-    return user
-
-def require_permission(permission: str, user):
+# Mock permission check - can be removed if not used by new endpoints or replaced by actual RBAC
+def require_permission(permission: str, user: UserModel):
     """Mock permission check"""
+    # Replace with actual RBAC logic if needed
+    print(f"Checking permission {permission} for user {user.id}")
     return True
 
-router = APIRouter(prefix="/social", tags=["social-collaboration"])
+router = APIRouter(
+    prefix="/social",
+    tags=["Social Collaboration"],
+    responses={404: {"description": "Not found"}}, # Added a default 404 response
+)
 
 # Peer Matching Endpoints
-@router.get("/users/{user_id}/peer-matches")
-async def get_peer_matches(
-    user_id: int,
-    limit: int = Query(10, ge=1, le=50),
-    skill_filter: Optional[str] = None,
-    experience_filter: Optional[str] = None,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    """Get AI-powered peer matches for a user"""
-    
-    # Verify user access
-    if current_user.id != user_id:
-        require_permission("view_user_data", current_user)
-    
-    # Mock peer matching algorithm results
-    mock_matches = [
-        {
-            "id": 1,
-            "name": "Alex Brown",
-            "title": "Product Manager",
-            "company": "TechCorp",
-            "initials": "AB",
-            "compatibilityScore": 94,
-            "sharedSkills": 5,
-            "skills": ["Product Strategy", "User Research", "Agile", "Data Analysis"],
-            "experience": "5+ years",
-            "location": "San Francisco, CA",
-            "matchReason": "Excellent skill complementarity and aligned career goals",
-            "mutualConnections": 8
-        },
-        {
-            "id": 2,
-            "name": "Sarah Chen",
-            "title": "UX Designer",
-            "company": "DesignStudio",
-            "initials": "SC",
-            "compatibilityScore": 89,
-            "sharedSkills": 3,
-            "skills": ["UI/UX Design", "Figma", "User Testing", "Design Systems"],
-            "experience": "4+ years",
-            "location": "Remote",
-            "matchReason": "Similar learning preferences and compatible work styles",
-            "mutualConnections": 5
-        },
-        {
-            "id": 3,
-            "name": "Mike Johnson",
-            "title": "DevOps Engineer",
-            "company": "CloudTech",
-            "initials": "MJ",
-            "compatibilityScore": 87,
-            "sharedSkills": 4,
-            "skills": ["AWS", "Docker", "Kubernetes", "CI/CD"],
-            "experience": "6+ years",
-            "location": "New York, NY",
-            "matchReason": "Complementary technical skills and shared interests",
-            "mutualConnections": 12
-        }
-    ]
-    
-    # Apply filters if provided
-    filtered_matches = mock_matches
-    if skill_filter and isinstance(skill_filter, str):
-        filtered_matches = []
-        for m in mock_matches:
-            skills = m.get("skills", [])
-            if isinstance(skills, list):
-                for skill in skills:
-                    if isinstance(skill, str) and skill_filter.lower() in skill.lower():
-                        filtered_matches.append(m)
-                        break
-    
-    return {"matches": filtered_matches[:limit], "total": len(filtered_matches)}
+# Removed old mock endpoint: /users/{user_id}/peer-matches
 
-@router.get("/users/{user_id}/skill-matches")
+@router.get("/peer-matches", response_model=List[UserSchema])
+async def get_ai_peer_matches(
+    db: Session = Depends(get_db),
+    current_user: UserModel = Depends(get_current_active_user),
+    min_common_skills: int = Query(2, ge=1, description="Minimum number of common skills for a match.")
+):
+    """
+    Get AI-powered peer matches based on common skills.
+    Compares the current user's skills with all other users.
+    """
+    current_user_skills_str = current_user.skills
+    if not current_user_skills_str:
+        return []
+
+    try:
+        current_user_skills_set = set(json.loads(current_user_skills_str))
+    except json.JSONDecodeError:
+        return [] # Or handle error appropriately
+
+    if not current_user_skills_set:
+        return []
+
+    # Fetching all users might be very inefficient. Consider pagination or more targeted queries.
+    # For now, limiting to a reasonable number for demonstration.
+    all_users = crud.user_crud.get_users(db, skip=0, limit=1000) # Adjust limit as needed
+
+    matched_peers = []
+    for other_user in all_users:
+        if other_user.id == current_user.id:
+            continue
+
+        other_user_skills_str = other_user.skills
+        if not other_user_skills_str:
+            continue
+
+        try:
+            other_user_skills_set = set(json.loads(other_user_skills_str))
+        except json.JSONDecodeError:
+            continue # Skip user if skills are malformed
+
+        common_skills = current_user_skills_set.intersection(other_user_skills_set)
+
+        if len(common_skills) >= min_common_skills:
+            # Optionally, add common_skills info to the user object if schema supports it
+            # For now, just returning the UserSchema which will include all its fields
+            matched_peers.append(other_user)
+
+    return matched_peers
+
+
+@router.get("/users/{user_id}/skill-matches") # This is another mock endpoint, leaving as is for now unless instructed to change
 async def get_skill_based_matches(
     user_id: int,
-    current_user: User = Depends(get_current_user),
+    current_user: UserModel = Depends(get_current_active_user), # Use actual dependency
     db: Session = Depends(get_db)
 ):
     """Get skill-based peer matches using advanced algorithms"""
-    
+    # This endpoint's logic is currently mock and refers to a specific user_id in path.
+    # It's different from the new /peer-matches endpoint.
     if current_user.id != user_id:
-        require_permission("view_user_data", current_user)
+        if not require_permission("view_user_data", current_user): # Example usage
+            raise HTTPException(status_code=403, detail="Not enough permissions")
     
     # Enhanced skill matching results
     skill_matches = [
@@ -167,13 +130,14 @@ async def get_skill_based_matches(
 async def get_industry_connections(
     user_id: int,
     industry: Optional[str] = None,
-    current_user: User = Depends(get_current_user),
+    current_user: UserModel = Depends(get_current_active_user), # Use actual dependency
     db: Session = Depends(get_db)
 ):
     """Get industry-specific networking connections"""
     
     if current_user.id != user_id:
-        require_permission("view_user_data", current_user)
+        if not require_permission("view_user_data", current_user): # Example usage
+            raise HTTPException(status_code=403, detail="Not enough permissions")
     
     connections = [
         {
@@ -196,7 +160,7 @@ async def get_networking_events(
     industry: Optional[str] = None,
     location: Optional[str] = None,
     virtual: Optional[bool] = None,
-    current_user: User = Depends(get_current_user),
+    current_user: UserModel = Depends(get_current_active_user), # Use actual dependency
     db: Session = Depends(get_db)
 ):
     """Get curated networking events"""
@@ -249,13 +213,14 @@ async def get_networking_events(
 @router.get("/users/{user_id}/mentorship-programs")
 async def get_mentorship_programs(
     user_id: int,
-    current_user: User = Depends(get_current_user),
+    current_user: UserModel = Depends(get_current_active_user), # Use actual dependency
     db: Session = Depends(get_db)
 ):
     """Get available mentorship programs"""
     
     if current_user.id != user_id:
-        require_permission("view_user_data", current_user)
+        if not require_permission("view_user_data", current_user): # Example usage
+            raise HTTPException(status_code=403, detail="Not enough permissions")
     
     programs = [
         {
@@ -284,10 +249,10 @@ async def get_mentorship_programs(
     
     return {"programs": programs}
 
-@router.post("/mentorship/{program_id}/join")
+@router.post("/mentorship/{program_id}/join") # Note: Path is /social/mentorship...
 async def join_mentorship_program(
     program_id: int,
-    current_user: User = Depends(get_current_user),
+    current_user: UserModel = Depends(get_current_active_user), # Use actual dependency
     db: Session = Depends(get_db)
 ):
     """Join a mentorship program"""
@@ -304,13 +269,14 @@ async def join_mentorship_program(
 async def get_collaboration_projects(
     user_id: int,
     status: Optional[str] = None,
-    current_user: User = Depends(get_current_user),
+    current_user: UserModel = Depends(get_current_active_user), # Use actual dependency
     db: Session = Depends(get_db)
 ):
     """Get collaboration projects for a user"""
     
     if current_user.id != user_id:
-        require_permission("view_user_data", current_user)
+        if not require_permission("view_user_data", current_user): # Example usage
+            raise HTTPException(status_code=403, detail="Not enough permissions")
     
     projects = [
         {
@@ -346,7 +312,7 @@ async def get_collaboration_projects(
 async def get_available_projects(
     category: Optional[str] = None,
     difficulty: Optional[str] = None,
-    current_user: User = Depends(get_current_user),
+    current_user: UserModel = Depends(get_current_active_user), # Use actual dependency
     db: Session = Depends(get_db)
 ):
     """Get available collaboration projects to join"""
@@ -389,10 +355,10 @@ async def get_available_projects(
     
     return {"projects": filtered_projects}
 
-@router.post("/projects/{project_id}/join")
+@router.post("/projects/{project_id}/join") # Note: Path is /social/projects...
 async def join_collaboration_project(
     project_id: int,
-    current_user: User = Depends(get_current_user),
+    current_user: UserModel = Depends(get_current_active_user), # Use actual dependency
     db: Session = Depends(get_db)
 ):
     """Join a collaboration project"""
@@ -408,13 +374,14 @@ async def join_collaboration_project(
 async def get_team_analytics(
     user_id: int,
     time_range: str = Query("month", regex="^(week|month|quarter|year)$"),
-    current_user: User = Depends(get_current_user),
+    current_user: UserModel = Depends(get_current_active_user), # Use actual dependency
     db: Session = Depends(get_db)
 ):
     """Get team collaboration analytics"""
     
     if current_user.id != user_id:
-        require_permission("view_user_data", current_user)
+        if not require_permission("view_user_data", current_user): # Example usage
+            raise HTTPException(status_code=403, detail="Not enough permissions")
     
     analytics = {
         "efficiency": 87,
@@ -449,13 +416,13 @@ async def get_team_analytics(
 async def send_connection_request(
     peer_id: int,
     message: Optional[str] = None,
-    current_user: User = Depends(get_current_user),
+    current_user: UserModel = Depends(get_current_active_user), # Use actual dependency
     db: Session = Depends(get_db)
 ):
     """Send a connection request to another user"""
     
     # Verify the target user exists
-    target_user = get_user(db, peer_id)
+    target_user = crud.user_crud.get_user(db, user_id=peer_id) # Use actual crud
     if not target_user:
         raise HTTPException(status_code=404, detail="User not found")
     
@@ -466,9 +433,9 @@ async def send_connection_request(
         "requestId": f"req_{current_user.id}_{peer_id}_{int(datetime.now().timestamp())}"
     }
 
-@router.get("/connections/requests")
+@router.get("/connections/requests") # Note: Path is /social/connections/requests
 async def get_connection_requests(
-    current_user: User = Depends(get_current_user),
+    current_user: UserModel = Depends(get_current_active_user), # Use actual dependency
     db: Session = Depends(get_db)
 ):
     """Get pending connection requests"""
@@ -490,57 +457,14 @@ async def get_connection_requests(
     
     return {"requests": requests}
 
-# User Profile for Social Features
-@router.get("/users/{user_id}/profile")
-async def get_social_profile(
-    user_id: int,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    """Get user's social collaboration profile"""
-    
-    if current_user.id != user_id:
-        require_permission("view_user_data", current_user)
-    
-    # Get user from database
-    user = get_user(db, user_id)
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    
-    # Mock enhanced profile data
-    profile = {
-        "id": user.id,
-        "name": user.full_name or "John Doe",
-        "email": user.email,
-        "title": "Senior Software Engineer",
-        "company": "Tech Innovation Corp",
-        "initials": "".join([n[0] for n in (user.full_name or "John Doe").split()]),
-        "experience": "5+ years",
-        "location": "San Francisco, CA",
-        "industry": "Technology",
-        "skills": ["React", "Node.js", "Python", "Machine Learning", "Team Leadership"],
-        "networkSize": 247,
-        "industryRank": 15,
-        "directConnections": 247,
-        "secondDegreeNetwork": "12.5K",
-        "industryInfluence": "8.7/10",
-        "collaborationScore": "94%",
-        "weeklyGrowth": 12,
-        "bio": "Passionate software engineer with expertise in full-stack development and AI/ML",
-        "interests": ["Artificial Intelligence", "Open Source", "Mentoring", "Innovation"],
-        "achievements": [
-            "Top 1% contributor on GitHub",
-            "Mentored 15+ junior developers",
-            "Speaker at 5 tech conferences"
-        ]
-    }
-    
-    return profile
+# User Profile for Social Features - This endpoint is being removed as per instructions.
+# @router.get("/users/{user_id}/profile")
+# async def get_social_profile(...) -> This is removed.
 
 # Analytics and Insights
-@router.get("/analytics/network-insights")
+@router.get("/analytics/network-insights") # Note: Path is /social/analytics...
 async def get_network_insights(
-    current_user: User = Depends(get_current_user),
+    current_user: UserModel = Depends(get_current_active_user), # Use actual dependency
     db: Session = Depends(get_db)
 ):
     """Get AI-powered network growth insights"""
@@ -581,3 +505,24 @@ async def get_network_insights(
     }
     
     return insights
+
+
+# New Kudos Endpoint
+@router.post("/users/{user_id}/kudos", response_model=Dict[str, Any])
+async def give_kudos_to_user(
+    user_id: int,
+    db: Session = Depends(get_db)
+    # current_user: UserModel = Depends(get_current_active_user) # Optional: if kudos can only be given by logged-in users
+):
+    """Give kudos to a user, incrementing their kudos_count."""
+    user = crud.user_crud.get_user(db, user_id=user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User to give kudos to not found")
+
+    user.kudos_count = (user.kudos_count or 0) + 1
+
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+
+    return {"message": "Kudos given successfully", "kudos_count": user.kudos_count}

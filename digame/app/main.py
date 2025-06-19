@@ -23,6 +23,7 @@ from .routers import market_intelligence_router # Import the market intelligence
 from .routers import workflow_automation_router # Import the workflow automation router
 from .routers import integration_router # Import the integration router
 from .routers import tenant_router # Import the tenant router
+from .routers import user_profile_router # Import the new user profile router
 
 # Import authentication components
 from .auth.middleware import configure_auth_middleware
@@ -146,6 +147,7 @@ app.include_router(market_intelligence_router.router, tags=["Market Intelligence
 app.include_router(workflow_automation_router.router, tags=["Workflow Automation"])
 app.include_router(integration_router.router, tags=["Integrations"])
 app.include_router(tenant_router.router, tags=["Tenant Management"])
+app.include_router(user_profile_router.router) # Add user profile router, prefix and tags are in the router itself
 
 # Startup and shutdown events
 @app.on_event("startup")

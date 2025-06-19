@@ -1,8 +1,10 @@
+import json # Added for JSON serialization
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from passlib.context import CryptContext
 
 from ..models.user import User
+# UserCreate and UserUpdate from user_schemas are expected to have the new fields
 from ..schemas.user_schemas import UserCreate, UserUpdate
 
 # Password hashing
@@ -33,7 +35,12 @@ def create_user(db: Session, user: UserCreate) -> User:
         hashed_password=hashed_password,
         first_name=user.first_name,
         last_name=user.last_name,
-        is_active=user.is_active
+        is_active=user.is_active,
+        # New fields
+        detailed_bio=user.detailed_bio,
+        contact_info=json.dumps(user.contact_info.dict()) if user.contact_info else None,
+        skills=json.dumps(user.skills) if user.skills is not None else None,
+        kudos_count=0 # Initialize kudos_count
     )
     db.add(db_user)
     db.commit()
@@ -49,11 +56,18 @@ def update_user(db: Session, user_id: int, user: UserUpdate) -> Optional[User]:
     update_data = user.dict(exclude_unset=True)
     
     # Hash the password if it's being updated
-    if "password" in update_data:
+    if "password" in update_data and update_data["password"] is not None:
         update_data["hashed_password"] = pwd_context.hash(update_data.pop("password"))
-    
+    else:
+        update_data.pop("password", None) # Remove password from update_data if it's None
+
     for key, value in update_data.items():
-        setattr(db_user, key, value)
+        if key == "contact_info" and value is not None:
+            setattr(db_user, key, json.dumps(value)) # value is already a dict due to UserUpdate schema
+        elif key == "skills" and value is not None:
+            setattr(db_user, key, json.dumps(value)) # value is already a list
+        else:
+            setattr(db_user, key, value)
     
     db.commit()
     db.refresh(db_user)
