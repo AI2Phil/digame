@@ -166,30 +166,63 @@ const AdvancedMobileFeatures = ({ navigation }) => {
     }
   };
 
-  const handleVoiceIntent = (intentObject) => {
-    if (!intentObject || !intentObject.intent) {
-      Speech.speak("Command not recognized or error in processing.");
+  const handleVoiceIntent = (nluResponse) => {
+    // Log the full NLU response for debugging
+    console.log("Handling NLU Response:", JSON.stringify(nluResponse, null, 2));
+
+    if (!nluResponse || !nluResponse.intent) {
+      Speech.speak("Sorry, I had trouble understanding that. Please try again.");
       return;
     }
 
-    switch (intentObject.intent) {
-      case 'show_analytics':
+    // Log entities for debugging
+    if (nluResponse.entities) {
+      console.log("NLU Entities:", nluResponse.entities);
+    }
+
+    switch (nluResponse.intent) {
+      case 'show_analytics': // Assuming backend intent name
+        Speech.speak("Showing analytics.");
         navigation.navigate('Analytics');
-        Speech.speak("Navigating to Analytics.");
         break;
-      case 'add_goal':
-        navigation.navigate('Goals');
-        Speech.speak("Navigating to Goals.");
+      case 'add_goal': // Assuming backend intent name
+        Speech.speak("Opening goals to add a new one.");
+        navigation.navigate('Goals'); // Navigate to Goals screen, user can then tap "add"
         break;
-      case 'update_progress':
-        navigation.navigate('Progress');
-        Speech.speak("Navigating to Progress.");
+      case 'update_progress': // Assuming backend intent name
+        Speech.speak("Opening progress to update.");
+        navigation.navigate('Progress'); // Navigate to Progress screen
+        break;
+      // Example for a more generic intent with entities:
+      case 'NAVIGATE_TO_SCREEN':
+        const screenName = nluResponse.entities?.screen_name;
+        if (screenName) {
+          // Basic validation: check if screenName is a string and not empty
+          if (typeof screenName === 'string' && screenName.trim() !== '') {
+            Speech.speak(`Navigating to ${screenName}.`);
+            // Ensure screenName matches a valid route key in your navigation setup
+            // For safety, you might want a list of valid navigable screens by voice
+            const validScreens = ['Analytics', 'Goals', 'Progress', 'Settings', 'Home', 'Profile']; // Example list
+            if (validScreens.includes(screenName)) {
+               navigation.navigate(screenName);
+            } else {
+               Speech.speak(`Sorry, I can't navigate to a screen called ${screenName}.`);
+               console.warn(`Attempted to navigate to an invalid screen by voice: ${screenName}`);
+            }
+          } else {
+            Speech.speak("Sorry, the screen name provided is not valid.");
+            console.warn(`Invalid screen_name entity received: ${screenName}`);
+          }
+        } else {
+          Speech.speak("Sorry, I understood you want to navigate, but not to which screen.");
+        }
         break;
       case 'unknown_command':
-        Speech.speak(`Command not recognized: ${intentObject.originalText}. Please try again.`);
-        break;
       default:
-        Speech.speak("Command not understood. Please try again.");
+        // Use a message from NLU if available, otherwise a generic one
+        const message = nluResponse.message || nluResponse.originalText || "Sorry, I couldn't understand that command.";
+        Speech.speak(message.startsWith("Command not recognized:") ? message : `I heard "${nluResponse.originalText || 'that'}", but I'm not sure what to do.`);
+        break;
     }
   };
 

@@ -1,3 +1,5 @@
+import { ApiService } from './ApiService'; // Assuming ApiService.js is in the same directory
+
 const advancedMobileService = {
   initialize() {
     console.log("AdvancedMobileService initialized");
@@ -20,19 +22,21 @@ const advancedMobileService = {
     console.log("Voice recognition stopped");
   },
 
-  processVoiceCommand(transcribedText) {
-    console.log(`Processing voice command: ${transcribedText}`);
-    return new Promise((resolve) => {
-      if (transcribedText.includes("analytics")) {
-        resolve({ intent: 'show_analytics' });
-      } else if (transcribedText.includes("goal")) {
-        resolve({ intent: 'add_goal' });
-      } else if (transcribedText.includes("progress")) {
-        resolve({ intent: 'update_progress' });
-      } else {
-        resolve({ intent: 'unknown_command', originalText: transcribedText });
-      }
-    });
+  async processVoiceCommand(transcribedText) {
+    console.log(`Attempting to interpret voice command via backend: ${transcribedText}`);
+    try {
+      const payload = { text: transcribedText, language: "en-US" }; // Language can be dynamic later
+      const nluResponse = await ApiService.interpretVoice(payload);
+      console.log("Backend NLU response:", nluResponse);
+      return nluResponse; // This will be the structured intent object from the backend
+    } catch (error) {
+      console.error('Error interpreting voice command via backend:', error);
+      // Consider how the calling component (AdvancedMobileFeatures.jsx) handles errors.
+      // Re-throwing allows the component to catch and display an Alert.
+      // Alternatively, return a specific error structure if preferred:
+      // return { intent: 'error', error_message: error.message || 'Failed to interpret command' };
+      throw error;
+    }
   },
 
   setupAiNotifications() {
@@ -40,9 +44,16 @@ const advancedMobileService = {
     return Promise.resolve();
   },
 
-  processAiNotifications() {
-    console.log("Processing AI notifications");
-    return Promise.resolve({ success: true, message: 'Notifications optimized (mocked)' });
+  async processAiNotifications() {
+    console.log("Attempting to optimize notifications via backend...");
+    try {
+      const response = await ApiService.optimizeNotificationsAI({}); // Payload can be adjusted if needed
+      console.log("Backend response for AI notification optimization:", response);
+      return response; // Or transform as needed
+    } catch (error) {
+      console.error('Error processing AI notifications via backend:', error);
+      throw error; // Or return a structured error object
+    }
   },
 
   generateAdvancedAnalytics() {
