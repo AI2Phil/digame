@@ -4,6 +4,7 @@
 
 The Digame platform has achieved significant milestones, notably with the **completion of a comprehensive UI Component Library (19 professional components)** and a **fully functional Mobile Application Platform (React Native)** with complete API integration. These achievements have substantially increased development velocity and enhanced the platform's user experience capabilities. The immediate focus is on integrating these new components across the platform and embarking on the next set of strategic priorities outlined in the "What You Should Do Next - Strategic Action Plan" section at the end of this document.
 Recent progress also includes enhancing the main dashboard with dynamic, user-specific data, improved charting capabilities, and the introduction of foundational component testing practices.
+Furthermore, a significant advancement has been made in laying the groundwork for advanced AI capabilities. The backend now includes a framework for integrating AI services for notification personalization and voice NLU, designed to use user-provided API keys. The mobile application has been enhanced to allow users to manage these API keys and now communicates with these backend services, moving away from client-side mocks for these features.
 
 This document outlines the comprehensive development roadmap for the Digame Digital Professional Twin Platform, aligned with the complete user journey from discovery to mastery. Each section indicates current implementation status and prioritized next steps.
 
@@ -109,7 +110,7 @@ This document outlines the comprehensive development roadmap for the Digame Digi
 6. **✅ COMPLETED**: Mobile App Enhancement (Push notifications, offline sync, biometrics)
 7. **✅ COMPLETED**: Real-time Notifications & Alerts (WebSocket integration, notification center)
 8. **✅ COMPLETED**: AI-Powered Recommendations & Coaching (Complete ML-driven personalization)
-9. **🚀 NEW HIGH PRIORITY**: Advanced Mobile Features (✅ Background refresh completed, ✅ Notification Backend completed, AI notifications pending, voice recognition pending)
+9. **🚀 NEW HIGH PRIORITY**: Advanced Mobile Features (✅ Background refresh completed, ✅ Backend framework for AI-driven notifications & voice NLU using user API keys completed, ✅ Mobile client UI for API key input completed, ✅ Mobile client services now call backend AI endpoints. *Pending: Integration of actual 3rd-party/in-house AI models on backend.*)
 10. **🎯 NEW HIGH PRIORITY**: Social Collaboration Features (Peer matching, mentorship programs)
 11. **📊 NEW HIGH PRIORITY**: Enterprise Features (Multi-tenancy, SSO integration)
 
@@ -231,6 +232,10 @@ This document outlines the comprehensive development roadmap for the Digame Digi
   - Voice recognition support
   - Real-time collaboration features
   - Advanced analytics dashboard
+
+  - ✅ **User API Key Management**: `SettingsScreen.js` updated with UI for users to input and save API keys for AI notification and NLU services.
+  - ✅ **Client-Side Service Updates**: `ApiService.js` in the mobile app now includes methods to manage API keys and call new backend AI endpoints. `advancedMobileService.js` has been refactored to use these methods, replacing previous client-side mocks for AI-powered notification optimization and voice command NLU.
+  - ✅ **Enhanced NLU Handling**: `AdvancedMobileFeatures.jsx` updated to process richer, structured NLU responses (intent and entities) from the backend.
 
 - **Performance Optimization**:
   - Mobile API optimization for bandwidth efficiency
@@ -498,12 +503,13 @@ This document outlines the comprehensive development roadmap for the Digame Digi
   - API gateway and rate limiting for enterprise clients
 
 - **Settings Page API Key** 
-future improvements:
-- Database Migration: Apply the migration in production environment
-- API Key Templates: Pre-configured templates for common services
-- Usage Analytics: Track API key usage and costs
-- Team Sharing: Allow sharing API keys within teams
-- Encryption Enhancement: Additional encryption layers, if needed
+  - ✅ **API Key Storage & Management**: Backend infrastructure (`UserSetting` model, `user_setting_router.py` with GET/POST endpoints for `/settings/api-keys`) is in place for securely storing and managing user-specific API keys. Mobile app's settings screen now utilizes these endpoints.
+  - **Further potential improvements**:
+    - Database Migration: Apply the migration in production environment
+    - API Key Templates: Pre-configured templates for common services
+    - Usage Analytics: Track API key usage and costs
+    - Team Sharing: Allow sharing API keys within teams
+    - Encryption Enhancement: Additional encryption layers, if needed
 
 ## Other Future considerations:
 - **Advanced Analytics**: Track onboarding completion rates for Enhanced user behavior tracking
@@ -998,4 +1004,23 @@ With the integration framework complete, you now have:
 
 **The integration framework is complete, the roadmap is clear, and the platform is positioned for market leadership. Time to execute!** 🚀
 
+---
+
+### Pending Tasks for Full AI Feature Enablement
+
+Following the recent integration of the backend framework for AI services and mobile client updates for API key management and backend communication, the following tasks are key to enabling fully functional AI features:
+
+-   **Backend - Actual AI Model Integration**:
+    -   Select and integrate specific third-party or in-house AI/ML models for notification timing/personalization within `NotificationService`.
+    -   Select and integrate a specific NLU service (e.g., OpenAI, Cohere, Google Dialogflow, or other) within `VoiceNLUService`.
+    -   Adapt service logic to the specific request/response contracts of the chosen AI providers, replacing the current hypothetical API calls.
+-   **Mobile Client - Rich Entity Utilization**:
+    -   Further enhance `AdvancedMobileFeatures.jsx` and other relevant mobile components to fully utilize the rich entity data now available from backend NLU responses (e.g., for date/time extraction, contact selection, deeper command parameterization).
+-   **Error Handling & User Experience**:
+    -   Refine error handling across the mobile client and backend for scenarios like invalid API keys (provider-side validation), AI service downtime, or unexpected responses from AI providers.
+    -   Improve user feedback mechanisms related to these AI interactions.
+-   **Configuration & Administration (Optional Enhancement)**:
+    -   Consider implementing a system for admins to provide default or fallback API keys for AI services, to be used if users haven't configured their own.
+    -   Explore options for securely managing these system-level keys.
+---
 
