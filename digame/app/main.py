@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware # Added for GZip compression
 import logging
 
 # Import routers
@@ -122,6 +123,11 @@ app = FastAPI(
 logger.info("Configuring authentication middleware...")
 middleware_config = get_middleware_config()
 configure_auth_middleware(app, middleware_config)
+
+# Add GZip middleware for response compression
+# This should be after CORS (if any, possibly in configure_auth_middleware) and before routers/specific middleware
+app.add_middleware(GZipMiddleware, minimum_size=1000)
+logger.info("GZipMiddleware added with minimum_size=1000")
 
 # Include authentication router first (no authentication required)
 app.include_router(auth_router.router, tags=["Authentication"])

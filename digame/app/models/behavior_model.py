@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, JSON, Text, Float, ForeignKey, Boolean, LargeBinary
+from sqlalchemy import Column, Integer, String, DateTime, JSON, Text, Float, ForeignKey, Boolean, LargeBinary, Index
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
@@ -71,6 +71,10 @@ class BehavioralPattern(Base):
     
     # Relationship to BehavioralModel
     model = relationship("BehavioralModel", back_populates="patterns")
+
+    __table_args__ = (
+        Index('ix_behavioral_patterns_model_id_pattern_label', 'model_id', 'pattern_label'),
+    )
     
     def __repr__(self):
         return f"<BehavioralPattern(id={self.id}, model_id={self.model_id}, pattern_label={self.pattern_label})>"

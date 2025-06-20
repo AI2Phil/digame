@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, JSON, ForeignKey
+from sqlalchemy import Column, Integer, String, DateTime, JSON, ForeignKey, Index
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
@@ -32,6 +32,10 @@ class Activity(Base):
         uselist=False, 
         back_populates="activity", 
         cascade="all, delete-orphan"
+    )
+
+    __table_args__ = (
+        Index('ix_digital_activities_user_id_timestamp', 'user_id', 'timestamp'),
     )
 
     def __repr__(self):
