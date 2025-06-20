@@ -3,6 +3,61 @@
  * Provides comprehensive API interaction methods for all backend endpoints
  */
 
+// --- Mock Data Store ---
+// Hoisted to module scope to be accessible and mutable by mock implementations
+let mockUserProfilesStore = {
+  'user123': { // Corresponds to getCurrentUser's default
+    id: 'user123',
+    username: 'current_user',
+    email: 'current@example.com',
+    detailedBio: 'A passionate developer working on amazing things.',
+    contactInfo: {
+      linkedin: 'linkedin.com/in/currentuser',
+      website: 'currentuser.dev',
+      professionalEmail: 'current.pro@example.com'
+    },
+    projects: [
+      { id: 'proj1', title: 'Digame Platform', description: 'Social collaboration tool', url: 'digame.app', technologiesUsed: ['React', 'Node.js'] }
+    ],
+    experience: [
+      { id: 'exp1', jobTitle: 'Software Engineer', company: 'Tech Solutions', duration: '2022-Present', description: 'Developing cool features.' }
+    ],
+    education: [
+      { id: 'edu1', institution: 'University of Technology', degree: 'B.Sc. Computer Science', fieldOfStudy: 'Software Engineering', graduationYear: '2022' }
+    ],
+    kudosCount: 10,
+    role: 'Admin',
+    is_active: true,
+    verified: true,
+  },
+  'user456': { // Corresponds to the "other user" for UserProfileOverviewPage
+    id: 'user456',
+    username: 'other_user',
+    email: 'other@example.com',
+    detailedBio: 'Another skilled professional in the network.',
+    contactInfo: {
+      linkedin: 'linkedin.com/in/otheruser',
+      website: 'otheruser.com',
+      professionalEmail: 'other.pro@example.com'
+    },
+    projects: [
+      { id: 'proj1Other', title: 'Project X', description: 'Confidential project.', url: '', technologiesUsed: ['Python', 'AI'] }
+    ],
+    experience: [
+      { id: 'exp1Other', jobTitle: 'Data Scientist', company: 'Innovate Corp', duration: '2020-Present', description: 'Working with data.' }
+    ],
+    education: [
+      { id: 'edu1Other', institution: 'Institute of Science', degree: 'M.Sc. Data Science', fieldOfStudy: 'Machine Learning', graduationYear: '2020' }
+    ],
+    kudosCount: 25,
+    role: 'Member',
+    is_active: true,
+    verified: false,
+  }
+  // Add other mock user profiles here if needed
+};
+// --- End Mock Data Store ---
+
 class ApiService {
   constructor() {
     this.baseURL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
@@ -134,7 +189,15 @@ class ApiService {
   }
 
   async getCurrentUser() {
-    return this.request('/auth/me');
+    // MOCK IMPLEMENTATION FOR DEVELOPMENT
+    console.warn("Using mock data for getCurrentUser from mockUserProfilesStore");
+    const currentUserData = mockUserProfilesStore['user123']; // Assuming 'user123' is the current user ID
+    if (currentUserData) {
+      return Promise.resolve(JSON.parse(JSON.stringify(currentUserData))); // Return a copy to prevent direct mutation issues
+    } else {
+      return Promise.reject(new Error("Current user (user123) not found in mock store."));
+    }
+    // return this.request('/auth/me'); // Original call
   }
 
   async verifyToken() {
@@ -423,6 +486,9 @@ class ApiService {
 
   // User Profile Enhancement methods
   async updateUserProfile(profileData) {
+    // This method handles updates to the user's profile,
+    // including the enriched data structure: detailedBio, contactInfo,
+    // projects, experience, and education arrays.
     return this.request('/auth/profile', {
       method: 'PUT',
       body: JSON.stringify(profileData),
@@ -771,7 +837,50 @@ class ApiService {
 
   // AI-Powered Recommendations & Coaching methods
   async getUserProfile(userId) {
-    return this.request(`/users/${userId}/profile`);
+    // MOCK IMPLEMENTATION FOR DEVELOPMENT
+    console.warn(`Using mock data for getUserProfile(userId: ${userId}) from mockUserProfilesStore`);
+    const userProfile = mockUserProfilesStore[userId];
+    if (userProfile) {
+      return Promise.resolve(JSON.parse(JSON.stringify(userProfile))); // Return a copy
+    } else {
+      // Fallback or error for unknown userId in mock
+      // This part defines a generic structure if user is not in store, useful for testing new profiles
+      const genericProfileFields = {
+        detailedBio: 'No detailed bio available.',
+        contactInfo: { linkedin: '', website: '', professionalEmail: '' },
+        projects: [],
+        experience: [],
+        education: [],
+        kudosCount: 0,
+        role: 'User',
+        is_active: true,
+        verified: false,
+      };
+      console.warn(`User ID ${userId} not found in mockUserProfilesStore. Returning generic structure or error.`);
+      // Depending on strictness, either return generic or reject:
+      // return Promise.resolve({ id: userId, username: `User ${userId}`, email: `${userId}@example.com`, ...genericProfileFields });
+      return Promise.reject(new Error(`User with ID ${userId} not found in mock store.`));
+    }
+    // return this.request(`/users/${userId}/profile`); // Original call
+  }
+
+  async giveKudos(userId) {
+    // MOCK IMPLEMENTATION FOR DEVELOPMENT
+    console.warn(`Mock giveKudos called for userId: ${userId}`);
+    if (mockUserProfilesStore[userId]) {
+      mockUserProfilesStore[userId].kudosCount = (mockUserProfilesStore[userId].kudosCount || 0) + 1;
+      console.log(`Kudos count for ${userId} (${mockUserProfilesStore[userId].username}) is now ${mockUserProfilesStore[userId].kudosCount}`);
+      return Promise.resolve({
+        message: 'Kudos given successfully!',
+        userId: userId,
+        newKudosCount: mockUserProfilesStore[userId].kudosCount
+      });
+    } else {
+      console.error(`User with ID ${userId} not found in mockUserProfilesStore for giving kudos.`);
+      return Promise.reject(new Error(`User with ID ${userId} not found for giving kudos.`));
+    }
+    // Actual implementation would be:
+    // return this.request(`/api/users/${userId}/kudos`, { method: 'POST' }); // Original call
   }
 
   async getUserBehaviorData(userId) {
@@ -1145,4 +1254,5 @@ const apiService = new ApiService();
 export default apiService;
 
 // Export the class for testing or custom instances
-export { ApiService };
+// Exporting mockUserProfilesStore can be useful for debugging or testing mock state.
+export { ApiService, mockUserProfilesStore };
