@@ -5,11 +5,12 @@ Multi-tenant service layer for the Digame platform
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, or_
 from typing import List, Optional, Dict, Any
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone # Added timezone
 import secrets
-import string
+import json # For TenantSettings value handling
 
-from ..models.tenant import Tenant, User, Role, UserRole, TenantSettings
+# Updated model imports
+from ..models.tenant import Tenant, User, Role, UserRole, TenantSettings, TenantInvitation, TenantAuditLog
 from ..database import get_db
 from passlib.context import CryptContext
 
@@ -25,194 +26,339 @@ class TenantService:
     def __init__(self, db: Session):
         self.db = db
     
-    def create_tenant(self, tenant_data: Dict[str, Any]) -> Tenant:
+    def _log_audit_event(
+        self,
+        tenant_id: int,
+        user_id: Optional[int],
+        action: str,
+        resource_type: Optional[str] = None,
+        resource_id: Optional[str] = None,
+        details: Optional[Dict[str, Any]] = None,
+        ip_address: Optional[str] = None,
+        user_agent: Optional[str] = None
+    ):
         """
-        Create a new tenant with default settings and admin user
+        Create and save a TenantAuditLog entry.
         """
-        # Create tenant
+        audit_log_entry = TenantAuditLog(
+            tenant_id=tenant_id,
+            user_id=user_id,
+            action=action,
+            resource_type=resource_type,
+            resource_id=resource_id,
+            details=details,
+            ip_address=ip_address,
+            user_agent=user_agent,
+        )
+        self.db.add(audit_log_entry)
+        self.db.flush()
+        return audit_log_entry
+
+    def create_tenant(self, tenant_data: Dict[str, Any], current_user_id: Optional[int] = None, ip_address: Optional[str] = None, user_agent: Optional[str] = None) -> Tenant:
+        required_fields = ["name", "slug", "admin_email", "admin_name"]
+        for field in required_fields:
+            if field not in tenant_data or not tenant_data[field]:
+                raise ValueError(f"Missing required field: {field}")
+
         tenant = Tenant(
             name=tenant_data["name"],
+            slug=tenant_data["slug"],
+            admin_email=tenant_data["admin_email"],
+            admin_name=tenant_data["admin_name"],
             domain=tenant_data.get("domain"),
             subdomain=tenant_data.get("subdomain"),
+            tenant_uuid=secrets.token_hex(16),
             subscription_tier=tenant_data.get("subscription_tier", "basic"),
-            settings=tenant_data.get("settings", {
-                "timezone": "UTC",
-                "date_format": "YYYY-MM-DD",
-                "currency": "USD",
-                "language": "en"
-            }),
-            features=self._get_enhanced_features(tenant_data.get("subscription_tier", "basic"))
+            settings=tenant_data.get("settings", {}),
+            features=self._get_enhanced_features(tenant_data.get("subscription_tier", "basic")),
+            max_users=tenant_data.get("max_users", 10),
+            storage_limit_gb=tenant_data.get("storage_limit_gb", 5),
+            api_rate_limit=tenant_data.get("api_rate_limit", 1000),
+            is_trial=tenant_data.get("is_trial", True),
+            trial_ends_at=tenant_data.get("trial_ends_at", datetime.now(timezone.utc) + timedelta(days=30)) if tenant_data.get("is_trial", True) else None,
+            branding=tenant_data.get("branding", {}),
+            phone=tenant_data.get("phone"),
+            address=tenant_data.get("address")
         )
-        
-        # Set trial period for new tenants
-        if "trial_ends_at" not in tenant_data:
-            tenant.trial_ends_at = datetime.utcnow() + timedelta(days=30)  # 30-day trial
         
         self.db.add(tenant)
-        self.db.flush()  # Get the tenant ID
+        self.db.flush()
         
-        # Create default tenant settings
-        settings = TenantSettings(
-            tenant_id=tenant.id,
-            analytics_enabled=True,
-            integrations_enabled=True,
-            ai_features_enabled=True,
-            workflow_automation_enabled=tenant_data.get("subscription_tier") in ["enterprise", "premium"],
-            market_intelligence_enabled=tenant_data.get("subscription_tier") == "enterprise"
-        )
-        self.db.add(settings)
-        
-        # Create default roles
         self._create_default_roles(tenant.id)
         
-        # Create admin user if provided
-        if "admin_user" in tenant_data:
-            self._create_admin_user(tenant.id, tenant_data["admin_user"])
-        
+        if "admin_user_password" in tenant_data and tenant_data["admin_user_password"]:
+            admin_user_data = {
+                "username": tenant_data["admin_email"],
+                "email": tenant_data["admin_email"],
+                "password": tenant_data["admin_user_password"],
+                "first_name": tenant_data["admin_name"].split(" ")[0] if tenant_data["admin_name"] else "Admin",
+                "last_name": " ".join(tenant_data["admin_name"].split(" ")[1:]) if " " in tenant_data["admin_name"] else "",
+            }
+            # Ensure _create_admin_user uses the tenant_id correctly
+            created_admin_user = self._create_admin_user(tenant.id, admin_user_data, ip_address=ip_address, user_agent=user_agent)
+            admin_user_id_for_log = created_admin_user.id
+        else:
+            admin_user_id_for_log = None # No admin user created here, maybe an external process
+
         self.db.commit()
-        
-        # Log tenant creation if audit logging is available
-        if hasattr(self, '_log_audit_event'):
-            self._log_audit_event(
-                tenant.id,
-                None,
-                "tenant_created",
-                "tenant",
-                str(tenant.id),
-                {"name": tenant_data["name"], "subscription_tier": tenant_data.get("subscription_tier", "basic")}
-            )
-        
+
+        self._log_audit_event(
+            tenant_id=tenant.id,
+            user_id=current_user_id if current_user_id else admin_user_id_for_log,
+            action="tenant_created",
+            resource_type="tenant",
+            resource_id=str(tenant.id),
+            details={"name": tenant.name, "slug": tenant.slug, "subscription_tier": tenant.subscription_tier},
+            ip_address=ip_address,
+            user_agent=user_agent
+        )
         return tenant
 
     def get_tenant_by_id(self, tenant_id: int) -> Optional[Tenant]:
-        """Get tenant by ID"""
         return self.db.query(Tenant).filter(Tenant.id == tenant_id).first()
 
     def get_tenant_by_slug(self, slug: str) -> Optional[Tenant]:
-        """Get tenant by slug"""
         return self.db.query(Tenant).filter(Tenant.slug == slug).first()
     
     def get_tenant_by_domain(self, domain: str) -> Optional[Tenant]:
-        """
-        Get tenant by domain name
-        """
         return self.db.query(Tenant).filter(Tenant.domain == domain).first()
     
     def get_tenant_by_subdomain(self, subdomain: str) -> Optional[Tenant]:
-        """
-        Get tenant by subdomain
-        """
         return self.db.query(Tenant).filter(Tenant.subdomain == subdomain).first()
 
-    def update_tenant(self, tenant_id: int, updates: Dict[str, Any], user_id: Optional[int] = None) -> Optional[Tenant]:
-        """Update tenant information"""
+    def update_tenant(self, tenant_id: int, updates: Dict[str, Any], current_user_id: Optional[int] = None, ip_address: Optional[str] = None, user_agent: Optional[str] = None) -> Optional[Tenant]:
         tenant = self.get_tenant_by_id(tenant_id)
         if not tenant:
             return None
 
-        # Track changes for audit log
+        original_data = {}
         changes = {}
-        
-        # Handle subscription_tier change and its impact on features
-        if "subscription_tier" in updates:
-            new_tier = updates["subscription_tier"]
-            if tenant.subscription_tier != new_tier:
-                if not isinstance(tenant.features, dict):
-                    tenant.features = {}
-                tenant.features["writing_assistance"] = new_tier in ["professional", "enterprise"]
-                # Update other tier-dependent features
-                tenant.features.update(self._get_tier_features(new_tier))
 
-        # Handle direct features update
-        if "features" in updates:
-            if isinstance(updates["features"], dict):
-                if "writing_assistance" not in updates["features"]:
-                    current_tier = updates.get("subscription_tier", tenant.subscription_tier)
-                    if not isinstance(tenant.features, dict):
-                         tenant.features = {}
-                    _features = tenant.features.copy()
-                    _features.update(updates["features"])
-                    _features["writing_assistance"] = current_tier in ["professional", "enterprise"]
-                    updates["features"] = _features
-            elif isinstance(tenant.features, dict):
-                current_tier = updates.get("subscription_tier", tenant.subscription_tier)
-                tenant.features["writing_assistance"] = current_tier in ["professional", "enterprise"]
-        elif "subscription_tier" in updates:
-             if isinstance(tenant.features, dict):
-                current_tier = updates.get("subscription_tier", tenant.subscription_tier)
-                tenant.features["writing_assistance"] = current_tier in ["professional", "enterprise"]
+        allowed_fields = [
+            "name", "slug", "domain", "subdomain", "subscription_tier",
+            "settings", "features", "branding", "is_active", "is_trial", "trial_ends_at",
+            "max_users", "storage_limit_gb", "api_rate_limit",
+            "admin_email", "admin_name", "phone", "address"
+        ]
+
+        if "subscription_tier" in updates and tenant.subscription_tier != updates["subscription_tier"]:
+            new_tier = updates["subscription_tier"]
+            original_data["subscription_tier"] = tenant.subscription_tier
+            changes["subscription_tier"] = new_tier
+            tenant.subscription_tier = new_tier
+            current_features = tenant.features if isinstance(tenant.features, dict) else {}
+            tier_specific_features = self._get_enhanced_features(new_tier)
+            current_features.update(tier_specific_features)
+            tenant.features = current_features
 
         for key, value in updates.items():
-            if hasattr(tenant, key) and getattr(tenant, key) != value:
-                changes[key] = {"old": getattr(tenant, key), "new": value}
-                setattr(tenant, key, value)
-            elif key == "features" and isinstance(tenant.features, dict) and isinstance(value, dict):
-                if tenant.features != value:
-                    changes[key] = {"old": tenant.features, "new": value}
+            if key in allowed_fields and hasattr(tenant, key): # Ensure key is an attribute of Tenant
+                old_value = getattr(tenant, key)
+                if old_value != value:
+                    original_data[key] = old_value
+                    changes[key] = value
                     setattr(tenant, key, value)
 
-        tenant.updated_at = datetime.utcnow()
-        self.db.commit()
-        self.db.refresh(tenant)
-
-        # Log changes
-        if changes and hasattr(self, '_log_audit_event'):
+        if changes:
+            tenant.updated_at = datetime.now(timezone.utc)
+            # self.db.add(tenant) # Not strictly necessary if already persistent and tracked
+            self.db.commit()
+            self.db.refresh(tenant)
             self._log_audit_event(
-                tenant_id,
-                user_id,
-                "tenant_updated",
-                "tenant",
-                str(tenant_id),
-                {"changes": changes}
+                tenant_id=tenant.id,
+                user_id=current_user_id,
+                action="tenant_updated",
+                resource_type="tenant",
+                resource_id=str(tenant.id),
+                details={"changes": changes, "original_data": original_data},
+                ip_address=ip_address,
+                user_agent=user_agent
             )
-
         return tenant
 
-    def add_user_to_tenant(
-        self,
-        tenant_id: int,
-        user_id: int,
-        role: str = "member",
-        permissions: Optional[Dict[str, bool]] = None
-    ) -> Optional[Dict]:
-        """Add user to tenant with specific role"""
-        # Implementation for adding user to tenant
-        return {"tenant_id": tenant_id, "user_id": user_id, "role": role}
-    
-    def update_tenant_settings(self, tenant_id: int, settings_data: Dict[str, Any]) -> TenantSettings:
-        """
-        Update tenant settings
-        """
-        settings = self.db.query(TenantSettings).filter(
-            TenantSettings.tenant_id == tenant_id
+    def get_tenant_setting(self, tenant_id: int, category: str, key: str) -> Optional[TenantSettings]:
+        return self.db.query(TenantSettings).filter(
+            TenantSettings.tenant_id == tenant_id,
+            TenantSettings.category == category,
+            TenantSettings.key == key
         ).first()
-        
-        if not settings:
-            settings = TenantSettings(tenant_id=tenant_id)
-            self.db.add(settings)
-        
-        # Update settings
-        for key, value in settings_data.items():
-            if hasattr(settings, key):
-                setattr(settings, key, value)
-        
-        settings.updated_at = datetime.utcnow()
+
+    def get_tenant_settings_by_category(self, tenant_id: int, category: str) -> List[TenantSettings]:
+        return self.db.query(TenantSettings).filter(
+            TenantSettings.tenant_id == tenant_id,
+            TenantSettings.category == category
+        ).all()
+
+    def set_tenant_setting(self, tenant_id: int, category: str, key: str, value: Any, value_type: str,
+                           is_encrypted: bool = False, current_user_id: Optional[int] = None,
+                           ip_address: Optional[str] = None, user_agent: Optional[str] = None) -> TenantSettings:
+        setting_value = ""
+        if value_type == "json":
+            setting_value = json.dumps(value)
+        elif value_type == "integer":
+            setting_value = str(int(value))
+        elif value_type == "boolean":
+            setting_value = "true" if bool(value) else "false"
+        else: # string or text
+            setting_value = str(value)
+
+        setting = self.get_tenant_setting(tenant_id, category, key)
+        action = "tenant_setting_updated"
+        if not setting:
+            action = "tenant_setting_created"
+            setting = TenantSettings(
+                tenant_id=tenant_id,
+                category=category,
+                key=key
+            )
+            self.db.add(setting)
+
+        setting.value = setting_value
+        setting.value_type = value_type
+        setting.is_encrypted = is_encrypted
+        setting.updated_at = datetime.now(timezone.utc)
+
         self.db.commit()
-        return settings
+        self.db.refresh(setting)
+
+        self._log_audit_event(
+            tenant_id=tenant_id, user_id=current_user_id, action=action,
+            resource_type="tenant_setting", resource_id=f"{category}:{key}",
+            details={"value_type": value_type, "is_encrypted": is_encrypted}, # Not logging value itself for security
+            ip_address=ip_address, user_agent=user_agent
+        )
+        return setting
+
+    def delete_tenant_setting(self, tenant_id: int, category: str, key: str,
+                              current_user_id: Optional[int] = None,
+                              ip_address: Optional[str] = None, user_agent: Optional[str] = None) -> bool:
+        setting = self.get_tenant_setting(tenant_id, category, key)
+        if setting:
+            self.db.delete(setting)
+            self.db.commit()
+            self._log_audit_event(
+                tenant_id=tenant_id, user_id=current_user_id, action="tenant_setting_deleted",
+                resource_type="tenant_setting", resource_id=f"{category}:{key}",
+                ip_address=ip_address, user_agent=user_agent
+            )
+            return True
+        return False
+
+    def create_invitation(self, tenant_id: int, invited_by_user_id: int, email: str, role: str,
+                          ip_address: Optional[str] = None, user_agent: Optional[str] = None) -> TenantInvitation:
+        inviter = self.db.query(User).filter(User.id == invited_by_user_id, User.tenant_id == tenant_id).first()
+        if not inviter:
+            raise ValueError("Inviter does not belong to the tenant or does not exist.")
+
+        existing_invitation = self.db.query(TenantInvitation).filter(
+            TenantInvitation.tenant_id == tenant_id,
+            TenantInvitation.email == email,
+            TenantInvitation.expires_at > datetime.now(timezone.utc),
+            TenantInvitation.accepted_at == None
+        ).first()
+        if existing_invitation:
+            raise ValueError(f"Active invitation already exists for {email}")
+
+        invitation = TenantInvitation(
+            tenant_id=tenant_id,
+            invited_by_user_id=invited_by_user_id,
+            email=email,
+            role=role,
+            invitation_token=secrets.token_urlsafe(32),
+            expires_at=datetime.now(timezone.utc) + timedelta(days=7)
+        )
+        self.db.add(invitation)
+        self.db.commit()
+        self.db.refresh(invitation)
+
+        self._log_audit_event(
+            tenant_id=tenant_id, user_id=invited_by_user_id, action="tenant_invitation_created",
+            resource_type="tenant_invitation", resource_id=str(invitation.id),
+            details={"email": email, "role": role, "expires_at": invitation.expires_at.isoformat()},
+            ip_address=ip_address, user_agent=user_agent
+        )
+        return invitation
+
+    def accept_invitation(self, token: str, accepting_user_id: int,
+                          ip_address: Optional[str] = None, user_agent: Optional[str] = None) -> Optional[TenantInvitation]:
+        invitation = self.get_invitation_by_token(token)
+        if not invitation:
+            raise ValueError("Invalid or non-existent invitation token.")
+        if invitation.expires_at < datetime.now(timezone.utc):
+            raise ValueError("Invitation has expired.")
+        if invitation.accepted_at is not None:
+            raise ValueError("Invitation has already been accepted.")
+
+        invitation.accepted_at = datetime.now(timezone.utc)
+
+        # User provisioning/linking logic would go here.
+        # For example, if user identified by 'accepting_user_id' needs to be formally associated
+        # with 'invitation.tenant_id' and assigned 'invitation.role'.
+        # This might involve creating a UserRole entry.
+        user_to_associate = self.db.query(User).filter(User.id == accepting_user_id).first()
+        if user_to_associate:
+            if user_to_associate.tenant_id != invitation.tenant_id:
+                # This logic depends on whether a user can switch tenants or belong to multiple.
+                # For now, we'll assume the user might be new to this tenant or role.
+                pass # Potentially update user.tenant_id or add to a TenantUser mapping table.
+
+            # Assign the role from invitation
+            role_to_assign = self.db.query(Role).filter(Role.tenant_id == invitation.tenant_id, Role.name == invitation.role).first()
+            if role_to_assign:
+                existing_user_role = self.db.query(UserRole).filter(UserRole.user_id == accepting_user_id, UserRole.role_id == role_to_assign.id).first()
+                if not existing_user_role:
+                    new_user_role = UserRole(user_id=accepting_user_id, role_id=role_to_assign.id, assigned_by=invitation.invited_by_user_id)
+                    self.db.add(new_user_role)
+        
+        self.db.commit()
+        self.db.refresh(invitation)
+
+        self._log_audit_event(
+            tenant_id=invitation.tenant_id, user_id=accepting_user_id, action="tenant_invitation_accepted",
+            resource_type="tenant_invitation", resource_id=str(invitation.id),
+            details={"email": invitation.email, "accepted_by_user_id": accepting_user_id},
+            ip_address=ip_address, user_agent=user_agent
+        )
+        return invitation
+
+    def get_invitation_by_token(self, token: str) -> Optional[TenantInvitation]:
+        return self.db.query(TenantInvitation).filter(TenantInvitation.invitation_token == token).first()
+
+    def list_invitations(self, tenant_id: int, status: Optional[str] = None) -> List[TenantInvitation]:
+        query = self.db.query(TenantInvitation).filter(TenantInvitation.tenant_id == tenant_id)
+        now = datetime.now(timezone.utc)
+        if status == "pending":
+            query = query.filter(TenantInvitation.accepted_at == None, TenantInvitation.expires_at > now)
+        elif status == "accepted":
+            query = query.filter(TenantInvitation.accepted_at != None)
+        elif status == "expired":
+            query = query.filter(TenantInvitation.expires_at <= now, TenantInvitation.accepted_at == None)
+        return query.order_by(TenantInvitation.created_at.desc()).all()
+
+    def list_audit_logs(self, tenant_id: int, user_id: Optional[int] = None,
+                        action: Optional[str] = None, limit: int = 100, offset: int = 0) -> List[TenantAuditLog]:
+        query = self.db.query(TenantAuditLog).filter(TenantAuditLog.tenant_id == tenant_id)
+        if user_id:
+            query = query.filter(TenantAuditLog.user_id == user_id)
+        if action:
+            query = query.filter(TenantAuditLog.action == action)
+        return query.order_by(TenantAuditLog.created_at.desc()).limit(limit).offset(offset).all()
     
     def get_tenant_users(self, tenant_id: int, skip: int = 0, limit: int = 100) -> List[User]:
-        """
-        Get all users for a tenant
-        """
-        return self.db.query(User).filter(
-            User.tenant_id == tenant_id
-        ).offset(skip).limit(limit).all()
+        return self.db.query(User).filter(User.tenant_id == tenant_id).offset(skip).limit(limit).all()
     
-    def create_user(self, tenant_id: int, user_data: Dict[str, Any]) -> User:
-        """
-        Create a new user within a tenant
-        """
-        # Hash password
+    def create_user(self, tenant_id: int, user_data: Dict[str, Any],
+                    current_admin_id: Optional[int] = None,
+                    ip_address: Optional[str] = None, user_agent: Optional[str] = None) -> User:
+        tenant = self.get_tenant_by_id(tenant_id)
+        if not tenant:
+            raise ValueError(f"Tenant {tenant_id} not found.")
+
+        if tenant.max_users is not None:
+            current_user_count = self.db.query(User).filter(User.tenant_id == tenant_id).count()
+            if current_user_count >= tenant.max_users:
+                raise ValueError(f"User limit ({tenant.max_users}) reached for tenant {tenant.name} (ID: {tenant_id}).")
+
         hashed_password = pwd_context.hash(user_data["password"])
         
         user = User(
@@ -231,28 +377,43 @@ class TenantService:
         self.db.add(user)
         self.db.flush()
         
-        # Assign default role
+        default_role_name = user_data.get("default_role", "User")
         default_role = self.db.query(Role).filter(
-            and_(Role.tenant_id == tenant_id, Role.name == "User")
+            Role.tenant_id == tenant_id, Role.name == default_role_name
         ).first()
         
+        assigned_role_id_for_log = None
         if default_role:
             user_role = UserRole(
                 user_id=user.id,
-                role_id=default_role.id
+                role_id=default_role.id,
+                assigned_by=current_admin_id
             )
             self.db.add(user_role)
+            assigned_role_id_for_log = default_role.id
         
-        self.db.commit()
+        # Commit happens after user and potentially UserRole are added
+        # self.db.commit() # Deferred to allow _create_admin_user to commit once.
+
+        self._log_audit_event(
+            tenant_id=tenant_id, user_id=current_admin_id, action="user_created",
+            resource_type="user", resource_id=str(user.id),
+            details={"username": user.username, "email": user.email, "assigned_role_id": assigned_role_id_for_log},
+            ip_address=ip_address, user_agent=user_agent
+        )
         return user
     
-    def assign_role(self, user_id: int, role_id: int, assigned_by: int) -> UserRole:
-        """
-        Assign a role to a user
-        """
-        # Check if assignment already exists
+    def assign_role(self, user_id: int, role_id: int, assigned_by_user_id: int,
+                    ip_address: Optional[str] = None, user_agent: Optional[str] = None) -> UserRole:
+        user = self.db.query(User).filter(User.id == user_id).first()
+        if not user:
+            raise ValueError("User not found.")
+        role_to_assign = self.db.query(Role).filter(Role.id == role_id, Role.tenant_id == user.tenant_id).first()
+        if not role_to_assign:
+            raise ValueError("Role not found or does not belong to the user's tenant.")
+
         existing = self.db.query(UserRole).filter(
-            and_(UserRole.user_id == user_id, UserRole.role_id == role_id)
+            UserRole.user_id == user_id, UserRole.role_id == role_id
         ).first()
         
         if existing:
@@ -261,143 +422,72 @@ class TenantService:
         user_role = UserRole(
             user_id=user_id,
             role_id=role_id,
-            assigned_by=assigned_by
+            assigned_by=assigned_by_user_id
         )
         
         self.db.add(user_role)
         self.db.commit()
+
+        self._log_audit_event(
+            tenant_id=user.tenant_id, user_id=assigned_by_user_id, action="user_role_assigned",
+            resource_type="user_role", resource_id=f"user:{user_id},role:{role_id}",
+            details={"user_id": user_id, "role_id": role_id, "role_name": role_to_assign.name},
+            ip_address=ip_address, user_agent=user_agent
+        )
         return user_role
     
     def get_user_permissions(self, user_id: int) -> List[str]:
-        """
-        Get all permissions for a user across all their roles
-        """
+        user = self.db.query(User).filter(User.id == user_id).first()
+        if not user:
+            return []
+
         permissions = set()
+        user_roles = self.db.query(UserRole).join(Role).filter(UserRole.user_id == user_id).options(relationship(Role.permissions)).all()
         
-        user_roles = self.db.query(UserRole).filter(UserRole.user_id == user_id).all()
-        
-        for user_role in user_roles:
-            role = self.db.query(Role).filter(Role.id == user_role.role_id).first()
-            if role and role.permissions:
-                permissions.update(role.permissions)
+        for ur in user_roles:
+            if ur.role and isinstance(ur.role.permissions, list): # ur.role should be eagerly loaded if using options correctly
+                permissions.update(ur.role.permissions)
         
         return list(permissions)
     
     def check_permission(self, user_id: int, permission: str) -> bool:
-        """
-        Check if a user has a specific permission
-        """
         permissions = self.get_user_permissions(user_id)
         return permission in permissions
     
     def _get_enhanced_features(self, subscription_tier: str) -> Dict[str, bool]:
-        """
-        Get enhanced features based on subscription tier including writing assistance
-        """
-        features = {
-            "analytics": True,
-            "social_collaboration": True,
-            "ai_insights": subscription_tier in ["professional", "enterprise"],
-            "advanced_reporting": subscription_tier == "enterprise",
-            "api_access": subscription_tier in ["professional", "enterprise"],
-            "sso": subscription_tier == "enterprise",
-            "audit_logs": subscription_tier == "enterprise",
-            "writing_assistance": subscription_tier in ["professional", "enterprise"],
-            "integrations": subscription_tier in ["premium", "professional", "enterprise"],
-            "ai_features": subscription_tier in ["premium", "professional", "enterprise"],
-            "workflow_automation": subscription_tier in ["premium", "professional", "enterprise"],
-            "market_intelligence": subscription_tier == "enterprise",
-            "advanced_security": subscription_tier in ["premium", "professional", "enterprise"]
+        base_features = {
+            "analytics": True, "social_collaboration": True, "basic_reporting": True,
+            "api_access": False, "sso": False, "audit_logs_access": False,
+            "ai_insights": False, "advanced_reporting": False, "writing_assistance": False,
+            "integrations_basic": True, "integrations_premium": False,
+            "ai_features_standard": False, "workflow_automation_simple": False,
+            "market_intelligence_overview": False, "advanced_security_options": False
         }
-        
-        return features
-    
-    def _get_tier_features(self, subscription_tier: str) -> Dict[str, bool]:
-        """
-        Get tier-specific features for updates
-        """
-        return {
-            "ai_insights": subscription_tier in ["professional", "enterprise"],
-            "advanced_reporting": subscription_tier == "enterprise",
-            "api_access": subscription_tier in ["professional", "enterprise"],
-            "sso": subscription_tier == "enterprise",
-            "audit_logs": subscription_tier == "enterprise",
-            "writing_assistance": subscription_tier in ["professional", "enterprise"]
-        }
-    
-    def _get_default_features(self, subscription_tier: str) -> Dict[str, bool]:
-        """
-        Get default features based on subscription tier
-        """
-        features = {
-            "basic": {
-                "analytics": True,
-                "integrations": False,
-                "ai_features": False,
-                "workflow_automation": False,
-                "market_intelligence": False,
-                "advanced_security": False
-            },
-            "premium": {
-                "analytics": True,
-                "integrations": True,
-                "ai_features": True,
-                "workflow_automation": True,
-                "market_intelligence": False,
-                "advanced_security": True
-            },
-            "enterprise": {
-                "analytics": True,
-                "integrations": True,
-                "ai_features": True,
-                "workflow_automation": True,
-                "market_intelligence": True,
-                "advanced_security": True
-            }
-        }
-        
-        return features.get(subscription_tier, features["basic"])
+        if subscription_tier == "professional": # Example, align with actual tier names
+            base_features.update({
+                "api_access": True, "ai_insights": True, "writing_assistance": True,
+                "integrations_premium": True, "ai_features_standard": True,
+                "workflow_automation_simple": True, "advanced_security_options": True
+            })
+        elif subscription_tier == "enterprise":
+            base_features.update({
+                "api_access": True, "sso": True, "audit_logs_access": True,
+                "ai_insights": True, "advanced_reporting": True, "writing_assistance": True,
+                "integrations_premium": True, "ai_features_standard": True,
+                "workflow_automation_simple": True,
+                "market_intelligence_overview": True,
+                "advanced_security_options": True
+            })
+        return base_features
     
     def _create_default_roles(self, tenant_id: int):
-        """
-        Create default roles for a new tenant
-        """
-        default_roles = [
-            {
-                "name": "Admin",
-                "description": "Full administrative access",
-                "permissions": [
-                    "tenant.manage",
-                    "users.manage",
-                    "roles.manage",
-                    "analytics.view",
-                    "integrations.manage",
-                    "workflows.manage",
-                    "settings.manage"
-                ]
-            },
-            {
-                "name": "Manager",
-                "description": "Team management access",
-                "permissions": [
-                    "users.view",
-                    "analytics.view",
-                    "workflows.view",
-                    "team.manage"
-                ]
-            },
-            {
-                "name": "User",
-                "description": "Standard user access",
-                "permissions": [
-                    "profile.manage",
-                    "analytics.view_own",
-                    "workflows.view_own"
-                ]
-            }
+        default_roles_data = [
+            {"name": "Admin", "description": "Full administrative access", "permissions": ["tenant:manage", "users:manage", "roles:manage", "settings:manage", "billing:manage"]},
+            {"name": "Manager", "description": "Team management and operational oversight", "permissions": ["users:view", "team:manage"]},
+            {"name": "User", "description": "Standard user access", "permissions": ["profile:manage_own", "content:view"]}
         ]
         
-        for role_data in default_roles:
+        for role_data in default_roles_data:
             role = Role(
                 tenant_id=tenant_id,
                 name=role_data["name"],
@@ -406,105 +496,128 @@ class TenantService:
                 is_system_role=True
             )
             self.db.add(role)
-    
-    def _create_admin_user(self, tenant_id: int, admin_data: Dict[str, Any]):
-        """
-        Create the initial admin user for a tenant
-        """
-        # Create admin user
-        admin_user = self.create_user(tenant_id, admin_data)
+        self.db.flush()
+
+    def _create_admin_user(self, tenant_id: int, admin_user_data: Dict[str, Any], ip_address: Optional[str] = None, user_agent: Optional[str] = None) -> User:
+        # Called from create_tenant, tenant context is established.
+        # The create_user method handles limit checks and its own audit log.
+        # Pass current_admin_id as None as this is the first admin.
+        admin_user = self.create_user(tenant_id, admin_user_data, current_admin_id=None, ip_address=ip_address, user_agent=user_agent)
         
-        # Assign admin role
         admin_role = self.db.query(Role).filter(
-            and_(Role.tenant_id == tenant_id, Role.name == "Admin")
+            Role.tenant_id == tenant_id, Role.name == "Admin"
         ).first()
         
         if admin_role:
-            self.assign_role(admin_user.id, admin_role.id, admin_user.id)
+            # assign_role handles its own audit log. Admin user is implicitly assigning to self.
+            self.assign_role(admin_user.id, admin_role.id, assigned_by_user_id=admin_user.id, ip_address=ip_address, user_agent=user_agent)
         
+        # Important: create_tenant will do the final commit.
         return admin_user
-
 
 class UserService:
     """
-    Service for user management operations
+    Service for user management operations not strictly tied to TenantService instance.
     """
-    
     def __init__(self, db: Session):
         self.db = db
     
-    def authenticate_user(self, username: str, password: str, tenant_id: int) -> Optional[User]:
-        """
-        Authenticate a user within a specific tenant
-        """
-        user = self.db.query(User).filter(
-            and_(
-                User.username == username,
-                User.tenant_id == tenant_id,
-                User.is_active == True
-            )
-        ).first()
+    def authenticate_user(self, username: str, password: str, tenant_id: Optional[int] = None) -> Optional[User]:
+        query = self.db.query(User).filter(User.username == username, User.is_active == True)
+        if tenant_id is not None: # Scope to tenant if ID provided
+            query = query.filter(User.tenant_id == tenant_id)
+
+        user = query.first()
         
         if user and pwd_context.verify(password, user.hashed_password):
-            # Update last login
-            user.last_login = datetime.utcnow()
+            user.last_login = datetime.now(timezone.utc)
             self.db.commit()
+            # Consider how to call TenantService._log_audit_event here if needed
+            # For example: TenantService(self.db)._log_audit_event(user.tenant_id, user.id, "user_login", ...)
             return user
-        
         return None
     
-    def update_user_profile(self, user_id: int, profile_data: Dict[str, Any]) -> User:
-        """
-        Update user profile information
-        """
-        user = self.db.query(User).filter(User.id == user_id).first()
+    def get_user_by_id(self, user_id: int) -> Optional[User]:
+        return self.db.query(User).filter(User.id == user_id).first()
+
+    def update_user_profile(self, user_id: int, profile_data: Dict[str, Any],
+                            current_user_id: int,
+                            ip_address: Optional[str] = None, user_agent: Optional[str] = None) -> User:
+        user = self.get_user_by_id(user_id)
+        if not user:
+            raise ValueError("User not found")
+
+        changes = {}
+        original_data = {}
+        allowed_fields = ["first_name", "last_name", "job_title", "department", "profile_data", "preferences"]
+
+        for field, value in profile_data.items():
+            if field in allowed_fields and hasattr(user, field):
+                old_value = getattr(user, field)
+                if old_value != value:
+                    if isinstance(old_value, dict) and isinstance(value, dict):
+                        merged_value = {**old_value, **value}
+                        if merged_value != old_value:
+                            original_data[field] = dict(old_value) # Ensure copy for dicts
+                            changes[field] = dict(merged_value)
+                            setattr(user, field, merged_value)
+                    else:
+                        original_data[field] = old_value
+                        changes[field] = value
+                        setattr(user, field, value)
+
+        if changes:
+            user.updated_at = datetime.now(timezone.utc)
+            self.db.commit()
+            self.db.refresh(user)
+            # TenantService(self.db)._log_audit_event(user.tenant_id, current_user_id, "user_profile_updated", "user", str(user.id), {"changes": changes}, ip_address, user_agent)
+        return user
+    
+    def change_password(self, user_id: int, old_password: str, new_password: str,
+                        current_user_id: int,
+                        ip_address: Optional[str] = None, user_agent: Optional[str] = None) -> bool:
+        user = self.get_user_by_id(user_id)
         if not user:
             raise ValueError("User not found")
         
-        # Update basic fields
-        for field in ["first_name", "last_name", "job_title", "department"]:
-            if field in profile_data:
-                setattr(user, field, profile_data[field])
-        
-        # Update profile data
-        if "profile_data" in profile_data:
-            user.profile_data = {**user.profile_data, **profile_data["profile_data"]}
-        
-        # Update preferences
-        if "preferences" in profile_data:
-            user.preferences = {**user.preferences, **profile_data["preferences"]}
-        
-        user.updated_at = datetime.utcnow()
-        self.db.commit()
-        return user
-    
-    def change_password(self, user_id: int, old_password: str, new_password: str) -> bool:
-        """
-        Change user password
-        """
-        user = self.db.query(User).filter(User.id == user_id).first()
-        if not user:
-            return False
-        
-        # Verify old password
         if not pwd_context.verify(old_password, user.hashed_password):
+            # TenantService(self.db)._log_audit_event(user.tenant_id, current_user_id, "user_change_password_failed_old_password", "user", str(user.id), ip_address=ip_address, user_agent=user_agent)
             return False
         
-        # Update password
         user.hashed_password = pwd_context.hash(new_password)
-        user.updated_at = datetime.utcnow()
+        user.updated_at = datetime.now(timezone.utc)
         self.db.commit()
+        # TenantService(self.db)._log_audit_event(user.tenant_id, current_user_id, "user_password_changed", "user", str(user.id), ip_address=ip_address, user_agent=user_agent)
         return True
     
-    def deactivate_user(self, user_id: int) -> bool:
-        """
-        Deactivate a user account
-        """
-        user = self.db.query(User).filter(User.id == user_id).first()
+    def deactivate_user(self, user_id: int, current_admin_id: int,
+                        ip_address: Optional[str] = None, user_agent: Optional[str] = None) -> bool:
+        user = self.get_user_by_id(user_id)
         if not user:
-            return False
+            raise ValueError("User not found")
         
+        if not user.is_active:
+            return True
+
         user.is_active = False
-        user.updated_at = datetime.utcnow()
+        user.updated_at = datetime.now(timezone.utc)
         self.db.commit()
+        # TenantService(self.db)._log_audit_event(user.tenant_id, current_admin_id, "user_deactivated", "user", str(user.id), ip_address=ip_address, user_agent=user_agent)
         return True
+
+    def activate_user(self, user_id: int, current_admin_id: int,
+                      ip_address: Optional[str] = None, user_agent: Optional[str] = None) -> bool:
+        user = self.get_user_by_id(user_id)
+        if not user:
+            raise ValueError("User not found")
+
+        if user.is_active:
+            return True
+
+        user.is_active = True
+        user.updated_at = datetime.now(timezone.utc)
+        self.db.commit()
+        # TenantService(self.db)._log_audit_event(user.tenant_id, current_admin_id, "user_activated", "user", str(user.id), ip_address=ip_address, user_agent=user_agent)
+        return True
+
+```

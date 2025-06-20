@@ -2,371 +2,363 @@
 Multi-tenant API router for the Digame platform
 """
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request # Added Request for IP/User-Agent
 from sqlalchemy.orm import Session
-from typing import List, Dict, Any
-from pydantic import BaseModel, EmailStr
-from datetime import datetime
+from typing import List, Optional, Dict, Any # Dict, Any might not be needed if schemas are strict
 
 from ..database import get_db
 from ..services.tenant_service import TenantService, UserService
-from ..models.tenant import Tenant, User, TenantSettings
+# Assuming User model is needed for type hinting current_user, adjust if defined elsewhere
+from ..models.tenant import User as UserModel
+from ..schemas import tenant_schemas # Import the new schemas module
 
-router = APIRouter(prefix="/api/v1/tenants", tags=["tenants"])
+router = APIRouter(
+    prefix="/api/v1", # Prefixing all with /api/v1
+    tags=["Tenant Management"]
+)
 
+# Placeholder for authentication - replace with actual dependency
+async def get_current_active_user(request: Request, db: Session = Depends(get_db)) -> UserModel:
+    # This is a placeholder. In a real app, this would validate a token
+    # and return the current authenticated user model.
+    # For now, let's assume it returns a mock admin user from the first tenant if needed.
+    user = db.query(UserModel).first()
+    if not user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
+    # Simulate adding ip_address and user_agent to the request state for service layer
+    request.state.ip_address = request.client.host if request.client else "unknown"
+    request.state.user_agent = request.headers.get("user-agent", "unknown")
+    return user
 
-# Pydantic models for request/response
-class TenantCreate(BaseModel):
-    name: str
-    domain: str
-    subdomain: str
-    subscription_tier: str = "basic"
-    settings: Dict[str, Any] = {}
-    admin_user: Dict[str, Any] = {}
-
-
-class TenantResponse(BaseModel):
-    id: int
-    name: str
-    domain: str
-    subdomain: str
-    subscription_tier: str
-    is_active: bool
-    created_at: datetime
-    
-    class Config:
-        from_attributes = True
-
-
-class UserCreate(BaseModel):
-    username: str
-    email: EmailStr
-    password: str
-    first_name: str = None
-    last_name: str = None
-    job_title: str = None
-    department: str = None
-    profile_data: Dict[str, Any] = {}
-    preferences: Dict[str, Any] = {}
+# Placeholder for admin user check - replace with actual permission check
+async def get_admin_user(current_user: UserModel = Depends(get_current_active_user), tenant_service: TenantService = Depends(lambda db: TenantService(db=db))):
+    # This is a placeholder. Check if user has admin privileges for the tenant.
+    # For example, check if user has 'tenant:manage' permission for their tenant.
+    # tenant_service = TenantService(db) # db needs to be passed correctly
+    # has_perm = tenant_service.check_permission(current_user.id, "tenant:manage")
+    # if not has_perm:
+    #     raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized for this action")
+    return current_user
 
 
-class UserResponse(BaseModel):
-    id: int
-    username: str
-    email: str
-    first_name: str = None
-    last_name: str = None
-    job_title: str = None
-    department: str = None
-    is_active: bool
-    created_at: datetime
-    last_login: datetime = None
-    
-    class Config:
-        from_attributes = True
-
-
-class TenantSettingsUpdate(BaseModel):
-    logo_url: str = None
-    primary_color: str = None
-    secondary_color: str = None
-    analytics_enabled: bool = None
-    integrations_enabled: bool = None
-    ai_features_enabled: bool = None
-    workflow_automation_enabled: bool = None
-    market_intelligence_enabled: bool = None
-    email_notifications: bool = None
-    session_timeout: int = None
-    mfa_required: bool = None
-
-
-class RoleAssignment(BaseModel):
-    user_id: int
-    role_id: int
-
-
-@router.post("/", response_model=TenantResponse)
-async def create_tenant(
-    tenant_data: TenantCreate,
-    db: Session = Depends(get_db)
+# --- Tenant Management Endpoints ---
+@router.post("/tenants/", response_model=tenant_schemas.TenantResponse, status_code=status.HTTP_201_CREATED)
+async def create_new_tenant(
+    tenant_data: tenant_schemas.TenantCreate,
+    request: Request, # To get IP and User-Agent
+    db: Session = Depends(get_db),
+    current_user: UserModel = Depends(get_admin_user) # Assuming only admins can create tenants
 ):
-    """
-    Create a new tenant with default settings and admin user
-    """
     tenant_service = TenantService(db)
-    
     try:
-        tenant = tenant_service.create_tenant(tenant_data.dict())
+        # Pass IP and User-Agent from request state if set by middleware/dependency
+        ip_address = request.state.ip_address if hasattr(request.state, "ip_address") else request.client.host
+        user_agent = request.state.user_agent if hasattr(request.state, "user_agent") else request.headers.get("user-agent")
+
+        tenant = tenant_service.create_tenant(
+            tenant_data.model_dump(),
+            current_user_id=current_user.id,
+            ip_address=ip_address,
+            user_agent=user_agent
+            )
         return tenant
+    except ValueError as ve:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(ve))
     except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Failed to create tenant: {str(e)}"
-        )
+        # Log the exception e
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to create tenant.")
 
-
-@router.get("/domain/{domain}", response_model=TenantResponse)
-async def get_tenant_by_domain(
-    domain: str,
-    db: Session = Depends(get_db)
-):
-    """
-    Get tenant information by domain
-    """
-    tenant_service = TenantService(db)
-    tenant = tenant_service.get_tenant_by_domain(domain)
-    
-    if not tenant:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Tenant not found"
-        )
-    
-    return tenant
-
-
-@router.get("/subdomain/{subdomain}", response_model=TenantResponse)
-async def get_tenant_by_subdomain(
-    subdomain: str,
-    db: Session = Depends(get_db)
-):
-    """
-    Get tenant information by subdomain
-    """
-    tenant_service = TenantService(db)
-    tenant = tenant_service.get_tenant_by_subdomain(subdomain)
-    
-    if not tenant:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Tenant not found"
-        )
-    
-    return tenant
-
-
-@router.put("/{tenant_id}/settings")
-async def update_tenant_settings(
+@router.get("/tenants/{tenant_id}", response_model=tenant_schemas.TenantResponse)
+async def read_tenant_by_id(
     tenant_id: int,
-    settings_data: TenantSettingsUpdate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: UserModel = Depends(get_current_active_user) # Basic auth to view
 ):
-    """
-    Update tenant settings
-    """
+    # Permission check: current_user must belong to tenant_id or be a superadmin
+    if current_user.tenant_id != tenant_id: # Simplified check
+        # Add logic here for superadmin or cross-tenant access if applicable
+        # Or check specific permission: tenant_service.check_permission(current_user.id, "tenant:view")
+        pass # Assuming for now, if user is part of the tenant, they can view it.
+
+    tenant = TenantService(db).get_tenant_by_id(tenant_id)
+    if not tenant:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Tenant not found")
+    return tenant
+
+@router.put("/tenants/{tenant_id}", response_model=tenant_schemas.TenantResponse)
+async def update_existing_tenant(
+    tenant_id: int,
+    tenant_update_data: tenant_schemas.TenantUpdate,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: UserModel = Depends(get_admin_user) # Assuming admin for updates
+):
+    # Permission check: current_user must be admin of tenant_id
+    if current_user.tenant_id != tenant_id: # Simplified check
+         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to update this tenant")
+
     tenant_service = TenantService(db)
+    ip_address = request.state.ip_address if hasattr(request.state, "ip_address") else request.client.host
+    user_agent = request.state.user_agent if hasattr(request.state, "user_agent") else request.headers.get("user-agent")
+
+    updated_tenant = tenant_service.update_tenant(
+        tenant_id,
+        tenant_update_data.model_dump(exclude_unset=True),
+        current_user_id=current_user.id,
+        ip_address=ip_address,
+        user_agent=user_agent
+    )
+    if not updated_tenant:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Tenant not found")
+    return updated_tenant
+
+# Add other tenant lookup methods if needed: by slug, domain, subdomain
+@router.get("/tenants/slug/{slug}", response_model=tenant_schemas.TenantResponse)
+async def read_tenant_by_slug(slug: str, db: Session = Depends(get_db)): # Public or semi-public
+    tenant = TenantService(db).get_tenant_by_slug(slug)
+    if not tenant:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Tenant not found")
+    return tenant
+
+# --- TenantSettings (Key-Value) Endpoints ---
+@router.post("/tenants/{tenant_id}/settings", response_model=tenant_schemas.TenantSettingResponse)
+async def create_or_update_tenant_setting(
+    tenant_id: int,
+    setting_data: tenant_schemas.TenantSettingCreateUpdate,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: UserModel = Depends(get_admin_user) # Admin of the tenant
+):
+    if current_user.tenant_id != tenant_id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized for this tenant")
+
+    tenant_service = TenantService(db)
+    ip_address = request.state.ip_address if hasattr(request.state, "ip_address") else request.client.host
+    user_agent = request.state.user_agent if hasattr(request.state, "user_agent") else request.headers.get("user-agent")
     
     try:
-        settings = tenant_service.update_tenant_settings(
-            tenant_id, 
-            settings_data.dict(exclude_unset=True)
+        setting = tenant_service.set_tenant_setting(
+            tenant_id, setting_data.category, setting_data.key,
+            setting_data.value, setting_data.value_type, setting_data.is_encrypted,
+            current_user_id=current_user.id, ip_address=ip_address, user_agent=user_agent
         )
-        return {"message": "Settings updated successfully"}
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Failed to update settings: {str(e)}"
+        return setting
+    except ValueError as ve:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(ve))
+
+@router.get("/tenants/{tenant_id}/settings/{category}/{key}", response_model=tenant_schemas.TenantSettingResponse)
+async def read_tenant_setting(
+    tenant_id: int, category: str, key: str, db: Session = Depends(get_db), current_user: UserModel = Depends(get_current_active_user)
+):
+    if current_user.tenant_id != tenant_id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized for this tenant")
+    setting = TenantService(db).get_tenant_setting(tenant_id, category, key)
+    if not setting:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Setting not found")
+    return setting
+
+@router.get("/tenants/{tenant_id}/settings/{category}", response_model=List[tenant_schemas.TenantSettingResponse])
+async def read_tenant_settings_by_category(
+    tenant_id: int, category: str, db: Session = Depends(get_db), current_user: UserModel = Depends(get_current_active_user)
+):
+    if current_user.tenant_id != tenant_id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized for this tenant")
+    settings = TenantService(db).get_tenant_settings_by_category(tenant_id, category)
+    return settings
+
+@router.delete("/tenants/{tenant_id}/settings/{category}/{key}", status_code=status.HTTP_204_NO_CONTENT)
+async def remove_tenant_setting(
+    tenant_id: int, category: str, key: str, request: Request, db: Session = Depends(get_db), current_user: UserModel = Depends(get_admin_user)
+):
+    if current_user.tenant_id != tenant_id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized for this tenant")
+    
+    tenant_service = TenantService(db)
+    ip_address = request.state.ip_address if hasattr(request.state, "ip_address") else request.client.host
+    user_agent = request.state.user_agent if hasattr(request.state, "user_agent") else request.headers.get("user-agent")
+
+    if not tenant_service.delete_tenant_setting(tenant_id, category, key, current_user_id=current_user.id, ip_address=ip_address, user_agent=user_agent):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Setting not found")
+    return None # For 204 response
+
+# --- TenantInvitation Endpoints ---
+# Note: Invitations are typically managed by tenant admins.
+@router.post("/tenants/{tenant_id}/invitations", response_model=tenant_schemas.TenantInvitationResponse, status_code=status.HTTP_201_CREATED)
+async def invite_user_to_tenant(
+    tenant_id: int,
+    invitation_data: tenant_schemas.TenantInvitationCreate,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: UserModel = Depends(get_admin_user) # Inviter must be admin of the tenant
+):
+    if current_user.tenant_id != tenant_id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to invite users to this tenant")
+
+    tenant_service = TenantService(db)
+    ip_address = request.state.ip_address if hasattr(request.state, "ip_address") else request.client.host
+    user_agent = request.state.user_agent if hasattr(request.state, "user_agent") else request.headers.get("user-agent")
+    try:
+        invitation = tenant_service.create_invitation(
+            tenant_id, current_user.id, invitation_data.email, invitation_data.role,
+            ip_address=ip_address, user_agent=user_agent
         )
+        return invitation
+    except ValueError as ve:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(ve))
 
+@router.post("/invitations/accept/{token}", response_model=tenant_schemas.TenantInvitationResponse)
+async def accept_tenant_invitation(
+    token: str,
+    request: Request, # For IP/User-Agent
+    # Assuming the user accepting is already authenticated in the system, or has just signed up.
+    # The `accepting_user_id` should come from the authenticated context.
+    current_user: UserModel = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    tenant_service = TenantService(db)
+    ip_address = request.state.ip_address if hasattr(request.state, "ip_address") else request.client.host
+    user_agent = request.state.user_agent if hasattr(request.state, "user_agent") else request.headers.get("user-agent")
+    try:
+        # Pass current_user.id as accepting_user_id
+        invitation = tenant_service.accept_invitation(token, current_user.id, ip_address=ip_address, user_agent=user_agent)
+        if not invitation: # Should be handled by exceptions in service, but as a safeguard
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invitation acceptance failed")
+        return invitation
+    except ValueError as ve:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(ve))
 
-@router.get("/{tenant_id}/users", response_model=List[UserResponse])
-async def get_tenant_users(
+@router.get("/tenants/{tenant_id}/invitations", response_model=List[tenant_schemas.TenantInvitationResponse])
+async def list_tenant_invitations(
+    tenant_id: int,
+    status: Optional[str] = None, # Query param: pending, accepted, expired
+    db: Session = Depends(get_db),
+    current_user: UserModel = Depends(get_admin_user) # Only admin can see all invitations
+):
+    if current_user.tenant_id != tenant_id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized for this tenant")
+    invitations = TenantService(db).list_invitations(tenant_id, status)
+    return invitations
+
+@router.get("/invitations/{token}", response_model=tenant_schemas.TenantInvitationResponse)
+async def get_invitation_details_by_token(token: str, db: Session = Depends(get_db)):
+    # This might be a public endpoint or require some form of auth if token is guessable.
+    invitation = TenantService(db).get_invitation_by_token(token)
+    if not invitation:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invitation not found")
+    return invitation
+
+# --- TenantAuditLog Endpoints ---
+@router.get("/tenants/{tenant_id}/audit-logs", response_model=List[tenant_schemas.TenantAuditLogResponse])
+async def list_tenant_audit_logs(
+    tenant_id: int,
+    user_id_filter: Optional[int] = None, # Query param user_id
+    action_filter: Optional[str] = None, # Query param action
+    limit: int = 100,
+    offset: int = 0,
+    db: Session = Depends(get_db),
+    current_user: UserModel = Depends(get_admin_user) # Only admin can see audit logs
+):
+    if current_user.tenant_id != tenant_id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized for this tenant")
+    logs = TenantService(db).list_audit_logs(tenant_id, user_id_filter, action_filter, limit, offset)
+    return logs
+
+# --- User Management under Tenant ---
+# These endpoints were partially in the old router. Consolidating and ensuring tenant context.
+@router.post("/tenants/{tenant_id}/users/", response_model=tenant_schemas.UserBasicResponse, status_code=status.HTTP_201_CREATED)
+async def create_user_for_tenant(
+    tenant_id: int,
+    user_data: tenant_schemas.UserCreateForTenant,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_admin: UserModel = Depends(get_admin_user) # Admin of the tenant
+):
+    if current_admin.tenant_id != tenant_id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to create users for this tenant")
+
+    tenant_service = TenantService(db)
+    ip_address = request.state.ip_address if hasattr(request.state, "ip_address") else request.client.host
+    user_agent = request.state.user_agent if hasattr(request.state, "user_agent") else request.headers.get("user-agent")
+    try:
+        user = tenant_service.create_user(
+            tenant_id,
+            user_data.model_dump(),
+            current_admin_id=current_admin.id,
+            ip_address=ip_address,
+            user_agent=user_agent
+            )
+        return user # Ensure UserBasicResponse is compatible with User model or map fields
+    except ValueError as ve:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(ve))
+
+@router.get("/tenants/{tenant_id}/users/", response_model=List[tenant_schemas.UserBasicResponse])
+async def list_users_for_tenant(
     tenant_id: int,
     skip: int = 0,
     limit: int = 100,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: UserModel = Depends(get_current_active_user) # User in tenant can see other users
 ):
-    """
-    Get all users for a tenant
-    """
-    tenant_service = TenantService(db)
-    users = tenant_service.get_tenant_users(tenant_id, skip, limit)
+    if current_user.tenant_id != tenant_id: # Or specific permission check
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized for this tenant")
+    users = TenantService(db).get_tenant_users(tenant_id, skip, limit)
     return users
 
 
-@router.post("/{tenant_id}/users", response_model=UserResponse)
-async def create_user(
+# Placeholder for Tenant Usage - requires service layer implementation
+@router.get("/tenants/{tenant_id}/usage", response_model=tenant_schemas.TenantUsageResponse)
+async def get_tenant_usage_info(
     tenant_id: int,
-    user_data: UserCreate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: UserModel = Depends(get_admin_user)
 ):
-    """
-    Create a new user within a tenant
-    """
-    tenant_service = TenantService(db)
+    if current_user.tenant_id != tenant_id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized for this tenant")
     
-    try:
-        user = tenant_service.create_user(tenant_id, user_data.dict())
-        return user
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Failed to create user: {str(e)}"
-        )
+    tenant = TenantService(db).get_tenant_by_id(tenant_id)
+    if not tenant:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Tenant not found")
+    
+    # Basic implementation:
+    current_user_count = db.query(UserModel).filter(UserModel.tenant_id == tenant_id).count()
+    return tenant_schemas.TenantUsageResponse(
+        tenant_id=tenant_id,
+        current_user_count=current_user_count,
+        max_users=tenant.max_users
+    )
 
+# Health check (can be in a general router too)
+@router.get("/tenants-health/", tags=["Health"])
+async def tenant_system_health_check():
+    return {"status": "healthy", "service": "Tenant Management System"}
 
-@router.post("/{tenant_id}/roles/assign")
-async def assign_role(
-    tenant_id: int,
-    assignment: RoleAssignment,
-    db: Session = Depends(get_db)
+# Ensure user-related endpoints from old router (profile, password change) are handled by a separate user_router
+# or if they are tenant-specific, ensure they are correctly scoped and secured here.
+# E.g. /users/{user_id}/profile should be in a user_router.
+# If /tenants/{tenant_id}/users/{user_id}/profile, then it's tenant-scoped.
+# The old router had /users/{user_id}/permissions - this logic would now use TenantService.get_user_permissions.
+# The old /authenticate was global - it should probably be in an auth_router.
+
+# Example: Get permissions for a user within their tenant
+@router.get("/users/{user_id}/permissions", response_model=List[str])
+async def get_user_permissions_in_tenant(
+    user_id: int, # User whose permissions are being fetched
+    db: Session = Depends(get_db),
+    current_user: UserModel = Depends(get_current_active_user) # Authenticated user
 ):
-    """
-    Assign a role to a user
-    """
-    tenant_service = TenantService(db)
-    
-    try:
-        user_role = tenant_service.assign_role(
-            assignment.user_id,
-            assignment.role_id,
-            assignment.user_id  # For now, users assign roles to themselves
-        )
-        return {"message": "Role assigned successfully"}
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Failed to assign role: {str(e)}"
-        )
+    # Logic:
+    # 1. Fetch the user_to_check = UserService(db).get_user_by_id(user_id)
+    # 2. Permission: current_user must be admin of user_to_check.tenant_id OR current_user.id == user_id
+    user_to_check = UserService(db).get_user_by_id(user_id)
+    if not user_to_check:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
+    # Simplified permission check:
+    if current_user.id != user_id and current_user.tenant_id != user_to_check.tenant_id:
+         # Add more granular check if current_user is admin of user_to_check's tenant
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to view these permissions")
 
-@router.get("/users/{user_id}/permissions")
-async def get_user_permissions(
-    user_id: int,
-    db: Session = Depends(get_db)
-):
-    """
-    Get all permissions for a user
-    """
-    tenant_service = TenantService(db)
-    permissions = tenant_service.get_user_permissions(user_id)
-    return {"permissions": permissions}
+    permissions = TenantService(db).get_user_permissions(user_id)
+    return permissions
 
-
-@router.get("/users/{user_id}/permissions/{permission}")
-async def check_user_permission(
-    user_id: int,
-    permission: str,
-    db: Session = Depends(get_db)
-):
-    """
-    Check if a user has a specific permission
-    """
-    tenant_service = TenantService(db)
-    has_permission = tenant_service.check_permission(user_id, permission)
-    return {"has_permission": has_permission}
-
-
-@router.post("/authenticate")
-async def authenticate_user(
-    username: str,
-    password: str,
-    tenant_id: int,
-    db: Session = Depends(get_db)
-):
-    """
-    Authenticate a user within a specific tenant
-    """
-    user_service = UserService(db)
-    user = user_service.authenticate_user(username, password, tenant_id)
-    
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid credentials"
-        )
-    
-    return {
-        "user_id": user.id,
-        "username": user.username,
-        "tenant_id": user.tenant_id,
-        "message": "Authentication successful"
-    }
-
-
-@router.put("/users/{user_id}/profile")
-async def update_user_profile(
-    user_id: int,
-    profile_data: Dict[str, Any],
-    db: Session = Depends(get_db)
-):
-    """
-    Update user profile information
-    """
-    user_service = UserService(db)
-    
-    try:
-        user = user_service.update_user_profile(user_id, profile_data)
-        return {"message": "Profile updated successfully"}
-    except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=str(e)
-        )
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Failed to update profile: {str(e)}"
-        )
-
-
-@router.put("/users/{user_id}/password")
-async def change_password(
-    user_id: int,
-    old_password: str,
-    new_password: str,
-    db: Session = Depends(get_db)
-):
-    """
-    Change user password
-    """
-    user_service = UserService(db)
-    success = user_service.change_password(user_id, old_password, new_password)
-    
-    if not success:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Failed to change password. Check old password."
-        )
-    
-    return {"message": "Password changed successfully"}
-
-
-@router.delete("/users/{user_id}")
-async def deactivate_user(
-    user_id: int,
-    db: Session = Depends(get_db)
-):
-    """
-    Deactivate a user account
-    """
-    user_service = UserService(db)
-    success = user_service.deactivate_user(user_id)
-    
-    if not success:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found"
-        )
-    
-    return {"message": "User deactivated successfully"}
-
-
-# Health check endpoint for tenant system
-@router.get("/health")
-async def tenant_health_check():
-    """
-    Health check for tenant system
-    """
-    return {
-        "status": "healthy",
-        "service": "multi-tenant",
-        "timestamp": datetime.utcnow(),
-        "features": [
-            "tenant_management",
-            "user_management", 
-            "role_based_access_control",
-            "tenant_settings",
-            "authentication"
-        ]
-    }
+```
