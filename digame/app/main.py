@@ -26,6 +26,7 @@ from .routers import market_intelligence_router # Import the market intelligence
 from .routers import workflow_automation_router # Import the workflow automation router
 from .routers import integration_router # Import the integration router
 from .routers import tenant_router # Import the tenant router
+from .routers import notification_router # Import the notification router
 
 # Import authentication components
 from .auth.middleware import configure_auth_middleware
@@ -160,6 +161,7 @@ app.include_router(market_intelligence_router.router, tags=["Market Intelligence
 app.include_router(workflow_automation_router.router, tags=["Workflow Automation"])
 app.include_router(integration_router.router, tags=["Integrations"])
 app.include_router(tenant_router.router, tags=["Tenant Management"])
+app.include_router(notification_router.router, prefix="/api", tags=["Notifications"]) # Add notification router
 
 # Startup and shutdown events
 @app.on_event("startup")

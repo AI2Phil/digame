@@ -23,6 +23,15 @@ from .job_crud import (
     update_job_status,
     delete_job
 )
+from .notification_crud import ( # Import new notification_crud functions
+    create_notification,
+    get_notification,
+    get_notifications_by_user,
+    get_unread_notifications_by_user,
+    update_notification,
+    mark_notification_as_read,
+    delete_notification
+)
 
 __all__ = [
     # User CRUD
@@ -49,4 +58,13 @@ __all__ = [
 
     # UserSetting CRUD
     "get_user_setting", "create_user_setting", "update_user_setting", "delete_user_setting",
+
+    # Notification CRUD
+    "create_notification",
+    "get_notification",
+    "get_notifications_by_user",
+    "get_unread_notifications_by_user",
+    "update_notification",
+    "mark_notification_as_read",
+    "delete_notification",
 ]

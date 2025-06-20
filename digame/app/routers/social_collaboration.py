@@ -52,6 +52,7 @@ async def get_peer_matches(
     limit: int = Query(10, ge=1, le=50),
     skill_filter: Optional[str] = None,
     experience_filter: Optional[str] = None,
+    match_type: Optional[str] = Query(None), # Add new match_type filter
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
@@ -61,8 +62,8 @@ async def get_peer_matches(
     if current_user.id != user_id:
         require_permission("view_user_data", current_user)
     
-    # Mock peer matching algorithm results
-    mock_matches = [
+    # Base mock data
+    base_mock_matches = [
         {
             "id": 1,
             "name": "Alex Brown",
@@ -106,19 +107,35 @@ async def get_peer_matches(
             "mutualConnections": 12
         }
     ]
+
+    processed_matches = []
+    for match_data in base_mock_matches:
+        new_match = match_data.copy()
+        if match_type == "learning_partner":
+            # Example: Add learningGoals for specific users
+            if new_match["id"] == 1:
+                new_match["learningGoals"] = ["Learn Advanced Python", "Master FastAPI"]
+            elif new_match["id"] == 3:
+                new_match["learningGoals"] = ["Explore Kubernetes security", "Get AWS Certified"]
+            # User with id 2 will not have learningGoals in this example
+        processed_matches.append(new_match)
     
     # Apply filters if provided
-    filtered_matches = mock_matches
+    filtered_matches = processed_matches
     if skill_filter and isinstance(skill_filter, str):
-        filtered_matches = []
-        for m in mock_matches:
+        temp_filtered_matches = []
+        for m in processed_matches: # Iterate over potentially modified matches
             skills = m.get("skills", [])
             if isinstance(skills, list):
                 for skill in skills:
                     if isinstance(skill, str) and skill_filter.lower() in skill.lower():
-                        filtered_matches.append(m)
+                        temp_filtered_matches.append(m)
                         break
+        filtered_matches = temp_filtered_matches
     
+    # Note: experience_filter logic would be similar if it needs to be applied
+    # For this example, we are focusing on skill_filter and match_type
+
     return {"matches": filtered_matches[:limit], "total": len(filtered_matches)}
 
 @router.get("/users/{user_id}/skill-matches")
