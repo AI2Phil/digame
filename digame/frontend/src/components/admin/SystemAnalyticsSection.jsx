@@ -2,17 +2,26 @@ import React, { useState, useEffect } from 'react';
 import { 
   BarChart3, TrendingUp, Activity, Database, 
   Clock, Users, Zap, AlertTriangle, CheckCircle,
-  Calendar, Download, RefreshCw, Monitor
+  Calendar, Download, RefreshCw, Monitor, Server, Cpu, MemoryStick, HardDrive, Network
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Progress } from '../ui/Progress';
 import { Badge } from '../ui/Badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/Tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/Select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/Table';
 
-const SystemAnalyticsSection = ({ systemStats }) => {
+const SystemAnalyticsSection = ({ stats: systemStats }) => { // Renamed prop for clarity if it comes from a general 'stats' object
   const [timeRange, setTimeRange] = useState('24h');
   const [refreshing, setRefreshing] = useState(false);
+
+  // Use a default object for systemStats if it's undefined to prevent errors
+  const safeSystemStats = systemStats || {
+    avgResponseTime: 0, dbQueryTime: 0, memoryUsage: 0, cpuUsage: 0,
+    totalRequests: 0, activeUsers24h: 0, newRegistrations: 0,
+    avgSessionDuration: '0m', bounceRate: '0%', diskUsage: 0, networkIO: '0%'
+  };
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -98,24 +107,26 @@ const SystemAnalyticsSection = ({ systemStats }) => {
                 <BarChart3 className="w-5 h-5" />
                 System Analytics
               </CardTitle>
-              <CardDescription>
-                Monitor system performance, API usage, and error tracking
+              <CardDescription className="dark:text-gray-400">
+                Monitor system performance, API usage, and error tracking.
               </CardDescription>
             </div>
-            <div className="flex items-center gap-2">
-              <select
-                value={timeRange}
-                onChange={(e) => setTimeRange(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-md text-sm"
-              >
-                <option value="1h">Last Hour</option>
-                <option value="24h">Last 24 Hours</option>
-                <option value="7d">Last 7 Days</option>
-                <option value="30d">Last 30 Days</option>
-              </select>
+            <div className="flex flex-col sm:flex-row items-center gap-2 mt-4 sm:mt-0">
+              <Select value={timeRange} onValueChange={setTimeRange}>
+                <SelectTrigger className="w-full sm:w-[180px] dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600">
+                  <SelectValue placeholder="Select time range" />
+                </SelectTrigger>
+                <SelectContent className="dark:bg-gray-800 dark:text-gray-200">
+                  <SelectItem value="1h">Last Hour</SelectItem>
+                  <SelectItem value="24h">Last 24 Hours</SelectItem>
+                  <SelectItem value="7d">Last 7 Days</SelectItem>
+                  <SelectItem value="30d">Last 30 Days</SelectItem>
+                </SelectContent>
+              </Select>
               <Button
                 variant="outline"
                 size="sm"
+                className="w-full sm:w-auto dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700"
                 onClick={handleRefresh}
                 disabled={refreshing}
               >
@@ -132,60 +143,60 @@ const SystemAnalyticsSection = ({ systemStats }) => {
       </Card>
 
       {/* Analytics Tabs */}
-      <Tabs defaultValue="performance" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="performance">Performance</TabsTrigger>
-          <TabsTrigger value="api-usage">API Usage</TabsTrigger>
-          <TabsTrigger value="errors">Error Logs</TabsTrigger>
-          <TabsTrigger value="users">User Analytics</TabsTrigger>
+      <Tabs defaultValue="performance" className="space-y-6 dark:text-gray-300">
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 gap-2 dark:bg-gray-800">
+          <TabsTrigger value="performance" className="dark:data-[state=active]:bg-gray-700 dark:data-[state=active]:text-white">Performance</TabsTrigger>
+          <TabsTrigger value="api-usage" className="dark:data-[state=active]:bg-gray-700 dark:data-[state=active]:text-white">API Usage</TabsTrigger>
+          <TabsTrigger value="errors" className="dark:data-[state=active]:bg-gray-700 dark:data-[state=active]:text-white">Error Logs</TabsTrigger>
+          <TabsTrigger value="users" className="dark:data-[state=active]:bg-gray-700 dark:data-[state=active]:text-white">User Analytics</TabsTrigger>
         </TabsList>
 
         {/* Performance Tab */}
         <TabsContent value="performance" className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
             {performanceMetrics.map((metric, index) => (
               <PerformanceMetricCard key={index} metric={metric} />
             ))}
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <SystemResourcesCard systemStats={systemStats} />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+            <SystemResourcesCard systemStats={safeSystemStats} />
             <ResponseTimeChart />
           </div>
         </TabsContent>
 
         {/* API Usage Tab */}
         <TabsContent value="api-usage" className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <Card>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+            <Card className="dark:bg-gray-800 dark:border-gray-700">
               <CardHeader>
-                <CardTitle className="text-lg">Total Requests</CardTitle>
+                <CardTitle className="text-lg dark:text-gray-100">Total Requests</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold text-blue-600">
-                  {systemStats.totalRequests || '12,456'}
+                <div className="text-3xl font-bold text-blue-600 dark:text-blue-400">
+                  {safeSystemStats.totalRequests?.toLocaleString() || 'N/A'}
                 </div>
-                <p className="text-sm text-gray-500">+23% from yesterday</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">+23% from yesterday</p>
               </CardContent>
             </Card>
-            <Card>
+            <Card className="dark:bg-gray-800 dark:border-gray-700">
               <CardHeader>
-                <CardTitle className="text-lg">Success Rate</CardTitle>
+                <CardTitle className="text-lg dark:text-gray-100">Success Rate</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold text-green-600">99.8%</div>
-                <p className="text-sm text-gray-500">+0.2% from yesterday</p>
+                <div className="text-3xl font-bold text-green-600 dark:text-green-400">99.8%</div>
+                <p className="text-sm text-gray-500 dark:text-gray-400">+0.2% from yesterday</p>
               </CardContent>
             </Card>
-            <Card>
+            <Card className="dark:bg-gray-800 dark:border-gray-700">
               <CardHeader>
-                <CardTitle className="text-lg">Avg Response</CardTitle>
+                <CardTitle className="text-lg dark:text-gray-100">Avg Response</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold text-purple-600">
-                  {systemStats.avgResponseTime || 120}ms
+                <div className="text-3xl font-bold text-purple-600 dark:text-purple-400">
+                  {safeSystemStats.avgResponseTime || 'N/A'}ms
                 </div>
-                <p className="text-sm text-gray-500">-15ms from yesterday</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">-15ms from yesterday</p>
               </CardContent>
             </Card>
           </div>
@@ -200,7 +211,7 @@ const SystemAnalyticsSection = ({ systemStats }) => {
 
         {/* User Analytics Tab */}
         <TabsContent value="users" className="space-y-6">
-          <UserAnalyticsSection systemStats={systemStats} />
+          <UserAnalyticsSection systemStats={safeSystemStats} />
         </TabsContent>
       </Tabs>
     </div>
@@ -211,35 +222,45 @@ const SystemAnalyticsSection = ({ systemStats }) => {
 const PerformanceMetricCard = ({ metric }) => {
   const getStatusColor = (status) => {
     switch (status) {
-      case 'excellent': return 'text-green-600 bg-green-100';
-      case 'good': return 'text-blue-600 bg-blue-100';
-      case 'warning': return 'text-yellow-600 bg-yellow-100';
-      case 'critical': return 'text-red-600 bg-red-100';
-      default: return 'text-gray-600 bg-gray-100';
+      case 'excellent': return 'text-green-600 bg-green-100 dark:text-green-400 dark:bg-green-900/30';
+      case 'good': return 'text-blue-600 bg-blue-100 dark:text-blue-400 dark:bg-blue-900/30';
+      case 'warning': return 'text-yellow-600 bg-yellow-100 dark:text-yellow-400 dark:bg-yellow-900/30';
+      case 'critical': return 'text-red-600 bg-red-100 dark:text-red-400 dark:bg-red-900/30';
+      default: return 'text-gray-600 bg-gray-100 dark:text-gray-400 dark:bg-gray-700/30';
     }
   };
+
+  const getProgressColor = (status) => {
+    switch (status) {
+      case 'excellent': return 'bg-green-500';
+      case 'good': return 'bg-blue-500';
+      case 'warning': return 'bg-yellow-500';
+      case 'critical': return 'bg-red-500';
+      default: return 'bg-gray-500';
+    }
+  }
 
   const progressValue = metric.unit === '%' ? metric.value : (metric.value / metric.target) * 100;
 
   return (
-    <Card>
-      <CardContent className="p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-sm font-medium text-gray-600">{metric.name}</h3>
-          <Badge className={getStatusColor(metric.status)}>
+    <Card className="dark:bg-gray-800 dark:border-gray-700">
+      <CardContent className="p-4 sm:p-6">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-medium text-gray-600 dark:text-gray-300">{metric.name}</h3>
+          <Badge className={`${getStatusColor(metric.status)} px-2 py-0.5 text-xs`}>
             {metric.status}
           </Badge>
         </div>
-        <div className="space-y-2">
-          <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-bold">{metric.value}</span>
-            <span className="text-sm text-gray-500">{metric.unit}</span>
-            <span className={`text-sm ${metric.trend.startsWith('+') ? 'text-red-500' : 'text-green-500'}`}>
+        <div className="space-y-1.5">
+          <div className="flex items-baseline gap-1.5">
+            <span className="text-xl sm:text-2xl font-bold dark:text-white">{metric.value}</span>
+            <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">{metric.unit}</span>
+            <span className={`text-xs sm:text-sm ${metric.trend.startsWith('+') ? 'text-red-500 dark:text-red-400' : 'text-green-500 dark:text-green-400'}`}>
               {metric.trend}
             </span>
           </div>
-          <Progress value={progressValue} className="h-2" />
-          <p className="text-xs text-gray-500">Target: {metric.target}{metric.unit}</p>
+          <Progress value={Math.min(100, progressValue)} className={`h-1.5 sm:h-2 ${getProgressColor(metric.status)} dark:bg-opacity-50`} />
+          <p className="text-xs text-gray-500 dark:text-gray-400">Target: {metric.target}{metric.unit}</p>
         </div>
       </CardContent>
     </Card>
@@ -247,62 +268,61 @@ const PerformanceMetricCard = ({ metric }) => {
 };
 
 // System Resources Card Component
-const SystemResourcesCard = ({ systemStats }) => (
-  <Card>
+const SystemResourcesCard = ({ systemStats }) => {
+  const resources = [
+    { name: 'CPU Usage', value: systemStats.cpuUsage || 0, icon: Cpu, color: 'blue' },
+    { name: 'Memory Usage', value: systemStats.memoryUsage || 0, icon: MemoryStick, color: 'green' },
+    { name: 'Disk Usage', value: systemStats.diskUsage || 0, icon: HardDrive, color: 'yellow' },
+    { name: 'Network I/O', value: parseFloat(systemStats.networkIO) || 0, icon: Network, unit: '%', color: 'purple' }, // Assuming networkIO is a percentage string like "28%"
+  ];
+
+  return (
+  <Card className="dark:bg-gray-800 dark:border-gray-700">
     <CardHeader>
-      <CardTitle className="flex items-center gap-2">
-        <Monitor className="w-5 h-5" />
+      <CardTitle className="flex items-center gap-2 dark:text-gray-100">
+        <Server className="w-5 h-5 text-blue-500 dark:text-blue-400" />
         System Resources
       </CardTitle>
+      <CardDescription className="dark:text-gray-400">Overview of key server resource utilization.</CardDescription>
     </CardHeader>
     <CardContent className="space-y-4">
-      <div className="space-y-2">
-        <div className="flex justify-between text-sm">
-          <span>CPU Usage</span>
-          <span>{systemStats.cpuUsage || 45}%</span>
-        </div>
-        <Progress value={systemStats.cpuUsage || 45} className="h-2" />
-      </div>
-      <div className="space-y-2">
-        <div className="flex justify-between text-sm">
-          <span>Memory Usage</span>
-          <span>{systemStats.memoryUsage || 62}%</span>
-        </div>
-        <Progress value={systemStats.memoryUsage || 62} className="h-2" />
-      </div>
-      <div className="space-y-2">
-        <div className="flex justify-between text-sm">
-          <span>Disk Usage</span>
-          <span>{systemStats.diskUsage || 34}%</span>
-        </div>
-        <Progress value={systemStats.diskUsage || 34} className="h-2" />
-      </div>
-      <div className="space-y-2">
-        <div className="flex justify-between text-sm">
-          <span>Network I/O</span>
-          <span>{systemStats.networkIO || 28}%</span>
-        </div>
-        <Progress value={systemStats.networkIO || 28} className="h-2" />
-      </div>
+      {resources.map(resource => {
+        const ResourceIcon = resource.icon;
+        const progressColor = `bg-${resource.color}-500`;
+        return (
+          <div key={resource.name} className="space-y-1.5">
+            <div className="flex justify-between items-center text-sm">
+              <span className="flex items-center gap-1.5 text-gray-700 dark:text-gray-300">
+                <ResourceIcon className={`w-4 h-4 text-${resource.color}-500 dark:text-${resource.color}-400`} />
+                {resource.name}
+              </span>
+              <span className="font-medium dark:text-white">{resource.value}{resource.unit || '%'}</span>
+            </div>
+            <Progress value={resource.value} className={`h-2 ${progressColor} dark:bg-opacity-50`} />
+          </div>
+        );
+      })}
     </CardContent>
   </Card>
-);
+  );
+};
 
 // Response Time Chart Component
 const ResponseTimeChart = () => (
-  <Card>
+  <Card className="dark:bg-gray-800 dark:border-gray-700">
     <CardHeader>
-      <CardTitle className="flex items-center gap-2">
-        <Clock className="w-5 h-5" />
+      <CardTitle className="flex items-center gap-2 dark:text-gray-100">
+        <Clock className="w-5 h-5 text-blue-500 dark:text-blue-400" />
         Response Time Trend
       </CardTitle>
+      <CardDescription className="dark:text-gray-400">API response times over the selected period.</CardDescription>
     </CardHeader>
     <CardContent>
-      <div className="h-64 flex items-center justify-center bg-gray-50 rounded-lg">
+      <div className="h-60 sm:h-64 flex items-center justify-center bg-gray-50 dark:bg-gray-700/50 rounded-lg border dark:border-gray-600">
         <div className="text-center">
-          <BarChart3 className="w-12 h-12 text-gray-400 mx-auto mb-2" />
-          <p className="text-gray-500">Chart visualization would go here</p>
-          <p className="text-sm text-gray-400">Integration with charting library needed</p>
+          <BarChart3 className="w-10 h-10 sm:w-12 sm:h-12 text-gray-400 dark:text-gray-500 mx-auto mb-2" />
+          <p className="text-gray-500 dark:text-gray-400 text-sm">Chart visualization placeholder</p>
+          <p className="text-xs text-gray-400 dark:text-gray-500">Integrate with a charting library here.</p>
         </div>
       </div>
     </CardContent>
@@ -311,44 +331,45 @@ const ResponseTimeChart = () => (
 
 // API Endpoints Table Component
 const ApiEndpointsTable = ({ endpoints }) => (
-  <Card>
+  <Card className="dark:bg-gray-800 dark:border-gray-700">
     <CardHeader>
-      <CardTitle>API Endpoint Performance</CardTitle>
+      <CardTitle className="dark:text-gray-100">API Endpoint Performance</CardTitle>
+      <CardDescription className="dark:text-gray-400">Breakdown of requests, average time, and errors per endpoint.</CardDescription>
     </CardHeader>
     <CardContent>
       <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead>
-            <tr className="border-b">
-              <th className="text-left p-3 font-medium">Endpoint</th>
-              <th className="text-left p-3 font-medium">Requests</th>
-              <th className="text-left p-3 font-medium">Avg Time</th>
-              <th className="text-left p-3 font-medium">Errors</th>
-              <th className="text-left p-3 font-medium">Status</th>
-            </tr>
-          </thead>
-          <tbody>
+        <Table>
+          <TableHeader className="dark:bg-gray-700/50">
+            <TableRow className="dark:border-gray-600">
+              <TableHead className="p-3 font-medium dark:text-gray-300">Endpoint</TableHead>
+              <TableHead className="p-3 font-medium dark:text-gray-300">Requests</TableHead>
+              <TableHead className="p-3 font-medium dark:text-gray-300">Avg Time (ms)</TableHead>
+              <TableHead className="p-3 font-medium dark:text-gray-300">Errors</TableHead>
+              <TableHead className="p-3 font-medium dark:text-gray-300">Status</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {endpoints.map((endpoint, index) => (
-              <tr key={index} className="border-b hover:bg-gray-50">
-                <td className="p-3 font-mono text-sm">{endpoint.endpoint}</td>
-                <td className="p-3">{endpoint.requests.toLocaleString()}</td>
-                <td className="p-3">{endpoint.avgTime}ms</td>
-                <td className="p-3">
+              <TableRow key={index} className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/30">
+                <TableCell className="p-3 font-mono text-xs sm:text-sm dark:text-gray-200">{endpoint.endpoint}</TableCell>
+                <TableCell className="p-3 dark:text-gray-300">{endpoint.requests.toLocaleString()}</TableCell>
+                <TableCell className="p-3 dark:text-gray-300">{endpoint.avgTime}</TableCell>
+                <TableCell className="p-3">
                   {endpoint.errors > 0 ? (
-                    <span className="text-red-600">{endpoint.errors}</span>
+                    <span className="text-red-500 dark:text-red-400">{endpoint.errors}</span>
                   ) : (
-                    <span className="text-green-600">0</span>
+                    <span className="text-green-500 dark:text-green-400">0</span>
                   )}
-                </td>
-                <td className="p-3">
-                  <Badge variant={endpoint.errors > 0 ? 'destructive' : 'success'}>
+                </TableCell>
+                <TableCell className="p-3">
+                  <Badge variant={endpoint.errors > 0 ? 'destructive' : 'success'} className="text-xs">
                     {endpoint.errors > 0 ? 'Issues' : 'Healthy'}
                   </Badge>
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             ))}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
     </CardContent>
   </Card>
@@ -356,29 +377,30 @@ const ApiEndpointsTable = ({ endpoints }) => (
 
 // Error Logs Table Component
 const ErrorLogsTable = ({ logs }) => (
-  <Card>
+  <Card className="dark:bg-gray-800 dark:border-gray-700">
     <CardHeader>
-      <CardTitle className="flex items-center gap-2">
-        <AlertTriangle className="w-5 h-5" />
+      <CardTitle className="flex items-center gap-2 dark:text-gray-100">
+        <AlertTriangle className="w-5 h-5 text-red-500 dark:text-red-400" />
         Recent Error Logs
       </CardTitle>
+      <CardDescription className="dark:text-gray-400">Summary of recent system errors and warnings.</CardDescription>
     </CardHeader>
     <CardContent>
       <div className="space-y-3">
         {logs.map((log, index) => (
-          <div key={index} className="p-4 border rounded-lg">
-            <div className="flex items-start justify-between">
+          <div key={index} className="p-3 sm:p-4 border dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-700/50 hover:shadow-sm">
+            <div className="flex flex-col sm:flex-row items-start justify-between">
               <div className="flex-1">
-                <div className="flex items-center gap-2 mb-2">
-                  <Badge variant={log.level === 'ERROR' ? 'destructive' : 'warning'}>
+                <div className="flex flex-wrap items-center gap-2 mb-1.5">
+                  <Badge variant={log.level === 'ERROR' ? 'destructive' : 'warning'} className="text-xs">
                     {log.level}
                   </Badge>
-                  <span className="text-sm text-gray-500">{log.timestamp}</span>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">{log.timestamp}</span>
                 </div>
-                <p className="font-medium text-gray-900 mb-1">{log.message}</p>
-                <div className="flex items-center gap-4 text-sm text-gray-500">
-                  <span>Endpoint: {log.endpoint}</span>
-                  <span>User: {log.user}</span>
+                <p className="font-medium text-gray-900 dark:text-gray-100 text-sm mb-1">{log.message}</p>
+                <div className="flex flex-col sm:flex-row sm:items-center gap-x-4 gap-y-1 text-xs text-gray-500 dark:text-gray-400">
+                  <span>Endpoint: <span className="font-mono">{log.endpoint}</span></span>
+                  <span>User: <span className="font-mono">{log.user}</span></span>
                 </div>
               </div>
             </div>
@@ -391,70 +413,53 @@ const ErrorLogsTable = ({ logs }) => (
 
 // User Analytics Section Component
 const UserAnalyticsSection = ({ systemStats }) => (
-  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-    <Card>
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+    <Card className="dark:bg-gray-800 dark:border-gray-700">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Users className="w-5 h-5" />
+        <CardTitle className="flex items-center gap-2 dark:text-gray-100">
+          <Users className="w-5 h-5 text-blue-500 dark:text-blue-400" />
           User Activity
         </CardTitle>
+        <CardDescription className="dark:text-gray-400">Key metrics related to user engagement.</CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="flex justify-between items-center">
-          <span>Active Users (24h)</span>
-          <span className="font-bold">{systemStats.activeUsers24h || 234}</span>
-        </div>
-        <div className="flex justify-between items-center">
-          <span>New Registrations</span>
-          <span className="font-bold">{systemStats.newRegistrations || 12}</span>
-        </div>
-        <div className="flex justify-between items-center">
-          <span>Session Duration (avg)</span>
-          <span className="font-bold">{systemStats.avgSessionDuration || '24m'}</span>
-        </div>
-        <div className="flex justify-between items-center">
-          <span>Bounce Rate</span>
-          <span className="font-bold">{systemStats.bounceRate || '15%'}</span>
-        </div>
+      <CardContent className="space-y-3">
+        {[
+          { label: "Active Users (24h)", value: systemStats.activeUsers24h?.toLocaleString() || 'N/A' },
+          { label: "New Registrations", value: systemStats.newRegistrations?.toLocaleString() || 'N/A' },
+          { label: "Session Duration (avg)", value: systemStats.avgSessionDuration || 'N/A' },
+          { label: "Bounce Rate", value: systemStats.bounceRate || 'N/A' },
+        ].map(metric => (
+          <div key={metric.label} className="flex justify-between items-center text-sm p-2 bg-gray-50 dark:bg-gray-700/50 rounded-md">
+            <span className="text-gray-600 dark:text-gray-300">{metric.label}</span>
+            <span className="font-semibold dark:text-white">{metric.value}</span>
+          </div>
+        ))}
       </CardContent>
     </Card>
 
-    <Card>
+    <Card className="dark:bg-gray-800 dark:border-gray-700">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Activity className="w-5 h-5" />
+        <CardTitle className="flex items-center gap-2 dark:text-gray-100">
+          <TrendingUp className="w-5 h-5 text-green-500 dark:text-green-400" />
           Feature Usage
         </CardTitle>
+        <CardDescription className="dark:text-gray-400">Popularity of key platform features.</CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="space-y-2">
-          <div className="flex justify-between text-sm">
-            <span>Dashboard Views</span>
-            <span>1,234</span>
+      <CardContent className="space-y-3">
+        {[
+          { name: 'Dashboard Views', value: 85, count: 1234, color: 'blue' },
+          { name: 'API Key Management', value: 65, count: 567, color: 'purple' },
+          { name: 'Onboarding Completion', value: 45, count: 89, color: 'green' },
+          { name: 'Settings Access', value: 35, count: 234, color: 'yellow' },
+        ].map(feature => (
+          <div key={feature.name} className="space-y-1.5">
+            <div className="flex justify-between items-center text-sm">
+              <span className="text-gray-700 dark:text-gray-300">{feature.name}</span>
+              <span className="font-medium dark:text-white">{feature.count?.toLocaleString()} views</span>
+            </div>
+            <Progress value={feature.value} className={`h-2 bg-${feature.color}-500 dark:bg-opacity-50`} />
           </div>
-          <Progress value={85} className="h-2" />
-        </div>
-        <div className="space-y-2">
-          <div className="flex justify-between text-sm">
-            <span>API Key Management</span>
-            <span>567</span>
-          </div>
-          <Progress value={65} className="h-2" />
-        </div>
-        <div className="space-y-2">
-          <div className="flex justify-between text-sm">
-            <span>Onboarding Completion</span>
-            <span>89</span>
-          </div>
-          <Progress value={45} className="h-2" />
-        </div>
-        <div className="space-y-2">
-          <div className="flex justify-between text-sm">
-            <span>Settings Access</span>
-            <span>234</span>
-          </div>
-          <Progress value={35} className="h-2" />
-        </div>
+        ))}
       </CardContent>
     </Card>
   </div>

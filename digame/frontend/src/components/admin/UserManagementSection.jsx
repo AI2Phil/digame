@@ -1,17 +1,25 @@
 import React, { useState } from 'react';
 import { 
-  Search, Filter, Download, MoreHorizontal, 
+  Search, Filter, Download, MoreHorizontal, ChevronDown, ChevronUp, ArrowUpDown,
   UserCheck, UserX, Shield, Key, Mail, 
-  Calendar, Activity, Edit, Trash2
+  Calendar, Activity, Edit, Trash2, Eye
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
-import { Table } from '../ui/Table';
-import { Avatar } from '../ui/Avatar';
+import {
+  Table, TableBody, TableCell, TableHead,
+  TableHeader, TableRow
+} from '../ui/Table';
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/Avatar';
 import { Badge } from '../ui/Badge';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../ui/Dialog';
-import { Toast } from '../ui/Toast';
+import { Checkbox } from '../ui/Checkbox'; // Assuming Checkbox component exists
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem,
+  DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger
+} from '../ui/DropdownMenu'; // For actions
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/Select';
+// import { Toast } from '../ui/Toast'; // Assuming Toast is handled globally or via a context
 
 const UserManagementSection = ({ 
   users, 
@@ -133,182 +141,202 @@ const UserManagementSection = ({
               />
             </div>
             <div className="flex gap-2">
-              <select
-                value={filterRole}
-                onChange={(e) => setFilterRole(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-md text-sm"
-              >
-                <option value="all">All Roles</option>
-                <option value="admin">Admin</option>
-                <option value="manager">Manager</option>
-                <option value="user">User</option>
-                <option value="viewer">Viewer</option>
-              </select>
-              <select
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-md text-sm"
-              >
-                <option value="all">All Status</option>
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
-              </select>
-              <Button variant="outline" size="sm">
-                <Filter className="w-4 h-4" />
-              </Button>
+              <Select value={filterRole} onValueChange={setFilterRole}>
+                <SelectTrigger className="w-full sm:w-auto text-xs sm:text-sm dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600">
+                  <SelectValue placeholder="Filter by role" />
+                </SelectTrigger>
+                <SelectContent className="dark:bg-gray-800 dark:text-gray-200">
+                  <SelectItem value="all">All Roles</SelectItem>
+                  <SelectItem value="admin">Admin</SelectItem>
+                  <SelectItem value="manager">Manager</SelectItem>
+                  <SelectItem value="user">User</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={filterStatus} onValueChange={setFilterStatus}>
+                <SelectTrigger className="w-full sm:w-auto text-xs sm:text-sm dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600">
+                  <SelectValue placeholder="Filter by status" />
+                </SelectTrigger>
+                <SelectContent className="dark:bg-gray-800 dark:text-gray-200">
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="inactive">Inactive</SelectItem>
+                </SelectContent>
+              </Select>
+              {/* <Button variant="outline" size="sm" className="hidden sm:flex">
+                <Filter className="w-4 h-4 mr-1 sm:mr-2" />
+                <span className="hidden sm:inline">Filters</span>
+              </Button> */}
             </div>
           </div>
 
           {/* Bulk Actions */}
           {selectedUsers.length > 0 && (
-            <div className="flex items-center gap-2 mb-4 p-3 bg-blue-50 rounded-lg">
-              <span className="text-sm font-medium">
+            <div className="flex flex-col sm:flex-row items-center gap-2 mb-4 p-3 bg-blue-50 dark:bg-blue-900/30 rounded-lg border border-blue-200 dark:border-blue-700">
+              <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
                 {selectedUsers.length} user(s) selected
               </span>
-              <div className="flex gap-2 ml-auto">
+              <div className="flex gap-2 ml-0 sm:ml-auto mt-2 sm:mt-0">
                 <Button 
                   size="sm" 
                   variant="outline"
+                  className="dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700"
                   onClick={() => handleBulkAction('activate')}
                 >
-                  Activate
+                  <UserCheck className="w-3 h-3 mr-1.5" /> Activate
                 </Button>
                 <Button 
                   size="sm" 
                   variant="outline"
+                  className="dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700"
                   onClick={() => handleBulkAction('deactivate')}
                 >
-                  Deactivate
+                  <UserX className="w-3 h-3 mr-1.5" /> Deactivate
                 </Button>
                 <Button 
                   size="sm" 
                   variant="destructive"
                   onClick={() => handleBulkAction('delete')}
                 >
-                  Delete
+                  <Trash2 className="w-3 h-3 mr-1.5" /> Delete
                 </Button>
               </div>
             </div>
           )}
 
           {/* Users Table */}
-          <div className="border rounded-lg overflow-hidden">
+          <div className="border rounded-lg overflow-x-auto dark:border-gray-700">
             <Table>
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="w-12 p-4">
-                    <input
-                      type="checkbox"
+              <TableHeader className="bg-gray-50 dark:bg-gray-800">
+                <TableRow>
+                  <TableHead className="w-10 sm:w-12 p-2 sm:p-4">
+                    <Checkbox
                       checked={selectedUsers.length === filteredUsers.length && filteredUsers.length > 0}
-                      onChange={handleSelectAll}
-                      className="rounded border-gray-300"
+                      onCheckedChange={handleSelectAll}
+                      aria-label="Select all users"
+                      className="dark:border-gray-600 data-[state=checked]:bg-blue-600 dark:data-[state=checked]:bg-blue-500"
                     />
-                  </th>
-                  <th className="text-left p-4 font-medium">User</th>
-                  <th className="text-left p-4 font-medium">Role</th>
-                  <th className="text-left p-4 font-medium">Status</th>
-                  <th className="text-left p-4 font-medium">Last Login</th>
-                  <th className="text-left p-4 font-medium">Created</th>
-                  <th className="text-left p-4 font-medium">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
+                  </TableHead>
+                  <TableHead className="p-2 sm:p-4 font-medium text-gray-600 dark:text-gray-300 min-w-[200px]">User</TableHead>
+                  <TableHead className="p-2 sm:p-4 font-medium text-gray-600 dark:text-gray-300">Role</TableHead>
+                  <TableHead className="p-2 sm:p-4 font-medium text-gray-600 dark:text-gray-300">Status</TableHead>
+                  <TableHead className="p-2 sm:p-4 font-medium text-gray-600 dark:text-gray-300 min-w-[150px]">Last Login</TableHead>
+                  <TableHead className="p-2 sm:p-4 font-medium text-gray-600 dark:text-gray-300 min-w-[150px]">Created</TableHead>
+                  <TableHead className="p-2 sm:p-4 font-medium text-gray-600 dark:text-gray-300 text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {filteredUsers.map((user) => (
-                  <tr key={user.id} className="border-t hover:bg-gray-50">
-                    <td className="p-4">
-                      <input
-                        type="checkbox"
+                  <TableRow key={user.id} className="border-t dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                    <TableCell className="p-2 sm:p-4">
+                      <Checkbox
                         checked={selectedUsers.includes(user.id)}
-                        onChange={() => handleSelectUser(user.id)}
-                        className="rounded border-gray-300"
+                        onCheckedChange={() => handleSelectUser(user.id)}
+                        aria-label={`Select user ${user.username}`}
+                        className="dark:border-gray-600 data-[state=checked]:bg-blue-600 dark:data-[state=checked]:bg-blue-500"
                       />
-                    </td>
-                    <td className="p-4">
+                    </TableCell>
+                    <TableCell className="p-2 sm:p-4">
                       <div className="flex items-center gap-3">
-                        <Avatar
-                          src={user.avatar}
-                          alt={user.username}
-                          fallback={user.username?.charAt(0).toUpperCase()}
-                          size="sm"
-                        />
+                        <Avatar className="w-8 h-8 sm:w-10 sm:h-10">
+                          <AvatarImage src={user.avatar} alt={user.username} />
+                          <AvatarFallback className="dark:bg-gray-600 dark:text-gray-300">
+                            {user.username?.charAt(0).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
                         <div>
-                          <p className="font-medium text-gray-900">{user.username}</p>
-                          <p className="text-sm text-gray-500">{user.email}</p>
+                          <p className="font-medium text-gray-900 dark:text-gray-100 text-sm">{user.username}</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">{user.email}</p>
                         </div>
                       </div>
-                    </td>
-                    <td className="p-4">
-                      {getRoleBadge(user.role)}
-                    </td>
-                    <td className="p-4">
-                      {getUserStatusBadge(user)}
-                    </td>
-                    <td className="p-4">
-                      <div className="text-sm">
+                    </TableCell>
+                    <TableCell className="p-2 sm:p-4">{getRoleBadge(user.role)}</TableCell>
+                    <TableCell className="p-2 sm:p-4">{getUserStatusBadge(user)}</TableCell>
+                    <TableCell className="p-2 sm:p-4">
+                      <div className="text-xs sm:text-sm text-gray-700 dark:text-gray-300">
                         {user.last_login ? (
                           <>
                             <p>{new Date(user.last_login).toLocaleDateString()}</p>
-                            <p className="text-gray-500">
+                            <p className="text-gray-500 dark:text-gray-400 text-xs">
                               {new Date(user.last_login).toLocaleTimeString()}
                             </p>
                           </>
                         ) : (
-                          <span className="text-gray-400">Never</span>
+                          <span className="text-gray-400 dark:text-gray-500">Never</span>
                         )}
                       </div>
-                    </td>
-                    <td className="p-4">
-                      <div className="text-sm">
+                    </TableCell>
+                    <TableCell className="p-2 sm:p-4">
+                      <div className="text-xs sm:text-sm text-gray-700 dark:text-gray-300">
                         <p>{new Date(user.created_at).toLocaleDateString()}</p>
-                        <p className="text-gray-500">
+                        <p className="text-gray-500 dark:text-gray-400 text-xs">
                           {new Date(user.created_at).toLocaleTimeString()}
                         </p>
                       </div>
-                    </td>
-                    <td className="p-4">
-                      <div className="flex items-center gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => onUserSelect(user)}
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => onUserAction(user.id, user.is_active ? 'deactivate' : 'activate')}
-                        >
-                          {user.is_active ? <UserX className="w-4 h-4" /> : <UserCheck className="w-4 h-4" />}
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          onClick={() => onUserAction(user.id, 'delete')}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
+                    </TableCell>
+                    <TableCell className="p-2 sm:p-4 text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="dark:text-gray-400 dark:hover:bg-gray-700">
+                            <MoreHorizontal className="w-4 h-4" />
+                            <span className="sr-only">User Actions</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700">
+                          <DropdownMenuItem onClick={() => onUserSelect(user)} className="dark:hover:bg-gray-700/70">
+                            <Eye className="w-3.5 h-3.5 mr-2" /> View Details
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => onUserSelect(user)} className="dark:hover:bg-gray-700/70">
+                            <Edit className="w-3.5 h-3.5 mr-2" /> Edit User
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator className="dark:bg-gray-700" />
+                          <DropdownMenuItem
+                            onClick={() => onUserAction(user.id, user.is_active ? 'deactivate' : 'activate')}
+                            className="dark:hover:bg-gray-700/70"
+                          >
+                            {user.is_active ? <UserX className="w-3.5 h-3.5 mr-2" /> : <UserCheck className="w-3.5 h-3.5 mr-2" />}
+                            {user.is_active ? 'Deactivate' : 'Activate'}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                             onClick={() => onUserAction(user.id, 'reset_password')}
+                             className="dark:hover:bg-gray-700/70"
+                          >
+                            <Key className="w-3.5 h-3.5 mr-2" /> Reset Password
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator className="dark:bg-gray-700"/>
+                          <DropdownMenuItem
+                            onClick={() => onUserAction(user.id, 'delete')}
+                            className="text-red-600 dark:text-red-400 dark:hover:bg-red-700/30 focus:text-red-600 focus:bg-red-100 dark:focus:bg-red-700/50"
+                          >
+                            <Trash2 className="w-3.5 h-3.5 mr-2" /> Delete User
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
+              </TableBody>
             </Table>
+             {filteredUsers.length === 0 && (
+                <div className="text-center p-8 text-gray-500 dark:text-gray-400">
+                    No users found matching your criteria.
+                </div>
+            )}
           </div>
 
           {/* Pagination */}
-          <div className="flex items-center justify-between mt-4">
-            <p className="text-sm text-gray-500">
-              Showing {filteredUsers.length} of {users.length} users
+          <div className="flex flex-col sm:flex-row items-center justify-between mt-4 gap-2">
+            <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+              Showing {filteredUsers.length > 0 ? 1 : 0} to {filteredUsers.length} of {users.length} users
             </p>
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" disabled>
+            <div className="flex items-center gap-1 sm:gap-2">
+              <Button variant="outline" size="sm" disabled className="dark:text-gray-400 dark:border-gray-600 dark:hover:bg-gray-700">
                 Previous
               </Button>
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" className="dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700">
                 1
               </Button>
-              <Button variant="outline" size="sm" disabled>
+              {/* Add more page numbers if implementing full pagination */}
+              <Button variant="outline" size="sm" disabled className="dark:text-gray-400 dark:border-gray-600 dark:hover:bg-gray-700">
                 Next
               </Button>
             </div>
