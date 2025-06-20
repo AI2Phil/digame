@@ -1,6 +1,8 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 import logging
+from pythonjsonlogger import jsonlogger
+import sys # Required for sys.stdout
 
 # Import routers
 from .routers import predictive as predictive_router
@@ -28,9 +30,15 @@ from .routers import tenant_router # Import the tenant router
 from .auth.middleware import configure_auth_middleware
 from .auth.config import auth_settings, get_middleware_config
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+# Configure JSON logging
+logger = logging.getLogger("digame_app") # Use a specific name for the main app logger
+logger.setLevel(logging.INFO)
+logHandler = logging.StreamHandler(sys.stdout) # Output to stdout
+formatter = jsonlogger.JsonFormatter(
+    fmt="%(asctime)s %(levelname)s %(name)s %(module)s %(funcName)s %(lineno)d %(message)s"
+)
+logHandler.setFormatter(formatter)
+logger.addHandler(logHandler)
 
 # Create FastAPI application with enhanced metadata
 app = FastAPI(
@@ -256,8 +264,16 @@ async def add_request_context(request: Request, call_next):
     response.headers["X-Process-Time"] = str(process_time)
     
     # Log slow requests
+    request_id = request.headers.get("X-Request-ID")
+    log_extras = {}
+    if request_id:
+        log_extras["request_id"] = request_id
+
     if process_time > 1.0:  # Log requests taking more than 1 second
-        logger.warning(f"Slow request: {request.method} {request.url} took {process_time:.2f}s")
+        logger.warning(
+            f"Slow request: {request.method} {request.url} took {process_time:.2f}s",
+            extra=log_extras
+        )
     
     return response
 
@@ -275,7 +291,15 @@ async def not_found_handler(request: Request, exc):
 @app.exception_handler(500)
 async def internal_error_handler(request: Request, exc):
     """Custom 500 handler"""
-    logger.error(f"Internal server error on {request.method} {request.url}: {exc}")
+    request_id = request.headers.get("X-Request-ID")
+    log_extras = {}
+    if request_id:
+        log_extras["request_id"] = request_id
+    logger.error(
+        f"Internal server error on {request.method} {request.url}: {exc}",
+        exc_info=True, # Include exception info
+        extra=log_extras
+    )
     return {
         "error": "Internal Server Error",
         "message": "An unexpected error occurred",
