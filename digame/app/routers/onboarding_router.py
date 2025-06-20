@@ -1,79 +1,44 @@
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
-from typing import Dict, Any
-import logging
+from fastapi import APIRouter, Depends, HTTPException
+from typing import Dict
 
-from ..auth.auth_dependencies import get_current_active_user
-from ..db import get_db
-from ..schemas import onboarding_schemas # Import new onboarding schemas
-from ..crud import onboarding_crud # Import new onboarding CRUD
-from ..models.user import User
+from digame.app.models.onboarding_models import UserOnboardingStatus, OnboardingStepUpdate, OnboardingPreferencesUpdate
+from digame.app.services.onboarding_service import OnboardingService, get_onboarding_service
 
-# Configure logging
-logger = logging.getLogger(__name__)
+# Placeholder for auth - reuse from dashboard_router or a common auth module
+async def get_current_user_id() -> str:
+    return "user123" # Dummy user ID for now
 
-# Create router
 router = APIRouter(
-    prefix="/onboarding",
-    tags=["Onboarding"],
-    responses={404: {"description": "Not found"}},
+    prefix="/api/v1/onboarding",
+    tags=["onboarding"],
+    # dependencies=[Depends(get_current_active_user)] # Add actual auth later
 )
 
-@router.post("/", response_model=onboarding_schemas.OnboardingDataResponse, status_code=status.HTTP_200_OK)
-async def save_onboarding_data(
-    onboarding_data_update: onboarding_schemas.OnboardingDataUpdate, # Use new schema for request body
-    current_user: User = Depends(get_current_active_user),
-    db: Session = Depends(get_db)
-) -> onboarding_schemas.OnboardingDataResponse:
-    """
-    Save or update user onboarding data using structured Pydantic models.
-    """
-    try:
-        user_id = getattr(current_user, 'id')
-        updated_onboarding_data = onboarding_crud.update_onboarding_data(
-            db=db, user_id=user_id, data_update=onboarding_data_update
-        )
-        if not updated_onboarding_data: # Should be handled by CRUD if user not found, but as a safeguard
-             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found, cannot update onboarding data.")
-        return updated_onboarding_data
-    except ValueError as ve: # Catch specific error from CRUD if user not found
-        logger.error(f"Error saving onboarding data for user {current_user.id}: {str(ve)}")
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(ve))
-    except Exception as e:
-        logger.error(f"Error saving onboarding data for user {current_user.id}: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to save onboarding data"
-        )
-
-@router.get("/", response_model=onboarding_schemas.OnboardingDataResponse, status_code=status.HTTP_200_OK)
+@router.get("/status", response_model=UserOnboardingStatus)
 async def get_onboarding_status(
-    current_user: User = Depends(get_current_active_user),
-    db: Session = Depends(get_db)
-) -> onboarding_schemas.OnboardingDataResponse:
-    """
-    Get user onboarding status and data using structured Pydantic models.
-    """
-    try:
-        user_id = getattr(current_user, 'id')
-        onboarding_data_response = onboarding_crud.get_onboarding_data(db=db, user_id=user_id)
-        if not onboarding_data_response:
-            # This case should ideally be handled by get_onboarding_data returning a default structure
-            # or raising an error if user is not found, which it should not if current_user is valid.
-            # If get_onboarding_data returns None only if user itself not found by user_crud.get_user
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found, cannot retrieve onboarding data.")
-        return onboarding_data_response
-    except Exception as e:
-        logger.error(f"Error getting onboarding status for user {current_user.id}: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to get onboarding status"
-        )
+    current_user_id: str = Depends(get_current_user_id),
+    service: OnboardingService = Depends(get_onboarding_service)
+):
+    if not current_user_id:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    return await service.get_user_onboarding_status(user_id=current_user_id)
 
-# Health check endpoint
-@router.get("/health", status_code=status.HTTP_200_OK)
-async def onboarding_health_check() -> Dict[str, str]:
-    """
-    Onboarding service health check
-    """
-    return {"status": "healthy", "service": "onboarding"}
+@router.post("/step", response_model=UserOnboardingStatus)
+async def update_onboarding_step_api(
+    step_update: OnboardingStepUpdate,
+    current_user_id: str = Depends(get_current_user_id),
+    service: OnboardingService = Depends(get_onboarding_service)
+):
+    if not current_user_id:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    return await service.update_onboarding_step(user_id=current_user_id, step_update=step_update)
+
+@router.post("/preferences", response_model=UserOnboardingStatus)
+async def update_onboarding_preferences_api(
+    preferences_update: OnboardingPreferencesUpdate,
+    current_user_id: str = Depends(get_current_user_id),
+    service: OnboardingService = Depends(get_onboarding_service)
+):
+    if not current_user_id:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    return await service.update_user_preferences(user_id=current_user_id, preferences_update=preferences_update)
