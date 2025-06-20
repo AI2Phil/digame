@@ -128,29 +128,72 @@ const AdvancedMobileFeatures = ({ navigation }) => {
   const startVoiceRecognition = async () => {
     try {
       setVoiceRecognitionActive(true);
-      await advancedMobileService.startVoiceRecognition();
-      
-      // Provide voice feedback
-      Speech.speak("Voice recognition started. What would you like to do?");
-      
-      // Auto-stop after 10 seconds
-      setTimeout(() => {
-        stopVoiceRecognition();
-      }, 10000);
-      
+      const result = await advancedMobileService.startVoiceRecognition();
+      if (result.status === 'recording_started') {
+        Speech.speak("Voice recognition started. Please state your command.");
+      }
+      // No more auto-stop
     } catch (error) {
       setVoiceRecognitionActive(false);
-      Alert.alert('Error', 'Failed to start voice recognition');
+      console.error('Failed to start voice recognition:', error);
+      if (error.error === 'permission_denied') {
+        Alert.alert('Error', 'Audio recording permission was denied. Please enable it in settings.');
+      } else {
+        Alert.alert('Error', 'Failed to start voice recognition. Please try again.');
+      }
     }
   };
 
   const stopVoiceRecognition = async () => {
+    let stopResult;
     try {
-      await advancedMobileService.stopVoiceRecognition();
+      stopResult = await advancedMobileService.stopVoiceRecognition();
       setVoiceRecognitionActive(false);
-      Speech.speak("Voice recognition stopped");
+
+      if (stopResult.status === 'recording_stopped' && stopResult.uri) {
+        Speech.speak("Processing your command with backend.");
+        try {
+          const backendTranscriptionResponse = await advancedMobileService.transcribeAudio(stopResult.uri);
+          if (backendTranscriptionResponse && backendTranscriptionResponse.transcription) {
+            Speech.speak(`Heard from backend: ${backendTranscriptionResponse.transcription}.`);
+
+            try {
+              const backendIntentResponse = await advancedMobileService.handleIntent(backendTranscriptionResponse.transcription);
+              if (backendIntentResponse && backendIntentResponse.intent) {
+                Speech.speak(`Backend intent: ${backendIntentResponse.intent}. Message: ${backendIntentResponse.message}`);
+                // Example: if (backendIntentResponse.intent === 'VIEW_ANALYTICS') navigation.navigate('Analytics');
+              } else {
+                Speech.speak("Could not determine intent from backend.");
+                Alert.alert("Error", "Could not determine intent from the backend.");
+              }
+            } catch (intentError) {
+              console.error('Error handling intent with backend:', intentError);
+              Speech.speak("Error recognizing intent with backend.");
+              Alert.alert('Error', 'Error recognizing intent. Please try again.');
+            }
+          } else {
+            Speech.speak("Could not get transcription from backend.");
+            Alert.alert("Error", "Could not get transcription from the backend.");
+          }
+        } catch (transcriptionError) {
+          console.error('Error transcribing audio with backend:', transcriptionError);
+          Speech.speak("Error transcribing audio with backend.");
+          Alert.alert('Error', 'Error transcribing audio. Please try again.');
+        }
+      } else if (stopResult.status === 'not_recording') {
+        Speech.speak("Voice recognition stopped. No command recorded.");
+      } else {
+        // This case might include errors like 'uri_null_after_stopping'
+        Speech.speak("Voice recognition stopped. Could not process audio.");
+         if (stopResult.error) {
+            Alert.alert('Error', `Problem stopping recording: ${stopResult.error}`);
+        }
+      }
     } catch (error) {
-      Alert.alert('Error', 'Failed to stop voice recognition');
+      setVoiceRecognitionActive(false);
+      console.error('Failed to stop voice recognition or process command:', error);
+      Speech.speak("Error stopping voice recognition.");
+      Alert.alert('Error', `Failed to stop voice recognition: ${error.message || 'Please try again.'}`);
     }
   };
 
@@ -179,10 +222,11 @@ const AdvancedMobileFeatures = ({ navigation }) => {
 
   const optimizeNotifications = async () => {
     try {
-      await advancedMobileService.processAiNotifications();
-      Alert.alert('Success', 'Notifications optimized based on your behavior patterns');
+      const backendResponse = await advancedMobileService.processAiNotifications();
+      Alert.alert('Success', backendResponse.message || 'Notifications optimized based on your behavior patterns (via backend).');
     } catch (error) {
-      Alert.alert('Error', 'Failed to optimize notifications');
+      console.error('Failed to optimize notifications via backend:', error);
+      Alert.alert('Error', error.message || 'Failed to optimize notifications via backend.');
     }
   };
 
