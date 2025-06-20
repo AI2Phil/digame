@@ -57,7 +57,28 @@ The default SQLAlchemy `QueuePool` settings (`pool_size=5`, `max_overflow=10`) a
 -   **Observed Bottlenecks**: Monitoring tools (or application logs showing connection timeouts or high latency in acquiring connections) might indicate that the connection pool is a bottleneck.
 -   **Database Connection Limits**: The database server itself will have a maximum number of concurrent connections it can handle. The pool settings should not exceed this limit across all application instances.
 
-**Recommendation**: Without specific performance data or observed issues (e.g., connection timeouts, high connection setup latency from application metrics), prematurely changing these default values is not recommended. If performance issues related to database connections are suspected or identified, then adjusting `pool_size`, `max_overflow`, and potentially `pool_recycle` (e.g., to a value like 1800 or 3600 seconds if stale connections are an issue) should be considered based on empirical evidence and testing. The `echo=True` setting for the engine is useful for debugging but should generally be `False` in a production environment to avoid excessive log output.
+### Adjusting Pool Parameters
+
+When and why you might need to adjust `pool_size`, `max_overflow`, and `pool_timeout`:
+
+*   **`pool_size`**:
+    *   **Increase if**: Your application consistently handles many concurrent requests that all require database access, and you observe delays or timeouts when acquiring connections. An undersized pool forces requests to wait for a connection to become free.
+    *   **Decrease if**: Your application has few concurrent users, or database interactions are infrequent. A large pool on a less busy application can consume unnecessary database resources (memory, connection slots on the DB server). Also, if you have many application instances, the total number of connections (instance_count * pool_size) might exceed the database server's capacity.
+    *   **Consider**: The nature of your workload. Short, fast queries might allow for a smaller `pool_size` as connections are returned quickly. Long-running queries will hold connections longer, potentially requiring a larger pool.
+
+*   **`max_overflow`**:
+    *   **Increase if**: Your application experiences short, sharp peaks in traffic. `max_overflow` allows the pool to temporarily accommodate these bursts without requests failing immediately.
+    *   **Decrease if**: You want to strictly limit the total number of connections to the database, perhaps due to licensing constraints or to prevent overwhelming the database during unexpected surges. Setting it to 0 means no connections beyond `pool_size` are allowed.
+    *   **Consider**: `max_overflow` is a safety valve, not a substitute for a correctly sized `pool_size`. Relying too much on overflow connections can mean that during sustained high traffic, you are frequently incurring the cost of creating new connections.
+
+*   **`pool_timeout`**:
+    *   **Increase if**: Your application can tolerate longer waits for a database connection during peak loads, and you'd rather have requests queue up than fail fast. This might be acceptable for background tasks but less so for user-facing requests.
+    *   **Decrease if**: You want requests to fail quickly if a connection isn't available, allowing the application to provide immediate feedback to the user or trigger a fallback mechanism. A very short timeout might lead to connection acquisition errors even for transient spikes if `pool_size` and `max_overflow` are also tight.
+    *   **Consider**: The user experience and system resilience. Long timeouts can make an application appear unresponsive if the database is struggling. Short timeouts can lead to more errors if the pool is temporarily exhausted.
+
+**Recommendation**: Without specific performance data or observed issues (e.g., connection timeouts, high connection setup latency from application metrics), prematurely changing these default values is not recommended. If performance issues related to database connections are suspected or identified, then adjusting `pool_size`, `max_overflow`, and potentially `pool_recycle` (e.g., to a value like 1800 or 3600 seconds if stale connections are an issue) should be considered based on empirical evidence and testing.
+
+**Important Note on `echo=True`**: The `echo=True` parameter in `create_engine` (used in `digame/app/database.py` for both SQLite and other databases by default) causes SQLAlchemy to log all SQL statements it executes. While this is invaluable for debugging during development, it generates significant log output and can have performance implications. **It is crucial to ensure `echo=True` is set to `echo=False` in production environments.** This will prevent sensitive data from being logged and reduce unnecessary I/O overhead.
 
 ### SQLite Configuration
 -   **For SQLite Databases:**
