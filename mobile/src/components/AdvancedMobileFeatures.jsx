@@ -80,6 +80,9 @@ const AdvancedMobileFeatures = ({ navigation }) => {
 
     } catch (error) {
       console.error('Failed to initialize advanced features:', error);
+      // Ensure service is initialized even if other parts fail, or handle error appropriately
+      // For now, we assume initialize itself doesn't throw often or is critical to proceed
+      // await advancedMobileService.initialize(); // This was already called above
       Alert.alert('Error', 'Failed to initialize advanced mobile features');
     } finally {
       setLoading(false);
@@ -90,16 +93,20 @@ const AdvancedMobileFeatures = ({ navigation }) => {
     try {
       if (backgroundSyncEnabled) {
         // Disable background sync
+        // Assuming this part remains platform-specific and not part of advancedMobileService
         await BackgroundFetch.unregisterTaskAsync('background-fetch-task');
         setBackgroundSyncEnabled(false);
         Alert.alert('Success', 'Background sync disabled');
       } else {
         // Enable background sync
-        await advancedMobileService.setupBackgroundFetch();
+        await advancedMobileService.setupBackgroundFetch(); // Service call
+        // Potentially, platform-specific registration might still be needed here
+        // For now, we assume the service handles it or it's a separate concern
         setBackgroundSyncEnabled(true);
         Alert.alert('Success', 'Background sync enabled');
       }
     } catch (error) {
+      console.error('Failed to toggle background sync:', error);
       Alert.alert('Error', 'Failed to toggle background sync');
     }
   };
@@ -110,17 +117,19 @@ const AdvancedMobileFeatures = ({ navigation }) => {
       
       if (newState) {
         // Enable AI notifications
-        await advancedMobileService.setupAiNotifications();
+        await advancedMobileService.setupAiNotifications(); // Service call
         await AsyncStorage.setItem('ai_notifications_enabled', 'true');
         Alert.alert('Success', 'AI-powered notifications enabled');
       } else {
         // Disable AI notifications
+        // Assuming disabling doesn't need a service call, or it's handled by platform/AsyncStorage
         await AsyncStorage.setItem('ai_notifications_enabled', 'false');
         Alert.alert('Success', 'AI-powered notifications disabled');
       }
       
       setAiNotificationsEnabled(newState);
     } catch (error) {
+      console.error('Failed to toggle AI notifications:', error);
       Alert.alert('Error', 'Failed to toggle AI notifications');
     }
   };
@@ -128,60 +137,86 @@ const AdvancedMobileFeatures = ({ navigation }) => {
   const startVoiceRecognition = async () => {
     try {
       setVoiceRecognitionActive(true);
-      await advancedMobileService.startVoiceRecognition();
+      const transcribedText = await advancedMobileService.startVoiceRecognition();
       
-      // Provide voice feedback
-      Speech.speak("Voice recognition started. What would you like to do?");
-      
-      // Auto-stop after 10 seconds
-      setTimeout(() => {
-        stopVoiceRecognition();
-      }, 10000);
-      
+      if (transcribedText) {
+        const intentObject = await advancedMobileService.processVoiceCommand(transcribedText);
+        handleVoiceIntent(intentObject);
+      } else {
+        // Handle case where no text was transcribed or service failed
+        Speech.speak("Could not get transcribed text. Please try again.");
+      }
     } catch (error) {
-      setVoiceRecognitionActive(false);
-      Alert.alert('Error', 'Failed to start voice recognition');
+      console.error('Voice recognition error:', error);
+      Alert.alert('Error', 'Voice recognition failed. Please try again.');
+    } finally {
+      setVoiceRecognitionActive(false); // Ensure this is reset
     }
   };
 
   const stopVoiceRecognition = async () => {
     try {
       await advancedMobileService.stopVoiceRecognition();
-      setVoiceRecognitionActive(false);
-      Speech.speak("Voice recognition stopped");
+      Speech.speak("Voice recognition stopped"); // Kept for user feedback
     } catch (error) {
+      console.error('Failed to stop voice recognition:', error);
       Alert.alert('Error', 'Failed to stop voice recognition');
+    } finally {
+      setVoiceRecognitionActive(false);
+    }
+  };
+
+  const handleVoiceIntent = (intentObject) => {
+    if (!intentObject || !intentObject.intent) {
+      Speech.speak("Command not recognized or error in processing.");
+      return;
+    }
+
+    switch (intentObject.intent) {
+      case 'show_analytics':
+        navigation.navigate('Analytics');
+        Speech.speak("Navigating to Analytics.");
+        break;
+      case 'add_goal':
+        navigation.navigate('Goals');
+        Speech.speak("Navigating to Goals.");
+        break;
+      case 'update_progress':
+        navigation.navigate('Progress');
+        Speech.speak("Navigating to Progress.");
+        break;
+      case 'unknown_command':
+        Speech.speak(`Command not recognized: ${intentObject.originalText}. Please try again.`);
+        break;
+      default:
+        Speech.speak("Command not understood. Please try again.");
     }
   };
 
   const testVoiceCommand = async (command) => {
     try {
-      Speech.speak(`Testing voice command: ${command}`);
-      
-      // Simulate voice command processing
-      switch (command) {
-        case 'show analytics':
-          navigation.navigate('Analytics');
-          break;
-        case 'add goal':
-          navigation.navigate('Goals');
-          break;
-        case 'update progress':
-          navigation.navigate('Progress');
-          break;
-        default:
-          Speech.speak("Command not recognized");
-      }
+      // Speech.speak(`Testing voice command: ${command}`); // Service handles logging
+      setVoiceRecognitionActive(true); // Simulate active state for UI if needed
+      const intentObject = await advancedMobileService.processVoiceCommand(command);
+      handleVoiceIntent(intentObject);
     } catch (error) {
+      console.error('Failed to process voice command:', error);
       Alert.alert('Error', 'Failed to process voice command');
+    } finally {
+      setVoiceRecognitionActive(false); // Reset active state
     }
   };
 
   const optimizeNotifications = async () => {
     try {
-      await advancedMobileService.processAiNotifications();
-      Alert.alert('Success', 'Notifications optimized based on your behavior patterns');
+      const result = await advancedMobileService.processAiNotifications();
+      if (result && result.success) {
+        Alert.alert('Success', result.message || 'Notifications optimized successfully!');
+      } else {
+        Alert.alert('Info', result.message || 'Notifications optimization process completed.');
+      }
     } catch (error) {
+      console.error('Failed to optimize notifications:', error);
       Alert.alert('Error', 'Failed to optimize notifications');
     }
   };
