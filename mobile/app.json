@@ -19,7 +19,10 @@
       "bundleIdentifier": "com.digame.mobile",
       "infoPlist": {
         "NSFaceIDUsageDescription": "Use Face ID to authenticate and securely access your Digame account.",
-        "NSCameraUsageDescription": "Camera access is required for Face ID authentication."
+        "NSCameraUsageDescription": "Camera access is required for Face ID authentication.",
+        "UIBackgroundModes": [
+          "fetch"
+        ]
       }
     },
     "android": {

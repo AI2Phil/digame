@@ -12,19 +12,85 @@ import json
 # Import from the correct paths based on the project structure
 try:
     from ..models.user import User
+    # Ensure Project model is imported, if not already (it's not in the provided snippet, so adding)
+    from ..models.project import Project # Added for Project model
     from ..crud.user_crud import get_user
+    # Import project schemas
+    from ..schemas.project_schemas import ProjectMatchResponse, Project as ProjectSchema, ProjectMatch # Added
+    # Import user schema - assuming it might have skills in a real scenario, but will use mock for now
+    from ..schemas.user_schemas import User as UserSchema # Added
 except ImportError:
     # Fallback for development - create mock classes
-    class User:
-        def __init__(self):
-            self.id = 1
-            self.email = "test@example.com"
-            self.full_name = "Test User"
+    class User: # Mock User
+        def __init__(self, id: int = 1, email: str = "test@example.com", full_name: str = "Test User", skills: List[str] = []):
+            self.id = id
+            self.email = email
+            self.full_name = full_name
+            self.skills = skills # Added skills for mock user
+
+    class Project: # Mock Project
+        def __init__(self, id: int, name: str, description: str, required_skills: List[str], owner_id: int, created_at: datetime):
+            self.id = id
+            self.name = name
+            self.description = description
+            self.required_skills = required_skills
+            self.owner_id = owner_id
+            self.created_at = created_at
+
+    def get_user(db, user_id): # Mock get_user
+        # In a real scenario, this would fetch from DB and include skills
+        # For now, returning a mock user with some skills for testing
+        return User(id=user_id, skills=["python", "fastapi"])
+
+
+    # Mock schemas for fallback
+    class ProjectSchema(BaseModel): # Pydantic BaseModel needs to be imported if not available
+        id: int
+        name: str
+        description: Optional[str] = None
+        required_skills: List[str] = []
+        owner_id: int
+        created_at: datetime
+        class Config:
+            orm_mode = True
+
+    class ProjectMatch(BaseModel):
+        project: ProjectSchema
+        matching_skills: List[str]
+        missing_skills: List[str]
+
+    class ProjectMatchResponse(BaseModel):
+        matches: List[ProjectMatch]
+        total: int
     
-    def get_user(db, user_id):
-        user = User()
-        user.id = user_id
-        return user
+    # Need BaseModel for mock schemas if pydantic is not globally available here
+    from pydantic import BaseModel # This was correctly added in the thought process, ensuring it's in the code.
+
+    # Mock ProjectSchema for fallback if actual schema import fails
+    if not globals().get('ProjectSchema'): # Define only if not defined by successful import
+        class ProjectSchema(BaseModel):
+            id: int
+            name: str
+            description: Optional[str] = None
+            required_skills: List[str] = []
+            owner_id: int
+            created_at: datetime
+            class Config:
+                orm_mode = True
+
+    # Mock ProjectMatch for fallback
+    if not globals().get('ProjectMatch'): # Define only if not defined
+        class ProjectMatch(BaseModel):
+            project: ProjectSchema
+            matching_skills: List[str]
+            missing_skills: List[str]
+
+    # Mock ProjectMatchResponse for fallback
+    if not globals().get('ProjectMatchResponse'): # Define only if not defined
+        class ProjectMatchResponse(BaseModel):
+            matches: List[ProjectMatch]
+            total: int
+
 
 # Mock dependencies for development
 def get_db():
@@ -404,6 +470,67 @@ async def join_collaboration_project(
     }
 
 # Team Analytics Endpoints
+# ... (existing code) ...
+
+# Make sure this new endpoint is defined within the router context
+@router.get("/project-matches", response_model=ProjectMatchResponse)
+async def get_project_matches(
+    user_id: int,
+    db: Session = Depends(get_db)
+    # current_user: User = Depends(get_current_user) # Assuming current_user is not strictly needed for this version
+):
+    """
+    Get project matches for a user based on their skills.
+    """
+    user_entity = get_user(db, user_id=user_id) # This will use the mock or real get_user
+
+    if not user_entity:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # For development, if user_entity doesn't have skills (e.g. real model without skills field yet)
+    # We'll use a default list. The mock get_user above already provides skills.
+    user_skills = []
+    if hasattr(user_entity, 'skills') and user_entity.skills:
+        user_skills = user_entity.skills
+    elif not hasattr(user_entity, 'skills'): # If the object truly has no skills attr
+        # Fallback to some default skills if even the mock User didn't get skills
+        # This case should ideally be covered by the mock User definition in ImportError
+        user_skills = ["python", "react"] # Default if no skills found on user object
+
+    # Mock project data
+    mock_projects_data = [
+        {"id": 1, "name": "AI Chatbot", "description": "A chatbot for customer service", "required_skills": ["python", "nlp", "machine learning"], "owner_id": 1, "created_at": datetime.utcnow()},
+        {"id": 2, "name": "E-commerce Platform", "description": "Online shopping platform", "required_skills": ["react", "nodejs", "mongodb"], "owner_id": 2, "created_at": datetime.utcnow()},
+        {"id": 3, "name": "Data Analytics Dashboard", "description": "Dashboard for visualizing data", "required_skills": ["python", "pandas", "fastapi"], "owner_id": 1, "created_at": datetime.utcnow()},
+        {"id": 4, "name": "Mobile Game", "description": "A new mobile game", "required_skills": ["unity", "csharp"], "owner_id": 3, "created_at": datetime.utcnow()},
+        {"id": 5, "name": "NLP Research", "description": "Research project on NLP", "required_skills": ["python", "pytorch", "nlp"], "owner_id": 1, "created_at": datetime.utcnow()},
+    ]
+
+    # Convert mock data to ProjectSchema.
+    # In a real scenario, these would be fetched from project_crud.get_projects(db) or similar
+    # And would likely already be Project model instances, then converted to ProjectSchema for response.
+    # For now, we create ProjectSchema instances directly from dicts.
+    all_projects = [ProjectSchema(**p) for p in mock_projects_data]
+
+    matches = []
+    for project in all_projects:
+        project_req_skills_set = set(s.lower() for s in project.required_skills)
+        user_skills_set = set(s.lower() for s in user_skills)
+
+        matching_skills = list(user_skills_set.intersection(project_req_skills_set))
+        missing_skills = list(project_req_skills_set.difference(user_skills_set))
+
+        if matching_skills: # Consider it a match if there's at least one skill in common
+            project_match = ProjectMatch(
+                project=project,
+                matching_skills=matching_skills,
+                missing_skills=missing_skills
+            )
+            matches.append(project_match)
+
+    return ProjectMatchResponse(matches=matches, total=len(matches))
+
+
 @router.get("/users/{user_id}/team-analytics")
 async def get_team_analytics(
     user_id: int,

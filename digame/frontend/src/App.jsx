@@ -10,6 +10,7 @@ import EnhancedSocialCollaborationDashboard from './pages/EnhancedSocialCollabor
 import AiToolsPage from './pages/AiToolsPage';
 import TaskManagementPage from './pages/TaskManagementPage';
 import EnterpriseDashboardPage from './pages/EnterpriseDashboardPage';
+import FindPeersPage from './pages/FindPeersPage'; // Import FindPeersPage
 import './App.css';
 
 function App() {
@@ -156,6 +157,18 @@ function App() {
             }
           />
           
+          {/* New route for Find Peers Page */}
+          <Route
+            path="/social/find-peers"
+            element={
+              isAuthenticated || isDemoMode ? (
+                <FindPeersPage />
+              ) : (
+                <Navigate to="/" replace />
+              )
+            }
+          />
+
           <Route
             path="/dashboard"
             element={

@@ -8,6 +8,8 @@ from .anomaly_schemas import DetectedAnomalyResponse, DetectedAnomalyBase
 from .task_schemas import TaskBase, TaskCreate, TaskUpdate, TaskResponse # Added new task schemas
 from .user_setting_schemas import UserSettingBase, UserSettingCreate, UserSettingUpdate, UserSetting # Import new UserSetting schemas
 from .onboarding_schemas import OnboardingDataBase, OnboardingDataCreate, OnboardingDataUpdate, OnboardingDataResponse, OnboardingStep # Import new onboarding schemas
+from .project_schemas import Project, ProjectCreate, ProjectMatchResponse # Import project schemas
+from .notification_schemas import Notification, NotificationCreate, NotificationUpdate # New line
 
 __all__ = [
     "RoleCreate", "RoleResponse",
@@ -22,6 +24,8 @@ __all__ = [
     "TaskBase", "TaskCreate", "TaskUpdate", "TaskResponse", # Added new task schemas
     "UserSettingBase", "UserSettingCreate", "UserSettingUpdate", "UserSetting", # Add UserSetting schemas to __all__
     "OnboardingDataBase", "OnboardingDataCreate", "OnboardingDataUpdate", "OnboardingDataResponse", "OnboardingStep", # Add onboarding schemas to __all__
+    "Project", "ProjectCreate", "ProjectMatchResponse", # Add project schemas to __all__
+    "Notification", "NotificationCreate", "NotificationUpdate", # Add new schemas
     "writing_assistance_schemas",
 ]
 

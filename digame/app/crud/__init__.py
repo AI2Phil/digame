@@ -23,6 +23,19 @@ from .job_crud import (
     update_job_status,
     delete_job
 )
+# Import UserSetting CRUD (assuming it was added previously or should be here)
+from .user_setting_crud import get_user_setting, create_user_setting, update_user_setting, delete_user_setting
+
+from .notification_crud import (
+    create_user_notification,
+    get_notification,
+    get_notifications_by_user,
+    update_notification,
+    delete_notification,
+    get_pending_scheduled_notifications,
+    mark_notification_as_read,
+    mark_multiple_notifications_as_read
+)
 
 __all__ = [
     # User CRUD
@@ -49,4 +62,14 @@ __all__ = [
 
     # UserSetting CRUD
     "get_user_setting", "create_user_setting", "update_user_setting", "delete_user_setting",
+
+    # Notification CRUD
+    "create_user_notification",
+    "get_notification",
+    "get_notifications_by_user",
+    "update_notification",
+    "delete_notification",
+    "get_pending_scheduled_notifications",
+    "mark_notification_as_read",
+    "mark_multiple_notifications_as_read",
 ]
