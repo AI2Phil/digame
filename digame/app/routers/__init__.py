@@ -5,8 +5,10 @@
 # from .predictive_router import router as predictive_router # Assuming predictive_router.py exists
 from .user_setting_router import router as user_setting_router # Import the new user setting router
 from . import writing_assistance_router
+from . import notification_router # Add this
 
 __all__ = [
     "user_setting_router", # Assuming this was meant to be exported
     "writing_assistance_router",
+    "notification_router", # Add to __all__
 ]

@@ -19,7 +19,10 @@
       "bundleIdentifier": "com.digame.mobile",
       "infoPlist": {
         "NSFaceIDUsageDescription": "Use Face ID to authenticate and securely access your Digame account.",
-        "NSCameraUsageDescription": "Camera access is required for Face ID authentication."
+        "NSCameraUsageDescription": "Camera access is required for Face ID authentication.",
+        "UIBackgroundModes": [
+          "fetch"
+        ]
       }
     },
     "android": {
@@ -35,6 +38,9 @@
         "VIBRATE",
         "ACCESS_NETWORK_STATE",
         "INTERNET"
+        // expo-background-fetch might require WAKE_LOCK or other permissions,
+        // but often handles them automatically or relies on existing ones like RECEIVE_BOOT_COMPLETED.
+        // Let's assume for now no new Android permissions are explicitly needed here unless docs state otherwise.
       ]
     },
     "web": {
@@ -55,6 +61,8 @@
           "faceIDPermission": "Allow Digame to use Face ID for secure authentication."
         }
       ]
+      // expo-background-fetch and expo-task-manager are typically auto-configured by Expo's build process
+      // and don't usually require explicit entries in the "plugins" array unless there are specific configurations.
     ],
     "notification": {
       "icon": "./assets/notification-icon.png",
