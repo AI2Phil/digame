@@ -1,11 +1,36 @@
 import React from 'react';
+import apiService from '../services/apiService'; // Added for user data
 import { useNavigate } from 'react-router-dom';
 import ProductivityChart from '../components/dashboard/ProductivityChart';
 import ActivityBreakdown from '../components/dashboard/ActivityBreakdown';
-import { EnhancedProductivityMetricCard } from '../components/dashboard/ProductivityMetricCard';
+import ProductivityMetricCard from '../components/dashboard/ProductivityMetricCard';
+import RecentActivity from '../components/dashboard/RecentActivity';
 
 export default function DashboardPage({ isDemoMode, onLogout }) {
   const navigate = useNavigate();
+  const [currentUser, setCurrentUser] = useState(null);
+  const [userLoading, setUserLoading] = useState(true);
+  const [userError, setUserError] = useState(null);
+
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      if (!isDemoMode) {
+        setUserLoading(true);
+        setUserError(null);
+        try {
+          const user = await apiService.getCurrentUser();
+          setCurrentUser(user);
+        } catch (error) {
+          console.error("Failed to fetch current user:", error);
+          setUserError(error.message || "Could not fetch user data");
+        }
+        setUserLoading(false);
+      } else {
+        setUserLoading(false); // Not loading if in demo mode
+      }
+    };
+    fetchCurrentUser();
+  }, [isDemoMode]);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -279,6 +304,16 @@ export default function DashboardPage({ isDemoMode, onLogout }) {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* User Loading/Error State */}
+        {userLoading && !isDemoMode && (
+          <div className="text-center p-8"><p>Loading user data...</p></div>
+        )}
+        {userError && !isDemoMode && (
+          <div className="text-center p-8 text-red-500">
+            <p>Error loading user data: {userError}</p>
+            <p>Dashboard features requiring user ID may not function correctly.</p>
+          </div>
+        )}
         {/* Welcome Section */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
@@ -318,7 +353,7 @@ export default function DashboardPage({ isDemoMode, onLogout }) {
 
         {/* Enhanced Stats Overview */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <EnhancedProductivityMetricCard
+          <ProductivityMetricCard userId={currentUser?.id || 1}
             title="Productivity Score"
             value="87%"
             target={90}
@@ -338,7 +373,7 @@ export default function DashboardPage({ isDemoMode, onLogout }) {
             ]}
           />
 
-          <EnhancedProductivityMetricCard
+          <ProductivityMetricCard userId={currentUser?.id || 1}
             title="Focus Time"
             value="6.2h"
             target={8}
@@ -358,7 +393,7 @@ export default function DashboardPage({ isDemoMode, onLogout }) {
             ]}
           />
 
-          <EnhancedProductivityMetricCard
+          <ProductivityMetricCard userId={currentUser?.id || 1}
             title="Collaboration"
             value="8.4"
             target={10}
@@ -378,7 +413,7 @@ export default function DashboardPage({ isDemoMode, onLogout }) {
             ]}
           />
 
-          <EnhancedProductivityMetricCard
+          <ProductivityMetricCard userId={currentUser?.id || 1}
             title="Growth Rate"
             value="+12%"
             change="Above average"
@@ -409,7 +444,7 @@ export default function DashboardPage({ isDemoMode, onLogout }) {
                 </h3>
                 <span className="text-sm text-gray-500">Last 7 days</span>
               </div>
-              <ProductivityChart userId={1} />
+              <ProductivityChart userId={currentUser?.id || 1} />
             </div>
           </div>
           
@@ -489,7 +524,7 @@ export default function DashboardPage({ isDemoMode, onLogout }) {
         {/* Additional Components Row */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
           {/* Activity Breakdown */}
-          <ActivityBreakdown userId={1} />
+          <ActivityBreakdown userId={currentUser?.id || 1} />
           
           {/* Recent Activities */}
           <div className="card">
@@ -502,33 +537,7 @@ export default function DashboardPage({ isDemoMode, onLogout }) {
               </button>
             </div>
             <div className="space-y-4">
-              <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                  <span className="text-blue-600 text-sm">💻</span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 truncate">Code Review Session</p>
-                  <p className="text-xs text-gray-600">2 hours ago</p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-                <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
-                  <span className="text-green-600 text-sm">📞</span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 truncate">Team Standup</p>
-                  <p className="text-xs text-gray-600">4 hours ago</p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-                <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
-                  <span className="text-purple-600 text-sm">📚</span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 truncate">Learning Session</p>
-                  <p className="text-xs text-gray-600">Yesterday</p>
-                </div>
-              </div>
+              <RecentActivity userId={currentUser?.id || 1} />
             </div>
           </div>
         </div>
