@@ -1,6 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { ToastProvider } from './components/ui/Toast';
+import enhancedApiService from './services/enhancedApiService';
 import HomePage from './pages/HomePage';
+import FeaturesPage from './pages/FeaturesPage';
+import HowItWorksPage from './pages/HowItWorksPage';
+import PricingPage from './pages/PricingPage';
+import DemoPage from './pages/DemoPage';
 import DashboardPage from './pages/DashboardPage';
 import ComponentDemoPage from './pages/ComponentDemoPage';
 import OnboardingPage from './pages/OnboardingPage';
@@ -14,6 +20,9 @@ import AdminDashboardPage from './pages/AdminDashboardPage'; // Import AdminDash
 import UserListPage from './pages/UserListPage';
 import UserProfileOverviewPage from './pages/UserProfileOverviewPage';
 import FindPeersPage from './pages/FindPeersPage'; // Import FindPeersPage
+import BehavioralAnalyticsPage from './pages/BehavioralAnalyticsPage';
+import PredictiveAnalyticsPage from './pages/PredictiveAnalyticsPage';
+import ReportsPage from './pages/ReportsPage';
 import './App.css';
 
 function App() {
@@ -77,6 +86,7 @@ function App() {
   const handleDemoAccess = () => {
     setIsDemoMode(true);
     setIsAuthenticated(false);
+    enhancedApiService.enableDemoMode();
   };
 
   const handleLogin = (userData, tokens) => {
@@ -97,6 +107,9 @@ function App() {
     setIsAuthenticated(false);
     setIsDemoMode(false);
     setNeedsOnboarding(false);
+    
+    // Disable demo mode
+    enhancedApiService.disableDemoMode();
     
     // Clear stored tokens
     localStorage.removeItem('access_token');
@@ -124,9 +137,10 @@ function App() {
   }
 
   return (
-    <Router>
-      <div className="App">
-        <Routes>
+    <ToastProvider position="top-right">
+      <Router>
+        <div className="App">
+          <Routes>
           <Route
             path="/"
             element={
@@ -144,6 +158,12 @@ function App() {
               )
             }
           />
+          
+          {/* Public Pages - No Authentication Required */}
+          <Route path="/features" element={<FeaturesPage />} />
+          <Route path="/how-it-works" element={<HowItWorksPage />} />
+          <Route path="/pricing" element={<PricingPage />} />
+          <Route path="/demo" element={<DemoPage onDemoAccess={handleDemoAccess} />} />
           
           {/* Community/User Routes */}
           <Route
@@ -230,7 +250,10 @@ function App() {
             path="/analytics/web"
             element={
               isAuthenticated || isDemoMode ? (
-                <AdvancedWebAnalyticsDashboard />
+                <AdvancedWebAnalyticsDashboard
+                  isDemoMode={isDemoMode}
+                  onLogout={handleLogout}
+                />
               ) : (
                 <Navigate to="/" replace />
               )
@@ -241,7 +264,10 @@ function App() {
             path="/analytics/mobile"
             element={
               isAuthenticated || isDemoMode ? (
-                <AdvancedMobileAnalyticsDashboard />
+                <AdvancedMobileAnalyticsDashboard
+                  isDemoMode={isDemoMode}
+                  onLogout={handleLogout}
+                />
               ) : (
                 <Navigate to="/" replace />
               )
@@ -375,13 +401,10 @@ function App() {
             path="/analytics/behavioral"
             element={
               isAuthenticated || isDemoMode ? (
-                <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-                  <div className="text-center">
-                    <div className="text-6xl mb-4">🧠</div>
-                    <h1 className="text-2xl font-bold text-gray-900 mb-2">Behavioral Analytics</h1>
-                    <p className="text-gray-600">Advanced behavioral analysis coming soon...</p>
-                  </div>
-                </div>
+                <BehavioralAnalyticsPage
+                  isDemoMode={isDemoMode}
+                  onLogout={handleLogout}
+                />
               ) : (
                 <Navigate to="/" replace />
               )
@@ -392,13 +415,10 @@ function App() {
             path="/analytics/predictive"
             element={
               isAuthenticated || isDemoMode ? (
-                <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-                  <div className="text-center">
-                    <div className="text-6xl mb-4">🔮</div>
-                    <h1 className="text-2xl font-bold text-gray-900 mb-2">Predictive Analytics</h1>
-                    <p className="text-gray-600">Predictive insights coming soon...</p>
-                  </div>
-                </div>
+                <PredictiveAnalyticsPage
+                  isDemoMode={isDemoMode}
+                  onLogout={handleLogout}
+                />
               ) : (
                 <Navigate to="/" replace />
               )
@@ -410,13 +430,10 @@ function App() {
             path="/reports"
             element={
               isAuthenticated || isDemoMode ? (
-                <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-                  <div className="text-center">
-                    <div className="text-6xl mb-4">📋</div>
-                    <h1 className="text-2xl font-bold text-gray-900 mb-2">Reports & Insights</h1>
-                    <p className="text-gray-600">Comprehensive reporting features coming soon...</p>
-                  </div>
-                </div>
+                <ReportsPage
+                  isDemoMode={isDemoMode}
+                  onLogout={handleLogout}
+                />
               ) : (
                 <Navigate to="/" replace />
               )
@@ -526,9 +543,10 @@ function App() {
             path="*"
             element={<Navigate to="/" replace />}
           />
-        </Routes>
-      </div>
-    </Router>
+          </Routes>
+        </div>
+      </Router>
+    </ToastProvider>
   );
 }
 

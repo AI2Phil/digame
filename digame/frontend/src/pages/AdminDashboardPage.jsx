@@ -14,8 +14,8 @@ import { Avatar } from '../components/ui/Avatar';
 import { Badge } from '../components/ui/Badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/Tabs';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/Dialog';
-import { Toast } from '../components/ui/Toast';
-import apiService from '../services/apiService';
+import { useToast } from '../components/ui/Toast';
+import enhancedApiService from '../services/enhancedApiService';
 import UserManagementSection from '../components/admin/UserManagementSection';
 import SystemAnalyticsSection from '../components/admin/SystemAnalyticsSection';
 import ApiKeyManagementSection from '../components/admin/ApiKeyManagementSection';
@@ -23,6 +23,7 @@ import OnboardingAnalyticsSection from '../components/admin/OnboardingAnalyticsS
 import UserDetailsDialog from '../components/admin/UserDetailsDialog';
 
 const AdminDashboardPage = () => {
+  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('overview');
   const [users, setUsers] = useState([]);
   const [systemStats, setSystemStats] = useState({});
@@ -41,19 +42,20 @@ const AdminDashboardPage = () => {
     setLoading(true);
     try {
       const [usersData, statsData, keysData, onboardingData] = await Promise.all([
-        apiService.getUsers(),
-        apiService.getSystemStats(),
-        apiService.getAdminApiKeys(),
-        apiService.getOnboardingAnalytics()
+        enhancedApiService.getUsers(),
+        enhancedApiService.getSystemStats(),
+        enhancedApiService.getAdminApiKeys(),
+        enhancedApiService.getOnboardingAnalytics()
       ]);
 
-      setUsers(usersData);
+      // Handle the case where getUsers returns an object with users array
+      setUsers(usersData.users || usersData || []);
       setSystemStats(statsData);
       setApiKeys(keysData);
       setOnboardingStats(onboardingData);
     } catch (error) {
       console.error('Failed to load dashboard data:', error);
-      Toast.error('Failed to load dashboard data');
+      toast.error('Failed to load dashboard data');
     } finally {
       setLoading(false);
     }
@@ -61,12 +63,12 @@ const AdminDashboardPage = () => {
 
   const handleUserAction = async (userId, action) => {
     try {
-      await apiService.performUserAction(userId, action);
-      Toast.success(`User ${action} successfully`);
+      await enhancedApiService.performUserAction(userId, action);
+      toast.success(`User ${action} successfully`);
       loadDashboardData();
     } catch (error) {
       console.error(`Failed to ${action} user:`, error);
-      Toast.error(`Failed to ${action} user`);
+      toast.error(`Failed to ${action} user`);
     }
   };
 

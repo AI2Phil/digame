@@ -12,9 +12,10 @@ import { Input } from '../ui/Input';
 import { Avatar } from '../ui/Avatar';
 import { Badge } from '../ui/Badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/Tabs';
-import { Toast } from '../ui/Toast';
+import { useToast } from '../ui/Toast';
 
 const SocialProfileSection = ({ user }) => {
+  const { toast } = useToast();
   const [connections, setConnections] = useState([]);
   const [socialLinks, setSocialLinks] = useState({
     linkedin: '',
@@ -118,27 +119,27 @@ const SocialProfileSection = ({ user }) => {
     try {
       // await apiService.updateSocialLinks(socialLinks);
       setIsEditingLinks(false);
-      Toast.success('Social links updated successfully');
+      toast.success('Social links updated successfully');
     } catch (error) {
-      Toast.error('Failed to update social links');
+      toast.error('Failed to update social links');
     }
   };
 
   const handleConnect = async (userId) => {
     try {
       // await apiService.sendConnectionRequest(userId);
-      Toast.success('Connection request sent');
+      toast.success('Connection request sent');
     } catch (error) {
-      Toast.error('Failed to send connection request');
+      toast.error('Failed to send connection request');
     }
   };
 
   const handleLike = async (activityId) => {
     try {
       // await apiService.likeActivity(activityId);
-      Toast.success('Liked!');
+      toast.success('Liked!');
     } catch (error) {
-      Toast.error('Failed to like activity');
+      toast.error('Failed to like activity');
     }
   };
 

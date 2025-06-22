@@ -8,36 +8,25 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
-import { Textarea } from '../components/ui/Textarea'; // Assuming Textarea component exists
+import { Textarea } from '../components/ui/Textarea';
 import { Avatar } from '../components/ui/Avatar';
 import { Badge } from '../components/ui/Badge';
 import { Progress } from '../components/ui/Progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/Tabs';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from '../components/ui/Dialog'; // Added DialogFooter, DialogClose
-import { Textarea } from '../components/ui/Textarea'; // Added Textarea
-import { Toast } from '../components/ui/Toast';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from '../components/ui/Dialog';
+import { useToast } from '../components/ui/Toast';
 import apiService from '../services/apiService';
 import GoalsManagementSection from '../components/profile/GoalsManagementSection';
 import AchievementsSection from '../components/profile/AchievementsSection';
 import SettingsManagementSection from '../components/profile/SettingsManagementSection';
 import SocialProfileSection from '../components/profile/SocialProfileSection';
-<<<<<<< HEAD
-import ProjectsManagementSection from '../components/profile/ProjectsManagementSection';
-import ExperienceManagementSection from '../components/profile/ExperienceManagementSection';
-import EducationManagementSection from '../components/profile/EducationManagementSection';
-=======
-// Import the new editable list components
-import ProjectsListEditable from '../components/profile/ProjectsListEditable';
-import ExperienceListEditable from '../components/profile/ExperienceListEditable';
-import EducationListEditable from '../components/profile/EducationListEditable';
->>>>>>> origin/feature/social-profile-enhancements-phase2-3
 
 const UserProfilePage = () => {
+  const { toast } = useToast();
   const [user, setUser] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('profile');
-  // Initialize editData with the full structure expected
   const [editData, setEditData] = useState({
     username: '',
     email: '',
@@ -51,13 +40,13 @@ const UserProfilePage = () => {
     company: '',
     industry: '',
     experience_level: '',
-    detailedBio: '', // New field
-    contactInfo: { linkedin: '', website: '', professionalEmail: '' }, // New field
-    skills_input: '', // Temporary for comma-separated skills
-    skills: [], // New field
-    projects: [], // New field
-    experience: [], // New field for experience_entries
-    education: [], // New field for education_entries
+    detailedBio: '',
+    contactInfo: { linkedin: '', website: '', professionalEmail: '' },
+    skills_input: '',
+    skills: [],
+    projects: [],
+    experience: [],
+    education: [],
   });
   const [goals, setGoals] = useState([]);
   const [achievements, setAchievements] = useState([]);
@@ -77,49 +66,34 @@ const UserProfilePage = () => {
         apiService.getApiKeys()
       ]);
 
-<<<<<<< HEAD
-      const initialEditData = {
-        ...userData,
-        detailedBio: userData.detailedBio || '',
-        contactInfo: userData.contactInfo || { linkedin: '', website: '', professionalEmail: '' },
-        projects: userData.projects || [],
-        experience: userData.experience || [],
-        education: userData.education || [],
-      };
-      setUser(initialEditData); // User state should also reflect the full structure
-      setEditData(initialEditData);
-=======
       setUser(userData);
-      // Populate editData with user data, handling new fields
       setEditData({
         username: userData.username || '',
         email: userData.email || '',
-        bio: userData.bio || '', // Assuming existing 'bio' is short bio in header
+        bio: userData.bio || '',
         first_name: userData.first_name || '',
         last_name: userData.last_name || '',
-        phone: userData.phone || '', // Assuming these existed
-        location: userData.location || '', // Assuming these existed
-        timezone: userData.timezone || '', // Assuming these existed
-        job_title: userData.job_title || '', // Assuming these existed
-        company: userData.company || '', // Assuming these existed
-        industry: userData.industry || '', // Assuming these existed
-        experience_level: userData.experience_level || '', // Assuming these existed
-
+        phone: userData.phone || '',
+        location: userData.location || '',
+        timezone: userData.timezone || '',
+        job_title: userData.job_title || '',
+        company: userData.company || '',
+        industry: userData.industry || '',
+        experience_level: userData.experience_level || '',
         detailedBio: userData.detailed_bio || '',
         contactInfo: userData.contact_info || { linkedin: '', website: '', professionalEmail: '' },
         skills: userData.skills || [],
-        skills_input: (userData.skills || []).join(', '), // For Textarea input
+        skills_input: (userData.skills || []).join(', '),
         projects: userData.projects || [],
-        experience: userData.experience_entries || [], // Map from backend name
-        education: userData.education_entries || [], // Map from backend name
+        experience: userData.experience_entries || [],
+        education: userData.education_entries || [],
       });
->>>>>>> origin/feature/social-profile-enhancements-phase2-3
       setGoals(goalsData || []);
       setAchievements(achievementsData || []);
       setApiKeys(apiKeysData || []);
     } catch (error) {
       console.error('Failed to load user profile:', error);
-      Toast.error('Failed to load profile data');
+      toast.error('Failed to load profile data');
     } finally {
       setLoading(false);
     }
@@ -127,26 +101,18 @@ const UserProfilePage = () => {
 
   const handleSaveProfile = async () => {
     try {
-      // Prepare payload, parsing skills from skills_input
       const payload = {
         ...editData,
         skills: editData.skills_input.split(',').map(s => s.trim()).filter(s => s),
       };
-      delete payload.skills_input; // Remove temporary field
+      delete payload.skills_input;
 
-      // Ensure contactInfo is an object, not null, if it was initially null and not edited
       if (!payload.contactInfo) {
         payload.contactInfo = { linkedin: '', website: '', professionalEmail: '' };
       }
 
-      // Map experience back to experience_entries for the backend if needed,
-      // or ensure UserUpdate schema on backend expects 'experience'.
-      // Based on previous subtask, UserUpdate expects 'experience', 'projects', 'education'.
-      // So, payload.experience, payload.projects, payload.education are correctly named.
-
       const updatedUser = await apiService.updateUserProfile(payload);
-      setUser(updatedUser); // This updatedUser should have the server-side representation
-      // Re-initialize editData based on the updatedUser to reflect server state (e.g. parsed JSON strings)
+      setUser(updatedUser);
       setEditData({
         username: updatedUser.username || '',
         email: updatedUser.email || '',
@@ -169,19 +135,14 @@ const UserProfilePage = () => {
         education: updatedUser.education_entries || [],
       });
       setIsEditing(false);
-      Toast.success('Profile updated successfully');
+      toast.success('Profile updated successfully');
     } catch (error) {
       console.error('Failed to update profile:', error);
-      Toast.error(`Failed to update profile: ${error.message}`);
+      toast.error(`Failed to update profile: ${error.message}`);
     }
   };
 
   const handleCancelEdit = () => {
-<<<<<<< HEAD
-    // User state should already have the full structure from loadUserProfile
-    setEditData(user);
-=======
-    // Reset editData from the current user state
     setEditData({
       username: user.username || '',
       email: user.email || '',
@@ -203,7 +164,6 @@ const UserProfilePage = () => {
       experience: user.experience_entries || [],
       education: user.education_entries || [],
     });
->>>>>>> origin/feature/social-profile-enhancements-phase2-3
     setIsEditing(false);
   };
 
@@ -215,9 +175,9 @@ const UserProfilePage = () => {
         formData.append('avatar', file);
         const response = await apiService.uploadAvatar(formData);
         setUser({ ...user, avatar: response.avatar_url });
-        Toast.success('Avatar updated successfully');
+        toast.success('Avatar updated successfully');
       } catch (error) {
-        Toast.error('Failed to upload avatar');
+        toast.error('Failed to upload avatar');
       }
     }
   };
@@ -274,47 +234,7 @@ const UserProfilePage = () => {
                 setEditData={setEditData}
               />
             </div>
-<<<<<<< HEAD
-            {/* New Repeatable Sections */}
-            <ProjectsManagementSection
-              projects={editData.projects}
-              setEditData={setEditData}
-              isEditing={isEditing}
-              userData={user}
-            />
-            <ExperienceManagementSection
-              experience={editData.experience}
-              setEditData={setEditData}
-              isEditing={isEditing}
-              userData={user}
-            />
-            <EducationManagementSection
-              education={editData.education}
-              setEditData={setEditData}
-              isEditing={isEditing}
-              userData={user}
-=======
-            {/* Projects Section */}
-            <ProjectsListEditable
-              items={editData.projects}
-              setItems={(newProjects) => setEditData(prev => ({ ...prev, projects: newProjects }))}
-              isEditing={isEditing}
-            />
-            {/* Experience Section */}
-            <ExperienceListEditable
-              items={editData.experience}
-              setItems={(newExperience) => setEditData(prev => ({ ...prev, experience: newExperience }))}
-              isEditing={isEditing}
-            />
-            {/* Education Section */}
-            <EducationListEditable
-              items={editData.education}
-              setItems={(newEducation) => setEditData(prev => ({ ...prev, education: newEducation }))}
-              isEditing={isEditing}
->>>>>>> origin/feature/social-profile-enhancements-phase2-3
-            />
             <ActivitySummaryCard user={user} />
-            {/* Kudos Count is displayed in ActivitySummaryCard and ProfileHeader */}
           </TabsContent>
 
           {/* Goals Tab */}
@@ -482,35 +402,12 @@ const PersonalInfoCard = ({ user, isEditing, editData, setEditData }) => (
             onChange={(e) => setEditData(prev => ({ ...prev, timezone: e.target.value }))}
             placeholder="Timezone"
           />
-<<<<<<< HEAD
-=======
-          {/* New Fields for PersonalInfoCard */}
->>>>>>> origin/feature/social-profile-enhancements-phase2-3
           <Textarea
             value={editData.detailedBio || ''}
             onChange={(e) => setEditData(prev => ({ ...prev, detailedBio: e.target.value }))}
             placeholder="Detailed Bio"
             rows={4}
           />
-<<<<<<< HEAD
-          <h3 className="text-sm font-medium text-gray-700 pt-2">Contact Information</h3>
-          <Input
-            value={editData.contactInfo?.linkedin || ''}
-            onChange={(e) => setEditData(prev => ({ ...prev, contactInfo: { ...prev.contactInfo, linkedin: e.target.value } }))}
-            placeholder="LinkedIn Profile URL"
-          />
-          <Input
-            value={editData.contactInfo?.website || ''}
-            onChange={(e) => setEditData(prev => ({ ...prev, contactInfo: { ...prev.contactInfo, website: e.target.value } }))}
-            placeholder="Personal Website/Portfolio"
-          />
-          <Input
-            value={editData.contactInfo?.professionalEmail || ''}
-            onChange={(e) => setEditData(prev => ({ ...prev, contactInfo: { ...prev.contactInfo, professionalEmail: e.target.value } }))}
-            placeholder="Professional Email"
-            type="email"
-          />
-=======
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Contact Info</label>
             <Input
@@ -532,41 +429,24 @@ const PersonalInfoCard = ({ user, isEditing, editData, setEditData }) => (
               type="email"
             />
           </div>
->>>>>>> origin/feature/social-profile-enhancements-phase2-3
         </>
       ) : (
         <>
           <InfoItem icon={User} label="Full Name" value={`${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Not provided'} />
           <InfoItem icon={Phone} label="Phone" value={user.phone || 'Not provided'} />
-          <InfoItem icon={Mail} label="Professional Email" value={user.contactInfo?.professionalEmail || 'Not provided'} />
+          <InfoItem icon={Mail} label="Professional Email" value={user.contact_info?.professionalEmail || 'Not provided'} />
           <InfoItem icon={MapPin} label="Location" value={user.location || 'Not provided'} />
           <InfoItem icon={Globe} label="Timezone" value={user.timezone || 'Not provided'} />
           <InfoItem icon={Calendar} label="Member Since" value={new Date(user.created_at).toLocaleDateString()} />
-<<<<<<< HEAD
-          {user.detailedBio && <InfoSection title="Detailed Bio" content={user.detailedBio} />}
-          <h3 className="text-sm font-medium text-gray-700 pt-4">Contact Information</h3>
-          <InfoItem icon={Globe} label="Website" value={user.contactInfo?.website || 'Not provided'} />
-          <InfoItem icon={User} label="LinkedIn" value={user.contactInfo?.linkedin || 'Not provided'} />
-
-=======
           <InfoItem icon={User} label="Detailed Bio" value={user.detailed_bio || 'Not provided'} />
           <h4 className="text-sm font-medium text-gray-700 mt-3 mb-1">Contact Info:</h4>
           <InfoItem icon={Mail} label="LinkedIn" value={user.contact_info?.linkedin || 'Not provided'} />
           <InfoItem icon={Globe} label="Website" value={user.contact_info?.website || 'Not provided'} />
           <InfoItem icon={Mail} label="Professional Email" value={user.contact_info?.professionalEmail || 'Not provided'} />
->>>>>>> origin/feature/social-profile-enhancements-phase2-3
         </>
       )}
     </CardContent>
   </Card>
-);
-
-// Helper for sections like Detailed Bio
-const InfoSection = ({ title, content }) => (
-  <div>
-    <h4 className="text-sm font-medium text-gray-600">{title}</h4>
-    <p className="text-gray-700 whitespace-pre-wrap">{content}</p>
-  </div>
 );
 
 // Professional Info Card Component
@@ -601,7 +481,6 @@ const ProfessionalInfoCard = ({ user, isEditing, editData, setEditData }) => (
             onChange={(e) => setEditData(prev => ({ ...prev, experience_level: e.target.value }))}
             placeholder="Experience Level"
           />
-          {/* New Field for Skills */}
           <div>
             <label htmlFor="skills_input" className="block text-sm font-medium text-gray-700">Skills (comma-separated)</label>
             <Textarea
@@ -633,14 +512,14 @@ const ProfessionalInfoCard = ({ user, isEditing, editData, setEditData }) => (
   </Card>
 );
 
-// Activity Summary Card Component (Display Kudos here)
+// Activity Summary Card Component
 const ActivitySummaryCard = ({ user }) => (
   <Card>
     <CardHeader>
       <CardTitle>Activity Summary</CardTitle>
     </CardHeader>
     <CardContent>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-6"> {/* Adjusted grid for kudos */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
         <div className="text-center">
           <div className="text-2xl font-bold text-blue-600">
             {user.kudos_count || 0}
@@ -665,7 +544,6 @@ const ActivitySummaryCard = ({ user }) => (
           </div>
           <p className="text-sm text-gray-600">Achievements</p>
         </div>
-        {/* Removed streak days to make space for kudos, or adjust grid as needed */}
       </div>
     </CardContent>
   </Card>

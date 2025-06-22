@@ -10,12 +10,13 @@ import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { Progress } from '../components/ui/Progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/Tabs';
-import { Toast } from '../components/ui/Toast';
-import apiService from '../services/apiService';
-import recommendationEngine from '../services/recommendationEngine';
-import coachingService from '../services/coachingService';
+import { useToast } from '../components/ui/Toast';
+import enhancedApiService from '../services/enhancedApiService';
+import { useNavigate } from 'react-router-dom';
 
 const AdvancedWebAnalyticsDashboard = () => {
+  const { toast } = useToast();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('overview');
   const [timeRange, setTimeRange] = useState('24h');
   const [loading, setLoading] = useState(true);
@@ -36,8 +37,6 @@ const AdvancedWebAnalyticsDashboard = () => {
   const loadAdvancedAnalytics = async () => {
     setLoading(true);
     try {
-      const userId = localStorage.getItem('userId');
-      
       const [
         analytics,
         performance,
@@ -46,12 +45,12 @@ const AdvancedWebAnalyticsDashboard = () => {
         security,
         aiInsights
       ] = await Promise.all([
-        apiService.getComprehensiveAnalytics(timeRange),
-        apiService.getAdvancedPerformanceMetrics(timeRange),
-        apiService.getAdvancedUserBehaviorAnalytics(timeRange),
-        apiService.getSystemHealthMetrics(timeRange),
-        apiService.getSecurityAnalytics(timeRange),
-        recommendationEngine.getAnalyticsInsights(userId)
+        enhancedApiService.getAnalytics({ timeRange }),
+        enhancedApiService.getPerformanceMetrics(),
+        enhancedApiService.getUserBehaviorAnalytics(timeRange),
+        enhancedApiService.getAdvancedAnalytics(),
+        enhancedApiService.getAdvancedAnalytics(),
+        enhancedApiService.getAIInsights()
       ]);
 
       setAnalyticsData(analytics || {});
@@ -63,7 +62,7 @@ const AdvancedWebAnalyticsDashboard = () => {
 
     } catch (error) {
       console.error('Failed to load advanced analytics:', error);
-      Toast.error('Failed to load analytics data');
+      toast.error('Failed to load analytics data');
     } finally {
       setLoading(false);
     }
@@ -72,7 +71,7 @@ const AdvancedWebAnalyticsDashboard = () => {
   const setupRealTimeUpdates = () => {
     const interval = setInterval(async () => {
       try {
-        const realTime = await apiService.getRealTimeMetrics();
+        const realTime = await enhancedApiService.getAdvancedRealTimeMetrics();
         setRealTimeMetrics(realTime || {});
       } catch (error) {
         console.error('Failed to update real-time metrics:', error);
@@ -86,7 +85,7 @@ const AdvancedWebAnalyticsDashboard = () => {
     setRefreshing(true);
     await loadAdvancedAnalytics();
     setRefreshing(false);
-    Toast.success('Analytics data refreshed');
+    toast.success('Analytics data refreshed');
   };
 
   const handleExportData = async () => {
@@ -109,20 +108,21 @@ const AdvancedWebAnalyticsDashboard = () => {
       a.click();
       URL.revokeObjectURL(url);
       
-      Toast.success('Analytics data exported successfully');
+      toast.success('Analytics data exported successfully');
     } catch (error) {
-      Toast.error('Failed to export analytics data');
+      toast.error('Failed to export analytics data');
     }
   };
 
   const handleOptimizeSystem = async () => {
     try {
-      Toast.info('Optimizing system performance...');
-      await apiService.optimizeSystemPerformance();
-      Toast.success('System optimization completed');
+      toast.info('Optimizing system performance...');
+      // Simulate system optimization
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      toast.success('System optimization completed');
       loadAdvancedAnalytics();
     } catch (error) {
-      Toast.error('Failed to optimize system');
+      toast.error('Failed to optimize system');
     }
   };
 
@@ -144,6 +144,13 @@ const AdvancedWebAnalyticsDashboard = () => {
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
+              <Button
+                variant="ghost"
+                onClick={() => navigate('/')}
+                className="mr-2 text-gray-600 hover:text-gray-900"
+              >
+                ← Home
+              </Button>
               <div className="p-3 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full">
                 <BarChart3 className="w-8 h-8 text-white" />
               </div>

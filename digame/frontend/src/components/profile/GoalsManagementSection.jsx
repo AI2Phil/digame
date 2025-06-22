@@ -10,10 +10,11 @@ import { Input } from '../ui/Input';
 import { Badge } from '../ui/Badge';
 import { Progress } from '../ui/Progress';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../ui/Dialog';
-import { Toast } from '../ui/Toast';
+import { useToast } from '../ui/Toast';
 import apiService from '../../services/apiService';
 
 const GoalsManagementSection = ({ goals, setGoals }) => {
+  const { toast } = useToast();
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [editingGoal, setEditingGoal] = useState(null);
   const [newGoal, setNewGoal] = useState({
@@ -40,9 +41,9 @@ const GoalsManagementSection = ({ goals, setGoals }) => {
         priority: 'medium'
       });
       setShowCreateDialog(false);
-      Toast.success('Goal created successfully');
+      toast.success('Goal created successfully');
     } catch (error) {
-      Toast.error('Failed to create goal');
+      toast.error('Failed to create goal');
     }
   };
 
@@ -50,9 +51,9 @@ const GoalsManagementSection = ({ goals, setGoals }) => {
     try {
       const updatedGoal = await apiService.updateGoal(goalId, updates);
       setGoals(goals.map(goal => goal.id === goalId ? updatedGoal : goal));
-      Toast.success('Goal updated successfully');
+      toast.success('Goal updated successfully');
     } catch (error) {
-      Toast.error('Failed to update goal');
+      toast.error('Failed to update goal');
     }
   };
 
@@ -60,9 +61,9 @@ const GoalsManagementSection = ({ goals, setGoals }) => {
     try {
       await apiService.deleteGoal(goalId);
       setGoals(goals.filter(goal => goal.id !== goalId));
-      Toast.success('Goal deleted successfully');
+      toast.success('Goal deleted successfully');
     } catch (error) {
-      Toast.error('Failed to delete goal');
+      toast.error('Failed to delete goal');
     }
   };
 
@@ -70,7 +71,7 @@ const GoalsManagementSection = ({ goals, setGoals }) => {
     try {
       await handleUpdateGoal(goalId, { current_value: newProgress });
     } catch (error) {
-      Toast.error('Failed to update progress');
+      toast.error('Failed to update progress');
     }
   };
 

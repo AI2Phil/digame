@@ -4,21 +4,52 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../co
 import { Button } from '../components/ui/Button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/Tabs';
 import { Badge } from '../components/ui/Badge';
-import { 
-  CheckCircle, 
-  Clock, 
-  AlertCircle, 
-  Brain, 
-  Zap, 
-  BarChart3, 
+import {
+  CheckCircle,
+  Clock,
+  AlertCircle,
+  Brain,
+  Zap,
+  BarChart3,
   ArrowLeft,
-  Plus,
   Filter,
   RefreshCw,
   Target,
   TrendingUp
 } from 'lucide-react';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../components/ui/Select';
+import enhancedApiService from '../services/enhancedApiService';
+
+// Mock data for demo - moved outside component to avoid dependency issues
+const mockTasks = [
+  {
+    id: 1,
+    description: "Consider automating or reviewing process: Daily Reporting",
+    status: "suggested",
+    priority_score: 0.85,
+    source_type: "process_note",
+    created_at: "2025-05-24T10:00:00Z",
+    notes: "Based on process: Open Excel -> Run Macro -> Email Report\nOccurrences: 15, Last Seen: 2025-05-23 14:30"
+  },
+  {
+    id: 2,
+    description: "Consider automating or reviewing process: Client Onboarding",
+    status: "acknowledged",
+    priority_score: 0.72,
+    source_type: "process_note",
+    created_at: "2025-05-23T09:15:00Z",
+    notes: "Based on process: Create Account -> Send Welcome Email -> Schedule Call\nOccurrences: 8, Last Seen: 2025-05-22 16:45"
+  },
+  {
+    id: 3,
+    description: "Consider automating or reviewing process: Bug Triage",
+    status: "in_progress",
+    priority_score: 0.91,
+    source_type: "process_note",
+    created_at: "2025-05-22T14:20:00Z",
+    notes: "Based on process: Check Jira -> Reproduce Bug -> Assign Priority\nOccurrences: 22, Last Seen: 2025-05-24 11:15"
+  }
+];
 
 export default function TaskManagementPage({ isDemoMode, onLogout }) {
   const navigate = useNavigate();
@@ -28,44 +59,23 @@ export default function TaskManagementPage({ isDemoMode, onLogout }) {
   const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState('all');
 
-  // Mock data for demo
-  const mockTasks = [
-    {
-      id: 1,
-      description: "Consider automating or reviewing process: Daily Reporting",
-      status: "suggested",
-      priority_score: 0.85,
-      source_type: "process_note",
-      created_at: "2025-05-24T10:00:00Z",
-      notes: "Based on process: Open Excel -> Run Macro -> Email Report\nOccurrences: 15, Last Seen: 2025-05-23 14:30"
-    },
-    {
-      id: 2,
-      description: "Consider automating or reviewing process: Client Onboarding",
-      status: "acknowledged",
-      priority_score: 0.72,
-      source_type: "process_note",
-      created_at: "2025-05-23T09:15:00Z",
-      notes: "Based on process: Create Account -> Send Welcome Email -> Schedule Call\nOccurrences: 8, Last Seen: 2025-05-22 16:45"
-    },
-    {
-      id: 3,
-      description: "Consider automating or reviewing process: Bug Triage",
-      status: "in_progress",
-      priority_score: 0.91,
-      source_type: "process_note",
-      created_at: "2025-05-22T14:20:00Z",
-      notes: "Based on process: Check Jira -> Reproduce Bug -> Assign Priority\nOccurrences: 22, Last Seen: 2025-05-24 11:15"
-    }
-  ];
-
   useEffect(() => {
-    if (isDemoMode) {
-      setTasks(mockTasks);
-    } else {
-      // TODO: Fetch real tasks from API
-      // fetchTasks();
-    }
+    const loadTasks = async () => {
+      try {
+        if (isDemoMode) {
+          const demoTasks = await enhancedApiService.getTasks();
+          setTasks(demoTasks.length > 0 ? demoTasks : mockTasks);
+        } else {
+          const apiTasks = await enhancedApiService.getTasks();
+          setTasks(apiTasks);
+        }
+      } catch (error) {
+        console.error('Failed to load tasks:', error);
+        setTasks(mockTasks);
+      }
+    };
+    
+    loadTasks();
   }, [isDemoMode]);
 
   const getStatusColor = (status) => {
@@ -373,11 +383,19 @@ export default function TaskManagementPage({ isDemoMode, onLogout }) {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => navigate('/dashboard')}
+                onClick={() => navigate('/')}
                 className="flex items-center gap-2"
               >
                 <ArrowLeft className="h-4 w-4" />
-                Back to Dashboard
+                Home
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigate('/dashboard')}
+                className="flex items-center gap-2"
+              >
+                Dashboard
               </Button>
               <div className="flex items-center space-x-3">
                 <div className="digame-logo">

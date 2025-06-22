@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  BarChart3, TrendingUp, Activity, Database, 
+import { useNavigate } from 'react-router-dom';
+import {
+  BarChart3, TrendingUp, Activity, Database,
   Clock, Users, Zap, AlertTriangle, CheckCircle,
   Monitor, Smartphone, Globe, RefreshCw,
-  Download, Filter, Calendar, Eye, Target
+  Download, Filter, Calendar, Eye, Target, Home
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -11,7 +12,7 @@ import { Badge } from '../components/ui/Badge';
 import { Progress } from '../components/ui/Progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/Tabs';
 import { Toast } from '../components/ui/Toast';
-import apiService from '../services/apiService';
+import enhancedApiService from '../services/enhancedApiService';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../components/ui/Select';
 import PerformanceMonitoringSection from '../components/analytics/PerformanceMonitoringSection';
 import UserBehaviorAnalyticsSection from '../components/analytics/UserBehaviorAnalyticsSection';
@@ -19,7 +20,8 @@ import ApiAnalyticsSection from '../components/analytics/ApiAnalyticsSection';
 import MobileAnalyticsSection from '../components/analytics/MobileAnalyticsSection';
 import { Skeleton } from '../components/ui/Skeleton';
 
-const AnalyticsDashboardPage = () => {
+const AnalyticsDashboardPage = ({ isDemoMode, onLogout }) => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('overview');
   const [timeRange, setTimeRange] = useState('24h');
   const [loading, setLoading] = useState(true);
@@ -37,22 +39,23 @@ const AnalyticsDashboardPage = () => {
         performanceData,
         userBehaviorData,
         apiMetricsData,
-        databaseMetricsData,
-        mobileAnalyticsData
+        mobileAnalyticsData,
+        webAnalyticsData
       ] = await Promise.all([
-        apiService.getPerformanceMetrics(timeRange),
-        apiService.getUserBehaviorAnalytics(timeRange),
-        apiService.getApiUsageMetrics(timeRange),
-        apiService.getDatabaseMetrics(timeRange),
-        apiService.getMobileAnalytics(timeRange)
+        enhancedApiService.getPerformanceMetrics(),
+        enhancedApiService.getUserBehaviorAnalytics(timeRange),
+        enhancedApiService.getAdvancedAnalytics(),
+        enhancedApiService.getMobileAnalytics(timeRange),
+        enhancedApiService.getAnalytics()
       ]);
 
       setAnalyticsData({
         performance: performanceData,
         userBehavior: userBehaviorData,
         apiMetrics: apiMetricsData,
-        database: databaseMetricsData,
-        mobile: mobileAnalyticsData
+        database: { load: 38 }, // Mock database data
+        mobile: mobileAnalyticsData,
+        web: webAnalyticsData
       });
     } catch (error) {
       console.error('Failed to load analytics data:', error);
@@ -71,7 +74,7 @@ const AnalyticsDashboardPage = () => {
 
   const handleExport = async () => {
     try {
-      await apiService.exportAnalyticsData(timeRange);
+      await enhancedApiService.exportAnalyticsData(timeRange);
       Toast.success('Analytics data exported successfully');
     } catch (error) {
       Toast.error('Failed to export analytics data');
@@ -151,9 +154,19 @@ const AnalyticsDashboardPage = () => {
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">Analytics Dashboard</h1>
-              <p className="text-gray-600">Real-time performance monitoring and user behavior analytics</p>
+            <div className="flex items-center gap-4">
+              <Button
+                variant="outline"
+                onClick={() => navigate('/')}
+                className="flex items-center gap-2"
+              >
+                <Home className="w-4 h-4" />
+                Home
+              </Button>
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900 mb-2">Analytics Dashboard</h1>
+                <p className="text-gray-600">Real-time performance monitoring and user behavior analytics</p>
+              </div>
             </div>
             <div className="flex items-center gap-3">
               <Select value={timeRange} onValueChange={setTimeRange}>
