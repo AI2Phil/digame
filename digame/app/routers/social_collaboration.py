@@ -12,25 +12,20 @@ from datetime import datetime
 from ..database import get_db
 from ..models.user import User as UserModel
 from ..schemas.user_profile_schemas import UserProfileUpdate, UserProfileResponse, UserWithProfileResponse
-from ..schemas.user_schemas import User as UserSchema
+from ..schemas.user_schemas import User as UserSchema # Added UserSchema import
 from ..services.social_collaboration_service import SocialCollaborationService
 from ..crud import user_crud, notification_crud
+from .. import crud
 from ..schemas.notification_schemas import NotificationCreate
+from ..auth.auth_dependencies import get_current_active_user
+import json # Ensure json is imported
 
-# Authentication dependency
-async def get_current_active_user(db: Session = Depends(get_db)) -> UserModel:
-    # In a real app, this would come from a token, etc.
-    # For now, returning the first user or raising an error if no users.
-    user = db.query(UserModel).first()
-    if user is None:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
-    return user
-
-# Placeholder permission check function
+# Mock permission check - can be removed if not used by new endpoints or replaced by actual RBAC
 def require_permission(permission: str, user: UserModel):
-    """Placeholder for permission checking"""
-    # In a real implementation, this would check user permissions
-    pass
+    """Mock permission check"""
+    # Replace with actual RBAC logic if needed
+    print(f"Checking permission {permission} for user {user.id}")
+    return True
 
 async def get_admin_user(current_user: UserModel = Depends(get_current_active_user)) -> UserModel:
     # Placeholder: In a real app, check if current_user has admin role/permissions.
@@ -38,42 +33,77 @@ async def get_admin_user(current_user: UserModel = Depends(get_current_active_us
     return current_user
 
 router = APIRouter(
-    prefix="/api/v1/social", # Using /api/v1 prefix for consistency
-    tags=["Social Collaboration"]
+    prefix="/social",
+    tags=["Social Collaboration"],
+    responses={404: {"description": "Not found"}}, # Added a default 404 response
 )
 
-# --- User Profile Management for Social Features ---
-
-@router.get("/users/{user_id}/profile", response_model=UserProfileResponse)
-async def read_user_profile(
-    user_id: int,
+@router.get("/peer-matches", response_model=List[UserSchema])
+async def get_ai_peer_matches(
     db: Session = Depends(get_db),
-    current_user: UserModel = Depends(get_current_active_user)
+    current_user: UserModel = Depends(get_current_active_user),
+    min_common_skills: int = Query(2, ge=1, description="Minimum number of common skills for a match.")
 ):
     """
-    Get a user's social profile.
-    A user can view their own profile. Viewing other profiles might require admin or specific permissions.
+    Get AI-powered peer matches based on common skills.
+    Compares the current user's skills with all other users.
     """
-    if current_user.id != user_id:
-        # Add admin check or other permission logic here if needed
-        # For now, only allow users to see their own profile via this specific endpoint.
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to view this profile")
+    current_user_skills_str = current_user.skills
+    if not current_user_skills_str:
+        return []
 
-    profile = user_crud.get_user_profile(db, user_id=user_id)
-    if not profile:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Profile not found")
-    return profile
+    try:
+        current_user_skills_set = set(json.loads(current_user_skills_str))
+    except json.JSONDecodeError:
+        return [] # Or handle error appropriately
 
-@router.get("/users/{user_id}/skill-matches")
+    if not current_user_skills_set:
+        return []
+
+    # Fetching all users might be very inefficient. Consider pagination or more targeted queries.
+    # For now, limiting to a reasonable number for demonstration.
+    all_users = crud.user_crud.get_users(db, skip=0, limit=1000) # Adjust limit as needed
+
+    matched_peers = []
+    for other_user in all_users:
+        if other_user.id == current_user.id:
+            continue
+
+        other_user_skills_str = other_user.skills
+        if not other_user_skills_str:
+            continue
+
+        try:
+            other_user_skills_set = set(json.loads(other_user_skills_str))
+        except json.JSONDecodeError:
+            continue # Skip user if skills are malformed
+
+        common_skills = current_user_skills_set.intersection(other_user_skills_set)
+
+        if len(common_skills) >= min_common_skills:
+            # Optionally, add common_skills info to the user object if schema supports it
+            # For now, just returning the UserSchema which will include all its fields
+            matched_peers.append(other_user)
+
+    return matched_peers
+
+
+@router.get("/users/{user_id}/skill-matches") # This is another mock endpoint, leaving as is for now unless instructed to change
 async def get_skill_based_matches(
     user_id: int,
+<<<<<<< HEAD
     current_user: UserModel = Depends(get_current_active_user),
+=======
+    current_user: UserModel = Depends(get_current_active_user), # Use actual dependency
+>>>>>>> origin/feature/social-profile-enhancements-phase2-3
     db: Session = Depends(get_db)
 ):
     """Get skill-based peer matches using advanced algorithms"""
-    
+    # This endpoint's logic is currently mock and refers to a specific user_id in path.
+    # It's different from the new /peer-matches endpoint.
     if current_user.id != user_id:
-        require_permission("view_user_data", current_user)
+        if not require_permission("view_user_data", current_user): # Example usage
+            raise HTTPException(status_code=403, detail="Not enough permissions")
     
     # Enhanced skill matching results
     skill_matches = [
@@ -110,13 +140,18 @@ async def get_skill_based_matches(
 async def get_industry_connections(
     user_id: int,
     industry: Optional[str] = None,
+<<<<<<< HEAD
     current_user: UserModel = Depends(get_current_active_user),
+=======
+    current_user: UserModel = Depends(get_current_active_user), # Use actual dependency
+>>>>>>> origin/feature/social-profile-enhancements-phase2-3
     db: Session = Depends(get_db)
 ):
     """Get industry-specific networking connections"""
     
     if current_user.id != user_id:
-        require_permission("view_user_data", current_user)
+        if not require_permission("view_user_data", current_user): # Example usage
+            raise HTTPException(status_code=403, detail="Not enough permissions")
     
     connections = [
         {
@@ -139,7 +174,11 @@ async def get_networking_events(
     industry: Optional[str] = None,
     location: Optional[str] = None,
     virtual: Optional[bool] = None,
+<<<<<<< HEAD
     current_user: UserModel = Depends(get_current_active_user),
+=======
+    current_user: UserModel = Depends(get_current_active_user), # Use actual dependency
+>>>>>>> origin/feature/social-profile-enhancements-phase2-3
     db: Session = Depends(get_db)
 ):
     """Get curated networking events"""
@@ -192,13 +231,18 @@ async def get_networking_events(
 @router.get("/users/{user_id}/mentorship-programs")
 async def get_mentorship_programs(
     user_id: int,
+<<<<<<< HEAD
     current_user: UserModel = Depends(get_current_active_user),
+=======
+    current_user: UserModel = Depends(get_current_active_user), # Use actual dependency
+>>>>>>> origin/feature/social-profile-enhancements-phase2-3
     db: Session = Depends(get_db)
 ):
     """Get available mentorship programs"""
     
     if current_user.id != user_id:
-        require_permission("view_user_data", current_user)
+        if not require_permission("view_user_data", current_user): # Example usage
+            raise HTTPException(status_code=403, detail="Not enough permissions")
     
     programs = [
         {
@@ -227,10 +271,14 @@ async def get_mentorship_programs(
     
     return {"programs": programs}
 
-@router.post("/mentorship/{program_id}/join")
+@router.post("/mentorship/{program_id}/join") # Note: Path is /social/mentorship...
 async def join_mentorship_program(
     program_id: int,
+<<<<<<< HEAD
     current_user: UserModel = Depends(get_current_active_user),
+=======
+    current_user: UserModel = Depends(get_current_active_user), # Use actual dependency
+>>>>>>> origin/feature/social-profile-enhancements-phase2-3
     db: Session = Depends(get_db)
 ):
     """Join a mentorship program"""
@@ -247,13 +295,18 @@ async def join_mentorship_program(
 async def get_collaboration_projects(
     user_id: int,
     status: Optional[str] = None,
+<<<<<<< HEAD
     current_user: UserModel = Depends(get_current_active_user),
+=======
+    current_user: UserModel = Depends(get_current_active_user), # Use actual dependency
+>>>>>>> origin/feature/social-profile-enhancements-phase2-3
     db: Session = Depends(get_db)
 ):
     """Get collaboration projects for a user"""
     
     if current_user.id != user_id:
-        require_permission("view_user_data", current_user)
+        if not require_permission("view_user_data", current_user): # Example usage
+            raise HTTPException(status_code=403, detail="Not enough permissions")
     
     projects = [
         {
@@ -289,7 +342,11 @@ async def get_collaboration_projects(
 async def get_available_projects(
     category: Optional[str] = None,
     difficulty: Optional[str] = None,
+<<<<<<< HEAD
     current_user: UserModel = Depends(get_current_active_user),
+=======
+    current_user: UserModel = Depends(get_current_active_user), # Use actual dependency
+>>>>>>> origin/feature/social-profile-enhancements-phase2-3
     db: Session = Depends(get_db)
 ):
     """Get available collaboration projects to join"""
@@ -332,10 +389,14 @@ async def get_available_projects(
     
     return {"projects": filtered_projects}
 
-@router.post("/projects/{project_id}/join")
+@router.post("/projects/{project_id}/join") # Note: Path is /social/projects...
 async def join_collaboration_project(
     project_id: int,
+<<<<<<< HEAD
     current_user: UserModel = Depends(get_current_active_user),
+=======
+    current_user: UserModel = Depends(get_current_active_user), # Use actual dependency
+>>>>>>> origin/feature/social-profile-enhancements-phase2-3
     db: Session = Depends(get_db)
 ):
     """Join a collaboration project"""
@@ -350,14 +411,20 @@ async def join_collaboration_project(
 @router.get("/users/{user_id}/team-analytics")
 async def get_team_analytics(
     user_id: int,
+<<<<<<< HEAD
     time_range: str = Query("month", pattern="^(week|month|quarter|year)$"),
     current_user: UserModel = Depends(get_current_active_user),
+=======
+    time_range: str = Query("month", regex="^(week|month|quarter|year)$"),
+    current_user: UserModel = Depends(get_current_active_user), # Use actual dependency
+>>>>>>> origin/feature/social-profile-enhancements-phase2-3
     db: Session = Depends(get_db)
 ):
     """Get team collaboration analytics"""
     
     if current_user.id != user_id:
-        require_permission("view_user_data", current_user)
+        if not require_permission("view_user_data", current_user): # Example usage
+            raise HTTPException(status_code=403, detail="Not enough permissions")
     
     analytics = {
         "efficiency": 87,
@@ -392,13 +459,21 @@ async def get_team_analytics(
 async def send_connection_request(
     peer_id: int,
     message: Optional[str] = None,
+<<<<<<< HEAD
     current_user: UserModel = Depends(get_current_active_user),
+=======
+    current_user: UserModel = Depends(get_current_active_user), # Use actual dependency
+>>>>>>> origin/feature/social-profile-enhancements-phase2-3
     db: Session = Depends(get_db)
 ):
     """Send a connection request to another user"""
     
     # Verify the target user exists
+<<<<<<< HEAD
     target_user = user_crud.get_user(db, peer_id)
+=======
+    target_user = crud.user_crud.get_user(db, user_id=peer_id) # Use actual crud
+>>>>>>> origin/feature/social-profile-enhancements-phase2-3
     if not target_user:
         raise HTTPException(status_code=404, detail="User not found")
     
@@ -419,6 +494,7 @@ async def send_connection_request(
         "requestId": f"req_{current_user.id}_{peer_id}_{int(datetime.now().timestamp())}"
     }
 
+<<<<<<< HEAD
 @router.post("/connections/requests/{request_id}/accept")
 async def accept_connection_request(
     request_id: str,
@@ -459,6 +535,11 @@ async def accept_connection_request(
 @router.get("/connections/requests")
 async def get_connection_requests(
     current_user: UserModel = Depends(get_current_active_user),
+=======
+@router.get("/connections/requests") # Note: Path is /social/connections/requests
+async def get_connection_requests(
+    current_user: UserModel = Depends(get_current_active_user), # Use actual dependency
+>>>>>>> origin/feature/social-profile-enhancements-phase2-3
     db: Session = Depends(get_db)
 ):
     """Get pending connection requests"""
@@ -480,6 +561,7 @@ async def get_connection_requests(
     
     return {"requests": requests}
 
+<<<<<<< HEAD
 # Enhanced User Profile for Social Features
 @router.get("/users/{user_id}/social-profile")
 async def get_social_profile(
@@ -625,3 +707,74 @@ async def get_skill_based_matches_deprecated(
             profile=UserProfileResponse.model_validate(profile_model) if profile_model else None
         ))
     return results
+=======
+# User Profile for Social Features - This endpoint is being removed as per instructions.
+# @router.get("/users/{user_id}/profile")
+# async def get_social_profile(...) -> This is removed.
+
+# Analytics and Insights
+@router.get("/analytics/network-insights") # Note: Path is /social/analytics...
+async def get_network_insights(
+    current_user: UserModel = Depends(get_current_active_user), # Use actual dependency
+    db: Session = Depends(get_db)
+):
+    """Get AI-powered network growth insights"""
+    
+    insights = {
+        "networkStrength": 89,
+        "growthRate": 12,
+        "engagementScore": 87,
+        "recommendations": [
+            {
+                "type": "connection",
+                "title": "Connect with more senior leaders",
+                "description": "Expand your reach to C-level executives in your industry",
+                "priority": "high",
+                "impact": "network_growth"
+            },
+            {
+                "type": "community",
+                "title": "Join AI/ML communities",
+                "description": "Your interest in AI shows potential for valuable connections",
+                "priority": "medium",
+                "impact": "skill_development"
+            },
+            {
+                "type": "event",
+                "title": "Attend more virtual events",
+                "description": "Expand globally through virtual networking opportunities",
+                "priority": "medium",
+                "impact": "global_reach"
+            }
+        ],
+        "networkAnalysis": {
+            "industryCoverage": 78,
+            "geographicDiversity": 65,
+            "seniorityBalance": 82,
+            "skillDiversity": 91
+        }
+    }
+    
+    return insights
+
+
+# New Kudos Endpoint
+@router.post("/users/{user_id}/kudos", response_model=Dict[str, Any])
+async def give_kudos_to_user(
+    user_id: int,
+    db: Session = Depends(get_db)
+    # current_user: UserModel = Depends(get_current_active_user) # Optional: if kudos can only be given by logged-in users
+):
+    """Give kudos to a user, incrementing their kudos_count."""
+    user = crud.user_crud.get_user(db, user_id=user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User to give kudos to not found")
+
+    user.kudos_count = (user.kudos_count or 0) + 1
+
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+
+    return {"message": "Kudos given successfully", "kudos_count": user.kudos_count}
+>>>>>>> origin/feature/social-profile-enhancements-phase2-3

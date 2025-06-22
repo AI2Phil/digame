@@ -45,6 +45,17 @@ from .task_crud import (
 )
 from . import notification_crud # Also import the module for compatibility
 
+# New CRUD imports
+from .project_crud import (
+    get_project, get_projects_by_user, create_user_project, update_project, delete_project
+)
+from .experience_crud import (
+    get_experience, get_experience_by_user, create_user_experience, update_experience, delete_experience
+)
+from .education_crud import (
+    get_education_entry, get_education_by_user, create_user_education, update_education_entry, delete_education_entry
+)
+
 __all__ = [
     # User CRUD
     "get_user", "get_user_by_email", "get_user_by_username", "get_users",
@@ -68,7 +79,7 @@ __all__ = [
     "update_job_status",
     "delete_job",
 
-    # UserSetting CRUD
+    # UserSetting CRUD (ensure it's imported if not already)
     "get_user_setting", "create_user_setting", "update_user_setting", "delete_user_setting",
 
     # Notification CRUD
@@ -92,6 +103,13 @@ __all__ = [
     "delete_task",
     "get_tasks_by_process_note_id",
     "task_crud",
+
+    # Project CRUD
+    "get_project", "get_projects_by_user", "create_user_project", "update_project", "delete_project",
+    # Experience CRUD
+    "get_experience", "get_experience_by_user", "create_user_experience", "update_experience", "delete_experience",
+    # Education CRUD
+    "get_education_entry", "get_education_by_user", "create_user_education", "update_education_entry", "delete_education_entry",
 ]
 
 from . import user_setting_crud # Assuming this was intended to be imported for __all__

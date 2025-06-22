@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+<<<<<<< HEAD
 import { useParams } from 'react-router-dom'; // Will be used eventually for dynamic userId
 import {
   User, Mail, Briefcase, GraduationCap, Star, Globe, Linkedin, ExternalLink, ThumbsUp, Info
@@ -37,17 +38,74 @@ const UserProfileOverviewPage = () => {
         console.error('Failed to load user profile:', err);
         setError(err.message || 'Failed to load profile data.');
         Toast.error(err.message || 'Failed to load profile data.');
+=======
+import { useParams } from 'react-router-dom';
+import apiService from '../../services/apiService';
+import { Card, CardHeader, CardContent, CardTitle, CardDescription } from '../../components/ui/Card';
+import { Avatar } from '../../components/ui/Avatar';
+import { Badge } from '../../components/ui/Badge';
+import { Button } from '../../components/ui/Button';
+import { Toast } from '../../components/ui/Toast';
+import { User, Briefcase, GraduationCap, Code, Link as LinkIcon, ThumbsUp, Mail, Globe, Linkedin } from 'lucide-react';
+
+// Import display cards
+import ProjectDisplayCard from '../../components/profile/ProjectDisplayCard';
+import ExperienceDisplayCard from '../../components/profile/ExperienceDisplayCard';
+import EducationDisplayCard from '../../components/profile/EducationDisplayCard';
+
+const UserProfileOverviewPage = () => {
+  const { userId } = useParams();
+  const [profile, setProfile] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const data = await apiService.getUserProfile(userId);
+        setProfile(data);
+      } catch (err) {
+        setError(err.message || 'Failed to load user profile.');
+        Toast.error(err.message || 'Failed to load user profile.');
+>>>>>>> origin/feature/social-profile-enhancements-phase2-3
       } finally {
         setLoading(false);
       }
     };
 
+<<<<<<< HEAD
     fetchUserProfile();
   }, [userId]); // Dependency array includes userId for future dynamic use
 
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen p-6">
+=======
+    if (userId) {
+      fetchProfile();
+    }
+  }, [userId]);
+
+  const handleGiveKudos = async () => {
+    if (!profile) return;
+    try {
+      const response = await apiService.giveKudos(profile.id);
+      setProfile(prevProfile => ({
+        ...prevProfile,
+        kudos_count: response.kudos_count,
+      }));
+      Toast.success(response.message || 'Kudos given!');
+    } catch (err) {
+      Toast.error(err.message || 'Failed to give kudos.');
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+>>>>>>> origin/feature/social-profile-enhancements-phase2-3
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <p>Loading profile...</p>
@@ -58,26 +116,39 @@ const UserProfileOverviewPage = () => {
 
   if (error) {
     return (
+<<<<<<< HEAD
       <div className="flex items-center justify-center min-h-screen p-6">
         <div className="text-center text-red-500">
           <Info className="w-12 h-12 mx-auto mb-4" />
           <h2 className="text-xl font-semibold">Error Loading Profile</h2>
           <p>{error}</p>
         </div>
+=======
+      <div className="flex items-center justify-center min-h-screen text-red-600">
+        <p>Error: {error}. Please try again later.</p>
+>>>>>>> origin/feature/social-profile-enhancements-phase2-3
       </div>
     );
   }
 
+<<<<<<< HEAD
   if (!profileData) {
     return (
       <div className="flex items-center justify-center min-h-screen p-6">
         <div className="text-center">
           <p>No profile data available for this user.</p>
         </div>
+=======
+  if (!profile) {
+    return (
+      <div className="flex items-center justify-center min-h-screen text-gray-600">
+        <p>User not found.</p>
+>>>>>>> origin/feature/social-profile-enhancements-phase2-3
       </div>
     );
   }
 
+<<<<<<< HEAD
   const {
     username,
     email,
@@ -155,10 +226,35 @@ const UserProfileOverviewPage = () => {
                   <span className="font-semibold">{kudosCount || 0} Kudos</span>
                 </div>
               </div>
+=======
+  return (
+    <div className="min-h-screen bg-gray-50 p-4 md:p-8">
+      <div className="max-w-4xl mx-auto space-y-6">
+        {/* Header Card */}
+        <Card>
+          <CardContent className="p-6 flex flex-col md:flex-row items-center gap-6">
+            <Avatar
+              src={profile.avatar} // Assuming avatar URL is available
+              alt={profile.username}
+              fallback={profile.username?.charAt(0).toUpperCase()}
+              className="w-24 h-24 md:w-32 md:h-32"
+            />
+            <div className="flex-1 text-center md:text-left">
+              <h1 className="text-3xl font-bold">{profile.username}</h1>
+              <p className="text-gray-600">{profile.email}</p>
+              <div className="mt-2 flex items-center justify-center md:justify-start gap-2">
+                <ThumbsUp className="w-5 h-5 text-blue-500" />
+                <span className="font-semibold">{profile.kudos_count || 0} Kudos</span>
+              </div>
+              <Button onClick={handleGiveKudos} size="sm" className="mt-3">
+                <ThumbsUp className="w-4 h-4 mr-2" /> Give Kudos
+              </Button>
+>>>>>>> origin/feature/social-profile-enhancements-phase2-3
             </div>
           </CardContent>
         </Card>
 
+<<<<<<< HEAD
         {/* Detailed Bio Card */}
         {detailedBio && (
           <Card>
@@ -167,11 +263,20 @@ const UserProfileOverviewPage = () => {
             </CardHeader>
             <CardContent>
               <p className="text-gray-700 whitespace-pre-wrap">{detailedBio}</p>
+=======
+        {/* About Card */}
+        {profile.detailed_bio && (
+          <Card>
+            <CardHeader><CardTitle className="flex items-center"><User className="mr-2"/> About</CardTitle></CardHeader>
+            <CardContent>
+              <p className="text-gray-700 whitespace-pre-wrap">{profile.detailed_bio}</p>
+>>>>>>> origin/feature/social-profile-enhancements-phase2-3
             </CardContent>
           </Card>
         )}
 
         {/* Contact Info Card */}
+<<<<<<< HEAD
         {contactInfo && (Object.values(contactInfo).some(val => val)) && (
           <Card>
             <CardHeader>
@@ -181,10 +286,41 @@ const UserProfileOverviewPage = () => {
               {contactInfo.professionalEmail && <InfoItem icon={Mail} label="Email" value={contactInfo.professionalEmail} isLink={`mailto:${contactInfo.professionalEmail}`} />}
               {contactInfo.website && <InfoItem icon={Globe} label="Website" value={contactInfo.website} isLink={contactInfo.website} />}
               {contactInfo.linkedin && <InfoItem icon={Linkedin} label="LinkedIn" value={contactInfo.linkedin} isLink={`https://www.${contactInfo.linkedin}`} />}
+=======
+        {profile.contact_info && (Object.values(profile.contact_info).some(v => v)) && (
+          <Card>
+            <CardHeader><CardTitle className="flex items-center"><Mail className="mr-2"/> Contact Information</CardTitle></CardHeader>
+            <CardContent className="space-y-2">
+              {profile.contact_info.professionalEmail && (
+                <div className="flex items-center gap-2">
+                  <Mail className="w-4 h-4 text-gray-500" />
+                  <a href={`mailto:${profile.contact_info.professionalEmail}`} className="text-blue-600 hover:underline">
+                    {profile.contact_info.professionalEmail}
+                  </a>
+                </div>
+              )}
+              {profile.contact_info.linkedin && (
+                <div className="flex items-center gap-2">
+                  <Linkedin className="w-4 h-4 text-gray-500" />
+                  <a href={profile.contact_info.linkedin.startsWith('http') ? profile.contact_info.linkedin : `https://${profile.contact_info.linkedin}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                    LinkedIn
+                  </a>
+                </div>
+              )}
+              {profile.contact_info.website && (
+                <div className="flex items-center gap-2">
+                  <Globe className="w-4 h-4 text-gray-500" />
+                  <a href={profile.contact_info.website.startsWith('http') ? profile.contact_info.website : `https://${profile.contact_info.website}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                    Website
+                  </a>
+                </div>
+              )}
+>>>>>>> origin/feature/social-profile-enhancements-phase2-3
             </CardContent>
           </Card>
         )}
 
+<<<<<<< HEAD
         {/* Projects Card */}
         {projects && projects.length > 0 && (
           <Card>
@@ -207,11 +343,21 @@ const UserProfileOverviewPage = () => {
                     </p>
                   )}
                 </div>
+=======
+        {/* Skills Card */}
+        {profile.skills && profile.skills.length > 0 && (
+          <Card>
+            <CardHeader><CardTitle className="flex items-center"><Code className="mr-2"/> Skills</CardTitle></CardHeader>
+            <CardContent className="flex flex-wrap gap-2">
+              {profile.skills.map((skill, index) => (
+                <Badge key={index} variant="outline">{skill}</Badge>
+>>>>>>> origin/feature/social-profile-enhancements-phase2-3
               ))}
             </CardContent>
           </Card>
         )}
 
+<<<<<<< HEAD
         {/* Experience Card */}
         {experience && experience.length > 0 && (
           <Card>
@@ -226,11 +372,21 @@ const UserProfileOverviewPage = () => {
                   <p className="text-sm text-gray-500">{exp.duration}</p>
                   <p className="text-sm text-gray-600 mt-1 whitespace-pre-wrap">{exp.description}</p>
                 </div>
+=======
+        {/* Projects Section */}
+        {profile.projects && profile.projects.length > 0 && (
+          <Card>
+            <CardHeader><CardTitle className="flex items-center"><Briefcase className="mr-2"/> Projects</CardTitle></CardHeader>
+            <CardContent>
+              {profile.projects.map((project, index) => (
+                <ProjectDisplayCard key={project.id || index} project={project} />
+>>>>>>> origin/feature/social-profile-enhancements-phase2-3
               ))}
             </CardContent>
           </Card>
         )}
 
+<<<<<<< HEAD
         {/* Education Card */}
         {education && education.length > 0 && (
           <Card>
@@ -244,6 +400,27 @@ const UserProfileOverviewPage = () => {
                   <p className="text-md text-gray-700">{edu.degree} in {edu.fieldOfStudy}</p>
                   <p className="text-sm text-gray-500">Graduation Year: {edu.graduationYear}</p>
                 </div>
+=======
+        {/* Experience Section */}
+        {profile.experience_entries && profile.experience_entries.length > 0 && (
+          <Card>
+            <CardHeader><CardTitle className="flex items-center"><Briefcase className="mr-2"/> Experience</CardTitle></CardHeader>
+            <CardContent>
+              {profile.experience_entries.map((exp, index) => (
+                <ExperienceDisplayCard key={exp.id || index} experience={exp} />
+              ))}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Education Section */}
+        {profile.education_entries && profile.education_entries.length > 0 && (
+          <Card>
+            <CardHeader><CardTitle className="flex items-center"><GraduationCap className="mr-2"/> Education</CardTitle></CardHeader>
+            <CardContent>
+              {profile.education_entries.map((edu, index) => (
+                <EducationDisplayCard key={edu.id || index} education={edu} />
+>>>>>>> origin/feature/social-profile-enhancements-phase2-3
               ))}
             </CardContent>
           </Card>
@@ -253,6 +430,7 @@ const UserProfileOverviewPage = () => {
   );
 };
 
+<<<<<<< HEAD
 // Helper InfoItem component (can be moved to a shared file if used elsewhere)
 const InfoItem = ({ icon: Icon, label, value, isLink }) => (
   <div className="flex items-start gap-3">
@@ -275,4 +453,6 @@ const InfoItem = ({ icon: Icon, label, value, isLink }) => (
   </div>
 );
 
+=======
+>>>>>>> origin/feature/social-profile-enhancements-phase2-3
 export default UserProfileOverviewPage;

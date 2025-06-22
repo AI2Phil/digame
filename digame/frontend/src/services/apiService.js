@@ -486,10 +486,15 @@ class ApiService {
 
   // User Profile Enhancement methods
   async updateUserProfile(profileData) {
+<<<<<<< HEAD
     // This method handles updates to the user's profile,
     // including the enriched data structure: detailedBio, contactInfo,
     // projects, experience, and education arrays.
     return this.request('/auth/profile', {
+=======
+    // Path changed from /auth/profile to /api/users/me/profile
+    return this.request('/api/users/me/profile', {
+>>>>>>> origin/feature/social-profile-enhancements-phase2-3
       method: 'PUT',
       body: JSON.stringify(profileData),
     });
@@ -840,6 +845,7 @@ class ApiService {
 
   // AI-Powered Recommendations & Coaching methods
   async getUserProfile(userId) {
+<<<<<<< HEAD
     // MOCK IMPLEMENTATION FOR DEVELOPMENT
     console.warn(`Using mock data for getUserProfile(userId: ${userId}) from mockUserProfilesStore`);
     const userProfile = mockUserProfilesStore[userId];
@@ -884,6 +890,10 @@ class ApiService {
     }
     // Actual implementation would be:
     // return this.request(`/api/users/${userId}/kudos`, { method: 'POST' }); // Original call
+=======
+    // Path changed from /users/${userId}/profile to /api/users/${userId}/profile
+    return this.request(`/api/users/${userId}/profile`);
+>>>>>>> origin/feature/social-profile-enhancements-phase2-3
   }
 
   async getUserBehaviorData(userId) {
@@ -1083,6 +1093,20 @@ class ApiService {
   }
 
   // Social Collaboration methods
+  async giveKudos(userId) {
+    // Endpoint is POST /social/users/{userId}/kudos
+    return this.request(`/social/users/${userId}/kudos`, {
+      method: 'POST',
+      // No body is expected by the backend for this endpoint
+    });
+  }
+
+  async getPeerMatches() {
+    // Endpoint is GET /social/peer-matches (for the current user)
+    // Changed from getPeerMatches(userId) and updated endpoint
+    return this.request('/social/peer-matches');
+  }
+
   async getUserConnections(userId) {
     return this.request(`/social/users/${userId}/connections`);
   }

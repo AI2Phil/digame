@@ -1,9 +1,11 @@
+import json # Added for JSON serialization
 from sqlalchemy.orm import Session
 from typing import List, Optional, Any # Added Any
 from passlib.context import CryptContext
 from datetime import datetime # Added datetime
 
 from ..models.user import User, UserProfile # Added UserProfile model
+# UserCreate and UserUpdate from user_schemas are expected to have the new fields
 from ..schemas.user_schemas import UserCreate, UserUpdate
 # Import new UserProfile schemas
 from ..schemas.user_profile_schemas import UserProfileCreate, UserProfileUpdate, UserProfileResponse
@@ -40,7 +42,12 @@ def create_user(db: Session, user: UserCreate) -> User:
         last_name=user.last_name,
         is_active=user.is_active if user.is_active is not None else True, # Ensure default
         onboarding_completed=user.onboarding_completed if hasattr(user, 'onboarding_completed') else False,
-        onboarding_data=user.onboarding_data if hasattr(user, 'onboarding_data') else None
+        onboarding_data=user.onboarding_data if hasattr(user, 'onboarding_data') else None,
+        # New fields
+        detailed_bio=user.detailed_bio if hasattr(user, 'detailed_bio') else None,
+        contact_info=json.dumps(user.contact_info.dict()) if hasattr(user, 'contact_info') and user.contact_info else None,
+        skills=json.dumps(user.skills) if hasattr(user, 'skills') and user.skills is not None else None,
+        kudos_count=0 # Initialize kudos_count
     )
     db.add(db_user)
     db.flush()  # Flush to get db_user.id for the profile
@@ -62,13 +69,19 @@ def update_user(db: Session, user_id: int, user_update: UserUpdate) -> Optional[
     
     update_data = user_update.model_dump(exclude_unset=True) # Use model_dump for Pydantic v2
     
+    # Hash the password if it's being updated
     if "password" in update_data and update_data["password"]: # Check if password is not None or empty
         update_data["hashed_password"] = pwd_context.hash(update_data.pop("password"))
-    elif "password" in update_data: # If password is None or empty, remove from update_data
-        del update_data["password"]
+    else:
+        update_data.pop("password", None) # Remove password from update_data if it's None or empty
 
     for key, value in update_data.items():
-        setattr(db_user, key, value)
+        if key == "contact_info" and value is not None:
+            setattr(db_user, key, json.dumps(value)) # value is already a dict due to UserUpdate schema
+        elif key == "skills" and value is not None:
+            setattr(db_user, key, json.dumps(value)) # value is already a list
+        else:
+            setattr(db_user, key, value)
     
     db_user.updated_at = datetime.utcnow() # Manually set updated_at for User model
     db.commit()

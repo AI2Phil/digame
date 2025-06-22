@@ -37,6 +37,7 @@ from .routers import meeting_insights_router # Import the new meeting insights r
 from .routers import email_analysis_router # Import the new email analysis router
 from .routers import language_learning_router # Import the new language learning router
 from .routers import task_prioritization_router # Import the new task prioritization router
+from .routers import user_profile_router # Import the new user profile router
 
 # Import authentication components
 from .auth.middleware import configure_auth_middleware
@@ -193,6 +194,7 @@ app.include_router(voice_router.router) # Add voice NLU router, prefix is in the
 app.include_router(advanced_mobile_router.router) # Add advanced mobile AI router, tags are in the router
 app.include_router(social_collaboration_router.router) # Add the social collaboration router
 app.include_router(mobile_ai_router.router) # Add the new mobile_ai_router, already tagged in its file
+app.include_router(user_profile_router.router) # Add user profile router, prefix and tags are in the router itself
 
 # Startup and shutdown events
 @app.on_event("startup")

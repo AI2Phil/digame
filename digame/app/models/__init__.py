@@ -24,6 +24,9 @@ from .workflow_automation import (
     # Note: The WorkflowLogStatus enum was part of the simpler model definition,
     # the existing advanced models use strings for status fields.
 )
+from .project import Project # Import the new Project model
+from .experience import Experience # Import the new Experience model
+from .education import Education # Import the new Education model
 
 # Optionally, define __all__ to specify what is exported when 'from .models import *' is used
 __all__ = [
@@ -46,4 +49,7 @@ __all__ = [
     "AutomationRule",
     "WorkflowAction",
     "WorkflowIntegration",
+    "Project", # Add Project to __all__
+    "Experience", # Add Experience to __all__
+    "Education", # Add Education to __all__
 ]
