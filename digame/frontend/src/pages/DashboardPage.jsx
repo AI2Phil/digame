@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'; // Added useState, useEffect
-import apiService from '../services/apiService';
+import enhancedApiService from '../services/enhancedApiService';
 import { useNavigate } from 'react-router-dom';
 import { Shield } from 'lucide-react'; // Import Shield icon
 import NotificationBell from '../components/notifications/NotificationBell'; // Import NotificationBell
@@ -27,7 +27,7 @@ export default function DashboardPage({ isDemoMode, onLogout }) {
         setUserLoading(true);
         setUserError(null);
         try {
-          const user = await apiService.getCurrentUser();
+          const user = await enhancedApiService.getCurrentUser();
           setCurrentUser(user);
         } catch (error) {
           console.error("Failed to fetch current user:", error);

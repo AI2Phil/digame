@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 // Step 1: Assume Recharts is installed and import necessary components.
 // In a real environment: npm install recharts
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import enhancedApiService from '../../services/enhancedApiService';
 
 // Helper function to format date as YYYY-MM-DD (keep existing)
 const formatDate = (date) => {
@@ -33,39 +34,23 @@ const ProductivityChart = ({ userId }) => { // Removed default for userId, expec
       setIsLoading(true);
       setError(null);
       try {
-        const response = await fetch(`/behavior/patterns?user_id=${userId}`);
+        // Use enhanced API service which handles demo mode automatically
+        const data = await enhancedApiService.getProductivityData(userId, 'daily');
 
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data = await response.json();
-
-        if (!Array.isArray(data)) {
+        if (!data || !Array.isArray(data)) {
           console.error("Fetched data is not an array:", data);
           throw new Error("Invalid data format from API.");
         }
 
-        const countsByDay = data.reduce((acc, activity) => {
-          if (!activity.timestamp) return acc;
-          try {
-            const day = formatDate(new Date(activity.timestamp));
-            acc[day] = (acc[day] || 0) + 1;
-            return acc;
-          } catch (e) {
-            console.error("Error parsing activity timestamp for chart:", activity.timestamp, e);
-            return acc;
-          }
-        }, {});
-
-        const formattedChartData = Object.entries(countsByDay)
-          .map(([date, count]) => ({
-            date,
-            // Format date for XAxis display (e.g., "MM/DD")
-            displayDate: new Date(date).toLocaleDateString(undefined, { month: 'numeric', day: 'numeric' }),
-            count
-          }))
-          .sort((a, b) => new Date(a.date) - new Date(b.date))
-          .slice(-7); // Keep only last 7 days
+        // Transform the data for the chart
+        const formattedChartData = data.map(item => ({
+          date: item.date,
+          displayDate: new Date(item.date).toLocaleDateString(undefined, { month: 'numeric', day: 'numeric' }),
+          count: item.productivity || item.tasks || item.value || 0,
+          productivity: item.productivity || 0,
+          focus: item.focus || 0,
+          collaboration: item.collaboration || 0
+        }));
 
         setChartData(formattedChartData);
         console.log("Processed chart data for Recharts:", formattedChartData);

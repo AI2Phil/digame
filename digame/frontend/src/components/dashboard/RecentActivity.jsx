@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import dashboardService from '../../services/dashboardService';
+import enhancedApiService from '../../services/enhancedApiService';
 
 const RecentActivity = ({ userId = 1 }) => {
   const [activities, setActivities] = useState([]);
@@ -43,7 +43,7 @@ const RecentActivity = ({ userId = 1 }) => {
       try {
         setLoading(true);
         setError(null);
-        const data = await dashboardService.getRecentActivities(userId);
+        const data = await enhancedApiService.getRecentActivities(userId);
         setActivities(data);
       } catch (err) {
         console.error('Error fetching recent activities:', err);

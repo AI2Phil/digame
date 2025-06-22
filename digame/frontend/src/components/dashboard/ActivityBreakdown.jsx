@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import dashboardService from '../../services/dashboardService';
+import enhancedApiService from '../../services/enhancedApiService';
 
 const ActivityBreakdown = ({ userId = 1 }) => {
   const [activityData, setActivityData] = useState(null);
@@ -26,7 +26,7 @@ const ActivityBreakdown = ({ userId = 1 }) => {
       try {
         setLoading(true);
         setError(null);
-        const data = await dashboardService.getActivityBreakdown(userId);
+        const data = await enhancedApiService.getActivityBreakdown(userId);
         setActivityData(data);
       } catch (err) {
         console.error('Error fetching activity data:', err);

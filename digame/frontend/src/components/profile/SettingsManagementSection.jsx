@@ -10,10 +10,11 @@ import { Input } from '../ui/Input';
 import { Badge } from '../ui/Badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/Tabs';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../ui/Dialog';
-import { Toast } from '../ui/Toast';
+import { useToast } from '../ui/Toast';
 import apiService from '../../services/apiService';
 
 const SettingsManagementSection = ({ apiKeys, setApiKeys }) => {
+  const { toast } = useToast();
   const [preferences, setPreferences] = useState({
     notifications: {
       email: true,
@@ -51,9 +52,9 @@ const SettingsManagementSection = ({ apiKeys, setApiKeys }) => {
       setApiKeys([...apiKeys, newKey]);
       setNewKeyData({ name: '', description: '', permissions: [] });
       setShowCreateKeyDialog(false);
-      Toast.success('API key created successfully');
+      toast.success('API key created successfully');
     } catch (error) {
-      Toast.error('Failed to create API key');
+      toast.error('Failed to create API key');
     }
   };
 
@@ -61,18 +62,18 @@ const SettingsManagementSection = ({ apiKeys, setApiKeys }) => {
     try {
       await apiService.deleteApiKey(keyName);
       setApiKeys(apiKeys.filter(key => key.name !== keyName));
-      Toast.success('API key deleted successfully');
+      toast.success('API key deleted successfully');
     } catch (error) {
-      Toast.error('Failed to delete API key');
+      toast.error('Failed to delete API key');
     }
   };
 
   const handleCopyKey = async (key) => {
     try {
       await navigator.clipboard.writeText(key);
-      Toast.success('API key copied to clipboard');
+      toast.success('API key copied to clipboard');
     } catch (error) {
-      Toast.error('Failed to copy API key');
+      toast.error('Failed to copy API key');
     }
   };
 
@@ -100,9 +101,9 @@ const SettingsManagementSection = ({ apiKeys, setApiKeys }) => {
     
     try {
       await apiService.updateUserPreferences(updatedPreferences);
-      Toast.success('Preferences updated successfully');
+      toast.success('Preferences updated successfully');
     } catch (error) {
-      Toast.error('Failed to update preferences');
+      toast.error('Failed to update preferences');
     }
   };
 

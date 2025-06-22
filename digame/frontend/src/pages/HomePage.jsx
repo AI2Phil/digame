@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import Button from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { Progress } from '../components/ui/Progress';
@@ -14,8 +15,7 @@ export default function HomePage({ onDemoAccess, onLogin }) {
   };
 
   const handleDemoClick = () => {
-    onDemoAccess();
-    window.location.href = '/dashboard';
+    window.location.href = '/demo';
   };
 
   const [showAuthForm, setShowAuthForm] = useState(false);
@@ -187,9 +187,9 @@ export default function HomePage({ onDemoAccess, onLogin }) {
             <span className="text-xl font-bold text-gray-900">Digame</span>
           </div>
           <div className="hidden md:flex space-x-8">
-            <a href="#features" className="text-gray-600 hover:text-gray-900">Features</a>
-            <a href="#how-it-works" className="text-gray-600 hover:text-gray-900">How it Works</a>
-            <a href="#pricing" className="text-gray-600 hover:text-gray-900">Pricing</a>
+            <Link to="/features" className="text-gray-600 hover:text-gray-900">Features</Link>
+            <Link to="/how-it-works" className="text-gray-600 hover:text-gray-900">How it Works</Link>
+            <Link to="/pricing" className="text-gray-600 hover:text-gray-900">Pricing</Link>
           </div>
           <Button
             onClick={handleGetStarted}
