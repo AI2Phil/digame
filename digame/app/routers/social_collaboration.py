@@ -48,7 +48,7 @@ async def get_ai_peer_matches(
     Get AI-powered peer matches based on common skills.
     Compares the current user's skills with all other users.
     """
-    current_user_skills_str = current_user.skills
+    current_user_skills_str = getattr(current_user, 'skills', None)
     if not current_user_skills_str:
         return []
 
@@ -69,7 +69,7 @@ async def get_ai_peer_matches(
         if other_user.id == current_user.id:
             continue
 
-        other_user_skills_str = other_user.skills
+        other_user_skills_str = getattr(other_user, 'skills', None)
         if not other_user_skills_str:
             continue
 
