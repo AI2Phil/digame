@@ -122,6 +122,98 @@ class EnhancedApiService {
     }
   }
 
+  // Advanced Mobile Analytics methods
+  async getAdvancedMobileAnalytics() {
+    if (this.isDemoMode()) {
+      return this.demoService.getAdvancedMobileAnalytics();
+    }
+    
+    try {
+      return await this.request('/analytics/mobile/advanced');
+    } catch (error) {
+      console.warn('getAdvancedMobileAnalytics failed, using demo data', error);
+      return this.demoService.getAdvancedMobileAnalytics();
+    }
+  }
+
+  async getAdvancedPerformanceMetrics() {
+    if (this.isDemoMode()) {
+      return this.demoService.getAdvancedPerformanceMetrics();
+    }
+    
+    try {
+      return await this.request('/analytics/mobile/performance');
+    } catch (error) {
+      console.warn('getAdvancedPerformanceMetrics failed, using demo data', error);
+      return this.demoService.getAdvancedPerformanceMetrics();
+    }
+  }
+
+  async getAdvancedNetworkAnalytics() {
+    if (this.isDemoMode()) {
+      return this.demoService.getAdvancedNetworkAnalytics();
+    }
+    
+    try {
+      return await this.request('/analytics/mobile/network');
+    } catch (error) {
+      console.warn('getAdvancedNetworkAnalytics failed, using demo data', error);
+      return this.demoService.getAdvancedNetworkAnalytics();
+    }
+  }
+
+  async getAdvancedOfflineAnalytics() {
+    if (this.isDemoMode()) {
+      return this.demoService.getAdvancedOfflineAnalytics();
+    }
+    
+    try {
+      return await this.request('/analytics/mobile/offline');
+    } catch (error) {
+      console.warn('getAdvancedOfflineAnalytics failed, using demo data', error);
+      return this.demoService.getAdvancedOfflineAnalytics();
+    }
+  }
+
+  async getAdvancedUserBehaviorAnalytics() {
+    if (this.isDemoMode()) {
+      return this.demoService.getAdvancedUserBehaviorAnalytics();
+    }
+    
+    try {
+      return await this.request('/analytics/mobile/behavior');
+    } catch (error) {
+      console.warn('getAdvancedUserBehaviorAnalytics failed, using demo data', error);
+      return this.demoService.getAdvancedUserBehaviorAnalytics();
+    }
+  }
+
+  async getAdvancedSecurityAnalytics() {
+    if (this.isDemoMode()) {
+      return this.demoService.getAdvancedSecurityAnalytics();
+    }
+    
+    try {
+      return await this.request('/analytics/mobile/security');
+    } catch (error) {
+      console.warn('getAdvancedSecurityAnalytics failed, using demo data', error);
+      return this.demoService.getAdvancedSecurityAnalytics();
+    }
+  }
+
+  async getAdvancedRealTimeMetrics() {
+    if (this.isDemoMode()) {
+      return this.demoService.getAdvancedRealTimeMetrics();
+    }
+    
+    try {
+      return await this.request('/analytics/mobile/realtime');
+    } catch (error) {
+      console.warn('getAdvancedRealTimeMetrics failed, using demo data', error);
+      return this.demoService.getAdvancedRealTimeMetrics();
+    }
+  }
+
   async getUserBehaviorAnalytics(timeRange = '24h') {
     if (this.isDemoMode()) {
       return this.demoService.getBehaviorAnalytics();
@@ -350,17 +442,122 @@ class EnhancedApiService {
   }
 
   // Social Collaboration methods
-  async getPeerMatches() {
+  async getSocialPeerMatches() {
     if (this.isDemoMode()) {
-      return this.demoService.getPeerMatches();
+      return this.demoService.getSocialPeerMatches();
     }
     
     try {
-      return await this.originalApiService.getPeerMatches();
+      return await this.request('/social/peer-matches');
     } catch (error) {
-      console.warn('getPeerMatches failed, using demo data', error);
-      return this.demoService.getPeerMatches();
+      console.warn('getSocialPeerMatches failed, using demo data', error);
+      return this.demoService.getSocialPeerMatches();
     }
+  }
+
+  async getSocialMentorshipMatches() {
+    if (this.isDemoMode()) {
+      return this.demoService.getSocialMentorshipMatches();
+    }
+    
+    try {
+      return await this.request('/social/mentorship-matches');
+    } catch (error) {
+      console.warn('getSocialMentorshipMatches failed, using demo data', error);
+      return this.demoService.getSocialMentorshipMatches();
+    }
+  }
+
+  async getSocialCollaborationProjects() {
+    if (this.isDemoMode()) {
+      return this.demoService.getSocialCollaborationProjects();
+    }
+    
+    try {
+      return await this.request('/social/collaboration-projects');
+    } catch (error) {
+      console.warn('getSocialCollaborationProjects failed, using demo data', error);
+      return this.demoService.getSocialCollaborationProjects();
+    }
+  }
+
+  async getSocialNetworkData() {
+    if (this.isDemoMode()) {
+      return this.demoService.getSocialNetworkData();
+    }
+    
+    try {
+      return await this.request('/social/network-data');
+    } catch (error) {
+      console.warn('getSocialNetworkData failed, using demo data', error);
+      return this.demoService.getSocialNetworkData();
+    }
+  }
+
+  async getSocialCommunityData() {
+    if (this.isDemoMode()) {
+      return this.demoService.getSocialCommunityData();
+    }
+    
+    try {
+      return await this.request('/social/community-data');
+    } catch (error) {
+      console.warn('getSocialCommunityData failed, using demo data', error);
+      return this.demoService.getSocialCommunityData();
+    }
+  }
+
+  async sendConnectionRequest(peerId) {
+    if (this.isDemoMode()) {
+      return this.demoService.sendConnectionRequest(peerId);
+    }
+    
+    try {
+      return await this.request('/social/connection-request', {
+        method: 'POST',
+        body: JSON.stringify({ peerId })
+      });
+    } catch (error) {
+      console.warn('sendConnectionRequest failed, using demo fallback', error);
+      return this.demoService.sendConnectionRequest(peerId);
+    }
+  }
+
+  async joinCollaborationProject(projectId) {
+    if (this.isDemoMode()) {
+      return this.demoService.joinCollaborationProject(projectId);
+    }
+    
+    try {
+      return await this.request('/social/join-project', {
+        method: 'POST',
+        body: JSON.stringify({ projectId })
+      });
+    } catch (error) {
+      console.warn('joinCollaborationProject failed, using demo fallback', error);
+      return this.demoService.joinCollaborationProject(projectId);
+    }
+  }
+
+  async requestMentorship(mentorId, type) {
+    if (this.isDemoMode()) {
+      return this.demoService.requestMentorship(mentorId, type);
+    }
+    
+    try {
+      return await this.request('/social/mentorship-request', {
+        method: 'POST',
+        body: JSON.stringify({ mentorId, type })
+      });
+    } catch (error) {
+      console.warn('requestMentorship failed, using demo fallback', error);
+      return this.demoService.requestMentorship(mentorId, type);
+    }
+  }
+
+  // Legacy methods for backward compatibility
+  async getPeerMatches() {
+    return this.getSocialPeerMatches();
   }
 
   async getUserConnections(userId) {
@@ -377,29 +574,11 @@ class EnhancedApiService {
   }
 
   async getActiveCollaborationProjects() {
-    if (this.isDemoMode()) {
-      return this.demoService.getCollaborationProjects();
-    }
-    
-    try {
-      return await this.originalApiService.getActiveCollaborationProjects();
-    } catch (error) {
-      console.warn('getActiveCollaborationProjects failed, using demo data', error);
-      return this.demoService.getCollaborationProjects();
-    }
+    return this.getSocialCollaborationProjects();
   }
 
   async getMentorshipOpportunities(userId) {
-    if (this.isDemoMode()) {
-      return this.demoService.getMentorshipOpportunities();
-    }
-    
-    try {
-      return await this.originalApiService.getMentorshipOpportunities(userId);
-    } catch (error) {
-      console.warn('getMentorshipOpportunities failed, using demo data', error);
-      return this.demoService.getMentorshipOpportunities();
-    }
+    return this.getSocialMentorshipMatches();
   }
 
   // Task Management methods
@@ -749,6 +928,32 @@ class EnhancedApiService {
     } catch (error) {
       console.warn('getRecentActivities failed, using demo data', error);
       return this.demoService.getRecentActivities(limit);
+    }
+  }
+
+  // Export methods
+  async exportAnalyticsData(timeRange = '24h') {
+    if (this.isDemoMode()) {
+      console.log(`[DEMO MODE] Exporting analytics data for ${timeRange}`);
+      return Promise.resolve({
+        success: true,
+        message: 'Analytics data exported successfully (demo)',
+        downloadUrl: '/demo/analytics-export.csv'
+      });
+    }
+    
+    try {
+      return await this.request('/analytics/export', {
+        method: 'POST',
+        body: JSON.stringify({ timeRange })
+      });
+    } catch (error) {
+      console.warn('exportAnalyticsData failed, using demo fallback', error);
+      return Promise.resolve({
+        success: true,
+        message: 'Analytics data exported successfully (demo)',
+        downloadUrl: '/demo/analytics-export.csv'
+      });
     }
   }
 

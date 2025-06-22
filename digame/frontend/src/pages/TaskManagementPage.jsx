@@ -383,11 +383,19 @@ export default function TaskManagementPage({ isDemoMode, onLogout }) {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => navigate('/dashboard')}
+                onClick={() => navigate('/')}
                 className="flex items-center gap-2"
               >
                 <ArrowLeft className="h-4 w-4" />
-                Back to Dashboard
+                Home
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigate('/dashboard')}
+                className="flex items-center gap-2"
+              >
+                Dashboard
               </Button>
               <div className="flex items-center space-x-3">
                 <div className="digame-logo">

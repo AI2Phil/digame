@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Users, UserPlus, MessageCircle, Target, 
+import { useNavigate } from 'react-router-dom';
+import {
+  Users, UserPlus, MessageCircle, Target,
   Award, Handshake, Globe, TrendingUp,
   Star, Clock, MapPin, Zap, Heart,
-  BookOpen, Coffee, Lightbulb, Network
+  BookOpen, Coffee, Lightbulb, Network, Home
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -12,10 +13,10 @@ import { Progress } from '../components/ui/Progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/Tabs';
 import { Avatar } from '../components/ui/Avatar';
 import { Toast } from '../components/ui/Toast';
-import socialService from '../services/socialService';
-import apiService from '../services/apiService';
+import { enhancedApiService } from '../services/enhancedApiService';
 
 const SocialCollaborationDashboard = () => {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
   const [peerMatches, setPeerMatches] = useState([]);
@@ -31,12 +32,7 @@ const SocialCollaborationDashboard = () => {
   const loadSocialData = async () => {
     setLoading(true);
     try {
-      const userId = localStorage.getItem('userId');
-      
-      // Initialize social service
-      await socialService.initialize(userId);
-
-      // Load all social collaboration data
+      // Load all social collaboration data using enhanced API service
       const [
         peerMatchData,
         mentorshipData,
@@ -44,18 +40,18 @@ const SocialCollaborationDashboard = () => {
         networkInfo,
         communityInfo
       ] = await Promise.all([
-        socialService.generatePeerMatches(),
-        socialService.generateMentorshipMatches(),
-        socialService.matchCollaborationProjects(),
-        socialService.buildProfessionalNetwork(),
-        socialService.buildIndustryCommunities()
+        enhancedApiService.getSocialPeerMatches(),
+        enhancedApiService.getSocialMentorshipMatches(),
+        enhancedApiService.getSocialCollaborationProjects(),
+        enhancedApiService.getSocialNetworkData(),
+        enhancedApiService.getSocialCommunityData()
       ]);
 
-      setPeerMatches(peerMatchData.peerMatches);
-      setMentorshipMatches(mentorshipData);
-      setCollaborationProjects(projectData.projectMatches);
-      setNetworkData(networkInfo);
-      setCommunityData(communityInfo);
+      setPeerMatches(peerMatchData.peerMatches || []);
+      setMentorshipMatches(mentorshipData || {});
+      setCollaborationProjects(projectData.projectMatches || []);
+      setNetworkData(networkInfo || {});
+      setCommunityData(communityInfo || {});
 
     } catch (error) {
       console.error('Failed to load social collaboration data:', error);
@@ -67,7 +63,7 @@ const SocialCollaborationDashboard = () => {
 
   const handleConnectWithPeer = async (peerId) => {
     try {
-      await apiService.sendConnectionRequest(peerId);
+      await enhancedApiService.sendConnectionRequest(peerId);
       Toast.success('Connection request sent!');
       loadSocialData(); // Refresh data
     } catch (error) {
@@ -77,7 +73,7 @@ const SocialCollaborationDashboard = () => {
 
   const handleJoinProject = async (projectId) => {
     try {
-      await apiService.joinCollaborationProject(projectId);
+      await enhancedApiService.joinCollaborationProject(projectId);
       Toast.success('Successfully joined project!');
       loadSocialData(); // Refresh data
     } catch (error) {
@@ -87,7 +83,7 @@ const SocialCollaborationDashboard = () => {
 
   const handleStartMentorship = async (mentorId, type) => {
     try {
-      await apiService.requestMentorship(mentorId, type);
+      await enhancedApiService.requestMentorship(mentorId, type);
       Toast.success('Mentorship request sent!');
       loadSocialData(); // Refresh data
     } catch (error) {
@@ -111,14 +107,24 @@ const SocialCollaborationDashboard = () => {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="p-3 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full">
-              <Users className="w-8 h-8 text-white" />
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="p-3 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full">
+                <Users className="w-8 h-8 text-white" />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900">Social Collaboration</h1>
+                <p className="text-gray-600">Connect, learn, and grow with your professional community</p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Social Collaboration</h1>
-              <p className="text-gray-600">Connect, learn, and grow with your professional community</p>
-            </div>
+            <Button
+              variant="outline"
+              onClick={() => navigate('/')}
+              className="flex items-center gap-2"
+            >
+              <Home className="w-4 h-4" />
+              Home
+            </Button>
           </div>
           
           {/* Quick Stats */}

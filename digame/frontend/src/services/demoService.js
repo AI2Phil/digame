@@ -206,14 +206,50 @@ class DemoService {
       // Activity Breakdown Data
       activityBreakdown: {
         categories: [
-          { name: 'Development', value: 45, color: '#3B82F6', hours: 36 },
-          { name: 'Meetings', value: 20, color: '#10B981', hours: 16 },
-          { name: 'Learning', value: 15, color: '#F59E0B', hours: 12 },
-          { name: 'Planning', value: 10, color: '#EF4444', hours: 8 },
-          { name: 'Documentation', value: 10, color: '#8B5CF6', hours: 8 }
+          {
+            name: 'Development',
+            value: 45,
+            color: '#3B82F6',
+            hours: 36,
+            change: 5,
+            insight: 'Your coding velocity has increased 23% this week'
+          },
+          {
+            name: 'Meetings',
+            value: 20,
+            color: '#10B981',
+            hours: 16,
+            change: -2,
+            insight: 'Consider shorter, more focused meetings'
+          },
+          {
+            name: 'Learning',
+            value: 15,
+            color: '#F59E0B',
+            hours: 12,
+            change: 8,
+            insight: 'Great progress on skill development goals'
+          },
+          {
+            name: 'Planning',
+            value: 10,
+            color: '#EF4444',
+            hours: 8,
+            change: 3,
+            insight: 'Strategic thinking time is well-balanced'
+          },
+          {
+            name: 'Documentation',
+            value: 10,
+            color: '#8B5CF6',
+            hours: 8,
+            change: 1,
+            insight: 'Consistent documentation habits maintained'
+          }
         ],
         totalHours: 80,
-        efficiency: 92
+        efficiency: 92,
+        mostProductiveTime: '9-11 AM'
       },
 
       // Recent Activities
@@ -323,7 +359,133 @@ class DemoService {
         platformBreakdown: [
           { platform: 'iOS', percentage: 58, users: 7134 },
           { platform: 'Android', percentage: 42, users: 5166 }
-        ]
+        ],
+        insights: {
+          productivityScore: 85,
+          engagementLevel: 92
+        },
+        sessionData: {
+          duration: 900000,
+          screenViews: {
+            'Dashboard': 45,
+            'Analytics': 23,
+            'Social': 18,
+            'AI Tools': 15,
+            'Tasks': 12
+          },
+          actions: [
+            { type: 'tap', screen: 'Dashboard', timestamp: Date.now() - 300000 },
+            { type: 'swipe', screen: 'Analytics', timestamp: Date.now() - 240000 },
+            { type: 'tap', screen: 'Social', timestamp: Date.now() - 180000 }
+          ]
+        }
+      },
+
+      // Enhanced Mobile Analytics for Advanced Dashboard
+      advancedMobileAnalytics: {
+        performanceMetrics: {
+          averageResponseTime: 850,
+          successRate: 98,
+          errorRate: 0.02,
+          throughput: 1250,
+          slowestEndpoints: [
+            { endpoint: '/api/analytics/advanced', averageDuration: 1200 },
+            { endpoint: '/api/social/connections', averageDuration: 950 },
+            { endpoint: '/api/ai/recommendations', averageDuration: 800 },
+            { endpoint: '/api/tasks/list', averageDuration: 650 }
+          ],
+          networkTypeBreakdown: {
+            wifi: { averageDuration: 650, requests: 1850 },
+            cellular: { averageDuration: 1200, requests: 890 },
+            offline: { averageDuration: 0, requests: 45 }
+          }
+        },
+        realTimeMetrics: {
+          memoryUsage: { used: 45, total: 128, limit: 256 },
+          networkStatus: { type: 'wifi', speed: 'fast', latency: 25, bandwidth: 75 },
+          batteryLevel: 67,
+          activeConnections: 3,
+          syncStatus: { syncInProgress: false, pendingSyncItems: 0, isOnline: true }
+        },
+        networkAnalytics: {
+          connectionTypes: {
+            wifi: { percentage: 68, avgSpeed: '45 Mbps', reliability: 98 },
+            cellular: { percentage: 32, avgSpeed: '12 Mbps', reliability: 92 }
+          },
+          dataUsage: {
+            downloaded: 2.3,
+            uploaded: 0.8,
+            cached: 1.2,
+            total: 4.3
+          },
+          requestAnalytics: {
+            totalRequests: 47,
+            successfulRequests: 46,
+            failedRequests: 1,
+            averageLatency: 245
+          }
+        },
+        offlineAnalytics: {
+          offlineDataCount: 0,
+          pendingSyncItems: 0,
+          pendingConflicts: 0,
+          isOnline: true,
+          syncHistory: [
+            { timestamp: Date.now() - 3600000, status: 'success', itemsSync: 15 },
+            { timestamp: Date.now() - 7200000, status: 'success', itemsSync: 8 },
+            { timestamp: Date.now() - 10800000, status: 'success', itemsSync: 23 }
+          ],
+          offlineCapabilities: {
+            cacheSize: '12.5 MB',
+            maxOfflineTime: '72 hours',
+            syncStrategy: 'incremental'
+          }
+        },
+        userBehaviorAnalytics: {
+          usagePatterns: {
+            peakHours: ['9-11 AM', '2-4 PM'],
+            averageSession: '15 minutes',
+            mostUsedFeatures: ['Dashboard', 'Goals', 'Analytics']
+          },
+          engagementMetrics: {
+            dailyActiveSessions: 3.2,
+            featureAdoptionRate: 78,
+            retentionRate: 92,
+            screenTimeDistribution: {
+              'Dashboard': 35,
+              'Analytics': 25,
+              'Social': 20,
+              'AI Tools': 12,
+              'Tasks': 8
+            }
+          },
+          interactionPatterns: {
+            tapFrequency: 145,
+            swipeFrequency: 67,
+            scrollDepth: 78,
+            sessionDepth: 4.2
+          }
+        },
+        securityAnalytics: {
+          authenticationMetrics: {
+            successRate: 98,
+            primaryMethod: 'Face ID',
+            fallbackMethod: 'PIN',
+            securityIncidents: 0
+          },
+          dataProtection: {
+            encryptionStatus: 'Active',
+            biometricEnabled: true,
+            secureStorage: 'Enabled',
+            networkSecurity: 'TLS 1.3'
+          },
+          privacyMetrics: {
+            dataSharing: 'Minimal',
+            trackingPrevention: 'Active',
+            permissionsGranted: 8,
+            permissionsDenied: 2
+          }
+        }
       },
 
       // Behavioral Analytics
@@ -838,6 +1000,369 @@ class DemoService {
             recommendation: 'Explore advanced collaboration platforms'
           }
         ]
+      },
+
+      // Social Collaboration Data for Social Dashboard
+      socialCollaboration: {
+        peerMatches: [
+          {
+            id: 'peer_001',
+            name: 'Sarah Chen',
+            role: 'Senior UX Designer',
+            company: 'DesignTech Inc.',
+            avatar: null,
+            overallScore: 0.94,
+            matchReason: 'Complementary skills in design and development, shared interest in AI-driven user experiences',
+            location: 'San Francisco, CA',
+            timezone: 'PST',
+            sharedSkills: ['User Experience', 'Design Systems', 'React', 'Figma'],
+            connectionStrength: 'High'
+          },
+          {
+            id: 'peer_002',
+            name: 'Michael Rodriguez',
+            role: 'Data Scientist',
+            company: 'DataCorp Solutions',
+            avatar: null,
+            overallScore: 0.89,
+            matchReason: 'Strong analytical skills and machine learning expertise that complements your development background',
+            location: 'Austin, TX',
+            timezone: 'CST',
+            sharedSkills: ['Python', 'Machine Learning', 'Data Analysis', 'Statistics'],
+            connectionStrength: 'Medium'
+          },
+          {
+            id: 'peer_003',
+            name: 'Emily Johnson',
+            role: 'Product Manager',
+            company: 'InnovateCo',
+            avatar: null,
+            overallScore: 0.87,
+            matchReason: 'Product strategy expertise and technical understanding make for great collaboration potential',
+            location: 'Seattle, WA',
+            timezone: 'PST',
+            sharedSkills: ['Product Strategy', 'Agile', 'User Research', 'Analytics'],
+            connectionStrength: 'High'
+          },
+          {
+            id: 'peer_004',
+            name: 'David Kim',
+            role: 'DevOps Engineer',
+            company: 'CloudTech Systems',
+            avatar: null,
+            overallScore: 0.85,
+            matchReason: 'Infrastructure and deployment expertise that perfectly complements your development skills',
+            location: 'New York, NY',
+            timezone: 'EST',
+            sharedSkills: ['AWS', 'Docker', 'Kubernetes', 'CI/CD'],
+            connectionStrength: 'Medium'
+          },
+          {
+            id: 'peer_005',
+            name: 'Lisa Wang',
+            role: 'AI Research Engineer',
+            company: 'AI Innovations Lab',
+            avatar: null,
+            overallScore: 0.92,
+            matchReason: 'Cutting-edge AI research background aligns with your interest in machine learning applications',
+            location: 'Boston, MA',
+            timezone: 'EST',
+            sharedSkills: ['TensorFlow', 'PyTorch', 'Deep Learning', 'Research'],
+            connectionStrength: 'High'
+          }
+        ],
+        mentorshipMatches: {
+          mentorMatches: [
+            {
+              id: 'mentor_001',
+              name: 'Robert Thompson',
+              role: 'Engineering Director',
+              company: 'TechGiant Corp',
+              avatar: null,
+              expertise: 'Technical Leadership, System Architecture, Team Management',
+              experience: '15+ years',
+              rating: 4.9,
+              availability: 'Available',
+              menteeCount: 12,
+              successStories: 8
+            },
+            {
+              id: 'mentor_002',
+              name: 'Jennifer Martinez',
+              role: 'VP of Engineering',
+              company: 'StartupSuccess Inc',
+              avatar: null,
+              expertise: 'Startup Growth, Technical Strategy, Product Development',
+              experience: '12+ years',
+              rating: 4.8,
+              availability: 'Limited',
+              menteeCount: 8,
+              successStories: 15
+            },
+            {
+              id: 'mentor_003',
+              name: 'Dr. Alan Foster',
+              role: 'AI Research Director',
+              company: 'Research Institute',
+              avatar: null,
+              expertise: 'Machine Learning, AI Ethics, Research Methodology',
+              experience: '20+ years',
+              rating: 4.9,
+              availability: 'Available',
+              menteeCount: 6,
+              successStories: 25
+            }
+          ],
+          menteeMatches: [
+            {
+              id: 'mentee_001',
+              name: 'Alex Rivera',
+              role: 'Junior Developer',
+              company: 'TechStart',
+              avatar: null,
+              learningArea: 'React Development and Best Practices',
+              experience: '1 year',
+              goals: ['Master React patterns', 'Learn testing frameworks', 'Improve code quality'],
+              commitment: 'High'
+            },
+            {
+              id: 'mentee_002',
+              name: 'Priya Patel',
+              role: 'Computer Science Student',
+              company: 'University',
+              avatar: null,
+              learningArea: 'Full-stack Development and Career Guidance',
+              experience: 'Student',
+              goals: ['Build portfolio projects', 'Prepare for interviews', 'Learn industry practices'],
+              commitment: 'High'
+            },
+            {
+              id: 'mentee_003',
+              name: 'James Wilson',
+              role: 'Career Changer',
+              company: 'Self-taught',
+              avatar: null,
+              learningArea: 'Transitioning from Finance to Tech',
+              experience: '6 months coding',
+              goals: ['Build technical skills', 'Network in tech', 'Land first tech job'],
+              commitment: 'Very High'
+            }
+          ],
+          mentorshipPrograms: [
+            {
+              id: 'program_001',
+              title: 'Tech Leadership Accelerator',
+              description: 'Structured 6-month program for emerging tech leaders',
+              duration: '6 months',
+              participants: 24,
+              nextCohort: '2025-01-15',
+              focus: ['Leadership Skills', 'Technical Strategy', 'Team Building']
+            },
+            {
+              id: 'program_002',
+              title: 'AI/ML Mentorship Circle',
+              description: 'Peer-to-peer learning program for AI and machine learning practitioners',
+              duration: '4 months',
+              participants: 16,
+              nextCohort: '2025-02-01',
+              focus: ['Machine Learning', 'AI Ethics', 'Research Methods']
+            },
+            {
+              id: 'program_003',
+              title: 'Startup Founder Bootcamp',
+              description: 'Intensive program for aspiring tech entrepreneurs',
+              duration: '3 months',
+              participants: 12,
+              nextCohort: '2025-01-30',
+              focus: ['Business Strategy', 'Product Development', 'Fundraising']
+            }
+          ]
+        },
+        collaborationProjects: {
+          projectMatches: [
+            {
+              id: 'project_001',
+              title: 'Open Source React Component Library',
+              description: 'Building a comprehensive, accessible React component library for the community',
+              teamSize: 8,
+              duration: '4 months',
+              urgency: 'medium',
+              matchScore: 94,
+              requiredSkills: ['React', 'TypeScript', 'Storybook', 'Testing'],
+              currentParticipants: [
+                { name: 'Sarah Chen', role: 'Design Lead' },
+                { name: 'Mike Johnson', role: 'Tech Lead' },
+                { name: 'Lisa Park', role: 'Developer' }
+              ],
+              status: 'Active',
+              progress: 35
+            },
+            {
+              id: 'project_002',
+              title: 'AI-Powered Code Review Tool',
+              description: 'Developing an intelligent code review assistant using machine learning',
+              teamSize: 6,
+              duration: '6 months',
+              urgency: 'high',
+              matchScore: 91,
+              requiredSkills: ['Python', 'Machine Learning', 'NLP', 'Git'],
+              currentParticipants: [
+                { name: 'Dr. Alan Foster', role: 'AI Advisor' },
+                { name: 'David Kim', role: 'Backend Lead' },
+                { name: 'Emily Chen', role: 'ML Engineer' }
+              ],
+              status: 'Active',
+              progress: 20
+            },
+            {
+              id: 'project_003',
+              title: 'Sustainable Tech Initiative',
+              description: 'Creating tools and resources for environmentally conscious software development',
+              teamSize: 10,
+              duration: '8 months',
+              urgency: 'low',
+              matchScore: 87,
+              requiredSkills: ['Full-stack Development', 'Data Analysis', 'Sustainability'],
+              currentParticipants: [
+                { name: 'Jennifer Martinez', role: 'Project Lead' },
+                { name: 'Robert Thompson', role: 'Advisor' },
+                { name: 'Alex Rivera', role: 'Junior Developer' }
+              ],
+              status: 'Planning',
+              progress: 5
+            },
+            {
+              id: 'project_004',
+              title: 'Developer Productivity Analytics',
+              description: 'Building analytics tools to help developers understand and improve their productivity',
+              teamSize: 5,
+              duration: '3 months',
+              urgency: 'medium',
+              matchScore: 89,
+              requiredSkills: ['React', 'Node.js', 'Analytics', 'Data Visualization'],
+              currentParticipants: [
+                { name: 'Michael Rodriguez', role: 'Data Lead' },
+                { name: 'Priya Patel', role: 'Frontend Developer' }
+              ],
+              status: 'Active',
+              progress: 60
+            }
+          ]
+        },
+        networkData: {
+          industryConnections: [
+            {
+              id: 'conn_001',
+              name: 'Tech Innovators Network',
+              type: 'Professional Group',
+              memberCount: 1247,
+              relevance: 'High',
+              activity: 'Very Active',
+              lastInteraction: '2 days ago'
+            },
+            {
+              id: 'conn_002',
+              name: 'AI/ML Practitioners',
+              type: 'Special Interest',
+              memberCount: 892,
+              relevance: 'High',
+              activity: 'Active',
+              lastInteraction: '1 week ago'
+            },
+            {
+              id: 'conn_003',
+              name: 'React Developers Community',
+              type: 'Technology Focus',
+              memberCount: 2156,
+              relevance: 'Very High',
+              activity: 'Very Active',
+              lastInteraction: '1 day ago'
+            },
+            {
+              id: 'conn_004',
+              name: 'Startup Founders Circle',
+              type: 'Entrepreneurship',
+              memberCount: 456,
+              relevance: 'Medium',
+              activity: 'Active',
+              lastInteraction: '5 days ago'
+            }
+          ],
+          connectionStrength: 85,
+          networkGrowth: '+12%',
+          influenceScore: 72,
+          reachability: 94
+        },
+        communityData: {
+          relevantCommunities: [
+            {
+              id: 'community_001',
+              name: 'JavaScript Developers United',
+              description: 'A global community of JavaScript developers sharing knowledge and best practices',
+              memberCount: '45.2K',
+              activity: 'Very High',
+              relevance: 95,
+              topics: ['JavaScript', 'React', 'Node.js', 'Web Development'],
+              engagement: 'High',
+              joinDate: null
+            },
+            {
+              id: 'community_002',
+              name: 'AI & Machine Learning Hub',
+              description: 'Connecting AI researchers, practitioners, and enthusiasts worldwide',
+              memberCount: '32.8K',
+              activity: 'High',
+              relevance: 88,
+              topics: ['Machine Learning', 'Deep Learning', 'AI Ethics', 'Research'],
+              engagement: 'Medium',
+              joinDate: null
+            },
+            {
+              id: 'community_003',
+              name: 'Tech Leadership Forum',
+              description: 'A community for current and aspiring technology leaders',
+              memberCount: '18.5K',
+              activity: 'Medium',
+              relevance: 82,
+              topics: ['Leadership', 'Management', 'Strategy', 'Team Building'],
+              engagement: 'High',
+              joinDate: null
+            },
+            {
+              id: 'community_004',
+              name: 'Open Source Contributors',
+              description: 'Supporting and celebrating open source software development',
+              memberCount: '67.1K',
+              activity: 'Very High',
+              relevance: 90,
+              topics: ['Open Source', 'Collaboration', 'Code Review', 'Community'],
+              engagement: 'Very High',
+              joinDate: null
+            },
+            {
+              id: 'community_005',
+              name: 'Product Development Collective',
+              description: 'Cross-functional community for product managers, designers, and developers',
+              memberCount: '24.7K',
+              activity: 'High',
+              relevance: 85,
+              topics: ['Product Management', 'UX Design', 'Development', 'Strategy'],
+              engagement: 'Medium',
+              joinDate: null
+            },
+            {
+              id: 'community_006',
+              name: 'DevOps & Cloud Engineers',
+              description: 'Community focused on DevOps practices and cloud technologies',
+              memberCount: '38.9K',
+              activity: 'High',
+              relevance: 78,
+              topics: ['DevOps', 'Cloud Computing', 'Infrastructure', 'Automation'],
+              engagement: 'Medium',
+              joinDate: null
+            }
+          ]
+        }
       }
     };
   }
@@ -972,6 +1497,82 @@ class DemoService {
 
   getIndustryInsights() {
     return this.demoData.enhancedSocialData.industryInsights;
+  }
+
+  // Advanced Mobile Analytics getter methods
+  getAdvancedMobileAnalytics() {
+    return this.demoData.advancedMobileAnalytics;
+  }
+
+  getAdvancedPerformanceMetrics() {
+    return this.demoData.advancedMobileAnalytics.performanceMetrics;
+  }
+
+  getAdvancedNetworkAnalytics() {
+    return this.demoData.advancedMobileAnalytics.networkAnalytics;
+  }
+
+  getAdvancedOfflineAnalytics() {
+    return this.demoData.advancedMobileAnalytics.offlineAnalytics;
+  }
+
+  getAdvancedUserBehaviorAnalytics() {
+    return this.demoData.advancedMobileAnalytics.userBehaviorAnalytics;
+  }
+
+  getAdvancedSecurityAnalytics() {
+    return this.demoData.advancedMobileAnalytics.securityAnalytics;
+  }
+
+  getAdvancedRealTimeMetrics() {
+    return this.demoData.advancedMobileAnalytics.realTimeMetrics;
+  }
+// Social Collaboration getter methods
+  getSocialPeerMatches() {
+    return {
+      peerMatches: this.demoData.socialCollaboration.peerMatches
+    };
+  }
+
+  getSocialMentorshipMatches() {
+    return this.demoData.socialCollaboration.mentorshipMatches;
+  }
+
+  getSocialCollaborationProjects() {
+    return this.demoData.socialCollaboration.collaborationProjects;
+  }
+
+  getSocialNetworkData() {
+    return this.demoData.socialCollaboration.networkData;
+  }
+
+  getSocialCommunityData() {
+    return this.demoData.socialCollaboration.communityData;
+  }
+
+  // Social interaction methods
+  sendConnectionRequest(peerId) {
+    console.log(`[DEMO] Sending connection request to peer ${peerId}`);
+    return Promise.resolve({ 
+      success: true, 
+      message: 'Connection request sent successfully' 
+    });
+  }
+
+  joinCollaborationProject(projectId) {
+    console.log(`[DEMO] Joining collaboration project ${projectId}`);
+    return Promise.resolve({ 
+      success: true, 
+      message: 'Successfully joined the project' 
+    });
+  }
+
+  requestMentorship(mentorId, type) {
+    console.log(`[DEMO] Requesting ${type} mentorship from ${mentorId}`);
+    return Promise.resolve({ 
+      success: true, 
+      message: `${type === 'mentor' ? 'Mentorship offer' : 'Mentorship request'} sent successfully` 
+    });
   }
 
   // Utility methods for demo interactions

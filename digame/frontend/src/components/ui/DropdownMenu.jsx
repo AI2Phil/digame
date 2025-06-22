@@ -173,11 +173,11 @@ const DropdownMenuItem = forwardRef(({
       ref={ref}
       type="button"
       className={cn(
-        "relative flex w-full cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none",
-        "focus:bg-accent focus:text-accent-foreground",
-        "data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
-        destructive && "text-destructive focus:text-destructive",
-        disabled && "pointer-events-none opacity-50",
+        "relative flex w-full cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none",
+        "text-gray-900 hover:bg-blue-50 hover:text-blue-900 focus:bg-blue-50 focus:text-blue-900",
+        "transition-colors duration-150",
+        destructive && "text-red-600 hover:text-red-700 focus:text-red-700",
+        disabled && "pointer-events-none opacity-50 text-gray-400",
         className
       )}
       onClick={handleClick}
@@ -214,10 +214,10 @@ const DropdownMenuCheckboxItem = forwardRef(({
       ref={ref}
       type="button"
       className={cn(
-        "relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none",
-        "focus:bg-accent focus:text-accent-foreground",
-        "data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
-        disabled && "pointer-events-none opacity-50",
+        "relative flex w-full cursor-pointer select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none",
+        "text-gray-900 hover:bg-blue-50 hover:text-blue-900 focus:bg-blue-50 focus:text-blue-900",
+        "transition-colors duration-150",
+        disabled && "pointer-events-none opacity-50 text-gray-400",
         className
       )}
       onClick={handleClick}
@@ -277,10 +277,10 @@ const DropdownMenuRadioItem = forwardRef(({
       ref={ref}
       type="button"
       className={cn(
-        "relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none",
-        "focus:bg-accent focus:text-accent-foreground",
-        "data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
-        disabled && "pointer-events-none opacity-50",
+        "relative flex w-full cursor-pointer select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none",
+        "text-gray-900 hover:bg-blue-50 hover:text-blue-900 focus:bg-blue-50 focus:text-blue-900",
+        "transition-colors duration-150",
+        disabled && "pointer-events-none opacity-50 text-gray-400",
         className
       )}
       onClick={handleClick}
@@ -367,8 +367,9 @@ const DropdownMenuSubTrigger = forwardRef(({
       ref={ref}
       type="button"
       className={cn(
-        "flex w-full cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none",
-        "focus:bg-accent focus:text-accent-foreground",
+        "flex w-full cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none",
+        "text-gray-900 hover:bg-blue-50 hover:text-blue-900 focus:bg-blue-50 focus:text-blue-900",
+        "transition-colors duration-150",
         className
       )}
       onMouseEnter={() => setIsOpen(true)}

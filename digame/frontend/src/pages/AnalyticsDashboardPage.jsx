@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  BarChart3, TrendingUp, Activity, Database, 
+import { useNavigate } from 'react-router-dom';
+import {
+  BarChart3, TrendingUp, Activity, Database,
   Clock, Users, Zap, AlertTriangle, CheckCircle,
   Monitor, Smartphone, Globe, RefreshCw,
-  Download, Filter, Calendar, Eye, Target
+  Download, Filter, Calendar, Eye, Target, Home
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -20,6 +21,7 @@ import MobileAnalyticsSection from '../components/analytics/MobileAnalyticsSecti
 import { Skeleton } from '../components/ui/Skeleton';
 
 const AnalyticsDashboardPage = ({ isDemoMode, onLogout }) => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('overview');
   const [timeRange, setTimeRange] = useState('24h');
   const [loading, setLoading] = useState(true);
@@ -72,7 +74,7 @@ const AnalyticsDashboardPage = ({ isDemoMode, onLogout }) => {
 
   const handleExport = async () => {
     try {
-      await apiService.exportAnalyticsData(timeRange);
+      await enhancedApiService.exportAnalyticsData(timeRange);
       Toast.success('Analytics data exported successfully');
     } catch (error) {
       Toast.error('Failed to export analytics data');
@@ -152,9 +154,19 @@ const AnalyticsDashboardPage = ({ isDemoMode, onLogout }) => {
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">Analytics Dashboard</h1>
-              <p className="text-gray-600">Real-time performance monitoring and user behavior analytics</p>
+            <div className="flex items-center gap-4">
+              <Button
+                variant="outline"
+                onClick={() => navigate('/')}
+                className="flex items-center gap-2"
+              >
+                <Home className="w-4 h-4" />
+                Home
+              </Button>
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900 mb-2">Analytics Dashboard</h1>
+                <p className="text-gray-600">Real-time performance monitoring and user behavior analytics</p>
+              </div>
             </div>
             <div className="flex items-center gap-3">
               <Select value={timeRange} onValueChange={setTimeRange}>
