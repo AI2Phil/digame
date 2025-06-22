@@ -5,9 +5,9 @@ from typing import List, Dict, Any, Optional
 from collections import Counter
 import re # For simple pattern matching if needed
 
-from digame.app.crud import user_setting_crud
-from digame.app.models.user import User as UserModel
-from digame.app.db import get_db # For the dependency injector
+from ..crud import user_setting_crud
+from ..models.user import User as UserModel
+from ..db import get_db # For the dependency injector
 
 # Placeholder for an external NLP service client for email analysis
 class MockExternalEmailAnalysisClient:

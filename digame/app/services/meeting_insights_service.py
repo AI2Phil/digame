@@ -2,9 +2,9 @@ import json
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status, Depends
 
-from digame.app.crud import user_setting_crud
-from digame.app.models.user import User as UserModel
-from digame.app.db import get_db # For the dependency injector
+from ..crud import user_setting_crud
+from ..models.user import User as UserModel
+from ..db import get_db # For the dependency injector
 
 # Placeholder for an external NLP service client for meeting insights
 class MockExternalMeetingInsightsClient:

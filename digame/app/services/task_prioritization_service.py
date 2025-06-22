@@ -5,11 +5,11 @@ from typing import List, Dict, Any, Optional
 from datetime import datetime, timedelta
 
 # Assuming Task model is correctly imported via models package
-from digame.app.models import Task as TaskModel
-from digame.app.models.user import User as UserModel
-from digame.app.crud import user_setting_crud # For potential future API key use
-from digame.app.crud import task_crud # To fetch tasks for a user
-from digame.app.db import get_db # For the dependency injector
+from ..models import Task as TaskModel
+from ..models.user import User as UserModel
+from ..crud import user_setting_crud # For potential future API key use
+from ..crud import task_crud # To fetch tasks for a user
+from ..db import get_db # For the dependency injector
 
 # No external client for now, focusing on internal heuristics
 
