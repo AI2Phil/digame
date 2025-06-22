@@ -15,6 +15,8 @@ from digame.app.models.tenant import TenantAuditLog as TenantAuditLogModel
 # Service to test
 from digame.app.services.tenant_service import TenantService, UserService
 
+
+
 # --- Fixtures ---
 
 @pytest.fixture
@@ -55,8 +57,7 @@ def sample_tenant_data():
 def mock_tenant_instance(sample_tenant_data):
     # Create a more complete mock tenant instance
     now = datetime.now(timezone.utc)
-    return TenantModel(
-        id=1,
+    return create_mock_model(TenantModel, id=1,
         tenant_uuid="test-uuid",
         name=sample_tenant_data["name"],
         slug=sample_tenant_data["slug"],
@@ -76,21 +77,48 @@ def mock_tenant_instance(sample_tenant_data):
 
 @pytest.fixture
 def mock_user_instance():
-    return UserModel(id=1, tenant_id=1, username="admin@test-tenant.com", email="admin@test-tenant.com", is_active=True)
+    return create_mock_model(UserModel, id=1, tenant_id=1, username="admin@test-tenant.com", email="admin@test-tenant.com", is_active=True)
 
 @pytest.fixture
 def mock_admin_role_instance():
-    return RoleModel(id=1, tenant_id=1, name="Admin", permissions=["tenant:manage"])
+    return create_mock_model(RoleModel, id=1, tenant_id=1, name="Admin", permissions=["tenant:manage"])
 
 
 # --- Tests for TenantService ---
+def create_mock_model(model_class, **kwargs):
+    """Create a mock instance of a SQLAlchemy model with given attributes."""
+    # For testing purposes, we'll create a simple mock object
+    # that behaves like the model but doesn't require database instantiation
+    class MockModel:
+        def __init__(self, **attrs):
+            for key, value in attrs.items():
+                setattr(self, key, value)
+            # Set some default attributes that SQLAlchemy models typically have
+            if not hasattr(self, 'id'):
+                self.id = 1
+            if not hasattr(self, 'created_at'):
+                from datetime import datetime, timezone
+                self.created_at = datetime.now(timezone.utc)
+        
+        def __repr__(self):
+            attrs = []
+            for key, value in self.__dict__.items():
+                if not key.startswith('_'):
+                    if isinstance(value, str) and len(value) > 20:
+                        attrs.append(f"{key}='{value[:20]}...'")
+                    else:
+                        attrs.append(f"{key}={repr(value)}")
+            return f"<{model_class.__name__}({', '.join(attrs)})>"
+    
+    return MockModel(**kwargs)
+
 
 class TestTenantCreation:
     def test_create_tenant_success(self, tenant_service: TenantService, mock_db_session: MagicMock, sample_tenant_data, mock_admin_role_instance):
         # Arrange
         mock_db_session.query(TenantModel).filter_by(slug=sample_tenant_data["slug"]).first.return_value = None
         mock_db_session.query(RoleModel).filter(RoleModel.tenant_id == ANY, RoleModel.name == "Admin").first.return_value = mock_admin_role_instance
-        mock_db_session.query(RoleModel).filter(RoleModel.tenant_id == ANY, RoleModel.name == "User").first.return_value = RoleModel(id=2, name="User")
+        mock_db_session.query(RoleModel).filter(RoleModel.tenant_id == ANY, RoleModel.name == "User").first.return_value = create_mock_model(RoleModel, id=2, name="User")
 
 
         # Act
@@ -157,7 +185,7 @@ class TestTenantSettingsManagement:
         assert any(call_args[0][0].action == "tenant_setting_created" for call_args in mock_db_session.add.call_args_list if isinstance(call_args[0][0], TenantAuditLogModel))
 
     def test_get_tenant_setting_found(self, tenant_service: TenantService, mock_db_session: MagicMock):
-        mock_setting = TenantSettingsModel(tenant_id=1, category="general", key="timezone", value="UTC")
+        mock_setting = create_mock_model(TenantSettingsModel, tenant_id=1, category="general", key="timezone", value="UTC")
         mock_db_session.query(TenantSettingsModel).filter(ANY, ANY, ANY).first.return_value = mock_setting
 
         setting = tenant_service.get_tenant_setting(1, "general", "timezone")
@@ -165,7 +193,7 @@ class TestTenantSettingsManagement:
         assert setting.value == "UTC"
 
     def test_delete_tenant_setting_success(self, tenant_service: TenantService, mock_db_session: MagicMock, mock_user_instance):
-        mock_setting = TenantSettingsModel(tenant_id=1, category="general", key="timezone", value="UTC")
+        mock_setting = create_mock_model(TenantSettingsModel, tenant_id=1, category="general", key="timezone", value="UTC")
         mock_db_session.query(TenantSettingsModel).filter(ANY, ANY, ANY).first.return_value = mock_setting
 
         result = tenant_service.delete_tenant_setting(1, "general", "timezone", mock_user_instance.id)
@@ -199,14 +227,13 @@ class TestTenantInvitationManagement:
     def test_accept_invitation_success(self, tenant_service: TenantService, mock_db_session: MagicMock, mock_user_instance):
         token = "valid_token"
         accepting_user_id = mock_user_instance.id
-        mock_invitation = TenantInvitationModel(
-            id=1, tenant_id=1, email="test@example.com", role="User",
+        mock_invitation = create_mock_model(TenantInvitationModel, id=1, tenant_id=1, email="test@example.com", role="User",
             invitation_token=token, expires_at=datetime.now(timezone.utc) + timedelta(days=1),
             invited_by_user_id=2
         )
         mock_db_session.query(TenantInvitationModel).filter(TenantInvitationModel.invitation_token == token).first.return_value = mock_invitation
         mock_db_session.query(UserModel).filter(UserModel.id == accepting_user_id).first.return_value = mock_user_instance
-        mock_db_session.query(RoleModel).filter(RoleModel.tenant_id == mock_invitation.tenant_id, RoleModel.name == mock_invitation.role).first.return_value = RoleModel(id=1, name="User")
+        mock_db_session.query(RoleModel).filter(RoleModel.tenant_id == mock_invitation.tenant_id, RoleModel.name == mock_invitation.role).first.return_value = create_mock_model(RoleModel, id=1, name="User")
 
 
         invitation = tenant_service.accept_invitation(token, accepting_user_id)
@@ -236,7 +263,7 @@ class TestTenantAuditLogManagement:
         mock_db_session.flush.assert_called_once() # _log_audit_event calls flush
 
     def test_list_audit_logs_with_filters(self, tenant_service: TenantService, mock_db_session: MagicMock):
-        mock_logs = [TenantAuditLogModel(action="test_action"), TenantAuditLogModel(action="another_action")]
+        mock_logs = [create_mock_model(TenantAuditLogModel, action="test_action"), create_mock_model(TenantAuditLogModel, action="another_action")]
         mock_db_session.query(TenantAuditLogModel).filter().order_by().limit().offset().all.return_value = mock_logs
 
         logs = tenant_service.list_audit_logs(tenant_id=1, action="test_action", limit=10, offset=0)
@@ -252,7 +279,7 @@ class TestUserManagementAndLimits:
         mock_tenant_instance.max_users = 5
         mock_db_session.query(TenantModel).filter(TenantModel.id == tenant_id).first.return_value = mock_tenant_instance
         mock_db_session.query(UserModel).filter(UserModel.tenant_id == tenant_id).count.return_value = 2 # Current users
-        mock_db_session.query(RoleModel).filter(ANY, ANY).first.return_value = RoleModel(id=1, name="User")
+        mock_db_session.query(RoleModel).filter(ANY, ANY).first.return_value = create_mock_model(RoleModel, id=1, name="User")
 
 
         user_data = {"username": "newuser", "email": "new@example.com", "password": "password"}
@@ -275,7 +302,7 @@ class TestUserManagementAndLimits:
 # Basic tests for UserService to ensure it's tenant-aware where needed
 class TestUserService:
     def test_authenticate_user_scoped_to_tenant(self, user_service: UserService, mock_db_session: MagicMock):
-        mock_user = UserModel(username="testuser", tenant_id=1, hashed_password=UserService.pwd_context.hash("password"))
+        mock_user = create_mock_model(UserModel, username="testuser", tenant_id=1, hashed_password=UserService.pwd_context.hash("password"))
         mock_db_session.query(UserModel).filter(UserModel.username == "testuser", UserModel.is_active == True, UserModel.tenant_id == 1).first.return_value = mock_user
 
         authenticated_user = user_service.authenticate_user("testuser", "password", tenant_id=1)

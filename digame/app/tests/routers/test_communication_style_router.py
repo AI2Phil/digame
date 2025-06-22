@@ -7,6 +7,8 @@ from digame.app.main import app # Main FastAPI app
 from digame.app.schemas.communication_style_schemas import CommunicationStyleAnalysisResponse
 from digame.app.models.user import User as UserModel
 
+
+
 # --- Test Client Fixture ---
 @pytest.fixture(scope="module")
 def client():
@@ -21,7 +23,7 @@ def mock_communication_style_service():
 
 @pytest.fixture
 def mock_current_active_user_for_comm_style():
-    user = UserModel(id=2, email="comm_router_user@example.com", full_name="Comm Router Test User", is_active=True)
+    user = create_mock_model(UserModel, id=2, email="comm_router_user@example.com", full_name="Comm Router Test User", is_active=True)
     # Ensure this mock user has `tenants` attribute if service relies on it, even if empty for some tests.
     # For router tests, the service is mocked, so direct user structure might be less critical
     # unless get_current_active_user itself does deep checks.
@@ -29,6 +31,33 @@ def mock_current_active_user_for_comm_style():
     return user
 
 # --- Router Tests ---
+def create_mock_model(model_class, **kwargs):
+    """Create a mock instance of a SQLAlchemy model with given attributes."""
+    # For testing purposes, we'll create a simple mock object
+    # that behaves like the model but doesn't require database instantiation
+    class MockModel:
+        def __init__(self, **attrs):
+            for key, value in attrs.items():
+                setattr(self, key, value)
+            # Set some default attributes that SQLAlchemy models typically have
+            if not hasattr(self, 'id'):
+                self.id = 1
+            if not hasattr(self, 'created_at'):
+                from datetime import datetime, timezone
+                self.created_at = datetime.now(timezone.utc)
+        
+        def __repr__(self):
+            attrs = []
+            for key, value in self.__dict__.items():
+                if not key.startswith('_'):
+                    if isinstance(value, str) and len(value) > 20:
+                        attrs.append(f"{key}='{value[:20]}...'")
+                    else:
+                        attrs.append(f"{key}={repr(value)}")
+            return f"<{model_class.__name__}({', '.join(attrs)})>"
+    
+    return MockModel(**kwargs)
+
 
 def test_analyze_endpoint_success(client, mock_communication_style_service, mock_current_active_user_for_comm_style):
     # Arrange

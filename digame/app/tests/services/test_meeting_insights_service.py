@@ -14,6 +14,8 @@ from digame.app.models.user_setting import UserSetting as UserSettingModel
 # Service to test
 from digame.app.services.meeting_insights_service import MeetingInsightsService
 
+
+
 # --- Fixtures ---
 
 @pytest.fixture
@@ -22,23 +24,20 @@ def mock_db_session():
 
 @pytest.fixture
 def mock_user_model_insights(): # Renamed for clarity
-    user = UserModel(id=3, email="insights_user@example.com", full_name="Insights Test User", tenants=[])
+    user = create_mock_model(UserModel, id=3, email="insights_user@example.com", full_name="Insights Test User", tenants=[])
     return user
 
 @pytest.fixture
 def mock_tenant_model_insights(): # Renamed
-    tenant = TenantModel(
-        id=3,
+    tenant = create_mock_model(TenantModel, id=3,
         name="Insights Tenant",
         admin_email="admin@insightstenant.com",
-        features={"meeting_insights": True} # Default to enabled
-    )
+        features={"meeting_insights": True} # Default to enabled)
     return tenant
 
 @pytest.fixture
 def mock_user_setting_model_insights(): # Renamed
-    setting = UserSettingModel(
-        id=3,
+    setting = create_mock_model(UserSettingModel, id=3,
         user_id=3, # Matches mock_user_model_insights.id
         api_keys=json.dumps({"meeting_insights_service_key": "valid_meeting_key_premium"})
     )
@@ -46,13 +45,40 @@ def mock_user_setting_model_insights(): # Renamed
 
 @pytest.fixture
 def mock_tenant_user_link_insights(mock_user_model_insights, mock_tenant_model_insights): # Renamed
-    link = TenantUserModel(user_id=mock_user_model_insights.id, tenant_id=mock_tenant_model_insights.id)
+    link = Tenantcreate_mock_model(UserModel, user_id=mock_user_model_insights.id, tenant_id=mock_tenant_model_insights.id)
     link.user = mock_user_model_insights
     link.tenant = mock_tenant_model_insights
     mock_user_model_insights.tenants.append(link)
     return link
 
 # --- Tests for MeetingInsightsService ---
+def create_mock_model(model_class, **kwargs):
+    """Create a mock instance of a SQLAlchemy model with given attributes."""
+    # For testing purposes, we'll create a simple mock object
+    # that behaves like the model but doesn't require database instantiation
+    class MockModel:
+        def __init__(self, **attrs):
+            for key, value in attrs.items():
+                setattr(self, key, value)
+            # Set some default attributes that SQLAlchemy models typically have
+            if not hasattr(self, 'id'):
+                self.id = 1
+            if not hasattr(self, 'created_at'):
+                from datetime import datetime, timezone
+                self.created_at = datetime.now(timezone.utc)
+        
+        def __repr__(self):
+            attrs = []
+            for key, value in self.__dict__.items():
+                if not key.startswith('_'):
+                    if isinstance(value, str) and len(value) > 20:
+                        attrs.append(f"{key}='{value[:20]}...'")
+                    else:
+                        attrs.append(f"{key}={repr(value)}")
+            return f"<{model_class.__name__}({', '.join(attrs)})>"
+    
+    return MockModel(**kwargs)
+
 
 def test_get_analysis_success(mock_db_session, mock_user_model_insights, mock_tenant_model_insights, mock_user_setting_model_insights, mock_tenant_user_link_insights):
     # Arrange

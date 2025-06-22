@@ -16,7 +16,36 @@ from digame.app.models.activity import Activity
 from digame.app.models.activity_features import ActivityEnrichedFeature
 from digame.app.models.user import User # For context, if needed
 
+
+
 # --- Helper Function Tests ---
+def create_mock_model(model_class, **kwargs):
+    """Create a mock instance of a SQLAlchemy model with given attributes."""
+    # For testing purposes, we'll create a simple mock object
+    # that behaves like the model but doesn't require database instantiation
+    class MockModel:
+        def __init__(self, **attrs):
+            for key, value in attrs.items():
+                setattr(self, key, value)
+            # Set some default attributes that SQLAlchemy models typically have
+            if not hasattr(self, 'id'):
+                self.id = 1
+            if not hasattr(self, 'created_at'):
+                from datetime import datetime, timezone
+                self.created_at = datetime.now(timezone.utc)
+        
+        def __repr__(self):
+            attrs = []
+            for key, value in self.__dict__.items():
+                if not key.startswith('_'):
+                    if isinstance(value, str) and len(value) > 20:
+                        attrs.append(f"{key}='{value[:20]}...'")
+                    else:
+                        attrs.append(f"{key}={repr(value)}")
+            return f"<{model_class.__name__}({', '.join(attrs)})>"
+    
+    return MockModel(**kwargs)
+
 
 def test_parse_activity_details():
     assert _parse_activity_details('{"key": "value"}') == {"key": "value"}
@@ -60,8 +89,7 @@ def test_extract_project_context():
 
 @pytest.fixture
 def sample_activity() -> Activity:
-    return Activity(
-        id=1, 
+    return create_mock_model(Activity, id=1, 
         user_id=1, 
         activity_type="app_usage", 
         timestamp=datetime.now(),
@@ -70,23 +98,19 @@ def sample_activity() -> Activity:
 
 @pytest.fixture
 def prev_enriched_feature_comm() -> ActivityEnrichedFeature:
-    return ActivityEnrichedFeature(
-        activity_id=0, # Belongs to a hypothetical previous activity
+    return create_mock_model(ActivityEnrichedFeature, activity_id=0, # Belongs to a hypothetical previous activity
         app_category="Communication", 
         project_context="General",
         website_category=None,
-        is_context_switch=False # Assuming previous state
-    )
+        is_context_switch=False # Assuming previous state)
 
 @pytest.fixture
 def prev_enriched_feature_dev_same_proj() -> ActivityEnrichedFeature:
-    return ActivityEnrichedFeature(
-        activity_id=0,
+    return create_mock_model(ActivityEnrichedFeature, activity_id=0,
         app_category="Development",
         project_context="MyCoolProject", # Same project
         website_category=None,
-        is_context_switch=False
-    )
+        is_context_switch=False)
 
 def test_generate_features_for_activity_basic(sample_activity: Activity, mock_db_session: MagicMock):
     feature = generate_features_for_activity(mock_db_session, sample_activity, None)
@@ -130,8 +154,8 @@ def test_generate_features_for_user_activities_processes_batch(mock_db_session_f
     act1_details = json.dumps({"app_name": "Outlook"}) # Communication
     act2_details = json.dumps({"app_name": "VSCode", "window_title": "file.py - ProjectX - VSCode"}) # Development, ProjectX
     
-    activity1 = Activity(id=1, user_id=user_id, activity_type="app_usage", details=act1_details, timestamp=datetime(2023,1,1,10,0,0))
-    activity2 = Activity(id=2, user_id=user_id, activity_type="app_usage", details=act2_details, timestamp=datetime(2023,1,1,10,5,0))
+    activity1 = create_mock_model(Activity, id=1, user_id=user_id, activity_type="app_usage", details=act1_details, timestamp=datetime(2023,1,1,10,0,0))
+    activity2 = create_mock_model(Activity, id=2, user_id=user_id, activity_type="app_usage", details=act2_details, timestamp=datetime(2023,1,1,10,5,0))
     
     # Simulate activities that need processing
     activities_to_process = [activity1, activity2]
@@ -165,12 +189,12 @@ def test_generate_features_for_user_activities_processes_batch(mock_db_session_f
 def test_generate_features_for_user_activities_with_prior_feature(mock_db_session_for_batch: MagicMock):
     user_id = 1
     # Prior activity (already processed and has a feature)
-    prior_activity = Activity(id=0, user_id=user_id, activity_type="app_usage", details=json.dumps({"app_name": "Firefox"}), timestamp=datetime(2023,1,1,9,55,0))
-    prior_feature = ActivityEnrichedFeature(activity_id=0, app_category="Browser", is_context_switch=False) # Simplified
+    prior_activity = create_mock_model(Activity, id=0, user_id=user_id, activity_type="app_usage", details=json.dumps({"app_name": "Firefox"}), timestamp=datetime(2023,1,1,9,55,0))
+    prior_feature = create_mock_model(ActivityEnrichedFeature, activity_id=0, app_category="Browser", is_context_switch=False) # Simplified
     
     # New activity to process
     act1_details = json.dumps({"app_name": "Outlook"}) # Communication
-    activity1 = Activity(id=1, user_id=user_id, activity_type="app_usage", details=act1_details, timestamp=datetime(2023,1,1,10,0,0))
+    activity1 = create_mock_model(Activity, id=1, user_id=user_id, activity_type="app_usage", details=act1_details, timestamp=datetime(2023,1,1,10,0,0))
     activities_to_process = [activity1]
 
     # Mock DB calls
@@ -192,7 +216,7 @@ def test_generate_features_for_user_activities_with_prior_feature(mock_db_sessio
 def test_generate_features_for_user_activities_db_commit_error(mock_db_session_for_batch: MagicMock):
     user_id = 1
     act1_details = json.dumps({"app_name": "Outlook"})
-    activity1 = Activity(id=1, user_id=user_id, activity_type="app_usage", details=act1_details, timestamp=datetime(2023,1,1,10,0,0))
+    activity1 = create_mock_model(Activity, id=1, user_id=user_id, activity_type="app_usage", details=act1_details, timestamp=datetime(2023,1,1,10,0,0))
     activities_to_process = [activity1]
     mock_db_session_for_batch.query(Activity).outerjoin().filter().filter().order_by().all.return_value = activities_to_process
     mock_db_session_for_batch.query(Activity).join().filter().filter().order_by().first.return_value = None # No prior

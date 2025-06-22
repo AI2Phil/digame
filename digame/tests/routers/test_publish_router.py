@@ -48,7 +48,36 @@ def client(db_session):
     del app.dependency_overrides[get_db]
 
 
+
+
 # --- Test Cases ---
+def create_mock_model(model_class, **kwargs):
+    """Create a mock instance of a SQLAlchemy model with given attributes."""
+    # For testing purposes, we'll create a simple mock object
+    # that behaves like the model but doesn't require database instantiation
+    class MockModel:
+        def __init__(self, **attrs):
+            for key, value in attrs.items():
+                setattr(self, key, value)
+            # Set some default attributes that SQLAlchemy models typically have
+            if not hasattr(self, 'id'):
+                self.id = 1
+            if not hasattr(self, 'created_at'):
+                from datetime import datetime, timezone
+                self.created_at = datetime.now(timezone.utc)
+        
+        def __repr__(self):
+            attrs = []
+            for key, value in self.__dict__.items():
+                if not key.startswith('_'):
+                    if isinstance(value, str) and len(value) > 20:
+                        attrs.append(f"{key}='{value[:20]}...'")
+                    else:
+                        attrs.append(f"{key}={repr(value)}")
+            return f"<{model_class.__name__}({', '.join(attrs)})>"
+    
+    return MockModel(**kwargs)
+
 
 def test_publish_model_not_found(client: TestClient):
     """
@@ -65,19 +94,17 @@ def test_publish_model_success(mock_subprocess_run, client: TestClient, db_sessi
     Test successful publishing of a model.
     """
     # Arrange: Create a mock user and model
-    test_user = User(id=1, username="testuser", email="test@example.com", hashed_password="hashedpassword")
+    test_user = create_mock_model(User, id=1, username="testuser", email="test@example.com", hashed_password="hashedpassword")
     db_session.add(test_user)
     db_session.commit()
     db_session.refresh(test_user)
 
-    test_model = BehavioralModel(
-        id=1,
+    test_model = create_mock_model(BehavioralModel, id=1,
         user_id=test_user.id,
         name="Test_Model_Name",
         version="1.0.alpha",
         algorithm="test_algo",
-        # Add other required fields for BehavioralModel if any
-    )
+        # Add other required fields for BehavioralModel if any)
     db_session.add(test_model)
     db_session.commit()
     db_session.refresh(test_model)
@@ -148,17 +175,15 @@ def test_publish_model_git_add_fails(mock_subprocess_run, client: TestClient, db
     Test publishing a model when 'git add' fails.
     """
     # Arrange: Create user and model
-    test_user = User(id=2, username="testuser2", email="test2@example.com", hashed_password="hashedpassword")
+    test_user = create_mock_model(User, id=2, username="testuser2", email="test2@example.com", hashed_password="hashedpassword")
     db_session.add(test_user)
     db_session.commit()
 
-    test_model = BehavioralModel(
-        id=2,
+    test_model = create_mock_model(BehavioralModel, id=2,
         user_id=test_user.id,
         name="GitAddFailModel",
         version="0.1",
-        algorithm="test_algo_fail"
-    )
+        algorithm="test_algo_fail")
     db_session.add(test_model)
     db_session.commit()
     model_id = test_model.id
@@ -193,7 +218,7 @@ def test_publish_model_git_add_fails(mock_subprocess_run, client: TestClient, db
 # For this test, direct User model creation is used.
 # from digame.app.schemas.user_schemas import UserCreate
 # test_user_data = UserCreate(username="testuser", email="test@example.com", password="password")
-# db_user = User(**test_user_data.dict()) # Example, adjust based on actual UserCreate and User model
+# db_user = create_mock_model(User, **test_user_data.dict()) # Example, adjust based on actual UserCreate and User model
 # db_session.add(db_user)
 # db_session.commit()
 # db_session.refresh(db_user)

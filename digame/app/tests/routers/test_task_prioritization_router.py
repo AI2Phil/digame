@@ -8,6 +8,8 @@ from digame.app.main import app # Main FastAPI app
 from digame.app.schemas.task_prioritization_schemas import PrioritizationResponse, PrioritizedTaskDetail
 from digame.app.models.user import User as UserModel
 
+
+
 # --- Test Client Fixture ---
 @pytest.fixture(scope="module")
 def client():
@@ -22,7 +24,7 @@ def mock_task_prioritization_service():
 
 @pytest.fixture
 def mock_current_active_user_for_task_prio(): # Renamed for clarity
-    user = UserModel(id=8, email="taskprio_router_user@example.com", full_name="TaskPrio Router Test User", is_active=True)
+    user = create_mock_model(UserModel, id=8, email="taskprio_router_user@example.com", full_name="TaskPrio Router Test User", is_active=True)
     user.tenants = []
     return user
 
@@ -34,6 +36,33 @@ def sample_prioritized_task_list() -> List[PrioritizedTaskDetail]:
     ]
 
 # --- Router Tests ---
+def create_mock_model(model_class, **kwargs):
+    """Create a mock instance of a SQLAlchemy model with given attributes."""
+    # For testing purposes, we'll create a simple mock object
+    # that behaves like the model but doesn't require database instantiation
+    class MockModel:
+        def __init__(self, **attrs):
+            for key, value in attrs.items():
+                setattr(self, key, value)
+            # Set some default attributes that SQLAlchemy models typically have
+            if not hasattr(self, 'id'):
+                self.id = 1
+            if not hasattr(self, 'created_at'):
+                from datetime import datetime, timezone
+                self.created_at = datetime.now(timezone.utc)
+        
+        def __repr__(self):
+            attrs = []
+            for key, value in self.__dict__.items():
+                if not key.startswith('_'):
+                    if isinstance(value, str) and len(value) > 20:
+                        attrs.append(f"{key}='{value[:20]}...'")
+                    else:
+                        attrs.append(f"{key}={repr(value)}")
+            return f"<{model_class.__name__}({', '.join(attrs)})>"
+    
+    return MockModel(**kwargs)
+
 
 def test_prioritize_endpoint_success_apply_false(client, mock_task_prioritization_service, mock_current_active_user_for_task_prio, sample_prioritized_task_list):
     # Arrange

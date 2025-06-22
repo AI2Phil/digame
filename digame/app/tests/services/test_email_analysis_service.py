@@ -18,6 +18,8 @@ from digame.app.services.email_analysis_service import EmailAnalysisService
 # Schemas (for creating sample data, though service itself doesn't directly take schemas)
 from digame.app.schemas.email_analysis_schemas import EmailDataItem
 
+
+
 # --- Fixtures ---
 
 @pytest.fixture
@@ -26,23 +28,20 @@ def mock_db_session():
 
 @pytest.fixture
 def mock_user_model_email_analysis(): # Renamed for clarity
-    user = UserModel(id=4, email="email_user@example.com", full_name="Email Test User", tenants=[])
+    user = create_mock_model(UserModel, id=4, email="email_user@example.com", full_name="Email Test User", tenants=[])
     return user
 
 @pytest.fixture
 def mock_tenant_model_email_analysis(): # Renamed
-    tenant = TenantModel(
-        id=4,
+    tenant = create_mock_model(TenantModel, id=4,
         name="Email Analysis Tenant",
         admin_email="admin@emailtenant.com",
-        features={"email_pattern_analysis": True} # Default to enabled
-    )
+        features={"email_pattern_analysis": True} # Default to enabled)
     return tenant
 
 @pytest.fixture
 def mock_user_setting_model_email_analysis(): # Renamed
-    setting = UserSettingModel(
-        id=4,
+    setting = create_mock_model(UserSettingModel, id=4,
         user_id=4, # Matches mock_user_model_email_analysis.id
         api_keys=json.dumps({"email_analysis_service_key": "valid_email_key_external"})
     )
@@ -50,8 +49,7 @@ def mock_user_setting_model_email_analysis(): # Renamed
 
 @pytest.fixture
 def mock_user_setting_model_email_analysis_no_key(): # For internal analysis
-    setting = UserSettingModel(
-        id=5,
+    setting = create_mock_model(UserSettingModel, id=5,
         user_id=4,
         api_keys=json.dumps({}) # No specific key for email analysis
     )
@@ -59,7 +57,7 @@ def mock_user_setting_model_email_analysis_no_key(): # For internal analysis
 
 @pytest.fixture
 def mock_tenant_user_link_email_analysis(mock_user_model_email_analysis, mock_tenant_model_email_analysis): # Renamed
-    link = TenantUserModel(user_id=mock_user_model_email_analysis.id, tenant_id=mock_tenant_model_email_analysis.id)
+    link = Tenantcreate_mock_model(UserModel, user_id=mock_user_model_email_analysis.id, tenant_id=mock_tenant_model_email_analysis.id)
     link.user = mock_user_model_email_analysis
     link.tenant = mock_tenant_model_email_analysis
     mock_user_model_email_analysis.tenants.append(link)
@@ -74,6 +72,33 @@ def sample_emails_data() -> List[EmailDataItem]:
     ]
 
 # --- Tests for EmailAnalysisService ---
+def create_mock_model(model_class, **kwargs):
+    """Create a mock instance of a SQLAlchemy model with given attributes."""
+    # For testing purposes, we'll create a simple mock object
+    # that behaves like the model but doesn't require database instantiation
+    class MockModel:
+        def __init__(self, **attrs):
+            for key, value in attrs.items():
+                setattr(self, key, value)
+            # Set some default attributes that SQLAlchemy models typically have
+            if not hasattr(self, 'id'):
+                self.id = 1
+            if not hasattr(self, 'created_at'):
+                from datetime import datetime, timezone
+                self.created_at = datetime.now(timezone.utc)
+        
+        def __repr__(self):
+            attrs = []
+            for key, value in self.__dict__.items():
+                if not key.startswith('_'):
+                    if isinstance(value, str) and len(value) > 20:
+                        attrs.append(f"{key}='{value[:20]}...'")
+                    else:
+                        attrs.append(f"{key}={repr(value)}")
+            return f"<{model_class.__name__}({', '.join(attrs)})>"
+    
+    return MockModel(**kwargs)
+
 
 def test_analyze_email_data_success_with_external_key(mock_db_session, mock_user_model_email_analysis, mock_tenant_model_email_analysis, mock_user_setting_model_email_analysis, mock_tenant_user_link_email_analysis, sample_emails_data):
     # Arrange

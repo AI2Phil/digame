@@ -11,6 +11,8 @@ from digame.app.auth.auth_dependencies import get_current_active_admin_user, MAN
 # Assuming test_admin_user and test_non_admin_user are available from conftest.py
 # These fixtures should return SQLAlchemyUser objects.
 
+
+
 # --- Helper Functions ---
 def get_admin_auth_headers(client: TestClient, admin_user_email: str = "admin_test@example.com") -> Dict[str, str]:
     # This is a placeholder. In a real scenario, you'd log in the user and get a real token.
@@ -18,6 +20,33 @@ def get_admin_auth_headers(client: TestClient, admin_user_email: str = "admin_te
     # If your `get_current_active_admin_user` relies on a specific token, generate it here.
     # For now, we'll use the "fake-admin-token" that auth_dependencies.py is set up to recognize.
     return {"Authorization": "Bearer fake-admin-token"}
+def create_mock_model(model_class, **kwargs):
+    """Create a mock instance of a SQLAlchemy model with given attributes."""
+    # For testing purposes, we'll create a simple mock object
+    # that behaves like the model but doesn't require database instantiation
+    class MockModel:
+        def __init__(self, **attrs):
+            for key, value in attrs.items():
+                setattr(self, key, value)
+            # Set some default attributes that SQLAlchemy models typically have
+            if not hasattr(self, 'id'):
+                self.id = 1
+            if not hasattr(self, 'created_at'):
+                from datetime import datetime, timezone
+                self.created_at = datetime.now(timezone.utc)
+        
+        def __repr__(self):
+            attrs = []
+            for key, value in self.__dict__.items():
+                if not key.startswith('_'):
+                    if isinstance(value, str) and len(value) > 20:
+                        attrs.append(f"{key}='{value[:20]}...'")
+                    else:
+                        attrs.append(f"{key}={repr(value)}")
+            return f"<{model_class.__name__}({', '.join(attrs)})>"
+    
+    return MockModel(**kwargs)
+
 
 def get_non_admin_auth_headers(client: TestClient, user_email: str = "non_admin_test@example.com") -> Dict[str, str]:
     # Placeholder for non-admin user token
@@ -148,7 +177,7 @@ def setup_user_and_role_for_assignment(client: TestClient, db_session_test: Sess
     # Create a user directly in DB for assignment (or use an existing test_non_admin_user if its ID is known and stable)
     target_user = db_session_test.query(SQLAlchemyUser).filter_by(email="assign_target@example.com").first()
     if not target_user:
-        target_user = SQLAlchemyUser(username="assign_target", email="assign_target@example.com", hashed_password="xxx")
+        target_user = create_mock_model(SQLAlchemyUser, username="assign_target", email="assign_target@example.com", hashed_password="xxx")
         db_session_test.add(target_user)
         db_session_test.commit()
         db_session_test.refresh(target_user)

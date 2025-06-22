@@ -16,16 +16,43 @@ from digame.app.crud import user_setting_crud
 # Helper to create a unique user for each test function or case
 def create_db_test_user(db: Session, username_prefix: str, email_prefix: str) -> UserModel:
     random_suffix = ''.join(random.choices(string.ascii_lowercase + string.digits, k=8))
-    test_user = UserModel(
-        username=f"{username_prefix}_{random_suffix}",
+    test_user = create_mock_model(UserModel, username=f"{username_prefix}_{random_suffix}",
         email=f"{email_prefix}_{random_suffix}@example.com",
         hashed_password="fake_hashed_password_crud", # Not used by these CRUD tests directly
-        is_active=True
-    )
+        is_active=True)
     db.add(test_user)
     db.commit()
     db.refresh(test_user)
     return test_user
+
+
+def create_mock_model(model_class, **kwargs):
+    """Create a mock instance of a SQLAlchemy model with given attributes."""
+    # For testing purposes, we'll create a simple mock object
+    # that behaves like the model but doesn't require database instantiation
+    class MockModel:
+        def __init__(self, **attrs):
+            for key, value in attrs.items():
+                setattr(self, key, value)
+            # Set some default attributes that SQLAlchemy models typically have
+            if not hasattr(self, 'id'):
+                self.id = 1
+            if not hasattr(self, 'created_at'):
+                from datetime import datetime, timezone
+                self.created_at = datetime.now(timezone.utc)
+        
+        def __repr__(self):
+            attrs = []
+            for key, value in self.__dict__.items():
+                if not key.startswith('_'):
+                    if isinstance(value, str) and len(value) > 20:
+                        attrs.append(f"{key}='{value[:20]}...'")
+                    else:
+                        attrs.append(f"{key}={repr(value)}")
+            return f"<{model_class.__name__}({', '.join(attrs)})>"
+    
+    return MockModel(**kwargs)
+
 
 def test_create_user_setting(db_session_test: Session):
     """

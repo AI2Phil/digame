@@ -16,12 +16,39 @@ from digame.app.schemas.notification_schemas import Notification as Notification
 # Mock user for dependency override
 @pytest.fixture
 def mock_current_active_user():
-    user = UserModel() # Or MagicMock(spec=UserModel)
+    user = create_mock_model(UserModel) # Or MagicMock(spec=UserModel)
     user.id = 1
     user.full_name = "Test User Active"
     user.email = "active@example.com"
     # Add other fields as necessary for User model
     return user
+def create_mock_model(model_class, **kwargs):
+    """Create a mock instance of a SQLAlchemy model with given attributes."""
+    # For testing purposes, we'll create a simple mock object
+    # that behaves like the model but doesn't require database instantiation
+    class MockModel:
+        def __init__(self, **attrs):
+            for key, value in attrs.items():
+                setattr(self, key, value)
+            # Set some default attributes that SQLAlchemy models typically have
+            if not hasattr(self, 'id'):
+                self.id = 1
+            if not hasattr(self, 'created_at'):
+                from datetime import datetime, timezone
+                self.created_at = datetime.now(timezone.utc)
+        
+        def __repr__(self):
+            attrs = []
+            for key, value in self.__dict__.items():
+                if not key.startswith('_'):
+                    if isinstance(value, str) and len(value) > 20:
+                        attrs.append(f"{key}='{value[:20]}...'")
+                    else:
+                        attrs.append(f"{key}={repr(value)}")
+            return f"<{model_class.__name__}({', '.join(attrs)})>"
+    
+    return MockModel(**kwargs)
+
 
 @pytest.fixture
 def client(mock_current_active_user):
@@ -44,6 +71,8 @@ def client(mock_current_active_user):
         # A common pattern is to have a global dependencies.py or similar.
 
     return TestClient(app)
+
+
 
 # --- Router Tests ---
 

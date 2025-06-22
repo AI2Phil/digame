@@ -28,6 +28,8 @@ from digame.app.routers.tenant_router import router as tenant_api_router
 app = FastAPI()
 app.include_router(tenant_api_router) # Include the router we are testing
 
+
+
 # --- Test Client Fixture ---
 @pytest.fixture
 def client():
@@ -129,6 +131,33 @@ def override_dependencies(
 
 
 # --- Actual Test Cases ---
+def create_mock_model(model_class, **kwargs):
+    """Create a mock instance of a SQLAlchemy model with given attributes."""
+    # For testing purposes, we'll create a simple mock object
+    # that behaves like the model but doesn't require database instantiation
+    class MockModel:
+        def __init__(self, **attrs):
+            for key, value in attrs.items():
+                setattr(self, key, value)
+            # Set some default attributes that SQLAlchemy models typically have
+            if not hasattr(self, 'id'):
+                self.id = 1
+            if not hasattr(self, 'created_at'):
+                from datetime import datetime, timezone
+                self.created_at = datetime.now(timezone.utc)
+        
+        def __repr__(self):
+            attrs = []
+            for key, value in self.__dict__.items():
+                if not key.startswith('_'):
+                    if isinstance(value, str) and len(value) > 20:
+                        attrs.append(f"{key}='{value[:20]}...'")
+                    else:
+                        attrs.append(f"{key}={repr(value)}")
+            return f"<{model_class.__name__}({', '.join(attrs)})>"
+    
+    return MockModel(**kwargs)
+
 
 class TestTenantRouterTenantManagement:
     def test_create_new_tenant_success(self, client: TestClient, mock_tenant_service: MagicMock, mock_admin_user: UserModel):
@@ -137,7 +166,7 @@ class TestTenantRouterTenantManagement:
             "name": "New Corp", "slug": "new-corp", "admin_email": "admin@newcorp.com",
             "admin_name": "Admin NewCorp", "admin_user_password": "password"
         }
-        mock_response_tenant = TenantModel(id=1, tenant_uuid="new-uuid", **tenant_create_data)
+        mock_response_tenant = create_mock_model(TenantModel, id=1, tenant_uuid="new-uuid", **tenant_create_data)
         mock_tenant_service.create_tenant.return_value = mock_response_tenant
 
         # Act
@@ -154,7 +183,7 @@ class TestTenantRouterTenantManagement:
 
     def test_read_tenant_by_id_success(self, client: TestClient, mock_tenant_service: MagicMock, mock_current_active_user: UserModel):
         tenant_id = mock_current_active_user.tenant_id # User is part of this tenant
-        mock_response_tenant = TenantModel(id=tenant_id, name="Test Tenant", slug="test", admin_email="t@e.com", admin_name="TA")
+        mock_response_tenant = create_mock_model(TenantModel, id=tenant_id, name="Test Tenant", slug="test", admin_email="t@e.com", admin_name="TA")
         mock_tenant_service.get_tenant_by_id.return_value = mock_response_tenant
 
         response = client.get(f"/api/v1/tenants/{tenant_id}")
@@ -167,7 +196,7 @@ class TestTenantRouterTenantManagement:
         # User from tenant 1 tries to access tenant 2
         different_tenant_id = mock_current_active_user.tenant_id + 1
         # Service would return a tenant if it existed, but router should block.
-        mock_response_tenant = TenantModel(id=different_tenant_id, name="Other Tenant", slug="other", admin_email="o@e.com", admin_name="OA")
+        mock_response_tenant = create_mock_model(TenantModel, id=different_tenant_id, name="Other Tenant", slug="other", admin_email="o@e.com", admin_name="OA")
         mock_tenant_service.get_tenant_by_id.return_value = mock_response_tenant
 
         # This test relies on the simplified permission check in the router.
@@ -186,7 +215,7 @@ class TestTenantRouterSettingsManagement:
     def test_create_or_update_tenant_setting(self, client: TestClient, mock_tenant_service: MagicMock, mock_admin_user: UserModel):
         tenant_id = mock_admin_user.tenant_id
         setting_data = {"category": "general", "key": "timezone", "value": "EST", "value_type": "string"}
-        mock_response_setting = TenantSettingsModel(id=1, tenant_id=tenant_id, **setting_data)
+        mock_response_setting = create_mock_model(TenantSettingsModel, id=1, tenant_id=tenant_id, **setting_data)
         mock_tenant_service.set_tenant_setting.return_value = mock_response_setting
 
         response = client.post(f"/api/v1/tenants/{tenant_id}/settings", json=setting_data)
@@ -204,8 +233,7 @@ class TestTenantRouterInvitationManagement:
         tenant_id = mock_admin_user.tenant_id
         invitation_data = {"email": "invitee@example.com", "role": "User"}
         now = datetime.now(timezone.utc)
-        mock_response_invitation = TenantInvitationModel(
-            id=1, tenant_id=tenant_id, email=invitation_data["email"], role=invitation_data["role"],
+        mock_response_invitation = create_mock_model(TenantInvitationModel, id=1, tenant_id=tenant_id, email=invitation_data["email"], role=invitation_data["role"],
             invitation_token="test_token", expires_at=now + timedelta(days=7), created_at=now,
             invited_by_user_id=mock_admin_user.id
         )
@@ -223,8 +251,7 @@ class TestTenantRouterInvitationManagement:
     def test_accept_tenant_invitation(self, client: TestClient, mock_tenant_service: MagicMock, mock_current_active_user: UserModel):
         token = "valid_invite_token"
         now = datetime.now(timezone.utc)
-        mock_response_invitation = TenantInvitationModel(
-            id=1, tenant_id=1, email=mock_current_active_user.email, role="User",
+        mock_response_invitation = create_mock_model(TenantInvitationModel, id=1, tenant_id=1, email=mock_current_active_user.email, role="User",
             invitation_token=token, expires_at=now + timedelta(days=1), accepted_at=now, # Marked as accepted
             created_at=now - timedelta(days=1), invited_by_user_id=2
         )
@@ -243,7 +270,7 @@ class TestTenantRouterAuditLogs:
         tenant_id = mock_admin_user.tenant_id
         now = datetime.now(timezone.utc)
         mock_logs = [
-            TenantAuditLogModel(id=1, tenant_id=tenant_id, action="test_action", created_at=now)
+            create_mock_model(TenantAuditLogModel, id=1, tenant_id=tenant_id, action="test_action", created_at=now)
         ]
         mock_tenant_service.list_audit_logs.return_value = mock_logs
 

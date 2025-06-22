@@ -9,7 +9,36 @@ from digame.app.models.activity import Activity
 from digame.app.models.process_notes import ProcessNote
 from digame.app.models.user import User
 
+
+
 # --- Helper Function Tests ---
+def create_mock_model(model_class, **kwargs):
+    """Create a mock instance of a SQLAlchemy model with given attributes."""
+    # For testing purposes, we'll create a simple mock object
+    # that behaves like the model but doesn't require database instantiation
+    class MockModel:
+        def __init__(self, **attrs):
+            for key, value in attrs.items():
+                setattr(self, key, value)
+            # Set some default attributes that SQLAlchemy models typically have
+            if not hasattr(self, 'id'):
+                self.id = 1
+            if not hasattr(self, 'created_at'):
+                from datetime import datetime, timezone
+                self.created_at = datetime.now(timezone.utc)
+        
+        def __repr__(self):
+            attrs = []
+            for key, value in self.__dict__.items():
+                if not key.startswith('_'):
+                    if isinstance(value, str) and len(value) > 20:
+                        attrs.append(f"{key}='{value[:20]}...'")
+                    else:
+                        attrs.append(f"{key}={repr(value)}")
+            return f"<{model_class.__name__}({', '.join(attrs)})>"
+    
+    return MockModel(**kwargs)
+
 
 def test_sequence_to_string():
     assert _sequence_to_string(["A", "B", "C"]) == "A -> B -> C"
@@ -38,11 +67,11 @@ def mock_db_session():
 def sample_user():
     """Provides a sample User object."""
     # Not strictly needed if service only takes user_id, but useful for context
-    return User(id=1, username="testuser", email="test@example.com", hashed_password="fake")
+    return create_mock_model(User, id=1, username="testuser", email="test@example.com", hashed_password="fake")
 
 def create_mock_activity(id: int, user_id: int, activity_type: str, timestamp: datetime, details: dict = None) -> Activity:
     """Helper to create mock Activity objects."""
-    act = Activity(id=id, user_id=user_id, activity_type=activity_type, timestamp=timestamp, details=details)
+    act = create_mock_model(Activity, id=id, user_id=user_id, activity_type=activity_type, timestamp=timestamp, details=details)
     # Mock the SQLAlchemy instance state if necessary for certain operations, though usually not for simple attribute access
     # act._sa_instance_state = MagicMock() 
     return act
@@ -149,8 +178,7 @@ def test_existing_process_note_update(mock_db_session: MagicMock, sample_user: U
     mock_db_session.query(Activity).filter().order_by().all.return_value = activities
     
     # Simulate an existing ProcessNote for this sequence
-    existing_note = ProcessNote(
-        id=101,
+    existing_note = create_mock_model(ProcessNote, id=101,
         user_id=user_id,
         inferred_task_name=_generate_task_name(sequence_str),
         process_steps_description=sequence_str,

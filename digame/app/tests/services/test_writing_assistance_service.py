@@ -14,6 +14,8 @@ from digame.app.services.writing_assistance_service import WritingAssistanceServ
 # Schemas
 from digame.app.schemas.writing_assistance_schemas import WritingSuggestionRequest, WritingSuggestionResponse
 
+
+
 # --- Fixtures ---
 
 @pytest.fixture
@@ -44,11 +46,11 @@ def writing_assistance_service(mock_db_session, mock_tenant_service):
 
 @pytest.fixture
 def mock_user():
-    return UserModel(id=1, tenant_id=1, username="testuser", email="test@example.com")
+    return create_mock_model(UserModel, id=1, tenant_id=1, username="testuser", email="test@example.com")
 
 @pytest.fixture
 def mock_tenant():
-    return TenantModel(id=1, name="Test Tenant", features={"writing_assistance": True})
+    return create_mock_model(TenantModel, id=1, name="Test Tenant", features={"writing_assistance": True})
 
 @pytest.fixture
 def sample_writing_request():
@@ -60,8 +62,7 @@ def sample_writing_request():
 
 @pytest.fixture
 def mock_writing_suggestion():
-    # return WritingSuggestionModel(
-    class MockWritingSuggestion:
+    # return create_mock_model(WritingSuggestionModel, class MockWritingSuggestion:
         def __init__(self):
             self.id = 1
             self.user_id = 1
@@ -74,6 +75,33 @@ def mock_writing_suggestion():
     return MockWritingSuggestion()
 
 # --- Tests for WritingAssistanceService ---
+def create_mock_model(model_class, **kwargs):
+    """Create a mock instance of a SQLAlchemy model with given attributes."""
+    # For testing purposes, we'll create a simple mock object
+    # that behaves like the model but doesn't require database instantiation
+    class MockModel:
+        def __init__(self, **attrs):
+            for key, value in attrs.items():
+                setattr(self, key, value)
+            # Set some default attributes that SQLAlchemy models typically have
+            if not hasattr(self, 'id'):
+                self.id = 1
+            if not hasattr(self, 'created_at'):
+                from datetime import datetime, timezone
+                self.created_at = datetime.now(timezone.utc)
+        
+        def __repr__(self):
+            attrs = []
+            for key, value in self.__dict__.items():
+                if not key.startswith('_'):
+                    if isinstance(value, str) and len(value) > 20:
+                        attrs.append(f"{key}='{value[:20]}...'")
+                    else:
+                        attrs.append(f"{key}={repr(value)}")
+            return f"<{model_class.__name__}({', '.join(attrs)})>"
+    
+    return MockModel(**kwargs)
+
 
 class TestFeatureAccessControl:
     def test_feature_enabled_check_success(self, writing_assistance_service: WritingAssistanceService, mock_user, mock_tenant_service):

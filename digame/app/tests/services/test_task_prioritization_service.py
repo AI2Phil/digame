@@ -15,6 +15,8 @@ from digame.app.models.task import Task as TaskModel # Assuming this is the corr
 # Service to test
 from digame.app.services.task_prioritization_service import TaskPrioritizationService
 
+
+
 # --- Fixtures ---
 
 @pytest.fixture
@@ -23,22 +25,20 @@ def mock_db_session():
 
 @pytest.fixture
 def mock_user_model_task_prio(): # Renamed for clarity
-    user = UserModel(id=7, email="task_user@example.com", full_name="Task Prio User", tenants=[])
+    user = create_mock_model(UserModel, id=7, email="task_user@example.com", full_name="Task Prio User", tenants=[])
     return user
 
 @pytest.fixture
 def mock_tenant_model_task_prio(): # Renamed
-    tenant = TenantModel(
-        id=7,
+    tenant = create_mock_model(TenantModel, id=7,
         name="Task Prio Tenant",
         admin_email="admin@tasktenant.com",
-        features={"intelligent_task_prioritization": True} # Default to enabled
-    )
+        features={"intelligent_task_prioritization": True} # Default to enabled)
     return tenant
 
 @pytest.fixture
 def mock_tenant_user_link_task_prio(mock_user_model_task_prio, mock_tenant_model_task_prio): # Renamed
-    link = TenantUserModel(user_id=mock_user_model_task_prio.id, tenant_id=mock_tenant_model_task_prio.id)
+    link = Tenantcreate_mock_model(UserModel, user_id=mock_user_model_task_prio.id, tenant_id=mock_tenant_model_task_prio.id)
     link.user = mock_user_model_task_prio
     link.tenant = mock_tenant_model_task_prio
     mock_user_model_task_prio.tenants.append(link)
@@ -59,6 +59,33 @@ def create_mock_task():
     return _create_mock_task
 
 # --- Tests for TaskPrioritizationService ---
+def create_mock_model(model_class, **kwargs):
+    """Create a mock instance of a SQLAlchemy model with given attributes."""
+    # For testing purposes, we'll create a simple mock object
+    # that behaves like the model but doesn't require database instantiation
+    class MockModel:
+        def __init__(self, **attrs):
+            for key, value in attrs.items():
+                setattr(self, key, value)
+            # Set some default attributes that SQLAlchemy models typically have
+            if not hasattr(self, 'id'):
+                self.id = 1
+            if not hasattr(self, 'created_at'):
+                from datetime import datetime, timezone
+                self.created_at = datetime.now(timezone.utc)
+        
+        def __repr__(self):
+            attrs = []
+            for key, value in self.__dict__.items():
+                if not key.startswith('_'):
+                    if isinstance(value, str) and len(value) > 20:
+                        attrs.append(f"{key}='{value[:20]}...'")
+                    else:
+                        attrs.append(f"{key}={repr(value)}")
+            return f"<{model_class.__name__}({', '.join(attrs)})>"
+    
+    return MockModel(**kwargs)
+
 
 def test_prioritize_tasks_success_no_db_apply(mock_db_session, mock_user_model_task_prio, mock_tenant_model_task_prio, mock_tenant_user_link_task_prio, create_mock_task):
     # Arrange

@@ -10,7 +10,36 @@ from digame.app.services.social_collaboration_service import SocialCollaboration
 # CRUD module to mock
 from digame.app.crud import user_crud
 
+
+
 # --- Fixtures ---
+def create_mock_model(model_class, **kwargs):
+    """Create a mock instance of a SQLAlchemy model with given attributes."""
+    # For testing purposes, we'll create a simple mock object
+    # that behaves like the model but doesn't require database instantiation
+    class MockModel:
+        def __init__(self, **attrs):
+            for key, value in attrs.items():
+                setattr(self, key, value)
+            # Set some default attributes that SQLAlchemy models typically have
+            if not hasattr(self, 'id'):
+                self.id = 1
+            if not hasattr(self, 'created_at'):
+                from datetime import datetime, timezone
+                self.created_at = datetime.now(timezone.utc)
+        
+        def __repr__(self):
+            attrs = []
+            for key, value in self.__dict__.items():
+                if not key.startswith('_'):
+                    if isinstance(value, str) and len(value) > 20:
+                        attrs.append(f"{key}='{value[:20]}...'")
+                    else:
+                        attrs.append(f"{key}={repr(value)}")
+            return f"<{model_class.__name__}({', '.join(attrs)})>"
+    
+    return MockModel(**kwargs)
+
 
 @pytest.fixture
 def mock_db_session():
@@ -28,7 +57,7 @@ def social_collaboration_service(mock_db_session):
 
 @pytest.fixture
 def mock_user_1():
-    return UserModel(id=1, username="user1", email="user1@example.com")
+    return create_mock_model(UserModel, id=1, username="user1", email="user1@example.com")
 
 @pytest.fixture
 def mock_user_profile_1_skills():
@@ -41,7 +70,7 @@ def mock_user_profile_1_skills():
 
 @pytest.fixture
 def mock_user_2():
-    return UserModel(id=2, username="user2", email="user2@example.com")
+    return create_mock_model(UserModel, id=2, username="user2", email="user2@example.com")
 
 @pytest.fixture
 def mock_user_profile_2_skills_match():
@@ -54,7 +83,7 @@ def mock_user_profile_2_skills_match():
 
 @pytest.fixture
 def mock_user_3():
-    return UserModel(id=3, username="user3", email="user3@example.com")
+    return create_mock_model(UserModel, id=3, username="user3", email="user3@example.com")
 
 @pytest.fixture
 def mock_user_profile_3_learning_match():
@@ -67,7 +96,7 @@ def mock_user_profile_3_learning_match():
 
 @pytest.fixture
 def mock_user_4_no_profile():
-    return UserModel(id=4, username="user4", email="user4@example.com")
+    return create_mock_model(UserModel, id=4, username="user4", email="user4@example.com")
 
 
 # --- Tests for SocialCollaborationService ---

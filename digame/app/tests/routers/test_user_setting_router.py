@@ -25,12 +25,10 @@ def create_and_get_test_user_for_api(db: Session, username_prefix: str) -> UserM
     # Check if user exists, if not add them
     existing_user = db.query(UserModel).filter(UserModel.email == email).first()
     if not existing_user:
-        mock_user_for_api = UserModel(
-            username=f"{username_prefix}_api_{random_suffix}",
+        mock_user_for_api = create_mock_model(UserModel, username=f"{username_prefix}_api_{random_suffix}",
             email=email,
             hashed_password="fake_api_password", # Not used for auth in these tests due to override
-            is_active=True
-        )
+            is_active=True)
         db.add(mock_user_for_api)
         db.commit()
         db.refresh(mock_user_for_api)
@@ -50,6 +48,35 @@ def override_auth_for_settings_api(client: TestClient, db_session_test: Session)
     client.app.dependency_overrides[get_current_active_user] = override_get_current_active_user_for_settings
     yield test_user # Provide the user to the test if needed
     client.app.dependency_overrides.clear()
+
+
+
+def create_mock_model(model_class, **kwargs):
+    """Create a mock instance of a SQLAlchemy model with given attributes."""
+    # For testing purposes, we'll create a simple mock object
+    # that behaves like the model but doesn't require database instantiation
+    class MockModel:
+        def __init__(self, **attrs):
+            for key, value in attrs.items():
+                setattr(self, key, value)
+            # Set some default attributes that SQLAlchemy models typically have
+            if not hasattr(self, 'id'):
+                self.id = 1
+            if not hasattr(self, 'created_at'):
+                from datetime import datetime, timezone
+                self.created_at = datetime.now(timezone.utc)
+        
+        def __repr__(self):
+            attrs = []
+            for key, value in self.__dict__.items():
+                if not key.startswith('_'):
+                    if isinstance(value, str) and len(value) > 20:
+                        attrs.append(f"{key}='{value[:20]}...'")
+                    else:
+                        attrs.append(f"{key}={repr(value)}")
+            return f"<{model_class.__name__}({', '.join(attrs)})>"
+    
+    return MockModel(**kwargs)
 
 
 def test_get_api_keys_no_settings_exist(client: TestClient, override_auth_for_settings_api):

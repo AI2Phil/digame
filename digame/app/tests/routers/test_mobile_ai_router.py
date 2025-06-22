@@ -29,6 +29,8 @@ from digame.app.routers.mobile_ai_router import router as mobile_ai_api_router #
 app = FastAPI()
 app.include_router(mobile_ai_api_router)
 
+
+
 # --- Test Client Fixture ---
 @pytest.fixture
 def client():
@@ -49,10 +51,8 @@ def mock_mobile_ai_service():
 @pytest.fixture
 def mock_auth_user():
     now = datetime.now(timezone.utc)
-    return UserModel(
-        id=1, username="testuser", email="test@example.com", is_active=True,
-        created_at=now, updated_at=now, hashed_password="testpassword"
-    )
+    return create_mock_model(UserModel, id=1, username="testuser", email="test@example.com", is_active=True,
+        created_at=now, updated_at=now, hashed_password="testpassword")
 
 # --- Apply Dependency Overrides ---
 @pytest.fixture(autouse=True)
@@ -80,6 +80,33 @@ def override_router_dependencies_mobile_ai(
 
 
 # --- Test Cases ---
+def create_mock_model(model_class, **kwargs):
+    """Create a mock instance of a SQLAlchemy model with given attributes."""
+    # For testing purposes, we'll create a simple mock object
+    # that behaves like the model but doesn't require database instantiation
+    class MockModel:
+        def __init__(self, **attrs):
+            for key, value in attrs.items():
+                setattr(self, key, value)
+            # Set some default attributes that SQLAlchemy models typically have
+            if not hasattr(self, 'id'):
+                self.id = 1
+            if not hasattr(self, 'created_at'):
+                from datetime import datetime, timezone
+                self.created_at = datetime.now(timezone.utc)
+        
+        def __repr__(self):
+            attrs = []
+            for key, value in self.__dict__.items():
+                if not key.startswith('_'):
+                    if isinstance(value, str) and len(value) > 20:
+                        attrs.append(f"{key}='{value[:20]}...'")
+                    else:
+                        attrs.append(f"{key}={repr(value)}")
+            return f"<{model_class.__name__}({', '.join(attrs)})>"
+    
+    return MockModel(**kwargs)
+
 
 class TestMobileAIRouterNotifications:
     async def test_configure_ai_notification_settings_success(self, client: TestClient, mock_mobile_ai_service: MagicMock, mock_auth_user: UserModel):

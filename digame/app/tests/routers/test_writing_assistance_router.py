@@ -16,6 +16,8 @@ from digame.app.models.user import User as UserModel
 # Service (to mock its methods)
 # from digame.app.services.writing_assistance_service import WritingAssistanceService # We'll mock this
 
+
+
 # --- Test Client Fixture ---
 @pytest.fixture(scope="module")
 def client():
@@ -36,11 +38,38 @@ def mock_writing_assistance_service():
 @pytest.fixture
 def mock_current_active_user():
     # A mock user object that `get_current_active_user` dependency would return
-    user = UserModel(id=1, email="test@example.com", full_name="Test User", is_active=True)
+    user = create_mock_model(UserModel, id=1, email="test@example.com", full_name="Test User", is_active=True)
     # Add any other fields your `get_current_active_user` might populate or rely on.
     return user
 
 # --- Router Tests ---
+def create_mock_model(model_class, **kwargs):
+    """Create a mock instance of a SQLAlchemy model with given attributes."""
+    # For testing purposes, we'll create a simple mock object
+    # that behaves like the model but doesn't require database instantiation
+    class MockModel:
+        def __init__(self, **attrs):
+            for key, value in attrs.items():
+                setattr(self, key, value)
+            # Set some default attributes that SQLAlchemy models typically have
+            if not hasattr(self, 'id'):
+                self.id = 1
+            if not hasattr(self, 'created_at'):
+                from datetime import datetime, timezone
+                self.created_at = datetime.now(timezone.utc)
+        
+        def __repr__(self):
+            attrs = []
+            for key, value in self.__dict__.items():
+                if not key.startswith('_'):
+                    if isinstance(value, str) and len(value) > 20:
+                        attrs.append(f"{key}='{value[:20]}...'")
+                    else:
+                        attrs.append(f"{key}={repr(value)}")
+            return f"<{model_class.__name__}({', '.join(attrs)})>"
+    
+    return MockModel(**kwargs)
+
 
 def test_suggest_endpoint_success(client, mock_writing_assistance_service, mock_current_active_user):
     # Arrange

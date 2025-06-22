@@ -27,6 +27,8 @@ except ImportError:
     app = FastAPI()
     app.include_router(social_router)
 
+
+
 # --- Test Client Fixture ---
 @pytest.fixture
 def client():
@@ -50,20 +52,16 @@ def mock_user_crud_profile():
 @pytest.fixture
 def mock_auth_user():
     now = datetime.now(timezone.utc)
-    return UserModel(
-        id=1, username="testuser", email="test@example.com", is_active=True,
+    return create_mock_model(UserModel, id=1, username="testuser", email="test@example.com", is_active=True,
         created_at=now, updated_at=now, hashed_password="testpassword",
-        first_name="Test", last_name="User"
-    )
+        first_name="Test", last_name="User")
 
 @pytest.fixture
 def another_mock_user():
     now = datetime.now(timezone.utc)
-    return UserModel(
-        id=2, username="anotheruser", email="another@example.com", is_active=True,
+    return create_mock_model(UserModel, id=2, username="anotheruser", email="another@example.com", is_active=True,
         created_at=now, updated_at=now, hashed_password="testpassword",
-        first_name="Another", last_name="User"
-    )
+        first_name="Another", last_name="User")
 
 # --- Apply Dependency Overrides ---
 @pytest.fixture(autouse=True)
@@ -89,6 +87,33 @@ def override_router_dependencies(
 
 
 # --- Test Cases ---
+def create_mock_model(model_class, **kwargs):
+    """Create a mock instance of a SQLAlchemy model with given attributes."""
+    # For testing purposes, we'll create a simple mock object
+    # that behaves like the model but doesn't require database instantiation
+    class MockModel:
+        def __init__(self, **attrs):
+            for key, value in attrs.items():
+                setattr(self, key, value)
+            # Set some default attributes that SQLAlchemy models typically have
+            if not hasattr(self, 'id'):
+                self.id = 1
+            if not hasattr(self, 'created_at'):
+                from datetime import datetime, timezone
+                self.created_at = datetime.now(timezone.utc)
+        
+        def __repr__(self):
+            attrs = []
+            for key, value in self.__dict__.items():
+                if not key.startswith('_'):
+                    if isinstance(value, str) and len(value) > 20:
+                        attrs.append(f"{key}='{value[:20]}...'")
+                    else:
+                        attrs.append(f"{key}={repr(value)}")
+            return f"<{model_class.__name__}({', '.join(attrs)})>"
+    
+    return MockModel(**kwargs)
+
 
 class TestSocialCollaborationRouterProfile:
     def test_read_user_profile_success(self, client: TestClient, mock_user_crud_profile: MagicMock, mock_auth_user: UserModel):
@@ -140,7 +165,7 @@ class TestSocialCollaborationRouterMatching:
     ):
         user_id = mock_auth_user.id
         now = datetime.now(timezone.utc)
-        mock_matched_user = UserModel(id=2, username="match", email="m@e.com", created_at=now, updated_at=now, hashed_password="pw")
+        mock_matched_user = create_mock_model(UserModel, id=2, username="match", email="m@e.com", created_at=now, updated_at=now, hashed_password="pw")
         mock_matched_user_profile = UserProfileModel(user_id=2, skills=["Python"], updated_at=now)
 
         mock_social_collaboration_service.get_skill_based_matches.return_value = [mock_matched_user]
@@ -162,7 +187,7 @@ class TestSocialCollaborationRouterMatching:
     ):
         user_id = mock_auth_user.id
         now = datetime.now(timezone.utc)
-        mock_partner_user = UserModel(id=3, username="partner", email="p@e.com", created_at=now, updated_at=now, hashed_password="pw")
+        mock_partner_user = create_mock_model(UserModel, id=3, username="partner", email="p@e.com", created_at=now, updated_at=now, hashed_password="pw")
         mock_partner_user_profile = UserProfileModel(user_id=3, learning_goals=["FastAPI"], updated_at=now)
 
         mock_social_collaboration_service.get_learning_partner_recommendations.return_value = [mock_partner_user]
