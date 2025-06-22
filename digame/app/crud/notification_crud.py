@@ -1,8 +1,8 @@
 from sqlalchemy.orm import Session
 from typing import List, Optional
 
-from digame.app.models import Notification as NotificationModel
-from digame.app.schemas import notification_schemas
+from ..models import Notification as NotificationModel
+from ..schemas import notification_schemas
 
 def create_notification(db: Session, notification: notification_schemas.NotificationCreate) -> NotificationModel:
     db_notification = NotificationModel(

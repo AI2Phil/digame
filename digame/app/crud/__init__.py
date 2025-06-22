@@ -32,6 +32,15 @@ from .notification_crud import ( # Import new notification_crud functions
     mark_notification_as_read,
     delete_notification
 )
+from .task_crud import (
+    get_task_by_id,
+    get_tasks_by_user_id,
+    create_task,
+    update_task,
+    update_task_status,
+    delete_task,
+    get_tasks_by_process_note_id
+)
 
 __all__ = [
     # User CRUD
@@ -67,4 +76,13 @@ __all__ = [
     "update_notification",
     "mark_notification_as_read",
     "delete_notification",
+
+    # Task CRUD
+    "get_task_by_id",
+    "get_tasks_by_user_id",
+    "create_task",
+    "update_task",
+    "update_task_status",
+    "delete_task",
+    "get_tasks_by_process_note_id",
 ]

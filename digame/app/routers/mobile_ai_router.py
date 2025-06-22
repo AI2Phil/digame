@@ -89,4 +89,3 @@ async def interpret_voice_command_endpoint(
             detail=f"An error occurred during voice command interpretation: {str(e)}"
         )
 
-```

@@ -361,4 +361,3 @@ async def get_user_permissions_in_tenant(
     permissions = TenantService(db).get_user_permissions(user_id)
     return permissions
 
-```

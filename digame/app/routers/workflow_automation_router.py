@@ -364,8 +364,8 @@ async def get_workflow_instance(
 @router.post("/instances/{instance_id}/execute")
 async def execute_workflow_instance(
     instance_id: int,
-    tenant_id: int = Query(..., description="Tenant ID"),
     background_tasks: BackgroundTasks,
+    tenant_id: int = Query(..., description="Tenant ID"),
     db: Session = Depends(get_db)
 ):
     """
@@ -498,8 +498,8 @@ async def get_automation_rule(
 async def trigger_automation_rule(
     rule_id: int,
     trigger_data: Dict[str, Any],
-    tenant_id: int = Query(..., description="Tenant ID"),
     background_tasks: BackgroundTasks,
+    tenant_id: int = Query(..., description="Tenant ID"),
     db: Session = Depends(get_db)
 ):
     """

@@ -580,8 +580,8 @@ async def oauth_callback(
 async def batch_sync_connections(
     tenant_id: int,
     connection_ids: List[int],
-    sync_type: str = "scheduled",
     background_tasks: BackgroundTasks,
+    sync_type: str = "scheduled",
     db: Session = Depends(get_db)
 ):
     """

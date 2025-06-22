@@ -125,4 +125,3 @@ class SocialCollaborationService:
         recommendations.sort(key=lambda x: x["score"], reverse=True)
         return [rec["user"] for rec in recommendations[:limit]]
 
-```

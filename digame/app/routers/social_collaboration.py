@@ -193,4 +193,3 @@ async def get_collaboration_projects_mock(user_id: int, current_user: UserModel 
     return {"message": "Collaboration projects endpoint not fully implemented."}
 
 # ... (other mock endpoints can be similarly marked or simplified)
-```

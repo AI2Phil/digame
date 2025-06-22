@@ -59,4 +59,3 @@ class UserWithProfileResponse(MinimalUserBase): # Inherits from MinimalUserBase 
 
     class Config:
         from_attributes = True
-```

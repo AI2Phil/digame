@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 # sqlalchemy.orm.Session is not directly used here but service might need it via get_db
 
-from digame.app.auth.auth_dependencies import get_current_active_user
-from digame.app.models.user import User as UserModel
-from digame.app.services.writing_assistance_service import WritingAssistanceService, get_writing_assistance_service
-from digame.app.schemas import writing_assistance_schemas as schemas
+from ..auth.auth_dependencies import get_current_active_user
+from ..models.user import User as UserModel
+from ..services.writing_assistance_service import WritingAssistanceService, get_writing_assistance_service
+from ..schemas import writing_assistance_schemas as schemas
 
 router = APIRouter(
     prefix="/ai/writing-assistance", 

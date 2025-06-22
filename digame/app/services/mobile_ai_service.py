@@ -104,4 +104,3 @@ class MobileAIService:
                 parameters={"original_text": command_request.text},
                 responseText="Sorry, I didn't understand that. Can you try rephrasing?"
             )
-```

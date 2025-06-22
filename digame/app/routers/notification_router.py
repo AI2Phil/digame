@@ -2,43 +2,49 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from typing import List, Optional
 
-# Attempt to import actual dependencies, fallback to mocks if necessary for robustness
+# Use relative imports for proper module resolution
 try:
-    from digame.app.database import get_db # Standard way to get DB session
-    from digame.app.auth.auth_dependencies import get_current_active_user # Standard auth
-    from digame.app.schemas.user_schemas import User # For current_user type hint
-    # Use User as UserModel for consistency with existing get_current_active_user annotation
-    UserModel = User
-    from digame.app.services import NotificationService # Added service import
+    from ..database import get_db
+    from ..auth.auth_dependencies import get_current_active_user
+    from ..schemas.user_schemas import User as UserModel
+    from ..services.notification_service import NotificationService
 except ImportError:
-    # This block is for robustness if the exact paths are different or during isolated testing
-    # In a real environment, these imports should resolve correctly.
-    # Fallback to simpler User model if user_schemas.User isn't found initially.
+    # Fallback imports if relative imports fail
     try:
-        from digame.app.models.user import User as UserModel # Fallback to model if schema not found
+        from ..models.user import User as UserModel
+        from ..database import get_db
+        
+        # Mock get_current_active_user if not found
+        def get_current_active_user() -> UserModel:
+            return UserModel()
+        
+        # Mock NotificationService if not found
+        class NotificationService:
+            def __init__(self, db):
+                self.db = db
+            async def optimize_user_notifications_with_ai(self, user_id, user_behavior_summary):
+                return {"mock_response": "AI optimization successful"}
     except ImportError:
-        # Absolute fallback mock if no User model/schema is found
-        class UserModel: # Renamed to UserModel to avoid conflict if User was defined above
-            id: int = 1
-            is_active: bool = True
-            # Ensure User is defined if UserModel is the fallback
-            User = UserModel
+        # Final fallback with mock classes
+        class UserModel:
+            def __init__(self):
+                self.id = 1
+                self.is_active = True
+        
+        def get_db():
+            return None
+            
+        def get_current_active_user() -> UserModel:
+            return UserModel()
+        
+        class NotificationService:
+            def __init__(self, db):
+                self.db = db
+            async def optimize_user_notifications_with_ai(self, user_id, user_behavior_summary):
+                return {"mock_response": "AI optimization successful"}
 
-
-    # Mock get_db if not found
-    def get_db(): return None
-    # Mock get_current_active_user if not found
-    def get_current_active_user() -> UserModel: return UserModel() # Adjusted to UserModel
-
-    # Mock NotificationService if not found (should not happen in real env)
-    class NotificationService:
-        def __init__(self, db): self.db = db
-        async def optimize_user_notifications_with_ai(self, user_id, user_behavior_summary):
-            return {"mock_response": "AI optimization successful"}
-
-
-from digame.app import crud # Access as crud.function_name
-from digame.app import schemas # Access as schemas.ClassName
+from .. import crud
+from .. import schemas
 
 router = APIRouter(
     prefix="/notifications",

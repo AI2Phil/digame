@@ -206,7 +206,7 @@ class MetricResponse(BaseModel):
 class AlertCreate(BaseModel):
     alert_name: str = Field(..., min_length=1, max_length=200)
     alert_type: str = Field(..., min_length=1, max_length=50)
-    severity: str = Field(..., regex="^(low|medium|high|critical)$")
+    severity: str = Field(..., pattern="^(low|medium|high|critical)$")
     condition: str = Field(..., min_length=1, max_length=100)
     threshold_value: float
     message: str = Field(..., min_length=1)
@@ -267,12 +267,12 @@ class FeatureUsageCreate(BaseModel):
 
 class ExportCreate(BaseModel):
     export_name: str = Field(..., min_length=1, max_length=200)
-    export_format: str = Field(..., regex="^(pdf|excel|csv|json|png)$")
-    export_scope: str = Field(default="full", regex="^(full|widgets|data_only)$")
+    export_format: str = Field(..., pattern="^(pdf|excel|csv|json|png)$")
+    export_scope: str = Field(default="full", pattern="^(full|widgets|data_only)$")
     include_charts: bool = True
     include_data: bool = True
     include_metadata: bool = False
-    page_orientation: str = Field(default="landscape", regex="^(portrait|landscape)$")
+    page_orientation: str = Field(default="landscape", pattern="^(portrait|landscape)$")
     is_scheduled: bool = False
     schedule_cron: Optional[str] = Field(None, max_length=100)
     next_execution: Optional[datetime] = None
@@ -658,9 +658,9 @@ async def acknowledge_alert(
 @router.post("/usage")
 async def track_feature_usage(
     usage_data: FeatureUsageCreate,
+    background_tasks: BackgroundTasks,
     tenant_id: int = Query(..., description="Tenant ID"),
     user_id: Optional[int] = Query(None, description="User ID"),
-    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db)
 ):
     """Track enterprise feature usage"""

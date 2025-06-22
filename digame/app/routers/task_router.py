@@ -2,12 +2,12 @@ from fastapi import APIRouter, Depends, HTTPException, status, Path, Query
 from sqlalchemy.orm import Session
 from typing import List, Optional
 
-from digame.app.schemas import task_schemas # Import the new task schemas
-from digame.app.crud import task_crud # Import the new task CRUD functions
-from digame.app.services import task_suggestion_service # For the optional trigger endpoint
-from digame.app.auth.auth_dependencies import PermissionChecker, get_current_active_user
-from digame.app.models.user import User as SQLAlchemyUser # For current_user type hint
-from digame.app.models.task import Task as SQLAlchemyTask # For type hinting
+from ..schemas import task_schemas # Import the new task schemas
+from ..crud import task_crud # Import the new task CRUD functions
+from ..services import task_suggestion_service # For the optional trigger endpoint
+from ..auth.auth_dependencies import PermissionChecker, get_current_active_user
+from ..models.user import User as SQLAlchemyUser # For current_user type hint
+from ..models.task import Task as SQLAlchemyTask # For type hinting
 
 # Assuming get_db dependency is available
 from .admin_rbac_router import get_db # Placeholder, replace with actual get_db path

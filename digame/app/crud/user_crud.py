@@ -160,4 +160,3 @@ def delete_user_profile(db: Session, user_id: int) -> bool:
     db.delete(db_profile)
     db.commit()
     return True
-```

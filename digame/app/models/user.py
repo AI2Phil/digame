@@ -102,4 +102,3 @@ class UserProfile(Base):
 # or defined with necessary back_populates attributes.
 # For this file's validity, only their string names are needed in relationships.
 # The user_roles table for the User-Role many-to-many relationship is also assumed to be defined elsewhere.
-```

@@ -3,9 +3,9 @@ from sqlalchemy.orm import Session
 from fastapi import HTTPException, status, Depends
 
 # Assuming standard locations for these modules based on the project structure
-from digame.app.crud import user_crud, user_setting_crud, tenant_crud # We'll need tenant_crud
-from digame.app.models.user import User as UserModel
-from digame.app.models.tenant import Tenant as TenantModel # Assuming tenant_crud returns this
+from ..crud import user_crud, user_setting_crud, tenant_crud # We'll need tenant_crud
+from ..models.user import User as UserModel
+from ..models.tenant import Tenant as TenantModel # Assuming tenant_crud returns this
 
 # Placeholder for an external AI service client
 class MockExternalWritingServiceClient:
@@ -137,7 +137,7 @@ def get_writing_assistance_service(db: Session = Depends()):
     # then `Depends(get_db)` is the way. If not, the router must provide it.
     # For service layer, it's cleaner to assume db is passed to __init__.
     # The Depends in this factory function is what FastAPI uses.
-    from digame.app.db import get_db # Assuming get_db is in digame.app.db
+    from ..database import get_db # Assuming get_db is in digame.app.database
     # db_instance = next(get_db()) # This is how you typically consume it if get_db is a generator
     # However, for Depends(get_db), FastAPI handles this.
     # The service constructor needs a db session.
@@ -182,7 +182,7 @@ def get_writing_assistance_service(db: Session = Depends()):
 
     # The provided stub had `Depends()`. This will not work.
     # It must be `Depends(callable)`. Assuming `digame.app.db.get_db`.
-    from digame.app.db import get_db as get_db_dependency
+    from ..database import get_db as get_db_dependency
     # This function itself will be used in `Depends(...)` in a router.
     # It needs `db` to be injected into it.
     # So, its signature should be `(db: Session = Depends(get_db_dependency))`
@@ -205,7 +205,7 @@ def get_writing_assistance_service(db: Session = Depends()):
     # This is slightly redundant. `Depends(get_db)` means `get_db` is called by FastAPI and its result passed as `db`.
     # So, `return WritingAssistanceService(db)` is sufficient.
     
-    from digame.app.db import get_db # Assuming this is the dependency provider
+    from ..database import get_db # Assuming this is the dependency provider
     # The `db` parameter in this function's signature will be filled by FastAPI
     # by calling `get_db()` and passing its result.
     return WritingAssistanceService(db)

@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
-from digame.app.models.tenant import Tenant # Assuming this model exists
-from digame.app.models.user import User # Assuming this model exists
-# from digame.app.models.tenant_user import TenantUser # If using an association table
+from ..models.tenant import Tenant
+from ..models.user import User
+# from ..models.tenant_user import TenantUser # If using an association table
 
 def get_tenant_by_id(db: Session, tenant_id: int) -> Tenant | None:
     return db.query(Tenant).filter(Tenant.id == tenant_id).first()

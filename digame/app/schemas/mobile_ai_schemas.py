@@ -44,4 +44,3 @@ class VoiceCommandResponse(BaseModel):
     # Optional: follow_up_prompt: Optional[str] = Field(default=None, description="If further interaction is needed")
     # Optional: confidence_score: Optional[float] = Field(default=None, description="NLU confidence in the interpretation")
 
-```

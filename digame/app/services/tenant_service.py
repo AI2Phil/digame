@@ -620,4 +620,3 @@ class UserService:
         # TenantService(self.db)._log_audit_event(user.tenant_id, current_admin_id, "user_activated", "user", str(user.id), ip_address=ip_address, user_agent=user_agent)
         return True
 
-```
