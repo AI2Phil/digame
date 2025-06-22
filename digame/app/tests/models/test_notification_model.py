@@ -158,8 +158,8 @@ class TestNotificationModel(unittest.TestCase):
             message=notification_data["message"],
             type=notification_data["type"],
             scheduled_at=notification_data["scheduled_at"],
-            is_read=notification_data["is_read"]
-            # created_at will have a default value)
+            is_read=notification_data["is_read"])
+            # created_at will have a default value
 
         self.assertTrue(hasattr(notification, "__class__"))
         self.assertEqual(notification.user_id, notification_data["user_id"])
