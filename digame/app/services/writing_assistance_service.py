@@ -7,66 +7,47 @@ from ..crud import user_crud, user_setting_crud, tenant_crud # We'll need tenant
 from ..models.user import User as UserModel
 from ..models.tenant import Tenant as TenantModel # Assuming tenant_crud returns this
 
-# Placeholder for an external AI service client
-class MockExternalWritingServiceClient:
-    def __init__(self, api_key: str):
-        if not api_key:
-            raise ValueError("API key must be provided for external writing service.")
-        self.api_key = api_key
+import logging # Added
+from .ai_integration_service import AIIntegrationService # Added
 
-    def get_suggestion(self, text: str) -> str:
-        # In a real scenario, this would make an HTTP request to an external service
-        # For now, it's a mock response.
-        if not text:
-            return "Input text cannot be empty."
-        if self.api_key == "valid_key_for_premium_suggestion":
-            return f"Premium AI suggestion for: '{text}'"
-        elif self.api_key == "valid_key_for_standard_suggestion":
-            return f"Standard AI suggestion for: '{text}'"
-        elif self.api_key == "invalid_key":
-            # This case might be better handled by the external service returning an error
-            # that we then translate into an HTTPException.
-            # For mock purposes, we'll raise an error that the service can catch.
-            raise ValueError("Invalid API key provided to external service.")
-        return f"Mock AI suggestion for: '{text}' (using key: {self.api_key})"
+# Assuming standard locations for these modules based on the project structure
+from ..crud import user_crud, user_setting_crud, tenant_crud # We'll need tenant_crud
+from ..models.user import User as UserModel
+from ..models.tenant import Tenant as TenantModel # Assuming tenant_crud returns this
+
+logger = logging.getLogger(__name__) # Added
 
 class WritingAssistanceService:
     def __init__(self, db: Session):
         self.db = db
+        self.ai_integration_service = AIIntegrationService(db=self.db)
 
-    def get_writing_suggestion(self, current_user: UserModel, text_input: str) -> str:
+    async def get_writing_suggestion(self, current_user: UserModel, text_input: str) -> str: # Changed to async
         if not current_user:
-            # This should ideally not happen if current_user is properly injected by FastAPI
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not authenticated.")
 
         # 1. Fetch user's tenant information.
-        # The user_crud.get_user method should ideally return a user with relationships.
-        # Let's assume `current_user.tenants` (a list of TenantUser objects) is available.
-        if not hasattr(current_user, 'tenants') or not current_user.tenants: # `tenants` would be from a relationship in UserModel
-            # Attempt to reload the user with relationships if not already loaded.
-            # This depends on your ORM setup and how `current_user` is obtained.
-            # If `current_user` is detached or relationships are not eagerly loaded, this explicit fetch might be needed.
-            user_from_db = user_crud.get_user(self.db, user_id=current_user.id)
-            if not user_from_db or not hasattr(user_from_db, 'tenants') or not user_from_db.tenants:
-                 raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User not associated with any tenant or tenant info missing.")
-            current_user = user_from_db
+        user_from_db = user_crud.get_user(self.db, user_id=current_user.id) # Ensure fresh user data
+        if not user_from_db :
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found.")
+        current_user = user_from_db # Use the fresh instance
 
+        # Simplified tenant fetching assuming user_from_db.tenant_id exists directly
+        # This part of the logic depends heavily on how tenants are linked to users.
+        # For this exercise, we assume a direct tenant_id or a simple relationship.
+        # The original logic for tenant fetching was complex due to potential missing relationships.
+        # Let's assume direct tenant_id on user model or a simpler path.
+        # If user has a `tenant_id` attribute:
+        tenant_id = getattr(current_user, 'tenant_id', None)
+        if not tenant_id and hasattr(current_user, 'tenants') and current_user.tenants:
+             # Fallback to original logic if user.tenants exists (list of TenantUser)
+             user_tenant_link = current_user.tenants[0]
+             tenant_id = getattr(user_tenant_link, 'tenant_id', None)
 
-        # Assuming the first tenant in the list is the active one for simplicity.
-        # In a real system, there'd be a concept of an "active" tenant context.
-        # Also assuming TenantUser model has a 'tenant' relationship to the Tenant model
-        user_tenant_link = current_user.tenants[0]
-        if not hasattr(user_tenant_link, 'tenant'):
-            # This means the TenantUser object doesn't have the 'tenant' attribute as expected.
-            # This could be due to missing relationship in TenantUser model or it wasn't loaded.
-            # Attempt to fetch tenant directly if tenant_id is available on user_tenant_link
-            if hasattr(user_tenant_link, 'tenant_id'):
-                tenant = tenant_crud.get_tenant_by_id(self.db, user_tenant_link.tenant_id)
-            else:
-                tenant = None # Cannot find tenant
-        else:
-            tenant = user_tenant_link.tenant # This is the Tenant object
+        if not tenant_id:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User not associated with any tenant or tenant ID missing.")
 
+        tenant = tenant_crud.get_tenant_by_id(self.db, tenant_id)
         if not tenant:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Tenant information not found for user.")
 
@@ -78,20 +59,20 @@ class WritingAssistanceService:
             except json.JSONDecodeError:
                  raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error parsing tenant features.")
         elif not isinstance(tenant_features, dict):
-            tenant_features = {} # Default to empty if not str or dict
+            tenant_features = {}
 
         if not tenant_features.get("writing_assistance"):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="Writing Assistance feature is not enabled for your tenant. Please contact your tenant administrator or check your subscription."
+                detail="Writing Assistance feature is not enabled for your tenant."
             )
 
         # 3. Retrieve the current user's API keys.
         user_settings = user_setting_crud.get_user_setting(self.db, user_id=current_user.id)
         if not user_settings or not user_settings.api_keys:
             raise HTTPException(
-                status_code=status.HTTP_402_PAYMENT_REQUIRED,
-                detail="API key for Writing Assistance not found in your settings. Please add it to use this feature."
+                status_code=status.HTTP_402_PAYMENT_REQUIRED, # Using 402 as per original
+                detail="API key for Writing Assistance not found. Please add 'openai_api_key' to your settings."
             )
 
         try:
@@ -102,33 +83,69 @@ class WritingAssistanceService:
                 detail="Error parsing your API key settings."
             )
 
-        # 4. Look for a specific key.
-        writing_service_key = api_keys_dict.get("writing_service_key")
-        if not writing_service_key:
+        # 4. Look for the standardized 'openai_api_key'.
+        openai_api_key = api_keys_dict.get("openai_api_key")
+        if not openai_api_key:
             raise HTTPException(
                 status_code=status.HTTP_402_PAYMENT_REQUIRED,
-                detail="The 'writing_service_key' is missing from your API key settings. Please add it."
+                detail="The 'openai_api_key' is missing from your API key settings. Please add it."
             )
 
-        # 5. Use the key to call the external service.
+        # 5. Use the key to call the OpenAI service.
+        system_prompt = """You are a helpful writing assistant.
+Given the user's text, provide a concise suggestion to improve it.
+This could be a rephrased version, a correction, or advice on style/tone.
+Respond in JSON format with a single key "suggestion_text" containing your suggested improvement or the improved text.
+If the input text is good, you can say so in the suggestion_text.
+Example User text: "i think its a good idea" -> AI Response: {"suggestion_text": "Consider phrasing it as: 'I believe it's a sound idea.' for a more formal tone."}
+Example User text: "This is perfect." -> AI Response: {"suggestion_text": "This text is clear and effective."}
+"""
+        ai_payload = {
+            "model": "gpt-3.5-turbo",
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": text_input}
+            ],
+            "response_format": {"type": "json_object"}
+        }
+
         try:
-            # Initialize the mock client with the user's key
-            external_service_client = MockExternalWritingServiceClient(api_key=writing_service_key)
-            suggestion = external_service_client.get_suggestion(text=text_input)
-            return suggestion
-        except ValueError as e: # Catch errors from the mock client (e.g., invalid key)
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Error with Writing Assistance service: {str(e)}"
-            )
-        except Exception as e: # Catch any other unexpected errors
-            # Log the exception e
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="An unexpected error occurred while getting writing suggestions."
+            openai_response_data = await self.ai_integration_service.make_request(
+                api_key=openai_api_key,
+                base_url="https://api.openai.com/v1",
+                endpoint="chat/completions",
+                method="POST",
+                payload=ai_payload
             )
 
-def get_writing_assistance_service(db: Session = Depends()):
+            if not openai_response_data.get("choices") or \
+               not openai_response_data["choices"][0].get("message") or \
+               not openai_response_data["choices"][0]["message"].get("content"):
+                logger.error(f"Unexpected OpenAI response structure for writing assistance (user {current_user.id}): {openai_response_data}")
+                raise HTTPException(status_code=500, detail="Writing assistance received an unexpected response format from AI provider.")
+
+            content_str = openai_response_data["choices"][0]["message"]["content"]
+            suggestion_json = json.loads(content_str)
+
+            suggestion_text = suggestion_json.get("suggestion_text")
+            if suggestion_text is None:
+                logger.error(f"OpenAI response JSON missing 'suggestion_text' for writing assistance (user {current_user.id}): {suggestion_json}")
+                raise HTTPException(status_code=500, detail="Writing assistance AI provider's response missing suggestion text.")
+
+            logger.info(f"Successfully received writing suggestion for user {current_user.id}")
+            return suggestion_text
+
+        except json.JSONDecodeError:
+            logger.error(f"Failed to parse JSON from OpenAI response for writing assistance (user {current_user.id}): {content_str if 'content_str' in locals() else 'N/A'}")
+            raise HTTPException(status_code=500, detail="Writing assistance failed to parse AI provider's response.")
+        except HTTPException: # Re-raise HTTPExceptions
+            raise
+        except Exception as e:
+            logger.error(f"Error calling OpenAI for writing assistance (user {current_user.id}): {str(e)}")
+            raise HTTPException(status_code=503, detail=f"Writing assistance request to AI provider failed: {str(e)}")
+
+
+def get_writing_assistance_service(db: Session = Depends()): # Signature unchanged, assuming Depends(get_db)
     # This dependency injector will be used by the router
     # It assumes get_db is correctly defined elsewhere (e.g., in digame.app.db)
     # The actual get_db dependency will be injected by FastAPI based on the router's setup

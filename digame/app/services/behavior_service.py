@@ -286,3 +286,170 @@ def get_behavior_patterns_for_user(db: Session, user_id: int) -> List[Dict[str, 
 def train_behavioral_model(*args, **kwargs):
     """Alias for train_and_save_behavior_model for backward compatibility."""
     return train_and_save_behavior_model(*args, **kwargs)
+
+class BehaviorService:
+    def __init__(self, db: Session):
+        self.db = db
+        # Placeholder for AIIntegrationService if needed by other methods in this class in the future
+        # from .ai_integration_service import AIIntegrationService
+        # self.ai_integration_service = AIIntegrationService(db=self.db)
+
+
+    async def get_ai_coaching_recommendations(self, user_id: int) -> Dict[str, Any]:
+        """
+        Generates AI-powered coaching recommendations based on user's behavioral patterns.
+        """
+        from .ai_integration_service import AIIntegrationService # Local import to avoid circularity if BehaviorService is widely imported
+        from ..crud import user_setting_crud # Local import
+        import logging # Local import
+        logger = logging.getLogger(__name__)
+
+        logger.info(f"Generating AI coaching recommendations for user_id: {user_id}")
+
+        user_settings = user_setting_crud.get_user_setting(self.db, user_id=user_id)
+        api_key = None
+        if user_settings and user_settings.api_keys:
+            try:
+                api_keys_dict = json.loads(user_settings.api_keys)
+                api_key = api_keys_dict.get("openai_api_key")
+            except json.JSONDecodeError:
+                logger.error(f"Failed to parse API keys for user {user_id} in BehaviorService.")
+                # Not raising HTTPException here, allow fallback or specific handling if desired
+                # For now, if key parsing fails, api_key remains None.
+
+        if not api_key:
+            logger.warning(f"OpenAI API key ('openai_api_key') not configured for user {user_id}. Cannot get AI coaching.")
+            # Depending on requirements, could return empty recommendations or raise an error.
+            # For now, let's return a message indicating the issue.
+            return {"error": "API key not configured. Unable to generate AI coaching recommendations."}
+
+        ai_integration_service = AIIntegrationService(db=self.db)
+
+        # 1. Fetch behavioral data
+        latest_model = get_latest_behavior_model_for_user(self.db, user_id)
+        if not latest_model:
+            logger.info(f"No behavioral model found for user {user_id}. Cannot generate coaching.")
+            return {"info": "No behavioral model found. AI coaching requires behavioral data."}
+
+        patterns = get_patterns_for_model(self.db, latest_model.id)
+        if not patterns:
+            logger.info(f"No behavioral patterns found for user {user_id} in model {latest_model.id}.")
+            return {"info": "No behavioral patterns found. AI coaching requires behavioral patterns."}
+
+        # 2. Summarize behavioral data for the prompt
+        # We need to convert SQLAlchemy models (BehavioralPattern) to dicts for JSON serialization
+        patterns_summary = []
+        for p in patterns:
+            pattern_dict = {
+                "pattern_label": p.pattern_label,
+                "size": p.size,
+                "name": p.name,
+                "description": p.description,
+                "centroid": p.centroid, # Already a dict
+                "temporal_distribution": p.temporal_distribution, # Already a dict
+                "activity_distribution": p.activity_distribution, # Already a dict
+                "context_features": p.context_features # Already a dict
+            }
+            patterns_summary.append(pattern_dict)
+
+        behavioral_data_summary = {
+            "model_name": latest_model.name,
+            "model_algorithm": latest_model.algorithm,
+            "num_clusters": latest_model.num_clusters,
+            "silhouette_score": latest_model.silhouette_score,
+            "patterns": patterns_summary
+        }
+        # Potentially add analytics summary here if available/integrated
+
+        # 3. Define prompts for OpenAI
+        system_prompt = """You are an AI professional development coach.
+Given a summary of a user's behavioral patterns (derived from their activity logs),
+provide 2-3 specific, actionable, and personalized coaching recommendations.
+Focus on helping them improve productivity, work habits, focus, or well-being.
+Phrase recommendations positively and constructively.
+Respond in JSON format with a top-level key "coaching_recommendations",
+which is a list of recommendation objects. Each object should have:
+'area' (string, e.g., 'Time Management', 'Focus Improvement', 'Work-Life Balance', 'Task Prioritization'),
+'recommendation_text' (string, the specific advice),
+'reasoning' (string, briefly explaining why this is suggested based on their patterns).
+If patterns are too generic or insufficient, provide general productivity tips.
+"""
+        user_prompt_content = f"User's behavioral data summary: {json.dumps(behavioral_data_summary, default=str)}" # Use default=str for datetime etc.
+
+        # 4. Construct payload for OpenAI
+        ai_payload = {
+            "model": "gpt-3.5-turbo", # Or "gpt-4" for more nuanced coaching
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt_content}
+            ],
+            "response_format": {"type": "json_object"}
+        }
+
+        logger.debug(f"Calling OpenAI for coaching recommendations for user {user_id}.")
+
+        # 5. Call OpenAI via AIIntegrationService
+        try:
+            openai_response_data = await ai_integration_service.make_request(
+                api_key=api_key,
+                base_url="https://api.openai.com/v1",
+                endpoint="chat/completions",
+                method="POST",
+                payload=ai_payload,
+            )
+
+            if not openai_response_data.get("choices") or \
+               not openai_response_data["choices"][0].get("message") or \
+               not openai_response_data["choices"][0]["message"].get("content"):
+                logger.error(f"Unexpected OpenAI response structure for coaching for user {user_id}: {openai_response_data}")
+                # Avoid raising HTTPException directly from service layer if possible, return error dict
+                return {"error": "Coaching AI service received an unexpected response format."}
+
+            content_str = openai_response_data["choices"][0]["message"]["content"]
+            coaching_result = json.loads(content_str)
+
+            logger.info(f"Successfully received and parsed AI coaching recommendations for user {user_id}: {coaching_result}")
+            return coaching_result
+
+        except json.JSONDecodeError:
+            logger.error(f"Failed to parse JSON from OpenAI coaching response for user {user_id}: {content_str if 'content_str' in locals() else 'N/A'}")
+            return {"error": "Coaching AI service failed to parse provider's response."}
+        except ValueError as ve: # From AIIntegrationService if API key is missing (though checked above)
+            logger.error(f"ValueError during AI coaching request for user {user_id}: {ve}")
+            return {"error": str(ve)}
+        except Exception as e: # Catch other exceptions from make_request or general issues
+            logger.error(f"Exception during AI coaching recommendations for user {user_id}: {e}")
+            # Check if it's an HTTPException-like structure from make_request before raising a generic one
+            if hasattr(e, 'status_code') and hasattr(e, 'detail'):
+                 return {"error": f"AI service error: {e.detail}", "status_code": e.status_code} # type: ignore
+            return {"error": f"Failed to get coaching recommendations via AI: {str(e)}"}
+
+# Ensure the class structure is maintained if other methods exist or are added above this class.
+# If BehaviorService class was not intended, the method could be a standalone async function.
+# For now, assuming it's a new method in an existing or new BehaviorService class.
+# If the file was purely functional, we'd just add the async def.
+# The original file appears to be mostly functional, but let's wrap this in a class for consistency with other services.
+# If there were existing functions not part of a class, we'd add this one similarly.
+# The provided behavior_service.py does not have a class structure for its main functions.
+# Re-evaluating: It's better to add this as a standalone async function in behavior_service.py
+# to match the existing style of the file, rather than introducing a class just for this.
+# However, the plan refers to "modifying the relevant service".
+# Given other services are classes (NotificationService, VoiceNLUService),
+# it's more consistent to make BehaviorService a class if it's to be a "service".
+
+# Let's assume the intention is to make BehaviorService a class like others.
+# If not, the method get_ai_coaching_recommendations can be defined at the top level.
+# The current structure of behavior_service.py is a set of functions.
+# To add get_ai_coaching_recommendations as a method, we would need to refactor behavior_service.py
+# to have a class structure, or create a new service file for AI-driven behavioral coaching.
+
+# For now, I will add it as a method to a new BehaviorService class,
+# assuming this is the desired "service" structure.
+# The existing functions like train_and_save_behavior_model would ideally become methods of this class too,
+# or remain utility functions called by the service methods.
+
+# The provided snippet for replacement assumes BehaviorService class exists or is being created.
+# The original file does not have BehaviorService class.
+# Let's define the class and add the new method.
+# The existing functions will remain outside the class for now, as refactoring them is out of scope.
+# This is a common pattern: utility/core logic functions, and a service class that orchestrates.

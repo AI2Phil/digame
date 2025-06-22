@@ -32,7 +32,7 @@ class NotificationService:
         if user_settings and user_settings.api_keys:
             try:
                 api_keys_dict = json.loads(user_settings.api_keys)
-                api_key = api_keys_dict.get("notification_ai_provider_key")
+                api_key = api_keys_dict.get("openai_api_key") # Standardized key name
             except json.JSONDecodeError:
                 logger.error(f"Failed to parse API keys JSON for user {user_id}")
                 raise HTTPException(status_code=500, detail="Error parsing API key configuration.")
@@ -41,64 +41,94 @@ class NotificationService:
             logger.warning(f"Notification AI API key not configured for user_id: {user_id}")
             raise HTTPException(
                 status_code=400,
-                detail="Notification AI API key ('notification_ai_provider_key') not configured by user."
+                detail="OpenAI API key ('openai_api_key') not configured by user for Notification AI."
             )
 
-        hypothetical_ai_service_url = "https://api.ai-notifications.com/v1"
-        endpoint = "optimize"
+        openai_api_base_url = "https://api.openai.com/v1"
+        openai_endpoint = "chat/completions"
 
-        payload = {
-            "user_id": str(user_id),
-            "user_behavior_summary": user_behavior_summary or {}
+        system_prompt = """You are an AI assistant that helps optimize user notifications.
+Given a user's behavior summary and current notifications, decide if a new notification is warranted,
+suggest optimal timing, or rephrase an existing notification for better engagement.
+Respond in JSON format. The top-level JSON should be an object with a key "suggestions",
+which is a list of suggestion objects. Each suggestion object should have:
+'action' (string, e.g., 'CREATE_NEW', 'ADJUST_EXISTING', 'DO_NOTHING'),
+'user_id' (integer, the user_id this suggestion is for),
+'title' (string, optional, for new or adjusted notifications),
+'message' (string, optional, for new or adjusted notifications),
+'type' (string, e.g., 'ai_optimized_suggestion', 'engagement_prompt'),
+'reasoning' (string, explaining why this suggestion is made).
+If 'action' is 'ADJUST_EXISTING', also include 'original_notification_id' (integer).
+If no specific optimization is clear or no action is needed, provide a suggestion with action 'DO_NOTHING'.
+Base your suggestions on the provided user_behavior_summary.
+Example user_behavior_summary: {"last_active_at": "2023-10-26T10:00:00Z", "preferred_contact_hours": ["09:00-12:00", "14:00-17:00"], "completed_tasks_today": 2, "pending_high_priority_tasks": 1, "recent_app_usage_minutes": 15}
+"""
+        user_prompt_content = f"User ID: {user_id}. User behavior summary: {json.dumps(user_behavior_summary or {})}"
+
+        ai_payload = {
+            "model": "gpt-3.5-turbo",
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt_content}
+            ],
+            "response_format": {"type": "json_object"}
         }
 
-        logger.debug(f"Calling AI notification optimization for user {user_id} at {hypothetical_ai_service_url}/{endpoint}")
+        logger.debug(f"Calling OpenAI notification optimization for user {user_id} at {openai_api_base_url}/{openai_endpoint}")
 
         try:
-            ai_response = await self.ai_integration_service.make_request(
+            openai_response_data = await self.ai_integration_service.make_request(
                 api_key=api_key,
-                base_url=hypothetical_ai_service_url,
-                endpoint=endpoint,
+                base_url=openai_api_base_url,
+                endpoint=openai_endpoint,
                 method="POST",
-                payload=payload,
-                # auth_scheme can be specified if not Bearer, e.g., "ApiKey My-Custom-Header-Name"
-                # For this example, assuming Bearer is fine or handled by make_request default
+                payload=ai_payload,
             )
-            logger.info(f"Successfully received AI response for user {user_id}: {ai_response}")
 
-            # For now, we are not creating/updating notifications in the DB.
-            # This logic would be added here in a real implementation.
-            # Example:
-            # if ai_response.get("suggestions"):
-            #     for suggestion in ai_response["suggestions"]:
-            #         notification_crud.create_notification(
-            #             db=self.db,
-            #             notification=NotificationCreate(
-            #                 user_id=user_id,
-            #                 title=suggestion.get("title", "AI Optimized Alert"),
-            #                 message=suggestion.get("message", "Consider this update."),
-            #                 type="ai_optimized"
-            #             )
-            #         )
+            if not openai_response_data.get("choices") or not openai_response_data["choices"][0].get("message") or not openai_response_data["choices"][0]["message"].get("content"):
+                logger.error(f"Unexpected OpenAI response structure for user {user_id}: {openai_response_data}")
+                raise HTTPException(status_code=500, detail="Notification AI service received an unexpected response format from AI provider.")
 
-            return {"success": True, "ai_response": ai_response}
+            content_str = openai_response_data["choices"][0]["message"]["content"]
+            ai_suggestions_response = json.loads(content_str)
 
-        except ValueError as ve: # Handles missing API key from make_request itself
-            logger.error(f"ValueError during AI request for user {user_id}: {ve}")
-            raise HTTPException(status_code=400, detail=str(ve))
+            logger.info(f"Successfully received and parsed AI notification suggestions for user {user_id}: {ai_suggestions_response}")
+
+            processed_suggestions = []
+            if ai_suggestions_response and "suggestions" in ai_suggestions_response:
+                for suggestion in ai_suggestions_response["suggestions"]:
+                    action = suggestion.get("action")
+                    # Potentially create notifications in DB based on action 'CREATE_NEW'
+                    if action == "CREATE_NEW" and suggestion.get("title") and suggestion.get("message"):
+                        try:
+                            created_notification = notification_crud.create_notification(
+                                db=self.db,
+                                notification=NotificationCreate(
+                                    user_id=user_id, # Ensure suggestion.get("user_id") matches or use the one from context
+                                    title=suggestion["title"],
+                                    message=suggestion["message"],
+                                    type=suggestion.get("type", "ai_optimized"),
+                                    # status="pending" # Assuming a status field exists
+                                )
+                            )
+                            processed_suggestions.append({
+                                "created_notification_id": created_notification.id,
+                                "details": suggestion
+                            })
+                        except Exception as e_crud:
+                            logger.error(f"Failed to create notification from AI suggestion for user {user_id}: {e_crud}. Suggestion: {suggestion}")
+                            processed_suggestions.append({"error_creating_notification": str(e_crud), "suggestion": suggestion})
+                    else:
+                        # For 'ADJUST_EXISTING' or 'DO_NOTHING', just pass along the suggestion for now
+                        processed_suggestions.append({"action_taken": action, "details": suggestion})
+
+            return {"success": True, "processed_suggestions": processed_suggestions, "raw_ai_response": ai_suggestions_response}
+
+        except json.JSONDecodeError:
+            logger.error(f"Failed to parse JSON from OpenAI response content for user {user_id}: {content_str}")
+            raise HTTPException(status_code=500, detail="Notification AI service failed to parse AI provider's response.")
+        except HTTPException: # Re-raise HTTPExceptions
+            raise
         except Exception as e:
             logger.error(f"Exception during AI notification optimization for user {user_id}: {e}")
-            # Check if the exception from make_request already includes status details
-            if "AI service request failed with status" in str(e) or "AI service rate limited" in str(e):
-                 # Attempt to parse out a status code if possible, otherwise default
-                status_code = 503 # Service Unavailable as a default for upstream errors
-                try:
-                    if "status" in str(e): # Very basic parsing
-                        parts = str(e).split("status ")
-                        if len(parts) > 1:
-                             status_code = int(parts[1].split(".")[0]) # e.g. "status 429. Details: ..."
-                except:
-                    pass # Keep default status_code
-                raise HTTPException(status_code=status_code, detail=f"AI service error: {e}")
-
-            raise HTTPException(status_code=503, detail=f"Failed to optimize notifications via AI: {e}")
+            raise HTTPException(status_code=503, detail=f"Failed to optimize notifications via AI: {str(e)}")
