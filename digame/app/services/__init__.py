@@ -32,6 +32,12 @@ __all__ = [
     "check_activity_for_anomalies",        # Added new function
     "detect_frequency_anomalies_for_user", # Added new function
     "writing_assistance_service",
+    "AIIntegrationService", # Added new service
+    "NotificationService", # Added NotificationService
+    "VoiceNLUService", # Added VoiceNLUService
 ]
 
 from . import writing_assistance_service
+from .ai_integration_service import AIIntegrationService # Added import
+from .notification_service import NotificationService # Added import
+from .voice_nlu_service import VoiceNLUService # Added import

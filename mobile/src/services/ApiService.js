@@ -192,6 +192,92 @@ class ApiService {
       throw error;
     }
   }
+
+  // API Key Settings
+  static async getApiKeys() {
+    try {
+      const headers = await this.getAuthHeaders();
+      const response = await fetch(`${API_BASE_URL}/settings/api-keys`, {
+        method: 'GET',
+        headers,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error('Get API keys raw error:', errorData);
+        throw new Error(`Failed to get API keys. Status: ${response.status}. ${errorData}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Get API keys error:', error);
+      throw error;
+    }
+  }
+
+  static async updateApiKeys(data) {
+    try {
+      const headers = await this.getAuthHeaders();
+      const response = await fetch(`${API_BASE_URL}/settings/api-keys`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error('Update API keys raw error:', errorData);
+        throw new Error(`Failed to update API keys. Status: ${response.status}. ${errorData}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Update API keys error:', error);
+      throw error;
+    }
+  }
+
+  // AI Notification Optimization
+  static async optimizeNotificationsAI(data) {
+    try {
+      const headers = await this.getAuthHeaders();
+      const response = await fetch(`${API_BASE_URL}/notifications/optimize-ai`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error('Optimize notifications AI raw error:', errorData);
+        throw new Error(`Failed to optimize notifications via AI. Status: ${response.status}. ${errorData}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Optimize notifications AI error:', error);
+      throw error;
+    }
+  }
+
+  // Voice NLU Interpretation
+  static async interpretVoice(data) {
+    try {
+      const headers = await this.getAuthHeaders();
+      const response = await fetch(`${API_BASE_URL}/voice/interpret`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error('Interpret voice raw error:', errorData);
+        throw new Error(`Failed to interpret voice command. Status: ${response.status}. ${errorData}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Interpret voice error:', error);
+      throw error;
+    }
+  }
 }
 
 export { ApiService };

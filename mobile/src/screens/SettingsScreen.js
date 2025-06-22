@@ -8,9 +8,11 @@ import {
   Alert,
   ScrollView,
   ActivityIndicator,
+  TextInput, // Added TextInput
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import biometricService from '../services/biometricService';
+import ApiService from '../services/ApiService'; // Added ApiService
 import notificationService from '../services/notificationService';
 import offlineService from '../services/offlineService';
 
@@ -22,12 +24,18 @@ export default function SettingsScreen({ navigation }) {
   const [networkStatus, setNetworkStatus] = useState({ isOnline: true, syncQueueLength: 0 });
   const [loading, setLoading] = useState(true);
 
+  // New state variables for API keys
+  const [notificationApiKey, setNotificationApiKey] = useState('');
+  const [nluApiKey, setNluApiKey] = useState('');
+  const [apiKeysLoading, setApiKeysLoading] = useState(false);
+
   useEffect(() => {
     initializeSettings();
     setupNetworkListener();
   }, []);
 
   const initializeSettings = async () => {
+    setLoading(true); // Moved setLoading here to cover API key loading
     try {
       // Check biometric availability and status
       const biometricStatus = await biometricService.initialize();
@@ -43,10 +51,60 @@ export default function SettingsScreen({ navigation }) {
       setNetworkStatus(status);
       setOfflineMode(!status.isOnline);
 
+      // Load API keys
+      await loadApiKeys();
+
     } catch (error) {
       console.error('Failed to initialize settings:', error);
+      Alert.alert('Error', 'Failed to initialize all settings.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadApiKeys = async () => {
+    setApiKeysLoading(true);
+    try {
+      const response = await ApiService.getApiKeys();
+      if (response && response.data && response.data.api_keys) {
+        setNotificationApiKey(response.data.api_keys.notification_ai_provider_key || '');
+        setNluApiKey(response.data.api_keys.nlu_service_provider_key || '');
+      } else {
+        setNotificationApiKey('');
+        setNluApiKey('');
+      }
+    } catch (error) {
+      console.error('Failed to load API keys:', error);
+      Alert.alert('Error', 'Failed to load API keys.');
+      setNotificationApiKey(''); // Reset on error
+      setNluApiKey(''); // Reset on error
+    } finally {
+      setApiKeysLoading(false);
+    }
+  };
+
+  const handleSaveApiKeys = async () => {
+    setApiKeysLoading(true);
+    const keysToSave = {};
+    if (notificationApiKey) keysToSave.notification_ai_provider_key = notificationApiKey;
+    if (nluApiKey) keysToSave.nlu_service_provider_key = nluApiKey;
+
+    // If a key is cleared, we want to save it as an empty string to remove it.
+    // The backend should handle empty strings appropriately (e.g., delete the key).
+    if (!notificationApiKey) keysToSave.notification_ai_provider_key = "";
+    if (!nluApiKey) keysToSave.nlu_service_provider_key = "";
+
+
+    const payload = { api_keys: keysToSave };
+
+    try {
+      await ApiService.updateApiKeys(payload);
+      Alert.alert('Success', 'API keys saved successfully.');
+    } catch (error) {
+      console.error('Failed to save API keys:', error);
+      Alert.alert('Error', 'Failed to save API keys. Please check your connection and try again.');
+    } finally {
+      setApiKeysLoading(false);
     }
   };
 
@@ -292,6 +350,48 @@ export default function SettingsScreen({ navigation }) {
             </View>
           </View>
         </View>
+
+        {/* API Keys Section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>AI Service Keys</Text>
+
+          <View style={styles.apiKeyEntry}>
+            <Text style={styles.inputLabel}>Notification AI Key</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter Notification AI Key"
+              value={notificationApiKey}
+              onChangeText={setNotificationApiKey}
+              secureTextEntry // Hide API key
+              autoCapitalize="none"
+            />
+          </View>
+
+          <View style={styles.apiKeyEntry}>
+            <Text style={styles.inputLabel}>NLU Service Key</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter NLU Service Key"
+              value={nluApiKey}
+              onChangeText={setNluApiKey}
+              secureTextEntry // Hide API key
+              autoCapitalize="none"
+            />
+          </View>
+
+          <TouchableOpacity
+            style={[styles.saveButton, apiKeysLoading && styles.buttonDisabled]}
+            onPress={handleSaveApiKeys}
+            disabled={apiKeysLoading}
+          >
+            {apiKeysLoading ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <Text style={styles.saveButtonText}>Save API Keys</Text>
+            )}
+          </TouchableOpacity>
+        </View>
+
       </View>
     </ScrollView>
   );
@@ -325,6 +425,59 @@ const styles = StyleSheet.create({
     color: '#333',
     marginBottom: 15,
     marginLeft: 5,
+  },
+  apiKeySectionTitle: { // Can be same as sectionTitle or more specific
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 15,
+    marginLeft: 5,
+  },
+  apiKeyEntry: {
+    marginBottom: 15,
+    backgroundColor: '#fff',
+    padding: 16,
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 3,
+  },
+  inputLabel: {
+    fontSize: 14,
+    color: '#555',
+    marginBottom: 8,
+    fontWeight: '500',
+  },
+  input: {
+    height: 48,
+    borderColor: '#ddd',
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    backgroundColor: '#fdfdfd',
+    fontSize: 16,
+  },
+  saveButton: {
+    backgroundColor: '#007AFF',
+    paddingVertical: 14,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginTop: 10,
+    shadowColor: '#007AFF',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 4,
+  },
+  buttonDisabled: {
+    backgroundColor: '#a0cfff', // Lighter shade when disabled
+  },
+  saveButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
   settingItem: {
     flexDirection: 'row',

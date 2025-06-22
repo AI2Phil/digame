@@ -27,6 +27,7 @@ from .routers import workflow_automation_router # Import the workflow automation
 from .routers import integration_router # Import the integration router
 from .routers import tenant_router # Import the tenant router
 from .routers import notification_router # Import the notification router
+from .routers import voice_router # Import the voice NLU router
 
 # Import authentication components
 from .auth.middleware import configure_auth_middleware
@@ -162,6 +163,7 @@ app.include_router(workflow_automation_router.router, tags=["Workflow Automation
 app.include_router(integration_router.router, tags=["Integrations"])
 app.include_router(tenant_router.router, tags=["Tenant Management"])
 app.include_router(notification_router.router, prefix="/api", tags=["Notifications"]) # Add notification router
+app.include_router(voice_router.router) # Add voice NLU router, prefix is in the router file
 
 # Startup and shutdown events
 @app.on_event("startup")
