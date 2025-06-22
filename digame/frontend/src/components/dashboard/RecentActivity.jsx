@@ -46,7 +46,7 @@ const RecentActivity = ({ userId = 1 }) => {
       try {
         setLoading(true);
         setError(null);
-        const data = await dashboardService.getRecentActivities(userId);
+        const data = await enhancedApiService.getRecentActivities(userId);
         if (Array.isArray(data)) {
           setActivities(data);
         } else {
