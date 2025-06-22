@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from digame.app.auth.auth_dependencies import get_current_active_user
-from digame.app.models.user import User as UserModel
-from digame.app.services.communication_style_service import CommunicationStyleService, get_communication_style_service
-from digame.app.schemas import communication_style_schemas as schemas
+from ..auth.auth_dependencies import get_current_active_user
+from ..models.user import User as UserModel
+from ..services.communication_style_service import CommunicationStyleService, get_communication_style_service
+from ..schemas import communication_style_schemas as schemas
 
 router = APIRouter(
     prefix="/ai/communication-style",

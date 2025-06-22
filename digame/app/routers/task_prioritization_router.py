@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from typing import List
 
-from digame.app.auth.auth_dependencies import get_current_active_user
-from digame.app.models.user import User as UserModel
-from digame.app.services.task_prioritization_service import TaskPrioritizationService, get_task_prioritization_service
-from digame.app.schemas import task_prioritization_schemas as schemas
+from ..auth.auth_dependencies import get_current_active_user
+from ..models.user import User as UserModel
+from ..services.task_prioritization_service import TaskPrioritizationService, get_task_prioritization_service
+from ..schemas import task_prioritization_schemas as schemas
 
 router = APIRouter(
     prefix="/ai/tasks/prioritization",

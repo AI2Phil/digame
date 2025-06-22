@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from typing import List # Not strictly needed here but often useful in routers
 
-from digame.app.auth.auth_dependencies import get_current_active_user
-from digame.app.models.user import User as UserModel
-from digame.app.services.email_analysis_service import EmailAnalysisService, get_email_analysis_service
-from digame.app.schemas import email_analysis_schemas as schemas
+from ..auth.auth_dependencies import get_current_active_user
+from ..models.user import User as UserModel
+from ..services.email_analysis_service import EmailAnalysisService, get_email_analysis_service
+from ..schemas import email_analysis_schemas as schemas
 
 router = APIRouter(
     prefix="/ai/email-analysis",

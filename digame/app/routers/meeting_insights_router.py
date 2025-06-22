@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from digame.app.auth.auth_dependencies import get_current_active_user
-from digame.app.models.user import User as UserModel
-from digame.app.services.meeting_insights_service import MeetingInsightsService, get_meeting_insights_service
-from digame.app.schemas import meeting_insights_schemas as schemas
+from ..auth.auth_dependencies import get_current_active_user
+from ..models.user import User as UserModel
+from ..services.meeting_insights_service import MeetingInsightsService, get_meeting_insights_service
+from ..schemas import meeting_insights_schemas as schemas
 
 router = APIRouter(
     prefix="/ai/meeting-insights",

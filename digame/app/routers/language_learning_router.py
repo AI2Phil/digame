@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from digame.app.auth.auth_dependencies import get_current_active_user
-from digame.app.models.user import User as UserModel
-from digame.app.services.language_learning_service import LanguageLearningService, get_language_learning_service
-from digame.app.schemas import language_learning_schemas as schemas
+from ..auth.auth_dependencies import get_current_active_user
+from ..models.user import User as UserModel
+from ..services.language_learning_service import LanguageLearningService, get_language_learning_service
+from ..schemas import language_learning_schemas as schemas
 
 router = APIRouter(
     prefix="/ai/language",
