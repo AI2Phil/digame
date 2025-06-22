@@ -1,114 +1,160 @@
 import React, { useState, useEffect } from 'react';
+import dashboardService from '../../services/dashboardService';
 
 const ActivityBreakdown = ({ userId = 1 }) => {
-  const [breakdownData, setBreakdownData] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [activityData, setActivityData] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Predefined colors for some activity types for consistency
-  const activityColorMap = {
-    'Work': 'bg-blue-500',
-    'Meeting': 'bg-green-500',
-    'Break': 'bg-yellow-500',
-    'Communication': 'bg-indigo-500',
-    'Learning': 'bg-purple-500',
-    'Research': 'bg-pink-500',
-    'default': 'bg-gray-400'
+  const categoryIcons = {
+    'Development': '💻',
+    'Meetings': '📞',
+    'Learning': '📚',
+    'Planning': '📋',
+    'Documentation': '📝',
+    'Testing': '🧪',
+    'Break': '☕',
+    'default': '📊'
   };
 
-  const getActivityColor = (activityType) => {
-    return activityColorMap[activityType] || activityColorMap['default'];
+  const getCategoryIcon = (categoryName) => {
+    return categoryIcons[categoryName] || categoryIcons['default'];
   };
 
   useEffect(() => {
-    const fetchActivityBreakdown = async () => {
-      setIsLoading(true);
-      setError(null);
+    const fetchActivityData = async () => {
       try {
-        const response = await fetch(\`/behavior/patterns?user_id=\${userId}\`);
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: \${response.status}`);
-        }
-        const data = await response.json();
-
-        if (!Array.isArray(data)) {
-          console.error("Fetched data is not an array:", data);
-          throw new Error("Invalid data format from API.");
-        }
-
-        // Process data to get counts per activity_type
-        const counts = data.reduce((acc, activity) => {
-          const type = activity.activity_type || 'Unknown';
-          acc[type] = (acc[type] || 0) + 1;
-          return acc;
-        }, {});
-
-        const totalActivities = data.length;
-
-        const formattedBreakdown = Object.entries(counts).map(([type, count]) => ({
-          type,
-          count,
-          percentage: totalActivities > 0 ? ((count / totalActivities) * 100).toFixed(1) : 0,
-          color: getActivityColor(type)
-        })).sort((a,b) => b.count - a.count); // Sort by count descending
-
-        setBreakdownData(formattedBreakdown);
-
-      } catch (e) {
-        console.error("Failed to fetch or process activity breakdown:", e);
-        setError(e.message);
+        setLoading(true);
+        setError(null);
+        const data = await dashboardService.getActivityBreakdown(userId);
+        setActivityData(data);
+      } catch (err) {
+        console.error('Error fetching activity data:', err);
+        setError('Failed to load activity breakdown. Please try again later.');
       } finally {
-        setIsLoading(false);
+        setLoading(false);
       }
     };
 
     if (userId) {
-      fetchActivityBreakdown();
+      fetchActivityData();
     }
   }, [userId]);
 
-  if (isLoading) {
+  if (loading) {
     return (
-      <div className="bg-white shadow rounded-lg p-4">
-        <h3 className="text-lg font-semibold mb-3 text-gray-700">Activity Breakdown</h3>
-        <p className="text-gray-500">Loading breakdown...</p>
+      <div className="card">
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-lg font-semibold text-gray-900">Activity Breakdown</h3>
+          <span className="text-sm text-gray-500">Loading...</span>
+        </div>
+        <div className="animate-pulse">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="mb-4">
+              <div className="h-4 bg-gray-200 rounded w-3/4 mb-1"></div>
+              <div className="h-2 bg-gray-200 rounded"></div>
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="bg-white shadow rounded-lg p-4">
-        <h3 className="text-lg font-semibold mb-3 text-gray-700">Activity Breakdown</h3>
-        <p className="text-sm text-red-500">Could not load activity breakdown. (`${error}`)</p>
+      <div className="card">
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-lg font-semibold text-gray-900">Activity Breakdown</h3>
+        </div>
+        <div className="text-center py-12">
+          <div className="text-4xl mb-4">😟</div>
+          <p className="text-red-600 mb-2 font-medium">Error</p>
+          <p className="text-sm text-gray-500">{error}</p>
+        </div>
       </div>
     );
   }
 
+  if (!activityData || !activityData.categories || activityData.categories.length === 0) {
+    return (
+      <div className="card">
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-lg font-semibold text-gray-900">Activity Breakdown</h3>
+        </div>
+        <div className="text-center py-12">
+          <div className="text-4xl mb-4">📊</div>
+          <p className="text-gray-600 mb-2 font-medium">No Activity Data Available</p>
+          <p className="text-sm text-gray-500">Start tracking your activities to see the breakdown here.</p>
+        </div>
+      </div>
+    );
+  }
+
+  const { categories = [], totalHours, efficiency, mostProductiveTime } = activityData || {};
+
   return (
-    <div className="bg-white shadow rounded-lg p-4">
-      <h3 className="text-lg font-semibold mb-3 text-gray-700">Activity Breakdown</h3>
-      {breakdownData.length === 0 ? (
-        <p className="text-sm text-gray-500">No activity data to display breakdown.</p>
-      ) : (
-        <div className="space-y-3">
-          {breakdownData.map((item) => (
-            <div key={item.type}>
-              <div className="flex justify-between mb-1">
-                <span className="text-sm font-medium text-gray-700">{item.type}</span>
-                <span className="text-sm font-medium text-gray-500">{item.count} activities ({item.percentage}%)</span>
+    <div className="card">
+      <div className="flex items-center justify-between mb-6">
+        <h3 className="text-lg font-semibold text-gray-900">Activity Breakdown</h3>
+        <span className="text-sm text-gray-500">Last 7 days</span>
+      </div>
+
+      {/* Activity Categories */}
+      <div className="space-y-4 mb-6">
+        {categories.map((category, index) => (
+          <div key={index} className="activity-item">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center space-x-3">
+                <span className="text-lg">{getCategoryIcon(category.name)}</span>
+                <span className="text-sm font-medium text-gray-900">{category.name}</span>
               </div>
-              <div className="w-full bg-gray-200 rounded-full h-2.5">
-                <div
-                  className={`h-2.5 rounded-full \${item.color}`}
-                  style={{ width: \`\${item.percentage}%\` }}
-                ></div>
-              </div>
+              <span className="text-sm font-semibold text-gray-900">{category.value}%</span>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-2">
+              <div
+                className="h-2 rounded-full transition-all duration-500"
+                style={{
+                  width: `${category.value}%`,
+                  backgroundColor: category.color
+                }}
+              ></div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Summary Stats */}
+      <div className="border-t border-gray-200 pt-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="text-center">
+            <div className="text-2xl font-bold text-gray-900">{totalHours !== undefined ? `${totalHours}h` : 'N/A'}</div>
+            <div className="text-xs text-gray-600">Total Active</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-bold text-green-600">{efficiency !== undefined ? `${efficiency}%` : 'N/A'}</div>
+            <div className="text-xs text-gray-600">Efficiency</div>
+          </div>
+          <div className="text-center">
+            <div className="text-xs font-medium text-gray-900">Peak Time</div>
+            <div className="text-xs text-gray-600">{mostProductiveTime || 'N/A'}</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Interactive Legend */}
+      <div className="mt-6 pt-4 border-t border-gray-200">
+        <div className="flex flex-wrap gap-3">
+          {categories.map((category, index) => (
+            <div key={index} className="flex items-center space-x-2 cursor-pointer hover:opacity-75 transition-opacity">
+              <div
+                className="w-3 h-3 rounded-full"
+                style={{ backgroundColor: category.color }}
+              ></div>
+              <span className="text-xs text-gray-600">{category.name}</span>
             </div>
           ))}
         </div>
-      )}
+      </div>
     </div>
   );
 };

@@ -9,8 +9,8 @@ import { Button } from '../ui/Button';
 import { Progress } from '../ui/Progress';
 import { Badge } from '../ui/Badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/Tabs';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/Select';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/Table';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../ui/Select';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../ui/Table';
 
 const SystemAnalyticsSection = ({ stats: systemStats }) => { // Renamed prop for clarity if it comes from a general 'stats' object
   const [timeRange, setTimeRange] = useState('24h');
@@ -111,18 +111,18 @@ const SystemAnalyticsSection = ({ stats: systemStats }) => { // Renamed prop for
                 Monitor system performance, API usage, and error tracking.
               </CardDescription>
             </div>
-            <div className="flex flex-col sm:flex-row items-center gap-2 mt-4 sm:mt-0">
-              <Select value={timeRange} onValueChange={setTimeRange}>
-                <SelectTrigger className="w-full sm:w-[180px] dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600">
-                  <SelectValue placeholder="Select time range" />
-                </SelectTrigger>
-                <SelectContent className="dark:bg-gray-800 dark:text-gray-200">
-                  <SelectItem value="1h">Last Hour</SelectItem>
-                  <SelectItem value="24h">Last 24 Hours</SelectItem>
-                  <SelectItem value="7d">Last 7 Days</SelectItem>
-                  <SelectItem value="30d">Last 30 Days</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="flex items-center gap-2">
+            <Select value={timeRange} onValueChange={setTimeRange}>
+              <SelectTrigger className="px-3 py-2 border border-gray-300 rounded-md text-sm w-[180px]">
+                <SelectValue placeholder="Select time range" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="1h">Last Hour</SelectItem>
+                <SelectItem value="24h">Last 24 Hours</SelectItem>
+                <SelectItem value="7d">Last 7 Days</SelectItem>
+                <SelectItem value="30d">Last 30 Days</SelectItem>
+              </SelectContent>
+            </Select>
               <Button
                 variant="outline"
                 size="sm"
@@ -337,40 +337,38 @@ const ApiEndpointsTable = ({ endpoints }) => (
       <CardDescription className="dark:text-gray-400">Breakdown of requests, average time, and errors per endpoint.</CardDescription>
     </CardHeader>
     <CardContent>
-      <div className="overflow-x-auto">
-        <Table>
-          <TableHeader className="dark:bg-gray-700/50">
-            <TableRow className="dark:border-gray-600">
-              <TableHead className="p-3 font-medium dark:text-gray-300">Endpoint</TableHead>
-              <TableHead className="p-3 font-medium dark:text-gray-300">Requests</TableHead>
-              <TableHead className="p-3 font-medium dark:text-gray-300">Avg Time (ms)</TableHead>
-              <TableHead className="p-3 font-medium dark:text-gray-300">Errors</TableHead>
-              <TableHead className="p-3 font-medium dark:text-gray-300">Status</TableHead>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Endpoint</TableHead>
+            <TableHead>Requests</TableHead>
+            <TableHead>Avg Time</TableHead>
+            <TableHead>Errors</TableHead>
+            <TableHead>Status</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {endpoints.map((endpoint, index) => (
+            <TableRow key={index}>
+              <TableCell className="font-mono text-sm">{endpoint.endpoint}</TableCell>
+              <TableCell>{endpoint.requests.toLocaleString()}</TableCell>
+              <TableCell>{endpoint.avgTime}ms</TableCell>
+              <TableCell>
+                {endpoint.errors > 0 ? (
+                  <span className="text-red-600">{endpoint.errors}</span>
+                ) : (
+                  <span className="text-green-600">0</span>
+                )}
+              </TableCell>
+              <TableCell>
+                <Badge variant={endpoint.errors > 0 ? 'destructive' : 'success'}>
+                  {endpoint.errors > 0 ? 'Issues' : 'Healthy'}
+                </Badge>
+              </TableCell>
             </TableRow>
-          </TableHeader>
-          <TableBody>
-            {endpoints.map((endpoint, index) => (
-              <TableRow key={index} className="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/30">
-                <TableCell className="p-3 font-mono text-xs sm:text-sm dark:text-gray-200">{endpoint.endpoint}</TableCell>
-                <TableCell className="p-3 dark:text-gray-300">{endpoint.requests.toLocaleString()}</TableCell>
-                <TableCell className="p-3 dark:text-gray-300">{endpoint.avgTime}</TableCell>
-                <TableCell className="p-3">
-                  {endpoint.errors > 0 ? (
-                    <span className="text-red-500 dark:text-red-400">{endpoint.errors}</span>
-                  ) : (
-                    <span className="text-green-500 dark:text-green-400">0</span>
-                  )}
-                </TableCell>
-                <TableCell className="p-3">
-                  <Badge variant={endpoint.errors > 0 ? 'destructive' : 'success'} className="text-xs">
-                    {endpoint.errors > 0 ? 'Issues' : 'Healthy'}
-                  </Badge>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+          ))}
+        </TableBody>
+      </Table>
     </CardContent>
   </Card>
 );

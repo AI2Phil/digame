@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import OnboardingWizard from '../components/onboarding/OnboardingWizard';
 import onboardingService from '../services/onboardingService';
 import { Toast } from '../components/ui/Toast';
+import { Button } from '../components/ui/Button';
+import { Alert, AlertDescription } from '../components/ui/Alert';
 
 const OnboardingPage = () => {
   const navigate = useNavigate();
@@ -121,21 +123,22 @@ const OnboardingPage = () => {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
         <div className="text-center max-w-md mx-auto p-6">
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-            {error}
-          </div>
-          <button
+          <Alert variant="destructive" className="mb-4">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+          <Button
             onClick={() => window.location.reload()}
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 mr-2"
+            variant="default"
+            className="mr-2"
           >
             Try Again
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={handleSkipOnboarding}
-            className="bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400"
+            variant="secondary"
           >
             Skip Setup
-          </button>
+          </Button>
         </div>
       </div>
     );
@@ -150,12 +153,13 @@ const OnboardingPage = () => {
       
       {/* Skip option */}
       <div className="fixed bottom-4 right-4">
-        <button
+        <Button
+          variant="link"
           onClick={handleSkipOnboarding}
           className="text-sm text-gray-500 hover:text-gray-700 underline"
         >
           Skip setup for now
-        </button>
+        </Button>
       </div>
     </div>
   );

@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../co
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Label } from '../components/ui/Label';
+import { Textarea } from '../components/ui/Textarea'; // Added Textarea import
 import { Switch } from '../components/ui/Switch';
 import { Select } from '../components/ui/Select';
 import { Slider } from '../components/ui/Slider';
@@ -17,6 +18,7 @@ import { Badge } from '../components/ui/Badge';
 import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/Avatar';
 import { Progress } from '../components/ui/Progress';
 import { useToast } from '../components/ui/Toast';
+import { ToggleGroup, ToggleGroupItem } from '../components/ui/ToggleGroup';
 
 const SettingsPage = () => {
   const [settings, setSettings] = useState({
@@ -340,12 +342,12 @@ const SettingsPage = () => {
               {/* Bio */}
               <div className="space-y-2">
                 <Label htmlFor="bio">Bio</Label>
-                <textarea
+                <Textarea
                   id="bio"
-                  className="w-full min-h-[100px] px-3 py-2 border border-input rounded-md"
                   value={settings.profile.bio}
                   onChange={(e) => updateSetting('profile', 'bio', e.target.value)}
                   placeholder="Tell us about yourself..."
+                  className="min-h-[100px]" // Ensure custom styling like min-height is preserved or adapted
                 />
               </div>
             </CardContent>
@@ -568,21 +570,29 @@ const SettingsPage = () => {
               {/* Theme Selection */}
               <div className="space-y-2">
                 <Label>Theme</Label>
-                <div className="grid grid-cols-3 gap-3">
-                  {['light', 'dark', 'system'].map((theme) => (
-                    <Button
-                      key={theme}
-                      variant={settings.appearance.theme === theme ? 'default' : 'outline'}
-                      onClick={() => updateSetting('appearance', 'theme', theme)}
-                      className="flex items-center space-x-2"
-                    >
-                      {theme === 'light' && <Sun className="h-4 w-4" />}
-                      {theme === 'dark' && <Moon className="h-4 w-4" />}
-                      {theme === 'system' && <Eye className="h-4 w-4" />}
-                      <span className="capitalize">{theme}</span>
-                    </Button>
-                  ))}
-                </div>
+                <ToggleGroup
+                  type="single"
+                  value={settings.appearance.theme}
+                  onValueChange={(value) => {
+                    if (value) {
+                      updateSetting('appearance', 'theme', value);
+                    }
+                  }}
+                  className="grid grid-cols-3 gap-3"
+                >
+                  <ToggleGroupItem value="light" aria-label="Light theme" className="flex items-center space-x-2 w-full justify-center data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
+                    <Sun className="h-4 w-4" />
+                    <span>Light</span>
+                  </ToggleGroupItem>
+                  <ToggleGroupItem value="dark" aria-label="Dark theme" className="flex items-center space-x-2 w-full justify-center data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
+                    <Moon className="h-4 w-4" />
+                    <span>Dark</span>
+                  </ToggleGroupItem>
+                  <ToggleGroupItem value="system" aria-label="System theme" className="flex items-center space-x-2 w-full justify-center data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
+                    <Eye className="h-4 w-4" />
+                    <span>System</span>
+                  </ToggleGroupItem>
+                </ToggleGroup>
               </div>
 
               <Separator />

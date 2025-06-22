@@ -8,7 +8,7 @@ import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Label } from '../ui/Label';
 import { Switch } from '../ui/Switch';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/Select';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../ui/Select';
 import { Progress } from '../ui/Progress';
 import { Badge } from '../ui/Badge';
 import { LayoutDashboard, ListChecks, Lightbulb } from 'lucide-react'; // Added for FeaturesStep
@@ -575,6 +575,7 @@ const GoalsStep = ({ data, updateData }) => {
               key={level}
               variant={data.goals.productivity_target === level ? 'default' : 'outline'}
               onClick={() => updateGoal('productivity_target', level)}
+<<<<<<< HEAD
               className={`capitalize w-full
                           ${data.goals.productivity_target === level
                             ? 'bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600'

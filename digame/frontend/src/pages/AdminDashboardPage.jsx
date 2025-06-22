@@ -161,6 +161,7 @@ const AdminDashboardPage = () => {
                 setSelectedUser(user);
                 setShowUserDialog(true);
               }}
+              isLoading={loading}
             />
           </TabsContent>
 

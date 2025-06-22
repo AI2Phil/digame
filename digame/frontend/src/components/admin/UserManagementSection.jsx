@@ -1,32 +1,29 @@
 import React, { useState } from 'react';
 import { 
-  Search, Filter, Download, MoreHorizontal, ChevronDown, ChevronUp, ArrowUpDown,
+  Search, Filter, Download, MoreHorizontal, 
   UserCheck, UserX, Shield, Key, Mail, 
-  Calendar, Activity, Edit, Trash2, Eye
+  Calendar, Activity, Edit, Trash2
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
-import {
-  Table, TableBody, TableCell, TableHead,
-  TableHeader, TableRow
-} from '../ui/Table';
-import { Avatar, AvatarFallback, AvatarImage } from '../ui/Avatar';
+import { Table } from '../ui/Table'; // Keep this, though not refactoring table structure itself here
+import { Avatar } from '../ui/Avatar';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../ui/Select';
+import { Checkbox } from '../ui/Checkbox';
 import { Badge } from '../ui/Badge';
-import { Checkbox } from '../ui/Checkbox'; // Assuming Checkbox component exists
-import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem,
-  DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger
-} from '../ui/DropdownMenu'; // For actions
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/Select';
-// import { Toast } from '../ui/Toast'; // Assuming Toast is handled globally or via a context
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../ui/Dialog';
+import { Toast } from '../ui/Toast';
+import { Skeleton } from '../ui/Skeleton';
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '../ui/Tooltip';
 
 const UserManagementSection = ({ 
   users, 
   searchTerm, 
   setSearchTerm, 
   onUserAction, 
-  onUserSelect 
+  onUserSelect,
+  isLoading
 }) => {
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [filterRole, setFilterRole] = useState('all');
@@ -102,9 +99,10 @@ const UserManagementSection = ({
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header and Controls */}
-      <Card>
+    <TooltipProvider delayDuration={300}>
+      <div className="space-y-6">
+        {/* Header and Controls */}
+        <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
@@ -142,201 +140,247 @@ const UserManagementSection = ({
             </div>
             <div className="flex gap-2">
               <Select value={filterRole} onValueChange={setFilterRole}>
-                <SelectTrigger className="w-full sm:w-auto text-xs sm:text-sm dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600">
+                <SelectTrigger className="px-3 py-2 border border-gray-300 rounded-md text-sm w-[180px]">
                   <SelectValue placeholder="Filter by role" />
                 </SelectTrigger>
-                <SelectContent className="dark:bg-gray-800 dark:text-gray-200">
+                <SelectContent>
                   <SelectItem value="all">All Roles</SelectItem>
                   <SelectItem value="admin">Admin</SelectItem>
                   <SelectItem value="manager">Manager</SelectItem>
                   <SelectItem value="user">User</SelectItem>
+                  <SelectItem value="viewer">Viewer</SelectItem>
                 </SelectContent>
               </Select>
               <Select value={filterStatus} onValueChange={setFilterStatus}>
-                <SelectTrigger className="w-full sm:w-auto text-xs sm:text-sm dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600">
+                <SelectTrigger className="px-3 py-2 border border-gray-300 rounded-md text-sm w-[180px]">
                   <SelectValue placeholder="Filter by status" />
                 </SelectTrigger>
-                <SelectContent className="dark:bg-gray-800 dark:text-gray-200">
+                <SelectContent>
                   <SelectItem value="all">All Status</SelectItem>
                   <SelectItem value="active">Active</SelectItem>
                   <SelectItem value="inactive">Inactive</SelectItem>
                 </SelectContent>
               </Select>
-              {/* <Button variant="outline" size="sm" className="hidden sm:flex">
-                <Filter className="w-4 h-4 mr-1 sm:mr-2" />
-                <span className="hidden sm:inline">Filters</span>
-              </Button> */}
+              <Button variant="outline" size="sm">
+                <Filter className="w-4 h-4" />
+              </Button>
             </div>
           </div>
 
           {/* Bulk Actions */}
           {selectedUsers.length > 0 && (
-            <div className="flex flex-col sm:flex-row items-center gap-2 mb-4 p-3 bg-blue-50 dark:bg-blue-900/30 rounded-lg border border-blue-200 dark:border-blue-700">
-              <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
+            <div className="flex items-center gap-2 mb-4 p-3 bg-blue-50 rounded-lg">
+              <span className="text-sm font-medium">
                 {selectedUsers.length} user(s) selected
               </span>
-              <div className="flex gap-2 ml-0 sm:ml-auto mt-2 sm:mt-0">
+              <div className="flex gap-2 ml-auto">
                 <Button 
                   size="sm" 
                   variant="outline"
-                  className="dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700"
                   onClick={() => handleBulkAction('activate')}
                 >
-                  <UserCheck className="w-3 h-3 mr-1.5" /> Activate
+                  Activate
                 </Button>
                 <Button 
                   size="sm" 
                   variant="outline"
-                  className="dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700"
                   onClick={() => handleBulkAction('deactivate')}
                 >
-                  <UserX className="w-3 h-3 mr-1.5" /> Deactivate
+                  Deactivate
                 </Button>
                 <Button 
                   size="sm" 
                   variant="destructive"
                   onClick={() => handleBulkAction('delete')}
                 >
-                  <Trash2 className="w-3 h-3 mr-1.5" /> Delete
+                  Delete
                 </Button>
               </div>
             </div>
           )}
 
           {/* Users Table */}
-          <div className="border rounded-lg overflow-x-auto dark:border-gray-700">
-            <Table>
-              <TableHeader className="bg-gray-50 dark:bg-gray-800">
-                <TableRow>
-                  <TableHead className="w-10 sm:w-12 p-2 sm:p-4">
-                    <Checkbox
-                      checked={selectedUsers.length === filteredUsers.length && filteredUsers.length > 0}
-                      onCheckedChange={handleSelectAll}
-                      aria-label="Select all users"
-                      className="dark:border-gray-600 data-[state=checked]:bg-blue-600 dark:data-[state=checked]:bg-blue-500"
-                    />
-                  </TableHead>
-                  <TableHead className="p-2 sm:p-4 font-medium text-gray-600 dark:text-gray-300 min-w-[200px]">User</TableHead>
-                  <TableHead className="p-2 sm:p-4 font-medium text-gray-600 dark:text-gray-300">Role</TableHead>
-                  <TableHead className="p-2 sm:p-4 font-medium text-gray-600 dark:text-gray-300">Status</TableHead>
-                  <TableHead className="p-2 sm:p-4 font-medium text-gray-600 dark:text-gray-300 min-w-[150px]">Last Login</TableHead>
-                  <TableHead className="p-2 sm:p-4 font-medium text-gray-600 dark:text-gray-300 min-w-[150px]">Created</TableHead>
-                  <TableHead className="p-2 sm:p-4 font-medium text-gray-600 dark:text-gray-300 text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredUsers.map((user) => (
-                  <TableRow key={user.id} className="border-t dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                    <TableCell className="p-2 sm:p-4">
-                      <Checkbox
-                        checked={selectedUsers.includes(user.id)}
-                        onCheckedChange={() => handleSelectUser(user.id)}
-                        aria-label={`Select user ${user.username}`}
-                        className="dark:border-gray-600 data-[state=checked]:bg-blue-600 dark:data-[state=checked]:bg-blue-500"
-                      />
-                    </TableCell>
-                    <TableCell className="p-2 sm:p-4">
-                      <div className="flex items-center gap-3">
-                        <Avatar className="w-8 h-8 sm:w-10 sm:h-10">
-                          <AvatarImage src={user.avatar} alt={user.username} />
-                          <AvatarFallback className="dark:bg-gray-600 dark:text-gray-300">
-                            {user.username?.charAt(0).toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <p className="font-medium text-gray-900 dark:text-gray-100 text-sm">{user.username}</p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">{user.email}</p>
+          <div className="border rounded-lg overflow-hidden">
+            {isLoading ? (
+              <Table>
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="w-12 p-4"><Skeleton className="h-5 w-5 rounded" /></th>
+                    <th className="text-left p-4 font-medium"><Skeleton className="h-4 w-32" /></th>
+                    <th className="text-left p-4 font-medium"><Skeleton className="h-4 w-20" /></th>
+                    <th className="text-left p-4 font-medium"><Skeleton className="h-4 w-24" /></th>
+                    <th className="text-left p-4 font-medium"><Skeleton className="h-4 w-28" /></th>
+                    <th className="text-left p-4 font-medium"><Skeleton className="h-4 w-28" /></th>
+                    <th className="text-left p-4 font-medium"><Skeleton className="h-4 w-32" /></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {[...Array(5)].map((_, i) => (
+                    <tr key={i} className="border-t">
+                      <td className="p-4"><Skeleton className="h-5 w-5 rounded" /></td>
+                      <td className="p-4">
+                        <div className="flex items-center gap-3">
+                          <Skeleton className="h-10 w-10 rounded-full" />
+                          <div>
+                            <Skeleton className="h-4 w-24 mb-1" />
+                            <Skeleton className="h-3 w-32" />
+                          </div>
                         </div>
-                      </div>
-                    </TableCell>
-                    <TableCell className="p-2 sm:p-4">{getRoleBadge(user.role)}</TableCell>
-                    <TableCell className="p-2 sm:p-4">{getUserStatusBadge(user)}</TableCell>
-                    <TableCell className="p-2 sm:p-4">
-                      <div className="text-xs sm:text-sm text-gray-700 dark:text-gray-300">
-                        {user.last_login ? (
-                          <>
-                            <p>{new Date(user.last_login).toLocaleDateString()}</p>
-                            <p className="text-gray-500 dark:text-gray-400 text-xs">
-                              {new Date(user.last_login).toLocaleTimeString()}
-                            </p>
-                          </>
-                        ) : (
-                          <span className="text-gray-400 dark:text-gray-500">Never</span>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell className="p-2 sm:p-4">
-                      <div className="text-xs sm:text-sm text-gray-700 dark:text-gray-300">
-                        <p>{new Date(user.created_at).toLocaleDateString()}</p>
-                        <p className="text-gray-500 dark:text-gray-400 text-xs">
-                          {new Date(user.created_at).toLocaleTimeString()}
-                        </p>
-                      </div>
-                    </TableCell>
-                    <TableCell className="p-2 sm:p-4 text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="dark:text-gray-400 dark:hover:bg-gray-700">
-                            <MoreHorizontal className="w-4 h-4" />
-                            <span className="sr-only">User Actions</span>
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700">
-                          <DropdownMenuItem onClick={() => onUserSelect(user)} className="dark:hover:bg-gray-700/70">
-                            <Eye className="w-3.5 h-3.5 mr-2" /> View Details
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => onUserSelect(user)} className="dark:hover:bg-gray-700/70">
-                            <Edit className="w-3.5 h-3.5 mr-2" /> Edit User
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator className="dark:bg-gray-700" />
-                          <DropdownMenuItem
-                            onClick={() => onUserAction(user.id, user.is_active ? 'deactivate' : 'activate')}
-                            className="dark:hover:bg-gray-700/70"
-                          >
-                            {user.is_active ? <UserX className="w-3.5 h-3.5 mr-2" /> : <UserCheck className="w-3.5 h-3.5 mr-2" />}
-                            {user.is_active ? 'Deactivate' : 'Activate'}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                             onClick={() => onUserAction(user.id, 'reset_password')}
-                             className="dark:hover:bg-gray-700/70"
-                          >
-                            <Key className="w-3.5 h-3.5 mr-2" /> Reset Password
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator className="dark:bg-gray-700"/>
-                          <DropdownMenuItem
-                            onClick={() => onUserAction(user.id, 'delete')}
-                            className="text-red-600 dark:text-red-400 dark:hover:bg-red-700/30 focus:text-red-600 focus:bg-red-100 dark:focus:bg-red-700/50"
-                          >
-                            <Trash2 className="w-3.5 h-3.5 mr-2" /> Delete User
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-             {filteredUsers.length === 0 && (
-                <div className="text-center p-8 text-gray-500 dark:text-gray-400">
-                    No users found matching your criteria.
-                </div>
+                      </td>
+                      <td className="p-4"><Skeleton className="h-4 w-16" /></td>
+                      <td className="p-4"><Skeleton className="h-4 w-20" /></td>
+                      <td className="p-4"><Skeleton className="h-3 w-20 mb-1" /><Skeleton className="h-3 w-16" /></td>
+                      <td className="p-4"><Skeleton className="h-3 w-20 mb-1" /><Skeleton className="h-3 w-16" /></td>
+                      <td className="p-4">
+                        <div className="flex items-center gap-2">
+                          <Skeleton className="h-8 w-8" /> <Skeleton className="h-8 w-8" /> <Skeleton className="h-8 w-8" />
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </Table>
+            ) : (
+              <Table>
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="w-12 p-4">
+                      <Checkbox
+                        checked={selectedUsers.length === filteredUsers.length && filteredUsers.length > 0}
+                        onCheckedChange={handleSelectAll}
+                      />
+                    </th>
+                    <th className="text-left p-4 font-medium">User</th>
+                    <th className="text-left p-4 font-medium">Role</th>
+                    <th className="text-left p-4 font-medium">Status</th>
+                    <th className="text-left p-4 font-medium">Last Login</th>
+                    <th className="text-left p-4 font-medium">Created</th>
+                    <th className="text-left p-4 font-medium">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredUsers.length > 0 ? filteredUsers.map((user) => (
+                    <tr key={user.id} className="border-t hover:bg-gray-50">
+                      <td className="p-4">
+                        <Checkbox
+                          checked={selectedUsers.includes(user.id)}
+                          onCheckedChange={() => handleSelectUser(user.id)}
+                        />
+                      </td>
+                      <td className="p-4">
+                        <div className="flex items-center gap-3">
+                          <Avatar
+                            src={user.avatar}
+                            alt={user.username}
+                            fallback={user.username?.charAt(0).toUpperCase()}
+                            size="sm"
+                          />
+                          <div>
+                            <p className="font-medium text-gray-900">{user.username}</p>
+                            <p className="text-sm text-gray-500">{user.email}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="p-4">
+                        {getRoleBadge(user.role)}
+                      </td>
+                      <td className="p-4">
+                        {getUserStatusBadge(user)}
+                      </td>
+                      <td className="p-4">
+                        <div className="text-sm">
+                          {user.last_login ? (
+                            <>
+                              <p>{new Date(user.last_login).toLocaleDateString()}</p>
+                              <p className="text-gray-500">
+                                {new Date(user.last_login).toLocaleTimeString()}
+                              </p>
+                            </>
+                          ) : (
+                            <span className="text-gray-400">Never</span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="p-4">
+                        <div className="text-sm">
+                          <p>{new Date(user.created_at).toLocaleDateString()}</p>
+                          <p className="text-gray-500">
+                            {new Date(user.created_at).toLocaleTimeString()}
+                          </p>
+                        </div>
+                      </td>
+                      <td className="p-4">
+                        <div className="flex items-center gap-2">
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => onUserSelect(user)}
+                              >
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Edit User</p>
+                            </TooltipContent>
+                          </Tooltip>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => onUserAction(user.id, user.is_active ? 'deactivate' : 'activate')}
+                              >
+                                {user.is_active ? <UserX className="w-4 h-4" /> : <UserCheck className="w-4 h-4" />}
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>{user.is_active ? 'Deactivate User' : 'Activate User'}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => onUserAction(user.id, 'delete')}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Delete User</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </div>
+                      </td>
+                    </tr>
+                  )) : (
+                    <tr>
+                      <td colSpan="7" className="text-center p-8 text-gray-500">
+                        No users found matching your criteria.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </Table>
             )}
           </div>
 
           {/* Pagination */}
-          <div className="flex flex-col sm:flex-row items-center justify-between mt-4 gap-2">
-            <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-              Showing {filteredUsers.length > 0 ? 1 : 0} to {filteredUsers.length} of {users.length} users
+          <div className="flex items-center justify-between mt-4">
+            <p className="text-sm text-gray-500">
+              Showing {filteredUsers.length} of {users.length} users
             </p>
-            <div className="flex items-center gap-1 sm:gap-2">
-              <Button variant="outline" size="sm" disabled className="dark:text-gray-400 dark:border-gray-600 dark:hover:bg-gray-700">
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" disabled>
                 Previous
               </Button>
-              <Button variant="outline" size="sm" className="dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700">
+              <Button variant="outline" size="sm">
                 1
               </Button>
-              {/* Add more page numbers if implementing full pagination */}
-              <Button variant="outline" size="sm" disabled className="dark:text-gray-400 dark:border-gray-600 dark:hover:bg-gray-700">
+              <Button variant="outline" size="sm" disabled>
                 Next
               </Button>
             </div>
@@ -344,6 +388,7 @@ const UserManagementSection = ({
         </CardContent>
       </Card>
     </div>
+    </TooltipProvider>
   );
 };
 

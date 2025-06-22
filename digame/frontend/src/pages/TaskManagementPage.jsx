@@ -18,6 +18,7 @@ import {
   Target,
   TrendingUp
 } from 'lucide-react';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../components/ui/Select';
 
 export default function TaskManagementPage({ isDemoMode, onLogout }) {
   const navigate = useNavigate();
@@ -195,17 +196,18 @@ export default function TaskManagementPage({ isDemoMode, onLogout }) {
         
         <div className="flex items-center gap-2">
           <Filter className="h-4 w-4 text-gray-500" />
-          <select 
-            value={filter} 
-            onChange={(e) => setFilter(e.target.value)}
-            className="border border-gray-300 rounded-md px-3 py-1 text-sm"
-          >
-            <option value="all">All Tasks</option>
-            <option value="suggested">Suggested</option>
-            <option value="acknowledged">Acknowledged</option>
-            <option value="in_progress">In Progress</option>
-            <option value="completed">Completed</option>
-          </select>
+          <Select value={filter} onValueChange={setFilter}>
+            <SelectTrigger className="border border-gray-300 rounded-md px-3 py-1 text-sm w-[180px]">
+              <SelectValue placeholder="Filter tasks" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Tasks</SelectItem>
+              <SelectItem value="suggested">Suggested</SelectItem>
+              <SelectItem value="acknowledged">Acknowledged</SelectItem>
+              <SelectItem value="in_progress">In Progress</SelectItem>
+              <SelectItem value="completed">Completed</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 

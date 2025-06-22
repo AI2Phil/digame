@@ -4,6 +4,7 @@ import Button from '../ui/Button';
 import { Card } from '../ui/Card';
 import Input from '../ui/Input';
 import { Badge } from '../ui/Badge';
+import { Switch } from '../../ui/Switch'; // Added Switch import
 
 const OnboardingFlow = ({ onComplete, onSkip }) => {
   const [currentStep, setCurrentStep] = useState(0);
@@ -228,13 +229,14 @@ const GoalsStep = ({ data, onNext, onPrevious, canGoBack }) => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         {goalOptions.map((goal) => (
-          <button
+          <Button
             key={goal.id}
+            variant={selectedGoals.includes(goal.id) ? 'default' : 'outline'}
             onClick={() => toggleGoal(goal.id)}
-            className={`p-4 rounded-lg border-2 transition-all text-left ${
+            className={`p-4 h-auto rounded-lg border-2 transition-all text-left justify-start ${
               selectedGoals.includes(goal.id)
-                ? 'border-blue-500 bg-blue-50'
-                : 'border-gray-200 hover:border-gray-300 bg-white'
+                ? 'border-blue-500 bg-blue-50 text-blue-700 hover:bg-blue-100' // Custom selected style if needed
+                : 'border-gray-200 hover:border-gray-300 bg-white text-gray-900'
             }`}
           >
             <div className="flex items-center space-x-3">
@@ -317,13 +319,14 @@ const WorkStyleStep = ({ data, onNext, onPrevious, canGoBack }) => {
 
       <div className="space-y-4">
         {workStyles.map((style) => (
-          <button
+          <Button
             key={style.id}
+            variant={workStyle === style.id ? 'default' : 'outline'}
             onClick={() => setWorkStyle(style.id)}
-            className={`w-full p-6 rounded-lg border-2 transition-all text-left ${
+            className={`w-full p-6 h-auto rounded-lg border-2 transition-all text-left justify-start items-start ${
               workStyle === style.id
-                ? 'border-blue-500 bg-blue-50'
-                : 'border-gray-200 hover:border-gray-300 bg-white'
+                ? 'border-blue-500 bg-blue-50 text-blue-700 hover:bg-blue-100' // Custom selected style
+                : 'border-gray-200 hover:border-gray-300 bg-white text-gray-900'
             }`}
           >
             <div className="flex items-start space-x-4">
@@ -402,18 +405,19 @@ const SkillsStep = ({ data, onNext, onPrevious, canGoBack }) => {
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {skillLevels.map((level) => (
-            <button
+            <Button
               key={level.id}
+              variant={skillLevel === level.id ? 'default' : 'outline'}
               onClick={() => setSkillLevel(level.id)}
-              className={`p-4 rounded-lg border-2 transition-all text-left ${
-                skillLevel === level.id
-                  ? 'border-blue-500 bg-blue-50'
-                  : 'border-gray-200 hover:border-gray-300 bg-white'
+              className={`p-4 h-auto rounded-lg border-2 transition-all text-left justify-start items-start flex-col ${
+                 skillLevel === level.id
+                ? 'border-blue-500 bg-blue-50 text-blue-700 hover:bg-blue-100'
+                : 'border-gray-200 hover:border-gray-300 bg-white text-gray-900'
               }`}
             >
               <h4 className="font-medium text-gray-900">{level.label}</h4>
-              <p className="text-sm text-gray-600">{level.description}</p>
-            </button>
+              <p className="text-sm text-gray-600 whitespace-normal">{level.description}</p>
+            </Button>
           ))}
         </div>
       </div>
@@ -425,22 +429,21 @@ const SkillsStep = ({ data, onNext, onPrevious, canGoBack }) => {
         </h3>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
           {focusAreaOptions.map((area) => (
-            <button
+            <Button
               key={area}
+              variant={focusAreas.includes(area) ? 'default' : 'outline'}
               onClick={() => toggleFocusArea(area)}
               disabled={!focusAreas.includes(area) && focusAreas.length >= 5}
-              className={`p-3 rounded-lg border transition-all text-sm ${
-                focusAreas.includes(area)
-                  ? 'border-blue-500 bg-blue-50 text-blue-700'
-                  : 'border-gray-200 hover:border-gray-300 bg-white text-gray-700'
-              } ${
+              className={`p-3 rounded-lg border transition-all text-sm justify-center ${
                 !focusAreas.includes(area) && focusAreas.length >= 5
                   ? 'opacity-50 cursor-not-allowed'
                   : ''
+              } ${
+                focusAreas.includes(area) ? 'bg-blue-50 text-blue-700 hover:bg-blue-100' : ''
               }`}
             >
               {area}
-            </button>
+            </Button>
           ))}
         </div>
         <p className="text-sm text-gray-500 mt-2">
@@ -494,18 +497,10 @@ const PreferencesStep = ({ data, onNext, onPrevious, canGoBack }) => {
               Receive insights, reminders, and achievement notifications
             </p>
           </div>
-          <button
-            onClick={() => updatePreference('notifications', !preferences.notifications)}
-            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-              preferences.notifications ? 'bg-blue-600' : 'bg-gray-200'
-            }`}
-          >
-            <span
-              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                preferences.notifications ? 'translate-x-6' : 'translate-x-1'
-              }`}
-            />
-          </button>
+          <Switch
+            checked={preferences.notifications}
+            onCheckedChange={(checked) => updatePreference('notifications', checked)}
+          />
         </div>
 
         {/* Data Collection */}
@@ -516,18 +511,10 @@ const PreferencesStep = ({ data, onNext, onPrevious, canGoBack }) => {
               Allow detailed activity tracking for better insights and recommendations
             </p>
           </div>
-          <button
-            onClick={() => updatePreference('dataCollection', !preferences.dataCollection)}
-            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-              preferences.dataCollection ? 'bg-blue-600' : 'bg-gray-200'
-            }`}
-          >
-            <span
-              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                preferences.dataCollection ? 'translate-x-6' : 'translate-x-1'
-              }`}
-            />
-          </button>
+          <Switch
+            checked={preferences.dataCollection}
+            onCheckedChange={(checked) => updatePreference('dataCollection', checked)}
+          />
         </div>
 
         {/* Public Profile */}
@@ -538,18 +525,10 @@ const PreferencesStep = ({ data, onNext, onPrevious, canGoBack }) => {
               Make your achievements and progress visible to other users for networking
             </p>
           </div>
-          <button
-            onClick={() => updatePreference('publicProfile', !preferences.publicProfile)}
-            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-              preferences.publicProfile ? 'bg-blue-600' : 'bg-gray-200'
-            }`}
-          >
-            <span
-              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                preferences.publicProfile ? 'translate-x-6' : 'translate-x-1'
-              }`}
-            />
-          </button>
+          <Switch
+            checked={preferences.publicProfile}
+            onCheckedChange={(checked) => updatePreference('publicProfile', checked)}
+          />
         </div>
       </div>
 

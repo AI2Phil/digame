@@ -1,92 +1,109 @@
 import React, { useState, useEffect } from 'react';
+import dashboardService from '../../services/dashboardService';
 
-const RecentActivity = ({ userId = 1, maxItems = 5 }) => { // Assuming userId prop or context later
+const RecentActivity = ({ userId = 1 }) => {
   const [activities, setActivities] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  const activityIcons = {
+    'analysis': '📊',
+    'meeting': '📞',
+    'coding': '💻',
+    'design': '🎨',
+    'documentation': '📝',
+    'testing': '🧪',
+    'research': '🔬',
+    'learning': '📚',
+    'default': '⚡'
+  };
+
+  const getActivityIcon = (activityType) => {
+    return activityIcons[activityType.toLowerCase()] || activityIcons['default'];
+  };
+
+  // Simplified timestamp formatter
+  const formatTimestamp = (isoTimestamp) => {
+    const date = new Date(isoTimestamp);
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(today.getDate() - 1);
+
+    if (date.toDateString() === today.toDateString()) {
+      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    } else if (date.toDateString() === yesterday.toDateString()) {
+      return 'Yesterday';
+    } else {
+      return date.toLocaleDateString();
+    }
+  };
 
   useEffect(() => {
     const fetchRecentActivities = async () => {
-      setIsLoading(true);
-      setError(null);
       try {
-        const response = await fetch(\`/behavior/patterns?user_id=\${userId}\`);
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: \${response.status}`);
-        }
-        const data = await response.json();
-
-        if (!Array.isArray(data)) {
-          console.error("Fetched data is not an array:", data);
-          throw new Error("Invalid data format from API.");
-        }
-
-        // Sort by timestamp descending (most recent first) and take top N items
-        const sortedData = data
-          .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
-          .slice(0, maxItems);
-
-        setActivities(sortedData);
-
-      } catch (e) {
-        console.error("Failed to fetch or process recent activities:", e);
-        setError(e.message);
+        setLoading(true);
+        setError(null);
+        const data = await dashboardService.getRecentActivities(userId);
+        setActivities(data);
+      } catch (err) {
+        console.error('Error fetching recent activities:', err);
+        setError('Failed to load recent activities.');
       } finally {
-        setIsLoading(false);
+        setLoading(false);
       }
     };
 
     if (userId) {
       fetchRecentActivities();
     }
-  }, [userId, maxItems]);
+  }, [userId]);
 
-  const formatTimestamp = (isoString) => {
-    if (!isoString) return 'No date';
-    try {
-      return new Date(isoString).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    } catch (e) {
-      return 'Invalid date';
-    }
-  };
-
-  if (isLoading) {
+  if (loading) {
     return (
-      <div className="bg-white shadow rounded-lg p-4">
-        <h3 className="text-lg font-semibold mb-2 text-gray-700">Recent Activity</h3>
-        <p className="text-gray-500">Loading activities...</p>
+      <div className="card">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Activities</h3>
+        <p className="text-gray-500">Loading recent activities...</p>
+        <div className="animate-pulse mt-4 space-y-3">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="h-10 bg-gray-200 rounded"></div>
+          ))}
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="bg-white shadow rounded-lg p-4">
-        <h3 className="text-lg font-semibold mb-2 text-gray-700">Recent Activity</h3>
-        <p className="text-sm text-red-500">Could not load recent activities. (`${error}`)</p>
+      <div className="card">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Activities</h3>
+        <p className="text-red-500">{error}</p>
+      </div>
+    );
+  }
+
+  if (activities.length === 0) {
+    return (
+      <div className="card">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Activities</h3>
+        <p className="text-gray-500">No recent activities found.</p>
       </div>
     );
   }
 
   return (
-    <div className="bg-white shadow rounded-lg p-4">
-      <h3 className="text-lg font-semibold mb-2 text-gray-700">Recent Activity</h3>
-      {activities.length === 0 ? (
-        <p className="text-sm text-gray-500">No recent activity found.</p>
-      ) : (
-        <ul className="divide-y divide-gray-200">
-          {activities.map((activity) => (
-            <li key={activity.activity_id || activity.timestamp} className="py-3">
-              <p className="text-sm font-medium text-gray-800">{activity.activity_type || 'Unknown Activity'}</p>
-              <p className="text-xs text-gray-500">
-                {formatTimestamp(activity.timestamp)}
-                {activity.app_category && \` - \${activity.app_category}\`}
-              </p>
-            </li>
-          ))}
-        </ul>
-      )}
+    <div className="card">
+      <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Activities</h3>
+      <div className="space-y-4">
+        {activities.map((activity) => (
+          <div key={activity.id} className="p-3 bg-gray-50 rounded-lg flex items-start space-x-3">
+            <span className="text-xl mt-1">{getActivityIcon(activity.type)}</span>
+            <div className="flex-grow">
+              <p className="text-sm text-gray-800">{activity.description}</p>
+              <p className="text-xs text-gray-500">{formatTimestamp(activity.timestamp)}</p>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 };

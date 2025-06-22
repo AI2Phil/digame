@@ -7,6 +7,13 @@ import ProductivityChart from '../components/dashboard/ProductivityChart';
 import ActivityBreakdown from '../components/dashboard/ActivityBreakdown';
 import ProductivityMetricCard from '../components/dashboard/ProductivityMetricCard';
 import RecentActivity from '../components/dashboard/RecentActivity';
+import { Button } from '../components/ui/Button';
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuLabel } from '../components/ui/DropdownMenu';
+import { Badge } from '../components/ui/Badge';
+import { Avatar, AvatarFallback } from '../components/ui/Avatar';
+import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle, SheetClose, SheetFooter, SheetDescription } from '../components/ui/Sheet';
+import { Separator } from '../components/ui/Separator';
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '../components/ui/Tooltip';
 
 export default function DashboardPage({ isDemoMode, onLogout }) {
   const navigate = useNavigate();
@@ -35,9 +42,10 @@ export default function DashboardPage({ isDemoMode, onLogout }) {
   }, [isDemoMode]);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b border-gray-200">
+    <TooltipProvider delayDuration={300}>
+      <div className="min-h-screen bg-gray-50">
+        {/* Header */}
+        <header className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-4">
@@ -48,9 +56,7 @@ export default function DashboardPage({ isDemoMode, onLogout }) {
                 <span className="text-xl font-bold text-gray-900">Digame</span>
               </div>
               {isDemoMode && (
-                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                  Demo Mode
-                </span>
+                <Badge variant="info" className="text-xs">Demo Mode</Badge>
               )}
             </div>
             
@@ -63,221 +69,145 @@ export default function DashboardPage({ isDemoMode, onLogout }) {
                   <span>🏠</span> Dashboard
                 </button>
                 
-                <div className="relative group">
-                  <button className="text-gray-600 hover:text-gray-900 text-sm transition-colors flex items-center gap-1">
-                    <span>📊</span> Analytics ▼
-                  </button>
-                  <div className="absolute top-full left-0 mt-1 w-56 bg-white rounded-md shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
-                    <div className="py-1">
-                      <button
-                        onClick={() => navigate('/analytics/web')}
-                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                      >
-                        <span>🌐</span> Web Analytics
-                      </button>
-                      <button
-                        onClick={() => navigate('/analytics/mobile')}
-                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                      >
-                        <span>📱</span> Mobile Analytics
-                      </button>
-                      <div className="border-t border-gray-100 my-1"></div>
-                      <div className="px-4 py-2 text-xs text-gray-500 font-medium">AI-POWERED INSIGHTS</div>
-                      <button
-                        onClick={() => navigate('/analytics/behavioral')}
-                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                      >
-                        <span>🧠</span> Behavioral Analytics
-                      </button>
-                      <button
-                        onClick={() => navigate('/analytics/predictive')}
-                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                      >
-                        <span>🔮</span> Predictive Analytics
-                      </button>
-                    </div>
-                  </div>
-                </div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="text-gray-600 hover:text-gray-900 text-sm transition-colors flex items-center gap-1">
+                      <span>📊</span> Analytics ▼
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-56">
+                    <DropdownMenuItem onClick={() => navigate('/analytics/web')} className="flex items-center gap-2">
+                      <span>🌐</span> Web Analytics
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/analytics/mobile')} className="flex items-center gap-2">
+                      <span>📱</span> Mobile Analytics
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuLabel className="px-2 py-1.5 text-xs font-medium text-gray-500">
+                      AI-POWERED INSIGHTS
+                    </DropdownMenuLabel>
+                    <DropdownMenuItem onClick={() => navigate('/analytics/behavioral')} className="flex items-center gap-2">
+                      <span>🧠</span> Behavioral Analytics
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/analytics/predictive')} className="flex items-center gap-2">
+                      <span>🔮</span> Predictive Analytics
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
 
-                <div className="relative group">
-                  <button className="text-gray-600 hover:text-gray-900 text-sm transition-colors flex items-center gap-1">
-                    <span>🤖</span> AI Tools ▼
-                  </button>
-                  <div className="absolute top-full left-0 mt-1 w-64 bg-white rounded-md shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
-                    <div className="py-1">
-                      <button
-                        onClick={() => navigate('/ai-tools')}
-                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                      >
-                        <span>🛠️</span> AI Tools Hub
-                      </button>
-                      <div className="border-t border-gray-100 my-1"></div>
-                      <div className="px-4 py-2 text-xs text-gray-500 font-medium">WRITING & CONTENT</div>
-                      <button
-                        onClick={() => navigate('/ai-tools?tab=writing')}
-                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                      >
-                        <span>✍️</span> Writing Assistance
-                      </button>
-                      <div className="border-t border-gray-100 my-1"></div>
-                      <div className="px-4 py-2 text-xs text-gray-500 font-medium">TASK MANAGEMENT</div>
-                      <button
-                        onClick={() => navigate('/tasks')}
-                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                      >
-                        <span>📋</span> AI Task Suggestions
-                      </button>
-                      <div className="border-t border-gray-100 my-1"></div>
-                      <div className="px-4 py-2 text-xs text-gray-500 font-medium">INSIGHTS & ANALYTICS</div>
-                      <button
-                        onClick={() => navigate('/ai-tools?tab=insights')}
-                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                      >
-                        <span>🧠</span> AI Insights
-                      </button>
-                      <button
-                        onClick={() => navigate('/ai-tools?tab=coaching')}
-                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                      >
-                        <span>🎯</span> AI Coaching
-                      </button>
-                    </div>
-                  </div>
-                </div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="text-gray-600 hover:text-gray-900 text-sm transition-colors flex items-center gap-1">
+                      <span>🤖</span> AI Tools ▼
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-64">
+                    <DropdownMenuItem onClick={() => navigate('/ai-tools')} className="flex items-center gap-2">
+                      <span>🛠️</span> AI Tools Hub
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuLabel className="px-2 py-1.5 text-xs font-medium text-gray-500">WRITING & CONTENT</DropdownMenuLabel>
+                    <DropdownMenuItem onClick={() => navigate('/ai-tools?tab=writing')} className="flex items-center gap-2">
+                      <span>✍️</span> Writing Assistance
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuLabel className="px-2 py-1.5 text-xs font-medium text-gray-500">TASK MANAGEMENT</DropdownMenuLabel>
+                    <DropdownMenuItem onClick={() => navigate('/tasks')} className="flex items-center gap-2">
+                      <span>📋</span> AI Task Suggestions
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuLabel className="px-2 py-1.5 text-xs font-medium text-gray-500">INSIGHTS & ANALYTICS</DropdownMenuLabel>
+                    <DropdownMenuItem onClick={() => navigate('/ai-tools?tab=insights')} className="flex items-center gap-2">
+                      <span>🧠</span> AI Insights
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/ai-tools?tab=coaching')} className="flex items-center gap-2">
+                      <span>🎯</span> AI Coaching
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
 
-                <div className="relative group">
-                  <button className="text-gray-600 hover:text-gray-900 text-sm transition-colors flex items-center gap-1">
-                    <span>🌐</span> Social & Community ▼
-                  </button>
-                  <div className="absolute top-full left-0 mt-1 w-64 bg-white rounded-md shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
-                    <div className="py-1">
-                      <button
-                        onClick={() => navigate('/social')}
-                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                      >
-                        <span>👥</span> Social Dashboard
-                      </button>
-                      <button
-                        onClick={() => navigate('/community')}
-                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                      >
-                        <span>🧑‍🤝‍🧑</span> Community Users
-                      </button>
-                      <div className="border-t border-gray-100 my-1"></div>
-                      <div className="px-4 py-2 text-xs text-gray-500 font-medium">COLLABORATION FEATURES</div>
-                      <button
-                        onClick={() => navigate('/social?tab=peer-matching')}
-                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                      >
-                        <span>🧠</span> AI Peer Matching
-                      </button>
-                      <button
-                        onClick={() => navigate('/social?tab=mentorship')}
-                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                      >
-                        <span>🎓</span> Mentorship Programs
-                      </button>
-                      <button
-                        onClick={() => navigate('/social?tab=projects')}
-                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                      >
-                        <span>🎯</span> Project Collaboration
-                      </button>
-                      <button
-                        onClick={() => navigate('/social?tab=teams')}
-                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                      >
-                        <span>📈</span> Team Analytics
-                      </button>
-                      <button
-                        onClick={() => navigate('/social?tab=industry')}
-                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                      >
-                        <span>🏢</span> Industry Networking
-                      </button>
-                    </div>
-                  </div>
-                </div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="text-gray-600 hover:text-gray-900 text-sm transition-colors flex items-center gap-1">
+                      <span>🤝</span> Social ▼
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-64">
+                    <DropdownMenuItem onClick={() => navigate('/social')} className="flex items-center gap-2">
+                      <span>👥</span> Social Collaboration
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuLabel className="px-2 py-1.5 text-xs font-medium text-gray-500">COLLABORATION FEATURES</DropdownMenuLabel>
+                    <DropdownMenuItem onClick={() => navigate('/social?tab=peer-matching')} className="flex items-center gap-2">
+                      <span>🧠</span> AI Peer Matching
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/social?tab=mentorship')} className="flex items-center gap-2">
+                      <span>🎓</span> Mentorship Programs
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/social?tab=projects')} className="flex items-center gap-2">
+                      <span>🎯</span> Project Collaboration
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/social?tab=teams')} className="flex items-center gap-2">
+                      <span>📈</span> Team Analytics
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/social?tab=industry')} className="flex items-center gap-2">
+                      <span>🏢</span> Industry Networking
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
 
-                <div className="relative group">
-                  <button className="text-gray-600 hover:text-gray-900 text-sm transition-colors flex items-center gap-1">
-                    <span>📋</span> Tasks ▼
-                  </button>
-                  <div className="absolute top-full left-0 mt-1 w-64 bg-white rounded-md shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
-                    <div className="py-1">
-                      <button
-                        onClick={() => navigate('/tasks')}
-                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                      >
-                        <span>📋</span> Task Management
-                      </button>
-                      <div className="border-t border-gray-100 my-1"></div>
-                      <div className="px-4 py-2 text-xs text-gray-500 font-medium">AI-POWERED FEATURES</div>
-                      <button
-                        onClick={() => navigate('/tasks?tab=suggestions')}
-                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                      >
-                        <span>🤖</span> AI Task Suggestions
-                      </button>
-                      <button
-                        onClick={() => navigate('/tasks?tab=automation')}
-                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                      >
-                        <span>⚡</span> Process Automation
-                      </button>
-                      <button
-                        onClick={() => navigate('/tasks?tab=insights')}
-                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                      >
-                        <span>📊</span> Task Analytics
-                      </button>
-                    </div>
-                  </div>
-                </div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="text-gray-600 hover:text-gray-900 text-sm transition-colors flex items-center gap-1">
+                      <span>📋</span> Tasks ▼
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-64">
+                    <DropdownMenuItem onClick={() => navigate('/tasks')} className="flex items-center gap-2">
+                      <span>📋</span> Task Management
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuLabel className="px-2 py-1.5 text-xs font-medium text-gray-500">AI-POWERED FEATURES</DropdownMenuLabel>
+                    <DropdownMenuItem onClick={() => navigate('/tasks?tab=suggestions')} className="flex items-center gap-2">
+                      <span>🤖</span> AI Task Suggestions
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/tasks?tab=automation')} className="flex items-center gap-2">
+                      <span>⚡</span> Process Automation
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/tasks?tab=insights')} className="flex items-center gap-2">
+                      <span>📊</span> Task Analytics
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
 
-                <div className="relative group">
-                  <button className="text-gray-600 hover:text-gray-900 text-sm transition-colors flex items-center gap-1">
-                    <span>🏢</span> Enterprise ▼
-                  </button>
-                  <div className="absolute top-full left-0 mt-1 w-64 bg-white rounded-md shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
-                    <div className="py-1">
-                      <button
-                        onClick={() => navigate('/enterprise')}
-                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                      >
-                        <span>🏢</span> Enterprise Dashboard
-                      </button>
-                      <div className="border-t border-gray-100 my-1"></div>
-                      <div className="px-4 py-2 text-xs text-gray-500 font-medium">AI ENTERPRISE FEATURES</div>
-                      <button
-                        onClick={() => navigate('/enterprise?tab=ai-features')}
-                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                      >
-                        <span>🤖</span> AI Feature Management
-                      </button>
-                      <button
-                        onClick={() => navigate('/enterprise?tab=tenants')}
-                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                      >
-                        <span>🏢</span> Tenant Management
-                      </button>
-                      <button
-                        onClick={() => navigate('/enterprise?tab=security')}
-                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                      >
-                        <span>🔒</span> Security & Compliance
-                      </button>
-                      <div className="border-t border-gray-100 my-1"></div>
-                      <div className="px-4 py-2 text-xs text-gray-500 font-medium">ANALYTICS & INSIGHTS</div>
-                      <button
-                        onClick={() => navigate('/enterprise?tab=overview')}
-                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                      >
-                        <span>📊</span> Enterprise Analytics
-                      </button>
-                    </div>
-                  </div>
-                </div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="text-gray-600 hover:text-gray-900 text-sm transition-colors flex items-center gap-1">
+                      <span>🏢</span> Enterprise ▼
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-64">
+                    <DropdownMenuItem onClick={() => navigate('/enterprise')} className="flex items-center gap-2">
+                      <span>🏢</span> Enterprise Dashboard
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuLabel className="px-2 py-1.5 text-xs font-medium text-gray-500">AI ENTERPRISE FEATURES</DropdownMenuLabel>
+                    <DropdownMenuItem onClick={() => navigate('/enterprise?tab=ai-features')} className="flex items-center gap-2">
+                      <span>🤖</span> AI Feature Management
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/enterprise?tab=tenants')} className="flex items-center gap-2">
+                      <span>🏢</span> Tenant Management
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/enterprise?tab=security')} className="flex items-center gap-2">
+                      <span>🔒</span> Security & Compliance
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuLabel className="px-2 py-1.5 text-xs font-medium text-gray-500">ANALYTICS & INSIGHTS</DropdownMenuLabel>
+                    <DropdownMenuItem onClick={() => navigate('/enterprise?tab=overview')} className="flex items-center gap-2">
+                      <span>📊</span> Enterprise Analytics
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
 
                 <button
                   onClick={() => navigate('/reports')}
@@ -300,18 +230,133 @@ export default function DashboardPage({ isDemoMode, onLogout }) {
               
               {/* Mobile menu button */}
               <div className="md:hidden">
-                <button className="text-gray-600 hover:text-gray-900 p-2">
-                  <span className="text-lg">☰</span>
-                </button>
+                <Sheet>
+                  <SheetTrigger asChild>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button variant="ghost" size="icon" className="text-gray-600 hover:text-gray-900 p-2">
+                          <span className="text-lg">☰</span>
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom">
+                        <p>Open Navigation</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </SheetTrigger>
+                  <SheetContent side="left" className="w-[300px] sm:w-[400px] p-0 flex flex-col">
+                    <SheetHeader className="p-6 pb-4">
+                      <SheetTitle>
+                        <div className="flex items-center space-x-2">
+                          <div className="digame-logo w-7 h-7">
+                            <span className="text-white font-bold text-xs">D</span>
+                          </div>
+                          <span className="text-lg font-bold text-gray-900">Digame Menu</span>
+                        </div>
+                      </SheetTitle>
+                    </SheetHeader>
+                    <Separator />
+                    <div className="flex-grow overflow-y-auto p-6 space-y-2">
+                      <SheetClose asChild>
+                        <Button variant="ghost" className="w-full justify-start text-base py-3" onClick={() => navigate('/dashboard')}>
+                          <span className="mr-3 text-lg">🏠</span> Dashboard
+                        </Button>
+                      </SheetClose>
+
+                      {/* Analytics Section */}
+                      <div className="pt-2">
+                        <h4 className="px-3 py-2 text-sm font-semibold text-gray-500">Analytics</h4>
+                        <SheetClose asChild><Button variant="ghost" className="w-full justify-start" onClick={() => navigate('/analytics/web')}><span className="mr-2">🌐</span> Web Analytics</Button></SheetClose>
+                        <SheetClose asChild><Button variant="ghost" className="w-full justify-start" onClick={() => navigate('/analytics/mobile')}><span className="mr-2">📱</span> Mobile Analytics</Button></SheetClose>
+                        <div className="px-3 py-2 text-xs font-medium text-gray-400">AI-POWERED INSIGHTS</div>
+                        <SheetClose asChild><Button variant="ghost" className="w-full justify-start" onClick={() => navigate('/analytics/behavioral')}><span className="mr-2">🧠</span> Behavioral Analytics</Button></SheetClose>
+                        <SheetClose asChild><Button variant="ghost" className="w-full justify-start" onClick={() => navigate('/analytics/predictive')}><span className="mr-2">🔮</span> Predictive Analytics</Button></SheetClose>
+                      </div>
+                      <Separator />
+
+                      {/* AI Tools Section */}
+                      <div className="pt-2">
+                        <h4 className="px-3 py-2 text-sm font-semibold text-gray-500">AI Tools</h4>
+                        <SheetClose asChild><Button variant="ghost" className="w-full justify-start" onClick={() => navigate('/ai-tools')}><span className="mr-2">🛠️</span> AI Tools Hub</Button></SheetClose>
+                        <div className="px-3 py-2 text-xs font-medium text-gray-400">WRITING & CONTENT</div>
+                        <SheetClose asChild><Button variant="ghost" className="w-full justify-start" onClick={() => navigate('/ai-tools?tab=writing')}><span className="mr-2">✍️</span> Writing Assistance</Button></SheetClose>
+                        <div className="px-3 py-2 text-xs font-medium text-gray-400">TASK MANAGEMENT</div>
+                        <SheetClose asChild><Button variant="ghost" className="w-full justify-start" onClick={() => navigate('/tasks')}><span className="mr-2">📋</span> AI Task Suggestions</Button></SheetClose>
+                        <div className="px-3 py-2 text-xs font-medium text-gray-400">INSIGHTS & ANALYTICS</div>
+                        <SheetClose asChild><Button variant="ghost" className="w-full justify-start" onClick={() => navigate('/ai-tools?tab=insights')}><span className="mr-2">🧠</span> AI Insights</Button></SheetClose>
+                        <SheetClose asChild><Button variant="ghost" className="w-full justify-start" onClick={() => navigate('/ai-tools?tab=coaching')}><span className="mr-2">🎯</span> AI Coaching</Button></SheetClose>
+                      </div>
+                      <Separator />
+
+                      {/* Social Section */}
+                      <div className="pt-2">
+                        <h4 className="px-3 py-2 text-sm font-semibold text-gray-500">Social</h4>
+                        <SheetClose asChild><Button variant="ghost" className="w-full justify-start" onClick={() => navigate('/social')}><span className="mr-2">👥</span> Social Collaboration</Button></SheetClose>
+                        <div className="px-3 py-2 text-xs font-medium text-gray-400">COLLABORATION FEATURES</div>
+                        <SheetClose asChild><Button variant="ghost" className="w-full justify-start" onClick={() => navigate('/social?tab=peer-matching')}><span className="mr-2">🧠</span> AI Peer Matching</Button></SheetClose>
+                        <SheetClose asChild><Button variant="ghost" className="w-full justify-start" onClick={() => navigate('/social?tab=mentorship')}><span className="mr-2">🎓</span> Mentorship Programs</Button></SheetClose>
+                        <SheetClose asChild><Button variant="ghost" className="w-full justify-start" onClick={() => navigate('/social?tab=projects')}><span className="mr-2">🎯</span> Project Collaboration</Button></SheetClose>
+                        <SheetClose asChild><Button variant="ghost" className="w-full justify-start" onClick={() => navigate('/social?tab=teams')}><span className="mr-2">📈</span> Team Analytics</Button></SheetClose>
+                        <SheetClose asChild><Button variant="ghost" className="w-full justify-start" onClick={() => navigate('/social?tab=industry')}><span className="mr-2">🏢</span> Industry Networking</Button></SheetClose>
+                      </div>
+                      <Separator />
+
+                      {/* Tasks Section */}
+                      <div className="pt-2">
+                        <h4 className="px-3 py-2 text-sm font-semibold text-gray-500">Tasks</h4>
+                        <SheetClose asChild><Button variant="ghost" className="w-full justify-start" onClick={() => navigate('/tasks')}><span className="mr-2">📋</span> Task Management</Button></SheetClose>
+                        <div className="px-3 py-2 text-xs font-medium text-gray-400">AI-POWERED FEATURES</div>
+                        <SheetClose asChild><Button variant="ghost" className="w-full justify-start" onClick={() => navigate('/tasks?tab=suggestions')}><span className="mr-2">🤖</span> AI Task Suggestions</Button></SheetClose>
+                        <SheetClose asChild><Button variant="ghost" className="w-full justify-start" onClick={() => navigate('/tasks?tab=automation')}><span className="mr-2">⚡</span> Process Automation</Button></SheetClose>
+                        <SheetClose asChild><Button variant="ghost" className="w-full justify-start" onClick={() => navigate('/tasks?tab=insights')}><span className="mr-2">📊</span> Task Analytics</Button></SheetClose>
+                      </div>
+                      <Separator />
+
+                      {/* Enterprise Section */}
+                      <div className="pt-2">
+                        <h4 className="px-3 py-2 text-sm font-semibold text-gray-500">Enterprise</h4>
+                        <SheetClose asChild><Button variant="ghost" className="w-full justify-start" onClick={() => navigate('/enterprise')}><span className="mr-2">🏢</span> Enterprise Dashboard</Button></SheetClose>
+                        <div className="px-3 py-2 text-xs font-medium text-gray-400">AI ENTERPRISE FEATURES</div>
+                        <SheetClose asChild><Button variant="ghost" className="w-full justify-start" onClick={() => navigate('/enterprise?tab=ai-features')}><span className="mr-2">🤖</span> AI Feature Management</Button></SheetClose>
+                        <SheetClose asChild><Button variant="ghost" className="w-full justify-start" onClick={() => navigate('/enterprise?tab=tenants')}><span className="mr-2">🏢</span> Tenant Management</Button></SheetClose>
+                        <SheetClose asChild><Button variant="ghost" className="w-full justify-start" onClick={() => navigate('/enterprise?tab=security')}><span className="mr-2">🔒</span> Security & Compliance</Button></SheetClose>
+                        <div className="px-3 py-2 text-xs font-medium text-gray-400">ANALYTICS & INSIGHTS</div>
+                        <SheetClose asChild><Button variant="ghost" className="w-full justify-start" onClick={() => navigate('/enterprise?tab=overview')}><span className="mr-2">📊</span> Enterprise Analytics</Button></SheetClose>
+                      </div>
+                      <Separator />
+
+                      <SheetClose asChild>
+                        <Button variant="ghost" className="w-full justify-start text-base py-3" onClick={() => navigate('/reports')}>
+                          <span className="mr-3 text-lg">📋</span> Reports
+                        </Button>
+                      </SheetClose>
+                    </div>
+                    <SheetFooter className="p-6 pt-4 border-t border-gray-200">
+                      <div className="flex items-center mb-4">
+                        <Avatar className="w-10 h-10 mr-3">
+                          <AvatarFallback className="text-base">👤</AvatarFallback>
+                        </Avatar>
+                        <div>
+                           <p className="text-sm font-medium text-gray-900">{isDemoMode ? "Demo User" : "User Name"}</p> {/* Replace with actual user name if available */}
+                           {isDemoMode && <Badge variant="outline">Demo Account</Badge>}
+                        </div>
+                      </div>
+                      <SheetClose asChild>
+                        <Button variant="outline" className="w-full" onClick={onLogout}>
+                          {isDemoMode ? 'Exit Demo' : 'Logout'}
+                        </Button>
+                      </SheetClose>
+                    </SheetFooter>
+                  </SheetContent>
+                </Sheet>
               </div>
               
               {/* Notification Bell added here */}
               <NotificationBell />
 
               <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
-                  <span className="text-gray-600 text-sm">👤</span>
-                </div>
+                <Avatar className="w-8 h-8">
+                  <AvatarFallback className="text-sm">👤</AvatarFallback>
+                </Avatar>
                 <button
                   onClick={onLogout}
                   className="text-gray-600 hover:text-gray-900 text-sm font-medium transition-colors"
@@ -549,19 +594,7 @@ export default function DashboardPage({ isDemoMode, onLogout }) {
           <ActivityBreakdown userId={currentUser?.id || 1} />
           
           {/* Recent Activities */}
-          <div className="card">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-semibold text-gray-900">
-                Recent Activities
-              </h3>
-              <button className="text-sm text-blue-600 hover:text-blue-700 font-medium">
-                View all
-              </button>
-            </div>
-            <div className="space-y-4">
-              <RecentActivity userId={currentUser?.id || 1} />
-            </div>
-          </div>
+          <RecentActivity userId={currentUser?.id || 1} />
         </div>
 
         {/* Platform Features Overview */}
@@ -728,5 +761,6 @@ export default function DashboardPage({ isDemoMode, onLogout }) {
         </div>
       </main>
     </div>
+    </TooltipProvider>
   );
 }
