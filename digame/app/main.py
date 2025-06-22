@@ -22,6 +22,7 @@ from .routers import job_router
 from .routers import publish_router
 from .routers import auth_router  # Import the new authentication router
 from .routers import onboarding_router
+from .routers import enhanced_onboarding_router
 from .routers import user_setting_router # Import the user setting router
 from .routers import admin_simple_router # Import the admin dashboard router
 from .routers import writing_assistance_router # Import the new writing assistance router
@@ -172,6 +173,7 @@ app.include_router(auth_router.router, tags=["Authentication"])
 # Include dashboard and onboarding routers
 app.include_router(dashboard_router.router, tags=["Dashboard"])
 app.include_router(onboarding_router.router, tags=["Onboarding"])
+app.include_router(enhanced_onboarding_router.router, prefix="/api/v1", tags=["Enhanced Onboarding"])
 
 # Include other routers (these will be protected by authentication middleware)
 app.include_router(user_setting_router) # Add user setting router

@@ -97,6 +97,14 @@ class User(Base):
         cascade="all, delete-orphan"
     )
 
+    # Relationship to UserOnboardingProgress (One-to-One)
+    onboarding_progress = relationship(
+        "UserOnboardingProgress",
+        back_populates="user",
+        uselist=False,
+        cascade="all, delete-orphan"
+    )
+
     # Relationships for messages
     sent_messages = relationship(
         "Message",
