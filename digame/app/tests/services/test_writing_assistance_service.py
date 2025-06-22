@@ -62,7 +62,8 @@ def sample_writing_request():
 
 @pytest.fixture
 def mock_writing_suggestion():
-    # return create_mock_model(WritingSuggestionModel, class MockWritingSuggestion:
+    # return create_mock_model(WritingSuggestionModel,
+    class MockWritingSuggestion:
         def __init__(self):
             self.id = 1
             self.user_id = 1
@@ -89,6 +90,15 @@ def create_mock_model(model_class, **kwargs):
             if not hasattr(self, 'created_at'):
                 from datetime import datetime, timezone
                 self.created_at = datetime.now(timezone.utc)
+            # Add common model attributes to avoid attribute errors
+            if not hasattr(self, 'updated_at'):
+                from datetime import datetime, timezone
+                self.updated_at = datetime.now(timezone.utc)
+        
+        def __getattr__(self, name):
+            # Return None for missing attributes instead of raising AttributeError
+            # This helps with static analysis and test flexibility
+            return None
         
         def __repr__(self):
             attrs = []
