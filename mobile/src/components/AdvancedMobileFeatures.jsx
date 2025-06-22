@@ -137,32 +137,69 @@ const AdvancedMobileFeatures = ({ navigation }) => {
   const startVoiceRecognition = async () => {
     try {
       setVoiceRecognitionActive(true);
-      const transcribedText = await advancedMobileService.startVoiceRecognition();
-      
-      if (transcribedText) {
-        const intentObject = await advancedMobileService.processVoiceCommand(transcribedText);
-        handleVoiceIntent(intentObject);
-      } else {
-        // Handle case where no text was transcribed or service failed
-        Speech.speak("Could not get transcribed text. Please try again.");
+      const result = await advancedMobileService.startVoiceRecognition();
+      if (result.status === 'recording_started') {
+        Speech.speak("Voice recognition started. Please state your command.");
       }
     } catch (error) {
-      console.error('Voice recognition error:', error);
-      Alert.alert('Error', 'Voice recognition failed. Please try again.');
-    } finally {
-      setVoiceRecognitionActive(false); // Ensure this is reset
+      setVoiceRecognitionActive(false);
+      console.error('Failed to start voice recognition:', error);
+      if (error.error === 'permission_denied') {
+        Alert.alert('Error', 'Audio recording permission was denied. Please enable it in settings.');
+      } else {
+        Alert.alert('Error', 'Failed to start voice recognition. Please try again.');
+      }
     }
   };
 
   const stopVoiceRecognition = async () => {
+    let stopResult;
     try {
-      await advancedMobileService.stopVoiceRecognition();
-      Speech.speak("Voice recognition stopped"); // Kept for user feedback
-    } catch (error) {
-      console.error('Failed to stop voice recognition:', error);
-      Alert.alert('Error', 'Failed to stop voice recognition');
-    } finally {
+      stopResult = await advancedMobileService.stopVoiceRecognition();
       setVoiceRecognitionActive(false);
+
+      if (stopResult.status === 'recording_stopped' && stopResult.uri) {
+        Speech.speak("Processing your command with backend.");
+        try {
+          const backendTranscriptionResponse = await advancedMobileService.transcribeAudio(stopResult.uri);
+          if (backendTranscriptionResponse && backendTranscriptionResponse.transcription) {
+            Speech.speak(`Heard from backend: ${backendTranscriptionResponse.transcription}.`);
+
+            try {
+              const backendIntentResponse = await advancedMobileService.handleIntent(backendTranscriptionResponse.transcription);
+              if (backendIntentResponse && backendIntentResponse.intent) {
+                handleVoiceIntent(backendIntentResponse);
+              } else {
+                Speech.speak("Could not determine intent from backend.");
+                Alert.alert("Error", "Could not determine intent from the backend.");
+              }
+            } catch (intentError) {
+              console.error('Error handling intent with backend:', intentError);
+              Speech.speak("Error recognizing intent with backend.");
+              Alert.alert('Error', 'Error recognizing intent. Please try again.');
+            }
+          } else {
+            Speech.speak("Could not get transcription from backend.");
+            Alert.alert("Error", "Could not get transcription from the backend.");
+          }
+        } catch (transcriptionError) {
+          console.error('Error transcribing audio with backend:', transcriptionError);
+          Speech.speak("Error transcribing audio with backend.");
+          Alert.alert('Error', 'Error transcribing audio. Please try again.');
+        }
+      } else if (stopResult.status === 'not_recording') {
+        Speech.speak("Voice recognition stopped. No command recorded.");
+      } else {
+        Speech.speak("Voice recognition stopped. Could not process audio.");
+         if (stopResult.error) {
+            Alert.alert('Error', `Problem stopping recording: ${stopResult.error}`);
+        }
+      }
+    } catch (error) {
+      setVoiceRecognitionActive(false);
+      console.error('Failed to stop voice recognition or process command:', error);
+      Speech.speak("Error stopping voice recognition.");
+      Alert.alert('Error', `Failed to stop voice recognition: ${error.message || 'Please try again.'}`);
     }
   };
 
@@ -181,28 +218,27 @@ const AdvancedMobileFeatures = ({ navigation }) => {
     }
 
     switch (nluResponse.intent) {
-      case 'show_analytics': // Assuming backend intent name
+      case 'show_analytics':
+      case 'VIEW_ANALYTICS':
         Speech.speak("Showing analytics.");
         navigation.navigate('Analytics');
         break;
-      case 'add_goal': // Assuming backend intent name
+      case 'add_goal':
+      case 'ADD_GOAL':
         Speech.speak("Opening goals to add a new one.");
-        navigation.navigate('Goals'); // Navigate to Goals screen, user can then tap "add"
+        navigation.navigate('Goals');
         break;
-      case 'update_progress': // Assuming backend intent name
+      case 'update_progress':
+      case 'UPDATE_PROGRESS':
         Speech.speak("Opening progress to update.");
-        navigation.navigate('Progress'); // Navigate to Progress screen
+        navigation.navigate('Progress');
         break;
-      // Example for a more generic intent with entities:
       case 'NAVIGATE_TO_SCREEN':
         const screenName = nluResponse.entities?.screen_name;
         if (screenName) {
-          // Basic validation: check if screenName is a string and not empty
           if (typeof screenName === 'string' && screenName.trim() !== '') {
             Speech.speak(`Navigating to ${screenName}.`);
-            // Ensure screenName matches a valid route key in your navigation setup
-            // For safety, you might want a list of valid navigable screens by voice
-            const validScreens = ['Analytics', 'Goals', 'Progress', 'Settings', 'Home', 'Profile']; // Example list
+            const validScreens = ['Analytics', 'Goals', 'Progress', 'Settings', 'Home', 'Profile'];
             if (validScreens.includes(screenName)) {
                navigation.navigate(screenName);
             } else {
@@ -219,7 +255,6 @@ const AdvancedMobileFeatures = ({ navigation }) => {
         break;
       case 'unknown_command':
       default:
-        // Use a message from NLU if available, otherwise a generic one
         const message = nluResponse.message || nluResponse.originalText || "Sorry, I couldn't understand that command.";
         Speech.speak(message.startsWith("Command not recognized:") ? message : `I heard "${nluResponse.originalText || 'that'}", but I'm not sure what to do.`);
         break;
@@ -228,29 +263,35 @@ const AdvancedMobileFeatures = ({ navigation }) => {
 
   const testVoiceCommand = async (command) => {
     try {
-      // Speech.speak(`Testing voice command: ${command}`); // Service handles logging
-      setVoiceRecognitionActive(true); // Simulate active state for UI if needed
-      const intentObject = await advancedMobileService.processVoiceCommand(command);
-      handleVoiceIntent(intentObject);
+      setVoiceRecognitionActive(true);
+      // Use the legacy processVoiceCommand method for testing
+      if (advancedMobileService.processVoiceCommand) {
+        const intentObject = await advancedMobileService.processVoiceCommand(command);
+        handleVoiceIntent(intentObject);
+      } else {
+        // Fallback to direct intent handling
+        const intentResponse = await advancedMobileService.handleIntent(command);
+        handleVoiceIntent(intentResponse);
+      }
     } catch (error) {
       console.error('Failed to process voice command:', error);
       Alert.alert('Error', 'Failed to process voice command');
     } finally {
-      setVoiceRecognitionActive(false); // Reset active state
+      setVoiceRecognitionActive(false);
     }
   };
 
   const optimizeNotifications = async () => {
     try {
-      const result = await advancedMobileService.processAiNotifications();
-      if (result && result.success) {
-        Alert.alert('Success', result.message || 'Notifications optimized successfully!');
+      const backendResponse = await advancedMobileService.processAiNotifications();
+      if (backendResponse && backendResponse.status) {
+        Alert.alert('Success', backendResponse.message || 'Notifications optimized based on your behavior patterns.');
       } else {
-        Alert.alert('Info', result.message || 'Notifications optimization process completed.');
+        Alert.alert('Info', backendResponse.message || 'Notifications optimization process completed.');
       }
     } catch (error) {
       console.error('Failed to optimize notifications:', error);
-      Alert.alert('Error', 'Failed to optimize notifications');
+      Alert.alert('Error', error.message || 'Failed to optimize notifications.');
     }
   };
 

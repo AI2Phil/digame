@@ -28,6 +28,7 @@ from .routers import integration_router # Import the integration router
 from .routers import tenant_router # Import the tenant router
 from .routers import notification_router # Import the notification router
 from .routers import voice_router # Import the voice NLU router
+from .routers import advanced_mobile_router # Import the advanced mobile AI router
 
 # Import authentication components
 from .auth.middleware import configure_auth_middleware
@@ -125,6 +126,10 @@ app = FastAPI(
         {
             "name": "Tenant Management",
             "description": "Multi-tenant organization management"
+        },
+        {
+            "name": "Advanced Mobile AI Features",
+            "description": "Endpoints for AI-driven advanced mobile functionalities like voice NLU and notification personalization."
         }
     ]
 )
@@ -164,6 +169,7 @@ app.include_router(integration_router.router, tags=["Integrations"])
 app.include_router(tenant_router.router, tags=["Tenant Management"])
 app.include_router(notification_router.router, prefix="/api", tags=["Notifications"]) # Add notification router
 app.include_router(voice_router.router) # Add voice NLU router, prefix is in the router file
+app.include_router(advanced_mobile_router.router) # Add advanced mobile AI router, tags are in the router
 
 # Startup and shutdown events
 @app.on_event("startup")
