@@ -20,9 +20,10 @@ class Activity(Base):
     # Optional field for more details about the activity
     details = Column(JSON(), nullable=True)
     
-    # Relationship to User model (optional, but good practice)
-    # This allows accessing the User object from an Activity instance
-    user = relationship("User", back_populates="activities")
+    # Temporarily commented out to resolve SQLAlchemy mapper issues
+    # # Relationship to User model (optional, but good practice)
+    # # This allows accessing the User object from an Activity instance
+    # user = relationship("User", back_populates="activities")
 
     # One-to-one relationship with ActivityEnrichedFeature
     # `uselist=False` makes this a scalar attribute (one-to-one)

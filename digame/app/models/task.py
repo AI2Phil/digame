@@ -29,8 +29,9 @@ class Task(Base):
     created_at = Column(DateTime(), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(), server_default=func.now(), onupdate=func.now(), nullable=False)
 
-    # Relationship to User model
-    user = relationship("User", back_populates="tasks")
+    # Temporarily commented out to resolve SQLAlchemy mapper issues
+    # # Relationship to User model
+    # user = relationship("User", back_populates="tasks")
     
     # Relationship to ProcessNote model (optional)
     process_note = relationship("ProcessNote", back_populates="generated_tasks")

@@ -89,8 +89,9 @@ class UserAchievement(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
-    # Relationships
-    user = relationship("User", back_populates="achievements")
+    # Temporarily commented out to resolve SQLAlchemy mapper issues
+    # # Relationships
+    # user = relationship("User", back_populates="achievements")
     achievement = relationship("Achievement", back_populates="user_achievements")
 
     @property
@@ -124,8 +125,9 @@ class Streak(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
-    # Relationships
-    user = relationship("User", back_populates="streaks")
+    # Temporarily commented out to resolve SQLAlchemy mapper issues
+    # # Relationships
+    # user = relationship("User", back_populates="streaks")
 
     @property
     def days_since_last_activity(self):
@@ -177,9 +179,10 @@ class Milestone(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
-    # Relationships
-    user = relationship("User")
-    goal = relationship("Goal", back_populates="milestones")
+    # Temporarily commented out to resolve SQLAlchemy mapper issues
+    # # Relationships
+    # user = relationship("User")
+    # goal = relationship("Goal", back_populates="milestones")
 
 class UserPoints(Base):
     """User points and scoring system"""
@@ -204,8 +207,9 @@ class UserPoints(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
-    # Relationships
-    user = relationship("User", back_populates="points")
+    # Temporarily commented out to resolve SQLAlchemy mapper issues
+    # # Relationships
+    # user = relationship("User", back_populates="points")
 
     def add_points(self, points: int, category: str = "general"):
         """Add points and update level"""
@@ -273,8 +277,9 @@ class UserBadge(Base):
     earned_at = Column(DateTime, default=datetime.utcnow)
     is_displayed = Column(Boolean, default=True)  # Show on profile
     
-    # Relationships
-    user = relationship("User", back_populates="badges")
+    # Temporarily commented out to resolve SQLAlchemy mapper issues
+    # # Relationships
+    # user = relationship("User", back_populates="badges")
     badge = relationship("Badge", back_populates="user_badges")
 
 class LeaderboardEntry(Base):

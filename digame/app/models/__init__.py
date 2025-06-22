@@ -33,10 +33,10 @@ from .social_collaboration import (
     ProjectApplication, SkillEndorsement, MentorshipConnection,
     ConnectionStatus, MessageType, ProjectStatus
 ) # Import enhanced social collaboration models
-from .gamification import (
-    Achievement, UserAchievement, Streak, Milestone, UserPoints,
-    Badge, UserBadge, LeaderboardEntry, AchievementType, AchievementRarity
-) # Import gamification models
+# from .gamification import (
+#     Achievement, UserAchievement, Streak, Milestone, UserPoints,
+#     Badge, UserBadge, LeaderboardEntry, AchievementType, AchievementRarity
+# ) # Import gamification models
 from .team import Team, TeamMember, TeamPerformanceMetric, TeamSkillGap, TeamWorkflow, TeamRoleEnum
 
 # Optionally, define __all__ to specify what is exported when 'from .models import *' is used
@@ -74,16 +74,16 @@ __all__ = [
     "ConnectionStatus",
     "MessageType",
     "ProjectStatus",
-    "Achievement", # Add gamification models to __all__
-    "UserAchievement",
-    "Streak",
-    "Milestone",
-    "UserPoints",
-    "Badge",
-    "UserBadge",
-    "LeaderboardEntry",
-    "AchievementType",
-    "AchievementRarity",
+    # "Achievement", # Add gamification models to __all__
+    # "UserAchievement",
+    # "Streak",
+    # "Milestone",
+    # "UserPoints",
+    # "Badge",
+    # "UserBadge",
+    # "LeaderboardEntry",
+    # "AchievementType",
+    # "AchievementRarity",
     "Team",
     "TeamMember",
     "TeamPerformanceMetric",

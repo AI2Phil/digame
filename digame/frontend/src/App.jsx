@@ -23,6 +23,11 @@ import FindPeersPage from './pages/FindPeersPage'; // Import FindPeersPage
 import BehavioralAnalyticsPage from './pages/BehavioralAnalyticsPage';
 import PredictiveAnalyticsPage from './pages/PredictiveAnalyticsPage';
 import ReportsPage from './pages/ReportsPage';
+// Team Collaboration Components
+import TeamManagement from './features/teams/components/TeamManagement';
+import TeamDashboard from './features/teams/components/TeamDashboard';
+import SkillGapVisualization from './features/teams/components/SkillGapVisualization';
+import WorkflowOptimization from './features/teams/components/WorkflowOptimization';
 import './App.css';
 
 function App() {
@@ -520,6 +525,51 @@ function App() {
                     <p className="text-gray-600">Industry trends and competitive analysis</p>
                   </div>
                 </div>
+              ) : (
+                <Navigate to="/" replace />
+              )
+            }
+          />
+
+          {/* Team Collaboration Routes */}
+          <Route
+            path="/teams"
+            element={
+              isAuthenticated || isDemoMode ? (
+                <TeamManagement />
+              ) : (
+                <Navigate to="/" replace />
+              )
+            }
+          />
+          
+          <Route
+            path="/teams/dashboard"
+            element={
+              isAuthenticated || isDemoMode ? (
+                <TeamDashboard />
+              ) : (
+                <Navigate to="/" replace />
+              )
+            }
+          />
+          
+          <Route
+            path="/teams/skills"
+            element={
+              isAuthenticated || isDemoMode ? (
+                <SkillGapVisualization />
+              ) : (
+                <Navigate to="/" replace />
+              )
+            }
+          />
+          
+          <Route
+            path="/teams/workflows"
+            element={
+              isAuthenticated || isDemoMode ? (
+                <WorkflowOptimization />
               ) : (
                 <Navigate to="/" replace />
               )

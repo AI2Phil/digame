@@ -9,7 +9,7 @@ This module provides comprehensive JWT token management including:
 """
 
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional, Dict, Any
 from jose import JWTError, jwt
 from passlib.context import CryptContext
@@ -20,7 +20,7 @@ from sqlalchemy.orm import Session
 # Configuration - In production, these should come from environment variables
 SECRET_KEY = os.getenv("SECRET_KEY", "your-super-secret-key-change-in-production")
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "120"))  # Increased to 2 hours for testing
 REFRESH_TOKEN_EXPIRE_DAYS = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", "7"))
 
 # Password hashing context
@@ -47,13 +47,13 @@ class TokenHandler:
         to_encode = data.copy()
         
         if expires_delta:
-            expire = datetime.utcnow() + expires_delta
+            expire = datetime.now(timezone.utc) + expires_delta
         else:
-            expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+            expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
         
         to_encode.update({
             "exp": expire,
-            "iat": datetime.utcnow(),
+            "iat": datetime.now(timezone.utc),
             "type": "access"
         })
         
@@ -72,11 +72,11 @@ class TokenHandler:
             Encoded JWT refresh token string
         """
         to_encode = data.copy()
-        expire = datetime.utcnow() + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
+        expire = datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
         
         to_encode.update({
             "exp": expire,
-            "iat": datetime.utcnow(),
+            "iat": datetime.now(timezone.utc),
             "type": "refresh",
             "jti": secrets.token_urlsafe(32)  # Unique token ID for blacklisting
         })
@@ -110,7 +110,7 @@ class TokenHandler:
             
             # Check expiration
             exp = payload.get("exp")
-            if exp and datetime.fromtimestamp(exp) < datetime.utcnow():
+            if exp and datetime.fromtimestamp(exp, tz=timezone.utc) < datetime.now(timezone.utc):
                 return None
             
             return dict(payload)
@@ -190,7 +190,7 @@ class PasswordHandler:
         Returns:
             Password reset token
         """
-        expire = datetime.utcnow() + timedelta(hours=1)  # 1 hour expiry
+        expire = datetime.now(timezone.utc) + timedelta(hours=1)  # 1 hour expiry
         data: Dict[str, Any] = {
             "email": email,
             "type": "password_reset",
@@ -240,14 +240,14 @@ def get_token_expiry_info(token: str) -> Optional[Dict[str, Any]]:
         iat = payload.get("iat")
         
         if exp:
-            exp_datetime = datetime.fromtimestamp(exp)
-            iat_datetime = datetime.fromtimestamp(iat) if iat else None
+            exp_datetime = datetime.fromtimestamp(exp, tz=timezone.utc)
+            iat_datetime = datetime.fromtimestamp(iat, tz=timezone.utc) if iat else None
             
             return {
                 "expires_at": exp_datetime,
                 "issued_at": iat_datetime,
-                "is_expired": exp_datetime < datetime.utcnow(),
-                "time_until_expiry": exp_datetime - datetime.utcnow() if exp_datetime > datetime.utcnow() else timedelta(0)
+                "is_expired": exp_datetime < datetime.now(timezone.utc),
+                "time_until_expiry": exp_datetime - datetime.now(timezone.utc) if exp_datetime > datetime.now(timezone.utc) else timedelta(0)
             }
         
         return None

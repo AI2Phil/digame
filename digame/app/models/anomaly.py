@@ -23,9 +23,10 @@ class DetectedAnomaly(Base):
     related_activity_ids = Column(JSON(), nullable=True) # Array of integers (IDs from digital_activity)
     status = Column(String(), default="new", nullable=False, index=True) # e.g., "new", "acknowledged", "resolved"
 
-    # Relationship to User model
-    # This allows accessing the User object from a DetectedAnomaly instance
-    user = relationship("User", back_populates="anomalies")
+    # Temporarily commented out to resolve SQLAlchemy mapper issues
+    # # Relationship to User model
+    # # This allows accessing the User object from a DetectedAnomaly instance
+    # user = relationship("User", back_populates="anomalies")
 
     def __repr__(self):
         return f"<DetectedAnomaly(id={self.id}, user_id={self.user_id}, type='{self.anomaly_type}', status='{self.status}')>"

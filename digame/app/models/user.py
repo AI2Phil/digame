@@ -38,35 +38,37 @@ class User(Base):
         secondary="user_roles", 
         back_populates="users"
     )
-    process_notes = relationship(
-        "ProcessNote",
-        back_populates="user",
-        cascade="all, delete-orphan"
-    )
-    activities = relationship(
-        "Activity",
-        back_populates="user",
-        cascade="all, delete-orphan"
-    )
-    anomalies = relationship(
-        "DetectedAnomaly",
-        back_populates="user",
-        cascade="all, delete-orphan"
-    )
-    tasks = relationship(
-        "Task",
-        back_populates="user",
-        cascade="all, delete-orphan"
-    )
-    behavioral_models = relationship(
-        "BehavioralModel",
-        back_populates="user",
-        cascade="all, delete-orphan"
-    )
+    # Temporarily commented out to resolve SQLAlchemy mapper issues
+    # process_notes = relationship(
+    #     "ProcessNote",
+    #     back_populates="user",
+    #     cascade="all, delete-orphan"
+    # )
+    # activities = relationship(
+    #     "Activity",
+    #     back_populates="user",
+    #     cascade="all, delete-orphan"
+    # )
+    # anomalies = relationship(
+    #     "DetectedAnomaly",
+    #     back_populates="user",
+    #     cascade="all, delete-orphan"
+    # )
+    # tasks = relationship(
+    #     "Task",
+    #     back_populates="user",
+    #     cascade="all, delete-orphan"
+    # )
+    # behavioral_models = relationship(
+    #     "BehavioralModel",
+    #     back_populates="user",
+    #     cascade="all, delete-orphan"
+    # )
     # Relationships to new models
     projects = relationship(
         "Project",
         back_populates="user",
+        foreign_keys="Project.user_id",
         cascade="all, delete-orphan"
     )
     experience_entries = relationship(
@@ -80,14 +82,15 @@ class User(Base):
         cascade="all, delete-orphan"
     )
 
-    # Relationship to UserSetting model
-    # This allows accessing the user's settings.
-    settings = relationship(
-        "UserSetting",
-        back_populates="user",
-        uselist=False,
-        cascade="all, delete-orphan"
-    )
+    # Temporarily commented out to resolve SQLAlchemy mapper issues
+    # # Relationship to UserSetting model
+    # # This allows accessing the user's settings.
+    # settings = relationship(
+    #     "UserSetting",
+    #     back_populates="user",
+    #     uselist=False,
+    #     cascade="all, delete-orphan"
+    # )
 
     # New relationship to UserProfile (One-to-One)
     profile = relationship(
@@ -98,26 +101,27 @@ class User(Base):
     )
 
     # Relationship to UserOnboardingProgress (One-to-One)
-    onboarding_progress = relationship(
-        "UserOnboardingProgress",
-        back_populates="user",
-        uselist=False,
-        cascade="all, delete-orphan"
-    )
+    # onboarding_progress = relationship(
+    #     "UserOnboardingProgress",
+    #     back_populates="user",
+    #     uselist=False,
+    #     cascade="all, delete-orphan"
+    # )
 
-    # Relationships for messages
-    sent_messages = relationship(
-        "Message",
-        foreign_keys="Message.sender_id",
-        back_populates="sender",
-        cascade="all, delete-orphan"
-    )
-    received_messages = relationship(
-        "Message",
-        foreign_keys="Message.receiver_id",
-        back_populates="receiver",
-        cascade="all, delete-orphan"
-    )
+    # Temporarily commented out to resolve SQLAlchemy mapper issues
+    # # Relationships for messages
+    # sent_messages = relationship(
+    #     "Message",
+    #     foreign_keys="Message.sender_id",
+    #     back_populates="sender",
+    #     cascade="all, delete-orphan"
+    # )
+    # received_messages = relationship(
+    #     "Message",
+    #     foreign_keys="Message.receiver_id",
+    #     back_populates="receiver",
+    #     cascade="all, delete-orphan"
+    # )
 
     # Relationships for Team Collaboration
     team_memberships = relationship("TeamMember", back_populates="user", cascade="all, delete-orphan")

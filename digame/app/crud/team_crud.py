@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
-from typing import List, Optional, Type
+from typing import List, Optional, Type, Any
+from pydantic import BaseModel
 from digame.app import models, schemas # Assuming models and schemas are accessible this way
 
 # CRUD for Team
@@ -86,7 +87,7 @@ def delete_team_member(db: Session, team_id: int, user_id: int) -> Optional[mode
     return db_member
 
 # Generic CRUD creator for PerformanceMetric, SkillGap, Workflow
-def _create_team_related_item(db: Session, item_create_schema: schemas.BaseModel, model_cls: Type[models.Base]) -> models.Base:
+def _create_team_related_item(db: Session, item_create_schema: BaseModel, model_cls: Type[models.Base]) -> models.Base:
     item_data = item_create_schema.dict()
     db_item = model_cls(**item_data)
     db.add(db_item)
@@ -103,7 +104,7 @@ def _get_team_related_items_by_team_id(db: Session, team_id: int, model_cls: Typ
     return db.query(model_cls).filter(model_cls.team_id == team_id).offset(skip).limit(limit).all()
 
 # Generic CRUD updater for PerformanceMetric, SkillGap, Workflow
-def _update_team_related_item(db: Session, item_id: int, item_update_schema: schemas.BaseModel, model_cls: Type[models.Base]) -> Optional[models.Base]:
+def _update_team_related_item(db: Session, item_id: int, item_update_schema: BaseModel, model_cls: Type[models.Base]) -> Optional[models.Base]:
     db_item = _get_team_related_item_by_id(db, item_id, model_cls)
     if db_item:
         update_data = item_update_schema.dict(exclude_unset=True)

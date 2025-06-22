@@ -20,7 +20,7 @@ from .routers import behavior as behavior_router
 from .routers import pattern_recognition_router
 from .routers import job_router
 from .routers import publish_router
-from .routers import auth_router  # Import the new authentication router
+from .routers.auth_router import router as auth_router  # Import the new authentication router
 from .routers import onboarding_router
 from .routers import enhanced_onboarding_router
 from .routers import user_setting_router # Import the user setting router
@@ -173,7 +173,7 @@ configure_auth_middleware(app)
 logger.info("GZipMiddleware configuration skipped due to type compatibility")
 
 # Include authentication router first (no authentication required)
-app.include_router(auth_router.router, tags=["Authentication"])
+app.include_router(auth_router, tags=["Authentication"])
 
 # Include dashboard and onboarding routers
 app.include_router(dashboard_router.router, tags=["Dashboard"])
@@ -211,7 +211,7 @@ app.include_router(social_collaboration_router.router) # Add the social collabor
 app.include_router(mobile_ai_router.router) # Add the new mobile_ai_router, already tagged in its file
 app.include_router(user_profile_router.router) # Add user profile router, prefix and tags are in the router itself
 app.include_router(gamification.router, tags=["Gamification"]) # Add gamification router
-app.include_router(team_router.router) # Add team router, prefix and tags are in the router file
+app.include_router(team_router.router, prefix="/api", tags=["Teams"]) # Add team router with API prefix
 
 # Startup and shutdown events
 @app.on_event("startup")

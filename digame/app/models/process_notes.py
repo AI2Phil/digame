@@ -30,9 +30,10 @@ class ProcessNote(Base):
     user_feedback = Column(String(), nullable=True) # e.g., "accurate", "inaccurate"
     user_tags = Column(JSON(), nullable=True) # Array of strings
 
-    # Relationship to User model
-    # This allows accessing the User object from a ProcessNote instance
-    user = relationship("User", back_populates="process_notes")
+    # Temporarily commented out to resolve SQLAlchemy mapper issues
+    # # Relationship to User model
+    # # This allows accessing the User object from a ProcessNote instance
+    # user = relationship("User", back_populates="process_notes")
 
     # Relationship to Task model (one-to-many: one ProcessNote can generate multiple Tasks)
     generated_tasks = relationship(

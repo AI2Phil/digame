@@ -10,7 +10,7 @@ from ..database import get_db
 from ..services.tenant_service import TenantService, UserService
 # Assuming User model is needed for type hinting current_user, adjust if defined elsewhere
 from ..models.tenant import User as UserModel
-from ..schemas import tenant_schemas # Import the new schemas module
+from ..schemas import tenant # Import the tenant schemas module
 
 router = APIRouter(
     prefix="/api/v1", # Prefixing all with /api/v1
@@ -42,9 +42,9 @@ async def get_admin_user(current_user: UserModel = Depends(get_current_active_us
 
 
 # --- Tenant Management Endpoints ---
-@router.post("/tenants/", response_model=tenant_schemas.TenantResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/tenants/", response_model=tenant.TenantResponse, status_code=status.HTTP_201_CREATED)
 async def create_new_tenant(
-    tenant_data: tenant_schemas.TenantCreate,
+    tenant_data: tenant.TenantCreate,
     request: Request, # To get IP and User-Agent
     db: Session = Depends(get_db),
     current_user: UserModel = Depends(get_admin_user) # Assuming only admins can create tenants
@@ -68,7 +68,7 @@ async def create_new_tenant(
         # Log the exception e
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to create tenant.")
 
-@router.get("/tenants/{tenant_id}", response_model=tenant_schemas.TenantResponse)
+@router.get("/tenants/{tenant_id}", response_model=tenant.TenantResponse)
 async def read_tenant_by_id(
     tenant_id: int,
     db: Session = Depends(get_db),
@@ -85,10 +85,10 @@ async def read_tenant_by_id(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Tenant not found")
     return tenant
 
-@router.put("/tenants/{tenant_id}", response_model=tenant_schemas.TenantResponse)
+@router.put("/tenants/{tenant_id}", response_model=tenant.TenantResponse)
 async def update_existing_tenant(
     tenant_id: int,
-    tenant_update_data: tenant_schemas.TenantUpdate,
+    tenant_update_data: tenant.TenantUpdate,
     request: Request,
     db: Session = Depends(get_db),
     current_user: UserModel = Depends(get_admin_user) # Assuming admin for updates
@@ -113,7 +113,7 @@ async def update_existing_tenant(
     return updated_tenant
 
 # Add other tenant lookup methods if needed: by slug, domain, subdomain
-@router.get("/tenants/slug/{slug}", response_model=tenant_schemas.TenantResponse)
+@router.get("/tenants/slug/{slug}", response_model=tenant.TenantResponse)
 async def read_tenant_by_slug(slug: str, db: Session = Depends(get_db)): # Public or semi-public
     tenant = TenantService(db).get_tenant_by_slug(slug)
     if not tenant:
@@ -121,10 +121,10 @@ async def read_tenant_by_slug(slug: str, db: Session = Depends(get_db)): # Publi
     return tenant
 
 # --- TenantSettings (Key-Value) Endpoints ---
-@router.post("/tenants/{tenant_id}/settings", response_model=tenant_schemas.TenantSettingResponse)
+@router.post("/tenants/{tenant_id}/settings", response_model=tenant.TenantSettingResponse)
 async def create_or_update_tenant_setting(
     tenant_id: int,
-    setting_data: tenant_schemas.TenantSettingCreateUpdate,
+    setting_data: tenant.TenantSettingCreateUpdate,
     request: Request,
     db: Session = Depends(get_db),
     current_user: UserModel = Depends(get_admin_user) # Admin of the tenant
@@ -146,7 +146,7 @@ async def create_or_update_tenant_setting(
     except ValueError as ve:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(ve))
 
-@router.get("/tenants/{tenant_id}/settings/{category}/{key}", response_model=tenant_schemas.TenantSettingResponse)
+@router.get("/tenants/{tenant_id}/settings/{category}/{key}", response_model=tenant.TenantSettingResponse)
 async def read_tenant_setting(
     tenant_id: int, category: str, key: str, db: Session = Depends(get_db), current_user: UserModel = Depends(get_current_active_user)
 ):
@@ -157,7 +157,7 @@ async def read_tenant_setting(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Setting not found")
     return setting
 
-@router.get("/tenants/{tenant_id}/settings/{category}", response_model=List[tenant_schemas.TenantSettingResponse])
+@router.get("/tenants/{tenant_id}/settings/{category}", response_model=List[tenant.TenantSettingResponse])
 async def read_tenant_settings_by_category(
     tenant_id: int, category: str, db: Session = Depends(get_db), current_user: UserModel = Depends(get_current_active_user)
 ):
@@ -183,10 +183,10 @@ async def remove_tenant_setting(
 
 # --- TenantInvitation Endpoints ---
 # Note: Invitations are typically managed by tenant admins.
-@router.post("/tenants/{tenant_id}/invitations", response_model=tenant_schemas.TenantInvitationResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/tenants/{tenant_id}/invitations", response_model=tenant.TenantInvitationResponse, status_code=status.HTTP_201_CREATED)
 async def invite_user_to_tenant(
     tenant_id: int,
-    invitation_data: tenant_schemas.TenantInvitationCreate,
+    invitation_data: tenant.TenantInvitationCreate,
     request: Request,
     db: Session = Depends(get_db),
     current_user: UserModel = Depends(get_admin_user) # Inviter must be admin of the tenant
@@ -206,7 +206,7 @@ async def invite_user_to_tenant(
     except ValueError as ve:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(ve))
 
-@router.post("/invitations/accept/{token}", response_model=tenant_schemas.TenantInvitationResponse)
+@router.post("/invitations/accept/{token}", response_model=tenant.TenantInvitationResponse)
 async def accept_tenant_invitation(
     token: str,
     request: Request, # For IP/User-Agent
@@ -227,7 +227,7 @@ async def accept_tenant_invitation(
     except ValueError as ve:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(ve))
 
-@router.get("/tenants/{tenant_id}/invitations", response_model=List[tenant_schemas.TenantInvitationResponse])
+@router.get("/tenants/{tenant_id}/invitations", response_model=List[tenant.TenantInvitationResponse])
 async def list_tenant_invitations(
     tenant_id: int,
     status: Optional[str] = None, # Query param: pending, accepted, expired
@@ -239,7 +239,7 @@ async def list_tenant_invitations(
     invitations = TenantService(db).list_invitations(tenant_id, status)
     return invitations
 
-@router.get("/invitations/{token}", response_model=tenant_schemas.TenantInvitationResponse)
+@router.get("/invitations/{token}", response_model=tenant.TenantInvitationResponse)
 async def get_invitation_details_by_token(token: str, db: Session = Depends(get_db)):
     # This might be a public endpoint or require some form of auth if token is guessable.
     invitation = TenantService(db).get_invitation_by_token(token)
@@ -248,7 +248,7 @@ async def get_invitation_details_by_token(token: str, db: Session = Depends(get_
     return invitation
 
 # --- TenantAuditLog Endpoints ---
-@router.get("/tenants/{tenant_id}/audit-logs", response_model=List[tenant_schemas.TenantAuditLogResponse])
+@router.get("/tenants/{tenant_id}/audit-logs", response_model=List[tenant.TenantAuditLogResponse])
 async def list_tenant_audit_logs(
     tenant_id: int,
     user_id_filter: Optional[int] = None, # Query param user_id
@@ -265,10 +265,10 @@ async def list_tenant_audit_logs(
 
 # --- User Management under Tenant ---
 # These endpoints were partially in the old router. Consolidating and ensuring tenant context.
-@router.post("/tenants/{tenant_id}/users/", response_model=tenant_schemas.UserBasicResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/tenants/{tenant_id}/users/", response_model=tenant.UserBasicResponse, status_code=status.HTTP_201_CREATED)
 async def create_user_for_tenant(
     tenant_id: int,
-    user_data: tenant_schemas.UserCreateForTenant,
+    user_data: tenant.UserCreateForTenant,
     request: Request,
     db: Session = Depends(get_db),
     current_admin: UserModel = Depends(get_admin_user) # Admin of the tenant
@@ -291,7 +291,7 @@ async def create_user_for_tenant(
     except ValueError as ve:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(ve))
 
-@router.get("/tenants/{tenant_id}/users/", response_model=List[tenant_schemas.UserBasicResponse])
+@router.get("/tenants/{tenant_id}/users/", response_model=List[tenant.UserBasicResponse])
 async def list_users_for_tenant(
     tenant_id: int,
     skip: int = 0,
@@ -306,7 +306,7 @@ async def list_users_for_tenant(
 
 
 # Placeholder for Tenant Usage - requires service layer implementation
-@router.get("/tenants/{tenant_id}/usage", response_model=tenant_schemas.TenantUsageResponse)
+@router.get("/tenants/{tenant_id}/usage", response_model=tenant.TenantUsageResponse)
 async def get_tenant_usage_info(
     tenant_id: int,
     db: Session = Depends(get_db),
@@ -321,7 +321,7 @@ async def get_tenant_usage_info(
     
     # Basic implementation:
     current_user_count = db.query(UserModel).filter(UserModel.tenant_id == tenant_id).count()
-    return tenant_schemas.TenantUsageResponse(
+    return tenant.TenantUsageResponse(
         tenant_id=tenant_id,
         current_user_count=current_user_count,
         max_users=tenant.max_users

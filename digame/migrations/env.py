@@ -17,17 +17,19 @@ if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 # Add the app directory to Python path for imports
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 # add your model's MetaData object here
 # for 'autogenerate' support
 
 # Explicitly import all models to ensure they are registered with Base
 # Assuming Base is defined in app.models.user and re-exported by app.models
-from app.models.user import Base, User  # Import Base here
-from app.models.project import Project
-from app.models.experience import Experience
-from app.models.education import Education
+from digame.app.models.user import Base, User  # Import Base here
+from digame.app.models.project import Project
+from digame.app.models.experience import Experience
+from digame.app.models.education import Education
+# Import team collaboration models
+from digame.app.models.team import Team, TeamMember, TeamPerformanceMetric, TeamSkillGap, TeamWorkflow
 # Also import any other models that might be relevant if they were missed by generic import
 # For example, if UserSetting was a separate file and not covered by app.models import:
 # from app.models.user_setting import UserSetting

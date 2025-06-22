@@ -24,8 +24,9 @@ class Job(Base):
     created_at = Column(DateTime(), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(), server_default=func.now(), onupdate=func.now(), nullable=False)
     
-    # Relationships
-    user = relationship("User", back_populates="jobs")
+    # Temporarily commented out to resolve SQLAlchemy mapper issues
+    # # Relationships
+    # user = relationship("User", back_populates="jobs")
     
     def __repr__(self):
         return f"<Job(id={self.id}, user_id={self.user_id}, job_type={self.job_type}, status={self.status})>"

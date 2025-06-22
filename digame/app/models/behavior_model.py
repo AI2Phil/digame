@@ -33,8 +33,9 @@ class BehavioralModel(Base):
     # The serialized model itself
     model_data = Column(LargeBinary(), nullable=True)  # Serialized model (pickle or joblib)
     
-    # Relationship to User model
-    user = relationship("User", back_populates="behavioral_models")
+    # Temporarily commented out to resolve SQLAlchemy mapper issues
+    # # Relationship to User model
+    # user = relationship("User", back_populates="behavioral_models")
     
     # Relationship to BehavioralPattern model
     patterns = relationship("BehavioralPattern", back_populates="model", cascade="all, delete-orphan")

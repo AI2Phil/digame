@@ -60,7 +60,7 @@ class User(UserBase): # UserBase already includes detailed_bio, contact_info, sk
     education_entries: List[EducationSchema] = Field(default_factory=list) # Matches model relationship name
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
     @validator('contact_info', pre=True, allow_reuse=True)
     def parse_contact_info(cls, value):
@@ -99,4 +99,4 @@ class UserWithRoles(User):
     roles: List[str] = []
 
     class Config:
-        orm_mode = True
+        from_attributes = True

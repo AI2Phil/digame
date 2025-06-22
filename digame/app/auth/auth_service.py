@@ -11,7 +11,8 @@ This service provides comprehensive authentication functionality including:
 
 from typing import Optional, Dict, Any, Tuple
 from sqlalchemy.orm import Session
-from fastapi import HTTPException, status
+from fastapi import HTTPException, status, Depends
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from datetime import datetime, timedelta
 import secrets
 import logging
@@ -27,6 +28,7 @@ from ..crud.user_crud import (
 )
 from ..crud.rbac_crud import get_role_by_name, assign_role_to_user
 from ..schemas.user_schemas import UserCreate, User as UserSchema
+from ..database import get_db
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -379,3 +381,44 @@ class AuthService:
 
 # Create singleton instance
 auth_service = AuthService()
+
+# Security scheme for FastAPI
+security = HTTPBearer()
+
+def get_current_user(
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+    db: Session = Depends(get_db)
+) -> User:
+    """
+    Dependency to get the current authenticated user
+    """
+    token = credentials.credentials
+    
+    # Verify the token
+    payload = auth_service.verify_access_token(token)
+    if not payload:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authentication credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    # Get user ID from token
+    user_id = payload.get("sub")
+    if not user_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token payload",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    # Get user from database
+    user = auth_service.get_user_from_token(db, token)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not found",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    return user

@@ -11,6 +11,7 @@ const Sidebar = ({ isDemoMode, onLogout, currentUser, isOpen, onToggle }) => {
   const [expandedSections, setExpandedSections] = useState({
     analytics: false,
     aiTools: false,
+    teams: false,
     social: false,
     tasks: false,
     enterprise: false
@@ -45,6 +46,17 @@ const Sidebar = ({ isDemoMode, onLogout, currentUser, isOpen, onToggle }) => {
         { label: 'AI Task Suggestions', icon: '📋', path: '/tasks', subtitle: 'TASK MANAGEMENT' },
         { label: 'AI Insights', icon: '🧠', path: '/ai-tools?tab=insights', subtitle: 'INSIGHTS & ANALYTICS' },
         { label: 'AI Coaching', icon: '🎯', path: '/ai-tools?tab=coaching', subtitle: 'INSIGHTS & ANALYTICS' }
+      ]
+    },
+    {
+      id: 'teams',
+      title: 'Teams',
+      icon: '👥',
+      items: [
+        { label: 'Team Management', icon: '⚙️', path: '/teams', subtitle: 'TEAM COLLABORATION' },
+        { label: 'Team Dashboard', icon: '📊', path: '/teams/dashboard', subtitle: 'TEAM COLLABORATION' },
+        { label: 'Skill Gap Analysis', icon: '🎯', path: '/teams/skills', subtitle: 'TEAM COLLABORATION' },
+        { label: 'Workflow Optimization', icon: '🔄', path: '/teams/workflows', subtitle: 'TEAM COLLABORATION' }
       ]
     },
     {
