@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
-from digame.app.db.base_class import Base
+from .user import Base
 
 class Notification(Base):
     __tablename__ = "notifications"

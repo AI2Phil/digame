@@ -1,8 +1,8 @@
 from typing import List, Optional
 from sqlalchemy.orm import Session
 from sqlalchemy import func
-from models.notification import Notification
-from schemas import notification_schemas
+from ..models.notification import Notification
+from ..schemas import notification_schemas
 
 def create_notification(db: Session, notification: notification_schemas.NotificationCreate, user_id: int) -> Notification:
     db_notification = Notification(

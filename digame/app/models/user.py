@@ -1,9 +1,9 @@
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, ForeignKey, JSON # Added ForeignKey, JSON
-from sqlalchemy.orm import relationship
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import relationship, DeclarativeBase
 from datetime import datetime # Changed to just datetime for consistency, as utcnow is method of datetime
 
-Base = declarative_base()
+class Base(DeclarativeBase):
+    pass
 
 class User(Base):
     __tablename__ = "users"
@@ -76,20 +76,20 @@ class User(Base):
 class UserProfile(Base):
     __tablename__ = "user_profiles" # Changed table name to plural
 
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), unique=True, nullable=False)
+    id = Column(Integer(), primary_key=True, index=True)
+    user_id = Column(Integer(), ForeignKey("users.id"), unique=True, nullable=False)
 
     skills = Column(JSON, nullable=True)
-    learning_goals = Column(Text, nullable=True) # Using Text for flexibility
+    learning_goals = Column(Text(), nullable=True) # Using Text for flexibility
     interests = Column(JSON, nullable=True)
     mentorship_preferences = Column(JSON, nullable=True)
 
-    bio = Column(Text, nullable=True)
+    bio = Column(Text(), nullable=True)
     location = Column(String(255), nullable=True)
     linkedin_url = Column(String(255), nullable=True)
     github_url = Column(String(255), nullable=True)
 
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_at = Column(DateTime(), default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # Relationship back to User (One-to-One)
     user = relationship("User", back_populates="profile")

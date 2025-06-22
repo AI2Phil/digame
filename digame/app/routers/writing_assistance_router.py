@@ -28,7 +28,6 @@ def get_writing_suggestion_endpoint(
             text_input=request_data.text_input
         )
         return schemas.WritingSuggestionResponse(
-            original_text=request_data.text_input,
             suggestion=suggestion_text
         )
     except HTTPException as e:

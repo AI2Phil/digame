@@ -56,6 +56,3 @@ class UserWithProfileResponse(MinimalUserBase): # Inherits from MinimalUserBase 
     # skills: Optional[List[Dict[str, str]]] = Field(None, alias="profile.skills") # Example if flattening
     # This requires Pydantic v2 and careful aliasing, or manual construction in the router.
     # For now, a nested 'profile' object is simpler.
-
-    class Config:
-        from_attributes = True

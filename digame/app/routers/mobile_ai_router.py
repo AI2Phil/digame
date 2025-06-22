@@ -40,7 +40,7 @@ async def configure_ai_notification_settings(
             prefs=prefs_request
         )
         if success:
-            return NotificationPrefsResponse(message="Notification preferences saved successfully.")
+            return NotificationPrefsResponse()
         else:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -59,7 +59,9 @@ async def fetch_ai_notification_triggers(
 ):
     try:
         triggers = await service.get_ai_notification_triggers(user_id=current_user.id)
-        return NotificationTriggersResponse(triggers=triggers)
+        response = NotificationTriggersResponse()
+        response.triggers = triggers
+        return response
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
