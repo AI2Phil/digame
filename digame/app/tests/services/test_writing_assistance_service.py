@@ -3,9 +3,9 @@ from unittest.mock import MagicMock, patch, AsyncMock
 from sqlalchemy.orm import Session
 
 # Models to import for type hinting and creating mock instances
-from digame.app.models.user import User as UserModel
-from digame.app.models.tenant import Tenant as TenantModel
-from digame.app.models.writing_assistance import WritingSuggestion as WritingSuggestionModel
+from digame.app.models.tenant import User as UserModel, Tenant as TenantModel
+# Note: WritingSuggestion model may not exist yet, commenting out for now
+# from digame.app.models.writing_assistance import WritingSuggestion as WritingSuggestionModel
 
 # Service to test
 from digame.app.services.writing_assistance_service import WritingAssistanceService
@@ -59,7 +59,8 @@ def sample_writing_request():
 
 @pytest.fixture
 def mock_writing_suggestion():
-    return WritingSuggestionModel(
+    # return WritingSuggestionModel(
+    return type('MockWritingSuggestion', (), {
         id=1,
         user_id=1,
         original_text="This is a sample text that needs improvement.",

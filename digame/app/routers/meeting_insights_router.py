@@ -26,10 +26,11 @@ def analyze_meeting_text_endpoint(
             current_user=current_user,
             meeting_text=request_data.meeting_text
         )
-        return schemas.MeetingAnalysisResponse(
-            original_text_length=len(request_data.meeting_text),
-            analysis=analysis_result
-        )
+        response_data = {
+            "original_text_length": len(request_data.meeting_text),
+            "analysis": analysis_result
+        }
+        return schemas.MeetingAnalysisResponse(**response_data)
     except HTTPException as e:
         # Re-raise HTTPExceptions directly from the service
         raise e

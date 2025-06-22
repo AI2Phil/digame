@@ -150,3 +150,9 @@ class TenantUsageResponse(BaseModel):
 # --- General Purpose Schemas ---
 class MessageResponse(BaseModel):
     message: str
+
+# --- Aliases for backward compatibility ---
+TenantSettingsCreate = TenantSettingCreateUpdate
+TenantSettingsUpdate = TenantSettingCreateUpdate
+TenantInvitationUpdate = TenantInvitationCreate
+TenantAuditLogCreate = TenantAuditLogResponse

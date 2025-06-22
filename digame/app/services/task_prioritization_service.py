@@ -118,11 +118,11 @@ class TaskPrioritizationService:
 
         if apply_changes and tasks_to_update_in_db:
             for item_to_update in tasks_to_update_in_db:
+                task_update_data = {"priority_score": item_to_update["priority_score"]}
                 task_crud.update_task(
-                    self.db,
+                    db=self.db,
                     task_id=item_to_update["task_id"],
-                    task_in={"priority_score": item_to_update["priority_score"]},
-                    user_id_for_verification=current_user.id # Pass user_id for ownership verification
+                    task_update=task_update_data
                 )
 
         # Sort the final list by the new suggested score

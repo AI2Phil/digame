@@ -178,7 +178,7 @@ def delete_api_key(
 
     del api_keys_dict[key_name]
 
-    update_schema = schemas.UserSettingUpdate(api_keys=api_keys_dict)
+    update_schema = schemas.UserSettingUpdate(**{"api_keys": api_keys_dict})
     updated_settings = crud.update_user_setting(
         db, user_id=current_user.id, settings=update_schema
     )
@@ -195,10 +195,11 @@ def delete_api_key(
             print(f"Redis error during DELETE (cache invalidation): {e}") # Or use proper logging
             pass # Don't fail request if cache delete fails
 
-    return schemas.UserSetting(
-        id=updated_settings.id,
-        user_id=updated_settings.user_id,
-        api_keys=api_keys_dict,
-        created_at=updated_settings.created_at,
-        updated_at=updated_settings.updated_at
-    )
+    user_setting_data = {
+        "id": updated_settings.id,
+        "user_id": updated_settings.user_id,
+        "api_keys": api_keys_dict,
+        "created_at": updated_settings.created_at,
+        "updated_at": updated_settings.updated_at
+    }
+    return schemas.UserSetting(**user_setting_data)

@@ -334,7 +334,7 @@ async def get_workflow_instances(
         )
         return [WorkflowInstanceResponse.from_orm(instance) for instance in instances]
     except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/instances/{instance_id}", response_model=WorkflowInstanceResponse)

@@ -205,8 +205,8 @@ class TestTenantInvitationManagement:
             invited_by_user_id=2
         )
         mock_db_session.query(TenantInvitationModel).filter(TenantInvitationModel.invitation_token == token).first.return_value = mock_invitation
-        mock_db_session.query(User).filter(User.id == accepting_user_id).first.return_value = mock_user_instance
-        mock_db_session.query(Role).filter(Role.tenant_id == mock_invitation.tenant_id, Role.name == mock_invitation.role).first.return_value = RoleModel(id=1, name="User")
+        mock_db_session.query(UserModel).filter(UserModel.id == accepting_user_id).first.return_value = mock_user_instance
+        mock_db_session.query(RoleModel).filter(RoleModel.tenant_id == mock_invitation.tenant_id, RoleModel.name == mock_invitation.role).first.return_value = RoleModel(id=1, name="User")
 
 
         invitation = tenant_service.accept_invitation(token, accepting_user_id)
