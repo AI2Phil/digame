@@ -1211,3 +1211,66 @@ Based on current implementation status, the following areas represent key opport
 
 ---
 
+## 🏗️ **FUTURE INFRASTRUCTURE REFACTORING**
+
+### Directory Structure Refactoring ⏳ **SCHEDULED FOR FUTURE**
+
+**Strategic Timing**: After reaching 95%+ feature completion during planned maintenance window
+
+**Overview**: Comprehensive plan to refactor the current nested `digame/digame/` directory structure to a simplified flat structure for improved developer experience and project organization.
+
+**Reference Document**: [`docs/REFACTOR.md`](docs/REFACTOR.md) - Complete 8-phase implementation plan
+
+#### **Refactoring Benefits**
+- **Simplified Structure**: Eliminates confusing nested directories
+- **Cleaner Imports**: Shorter, more intuitive import paths (`app.models` vs `digame.app.models`)
+- **Better IDE Support**: Improved project navigation and IntelliSense
+- **Standard Convention**: Follows common Python project conventions
+- **Reduced Complexity**: Fewer directory levels to navigate
+
+#### **Target Structure Transformation**
+```bash
+# Current: digame/digame/app/ → Target: digame/app/
+# Current: digame/digame/frontend/ → Target: digame/frontend/
+# Current: digame/digame/tests/ → Target: digame/tests/
+# Current: digame/digame/migrations/ → Target: digame/migrations/
+```
+
+#### **Implementation Phases** (5-6 hours total)
+1. **Phase 1**: Preparation and Backup (30 min)
+2. **Phase 2**: Move Core Application Files (1 hour)
+3. **Phase 3**: Move Configuration and Build Files (45 min)
+4. **Phase 4**: Update Configuration Files (1 hour)
+5. **Phase 5**: Clean Up and Remove Nested Directory (15 min)
+6. **Phase 6**: Update CI/CD and Development Tools (45 min)
+7. **Phase 7**: Testing and Validation (1 hour)
+8. **Phase 8**: Documentation Updates (30 min)
+
+#### **Risk Assessment**
+- **Risk Level**: 🟡 Medium (High-risk, low-immediate-value)
+- **High-Risk Areas**: Import statements, Docker configuration, CI/CD pipelines
+- **Mitigation**: Comprehensive backup strategy, incremental approach, thorough testing
+
+#### **Recommended Timing**
+- **Not Now**: Platform at 85% completion with active feature development
+- **Future Window**: After reaching 95%+ feature completion
+- **Ideal Timing**: During major version release cycle
+- **Prerequisites**: Complete gamification, AI integration, and social collaboration enhancements
+
+#### **Decision Rationale**
+**Why Later**:
+- Current focus on high-impact user features provides immediate value
+- Refactoring could disrupt 16 stable, merged branches
+- No direct user-facing benefits justify current development disruption
+- Better performed during dedicated maintenance window
+
+**Why Eventually**:
+- Improved developer experience and code maintainability
+- Simplified onboarding for new team members
+- Better alignment with Python project standards
+- Reduced cognitive overhead for navigation
+
+See [`docs/REFACTOR.md`](docs/REFACTOR.md) for complete implementation details, commands, validation procedures, and rollback strategies.
+
+---
+
