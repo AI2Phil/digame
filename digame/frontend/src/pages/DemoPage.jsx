@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Button from '../components/ui/Button';
 import { Card, CardContent } from '../components/ui/Card';
+import demoService from '../services/demoService';
 
 export default function DemoPage({ onDemoAccess }) {
   const [selectedDemo, setSelectedDemo] = useState(null);
@@ -10,6 +11,7 @@ export default function DemoPage({ onDemoAccess }) {
   const handleDemoSelect = (demoType) => {
     setSelectedDemo(demoType);
     // Enable demo mode and redirect to dashboard
+    demoService.setDemoMode(true);
     if (onDemoAccess) {
       onDemoAccess();
     }

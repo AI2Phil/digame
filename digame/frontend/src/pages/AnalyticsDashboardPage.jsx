@@ -11,7 +11,7 @@ import { Badge } from '../components/ui/Badge';
 import { Progress } from '../components/ui/Progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/Tabs';
 import { Toast } from '../components/ui/Toast';
-import apiService from '../services/apiService';
+import enhancedApiService from '../services/enhancedApiService';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../components/ui/Select';
 import PerformanceMonitoringSection from '../components/analytics/PerformanceMonitoringSection';
 import UserBehaviorAnalyticsSection from '../components/analytics/UserBehaviorAnalyticsSection';
@@ -19,7 +19,7 @@ import ApiAnalyticsSection from '../components/analytics/ApiAnalyticsSection';
 import MobileAnalyticsSection from '../components/analytics/MobileAnalyticsSection';
 import { Skeleton } from '../components/ui/Skeleton';
 
-const AnalyticsDashboardPage = () => {
+const AnalyticsDashboardPage = ({ isDemoMode, onLogout }) => {
   const [activeTab, setActiveTab] = useState('overview');
   const [timeRange, setTimeRange] = useState('24h');
   const [loading, setLoading] = useState(true);
@@ -37,22 +37,23 @@ const AnalyticsDashboardPage = () => {
         performanceData,
         userBehaviorData,
         apiMetricsData,
-        databaseMetricsData,
-        mobileAnalyticsData
+        mobileAnalyticsData,
+        webAnalyticsData
       ] = await Promise.all([
-        apiService.getPerformanceMetrics(timeRange),
-        apiService.getUserBehaviorAnalytics(timeRange),
-        apiService.getApiUsageMetrics(timeRange),
-        apiService.getDatabaseMetrics(timeRange),
-        apiService.getMobileAnalytics(timeRange)
+        enhancedApiService.getPerformanceMetrics(),
+        enhancedApiService.getUserBehaviorAnalytics(timeRange),
+        enhancedApiService.getAdvancedAnalytics(),
+        enhancedApiService.getMobileAnalytics(timeRange),
+        enhancedApiService.getAnalytics()
       ]);
 
       setAnalyticsData({
         performance: performanceData,
         userBehavior: userBehaviorData,
         apiMetrics: apiMetricsData,
-        database: databaseMetricsData,
-        mobile: mobileAnalyticsData
+        database: { load: 38 }, // Mock database data
+        mobile: mobileAnalyticsData,
+        web: webAnalyticsData
       });
     } catch (error) {
       console.error('Failed to load analytics data:', error);

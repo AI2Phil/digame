@@ -48,7 +48,8 @@ const AdminDashboardPage = () => {
         enhancedApiService.getOnboardingAnalytics()
       ]);
 
-      setUsers(usersData);
+      // Handle the case where getUsers returns an object with users array
+      setUsers(usersData.users || usersData || []);
       setSystemStats(statsData);
       setApiKeys(keysData);
       setOnboardingStats(onboardingData);

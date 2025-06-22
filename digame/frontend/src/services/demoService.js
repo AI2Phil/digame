@@ -681,6 +681,163 @@ class DemoService {
             status: 'Ahead'
           }
         ]
+      },
+
+      // Additional comprehensive demo data for all features
+      aiToolsData: {
+        writingAssistance: {
+          suggestions: [
+            {
+              id: 'suggestion_001',
+              type: 'grammar',
+              original: 'The team are working on the project.',
+              suggestion: 'The team is working on the project.',
+              confidence: 95,
+              explanation: 'Collective nouns like "team" typically take singular verbs.'
+            },
+            {
+              id: 'suggestion_002',
+              type: 'clarity',
+              original: 'We need to optimize the performance of the application.',
+              suggestion: 'We need to improve the application\'s speed and efficiency.',
+              confidence: 88,
+              explanation: 'More specific language helps readers understand exactly what needs improvement.'
+            }
+          ],
+          templates: [
+            {
+              id: 'template_001',
+              name: 'Project Status Update',
+              category: 'Business Communication',
+              content: 'Hi team,\n\nHere\'s our weekly project update:\n\n**Completed:**\n- [List completed tasks]\n\n**In Progress:**\n- [List ongoing tasks]\n\n**Upcoming:**\n- [List planned tasks]\n\n**Blockers:**\n- [List any issues]\n\nBest regards,\n[Your name]'
+            },
+            {
+              id: 'template_002',
+              name: 'Meeting Follow-up',
+              category: 'Business Communication',
+              content: 'Hi everyone,\n\nThank you for attending today\'s meeting. Here are the key takeaways:\n\n**Decisions Made:**\n- [List decisions]\n\n**Action Items:**\n- [List action items with owners]\n\n**Next Steps:**\n- [List next steps]\n\nPlease let me know if I missed anything.\n\nBest,\n[Your name]'
+            }
+          ]
+        },
+        insights: [
+          {
+            id: 'insight_001',
+            category: 'Productivity',
+            title: 'Peak Performance Hours Identified',
+            description: 'Your productivity is 23% higher between 9-11 AM compared to other times.',
+            actionable: true,
+            actions: ['Schedule important tasks during morning hours', 'Block calendar for deep work'],
+            confidence: 92
+          },
+          {
+            id: 'insight_002',
+            category: 'Collaboration',
+            title: 'Meeting Efficiency Opportunity',
+            description: 'You spend 35% of your time in meetings, but only 60% are rated as productive.',
+            actionable: true,
+            actions: ['Implement meeting agendas', 'Set clear objectives', 'Consider async alternatives'],
+            confidence: 87
+          }
+        ],
+        coaching: [
+          {
+            id: 'coaching_001',
+            area: 'Time Management',
+            level: 'Intermediate',
+            recommendations: [
+              'Use time-blocking for better focus',
+              'Implement the Pomodoro Technique',
+              'Set boundaries for interruptions'
+            ],
+            progress: 65,
+            nextMilestone: 'Complete 5 consecutive days of time-blocking'
+          },
+          {
+            id: 'coaching_002',
+            area: 'Communication Skills',
+            level: 'Advanced',
+            recommendations: [
+              'Practice active listening in meetings',
+              'Provide more specific feedback',
+              'Use data to support arguments'
+            ],
+            progress: 80,
+            nextMilestone: 'Lead a cross-functional project presentation'
+          }
+        ]
+      },
+
+      // Enhanced analytics data
+      advancedAnalytics: {
+        heatmapData: [
+          { hour: '9:00', day: 'Monday', value: 85 },
+          { hour: '10:00', day: 'Monday', value: 92 },
+          { hour: '11:00', day: 'Monday', value: 88 },
+          { hour: '14:00', day: 'Monday', value: 75 },
+          { hour: '15:00', day: 'Monday', value: 70 },
+          { hour: '9:00', day: 'Tuesday', value: 90 },
+          { hour: '10:00', day: 'Tuesday', value: 95 },
+          { hour: '11:00', day: 'Tuesday', value: 85 },
+          { hour: '14:00', day: 'Tuesday', value: 78 },
+          { hour: '15:00', day: 'Tuesday', value: 72 }
+        ],
+        userJourney: [
+          { step: 'Login', users: 1000, conversion: 100 },
+          { step: 'Dashboard View', users: 950, conversion: 95 },
+          { step: 'Feature Usage', users: 800, conversion: 80 },
+          { step: 'Task Creation', users: 600, conversion: 60 },
+          { step: 'Goal Setting', users: 400, conversion: 40 },
+          { step: 'Report Generation', users: 300, conversion: 30 }
+        ],
+        performanceMetrics: {
+          pageLoadTime: 1.2,
+          apiResponseTime: 250,
+          errorRate: 0.02,
+          uptime: 99.9,
+          userSatisfaction: 4.6
+        }
+      },
+
+      // Social collaboration enhancements
+      enhancedSocialData: {
+        networkAnalysis: {
+          connectionStrength: 85,
+          networkSize: 127,
+          influenceScore: 72,
+          collaborationIndex: 8.4
+        },
+        skillMatching: [
+          {
+            skill: 'React Development',
+            yourLevel: 92,
+            demandLevel: 88,
+            matchingPeers: 15,
+            learningOpportunities: 3
+          },
+          {
+            skill: 'Machine Learning',
+            yourLevel: 65,
+            demandLevel: 95,
+            matchingPeers: 8,
+            learningOpportunities: 12
+          }
+        ],
+        industryInsights: [
+          {
+            trend: 'AI Integration in Development',
+            relevance: 95,
+            growth: '+45%',
+            timeframe: '6 months',
+            recommendation: 'Consider upskilling in AI/ML tools'
+          },
+          {
+            trend: 'Remote Collaboration Tools',
+            relevance: 88,
+            growth: '+32%',
+            timeframe: '3 months',
+            recommendation: 'Explore advanced collaboration platforms'
+          }
+        ]
       }
     };
   }
@@ -770,6 +927,51 @@ class DemoService {
 
   getReports() {
     return this.demoData.reports;
+  }
+
+  // New getter methods for enhanced demo data
+  getAIToolsData() {
+    return this.demoData.aiToolsData;
+  }
+
+  getWritingAssistance() {
+    return this.demoData.aiToolsData.writingAssistance;
+  }
+
+  getAICoaching() {
+    return this.demoData.aiToolsData.coaching;
+  }
+
+  getAdvancedAnalytics() {
+    return this.demoData.advancedAnalytics;
+  }
+
+  getEnhancedSocialData() {
+    return this.demoData.enhancedSocialData;
+  }
+
+  getHeatmapData() {
+    return this.demoData.advancedAnalytics.heatmapData;
+  }
+
+  getUserJourneyData() {
+    return this.demoData.advancedAnalytics.userJourney;
+  }
+
+  getPerformanceMetrics() {
+    return this.demoData.advancedAnalytics.performanceMetrics;
+  }
+
+  getNetworkAnalysis() {
+    return this.demoData.enhancedSocialData.networkAnalysis;
+  }
+
+  getSkillMatching() {
+    return this.demoData.enhancedSocialData.skillMatching;
+  }
+
+  getIndustryInsights() {
+    return this.demoData.enhancedSocialData.industryInsights;
   }
 
   // Utility methods for demo interactions

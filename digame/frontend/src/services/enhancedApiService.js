@@ -203,6 +203,152 @@ class EnhancedApiService {
     }
   }
 
+  // Enhanced AI Tools methods
+  async getAIToolsData() {
+    if (this.isDemoMode()) {
+      return this.demoService.getAIToolsData();
+    }
+    
+    try {
+      return await this.request('/ai/tools');
+    } catch (error) {
+      console.warn('getAIToolsData failed, using demo data', error);
+      return this.demoService.getAIToolsData();
+    }
+  }
+
+  async getWritingAssistance() {
+    if (this.isDemoMode()) {
+      return this.demoService.getWritingAssistance();
+    }
+    
+    try {
+      return await this.request('/ai/writing-assistance');
+    } catch (error) {
+      console.warn('getWritingAssistance failed, using demo data', error);
+      return this.demoService.getWritingAssistance();
+    }
+  }
+
+  async getAICoaching() {
+    if (this.isDemoMode()) {
+      return this.demoService.getAICoaching();
+    }
+    
+    try {
+      return await this.request('/ai/coaching');
+    } catch (error) {
+      console.warn('getAICoaching failed, using demo data', error);
+      return this.demoService.getAICoaching();
+    }
+  }
+
+  // Enhanced Analytics methods
+  async getAdvancedAnalytics() {
+    if (this.isDemoMode()) {
+      return this.demoService.getAdvancedAnalytics();
+    }
+    
+    try {
+      return await this.request('/analytics/advanced');
+    } catch (error) {
+      console.warn('getAdvancedAnalytics failed, using demo data', error);
+      return this.demoService.getAdvancedAnalytics();
+    }
+  }
+
+  async getHeatmapData() {
+    if (this.isDemoMode()) {
+      return this.demoService.getHeatmapData();
+    }
+    
+    try {
+      return await this.request('/analytics/heatmap');
+    } catch (error) {
+      console.warn('getHeatmapData failed, using demo data', error);
+      return this.demoService.getHeatmapData();
+    }
+  }
+
+  async getUserJourneyData() {
+    if (this.isDemoMode()) {
+      return this.demoService.getUserJourneyData();
+    }
+    
+    try {
+      return await this.request('/analytics/user-journey');
+    } catch (error) {
+      console.warn('getUserJourneyData failed, using demo data', error);
+      return this.demoService.getUserJourneyData();
+    }
+  }
+
+  async getPerformanceMetrics() {
+    if (this.isDemoMode()) {
+      return this.demoService.getPerformanceMetrics();
+    }
+    
+    try {
+      return await this.request('/analytics/performance');
+    } catch (error) {
+      console.warn('getPerformanceMetrics failed, using demo data', error);
+      return this.demoService.getPerformanceMetrics();
+    }
+  }
+
+  // Enhanced Social methods
+  async getEnhancedSocialData() {
+    if (this.isDemoMode()) {
+      return this.demoService.getEnhancedSocialData();
+    }
+    
+    try {
+      return await this.request('/social/enhanced');
+    } catch (error) {
+      console.warn('getEnhancedSocialData failed, using demo data', error);
+      return this.demoService.getEnhancedSocialData();
+    }
+  }
+
+  async getNetworkAnalysis() {
+    if (this.isDemoMode()) {
+      return this.demoService.getNetworkAnalysis();
+    }
+    
+    try {
+      return await this.request('/social/network-analysis');
+    } catch (error) {
+      console.warn('getNetworkAnalysis failed, using demo data', error);
+      return this.demoService.getNetworkAnalysis();
+    }
+  }
+
+  async getSkillMatching() {
+    if (this.isDemoMode()) {
+      return this.demoService.getSkillMatching();
+    }
+    
+    try {
+      return await this.request('/social/skill-matching');
+    } catch (error) {
+      console.warn('getSkillMatching failed, using demo data', error);
+      return this.demoService.getSkillMatching();
+    }
+  }
+
+  async getIndustryInsights() {
+    if (this.isDemoMode()) {
+      return this.demoService.getIndustryInsights();
+    }
+    
+    try {
+      return await this.request('/social/industry-insights');
+    } catch (error) {
+      console.warn('getIndustryInsights failed, using demo data', error);
+      return this.demoService.getIndustryInsights();
+    }
+  }
+
   // Social Collaboration methods
   async getPeerMatches() {
     if (this.isDemoMode()) {

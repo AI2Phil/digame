@@ -250,7 +250,10 @@ function App() {
             path="/analytics/web"
             element={
               isAuthenticated || isDemoMode ? (
-                <AdvancedWebAnalyticsDashboard />
+                <AdvancedWebAnalyticsDashboard
+                  isDemoMode={isDemoMode}
+                  onLogout={handleLogout}
+                />
               ) : (
                 <Navigate to="/" replace />
               )
@@ -261,7 +264,10 @@ function App() {
             path="/analytics/mobile"
             element={
               isAuthenticated || isDemoMode ? (
-                <AdvancedMobileAnalyticsDashboard />
+                <AdvancedMobileAnalyticsDashboard
+                  isDemoMode={isDemoMode}
+                  onLogout={handleLogout}
+                />
               ) : (
                 <Navigate to="/" replace />
               )
