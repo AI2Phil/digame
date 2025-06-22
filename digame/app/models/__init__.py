@@ -37,6 +37,7 @@ from .gamification import (
     Achievement, UserAchievement, Streak, Milestone, UserPoints,
     Badge, UserBadge, LeaderboardEntry, AchievementType, AchievementRarity
 ) # Import gamification models
+from .team import Team, TeamMember, TeamPerformanceMetric, TeamSkillGap, TeamWorkflow, TeamRoleEnum
 
 # Optionally, define __all__ to specify what is exported when 'from .models import *' is used
 __all__ = [
@@ -83,4 +84,10 @@ __all__ = [
     "LeaderboardEntry",
     "AchievementType",
     "AchievementRarity",
+    "Team",
+    "TeamMember",
+    "TeamPerformanceMetric",
+    "TeamSkillGap",
+    "TeamWorkflow",
+    "TeamRoleEnum",
 ]

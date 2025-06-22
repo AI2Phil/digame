@@ -44,6 +44,7 @@ from .routers import language_learning_router # Import the new language learning
 from .routers import task_prioritization_router # Import the new task prioritization router
 from .routers import user_profile_router # Import the new user profile router
 from .routers import dashboard_router # Import the dashboard router
+from .routers import team_router # Import the new team router
 from .api import gamification # Import the gamification API
 
 # Configure JSON logging
@@ -154,6 +155,10 @@ app = FastAPI(
         {
             "name": "Gamification",
             "description": "Achievement tracking, streaks, points, and leaderboards"
+        },
+        {
+            "name": "Teams",
+            "description": "Team collaboration, performance analytics, and insights"
         }
     ]
 )
@@ -206,6 +211,7 @@ app.include_router(social_collaboration_router.router) # Add the social collabor
 app.include_router(mobile_ai_router.router) # Add the new mobile_ai_router, already tagged in its file
 app.include_router(user_profile_router.router) # Add user profile router, prefix and tags are in the router itself
 app.include_router(gamification.router, tags=["Gamification"]) # Add gamification router
+app.include_router(team_router.router) # Add team router, prefix and tags are in the router file
 
 # Startup and shutdown events
 @app.on_event("startup")

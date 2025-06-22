@@ -63,6 +63,15 @@ from .education_crud import (
     get_education_entry, get_education_by_user, create_user_education, update_education_entry, delete_education_entry
 )
 
+# Team CRUD imports
+from .team_crud import (
+    create_team, get_team, get_teams, update_team, delete_team,
+    create_team_member, get_team_member, get_team_members, update_team_member, delete_team_member,
+    create_team_performance_metric, get_team_performance_metric, get_team_performance_metrics_for_team, update_team_performance_metric, delete_team_performance_metric,
+    create_team_skill_gap, get_team_skill_gap, get_team_skill_gaps_for_team, update_team_skill_gap, delete_team_skill_gap,
+    create_team_workflow, get_team_workflow, get_team_workflows_for_team, update_team_workflow, delete_team_workflow
+)
+
 __all__ = [
     # User CRUD
     "get_user", "get_user_by_email", "get_user_by_username", "get_users",
@@ -122,6 +131,13 @@ __all__ = [
     "create_user_notification",
     "get_pending_scheduled_notifications",
     "mark_multiple_notifications_as_read",
+
+    # Team CRUD
+    "create_team", "get_team", "get_teams", "update_team", "delete_team",
+    "create_team_member", "get_team_member", "get_team_members", "update_team_member", "delete_team_member",
+    "create_team_performance_metric", "get_team_performance_metric", "get_team_performance_metrics_for_team", "update_team_performance_metric", "delete_team_performance_metric",
+    "create_team_skill_gap", "get_team_skill_gap", "get_team_skill_gaps_for_team", "update_team_skill_gap", "delete_team_skill_gap",
+    "create_team_workflow", "get_team_workflow", "get_team_workflows_for_team", "update_team_workflow", "delete_team_workflow",
 ]
 
 from . import user_setting_crud # Assuming this was intended to be imported for __all__
