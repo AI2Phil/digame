@@ -38,10 +38,7 @@ from .routers import email_analysis_router # Import the new email analysis route
 from .routers import language_learning_router # Import the new language learning router
 from .routers import task_prioritization_router # Import the new task prioritization router
 from .routers import user_profile_router # Import the new user profile router
-
-# Import authentication components
-from .auth.middleware import configure_auth_middleware
-from .auth.config import auth_settings, get_middleware_config
+from .routers import dashboard_router # Import the dashboard router
 
 # Configure JSON logging
 logger = logging.getLogger("digame_app") # Use a specific name for the main app logger
@@ -164,6 +161,10 @@ logger.info("GZipMiddleware configuration skipped due to type compatibility")
 # Include authentication router first (no authentication required)
 app.include_router(auth_router.router, tags=["Authentication"])
 
+# Include dashboard and onboarding routers
+app.include_router(dashboard_router.router, tags=["Dashboard"])
+app.include_router(onboarding_router.router, tags=["Onboarding"])
+
 # Include other routers (these will be protected by authentication middleware)
 app.include_router(user_setting_router) # Add user setting router
 app.include_router(writing_assistance_router.router) # Add the writing assistance router
@@ -182,7 +183,6 @@ app.include_router(behavior_router.router, prefix="/behavior", tags=["Behavior R
 app.include_router(pattern_recognition_router.router, prefix="/pattern-recognition", tags=["Pattern Recognition"])
 app.include_router(job_router.router, prefix="/api", tags=["Background Jobs"])
 app.include_router(publish_router.router, prefix="/publish", tags=["Publishing"])
-app.include_router(onboarding_router.router, tags=["Onboarding"])
 app.include_router(task_router.router, tags=["Task Management"])
 app.include_router(enterprise_dashboard_router.router, tags=["Enterprise Dashboard"])
 app.include_router(market_intelligence_router.router, tags=["Market Intelligence"])
