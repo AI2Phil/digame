@@ -299,4 +299,6 @@ export const useCheckboxGroup = (initialValue = []) => {
   };
 };
 
+// Named exports for compatibility
+export { Checkbox };
 export default Checkbox;

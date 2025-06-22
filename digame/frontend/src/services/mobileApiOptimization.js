@@ -1,13 +1,41 @@
 /**
- * Mobile API Optimization Service
- * Handles bandwidth efficiency, request optimization, and mobile-specific API enhancements
+ * Web API Optimization Service
+ * Handles bandwidth efficiency, request optimization, and web-specific API enhancements
  */
 
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import NetInfo from '@react-native-netinfo/netinfo';
-import { Platform } from 'react-native';
+// Web-compatible replacements for mobile imports
+const AsyncStorage = {
+  getItem: (key) => Promise.resolve(localStorage.getItem(key)),
+  setItem: (key, value) => Promise.resolve(localStorage.setItem(key, value)),
+  removeItem: (key) => Promise.resolve(localStorage.removeItem(key)),
+  getAllKeys: () => Promise.resolve(Object.keys(localStorage)),
+  multiRemove: (keys) => Promise.resolve(keys.forEach(key => localStorage.removeItem(key)))
+};
 
-class MobileApiOptimization {
+const NetInfo = {
+  fetch: () => Promise.resolve({
+    isConnected: navigator.onLine,
+    type: navigator.connection ? navigator.connection.effectiveType : 'wifi'
+  }),
+  addEventListener: (callback) => {
+    const handler = () => callback({
+      isConnected: navigator.onLine,
+      type: navigator.connection ? navigator.connection.effectiveType : 'wifi'
+    });
+    window.addEventListener('online', handler);
+    window.addEventListener('offline', handler);
+    return () => {
+      window.removeEventListener('online', handler);
+      window.removeEventListener('offline', handler);
+    };
+  }
+};
+
+const Platform = {
+  OS: 'web'
+};
+
+class WebApiOptimization {
   constructor() {
     this.requestQueue = [];
     this.isOnline = true;
@@ -20,7 +48,7 @@ class MobileApiOptimization {
   }
 
   /**
-   * Initialize mobile API optimization
+   * Initialize web API optimization
    */
   async initialize() {
     try {
@@ -36,9 +64,9 @@ class MobileApiOptimization {
       // Initialize cache management
       await this.initializeCacheManagement();
       
-      console.log('Mobile API optimization initialized');
+      console.log('Web API optimization initialized');
     } catch (error) {
-      console.error('Failed to initialize mobile API optimization:', error);
+      console.error('Failed to initialize web API optimization:', error);
       throw error;
     }
   }
@@ -74,9 +102,11 @@ class MobileApiOptimization {
     // Adjust optimization strategy based on network type
     switch (networkState.type) {
       case 'wifi':
+      case '4g':
         this.setOptimizationLevel('standard');
         break;
-      case 'cellular':
+      case '3g':
+      case 'slow-2g':
         this.setOptimizationLevel('aggressive');
         break;
       case 'none':
@@ -121,7 +151,7 @@ class MobileApiOptimization {
   }
 
   /**
-   * Optimize API request for mobile bandwidth efficiency
+   * Optimize API request for web bandwidth efficiency
    */
   async optimizeRequest(url, options = {}) {
     try {
@@ -179,12 +209,12 @@ class MobileApiOptimization {
    * Apply bandwidth optimization strategies
    */
   applyBandwidthOptimization(options) {
-    // Add mobile-specific headers
+    // Add web-specific headers
     options.headers = {
       ...options.headers,
-      'X-Mobile-Optimized': 'true',
+      'X-Web-Optimized': 'true',
       'X-Network-Type': this.networkType,
-      'X-Bandwidth-Limited': this.networkType === 'cellular' ? 'true' : 'false'
+      'X-Bandwidth-Limited': this.networkType === '3g' || this.networkType === 'slow-2g' ? 'true' : 'false'
     };
 
     // Request compressed responses
@@ -192,7 +222,7 @@ class MobileApiOptimization {
       options.headers['Accept-Encoding'] = 'gzip, deflate';
     }
 
-    // Add cache control for mobile
+    // Add cache control for web
     options.headers['Cache-Control'] = 'max-age=300, stale-while-revalidate=60';
 
     return options;
@@ -384,7 +414,7 @@ class MobileApiOptimization {
       // Add request timing
       const startTime = Date.now();
       
-      // Add mobile-specific optimizations
+      // Add web-specific optimizations
       const optimizedOptions = {
         ...options,
         timeout: this.getOptimalTimeout(),
@@ -424,12 +454,12 @@ class MobileApiOptimization {
   getOptimalTimeout() {
     switch (this.networkType) {
       case 'wifi':
+      case '4g':
         return 10000; // 10 seconds
-      case 'cellular':
+      case '3g':
         return 15000; // 15 seconds
-      case 'bluetooth':
-      case 'ethernet':
-        return 8000; // 8 seconds
+      case 'slow-2g':
+        return 20000; // 20 seconds
       default:
         return 12000; // 12 seconds
     }
@@ -466,7 +496,7 @@ class MobileApiOptimization {
     const method = options.method || 'GET';
     const body = options.body || '';
     const hash = this.simpleHash(`${method}:${url}:${body}`);
-    return `mobile_api_cache_${hash}`;
+    return `web_api_cache_${hash}`;
   }
 
   /**
@@ -538,7 +568,7 @@ class MobileApiOptimization {
    */
   async storePerformanceData(performance) {
     try {
-      const key = 'mobile_api_performance';
+      const key = 'web_api_performance';
       const existing = await AsyncStorage.getItem(key);
       const data = existing ? JSON.parse(existing) : [];
       
@@ -555,190 +585,12 @@ class MobileApiOptimization {
     }
   }
 
-  /**
-   * Get API performance analytics
-   */
-  async getPerformanceAnalytics() {
-    try {
-      const key = 'mobile_api_performance';
-      const data = await AsyncStorage.getItem(key);
-      
-      if (!data) return null;
-      
-      const performances = JSON.parse(data);
-      
-      return {
-        averageResponseTime: this.calculateAverageResponseTime(performances),
-        successRate: this.calculateSuccessRate(performances),
-        networkTypeBreakdown: this.analyzeNetworkTypePerformance(performances),
-        slowestEndpoints: this.identifySlowEndpoints(performances),
-        recommendations: this.generateOptimizationRecommendations(performances)
-      };
-    } catch (error) {
-      console.error('Failed to get performance analytics:', error);
-      return null;
-    }
-  }
-
-  /**
-   * Calculate average response time
-   */
-  calculateAverageResponseTime(performances) {
-    if (performances.length === 0) return 0;
-    
-    const total = performances.reduce((sum, perf) => sum + perf.duration, 0);
-    return Math.round(total / performances.length);
-  }
-
-  /**
-   * Calculate API success rate
-   */
-  calculateSuccessRate(performances) {
-    if (performances.length === 0) return 100;
-    
-    const successful = performances.filter(perf => perf.status >= 200 && perf.status < 300).length;
-    return Math.round((successful / performances.length) * 100);
-  }
-
-  /**
-   * Analyze performance by network type
-   */
-  analyzeNetworkTypePerformance(performances) {
-    const breakdown = {};
-    
-    performances.forEach(perf => {
-      if (!breakdown[perf.networkType]) {
-        breakdown[perf.networkType] = {
-          count: 0,
-          totalDuration: 0,
-          successCount: 0
-        };
-      }
-      
-      breakdown[perf.networkType].count++;
-      breakdown[perf.networkType].totalDuration += perf.duration;
-      
-      if (perf.status >= 200 && perf.status < 300) {
-        breakdown[perf.networkType].successCount++;
-      }
-    });
-    
-    // Calculate averages
-    Object.keys(breakdown).forEach(networkType => {
-      const data = breakdown[networkType];
-      data.averageDuration = Math.round(data.totalDuration / data.count);
-      data.successRate = Math.round((data.successCount / data.count) * 100);
-    });
-    
-    return breakdown;
-  }
-
-  /**
-   * Identify slowest API endpoints
-   */
-  identifySlowEndpoints(performances) {
-    const endpointStats = {};
-    
-    performances.forEach(perf => {
-      const endpoint = this.extractEndpoint(perf.url);
-      
-      if (!endpointStats[endpoint]) {
-        endpointStats[endpoint] = {
-          count: 0,
-          totalDuration: 0,
-          maxDuration: 0
-        };
-      }
-      
-      endpointStats[endpoint].count++;
-      endpointStats[endpoint].totalDuration += perf.duration;
-      endpointStats[endpoint].maxDuration = Math.max(
-        endpointStats[endpoint].maxDuration,
-        perf.duration
-      );
-    });
-    
-    // Calculate averages and sort by slowest
-    const endpointArray = Object.keys(endpointStats).map(endpoint => ({
-      endpoint,
-      averageDuration: Math.round(endpointStats[endpoint].totalDuration / endpointStats[endpoint].count),
-      maxDuration: endpointStats[endpoint].maxDuration,
-      count: endpointStats[endpoint].count
-    }));
-    
-    return endpointArray
-      .sort((a, b) => b.averageDuration - a.averageDuration)
-      .slice(0, 5); // Top 5 slowest
-  }
-
-  /**
-   * Extract endpoint from URL for analysis
-   */
-  extractEndpoint(url) {
-    try {
-      const urlObj = new URL(url);
-      return urlObj.pathname.split('/').slice(0, 3).join('/'); // First 2 path segments
-    } catch (error) {
-      return url;
-    }
-  }
-
-  /**
-   * Generate optimization recommendations
-   */
-  generateOptimizationRecommendations(performances) {
-    const recommendations = [];
-    const analytics = {
-      averageResponseTime: this.calculateAverageResponseTime(performances),
-      successRate: this.calculateSuccessRate(performances)
-    };
-    
-    if (analytics.averageResponseTime > 2000) {
-      recommendations.push({
-        type: 'performance',
-        priority: 'high',
-        message: 'Average response time is high. Consider enabling aggressive caching.',
-        action: 'enable_aggressive_caching'
-      });
-    }
-    
-    if (analytics.successRate < 95) {
-      recommendations.push({
-        type: 'reliability',
-        priority: 'high',
-        message: 'API success rate is below 95%. Check network stability.',
-        action: 'improve_error_handling'
-      });
-    }
-    
-    const cellularPerformance = performances.filter(p => p.networkType === 'cellular');
-    if (cellularPerformance.length > 0) {
-      const cellularAvg = this.calculateAverageResponseTime(cellularPerformance);
-      if (cellularAvg > 3000) {
-        recommendations.push({
-          type: 'mobile',
-          priority: 'medium',
-          message: 'Cellular performance is slow. Enable bandwidth optimization.',
-          action: 'enable_bandwidth_optimization'
-        });
-      }
-    }
-    
-    return recommendations;
-  }
-
-  /**
-   * Compress data for transmission
-   */
+  // Additional helper methods...
   compressData(data) {
-    // Simple compression simulation
-    // In a real implementation, you would use a proper compression library
+    // Simple compression simulation for web
     return data;
   }
 
-  /**
-   * Create batch URL for multiple requests
-   */
   createBatchUrl(requests) {
     // Check if requests can be batched
     const baseUrls = requests.map(r => r.url.split('?')[0]);
@@ -759,17 +611,11 @@ class MobileApiOptimization {
     return null;
   }
 
-  /**
-   * Extract ID from URL for batching
-   */
   extractIdFromUrl(url) {
     const match = url.match(/\/(\d+)(?:\?|$)/);
     return match ? match[1] : null;
   }
 
-  /**
-   * Distribute batch response to individual requests
-   */
   distributeBatchResponse(requests, batchResponse) {
     // Distribute batch response data to individual request promises
     if (batchResponse && Array.isArray(batchResponse)) {
@@ -786,9 +632,6 @@ class MobileApiOptimization {
     }
   }
 
-  /**
-   * Fallback to individual requests when batching fails
-   */
   async fallbackToIndividualRequests(requests) {
     for (const request of requests) {
       try {
@@ -800,19 +643,16 @@ class MobileApiOptimization {
     }
   }
 
-  /**
-   * Adapt to network conditions
-   */
   adaptToNetworkConditions(networkState) {
     console.log('Network conditions changed:', networkState);
     
     // Adjust optimization strategies based on new network conditions
-    if (networkState.type === 'cellular' && networkState.details?.cellularGeneration === '3g') {
-      // Very aggressive optimization for 3G
+    if (networkState.type === '3g' || networkState.type === 'slow-2g') {
+      // Very aggressive optimization for slow connections
       this.setOptimizationLevel('aggressive');
       this.cacheStrategy = 'aggressive';
-    } else if (networkState.type === 'wifi') {
-      // Standard optimization for WiFi
+    } else if (networkState.type === 'wifi' || networkState.type === '4g') {
+      // Standard optimization for fast connections
       this.setOptimizationLevel('standard');
     }
     
@@ -822,9 +662,6 @@ class MobileApiOptimization {
     }
   }
 
-  /**
-   * Handle transition to offline mode
-   */
   handleOfflineTransition() {
     // Reject all pending requests
     this.requestQueue.forEach(request => {
@@ -835,33 +672,21 @@ class MobileApiOptimization {
     console.log('Transitioned to offline mode');
   }
 
-  /**
-   * Enable offline mode
-   */
   enableOfflineMode() {
     console.log('Offline mode enabled - using cached data only');
     // Implementation would handle offline data access
   }
 
-  /**
-   * Setup request optimization
-   */
   setupRequestOptimization() {
     // Configure request optimization settings
     console.log('Request optimization configured');
   }
 
-  /**
-   * Setup bandwidth monitoring
-   */
   setupBandwidthMonitoring() {
     // Monitor bandwidth usage and adapt accordingly
     console.log('Bandwidth monitoring setup completed');
   }
 
-  /**
-   * Initialize cache management
-   */
   async initializeCacheManagement() {
     try {
       // Clean up expired cache entries
@@ -872,13 +697,10 @@ class MobileApiOptimization {
     }
   }
 
-  /**
-   * Cleanup expired cache entries
-   */
   async cleanupExpiredCache() {
     try {
       const keys = await AsyncStorage.getAllKeys();
-      const cacheKeys = keys.filter(key => key.startsWith('mobile_api_cache_'));
+      const cacheKeys = keys.filter(key => key.startsWith('web_api_cache_'));
       
       for (const key of cacheKeys) {
         const data = await AsyncStorage.getItem(key);
@@ -896,6 +718,6 @@ class MobileApiOptimization {
 }
 
 // Create singleton instance
-const mobileApiOptimization = new MobileApiOptimization();
+const webApiOptimization = new WebApiOptimization();
 
-export default mobileApiOptimization;
+export default webApiOptimization;

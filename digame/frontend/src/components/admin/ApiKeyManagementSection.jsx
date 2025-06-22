@@ -61,36 +61,36 @@ const ApiKeyManagementSection = ({ apiKeys, onRefresh }) => {
   const handleCopyKey = async (key) => {
     try {
       await navigator.clipboard.writeText(key);
-      Toast.success('API key copied to clipboard');
+      console.log('API key copied to clipboard');
     } catch (error) {
-      Toast.error('Failed to copy API key');
+      console.error('Failed to copy API key');
     }
   };
 
   const handleDeleteKey = async (keyId) => {
     try {
       await apiService.deleteAdminApiKey(keyId);
-      Toast.success('API key deleted successfully');
+      console.log('API key deleted successfully');
       onRefresh();
     } catch (error) {
-      Toast.error('Failed to delete API key');
+      console.error('Failed to delete API key');
     }
   };
 
   const handleBulkAction = async (action) => {
     try {
       await Promise.all(
-        selectedKeys.map(keyId => 
-          action === 'delete' 
+        selectedKeys.map(keyId =>
+          action === 'delete'
             ? apiService.deleteAdminApiKey(keyId)
             : apiService.updateAdminApiKey(keyId, { status: action })
         )
       );
       setSelectedKeys([]);
-      Toast.success(`Bulk ${action} completed successfully`);
+      console.log(`Bulk ${action} completed successfully`);
       onRefresh();
     } catch (error) {
-      Toast.error(`Failed to perform bulk ${action}`);
+      console.error(`Failed to perform bulk ${action}`);
     }
   };
 

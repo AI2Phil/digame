@@ -412,4 +412,7 @@ export const DataTable = ({
   );
 };
 
+// Named exports for compatibility
+export const TableHead = TableHeaderCell; // Alias for compatibility
+
 export default Table;

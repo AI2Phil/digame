@@ -1,12 +1,41 @@
 /**
  * Offline Data Synchronization and Conflict Resolution Service
- * Handles offline data storage, synchronization, and conflict resolution
+ * Handles offline data storage, synchronization, and conflict resolution for web
  */
 
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import NetInfo from '@react-native-netinfo/netinfo';
-import { Platform } from 'react-native';
+// Web-compatible replacements for mobile imports
 import apiService from './apiService';
+
+const AsyncStorage = {
+  getItem: (key) => Promise.resolve(localStorage.getItem(key)),
+  setItem: (key, value) => Promise.resolve(localStorage.setItem(key, value)),
+  removeItem: (key) => Promise.resolve(localStorage.removeItem(key)),
+  getAllKeys: () => Promise.resolve(Object.keys(localStorage)),
+  multiRemove: (keys) => Promise.resolve(keys.forEach(key => localStorage.removeItem(key)))
+};
+
+const NetInfo = {
+  fetch: () => Promise.resolve({
+    isConnected: navigator.onLine,
+    type: navigator.connection ? navigator.connection.effectiveType : 'wifi'
+  }),
+  addEventListener: (callback) => {
+    const handler = () => callback({
+      isConnected: navigator.onLine,
+      type: navigator.connection ? navigator.connection.effectiveType : 'wifi'
+    });
+    window.addEventListener('online', handler);
+    window.addEventListener('offline', handler);
+    return () => {
+      window.removeEventListener('online', handler);
+      window.removeEventListener('offline', handler);
+    };
+  }
+};
+
+const Platform = {
+  OS: 'web'
+};
 
 class OfflineDataSync {
   constructor() {
@@ -258,7 +287,7 @@ class OfflineDataSync {
       
       console.log('Successfully synced:', key);
     } catch (error) {
-      console.error('Failed to sync entry:', key, error);
+      console.error('Failed to sync entry:', entry.key, error);
       throw error;
     }
   }
@@ -804,6 +833,8 @@ class OfflineDataSync {
           await this.updateOnServer(conflict.key, data, conflict.offlineEntry.metadata);
           await this.updateOfflineData(conflict.key, data);
           break;
+        default:
+          throw new Error('Invalid resolution type');
       }
       
       // Remove from conflict queue

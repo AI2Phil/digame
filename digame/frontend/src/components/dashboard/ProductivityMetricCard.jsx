@@ -10,10 +10,10 @@ const ProductivityMetricCard = ({ userId = 1 }) => { // Assuming userId prop or 
       try {
         // Actual API endpoint: /behavior/patterns?user_id={user_id}
         // The router for behavior.py is prefixed with /behavior
-        const response = await fetch(\`/behavior/patterns?user_id=\${userId}\`);
+        const response = await fetch(`/behavior/patterns?user_id=${userId}`);
 
         if (!response.ok) {
-          throw new Error(`HTTP error! status: \${response.status}`);
+          throw new Error(`HTTP error! status: ${response.status}`);
         }
         const data = await response.json(); // Expects a list of ActivityPatternResponse
 
@@ -66,7 +66,7 @@ const ProductivityMetricCard = ({ userId = 1 }) => { // Assuming userId prop or 
           {metric.unit && <span className="text-lg font-normal ml-1">{metric.unit}</span>}
         </p>
       )}
-      {error && <p className="text-sm text-red-500 mt-2">Could not load data. (`${error}`)</p>}
+      {error && <p className="text-sm text-red-500 mt-2">Could not load data. ({error})</p>}
     </div>
   );
 };

@@ -325,3 +325,4 @@ export const SimpleSeparator = ({
 };
 
 export default Separator;
+export { Separator };

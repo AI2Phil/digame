@@ -33,10 +33,10 @@ const ProductivityChart = ({ userId }) => { // Removed default for userId, expec
       setIsLoading(true);
       setError(null);
       try {
-        const response = await fetch(\`/behavior/patterns?user_id=\${userId}\`);
+        const response = await fetch(`/behavior/patterns?user_id=${userId}`);
 
         if (!response.ok) {
-          throw new Error(`HTTP error! status: \${response.status}`);
+          throw new Error(`HTTP error! status: ${response.status}`);
         }
         const data = await response.json();
 
@@ -87,7 +87,7 @@ const ProductivityChart = ({ userId }) => { // Removed default for userId, expec
       <h3 className="text-lg font-semibold mb-2 text-gray-700">Productivity Trend (Activities per Day - Last 7 Days)</h3>
       <div className="flex-grow" style={{ minHeight: '200px' }}> {/* Ensure container has height for ResponsiveContainer */}
         {isLoading && <p className="text-gray-500 text-center pt-10">Loading chart data...</p>}
-        {error && <p className="text-sm text-red-500 text-center pt-10">Could not load chart data. (\`\${error}\`)</p>}
+        {error && <p className="text-sm text-red-500 text-center pt-10">Could not load chart data. ({error})</p>}
         {!isLoading && !error && chartData.length === 0 && (
           <p className="text-sm text-gray-500 text-center pt-10">No activity data to display chart for the last 7 days.</p>
         )}
@@ -106,7 +106,7 @@ const ProductivityChart = ({ userId }) => { // Removed default for userId, expec
               <Tooltip
                 contentStyle={{ backgroundColor: 'white', border: '1px solid #ccc', borderRadius: '4px' }}
                 labelStyle={{ fontWeight: 'bold', color: '#333' }}
-                formatter={(value, name, props) => [\`\${value} activities\`, null]}
+                formatter={(value, name, props) => [`${value} activities`, null]}
                 labelFormatter={(label) => chartData.find(d => d.displayDate === label)?.date} // Show full date in tooltip
               />
               <Legend wrapperStyle={{ fontSize: '14px' }} />

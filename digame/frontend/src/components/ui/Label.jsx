@@ -288,4 +288,6 @@ export const createFieldProps = (label, options = {}) => {
   };
 };
 
+// Named exports for compatibility
+export { Label };
 export default Label;

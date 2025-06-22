@@ -344,3 +344,4 @@ export const useSwitchGroupState = (initialValues = {}) => {
 };
 
 export default Switch;
+export { Switch };

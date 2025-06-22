@@ -402,4 +402,15 @@ export const AvatarUpload = ({
   );
 };
 
+// Named exports for compatibility
+export const AvatarImage = ({ src, alt, className, ...props }) => (
+  <img src={src} alt={alt} className={`w-full h-full object-cover ${className}`} {...props} />
+);
+
+export const AvatarFallback = ({ children, className, ...props }) => (
+  <div className={`flex items-center justify-center w-full h-full bg-gray-300 text-gray-600 font-medium ${className}`} {...props}>
+    {children}
+  </div>
+);
+
 export default Avatar;

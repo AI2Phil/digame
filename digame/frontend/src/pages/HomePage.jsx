@@ -154,6 +154,13 @@ export default function HomePage({ onDemoAccess, onLogin }) {
                   </div>
                 </div>
 
+                <Button
+                  onClick={handleSignUp}
+                  variant="primary"
+                  size="lg"
+                  className="w-full"
+                  icon="🎯"
+                >
                   Create Account
                 </Button>
                 <p className="text-center text-sm text-gray-500 mt-3">
@@ -270,9 +277,9 @@ export default function HomePage({ onDemoAccess, onLogin }) {
                   <Progress value={45} className="w-3/4" showValue animated />
                 </div>
               </div>
+            </div>
             </CardContent>
           </Card>
-          </div>
         </div>
       </div>
 

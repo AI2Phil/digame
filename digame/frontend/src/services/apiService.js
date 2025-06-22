@@ -486,15 +486,11 @@ class ApiService {
 
   // User Profile Enhancement methods
   async updateUserProfile(profileData) {
-<<<<<<< HEAD
+    // Path changed from /auth/profile to /api/users/me/profile
     // This method handles updates to the user's profile,
     // including the enriched data structure: detailedBio, contactInfo,
     // projects, experience, and education arrays.
-    return this.request('/auth/profile', {
-=======
-    // Path changed from /auth/profile to /api/users/me/profile
     return this.request('/api/users/me/profile', {
->>>>>>> origin/feature/social-profile-enhancements-phase2-3
       method: 'PUT',
       body: JSON.stringify(profileData),
     });
@@ -845,7 +841,6 @@ class ApiService {
 
   // AI-Powered Recommendations & Coaching methods
   async getUserProfile(userId) {
-<<<<<<< HEAD
     // MOCK IMPLEMENTATION FOR DEVELOPMENT
     console.warn(`Using mock data for getUserProfile(userId: ${userId}) from mockUserProfilesStore`);
     const userProfile = mockUserProfilesStore[userId];
@@ -870,30 +865,8 @@ class ApiService {
       // return Promise.resolve({ id: userId, username: `User ${userId}`, email: `${userId}@example.com`, ...genericProfileFields });
       return Promise.reject(new Error(`User with ID ${userId} not found in mock store.`));
     }
-    // return this.request(`/users/${userId}/profile`); // Original call
-  }
-
-  async giveKudos(userId) {
-    // MOCK IMPLEMENTATION FOR DEVELOPMENT
-    console.warn(`Mock giveKudos called for userId: ${userId}`);
-    if (mockUserProfilesStore[userId]) {
-      mockUserProfilesStore[userId].kudosCount = (mockUserProfilesStore[userId].kudosCount || 0) + 1;
-      console.log(`Kudos count for ${userId} (${mockUserProfilesStore[userId].username}) is now ${mockUserProfilesStore[userId].kudosCount}`);
-      return Promise.resolve({
-        message: 'Kudos given successfully!',
-        userId: userId,
-        newKudosCount: mockUserProfilesStore[userId].kudosCount
-      });
-    } else {
-      console.error(`User with ID ${userId} not found in mockUserProfilesStore for giving kudos.`);
-      return Promise.reject(new Error(`User with ID ${userId} not found for giving kudos.`));
-    }
-    // Actual implementation would be:
-    // return this.request(`/api/users/${userId}/kudos`, { method: 'POST' }); // Original call
-=======
     // Path changed from /users/${userId}/profile to /api/users/${userId}/profile
-    return this.request(`/api/users/${userId}/profile`);
->>>>>>> origin/feature/social-profile-enhancements-phase2-3
+    // return this.request(`/api/users/${userId}/profile`); // Original call
   }
 
   async getUserBehaviorData(userId) {

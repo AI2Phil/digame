@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { 
-  UserCheck, TrendingUp, Clock, Target, 
+import {
+  UserCheck, TrendingUp, Clock, Target,
   BarChart3, Users, CheckCircle, XCircle,
   Calendar, Filter, Download, RefreshCw,
-  ArrowUp, ArrowDown, Minus, Star, Users2, BarChartHorizontalBig
+  ArrowUp, ArrowDown, Minus, Star, Users2, BarChartHorizontalBig,
+  Lightbulb
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/Card';
 import { Button } from '../ui/Button';
@@ -543,7 +544,7 @@ const OnboardingInsights = () => (
         <div className="p-3 sm:p-4 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-700 rounded-lg">
           <h4 className="font-medium text-green-800 dark:text-green-300 mb-1 text-sm">✅ Strong Performance</h4>
           <p className="text-xs sm:text-sm text-green-700 dark:text-green-400">
-            {stats.completionRate}% completion rate is above industry average. Users who complete the welcome step
+            85% completion rate is above industry average. Users who complete the welcome step
             have a 99% chance of finishing the entire onboarding.
           </p>
         </div>

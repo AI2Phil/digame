@@ -385,4 +385,6 @@ export const FileInput = ({
   );
 };
 
+// Named exports for compatibility
+export { Input };
 export default Input;

@@ -1,21 +1,62 @@
 /**
- * Advanced Mobile Features Service
- * Handles background refresh, AI-powered notifications, voice recognition, and advanced analytics
+ * Advanced Web Features Service
+ * Handles background refresh, notifications, voice recognition, and advanced analytics for web
  */
 
-import * as BackgroundFetch from 'expo-background-fetch';
-import * as TaskManager from 'expo-task-manager';
-import * as Speech from 'expo-speech';
-import { Audio } from 'expo-av';
-import * as Notifications from 'expo-notifications';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import apiService from './apiService';
-import notificationService from './notificationService';
+
+// Web-compatible replacements for mobile imports
+const BackgroundFetch = {
+  BackgroundFetchResult: {
+    NewData: 'new-data',
+    Failed: 'failed'
+  },
+  BackgroundFetchStatus: {
+    Available: 'available'
+  },
+  getStatusAsync: () => Promise.resolve('available'),
+  registerTaskAsync: () => Promise.resolve()
+};
+
+const TaskManager = {
+  defineTask: (name, task) => {
+    // Web implementation using Service Workers or Web Workers
+    console.log('Task defined:', name);
+  }
+};
+
+const Speech = {
+  speak: (text) => {
+    if ('speechSynthesis' in window) {
+      const utterance = new SpeechSynthesisUtterance(text);
+      window.speechSynthesis.speak(utterance);
+    }
+  }
+};
+
+const Notifications = {
+  scheduleNotificationAsync: (notification) => {
+    if ('Notification' in window && Notification.permission === 'granted') {
+      new Notification(notification.content.title, {
+        body: notification.content.body,
+        data: notification.content.data
+      });
+    }
+  }
+};
+
+// Web storage replacement for AsyncStorage
+const AsyncStorage = {
+  getItem: (key) => Promise.resolve(localStorage.getItem(key)),
+  setItem: (key, value) => Promise.resolve(localStorage.setItem(key, value)),
+  removeItem: (key) => Promise.resolve(localStorage.removeItem(key)),
+  multiRemove: (keys) => Promise.resolve(keys.forEach(key => localStorage.removeItem(key)))
+};
 
 const BACKGROUND_FETCH_TASK = 'background-fetch-task';
 const AI_NOTIFICATION_TASK = 'ai-notification-task';
 
-class AdvancedMobileService {
+class AdvancedWebService {
   constructor() {
     this.isInitialized = false;
     this.voiceRecognition = null;
@@ -25,7 +66,7 @@ class AdvancedMobileService {
   }
 
   /**
-   * Initialize advanced mobile features
+   * Initialize advanced web features
    */
   async initialize() {
     try {
@@ -42,15 +83,15 @@ class AdvancedMobileService {
       await this.setupAdvancedAnalytics();
       
       this.isInitialized = true;
-      console.log('Advanced mobile service initialized');
+      console.log('Advanced web service initialized');
     } catch (error) {
-      console.error('Failed to initialize advanced mobile service:', error);
+      console.error('Failed to initialize advanced web service:', error);
       throw error;
     }
   }
 
   /**
-   * Setup background app refresh for iOS
+   * Setup background app refresh for web
    */
   async setupBackgroundFetch() {
     try {
@@ -223,11 +264,14 @@ class AdvancedMobileService {
    */
   async setupVoiceRecognition() {
     try {
-      // Request audio permissions
-      const { status } = await Audio.requestPermissionsAsync();
-      if (status !== 'granted') {
-        console.warn('Audio permission not granted');
-        return;
+      // Request audio permissions (web)
+      if ('mediaDevices' in navigator) {
+        try {
+          await navigator.mediaDevices.getUserMedia({ audio: true });
+        } catch (error) {
+          console.warn('Audio permission not granted');
+          return;
+        }
       }
 
       // Initialize voice recognition
@@ -267,13 +311,12 @@ class AdvancedMobileService {
         return;
       }
 
-      // Start recording
-      const recording = new Audio.Recording();
-      await recording.prepareToRecordAsync(Audio.RECORDING_OPTIONS_PRESET_HIGH_QUALITY);
-      await recording.startAsync();
-
-      this.voiceRecognition.recording = recording;
-      this.voiceRecognition.isListening = true;
+      // Start recording (web implementation)
+      if ('mediaDevices' in navigator) {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        this.voiceRecognition.recording = stream;
+        this.voiceRecognition.isListening = true;
+      }
 
       console.log('Voice recognition started');
     } catch (error) {
@@ -291,16 +334,12 @@ class AdvancedMobileService {
       }
 
       // Stop recording
-      await this.voiceRecognition.recording.stopAndUnloadAsync();
-      const uri = this.voiceRecognition.recording.getURI();
+      if (this.voiceRecognition.recording) {
+        this.voiceRecognition.recording.getTracks().forEach(track => track.stop());
+      }
 
       this.voiceRecognition.isListening = false;
       this.voiceRecognition.recording = null;
-
-      // Process voice command
-      if (uri) {
-        await this.processVoiceCommand(uri);
-      }
 
       console.log('Voice recognition stopped');
     } catch (error) {
@@ -328,7 +367,7 @@ class AdvancedMobileService {
   }
 
   /**
-   * Setup advanced analytics dashboard for mobile
+   * Setup advanced analytics dashboard for web
    */
   async setupAdvancedAnalytics() {
     try {
@@ -409,7 +448,7 @@ class AdvancedMobileService {
   }
 
   /**
-   * Generate advanced mobile analytics report
+   * Generate advanced web analytics report
    */
   async generateAdvancedAnalytics() {
     try {
@@ -423,14 +462,14 @@ class AdvancedMobileService {
       const historicalData = await this.getHistoricalAnalytics(userId);
       
       // Generate insights
-      const insights = this.generateMobileInsights(sessionData, historicalData);
+      const insights = this.generateWebInsights(sessionData, historicalData);
       
       // Create comprehensive report
       const report = {
         sessionData,
         historicalData,
         insights,
-        recommendations: this.generateMobileRecommendations(insights),
+        recommendations: this.generateWebRecommendations(insights),
         timestamp: new Date()
       };
 
@@ -526,14 +565,14 @@ class AdvancedMobileService {
 
   async getHistoricalAnalytics(userId) {
     try {
-      return await apiService.getMobileAnalytics(userId);
+      return await apiService.getWebAnalytics(userId);
     } catch (error) {
       console.error('Failed to get historical analytics:', error);
       return {};
     }
   }
 
-  generateMobileInsights(sessionData, historicalData) {
+  generateWebInsights(sessionData, historicalData) {
     return {
       productivityScore: this.calculateProductivityScore(sessionData),
       engagementLevel: this.calculateEngagementLevel(sessionData),
@@ -542,7 +581,7 @@ class AdvancedMobileService {
     };
   }
 
-  generateMobileRecommendations(insights) {
+  generateWebRecommendations(insights) {
     const recommendations = [];
     
     if (insights.productivityScore < 70) {
@@ -663,6 +702,6 @@ class AdvancedMobileService {
 }
 
 // Create singleton instance
-const advancedMobileService = new AdvancedMobileService();
+const advancedWebService = new AdvancedWebService();
 
-export default advancedMobileService;
+export default advancedWebService;

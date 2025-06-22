@@ -152,3 +152,4 @@ export const TextareaVariants = {
 };
 
 export default Textarea;
+export { Textarea };

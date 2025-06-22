@@ -271,4 +271,32 @@ export const SelectVariants = {
   ))
 };
 
+// Named exports for compatibility
+export { Select };
+
+// Additional Select component exports that are commonly used
+export const SelectTrigger = ({ children, className, ...props }) => (
+  <div className={`flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ${className}`} {...props}>
+    {children}
+  </div>
+);
+
+export const SelectValue = ({ placeholder, children, className, ...props }) => (
+  <span className={`truncate ${className}`} {...props}>
+    {children || placeholder}
+  </span>
+);
+
+export const SelectContent = ({ children, className, ...props }) => (
+  <div className={`relative z-50 min-w-[8rem] overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-md ${className}`} {...props}>
+    {children}
+  </div>
+);
+
+export const SelectItem = ({ children, className, value, ...props }) => (
+  <div className={`relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none hover:bg-accent hover:text-accent-foreground ${className}`} {...props}>
+    {children}
+  </div>
+);
+
 export default Select;

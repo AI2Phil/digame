@@ -232,4 +232,6 @@ export const IconButton = forwardRef(({
 
 IconButton.displayName = 'IconButton';
 
+// Named exports for compatibility
+export { Button };
 export default Button;
