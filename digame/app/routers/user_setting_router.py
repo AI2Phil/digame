@@ -5,7 +5,7 @@ import redis # Added for caching
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from ..db import get_db
+from ..database import get_db
 from ..auth.auth_dependencies import get_current_active_user
 from ..models.user import User as UserModel # Renamed to avoid confusion with User schema
 from ..schemas import user_setting_schemas as schemas # Alias for clarity

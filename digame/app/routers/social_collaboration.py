@@ -560,7 +560,7 @@ async def get_network_insights(
 @router.post("/users/{user_id}/kudos", response_model=Dict[str, Any])
 async def give_kudos_to_user(
     user_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
     # current_user: UserModel = Depends(get_current_active_user) # Optional: if kudos can only be given by logged-in users
 ):
     """Give kudos to a user, incrementing their kudos_count."""
