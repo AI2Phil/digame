@@ -1,125 +1,581 @@
-# Application Performance Monitoring (APM) Integration Plan
+# Application Performance Monitoring (APM) Integration Guide
 
-This document outlines potential Application Performance Monitoring (APM) tools and general steps for integrating APM into the Digame application to gain insights into its performance and identify bottlenecks.
+## Overview
 
-## APM Tools Options
+This guide provides comprehensive instructions for integrating Application Performance Monitoring (APM) tools with the Digame platform to ensure optimal performance, reliability, and observability in production environments.
 
-Selecting an APM tool depends on various factors including specific monitoring needs, existing infrastructure, and budget. Below are a couple of widely adopted options:
+## Recommended APM Solutions
 
-### 1. OpenTelemetry
-
--   **Overview**: OpenTelemetry is an open-source observability framework (CNCF project) providing APIs, SDKs, and tools to instrument, generate, collect, and export telemetry data (metrics, logs, and traces). It's vendor-agnostic, allowing flexibility in choosing backends for data storage and visualization (e.g., Jaeger, Prometheus, Zipkin, or commercial offerings).
--   **Pros**: Vendor neutrality, strong community support, comprehensive observability (traces, metrics, logs), growing ecosystem of integrations.
--   **Considerations**: Being a framework, it requires choosing and configuring a backend for data storage and visualization.
+### 1. OpenTelemetry (Recommended)
+**Why OpenTelemetry:**
+- Vendor-neutral, open-source standard
+- Comprehensive instrumentation for Python/FastAPI
+- Supports multiple backends (Jaeger, Zipkin, Prometheus)
+- Future-proof with industry-wide adoption
 
 ### 2. Elastic APM
+**Why Elastic APM:**
+- Excellent integration with FastAPI
+- Built-in error tracking and performance monitoring
+- Powerful visualization with Kibana
+- Cost-effective for medium-scale deployments
 
--   **Overview**: Elastic APM is part of the Elastic Stack (Elasticsearch, Logstash, Kibana). It provides application performance monitoring by collecting detailed performance information on response times for incoming requests, database queries, calls to caches, external HTTP requests, and more.
--   **Pros**: Tight integration with the Elastic Stack (if already in use for logging or analytics), rich UI through Kibana, support for distributed tracing.
--   **Considerations**: Best suited if already invested in the Elastic ecosystem.
+### 3. New Relic
+**Why New Relic:**
+- Comprehensive full-stack monitoring
+- AI-powered insights and alerting
+- Excellent React/JavaScript instrumentation
+- Enterprise-grade features and support
 
-## General Integration Steps
+---
 
-The following steps are generally applicable for integrating an APM solution into a Python web application like Digame (which uses FastAPI).
+## OpenTelemetry Integration (Recommended)
 
-### 1. Add APM Library
+### Installation
 
-First, the chosen APM agent library needs to be added as a project dependency.
+```bash
+# Install OpenTelemetry packages
+pip install opentelemetry-api
+pip install opentelemetry-sdk
+pip install opentelemetry-instrumentation-fastapi
+pip install opentelemetry-instrumentation-sqlalchemy
+pip install opentelemetry-instrumentation-redis
+pip install opentelemetry-exporter-jaeger-thrift
+pip install opentelemetry-exporter-prometheus
+```
 
--   **For OpenTelemetry**:
-    ```bash
-    pip install opentelemetry-distro opentelemetry-instrumentation-fastapi
-    ```
-    You'll also need an exporter for your chosen backend (e.g., `opentelemetry-exporter-otlp`, `opentelemetry-exporter-jaeger`).
+### Configuration
 
--   **For Elastic APM**:
-    ```bash
-    pip install elastic-apm
-    ```
+Create `digame/app/monitoring/telemetry.py`:
 
-### 2. Configure APM Agent
+```python
+from opentelemetry import trace, metrics
+from opentelemetry.exporter.jaeger.thrift import JaegerExporter
+from opentelemetry.exporter.prometheus import PrometheusMetricReader
+from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
+from opentelemetry.instrumentation.redis import RedisInstrumentor
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
+from opentelemetry.sdk.metrics import MeterProvider
+from opentelemetry.sdk.resources import Resource
+import os
 
-The APM agent needs to be initialized and configured within the application. This typically involves:
-
--   Setting a **Service Name** (e.g., `digame-api`).
--   Providing an **APM Server URL** (for Elastic APM or an OpenTelemetry collector).
--   Setting an **Environment** (e.g., `development`, `staging`, `production`).
--   Configuring sampling rates, log levels, and other agent-specific settings.
-
-This configuration is often done early in the application startup sequence, for example, in `main.py` or a dedicated configuration module. Environment variables are commonly used for sensitive information like APM server URLs or API keys.
-
-### 3. Add Middleware for Automatic Request Tracing
-
-Most APM libraries provide middleware for web frameworks like FastAPI to automatically trace incoming requests and capture common metrics.
-
--   **OpenTelemetry**: The `opentelemetry-instrumentation-fastapi` library provides FastAPI instrumentation. This is typically applied to the FastAPI app instance.
-    ```python
-    # Example in main.py
-    from fastapi import FastAPI
-    from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
-
-    app = FastAPI()
-    FastAPIInstrumentor.instrument_app(app)
-    ```
-
--   **Elastic APM**: The `elasticapm.contrib.starlette` middleware can be used for FastAPI applications.
-    ```python
-    # Example in main.py
-    from fastapi import FastAPI
-    from elasticapm.contrib.starlette import ElasticAPM, make_apm_client
-
-    app = FastAPI()
-    apm = make_apm_client({'SERVICE_NAME': 'digame-api'}) # Configuration via dict or env vars
-    app.add_middleware(ElasticAPM, client=apm)
-    ```
-
-### 4. Custom Instrumentation for Critical Functions
-
-While automatic instrumentation captures a lot, critical business logic, specific function calls, or interactions with services not auto-instrumented might require custom instrumentation.
-
--   **Decorators or Context Managers**: APM libraries provide ways to manually start and end "spans" or "transactions" around specific code blocks.
-    ```python
-    # Example with OpenTelemetry
-    from opentelemetry import trace
-
+def setup_telemetry():
+    """Initialize OpenTelemetry instrumentation"""
+    
+    # Create resource with service information
+    resource = Resource.create({
+        "service.name": "digame-api",
+        "service.version": "1.0.0",
+        "deployment.environment": os.getenv("ENVIRONMENT", "development")
+    })
+    
+    # Setup tracing
+    trace.set_tracer_provider(TracerProvider(resource=resource))
     tracer = trace.get_tracer(__name__)
+    
+    # Setup Jaeger exporter
+    jaeger_exporter = JaegerExporter(
+        agent_host_name=os.getenv("JAEGER_HOST", "localhost"),
+        agent_port=int(os.getenv("JAEGER_PORT", "6831")),
+    )
+    
+    span_processor = BatchSpanProcessor(jaeger_exporter)
+    trace.get_tracer_provider().add_span_processor(span_processor)
+    
+    # Setup metrics
+    prometheus_reader = PrometheusMetricReader()
+    metrics.set_meter_provider(MeterProvider(
+        resource=resource,
+        metric_readers=[prometheus_reader]
+    ))
+    
+    return tracer
 
-    def my_critical_function():
-        with tracer.start_as_current_span("my_critical_function_span"):
-            # ... business logic ...
-            pass
-    ```
-    ```python
-    # Example with Elastic APM
-    import elasticapm
+def instrument_app(app):
+    """Instrument FastAPI application"""
+    
+    # Instrument FastAPI
+    FastAPIInstrumentor.instrument_app(app)
+    
+    # Instrument SQLAlchemy
+    SQLAlchemyInstrumentor().instrument()
+    
+    # Instrument Redis
+    RedisInstrumentor().instrument()
+    
+    return app
+```
 
-    @elasticapm.capture_span()
-    def my_critical_function():
-        # ... business logic ...
-        pass
-    ```
+### Integration with FastAPI
 
-## Key Metrics to Track
+Update `digame/app/main.py`:
 
-Once APM is integrated, focus on tracking these key metrics:
+```python
+from fastapi import FastAPI
+from digame.app.monitoring.telemetry import setup_telemetry, instrument_app
+import os
 
--   **Request Latency**: Time taken to process incoming HTTP requests (overall, and per endpoint).
--   **Error Rates**: Frequency of errors (e.g., HTTP 5xx errors, unhandled exceptions).
--   **Transaction Traces**: Detailed breakdown of time spent in different parts of a request (e.g., database queries, external API calls, internal function calls). This is crucial for identifying bottlenecks.
--   **Database Call Times**: Time taken for database queries, identifying slow or frequent queries.
--   **External Service Calls**: Latency and error rates for calls made to third-party services or other internal microservices.
--   **Throughput**: Number of requests processed per unit of time.
--   **CPU and Memory Usage**: System-level metrics for application instances.
+# Initialize telemetry
+tracer = setup_telemetry()
 
-## New Dependencies to Consider
+app = FastAPI(title="Digame API", version="1.0.0")
 
-Based on the choice of APM tool, the following dependencies might be added:
+# Instrument the application
+if os.getenv("ENABLE_TELEMETRY", "false").lower() == "true":
+    app = instrument_app(app)
 
--   **If using OpenTelemetry**:
-    -   `opentelemetry-distro`: Provides a convenient way to install core OpenTelemetry components.
-    -   `opentelemetry-instrumentation-fastapi`: Specifically for auto-instrumenting FastAPI applications.
-    -   *(Potentially)* Exporter libraries like `opentelemetry-exporter-otlp`, `opentelemetry-exporter-jaeger`, etc., depending on the chosen backend.
--   **If using Elastic APM**:
-    -   `elastic-apm`: The main Python agent for Elastic APM.
+# Custom middleware for additional metrics
+@app.middleware("http")
+async def add_telemetry_middleware(request, call_next):
+    with tracer.start_as_current_span("http_request") as span:
+        span.set_attribute("http.method", request.method)
+        span.set_attribute("http.url", str(request.url))
+        
+        response = await call_next(request)
+        
+        span.set_attribute("http.status_code", response.status_code)
+        return response
+```
 
-These dependencies should be added to `requirements.txt` or `pyproject.toml` after selecting and testing the APM solution.
+---
+
+## Elastic APM Integration
+
+### Installation
+
+```bash
+pip install elastic-apm
+```
+
+### Configuration
+
+Create `digame/app/monitoring/elastic_apm.py`:
+
+```python
+from elasticapm.contrib.starlette import ElasticAPM
+import os
+
+def setup_elastic_apm(app):
+    """Setup Elastic APM monitoring"""
+    
+    apm_config = {
+        'SERVICE_NAME': 'digame-api',
+        'SECRET_TOKEN': os.getenv('ELASTIC_APM_SECRET_TOKEN'),
+        'SERVER_URL': os.getenv('ELASTIC_APM_SERVER_URL', 'http://localhost:8200'),
+        'ENVIRONMENT': os.getenv('ENVIRONMENT', 'development'),
+        'DEBUG': os.getenv('ELASTIC_APM_DEBUG', 'false').lower() == 'true',
+        'CAPTURE_BODY': 'all',
+        'CAPTURE_HEADERS': True,
+    }
+    
+    apm = ElasticAPM(app, config=apm_config)
+    return apm
+```
+
+### Integration
+
+Update `digame/app/main.py`:
+
+```python
+from digame.app.monitoring.elastic_apm import setup_elastic_apm
+import os
+
+app = FastAPI(title="Digame API", version="1.0.0")
+
+# Setup Elastic APM
+if os.getenv("ENABLE_ELASTIC_APM", "false").lower() == "true":
+    apm = setup_elastic_apm(app)
+```
+
+---
+
+## Custom Metrics and Monitoring
+
+### Performance Metrics
+
+Create `digame/app/monitoring/metrics.py`:
+
+```python
+from opentelemetry import metrics
+from functools import wraps
+import time
+import asyncio
+
+# Get meter
+meter = metrics.get_meter(__name__)
+
+# Create custom metrics
+request_duration = meter.create_histogram(
+    name="http_request_duration_seconds",
+    description="HTTP request duration in seconds",
+    unit="s"
+)
+
+database_query_duration = meter.create_histogram(
+    name="database_query_duration_seconds",
+    description="Database query duration in seconds",
+    unit="s"
+)
+
+active_users = meter.create_up_down_counter(
+    name="active_users_total",
+    description="Number of active users"
+)
+
+goal_completions = meter.create_counter(
+    name="goal_completions_total",
+    description="Total number of completed goals"
+)
+
+def track_performance(metric_name: str):
+    """Decorator to track function performance"""
+    def decorator(func):
+        @wraps(func)
+        async def async_wrapper(*args, **kwargs):
+            start_time = time.time()
+            try:
+                result = await func(*args, **kwargs)
+                duration = time.time() - start_time
+                
+                if metric_name == "database_query":
+                    database_query_duration.record(duration)
+                elif metric_name == "http_request":
+                    request_duration.record(duration)
+                    
+                return result
+            except Exception as e:
+                duration = time.time() - start_time
+                # Record error metrics
+                raise e
+        
+        @wraps(func)
+        def sync_wrapper(*args, **kwargs):
+            start_time = time.time()
+            try:
+                result = func(*args, **kwargs)
+                duration = time.time() - start_time
+                
+                if metric_name == "database_query":
+                    database_query_duration.record(duration)
+                    
+                return result
+            except Exception as e:
+                duration = time.time() - start_time
+                # Record error metrics
+                raise e
+        
+        return async_wrapper if asyncio.iscoroutinefunction(func) else sync_wrapper
+    return decorator
+
+# Business metrics
+def track_goal_completion(user_id: int, goal_id: int):
+    """Track goal completion event"""
+    goal_completions.add(1, {"user_id": str(user_id), "goal_id": str(goal_id)})
+
+def track_user_activity(user_id: int, action: str):
+    """Track user activity"""
+    active_users.add(1, {"user_id": str(user_id), "action": action})
+```
+
+### Usage in Services
+
+Update service methods to include monitoring:
+
+```python
+from digame.app.monitoring.metrics import track_performance, track_goal_completion
+
+class GoalService:
+    @track_performance("database_query")
+    async def complete_goal(self, goal_id: int, user_id: int):
+        """Complete a goal and track the event"""
+        # Existing goal completion logic
+        goal = await self.update_goal_status(goal_id, "completed")
+        
+        # Track the completion
+        track_goal_completion(user_id, goal_id)
+        
+        return goal
+```
+
+---
+
+## Frontend Monitoring
+
+### React Error Boundary
+
+Create `frontend/src/components/ErrorBoundary.jsx`:
+
+```javascript
+import React from 'react';
+
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null, errorInfo: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    this.setState({
+      error: error,
+      errorInfo: errorInfo
+    });
+
+    // Send error to monitoring service
+    this.logErrorToService(error, errorInfo);
+  }
+
+  logErrorToService(error, errorInfo) {
+    // Send to your monitoring service
+    fetch('/api/monitoring/frontend-error', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        error: error.toString(),
+        errorInfo: errorInfo.componentStack,
+        userAgent: navigator.userAgent,
+        url: window.location.href,
+        timestamp: new Date().toISOString()
+      })
+    });
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="error-boundary">
+          <h2>Something went wrong.</h2>
+          <details style={{ whiteSpace: 'pre-wrap' }}>
+            {this.state.error && this.state.error.toString()}
+            <br />
+            {this.state.errorInfo.componentStack}
+          </details>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
+export default ErrorBoundary;
+```
+
+### Performance Monitoring
+
+Create `frontend/src/utils/performance.js`:
+
+```javascript
+// Web Vitals monitoring
+import { getCLS, getFID, getFCP, getLCP, getTTFB } from 'web-vitals';
+
+function sendToAnalytics(metric) {
+  fetch('/api/monitoring/web-vitals', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(metric)
+  });
+}
+
+// Measure and send Web Vitals
+getCLS(sendToAnalytics);
+getFID(sendToAnalytics);
+getFCP(sendToAnalytics);
+getLCP(sendToAnalytics);
+getTTFB(sendToAnalytics);
+
+// Custom performance tracking
+export const trackPageLoad = (pageName) => {
+  const startTime = performance.now();
+  
+  return () => {
+    const endTime = performance.now();
+    const duration = endTime - startTime;
+    
+    fetch('/api/monitoring/page-performance', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        page: pageName,
+        duration: duration,
+        timestamp: new Date().toISOString()
+      })
+    });
+  };
+};
+```
+
+---
+
+## Environment Configuration
+
+### Docker Compose for Development
+
+Create `docker-compose.monitoring.yml`:
+
+```yaml
+version: '3.8'
+
+services:
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    ports:
+      - "16686:16686"
+      - "14268:14268"
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana-storage:/var/lib/grafana
+
+volumes:
+  grafana-storage:
+```
+
+### Environment Variables
+
+Add to `.env`:
+
+```bash
+# APM Configuration
+ENABLE_TELEMETRY=true
+JAEGER_HOST=localhost
+JAEGER_PORT=6831
+
+# Elastic APM (if using)
+ENABLE_ELASTIC_APM=false
+ELASTIC_APM_SECRET_TOKEN=your_secret_token
+ELASTIC_APM_SERVER_URL=http://localhost:8200
+
+# Monitoring
+PROMETHEUS_ENDPOINT=http://localhost:9090
+GRAFANA_ENDPOINT=http://localhost:3000
+```
+
+---
+
+## Production Deployment
+
+### Kubernetes Configuration
+
+Create `k8s/monitoring.yaml`:
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: digame-api
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: digame-api
+  template:
+    metadata:
+      labels:
+        app: digame-api
+    spec:
+      containers:
+      - name: digame-api
+        image: digame/api:latest
+        env:
+        - name: ENABLE_TELEMETRY
+          value: "true"
+        - name: JAEGER_HOST
+          value: "jaeger-collector"
+        - name: ENVIRONMENT
+          value: "production"
+        ports:
+        - containerPort: 8000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: digame-api-service
+spec:
+  selector:
+    app: digame-api
+  ports:
+  - port: 80
+    targetPort: 8000
+```
+
+### Monitoring Alerts
+
+Create `monitoring/alerts.yml`:
+
+```yaml
+groups:
+- name: digame-api
+  rules:
+  - alert: HighErrorRate
+    expr: rate(http_requests_total{status=~"5.."}[5m]) > 0.1
+    for: 5m
+    labels:
+      severity: critical
+    annotations:
+      summary: High error rate detected
+      description: "Error rate is {{ $value }} errors per second"
+
+  - alert: HighResponseTime
+    expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 1
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: High response time detected
+      description: "95th percentile response time is {{ $value }} seconds"
+
+  - alert: DatabaseConnectionIssues
+    expr: rate(database_query_duration_seconds_count[5m]) == 0
+    for: 2m
+    labels:
+      severity: critical
+    annotations:
+      summary: Database connection issues
+      description: "No database queries detected for 2 minutes"
+```
+
+---
+
+## Best Practices
+
+### 1. Sampling Strategy
+- Use head-based sampling for high-traffic endpoints
+- Sample 100% of errors and slow requests
+- Adjust sampling rates based on traffic volume
+
+### 2. Custom Attributes
+- Add user_id to spans for user-specific debugging
+- Include feature flags and A/B test variants
+- Tag requests with tenant information for multi-tenancy
+
+### 3. Performance Budgets
+- Set SLA targets: 95th percentile < 500ms
+- Monitor Core Web Vitals for frontend
+- Track business metrics alongside technical metrics
+
+### 4. Alerting Strategy
+- Alert on symptoms, not causes
+- Use multiple severity levels
+- Include runbooks in alert descriptions
+
+This comprehensive APM integration guide ensures robust monitoring and observability for the Digame platform across all environments.

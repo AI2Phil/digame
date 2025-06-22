@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
-import { 
-  Key, Plus, Search, Eye, EyeOff, Copy, 
-  Trash2, Edit, Calendar, Activity, 
+import React, { useState, useEffect } from 'react';
+import {
+  Key, Plus, Search, Eye, EyeOff, Copy,
+  Trash2, Edit, Calendar, Activity,
   AlertTriangle, CheckCircle, Clock, Server, UserCircle,
-  Download, Filter, MoreHorizontal, Settings2
+  Download, Filter, MoreHorizontal, Settings2, Shield,
+  BarChart3, TrendingUp, Zap, Database, Globe
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/Card';
 import { Button } from '../ui/Button';
