@@ -14,6 +14,14 @@ from .user_setting_schemas import UserSettingBase, UserSettingCreate, UserSettin
 from .onboarding_schemas import OnboardingDataBase, OnboardingDataCreate, OnboardingDataUpdate, OnboardingDataResponse, OnboardingStep # Import new onboarding schemas
 from .project_schemas import Project, ProjectCreate, ProjectMatchResponse # Import project schemas
 from .notification_schemas import Notification, NotificationCreate, NotificationUpdate # Import new notification schemas
+from .team_schemas import (
+    TeamBase, TeamCreate, TeamUpdate, Team, TeamWithMembers, TeamWithFullDetails,
+    TeamMemberBase, TeamMemberCreate, TeamMemberUpdate, TeamMember, TeamMemberAction,
+    TeamPerformanceMetricBase, TeamPerformanceMetricCreate, TeamPerformanceMetricUpdate, TeamPerformanceMetric,
+    TeamSkillGapBase, TeamSkillGapCreate, TeamSkillGapUpdate, TeamSkillGap,
+    TeamWorkflowBase, TeamWorkflowCreate, TeamWorkflowUpdate, TeamWorkflow,
+    TeamAnalyticsDashboard, TeamCollaborationPattern, TeamRoleEnumSchema
+)
 
 __all__ = [
     # User Schemas
@@ -45,6 +53,13 @@ __all__ = [
     "email_analysis_schemas",
     "language_learning_schemas",
     "task_prioritization_schemas",
+    # Team Schemas
+    "TeamBase", "TeamCreate", "TeamUpdate", "Team", "TeamWithMembers", "TeamWithFullDetails",
+    "TeamMemberBase", "TeamMemberCreate", "TeamMemberUpdate", "TeamMember", "TeamMemberAction",
+    "TeamPerformanceMetricBase", "TeamPerformanceMetricCreate", "TeamPerformanceMetricUpdate", "TeamPerformanceMetric",
+    "TeamSkillGapBase", "TeamSkillGapCreate", "TeamSkillGapUpdate", "TeamSkillGap",
+    "TeamWorkflowBase", "TeamWorkflowCreate", "TeamWorkflowUpdate", "TeamWorkflow",
+    "TeamAnalyticsDashboard", "TeamCollaborationPattern", "TeamRoleEnumSchema",
 ]
 
 from . import writing_assistance_schemas
