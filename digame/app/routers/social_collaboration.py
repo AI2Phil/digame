@@ -7,18 +7,48 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 from typing import List, Optional, Dict, Any
 from datetime import datetime
+from pydantic import BaseModel
+import json
 
 # Import from the correct paths based on the project structure
 from ..database import get_db
 from ..models.user import User as UserModel
+from ..models.project import Project
 from ..schemas.user_profile_schemas import UserProfileUpdate, UserProfileResponse, UserWithProfileResponse
-from ..schemas.user_schemas import User as UserSchema # Added UserSchema import
+from ..schemas.user_schemas import User as UserSchema
 from ..services.social_collaboration_service import SocialCollaborationService
 from ..crud import user_crud, notification_crud
 from .. import crud
 from ..schemas.notification_schemas import NotificationCreate
 from ..auth.auth_dependencies import get_current_active_user
-import json # Ensure json is imported
+
+# Import project schemas with fallback
+try:
+    from ..schemas.project_schemas import ProjectMatchResponse, Project as ProjectSchema, ProjectMatch
+except ImportError:
+    # Fallback project schemas if not available
+    class ProjectSchema(BaseModel):
+        id: int
+        name: str
+        description: Optional[str] = None
+        required_skills: List[str] = []
+        owner_id: int
+        created_at: datetime
+        
+        class Config:
+            from_attributes = True  # Updated for Pydantic v2
+
+    class ProjectMatch(BaseModel):
+        project: ProjectSchema
+        matching_skills: List[str]
+        missing_skills: List[str]
+        
+        class Config:
+            from_attributes = True
+
+    class ProjectMatchResponse(BaseModel):
+        matches: List[ProjectMatch]
+        total: int
 
 # Mock permission check - can be removed if not used by new endpoints or replaced by actual RBAC
 def require_permission(permission: str, user: UserModel):
@@ -376,6 +406,67 @@ async def join_collaboration_project(
     }
 
 # Team Analytics Endpoints
+# ... (existing code) ...
+
+# Make sure this new endpoint is defined within the router context
+@router.get("/project-matches", response_model=ProjectMatchResponse)
+async def get_project_matches(
+    user_id: int,
+    db: Session = Depends(get_db)
+    # current_user: User = Depends(get_current_user) # Assuming current_user is not strictly needed for this version
+):
+    """
+    Get project matches for a user based on their skills.
+    """
+    user_entity = crud.user_crud.get_user(db, user_id=user_id) # Use the actual CRUD function
+
+    if not user_entity:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # For development, if user_entity doesn't have skills (e.g. real model without skills field yet)
+    # We'll use a default list. The mock get_user above already provides skills.
+    user_skills = []
+    if hasattr(user_entity, 'skills') and user_entity.skills:
+        user_skills = user_entity.skills
+    elif not hasattr(user_entity, 'skills'): # If the object truly has no skills attr
+        # Fallback to some default skills if even the mock User didn't get skills
+        # This case should ideally be covered by the mock User definition in ImportError
+        user_skills = ["python", "react"] # Default if no skills found on user object
+
+    # Mock project data
+    mock_projects_data = [
+        {"id": 1, "name": "AI Chatbot", "description": "A chatbot for customer service", "required_skills": ["python", "nlp", "machine learning"], "owner_id": 1, "created_at": datetime.utcnow()},
+        {"id": 2, "name": "E-commerce Platform", "description": "Online shopping platform", "required_skills": ["react", "nodejs", "mongodb"], "owner_id": 2, "created_at": datetime.utcnow()},
+        {"id": 3, "name": "Data Analytics Dashboard", "description": "Dashboard for visualizing data", "required_skills": ["python", "pandas", "fastapi"], "owner_id": 1, "created_at": datetime.utcnow()},
+        {"id": 4, "name": "Mobile Game", "description": "A new mobile game", "required_skills": ["unity", "csharp"], "owner_id": 3, "created_at": datetime.utcnow()},
+        {"id": 5, "name": "NLP Research", "description": "Research project on NLP", "required_skills": ["python", "pytorch", "nlp"], "owner_id": 1, "created_at": datetime.utcnow()},
+    ]
+
+    # Convert mock data to ProjectSchema.
+    # In a real scenario, these would be fetched from project_crud.get_projects(db) or similar
+    # And would likely already be Project model instances, then converted to ProjectSchema for response.
+    # For now, we create ProjectSchema instances directly from dicts.
+    all_projects = [ProjectSchema(**p) for p in mock_projects_data]
+
+    matches = []
+    for project in all_projects:
+        project_req_skills_set = set(s.lower() for s in project.required_skills)
+        user_skills_set = set(s.lower() for s in user_skills)
+
+        matching_skills = list(user_skills_set.intersection(project_req_skills_set))
+        missing_skills = list(project_req_skills_set.difference(user_skills_set))
+
+        if matching_skills: # Consider it a match if there's at least one skill in common
+            project_match = ProjectMatch(
+                project=project,
+                matching_skills=matching_skills,
+                missing_skills=missing_skills
+            )
+            matches.append(project_match)
+
+    return ProjectMatchResponse(matches=matches, total=len(matches))
+
+
 @router.get("/users/{user_id}/team-analytics")
 async def get_team_analytics(
     user_id: int,

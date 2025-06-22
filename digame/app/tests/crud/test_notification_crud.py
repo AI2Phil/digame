@@ -1,10 +1,10 @@
 import pytest
 from unittest.mock import MagicMock, call
 from sqlalchemy.orm import Session
-from digame.app.models.notification import Notification
-from digame.app.models.user import User # Assuming User model exists
-from digame.app.schemas.notification_schemas import NotificationCreate
-from digame.app.crud import notification_crud
+from models.notification import Notification
+from models.user import User # Assuming User model exists
+from schemas.notification_schemas import NotificationCreate
+from crud import notification_crud
 from sqlalchemy import func # For server_default=func.now()
 
 # Mock base for SQLAlchemy models to avoid needing a real DB for basic attribute setting

@@ -23,8 +23,13 @@ from .job_crud import (
     update_job_status,
     delete_job
 )
-from .notification_crud import ( # Import new notification_crud functions
+# Import UserSetting CRUD
+from .user_setting_crud import get_user_setting, create_user_setting, update_user_setting, delete_user_setting
+
+# Import comprehensive notification CRUD functions (combining both versions)
+from .notification_crud import (
     create_notification,
+    create_user_notification,
     get_notification,
     get_notifications_by_user,
     get_unread_notifications_by_user,
@@ -32,6 +37,8 @@ from .notification_crud import ( # Import new notification_crud functions
     update_notification,
     mark_notification_as_read,
     mark_all_notifications_as_read_for_user,
+    mark_multiple_notifications_as_read,
+    get_pending_scheduled_notifications,
     delete_notification
 )
 from .task_crud import (
@@ -110,6 +117,11 @@ __all__ = [
     "get_experience", "get_experience_by_user", "create_user_experience", "update_experience", "delete_experience",
     # Education CRUD
     "get_education_entry", "get_education_by_user", "create_user_education", "update_education_entry", "delete_education_entry",
+    
+    # Additional notification CRUD functions
+    "create_user_notification",
+    "get_pending_scheduled_notifications",
+    "mark_multiple_notifications_as_read",
 ]
 
 from . import user_setting_crud # Assuming this was intended to be imported for __all__

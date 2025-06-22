@@ -5,6 +5,12 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as TaskManager from 'expo-task-manager'; // Import TaskManager
+import {
+  MY_BACKGROUND_FETCH_TASK,
+  registerBackgroundFetchAsync,
+  isTaskRegisteredAsync as isBackgroundTaskRegistered // Alias to avoid conflict if any
+} from './tasks/backgroundTask'; // Import background task helpers
 import { Alert, AppState } from 'react-native';
 
 // Import screens
@@ -80,6 +86,26 @@ export default function App() {
 
   useEffect(() => {
     initializeApp();
+
+    // Register background tasks
+    const initializeBackgroundTasks = async () => {
+      try {
+        const isRegistered = await isBackgroundTaskRegistered();
+        console.log(`Background task ${MY_BACKGROUND_FETCH_TASK} is registered: ${isRegistered}`);
+        if (!isRegistered) {
+          // Example: Unregister before registering if options need to be updated
+          // await unregisterBackgroundFetchAsync();
+          await registerBackgroundFetchAsync();
+        } else {
+          // Optionally, check if options are consistent and re-register if needed
+          console.log(`${MY_BACKGROUND_FETCH_TASK} already registered. Skipping registration.`);
+        }
+      } catch (error) {
+        console.error("Failed to initialize background tasks:", error);
+      }
+    };
+
+    initializeBackgroundTasks();
   }, []);
 
   useEffect(() => {

@@ -7,7 +7,7 @@
 from .user import User, Base # Base is often defined in one model file (e.g., user.py) or a database.py
 from .rbac import Role, Permission, user_roles_table, role_permissions_table
 from .process_notes import ProcessNote
-from .activity import Activity 
+from .activity import Activity
 from .activity_features import ActivityEnrichedFeature
 from .anomaly import DetectedAnomaly
 from .task import Task # Added new model

@@ -13,6 +13,7 @@ import EnterpriseDashboardPage from './pages/EnterpriseDashboardPage';
 import AdminDashboardPage from './pages/AdminDashboardPage'; // Import AdminDashboardPage
 import UserListPage from './pages/UserListPage';
 import UserProfileOverviewPage from './pages/UserProfileOverviewPage';
+import FindPeersPage from './pages/FindPeersPage'; // Import FindPeersPage
 import './App.css';
 
 function App() {
@@ -181,6 +182,18 @@ function App() {
             }
           />
           
+          {/* New route for Find Peers Page */}
+          <Route
+            path="/social/find-peers"
+            element={
+              isAuthenticated || isDemoMode ? (
+                <FindPeersPage />
+              ) : (
+                <Navigate to="/" replace />
+              )
+            }
+          />
+
           <Route
             path="/dashboard"
             element={

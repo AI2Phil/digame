@@ -1,18 +1,22 @@
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
-from .user import Base
+from ..database import Base
 
 class Notification(Base):
     __tablename__ = "notifications"
 
-    id = Column(Integer(), primary_key=True, index=True)
-    user_id = Column(Integer(), ForeignKey("users.id"), index=True, nullable=False)
-    message = Column(String(), nullable=False)
-    type = Column(String(), index=True, nullable=False)
-    is_read = Column(Boolean(), default=False, nullable=False, index=True)
-    scheduled_at = Column(DateTime(), nullable=True, index=True)  # Keep from HEAD
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), index=True, nullable=False)
+    message = Column(String, nullable=False)
+    type = Column(String, index=True, nullable=False)
+    is_read = Column(Boolean, default=False, nullable=False, index=True)
+    scheduled_at = Column(DateTime(timezone=True), nullable=True, index=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
-    recipient = relationship("User")
+    # Define relationship to User model
+    user = relationship("User", back_populates="notifications")
+
+    def __repr__(self):
+        return f"<Notification(id={self.id}, user_id={self.user_id}, message='{self.message[:20]}...', is_read={self.is_read}, scheduled_at={self.scheduled_at})>"
