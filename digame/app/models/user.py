@@ -1,9 +1,7 @@
-from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text
+from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, ForeignKey, JSON # Added ForeignKey, JSON
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
-from datetime import datetime
-
-# Removed: from .user_setting import UserSetting # This caused a circular import
+from datetime import datetime # Changed to just datetime for consistency, as utcnow is method of datetime
 
 Base = declarative_base()
 
@@ -21,69 +19,87 @@ class User(Base):
     created_at = Column(DateTime(), default=datetime.utcnow)
     updated_at = Column(DateTime(), default=datetime.utcnow, onupdate=datetime.utcnow)
     
-    is_active = Column(Integer(), default=True) # Using Integer for broader DB compatibility (e.g. 0 or 1)
+    is_active = Column(Boolean(), default=True) # Changed Integer to Boolean for clarity
     
-    # Onboarding fields
     onboarding_completed = Column(Boolean(), default=False)
-    onboarding_data = Column(Text(), nullable=True)  # JSON string for onboarding data
+    onboarding_data = Column(Text(), nullable=True)
 
-    # Relationship to Role via user_roles_table
-    # The 'secondary' argument refers to the __tablename__ of the association table.
-    # This table (user_roles) will be defined in rbac.py.
     roles = relationship(
         "Role",
         secondary="user_roles", 
-        back_populates="users"  # Corresponds to the 'users' attribute in the Role model
+        back_populates="users"
     )
-
-    # Relationship to ProcessNote model
-    # This allows accessing all process notes associated with a user.
     process_notes = relationship(
-        "ProcessNote", # String reference to the ProcessNote class
-        back_populates="user", # Corresponds to the 'user' attribute in ProcessNote
-        cascade="all, delete-orphan" # If a user is deleted, their process notes are also deleted.
+        "ProcessNote",
+        back_populates="user",
+        cascade="all, delete-orphan"
     )
-
-    # Relationship to Activity model
-    # Allows accessing all activities associated with a user.
     activities = relationship(
-        "Activity", # String reference to the Activity class
-        back_populates="user", # Corresponds to the 'user' attribute in Activity
-        cascade="all, delete-orphan" # If a user is deleted, their activities are also deleted.
+        "Activity",
+        back_populates="user",
+        cascade="all, delete-orphan"
     )
-
-    # Relationship to DetectedAnomaly model
-    # Allows accessing all anomalies detected for a user.
     anomalies = relationship(
-        "DetectedAnomaly", # String reference to the DetectedAnomaly class
-        back_populates="user", # Corresponds to the 'user' attribute in DetectedAnomaly
-        cascade="all, delete-orphan" # If a user is deleted, their anomalies are also deleted.
+        "DetectedAnomaly",
+        back_populates="user",
+        cascade="all, delete-orphan"
     )
-
-    # Relationship to Task model
-    # Allows accessing all tasks assigned to or created by a user.
     tasks = relationship(
-        "Task", # String reference to the Task class
-        back_populates="user", # Corresponds to the 'user' attribute in Task
-        cascade="all, delete-orphan" # If a user is deleted, their tasks are also deleted.
+        "Task",
+        back_populates="user",
+        cascade="all, delete-orphan"
     )
-    
-    # Relationship to BehavioralModel model
-    # Allows accessing all behavioral models created for a user.
     behavioral_models = relationship(
-        "BehavioralModel", # String reference to the BehavioralModel class
-        back_populates="user", # Corresponds to the 'user' attribute in BehavioralModel
-        cascade="all, delete-orphan" # If a user is deleted, their behavioral models are also deleted.
+        "BehavioralModel",
+        back_populates="user",
+        cascade="all, delete-orphan"
     )
-
-    # Relationship to UserSetting model
-    # This allows accessing the user's settings.
     settings = relationship(
         "UserSetting",
         back_populates="user",
-        uselist=False, # One-to-one relationship
-        cascade="all, delete-orphan" # If a user is deleted, their settings are also deleted.
+        uselist=False,
+        cascade="all, delete-orphan"
+    )
+
+    # New relationship to UserProfile (One-to-One)
+    profile = relationship(
+        "UserProfile",
+        back_populates="user",
+        uselist=False,
+        cascade="all, delete-orphan"
     )
 
     def __repr__(self):
         return f"<User(id={self.id}, username='{self.username}', email='{self.email}')>"
+
+
+class UserProfile(Base):
+    __tablename__ = "user_profiles" # Changed table name to plural
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), unique=True, nullable=False)
+
+    skills = Column(JSON, nullable=True)
+    learning_goals = Column(Text, nullable=True) # Using Text for flexibility
+    interests = Column(JSON, nullable=True)
+    mentorship_preferences = Column(JSON, nullable=True)
+
+    bio = Column(Text, nullable=True)
+    location = Column(String(255), nullable=True)
+    linkedin_url = Column(String(255), nullable=True)
+    github_url = Column(String(255), nullable=True)
+
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationship back to User (One-to-One)
+    user = relationship("User", back_populates="profile")
+
+    def __repr__(self):
+        return f"<UserProfile(id={self.id}, user_id={self.user_id})>"
+
+# Note: Models for Role, ProcessNote, Activity, DetectedAnomaly, Task, BehavioralModel, UserSetting
+# are assumed to be defined elsewhere and imported if needed for full application run,
+# or defined with necessary back_populates attributes.
+# For this file's validity, only their string names are needed in relationships.
+# The user_roles table for the User-Role many-to-many relationship is also assumed to be defined elsewhere.
+```

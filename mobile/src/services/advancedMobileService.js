@@ -3,23 +3,75 @@ import { Audio } from 'expo-av';
 import { ApiService } from './ApiService'; // Fallback to ApiService for some operations
 
 const API_BASE_URL = 'http://localhost:8000/mobile-ai'; // Using localhost for subtask environment
+const FAKE_TOKEN = 'FAKE_BEARER_TOKEN'; // Placeholder for actual auth token
 
 let recording = null;
 
+// Helper function for authenticated fetch calls
+async function authenticatedFetch(url, options = {}) {
+    const headers = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${FAKE_TOKEN}`,
+        ...options.headers,
+    };
+    const config = {
+        ...options,
+        headers,
+    };
+
+    try {
+        const response = await fetch(url, config);
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ message: response.statusText }));
+            console.error(`API Error ${response.status}: ${errorData.message || response.statusText}`, { url, options });
+            throw new Error(`API Error ${response.status}: ${errorData.message || response.statusText}`);
+        }
+        // Handle cases where response might be empty (e.g., 204 No Content)
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.indexOf("application/json") !== -1) {
+            return await response.json();
+        }
+        return await response.text(); // Or handle as appropriate if text/empty is expected
+    } catch (error) {
+        console.error('Network or Fetch Error:', error, { url, options });
+        throw error; // Re-throw to be caught by calling function
+    }
+}
+
 const AdvancedMobileService = {
+  config: { // Default config, can be updated by initialize()
+    backgroundFetchInterval: 15 * 60, // 15 minutes
+    aiNotificationsEnabled: true,
+  },
+
   initialize: () => {
     console.log("AdvancedMobileService initialized");
-    return Promise.resolve();
+    return Promise.resolve({ status: 'initialized', config: AdvancedMobileService.config });
   },
 
   setupBackgroundFetch: () => {
     console.log("Background fetch setup");
-    return Promise.resolve();
+    return Promise.resolve({ status: 'Background fetch setup attempted' });
   },
 
-  setupAiNotifications: () => {
+  setupAiNotifications: async (userBehaviorSummary = {}) => {
     console.log("AI notifications setup");
-    return Promise.resolve();
+    try {
+      const payload = {
+        notification_enabled_types: ["task_updates", "daily_summary"],
+        preferred_times: ["09:00", "17:00"],
+        behavior_summary: userBehaviorSummary,
+      };
+      const response = await authenticatedFetch(`${API_BASE_URL}/mobile/ai/notifications/settings`, {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+      console.log('AI notification preferences stored:', response);
+      return response;
+    } catch (error) {
+      console.error('Error in setupAiNotifications:', error);
+      return Promise.resolve({ status: 'setup_attempted' });
+    }
   },
 
   startVoiceRecognition: async () => {
@@ -71,27 +123,46 @@ const AdvancedMobileService = {
   },
 
   // Legacy method for backward compatibility
-  async processVoiceCommand(transcribedText) {
+  async processVoiceCommand(transcribedText, language = "en-US") {
     console.log(`Processing voice command via backend: ${transcribedText}`);
     try {
-      const payload = { text: transcribedText, language: "en-US" };
+      const payload = { text: transcribedText, language: language };
       const nluResponse = await ApiService.interpretVoice(payload);
       console.log("Backend NLU response:", nluResponse);
       return nluResponse;
     } catch (error) {
       console.error('Error interpreting voice command via backend:', error);
-      throw error;
+      // Return a default error-like response structure
+      return {
+        intent: 'interpretation_failed',
+        parameters: { original_text: transcribedText },
+        responseText: "Sorry, I couldn't process that command right now."
+      };
     }
   },
 
-  generateAdvancedAnalytics: () => {
+  generateAdvancedAnalytics: async (usageData = {}) => {
     console.log("Generating advanced analytics");
-    return Promise.resolve({
-      insights: { productivityScore: 88, engagementLevel: 90 },
-      sessionData: { duration: 1200000, screenViews: { home: 10, profile: 5 } },
-      mockData: true,
-      timestamp: new Date().toISOString()
-    });
+    try {
+      const response = await authenticatedFetch(`${API_BASE_URL}/mobile/analytics`, {
+        method: 'POST',
+        body: JSON.stringify(usageData),
+      });
+      console.log('Advanced analytics data/response from backend:', response);
+      return response || {
+        insights: { productivityScore: 88, engagementLevel: 90 },
+        sessionData: { duration: 1200000, screenViews: { home: 10, profile: 5 } },
+        mockData: true,
+        timestamp: new Date().toISOString()
+      };
+    } catch (error) {
+      console.error('Error in generateAdvancedAnalytics:', error);
+      return {
+        insights: { productivityScore: 70, engagementLevel: 65, focusTime: '2.0h', error: 'Could not fetch live analytics' },
+        sessionData: { averageDuration: 0, commonActions: [] },
+        personalizedTips: ['Could not fetch tips. Check your connection.']
+      };
+    }
   },
 
   processAiNotifications: async () => {
