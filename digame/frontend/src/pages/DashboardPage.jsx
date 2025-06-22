@@ -1,25 +1,24 @@
 import React, { useState, useEffect } from 'react'; // Added useState, useEffect
 import enhancedApiService from '../services/enhancedApiService';
 import { useNavigate } from 'react-router-dom';
-import { Shield } from 'lucide-react'; // Import Shield icon
+import { Menu } from 'lucide-react'; // Import Menu icon for sidebar toggle
 import NotificationBell from '../components/notifications/NotificationBell'; // Import NotificationBell
+import Sidebar from '../components/navigation/Sidebar'; // Import new Sidebar component
 import ProductivityChart from '../components/dashboard/ProductivityChart';
 import ActivityBreakdown from '../components/dashboard/ActivityBreakdown';
 import ProductivityMetricCard from '../components/dashboard/ProductivityMetricCard';
 import RecentActivity from '../components/dashboard/RecentActivity';
 import { Button } from '../components/ui/Button';
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuLabel } from '../components/ui/DropdownMenu';
 import { Badge } from '../components/ui/Badge';
 import { Avatar, AvatarFallback } from '../components/ui/Avatar';
-import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle, SheetClose, SheetFooter, SheetDescription } from '../components/ui/Sheet';
-import { Separator } from '../components/ui/Separator';
-import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '../components/ui/Tooltip';
+import { TooltipProvider } from '../components/ui/Tooltip';
 
 export default function DashboardPage({ isDemoMode, onLogout }) {
   const navigate = useNavigate();
   const [currentUser, setCurrentUser] = useState(null);
   const [userLoading, setUserLoading] = useState(true);
   const [userError, setUserError] = useState(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     const fetchCurrentUser = async () => {
@@ -43,331 +42,51 @@ export default function DashboardPage({ isDemoMode, onLogout }) {
 
   return (
     <TooltipProvider delayDuration={300}>
-      <div className="min-h-screen bg-gray-50">
-        {/* Header */}
-        <header className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-3">
-                <div className="digame-logo">
-                  <span className="text-white font-bold text-sm">D</span>
-                </div>
-                <span className="text-xl font-bold text-gray-900">Digame</span>
-              </div>
-              {isDemoMode && (
-                <Badge variant="info" className="text-xs">Demo Mode</Badge>
-              )}
-            </div>
-            
-            <div className="flex items-center space-x-6">
-              <nav className="hidden md:flex space-x-6">
-                <button
-                  onClick={() => navigate('/dashboard')}
-                  className="text-blue-600 font-medium text-sm hover:text-blue-700 transition-colors flex items-center gap-1"
-                >
-                  <span>🏠</span> Dashboard
-                </button>
-                
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="text-gray-600 hover:text-gray-900 text-sm transition-colors flex items-center gap-1">
-                      <span>📊</span> Analytics ▼
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-56">
-                    <DropdownMenuItem onClick={() => navigate('/analytics/web')} className="flex items-center gap-2">
-                      <span>🌐</span> Web Analytics
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate('/analytics/mobile')} className="flex items-center gap-2">
-                      <span>📱</span> Mobile Analytics
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuLabel className="px-2 py-1.5 text-xs font-medium text-gray-500">
-                      AI-POWERED INSIGHTS
-                    </DropdownMenuLabel>
-                    <DropdownMenuItem onClick={() => navigate('/analytics/behavioral')} className="flex items-center gap-2">
-                      <span>🧠</span> Behavioral Analytics
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate('/analytics/predictive')} className="flex items-center gap-2">
-                      <span>🔮</span> Predictive Analytics
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+      <div className="min-h-screen bg-gray-50 flex">
+        {/* Sidebar */}
+        <Sidebar
+          isDemoMode={isDemoMode}
+          onLogout={onLogout}
+          currentUser={currentUser}
+          isOpen={sidebarOpen}
+          onToggle={() => setSidebarOpen(!sidebarOpen)}
+        />
 
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="text-gray-600 hover:text-gray-900 text-sm transition-colors flex items-center gap-1">
-                      <span>🤖</span> AI Tools ▼
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-64">
-                    <DropdownMenuItem onClick={() => navigate('/ai-tools')} className="flex items-center gap-2">
-                      <span>🛠️</span> AI Tools Hub
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuLabel className="px-2 py-1.5 text-xs font-medium text-gray-500">WRITING & CONTENT</DropdownMenuLabel>
-                    <DropdownMenuItem onClick={() => navigate('/ai-tools?tab=writing')} className="flex items-center gap-2">
-                      <span>✍️</span> Writing Assistance
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuLabel className="px-2 py-1.5 text-xs font-medium text-gray-500">TASK MANAGEMENT</DropdownMenuLabel>
-                    <DropdownMenuItem onClick={() => navigate('/tasks')} className="flex items-center gap-2">
-                      <span>📋</span> AI Task Suggestions
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuLabel className="px-2 py-1.5 text-xs font-medium text-gray-500">INSIGHTS & ANALYTICS</DropdownMenuLabel>
-                    <DropdownMenuItem onClick={() => navigate('/ai-tools?tab=insights')} className="flex items-center gap-2">
-                      <span>🧠</span> AI Insights
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate('/ai-tools?tab=coaching')} className="flex items-center gap-2">
-                      <span>🎯</span> AI Coaching
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="text-gray-600 hover:text-gray-900 text-sm transition-colors flex items-center gap-1">
-                      <span>🤝</span> Social ▼
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-64">
-                    <DropdownMenuItem onClick={() => navigate('/social')} className="flex items-center gap-2">
-                      <span>👥</span> Social Collaboration
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuLabel className="px-2 py-1.5 text-xs font-medium text-gray-500">COLLABORATION FEATURES</DropdownMenuLabel>
-                    <DropdownMenuItem onClick={() => navigate('/social?tab=peer-matching')} className="flex items-center gap-2">
-                      <span>🧠</span> AI Peer Matching
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate('/social?tab=mentorship')} className="flex items-center gap-2">
-                      <span>🎓</span> Mentorship Programs
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate('/social?tab=projects')} className="flex items-center gap-2">
-                      <span>🎯</span> Project Collaboration
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate('/social?tab=teams')} className="flex items-center gap-2">
-                      <span>📈</span> Team Analytics
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate('/social?tab=industry')} className="flex items-center gap-2">
-                      <span>🏢</span> Industry Networking
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="text-gray-600 hover:text-gray-900 text-sm transition-colors flex items-center gap-1">
-                      <span>📋</span> Tasks ▼
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-64">
-                    <DropdownMenuItem onClick={() => navigate('/tasks')} className="flex items-center gap-2">
-                      <span>📋</span> Task Management
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuLabel className="px-2 py-1.5 text-xs font-medium text-gray-500">AI-POWERED FEATURES</DropdownMenuLabel>
-                    <DropdownMenuItem onClick={() => navigate('/tasks?tab=suggestions')} className="flex items-center gap-2">
-                      <span>🤖</span> AI Task Suggestions
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate('/tasks?tab=automation')} className="flex items-center gap-2">
-                      <span>⚡</span> Process Automation
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate('/tasks?tab=insights')} className="flex items-center gap-2">
-                      <span>📊</span> Task Analytics
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="text-gray-600 hover:text-gray-900 text-sm transition-colors flex items-center gap-1">
-                      <span>🏢</span> Enterprise ▼
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-64">
-                    <DropdownMenuItem onClick={() => navigate('/enterprise')} className="flex items-center gap-2">
-                      <span>🏢</span> Enterprise Dashboard
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuLabel className="px-2 py-1.5 text-xs font-medium text-gray-500">AI ENTERPRISE FEATURES</DropdownMenuLabel>
-                    <DropdownMenuItem onClick={() => navigate('/enterprise?tab=ai-features')} className="flex items-center gap-2">
-                      <span>🤖</span> AI Feature Management
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate('/enterprise?tab=tenants')} className="flex items-center gap-2">
-                      <span>🏢</span> Tenant Management
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate('/enterprise?tab=security')} className="flex items-center gap-2">
-                      <span>🔒</span> Security & Compliance
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuLabel className="px-2 py-1.5 text-xs font-medium text-gray-500">ANALYTICS & INSIGHTS</DropdownMenuLabel>
-                    <DropdownMenuItem onClick={() => navigate('/enterprise?tab=overview')} className="flex items-center gap-2">
-                      <span>📊</span> Enterprise Analytics
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-
-                <button
-                  onClick={() => navigate('/reports')}
-                  className="text-gray-600 hover:text-gray-900 text-sm transition-colors flex items-center gap-1"
-                >
-                  <span>📋</span> Reports
-                </button>
-
-                {/* Admin Dashboard Link - Visible only if user is admin (conceptual) */}
-                {/* This check would ideally come from currentUser.role or similar */}
-                {(currentUser?.role === 'admin' || isDemoMode) && (
-                  <button
-                    onClick={() => navigate('/admin/dashboard')}
-                    className="text-gray-600 hover:text-gray-900 text-sm transition-colors flex items-center gap-1"
+        {/* Main Content Area */}
+        <div className="flex-1 lg:ml-0">
+          {/* Top Header */}
+          <header className="bg-white shadow-sm border-b border-gray-200 lg:hidden">
+            <div className="px-4 sm:px-6 lg:px-8">
+              <div className="flex justify-between items-center h-16">
+                <div className="flex items-center space-x-4">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setSidebarOpen(true)}
+                    className="text-gray-700 hover:text-gray-900"
                   >
-                    <Shield className="w-4 h-4" /> Admin
-                  </button>
-                )}
-              </nav>
-              
-              {/* Mobile menu button */}
-              <div className="md:hidden">
-                <Sheet>
-                  <SheetTrigger asChild>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button variant="ghost" size="icon" className="text-gray-600 hover:text-gray-900 p-2">
-                          <span className="text-lg">☰</span>
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent side="bottom">
-                        <p>Open Navigation</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </SheetTrigger>
-                  <SheetContent side="left" className="w-[300px] sm:w-[400px] p-0 flex flex-col">
-                    <SheetHeader className="p-6 pb-4">
-                      <SheetTitle>
-                        <div className="flex items-center space-x-2">
-                          <div className="digame-logo w-7 h-7">
-                            <span className="text-white font-bold text-xs">D</span>
-                          </div>
-                          <span className="text-lg font-bold text-gray-900">Digame Menu</span>
-                        </div>
-                      </SheetTitle>
-                    </SheetHeader>
-                    <Separator />
-                    <div className="flex-grow overflow-y-auto p-6 space-y-2">
-                      <SheetClose asChild>
-                        <Button variant="ghost" className="w-full justify-start text-base py-3" onClick={() => navigate('/dashboard')}>
-                          <span className="mr-3 text-lg">🏠</span> Dashboard
-                        </Button>
-                      </SheetClose>
-
-                      {/* Analytics Section */}
-                      <div className="pt-2">
-                        <h4 className="px-3 py-2 text-sm font-semibold text-gray-500">Analytics</h4>
-                        <SheetClose asChild><Button variant="ghost" className="w-full justify-start" onClick={() => navigate('/analytics/web')}><span className="mr-2">🌐</span> Web Analytics</Button></SheetClose>
-                        <SheetClose asChild><Button variant="ghost" className="w-full justify-start" onClick={() => navigate('/analytics/mobile')}><span className="mr-2">📱</span> Mobile Analytics</Button></SheetClose>
-                        <div className="px-3 py-2 text-xs font-medium text-gray-400">AI-POWERED INSIGHTS</div>
-                        <SheetClose asChild><Button variant="ghost" className="w-full justify-start" onClick={() => navigate('/analytics/behavioral')}><span className="mr-2">🧠</span> Behavioral Analytics</Button></SheetClose>
-                        <SheetClose asChild><Button variant="ghost" className="w-full justify-start" onClick={() => navigate('/analytics/predictive')}><span className="mr-2">🔮</span> Predictive Analytics</Button></SheetClose>
-                      </div>
-                      <Separator />
-
-                      {/* AI Tools Section */}
-                      <div className="pt-2">
-                        <h4 className="px-3 py-2 text-sm font-semibold text-gray-500">AI Tools</h4>
-                        <SheetClose asChild><Button variant="ghost" className="w-full justify-start" onClick={() => navigate('/ai-tools')}><span className="mr-2">🛠️</span> AI Tools Hub</Button></SheetClose>
-                        <div className="px-3 py-2 text-xs font-medium text-gray-400">WRITING & CONTENT</div>
-                        <SheetClose asChild><Button variant="ghost" className="w-full justify-start" onClick={() => navigate('/ai-tools?tab=writing')}><span className="mr-2">✍️</span> Writing Assistance</Button></SheetClose>
-                        <div className="px-3 py-2 text-xs font-medium text-gray-400">TASK MANAGEMENT</div>
-                        <SheetClose asChild><Button variant="ghost" className="w-full justify-start" onClick={() => navigate('/tasks')}><span className="mr-2">📋</span> AI Task Suggestions</Button></SheetClose>
-                        <div className="px-3 py-2 text-xs font-medium text-gray-400">INSIGHTS & ANALYTICS</div>
-                        <SheetClose asChild><Button variant="ghost" className="w-full justify-start" onClick={() => navigate('/ai-tools?tab=insights')}><span className="mr-2">🧠</span> AI Insights</Button></SheetClose>
-                        <SheetClose asChild><Button variant="ghost" className="w-full justify-start" onClick={() => navigate('/ai-tools?tab=coaching')}><span className="mr-2">🎯</span> AI Coaching</Button></SheetClose>
-                      </div>
-                      <Separator />
-
-                      {/* Social Section */}
-                      <div className="pt-2">
-                        <h4 className="px-3 py-2 text-sm font-semibold text-gray-500">Social</h4>
-                        <SheetClose asChild><Button variant="ghost" className="w-full justify-start" onClick={() => navigate('/social')}><span className="mr-2">👥</span> Social Collaboration</Button></SheetClose>
-                        <div className="px-3 py-2 text-xs font-medium text-gray-400">COLLABORATION FEATURES</div>
-                        <SheetClose asChild><Button variant="ghost" className="w-full justify-start" onClick={() => navigate('/social?tab=peer-matching')}><span className="mr-2">🧠</span> AI Peer Matching</Button></SheetClose>
-                        <SheetClose asChild><Button variant="ghost" className="w-full justify-start" onClick={() => navigate('/social?tab=mentorship')}><span className="mr-2">🎓</span> Mentorship Programs</Button></SheetClose>
-                        <SheetClose asChild><Button variant="ghost" className="w-full justify-start" onClick={() => navigate('/social?tab=projects')}><span className="mr-2">🎯</span> Project Collaboration</Button></SheetClose>
-                        <SheetClose asChild><Button variant="ghost" className="w-full justify-start" onClick={() => navigate('/social?tab=teams')}><span className="mr-2">📈</span> Team Analytics</Button></SheetClose>
-                        <SheetClose asChild><Button variant="ghost" className="w-full justify-start" onClick={() => navigate('/social?tab=industry')}><span className="mr-2">🏢</span> Industry Networking</Button></SheetClose>
-                      </div>
-                      <Separator />
-
-                      {/* Tasks Section */}
-                      <div className="pt-2">
-                        <h4 className="px-3 py-2 text-sm font-semibold text-gray-500">Tasks</h4>
-                        <SheetClose asChild><Button variant="ghost" className="w-full justify-start" onClick={() => navigate('/tasks')}><span className="mr-2">📋</span> Task Management</Button></SheetClose>
-                        <div className="px-3 py-2 text-xs font-medium text-gray-400">AI-POWERED FEATURES</div>
-                        <SheetClose asChild><Button variant="ghost" className="w-full justify-start" onClick={() => navigate('/tasks?tab=suggestions')}><span className="mr-2">🤖</span> AI Task Suggestions</Button></SheetClose>
-                        <SheetClose asChild><Button variant="ghost" className="w-full justify-start" onClick={() => navigate('/tasks?tab=automation')}><span className="mr-2">⚡</span> Process Automation</Button></SheetClose>
-                        <SheetClose asChild><Button variant="ghost" className="w-full justify-start" onClick={() => navigate('/tasks?tab=insights')}><span className="mr-2">📊</span> Task Analytics</Button></SheetClose>
-                      </div>
-                      <Separator />
-
-                      {/* Enterprise Section */}
-                      <div className="pt-2">
-                        <h4 className="px-3 py-2 text-sm font-semibold text-gray-500">Enterprise</h4>
-                        <SheetClose asChild><Button variant="ghost" className="w-full justify-start" onClick={() => navigate('/enterprise')}><span className="mr-2">🏢</span> Enterprise Dashboard</Button></SheetClose>
-                        <div className="px-3 py-2 text-xs font-medium text-gray-400">AI ENTERPRISE FEATURES</div>
-                        <SheetClose asChild><Button variant="ghost" className="w-full justify-start" onClick={() => navigate('/enterprise?tab=ai-features')}><span className="mr-2">🤖</span> AI Feature Management</Button></SheetClose>
-                        <SheetClose asChild><Button variant="ghost" className="w-full justify-start" onClick={() => navigate('/enterprise?tab=tenants')}><span className="mr-2">🏢</span> Tenant Management</Button></SheetClose>
-                        <SheetClose asChild><Button variant="ghost" className="w-full justify-start" onClick={() => navigate('/enterprise?tab=security')}><span className="mr-2">🔒</span> Security & Compliance</Button></SheetClose>
-                        <div className="px-3 py-2 text-xs font-medium text-gray-400">ANALYTICS & INSIGHTS</div>
-                        <SheetClose asChild><Button variant="ghost" className="w-full justify-start" onClick={() => navigate('/enterprise?tab=overview')}><span className="mr-2">📊</span> Enterprise Analytics</Button></SheetClose>
-                      </div>
-                      <Separator />
-
-                      <SheetClose asChild>
-                        <Button variant="ghost" className="w-full justify-start text-base py-3" onClick={() => navigate('/reports')}>
-                          <span className="mr-3 text-lg">📋</span> Reports
-                        </Button>
-                      </SheetClose>
+                    <Menu className="w-6 h-6" />
+                  </Button>
+                  <div className="flex items-center space-x-3">
+                    <div className="digame-logo">
+                      <span className="text-white font-bold text-sm">D</span>
                     </div>
-                    <SheetFooter className="p-6 pt-4 border-t border-gray-200">
-                      <div className="flex items-center mb-4">
-                        <Avatar className="w-10 h-10 mr-3">
-                          <AvatarFallback className="text-base">👤</AvatarFallback>
-                        </Avatar>
-                        <div>
-                           <p className="text-sm font-medium text-gray-900">{isDemoMode ? "Demo User" : "User Name"}</p> {/* Replace with actual user name if available */}
-                           {isDemoMode && <Badge variant="outline">Demo Account</Badge>}
-                        </div>
-                      </div>
-                      <SheetClose asChild>
-                        <Button variant="outline" className="w-full" onClick={onLogout}>
-                          {isDemoMode ? 'Exit Demo' : 'Logout'}
-                        </Button>
-                      </SheetClose>
-                    </SheetFooter>
-                  </SheetContent>
-                </Sheet>
-              </div>
-              
-              {/* Notification Bell added here */}
-              <NotificationBell />
-
-              <div className="flex items-center space-x-3">
-                <Avatar className="w-8 h-8">
-                  <AvatarFallback className="text-sm">👤</AvatarFallback>
-                </Avatar>
-                <button
-                  onClick={onLogout}
-                  className="text-gray-600 hover:text-gray-900 text-sm font-medium transition-colors"
-                >
-                  {isDemoMode ? 'Exit Demo' : 'Logout'}
-                </button>
+                    <span className="text-xl font-bold text-gray-900">Digame</span>
+                    {isDemoMode && (
+                      <Badge variant="info" className="text-xs">Demo</Badge>
+                    )}
+                  </div>
+                </div>
+                
+                <div className="flex items-center space-x-3">
+                  <NotificationBell />
+                  <Avatar className="w-8 h-8">
+                    <AvatarFallback className="text-sm">👤</AvatarFallback>
+                  </Avatar>
+                </div>
               </div>
             </div>
-          </div>
-        </div>
-      </header>
+          </header>
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -760,7 +479,8 @@ export default function DashboardPage({ isDemoMode, onLogout }) {
           </div>
         </div>
       </main>
-    </div>
+        </div>
+      </div>
     </TooltipProvider>
   );
 }
