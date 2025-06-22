@@ -106,7 +106,7 @@ describe('ProductivityChart Component', () => {
     const mockApiData = Array.from({ length: 10 }, (_, i) => {
         const date = new Date();
         date.setDate(today.getDate() - i);
-        return { activity_id: i, timestamp: date.toISOString(), activity_type: \`Type\${i % 2}\` };
+        return { activity_id: i, timestamp: date.toISOString(), activity_type: `Type${i % 2}` };
     }).reverse(); // oldest first for processing
 
     test('processes data correctly (last 7 days, sorted, formatted for Recharts) and renders Recharts components', async () => {
