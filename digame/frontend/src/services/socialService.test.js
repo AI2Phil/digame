@@ -15,6 +15,17 @@ describe('socialService', () => {
     socialService.userCommunityGroups = [];
     socialService.userSkills = [];
     socialService.userGoals = [];
+
+    // Mock all apiService methods used in this test file
+    apiService.getUserProfile = jest.fn();
+    apiService.getUserConnections = jest.fn();
+    apiService.getUserCommunityGroups = jest.fn();
+    apiService.getUserSkillsMatrix = jest.fn();
+    apiService.getUserLearningGoals = jest.fn();
+    apiService.findPeerMatches = jest.fn();
+    apiService.findPotentialMentors = jest.fn();
+    apiService.findPotentialMentees = jest.fn();
+    apiService.getMentorshipPrograms = jest.fn(); // Assuming this might be used
   });
 
   describe('initialize', () => {
@@ -23,6 +34,7 @@ describe('socialService', () => {
     const mockUserCommunityGroups = [{ id: 'group1', name: 'React Devs' }];
 
     beforeEach(() => {
+      // Configure the mocked methods for this describe block
       apiService.getUserProfile.mockResolvedValue(mockUserProfile);
       apiService.getUserConnections.mockResolvedValue(mockUserConnections);
       apiService.getUserCommunityGroups.mockResolvedValue(mockUserCommunityGroups);

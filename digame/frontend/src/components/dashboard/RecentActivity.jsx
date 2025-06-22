@@ -19,7 +19,10 @@ const RecentActivity = ({ userId = 1 }) => {
   };
 
   const getActivityIcon = (activityType) => {
-    return activityIcons[activityType.toLowerCase()] || activityIcons['default'];
+    if (typeof activityType === 'string') {
+      return activityIcons[activityType.toLowerCase()] || activityIcons['default'];
+    }
+    return activityIcons['default'];
   };
 
   // Simplified timestamp formatter
@@ -44,7 +47,14 @@ const RecentActivity = ({ userId = 1 }) => {
         setLoading(true);
         setError(null);
         const data = await dashboardService.getRecentActivities(userId);
-        setActivities(data);
+        if (Array.isArray(data)) {
+          setActivities(data);
+        } else {
+          console.error('Recent activities data is not an array:', data);
+          setActivities([]); // Default to empty array if data is not as expected
+          // Optionally, set an error state here as well if non-array is critical
+          // setError('Failed to load recent activities due to invalid data format.');
+        }
       } catch (err) {
         console.error('Error fetching recent activities:', err);
         setError('Failed to load recent activities.');

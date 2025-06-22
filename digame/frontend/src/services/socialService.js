@@ -20,15 +20,19 @@ class SocialService {
    */
   async initialize(userId) {
     try {
-      const [profile, connections, groups] = await Promise.all([
+      const [profile, connections, groups, skillsData, goalsData] = await Promise.all([
         apiService.getUserProfile(userId),
         apiService.getUserConnections(userId),
-        apiService.getUserCommunityGroups(userId)
+        apiService.getUserCommunityGroups(userId),
+        apiService.getUserSkillsMatrix(userId),
+        apiService.getUserLearningGoals(userId)
       ]);
 
       this.userProfile = profile;
       this.connections = connections;
       this.communityGroups = groups;
+      this.userSkills = skillsData.skills; // Populate userSkills
+      this.userGoals = goalsData.goals;   // Populate userGoals correctly
       this.isInitialized = true;
 
       console.log('Social service initialized for user:', userId);
@@ -48,16 +52,22 @@ class SocialService {
 
     try {
       // Get user's skill profile and learning goals
-      const [skillProfile, learningGoals, behaviorData] = await Promise.all([
-        apiService.getUserSkillsMatrix(this.userProfile.id),
-        apiService.getUserGoals(this.userProfile.id),
-        apiService.getUserBehaviorData(this.userProfile.id)
-      ]);
+      // User skills and goals are now populated during initialize
+      // const [skillProfile, learningGoals, behaviorData] = await Promise.all([
+      //   apiService.getUserSkillsMatrix(this.userProfile.id),
+      //   apiService.getUserGoals(this.userProfile.id),
+      //   apiService.getUserBehaviorData(this.userProfile.id)
+      // ]);
+
+      // For now, assume skillProfile and behaviorData are part of this.userProfile or fetched if needed
+      // Simplified: use this.userSkills and this.userGoals directly
+      const skillProfile = { skills: this.userSkills }; // Adapt as per actual structure of skillProfile
+      const behaviorData = this.userProfile.behaviorData || {}; // Assuming behaviorData is on userProfile or fetched
 
       // Generate peer matching criteria
       const matchingCriteria = this.buildMatchingCriteria(
-        skillProfile,
-        learningGoals,
+        skillProfile, // This might need to be this.userSkills directly depending on structure
+        this.userGoals, // Pass the array of goals
         behaviorData
       );
 
@@ -132,8 +142,9 @@ class SocialService {
   /**
    * Score peer matches based on compatibility
    */
-  scorePeerMatches(potentialMatches, criteria) {
-    return potentialMatches.map(match => {
+  scorePeerMatches(potentialMatchesData, criteria) { // Renamed to avoid confusion
+    const matchesArray = potentialMatchesData.peers || []; // Access the peers array
+    return matchesArray.map(match => {
       const scores = {
         skillCompatibility: this.calculateSkillCompatibility(match, criteria.skillSimilarity),
         goalAlignment: this.calculateGoalAlignment(match, criteria.goalAlignment),
@@ -244,11 +255,22 @@ class SocialService {
    */
   async generateMentorshipMatches() {
     try {
-      // Find potential mentors
-      const potentialMentors = await this.findPotentialMentors();
+      const criteriaForMentors = {
+        learningGoals: this.userGoals.map(g => g.id),
+        currentConnections: this.connections.map(c => c.id)
+      };
+      const criteriaForMentees = {
+        skills: this.userSkills.map(s => s.id),
+        currentConnections: this.connections.map(c => c.id)
+      };
+
+      const [mentorsResponse, menteesResponse] = await Promise.all([
+        apiService.findPotentialMentors(criteriaForMentors),
+        apiService.findPotentialMentees(criteriaForMentees)
+      ]);
       
-      // Find potential mentees
-      const potentialMentees = await this.findPotentialMentees();
+      const potentialMentors = mentorsResponse.mentors;
+      const potentialMentees = menteesResponse.mentees;
       
       // Score mentorship compatibility
       const mentorMatches = this.scoreMentorshipMatches(potentialMentors);
