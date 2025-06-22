@@ -20,7 +20,12 @@ if DATABASE_URL.startswith("sqlite"):
         echo=True  # Set to False in production
     )
 else:
-    engine = create_engine(DATABASE_URL, echo=True)
+    engine = create_engine(
+        DATABASE_URL,
+        echo=True,  # Set to False in production
+        pool_size=10,
+        max_overflow=20
+    )
 
 # Create SessionLocal class
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

@@ -10,6 +10,7 @@ import EnhancedSocialCollaborationDashboard from './pages/EnhancedSocialCollabor
 import AiToolsPage from './pages/AiToolsPage';
 import TaskManagementPage from './pages/TaskManagementPage';
 import EnterpriseDashboardPage from './pages/EnterpriseDashboardPage';
+import AdminDashboardPage from './pages/AdminDashboardPage'; // Import AdminDashboardPage
 import './App.css';
 
 function App() {
@@ -453,6 +454,18 @@ function App() {
                     <p className="text-gray-600">Industry trends and competitive analysis</p>
                   </div>
                 </div>
+              ) : (
+                <Navigate to="/" replace />
+              )
+            }
+          />
+
+          {/* Admin Dashboard Route */}
+          <Route
+            path="/admin/dashboard"
+            element={
+              isAuthenticated || isDemoMode ? ( // Or just isAuthenticated if demo mode shouldn't access admin
+                <AdminDashboardPage />
               ) : (
                 <Navigate to="/" replace />
               )

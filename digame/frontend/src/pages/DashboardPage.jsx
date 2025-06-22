@@ -1,6 +1,7 @@
-import React from 'react';
-import apiService from '../services/apiService'; // Added for user data
+import React, { useState, useEffect } from 'react'; // Added useState, useEffect
+import apiService from '../services/apiService';
 import { useNavigate } from 'react-router-dom';
+import { Shield } from 'lucide-react'; // Import Shield icon
 import ProductivityChart from '../components/dashboard/ProductivityChart';
 import ActivityBreakdown from '../components/dashboard/ActivityBreakdown';
 import ProductivityMetricCard from '../components/dashboard/ProductivityMetricCard';
@@ -277,6 +278,17 @@ export default function DashboardPage({ isDemoMode, onLogout }) {
                 >
                   <span>📋</span> Reports
                 </button>
+
+                {/* Admin Dashboard Link - Visible only if user is admin (conceptual) */}
+                {/* This check would ideally come from currentUser.role or similar */}
+                {(currentUser?.role === 'admin' || isDemoMode) && (
+                  <button
+                    onClick={() => navigate('/admin/dashboard')}
+                    className="text-gray-600 hover:text-gray-900 text-sm transition-colors flex items-center gap-1"
+                  >
+                    <Shield className="w-4 h-4" /> Admin
+                  </button>
+                )}
               </nav>
               
               {/* Mobile menu button */}
