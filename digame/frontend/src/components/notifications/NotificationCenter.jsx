@@ -10,6 +10,8 @@ import { Badge } from '../ui/Badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/Tabs';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../ui/Dialog';
 import { Toast } from '../ui/Toast';
+import { Switch } from '../ui/Switch'; // Added import
+import { Label } from '../ui/Label';   // Added import
 import notificationService from '../../services/notificationService';
 
 const NotificationCenter = ({ isOpen, onClose }) => {
@@ -465,18 +467,15 @@ const NotificationSettingsDialog = ({ isOpen, onClose }) => {
 const SettingToggle = ({ label, description, checked, onChange }) => (
   <div className="flex items-center justify-between p-3 border rounded-lg">
     <div>
-      <p className="font-medium text-sm">{label}</p>
-      <p className="text-xs text-gray-600">{description}</p>
+      <Label className="font-medium text-sm">{label}</Label>
+      {description && <p className="text-xs text-gray-600">{description}</p>}
     </div>
-    <label className="relative inline-flex items-center cursor-pointer">
-      <input
-        type="checkbox"
-        checked={checked}
-        onChange={onChange}
-        className="sr-only peer"
-      />
-      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-    </label>
+    <Switch
+      checked={checked}
+      onCheckedChange={onChange} // The handler passed (handleToggle) doesn't take an arg, it flips state.
+                                 // If handleToggle needed the new state, it would be:
+                                 // onCheckedChange={(newState) => onChange(newState)}
+    />
   </div>
 );
 

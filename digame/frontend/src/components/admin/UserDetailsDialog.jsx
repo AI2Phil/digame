@@ -3,12 +3,15 @@ import {
   User, Mail, Calendar, Shield, Activity, 
   Key, Settings, Edit, Save, X
 } from 'lucide-react';
-import { Button } from '../ui/Button';
-import { Input } from '../ui/Input';
-import { Badge } from '../ui/Badge';
-import { Avatar } from '../ui/Avatar';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/Tabs';
-import { Toast } from '../ui/Toast';
+import { Button } from '../../ui/Button'; // Path corrected
+import { Input } from '../../ui/Input';   // Path corrected
+import { Badge } from '../../ui/Badge';   // Path corrected
+import { Avatar } from '../../ui/Avatar'; // Path corrected
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../ui/Tabs'; // Path corrected
+import { Toast } from '../../ui/Toast';   // Path corrected
+import { Select } from '../../ui/Select';
+import { Label } from '../../ui/Label';
+import { Checkbox } from '../../ui/Checkbox';
 
 const UserDetailsDialog = ({ user, onAction, onClose }) => {
   const [isEditing, setIsEditing] = useState(false);
@@ -78,20 +81,32 @@ const UserDetailsDialog = ({ user, onAction, onClose }) => {
           )}
           <div className="flex items-center gap-2 mt-2">
             {isEditing ? (
-              <select
+              <Select
                 value={editData.role}
-                onChange={(e) => setEditData(prev => ({ ...prev, role: e.target.value }))}
-                className="px-2 py-1 border border-gray-300 rounded text-sm"
-              >
-                <option value="viewer">Viewer</option>
-                <option value="user">User</option>
-                <option value="manager">Manager</option>
-                <option value="admin">Admin</option>
-              </select>
+                onChange={(value) => setEditData(prev => ({ ...prev, role: value }))}
+                options={[
+                  { value: 'viewer', label: 'Viewer' },
+                  { value: 'user', label: 'User' },
+                  { value: 'manager', label: 'Manager' },
+                  { value: 'admin', label: 'Admin' },
+                ]}
+                placeholder="Select role..."
+                className="w-full text-sm" // Added w-full for better layout in edit mode, kept text-sm
+              />
             ) : (
               getRoleBadge(user.role)
             )}
-            {getStatusBadge(isEditing ? editData.is_active : user.is_active)}
+            {isEditing && ( // Also allow editing status
+              <div className="flex items-center space-x-2 ml-2">
+                <Checkbox
+                  id="is_active_edit"
+                  checked={editData.is_active}
+                  onCheckedChange={(checked) => setEditData(prev => ({...prev, is_active: checked}))}
+                />
+                <Label htmlFor="is_active_edit" className="text-sm">Active</Label>
+              </div>
+            )}
+            {!isEditing && getStatusBadge(user.is_active)}
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -128,17 +143,17 @@ const UserDetailsDialog = ({ user, onAction, onClose }) => {
         <TabsContent value="profile" className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-sm font-medium text-gray-600">User ID</label>
+              <Label className="text-sm font-medium text-gray-600">User ID</Label>
               <p className="text-sm text-gray-900">{user.id}</p>
             </div>
             <div>
-              <label className="text-sm font-medium text-gray-600">Created</label>
+              <Label className="text-sm font-medium text-gray-600">Created</Label>
               <p className="text-sm text-gray-900">
                 {new Date(user.created_at).toLocaleDateString()}
               </p>
             </div>
             <div>
-              <label className="text-sm font-medium text-gray-600">Last Login</label>
+              <Label className="text-sm font-medium text-gray-600">Last Login</Label>
               <p className="text-sm text-gray-900">
                 {user.last_login 
                   ? new Date(user.last_login).toLocaleDateString()
@@ -147,7 +162,7 @@ const UserDetailsDialog = ({ user, onAction, onClose }) => {
               </p>
             </div>
             <div>
-              <label className="text-sm font-medium text-gray-600">Login Count</label>
+              <Label className="text-sm font-medium text-gray-600">Login Count</Label>
               <p className="text-sm text-gray-900">{user.login_count || 0}</p>
             </div>
           </div>
@@ -206,11 +221,10 @@ const UserDetailsDialog = ({ user, onAction, onClose }) => {
                 'write:api_keys'
               ].map((permission, index) => (
                 <div key={index} className="flex items-center gap-2 p-2 bg-gray-50 rounded">
-                  <input
-                    type="checkbox"
+                  <Checkbox
                     checked={true}
-                    readOnly
-                    className="rounded border-gray-300"
+                    disabled={true} // Using disabled for read-only behavior
+                    aria-readonly="true"
                   />
                   <span className="text-sm font-mono">{permission}</span>
                 </div>

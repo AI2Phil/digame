@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import {
-  BarChart3, TrendingUp, Activity, Database,
+import { 
+  BarChart3, TrendingUp, Activity, Database, 
   Clock, Users, Zap, AlertTriangle, CheckCircle,
   Monitor, Smartphone, Globe, RefreshCw,
-  Download, Filter, Calendar, Eye, Target, Home
+  Download, Filter, Calendar, Eye, Target
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -12,16 +11,14 @@ import { Badge } from '../components/ui/Badge';
 import { Progress } from '../components/ui/Progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/Tabs';
 import { Toast } from '../components/ui/Toast';
-import enhancedApiService from '../services/enhancedApiService';
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../components/ui/Select';
+import { Select } from '../components/ui/Select'; // Added import
+import apiService from '../services/apiService';
 import PerformanceMonitoringSection from '../components/analytics/PerformanceMonitoringSection';
 import UserBehaviorAnalyticsSection from '../components/analytics/UserBehaviorAnalyticsSection';
 import ApiAnalyticsSection from '../components/analytics/ApiAnalyticsSection';
 import MobileAnalyticsSection from '../components/analytics/MobileAnalyticsSection';
-import { Skeleton } from '../components/ui/Skeleton';
 
-const AnalyticsDashboardPage = ({ isDemoMode, onLogout }) => {
-  const navigate = useNavigate();
+const AnalyticsDashboardPage = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [timeRange, setTimeRange] = useState('24h');
   const [loading, setLoading] = useState(true);
@@ -39,23 +36,22 @@ const AnalyticsDashboardPage = ({ isDemoMode, onLogout }) => {
         performanceData,
         userBehaviorData,
         apiMetricsData,
-        mobileAnalyticsData,
-        webAnalyticsData
+        databaseMetricsData,
+        mobileAnalyticsData
       ] = await Promise.all([
-        enhancedApiService.getPerformanceMetrics(),
-        enhancedApiService.getUserBehaviorAnalytics(timeRange),
-        enhancedApiService.getAdvancedAnalytics(),
-        enhancedApiService.getMobileAnalytics(timeRange),
-        enhancedApiService.getAnalytics()
+        apiService.getPerformanceMetrics(timeRange),
+        apiService.getUserBehaviorAnalytics(timeRange),
+        apiService.getApiUsageMetrics(timeRange),
+        apiService.getDatabaseMetrics(timeRange),
+        apiService.getMobileAnalytics(timeRange)
       ]);
 
       setAnalyticsData({
         performance: performanceData,
         userBehavior: userBehaviorData,
         apiMetrics: apiMetricsData,
-        database: { load: 38 }, // Mock database data
-        mobile: mobileAnalyticsData,
-        web: webAnalyticsData
+        database: databaseMetricsData,
+        mobile: mobileAnalyticsData
       });
     } catch (error) {
       console.error('Failed to load analytics data:', error);
@@ -74,7 +70,7 @@ const AnalyticsDashboardPage = ({ isDemoMode, onLogout }) => {
 
   const handleExport = async () => {
     try {
-      await enhancedApiService.exportAnalyticsData(timeRange);
+      await apiService.exportAnalyticsData(timeRange);
       Toast.success('Analytics data exported successfully');
     } catch (error) {
       Toast.error('Failed to export analytics data');
@@ -83,66 +79,10 @@ const AnalyticsDashboardPage = ({ isDemoMode, onLogout }) => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 p-6">
-        <div className="max-w-7xl mx-auto">
-          {/* Header (rendered normally) */}
-          <div className="mb-8">
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">Analytics Dashboard</h1>
-                <p className="text-gray-600">Real-time performance monitoring and user behavior analytics</p>
-              </div>
-              <div className="flex items-center gap-3">
-                <Select value={timeRange} onValueChange={setTimeRange}>
-                  <SelectTrigger className="px-3 py-2 border border-gray-300 rounded-md text-sm w-[180px]">
-                    <SelectValue placeholder="Select time range" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="1h">Last Hour</SelectItem>
-                    <SelectItem value="24h">Last 24 Hours</SelectItem>
-                    <SelectItem value="7d">Last 7 Days</SelectItem>
-                    <SelectItem value="30d">Last 30 Days</SelectItem>
-                    <SelectItem value="90d">Last 90 Days</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Button variant="outline" disabled>
-                  <RefreshCw className="w-4 h-4 mr-2" />
-                  Refresh
-                </Button>
-                <Button variant="outline" disabled>
-                  <Download className="w-4 h-4 mr-2" />
-                  Export
-                </Button>
-              </div>
-            </div>
-          </div>
-
-          {/* Key Metrics Overview Skeletons */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            {[...Array(4)].map((_, i) => (
-              <Card key={i}>
-                <CardContent className="p-6">
-                  <Skeleton className="h-4 w-3/4 mb-2" /> {/* Title */}
-                  <Skeleton className="h-8 w-1/2 mb-2" /> {/* Value */}
-                  <Skeleton className="h-3 w-1/2" />      {/* Change */}
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-
-          {/* TabsList Skeleton */}
-          <div className="mb-8">
-            <Skeleton className="h-10 w-full rounded-md" />
-          </div>
-
-          {/* TabsContent Skeleton */}
-          <Card>
-            <CardContent className="p-6 space-y-4">
-              <Skeleton className="h-8 w-1/4 mb-4" /> {/* Section Title */}
-              <Skeleton className="h-32 w-full" />    {/* Placeholder for content/chart */}
-              <Skeleton className="h-20 w-full" />    {/* Another placeholder */}
-            </CardContent>
-          </Card>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p>Loading analytics dashboard...</p>
         </div>
       </div>
     );
@@ -154,33 +94,23 @@ const AnalyticsDashboardPage = ({ isDemoMode, onLogout }) => {
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Button
-                variant="outline"
-                onClick={() => navigate('/')}
-                className="flex items-center gap-2"
-              >
-                <Home className="w-4 h-4" />
-                Home
-              </Button>
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">Analytics Dashboard</h1>
-                <p className="text-gray-600">Real-time performance monitoring and user behavior analytics</p>
-              </div>
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">Analytics Dashboard</h1>
+              <p className="text-gray-600">Real-time performance monitoring and user behavior analytics</p>
             </div>
             <div className="flex items-center gap-3">
-              <Select value={timeRange} onValueChange={setTimeRange}>
-                <SelectTrigger className="px-3 py-2 border border-gray-300 rounded-md text-sm w-[180px]">
-                  <SelectValue placeholder="Select time range" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="1h">Last Hour</SelectItem>
-                  <SelectItem value="24h">Last 24 Hours</SelectItem>
-                  <SelectItem value="7d">Last 7 Days</SelectItem>
-                  <SelectItem value="30d">Last 30 Days</SelectItem>
-                  <SelectItem value="90d">Last 90 Days</SelectItem>
-                </SelectContent>
-              </Select>
+              <Select
+                value={timeRange}
+                onChange={setTimeRange}
+                options={[
+                  { value: '1h', label: 'Last Hour' },
+                  { value: '24h', label: 'Last 24 Hours' },
+                  { value: '7d', label: 'Last 7 Days' },
+                  { value: '30d', label: 'Last 30 Days' },
+                  { value: '90d', label: 'Last 90 Days' },
+                ]}
+                className="text-sm min-w-[150px]" // Added min-w for better default appearance
+              />
               <Button
                 variant="outline"
                 onClick={handleRefresh}

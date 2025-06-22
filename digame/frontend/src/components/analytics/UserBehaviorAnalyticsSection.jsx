@@ -10,6 +10,7 @@ import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
 import { Progress } from '../ui/Progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/Tabs';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../ui/Table';
 
 const UserBehaviorAnalyticsSection = ({ data }) => {
   const [timeRange, setTimeRange] = useState('7d');
@@ -402,34 +403,32 @@ const ContentAnalyticsSection = ({ pages }) => (
       </CardTitle>
     </CardHeader>
     <CardContent>
-      <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead>
-            <tr className="border-b">
-              <th className="text-left p-2">Page</th>
-              <th className="text-right p-2">Views</th>
-              <th className="text-right p-2">Unique Views</th>
-              <th className="text-right p-2">Avg Time</th>
-              <th className="text-right p-2">Bounce Rate</th>
-            </tr>
-          </thead>
-          <tbody>
-            {pages.map((page, index) => (
-              <tr key={index} className="border-b hover:bg-gray-50">
-                <td className="p-2 font-medium">{page.page}</td>
-                <td className="p-2 text-right">{page.views.toLocaleString()}</td>
-                <td className="p-2 text-right">{page.uniqueViews.toLocaleString()}</td>
-                <td className="p-2 text-right">{page.avgTime}</td>
-                <td className="p-2 text-right">
-                  <Badge variant={page.bounceRate < 15 ? 'success' : page.bounceRate < 25 ? 'warning' : 'destructive'}>
-                    {page.bounceRate}%
-                  </Badge>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead align="left">Page</TableHead>
+            <TableHead align="right">Views</TableHead>
+            <TableHead align="right">Unique Views</TableHead>
+            <TableHead align="right">Avg Time</TableHead>
+            <TableHead align="right">Bounce Rate</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {pages.map((page, index) => (
+            <TableRow key={index}>
+              <TableCell className="font-medium">{page.page}</TableCell>
+              <TableCell align="right">{page.views.toLocaleString()}</TableCell>
+              <TableCell align="right">{page.uniqueViews.toLocaleString()}</TableCell>
+              <TableCell align="right">{page.avgTime}</TableCell>
+              <TableCell align="right">
+                <Badge variant={page.bounceRate < 15 ? 'success' : page.bounceRate < 25 ? 'warning' : 'destructive'}>
+                  {page.bounceRate}%
+                </Badge>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
     </CardContent>
   </Card>
 );

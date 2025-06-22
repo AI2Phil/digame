@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../co
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Label } from '../components/ui/Label';
-import { Textarea } from '../components/ui/Textarea'; // Added Textarea import
+import { Textarea } from '../components/ui/Textarea';
 import { Switch } from '../components/ui/Switch';
 import { Select } from '../components/ui/Select';
 import { Slider } from '../components/ui/Slider';
@@ -18,7 +18,6 @@ import { Badge } from '../components/ui/Badge';
 import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/Avatar';
 import { Progress } from '../components/ui/Progress';
 import { useToast } from '../components/ui/Toast';
-import { ToggleGroup, ToggleGroupItem } from '../components/ui/ToggleGroup';
 
 const SettingsPage = () => {
   const [settings, setSettings] = useState({
@@ -344,10 +343,10 @@ const SettingsPage = () => {
                 <Label htmlFor="bio">Bio</Label>
                 <Textarea
                   id="bio"
+                  className="w-full min-h-[100px] px-3 py-2 border border-input rounded-md"
                   value={settings.profile.bio}
                   onChange={(e) => updateSetting('profile', 'bio', e.target.value)}
                   placeholder="Tell us about yourself..."
-                  className="min-h-[100px]" // Ensure custom styling like min-height is preserved or adapted
                 />
               </div>
             </CardContent>
@@ -429,12 +428,14 @@ const SettingsPage = () => {
                 <Label>Notification Frequency</Label>
                 <Select
                   value={settings.notifications.notificationFrequency}
-                  onValueChange={(value) => updateSetting('notifications', 'notificationFrequency', value)}
-                >
-                  <option value="minimal">Minimal</option>
-                  <option value="normal">Normal</option>
-                  <option value="frequent">Frequent</option>
-                </Select>
+                  onChange={(value) => updateSetting('notifications', 'notificationFrequency', value)}
+                  options={[
+                    { value: "minimal", label: "Minimal" },
+                    { value: "normal", label: "Normal" },
+                    { value: "frequent", label: "Frequent" },
+                  ]}
+                  placeholder="Select frequency..."
+                />
               </div>
             </CardContent>
           </Card>
@@ -456,12 +457,14 @@ const SettingsPage = () => {
                   <Label>Profile Visibility</Label>
                   <Select
                     value={settings.privacy.profileVisibility}
-                    onValueChange={(value) => updateSetting('privacy', 'profileVisibility', value)}
-                  >
-                    <option value="public">Public</option>
-                    <option value="private">Private</option>
-                    <option value="team">Team Only</option>
-                  </Select>
+                    onChange={(value) => updateSetting('privacy', 'profileVisibility', value)}
+                    options={[
+                      { value: "public", label: "Public" },
+                      { value: "private", label: "Private" },
+                      { value: "team", label: "Team Only" },
+                    ]}
+                    placeholder="Select visibility..."
+                  />
                 </div>
 
                 <div className="flex items-center justify-between">
@@ -570,29 +573,21 @@ const SettingsPage = () => {
               {/* Theme Selection */}
               <div className="space-y-2">
                 <Label>Theme</Label>
-                <ToggleGroup
-                  type="single"
-                  value={settings.appearance.theme}
-                  onValueChange={(value) => {
-                    if (value) {
-                      updateSetting('appearance', 'theme', value);
-                    }
-                  }}
-                  className="grid grid-cols-3 gap-3"
-                >
-                  <ToggleGroupItem value="light" aria-label="Light theme" className="flex items-center space-x-2 w-full justify-center data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
-                    <Sun className="h-4 w-4" />
-                    <span>Light</span>
-                  </ToggleGroupItem>
-                  <ToggleGroupItem value="dark" aria-label="Dark theme" className="flex items-center space-x-2 w-full justify-center data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
-                    <Moon className="h-4 w-4" />
-                    <span>Dark</span>
-                  </ToggleGroupItem>
-                  <ToggleGroupItem value="system" aria-label="System theme" className="flex items-center space-x-2 w-full justify-center data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
-                    <Eye className="h-4 w-4" />
-                    <span>System</span>
-                  </ToggleGroupItem>
-                </ToggleGroup>
+                <div className="grid grid-cols-3 gap-3">
+                  {['light', 'dark', 'system'].map((theme) => (
+                    <Button
+                      key={theme}
+                      variant={settings.appearance.theme === theme ? 'default' : 'outline'}
+                      onClick={() => updateSetting('appearance', 'theme', theme)}
+                      className="flex items-center space-x-2"
+                    >
+                      {theme === 'light' && <Sun className="h-4 w-4" />}
+                      {theme === 'dark' && <Moon className="h-4 w-4" />}
+                      {theme === 'system' && <Eye className="h-4 w-4" />}
+                      <span className="capitalize">{theme}</span>
+                    </Button>
+                  ))}
+                </div>
               </div>
 
               <Separator />
@@ -660,49 +655,57 @@ const SettingsPage = () => {
                   <Label>Language</Label>
                   <Select
                     value={settings.localization.language}
-                    onValueChange={(value) => updateSetting('localization', 'language', value)}
-                  >
-                    <option value="en">English</option>
-                    <option value="es">Español</option>
-                    <option value="fr">Français</option>
-                    <option value="de">Deutsch</option>
-                  </Select>
+                    onChange={(value) => updateSetting('localization', 'language', value)}
+                    options={[
+                      { value: "en", label: "English" },
+                      { value: "es", label: "Español" },
+                      { value: "fr", label: "Français" },
+                      { value: "de", label: "Deutsch" },
+                    ]}
+                    placeholder="Select language..."
+                  />
                 </div>
 
                 <div className="space-y-2">
                   <Label>Timezone</Label>
                   <Select
                     value={settings.localization.timezone}
-                    onValueChange={(value) => updateSetting('localization', 'timezone', value)}
-                  >
-                    <option value="UTC-8">Pacific Time (UTC-8)</option>
-                    <option value="UTC-5">Eastern Time (UTC-5)</option>
-                    <option value="UTC+0">UTC</option>
-                    <option value="UTC+1">Central European Time (UTC+1)</option>
-                  </Select>
+                    onChange={(value) => updateSetting('localization', 'timezone', value)}
+                    options={[
+                      { value: "UTC-8", label: "Pacific Time (UTC-8)" },
+                      { value: "UTC-5", label: "Eastern Time (UTC-5)" },
+                      { value: "UTC+0", label: "UTC" },
+                      { value: "UTC+1", label: "Central European Time (UTC+1)" },
+                    ]}
+                    placeholder="Select timezone..."
+                  />
                 </div>
 
                 <div className="space-y-2">
                   <Label>Date Format</Label>
                   <Select
                     value={settings.localization.dateFormat}
-                    onValueChange={(value) => updateSetting('localization', 'dateFormat', value)}
-                  >
-                    <option value="MM/DD/YYYY">MM/DD/YYYY</option>
-                    <option value="DD/MM/YYYY">DD/MM/YYYY</option>
-                    <option value="YYYY-MM-DD">YYYY-MM-DD</option>
-                  </Select>
+                    onChange={(value) => updateSetting('localization', 'dateFormat', value)}
+                    options={[
+                      { value: "MM/DD/YYYY", label: "MM/DD/YYYY" },
+                      { value: "DD/MM/YYYY", label: "DD/MM/YYYY" },
+                      { value: "YYYY-MM-DD", label: "YYYY-MM-DD" },
+                    ]}
+                    placeholder="Select date format..."
+                  />
                 </div>
 
                 <div className="space-y-2">
                   <Label>Time Format</Label>
                   <Select
                     value={settings.localization.timeFormat}
-                    onValueChange={(value) => updateSetting('localization', 'timeFormat', value)}
-                  >
-                    <option value="12h">12 Hour</option>
-                    <option value="24h">24 Hour</option>
-                  </Select>
+                    onChange={(value) => updateSetting('localization', 'timeFormat', value)}
+                    options={[
+                      { value: "12h", label: "12 Hour" },
+                      { value: "24h", label: "24 Hour" },
+                    ]}
+                    placeholder="Select time format..."
+                  />
                 </div>
               </div>
             </CardContent>

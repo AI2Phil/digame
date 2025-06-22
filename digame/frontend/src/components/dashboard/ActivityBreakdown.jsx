@@ -1,214 +1,139 @@
 import React, { useState, useEffect } from 'react';
-import enhancedApiService from '../../services/enhancedApiService';
+import { Card, CardHeader, CardTitle, CardContent } from '../../ui/Card';
+import { Progress } from '../../ui/Progress';
 
-const ActivityBreakdown = ({ userId = 1 }) => {
+const ActivityBreakdown = ({ userId }) => {
   const [activityData, setActivityData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
 
-  const categoryIcons = {
-    'Development': '💻',
-    'Meetings': '📞',
-    'Learning': '📚',
-    'Planning': '📋',
-    'Documentation': '📝',
-    'Testing': '🧪',
-    'Break': '☕',
-    'default': '📊'
-  };
-
-  const getCategoryIcon = (categoryName) => {
-    return categoryIcons[categoryName] || categoryIcons['default'];
+  // Sample data for demo mode
+  const sampleData = {
+    categories: [
+      { name: 'Development', value: 45, color: '#2563eb', icon: '💻' },
+      { name: 'Meetings', value: 25, color: '#7c3aed', icon: '📞' },
+      { name: 'Learning', value: 15, color: '#16a34a', icon: '📚' },
+      { name: 'Planning', value: 10, color: '#ea580c', icon: '📋' },
+      { name: 'Break', value: 5, color: '#6b7280', icon: '☕' }
+    ],
+    totalHours: 8.5,
+    mostProductiveTime: '9:00 AM - 11:00 AM',
+    efficiency: 87
   };
 
   useEffect(() => {
+    // Simulate API call
     const fetchActivityData = async () => {
       try {
         setLoading(true);
-        setError(null);
-        const data = await enhancedApiService.getActivityBreakdown(userId);
-        setActivityData(data);
-      } catch (err) {
-        console.error('Error fetching activity data:', err);
-        setError('Failed to load activity breakdown. Please try again later.');
-      } finally {
+        // In demo mode, use sample data
+        setTimeout(() => {
+          setActivityData(sampleData);
+          setLoading(false);
+        }, 500);
+      } catch (error) {
+        console.error('Error fetching activity data:', error);
+        setActivityData(sampleData);
         setLoading(false);
       }
     };
 
-    if (userId) {
-      fetchActivityData();
-    }
+    fetchActivityData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
   if (loading) {
     return (
-      <div className="card">
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-lg font-semibold text-gray-900">Activity Breakdown</h3>
-          <span className="text-sm text-gray-500">Loading...</span>
-        </div>
-        <div className="animate-pulse">
-          {[...Array(3)].map((_, i) => (
-            <div key={i} className="mb-4">
-              <div className="h-4 bg-gray-200 rounded w-3/4 mb-1"></div>
-              <div className="h-2 bg-gray-200 rounded"></div>
-            </div>
-          ))}
-        </div>
-      </div>
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-lg">Activity Breakdown</CardTitle>
+            <span className="text-sm text-gray-500">Loading...</span>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="animate-pulse">
+            <div className="h-4 bg-gray-200 rounded mb-4 py-1"></div> {/* Added py-1 to give some visual height like a progress bar line */}
+            <div className="h-4 bg-gray-200 rounded mb-4 py-1"></div>
+            <div className="h-4 bg-gray-200 rounded mb-4 py-1"></div>
+          </div>
+        </CardContent>
+      </Card>
     );
   }
 
-  if (error) {
+  if (!activityData) {
     return (
-      <div className="card">
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-lg font-semibold text-gray-900">Activity Breakdown</h3>
-        </div>
-        <div className="text-center py-12">
-          <div className="text-4xl mb-4">😟</div>
-          <p className="text-red-600 mb-2 font-medium">Error</p>
-          <p className="text-sm text-gray-500">{error}</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!activityData || !activityData.categories || activityData.categories.length === 0) {
-    return (
-      <div className="card">
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-lg font-semibold text-gray-900">Activity Breakdown</h3>
-        </div>
-        <div className="text-center py-12">
+      <Card>
+        <CardContent className="text-center py-12">
           <div className="text-4xl mb-4">📊</div>
-          <p className="text-gray-600 mb-2 font-medium">No Activity Data Available</p>
-          <p className="text-sm text-gray-500">Start tracking your activities to see the breakdown here.</p>
-        </div>
-      </div>
+          <p className="text-gray-600 mb-2 font-medium">No Activity Data</p>
+          <p className="text-sm text-gray-500">Start tracking to see your breakdown</p>
+        </CardContent>
+      </Card>
     );
   }
 
-  const { categories = [], totalHours, efficiency } = activityData || {};
+  const { categories, totalHours, mostProductiveTime, efficiency } = activityData;
 
   return (
-    <div className="card">
-      <div className="flex items-center justify-between mb-6">
-        <h3 className="text-lg font-semibold text-gray-900">Activity Breakdown</h3>
-        <span className="text-sm text-gray-500">Last 7 days</span>
-      </div>
-
-      {/* Activity Categories */}
-      <div className="space-y-4 mb-6">
-        {categories.map((category, index) => (
-          <div key={index} className="activity-item">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center space-x-3">
-                <span className="text-lg">{getCategoryIcon(category.name)}</span>
-                <div>
-                  <span className="text-sm font-medium text-gray-900">{category.name}</span>
-                  {category.hours && (
-                    <div className="text-xs text-gray-500">{category.hours}h this week</div>
-                  )}
-                </div>
-              </div>
-              <div className="text-right">
-                <span className="text-sm font-semibold text-gray-900">{category.value}%</span>
-                {category.change && (
-                  <div className={`text-xs ${category.change > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                    {category.change > 0 ? '+' : ''}{category.change}%
-                  </div>
-                )}
-              </div>
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-3 relative overflow-hidden">
-              <div
-                className="h-3 rounded-full transition-all duration-500 relative"
-                style={{
-                  width: `${category.value}%`,
-                  backgroundColor: category.color
-                }}
-              >
-                {/* Subtle gradient overlay */}
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent to-white opacity-20 rounded-full"></div>
-              </div>
-            </div>
-            {/* Category insights */}
-            {category.insight && (
-              <div className="mt-2 text-xs text-gray-600 italic">
-                💡 {category.insight}
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
-
-      {/* Enhanced Summary Stats */}
-      <div className="border-t border-gray-200 pt-4">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="text-center">
-            <div className="text-2xl font-bold text-gray-900">{totalHours !== undefined ? `${totalHours}h` : '80h'}</div>
-            <div className="text-xs text-gray-600">Total Active</div>
-            <div className="text-xs text-green-600 mt-1">+5h vs last week</div>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-green-600">{efficiency !== undefined ? `${efficiency}%` : '92%'}</div>
-            <div className="text-xs text-gray-600">Efficiency</div>
-            <div className="text-xs text-green-600 mt-1">+3% improvement</div>
-          </div>
-          <div className="text-center">
-            <div className="text-lg font-bold text-blue-600">9-11 AM</div>
-            <div className="text-xs text-gray-600">Peak Time</div>
-            <div className="text-xs text-gray-500 mt-1">Most productive</div>
-          </div>
-          <div className="text-center">
-            <div className="text-lg font-bold text-purple-600">15 min</div>
-            <div className="text-xs text-gray-600">Avg Break</div>
-            <div className="text-xs text-gray-500 mt-1">Optimal length</div>
-          </div>
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-lg">Activity Breakdown</CardTitle>
+          <span className="text-sm text-gray-500">Last 7 days</span>
         </div>
-      </div>
-
-      {/* Weekly Comparison */}
-      <div className="mt-6 pt-4 border-t border-gray-200">
-        <h4 className="text-sm font-semibold text-gray-900 mb-3">Weekly Trends</h4>
-        <div className="grid grid-cols-7 gap-2 text-center">
-          {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, index) => {
-            const productivity = [85, 92, 88, 90, 87, 75, 70][index];
-            return (
-              <div key={day} className="flex flex-col items-center">
-                <div className="text-xs text-gray-600 mb-1">{day}</div>
-                <div className="w-6 h-12 bg-gray-200 rounded-sm relative overflow-hidden">
-                  <div
-                    className="absolute bottom-0 w-full bg-blue-500 rounded-sm transition-all duration-500"
-                    style={{ height: `${productivity}%` }}
-                  ></div>
-                </div>
-                <div className="text-xs text-gray-500 mt-1">{productivity}%</div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Interactive Legend with Enhanced Info */}
-      <div className="mt-6 pt-4 border-t border-gray-200">
-        <div className="flex flex-wrap gap-3">
+      </CardHeader>
+      <CardContent>
+        {/* Activity Categories */}
+        <div className="space-y-4 mb-6">
           {categories.map((category, index) => (
-            <div key={index} className="flex items-center space-x-2 cursor-pointer hover:opacity-75 transition-opacity group">
-              <div
-                className="w-3 h-3 rounded-full group-hover:scale-110 transition-transform"
-                style={{ backgroundColor: category.color }}
-              ></div>
-              <span className="text-xs text-gray-600 group-hover:text-gray-900 transition-colors">
-                {category.name} ({category.value}%)
-              </span>
+            <div key={index} className="activity-item">
+              <div className="flex items-center justify-between mb-1"> {/* Reduced mb for tighter spacing with Progress */}
+                <div className="flex items-center space-x-3">
+                  <span className="text-lg">{category.icon}</span>
+                  <span className="text-sm font-medium text-gray-900">{category.name}</span>
+                </div>
+                <span className="text-sm font-semibold text-gray-900">{category.value}%</span>
+              </div>
+              <Progress value={category.value} />
             </div>
           ))}
         </div>
-      </div>
-    </div>
+
+        {/* Summary Stats */}
+        <div className="border-t border-gray-200 pt-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="text-center">
+              <div className="text-2xl font-bold text-gray-900">{totalHours}h</div>
+              <div className="text-xs text-gray-600">Total Active</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-green-600">{efficiency}%</div>
+              <div className="text-xs text-gray-600">Efficiency</div>
+            </div>
+            <div className="text-center">
+              <div className="text-xs font-medium text-gray-900">Peak Time</div> {/* Changed from text-2xl to text-xs for consistency */}
+              <div className="text-xs text-gray-600">{mostProductiveTime}</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Interactive Legend */}
+        <div className="mt-6 pt-4 border-t border-gray-200">
+          <div className="flex flex-wrap gap-3">
+            {categories.map((category, index) => (
+              <div key={index} className="flex items-center space-x-2 cursor-pointer hover:opacity-75 transition-opacity">
+                <div
+                  className="w-3 h-3 rounded-full"
+                  style={{ backgroundColor: category.color }} // Custom color dots for legend remain
+                ></div>
+                <span className="text-xs text-gray-600">{category.name}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 };
 

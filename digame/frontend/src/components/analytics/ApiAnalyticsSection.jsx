@@ -9,6 +9,7 @@ import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
 import { Progress } from '../ui/Progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/Tabs';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../ui/Table';
 
 const ApiAnalyticsSection = ({ data }) => {
   const [selectedEndpoint, setSelectedEndpoint] = useState('all');
@@ -248,50 +249,48 @@ const EndpointAnalyticsSection = ({ endpoints }) => (
       </CardTitle>
     </CardHeader>
     <CardContent>
-      <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead>
-            <tr className="border-b">
-              <th className="text-left p-3">Endpoint</th>
-              <th className="text-right p-3">Requests</th>
-              <th className="text-right p-3">Avg Response</th>
-              <th className="text-right p-3">P95 Response</th>
-              <th className="text-right p-3">Error Rate</th>
-              <th className="text-right p-3">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {endpoints.map((endpoint, index) => (
-              <tr key={index} className="border-b hover:bg-gray-50">
-                <td className="p-3">
-                  <code className="text-sm bg-gray-100 px-2 py-1 rounded">
-                    {endpoint.endpoint}
-                  </code>
-                </td>
-                <td className="p-3 text-right font-medium">
-                  {endpoint.requests.toLocaleString()}
-                </td>
-                <td className="p-3 text-right">
-                  {endpoint.avgResponseTime}ms
-                </td>
-                <td className="p-3 text-right">
-                  {endpoint.p95ResponseTime}ms
-                </td>
-                <td className="p-3 text-right">
-                  <Badge variant={endpoint.errorRate < 1 ? 'success' : endpoint.errorRate < 2 ? 'warning' : 'destructive'}>
-                    {endpoint.errorRate}%
-                  </Badge>
-                </td>
-                <td className="p-3 text-right">
-                  <Badge variant={endpoint.status === 'healthy' ? 'success' : endpoint.status === 'warning' ? 'warning' : 'destructive'}>
-                    {endpoint.status}
-                  </Badge>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead align="left">Endpoint</TableHead>
+            <TableHead align="right">Requests</TableHead>
+            <TableHead align="right">Avg Response</TableHead>
+            <TableHead align="right">P95 Response</TableHead>
+            <TableHead align="right">Error Rate</TableHead>
+            <TableHead align="right">Status</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {endpoints.map((endpoint, index) => (
+            <TableRow key={index}>
+              <TableCell>
+                <code className="text-sm bg-gray-100 px-2 py-1 rounded">
+                  {endpoint.endpoint}
+                </code>
+              </TableCell>
+              <TableCell align="right" className="font-medium">
+                {endpoint.requests.toLocaleString()}
+              </TableCell>
+              <TableCell align="right">
+                {endpoint.avgResponseTime}ms
+              </TableCell>
+              <TableCell align="right">
+                {endpoint.p95ResponseTime}ms
+              </TableCell>
+              <TableCell align="right">
+                <Badge variant={endpoint.errorRate < 1 ? 'success' : endpoint.errorRate < 2 ? 'warning' : 'destructive'}>
+                  {endpoint.errorRate}%
+                </Badge>
+              </TableCell>
+              <TableCell align="right">
+                <Badge variant={endpoint.status === 'healthy' ? 'success' : endpoint.status === 'warning' ? 'warning' : 'destructive'}>
+                  {endpoint.status}
+                </Badge>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
     </CardContent>
   </Card>
 );
@@ -481,34 +480,32 @@ const GeographicApiUsageSection = ({ regions }) => (
       </CardTitle>
     </CardHeader>
     <CardContent>
-      <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead>
-            <tr className="border-b">
-              <th className="text-left p-3">Region</th>
-              <th className="text-right p-3">Requests</th>
-              <th className="text-right p-3">Percentage</th>
-              <th className="text-right p-3">Avg Latency</th>
-            </tr>
-          </thead>
-          <tbody>
-            {regions.map((region, index) => (
-              <tr key={index} className="border-b hover:bg-gray-50">
-                <td className="p-3 font-medium">{region.region}</td>
-                <td className="p-3 text-right">{region.requests.toLocaleString()}</td>
-                <td className="p-3 text-right">
-                  <Badge variant="secondary">{region.percentage}%</Badge>
-                </td>
-                <td className="p-3 text-right">
-                  <Badge variant={region.latency < 150 ? 'success' : region.latency < 250 ? 'warning' : 'destructive'}>
-                    {region.latency}ms
-                  </Badge>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead align="left">Region</TableHead>
+            <TableHead align="right">Requests</TableHead>
+            <TableHead align="right">Percentage</TableHead>
+            <TableHead align="right">Avg Latency</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {regions.map((region, index) => (
+            <TableRow key={index}>
+              <TableCell className="font-medium">{region.region}</TableCell>
+              <TableCell align="right">{region.requests.toLocaleString()}</TableCell>
+              <TableCell align="right">
+                <Badge variant="secondary">{region.percentage}%</Badge>
+              </TableCell>
+              <TableCell align="right">
+                <Badge variant={region.latency < 150 ? 'success' : region.latency < 250 ? 'warning' : 'destructive'}>
+                  {region.latency}ms
+                </Badge>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
     </CardContent>
   </Card>
 );

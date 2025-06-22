@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import Button from '../components/ui/Button';
 import { Card, CardContent } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui/Table';
 
 export default function PricingPage() {
   return (
@@ -203,62 +204,60 @@ export default function PricingPage() {
           <h2 className="text-3xl font-bold text-gray-900 text-center mb-12">
             Compare Plans
           </h2>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-gray-200">
-                  <th className="text-left py-4 px-6 font-semibold text-gray-900">Features</th>
-                  <th className="text-center py-4 px-6 font-semibold text-gray-900">Starter</th>
-                  <th className="text-center py-4 px-6 font-semibold text-gray-900">Professional</th>
-                  <th className="text-center py-4 px-6 font-semibold text-gray-900">Enterprise</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                <tr>
-                  <td className="py-4 px-6 text-gray-700">Productivity Tracking</td>
-                  <td className="py-4 px-6 text-center">✓</td>
-                  <td className="py-4 px-6 text-center">✓</td>
-                  <td className="py-4 px-6 text-center">✓</td>
-                </tr>
-                <tr>
-                  <td className="py-4 px-6 text-gray-700">AI Insights</td>
-                  <td className="py-4 px-6 text-center text-gray-400">Basic</td>
-                  <td className="py-4 px-6 text-center">✓</td>
-                  <td className="py-4 px-6 text-center">✓</td>
-                </tr>
-                <tr>
-                  <td className="py-4 px-6 text-gray-700">Predictive Analytics</td>
-                  <td className="py-4 px-6 text-center text-gray-400">—</td>
-                  <td className="py-4 px-6 text-center">✓</td>
-                  <td className="py-4 px-6 text-center">✓</td>
-                </tr>
-                <tr>
-                  <td className="py-4 px-6 text-gray-700">Goal Tracking</td>
-                  <td className="py-4 px-6 text-center text-gray-400">3 goals</td>
-                  <td className="py-4 px-6 text-center">Unlimited</td>
-                  <td className="py-4 px-6 text-center">Unlimited</td>
-                </tr>
-                <tr>
-                  <td className="py-4 px-6 text-gray-700">Integrations</td>
-                  <td className="py-4 px-6 text-center text-gray-400">5</td>
-                  <td className="py-4 px-6 text-center">50+</td>
-                  <td className="py-4 px-6 text-center">Custom</td>
-                </tr>
-                <tr>
-                  <td className="py-4 px-6 text-gray-700">Team Analytics</td>
-                  <td className="py-4 px-6 text-center text-gray-400">—</td>
-                  <td className="py-4 px-6 text-center text-gray-400">—</td>
-                  <td className="py-4 px-6 text-center">✓</td>
-                </tr>
-                <tr>
-                  <td className="py-4 px-6 text-gray-700">Support</td>
-                  <td className="py-4 px-6 text-center text-gray-400">Community</td>
-                  <td className="py-4 px-6 text-center">Priority</td>
-                  <td className="py-4 px-6 text-center">24/7 Premium</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead align="left" className="font-semibold text-gray-900">Features</TableHead>
+                <TableHead align="center" className="font-semibold text-gray-900">Starter</TableHead>
+                <TableHead align="center" className="font-semibold text-gray-900">Professional</TableHead>
+                <TableHead align="center" className="font-semibold text-gray-900">Enterprise</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              <TableRow>
+                <TableCell className="text-gray-700">Productivity Tracking</TableCell>
+                <TableCell align="center">✓</TableCell>
+                <TableCell align="center">✓</TableCell>
+                <TableCell align="center">✓</TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell className="text-gray-700">AI Insights</TableCell>
+                <TableCell align="center" className="text-gray-400">Basic</TableCell>
+                <TableCell align="center">✓</TableCell>
+                <TableCell align="center">✓</TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell className="text-gray-700">Predictive Analytics</TableCell>
+                <TableCell align="center" className="text-gray-400">—</TableCell>
+                <TableCell align="center">✓</TableCell>
+                <TableCell align="center">✓</TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell className="text-gray-700">Goal Tracking</TableCell>
+                <TableCell align="center" className="text-gray-400">3 goals</TableCell>
+                <TableCell align="center">Unlimited</TableCell>
+                <TableCell align="center">Unlimited</TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell className="text-gray-700">Integrations</TableCell>
+                <TableCell align="center" className="text-gray-400">5</TableCell>
+                <TableCell align="center">50+</TableCell>
+                <TableCell align="center">Custom</TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell className="text-gray-700">Team Analytics</TableCell>
+                <TableCell align="center" className="text-gray-400">—</TableCell>
+                <TableCell align="center" className="text-gray-400">—</TableCell>
+                <TableCell align="center">✓</TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell className="text-gray-700">Support</TableCell>
+                <TableCell align="center" className="text-gray-400">Community</TableCell>
+                <TableCell align="center">Priority</TableCell>
+                <TableCell align="center">24/7 Premium</TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
         </div>
 
         {/* FAQ Section */}
