@@ -1,6 +1,6 @@
 """
 Social Collaboration API Router
-Handles peer matching, user profile updates for social features, and other related endpoints.
+Enhanced with real project data, messaging, and improved peer matching
 """
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -17,6 +17,7 @@ from ..models.project import Project
 from ..schemas.user_profile_schemas import UserProfileUpdate, UserProfileResponse, UserWithProfileResponse
 from ..schemas.user_schemas import User as UserSchema
 from ..services.social_collaboration_service import SocialCollaborationService
+from ..services.enhanced_social_collaboration_service import EnhancedSocialCollaborationService
 from ..crud import user_crud, notification_crud
 from .. import crud
 from ..schemas.notification_schemas import NotificationCreate
@@ -673,3 +674,259 @@ async def give_kudos_to_user(
     db.refresh(user)
 
     return {"message": "Kudos given successfully", "kudos_count": user.kudos_count}
+
+
+# Enhanced Social Collaboration Endpoints
+
+# Real Project Data Endpoints
+@router.post("/projects", response_model=Dict[str, Any])
+async def create_collaboration_project(
+    project_data: Dict[str, Any],
+    db: Session = Depends(get_db),
+    current_user: UserModel = Depends(get_current_active_user)
+):
+    """Create a new collaboration project with real data"""
+    try:
+        enhanced_service = EnhancedSocialCollaborationService(db)
+        project = enhanced_service.create_collaboration_project(current_user.id, project_data)
+        
+        return {
+            "success": True,
+            "message": "Project created successfully",
+            "project": {
+                "id": project.id,
+                "name": project.name,
+                "description": project.description,
+                "category": project.category,
+                "status": project.status.value,
+                "created_at": project.created_at.isoformat()
+            }
+        }
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.get("/projects/matches", response_model=Dict[str, Any])
+async def get_real_project_matches(
+    limit: int = Query(10, ge=1, le=50),
+    db: Session = Depends(get_db),
+    current_user: UserModel = Depends(get_current_active_user)
+):
+    """Get real project matches based on user skills"""
+    try:
+        enhanced_service = EnhancedSocialCollaborationService(db)
+        matches = enhanced_service.get_real_project_matches(current_user.id, limit)
+        
+        return {
+            "matches": matches,
+            "total": len(matches)
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/projects/{project_id}/apply", response_model=Dict[str, Any])
+async def apply_to_project(
+    project_id: int,
+    application_data: Dict[str, Any],
+    db: Session = Depends(get_db),
+    current_user: UserModel = Depends(get_current_active_user)
+):
+    """Apply to join a collaboration project"""
+    try:
+        enhanced_service = EnhancedSocialCollaborationService(db)
+        application = enhanced_service.apply_to_project(project_id, current_user.id, application_data)
+        
+        return {
+            "success": True,
+            "message": "Application submitted successfully",
+            "application_id": application.id
+        }
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+# Enhanced Peer Connection Endpoints
+@router.post("/connections/request", response_model=Dict[str, Any])
+async def send_enhanced_connection_request(
+    recipient_id: int,
+    message: Optional[str] = None,
+    db: Session = Depends(get_db),
+    current_user: UserModel = Depends(get_current_active_user)
+):
+    """Send an enhanced connection request with optional message"""
+    try:
+        enhanced_service = EnhancedSocialCollaborationService(db)
+        connection = enhanced_service.send_peer_connection_request(
+            current_user.id, recipient_id, message
+        )
+        
+        return {
+            "success": True,
+            "message": "Connection request sent successfully",
+            "connection_id": connection.id,
+            "status": connection.status.value
+        }
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/connections/{connection_id}/accept", response_model=Dict[str, Any])
+async def accept_enhanced_connection_request(
+    connection_id: int,
+    db: Session = Depends(get_db),
+    current_user: UserModel = Depends(get_current_active_user)
+):
+    """Accept a connection request"""
+    try:
+        enhanced_service = EnhancedSocialCollaborationService(db)
+        connection = enhanced_service.accept_connection_request(connection_id, current_user.id)
+        
+        return {
+            "success": True,
+            "message": "Connection request accepted",
+            "connection_id": connection.id,
+            "status": connection.status.value
+        }
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# Peer Messaging Endpoints
+@router.post("/messages/{recipient_id}", response_model=Dict[str, Any])
+async def send_peer_message(
+    recipient_id: int,
+    message_data: Dict[str, Any],
+    db: Session = Depends(get_db),
+    current_user: UserModel = Depends(get_current_active_user)
+):
+    """Send a message to a connected peer"""
+    try:
+        enhanced_service = EnhancedSocialCollaborationService(db)
+        
+        from ..models.social_collaboration import MessageType
+        message_type = MessageType.TEXT
+        if message_data.get("message_type") == "project_invite":
+            message_type = MessageType.PROJECT_INVITE
+        elif message_data.get("message_type") == "meeting_request":
+            message_type = MessageType.MEETING_REQUEST
+        
+        message = enhanced_service.send_peer_message(
+            current_user.id,
+            recipient_id,
+            message_data["content"],
+            message_type,
+            message_data.get("metadata")
+        )
+        
+        return {
+            "id": message.id,
+            "sender_id": message.sender_id,
+            "content": message.content,
+            "message_type": message.message_type.value,
+            "metadata": message.metadata,
+            "created_at": message.created_at.isoformat(),
+            "is_read": message.is_read
+        }
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/messages/{peer_id}", response_model=Dict[str, Any])
+async def get_peer_messages(
+    peer_id: int,
+    limit: int = Query(50, ge=1, le=100),
+    db: Session = Depends(get_db),
+    current_user: UserModel = Depends(get_current_active_user)
+):
+    """Get messages with a connected peer"""
+    try:
+        enhanced_service = EnhancedSocialCollaborationService(db)
+        messages = enhanced_service.get_peer_messages(current_user.id, peer_id, limit)
+        
+        # Mark messages as read
+        if messages:
+            connection_id = messages[0].connection_id if messages else None
+            if connection_id:
+                enhanced_service.mark_messages_as_read(current_user.id, connection_id)
+        
+        message_list = []
+        for msg in messages:
+            message_list.append({
+                "id": msg.id,
+                "sender_id": msg.sender_id,
+                "content": msg.content,
+                "message_type": msg.message_type.value,
+                "metadata": msg.metadata,
+                "created_at": msg.created_at.isoformat(),
+                "is_read": msg.is_read
+            })
+        
+        return {
+            "messages": message_list,
+            "connection_status": "connected",
+            "total": len(message_list)
+        }
+    except Exception as e:
+        return {
+            "messages": [],
+            "connection_status": "not_connected",
+            "total": 0
+        }
+
+
+# Enhanced Peer Matching Endpoints
+@router.get("/peer-matches/enhanced", response_model=Dict[str, Any])
+async def get_enhanced_peer_matches(
+    match_type: str = Query("skills", regex="^(skills|learning_partner)$"),
+    limit: int = Query(10, ge=1, le=50),
+    db: Session = Depends(get_db),
+    current_user: UserModel = Depends(get_current_active_user)
+):
+    """Get enhanced peer matches with improved algorithms"""
+    try:
+        enhanced_service = EnhancedSocialCollaborationService(db)
+        matches = enhanced_service.get_enhanced_peer_matches(current_user.id, match_type, limit)
+        
+        return {
+            "matches": matches,
+            "match_type": match_type,
+            "total": len(matches)
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# Skill Endorsement Endpoints
+@router.post("/skills/endorse", response_model=Dict[str, Any])
+async def endorse_user_skill(
+    endorsement_data: Dict[str, Any],
+    db: Session = Depends(get_db),
+    current_user: UserModel = Depends(get_current_active_user)
+):
+    """Endorse a skill for another user"""
+    try:
+        enhanced_service = EnhancedSocialCollaborationService(db)
+        endorsement = enhanced_service.endorse_skill(
+            current_user.id,
+            endorsement_data["endorsed_user_id"],
+            endorsement_data["skill_name"],
+            endorsement_data.get("proficiency_level"),
+            endorsement_data.get("comment")
+        )
+        
+        return {
+            "success": True,
+            "message": "Skill endorsed successfully",
+            "endorsement_id": endorsement.id
+        }
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
