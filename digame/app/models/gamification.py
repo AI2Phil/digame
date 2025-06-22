@@ -7,7 +7,7 @@ from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime, Float, 
 from sqlalchemy.orm import relationship
 from datetime import datetime, timedelta
 import enum
-from ..database import Base
+from .user import Base
 
 class AchievementType(enum.Enum):
     """Types of achievements"""

@@ -13,7 +13,7 @@ from ..models.gamification import (
     Badge, UserBadge, LeaderboardEntry, AchievementType, AchievementRarity
 )
 from ..models.user import User
-from ..models.goal import Goal
+from ..models.task import Task
 
 logger = logging.getLogger(__name__)
 
@@ -66,7 +66,7 @@ class GamificationService:
         
         return user_achievement
 
-    def award_achievement(self, user_id: int, achievement_id: int, context_data: Dict = None) -> bool:
+    def award_achievement(self, user_id: int, achievement_id: int, context_data: Optional[Dict] = None) -> bool:
         """Award an achievement to a user"""
         try:
             user_achievement = self.check_achievement_progress(user_id, achievement_id)
@@ -214,62 +214,61 @@ class GamificationService:
         
         return user_points
 
-    # Goal Integration
-    def handle_goal_progress(self, user_id: int, goal_id: int, old_progress: float, new_progress: float):
-        """Handle goal progress updates for gamification"""
-        # Update daily goal streak
-        if new_progress > old_progress:
-            self.update_streak(user_id, "daily_goal_progress")
+    # Task Integration (replacing Goal Integration)
+    def handle_task_progress(self, user_id: int, task_id: int, old_status: str, new_status: str):
+        """Handle task progress updates for gamification"""
+        # Update daily task streak
+        if new_status in ["in_progress", "completed"] and old_status in ["suggested", "accepted"]:
+            self.update_streak(user_id, "daily_task_progress")
         
-        # Check for goal completion
-        if new_progress >= 100 and old_progress < 100:
-            self.handle_goal_completion(user_id, goal_id)
-        
-        # Check for milestone achievements
-        milestones = [25, 50, 75, 90]
-        for milestone in milestones:
-            if old_progress < milestone <= new_progress:
-                self._check_milestone_achievements(user_id, milestone)
+        # Check for task completion
+        if new_status == "completed" and old_status != "completed":
+            self.handle_task_completion(user_id, task_id)
 
-    def handle_goal_completion(self, user_id: int, goal_id: int):
-        """Handle goal completion for gamification"""
-        goal = self.db.query(Goal).filter(Goal.id == goal_id).first()
-        if not goal:
+    def handle_task_completion(self, user_id: int, task_id: int):
+        """Handle task completion for gamification"""
+        task = self.db.query(Task).filter(Task.id == task_id).first()
+        if not task:
             return
         
-        # Award points based on goal priority
-        points_map = {"low": 10, "medium": 25, "high": 50}
-        points = points_map.get(goal.priority, 25)
-        self.add_points(user_id, points, "goal")
+        # Award points based on task priority score
+        if task.priority_score >= 0.8:
+            points = 50  # High priority
+        elif task.priority_score >= 0.5:
+            points = 25  # Medium priority
+        else:
+            points = 10  # Low priority
+            
+        self.add_points(user_id, points, "task")
         
-        # Update goal completion streak
-        self.update_streak(user_id, "goal_completion")
+        # Update task completion streak
+        self.update_streak(user_id, "task_completion")
         
-        # Check for goal-related achievements
-        self._check_goal_achievements(user_id)
+        # Check for task-related achievements
+        self._check_task_achievements(user_id)
 
     # Achievement Checking Logic
-    def _check_goal_achievements(self, user_id: int):
-        """Check for goal-related achievements"""
-        # Get user's completed goals count
-        completed_goals = self.db.query(Goal).filter(
-            Goal.user_id == user_id,
-            Goal.current_value >= Goal.target_value
+    def _check_task_achievements(self, user_id: int):
+        """Check for task-related achievements"""
+        # Get user's completed tasks count
+        completed_tasks = self.db.query(Task).filter(
+            Task.user_id == user_id,
+            Task.status == "completed"
         ).count()
         
-        # Define goal achievements
-        goal_achievements = [
-            (1, "first_goal"),
-            (5, "goal_achiever"),
-            (10, "goal_master"),
-            (25, "goal_legend"),
-            (50, "goal_champion")
+        # Define task achievements
+        task_achievements = [
+            (1, "first_task"),
+            (5, "task_achiever"),
+            (10, "task_master"),
+            (25, "task_legend"),
+            (50, "task_champion")
         ]
         
-        for count, achievement_key in goal_achievements:
-            if completed_goals >= count:
+        for count, achievement_key in task_achievements:
+            if completed_tasks >= count:
                 achievement = self.db.query(Achievement).filter(
-                    Achievement.category == "goals",
+                    Achievement.category == "tasks",
                     Achievement.title.contains(achievement_key.replace("_", " ").title())
                 ).first()
                 if achievement:
@@ -425,34 +424,34 @@ class GamificationService:
 def create_default_achievements(db: Session):
     """Create default achievements for the platform"""
     default_achievements = [
-        # Goal Achievements
+        # Task Achievements
         {
             "title": "First Steps",
-            "description": "Complete your first goal",
-            "category": "goals",
+            "description": "Complete your first task",
+            "category": "tasks",
             "type": AchievementType.GOAL_COMPLETION,
             "rarity": AchievementRarity.COMMON,
-            "criteria": {"goals_completed": 1},
+            "criteria": {"tasks_completed": 1},
             "points": 10,
             "icon": "target"
         },
         {
-            "title": "Goal Achiever",
-            "description": "Complete 5 goals",
-            "category": "goals",
+            "title": "Task Achiever",
+            "description": "Complete 5 tasks",
+            "category": "tasks",
             "type": AchievementType.GOAL_COMPLETION,
             "rarity": AchievementRarity.UNCOMMON,
-            "criteria": {"goals_completed": 5},
+            "criteria": {"tasks_completed": 5},
             "points": 25,
             "icon": "trophy"
         },
         {
-            "title": "Goal Master",
-            "description": "Complete 10 goals",
-            "category": "goals",
+            "title": "Task Master",
+            "description": "Complete 10 tasks",
+            "category": "tasks",
             "type": AchievementType.GOAL_COMPLETION,
             "rarity": AchievementRarity.RARE,
-            "criteria": {"goals_completed": 10},
+            "criteria": {"tasks_completed": 10},
             "points": 50,
             "icon": "crown"
         },
@@ -522,3 +521,7 @@ def create_default_achievements(db: Session):
         ).first()
         
         if not existing:
+            achievement = Achievement(**achievement_data)
+            db.add(achievement)
+    
+    db.commit()

@@ -27,6 +27,10 @@ from .workflow_automation import (
 from .project import Project # Import the new Project model
 from .experience import Experience # Import the new Experience model
 from .education import Education # Import the new Education model
+from .gamification import (
+    Achievement, UserAchievement, Streak, Milestone, UserPoints,
+    Badge, UserBadge, LeaderboardEntry, AchievementType, AchievementRarity
+) # Import gamification models
 
 # Optionally, define __all__ to specify what is exported when 'from .models import *' is used
 __all__ = [
@@ -52,4 +56,14 @@ __all__ = [
     "Project", # Add Project to __all__
     "Experience", # Add Experience to __all__
     "Education", # Add Education to __all__
+    "Achievement", # Add gamification models to __all__
+    "UserAchievement",
+    "Streak",
+    "Milestone",
+    "UserPoints",
+    "Badge",
+    "UserBadge",
+    "LeaderboardEntry",
+    "AchievementType",
+    "AchievementRarity",
 ]
