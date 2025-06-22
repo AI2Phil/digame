@@ -9,26 +9,30 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
-import { Select } from '../ui/Select'; // Added
-import { Checkbox } from '../ui/Checkbox'; // Added
-import { Table } from '../ui/Table';
+import { Select } from '../ui/Select';
+import { Checkbox } from '../ui/Checkbox'; // Keep for now, DataTable might have its own selection checkboxes
+// import { Table } from '../ui/Table'; // Will use DataTable
+import { DataTable } from '../ui/Table'; // Import DataTable
 import { Avatar } from '../ui/Avatar';
 import { Badge } from '../ui/Badge';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../ui/Dialog';
-import { Toast } from '../ui/Toast';
+// Dialog is not directly used in this section in the new structure, but kept for AdminDashboardPage.
+// import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../ui/Dialog';
+import { Toast } from '../ui/Toast'; // Keep Toast for notifications
 
 const UserManagementSection = ({
-  users,
-  searchTerm,
-  setSearchTerm,
+  users, // This will be the 'data' prop for DataTable
+  searchTerm: initialSearchTerm, // Renamed to avoid conflict if DataTable has internal search
+  setSearchTerm: onSearchTermChange, // Callback for external search changes
   onUserAction,
-  onUserSelect
+  onUserSelect,
+  // isLoading prop can be used to show a loading state in DataTable if supported, or handle outside
 }) => {
-  const [selectedUsers, setSelectedUsers] = useState([]);
-  const [filterRole, setFilterRole] = useState('all');
-  const [filterStatus, setFilterStatus] = useState('all');
-  const [sortBy, setSortBy] = useState('created_at');
-  const [sortOrder, setSortOrder] = useState('desc');
+  const [selectedUserIds, setSelectedUserIds] = useState(new Set()); // Store IDs for selected users
+  // External filter states, to be used for pre-filtering data passed to DataTable
+  const [currentFilterRole, setCurrentFilterRole] = useState('all');
+  const [currentFilterStatus, setCurrentFilterStatus] = useState('all');
+  // sortBy and sortOrder will be handled by DataTable internally if its sorting is used.
+  // If external sorting controls are desired, these states might be needed to control DataTable.
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -51,57 +55,64 @@ const UserManagementSection = ({
 
   const handleRefresh = async () => {
     setRefreshing(true);
-    setTimeout(() => setRefreshing(false), 1000);
+    // NOTE: In a real app, you'd likely call a prop function to reload data.
+    // For now, just simulate a delay.
+    setTimeout(() => {
+        setRefreshing(false);
+        // Consider calling a prop like onRefreshData() if AdminDashboardPage should handle it
+    }, 1000);
   };
 
-  const handleSelectUser = (userId) => {
-    setSelectedUsers(prev => 
-      prev.includes(userId) 
-        ? prev.filter(id => id !== userId)
-        : [...prev, userId]
-    );
-  };
-
-  const handleSelectAll = () => {
-    setSelectedUsers(
-      selectedUsers.length === filteredUsers.length 
-        ? [] 
-        : filteredUsers.map(user => user.id)
-    );
+  // DataTable will call this with an array of selected row original data objects or their IDs/indices
+  const handleSelectionChange = (selectedRowIdentifiers) => {
+    // Assuming DataTable provides an array of user IDs if primaryKey="id" is set,
+    // or indices if not. If it's indices, map to IDs based on processedUsers.
+    // For simplicity, assuming it's IDs for now.
+    setSelectedUserIds(new Set(selectedRowIdentifiers));
   };
 
   const handleBulkAction = async (action) => {
     try {
       await Promise.all(
-        selectedUsers.map(userId => onUserAction(userId, action))
+        Array.from(selectedUserIds).map(userId => onUserAction(userId, action))
       );
-      setSelectedUsers([]);
+      setSelectedUserIds(new Set()); // Clear selection
       Toast.success(`Bulk ${action} completed successfully`);
-    } catch (error) {
-      Toast.error(`Failed to perform bulk ${action}`);
+    } catch (error)      Toast.error(`Failed to perform bulk ${action}`);
     }
   };
 
-  const filteredUsers = users
-    .filter(user => {
-      const matchesSearch = user.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           user.email?.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesRole = filterRole === 'all' || user.role === filterRole;
-      const matchesStatus = filterStatus === 'all' || 
-                           (filterStatus === 'active' && user.is_active) ||
-                           (filterStatus === 'inactive' && !user.is_active);
-      return matchesSearch && matchesRole && matchesStatus;
-    })
-    .sort((a, b) => {
-      const aValue = a[sortBy];
-      const bValue = b[sortBy];
-      const order = sortOrder === 'asc' ? 1 : -1;
-      
-      if (typeof aValue === 'string') {
-        return aValue.localeCompare(bValue) * order;
-      }
-      return (aValue - bValue) * order;
-    });
+  // Memoized filtered and sorted data for DataTable
+  // DataTable will handle its own sorting if its internal sort controls are used.
+  // If we want external sort controls, this memo would also include sorting.
+  const processedUsers = React.useMemo(() => {
+    let filtered = users;
+
+    // Apply external search term
+    if (initialSearchTerm) {
+      const lowerSearchTerm = initialSearchTerm.toLowerCase();
+      filtered = filtered.filter(user =>
+        user.username?.toLowerCase().includes(lowerSearchTerm) ||
+        user.email?.toLowerCase().includes(lowerSearchTerm)
+      );
+    }
+
+    // Apply external role filter
+    if (currentFilterRole !== 'all') {
+      filtered = filtered.filter(user => user.role === currentFilterRole);
+    }
+
+    // Apply external status filter
+    if (currentFilterStatus !== 'all') {
+      filtered = filtered.filter(user =>
+        (currentFilterStatus === 'active' && user.is_active) ||
+        (currentFilterStatus === 'inactive' && !user.is_active)
+      );
+    }
+
+    // Sorting is expected to be handled by DataTable itself if `sortable` prop is true on columns
+    return filtered;
+  }, [users, initialSearchTerm, currentFilterRole, currentFilterStatus]);
 
   const getUserStatusBadge = (user) => {
     if (!user.is_active) return <Badge variant="destructive">Inactive</Badge>;
@@ -120,6 +131,129 @@ const UserManagementSection = ({
     };
     return <Badge variant={roleColors[role] || 'default'}>{role}</Badge>;
   };
+
+  const columns = [
+    {
+      key: 'user', // This key should match a property in the user object or be arbitrary if using render
+      title: 'User',
+      sortable: true, // DataTable can sort by this column if data is structured appropriately
+      render: (value, row) => ( // value is row[key], row is the full user object
+        <div className="flex items-center gap-3">
+          <Avatar
+            src={row.avatar}
+            alt={row.username}
+            fallback={row.username?.charAt(0).toUpperCase()}
+            size="sm"
+            className={`transition-all duration-200 ${
+              isDarkMode ? 'bg-gray-600 text-gray-200' : 'bg-gray-200 text-gray-800'
+            }`}
+          />
+          <div>
+            <p className={`font-medium transition-all duration-300 ${
+              isDarkMode ? 'text-white' : 'text-gray-900'
+            }`}>{row.username}</p>
+            <p className={`text-sm transition-all duration-300 ${
+              isDarkMode ? 'text-gray-400' : 'text-gray-500'
+            }`}>{row.email}</p>
+          </div>
+        </div>
+      ),
+    },
+    {
+      key: 'role',
+      title: 'Role',
+      sortable: true,
+      render: (role) => getRoleBadge(role),
+    },
+    {
+      key: 'is_active', // Assuming user object has 'is_active' for status
+      title: 'Status',
+      sortable: true,
+      render: (isActive, row) => getUserStatusBadge(row), // Pass the whole row if needed by badge function
+    },
+    {
+      key: 'last_login',
+      title: 'Last Login',
+      sortable: true,
+      render: (last_login) => (
+        <div className="text-sm">
+          {last_login ? (
+            <>
+              <p className={`transition-all duration-300 ${
+                isDarkMode ? 'text-gray-200' : 'text-gray-900'
+              }`}>{new Date(last_login).toLocaleDateString()}</p>
+              <p className={`transition-all duration-300 ${
+                isDarkMode ? 'text-gray-400' : 'text-gray-500'
+              }`}>
+                {new Date(last_login).toLocaleTimeString()}
+              </p>
+            </>
+          ) : (
+            <span className={`transition-all duration-300 ${
+              isDarkMode ? 'text-gray-500' : 'text-gray-400'
+            }`}>Never</span>
+          )}
+        </div>
+      ),
+    },
+    {
+      key: 'created_at',
+      title: 'Created',
+      sortable: true,
+      render: (created_at) => (
+         <div className="text-sm">
+            <p className={`transition-all duration-300 ${
+              isDarkMode ? 'text-gray-200' : 'text-gray-900'
+            }`}>{new Date(created_at).toLocaleDateString()}</p>
+            <p className={`transition-all duration-300 ${
+              isDarkMode ? 'text-gray-400' : 'text-gray-500'
+            }`}>
+              {new Date(created_at).toLocaleTimeString()}
+            </p>
+          </div>
+      ),
+    },
+    {
+      key: 'actions',
+      title: 'Actions',
+      render: (value, row) => (
+        <div className="flex items-center gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={(e) => { e.stopPropagation(); onUserSelect(row); }}
+            className={`transition-all duration-200 ${
+              isDarkMode
+                ? 'border-gray-600 text-gray-300 hover:bg-gray-700'
+                : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+            }`}
+          >
+            <Edit className="w-4 h-4" />
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={(e) => { e.stopPropagation(); onUserAction(row.id, row.is_active ? 'deactivate' : 'activate'); }}
+            className={`transition-all duration-200 ${
+              isDarkMode
+                ? 'border-gray-600 text-gray-300 hover:bg-gray-700'
+                : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+            }`}
+          >
+            {row.is_active ? <UserX className="w-4 h-4" /> : <UserCheck className="w-4 h-4" />}
+          </Button>
+          <Button
+            size="sm"
+            variant="destructive"
+            onClick={(e) => { e.stopPropagation(); onUserAction(row.id, 'delete'); }}
+            className="transition-all duration-200 hover:scale-105"
+          >
+            <Trash2 className="w-4 h-4" />
+          </Button>
+        </div>
+      ),
+    },
+  ];
 
   return (
     <div className="space-y-6">
@@ -356,211 +490,22 @@ const UserManagementSection = ({
           )}
 
           {/* Users Table */}
-          <div className={`border rounded-lg overflow-hidden transition-all duration-300 ${
-            isDarkMode ? 'border-gray-700' : 'border-gray-200'
-          }`}>
-            <Table className={isDarkMode ? 'dark' : ''}>
-              <thead className={`transition-all duration-300 ${
-                isDarkMode ? 'bg-gray-700' : 'bg-gray-50'
-              }`}>
-                <tr>
-                  <th className="w-12 p-4">
-                    <Checkbox
-                      checked={selectedUsers.length === filteredUsers.length && filteredUsers.length > 0}
-                      onCheckedChange={handleSelectAll}
-                      aria-label="Select all users"
-                      className={`transition-all duration-200 ${
-                        isDarkMode
-                          ? 'border-gray-600 data-[state=checked]:bg-blue-600'
-                          : 'border-gray-300 data-[state=checked]:bg-blue-600'
-                      }`}
-                    />
-                  </th>
-                  <th className={`text-left p-4 font-medium transition-all duration-300 ${
-                    isDarkMode ? 'text-gray-200' : 'text-gray-900'
-                  }`}>User</th>
-                  <th className={`text-left p-4 font-medium transition-all duration-300 ${
-                    isDarkMode ? 'text-gray-200' : 'text-gray-900'
-                  }`}>Role</th>
-                  <th className={`text-left p-4 font-medium transition-all duration-300 ${
-                    isDarkMode ? 'text-gray-200' : 'text-gray-900'
-                  }`}>Status</th>
-                  <th className={`text-left p-4 font-medium transition-all duration-300 ${
-                    isDarkMode ? 'text-gray-200' : 'text-gray-900'
-                  }`}>Last Login</th>
-                  <th className={`text-left p-4 font-medium transition-all duration-300 ${
-                    isDarkMode ? 'text-gray-200' : 'text-gray-900'
-                  }`}>Created</th>
-                  <th className={`text-left p-4 font-medium transition-all duration-300 ${
-                    isDarkMode ? 'text-gray-200' : 'text-gray-900'
-                  }`}>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredUsers.map((user) => (
-                  <tr key={user.id} className={`border-t transition-all duration-200 ${
-                    isDarkMode
-                      ? 'border-gray-700 hover:bg-gray-700/50'
-                      : 'border-gray-200 hover:bg-gray-50'
-                  }`}>
-                    <td className="p-4">
-                      <Checkbox
-                        checked={selectedUsers.includes(user.id)}
-                        onCheckedChange={() => handleSelectUser(user.id)}
-                        aria-label={`Select user ${user.username}`}
-                        className={`transition-all duration-200 ${
-                          isDarkMode
-                            ? 'border-gray-600 data-[state=checked]:bg-blue-600'
-                            : 'border-gray-300 data-[state=checked]:bg-blue-600'
-                        }`}
-                      />
-                    </td>
-                    <td className="p-4">
-                      <div className="flex items-center gap-3">
-                        <Avatar
-                          src={user.avatar}
-                          alt={user.username}
-                          fallback={user.username?.charAt(0).toUpperCase()}
-                          size="sm"
-                          className={`transition-all duration-200 ${
-                            isDarkMode ? 'bg-gray-600 text-gray-200' : 'bg-gray-200 text-gray-800'
-                          }`}
-                        />
-                        <div>
-                          <p className={`font-medium transition-all duration-300 ${
-                            isDarkMode ? 'text-white' : 'text-gray-900'
-                          }`}>{user.username}</p>
-                          <p className={`text-sm transition-all duration-300 ${
-                            isDarkMode ? 'text-gray-400' : 'text-gray-500'
-                          }`}>{user.email}</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="p-4">
-                      {getRoleBadge(user.role)}
-                    </td>
-                    <td className="p-4">
-                      {getUserStatusBadge(user)}
-                    </td>
-                    <td className="p-4">
-                      <div className="text-sm">
-                        {user.last_login ? (
-                          <>
-                            <p className={`transition-all duration-300 ${
-                              isDarkMode ? 'text-gray-200' : 'text-gray-900'
-                            }`}>{new Date(user.last_login).toLocaleDateString()}</p>
-                            <p className={`transition-all duration-300 ${
-                              isDarkMode ? 'text-gray-400' : 'text-gray-500'
-                            }`}>
-                              {new Date(user.last_login).toLocaleTimeString()}
-                            </p>
-                          </>
-                        ) : (
-                          <span className={`transition-all duration-300 ${
-                            isDarkMode ? 'text-gray-500' : 'text-gray-400'
-                          }`}>Never</span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="p-4">
-                      <div className="text-sm">
-                        <p className={`transition-all duration-300 ${
-                          isDarkMode ? 'text-gray-200' : 'text-gray-900'
-                        }`}>{new Date(user.created_at).toLocaleDateString()}</p>
-                        <p className={`transition-all duration-300 ${
-                          isDarkMode ? 'text-gray-400' : 'text-gray-500'
-                        }`}>
-                          {new Date(user.created_at).toLocaleTimeString()}
-                        </p>
-                      </div>
-                    </td>
-                    <td className="p-4">
-                      <div className="flex items-center gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => onUserSelect(user)}
-                          className={`transition-all duration-200 ${
-                            isDarkMode
-                              ? 'border-gray-600 text-gray-300 hover:bg-gray-700'
-                              : 'border-gray-300 text-gray-700 hover:bg-gray-50'
-                          }`}
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => onUserAction(user.id, user.is_active ? 'deactivate' : 'activate')}
-                          className={`transition-all duration-200 ${
-                            isDarkMode
-                              ? 'border-gray-600 text-gray-300 hover:bg-gray-700'
-                              : 'border-gray-300 text-gray-700 hover:bg-gray-50'
-                          }`}
-                        >
-                          {user.is_active ? <UserX className="w-4 h-4" /> : <UserCheck className="w-4 h-4" />}
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          onClick={() => onUserAction(user.id, 'delete')}
-                          className="transition-all duration-200 hover:scale-105"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </Table>
-          </div>
-
-          {/* Pagination */}
-          <div className="flex items-center justify-between mt-4">
-            <p className={`text-sm transition-all duration-300 ${
-              isDarkMode ? 'text-gray-400' : 'text-gray-500'
-            }`}>
-              Showing {filteredUsers.length} of {users.length} users
-            </p>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                disabled
-                className={`transition-all duration-200 ${
-                  isDarkMode
-                    ? 'border-gray-600 text-gray-500 bg-gray-800'
-                    : 'border-gray-300 text-gray-400 bg-gray-50'
-                }`}
-              >
-                Previous
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className={`transition-all duration-200 ${
-                  isDarkMode
-                    ? 'border-blue-600 text-white bg-blue-600 hover:bg-blue-700'
-                    : 'border-blue-600 text-white bg-blue-600 hover:bg-blue-700'
-                }`}
-              >
-                1
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled
-                className={`transition-all duration-200 ${
-                  isDarkMode
-                    ? 'border-gray-600 text-gray-500 bg-gray-800'
-                    : 'border-gray-300 text-gray-400 bg-gray-50'
-                }`}
-              >
-                Next
-              </Button>
-            </div>
-          </div>
+          <DataTable
+            data={processedUsers}
+            columns={columns}
+            sortable={true} // Enable global sorting for DataTable
+            filterable={false} // External filters are used via processedUsers
+            searchable={false} // External search is used via processedUsers
+            pagination={true}
+            pageSize={10}
+            className={`transition-all duration-300 ${isDarkMode ? 'dark' : ''}`} // Apply dark mode if needed
+            onRowClick={(user) => onUserSelect(user)} // Pass row data to onUserSelect
+            rowSelection={true} // Enable row selection in DataTable
+            onSelectionChange={handleSelectionChange} // Handle selection changes from DataTable
+            // primaryKey="id" // Assuming 'id' is the unique key for users, important for selection
+          />
+          {/* DataTable handles its own pagination if pagination={true} */}
+          {/* The old manual pagination div is removed. */}
         </CardContent>
       </Card>
     </div>

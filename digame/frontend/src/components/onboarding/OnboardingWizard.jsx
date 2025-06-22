@@ -5,12 +5,22 @@ import {
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/Card';
 import { Button } from '../ui/Button';
-import { Input } from '../ui/Input';
-import { Label } from '../ui/Label';
+// Input, Label, Select will be replaced or supplemented by Form components
+// import { Input } from '../ui/Input';
+// import { Label } from '../ui/Label';
 import { Switch } from '../ui/Switch';
-import { Select } from '../ui/Select';
-import { Progress } from '../ui/Progress';
+// import { Select } from '../ui/Select';
+import { Progress, ProgressSteps } from '../ui/Progress'; // Added ProgressSteps
 import { Badge } from '../ui/Badge';
+import {
+  Form,
+  FormField,
+  FormLabel,
+  FormInput,
+  FormSelect,
+  // FormCheckbox, // Using Switch for now, so not importing FormCheckbox
+  // FormSubmitButton // Using existing Buttons for next/prev logic
+} from '../ui/Form';
 
 const OnboardingWizard = ({ onComplete, onSkip }) => {
   const [currentStep, setCurrentStep] = useState(0);
@@ -173,38 +183,15 @@ const OnboardingWizard = ({ onComplete, onSkip }) => {
         </div>
 
         {/* Step Indicators */}
-        <div className="flex items-center justify-center mb-8">
-          {steps.map((step, index) => {
-            const Icon = step.icon;
-            const isCompleted = index < currentStep;
-            const isCurrent = index === currentStep;
-            
-            return (
-              <div key={step.id} className="flex items-center">
-                <div className={`
-                  flex items-center justify-center w-10 h-10 rounded-full border-2 transition-colors
-                  ${isCompleted 
-                    ? 'bg-green-500 border-green-500 text-white' 
-                    : isCurrent 
-                      ? 'bg-blue-500 border-blue-500 text-white'
-                      : 'bg-white border-gray-300 text-gray-400'
-                  }
-                `}>
-                  {isCompleted ? (
-                    <Check className="w-5 h-5" />
-                  ) : (
-                    <Icon className="w-5 h-5" />
-                  )}
-                </div>
-                {index < steps.length - 1 && (
-                  <div className={`
-                    w-12 h-0.5 mx-2 transition-colors
-                    ${isCompleted ? 'bg-green-500' : 'bg-gray-300'}
-                  `} />
-                )}
-              </div>
-            );
-          })}
+        <div className="mb-8 px-4 md:px-0"> {/* Added padding for smaller screens */}
+          <ProgressSteps
+            steps={steps.map(step => ({
+              label: step.title,
+              icon: React.createElement(step.icon, {className: "w-5 h-5"})
+            }))}
+            currentStep={currentStep}
+            variant="default" // Matches blue theme, can be "success" for green
+          />
         </div>
 
         {/* Main Content */}
@@ -297,164 +284,225 @@ const WelcomeStep = ({ data, updateData }) => (
   </div>
 );
 
-const PreferencesStep = ({ data, updateData }) => {
-  const updatePreference = (category, key, value) => {
+const PreferencesStep = ({ data, updateData, onNext }) => {
+  const handleSwitchChange = (category, key, checked) => {
     updateData({
       user_preferences: {
         ...data.user_preferences,
         [category]: {
           ...data.user_preferences[category],
-          [key]: value
+          [key]: checked
         }
       }
     });
   };
 
+  // Form's onSubmit will call this, then the main "Next" button handles step progression
+  const handleFormSubmit = (formDataFromFormContext) => {
+    // formDataFromFormContext here will only contain fields managed by FormInput, FormSelect etc.
+    // So, we merge it with the existing user_preferences which holds switch values.
+    updateData({
+      user_preferences: {
+        ...data.user_preferences, // keep existing values like those from switches
+        appearance: { // Assuming 'appearance.theme' is the only field managed by FormSelect here
+            ...data.user_preferences.appearance,
+            theme: formDataFromFormContext['appearance.theme']
+        }
+      }
+    });
+    // Actual step progression is handled by the main "Next" button in OnboardingWizard
+  };
+
   return (
-    <div className="space-y-6">
-      <div>
-        <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-          <Bell className="w-5 h-5" />
-          Notification Preferences
-        </h3>
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <Label>Email Notifications</Label>
-              <p className="text-sm text-gray-500">Receive updates via email</p>
+    <Form
+      onSubmit={handleFormSubmit}
+      defaultValues={{
+        'appearance.theme': data.user_preferences.appearance.theme
+      }} // Only fields for FormSelect/FormInput
+      // Add validation if needed, e.g.
+      // validation={{ 'appearance.theme': { required: 'Theme is required' } }}
+    >
+      <div className="space-y-6">
+        <div>
+          <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+            <Bell className="w-5 h-5" />
+            Notification Preferences
+          </h3>
+          <div className="space-y-4">
+            {/* Email Notifications Switch */}
+            <div className="flex items-center justify-between">
+              <div>
+                <FormLabel htmlFor="notifications.email">Email Notifications</FormLabel>
+                <p className="text-sm text-gray-500">Receive updates via email</p>
+              </div>
+              <Switch
+                id="notifications.email"
+                checked={data.user_preferences.notifications.email}
+                onCheckedChange={(checked) => handleSwitchChange('notifications', 'email', checked)}
+              />
             </div>
-            <Switch
-              checked={data.user_preferences.notifications.email}
-              onCheckedChange={(checked) => updatePreference('notifications', 'email', checked)}
-            />
-          </div>
-          <div className="flex items-center justify-between">
-            <div>
-              <Label>Push Notifications</Label>
-              <p className="text-sm text-gray-500">Get real-time alerts</p>
+            {/* Push Notifications Switch */}
+            <div className="flex items-center justify-between">
+              <div>
+                <FormLabel htmlFor="notifications.push">Push Notifications</FormLabel>
+                <p className="text-sm text-gray-500">Get real-time alerts</p>
+              </div>
+              <Switch
+                id="notifications.push"
+                checked={data.user_preferences.notifications.push}
+                onCheckedChange={(checked) => handleSwitchChange('notifications', 'push', checked)}
+              />
             </div>
-            <Switch
-              checked={data.user_preferences.notifications.push}
-              onCheckedChange={(checked) => updatePreference('notifications', 'push', checked)}
-            />
           </div>
         </div>
-      </div>
 
-      <div>
-        <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-          <Shield className="w-5 h-5" />
-          Privacy Settings
-        </h3>
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <Label>Analytics</Label>
-              <p className="text-sm text-gray-500">Help improve Digame with usage data</p>
+        <div>
+          <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+            <Shield className="w-5 h-5" />
+            Privacy Settings
+          </h3>
+          <div className="space-y-4">
+            {/* Analytics Switch */}
+            <div className="flex items-center justify-between">
+              <div>
+                <FormLabel htmlFor="privacy.analytics">Analytics</FormLabel>
+                <p className="text-sm text-gray-500">Help improve Digame with usage data</p>
+              </div>
+              <Switch
+                id="privacy.analytics"
+                checked={data.user_preferences.privacy.analytics}
+                onCheckedChange={(checked) => handleSwitchChange('privacy', 'analytics', checked)}
+              />
             </div>
-            <Switch
-              checked={data.user_preferences.privacy.analytics}
-              onCheckedChange={(checked) => updatePreference('privacy', 'analytics', checked)}
-            />
           </div>
         </div>
-      </div>
 
-      <div>
-        <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-          <Palette className="w-5 h-5" />
-          Appearance
-        </h3>
-        <div className="space-y-4">
-          <div>
-            <Label htmlFor="theme-preference">Theme</Label> 
-            <Select
-              id="theme-preference"
-              value={data.user_preferences.appearance.theme}
-              onChange={(value) => updatePreference('appearance', 'theme', value)}
-              options={[
-                { value: 'light', label: 'Light' },
-                { value: 'dark', label: 'Dark' },
-                { value: 'system', label: 'System' },
-              ]}
-              placeholder="Select a theme..."
-              // className="mt-1" // Add margin if Label doesn't provide enough or if Select needs it
-            />
+        <div>
+          <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+            <Palette className="w-5 h-5" />
+            Appearance
+          </h3>
+          <div className="space-y-4">
+            <FormField name="appearance.theme">
+              <FormLabel htmlFor="appearance.theme">Theme</FormLabel>
+              <FormSelect
+                name="appearance.theme" // Name for Form context
+                id="appearance.theme"   // For label association
+                options={[
+                  { value: 'light', label: 'Light' },
+                  { value: 'dark', label: 'Dark' },
+                  { value: 'system', label: 'System' },
+                ]}
+                placeholder="Select a theme..."
+                // value and onChange are handled by FormContext
+                className="mt-1"
+              />
+            </FormField>
           </div>
         </div>
       </div>
-    </div>
+      {/* The main "Next" button of the wizard will implicitly trigger form validation if mode is onSubmit */}
+      {/* Or validation happens onChange/onBlur based on Form settings */}
+    </Form>
   );
 };
 
-const GoalsStep = ({ data, updateData }) => {
-  const updateGoal = (key, value) => {
+const GoalsStep = ({ data, updateData, onNext }) => {
+  // This function will be called by the Form's onSubmit
+  const handleFormSubmit = (formDataFromFormContext) => {
+    // formDataFromFormContext will contain 'primary_goal'
+    // We merge it with existing goals data (productivity_target, focus_areas)
     updateData({
       goals: {
-        ...data.goals,
-        [key]: value
+        ...data.goals, // Preserve existing target and focus areas
+        primary_goal: formDataFromFormContext.primary_goal,
       }
     });
+    // Actual step progression is handled by the main "Next" button
   };
 
-  const focusAreas = [
+  const goalValidationRules = {
+    primary_goal: {
+      required: 'Primary professional goal is required.',
+      minLength: 5 // Example validation
+    },
+    // productivity_target and focus_areas are handled by buttons, not direct form inputs for validation here
+  };
+
+  const focusAreasOptions = [
     'Time Management', 'Deep Work', 'Communication', 'Learning',
     'Health & Wellness', 'Team Collaboration', 'Innovation', 'Leadership'
   ];
 
+  // Handler for focus areas, separate from Form context
   const toggleFocusArea = (area) => {
-    const current = data.goals.focus_areas || [];
-    const updated = current.includes(area)
-      ? current.filter(a => a !== area)
-      : [...current, area];
-    updateGoal('focus_areas', updated);
+    const currentFocusAreas = data.goals.focus_areas || [];
+    const updatedFocusAreas = currentFocusAreas.includes(area)
+      ? currentFocusAreas.filter(a => a !== area)
+      : [...currentFocusAreas, area];
+    updateData({ goals: { ...data.goals, focus_areas: updatedFocusAreas } });
+  };
+
+  // Handler for productivity target, separate from Form context
+  const updateProductivityTarget = (level) => {
+    updateData({ goals: { ...data.goals, productivity_target: level } });
   };
 
   return (
-    <div className="space-y-6">
-      <div>
-        <Label htmlFor="primary-goal">What's your primary professional goal?</Label>
-        <Input
-          id="primary-goal"
-          placeholder="e.g., Improve productivity, Better work-life balance, Learn new skills"
-          value={data.goals.primary_goal}
-          onChange={(e) => updateGoal('primary_goal', e.target.value)}
-          className="mt-2"
-        />
-      </div>
+    <Form
+      onSubmit={handleFormSubmit}
+      defaultValues={{ primary_goal: data.goals.primary_goal || '' }}
+      validation={goalValidationRules}
+      mode="onChange" // Or onBlur/onSubmit
+    >
+      <div className="space-y-6">
+        <FormField name="primary_goal">
+          <FormLabel htmlFor="primary_goal" required>What's your primary professional goal?</FormLabel>
+          <FormInput
+            name="primary_goal" // Critical for Form context
+            id="primary-goal"   // For label association
+            placeholder="e.g., Improve productivity, Better work-life balance, Learn new skills"
+            className="mt-1"    // FormLabel has mb-1, so input gets mt-1
+          />
+          {/* Error message will be rendered by FormInput if validation fails */}
+        </FormField>
 
-      <div>
-        <Label>Productivity Target</Label>
-        <div className="grid grid-cols-3 gap-3 mt-2">
-          {['gentle', 'moderate', 'ambitious'].map((level) => (
-            <Button
-              key={level}
-              variant={data.goals.productivity_target === level ? 'default' : 'outline'}
-              onClick={() => updateGoal('productivity_target', level)}
-              className="capitalize"
-            >
-              {level}
-            </Button>
-          ))}
+        <div>
+          <FormLabel>Productivity Target</FormLabel>
+          <div className="grid grid-cols-3 gap-3 mt-1">
+            {['gentle', 'moderate', 'ambitious'].map((level) => (
+              <Button
+                type="button" // Important: prevent default form submission
+                key={level}
+                variant={data.goals.productivity_target === level ? 'default' : 'outline'}
+                onClick={() => updateProductivityTarget(level)}
+                className="capitalize"
+              >
+                {level}
+              </Button>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <FormLabel>Focus Areas (select all that apply)</FormLabel>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-1"> {/* Adjusted grid for better layout */}
+            {focusAreasOptions.map((area) => (
+              <Button
+                type="button" // Important: prevent default form submission
+                key={area}
+                variant={(data.goals.focus_areas || []).includes(area) ? 'default' : 'outline'}
+                onClick={() => toggleFocusArea(area)}
+                size="sm" // Keep size small for these buttons
+              >
+                {area}
+              </Button>
+            ))}
+          </div>
         </div>
       </div>
-
-      <div>
-        <Label>Focus Areas (select all that apply)</Label>
-        <div className="grid grid-cols-2 gap-2 mt-2">
-          {focusAreas.map((area) => (
-            <Button
-              key={area}
-              variant={(data.goals.focus_areas || []).includes(area) ? 'default' : 'outline'}
-              onClick={() => toggleFocusArea(area)}
-              size="sm"
-            >
-              {area}
-            </Button>
-          ))}
-        </div>
-      </div>
-    </div>
+      {/* Main "Next" button outside this component will trigger form submission/validation */}
+    </Form>
   );
 };
 

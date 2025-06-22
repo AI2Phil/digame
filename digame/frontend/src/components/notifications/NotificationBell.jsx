@@ -5,8 +5,10 @@ import { Badge } from '../ui/Badge';
 import NotificationCenter from './NotificationCenter';
 import notificationService from '../../services/notificationService';
 import websocketService from '../../services/websocketService';
+import { useToast } from '../ui/Toast'; // Import useToast
 
 const NotificationBell = ({ className = '' }) => {
+  const { toast } = useToast(); // Initialize useToast
   const [isOpen, setIsOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [hasNewNotification, setHasNewNotification] = useState(false);
@@ -50,6 +52,9 @@ const NotificationBell = ({ className = '' }) => {
   const handleNewNotification = (notification) => {
     setHasNewNotification(true);
     updateUnreadCount();
+
+    // Show a toast for the new notification
+    toast.info(notification.title || 'New Notification', notification.message || 'You have a new update.', { duration: 5000 });
     
     // Auto-hide the "new notification" indicator after 3 seconds
     setTimeout(() => {
