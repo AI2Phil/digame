@@ -27,6 +27,12 @@ from .workflow_automation import (
 from .project import Project # Import the new Project model
 from .experience import Experience # Import the new Experience model
 from .education import Education # Import the new Education model
+from .communication import Message # Import the new Message model
+from .social_collaboration import (
+    PeerConnection, PeerMessage, CollaborationProject, ProjectMember,
+    ProjectApplication, SkillEndorsement, MentorshipConnection,
+    ConnectionStatus, MessageType, ProjectStatus
+) # Import enhanced social collaboration models
 from .gamification import (
     Achievement, UserAchievement, Streak, Milestone, UserPoints,
     Badge, UserBadge, LeaderboardEntry, AchievementType, AchievementRarity
@@ -56,6 +62,17 @@ __all__ = [
     "Project", # Add Project to __all__
     "Experience", # Add Experience to __all__
     "Education", # Add Education to __all__
+    "Message", # Add Message to __all__
+    "PeerConnection", # Add enhanced social collaboration models to __all__
+    "PeerMessage",
+    "CollaborationProject",
+    "ProjectMember",
+    "ProjectApplication",
+    "SkillEndorsement",
+    "MentorshipConnection",
+    "ConnectionStatus",
+    "MessageType",
+    "ProjectStatus",
     "Achievement", # Add gamification models to __all__
     "UserAchievement",
     "Streak",

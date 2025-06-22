@@ -204,7 +204,6 @@ This document outlines the comprehensive development roadmap for the Digame Digi
 ```
 
 **Implementation Tasks**:
-<<<<<<< HEAD
 - **Frontend Development**:
   - ✅ Partially Completed: Enhanced `OnboardingWizard.jsx` with new UI components, improved styling, and refined step structure
   - ✅ Partially Completed: Added interactive elements to Welcome and Features steps in `OnboardingWizard.jsx`. Tooltips/highlights are conceptual at this stage

@@ -97,6 +97,20 @@ class User(Base):
         cascade="all, delete-orphan"
     )
 
+    # Relationships for messages
+    sent_messages = relationship(
+        "Message",
+        foreign_keys="Message.sender_id",
+        back_populates="sender",
+        cascade="all, delete-orphan"
+    )
+    received_messages = relationship(
+        "Message",
+        foreign_keys="Message.receiver_id",
+        back_populates="receiver",
+        cascade="all, delete-orphan"
+    )
+
     def __repr__(self):
         return f"<User(id={self.id}, username='{self.username}', email='{self.email}')>"
 

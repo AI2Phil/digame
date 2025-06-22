@@ -1,6 +1,6 @@
 """
 Social Collaboration API Router
-Enhanced with real project data, messaging, and improved peer matching
+Handles peer matching, user profile updates for social features, and other related endpoints.
 """
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -13,43 +13,40 @@ import json
 # Import from the correct paths based on the project structure
 from ..database import get_db
 from ..models.user import User as UserModel
-from ..models.project import Project
+# Project model is not directly used here anymore for creating ProjectSchema instances
+# from ..models.project import Project 
 from ..schemas.user_profile_schemas import UserProfileUpdate, UserProfileResponse, UserWithProfileResponse
 from ..schemas.user_schemas import User as UserSchema
 from ..services.social_collaboration_service import SocialCollaborationService
-from ..services.enhanced_social_collaboration_service import EnhancedSocialCollaborationService
-from ..crud import user_crud, notification_crud
+from ..crud import user_crud, notification_crud, project_crud # Added project_crud
 from .. import crud
 from ..schemas.notification_schemas import NotificationCreate
 from ..auth.auth_dependencies import get_current_active_user
 
-# Import project schemas with fallback
-try:
-    from ..schemas.project_schemas import ProjectMatchResponse, Project as ProjectSchema, ProjectMatch
-except ImportError:
-    # Fallback project schemas if not available
-    class ProjectSchema(BaseModel):
-        id: int
-        name: str
-        description: Optional[str] = None
-        required_skills: List[str] = []
-        owner_id: int
-        created_at: datetime
-        
-        class Config:
-            from_attributes = True  # Updated for Pydantic v2
+from sqlalchemy import or_ # For ORM queries in routes if needed, though logic is in service
 
-    class ProjectMatch(BaseModel):
-        project: ProjectSchema
-        matching_skills: List[str]
-        missing_skills: List[str]
-        
-        class Config:
-            from_attributes = True
+# Import project schemas
+from ..schemas.project_schemas import ProjectMatchResponse, Project as ProjectSchema, ProjectMatch
+from ..schemas.user_schemas import User as UserResponseSchema
+from ..schemas.communication_schemas import MessageCreate, MessageResponse, ConversationResponse # Communication schemas
 
-    class ProjectMatchResponse(BaseModel):
-        matches: List[ProjectMatch]
-        total: int
+
+# Define a response model for networking opportunities
+class NetworkingOpportunityDetail(BaseModel):
+    name: str
+    # bio: Optional[str] = None # Add more fields as needed for frontend
+    # linkedin_url: Optional[str] = None
+
+class NetworkingOpportunity(BaseModel):
+    user: UserResponseSchema # Use the existing User schema for the user part
+    score: int
+    reasons: List[str]
+    details: NetworkingOpportunityDetail
+
+class NetworkingOpportunitiesResponse(BaseModel):
+    opportunities: List[NetworkingOpportunity]
+    total: int
+
 
 # Mock permission check - can be removed if not used by new endpoints or replaced by actual RBAC
 def require_permission(permission: str, user: UserModel):
@@ -428,38 +425,48 @@ async def get_project_matches(
     # We'll use a default list. The mock get_user above already provides skills.
     user_skills = []
     if hasattr(user_entity, 'skills') and user_entity.skills:
-        user_skills = user_entity.skills
-    elif not hasattr(user_entity, 'skills'): # If the object truly has no skills attr
-        # Fallback to some default skills if even the mock User didn't get skills
-        # This case should ideally be covered by the mock User definition in ImportError
+        # Skills in User model might be a JSON string, or already parsed list.
+        # Assuming User model's skills attribute is List[str] or parsed by User schema
+        if isinstance(user_entity.skills, str):
+            try:
+                user_skills = json.loads(user_entity.skills)
+            except json.JSONDecodeError:
+                user_skills = [] # Fallback for malformed JSON
+        elif isinstance(user_entity.skills, list):
+            user_skills = user_entity.skills
+        else:
+            user_skills = []
+    else: # If the object truly has no skills attr or it's None/empty
         user_skills = ["python", "react"] # Default if no skills found on user object
 
-    # Mock project data
-    mock_projects_data = [
-        {"id": 1, "name": "AI Chatbot", "description": "A chatbot for customer service", "required_skills": ["python", "nlp", "machine learning"], "owner_id": 1, "created_at": datetime.utcnow()},
-        {"id": 2, "name": "E-commerce Platform", "description": "Online shopping platform", "required_skills": ["react", "nodejs", "mongodb"], "owner_id": 2, "created_at": datetime.utcnow()},
-        {"id": 3, "name": "Data Analytics Dashboard", "description": "Dashboard for visualizing data", "required_skills": ["python", "pandas", "fastapi"], "owner_id": 1, "created_at": datetime.utcnow()},
-        {"id": 4, "name": "Mobile Game", "description": "A new mobile game", "required_skills": ["unity", "csharp"], "owner_id": 3, "created_at": datetime.utcnow()},
-        {"id": 5, "name": "NLP Research", "description": "Research project on NLP", "required_skills": ["python", "pytorch", "nlp"], "owner_id": 1, "created_at": datetime.utcnow()},
-    ]
-
-    # Convert mock data to ProjectSchema.
-    # In a real scenario, these would be fetched from project_crud.get_projects(db) or similar
-    # And would likely already be Project model instances, then converted to ProjectSchema for response.
-    # For now, we create ProjectSchema instances directly from dicts.
-    all_projects = [ProjectSchema(**p) for p in mock_projects_data]
+    # Fetch projects from the database using the project_crud
+    db_projects = project_crud.get_projects(db, limit=1000) # Adjust limit as necessary
 
     matches = []
-    for project in all_projects:
-        project_req_skills_set = set(s.lower() for s in project.required_skills)
-        user_skills_set = set(s.lower() for s in user_skills)
+    for project_model in db_projects:
+        # Ensure project_model.required_skills is a list of strings
+        # The Project model stores required_skills as JSON, so it might be string or already parsed by SQLAlchemy type decorator/schema
+        project_req_skills_list = []
+        if isinstance(project_model.required_skills, str):
+            try:
+                project_req_skills_list = json.loads(project_model.required_skills)
+            except json.JSONDecodeError:
+                project_req_skills_list = [] # Malformed JSON
+        elif isinstance(project_model.required_skills, list):
+            project_req_skills_list = project_model.required_skills
+        
+        project_req_skills_set = set(s.lower() for s in project_req_skills_list if isinstance(s, str))
+        user_skills_set = set(s.lower() for s in user_skills if isinstance(s, str))
 
         matching_skills = list(user_skills_set.intersection(project_req_skills_set))
         missing_skills = list(project_req_skills_set.difference(user_skills_set))
 
         if matching_skills: # Consider it a match if there's at least one skill in common
+            # Convert the SQLAlchemy Project model to a Pydantic ProjectSchema
+            # This handles the conversion of JSON fields like technologiesUsed and required_skills if they are strings
+            project_schema = ProjectSchema.model_validate(project_model)
             match_data = {
-                "project": project,
+                "project": project_schema,
                 "matching_skills": matching_skills,
                 "missing_skills": missing_skills
             }
@@ -676,257 +683,166 @@ async def give_kudos_to_user(
     return {"message": "Kudos given successfully", "kudos_count": user.kudos_count}
 
 
-# Enhanced Social Collaboration Endpoints
+@router.get("/users/{user_id}/networking-opportunities", response_model=NetworkingOpportunitiesResponse)
+async def get_networking_opportunities_for_user(
+    user_id: int,
+    limit: int = Query(10, ge=1, le=100, description="Number of opportunities to return"),
+    db: Session = Depends(get_db),
+    current_user: UserModel = Depends(get_current_active_user) # Ensure user is authenticated
+):
+    """
+    Get networking opportunities for a given user.
+    Requires the authenticated user to be the user_id in the path or an admin (not implemented yet).
+    """
+    if current_user.id != user_id:
+        # Add RBAC check here if admins should be allowed to see this for other users
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to access this resource")
 
-# Real Project Data Endpoints
-@router.post("/projects", response_model=Dict[str, Any])
-async def create_collaboration_project(
-    project_data: Dict[str, Any],
+    service = SocialCollaborationService(db)
+    opportunities_data = service.get_networking_opportunities(user_id=user_id, limit=limit)
+
+    # Convert user models in opportunities_data to UserResponseSchema
+    processed_opportunities = []
+    for opp_data in opportunities_data:
+        user_model = opp_data["user"]
+        # user_response = UserResponseSchema.from_orm(user_model) # old pydantic v1
+        user_response = UserResponseSchema.model_validate(user_model) # pydantic v2
+        processed_opportunities.append(NetworkingOpportunity(
+            user=user_response,
+            score=opp_data["score"],
+            reasons=opp_data["reasons"],
+            details=NetworkingOpportunityDetail(**opp_data["details"])
+        ))
+
+    return NetworkingOpportunitiesResponse(
+        opportunities=processed_opportunities,
+        total=len(processed_opportunities)
+    )
+
+# --- Communication Endpoints ---
+
+@router.post("/messages", response_model=MessageResponse, status_code=status.HTTP_201_CREATED)
+async def send_new_message(
+    message_data: MessageCreate,
     db: Session = Depends(get_db),
     current_user: UserModel = Depends(get_current_active_user)
 ):
-    """Create a new collaboration project with real data"""
+    """
+    Send a message to another user.
+    """
+    service = SocialCollaborationService(db)
     try:
-        enhanced_service = EnhancedSocialCollaborationService(db)
-        project = enhanced_service.create_collaboration_project(current_user.id, project_data)
+        # The service method `send_message` expects sender_id and message_data (which includes receiver_id)
+        created_message_model = service.send_message(sender_id=current_user.id, message_data=message_data)
         
-        return {
-            "success": True,
-            "message": "Project created successfully",
-            "project": {
-                "id": project.id,
-                "name": project.name,
-                "description": project.description,
-                "category": project.category,
-                "status": project.status.value,
-                "created_at": project.created_at.isoformat()
+        # Enrich with sender details for the response
+        sender_details_for_response = None
+        if created_message_model.sender: # Sender should always exist
+             sender_details_for_response = {
+                "id": created_message_model.sender.id,
+                "username": created_message_model.sender.username,
+                "first_name": created_message_model.sender.first_name,
+                "last_name": created_message_model.sender.last_name,
             }
-        }
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
 
-
-@router.get("/projects/matches", response_model=Dict[str, Any])
-async def get_real_project_matches(
-    limit: int = Query(10, ge=1, le=50),
-    db: Session = Depends(get_db),
-    current_user: UserModel = Depends(get_current_active_user)
-):
-    """Get real project matches based on user skills"""
-    try:
-        enhanced_service = EnhancedSocialCollaborationService(db)
-        matches = enhanced_service.get_real_project_matches(current_user.id, limit)
-        
-        return {
-            "matches": matches,
-            "total": len(matches)
-        }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@router.post("/projects/{project_id}/apply", response_model=Dict[str, Any])
-async def apply_to_project(
-    project_id: int,
-    application_data: Dict[str, Any],
-    db: Session = Depends(get_db),
-    current_user: UserModel = Depends(get_current_active_user)
-):
-    """Apply to join a collaboration project"""
-    try:
-        enhanced_service = EnhancedSocialCollaborationService(db)
-        application = enhanced_service.apply_to_project(project_id, current_user.id, application_data)
-        
-        return {
-            "success": True,
-            "message": "Application submitted successfully",
-            "application_id": application.id
-        }
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
-
-# Enhanced Peer Connection Endpoints
-@router.post("/connections/request", response_model=Dict[str, Any])
-async def send_enhanced_connection_request(
-    recipient_id: int,
-    message: Optional[str] = None,
-    db: Session = Depends(get_db),
-    current_user: UserModel = Depends(get_current_active_user)
-):
-    """Send an enhanced connection request with optional message"""
-    try:
-        enhanced_service = EnhancedSocialCollaborationService(db)
-        connection = enhanced_service.send_peer_connection_request(
-            current_user.id, recipient_id, message
+        return MessageResponse(
+            id=created_message_model.id,
+            sender_id=created_message_model.sender_id,
+            receiver_id=created_message_model.receiver_id,
+            content=created_message_model.content,
+            timestamp=created_message_model.timestamp,
+            is_read=created_message_model.is_read,
+            sender=sender_details_for_response # Pass the dict here, Pydantic will validate
         )
-        
-        return {
-            "success": True,
-            "message": "Connection request sent successfully",
-            "connection_id": connection.id,
-            "status": connection.status.value
-        }
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except Exception as e: # Catch other potential errors
+        # Log the exception e
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Could not send message.")
 
 
-@router.post("/connections/{connection_id}/accept", response_model=Dict[str, Any])
-async def accept_enhanced_connection_request(
-    connection_id: int,
-    db: Session = Depends(get_db),
-    current_user: UserModel = Depends(get_current_active_user)
-):
-    """Accept a connection request"""
-    try:
-        enhanced_service = EnhancedSocialCollaborationService(db)
-        connection = enhanced_service.accept_connection_request(connection_id, current_user.id)
-        
-        return {
-            "success": True,
-            "message": "Connection request accepted",
-            "connection_id": connection.id,
-            "status": connection.status.value
-        }
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-# Peer Messaging Endpoints
-@router.post("/messages/{recipient_id}", response_model=Dict[str, Any])
-async def send_peer_message(
-    recipient_id: int,
-    message_data: Dict[str, Any],
-    db: Session = Depends(get_db),
-    current_user: UserModel = Depends(get_current_active_user)
-):
-    """Send a message to a connected peer"""
-    try:
-        enhanced_service = EnhancedSocialCollaborationService(db)
-        
-        from ..models.social_collaboration import MessageType
-        message_type = MessageType.TEXT
-        if message_data.get("message_type") == "project_invite":
-            message_type = MessageType.PROJECT_INVITE
-        elif message_data.get("message_type") == "meeting_request":
-            message_type = MessageType.MEETING_REQUEST
-        
-        message = enhanced_service.send_peer_message(
-            current_user.id,
-            recipient_id,
-            message_data["content"],
-            message_type,
-            message_data.get("metadata")
-        )
-        
-        return {
-            "id": message.id,
-            "sender_id": message.sender_id,
-            "content": message.content,
-            "message_type": message.message_type.value,
-            "metadata": message.metadata,
-            "created_at": message.created_at.isoformat(),
-            "is_read": message.is_read
-        }
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@router.get("/messages/{peer_id}", response_model=Dict[str, Any])
-async def get_peer_messages(
+@router.get("/messages/{peer_id}", response_model=List[MessageResponse])
+async def get_messages_with_peer(
     peer_id: int,
-    limit: int = Query(50, ge=1, le=100),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(50, ge=1, le=200),
     db: Session = Depends(get_db),
     current_user: UserModel = Depends(get_current_active_user)
 ):
-    """Get messages with a connected peer"""
-    try:
-        enhanced_service = EnhancedSocialCollaborationService(db)
-        messages = enhanced_service.get_peer_messages(current_user.id, peer_id, limit)
-        
-        # Mark messages as read
-        if messages:
-            connection_id = messages[0].connection_id if messages else None
-            if connection_id:
-                enhanced_service.mark_messages_as_read(current_user.id, connection_id)
-        
-        message_list = []
-        for msg in messages:
-            message_list.append({
-                "id": msg.id,
-                "sender_id": msg.sender_id,
-                "content": msg.content,
-                "message_type": msg.message_type.value,
-                "metadata": msg.metadata,
-                "created_at": msg.created_at.isoformat(),
-                "is_read": msg.is_read
-            })
-        
-        return {
-            "messages": message_list,
-            "connection_status": "connected",
-            "total": len(message_list)
-        }
-    except Exception as e:
-        return {
-            "messages": [],
-            "connection_status": "not_connected",
-            "total": 0
-        }
+    """
+    Get conversation history with a specific peer.
+    Messages received by the current user in this fetch will be marked as read.
+    """
+    service = SocialCollaborationService(db)
+    if current_user.id == peer_id:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Cannot get conversation with oneself.")
+
+    message_models = service.get_conversation_history(user1_id=current_user.id, user2_id=peer_id, skip=skip, limit=limit)
+    
+    response_messages = []
+    for msg_model in message_models:
+        sender_details = None
+        # Sender object might not be eagerly loaded by default depending on SQLAlchemy relationship config.
+        # Explicitly fetching or ensuring it's loaded by the service/CRUD is better.
+        # For now, assume msg_model.sender is available if sender_id exists.
+        if msg_model.sender: # Check if sender relationship is loaded
+            sender_details = {
+                "id": msg_model.sender.id,
+                "username": msg_model.sender.username,
+                "first_name": msg_model.sender.first_name,
+                "last_name": msg_model.sender.last_name,
+            }
+        elif msg_model.sender_id: # Fallback if sender object not loaded, fetch manually
+            sender_user = user_crud.get_user(db, user_id=msg_model.sender_id)
+            if sender_user:
+                sender_details = {
+                    "id": sender_user.id,
+                    "username": sender_user.username,
+                    "first_name": sender_user.first_name,
+                    "last_name": sender_user.last_name,
+                }
+
+        response_messages.append(MessageResponse(
+            id=msg_model.id,
+            sender_id=msg_model.sender_id,
+            receiver_id=msg_model.receiver_id,
+            content=msg_model.content,
+            timestamp=msg_model.timestamp,
+            is_read=msg_model.is_read, # is_read status reflects state *after* service call
+            sender=sender_details
+        ))
+    return response_messages
 
 
-# Enhanced Peer Matching Endpoints
-@router.get("/peer-matches/enhanced", response_model=Dict[str, Any])
-async def get_enhanced_peer_matches(
-    match_type: str = Query("skills", regex="^(skills|learning_partner)$"),
-    limit: int = Query(10, ge=1, le=50),
+@router.get("/conversations", response_model=List[ConversationResponse])
+async def list_my_conversations(
+    limit: int = Query(20, ge=1, le=100),
     db: Session = Depends(get_db),
     current_user: UserModel = Depends(get_current_active_user)
 ):
-    """Get enhanced peer matches with improved algorithms"""
-    try:
-        enhanced_service = EnhancedSocialCollaborationService(db)
-        matches = enhanced_service.get_enhanced_peer_matches(current_user.id, match_type, limit)
-        
-        return {
-            "matches": matches,
-            "match_type": match_type,
-            "total": len(matches)
-        }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    """
+    List all active conversations for the current user.
+    """
+    service = SocialCollaborationService(db)
+    # The service method list_user_conversations already returns List[ConversationResponse]
+    # So, direct pass-through is possible if the service constructs the full ConversationResponse correctly.
+    # The current service implementation for list_user_conversations might need adjustment
+    # to perfectly match the ConversationResponse schema (especially the `messages` part).
+    return service.list_user_conversations(user_id=current_user.id, limit=limit)
 
-
-# Skill Endorsement Endpoints
-@router.post("/skills/endorse", response_model=Dict[str, Any])
-async def endorse_user_skill(
-    endorsement_data: Dict[str, Any],
+@router.post("/messages/{peer_id}/read", status_code=status.HTTP_204_NO_CONTENT)
+async def mark_messages_from_peer_as_read(
+    peer_id: int,
     db: Session = Depends(get_db),
     current_user: UserModel = Depends(get_current_active_user)
 ):
-    """Endorse a skill for another user"""
-    try:
-        enhanced_service = EnhancedSocialCollaborationService(db)
-        endorsement = enhanced_service.endorse_skill(
-            current_user.id,
-            endorsement_data["endorsed_user_id"],
-            endorsement_data["skill_name"],
-            endorsement_data.get("proficiency_level"),
-            endorsement_data.get("comment")
-        )
-        
-        return {
-            "success": True,
-            "message": "Skill endorsed successfully",
-            "endorsement_id": endorsement.id
-        }
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    """
+    Mark all unread messages received from peer_id as read.
+    """
+    service = SocialCollaborationService(db)
+    if current_user.id == peer_id:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid operation for oneself.")
+
+    updated_count = service.mark_conversation_as_read(current_user_id=current_user.id, peer_user_id=peer_id)
+    # Optionally return updated_count in a JSON response if 204 is not desired.
+    return None # For 204 response

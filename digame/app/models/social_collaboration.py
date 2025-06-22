@@ -70,7 +70,7 @@ class PeerMessage(Base):
     sender_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     message_type = Column(Enum(MessageType), default=MessageType.TEXT, nullable=False)
     content = Column(Text, nullable=False)
-    metadata = Column(JSON, nullable=True)  # For file attachments, meeting details, etc.
+    message_metadata = Column(JSON, nullable=True)  # For file attachments, meeting details, etc.
     is_read = Column(Boolean, default=False, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     

@@ -1,497 +1,394 @@
 """
-Enhanced Social Collaboration Service
-Real project data integration, messaging, and improved peer matching
+Enhanced Social Collaboration Service with real project data integration,
+peer messaging system, improved matching algorithms, skill endorsements,
+and comprehensive conversation management.
 """
 
+import json # Added json
 from sqlalchemy.orm import Session
-from typing import List, Optional, Dict, Any
-from datetime import datetime, timedelta
-import json
+from typing import List, Optional, Dict, Any, Set # Added Set for efficient skill comparison
+from sqlalchemy import or_, and_
+from datetime import datetime
 
-from ..models.user import User
-from ..models.social_collaboration import (
-    PeerConnection, PeerMessage, CollaborationProject, ProjectMember, 
-    ProjectApplication, SkillEndorsement, MentorshipConnection,
-    ConnectionStatus, MessageType, ProjectStatus
-)
-from ..crud import user_crud
-from ..schemas.notification_schemas import NotificationCreate
-from ..crud import notification_crud
+from ..models.user import User, UserProfile
+# Assuming user_crud contains get_user_profile and get_users
+from ..crud import user_crud, project_crud, communication_crud # Added communication_crud
+from ..schemas.communication_schemas import MessageCreate, MessageResponse, ConversationResponse, MessageUser
+from ..models.communication import Message as MessageModel # Alias to avoid confusion
 
-
-class EnhancedSocialCollaborationService:
+class SocialCollaborationService:
     def __init__(self, db: Session):
         self.db = db
 
-    # Real Project Data Integration
-    def create_collaboration_project(self, owner_id: int, project_data: Dict[str, Any]) -> CollaborationProject:
-        """Create a new collaboration project with real data"""
-        project = CollaborationProject(
-            name=project_data["name"],
-            description=project_data["description"],
-            category=project_data["category"],
-            owner_id=owner_id,
-            required_skills=project_data.get("required_skills", []),
-            optional_skills=project_data.get("optional_skills", []),
-            difficulty_level=project_data["difficulty_level"],
-            estimated_duration=project_data.get("estimated_duration"),
-            time_commitment=project_data.get("time_commitment"),
-            max_team_size=project_data.get("max_team_size", 10),
-            repository_url=project_data.get("repository_url"),
-            project_url=project_data.get("project_url"),
-            documentation_url=project_data.get("documentation_url"),
-            tags=project_data.get("tags", []),
-            target_completion_date=project_data.get("target_completion_date")
-        )
-        
-        self.db.add(project)
-        self.db.commit()
-        self.db.refresh(project)
-        
-        # Add owner as first team member
-        self.add_project_member(project.id, owner_id, "Project Lead", project_data.get("required_skills", []))
-        
-        return project
+    def _get_user_skills(self, user_id: int) -> Optional[Set[str]]:
+        """Helper to fetch and parse user skills into a set."""
+        profile = user_crud.get_user_profile(self.db, user_id=user_id)
+        if not profile or not profile.skills:
+            return set() # Return empty set if no profile or no skills
 
-    def get_real_project_matches(self, user_id: int, limit: int = 10) -> List[Dict[str, Any]]:
-        """Get real project matches based on user skills and preferences"""
-        user = user_crud.get_user(self.db, user_id)
-        if not user:
-            return []
-
-        # Get user skills (assuming they're stored as JSON in user profile)
-        user_skills = self._get_user_skills(user_id)
-        if not user_skills:
-            return []
-
-        # Query active projects that are recruiting
-        projects = self.db.query(CollaborationProject).filter(
-            CollaborationProject.status == ProjectStatus.RECRUITING,
-            CollaborationProject.owner_id != user_id
-        ).all()
-
-        matches = []
-        for project in projects:
-            # Calculate skill match
-            required_skills = set(skill.lower() for skill in project.required_skills)
-            user_skills_set = set(skill.lower() for skill in user_skills)
-            
-            matching_skills = list(required_skills.intersection(user_skills_set))
-            missing_skills = list(required_skills.difference(user_skills_set))
-            
-            # Calculate match score
-            if required_skills:
-                match_score = len(matching_skills) / len(required_skills) * 100
-            else:
-                match_score = 0
-
-            # Only include if there's some skill overlap or it's beginner-friendly
-            if matching_skills or project.difficulty_level == "Beginner":
-                # Get current team size
-                current_team_size = self.db.query(ProjectMember).filter(
-                    ProjectMember.project_id == project.id,
-                    ProjectMember.is_active == True
-                ).count()
-
-                matches.append({
-                    "project": {
-                        "id": project.id,
-                        "name": project.name,
-                        "description": project.description,
-                        "category": project.category,
-                        "difficulty_level": project.difficulty_level,
-                        "estimated_duration": project.estimated_duration,
-                        "time_commitment": project.time_commitment,
-                        "current_team_size": current_team_size,
-                        "max_team_size": project.max_team_size,
-                        "progress_percentage": project.progress_percentage,
-                        "repository_url": project.repository_url,
-                        "project_url": project.project_url,
-                        "tags": project.tags,
-                        "created_at": project.created_at.isoformat()
-                    },
-                    "matching_skills": matching_skills,
-                    "missing_skills": missing_skills,
-                    "match_score": round(match_score, 1),
-                    "urgency": "high" if current_team_size < 3 else "medium"
-                })
-
-        # Sort by match score and return top matches
-        matches.sort(key=lambda x: x["match_score"], reverse=True)
-        return matches[:limit]
-
-    def apply_to_project(self, project_id: int, applicant_id: int, application_data: Dict[str, Any]) -> ProjectApplication:
-        """Apply to join a collaboration project"""
-        application = ProjectApplication(
-            project_id=project_id,
-            applicant_id=applicant_id,
-            message=application_data.get("message"),
-            proposed_role=application_data.get("proposed_role"),
-            relevant_skills=application_data.get("relevant_skills", [])
-        )
-        
-        self.db.add(application)
-        self.db.commit()
-        self.db.refresh(application)
-        
-        # Notify project owner
-        project = self.db.query(CollaborationProject).filter(
-            CollaborationProject.id == project_id
-        ).first()
-        
-        if project:
-            applicant = user_crud.get_user(self.db, applicant_id)
-            notification_data = NotificationCreate(
-                message=f"{applicant.first_name or 'Someone'} applied to join your project '{project.name}'",
-                type="project_application"
-            )
+        # UserProfile.skills is JSON, schema UserProfileBase suggests List[Dict[str, str]]
+        # e.g., [{"skill": "Python", "proficiency": "Advanced"}]
+        skills_data = profile.skills
+        if isinstance(skills_data, str): # If stored as JSON string in DB
             try:
-                notification_crud.create_notification(
-                    db=self.db, 
-                    notification=notification_data, 
-                    user_id=project.owner_id
-                )
-            except Exception as e:
-                print(f"Could not create notification: {e}")
-        
-        return application
+                skills_list = json.loads(skills_data)
+            except json.JSONDecodeError:
+                return set()
+        elif isinstance(skills_data, list):
+            skills_list = skills_data
+        else:
+            return set()
 
-    def add_project_member(self, project_id: int, user_id: int, role: str, contributing_skills: List[str]) -> ProjectMember:
-        """Add a member to a project"""
-        member = ProjectMember(
-            project_id=project_id,
-            user_id=user_id,
-            role=role,
-            skills_contributing=contributing_skills
-        )
-        
-        self.db.add(member)
-        self.db.commit()
-        self.db.refresh(member)
-        return member
+        parsed_skills = set()
+        if isinstance(skills_list, list):
+            for item in skills_list:
+                if isinstance(item, dict) and "skill" in item and isinstance(item["skill"], str):
+                    parsed_skills.add(item["skill"].lower())
+                elif isinstance(item, str): # Support for list of strings directly
+                    parsed_skills.add(item.lower())
+        return parsed_skills
 
-    # Enhanced Peer Messaging System
-    def send_peer_connection_request(self, requester_id: int, recipient_id: int, message: str = None) -> PeerConnection:
-        """Send a connection request to another user"""
-        # Check if connection already exists
-        existing = self.db.query(PeerConnection).filter(
-            ((PeerConnection.requester_id == requester_id) & (PeerConnection.recipient_id == recipient_id)) |
-            ((PeerConnection.requester_id == recipient_id) & (PeerConnection.recipient_id == requester_id))
-        ).first()
-        
-        if existing:
-            raise ValueError("Connection already exists or pending")
-        
-        connection = PeerConnection(
-            requester_id=requester_id,
-            recipient_id=recipient_id,
-            message=message,
-            status=ConnectionStatus.PENDING
-        )
-        
-        self.db.add(connection)
-        self.db.commit()
-        self.db.refresh(connection)
-        
-        # Send notification
-        requester = user_crud.get_user(self.db, requester_id)
-        notification_data = NotificationCreate(
-            message=f"{requester.first_name or 'Someone'} sent you a connection request",
-            type="connection_request"
-        )
-        try:
-            notification_crud.create_notification(
-                db=self.db, 
-                notification=notification_data, 
-                user_id=recipient_id
-            )
-        except Exception as e:
-            print(f"Could not create notification: {e}")
-        
-        return connection
+    def _get_user_learning_goals(self, user_id: int) -> Optional[Set[str]]:
+        """Helper to fetch and parse user learning goals (JSON list in Text field) into a set."""
+        profile = user_crud.get_user_profile(self.db, user_id=user_id)
+        if not profile or not profile.learning_goals:
+            return set()
 
-    def accept_connection_request(self, connection_id: int, user_id: int) -> PeerConnection:
-        """Accept a connection request"""
-        connection = self.db.query(PeerConnection).filter(
-            PeerConnection.id == connection_id,
-            PeerConnection.recipient_id == user_id,
-            PeerConnection.status == ConnectionStatus.PENDING
-        ).first()
-        
-        if not connection:
-            raise ValueError("Connection request not found or not pending")
-        
-        connection.status = ConnectionStatus.ACCEPTED
-        connection.updated_at = datetime.utcnow()
-        
-        self.db.commit()
-        self.db.refresh(connection)
-        
-        # Notify requester
-        recipient = user_crud.get_user(self.db, user_id)
-        notification_data = NotificationCreate(
-            message=f"{recipient.first_name or 'Someone'} accepted your connection request",
-            type="connection_accepted"
-        )
-        try:
-            notification_crud.create_notification(
-                db=self.db, 
-                notification=notification_data, 
-                user_id=connection.requester_id
-            )
-        except Exception as e:
-            print(f"Could not create notification: {e}")
-        
-        return connection
+        learning_goals_data = profile.learning_goals
+        # learning_goals is Text in model, List[str] in schema. Assume JSON encoded list.
+        if isinstance(learning_goals_data, str):
+            try:
+                goals_list = json.loads(learning_goals_data)
+                if isinstance(goals_list, list):
+                    return {str(goal).lower() for goal in goals_list if isinstance(goal, (str, int, float))} # Ensure items are strings
+            except json.JSONDecodeError:
+                # If not JSON, could try splitting if it's comma-separated, or return empty.
+                # For now, assume it must be valid JSON list of strings.
+                return set()
+        elif isinstance(learning_goals_data, list): # If already parsed to list
+             return {str(goal).lower() for goal in learning_goals_data if isinstance(goal, (str, int, float))}
+        return set()
 
-    def send_peer_message(self, sender_id: int, recipient_id: int, content: str, 
-                         message_type: MessageType = MessageType.TEXT, metadata: Dict = None) -> PeerMessage:
-        """Send a message between connected peers"""
-        # Find active connection between users
-        connection = self.db.query(PeerConnection).filter(
-            ((PeerConnection.requester_id == sender_id) & (PeerConnection.recipient_id == recipient_id)) |
-            ((PeerConnection.requester_id == recipient_id) & (PeerConnection.recipient_id == sender_id)),
-            PeerConnection.status == ConnectionStatus.ACCEPTED
-        ).first()
-        
-        if not connection:
-            raise ValueError("No active connection between users")
-        
-        message = PeerMessage(
-            connection_id=connection.id,
-            sender_id=sender_id,
-            message_type=message_type,
-            content=content,
-            metadata=metadata or {}
-        )
-        
-        self.db.add(message)
-        self.db.commit()
-        self.db.refresh(message)
-        
-        # Notify recipient
-        sender = user_crud.get_user(self.db, sender_id)
-        notification_data = NotificationCreate(
-            message=f"New message from {sender.first_name or 'a connection'}",
-            type="peer_message"
-        )
-        try:
-            recipient_id_for_notification = (
-                recipient_id if connection.requester_id == sender_id 
-                else connection.requester_id
-            )
-            notification_crud.create_notification(
-                db=self.db, 
-                notification=notification_data, 
-                user_id=recipient_id_for_notification
-            )
-        except Exception as e:
-            print(f"Could not create notification: {e}")
-        
-        return message
+    def _get_user_interests(self, user_id: int) -> Set[str]:
+        """Helper to fetch and parse user interests (JSON list) into a set."""
+        profile = user_crud.get_user_profile(self.db, user_id=user_id)
+        if not profile or not profile.interests:
+            return set()
 
-    def get_peer_messages(self, user_id: int, peer_id: int, limit: int = 50) -> List[PeerMessage]:
-        """Get messages between two connected peers"""
-        connection = self.db.query(PeerConnection).filter(
-            ((PeerConnection.requester_id == user_id) & (PeerConnection.recipient_id == peer_id)) |
-            ((PeerConnection.requester_id == peer_id) & (PeerConnection.recipient_id == user_id)),
-            PeerConnection.status == ConnectionStatus.ACCEPTED
-        ).first()
-        
-        if not connection:
-            return []
-        
-        messages = self.db.query(PeerMessage).filter(
-            PeerMessage.connection_id == connection.id
-        ).order_by(PeerMessage.created_at.desc()).limit(limit).all()
-        
-        return list(reversed(messages))  # Return in chronological order
+        interests_data = profile.interests
+        if isinstance(interests_data, str): # If stored as JSON string
+            try:
+                interests_list = json.loads(interests_data)
+            except json.JSONDecodeError:
+                return set()
+        elif isinstance(interests_data, list):
+            interests_list = interests_data
+        else:
+            return set()
 
-    def mark_messages_as_read(self, user_id: int, connection_id: int):
-        """Mark messages as read for a user"""
-        self.db.query(PeerMessage).filter(
-            PeerMessage.connection_id == connection_id,
-            PeerMessage.sender_id != user_id,
-            PeerMessage.is_read == False
-        ).update({"is_read": True})
-        
-        self.db.commit()
+        if isinstance(interests_list, list):
+            return {interest.lower() for interest in interests_list if isinstance(interest, str)}
+        return set()
 
-    # Enhanced Peer Matching with Real Data
-    def get_enhanced_peer_matches(self, user_id: int, match_type: str = "skills", limit: int = 10) -> List[Dict[str, Any]]:
-        """Get enhanced peer matches with real data and improved algorithms"""
-        user = user_crud.get_user(self.db, user_id)
-        if not user:
+    def get_skill_based_matches(self, user_id: int, limit: int = 10) -> List[User]:
+        """
+        Finds users with similar skills.
+        """
+        target_user_skills = self._get_user_skills(user_id)
+        if not target_user_skills:
             return []
 
-        user_skills = self._get_user_skills(user_id)
-        if not user_skills:
-            return []
+        # Fetch candidate users.
+        # For now, fetch all other users. In a real system, apply filtering (e.g., same tenant, active).
+        # Also, user_crud.get_users() might not load profiles by default.
+        all_users = user_crud.get_users(self.db, limit=1000) # Arbitrary limit for now
 
-        # Get all potential matches (excluding already connected users)
-        connected_user_ids = self._get_connected_user_ids(user_id)
-        
-        potential_matches = self.db.query(User).filter(
-            User.id != user_id,
-            ~User.id.in_(connected_user_ids)
-        ).all()
+        candidate_matches = []
 
-        matches = []
-        for candidate in potential_matches:
-            candidate_skills = self._get_user_skills(candidate.id)
-            if not candidate_skills:
+        for candidate_user in all_users:
+            if candidate_user.id == user_id:
                 continue
 
-            # Calculate compatibility score
-            compatibility_data = self._calculate_compatibility(user_skills, candidate_skills, match_type)
+            candidate_user_skills = self._get_user_skills(candidate_user.id)
+            if not candidate_user_skills:
+                continue
+
+            common_skills = target_user_skills.intersection(candidate_user_skills)
+            match_score = len(common_skills)
+
+            if match_score > 0:
+                # Store user object and score. Consider returning a richer structure if needed.
+                candidate_matches.append({"user": candidate_user, "score": match_score})
+
+        # Sort candidates by match score
+        candidate_matches.sort(key=lambda x: x["score"], reverse=True)
+
+        # Return top N users
+        return [match["user"] for match in candidate_matches[:limit]]
+
+    def get_learning_partner_recommendations(self, user_id: int, limit: int = 10) -> List[User]:
+        """
+        Recommends learning partners based on learning goals, skills, and mentorship preferences.
+        """
+        target_user_profile = user_crud.get_user_profile(self.db, user_id=user_id)
+        if not target_user_profile:
+            return []
+
+        target_learning_goals = self._get_user_learning_goals(user_id)
+        # target_skills = self._get_user_skills(user_id) # Could be used for peer matching
+
+        if not target_learning_goals: # If user has no learning goals, difficult to recommend
+            return []
+
+        all_users = user_crud.get_users(self.db, limit=1000)
+        recommendations = []
+
+        for candidate_user in all_users:
+            if candidate_user.id == user_id:
+                continue
+
+            candidate_profile = user_crud.get_user_profile(self.db, candidate_user.id)
+            if not candidate_profile:
+                continue
+
+            score = 0
+
+            # Criteria 1: Candidate has skills matching target user's learning goals
+            candidate_skills = self._get_user_skills(candidate_user.id)
+            if candidate_skills:
+                matching_goal_skills = target_learning_goals.intersection(candidate_skills)
+                score += len(matching_goal_skills) * 2 # Higher weight for providing skills
+
+            # Criteria 2: Candidate is willing to mentor on topics related to target's learning goals
+            if candidate_profile.mentorship_preferences and isinstance(candidate_profile.mentorship_preferences, dict):
+                if candidate_profile.mentorship_preferences.get("willing_to_mentor"):
+                    mentor_topics_raw = candidate_profile.mentorship_preferences.get("topics", [])
+                    if isinstance(mentor_topics_raw, list):
+                        mentor_topics = {topic.lower() for topic in mentor_topics_raw if isinstance(topic, str)}
+                        if target_learning_goals.intersection(mentor_topics):
+                            score += 3 # Higher weight for mentorship alignment
+
+            # Criteria 3: Candidate has similar learning goals (peer learning)
+            candidate_learning_goals = self._get_user_learning_goals(candidate_user.id)
+            if candidate_learning_goals:
+                common_goals = target_learning_goals.intersection(candidate_learning_goals)
+                score += len(common_goals)
+
+            if score > 0:
+                recommendations.append({"user": candidate_user, "score": score})
+
+        recommendations.sort(key=lambda x: x["score"], reverse=True)
+        return [rec["user"] for rec in recommendations[:limit]]
+
+    def get_networking_opportunities(self, user_id: int, limit: int = 10) -> List[Dict[str, Any]]:
+        """
+        Identifies potential networking opportunities for a user based on various factors.
+        Returns a list of dictionaries, each containing a 'user' and a 'reason' for the match.
+        """
+        current_user_profile = user_crud.get_user_profile(self.db, user_id=user_id)
+        if not current_user_profile:
+            return []
+
+        current_user_skills = self._get_user_skills(user_id)
+        current_user_learning_goals = self._get_user_learning_goals(user_id)
+        current_user_interests = self._get_user_interests(user_id)
+        current_user_mentorship_prefs = current_user_profile.mentorship_preferences or {}
+        current_user_willing_to_mentor_topics = set()
+        if isinstance(current_user_mentorship_prefs.get("topics"), list) and current_user_mentorship_prefs.get("willing_to_mentor"):
+            current_user_willing_to_mentor_topics = {topic.lower() for topic in current_user_mentorship_prefs["topics"]}
+
+
+        all_users = user_crud.get_users(self.db, limit=1000) # Consider pagination/filtering
+        opportunities = []
+
+        for candidate_user_model in all_users:
+            if candidate_user_model.id == user_id:
+                continue
+
+            candidate_profile = user_crud.get_user_profile(self.db, candidate_user_model.id)
+            if not candidate_profile:
+                continue
+
+            score = 0
+            reasons = []
+
+            candidate_skills = self._get_user_skills(candidate_user_model.id)
+            candidate_learning_goals = self._get_user_learning_goals(candidate_user_model.id)
+            candidate_interests = self._get_user_interests(candidate_user_model.id)
+            candidate_mentorship_prefs = candidate_profile.mentorship_preferences or {}
+            candidate_willing_to_mentor_topics = set()
+            if isinstance(candidate_mentorship_prefs.get("topics"), list) and candidate_mentorship_prefs.get("willing_to_mentor"):
+                 candidate_willing_to_mentor_topics = {topic.lower() for topic in candidate_mentorship_prefs["topics"]}
+
+            # 1. Complementary Skills
+            if current_user_learning_goals and candidate_skills:
+                complementary = current_user_learning_goals.intersection(candidate_skills)
+                if complementary:
+                    score += len(complementary) * 2
+                    reasons.append(f"Has skills you want to learn: {', '.join(complementary)}")
+
+            # 2. Shared Interests
+            if current_user_interests and candidate_interests:
+                shared_interests = current_user_interests.intersection(candidate_interests)
+                if shared_interests:
+                    score += len(shared_interests)
+                    reasons.append(f"Shares interests: {', '.join(shared_interests)}")
+
+            # 3. Mentorship Potential
+            # Candidate can mentor current user
+            if current_user_learning_goals and candidate_willing_to_mentor_topics:
+                mentorship_match = current_user_learning_goals.intersection(candidate_willing_to_mentor_topics)
+                if mentorship_match:
+                    score += 3
+                    reasons.append(f"Can mentor you in: {', '.join(mentorship_match)}")
             
-            if compatibility_data["score"] > 0:
-                # Get skill endorsements for credibility
-                endorsements = self._get_skill_endorsements(candidate.id)
-                
-                matches.append({
-                    "id": candidate.id,
-                    "name": f"{candidate.first_name or ''} {candidate.last_name or ''}".strip() or candidate.username,
-                    "title": getattr(candidate, 'title', 'Professional'),
-                    "company": getattr(candidate, 'company', 'Independent'),
-                    "location": getattr(candidate, 'location', 'Remote'),
-                    "initials": self._get_initials(candidate),
-                    "compatibilityScore": compatibility_data["score"],
-                    "sharedSkills": compatibility_data["shared_skills"],
-                    "complementarySkills": compatibility_data["complementary_skills"],
-                    "skillGaps": compatibility_data["skill_gaps"],
-                    "endorsements": len(endorsements),
-                    "matchReason": compatibility_data["reason"],
-                    "collaborationPotential": self._assess_collaboration_potential(compatibility_data["score"])
+            # Current user can mentor candidate
+            if candidate_learning_goals and current_user_willing_to_mentor_topics:
+                can_mentor_candidate_match = candidate_learning_goals.intersection(current_user_willing_to_mentor_topics)
+                if can_mentor_candidate_match:
+                    score += 1 # Lower score as it's not a direct benefit to current user but good for network
+                    reasons.append(f"You can mentor them in: {', '.join(can_mentor_candidate_match)}")
+
+
+            # 4. Location Match
+            if current_user_profile.location and candidate_profile.location and \
+               current_user_profile.location.lower() == candidate_profile.location.lower():
+                score += 1
+                reasons.append(f"Located in the same area: {current_user_profile.location}")
+
+            # 5. Project Collaboration Potential (simplified: candidate owns project needing current user's skills)
+            # This is a basic check. A more advanced version would check project members, etc.
+            if current_user_skills:
+                candidate_owned_projects = project_crud.get_projects_by_user(self.db, user_id=candidate_user_model.id, limit=100)
+                for project in candidate_owned_projects:
+                    project_req_skills_list = []
+                    if isinstance(project.required_skills, str):
+                        try: project_req_skills_list = json.loads(project.required_skills)
+                        except: pass
+                    elif isinstance(project.required_skills, list):
+                        project_req_skills_list = project.required_skills
+                    
+                    project_req_skills_set = {s.lower() for s in project_req_skills_list if isinstance(s, str)}
+                    
+                    if current_user_skills.intersection(project_req_skills_set):
+                        score += 2
+                        reasons.append(f"Owns project '{project.name or project.title}' needing your skills.")
+                        break # Avoid multiple scores for multiple projects from same user for this simple check
+
+            if score > 0:
+                opportunities.append({
+                    "user": candidate_user_model, # Or a UserSchema representation
+                    "score": score,
+                    "reasons": reasons,
+                    # Include specific details for frontend if needed
+                    "details": {
+                        "name": f"{candidate_user_model.first_name or ''} {candidate_user_model.last_name or ''}".strip() or candidate_user_model.username,
+                        # Potentially add candidate_profile.bio, candidate_profile.linkedin_url etc.
+                    }
                 })
 
-        # Sort by compatibility score
-        matches.sort(key=lambda x: x["compatibilityScore"], reverse=True)
-        return matches[:limit]
+        opportunities.sort(key=lambda x: x["score"], reverse=True)
+        return opportunities[:limit]
 
-    def endorse_skill(self, endorser_id: int, endorsed_user_id: int, skill_name: str, 
-                     proficiency_level: str = None, comment: str = None) -> SkillEndorsement:
-        """Endorse a skill for another user"""
-        # Check if endorsement already exists
-        existing = self.db.query(SkillEndorsement).filter(
-            SkillEndorsement.endorser_id == endorser_id,
-            SkillEndorsement.endorsed_user_id == endorsed_user_id,
-            SkillEndorsement.skill_name == skill_name
-        ).first()
+    # --- Communication Methods ---
+
+    def send_message(self, sender_id: int, message_data: MessageCreate) -> MessageModel:
+        """
+        Sends a message from sender_id to receiver_id.
+        """
+        # Basic validation: ensure receiver exists
+        receiver_user = user_crud.get_user(self.db, user_id=message_data.receiver_id)
+        if not receiver_user:
+            raise ValueError("Receiver user not found.") # Or a custom exception
         
-        if existing:
-            raise ValueError("Skill already endorsed by this user")
-        
-        endorsement = SkillEndorsement(
-            endorser_id=endorser_id,
-            endorsed_user_id=endorsed_user_id,
-            skill_name=skill_name,
-            proficiency_level=proficiency_level,
-            comment=comment
+        # Ensure sender is not sending to themselves (optional, based on requirements)
+        if sender_id == message_data.receiver_id:
+            raise ValueError("Cannot send messages to yourself.")
+
+        return communication_crud.create_message(db=self.db, message=message_data, sender_id=sender_id)
+
+    def get_conversation_history(self, user1_id: int, user2_id: int, skip: int = 0, limit: int = 50) -> List[MessageModel]:
+        """
+        Retrieves the message history between two users.
+        Marks retrieved messages as read for user1_id if they are the receiver.
+        """
+        messages = communication_crud.get_messages_between_users(
+            db=self.db, user1_id=user1_id, user2_id=user2_id, skip=skip, limit=limit
         )
         
-        self.db.add(endorsement)
-        self.db.commit()
-        self.db.refresh(endorsement)
+        # Mark messages as read where user1_id is the receiver
+        # This is a simplified approach. In a real system, you might only mark messages
+        # up to a certain point or based on client acknowledgement.
+        ids_to_mark_read = [
+            m.id for m in messages if m.receiver_id == user1_id and not m.is_read
+        ]
+        if ids_to_mark_read:
+            # This updates all messages from user2_id to user1_id that are unread.
+            # A more precise way would be to update only the fetched `ids_to_mark_read`.
+            communication_crud.mark_messages_as_read(db=self.db, receiver_id=user1_id, sender_id=user2_id)
+            # Refresh messages state (is_read) if needed, or rely on frontend to update.
+            # For simplicity, we assume the mark_messages_as_read is sufficient for subsequent fetches.
+
+        return messages
+
+    def list_user_conversations(self, user_id: int, limit: int = 20) -> List[ConversationResponse]:
+        """
+        Lists all conversations for a user, showing the peer and last message details.
+        """
+        raw_conversations = communication_crud.get_conversations(db=self.db, user_id=user_id, limit=limit)
         
-        # Notify endorsed user
-        endorser = user_crud.get_user(self.db, endorser_id)
-        notification_data = NotificationCreate(
-            message=f"{endorser.first_name or 'Someone'} endorsed your {skill_name} skill",
-            type="skill_endorsement"
-        )
-        try:
-            notification_crud.create_notification(
-                db=self.db, 
-                notification=notification_data, 
-                user_id=endorsed_user_id
+        processed_conversations = []
+        for raw_convo in raw_conversations:
+            peer_user_model = user_crud.get_user(self.db, user_id=raw_convo["peer_user_id"])
+            if not peer_user_model:
+                continue # Should not happen if DB is consistent
+
+            peer_user_schema = MessageUser.model_validate(peer_user_model)
+            
+            # Fetch last 1 message for the preview (or use raw_convo data)
+            # For a full ConversationResponse, we might need more messages, but schema has `messages: list[MessageResponse]`
+            # The current communication_crud.get_conversations only returns last message *content*, not full MessageResponse.
+            # This part needs alignment or simplification of ConversationResponse.
+            # For now, let's use the last message content from raw_convo and make messages list empty for this high-level view.
+
+            # Simplified: Get last message object to create a MessageResponse for the preview.
+            last_msg_obj = self.db.query(MessageModel).filter(
+                or_(
+                    and_(MessageModel.sender_id == user_id, MessageModel.receiver_id == raw_convo["peer_user_id"]),
+                    and_(MessageModel.sender_id == raw_convo["peer_user_id"], MessageModel.receiver_id == user_id)
+                )
+            ).order_by(MessageModel.timestamp.desc()).first()
+            
+            last_message_resp = None
+            if last_msg_obj:
+                 sender_details = user_crud.get_user(self.db, user_id=last_msg_obj.sender_id)
+                 sender_schema = MessageUser.model_validate(sender_details) if sender_details else None
+                 last_message_resp = MessageResponse(
+                    id=last_msg_obj.id,
+                    sender_id=last_msg_obj.sender_id,
+                    receiver_id=last_msg_obj.receiver_id,
+                    content=last_msg_obj.content,
+                    timestamp=last_msg_obj.timestamp,
+                    is_read=last_msg_obj.is_read,
+                    sender=sender_schema
+                )
+
+            conversation_resp = ConversationResponse(
+                peer_user=peer_user_schema,
+                # messages=[last_message_resp] if last_message_resp else [], # Schema wants list[MessageResponse]
+                # For a list of conversations, 'messages' might be just the *last* message.
+                # If ConversationResponse.messages is meant to be the *full* history, this endpoint is misnamed.
+                # Assuming it's a summary, so providing only the last message.
+                messages= [last_message_resp] if last_message_resp else [], # For now, just the last one.
+                last_message_timestamp=raw_convo["last_message_timestamp"],
+                unread_count=raw_convo["unread_count"]
             )
-        except Exception as e:
-            print(f"Could not create notification: {e}")
-        
-        return endorsement
+            processed_conversations.append(conversation_resp)
+            
+        return processed_conversations
 
-    # Helper Methods
-    def _get_user_skills(self, user_id: int) -> List[str]:
-        """Get user skills from their profile"""
-        user = user_crud.get_user(self.db, user_id)
-        if not user:
-            return []
-        
-        # Try to get skills from user attributes
-        if hasattr(user, 'skills') and user.skills:
-            try:
-                if isinstance(user.skills, str):
-                    return json.loads(user.skills)
-                elif isinstance(user.skills, list):
-                    return user.skills
-            except (json.JSONDecodeError, TypeError):
-                pass
-        
-        # Fallback to default skills for demo
-        return ["Python", "JavaScript", "React", "FastAPI"]
-
-    def _get_connected_user_ids(self, user_id: int) -> List[int]:
-        """Get IDs of users already connected to this user"""
-        connections = self.db.query(PeerConnection).filter(
-            ((PeerConnection.requester_id == user_id) | (PeerConnection.recipient_id == user_id)),
-            PeerConnection.status == ConnectionStatus.ACCEPTED
-        ).all()
-        
-        connected_ids = []
-        for conn in connections:
-            if conn.requester_id == user_id:
-                connected_ids.append(conn.recipient_id)
-            else:
-                connected_ids.append(conn.requester_id)
-        
-        return connected_ids
-
-    def _calculate_compatibility(self, user_skills: List[str], candidate_skills: List[str], match_type: str) -> Dict[str, Any]:
-        """Calculate compatibility between two users"""
-        user_skills_set = set(skill.lower() for skill in user_skills)
-        candidate_skills_set = set(skill.lower() for skill in candidate_skills)
-        
-        shared_skills = list(user_skills_set.intersection(candidate_skills_set))
-        user_unique = list(user_skills_set.difference(candidate_skills_set))
-        candidate_unique = list(candidate_skills_set.difference(user_skills_set))
-        
-        if match_type == "skills":
-            # For skill-based matching, prioritize shared skills
-            score = len(shared_skills) * 20 + len(candidate_unique) * 5
-            reason = f"Shares {len(shared_skills)} skills and brings {len(candidate_unique)} complementary skills"
-        else:
-            # For learning partner matching, prioritize complementary skills
-            score = len(candidate_unique) * 15 + len(shared_skills) * 10
-            reason = f"Can teach {len(candidate_unique)} new skills while collaborating on {len(shared_skills)} shared skills"
-        
-        return {
-            "score": min(score, 100),  # Cap at 100
-            "shared_skills": shared_skills[:5],  # Limit for display
-            "complementary_skills": candidate_unique[:5],
-            "skill_gaps": user_unique[:3],
-            "reason": reason
-        }
-
-    def _get_skill_endorsements(self, user_id: int) -> List[SkillEndorsement]:
-        """Get skill endorsements for a user"""
-        return self.db.query(SkillEndorsement).filter(
-            SkillEndorsement.endorsed_user_id == user_id
-        ).all()
-
-    def _get_initials(self, user: User) -> str:
-        """Get user initials"""
-        first_initial = (user.first_name or user.username)[0].upper() if user.first_name or user.username else "U"
-        last_initial = user.last_name[0].upper() if user.last_name else ""
-        return f"{first_initial}{last_initial}" if last_initial else first_initial
-
-    def _assess_collaboration_potential(self, score: int) -> str:
-        """Assess collaboration potential based on compatibility score"""
-        if score >= 80:
-            return "very-high"
-        elif score >= 60:
-            return "high"
-        elif score >= 40:
-            return "medium"
-        else:
-            return "low"
+    def mark_conversation_as_read(self, current_user_id: int, peer_user_id: int) -> int:
+        """Marks all messages received by current_user_id from peer_user_id as read."""
+        return communication_crud.mark_messages_as_read(
+            db=self.db, receiver_id=current_user_id, sender_id=peer_user_id
+        )
