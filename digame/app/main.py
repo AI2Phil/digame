@@ -32,6 +32,11 @@ from .routers import voice_router # Import the voice NLU router
 from .routers import advanced_mobile_router # Import the advanced mobile AI router
 from .routers import social_collaboration as social_collaboration_router # Import the social collaboration router
 from .routers import mobile_ai_router # Import the new mobile AI router
+from .routers import communication_style_router # Import the new communication style router
+from .routers import meeting_insights_router # Import the new meeting insights router
+from .routers import email_analysis_router # Import the new email analysis router
+from .routers import language_learning_router # Import the new language learning router
+from .routers import task_prioritization_router # Import the new task prioritization router
 
 # Import authentication components
 from .auth.middleware import configure_auth_middleware
@@ -159,8 +164,13 @@ logger.info("GZipMiddleware configuration skipped due to type compatibility")
 app.include_router(auth_router.router, tags=["Authentication"])
 
 # Include other routers (these will be protected by authentication middleware)
-app.include_router(user_setting_router)
-app.include_router(writing_assistance_router.router)
+app.include_router(user_setting_router) # Add user setting router
+app.include_router(writing_assistance_router.router) # Add the writing assistance router
+app.include_router(communication_style_router.router) # Add the communication style router
+app.include_router(meeting_insights_router.router) # Add the meeting insights router
+app.include_router(email_analysis_router.router) # Add the email analysis router
+app.include_router(language_learning_router.router) # Add the language learning router
+app.include_router(task_prioritization_router.router) # Add the task prioritization router
 app.include_router(admin_simple_router.router, tags=["Admin Dashboard"])
 app.include_router(predictive_router.router, prefix="/predictive", tags=["Predictive Modeling"])
 app.include_router(admin_rbac_router.router, prefix="/admin/rbac", tags=["Admin RBAC Management"])

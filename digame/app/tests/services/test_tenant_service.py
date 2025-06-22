@@ -288,4 +288,3 @@ class TestUserService:
 
         authenticated_user = user_service.authenticate_user("testuser", "password", tenant_id=2)
         assert authenticated_user is None
-```

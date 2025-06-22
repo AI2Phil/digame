@@ -1,22 +1,33 @@
 from sqlalchemy.orm import Session
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from datetime import datetime
 
 from ..models.task import Task
 from ..schemas.task_schemas import TaskCreate, TaskUpdate
 
-def get_task_by_id(db: Session, task_id: int) -> Optional[Task]:
-    """Get a task by ID"""
-    return db.query(Task).filter(Task.id == task_id).first()
+def get_task_by_id(db: Session, task_id: int, user_id: Optional[int] = None) -> Optional[Task]:
+    """Get a task by ID with optional user ownership check"""
+    query = db.query(Task).filter(Task.id == task_id)
+    if user_id is not None:
+        query = query.filter(Task.user_id == user_id)
+    return query.first()
 
-def get_tasks_by_user_id(db: Session, user_id: int, status: Optional[str] = None, skip: int = 0, limit: int = 100) -> List[Task]:
-    """Get tasks for a user, optionally filtered by status"""
+def get_tasks_by_user_id(db: Session, user_id: int, status: Optional[str] = None, exclude_statuses: Optional[List[str]] = None, skip: int = 0, limit: int = 100) -> List[Task]:
+    """Get tasks for a user, optionally filtered by status or excluding statuses"""
     query = db.query(Task).filter(Task.user_id == user_id)
     
     if status:
         query = query.filter(Task.status == status)
     
-    return query.offset(skip).limit(limit).all()
+    if exclude_statuses:
+        query = query.filter(~Task.status.in_(exclude_statuses))
+    
+    # Added default sorting: by priority (desc), then due_date (asc), then created_at (desc)
+    return query.order_by(
+        Task.priority_score.desc().nullslast(),
+        Task.due_date_inferred.asc().nullslast(),
+        Task.created_at.desc()
+    ).offset(skip).limit(limit).all()
 
 def create_task(db: Session, task: TaskCreate, user_id: int) -> Task:
     """Create a new task"""
@@ -36,25 +47,26 @@ def create_task(db: Session, task: TaskCreate, user_id: int) -> Task:
     db.refresh(db_task)
     return db_task
 
-def update_task(db: Session, task_id: int, task_update: TaskUpdate) -> Optional[Task]:
-    """Update a task"""
-    db_task = get_task_by_id(db, task_id)
+def update_task(db: Session, task_id: int, task_update: TaskUpdate, user_id: Optional[int] = None) -> Optional[Task]:
+    """Update a task with optional user ownership check"""
+    db_task = get_task_by_id(db, task_id, user_id)
     if not db_task:
         return None
     
     update_data = task_update.model_dump(exclude_unset=True)
     
     for key, value in update_data.items():
-        setattr(db_task, key, value)
+        if hasattr(db_task, key):
+            setattr(db_task, key, value)
     
     db_task.updated_at = datetime.utcnow()
     db.commit()
     db.refresh(db_task)
     return db_task
 
-def update_task_status(db: Session, task_id: int, new_status: str) -> Optional[Task]:
-    """Update task status"""
-    db_task = get_task_by_id(db, task_id)
+def update_task_status(db: Session, task_id: int, new_status: str, user_id: Optional[int] = None) -> Optional[Task]:
+    """Update task status with optional user ownership check"""
+    db_task = get_task_by_id(db, task_id, user_id)
     if not db_task:
         return None
     
@@ -64,9 +76,9 @@ def update_task_status(db: Session, task_id: int, new_status: str) -> Optional[T
     db.refresh(db_task)
     return db_task
 
-def delete_task(db: Session, task_id: int) -> bool:
-    """Delete a task"""
-    db_task = get_task_by_id(db, task_id)
+def delete_task(db: Session, task_id: int, user_id: Optional[int] = None) -> bool:
+    """Delete a task with optional user ownership check"""
+    db_task = get_task_by_id(db, task_id, user_id)
     if not db_task:
         return False
     

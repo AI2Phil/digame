@@ -52,12 +52,12 @@ def test_suggest_endpoint_success(client, mock_writing_assistance_service, mock_
     # get_writing_assistance_service is from digame.app.services.writing_assistance_service
     app.dependency_overrides[app.router.dependencies[0].depends] = lambda: mock_current_active_user # Placeholder for actual get_current_active_user
     app.dependency_overrides[app.router.dependencies[1].depends] = lambda: mock_writing_assistance_service # Placeholder for actual get_writing_assistance_service
-    
+
     # Need to find the actual callables for dependency overrides.
     # Let's assume we can import them directly for clarity in patching.
     from digame.app.auth.auth_dependencies import get_current_active_user
     from digame.app.services.writing_assistance_service import get_writing_assistance_service
-    
+
     app.dependency_overrides[get_current_active_user] = lambda: mock_current_active_user
     app.dependency_overrides[get_writing_assistance_service] = lambda: mock_writing_assistance_service
 
@@ -92,7 +92,7 @@ def test_suggest_endpoint_service_raises_http_exception(client, mock_writing_ass
     from digame.app.services.writing_assistance_service import get_writing_assistance_service
     app.dependency_overrides[get_current_active_user] = lambda: mock_current_active_user
     app.dependency_overrides[get_writing_assistance_service] = lambda: mock_writing_assistance_service
-    
+
     request_payload = {"text_input": "Test input"}
 
     # Action
@@ -129,7 +129,6 @@ def test_suggest_endpoint_service_raises_unexpected_exception(client, mock_writi
     assert "unexpected error occurred" in data["detail"].lower()
     assert "something went very wrong" in data["detail"].lower()
 
-
     # Clean up overrides
     app.dependency_overrides = {}
 
@@ -151,7 +150,7 @@ def test_suggest_endpoint_invalid_input_empty_text(client, mock_current_active_u
     assert "detail" in data
     # Check for a message indicating the text_input field error
     assert any("ensure this value has at least 1 character" in err["msg"].lower() for err in data["detail"] if err["loc"] == ["body", "text_input"])
-    
+
     # Clean up overrides
     app.dependency_overrides = {}
 
@@ -163,7 +162,7 @@ def test_suggest_endpoint_invalid_input_missing_text(client, mock_current_active
 
     response = client.post("/ai/writing-assistance/suggest", json=request_payload)
 
-    assert response.status_code == 422 
+    assert response.status_code == 422
     data = response.json()
     assert any("field required" in err["msg"].lower() for err in data["detail"] if err["loc"] == ["body", "text_input"])
 
@@ -180,57 +179,3 @@ def test_health_check_endpoint(client):
     assert response.status_code == 200
     data = response.json()
     assert data == {"status": "healthy", "service": "AI - Writing Assistance"}
-
-# Note on Dependency Overrides:
-# The way dependencies are obtained for `app.dependency_overrides` can be tricky.
-# `app.router.dependencies` might not be the most reliable way if routers are nested or complex.
-# A common pattern is to import the dependency provider functions directly and use them as keys:
-# from myapp.dependencies import get_current_user, get_my_service
-# app.dependency_overrides[get_current_user] = ...
-# app.dependency_overrides[get_my_service] = ...
-# I've updated the tests to reflect this more robust pattern by importing the actual dependency functions.
-# This assumes `get_current_active_user` is in `digame.app.auth.auth_dependencies`
-# and `get_writing_assistance_service` is in `digame.app.services.writing_assistance_service`.
-# If these paths are different, they need to be adjusted.
-
-# Make sure the main FastAPI `app` is correctly imported.
-# `from digame.app.main import app` implies your project structure allows this import.
-# If `main.py` is at the root of `digame/app/`, this should work when tests are run correctly.
-# (e.g. with `python -m pytest` from the project root that contains `digame` directory).
-# The `client` fixture uses `scope="module"` for efficiency, as the app setup can be reused.
-# Individual tests then apply their specific overrides.
-# Remember to clear `app.dependency_overrides` after each test if they are applied per-test,
-# to prevent interference between tests.
-# If overrides are applied to `app` before `TestClient(app)` then they are module-wide.
-# The example shows per-test overrides which is safer.
-# The `FastAPI.routing.APIRoute.dependant.dependencies` might also be a way to inspect dependencies
-# if you need to dynamically find them, but direct import of the dependency functions is usually cleaner.
-# The example above has been updated to use direct imports for dependency functions.
-# This is generally more stable than relying on `app.router.dependencies` indices.
-# Ensure that the functions like `get_current_active_user` and `get_writing_assistance_service`
-# are the *exact* functions used in your router's `Depends(...)`.
-# If `main.py` is not found, or `app` instance is named differently, adjust the import.
-# The test assumes standard FastAPI TestClient usage.
-# The `PYTHONPATH` needs to be set up correctly for these imports to work when running pytest.
-# Typically, running `pytest` from the root of your project (the directory containing `digame`)
-# with `digame` being a package (having `__init__.py`) should handle this.
-# Or, if `digame/app` is the root, then imports might be relative `from ..services import ...` etc.
-# The current imports assume `digame.app` is part of the python path.
-# Example: `PYTHONPATH=. pytest` or `python -m pytest`.
-# For `app.dependency_overrides[app.router.dependencies[0].depends]`, this is not robust.
-# The dependencies are on the specific route, not the router itself.
-# It's better to retrieve the route and then its dependencies, or, as done above,
-# import the dependency provider function directly.
-# The router for writing assistance is `/ai/writing-assistance`.
-# The dependencies for `/suggest` are `get_current_active_user` and `get_writing_assistance_service`.
-# The code has been updated to use `app.dependency_overrides[actual_dependency_function_object]`.
-# This requires importing those functions into the test file.
-# `from digame.app.main import app` is key. If `main.py` is inside `digame/app/`, this means `digame` is the top-level package.
-# And `PYTHONPATH` should include the directory *containing* `digame`.
-# If `app` is the top-level package, then `from app.main import app`.
-# Assume `digame` is the top-level package.
-# The test file is `digame/app/tests/routers/test_writing_assistance_router.py`.
-# `from digame.app.main import app` should work.
-# `from digame.app.auth.auth_dependencies import get_current_active_user` should work.
-# `from digame.app.services.writing_assistance_service import get_writing_assistance_service` should work.
-# This seems consistent.

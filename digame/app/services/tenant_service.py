@@ -25,7 +25,6 @@ class TenantService:
     
     def __init__(self, db: Session):
         self.db = db
-    
     def _log_audit_event(
         self,
         tenant_id: int,

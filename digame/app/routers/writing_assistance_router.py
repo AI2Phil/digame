@@ -1,5 +1,4 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-# sqlalchemy.orm.Session is not directly used here but service might need it via get_db
 
 from ..auth.auth_dependencies import get_current_active_user
 from ..models.user import User as UserModel
@@ -7,7 +6,7 @@ from ..services.writing_assistance_service import WritingAssistanceService, get_
 from ..schemas import writing_assistance_schemas as schemas
 
 router = APIRouter(
-    prefix="/ai/writing-assistance", 
+    prefix="/ai/writing-assistance",
     tags=["AI - Writing Assistance"],
 )
 
@@ -24,15 +23,16 @@ def get_writing_suggestion_endpoint(
     """
     try:
         suggestion_text = service.get_writing_suggestion(
-            current_user=current_user, 
+            current_user=current_user,
             text_input=request_data.text_input
         )
         return schemas.WritingSuggestionResponse(
+            original_text=request_data.text_input,
             suggestion=suggestion_text
         )
     except HTTPException as e:
         # Re-raise HTTPExceptions directly if they are from the service
-        raise e 
+        raise e
     except Exception as e:
         # Catch any other unexpected errors from the service
         # Remember to log the error e in a real application

@@ -35,9 +35,19 @@ __all__ = [
     "AIIntegrationService", # Added new service
     "NotificationService", # Added NotificationService
     "VoiceNLUService", # Added VoiceNLUService
+    "communication_style_service",
+    "meeting_insights_service",
+    "email_analysis_service",
+    "language_learning_service",
+    "task_prioritization_service",
 ]
 
 from . import writing_assistance_service
 from .ai_integration_service import AIIntegrationService # Added import
 from .notification_service import NotificationService # Added import
 from .voice_nlu_service import VoiceNLUService # Added import
+from . import communication_style_service
+from . import meeting_insights_service
+from . import email_analysis_service
+from . import language_learning_service
+from . import task_prioritization_service

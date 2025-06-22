@@ -25,6 +25,16 @@ __all__ = [
     "OnboardingDataBase", "OnboardingDataCreate", "OnboardingDataUpdate", "OnboardingDataResponse", "OnboardingStep", # Add onboarding schemas to __all__
     "Notification", "NotificationCreate", "NotificationUpdate", # Add notification schemas to __all__
     "writing_assistance_schemas",
+    "communication_style_schemas",
+    "meeting_insights_schemas",
+    "email_analysis_schemas",
+    "language_learning_schemas",
+    "task_prioritization_schemas",
 ]
 
 from . import writing_assistance_schemas
+from . import communication_style_schemas
+from . import meeting_insights_schemas
+from . import email_analysis_schemas
+from . import language_learning_schemas
+from . import task_prioritization_schemas
