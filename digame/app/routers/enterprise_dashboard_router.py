@@ -20,7 +20,7 @@ router = APIRouter(prefix="/enterprise/dashboard", tags=["Enterprise Dashboard"]
 
 # Pydantic Models
 class DashboardCreate(BaseModel):
-    name: str = Field(..., min_length=1, max_length=200)
+    name: str = Field(min_length=1, max_length=200)
     description: Optional[str] = None
     dashboard_type: str = Field(default="enterprise")
     layout_type: str = Field(default="grid")
@@ -38,7 +38,7 @@ class DashboardCreate(BaseModel):
 
 
 class DashboardUpdate(BaseModel):
-    name: Optional[str] = Field(None, min_length=1, max_length=200)
+    name: Optional[str] = Field(default=None, min_length=1, max_length=200)
     description: Optional[str] = None
     dashboard_type: Optional[str] = None
     layout_type: Optional[str] = None
@@ -46,7 +46,7 @@ class DashboardUpdate(BaseModel):
     is_default: Optional[bool] = None
     is_public: Optional[bool] = None
     auto_refresh: Optional[bool] = None
-    refresh_interval: Optional[int] = Field(None, ge=30, le=3600)
+    refresh_interval: Optional[int] = Field(default=None, ge=30, le=3600)
     allowed_roles: Optional[List[str]] = None
     allowed_users: Optional[List[int]] = None
     theme: Optional[str] = None
@@ -82,10 +82,10 @@ class DashboardResponse(BaseModel):
 
 
 class WidgetCreate(BaseModel):
-    widget_id: str = Field(..., min_length=1, max_length=100)
-    widget_name: str = Field(..., min_length=1, max_length=200)
-    widget_type: str = Field(..., min_length=1, max_length=50)
-    data_source: str = Field(..., min_length=1, max_length=100)
+    widget_id: str = Field(min_length=1, max_length=100)
+    widget_name: str = Field(min_length=1, max_length=200)
+    widget_type: str = Field(min_length=1, max_length=50)
+    data_source: str = Field(min_length=1, max_length=100)
     query_config: Dict[str, Any] = Field(default_factory=dict)
     display_config: Dict[str, Any] = Field(default_factory=dict)
     position_x: int = Field(default=0, ge=0)
@@ -93,8 +93,8 @@ class WidgetCreate(BaseModel):
     width: int = Field(default=4, ge=1, le=12)
     height: int = Field(default=3, ge=1, le=12)
     z_index: int = Field(default=1, ge=1)
-    title: Optional[str] = Field(None, max_length=200)
-    subtitle: Optional[str] = Field(None, max_length=500)
+    title: Optional[str] = Field(default=None, max_length=200)
+    subtitle: Optional[str] = Field(default=None, max_length=500)
     is_visible: bool = True
     is_resizable: bool = True
     is_movable: bool = True
@@ -103,23 +103,24 @@ class WidgetCreate(BaseModel):
 
 
 class WidgetUpdate(BaseModel):
-    widget_name: Optional[str] = Field(None, min_length=1, max_length=200)
-    widget_type: Optional[str] = Field(None, min_length=1, max_length=50)
-    data_source: Optional[str] = Field(None, min_length=1, max_length=100)
+    widget_name: Optional[str] = Field(default=None, min_length=1, max_length=200)
+    widget_type: Optional[str] = Field(default=None, min_length=1, max_length=50)
+    data_source: Optional[str] = Field(default=None, min_length=1, max_length=100)
     query_config: Optional[Dict[str, Any]] = None
     display_config: Optional[Dict[str, Any]] = None
-    position_x: Optional[int] = Field(None, ge=0)
-    position_y: Optional[int] = Field(None, ge=0)
-    width: Optional[int] = Field(None, ge=1, le=12)
-    height: Optional[int] = Field(None, ge=1, le=12)
-    z_index: Optional[int] = Field(None, ge=1)
-    title: Optional[str] = Field(None, max_length=200)
-    subtitle: Optional[str] = Field(None, max_length=500)
+    position_x: Optional[int] = Field(default=None, ge=0)
+    position_y: Optional[int] = Field(default=None, ge=0)
+    width: Optional[int] = Field(default=None, ge=1, le=12)
+    height: Optional[int] = Field(default=None, ge=1, le=12)
+    z_index: Optional[int] = Field(default=None, ge=1)
+    title: Optional[str] = Field(default=None, max_length=200)
+    title: Optional[str] = Field(default=None, max_length=200)
+    subtitle: Optional[str] = Field(default=None, max_length=500)
     is_visible: Optional[bool] = None
     is_resizable: Optional[bool] = None
     is_movable: Optional[bool] = None
     auto_refresh: Optional[bool] = None
-    refresh_interval: Optional[int] = Field(None, ge=30, le=3600)
+    refresh_interval: Optional[int] = Field(default=None, ge=30, le=3600)
 
 
 class WidgetResponse(BaseModel):
@@ -163,7 +164,7 @@ class MetricCreate(BaseModel):
     target_value: Optional[float] = None
     threshold_warning: Optional[float] = None
     threshold_critical: Optional[float] = None
-    unit: Optional[str] = Field(None, max_length=20)
+    unit: Optional[str] = Field(default=None, max_length=20)
     description: Optional[str] = None
     calculation_method: Optional[str] = None
     period_start: datetime
@@ -251,18 +252,18 @@ class FeatureUsageCreate(BaseModel):
     feature_name: str = Field(..., min_length=1, max_length=100)
     feature_category: str = Field(..., min_length=1, max_length=50)
     action: str = Field(..., min_length=1, max_length=100)
-    session_id: Optional[str] = Field(None, max_length=100)
-    duration_seconds: Optional[float] = Field(None, ge=0)
+    session_id: Optional[str] = Field(default=None, max_length=100)
+    duration_seconds: Optional[float] = Field(default=None, ge=0)
     resource_consumption: Dict[str, Any] = Field(default_factory=dict)
-    ip_address: Optional[str] = Field(None, max_length=45)
+    ip_address: Optional[str] = Field(default=None, max_length=45)
     user_agent: Optional[str] = None
-    referrer: Optional[str] = Field(None, max_length=500)
-    response_time_ms: Optional[float] = Field(None, ge=0)
+    referrer: Optional[str] = Field(default=None, max_length=500)
+    response_time_ms: Optional[float] = Field(default=None, ge=0)
     success: bool = True
     error_message: Optional[str] = None
     business_value: Optional[float] = None
-    cost_center: Optional[str] = Field(None, max_length=100)
-    project_code: Optional[str] = Field(None, max_length=100)
+    cost_center: Optional[str] = Field(default=None, max_length=100)
+    project_code: Optional[str] = Field(default=None, max_length=100)
 
 
 class ExportCreate(BaseModel):
@@ -274,7 +275,7 @@ class ExportCreate(BaseModel):
     include_metadata: bool = False
     page_orientation: str = Field(default="landscape", pattern="^(portrait|landscape)$")
     is_scheduled: bool = False
-    schedule_cron: Optional[str] = Field(None, max_length=100)
+    schedule_cron: Optional[str] = Field(default=None, max_length=100)
     next_execution: Optional[datetime] = None
     is_public: bool = False
     expires_at: Optional[datetime] = None

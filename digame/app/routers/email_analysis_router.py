@@ -28,9 +28,10 @@ def analyze_email_patterns_endpoint(
             current_user=current_user,
             emails_data=request_data.emails_data
         )
-        return schemas.EmailAnalysisResponse(
-            analysis_summary=analysis_result
-        )
+        response_data = {
+            "analysis_summary": analysis_result
+        }
+        return schemas.EmailAnalysisResponse(**response_data)
     except HTTPException as e:
         # Re-raise HTTPExceptions directly from the service
         raise e

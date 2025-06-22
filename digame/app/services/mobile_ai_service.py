@@ -38,12 +38,12 @@ class MobileAIService:
             relative_schedule_info={"type": "daily_at", "time": "08:30"},
             presentation_options={"priority": "default"}
         ))
-        mock_triggers.append(NotificationTrigger(
-            trigger_type="task_completion_prompt",
-            message_template="🚀 Great job on completing {task_name}! Ready for the next challenge?",
-            condition={"type": "event_occurred", "event_name": "task_completed", "min_tasks_today_for_prompt": 1},
-            presentation_options={"priority": "high", "sound": "positive_ping.caf"}
-        ))
+        trigger = NotificationTrigger()
+        trigger.trigger_type = "task_completion_prompt"
+        trigger.message_template = "🚀 Great job on completing {task_name}! Ready for the next challenge?"
+        trigger.condition = {"type": "event_occurred", "event_name": "task_completed", "min_tasks_today_for_prompt": 1}
+        trigger.presentation_options = {"priority": "high", "sound": "positive_ping.caf"}
+        mock_triggers.append(trigger)
         if user_id % 2 == 0:
              mock_triggers.append(NotificationTrigger(
                 trigger_type="productivity_tip",
@@ -102,5 +102,5 @@ class MobileAIService:
             return VoiceCommandResponse(
                 intent="unknown_command",
                 parameters={"original_text": command_request.text},
-                responseText="Sorry, I didn't understand that. Can you try rephrasing?"
+                response_text="Sorry, I didn't understand that. Can you try rephrasing?"
             )

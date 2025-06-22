@@ -26,10 +26,11 @@ def analyze_communication_style_endpoint(
             current_user=current_user,
             text_input=request_data.text_input
         )
-        return schemas.CommunicationStyleAnalysisResponse(
-            original_text_length=len(request_data.text_input),
-            analysis=analysis_result
-        )
+        response_data = {
+            "original_text_length": len(request_data.text_input),
+            "analysis": analysis_result
+        }
+        return schemas.CommunicationStyleAnalysisResponse(**response_data)
     except HTTPException as e:
         # Re-raise HTTPExceptions directly from the service
         raise e

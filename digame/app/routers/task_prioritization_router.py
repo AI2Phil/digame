@@ -32,12 +32,13 @@ def prioritize_user_tasks_endpoint(
         if request_data.apply_changes:
             message = "Tasks analyzed, priorities suggested and applied to the database."
 
-        return schemas.PrioritizationResponse(
-            message=message,
-            processed_task_count=len(prioritized_list),
-            prioritized_tasks=prioritized_list,
-            changes_applied=request_data.apply_changes
-        )
+        response_data = {
+            "message": message,
+            "processed_task_count": len(prioritized_list),
+            "prioritized_tasks": prioritized_list,
+            "changes_applied": request_data.apply_changes
+        }
+        return schemas.PrioritizationResponse(**response_data)
     except HTTPException as e:
         # Re-raise HTTPExceptions directly from the service
         raise e
