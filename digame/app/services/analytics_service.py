@@ -24,6 +24,7 @@ from ..models.analytics import (
 )
 from ..models.user import User
 from ..models.tenant import Tenant
+from ..models.comparative_benchmark import ComparativeBenchmark
 
 
 class AnalyticsService:
@@ -58,6 +59,9 @@ class AnalyticsService:
             features=model_data.get("features", []),
             target_variable=model_data["target_variable"],
             hyperparameters=model_data.get("hyperparameters", {}),
+            dimensions=model_data.get("dimensions", []),
+            metrics=model_data.get("metrics", []),
+            aggregation_types=model_data.get("aggregation_types", {}),
             training_data_source=model_data["training_data_source"],
             training_period_days=model_data.get("training_period_days", 90),
             retrain_frequency_days=model_data.get("retrain_frequency_days", 7),
@@ -235,7 +239,9 @@ class AnalyticsService:
                 "tasks_completed": np.random.poisson(15, n_samples),
                 "meetings_attended": np.random.poisson(8, n_samples),
                 "experience_years": np.random.uniform(0, 20, n_samples),
-                "team_size": np.random.randint(3, 15, n_samples)
+                "team_size": np.random.randint(3, 15, n_samples),
+                "department": np.random.choice(["Eng", "Sales", "Marketing"], n_samples),
+                "project_type": np.random.choice(["A", "B", "C"], n_samples)
             })
             # Performance score as target
             data["performance_score"] = (
@@ -244,14 +250,17 @@ class AnalyticsService:
                 data["experience_years"] * 1.5 +
                 np.random.normal(0, 5, n_samples)
             )
-            
+            if "quality_score" in model.metrics: # Example for multi-metric
+                 data["quality_score"] = np.random.uniform(60, 100, n_samples)
+
         elif model.model_type == "productivity":
             data.update({
                 "focus_time_hours": np.random.normal(6, 2, n_samples),
                 "interruptions_count": np.random.poisson(12, n_samples),
                 "tools_used": np.random.randint(3, 10, n_samples),
                 "collaboration_score": np.random.uniform(1, 10, n_samples),
-                "workload_rating": np.random.randint(1, 11, n_samples)
+                "workload_rating": np.random.randint(1, 11, n_samples),
+                "location": np.random.choice(["Office", "Remote", "Hybrid"], n_samples)
             })
             # Productivity index as target
             data["productivity_index"] = (
@@ -260,28 +269,46 @@ class AnalyticsService:
                 data["collaboration_score"] * 3 +
                 np.random.normal(0, 5, n_samples)
             )
-            
+
         elif model.model_type == "roi":
             data.update({
                 "investment_amount": np.random.uniform(1000, 100000, n_samples),
                 "project_duration_days": np.random.randint(30, 365, n_samples),
                 "team_size": np.random.randint(2, 20, n_samples),
                 "complexity_score": np.random.uniform(1, 10, n_samples),
-                "risk_score": np.random.uniform(1, 10, n_samples)
+                "risk_score": np.random.uniform(1, 10, n_samples),
+                "quarter": np.random.choice(["Q1", "Q2", "Q3", "Q4"], n_samples)
             })
             # ROI percentage as target
             data["roi_percentage"] = (
                 (data["investment_amount"] * 0.3) / data["investment_amount"] * 100 +
                 np.random.normal(0, 20, n_samples)
             )
-            
+
         else:
             # Generic data
             for feature in model.features:
                 data[feature] = np.random.normal(50, 15, n_samples)
-            data[model.target_variable] = np.random.normal(75, 20, n_samples)
-        
-        return pd.DataFrame(data)
+            if model.target_variable:
+                data[model.target_variable] = np.random.normal(75, 20, n_samples)
+            # Add mock dimension data if specified
+            for dim in model.dimensions:
+                if dim not in data: # Avoid overwriting features if names clash
+                    data[dim] = np.random.choice([f"{dim}_A", f"{dim}_B", f"{dim}_C"], n_samples)
+            for met in model.metrics:
+                 if met not in data: # Avoid overwriting features or target_variable
+                    data[met] = np.random.normal(100, 20, n_samples)
+
+        df = pd.DataFrame(data)
+        # Ensure all specified features, dimensions, and metrics columns exist, even if empty initially
+        all_cols = set(model.features) | set(model.dimensions) | set(model.metrics)
+        if model.target_variable:
+            all_cols.add(model.target_variable)
+
+        for col in all_cols:
+            if col not in df.columns:
+                df[col] = 0 # Or np.nan, depending on desired handling
+        return df
 
     def _calculate_metrics(self, y_true, y_pred, algorithm: str) -> Dict[str, float]:
         """Calculate model performance metrics"""
@@ -323,8 +350,23 @@ class AnalyticsService:
             raise ValueError("Model not found or not trained")
         
         # Mock prediction calculation
-        predicted_value = self._calculate_mock_prediction(model, input_features)
+        prediction_output = self._calculate_mock_prediction(model, input_features)
         confidence_score = np.random.uniform(0.7, 0.95)
+
+        predicted_value_single = None
+        predicted_values_multi_dim = None
+
+        if isinstance(prediction_output, dict) and "multi_dim" in prediction_output:
+            predicted_values_multi_dim = prediction_output["multi_dim"]
+            # Optionally, derive a single representative value if appropriate
+            # For example, average of multi-dim values, or a specific key's value
+            if predicted_values_multi_dim and isinstance(predicted_values_multi_dim, list) and predicted_values_multi_dim[0].get("value"):
+                 predicted_value_single = predicted_values_multi_dim[0]["value"] # Takes first value as representative
+            elif predicted_values_multi_dim and isinstance(predicted_values_multi_dim, dict):
+                 # If it's a dict, maybe take a primary metric or average
+                 pass # Decide on logic for single value from dict
+        elif isinstance(prediction_output, (float, int)):
+            predicted_value_single = float(prediction_output)
         
         # Create prediction record
         prediction = AnalyticsPrediction(
@@ -334,13 +376,16 @@ class AnalyticsService:
             entity_id=entity_id,
             prediction_type=model.model_type,
             input_features=input_features,
-            predicted_value=predicted_value,
+            predicted_value=predicted_value_single,
+            predicted_values_multi_dim=predicted_values_multi_dim,
             confidence_score=confidence_score,
-            prediction_interval_lower=predicted_value * 0.9,
-            prediction_interval_upper=predicted_value * 1.1,
+            # Adjust intervals if multi-dim; this is a simplification
+            prediction_interval_lower=predicted_value_single * 0.9 if predicted_value_single is not None else None,
+            prediction_interval_upper=predicted_value_single * 1.1 if predicted_value_single is not None else None,
             prediction_horizon_days=prediction_horizon_days,
             expires_at=datetime.utcnow() + timedelta(days=7) if prediction_horizon_days else None,
-            created_by_user_id=created_by_user_id
+            created_by_user_id=created_by_user_id,
+            raw_prediction_output=prediction_output # Store the original output
         )
         
         self.db.add(prediction)
@@ -354,41 +399,68 @@ class AnalyticsService:
         
         return prediction
 
-    def _calculate_mock_prediction(self, model: AnalyticsModel, input_features: Dict[str, Any]) -> float:
-        """Calculate mock prediction value"""
-        
-        # Simple mock calculation based on model type
+    def _calculate_mock_prediction(self, model: AnalyticsModel, input_features: Dict[str, Any]) -> Any:
+        """
+        Calculate mock prediction value.
+        Can return a float or a dict for multi-dimensional predictions.
+        Example multi-dim output: {"multi_dim": [{"dims": {"country": "US", "product": "A"}, "value": 100}, ...]}
+        """
+
+        # If model has dimensions, return a multi-dimensional mock prediction
+        if model.dimensions and model.metrics:
+            # Create a few mock multi-dimensional data points
+            # This is highly dependent on how you want to structure multi_dim results
+            mock_multi_dim_results = []
+            # Example: Create 2-3 combinations of first dimension's possible values
+            # And generate values for all specified metrics
+            dim1_values = [f"{model.dimensions[0]}_Val1", f"{model.dimensions[0]}_Val2"]
+
+            for dim_val in dim1_values:
+                current_dims = {model.dimensions[0]: dim_val}
+                # If more dimensions, you'd create more complex combinations
+                if len(model.dimensions) > 1:
+                    current_dims[model.dimensions[1]] = f"{model.dimensions[1]}_SubValA"
+
+
+                for metric_name in model.metrics:
+                    # Simulate a base value calculation similar to single value predictions
+                    base_metric_value = 50 + np.random.normal(0,10) # Simplified
+                    # You could make this more sophisticated by using input_features
+                    # and varying based on dim_val or metric_name
+
+                    mock_multi_dim_results.append({
+                        "dims": current_dims.copy(), # ensure a copy if current_dims is modified later
+                        "metric": metric_name, # Store which metric this value is for
+                        "value": round(base_metric_value + np.random.normal(0, 5), 2)
+                    })
+            return {"multi_dim": mock_multi_dim_results}
+
+        # Fallback to simple mock calculation based on model type (single value prediction)
         if model.model_type == "performance":
             base_score = 75.0
-            for feature, value in input_features.items():
-                if "experience" in feature:
-                    base_score += float(value) * 2
-                elif "tasks" in feature:
-                    base_score += float(value) * 1.5
-                elif "hours" in feature:
-                    base_score += float(value) * 0.5
+            for feature_name, value in input_features.items():
+                val = float(value) if value is not None else 0
+                if "experience" in feature_name: base_score += val * 2
+                elif "tasks" in feature_name: base_score += val * 1.5
+                elif "hours" in feature_name: base_score += val * 0.5
             return max(0, min(100, base_score + np.random.normal(0, 5)))
             
         elif model.model_type == "productivity":
             base_index = 60.0
-            for feature, value in input_features.items():
-                if "focus" in feature:
-                    base_index += float(value) * 8
-                elif "interruptions" in feature:
-                    base_index -= float(value) * 1.5
-                elif "collaboration" in feature:
-                    base_index += float(value) * 2
+            for feature_name, value in input_features.items():
+                val = float(value) if value is not None else 0
+                if "focus" in feature_name: base_index += val * 8
+                elif "interruptions" in feature_name: base_index -= val * 1.5
+                elif "collaboration" in feature_name: base_index += val * 2
             return max(0, base_index + np.random.normal(0, 8))
             
         elif model.model_type == "roi":
             base_roi = 15.0
-            for feature, value in input_features.items():
-                if "investment" in feature:
-                    base_roi += np.log(float(value)) * 2
-                elif "duration" in feature:
-                    base_roi -= float(value) * 0.05
-                elif "complexity" in feature:
-                    base_roi -= float(value) * 2
+            for feature_name, value in input_features.items():
+                val = float(value) if value is not None else 0
+                if "investment" in feature_name and val > 0: base_roi += np.log(val) * 2
+                elif "duration" in feature_name: base_roi -= val * 0.05
+                elif "complexity" in feature_name: base_roi -= val * 2
             return base_roi + np.random.normal(0, 10)
             
         else:
@@ -703,21 +775,24 @@ class AnalyticsService:
         # Model performance insights
         models = self.get_analytics_models(tenant_id)
         if models:
-            avg_accuracy = sum(m.accuracy_score or 0 for m in models) / len(models)
-            if avg_accuracy > 0.85:
-                insights.append({
-                    "type": "positive",
-                    "category": "model_performance",
-                    "title": "High Model Accuracy",
-                    "description": f"Your analytics models are performing well with an average accuracy of {avg_accuracy:.1%}",
-                    "recommendation": "Consider deploying more models to production to leverage this high accuracy."
-                })
+            # Filter out models that might not have accuracy_score (e.g. if it's not applicable)
+            relevant_models = [m for m in models if m.accuracy_score is not None]
+            if relevant_models:
+                avg_accuracy = sum(m.accuracy_score for m in relevant_models) / len(relevant_models)
+                if avg_accuracy > 0.85:
+                    insights.append({
+                        "type": "positive",
+                        "category": "model_performance",
+                        "title": "High Model Accuracy",
+                        "description": f"Your analytics models are performing well with an average accuracy of {avg_accuracy:.1%}",
+                        "recommendation": "Consider deploying more models to production to leverage this high accuracy."
+                    })
         
         # ROI insights
         roi_calcs = self.get_roi_calculations(tenant_id)
         if roi_calcs:
             positive_roi_count = sum(1 for calc in roi_calcs if calc.roi_percentage > 0)
-            if positive_roi_count / len(roi_calcs) > 0.8:
+            if len(roi_calcs) > 0 and positive_roi_count / len(roi_calcs) > 0.8 :
                 insights.append({
                     "type": "positive",
                     "category": "roi_performance",
@@ -740,6 +815,196 @@ class AnalyticsService:
                 })
         
         return insights
+
+    # Comparative Benchmarking
+    def add_benchmark_data(
+        self,
+        benchmark_data: Dict[str, Any],
+        tenant_id: Optional[int] = None, # For tenant-specific benchmarks
+        created_by_user_id: Optional[int] = None
+    ) -> ComparativeBenchmark:
+        """Add new benchmark data."""
+        benchmark = ComparativeBenchmark(
+            tenant_id=tenant_id,
+            name=benchmark_data["name"],
+            description=benchmark_data.get("description"),
+            category=benchmark_data["category"],
+            source=benchmark_data.get("source"),
+            metric_name=benchmark_data["metric_name"],
+            entity_type=benchmark_data.get("entity_type"),
+            industry_segment=benchmark_data.get("industry_segment"),
+            region=benchmark_data.get("region"),
+            company_size=benchmark_data.get("company_size"),
+            benchmark_value=benchmark_data["benchmark_value"],
+            value_type=benchmark_data.get("value_type", "average"),
+            unit=benchmark_data.get("unit"),
+            period_start_date=benchmark_data.get("period_start_date"),
+            period_end_date=benchmark_data.get("period_end_date"),
+            data_freshness_date=benchmark_data.get("data_freshness_date", datetime.utcnow()),
+            dimensions=benchmark_data.get("dimensions"),
+            created_by_user_id=created_by_user_id
+        )
+        self.db.add(benchmark)
+        self.db.commit()
+        self.db.refresh(benchmark)
+        return benchmark
+
+    def get_benchmarks(
+        self,
+        metric_name: str,
+        tenant_id: Optional[int] = None, # To fetch global and tenant-specific
+        category: Optional[str] = None,
+        industry_segment: Optional[str] = None,
+        region: Optional[str] = None,
+        company_size: Optional[str] = None
+    ) -> List[ComparativeBenchmark]:
+        """Get relevant benchmarks."""
+        query = self.db.query(ComparativeBenchmark).filter(
+            ComparativeBenchmark.metric_name == metric_name,
+            ComparativeBenchmark.is_active == True,
+            or_(ComparativeBenchmark.tenant_id == tenant_id, ComparativeBenchmark.tenant_id == None) # Global or tenant-specific
+        )
+        if category:
+            query = query.filter(ComparativeBenchmark.category == category)
+        if industry_segment:
+            query = query.filter(ComparativeBenchmark.industry_segment == industry_segment)
+        if region:
+            query = query.filter(ComparativeBenchmark.region == region)
+        if company_size:
+            query = query.filter(ComparativeBenchmark.company_size == company_size)
+
+        return query.order_by(desc(ComparativeBenchmark.data_freshness_date)).all()
+
+    async def make_prediction_with_benchmark(
+        self,
+        model_id: int,
+        entity_type: str,
+        entity_id: int,
+        input_features: Dict[str, Any],
+        benchmark_params: Optional[Dict[str, Any]] = None, # Params to find relevant benchmark
+        prediction_horizon_days: Optional[int] = None,
+        created_by_user_id: Optional[int] = None
+    ) -> AnalyticsPrediction:
+        """Make a prediction and compare it against a relevant benchmark."""
+        prediction = await self.make_prediction(
+            model_id, entity_type, entity_id, input_features,
+            prediction_horizon_days, created_by_user_id
+        )
+
+        if benchmark_params and prediction.predicted_value is not None:
+            model = self.db.query(AnalyticsModel).filter(AnalyticsModel.id == model_id).first()
+            if model:
+                benchmarks = self.get_benchmarks(
+                    metric_name=model.target_variable, # Assuming target variable is the metric to benchmark
+                    tenant_id=model.tenant_id,
+                    **benchmark_params
+                )
+                if benchmarks:
+                    # For simplicity, use the first relevant benchmark found
+                    relevant_benchmark = benchmarks[0]
+                    prediction.benchmark_comparison_data = {
+                        "benchmark_name": relevant_benchmark.name,
+                        "benchmark_value": relevant_benchmark.benchmark_value,
+                        "entity_value": prediction.predicted_value,
+                        "difference": prediction.predicted_value - relevant_benchmark.benchmark_value,
+                        "unit": relevant_benchmark.unit
+                    }
+                    self.db.commit()
+                    self.db.refresh(prediction)
+        return prediction
+
+    # ROI Calculation Refinement
+    def create_roi_calculation(
+        self,
+        tenant_id: int,
+        roi_data: Dict[str, Any],
+        calculated_by_user_id: int
+    ) -> ROICalculation:
+        """Create a new ROI calculation, potentially using performance metrics for costs/benefits."""
+
+        # Potential: Fetch performance metrics data to inform costs/benefits
+        # Example: if roi_data contains performance_metric_ids for cost/benefit components
+        # performance_metric_ids = roi_data.get("performance_metric_ids", {})
+        # if "cost_savings_metric_id" in performance_metric_ids:
+        #     metric = self.db.query(PerformanceMetric).get(performance_metric_ids["cost_savings_metric_id"])
+        #     if metric: roi_data["cost_savings"] = metric.current_value * some_factor
+
+        roi_calc = ROICalculation(
+            tenant_id=tenant_id,
+            entity_type=roi_data["entity_type"],
+            entity_id=roi_data["entity_id"],
+            calculation_name=roi_data["calculation_name"],
+            description=roi_data.get("description"),
+            period_start=roi_data["period_start"],
+            period_end=roi_data["period_end"],
+            period_days=(roi_data["period_end"] - roi_data["period_start"]).days,
+            initial_investment=Decimal(str(roi_data.get("initial_investment", 0))),
+            operational_costs=Decimal(str(roi_data.get("operational_costs", 0))),
+            labor_costs=Decimal(str(roi_data.get("labor_costs", 0))),
+            technology_costs=Decimal(str(roi_data.get("technology_costs", 0))),
+            training_costs=Decimal(str(roi_data.get("training_costs", 0))),
+            other_costs=Decimal(str(roi_data.get("other_costs", 0))),
+            revenue_increase=Decimal(str(roi_data.get("revenue_increase", 0))),
+            cost_savings=Decimal(str(roi_data.get("cost_savings", 0))),
+            productivity_gains=Decimal(str(roi_data.get("productivity_gains", 0))),
+            efficiency_gains=Decimal(str(roi_data.get("efficiency_gains", 0))),
+            quality_improvements=Decimal(str(roi_data.get("quality_improvements", 0))),
+            risk_reduction=Decimal(str(roi_data.get("risk_reduction", 0))),
+            other_benefits=Decimal(str(roi_data.get("other_benefits", 0))),
+            calculation_method=roi_data.get("calculation_method", "simple"),
+            discount_rate=roi_data.get("discount_rate", 0.1),
+            assumptions=roi_data.get("assumptions", {}),
+            data_sources=roi_data.get("data_sources", []),
+            analytics_model_id=roi_data.get("analytics_model_id"),
+            calculated_by_user_id=calculated_by_user_id
+        )
+
+        roi_calc.update_totals()
+        roi_calc.calculate_roi_metrics()
+
+        self.db.add(roi_calc)
+        self.db.commit()
+        self.db.refresh(roi_calc)
+
+        return roi_calc
+
+    def calculate_multi_dimensional_metrics(
+        self,
+        model_id: int,
+        data: pd.DataFrame # Expects a DataFrame with dimensions and metrics
+    ) -> List[Dict[str, Any]]:
+        """
+        Calculates and aggregates multi-dimensional metrics based on model config.
+        This is a conceptual mock. Real implementation would be more complex.
+        """
+        model = self.db.query(AnalyticsModel).get(model_id)
+        if not model or not model.dimensions or not model.metrics:
+            return []
+
+        # Example: Group by all dimensions and aggregate all metrics
+        # Aggregation type can be specified per metric in model.aggregation_types
+
+        grouped_data = data.groupby(model.dimensions)
+        results = []
+
+        for name, group in grouped_data:
+            aggregated_metrics = {}
+            for metric_col in model.metrics:
+                agg_type = model.aggregation_types.get(metric_col, "sum") # Default to sum
+                if agg_type == "sum":
+                    aggregated_metrics[metric_col] = group[metric_col].sum()
+                elif agg_type == "mean":
+                    aggregated_metrics[metric_col] = group[metric_col].mean()
+                # Add other aggregation types like count, min, max etc.
+
+            # Ensure name is a tuple if multiple dimensions, otherwise it's a single value
+            dim_values = name if isinstance(name, tuple) else (name,)
+
+            results.append({
+                "dimensions": dict(zip(model.dimensions, dim_values)),
+                "metrics": aggregated_metrics
+            })
+        return results
 
 
 def get_analytics_service(db: Session) -> AnalyticsService:

@@ -225,10 +225,16 @@ async def execute_report(
     """Execute a report and generate output"""
     
     try:
-        output_format = execution_params.get("output_format", "json")
-        parameters = execution_params.get("parameters", {})
-        filters = execution_params.get("filters", {})
+        output_format = execution_params.pop("output_format", "json")
+        # Remaining execution_params can be used as dynamic query parameters
+        # for interactive exploration.
+        # Standard parameters and filters can still be explicitly defined if needed.
+        dynamic_parameters = execution_params.copy() # Use the rest of the payload as dynamic params
         
+        # For structured parameters and filters, you might still want to extract them explicitly
+        # parameters = execution_params.get("parameters", {})
+        # filters = execution_params.get("filters", {})
+
         # Mock execution
         execution_info = {
             "execution_id": "exec_12345",
@@ -236,8 +242,8 @@ async def execute_report(
             "status": "running",
             "started_at": datetime.utcnow().isoformat(),
             "output_format": output_format,
-            "parameters": parameters,
-            "filters": filters
+            "parameters": dynamic_parameters, # Using dynamic_parameters here
+            "filters": {} # Assuming filters might be part of dynamic_parameters or handled differently
         }
         
         # Simulate async execution

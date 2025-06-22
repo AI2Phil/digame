@@ -340,25 +340,61 @@ class ReportingService:
         parameters: Optional[Dict[str, Any]],
         filters: Optional[Dict[str, Any]]
     ) -> List[Dict[str, Any]]:
-        """Execute the actual data query for the report"""
+        """
+        Execute the actual data query for the report.
+        Conceptually, this would use `parameters` and `filters` to build dynamic queries.
+        The `report.query_config` might define base queries or allowable fields.
+        For interactive exploration, `parameters` could include things like:
+        - group_by: list of fields to group by
+        - aggregations: dict of field -> aggregation_function (e.g. {"sales": "SUM", "users": "COUNT"})
+        - sort_by: list of fields to sort by
+        - dynamic_filters: additional filters applied at runtime
+        """
         
         # This is a mock implementation
-        # In production, this would connect to actual data sources
+        # In production, this would connect to actual data sources and build dynamic queries
         
         data_source = report.data_source
-        query_config = report.query_config
+        # query_config = report.query_config # Would be used to build the query
         
+        # Simulate using parameters for filtering if provided (very basic example)
+        print(f"Executing query for report {report.id} with parameters: {parameters}, filters: {filters}")
+
         # Mock data based on data source
         if data_source == "users":
-            return self._get_mock_user_data(parameters, filters)
-        elif data_source == "analytics":
-            return self._get_mock_analytics_data(parameters, filters)
+            data = self._get_mock_user_data(parameters, filters)
+        elif data_source == "analytics_performance": # New specific data source
+            data = self._get_mock_advanced_performance_data(parameters, filters)
+        elif data_source == "analytics_roi": # New specific data source
+            data = self._get_mock_advanced_roi_data(parameters, filters)
+        elif data_source == "analytics": # Existing generic analytics
+            data = self._get_mock_analytics_data(parameters, filters)
         elif data_source == "activities":
-            return self._get_mock_activity_data(parameters, filters)
+            data = self._get_mock_activity_data(parameters, filters)
         elif data_source == "financial":
-            return self._get_mock_financial_data(parameters, filters)
+            data = self._get_mock_financial_data(parameters, filters)
         else:
-            return []
+            data = []
+
+        # Conceptual: Apply dynamic aggregations/grouping based on `parameters` here
+        # For mock, we just return the raw mock data subset.
+        return data
+
+    def _get_mock_advanced_performance_data(self, parameters: Optional[Dict], filters: Optional[Dict]) -> List[Dict]:
+        """Generate mock advanced performance data for reports"""
+        return [
+            {"date": "2025-05-01", "metric": "User Engagement Score", "value": 78.5, "dimension1": "Region A", "dimension2": "Product X"},
+            {"date": "2025-05-01", "metric": "Task Completion Rate", "value": 92.1, "dimension1": "Region A", "dimension2": "Product X"},
+            {"date": "2025-05-02", "metric": "User Engagement Score", "value": 79.2, "dimension1": "Region B", "dimension2": "Product Y"},
+            {"date": "2025-05-02", "metric": "Task Completion Rate", "value": 90.5, "dimension1": "Region B", "dimension2": "Product Y"},
+        ]
+
+    def _get_mock_advanced_roi_data(self, parameters: Optional[Dict], filters: Optional[Dict]) -> List[Dict]:
+        """Generate mock advanced ROI data for reports"""
+        return [
+            {"project_name": "Project Alpha", "quarter": "Q1 2025", "investment": 50000, "returns": 75000, "roi_percent": 50.0, "benchmark_roi": 40.0},
+            {"project_name": "Project Beta", "quarter": "Q1 2025", "investment": 120000, "returns": 150000, "roi_percent": 25.0, "benchmark_roi": 30.0},
+        ]
 
     def _get_mock_user_data(self, parameters: Optional[Dict], filters: Optional[Dict]) -> List[Dict]:
         """Generate mock user data for reports"""
@@ -505,18 +541,26 @@ class ReportingService:
         data: List[Dict[str, Any]],
         output_format: str
     ) -> str:
-        """Generate output file in specified format"""
-        
+        """Generate output file in specified format, considering report.export_config"""
+        report = self.db.query(Report).filter(Report.id == execution.report_id).first()
+        export_config = report.export_config if report else {}
+
+        # Potentially filter/transform data based on export_config before generation
+        # For example, if export_config specifies certain columns:
+        # columns_to_export = export_config.get("columns")
+        # if columns_to_export and data:
+        #     data = [{col: row[col] for col in columns_to_export if col in row} for row in data]
+
         if output_format == "pdf":
-            return await self._generate_pdf_report(execution, data)
+            return await self._generate_pdf_report(execution, data, export_config)
         elif output_format == "excel":
-            return await self._generate_excel_report(execution, data)
+            return await self._generate_excel_report(execution, data, export_config)
         elif output_format == "csv":
-            return await self._generate_csv_report(execution, data)
+            return await self._generate_csv_report(execution, data, export_config)
         else:
             raise ValueError(f"Unsupported output format: {output_format}")
 
-    async def _generate_pdf_report(self, execution: ReportExecution, data: List[Dict[str, Any]]) -> str:
+    async def _generate_pdf_report(self, execution: ReportExecution, data: List[Dict[str, Any]], export_config: Dict[str, Any] = None) -> str:
         """Generate PDF report using ReportLab"""
         
         # Mock PDF generation for development
@@ -585,28 +629,31 @@ class ReportingService:
         
         return file_path
 
-    async def _generate_excel_report(self, execution: ReportExecution, data: List[Dict[str, Any]]) -> str:
+    async def _generate_excel_report(self, execution: ReportExecution, data: List[Dict[str, Any]], export_config: Dict[str, Any] = None) -> str:
         """Generate Excel report using openpyxl"""
         
         file_path = f"/tmp/report_{execution.execution_uuid}.xlsx"
         
         # Mock Excel generation
         # In production, this would use openpyxl to create actual Excel files
+        # It would also use export_config to determine sheet names, specific columns, formatting, etc.
+        custom_sheet_name = export_config.get("sheet_name", "Report Data") if export_config else "Report Data"
+
         with open(file_path, 'w') as f:
-            f.write(f"Mock Excel Report\nData rows: {len(data)}\n")
+            f.write(f"Mock Excel Report - Sheet: {custom_sheet_name}\nData rows: {len(data)}\n")
             if data:
-                # Write headers
-                headers = list(data[0].keys())
+                columns_to_export = export_config.get("columns") if export_config else list(data[0].keys())
+                headers = [col for col in columns_to_export if col in data[0]] # Ensure header exists in data
+
                 f.write(",".join(headers) + "\n")
                 
-                # Write data
                 for row in data:
                     values = [str(row.get(header, "")) for header in headers]
                     f.write(",".join(values) + "\n")
         
         return file_path
 
-    async def _generate_csv_report(self, execution: ReportExecution, data: List[Dict[str, Any]]) -> str:
+    async def _generate_csv_report(self, execution: ReportExecution, data: List[Dict[str, Any]], export_config: Dict[str, Any] = None) -> str:
         """Generate CSV report"""
         
         file_path = f"/tmp/report_{execution.execution_uuid}.csv"
@@ -617,14 +664,15 @@ class ReportingService:
             return file_path
         
         # Write CSV data
+        # export_config could specify delimiter, quoting, specific columns etc.
+        columns_to_export = export_config.get("columns") if export_config else list(data[0].keys())
+        headers = [col for col in columns_to_export if col in data[0]]
+
         with open(file_path, 'w') as f:
-            # Write headers
-            headers = list(data[0].keys())
             f.write(",".join(headers) + "\n")
             
-            # Write data rows
             for row in data:
-                values = [str(row.get(header, "")).replace(",", ";") for header in headers]
+                values = [str(row.get(header, "")).replace(",", ";") for header in headers] # Basic CSV escape
                 f.write(",".join(values) + "\n")
         
         return file_path

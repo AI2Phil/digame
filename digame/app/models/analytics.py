@@ -38,6 +38,9 @@ class AnalyticsModel(Base):
     features = Column(JSON, default=[])  # Input features for the model
     target_variable = Column(String(255), nullable=False)  # What the model predicts
     hyperparameters = Column(JSON, default={})  # Model-specific parameters
+    dimensions = Column(JSON, default=[]) # For multi-dimensional metrics: list of dimension names
+    metrics = Column(JSON, default=[]) # For multi-dimensional metrics: list of metric names
+    aggregation_types = Column(JSON, default={}) # For multi-dimensional metrics: e.g. {"metric_name": "SUM"}
     
     # Training configuration
     training_data_source = Column(String(255), nullable=False)  # Source of training data
@@ -131,10 +134,12 @@ class AnalyticsPrediction(Base):
     feature_importance = Column(JSON, default={})  # Feature importance scores
     
     # Prediction results
-    predicted_value = Column(Float, nullable=False)
+    predicted_value = Column(Float, nullable=True) # Made nullable for multi-dimensional results
+    predicted_values_multi_dim = Column(JSON, nullable=True) # For multi-dimensional results: {dim_val: predicted_value} or list of {dims: {}, value: X}
     confidence_score = Column(Float, nullable=True)  # Model confidence (0-1)
     prediction_interval_lower = Column(Float, nullable=True)  # Lower bound
     prediction_interval_upper = Column(Float, nullable=True)  # Upper bound
+    benchmark_comparison_data = Column(JSON, nullable=True) # {benchmark_name: value, entity_value: value, difference: X}
     
     # Prediction metadata
     prediction_horizon_days = Column(Integer, nullable=True)  # How far into future
@@ -146,6 +151,7 @@ class AnalyticsPrediction(Base):
     prediction_error = Column(Float, nullable=True)  # Difference from actual
     is_validated = Column(Boolean, default=False)
     validation_date = Column(DateTime, nullable=True)
+    raw_prediction_output = Column(JSON, nullable=True) # Store raw output from complex models if needed for later processing
     
     # Usage tracking
     view_count = Column(Integer, default=0)

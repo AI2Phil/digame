@@ -131,8 +131,8 @@ async def create_analytics_model(
     try:
         # Mock model creation
         model_info = {
-            "id": 4,
-            "model_uuid": "model-abc12345-e89b-12d3-a456-426614174003",
+            "id": 4, # Placeholder ID
+            "model_uuid": str(uuid.uuid4()), # Generate a UUID
             "tenant_id": tenant_id,
             "name": model_data.get("name", "new_model"),
             "display_name": model_data.get("display_name", "New Model"),
@@ -143,12 +143,29 @@ async def create_analytics_model(
             "features": model_data.get("features", []),
             "target_variable": model_data.get("target_variable", "target"),
             "hyperparameters": model_data.get("hyperparameters", {}),
+            "dimensions": model_data.get("dimensions", []), # New field
+            "metrics": model_data.get("metrics", []), # New field
+            "aggregation_types": model_data.get("aggregation_types", {}), # New field
             "training_data_source": model_data.get("training_data_source", "user_activities"),
+            "training_period_days": model_data.get("training_period_days", 90),
+            "retrain_frequency_days": model_data.get("retrain_frequency_days", 7),
+            "validation_split": model_data.get("validation_split", 0.2),
             "status": "draft",
             "is_active": True,
             "is_production": False,
             "created_at": datetime.utcnow().isoformat(),
-            "created_by_user_id": current_user.id
+            "updated_at": datetime.utcnow().isoformat(),
+            "created_by_user_id": current_user.id,
+            "accuracy_score": None, # Initialize performance metrics
+            "precision_score": None,
+            "recall_score": None,
+            "f1_score": None,
+            "r2_score": None,
+            "mae_score": None,
+            "rmse_score": None,
+            "last_trained_at": None,
+            "prediction_count": 0,
+            "last_prediction_at": None
         }
         
         return {
@@ -195,34 +212,60 @@ async def train_model(
 async def make_prediction(
     model_id: int,
     prediction_data: dict,
+    benchmark_params: Optional[Dict[str, Any]] = None, # For benchmark comparison
     current_user=Depends(get_current_user),
     tenant_id: int = Depends(get_current_tenant),
     db: Session = Depends(get_db)
 ):
-    """Make a prediction using a trained model"""
+    """Make a prediction using a trained model, optionally with benchmark comparison."""
     
     # Mock prediction
+    # This mock needs to be more sophisticated to reflect potential multi-dim output
+    # and benchmark data based on the service layer changes.
+
+    mock_predicted_value_single = 78.5
+    mock_predicted_values_multi_dim = None
+    mock_benchmark_data = None
+
+    # Simulate multi-dim output if model_id implies it (e.g. model_id == 3)
+    if model_id == 3: # Arbitrary condition for mock multi-dim
+        mock_predicted_value_single = None # Or a summary value
+        mock_predicted_values_multi_dim = [
+            {"dims": {"region": "NA", "product_line": "X"}, "metric": "sales_forecast", "value": 1200.50},
+            {"dims": {"region": "EMEA", "product_line": "X"}, "metric": "sales_forecast", "value": 950.75}
+        ]
+
+    if benchmark_params:
+        mock_benchmark_data = {
+            "benchmark_name": "Industry Average Q1 Sales",
+            "benchmark_value": (mock_predicted_value_single or 1000) * 0.9, # Mock benchmark value
+            "entity_value": mock_predicted_value_single or 1000,
+            "difference": (mock_predicted_value_single or 1000) * 0.1,
+            "unit": "units"
+        }
+
     prediction = {
-        "id": 1,
-        "prediction_uuid": "pred-123e4567-e89b-12d3-a456-426614174000",
+        "id": 1, # Placeholder
+        "prediction_uuid": str(uuid.uuid4()),
         "model_id": model_id,
         "entity_type": prediction_data.get("entity_type", "user"),
         "entity_id": prediction_data.get("entity_id", 1),
-        "prediction_type": "performance",
+        "prediction_type": "performance", # This might come from the model in a real scenario
         "input_features": prediction_data.get("input_features", {}),
-        "predicted_value": 78.5,
+        "predicted_value": mock_predicted_value_single,
+        "predicted_values_multi_dim": mock_predicted_values_multi_dim,
         "confidence_score": 0.84,
-        "prediction_interval_lower": 70.7,
-        "prediction_interval_upper": 86.4,
+        "prediction_interval_lower": mock_predicted_value_single * 0.9 if mock_predicted_value_single else None,
+        "prediction_interval_upper": mock_predicted_value_single * 1.1 if mock_predicted_value_single else None,
+        "benchmark_comparison_data": mock_benchmark_data,
         "prediction_horizon_days": prediction_data.get("prediction_horizon_days"),
         "prediction_date": datetime.utcnow().isoformat(),
         "expires_at": (datetime.utcnow() + timedelta(days=7)).isoformat() if prediction_data.get("prediction_horizon_days") else None,
-        "feature_importance": {
+        "feature_importance": { # Assuming this is still relevant
             "experience_years": 0.35,
             "tasks_completed": 0.28,
-            "hours_worked": 0.22,
-            "meetings_attended": 0.15
-        }
+        },
+        "raw_prediction_output": {"detail": "Raw output from model..."} # Mock raw output
     }
     
     return {
@@ -244,7 +287,7 @@ async def get_predictions(
 ):
     """Get predictions for tenant"""
     
-    # Mock predictions data
+    # Mock predictions data - updated to reflect new fields
     predictions = [
         {
             "id": 1,
@@ -255,26 +298,59 @@ async def get_predictions(
             "entity_id": 101,
             "prediction_type": "performance",
             "predicted_value": 78.5,
+            "predicted_values_multi_dim": None, # Example for single value prediction
+            "benchmark_comparison_data": {
+                 "benchmark_name": "Team Average Performance",
+                 "benchmark_value": 75.0,
+                 "entity_value": 78.5,
+                 "difference": 3.5,
+                 "unit": "%"
+            },
             "confidence_score": 0.84,
             "prediction_date": "2025-05-24T09:45:00Z",
             "is_validated": False,
             "actual_value": None,
-            "prediction_error": None
+            "prediction_error": None,
+            "raw_prediction_output": {"detail": "Model raw output for pred 1..."}
         },
         {
             "id": 2,
             "prediction_uuid": "pred-456e7890-e89b-12d3-a456-426614174001",
-            "model_id": 2,
+            "model_id": 2, # Assume this is a simple model
             "model_name": "productivity_optimizer",
             "entity_type": "user",
             "entity_id": 102,
             "prediction_type": "productivity",
             "predicted_value": 65.2,
+            "predicted_values_multi_dim": None,
+            "benchmark_comparison_data": None,
             "confidence_score": 0.79,
             "prediction_date": "2025-05-24T08:30:00Z",
             "is_validated": True,
             "actual_value": 67.1,
-            "prediction_error": 1.9
+            "prediction_error": 1.9,
+            "raw_prediction_output": None
+        },
+        {
+            "id": 3,
+            "prediction_uuid": "pred-789f0123-e89b-12d3-a456-426614174002",
+            "model_id": 3, # Assume this is a multi-dim model
+            "model_name": "multi_dim_sales_forecaster",
+            "entity_type": "product_line",
+            "entity_id": 201,
+            "prediction_type": "sales_forecast",
+            "predicted_value": None, # No single value for this mock
+            "predicted_values_multi_dim": [
+                {"dims": {"region": "NA"}, "metric": "units_forecasted", "value": 1500},
+                {"dims": {"region": "EMEA"}, "metric": "units_forecasted", "value": 1200},
+            ],
+            "benchmark_comparison_data": None,
+            "confidence_score": 0.88,
+            "prediction_date": "2025-05-24T10:15:00Z",
+            "is_validated": False,
+            "actual_value": None,
+            "prediction_error": None,
+            "raw_prediction_output": {"detail": "Multi-dim raw output for pred 3..."}
         }
     ]
     
