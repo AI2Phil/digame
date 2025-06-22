@@ -1,20 +1,18 @@
-from sqlalchemy import Column, Integer, String, DateTime, Boolean, ForeignKey
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
-from datetime import datetime
-
-from .user import Base
+from sqlalchemy.sql import func
+from digame.app.db.base_class import Base
 
 class Notification(Base):
     __tablename__ = "notifications"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, index=True) # Assuming it links to a user
+    user_id = Column(Integer, ForeignKey("users.id"), index=True, nullable=False)
     message = Column(String, nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    scheduled_at = Column(DateTime, nullable=True, index=True)
-    is_read = Column(Boolean, default=False, nullable=False)
+    type = Column(String, index=True, nullable=False)
+    is_read = Column(Boolean, default=False, nullable=False, index=True)
+    scheduled_at = Column(DateTime, nullable=True, index=True)  # Keep from HEAD
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
-    # If you have a User model and want to define a relationship, you can add:
-    # owner = relationship("User", back_populates="notifications")
-    # Ensure "User" model is imported and has a "notifications" relationship attribute.
-    # For now, user_id is kept as a simple Integer field.
+    recipient = relationship("User")

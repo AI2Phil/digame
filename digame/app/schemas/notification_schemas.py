@@ -4,8 +4,7 @@ from datetime import datetime
 
 class NotificationBase(BaseModel):
     message: str
-    scheduled_at: Optional[datetime] = None
-    user_id: int
+    type: str
 
 class NotificationCreate(NotificationBase):
     pass
@@ -17,8 +16,11 @@ class NotificationUpdate(BaseModel):
 
 class Notification(NotificationBase):
     id: int
-    created_at: datetime
+    user_id: int
     is_read: bool
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+    scheduled_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True # Pydantic V2 uses from_attributes instead of orm_mode

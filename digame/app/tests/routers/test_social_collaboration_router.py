@@ -18,10 +18,14 @@ from digame.app.services.social_collaboration_service import SocialCollaboration
 from digame.app.crud import user_crud
 
 # Router to be tested
-from digame.app.routers.social_collaboration import router as social_router # Corrected import
+from digame.app.routers.social_collaboration import router as social_router
 
-app = FastAPI()
-app.include_router(social_router)
+# Attempt to import app, adjust if main is structured differently
+try:
+    from digame.app.main import app
+except ImportError:
+    app = FastAPI()
+    app.include_router(social_router)
 
 # --- Test Client Fixture ---
 @pytest.fixture
@@ -34,11 +38,12 @@ def mock_social_collaboration_service():
     return MagicMock(spec=SocialCollaborationService)
 
 @pytest.fixture
-def mock_user_crud_profile(): # Renamed to avoid conflict if user_crud is mocked elsewhere
+def mock_user_crud_profile():
     # Mocking specific functions from user_crud that are used by this router
     mock_crud = MagicMock()
     mock_crud.get_user_profile = MagicMock()
     mock_crud.update_user_profile = MagicMock()
+    mock_crud.get_user = MagicMock()
     return mock_crud
 
 # --- Mock Authentication Fixture ---
@@ -47,56 +52,37 @@ def mock_auth_user():
     now = datetime.now(timezone.utc)
     return UserModel(
         id=1, username="testuser", email="test@example.com", is_active=True,
-        created_at=now, updated_at=now, hashed_password="testpassword"
+        created_at=now, updated_at=now, hashed_password="testpassword",
+        first_name="Test", last_name="User"
+    )
+
+@pytest.fixture
+def another_mock_user():
+    now = datetime.now(timezone.utc)
+    return UserModel(
+        id=2, username="anotheruser", email="another@example.com", is_active=True,
+        created_at=now, updated_at=now, hashed_password="testpassword",
+        first_name="Another", last_name="User"
     )
 
 # --- Apply Dependency Overrides ---
 @pytest.fixture(autouse=True)
 def override_router_dependencies(
     mock_social_collaboration_service: MagicMock,
-    mock_user_crud_profile: MagicMock, # Use the renamed fixture
+    mock_user_crud_profile: MagicMock,
     mock_auth_user: UserModel
 ):
     # Mock get_db from ..database which is used by get_current_active_user in router
-    # and also passed to service/crud if not directly mocked at instantiation
     def get_mock_db_session_override():
         return MagicMock(spec=Session)
 
     def get_current_active_user_override():
         return mock_auth_user
 
-    # Patch where user_crud is imported and used in the router
-    # This is tricky if router imports specific functions vs the whole module.
-    # Assuming router does `from ..crud import user_crud`
-    # If user_crud module itself is used, patching it globally for the test session:
-
-    # For services instantiated in the router:
-    def get_mock_social_collaboration_service_override():
-        # Pass a mock DB if the service expects it, though its methods will be mocked too
-        return mock_social_collaboration_service
-
     app.dependency_overrides[social_router.get_db] = get_mock_db_session_override
     app.dependency_overrides[social_router.get_current_active_user] = get_current_active_user_override
 
-    # To mock user_crud.get_user_profile and user_crud.update_user_profile,
-    # we need to patch them where they are looked up by FastAPI's dependency injection,
-    # or ensure the service/router uses a mockable version.
-    # The router directly calls user_crud.get_user_profile(db, ...) etc.
-    # So, we need to ensure that `db` passed to it is a mock, or patch `user_crud` itself.
-    # The most straightforward way for this test setup is to ensure `SocialCollaborationService`
-    # and direct `user_crud` calls use mocked versions.
-    # Instantiating service with mocked DB is handled by get_mock_social_collaboration_service_override.
-    # For direct crud calls in router:
-    # We can't easily override `user_crud` module directly here without `mocker` fixture from pytest-mock or complex patching.
-    # Instead, we'll ensure service calls are mocked, and for direct crud calls, we'll rely on `get_db` being mocked.
-    # The get_user_profile and update_user_profile endpoints directly call user_crud.
-    # We will patch these crud functions directly for these tests.
-
     with patch('digame.app.routers.social_collaboration.user_crud', mock_user_crud_profile):
-        # For SocialCollaborationService, ensure it's instantiated with a mock DB
-        # The router instantiates it like: service = SocialCollaborationService(db)
-        # So, as long as `db` (from get_db) is mocked, the service gets a mock DB.
-        # And the service's methods themselves are on `mock_social_collaboration_service`.
         yield
 
     app.dependency_overrides = {}
@@ -196,7 +182,102 @@ class TestSocialCollaborationRouterMatching:
         response = client.get(f"/api/v1/social/users/{user_id}/peer-matches?match_type=invalid_type")
         assert response.status_code == 400 # Bad Request
 
-# TODO: Add tests for deprecated skill-matches endpoint if it needs to be actively maintained.
-# TODO: Add tests for authorization failures (e.g., user trying to get matches for another user).
-# TODO: Test other placeholder endpoints if their behavior (returning "Not implemented") is important.
-```
+class TestSocialCollaborationNotifications:
+    @patch('digame.app.crud.notification_crud.create_notification')
+    def test_send_connection_request_triggers_notification(
+        self,
+        mock_create_notification,
+        client: TestClient,
+        mock_user_crud_profile: MagicMock,
+        mock_auth_user: UserModel,
+        another_mock_user: UserModel
+    ):
+        peer_id = another_mock_user.id
+        mock_user_crud_profile.get_user.return_value = another_mock_user
+
+        response = client.post(
+            "/api/v1/social/connections/request",
+            params={"peer_id": peer_id, "message": "Hello there"}
+        )
+
+        assert response.status_code == 200
+        json_response = response.json()
+        assert json_response["success"] is True
+        assert f"Connection request sent to user {peer_id}" in json_response["message"]
+
+        mock_create_notification.assert_called_once_with(
+            db=ANY,
+            notification=ANY,
+            user_id=peer_id
+        )
+        # Check the notification content
+        notification_arg = mock_create_notification.call_args[1]['notification']
+        assert notification_arg.message == f"{mock_auth_user.first_name or 'A user'} sent you a connection request."
+        assert notification_arg.type == 'connection_request'
+
+    @patch('digame.app.crud.notification_crud.create_notification')
+    def test_accept_connection_request_triggers_notification(
+        self,
+        mock_create_notification,
+        client: TestClient,
+        mock_user_crud_profile: MagicMock,
+        mock_auth_user: UserModel,
+        another_mock_user: UserModel
+    ):
+        original_sender_id = another_mock_user.id
+        receiver_id = mock_auth_user.id
+
+        # Mock that the original sender exists
+        mock_user_crud_profile.get_user.return_value = another_mock_user
+
+        # request_id format from social_collaboration.py: req_SENDERID_RECEIVERID_TIMESTAMP
+        timestamp = int(datetime.now().timestamp())
+        mock_request_id = f"req_{original_sender_id}_{receiver_id}_{timestamp}"
+
+        response = client.post(f"/api/v1/social/connections/requests/{mock_request_id}/accept")
+
+        assert response.status_code == 200
+        json_response = response.json()
+        assert json_response["success"] is True
+        assert f"Connection request {mock_request_id} accepted. Notification sent to user {original_sender_id}" in json_response["message"]
+
+        mock_create_notification.assert_called_once_with(
+            db=ANY,
+            notification=ANY,
+            user_id=original_sender_id
+        )
+        notification_arg = mock_create_notification.call_args[1]['notification']
+        assert notification_arg.message == f"{mock_auth_user.first_name or 'A user'} accepted your connection request."
+        assert notification_arg.type == 'connection_accepted'
+
+    @patch('digame.app.crud.notification_crud.create_notification')
+    def test_accept_connection_request_invalid_request_id_format(
+        self,
+        mock_create_notification,
+        client: TestClient
+    ):
+        invalid_request_id = "invalid_id_format"
+        response = client.post(f"/api/v1/social/connections/requests/{invalid_request_id}/accept")
+        assert response.status_code == 400
+        assert "Invalid request_id format" in response.json()["detail"]
+        mock_create_notification.assert_not_called()
+
+    @patch('digame.app.crud.notification_crud.create_notification')
+    def test_accept_connection_request_original_requester_not_found(
+        self,
+        mock_create_notification,
+        client: TestClient,
+        mock_user_crud_profile: MagicMock,
+        mock_auth_user: UserModel
+    ):
+        original_sender_id = 999  # Non-existent user
+        receiver_id = mock_auth_user.id
+        timestamp = int(datetime.now().timestamp())
+        mock_request_id = f"req_{original_sender_id}_{receiver_id}_{timestamp}"
+
+        mock_user_crud_profile.get_user.return_value = None  # Simulate original requester not found
+
+        response = client.post(f"/api/v1/social/connections/requests/{mock_request_id}/accept")
+        assert response.status_code == 404
+        assert f"Original requester (ID: {original_sender_id}) not found" in response.json()["detail"]
+        mock_create_notification.assert_not_called()

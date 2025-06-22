@@ -1,6 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.orm import Session
 from typing import List, Optional
+from fastapi import APIRouter, Depends, HTTPException, status, Query
+from sqlalchemy.orm import Session
 
 # Use relative imports for proper module resolution
 try:
@@ -45,18 +45,51 @@ except ImportError:
 
 from .. import crud
 from .. import schemas
+from ..crud import notification_crud
+from ..schemas import notification_schemas
 
 router = APIRouter(
-    prefix="/notifications",
-    tags=["notifications"]
+    prefix="/api/notifications",
+    tags=["notifications"],
+    responses={404: {"description": "Not found"}},
 )
+
+@router.get("/", response_model=List[schemas.Notification])
+async def read_notifications(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=200),
+    read: Optional[bool] = None,
+    db: Session = Depends(get_db),
+    current_user: UserModel = Depends(get_current_active_user)
+):
+    """
+    Retrieve notifications for the current user.
+    - `skip`: Number of notifications to skip.
+    - `limit`: Maximum number of notifications to return.
+    - `read`: Filter by read status:
+        - `true`: Only read notifications.
+        - `false`: Only unread notifications.
+        - `null` (default): All notifications.
+    """
+    if not current_user or not current_user.is_active:
+        raise HTTPException(status_code=403, detail="User not authenticated or inactive.")
+
+    # Use the enhanced CRUD function
+    notifications = notification_crud.get_notifications_for_user(
+        db=db,
+        user_id=current_user.id,
+        skip=skip,
+        limit=limit,
+        read_status=read
+    )
+    return notifications
 
 @router.get("/new", response_model=List[schemas.Notification])
 async def get_new_notifications(
     db: Session = Depends(get_db),
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=200),
-    current_user: UserModel = Depends(get_current_active_user) # Use authenticated user
+    current_user: UserModel = Depends(get_current_active_user)
 ):
     """
     Retrieve new (unread) notifications for the authenticated user.
@@ -64,32 +97,11 @@ async def get_new_notifications(
     if not current_user or not current_user.is_active:
         raise HTTPException(status_code=403, detail="User not authenticated or inactive.")
 
-    # user_id is taken from the authenticated current_user
-    notifications = crud.get_unread_notifications_by_user( # Assuming crud.py uses user.id
-        db=db, user_id=current_user.id, skip=skip, limit=limit
-    )
-
-    # FastAPI will correctly return an empty list if no notifications are found.
-    return notifications
-
-@router.get("/", response_model=List[schemas.Notification])
-async def get_all_notifications_for_user(
-    db: Session = Depends(get_db),
-    skip: int = Query(0, ge=0),
-    limit: int = Query(100, ge=1, le=200),
-    current_user: UserModel = Depends(get_current_active_user) # Use authenticated user
-):
-    """
-    Retrieve all notifications (read and unread) for the authenticated user.
-    """
-    if not current_user or not current_user.is_active:
-        raise HTTPException(status_code=403, detail="User not authenticated or inactive.")
-
-    notifications = crud.get_notifications_by_user( # Assuming crud.py uses user.id
-        db=db, user_id=current_user.id, skip=skip, limit=limit
+    # Use the enhanced CRUD function for unread notifications
+    notifications = notification_crud.get_notifications_for_user(
+        db=db, user_id=current_user.id, skip=skip, limit=limit, read_status=False
     )
     return notifications
-
 
 @router.post("/optimize-ai", response_model=dict)
 async def optimize_notifications_ai(
@@ -123,13 +135,10 @@ async def optimize_notifications_ai(
         raise he
     except Exception as e:
         # Log the unexpected error for debugging
-        # import logging
-        # logging.getLogger(__name__).error(f"Unexpected error during AI notification optimization: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"An unexpected error occurred: {str(e)}")
 
-
 @router.post("/{notification_id}/read", response_model=schemas.Notification)
-async def mark_notification_as_read_route(
+async def mark_notification_as_read_endpoint(
     notification_id: int,
     db: Session = Depends(get_db),
     current_user: UserModel = Depends(get_current_active_user)
@@ -140,15 +149,28 @@ async def mark_notification_as_read_route(
     if not current_user or not current_user.is_active:
         raise HTTPException(status_code=403, detail="User not authenticated or inactive.")
 
-    db_notification = crud.get_notification(db, notification_id=notification_id) # Assuming crud.py uses notification.id
+    db_notification = notification_crud.mark_notification_as_read(
+        db=db, notification_id=notification_id, user_id=current_user.id
+    )
     if db_notification is None:
-        raise HTTPException(status_code=404, detail="Notification not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Notification not found or access denied"
+        )
+    return db_notification
 
-    if db_notification.user_id != current_user.id: # Assuming notification model has user_id
-        # This check ensures users can only mark their own notifications as read.
-        raise HTTPException(status_code=403, detail="Not authorized to modify this notification")
+@router.post("/all/read", response_model=List[schemas.Notification])
+async def mark_all_user_notifications_as_read(
+    db: Session = Depends(get_db),
+    current_user: UserModel = Depends(get_current_active_user)
+):
+    """
+    Mark all unread notifications for the current user as read.
+    """
+    if not current_user or not current_user.is_active:
+        raise HTTPException(status_code=403, detail="User not authenticated or inactive.")
 
-    updated_notification = crud.mark_notification_as_read(db=db, notification_id=notification_id)
-    if updated_notification is None: # Should not happen if previous checks passed
-        raise HTTPException(status_code=404, detail="Notification not found after attempting to mark as read")
-    return updated_notification
+    updated_notifications = notification_crud.mark_all_notifications_as_read_for_user(
+        db=db, user_id=current_user.id
+    )
+    return updated_notifications
