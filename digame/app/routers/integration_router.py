@@ -23,11 +23,11 @@ class IntegrationProviderResponse(BaseModel):
     id: int
     name: str
     display_name: str
-    description: str = None
+    description: Optional[str] = None
     category: str
     auth_type: str
     supported_operations: List[str]
-    logo_url: str = None
+    logo_url: Optional[str] = None
     is_active: bool
     
     class Config:
@@ -37,8 +37,8 @@ class IntegrationProviderResponse(BaseModel):
 class IntegrationConnectionCreate(BaseModel):
     provider_id: int
     connection_name: str
-    external_account_id: str = None
-    external_account_name: str = None
+    external_account_id: Optional[str] = None
+    external_account_name: Optional[str] = None
     auth_data: Dict[str, Any] = {}
     sync_settings: Dict[str, Any] = {}
     field_mappings: Dict[str, Any] = {}
@@ -49,9 +49,9 @@ class IntegrationConnectionResponse(BaseModel):
     id: int
     provider_id: int
     connection_name: str
-    external_account_name: str = None
+    external_account_name: Optional[str] = None
     status: str
-    last_sync_at: datetime = None
+    last_sync_at: Optional[datetime] = None
     total_syncs: int
     successful_syncs: int
     error_count: int
@@ -76,9 +76,9 @@ class IntegrationSyncResponse(BaseModel):
     records_created: int
     records_updated: int
     records_failed: int
-    duration_seconds: float = None
+    duration_seconds: Optional[float] = None
     started_at: datetime
-    completed_at: datetime = None
+    completed_at: Optional[datetime] = None
     
     class Config:
         from_attributes = True
@@ -86,7 +86,7 @@ class IntegrationSyncResponse(BaseModel):
 
 class IntegrationWebhookCreate(BaseModel):
     webhook_url: str
-    webhook_secret: str = None
+    webhook_secret: Optional[str] = None
     events: List[str] = []
     timeout_seconds: int = 30
 
@@ -113,8 +113,8 @@ class IntegrationDataMappingCreate(BaseModel):
     transformation_config: Dict[str, Any] = {}
     validation_rules: Dict[str, Any] = {}
     is_required: bool = False
-    default_value: str = None
-    description: str = None
+    default_value: Optional[str] = None
+    description: Optional[str] = None
 
 
 class IntegrationDataMappingResponse(BaseModel):
@@ -225,7 +225,7 @@ async def get_integration_connections(
 @router.put("/connections/{connection_id}/status")
 async def update_connection_status(
     connection_id: int,
-    status: str,
+    connection_status: str,
     error_message: Optional[str] = None,
     db: Session = Depends(get_db)
 ):
@@ -235,7 +235,7 @@ async def update_connection_status(
     integration_service = IntegrationService(db)
     success = integration_service.update_connection_status(
         connection_id=connection_id,
-        status=status,
+        status=connection_status,
         error_message=error_message
     )
     
@@ -559,7 +559,7 @@ async def integration_health_check():
 async def oauth_callback(
     provider_name: str,
     code: str,
-    state: str = None,
+    state: Optional[str] = None,
     db: Session = Depends(get_db)
 ):
     """

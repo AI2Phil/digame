@@ -57,7 +57,10 @@ def get_api_keys(
             cached_data = redis_client.get(cache_key)
             if cached_data:
                 # Data in Redis is stored as a JSON string of the dictionary
-                api_keys_dict = json.loads(cached_data.decode('utf-8')) # decode bytes to str, then parse JSON
+                if isinstance(cached_data, bytes):
+                    api_keys_dict = json.loads(cached_data.decode('utf-8'))
+                else:
+                    api_keys_dict = json.loads(str(cached_data)) # Ensure it's a string
                 # Construct response from cached data. Note: created_at/updated_at might be stale or not stored.
                 # For simplicity, we assume api_keys is the primary cached data.
                 # A more complete caching strategy might store the whole UserSetting object or relevant parts.
@@ -72,11 +75,10 @@ def get_api_keys(
                 db_user_settings = crud.get_user_setting(db, user_id=current_user.id)
                 if not db_user_settings: # Should not happen if cache exists, but good check
                      db_user_settings = crud.create_user_setting(
-                        db, user_id=current_user.id, settings=schemas.UserSettingCreate(api_keys={})
+                        db, user_id=current_user.id, settings=schemas.UserSettingCreate()
                      )
 
                 return schemas.UserSetting(
-                    id=db_user_settings.id,
                     user_id=db_user_settings.user_id,
                     api_keys=api_keys_dict, # Use cached api_keys
                     created_at=db_user_settings.created_at,
@@ -92,7 +94,7 @@ def get_api_keys(
     created_new = False
     if not db_user_settings:
         db_user_settings = crud.create_user_setting(
-            db, user_id=current_user.id, settings=schemas.UserSettingCreate(api_keys={})
+            db, user_id=current_user.id, settings=schemas.UserSettingCreate()
         )
         created_new = True # Flag that we created it
 
@@ -107,13 +109,12 @@ def get_api_keys(
             pass # Don't fail request if cache set fails
 
     return schemas.UserSetting(
-        id=db_user_settings.id,
+    return schemas.UserSetting(
         user_id=db_user_settings.user_id,
         api_keys=api_keys_dict,
         created_at=db_user_settings.created_at,
         updated_at=db_user_settings.updated_at
     )
-
 @router.post("/api-keys", response_model=schemas.UserSetting)
 def update_api_keys(
     api_key_data: schemas.UserSettingUpdate,
@@ -130,7 +131,7 @@ def update_api_keys(
             db, user_id=current_user.id, settings=api_key_data
         )
     else:
-        create_data = schemas.UserSettingCreate(api_keys=api_key_data.api_keys if api_key_data.api_keys is not None else {})
+        create_data = schemas.UserSettingCreate()
         updated_settings = crud.create_user_setting(
             db, user_id=current_user.id, settings=create_data
         )
@@ -150,13 +151,12 @@ def update_api_keys(
     api_keys_dict = _parse_api_keys(updated_settings.api_keys)
     return schemas.UserSetting(
         id=updated_settings.id,
+    return schemas.UserSetting(
         user_id=updated_settings.user_id,
         api_keys=api_keys_dict,
         created_at=updated_settings.created_at,
         updated_at=updated_settings.updated_at
     )
-
-@router.delete("/api-keys/{key_name}", response_model=schemas.UserSetting)
 def delete_api_key(
     key_name: str,
     db: Session = Depends(get_db),

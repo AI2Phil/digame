@@ -575,7 +575,6 @@ const GoalsStep = ({ data, updateData }) => {
               key={level}
               variant={data.goals.productivity_target === level ? 'default' : 'outline'}
               onClick={() => updateGoal('productivity_target', level)}
-<<<<<<< HEAD
               className={`capitalize w-full
                           ${data.goals.productivity_target === level
                             ? 'bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600'

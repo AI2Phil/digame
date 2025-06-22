@@ -6,12 +6,12 @@ from .user import Base
 class Notification(Base):
     __tablename__ = "notifications"
 
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), index=True, nullable=False)
-    message = Column(String, nullable=False)
-    type = Column(String, index=True, nullable=False)
-    is_read = Column(Boolean, default=False, nullable=False, index=True)
-    scheduled_at = Column(DateTime, nullable=True, index=True)  # Keep from HEAD
+    id = Column(Integer(), primary_key=True, index=True)
+    user_id = Column(Integer(), ForeignKey("users.id"), index=True, nullable=False)
+    message = Column(String(), nullable=False)
+    type = Column(String(), index=True, nullable=False)
+    is_read = Column(Boolean(), default=False, nullable=False, index=True)
+    scheduled_at = Column(DateTime(), nullable=True, index=True)  # Keep from HEAD
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 

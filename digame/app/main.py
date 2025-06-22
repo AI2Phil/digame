@@ -6,6 +6,10 @@ from pythonjsonlogger import jsonlogger
 import sys # Required for sys.stdout
 from datetime import datetime, timezone
 
+# Import authentication utilities
+from .auth.middleware import configure_auth_middleware
+from .auth.config import auth_settings
+
 # Import routers
 from .routers import predictive as predictive_router
 from .routers import admin_rbac_router
@@ -150,8 +154,7 @@ app = FastAPI(
 
 # Configure authentication middleware
 logger.info("Configuring authentication middleware...")
-middleware_config = get_middleware_config()
-configure_auth_middleware(app, middleware_config)
+configure_auth_middleware(app)
 
 # Add GZip middleware for response compression
 # Note: Temporarily commented out due to type issues
