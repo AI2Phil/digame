@@ -91,11 +91,7 @@ async def get_ai_peer_matches(
 @router.get("/users/{user_id}/skill-matches") # This is another mock endpoint, leaving as is for now unless instructed to change
 async def get_skill_based_matches(
     user_id: int,
-<<<<<<< HEAD
-    current_user: UserModel = Depends(get_current_active_user),
-=======
     current_user: UserModel = Depends(get_current_active_user), # Use actual dependency
->>>>>>> origin/feature/social-profile-enhancements-phase2-3
     db: Session = Depends(get_db)
 ):
     """Get skill-based peer matches using advanced algorithms"""
@@ -140,11 +136,7 @@ async def get_skill_based_matches(
 async def get_industry_connections(
     user_id: int,
     industry: Optional[str] = None,
-<<<<<<< HEAD
-    current_user: UserModel = Depends(get_current_active_user),
-=======
     current_user: UserModel = Depends(get_current_active_user), # Use actual dependency
->>>>>>> origin/feature/social-profile-enhancements-phase2-3
     db: Session = Depends(get_db)
 ):
     """Get industry-specific networking connections"""
@@ -174,11 +166,7 @@ async def get_networking_events(
     industry: Optional[str] = None,
     location: Optional[str] = None,
     virtual: Optional[bool] = None,
-<<<<<<< HEAD
-    current_user: UserModel = Depends(get_current_active_user),
-=======
     current_user: UserModel = Depends(get_current_active_user), # Use actual dependency
->>>>>>> origin/feature/social-profile-enhancements-phase2-3
     db: Session = Depends(get_db)
 ):
     """Get curated networking events"""
