@@ -30,7 +30,11 @@ def test_user():
 
 @pytest.fixture
 def test_notification_create_schema():
-    return NotificationCreate(message="Test Message", type="test_type")
+    notification_data = {
+        "message": "Test Message",
+        "type": "test_type"
+    }
+    return NotificationCreate(**notification_data)
 
 @pytest.fixture
 def test_db_notification(test_user):

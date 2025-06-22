@@ -31,17 +31,18 @@ def get_tasks_by_user_id(db: Session, user_id: int, status: Optional[str] = None
 
 def create_task(db: Session, task: TaskCreate, user_id: int) -> Task:
     """Create a new task"""
-    db_task = Task(
-        user_id=user_id,
-        description=task.description,
-        source_type=task.source_type,
-        source_identifier=task.source_identifier,
-        priority_score=task.priority_score,
-        status=task.status or 'suggested',
-        notes=task.notes,
-        due_date_inferred=task.due_date_inferred,
-        process_note_id=task.process_note_id
-    )
+    task_data = {
+        "user_id": user_id,
+        "description": task.description,
+        "source_type": task.source_type,
+        "source_identifier": task.source_identifier,
+        "priority_score": task.priority_score,
+        "status": task.status or 'suggested',
+        "notes": task.notes,
+        "due_date_inferred": task.due_date_inferred,
+        "process_note_id": task.process_note_id
+    }
+    db_task = Task(**task_data)
     db.add(db_task)
     db.commit()
     db.refresh(db_task)

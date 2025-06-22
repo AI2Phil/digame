@@ -2,7 +2,7 @@
 Multi-tenant service layer for the Digame platform
 """
 
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, relationship
 from sqlalchemy import and_, or_
 from typing import List, Optional, Dict, Any
 from datetime import datetime, timedelta, timezone # Added timezone
@@ -39,16 +39,17 @@ class TenantService:
         """
         Create and save a TenantAuditLog entry.
         """
-        audit_log_entry = TenantAuditLog(
-            tenant_id=tenant_id,
-            user_id=user_id,
-            action=action,
-            resource_type=resource_type,
-            resource_id=resource_id,
-            details=details,
-            ip_address=ip_address,
-            user_agent=user_agent,
-        )
+        audit_data = {
+            "tenant_id": tenant_id,
+            "user_id": user_id,
+            "action": action,
+            "resource_type": resource_type,
+            "resource_id": resource_id,
+            "details": details,
+            "ip_address": ip_address,
+            "user_agent": user_agent,
+        }
+        audit_log_entry = TenantAuditLog(**audit_data)
         self.db.add(audit_log_entry)
         self.db.flush()
         return audit_log_entry
@@ -59,26 +60,27 @@ class TenantService:
             if field not in tenant_data or not tenant_data[field]:
                 raise ValueError(f"Missing required field: {field}")
 
-        tenant = Tenant(
-            name=tenant_data["name"],
-            slug=tenant_data["slug"],
-            admin_email=tenant_data["admin_email"],
-            admin_name=tenant_data["admin_name"],
-            domain=tenant_data.get("domain"),
-            subdomain=tenant_data.get("subdomain"),
-            tenant_uuid=secrets.token_hex(16),
-            subscription_tier=tenant_data.get("subscription_tier", "basic"),
-            settings=tenant_data.get("settings", {}),
-            features=self._get_enhanced_features(tenant_data.get("subscription_tier", "basic")),
-            max_users=tenant_data.get("max_users", 10),
-            storage_limit_gb=tenant_data.get("storage_limit_gb", 5),
-            api_rate_limit=tenant_data.get("api_rate_limit", 1000),
-            is_trial=tenant_data.get("is_trial", True),
-            trial_ends_at=tenant_data.get("trial_ends_at", datetime.now(timezone.utc) + timedelta(days=30)) if tenant_data.get("is_trial", True) else None,
-            branding=tenant_data.get("branding", {}),
-            phone=tenant_data.get("phone"),
-            address=tenant_data.get("address")
-        )
+        tenant_create_data = {
+            "name": tenant_data["name"],
+            "slug": tenant_data["slug"],
+            "admin_email": tenant_data["admin_email"],
+            "admin_name": tenant_data["admin_name"],
+            "domain": tenant_data.get("domain"),
+            "subdomain": tenant_data.get("subdomain"),
+            "tenant_uuid": secrets.token_hex(16),
+            "subscription_tier": tenant_data.get("subscription_tier", "basic"),
+            "settings": tenant_data.get("settings", {}),
+            "features": self._get_enhanced_features(tenant_data.get("subscription_tier", "basic")),
+            "max_users": tenant_data.get("max_users", 10),
+            "storage_limit_gb": tenant_data.get("storage_limit_gb", 5),
+            "api_rate_limit": tenant_data.get("api_rate_limit", 1000),
+            "is_trial": tenant_data.get("is_trial", True),
+            "trial_ends_at": tenant_data.get("trial_ends_at", datetime.now(timezone.utc) + timedelta(days=30)) if tenant_data.get("is_trial", True) else None,
+            "branding": tenant_data.get("branding", {}),
+            "phone": tenant_data.get("phone"),
+            "address": tenant_data.get("address")
+        }
+        tenant = Tenant(**tenant_create_data)
         
         self.db.add(tenant)
         self.db.flush()
@@ -205,11 +207,12 @@ class TenantService:
         action = "tenant_setting_updated"
         if not setting:
             action = "tenant_setting_created"
-            setting = TenantSettings(
-                tenant_id=tenant_id,
-                category=category,
-                key=key
-            )
+            setting_data = {
+                "tenant_id": tenant_id,
+                "category": category,
+                "key": key
+            }
+            setting = TenantSettings(**setting_data)
             self.db.add(setting)
 
         setting.value = setting_value
@@ -258,14 +261,15 @@ class TenantService:
         if existing_invitation:
             raise ValueError(f"Active invitation already exists for {email}")
 
-        invitation = TenantInvitation(
-            tenant_id=tenant_id,
-            invited_by_user_id=invited_by_user_id,
-            email=email,
-            role=role,
-            invitation_token=secrets.token_urlsafe(32),
-            expires_at=datetime.now(timezone.utc) + timedelta(days=7)
-        )
+        invitation_data = {
+            "tenant_id": tenant_id,
+            "invited_by_user_id": invited_by_user_id,
+            "email": email,
+            "role": role,
+            "invitation_token": secrets.token_urlsafe(32),
+            "expires_at": datetime.now(timezone.utc) + timedelta(days=7)
+        }
+        invitation = TenantInvitation(**invitation_data)
         self.db.add(invitation)
         self.db.commit()
         self.db.refresh(invitation)
@@ -306,7 +310,12 @@ class TenantService:
             if role_to_assign:
                 existing_user_role = self.db.query(UserRole).filter(UserRole.user_id == accepting_user_id, UserRole.role_id == role_to_assign.id).first()
                 if not existing_user_role:
-                    new_user_role = UserRole(user_id=accepting_user_id, role_id=role_to_assign.id, assigned_by=invitation.invited_by_user_id)
+                    user_role_data = {
+                        "user_id": accepting_user_id,
+                        "role_id": role_to_assign.id,
+                        "assigned_by": invitation.invited_by_user_id
+                    }
+                    new_user_role = UserRole(**user_role_data)
                     self.db.add(new_user_role)
         
         self.db.commit()
@@ -360,18 +369,19 @@ class TenantService:
 
         hashed_password = pwd_context.hash(user_data["password"])
         
-        user = User(
-            tenant_id=tenant_id,
-            username=user_data["username"],
-            email=user_data["email"],
-            first_name=user_data.get("first_name"),
-            last_name=user_data.get("last_name"),
-            hashed_password=hashed_password,
-            job_title=user_data.get("job_title"),
-            department=user_data.get("department"),
-            profile_data=user_data.get("profile_data", {}),
-            preferences=user_data.get("preferences", {})
-        )
+        user_create_data = {
+            "tenant_id": tenant_id,
+            "username": user_data["username"],
+            "email": user_data["email"],
+            "first_name": user_data.get("first_name"),
+            "last_name": user_data.get("last_name"),
+            "hashed_password": hashed_password,
+            "job_title": user_data.get("job_title"),
+            "department": user_data.get("department"),
+            "profile_data": user_data.get("profile_data", {}),
+            "preferences": user_data.get("preferences", {})
+        }
+        user = User(**user_create_data)
         
         self.db.add(user)
         self.db.flush()
@@ -383,11 +393,12 @@ class TenantService:
         
         assigned_role_id_for_log = None
         if default_role:
-            user_role = UserRole(
-                user_id=user.id,
-                role_id=default_role.id,
-                assigned_by=current_admin_id
-            )
+            user_role_data = {
+                "user_id": user.id,
+                "role_id": default_role.id,
+                "assigned_by": current_admin_id
+            }
+            user_role = UserRole(**user_role_data)
             self.db.add(user_role)
             assigned_role_id_for_log = default_role.id
         
@@ -418,11 +429,12 @@ class TenantService:
         if existing:
             return existing
         
-        user_role = UserRole(
-            user_id=user_id,
-            role_id=role_id,
-            assigned_by=assigned_by_user_id
-        )
+        user_role_data = {
+            "user_id": user_id,
+            "role_id": role_id,
+            "assigned_by": assigned_by_user_id
+        }
+        user_role = UserRole(**user_role_data)
         
         self.db.add(user_role)
         self.db.commit()
@@ -487,13 +499,14 @@ class TenantService:
         ]
         
         for role_data in default_roles_data:
-            role = Role(
-                tenant_id=tenant_id,
-                name=role_data["name"],
-                description=role_data["description"],
-                permissions=role_data["permissions"],
-                is_system_role=True
-            )
+            role_create_data = {
+                "tenant_id": tenant_id,
+                "name": role_data["name"],
+                "description": role_data["description"],
+                "permissions": role_data["permissions"],
+                "is_system_role": True
+            }
+            role = Role(**role_create_data)
             self.db.add(role)
         self.db.flush()
 

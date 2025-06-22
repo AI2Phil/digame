@@ -457,14 +457,19 @@ async def get_project_matches(
         missing_skills = list(project_req_skills_set.difference(user_skills_set))
 
         if matching_skills: # Consider it a match if there's at least one skill in common
-            project_match = ProjectMatch(
-                project=project,
-                matching_skills=matching_skills,
-                missing_skills=missing_skills
-            )
+            match_data = {
+                "project": project,
+                "matching_skills": matching_skills,
+                "missing_skills": missing_skills
+            }
+            project_match = ProjectMatch(**match_data)
             matches.append(project_match)
 
-    return ProjectMatchResponse(matches=matches, total=len(matches))
+    response_data = {
+        "matches": matches,
+        "total": len(matches)
+    }
+    return ProjectMatchResponse(**response_data)
 
 
 @router.get("/users/{user_id}/team-analytics")
@@ -524,10 +529,11 @@ async def send_connection_request(
         raise HTTPException(status_code=404, detail="User not found")
     
     # Create notification for the receiver
-    notification_data = NotificationCreate(
-        message=f"{current_user.first_name or 'A user'} sent you a connection request.",
-        type='connection_request'
-    )
+    notification_data_dict = {
+        "message": f"{current_user.first_name or 'A user'} sent you a connection request.",
+        "type": 'connection_request'
+    }
+    notification_data = NotificationCreate(**notification_data_dict)
     try:
         notification_crud.create_notification(db=db, notification=notification_data, user_id=peer_id)
     except Exception as e:
@@ -562,10 +568,11 @@ async def accept_connection_request(
         raise HTTPException(status_code=404, detail=f"Original requester (ID: {original_requester_id}) not found")
 
     # Create notification for the original requester
-    notification_data = NotificationCreate(
-        message=f"{current_user.first_name or 'A user'} accepted your connection request.",
-        type='connection_accepted'
-    )
+    notification_data_dict = {
+        "message": f"{current_user.first_name or 'A user'} accepted your connection request.",
+        "type": 'connection_accepted'
+    }
+    notification_data = NotificationCreate(**notification_data_dict)
     try:
         notification_crud.create_notification(db=db, notification=notification_data, user_id=original_requester_id)
     except Exception as e:

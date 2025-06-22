@@ -28,7 +28,7 @@ class DashboardCreate(BaseModel):
     is_default: bool = False
     is_public: bool = False
     auto_refresh: bool = True
-    refresh_interval: int = Field(default=300, ge=30, le=3600)
+    refresh_interval: int = 300
     allowed_roles: List[str] = Field(default_factory=list)
     allowed_users: List[int] = Field(default_factory=list)
     theme: str = Field(default="light")
@@ -46,7 +46,7 @@ class DashboardUpdate(BaseModel):
     is_default: Optional[bool] = None
     is_public: Optional[bool] = None
     auto_refresh: Optional[bool] = None
-    refresh_interval: Optional[int] = Field(default=None, ge=30, le=3600)
+    refresh_interval: Optional[int] = None
     allowed_roles: Optional[List[str]] = None
     allowed_users: Optional[List[int]] = None
     theme: Optional[str] = None
@@ -88,18 +88,18 @@ class WidgetCreate(BaseModel):
     data_source: str = Field(min_length=1, max_length=100)
     query_config: Dict[str, Any] = Field(default_factory=dict)
     display_config: Dict[str, Any] = Field(default_factory=dict)
-    position_x: int = Field(default=0, ge=0)
-    position_y: int = Field(default=0, ge=0)
-    width: int = Field(default=4, ge=1, le=12)
-    height: int = Field(default=3, ge=1, le=12)
-    z_index: int = Field(default=1, ge=1)
+    position_x: int = 0
+    position_y: int = 0
+    width: int = 4
+    height: int = 3
+    z_index: int = 1
     title: Optional[str] = Field(default=None, max_length=200)
     subtitle: Optional[str] = Field(default=None, max_length=500)
     is_visible: bool = True
     is_resizable: bool = True
     is_movable: bool = True
     auto_refresh: bool = True
-    refresh_interval: int = Field(default=300, ge=30, le=3600)
+    refresh_interval: int = 300
 
 
 class WidgetUpdate(BaseModel):
@@ -108,19 +108,18 @@ class WidgetUpdate(BaseModel):
     data_source: Optional[str] = Field(default=None, min_length=1, max_length=100)
     query_config: Optional[Dict[str, Any]] = None
     display_config: Optional[Dict[str, Any]] = None
-    position_x: Optional[int] = Field(default=None, ge=0)
-    position_y: Optional[int] = Field(default=None, ge=0)
-    width: Optional[int] = Field(default=None, ge=1, le=12)
-    height: Optional[int] = Field(default=None, ge=1, le=12)
-    z_index: Optional[int] = Field(default=None, ge=1)
-    title: Optional[str] = Field(default=None, max_length=200)
+    position_x: Optional[int] = None
+    position_y: Optional[int] = None
+    width: Optional[int] = None
+    height: Optional[int] = None
+    z_index: Optional[int] = None
     title: Optional[str] = Field(default=None, max_length=200)
     subtitle: Optional[str] = Field(default=None, max_length=500)
     is_visible: Optional[bool] = None
     is_resizable: Optional[bool] = None
     is_movable: Optional[bool] = None
     auto_refresh: Optional[bool] = None
-    refresh_interval: Optional[int] = Field(default=None, ge=30, le=3600)
+    refresh_interval: Optional[int] = None
 
 
 class WidgetResponse(BaseModel):
@@ -156,9 +155,9 @@ class WidgetResponse(BaseModel):
 
 
 class MetricCreate(BaseModel):
-    metric_name: str = Field(..., min_length=1, max_length=100)
-    metric_category: str = Field(..., min_length=1, max_length=50)
-    metric_type: str = Field(..., min_length=1, max_length=50)
+    metric_name: str = Field(min_length=1, max_length=100)
+    metric_category: str = Field(min_length=1, max_length=50)
+    metric_type: str = Field(min_length=1, max_length=50)
     value: float
     previous_value: Optional[float] = None
     target_value: Optional[float] = None
@@ -170,8 +169,8 @@ class MetricCreate(BaseModel):
     period_start: datetime
     period_end: datetime
     granularity: str = Field(default="daily")
-    confidence_score: float = Field(default=1.0, ge=0.0, le=1.0)
-    data_completeness: float = Field(default=1.0, ge=0.0, le=1.0)
+    confidence_score: float = 1.0
+    data_completeness: float = 1.0
 
 
 class MetricResponse(BaseModel):
@@ -205,17 +204,17 @@ class MetricResponse(BaseModel):
 
 
 class AlertCreate(BaseModel):
-    alert_name: str = Field(..., min_length=1, max_length=200)
-    alert_type: str = Field(..., min_length=1, max_length=50)
-    severity: str = Field(..., pattern="^(low|medium|high|critical)$")
-    condition: str = Field(..., min_length=1, max_length=100)
+    alert_name: str = Field(min_length=1, max_length=200)
+    alert_type: str = Field(min_length=1, max_length=50)
+    severity: str = Field(pattern="^(low|medium|high|critical)$")
+    condition: str = Field(min_length=1, max_length=100)
     threshold_value: float
-    message: str = Field(..., min_length=1)
+    message: str = Field(min_length=1)
     description: Optional[str] = None
     recommended_action: Optional[str] = None
     notification_channels: List[str] = Field(default_factory=list)
     notification_frequency: str = Field(default="immediate")
-    suppress_duration: int = Field(default=3600, ge=0)
+    suppress_duration: int = 3600
 
 
 class AlertResponse(BaseModel):
@@ -249,16 +248,16 @@ class AlertResponse(BaseModel):
 
 
 class FeatureUsageCreate(BaseModel):
-    feature_name: str = Field(..., min_length=1, max_length=100)
-    feature_category: str = Field(..., min_length=1, max_length=50)
-    action: str = Field(..., min_length=1, max_length=100)
+    feature_name: str = Field(min_length=1, max_length=100)
+    feature_category: str = Field(min_length=1, max_length=50)
+    action: str = Field(min_length=1, max_length=100)
     session_id: Optional[str] = Field(default=None, max_length=100)
-    duration_seconds: Optional[float] = Field(default=None, ge=0)
+    duration_seconds: Optional[float] = None
     resource_consumption: Dict[str, Any] = Field(default_factory=dict)
     ip_address: Optional[str] = Field(default=None, max_length=45)
     user_agent: Optional[str] = None
     referrer: Optional[str] = Field(default=None, max_length=500)
-    response_time_ms: Optional[float] = Field(default=None, ge=0)
+    response_time_ms: Optional[float] = None
     success: bool = True
     error_message: Optional[str] = None
     business_value: Optional[float] = None
@@ -267,8 +266,8 @@ class FeatureUsageCreate(BaseModel):
 
 
 class ExportCreate(BaseModel):
-    export_name: str = Field(..., min_length=1, max_length=200)
-    export_format: str = Field(..., pattern="^(pdf|excel|csv|json|png)$")
+    export_name: str = Field(min_length=1, max_length=200)
+    export_format: str = Field(pattern="^(pdf|excel|csv|json|png)$")
     export_scope: str = Field(default="full", pattern="^(full|widgets|data_only)$")
     include_charts: bool = True
     include_data: bool = True

@@ -78,12 +78,13 @@ def get_api_keys(
                         db, user_id=current_user.id, settings=schemas.UserSettingCreate()
                      )
 
-                return schemas.UserSetting(
-                    user_id=db_user_settings.user_id,
-                    api_keys=api_keys_dict, # Use cached api_keys
-                    created_at=db_user_settings.created_at,
-                    updated_at=db_user_settings.updated_at
-                )
+                user_setting_data = {
+                    "user_id": db_user_settings.user_id,
+                    "api_keys": api_keys_dict, # Use cached api_keys
+                    "created_at": db_user_settings.created_at,
+                    "updated_at": db_user_settings.updated_at
+                }
+                return schemas.UserSetting(**user_setting_data)
         except redis.exceptions.RedisError as e:
             # Log Redis error and fall through to DB
             print(f"Redis error during GET: {e}") # Or use proper logging
@@ -108,13 +109,13 @@ def get_api_keys(
             print(f"Redis error during SET: {e}") # Or use proper logging
             pass # Don't fail request if cache set fails
 
-    return schemas.UserSetting(
-    return schemas.UserSetting(
-        user_id=db_user_settings.user_id,
-        api_keys=api_keys_dict,
-        created_at=db_user_settings.created_at,
-        updated_at=db_user_settings.updated_at
-    )
+    user_setting_data = {
+        "user_id": db_user_settings.user_id,
+        "api_keys": api_keys_dict,
+        "created_at": db_user_settings.created_at,
+        "updated_at": db_user_settings.updated_at
+    }
+    return schemas.UserSetting(**user_setting_data)
 @router.post("/api-keys", response_model=schemas.UserSetting)
 def update_api_keys(
     api_key_data: schemas.UserSettingUpdate,
@@ -149,14 +150,14 @@ def update_api_keys(
             pass # Don't fail request if cache delete fails
 
     api_keys_dict = _parse_api_keys(updated_settings.api_keys)
-    return schemas.UserSetting(
-        id=updated_settings.id,
-    return schemas.UserSetting(
-        user_id=updated_settings.user_id,
-        api_keys=api_keys_dict,
-        created_at=updated_settings.created_at,
-        updated_at=updated_settings.updated_at
-    )
+    user_setting_data = {
+        "id": updated_settings.id,
+        "user_id": updated_settings.user_id,
+        "api_keys": api_keys_dict,
+        "created_at": updated_settings.created_at,
+        "updated_at": updated_settings.updated_at
+    }
+    return schemas.UserSetting(**user_setting_data)
 def delete_api_key(
     key_name: str,
     db: Session = Depends(get_db),

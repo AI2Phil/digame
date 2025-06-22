@@ -26,10 +26,11 @@ def get_writing_suggestion_endpoint(
             current_user=current_user,
             text_input=request_data.text_input
         )
-        return schemas.WritingSuggestionResponse(
-            original_text=request_data.text_input,
-            suggestion=suggestion_text
-        )
+        suggestion_data = {
+            "original_text": request_data.text_input,
+            "suggestion": suggestion_text
+        }
+        return schemas.WritingSuggestionResponse(**suggestion_data)
     except HTTPException as e:
         # Re-raise HTTPExceptions directly if they are from the service
         raise e

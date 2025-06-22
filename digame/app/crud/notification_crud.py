@@ -7,12 +7,13 @@ from ..schemas.notification_schemas import NotificationCreate, NotificationUpdat
 
 def create_notification(db: Session, notification: NotificationCreate, user_id: int) -> Notification:
     """Create a new notification for a user."""
-    db_notification = Notification(
-        user_id=user_id,
-        message=notification.message,
-        type=notification.type,
-        scheduled_at=getattr(notification, 'scheduled_at', None)
-    )
+    notification_data = {
+        "user_id": user_id,
+        "message": notification.message,
+        "type": notification.type,
+        "scheduled_at": getattr(notification, 'scheduled_at', None)
+    }
+    db_notification = Notification(**notification_data)
     db.add(db_notification)
     db.commit()
     db.refresh(db_notification)
