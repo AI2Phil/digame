@@ -78,7 +78,8 @@ const UserManagementSection = ({
       );
       setSelectedUserIds(new Set()); // Clear selection
       Toast.success(`Bulk ${action} completed successfully`);
-    } catch (error)      Toast.error(`Failed to perform bulk ${action}`);
+    } catch (error) {
+      Toast.error(`Failed to perform bulk ${action}`);
     }
   };
 

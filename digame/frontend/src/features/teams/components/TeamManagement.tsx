@@ -7,6 +7,7 @@ import { Avatar } from '../../../components/ui/Avatar';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../../../components/ui/Dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../../components/ui/Tabs';
 import { useTeamManagement } from '../hooks/useTeamManagement';
+import { useAuth } from '../../../contexts/AuthContext';
 
 interface Team {
   id: number;
@@ -31,6 +32,7 @@ interface TeamMember {
 }
 
 const TeamManagement: React.FC = () => {
+  const { user, logout } = useAuth();
   const {
     teams,
     selectedTeam,
@@ -121,15 +123,30 @@ const TeamManagement: React.FC = () => {
   }
 
   if (error) {
+    const isAuthError = error.message.includes('401') || error.message.includes('Unauthorized');
+    
     return (
       <div className="flex flex-col items-center justify-center min-h-screen">
         <Card className="w-full max-w-md text-center">
           <CardHeader>
-            <CardTitle className="text-red-600">Error Loading Teams</CardTitle>
+            <CardTitle className="text-red-600">
+              {isAuthError ? 'Authentication Required' : 'Error Loading Teams'}
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-gray-600 mb-4">{error.message}</p>
-            <Button onClick={fetchTeams}>Try Again</Button>
+            <p className="text-gray-600 mb-4">
+              {isAuthError
+                ? 'Your session has expired. Please log in again to access team management.'
+                : error.message
+              }
+            </p>
+            <div className="space-x-2">
+              {isAuthError ? (
+                <Button onClick={logout}>Log In Again</Button>
+              ) : (
+                <Button onClick={fetchTeams}>Try Again</Button>
+              )}
+            </div>
           </CardContent>
         </Card>
       </div>

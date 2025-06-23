@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ToastProvider } from './components/ui/Toast';
+import { AuthProvider } from './contexts/AuthContext';
+import ProtectedRoute from './components/auth/ProtectedRoute';
 import enhancedApiService from './services/enhancedApiService';
 import HomePage from './pages/HomePage';
 import FeaturesPage from './pages/FeaturesPage';
@@ -23,11 +25,10 @@ import FindPeersPage from './pages/FindPeersPage'; // Import FindPeersPage
 import BehavioralAnalyticsPage from './pages/BehavioralAnalyticsPage';
 import PredictiveAnalyticsPage from './pages/PredictiveAnalyticsPage';
 import ReportsPage from './pages/ReportsPage';
-// Team Collaboration Components
-import TeamManagement from './features/teams/components/TeamManagement';
-import TeamDashboard from './features/teams/components/TeamDashboard';
-import SkillGapVisualization from './features/teams/components/SkillGapVisualization';
-import WorkflowOptimization from './features/teams/components/WorkflowOptimization';
+// Team Collaboration Page
+import TeamsPage from './pages/TeamsPage';
+// Authentication Page
+import AuthPage from './pages/AuthPage';
 import './App.css';
 
 function App() {
@@ -142,10 +143,11 @@ function App() {
   }
 
   return (
-    <ToastProvider position="top-right">
-      <Router>
-        <div className="App">
-          <Routes>
+    <AuthProvider>
+      <ToastProvider position="top-right">
+        <Router>
+          <div className="App">
+            <Routes>
           <Route
             path="/"
             element={
@@ -163,6 +165,9 @@ function App() {
               )
             }
           />
+          
+          {/* Authentication Page */}
+          <Route path="/auth" element={<AuthPage />} />
           
           {/* Public Pages - No Authentication Required */}
           <Route path="/features" element={<FeaturesPage />} />
@@ -531,48 +536,40 @@ function App() {
             }
           />
 
-          {/* Team Collaboration Routes */}
+          {/* Team Collaboration Routes - Using ProtectedRoute for better authentication handling */}
           <Route
             path="/teams"
             element={
-              isAuthenticated || isDemoMode ? (
-                <TeamManagement />
-              ) : (
-                <Navigate to="/" replace />
-              )
+              <ProtectedRoute>
+                <TeamsPage />
+              </ProtectedRoute>
             }
           />
           
           <Route
             path="/teams/dashboard"
             element={
-              isAuthenticated || isDemoMode ? (
-                <TeamDashboard />
-              ) : (
-                <Navigate to="/" replace />
-              )
+              <ProtectedRoute>
+                <TeamsPage />
+              </ProtectedRoute>
             }
           />
           
           <Route
             path="/teams/skills"
             element={
-              isAuthenticated || isDemoMode ? (
-                <SkillGapVisualization />
-              ) : (
-                <Navigate to="/" replace />
-              )
+              <ProtectedRoute>
+                <TeamsPage />
+              </ProtectedRoute>
             }
           />
           
           <Route
             path="/teams/workflows"
             element={
-              isAuthenticated || isDemoMode ? (
-                <WorkflowOptimization />
-              ) : (
-                <Navigate to="/" replace />
-              )
+              <ProtectedRoute>
+                <TeamsPage />
+              </ProtectedRoute>
             }
           />
 
@@ -597,6 +594,7 @@ function App() {
         </div>
       </Router>
     </ToastProvider>
+    </AuthProvider>
   );
 }
 
