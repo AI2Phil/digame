@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  ChevronRight, ChevronLeft, Check, User, Settings, 
-  Target, Zap, Bell, Shield, Palette, Globe 
+import React, { useState } from 'react';
+import {
+  ChevronRight, ChevronLeft, Check, User, Settings,
+  Target, Zap, Bell, Shield, Palette
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/Card';
 import { Button } from '../ui/Button';
@@ -10,7 +10,7 @@ import { Button } from '../ui/Button';
 // import { Label } from '../ui/Label';
 import { Switch } from '../ui/Switch';
 // import { Select } from '../ui/Select';
-import { Progress, ProgressSteps } from '../ui/Progress';
+import Progress, { ProgressSteps } from '../ui/Progress';
 import { Badge } from '../ui/Badge';
 import {
   Form,
@@ -135,6 +135,17 @@ const OnboardingWizard = ({ onComplete, onSkip }) => {
       current_step_id: 'complete'
     };
 
+    // Check if we're in demo mode
+    const isDemoMode = localStorage.getItem('demo_mode') === 'true';
+    
+    if (isDemoMode) {
+      // In demo mode, redirect to CTA page instead of completing onboarding
+      console.log('Demo mode: Redirecting to Call-to-Action page');
+      // Redirect to pricing page with demo completion context
+      window.location.href = '/pricing?demo_completed=true';
+      return;
+    }
+
     try {
       const response = await fetch('/onboarding/', {
         method: 'POST',
@@ -147,9 +158,15 @@ const OnboardingWizard = ({ onComplete, onSkip }) => {
 
       if (response.ok) {
         onComplete && onComplete(finalData);
+      } else {
+        // If API fails, still complete the onboarding for better UX
+        console.warn('Onboarding API failed, completing locally');
+        onComplete && onComplete(finalData);
       }
     } catch (error) {
-      console.error('Failed to save onboarding data:', error);
+      console.warn('Failed to save onboarding data, completing locally:', error);
+      // Still complete the onboarding even if API fails
+      onComplete && onComplete(finalData);
     }
   };
 
@@ -383,21 +400,23 @@ const PreferencesStep = ({ data, updateData, onNext }) => {
             Appearance
           </h3>
           <div className="space-y-4">
-            <FormField name="appearance.theme">
+            <div>
               <FormLabel htmlFor="appearance.theme">Theme</FormLabel>
-              <FormSelect
-                name="appearance.theme" // Name for Form context
-                id="appearance.theme"   // For label association
-                options={[
-                  { value: 'light', label: 'Light' },
-                  { value: 'dark', label: 'Dark' },
-                  { value: 'system', label: 'System' },
-                ]}
-                placeholder="Select a theme..."
-                // value and onChange are handled by FormContext
-                className="mt-1"
-              />
-            </FormField>
+              <FormField name="appearance.theme">
+                <FormSelect
+                  name="appearance.theme" // Name for Form context
+                  id="appearance.theme"   // For label association
+                  options={[
+                    { value: 'light', label: 'Light' },
+                    { value: 'dark', label: 'Dark' },
+                    { value: 'system', label: 'System' },
+                  ]}
+                  placeholder="Select a theme..."
+                  // value and onChange are handled by FormContext
+                  className="mt-1"
+                />
+              </FormField>
+            </div>
           </div>
         </div>
       </div>
@@ -456,16 +475,17 @@ const GoalsStep = ({ data, updateData, onNext }) => {
       mode="onChange" // Or onBlur/onSubmit
     >
       <div className="space-y-6">
-        <FormField name="primary_goal">
+        <div>
           <FormLabel htmlFor="primary_goal" required>What's your primary professional goal?</FormLabel>
-          <FormInput
-            name="primary_goal" // Critical for Form context
-            id="primary-goal"   // For label association
-            placeholder="e.g., Improve productivity, Better work-life balance, Learn new skills"
-            className="mt-1"    // FormLabel has mb-1, so input gets mt-1
-          />
-          {/* Error message will be rendered by FormInput if validation fails */}
-        </FormField>
+          <FormField name="primary_goal">
+            <FormInput
+              name="primary_goal" // Critical for Form context
+              id="primary-goal"   // For label association
+              placeholder="e.g., Improve productivity, Better work-life balance, Learn new skills"
+              className="mt-1"    // FormLabel has mb-1, so input gets mt-1
+            />
+          </FormField>
+        </div>
 
         <div>
           <FormLabel>Productivity Target</FormLabel>

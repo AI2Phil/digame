@@ -1,11 +1,21 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import Button from '../components/ui/Button';
 import { Card, CardContent } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui/Table';
 
 export default function PricingPage() {
+  const [searchParams] = useSearchParams();
+  const [showDemoCompletedMessage, setShowDemoCompletedMessage] = useState(false);
+
+  useEffect(() => {
+    // Check if user came from completed demo
+    if (searchParams.get('demo_completed') === 'true') {
+      setShowDemoCompletedMessage(true);
+    }
+  }, [searchParams]);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
       {/* Navigation */}
@@ -32,6 +42,29 @@ export default function PricingPage() {
 
       {/* Hero Section */}
       <div className="container mx-auto px-4 py-16">
+        {/* Demo Completed Message */}
+        {showDemoCompletedMessage && (
+          <div className="bg-green-50 border border-green-200 rounded-2xl p-8 mb-12 text-center">
+            <div className="text-4xl mb-4">🎉</div>
+            <h2 className="text-2xl font-bold text-green-800 mb-2">
+              Congratulations! You've completed the Digame demo
+            </h2>
+            <p className="text-green-700 mb-6">
+              You've experienced the power of your digital professional twin. Ready to unlock your full potential?
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Link to="/auth">
+                <Button variant="primary" size="lg" icon="🚀" className="bg-green-600 hover:bg-green-700">
+                  Create Your Account
+                </Button>
+              </Link>
+              <Button variant="outline" size="lg" className="border-green-600 text-green-600 hover:bg-green-50">
+                Continue Exploring
+              </Button>
+            </div>
+          </div>
+        )}
+
         <div className="text-center max-w-4xl mx-auto mb-16">
           <h1 className="text-5xl font-bold text-gray-900 mb-6">
             Simple, Transparent

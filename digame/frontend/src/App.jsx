@@ -24,8 +24,11 @@ import FindPeersPage from './pages/FindPeersPage'; // Import FindPeersPage
 import BehavioralAnalyticsPage from './pages/BehavioralAnalyticsPage';
 import PredictiveAnalyticsPage from './pages/PredictiveAnalyticsPage';
 import ReportsPage from './pages/ReportsPage';
-// Team Collaboration Page
+// Team Collaboration Pages
 import TeamsPage from './pages/TeamsPage.jsx';
+import TeamDashboardPage from './pages/TeamDashboardPage.jsx';
+import SkillGapAnalysisPage from './pages/SkillGapAnalysisPage.jsx';
+import WorkflowOptimizationPage from './pages/WorkflowOptimizationPage.jsx';
 // Authentication Page
 import AuthPage from './pages/AuthPage.tsx';
 import './App.css';
@@ -554,7 +557,7 @@ function App() {
             path="/teams/dashboard"
             element={
               isAuthenticated || isDemoMode ? (
-                <TeamsPage
+                <TeamDashboardPage
                   isDemoMode={isDemoMode}
                   onLogout={handleLogout}
                 />
@@ -568,7 +571,7 @@ function App() {
             path="/teams/skills"
             element={
               isAuthenticated || isDemoMode ? (
-                <TeamsPage
+                <SkillGapAnalysisPage
                   isDemoMode={isDemoMode}
                   onLogout={handleLogout}
                 />
@@ -582,7 +585,7 @@ function App() {
             path="/teams/workflows"
             element={
               isAuthenticated || isDemoMode ? (
-                <TeamsPage
+                <WorkflowOptimizationPage
                   isDemoMode={isDemoMode}
                   onLogout={handleLogout}
                 />

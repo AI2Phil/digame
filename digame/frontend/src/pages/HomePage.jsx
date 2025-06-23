@@ -121,9 +121,9 @@ export default function HomePage({ onDemoAccess, onLogin }) {
                   <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
                     <span className="text-2xl">🎯</span>
                   </div>
-                  <h3 className="text-2xl font-bold text-gray-900 mb-2">Try the Demo</h3>
+                  <h3 className="text-2xl font-bold text-gray-900 mb-2">Create Your Account</h3>
                   <p className="text-gray-600">
-                    Experience the full platform with sample data and see how your digital twin works
+                    Start building your personal digital twin with real data and personalized insights
                   </p>
                 </div>
 
@@ -132,25 +132,25 @@ export default function HomePage({ onDemoAccess, onLogin }) {
                     <div className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center">
                       <span className="text-green-600 text-xs">✓</span>
                     </div>
-                    <span className="text-gray-700">Interactive productivity dashboard</span>
+                    <span className="text-gray-700">Personalized digital twin</span>
                   </div>
                   <div className="flex items-center space-x-3">
                     <div className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center">
                       <span className="text-green-600 text-xs">✓</span>
                     </div>
-                    <span className="text-gray-700">Behavioral pattern analysis</span>
+                    <span className="text-gray-700">Real-time productivity tracking</span>
                   </div>
                   <div className="flex items-center space-x-3">
                     <div className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center">
                       <span className="text-green-600 text-xs">✓</span>
                     </div>
-                    <span className="text-gray-700">Predictive insights and recommendations</span>
+                    <span className="text-gray-700">AI-powered career coaching</span>
                   </div>
                   <div className="flex items-center space-x-3">
                     <div className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center">
                       <span className="text-green-600 text-xs">✓</span>
                     </div>
-                    <span className="text-gray-700">No registration required</span>
+                    <span className="text-gray-700">30-day free trial</span>
                   </div>
                 </div>
 
