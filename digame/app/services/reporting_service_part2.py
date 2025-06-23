@@ -27,6 +27,10 @@ from ..models.reporting import (
 )
 from ..models.user import User
 from ..models.tenant import Tenant
+# Import schemas and the conceptual ReportDefinition model
+from ..schemas import analytics_schemas as schemas
+from ..models.dashboard_custom import ReportDefinition # Assuming ReportDefinition model is here
+# ReportSchedule SQLAlchemy model is already imported from ..models.reporting
 
 
 class ReportSchedulingService:
@@ -35,10 +39,10 @@ class ReportSchedulingService:
     def __init__(self, db: Session):
         self.db = db
 
-    # Schedule Management
+    # --- Existing Schedule Management for old Report model ---
     def create_schedule(
         self,
-        report_id: int,
+        report_id: int, # This refers to the old Report model's ID
         tenant_id: int,
         name: str,
         cron_expression: str,
@@ -129,11 +133,128 @@ class ReportSchedulingService:
                 schedule.tenant_id,
                 "scheduled_report_failed",
                 "execution",
-                report_id=schedule.report_id,
+                report_id=schedule.report_id, # Old report_id
                 details={"error": str(e), "schedule_id": schedule.id}
             )
             
             return False
+
+    # --- New Schedule Management for ReportDefinition ---
+
+    def create_definition_schedule(
+        self,
+        schedule_data: schemas.ReportScheduleCreate, # Uses report_definition_id
+        tenant_id: int,
+        created_by_user_id: int
+    ) -> ReportSchedule: # Still returns the same SQLAlchemy model for now
+        """Create a new schedule for a ReportDefinition."""
+
+        # Validate cron expression
+        if not self._validate_cron_expression(schedule_data.cron_schedule):
+            raise ValueError("Invalid cron expression")
+
+        # Calculate next run time
+        next_run = self._calculate_next_run(schedule_data.cron_schedule, schedule_data.timezone if hasattr(schedule_data, 'timezone') else "UTC")
+
+        # IMPORTANT: This assumes ReportSchedule model can store report_definition_id
+        # or that report_id field is being repurposed. This needs DB model alignment.
+        # For now, proceeding as if it's compatible or `report_definition_id` is an alias/new field.
+        db_schedule = ReportSchedule(
+            # report_id=schedule_data.report_definition_id, # This is the conceptual link
+            # If ReportSchedule model still only has report_id, this line would need to be:
+            # report_id = schedule_data.report_definition_id,
+            # This implies a FK issue or that report_id is just an integer without strict FK to old reports table for these new types.
+            # Let's assume for service logic, we are setting a field that represents this link.
+            # For the sake of moving forward with service logic, we will use report_id and assume it stores the definition_id.
+            # This is a known point that needs resolution at DB model level.
+            # report_id=schedule_data.report_definition_id, # OLD: Temporarily using report_id to mean report_definition_id
+            report_definition_id=schedule_data.report_definition_id, # NEW: Using the correct field
+            schedule_type="report_definition", # NEW: Setting the type
+            tenant_id=tenant_id,
+            name=schedule_data.name if hasattr(schedule_data, 'name') and schedule_data.name else f"Schedule for Report Definition {schedule_data.report_definition_id}",
+            cron_expression=schedule_data.cron_schedule,
+            timezone=getattr(schedule_data, 'timezone', "UTC"), # Use getattr for safety
+            output_formats=getattr(schedule_data, 'output_formats', ["pdf"]),
+            delivery_method=getattr(schedule_data, 'delivery_method', "email"),
+            delivery_config={"recipients": schedule_data.recipients} if hasattr(schedule_data, 'recipients') and schedule_data.recipients else {},
+            # default_parameters and default_filters can be added if present in schema/model
+            default_parameters=getattr(schedule_data, 'default_parameters', {}),
+            default_filters=getattr(schedule_data, 'default_filters', {}),
+            next_run_at=next_run,
+            is_active=schedule_data.is_active,
+            created_by_user_id=created_by_user_id
+        )
+
+        self.db.add(db_schedule)
+        self.db.commit()
+        self.db.refresh(db_schedule)
+        return db_schedule
+
+    def get_definition_schedule(self, schedule_id: int, tenant_id: int) -> Optional[ReportSchedule]:
+        """Get a specific schedule by its ID, ensuring tenant isolation and correct type."""
+        return self.db.query(ReportSchedule).filter(
+            ReportSchedule.id == schedule_id,
+            ReportSchedule.tenant_id == tenant_id,
+            ReportSchedule.schedule_type == "report_definition" # Ensure it's the correct type
+        ).first()
+
+    def list_definition_schedules(
+        self,
+        tenant_id: int,
+        report_definition_id: Optional[int] = None
+    ) -> List[ReportSchedule]:
+        """List schedules for ReportDefinitions, optionally filtered by report_definition_id."""
+        query = self.db.query(ReportSchedule).filter(
+            ReportSchedule.tenant_id == tenant_id,
+            ReportSchedule.schedule_type == "report_definition" # Ensure it's the correct type
+        )
+        if report_definition_id:
+            query = query.filter(ReportSchedule.report_definition_id == report_definition_id)
+
+        return query.order_by(ReportSchedule.next_run_at).all()
+
+    def update_definition_schedule(
+        self,
+        schedule_id: int,
+        schedule_update_data: schemas.ReportScheduleUpdate, # Pydantic schema for update
+        tenant_id: int
+    ) -> Optional[ReportSchedule]:
+        """Update an existing schedule for a ReportDefinition."""
+        db_schedule = self.get_definition_schedule(schedule_id, tenant_id)
+        if not db_schedule:
+            return None
+
+        update_data = schedule_update_data.dict(exclude_unset=True)
+
+        if "cron_schedule" in update_data or "timezone" in update_data:
+            cron = update_data.get("cron_schedule", db_schedule.cron_expression)
+            tz = update_data.get("timezone", db_schedule.timezone)
+            db_schedule.next_run_at = self._calculate_next_run(cron, tz)
+
+        for key, value in update_data.items():
+            if key == "recipients" and "delivery_config" in db_schedule.delivery_config:
+                 db_schedule.delivery_config["recipients"] = value
+            elif hasattr(db_schedule, key):
+                 setattr(db_schedule, key, value)
+            # else if key is for a field within delivery_config, handle that
+
+        db_schedule.updated_at = datetime.utcnow()
+        self.db.commit()
+        self.db.refresh(db_schedule)
+        return db_schedule
+
+    def delete_definition_schedule(self, schedule_id: int, tenant_id: int) -> bool:
+        """Delete a schedule for a ReportDefinition."""
+        db_schedule = self.get_definition_schedule(schedule_id, tenant_id)
+        if not db_schedule:
+            return False
+
+        self.db.delete(db_schedule)
+        self.db.commit()
+        return True
+
+    # --- End of New Schedule Management ---
+
 
     async def _execute_report_for_schedule(
         self,

@@ -76,4 +76,39 @@ class AnalyticsDashboard(Base):
         return f"<AnalyticsDashboard(id={self.id}, name='{self.name}', user_id={self.user_id})>"
 
 # Remember to add these to digame/app/models/__init__.py:
-# from .dashboard_custom import AnalyticsDashboard, DashboardWidget
+# from .dashboard_custom import AnalyticsDashboard, DashboardWidget, ReportDefinition
+
+
+class ReportDefinition(Base):
+    """
+    Stores user-defined report configurations.
+    """
+    __tablename__ = "report_definitions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    definition_uuid = Column(String(36), unique=True, index=True, default=lambda: str(uuid.uuid4()))
+
+    name = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+    report_type = Column(String(100), default="generic", index=True) # E.g., "performance_summary", "custom_dashboard_export"
+
+    # Storing complex structures like content_blocks and global_filters as JSON
+    # For PostgreSQL, JSONB is generally preferred over JSON for performance and functionality.
+    # Using JSON here for broader compatibility if DB is not PostgreSQL, but JSONB is better if it is.
+    content_blocks = Column(JSON, nullable=False, default=lambda: [])
+    global_filters = Column(JSON, nullable=True, default=lambda: [])
+
+    output_format = Column(String(50), default="pdf") # Default output format
+
+    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True) # Creator/owner
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    owner = relationship("User") # Relationship to the User model for user_id
+    # schedules = relationship("ReportSchedule", back_populates="report_definition") # If ReportSchedule links back
+
+    def __repr__(self):
+        return f"<ReportDefinition(id={self.id}, name='{self.name}', tenant_id={self.tenant_id})>"

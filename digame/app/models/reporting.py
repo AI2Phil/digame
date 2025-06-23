@@ -15,6 +15,8 @@ except ImportError:
     # Fallback for development
     Base = declarative_base()
 
+from .dashboard_custom import ReportDefinition # Import ReportDefinition
+
 class Report(Base):
     """
     Report definition and configuration
@@ -206,10 +208,14 @@ class ReportSchedule(Base):
     created_by_user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     
     # Relationships
-    report = relationship("Report", back_populates="schedules")
+    report = relationship("Report", back_populates="schedules") # For legacy schedules
+    report_definition = relationship("ReportDefinition", foreign_keys=[report_definition_id]) # For new schedules
+    # Ensure ReportDefinition is imported if not already: from .dashboard_custom import ReportDefinition
 
     def __repr__(self):
-        return f"<ReportSchedule(id={self.id}, name='{self.name}', cron='{self.cron_expression}')>"
+        if self.schedule_type == "report_definition":
+            return f"<ReportSchedule(id={self.id}, name='{self.name}', type='definition', def_id={self.report_definition_id})>"
+        return f"<ReportSchedule(id={self.id}, name='{self.name}', type='legacy', report_id={self.report_id})>"
 
     @property
     def success_rate(self):

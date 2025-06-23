@@ -247,14 +247,28 @@ class ROICalculationCreate(ROICalculationBase):
     pass # calculated_by_user_id handled in service/router
 
 class ROICalculationUpdate(BaseModel): # For potentially re-calculating or adjusting
+    calculation_name: Optional[str] = None
     description: Optional[str] = None
-    # Allow updating cost/benefit fields, then recalculate
+    period_start: Optional[datetime] = None
+    period_end: Optional[datetime] = None
     initial_investment: Optional[Decimal] = None
     operational_costs: Optional[Decimal] = None
-    # ... (other cost/benefit fields) ...
+    labor_costs: Optional[Decimal] = None
+    technology_costs: Optional[Decimal] = None
+    training_costs: Optional[Decimal] = None
+    other_costs: Optional[Decimal] = None
     revenue_increase: Optional[Decimal] = None
-    # ...
+    cost_savings: Optional[Decimal] = None
+    productivity_gains: Optional[Decimal] = None
+    efficiency_gains: Optional[Decimal] = None
+    quality_improvements: Optional[Decimal] = None
+    risk_reduction: Optional[Decimal] = None
+    other_benefits: Optional[Decimal] = None
+    calculation_method: Optional[str] = None
+    discount_rate: Optional[float] = None
     assumptions: Optional[Dict[str, Any]] = None
+    data_sources: Optional[List[str]] = None
+    analytics_model_id: Optional[int] = None
     metric_links: Optional[List[ROIMetricLink]] = None # Allow updating links for recalculation
 
 class ROICalculationInDB(ROICalculationBase, BaseAuditModel, TenantAssociatedModel):
@@ -314,9 +328,23 @@ class ComparativeBenchmarkUpdate(BaseModel):
     category: Optional[str] = None
     source: Optional[str] = None
     metric_name: Optional[str] = None
+    entity_type: Optional[str] = None
+    industry_segment: Optional[str] = None
+    region: Optional[str] = None
+    company_size: Optional[str] = None
     benchmark_value: Optional[float] = None
-    # ... other updatable fields
+    value_type: Optional[str] = None
+    unit: Optional[str] = None
+    period_start_date: Optional[datetime] = None
+    period_end_date: Optional[datetime] = None
+    data_freshness_date: Optional[datetime] = None
+    confidence_level: Optional[float] = None
+    lower_bound: Optional[float] = None
+    upper_bound: Optional[float] = None
+    sample_size: Optional[int] = None
+    dimensions: Optional[Dict[str, Any]] = None
     is_active: Optional[bool] = None
+    # tenant_id is not updatable via this schema directly, it's handled by creation context
 
 class ComparativeBenchmarkInDB(ComparativeBenchmarkBase, BaseAuditModel):
     id: int
@@ -385,17 +413,37 @@ class ReportFilter(BaseModel):
     operator: str # e.g., "eq", "gt", "lt", "in", "like"
     value: Any
 
+# Report Content Block
+class ReportContentBlock(BaseModel):
+    title: Optional[str] = Field(None, example="Monthly Active Users Trend")
+    block_type: str = Field(..., example="chart")  # e.g., "chart", "table", "kpi_summary", "text"
+    data_source: Optional[DashboardWidgetDataSource] = None # Source of data for this block, not needed for "text" type
+    display_options: Optional[Dict[str, Any]] = Field(default_factory=dict, example={"chart_type": "line", "x_axis": "date", "y_axis": "mau"})
+    text_content: Optional[str] = Field(None, example="This section summarizes key findings.") # For block_type="text"
+
+    class Config:
+        orm_mode = True
+
+
 class ReportDefinitionBase(BaseModel):
-    name: str
+    name: str = Field(..., example="Quarterly Performance Review")
     description: Optional[str] = None
-    report_type: str # e.g., "performance_summary", "roi_analysis", "prediction_accuracy"
-    data_sources: List[DashboardWidgetDataSource] # Re-use for specifying data content
-    filters: Optional[List[ReportFilter]] = Field(default_factory=list)
-    output_format: str = Field(default="pdf") # pdf, csv, xlsx
-    # visual_elements: Optional[List[str]] # e.g., list of chart types or sections to include
+    report_type: str = Field(default="generic", example="performance_summary") # For categorization
+    content_blocks: List[ReportContentBlock] = Field(default_factory=list)
+    global_filters: Optional[List[ReportFilter]] = Field(default_factory=list, description="Filters applied to all applicable data sources in content blocks")
+    output_format: str = Field(default="pdf") # Default output format: pdf, csv, json_data
+    # visual_elements was too vague, replaced by content_blocks
 
 class ReportDefinitionCreate(ReportDefinitionBase):
     pass # user_id handled by service
+
+class ReportDefinitionUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    report_type: Optional[str] = None
+    content_blocks: Optional[List[ReportContentBlock]] = None
+    global_filters: Optional[List[ReportFilter]] = None
+    output_format: Optional[str] = None
 
 class ReportDefinitionInDB(ReportDefinitionBase, BaseAuditModel, TenantAssociatedModel):
     id: int

@@ -36,13 +36,18 @@ from ..models.reporting import (
 )
 from ..models.user import User
 from ..models.tenant import Tenant
+# Import CustomDashboardService and its getter, and the new ReportDefinition model
+from ..models.dashboard_custom import ReportDefinition # Assuming ReportDefinition is in dashboard_custom
+from .dashboard_service_custom import CustomDashboardService, get_custom_dashboard_service
+from ..schemas import analytics_schemas # For ReportDefinition schema types
 
 
 class ReportingService:
     """Service for managing advanced reporting and PDF generation"""
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session, custom_dashboard_service: CustomDashboardService):
         self.db = db
+        self.custom_dashboard_service = custom_dashboard_service
         self.executor = ThreadPoolExecutor(max_workers=4)
 
     # Report Management
@@ -778,6 +783,265 @@ class ReportingService:
         # Note: Commit is handled by the calling method
 
 
-def get_reporting_service(db: Session) -> ReportingService:
+def get_reporting_service(
+    db: Session = Depends(get_db), # Assuming get_db is available from ..database
+    custom_dashboard_service: CustomDashboardService = Depends(get_custom_dashboard_service)
+) -> ReportingService:
     """Get reporting service instance"""
-    return ReportingService(db)
+    # Need to import Depends and get_db
+    from fastapi import Depends
+    from ..database import get_db
+    return ReportingService(db=db, custom_dashboard_service=custom_dashboard_service)
+
+    # --- New Methods for ReportDefinition ---
+
+    def create_report_definition(
+        self,
+        report_def_create: schemas.ReportDefinitionCreate,
+        tenant_id: int,
+        user_id: int
+    ) -> ReportDefinition:
+        """Create a new ReportDefinition."""
+        # Ensure ReportDefinition model is correctly imported and defined as a SQLAlchemy model
+        # from ..models.dashboard_custom import ReportDefinition (already imported at top)
+
+        # The content_blocks in report_def_create are Pydantic models.
+        # If ReportDefinition SQLAlchemy model stores content_blocks as JSON,
+        # they need to be converted.
+        content_blocks_as_dict = [block.dict() for block in report_def_create.content_blocks]
+
+        db_report_def = ReportDefinition(
+            name=report_def_create.name,
+            description=report_def_create.description,
+            report_type=report_def_create.report_type,
+            content_blocks=content_blocks_as_dict, # Store as JSON
+            global_filters=[filter.dict() for filter in report_def_create.global_filters], # Store as JSON
+            output_format=report_def_create.output_format,
+            tenant_id=tenant_id,
+            user_id=user_id, # Assuming ReportDefinition model has user_id
+            # definition_uuid=str(uuid.uuid4()) # Assuming model handles UUID
+        )
+        self.db.add(db_report_def)
+        self.db.commit()
+        self.db.refresh(db_report_def)
+        return db_report_def
+
+    def get_report_definition(self, report_definition_id: int, tenant_id: int) -> Optional[ReportDefinition]:
+        """Retrieve a ReportDefinition by its ID and tenant_id."""
+        # Assuming ReportDefinition model has tenant_id and user_id fields similar to AnalyticsDashboard
+        return self.db.query(ReportDefinition).filter(
+            ReportDefinition.id == report_definition_id,
+            ReportDefinition.tenant_id == tenant_id # Ensure tenant isolation
+        ).first()
+
+    def list_report_definitions(
+        self,
+        tenant_id: int,
+        user_id: Optional[int] = None, # For potential filtering by owner
+        skip: int = 0,
+        limit: int = 100
+    ) -> List[ReportDefinition]:
+        """List ReportDefinitions for a tenant, optionally filtered by user_id."""
+        query = self.db.query(ReportDefinition).filter(ReportDefinition.tenant_id == tenant_id)
+        if user_id:
+            # This assumes ReportDefinition model has a 'user_id' field for ownership
+            query = query.filter(ReportDefinition.user_id == user_id)
+        return query.order_by(ReportDefinition.name).offset(skip).limit(limit).all()
+
+    def update_report_definition(
+        self,
+        report_definition_id: int,
+        report_def_update: schemas.ReportDefinitionUpdate,
+        tenant_id: int,
+        user_id: int # For ownership/permission check
+    ) -> Optional[ReportDefinition]:
+        """Update an existing ReportDefinition."""
+        db_report_def = self.db.query(ReportDefinition).filter(
+            ReportDefinition.id == report_definition_id,
+            ReportDefinition.tenant_id == tenant_id
+        ).first()
+
+        if not db_report_def:
+            return None
+
+        # Add ownership check if ReportDefinition has user_id
+        if hasattr(db_report_def, 'user_id') and db_report_def.user_id != user_id:
+             # Or raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to update this report definition")
+            return None
+
+        update_data = report_def_update.dict(exclude_unset=True)
+        for key, value in update_data.items():
+            if key == "content_blocks" and value is not None:
+                setattr(db_report_def, key, [block.dict() for block in value])
+            elif key == "global_filters" and value is not None:
+                setattr(db_report_def, key, [filter.dict() for filter in value])
+            elif hasattr(db_report_def, key):
+                setattr(db_report_def, key, value)
+
+        db_report_def.updated_at = datetime.utcnow() # Assuming model has updated_at
+        self.db.commit()
+        self.db.refresh(db_report_def)
+        return db_report_def
+
+    def delete_report_definition(
+        self,
+        report_definition_id: int,
+        tenant_id: int,
+        user_id: int # For ownership/permission check
+    ) -> bool:
+        """Delete a ReportDefinition."""
+        db_report_def = self.db.query(ReportDefinition).filter(
+            ReportDefinition.id == report_definition_id,
+            ReportDefinition.tenant_id == tenant_id
+        ).first()
+
+        if not db_report_def:
+            return False
+
+        if hasattr(db_report_def, 'user_id') and db_report_def.user_id != user_id:
+            return False # Not authorized
+
+        # TODO: Consider deleting associated ReportSchedules if cascading delete is not set up in DB model
+        # self.db.query(ReportSchedule).filter(ReportSchedule.report_definition_id == report_definition_id).delete()
+
+        self.db.delete(db_report_def)
+        self.db.commit()
+        return True
+
+    async def generate_report_data(
+        self,
+        report_definition_id: int,
+        tenant_id: int,
+        # current_user: User # Optional: if user-specific data within report is needed
+    ) -> Dict[str, Any]:
+        """
+        Generates the data for a report based on its ReportDefinition.
+        This method focuses on compiling the data, not on file generation (PDF, etc.).
+        """
+        report_definition = self.get_report_definition(report_definition_id, tenant_id)
+
+        if not report_definition:
+            raise ValueError(f"ReportDefinition with id {report_definition_id} not found for tenant {tenant_id}")
+
+        compiled_report_data = {
+            "report_name": report_definition.name,
+            "report_description": report_definition.description,
+            "report_type": report_definition.report_type,
+            "generated_at": datetime.utcnow(),
+            "content": []
+        }
+
+        for block_config in report_definition.content_blocks:
+            block_data_payload = None
+            if block_config.block_type == "text":
+                block_data_payload = {"text": block_config.text_content}
+            elif block_config.data_source:
+                # Simulate the structure get_widget_data expects or refactor get_widget_data.
+                # For now, we directly use the data_source from the block.
+                # CustomDashboardService.get_widget_data needs a widget_id.
+                # We need a way to get data based on data_source_config directly.
+                #
+                # Option A: Modify get_widget_data to accept data_source_config (more invasive for now)
+                # Option B: Create a helper in CustomDashboardService or here.
+                # Option C: For now, let's assume CustomDashboardService could have a method like:
+                #   fetch_data_for_source(data_source: DashboardWidgetDataSource, tenant_id: int)
+                # This is what get_widget_data essentially does after fetching the widget.
+                #
+                # For this step, let's construct what get_widget_data in CustomDashboardService
+                # would effectively do with the block's data_source.
+                # This is a temporary direct call structure to analytics_service for simplicity,
+                # mimicking what an adapted get_widget_data would do.
+                # Proper way: CustomDashboardService.get_data_for_source(block_config.data_source, tenant_id)
+
+                # This part needs to call the logic now within CustomDashboardService.get_widget_data
+                # We can't directly call get_widget_data as it expects a widget_id.
+                #
+                # Let's assume a refactoring of get_widget_data or a new helper method in CustomDashboardService.
+                # For the purpose of this step, we'll outline the call.
+                # The actual data fetching logic is already in CustomDashboardService.get_widget_data's `if/elif` block.
+                # We need to pass `block_config.data_source.type` and `block_config.data_source.query_params`.
+
+                # Simplified: we'll call a conceptual method on custom_dashboard_service
+                # that processes a data_source directly.
+                # This conceptual method encapsulates the if/elif logic from get_widget_data.
+
+                # To make this runnable, we'll have to pass a mock widget_id or -1
+                # and then have get_widget_data use the passed block_config if widget_id is -1.
+                # This is a hack. A better way is to refactor get_widget_data.
+                # Let's assume we have a (mocked for now) way to get data for a raw data_source.
+
+                # For now, this is a placeholder for how data would be fetched.
+                # The actual fetching logic is in self.custom_dashboard_service.get_widget_data,
+                # but it's keyed by widget_id.
+                # A direct call to the data fetching part of get_widget_data is needed.
+
+                # Let's assume `self.custom_dashboard_service` has a new method:
+                # `async def get_data_for_data_source(self, data_source: schemas.DashboardWidgetDataSource, tenant_id: int)`
+                # which contains the core logic of `get_widget_data`'s if/elif block.
+
+                # If CustomDashboardService.get_widget_data is not refactored,
+                # ReportingService would have to replicate the data fetching logic
+                # from CustomDashboardService based on block_config.data_source.type,
+                # which is not ideal (code duplication).
+
+                # For now, let's assume we will call a helper or refactored method.
+                # This part is the conceptual link.
+                try:
+                    # This is where the call to the data fetching logic (now in CustomDashboardService) happens.
+                    # We need to adapt this. For now, let's create a placeholder call.
+                    # This will be refined when CustomDashboardService is confirmed.
+                    # The `get_widget_data` in CustomDashboardService currently requires a widget_id.
+                    # This is a structural challenge for calling it directly.
+                    # We will simulate the data fetching part. This requires CustomDashboardService to be enhanced
+                    # or to duplicate logic.
+
+                    # For the current step, let's assume a method exists in CustomDashboardService
+                    # that takes a data_source object.
+                    # widget_data_response = await self.custom_dashboard_service.get_data_from_source_config(
+                    # tenant_id=tenant_id,
+                    # data_source_config=block_config.data_source.dict() # Pass as dict
+                    # )
+                    # block_data_payload = widget_data_response.get("data")
+
+                    # Given the current structure of get_widget_data, this is hard to call directly.
+                    # We will mock the outcome for now.
+                    # In a real implementation, CustomDashboardService.get_widget_data would be refactored,
+                    # or a new method exposed by it.
+
+                    # For now, let's construct a simplified call to the analytics_service directly,
+                    # similar to what get_widget_data does, to show the flow.
+                    # This means some logic from CustomDashboardService.get_widget_data is being
+                    # conceptually used here.
+                    source_type = block_config.data_source.type
+                    q_params = block_config.data_source.query_params
+
+                    # This is a simplified replication of logic within CustomDashboardService.get_widget_data
+                    if source_type == "performance_metric_list":
+                         metrics = self.custom_dashboard_service.analytics_service.get_performance_metrics(
+                            tenant_id=tenant_id, metric_type=q_params.get("metric_type"),
+                            category=q_params.get("category"), entity_type=q_params.get("entity_type"),
+                            entity_id=q_params.get("entity_id"), limit=q_params.get("limit", 50)
+                        )
+                         block_data_payload = [schemas.PerformanceMetricInDB.from_orm(m).dict() for m in metrics]
+                    elif source_type == "prediction_list":
+                        predictions = self.custom_dashboard_service.analytics_service.get_predictions(
+                            tenant_id=tenant_id, model_id=q_params.get("model_id"),
+                            entity_type=q_params.get("entity_type"), entity_id=q_params.get("entity_id"),
+                            limit=q_params.get("limit", 50)
+                        )
+                        block_data_payload = [schemas.AnalyticsPredictionInDB.from_orm(p).dict() for p in predictions]
+                    # Add other types as needed, mirroring CustomDashboardService.get_widget_data
+                    else:
+                        block_data_payload = {"error": f"Data source type '{source_type}' not yet supported in report generation."}
+
+                except Exception as e:
+                    block_data_payload = {"error": f"Failed to fetch data for block '{block_config.title}': {str(e)}"}
+
+            compiled_report_data["content"].append({
+                "title": block_config.title,
+                "block_type": block_config.block_type,
+                "display_options": block_config.display_options,
+                "data": block_data_payload
+            })
+
+        return compiled_report_data
