@@ -305,45 +305,377 @@ class CustomDashboardService:
 
         return data_payload
 
-    # --- Data Fetching for Widgets (Conceptual - to be expanded) ---
+    # --- Enhanced Data Fetching for Widgets ---
     async def get_widget_data(
         self,
         widget_id: int,
         tenant_id: int,
-        # current_user: User, # Pass if get_data_for_source needs it
+        user_context: Optional[Dict[str, Any]] = None,
+        time_range: Optional[Dict[str, Any]] = None,
+        filters: Optional[Dict[str, Any]] = None,
+        refresh_cache: bool = False
     ) -> Dict[str, Any]:
+        """
+        Enhanced widget data fetching with support for complex scenarios:
+        - User context for personalized data
+        - Time range filtering
+        - Dynamic filters
+        - Caching and refresh options
+        - Data transformations and aggregations
+        - Error handling and fallbacks
+        """
         widget = self.get_widget(widget_id, tenant_id)
         if not widget:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Widget configuration not found")
 
-        # Ensure widget.data_source_config is a dictionary before attempting to create DashboardWidgetDataSource
+        # Validate widget configuration
         if not isinstance(widget.data_source_config, dict):
-            # Log this unexpected state
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Invalid data_source_config format for widget {widget_id}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Invalid data_source_config format for widget {widget_id}"
+            )
 
         try:
             # Construct DashboardWidgetDataSource from the widget's JSON config
-            data_source_for_method = schemas.DashboardWidgetDataSource(**widget.data_source_config)
-        except Exception as e: # Handle potential Pydantic validation errors or other issues
-            # Log error e (e.g., using a logger)
-            # Consider raising a more specific error or logging more details
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Invalid data_source_config for widget {widget_id}: {str(e)}")
+            data_source_config = schemas.DashboardWidgetDataSource(**widget.data_source_config)
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Invalid data_source_config for widget {widget_id}: {str(e)}"
+            )
 
-        # Call the new centralized data fetching method
-        data_payload = await self.get_data_for_source(
-            data_source_config=data_source_for_method,
-            tenant_id=tenant_id,
-            # current_user=current_user # Pass if get_data_for_source is updated to use it
+        # Apply dynamic parameters and filters
+        enhanced_data_source = await self._enhance_data_source_config(
+            data_source_config, user_context, time_range, filters
         )
 
-        return {
+        # Check cache if not refreshing
+        cached_data = None
+        if not refresh_cache:
+            cached_data = await self._get_cached_widget_data(widget_id, enhanced_data_source)
+
+        if cached_data:
+            data_payload = cached_data
+        else:
+            # Fetch fresh data
+            data_payload = await self.get_data_for_source(
+                data_source_config=enhanced_data_source,
+                tenant_id=tenant_id
+            )
+            
+            # Apply post-processing transformations
+            data_payload = await self._apply_widget_transformations(
+                widget, data_payload, user_context
+            )
+            
+            # Cache the result
+            await self._cache_widget_data(widget_id, enhanced_data_source, data_payload)
+
+        # Build comprehensive response
+        response = {
             "widget_id": widget_id,
             "widget_title": widget.title,
             "widget_type": widget.widget_type,
-            "data_source_config": widget.data_source_config, # Return original config for context
-            "data": data_payload, # This is the actual data fetched by the new method
-            "display_options": widget.display_options
+            "widget_uuid": widget.widget_uuid,
+            "data_source_config": widget.data_source_config,
+            "display_options": widget.display_options,
+            "data": data_payload,
+            "metadata": await self._build_widget_metadata(widget, data_payload, user_context),
+            "last_updated": widget.updated_at,
+            "cache_info": {
+                "from_cache": cached_data is not None,
+                "refresh_requested": refresh_cache
+            }
         }
+
+        return response
+
+    async def _enhance_data_source_config(
+        self,
+        data_source_config: schemas.DashboardWidgetDataSource,
+        user_context: Optional[Dict[str, Any]] = None,
+        time_range: Optional[Dict[str, Any]] = None,
+        filters: Optional[Dict[str, Any]] = None
+    ) -> schemas.DashboardWidgetDataSource:
+        """
+        Enhance data source configuration with dynamic parameters
+        """
+        enhanced_params = dict(data_source_config.query_params or {})
+        
+        # Apply time range filters
+        if time_range:
+            if "start_date" in time_range:
+                enhanced_params["start_date"] = time_range["start_date"]
+            if "end_date" in time_range:
+                enhanced_params["end_date"] = time_range["end_date"]
+            if "period" in time_range:
+                enhanced_params["period"] = time_range["period"]
+        
+        # Apply user context
+        if user_context:
+            if "user_id" in user_context:
+                enhanced_params["user_id"] = user_context["user_id"]
+            if "department" in user_context:
+                enhanced_params["department"] = user_context["department"]
+            if "role" in user_context:
+                enhanced_params["role"] = user_context["role"]
+        
+        # Apply additional filters
+        if filters:
+            enhanced_params.update(filters)
+        
+        # Create enhanced data source config
+        enhanced_config = schemas.DashboardWidgetDataSource(
+            type=data_source_config.type,
+            query_params=enhanced_params
+        )
+        
+        return enhanced_config
+
+    async def _apply_widget_transformations(
+        self,
+        widget: DashboardWidget,
+        data_payload: Any,
+        user_context: Optional[Dict[str, Any]] = None
+    ) -> Any:
+        """
+        Apply widget-specific data transformations and calculations
+        """
+        if not isinstance(data_payload, dict) or "error" in data_payload:
+            return data_payload
+        
+        display_options = widget.display_options or {}
+        widget_type = widget.widget_type
+        
+        # Apply transformations based on widget type
+        if widget_type == "chart":
+            return await self._transform_chart_data(data_payload, display_options)
+        elif widget_type == "table":
+            return await self._transform_table_data(data_payload, display_options)
+        elif widget_type == "metric":
+            return await self._transform_metric_data(data_payload, display_options)
+        elif widget_type == "gauge":
+            return await self._transform_gauge_data(data_payload, display_options)
+        elif widget_type == "heatmap":
+            return await self._transform_heatmap_data(data_payload, display_options)
+        
+        return data_payload
+
+    async def _transform_chart_data(self, data: Any, options: Dict[str, Any]) -> Any:
+        """Transform data for chart widgets"""
+        if isinstance(data, list):
+            # Sort data if specified
+            if options.get("sort_by"):
+                sort_field = options["sort_by"]
+                reverse = options.get("sort_desc", False)
+                try:
+                    data = sorted(data, key=lambda x: x.get(sort_field, 0), reverse=reverse)
+                except (TypeError, KeyError):
+                    pass  # Keep original order if sorting fails
+            
+            # Limit data points if specified
+            if options.get("max_points"):
+                data = data[:options["max_points"]]
+        
+        return data
+
+    async def _transform_table_data(self, data: Any, options: Dict[str, Any]) -> Any:
+        """Transform data for table widgets"""
+        if isinstance(data, list):
+            # Apply column filtering
+            if options.get("visible_columns"):
+                visible_cols = options["visible_columns"]
+                data = [
+                    {k: v for k, v in item.items() if k in visible_cols}
+                    for item in data if isinstance(item, dict)
+                ]
+            
+            # Apply pagination
+            page = options.get("page", 1)
+            page_size = options.get("page_size", 50)
+            start_idx = (page - 1) * page_size
+            end_idx = start_idx + page_size
+            
+            return {
+                "items": data[start_idx:end_idx],
+                "total": len(data),
+                "page": page,
+                "page_size": page_size,
+                "total_pages": (len(data) + page_size - 1) // page_size
+            }
+        
+        return data
+
+    async def _transform_metric_data(self, data: Any, options: Dict[str, Any]) -> Any:
+        """Transform data for metric widgets"""
+        if isinstance(data, dict) and "value" in data:
+            # Apply formatting
+            if options.get("format"):
+                format_type = options["format"]
+                value = data["value"]
+                
+                if format_type == "percentage":
+                    data["formatted_value"] = f"{value:.1f}%"
+                elif format_type == "currency":
+                    currency = options.get("currency", "USD")
+                    data["formatted_value"] = f"{currency} {value:,.2f}"
+                elif format_type == "number":
+                    decimals = options.get("decimals", 0)
+                    data["formatted_value"] = f"{value:,.{decimals}f}"
+            
+            # Add trend indicators
+            if "previous_value" in data:
+                current = data["value"]
+                previous = data["previous_value"]
+                if previous != 0:
+                    change_percent = ((current - previous) / previous) * 100
+                    data["change_percent"] = change_percent
+                    data["trend"] = "up" if change_percent > 0 else "down" if change_percent < 0 else "flat"
+        
+        return data
+
+    async def _transform_gauge_data(self, data: Any, options: Dict[str, Any]) -> Any:
+        """Transform data for gauge widgets"""
+        if isinstance(data, dict) and "value" in data:
+            value = data["value"]
+            min_val = options.get("min_value", 0)
+            max_val = options.get("max_value", 100)
+            
+            # Calculate percentage for gauge
+            if max_val > min_val:
+                percentage = ((value - min_val) / (max_val - min_val)) * 100
+                data["percentage"] = max(0, min(100, percentage))
+            
+            # Add threshold indicators
+            thresholds = options.get("thresholds", {})
+            if thresholds:
+                if value >= thresholds.get("excellent", float('inf')):
+                    data["status"] = "excellent"
+                elif value >= thresholds.get("good", float('inf')):
+                    data["status"] = "good"
+                elif value >= thresholds.get("warning", float('inf')):
+                    data["status"] = "warning"
+                else:
+                    data["status"] = "critical"
+        
+        return data
+
+    async def _transform_heatmap_data(self, data: Any, options: Dict[str, Any]) -> Any:
+        """Transform data for heatmap widgets"""
+        if isinstance(data, list):
+            # Group data for heatmap if needed
+            group_by_x = options.get("x_axis_field")
+            group_by_y = options.get("y_axis_field")
+            value_field = options.get("value_field", "value")
+            
+            if group_by_x and group_by_y:
+                heatmap_data = {}
+                for item in data:
+                    if isinstance(item, dict):
+                        x_val = item.get(group_by_x)
+                        y_val = item.get(group_by_y)
+                        value = item.get(value_field, 0)
+                        
+                        if x_val is not None and y_val is not None:
+                            if x_val not in heatmap_data:
+                                heatmap_data[x_val] = {}
+                            heatmap_data[x_val][y_val] = value
+                
+                return {"heatmap_data": heatmap_data, "original_data": data}
+        
+        return data
+
+    async def _build_widget_metadata(
+        self,
+        widget: DashboardWidget,
+        data_payload: Any,
+        user_context: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
+        """
+        Build metadata about the widget and its data
+        """
+        metadata = {
+            "widget_created": widget.created_at,
+            "widget_updated": widget.updated_at,
+            "data_source_type": widget.data_source_config.get("type") if widget.data_source_config else None,
+        }
+        
+        # Add data statistics
+        if isinstance(data_payload, list):
+            metadata["data_count"] = len(data_payload)
+            metadata["data_type"] = "list"
+        elif isinstance(data_payload, dict):
+            if "error" in data_payload:
+                metadata["has_error"] = True
+                metadata["error_message"] = data_payload["error"]
+            else:
+                metadata["data_type"] = "object"
+                metadata["data_keys"] = list(data_payload.keys())
+        
+        # Add user context info
+        if user_context:
+            metadata["personalized"] = True
+            metadata["user_context_keys"] = list(user_context.keys())
+        
+        return metadata
+
+    async def _get_cached_widget_data(
+        self,
+        widget_id: int,
+        data_source_config: schemas.DashboardWidgetDataSource
+    ) -> Optional[Any]:
+        """
+        Get cached widget data if available and valid
+        TODO: Implement actual caching mechanism (Redis, in-memory, etc.)
+        """
+        # Placeholder for caching implementation
+        return None
+
+    async def _cache_widget_data(
+        self,
+        widget_id: int,
+        data_source_config: schemas.DashboardWidgetDataSource,
+        data_payload: Any
+    ) -> None:
+        """
+        Cache widget data for future requests
+        TODO: Implement actual caching mechanism (Redis, in-memory, etc.)
+        """
+        # Placeholder for caching implementation
+        pass
+
+    async def get_widget_data_batch(
+        self,
+        widget_ids: List[int],
+        tenant_id: int,
+        user_context: Optional[Dict[str, Any]] = None,
+        time_range: Optional[Dict[str, Any]] = None,
+        filters: Optional[Dict[str, Any]] = None
+    ) -> Dict[int, Dict[str, Any]]:
+        """
+        Fetch data for multiple widgets in batch for dashboard loading optimization
+        """
+        results = {}
+        
+        # TODO: Implement parallel processing for better performance
+        for widget_id in widget_ids:
+            try:
+                widget_data = await self.get_widget_data(
+                    widget_id=widget_id,
+                    tenant_id=tenant_id,
+                    user_context=user_context,
+                    time_range=time_range,
+                    filters=filters
+                )
+                results[widget_id] = widget_data
+            except Exception as e:
+                results[widget_id] = {
+                    "widget_id": widget_id,
+                    "error": str(e),
+                    "data": {"error": f"Failed to load widget data: {str(e)}"}
+                }
+        
+        return results
 
 
 from ..database import get_db, SessionLocal # Import get_db and SessionLocal
