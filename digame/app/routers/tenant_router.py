@@ -361,3 +361,57 @@ async def get_user_permissions_in_tenant(
     permissions = TenantService(db).get_user_permissions(user_id)
     return permissions
 
+# --- Tenant AI Feature Management Endpoints ---
+
+class AIFeatureUpdateRequest(BaseModel):
+    is_enabled: bool
+
+@router.get("/tenants/{tenant_id}/ai-features", response_model=Optional[Dict[str, bool]])
+async def get_tenant_ai_features_config(
+    tenant_id: int,
+    db: Session = Depends(get_db),
+    current_user: UserModel = Depends(get_admin_user) # Only tenant admins
+):
+    if current_user.tenant_id != tenant_id: # Basic check, real RBAC would be better
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized for this tenant's AI features")
+
+    tenant_service = TenantService(db)
+    ai_features = tenant_service.get_tenant_ai_features(tenant_id)
+    if ai_features is None:
+        # This could happen if tenant not found, or features field is malformed (though service defaults it)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Tenant or AI features not found")
+    return ai_features
+
+@router.put("/tenants/{tenant_id}/ai-features/{feature_name}", response_model=tenant.TenantResponse)
+async def update_tenant_ai_feature_config(
+    tenant_id: int,
+    feature_name: str,
+    update_request: AIFeatureUpdateRequest,
+    request: Request, # For IP/User-Agent
+    db: Session = Depends(get_db),
+    current_user: UserModel = Depends(get_admin_user) # Only tenant admins
+):
+    if current_user.tenant_id != tenant_id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to update AI features for this tenant")
+
+    tenant_service = TenantService(db)
+    ip_address = request.state.ip_address if hasattr(request.state, "ip_address") else request.client.host
+    user_agent = request.state.user_agent if hasattr(request.state, "user_agent") else request.headers.get("user-agent")
+
+    try:
+        updated_tenant = tenant_service.update_tenant_ai_feature(
+            tenant_id=tenant_id,
+            feature_name=feature_name,
+            is_enabled=update_request.is_enabled,
+            current_user_id=current_user.id,
+            ip_address=ip_address,
+            user_agent=user_agent
+        )
+        if not updated_tenant:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Tenant not found or feature update failed")
+        return updated_tenant
+    except ValueError as ve: # Catch specific errors like invalid feature_name
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(ve))
+    except Exception as e:
+        # Log general errors
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to update AI feature")

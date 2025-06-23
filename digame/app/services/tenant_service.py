@@ -465,31 +465,65 @@ class TenantService:
         permissions = self.get_user_permissions(user_id)
         return permission in permissions
     
-    def _get_enhanced_features(self, subscription_tier: str) -> Dict[str, bool]:
-        base_features = {
-            "analytics": True, "social_collaboration": True, "basic_reporting": True,
-            "api_access": False, "sso": False, "audit_logs_access": False,
-            "ai_insights": False, "advanced_reporting": False, "writing_assistance": False,
-            "integrations_basic": True, "integrations_premium": False,
-            "ai_features_standard": False, "workflow_automation_simple": False,
-            "market_intelligence_overview": False, "advanced_security_options": False
+    def _get_enhanced_features(self, subscription_tier: str) -> Dict[str, Any]:
+        # Default features for all tiers (can be overridden)
+        # These are general platform features, ai features will be separate for clarity
+        platform_features = {
+            "analytics_basic": True,
+            "social_collaboration_core": True,
+            "reporting_standard": True,
+            "api_access_limited": False,
+            "sso_basic": False,
+            "audit_logs_basic": False,
+            "integrations_standard": True,
         }
-        if subscription_tier == "professional": # Example, align with actual tier names
-            base_features.update({
-                "api_access": True, "ai_insights": True, "writing_assistance": True,
-                "integrations_premium": True, "ai_features_standard": True,
-                "workflow_automation_simple": True, "advanced_security_options": True
+
+        # AI feature flags - default to False
+        ai_feature_flags = {
+            "enable_communication_style_analysis": False,
+            "enable_meeting_insights": False,
+            "enable_task_management_ai": False,
+            "enable_writing_assistance": False,
+            "enable_behavioral_analytics": False,
+            "enable_workflow_automation": False, # Coming soon
+            "enable_intelligent_task_prioritization": False, # Base is heuristic, OpenAI is enhancement
+            "enable_email_pattern_analysis": False,
+            "enable_language_learning_support": False,
+            "enable_skill_gap_analysis": False,
+            "enable_personalized_learning_recommendations": False,
+        }
+
+        # Tier-specific overrides and additions
+        if subscription_tier == "professional":
+            platform_features.update({
+                "api_access_limited": True,
+                "audit_logs_basic": True,
+            })
+            ai_feature_flags.update({
+                "enable_task_management_ai": True, # Example
+                "enable_writing_assistance": True, # Example
+                "enable_behavioral_analytics": True, # Example
+                "enable_intelligent_task_prioritization": True, # Heuristic version enabled
             })
         elif subscription_tier == "enterprise":
-            base_features.update({
-                "api_access": True, "sso": True, "audit_logs_access": True,
-                "ai_insights": True, "advanced_reporting": True, "writing_assistance": True,
-                "integrations_premium": True, "ai_features_standard": True,
-                "workflow_automation_simple": True,
-                "market_intelligence_overview": True,
-                "advanced_security_options": True
+            platform_features.update({
+                "api_access_full": True, # More advanced than limited
+                "sso_full": True,
+                "audit_logs_advanced": True,
+                "integrations_premium": True,
             })
-        return base_features
+            # Enterprises get all AI features enabled by default
+            for key in ai_feature_flags:
+                ai_feature_flags[key] = True
+            # Except for features explicitly marked as not ready for all
+            ai_feature_flags["enable_workflow_automation"] = False # Still coming soon
+
+        # Merge platform features and AI features
+        # We can namespace AI features under an 'ai_settings' key if desired,
+        # or keep them flat in the 'features' JSON.
+        # For now, let's keep them flat as per existing structure of `features` field.
+        all_features = {**platform_features, **ai_feature_flags}
+        return all_features
     
     def _create_default_roles(self, tenant_id: int):
         default_roles_data = [
@@ -526,6 +560,77 @@ class TenantService:
         
         # Important: create_tenant will do the final commit.
         return admin_user
+
+    def get_tenant_ai_features(self, tenant_id: int) -> Optional[Dict[str, bool]]:
+        """
+        Retrieves the AI-specific feature flags for a tenant.
+        Returns a dictionary of AI feature names and their boolean status.
+        """
+        tenant = self.get_tenant_by_id(tenant_id)
+        if not tenant or not isinstance(tenant.features, dict):
+            return None
+
+        ai_feature_keys = [
+            "enable_communication_style_analysis", "enable_meeting_insights",
+            "enable_task_management_ai", "enable_writing_assistance",
+            "enable_behavioral_analytics", "enable_workflow_automation",
+            "enable_intelligent_task_prioritization", "enable_email_pattern_analysis",
+            "enable_language_learning_support", "enable_skill_gap_analysis",
+            "enable_personalized_learning_recommendations"
+        ]
+
+        ai_features_status = {}
+        for key in ai_feature_keys:
+            ai_features_status[key] = tenant.features.get(key, False) # Default to False if key missing
+        return ai_features_status
+
+    def update_tenant_ai_feature(self, tenant_id: int, feature_name: str, is_enabled: bool,
+                                 current_user_id: Optional[int] = None,
+                                 ip_address: Optional[str] = None, user_agent: Optional[str] = None) -> Optional[Tenant]:
+        """
+        Updates a single AI feature flag for a tenant.
+        """
+        tenant = self.get_tenant_by_id(tenant_id)
+        if not tenant:
+            return None
+
+        valid_ai_feature_keys = [
+            "enable_communication_style_analysis", "enable_meeting_insights",
+            "enable_task_management_ai", "enable_writing_assistance",
+            "enable_behavioral_analytics", "enable_workflow_automation",
+            "enable_intelligent_task_prioritization", "enable_email_pattern_analysis",
+            "enable_language_learning_support", "enable_skill_gap_analysis",
+            "enable_personalized_learning_recommendations"
+        ]
+
+        if feature_name not in valid_ai_feature_keys:
+            raise ValueError(f"Invalid AI feature name: {feature_name}")
+
+        current_features = tenant.features if isinstance(tenant.features, dict) else {}
+
+        if current_features.get(feature_name) == is_enabled:
+            return tenant # No change needed
+
+        original_feature_value = current_features.get(feature_name)
+        current_features[feature_name] = is_enabled
+        tenant.features = current_features # SQLAlchemy tracks changes to mutable JSON types
+        tenant.updated_at = datetime.now(timezone.utc)
+
+        # self.db.add(tenant) # Not strictly necessary if already persistent and tracked
+        self.db.commit()
+        self.db.refresh(tenant)
+
+        self._log_audit_event(
+            tenant_id=tenant.id,
+            user_id=current_user_id,
+            action="tenant_ai_feature_updated",
+            resource_type="tenant_feature",
+            resource_id=feature_name,
+            details={"feature_name": feature_name, "new_status": is_enabled, "old_status": original_feature_value},
+            ip_address=ip_address,
+            user_agent=user_agent
+        )
+        return tenant
 
 class UserService:
     """
