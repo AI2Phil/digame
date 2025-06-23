@@ -34,12 +34,13 @@ class Report(Base):
     # Report configuration
     data_source = Column(String(100), nullable=False)  # users, analytics, activities, etc.
     query_config = Column(JSON, default={})  # SQL query parameters, filters, etc.
-    visualization_config = Column(JSON, default={})  # Chart types, colors, layout
+    visualization_config = Column(JSON, default={})  # Chart types, colors, layout, interactive elements (e.g., drilldown_fields)
     format_config = Column(JSON, default={})  # PDF layout, Excel formatting, etc.
+    export_config = Column(JSON, default={}) # Specific columns for export, data transformations, etc.
     
     # Filters and parameters
     default_filters = Column(JSON, default={})
-    parameter_schema = Column(JSON, default={})  # Define user-configurable parameters
+    parameter_schema = Column(JSON, default={})  # Define user-configurable parameters (e.g., for interactive exploration)
     
     # Access control
     is_public = Column(Boolean, default=False)  # Available to all tenant users

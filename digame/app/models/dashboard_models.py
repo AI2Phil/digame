@@ -37,3 +37,61 @@ class RecentActivityItem(BaseModel):
 class RecentActivities(BaseModel):
     title: str
     activities: List[RecentActivityItem]
+
+# Models for Advanced Analytics Dashboard Customization
+class WidgetConfig(BaseModel):
+    id: str # Unique ID for the widget instance on a dashboard
+    widget_type: str # e.g., "performance_forecast", "benchmark_comparison", "roi_summary_chart"
+    title: str
+    size: str # e.g., "small", "medium", "large", "1x1", "2x1"
+    position: Dict[str, int] # e.g., {"x": 0, "y": 0} for grid layout
+    settings: Dict[str, Any] = {} # Widget-specific settings, e.g., { "metric_ids": [1,2], "time_period": "30d" }
+
+class DashboardLayout(BaseModel):
+    columns: int
+    widgets: List[WidgetConfig]
+
+class CustomDashboard(BaseModel):
+    id: str # UUID for the dashboard
+    tenant_id: int
+    user_id: int # Owner of the dashboard
+    name: str
+    description: Optional[str] = None
+    layout: DashboardLayout
+    is_default: bool = False
+    created_at: datetime.datetime
+    updated_at: datetime.datetime
+
+# Models for displaying Advanced Analytics Data
+class AdvancedPerformanceDataPoint(BaseModel):
+    timestamp: datetime.datetime
+    value: float
+    dimension_values: Optional[Dict[str, str]] = None # e.g. {"region": "NA", "product": "X"}
+
+class AdvancedPerformanceSeries(BaseModel):
+    metric_name: str
+    series_label: str # For legend, e.g., "Actual Performance - Product X" or "Forecasted - Overall"
+    data_points: List[AdvancedPerformanceDataPoint]
+    unit: Optional[str] = None
+
+class PerformanceForecastData(BaseModel):
+    title: str
+    forecast_horizon_days: int
+    series: List[AdvancedPerformanceSeries] # Could include actuals and forecast
+
+class BenchmarkComparisonData(BaseModel):
+    metric_name: str
+    entity_value: float
+    benchmark_value: float
+    benchmark_name: str
+    difference: float
+    unit: Optional[str] = None
+    notes: Optional[str] = None # e.g. "Above industry average by 15%"
+
+class ROIDashboardData(BaseModel):
+    title: str
+    total_roi_percentage: float
+    total_investment: float
+    total_benefits: float
+    top_performing_projects: List[Dict[str, Any]] # e.g. [{"name": "Project Alpha", "roi": 150.0}]
+    roi_trend: List[AdvancedPerformanceDataPoint] # ROI over time

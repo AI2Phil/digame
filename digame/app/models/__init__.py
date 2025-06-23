@@ -33,11 +33,15 @@ from .social_collaboration import (
     ProjectApplication, SkillEndorsement, MentorshipConnection,
     ConnectionStatus, MessageType, ProjectStatus
 ) # Import enhanced social collaboration models
-# from .gamification import (
-#     Achievement, UserAchievement, Streak, Milestone, UserPoints,
-#     Badge, UserBadge, LeaderboardEntry, AchievementType, AchievementRarity
-# ) # Import gamification models
+from .gamification import (
+    Achievement, UserAchievement, Streak, Milestone, UserPoints,
+    Badge, UserBadge, LeaderboardEntry, AchievementType, AchievementRarity
+) # Import gamification models
 from .team import Team, TeamMember, TeamPerformanceMetric, TeamSkillGap, TeamWorkflow, TeamRoleEnum
+from .comparative_benchmark import ComparativeBenchmark
+from .analytics import AnalyticsModel, AnalyticsPrediction, AnalyticsTrainingJob, ROICalculation, PerformanceMetric
+from .dashboard_models import ProductivityChartDataPoint, ProductivityChart, ActivityBreakdownItem, ActivityBreakdown, ProductivityMetric, ProductivityMetricsGroup, RecentActivityItem, RecentActivities
+from .reporting import Report, ReportExecution, ReportSchedule, ReportSubscription, ReportTemplate, ReportAuditLog, ReportCache
 
 # Optionally, define __all__ to specify what is exported when 'from .models import *' is used
 __all__ = [
@@ -74,20 +78,41 @@ __all__ = [
     "ConnectionStatus",
     "MessageType",
     "ProjectStatus",
-    # "Achievement", # Add gamification models to __all__
-    # "UserAchievement",
-    # "Streak",
-    # "Milestone",
-    # "UserPoints",
-    # "Badge",
-    # "UserBadge",
-    # "LeaderboardEntry",
-    # "AchievementType",
-    # "AchievementRarity",
+    "Achievement", # Add gamification models to __all__
+    "UserAchievement",
+    "Streak",
+    "Milestone",
+    "UserPoints",
+    "Badge",
+    "UserBadge",
+    "LeaderboardEntry",
+    "AchievementType",
+    "AchievementRarity",
     "Team",
     "TeamMember",
     "TeamPerformanceMetric",
     "TeamSkillGap",
     "TeamWorkflow",
     "TeamRoleEnum",
+    "ComparativeBenchmark",
+    "AnalyticsModel",
+    "AnalyticsPrediction",
+    "AnalyticsTrainingJob",
+    "ROICalculation",
+    "PerformanceMetric",
+    "ProductivityChartDataPoint",
+    "ProductivityChart",
+    "ActivityBreakdownItem",
+    "ActivityBreakdown",
+    "ProductivityMetric",
+    "ProductivityMetricsGroup",
+    "RecentActivityItem",
+    "RecentActivities",
+    "Report",
+    "ReportExecution",
+    "ReportSchedule",
+    "ReportSubscription",
+    "ReportTemplate",
+    "ReportAuditLog",
+    "ReportCache",
 ]
