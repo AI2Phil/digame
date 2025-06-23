@@ -321,8 +321,8 @@ const UserManagementSection = ({
               }`} />
               <Input
                 placeholder="Search users by name or email..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                value={initialSearchTerm || ''}
+                onChange={(e) => onSearchTermChange && onSearchTermChange(e.target.value)}
                 className={`pl-10 transition-all duration-200 ${
                   isDarkMode
                     ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500'
@@ -332,8 +332,8 @@ const UserManagementSection = ({
             </div>
             <div className="flex gap-2">
               <Select
-                value={filterRole}
-                onChange={setFilterRole}
+                value={currentFilterRole}
+                onChange={setCurrentFilterRole}
                 options={[
                   { value: 'all', label: 'All Roles' },
                   { value: 'admin', label: 'Admin' },
@@ -348,8 +348,8 @@ const UserManagementSection = ({
                 }`}
               />
               <Select
-                value={filterStatus}
-                onChange={setFilterStatus}
+                value={currentFilterStatus}
+                onChange={setCurrentFilterStatus}
                 options={[
                   { value: 'all', label: 'All Statuses' },
                   { value: 'active', label: 'Active' },
@@ -439,7 +439,7 @@ const UserManagementSection = ({
           </div>
 
           {/* Bulk Actions */}
-          {selectedUsers.length > 0 && (
+          {selectedUserIds.size > 0 && (
             <div className={`flex items-center gap-2 mb-4 p-3 rounded-lg border transition-all duration-200 ${
               isDarkMode
                 ? 'bg-blue-900/30 border-blue-700'
@@ -448,7 +448,7 @@ const UserManagementSection = ({
               <span className={`text-sm font-medium ${
                 isDarkMode ? 'text-blue-300' : 'text-blue-700'
               }`}>
-                {selectedUsers.length} user(s) selected
+                {selectedUserIds.size} user(s) selected
               </span>
               <div className="flex gap-2 ml-auto">
                 <Button
