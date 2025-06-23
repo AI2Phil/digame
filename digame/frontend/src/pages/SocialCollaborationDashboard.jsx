@@ -119,7 +119,11 @@ const SocialCollaborationDashboard = () => {
             </div>
             <Button
               variant="outline"
-              onClick={() => navigate('/')}
+              onClick={() => {
+                // Check if we're in demo mode
+                const isDemoMode = localStorage.getItem('demo_mode') === 'true';
+                navigate(isDemoMode ? '/dashboard' : '/');
+              }}
               className="flex items-center gap-2"
             >
               <Home className="w-4 h-4" />

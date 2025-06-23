@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Users, Settings, BarChart3, Key, UserCheck, 
-  Activity, Shield, Database, AlertTriangle, 
+import { useNavigate } from 'react-router-dom';
+import {
+  Users, Settings, BarChart3, Key, UserCheck,
+  Activity, Shield, Database, AlertTriangle,
   TrendingUp, Clock, CheckCircle, XCircle,
-  Search, Filter, Download, RefreshCw
+  Search, Filter, Download, RefreshCw, Home
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -23,6 +24,7 @@ import OnboardingAnalyticsSection from '../components/admin/OnboardingAnalyticsS
 import UserDetailsDialog from '../components/admin/UserDetailsDialog';
 
 const AdminDashboardPage = () => {
+  const navigate = useNavigate();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('overview');
   const [users, setUsers] = useState([]);
@@ -93,8 +95,25 @@ const AdminDashboardPage = () => {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Admin Dashboard</h1>
-          <p className="text-gray-600">Manage users, monitor system performance, and track platform analytics</p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">Admin Dashboard</h1>
+              <p className="text-gray-600">Manage users, monitor system performance, and track platform analytics</p>
+            </div>
+            
+            {/* Home Button */}
+            <Button
+              variant="outline"
+              onClick={() => {
+                const isDemoMode = localStorage.getItem('demo_mode') === 'true';
+                navigate(isDemoMode ? '/dashboard' : '/');
+              }}
+              className="flex items-center gap-2"
+            >
+              <Home className="w-4 h-4" />
+              Home
+            </Button>
+          </div>
         </div>
 
         {/* Quick Stats Cards */}

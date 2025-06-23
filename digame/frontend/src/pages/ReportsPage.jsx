@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { 
-  FileText, Download, Calendar, Filter, Search, 
+import { useNavigate } from 'react-router-dom';
+import {
+  FileText, Download, Calendar, Filter, Search,
   BarChart3, PieChart, TrendingUp, Clock, Target,
-  Users, Activity, Zap, Eye, Share2, Printer
+  Users, Activity, Zap, Eye, Share2, Printer, Home
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -22,6 +23,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/Dialog';
 
 const ReportsPage = () => {
+  const navigate = useNavigate();
   const [dateRange, setDateRange] = useState({
     from: new Date(2024, 0, 1),
     to: new Date()
@@ -161,10 +163,29 @@ const ReportsPage = () => {
     <div className="container mx-auto p-6 max-w-7xl">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-3xl font-bold">Reports & Analytics</h1>
-          <p className="text-muted-foreground">Generate and manage your productivity reports</p>
+        <div className="flex items-center justify-between w-full">
+          <div>
+            <h1 className="text-3xl font-bold">Reports & Analytics</h1>
+            <p className="text-muted-foreground">Generate and manage your productivity reports</p>
+          </div>
+          
+          {/* Home Button */}
+          <Button
+            variant="outline"
+            onClick={() => {
+              const isDemoMode = localStorage.getItem('demo_mode') === 'true';
+              navigate(isDemoMode ? '/dashboard' : '/');
+            }}
+            className="flex items-center gap-2"
+          >
+            <Home className="w-4 h-4" />
+            Home
+          </Button>
         </div>
+      </div>
+      
+      <div className="flex items-center justify-between mb-6">
+        <div></div>
         
         <div className="flex items-center space-x-2">
           <Button variant="outline" onClick={handleBulkDownload} disabled={selectedReports.length === 0}>

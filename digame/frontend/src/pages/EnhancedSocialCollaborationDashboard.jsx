@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Users, UserPlus, MessageCircle, Target, Award, TrendingUp, 
+import { useNavigate } from 'react-router-dom';
+import {
+  Users, UserPlus, MessageCircle, Target, Award, TrendingUp,
   Network, Brain, Handshake, BookOpen, Calendar, MapPin,
   Search, Filter, Star, Heart, Share2, Eye, Clock,
   Building, Briefcase, GraduationCap, Coffee, Video,
-  BarChart3, PieChart, Activity, Zap, Globe, Shield
+  BarChart3, PieChart, Activity, Zap, Globe, Shield, Home
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -16,6 +17,7 @@ import socialService from '../services/socialService';
 import apiService from '../services/apiService';
 
 const EnhancedSocialCollaborationDashboard = () => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('overview');
   const [loading, setLoading] = useState(true);
   const [userProfile, setUserProfile] = useState({});
@@ -105,14 +107,29 @@ const EnhancedSocialCollaborationDashboard = () => {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="p-3 bg-gradient-to-r from-purple-500 to-pink-600 rounded-full">
-              <Users className="w-8 h-8 text-white" />
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="p-3 bg-gradient-to-r from-purple-500 to-pink-600 rounded-full">
+                <Users className="w-8 h-8 text-white" />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900">Enhanced Social Collaboration</h1>
+                <p className="text-gray-600">Advanced peer matching, networking, and team collaboration platform</p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Enhanced Social Collaboration</h1>
-              <p className="text-gray-600">Advanced peer matching, networking, and team collaboration platform</p>
-            </div>
+            
+            {/* Home Button */}
+            <Button
+              variant="outline"
+              onClick={() => {
+                const isDemoMode = localStorage.getItem('demo_mode') === 'true';
+                navigate(isDemoMode ? '/dashboard' : '/');
+              }}
+              className="flex items-center gap-2"
+            >
+              <Home className="w-4 h-4" />
+              Home
+            </Button>
           </div>
           
           {/* Quick Stats */}

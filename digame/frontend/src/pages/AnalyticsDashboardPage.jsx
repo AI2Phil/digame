@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  BarChart3, TrendingUp, Activity, Database, 
+import { useNavigate } from 'react-router-dom';
+import {
+  BarChart3, TrendingUp, Activity, Database,
   Clock, Users, Zap, AlertTriangle, CheckCircle,
   Monitor, Smartphone, Globe, RefreshCw,
-  Download, Filter, Calendar, Eye, Target
+  Download, Filter, Calendar, Eye, Target, Home
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -19,6 +20,7 @@ import ApiAnalyticsSection from '../components/analytics/ApiAnalyticsSection';
 import MobileAnalyticsSection from '../components/analytics/MobileAnalyticsSection';
 
 const AnalyticsDashboardPage = () => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('overview');
   const [timeRange, setTimeRange] = useState('24h');
   const [loading, setLoading] = useState(true);
@@ -99,6 +101,18 @@ const AnalyticsDashboardPage = () => {
               <p className="text-gray-600">Real-time performance monitoring and user behavior analytics</p>
             </div>
             <div className="flex items-center gap-3">
+              {/* Home Button */}
+              <Button
+                variant="outline"
+                onClick={() => {
+                  const isDemoMode = localStorage.getItem('demo_mode') === 'true';
+                  navigate(isDemoMode ? '/dashboard' : '/');
+                }}
+                className="flex items-center gap-2"
+              >
+                <Home className="w-4 h-4" />
+                Home
+              </Button>
               <Select
                 value={timeRange}
                 onChange={setTimeRange}

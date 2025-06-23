@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { 
-  Users, UserPlus, Mail, MoreHorizontal, Crown, 
+import { useNavigate } from 'react-router-dom';
+import {
+  Users, UserPlus, Mail, MoreHorizontal, Crown,
   Shield, Eye, Edit, Trash2, Search, Filter,
   Calendar, Clock, Target, TrendingUp, Award,
   Settings, Download, Share2, MessageSquare,
-  Activity, BarChart3, Zap, CheckCircle
+  Activity, BarChart3, Zap, CheckCircle, Home
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -23,10 +24,18 @@ import { Chart } from '../components/ui/Chart';
 import { Textarea } from '../components/ui/Textarea'; // Added
 import { Switch } from '../components/ui/Switch';   // Added
 
-const TeamsPage = () => {
+const TeamsPage = ({ isDemoMode = false, onLogout }) => {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
+
+  // Use prop if provided, otherwise fallback to localStorage
+  const isDemo = isDemoMode || localStorage.getItem('demo_mode') === 'true';
+
+  const handleHomeClick = () => {
+    navigate(isDemo ? '/dashboard' : '/');
+  };
 
   // State for Invite Dialog
   const [inviteData, setInviteData] = useState({
@@ -70,7 +79,7 @@ const TeamsPage = () => {
       email: 'sarah.johnson@company.com',
       role: 'Team Lead',
       status: 'active',
-      avatar: '/api/placeholder/40/40',
+      avatar: isDemo ? 'https://via.placeholder.com/40x40/3B82F6/FFFFFF?text=SJ' : '/api/placeholder/40/40',
       joinDate: '2023-01-15',
       lastActive: '2 hours ago',
       productivity: 92,
@@ -84,7 +93,7 @@ const TeamsPage = () => {
       email: 'michael.chen@company.com',
       role: 'Senior Developer',
       status: 'active',
-      avatar: '/api/placeholder/40/40',
+      avatar: isDemo ? 'https://via.placeholder.com/40x40/10B981/FFFFFF?text=MC' : '/api/placeholder/40/40',
       joinDate: '2023-02-20',
       lastActive: '1 hour ago',
       productivity: 88,
@@ -98,7 +107,7 @@ const TeamsPage = () => {
       email: 'emily.rodriguez@company.com',
       role: 'Product Manager',
       status: 'active',
-      avatar: '/api/placeholder/40/40',
+      avatar: isDemo ? 'https://via.placeholder.com/40x40/8B5CF6/FFFFFF?text=ER' : '/api/placeholder/40/40',
       joinDate: '2023-03-10',
       lastActive: '30 minutes ago',
       productivity: 95,
@@ -112,7 +121,7 @@ const TeamsPage = () => {
       email: 'david.kim@company.com',
       role: 'Designer',
       status: 'inactive',
-      avatar: '/api/placeholder/40/40',
+      avatar: isDemo ? 'https://via.placeholder.com/40x40/F59E0B/FFFFFF?text=DK' : '/api/placeholder/40/40',
       joinDate: '2023-04-05',
       lastActive: '2 days ago',
       productivity: 76,
@@ -126,7 +135,7 @@ const TeamsPage = () => {
       email: 'lisa.wang@company.com',
       role: 'Developer',
       status: 'active',
-      avatar: '/api/placeholder/40/40',
+      avatar: isDemo ? 'https://via.placeholder.com/40x40/EF4444/FFFFFF?text=LW' : '/api/placeholder/40/40',
       joinDate: '2023-05-12',
       lastActive: '15 minutes ago',
       productivity: 85,
@@ -209,6 +218,11 @@ const TeamsPage = () => {
         </div>
         
         <div className="flex items-center space-x-2">
+          <Button variant="outline" onClick={handleHomeClick}>
+            <Home className="mr-2 h-4 w-4" />
+            {isDemo ? 'Back to Dashboard' : 'Home'}
+          </Button>
+          
           <Button variant="outline" onClick={handleExportTeamData}>
             <Download className="mr-2 h-4 w-4" />
             Export Data

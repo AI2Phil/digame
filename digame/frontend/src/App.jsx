@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ToastProvider } from './components/ui/Toast';
 import { AuthProvider } from './contexts/AuthContext.tsx';
-import ProtectedRoute from './components/auth/ProtectedRoute.tsx';
 import enhancedApiService from './services/enhancedApiService';
 import HomePage from './pages/HomePage';
 import FeaturesPage from './pages/FeaturesPage';
@@ -26,7 +25,7 @@ import BehavioralAnalyticsPage from './pages/BehavioralAnalyticsPage';
 import PredictiveAnalyticsPage from './pages/PredictiveAnalyticsPage';
 import ReportsPage from './pages/ReportsPage';
 // Team Collaboration Page
-import TeamsPage from './pages/TeamsPage.tsx';
+import TeamsPage from './pages/TeamsPage.jsx';
 // Authentication Page
 import AuthPage from './pages/AuthPage.tsx';
 import './App.css';
@@ -200,8 +199,8 @@ function App() {
           <Route
             path="/onboarding"
             element={
-              isAuthenticated ? (
-                needsOnboarding ? (
+              isAuthenticated || isDemoMode ? (
+                needsOnboarding || isDemoMode ? (
                   <OnboardingPage onComplete={handleOnboardingComplete} />
                 ) : (
                   <Navigate to="/dashboard" replace />
@@ -536,40 +535,60 @@ function App() {
             }
           />
 
-          {/* Team Collaboration Routes - Using ProtectedRoute for better authentication handling */}
+          {/* Team Collaboration Routes */}
           <Route
             path="/teams"
             element={
-              <ProtectedRoute>
-                <TeamsPage />
-              </ProtectedRoute>
+              isAuthenticated || isDemoMode ? (
+                <TeamsPage
+                  isDemoMode={isDemoMode}
+                  onLogout={handleLogout}
+                />
+              ) : (
+                <Navigate to="/" replace />
+              )
             }
           />
           
           <Route
             path="/teams/dashboard"
             element={
-              <ProtectedRoute>
-                <TeamsPage />
-              </ProtectedRoute>
+              isAuthenticated || isDemoMode ? (
+                <TeamsPage
+                  isDemoMode={isDemoMode}
+                  onLogout={handleLogout}
+                />
+              ) : (
+                <Navigate to="/" replace />
+              )
             }
           />
           
           <Route
             path="/teams/skills"
             element={
-              <ProtectedRoute>
-                <TeamsPage />
-              </ProtectedRoute>
+              isAuthenticated || isDemoMode ? (
+                <TeamsPage
+                  isDemoMode={isDemoMode}
+                  onLogout={handleLogout}
+                />
+              ) : (
+                <Navigate to="/" replace />
+              )
             }
           />
           
           <Route
             path="/teams/workflows"
             element={
-              <ProtectedRoute>
-                <TeamsPage />
-              </ProtectedRoute>
+              isAuthenticated || isDemoMode ? (
+                <TeamsPage
+                  isDemoMode={isDemoMode}
+                  onLogout={handleLogout}
+                />
+              ) : (
+                <Navigate to="/" replace />
+              )
             }
           />
 

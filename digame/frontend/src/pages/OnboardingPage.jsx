@@ -18,6 +18,24 @@ const OnboardingPage = () => {
 
   const initializeOnboarding = async () => {
     try {
+      // Check if we're in demo mode
+      const isDemoMode = localStorage.getItem('demo_mode') === 'true';
+      
+      if (isDemoMode) {
+        // In demo mode, create a demo user and skip completion check
+        const demoUser = {
+          id: 'demo_user_001',
+          username: 'demo_user',
+          email: 'demo@digame.com',
+          firstName: 'Demo',
+          lastName: 'User',
+          role: 'Professional'
+        };
+        setUser(demoUser);
+        setLoading(false);
+        return;
+      }
+
       // Get user data from localStorage or API
       const userData = localStorage.getItem('user');
       if (userData) {

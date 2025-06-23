@@ -146,7 +146,11 @@ const AdvancedWebAnalyticsDashboard = () => {
             <div className="flex items-center gap-3">
               <Button
                 variant="ghost"
-                onClick={() => navigate('/')}
+                onClick={() => {
+                  // Check if we're in demo mode
+                  const isDemoMode = localStorage.getItem('demo_mode') === 'true';
+                  navigate(isDemoMode ? '/dashboard' : '/');
+                }}
                 className="mr-2 text-gray-600 hover:text-gray-900"
               >
                 ← Home
@@ -333,23 +337,23 @@ const WebOverviewSection = ({ analytics, performance, userBehavior, systemHealth
     <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
       <KPICard
         title="Total Users"
-        value={analytics.totalUsers || '12,847'}
+        value={analytics.userSessions?.total?.toLocaleString() || '12,847'}
         icon={Users}
         color="blue"
         trend="up"
-        change="+12.5%"
+        change={analytics.userSessions?.change ? `+${analytics.userSessions.change}%` : "+12.5%"}
       />
       <KPICard
         title="Page Views"
-        value={analytics.pageViews || '89,234'}
+        value={analytics.pageViews?.total?.toLocaleString() || '89,234'}
         icon={Eye}
         color="green"
         trend="up"
-        change="+8.3%"
+        change={analytics.pageViews?.change ? `+${analytics.pageViews.change}%` : "+8.3%"}
       />
       <KPICard
         title="Avg Response Time"
-        value={`${performance.avgResponseTime || 245}ms`}
+        value={`${performance.avgResponseTime || performance.apiResponseTime || 245}ms`}
         icon={Timer}
         color="purple"
         trend="down"
@@ -357,7 +361,7 @@ const WebOverviewSection = ({ analytics, performance, userBehavior, systemHealth
       />
       <KPICard
         title="System Uptime"
-        value={`${systemHealth.uptime || 99.9}%`}
+        value={`${systemHealth.uptime || performance.uptime || 99.9}%`}
         icon={CheckCircle}
         color="emerald"
         trend="stable"

@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { 
+import { useNavigate } from 'react-router-dom';
+import {
   Smartphone, Battery, Wifi, Clock, TrendingUp, Activity, Zap, Volume2,
   Settings, Bell, Eye, BarChart3, Mic, RefreshCw, Brain, Target,
-  Users, Globe, Download, Upload, Signal, Cpu, HardDrive, 
-  Timer, AlertTriangle, CheckCircle, XCircle, Info
+  Users, Globe, Download, Upload, Signal, Cpu, HardDrive,
+  Timer, AlertTriangle, CheckCircle, XCircle, Info, Home
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -14,6 +15,7 @@ import { useToast } from '../components/ui/Toast';
 import enhancedApiService from '../services/enhancedApiService';
 
 const AdvancedMobileAnalyticsDashboard = () => {
+  const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
@@ -170,14 +172,29 @@ const AdvancedMobileAnalyticsDashboard = () => {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="p-3 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full">
-              <BarChart3 className="w-8 h-8 text-white" />
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="p-3 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full">
+                <BarChart3 className="w-8 h-8 text-white" />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900">Advanced Mobile Analytics</h1>
+                <p className="text-gray-600">Comprehensive mobile performance insights and optimization</p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Advanced Mobile Analytics</h1>
-              <p className="text-gray-600">Comprehensive mobile performance insights and optimization</p>
-            </div>
+            
+            {/* Home Button */}
+            <Button
+              variant="outline"
+              onClick={() => {
+                const isDemoMode = localStorage.getItem('demo_mode') === 'true';
+                navigate(isDemoMode ? '/dashboard' : '/');
+              }}
+              className="flex items-center gap-2"
+            >
+              <Home className="w-4 h-4" />
+              Home
+            </Button>
           </div>
           
           {/* Real-time Status Bar */}

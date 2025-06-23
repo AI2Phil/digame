@@ -10,7 +10,7 @@ import { Button } from '../ui/Button';
 // import { Label } from '../ui/Label';
 import { Switch } from '../ui/Switch';
 // import { Select } from '../ui/Select';
-import { Progress, ProgressSteps } from '../ui/Progress'; // Added ProgressSteps
+import { Progress, ProgressSteps } from '../ui/Progress';
 import { Badge } from '../ui/Badge';
 import {
   Form,

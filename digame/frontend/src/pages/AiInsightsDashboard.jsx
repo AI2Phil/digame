@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Brain, TrendingUp, Target, Lightbulb, 
+import { useNavigate } from 'react-router-dom';
+import {
+  Brain, TrendingUp, Target, Lightbulb,
   BookOpen, Award, Clock, BarChart3,
   Zap, Users, Calendar, ArrowRight,
-  CheckCircle, AlertTriangle, Star
+  CheckCircle, AlertTriangle, Star, Home
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -16,6 +17,7 @@ import coachingService from '../services/coachingService';
 import apiService from '../services/apiService';
 
 const AiInsightsDashboard = () => {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
   const [insights, setInsights] = useState({});
@@ -109,14 +111,29 @@ const AiInsightsDashboard = () => {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="p-3 bg-gradient-to-r from-purple-500 to-blue-600 rounded-full">
-              <Brain className="w-8 h-8 text-white" />
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="p-3 bg-gradient-to-r from-purple-500 to-blue-600 rounded-full">
+                <Brain className="w-8 h-8 text-white" />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900">AI Insights Dashboard</h1>
+                <p className="text-gray-600">Personalized recommendations and intelligent coaching</p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">AI Insights Dashboard</h1>
-              <p className="text-gray-600">Personalized recommendations and intelligent coaching</p>
-            </div>
+            
+            {/* Home Button */}
+            <Button
+              variant="outline"
+              onClick={() => {
+                const isDemoMode = localStorage.getItem('demo_mode') === 'true';
+                navigate(isDemoMode ? '/dashboard' : '/');
+              }}
+              className="flex items-center gap-2"
+            >
+              <Home className="w-4 h-4" />
+              Home
+            </Button>
           </div>
           
           {/* Quick Stats */}

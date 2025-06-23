@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import Button from '../components/ui/Button';
+import { Button } from '../components/ui/Button';
 import { Card, CardContent } from '../components/ui/Card';
 import demoService from '../services/demoService';
 
@@ -10,12 +10,19 @@ export default function DemoPage({ onDemoAccess }) {
 
   const handleDemoSelect = (demoType) => {
     setSelectedDemo(demoType);
-    // Enable demo mode and redirect to dashboard
+    // Enable demo mode
     demoService.setDemoMode(true);
     if (onDemoAccess) {
       onDemoAccess();
     }
-    navigate('/dashboard');
+    
+    if (demoType === 'guided') {
+      // For guided tour, navigate to onboarding wizard
+      navigate('/onboarding');
+    } else {
+      // For interactive demo, go directly to dashboard
+      navigate('/dashboard');
+    }
   };
 
   return (
