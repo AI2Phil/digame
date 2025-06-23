@@ -319,12 +319,12 @@ export const DatePicker = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [inputValue, setInputValue] = useState(
-    value ? value.toLocaleDateString() : ''
+    value && value instanceof Date ? value.toLocaleDateString() : ''
   );
 
   const handleDateChange = (date) => {
     onChange?.(date);
-    setInputValue(date ? date.toLocaleDateString() : '');
+    setInputValue(date && date instanceof Date ? date.toLocaleDateString() : '');
     setIsOpen(false);
   };
 

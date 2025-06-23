@@ -253,16 +253,21 @@ export default function DashboardPage({ isDemoMode, onLogout }) {
                       : "Select a date range"}
                   </p>
                 </div>
-                <DatePicker
-                  mode="range" // Enable range selection
-                  value={selectedDateRange}
-                  onChange={(range) => setSelectedDateRange(range || { from: null, to: null })}
-                  placeholder="Select date range"
-                  className="w-full sm:w-auto"
-                  // You might need to adjust props for range selection if DatePicker API differs
-                  // For example, if it expects `onRangeChange` or similar.
-                  // Assuming `onChange` handles range object like { from: Date, to: Date }
-                />
+                <div className="flex items-center space-x-2">
+                  <DatePicker
+                    value={selectedDateRange.from}
+                    onChange={(date) => setSelectedDateRange(prev => ({ ...prev, from: date }))}
+                    placeholder="Start date"
+                    className="w-32"
+                  />
+                  <span className="text-gray-500">to</span>
+                  <DatePicker
+                    value={selectedDateRange.to}
+                    onChange={(date) => setSelectedDateRange(prev => ({ ...prev, to: date }))}
+                    placeholder="End date"
+                    className="w-32"
+                  />
+                </div>
               </div>
               <ProductivityChart
                 userId={currentUser?.id || 1}
