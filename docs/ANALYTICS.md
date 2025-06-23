@@ -1,20 +1,26 @@
 Advanced Analytics: Predictive performance modeling, ROI measurement tools 
+
 The Advanced Analytics feature provides comprehensive predictive modeling and ROI measurement capabilities, enabling data-driven decision making and performance optimization for enterprise productivity platforms.
+
    - **Multi-dimensional Performance Metrics**:
      - `AnalyticsModel` configures dimensions, metrics, and aggregation types. Predictions can store multi-dimensional results.
      - `PerformanceMetric` model now includes `dimensions_values` (JSON) to tag specific metric records with their dimensional context (e.g., `{"country": "USA", "department": "Sales"}`).
      - `PerformanceMetric` also includes `predicted_by_model_id` to link a metric value if it's a forecast from an `AnalyticsModel`.
+
    - **Predictive Performance Modeling**:
      - Services enhanced for training models and generating multi-dimensional predictions or forecasts.
      - `AnalyticsService._generate_training_data` and `_calculate_mock_prediction` are more dynamic to support these multi-dimensional aspects.
+
    - **Comparative Benchmarking**:
      - `ComparativeBenchmark` model (`comparative_benchmark.py`) stores industry/peer benchmarks.
      - `AnalyticsPrediction.benchmark_comparison_data` stores comparison results for predictions.
      - `AnalyticsService` includes `add_benchmark_data`, `get_benchmarks`, and `make_prediction_with_benchmark`.
      - **New**: `AnalyticsService.compare_performance_metric_with_benchmarks` method allows direct comparison of any recorded `PerformanceMetric` against the benchmark dataset.
+
    - **ROI Measurement Tools**:
      - `ROICalculation` model and services provide robust ROI analysis.
      - **Enhanced**: `AnalyticsService.create_roi_calculation` now supports `metric_links` in its input, allowing cost/benefit line items to be dynamically populated from `PerformanceMetric` records or `AnalyticsPrediction` results.
+     
    - **Custom Analytics Dashboards**:
      - **New Models** (`dashboard_custom.py`): `AnalyticsDashboard` (stores dashboard configuration, layout, owner) and `DashboardWidget` (stores widget type, title, data source, display options).
      - **New Service** (`dashboard_service_custom.py`): `CustomDashboardService` provides CRUD operations for these dashboards and widgets, and includes `get_widget_data(widget_id)` to fetch data for a widget based on its `data_source_config`. This method is designed to call other services like `AnalyticsService` to retrieve the actual data.
