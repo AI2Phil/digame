@@ -42,7 +42,7 @@ from .comparative_benchmark import ComparativeBenchmark
 from .analytics import AnalyticsModel, AnalyticsPrediction, AnalyticsTrainingJob, ROICalculation, PerformanceMetric
 from .dashboard_models import ProductivityChartDataPoint, ProductivityChart, ActivityBreakdownItem, ActivityBreakdown, ProductivityMetric, ProductivityMetricsGroup, RecentActivityItem, RecentActivities
 from .reporting import Report, ReportExecution, ReportSchedule, ReportSubscription, ReportTemplate, ReportAuditLog, ReportCache
-from .dashboard_custom import AnalyticsDashboard, DashboardWidget # Added for custom dashboards
+from .dashboard_custom import AnalyticsDashboard, DashboardWidget, ReportDefinition # Added for custom dashboards
 
 # Optionally, define __all__ to specify what is exported when 'from .models import *' is used
 __all__ = [
@@ -118,4 +118,5 @@ __all__ = [
     "ReportCache",
     "AnalyticsDashboard", # Added for custom dashboards
     "DashboardWidget",    # Added for custom dashboards
+    "ReportDefinition",   # Added for custom dashboards
 ]

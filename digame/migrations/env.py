@@ -30,6 +30,9 @@ from digame.app.models.experience import Experience
 from digame.app.models.education import Education
 # Import team collaboration models
 from digame.app.models.team import Team, TeamMember, TeamPerformanceMetric, TeamSkillGap, TeamWorkflow
+# Import dashboard and reporting models
+from digame.app.models.dashboard_custom import ReportDefinition, DashboardWidget, AnalyticsDashboard
+from digame.app.models.reporting import ReportSchedule
 # Also import any other models that might be relevant if they were missed by generic import
 # For example, if UserSetting was a separate file and not covered by app.models import:
 # from app.models.user_setting import UserSetting
