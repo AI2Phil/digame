@@ -137,37 +137,19 @@ class CustomDashboardService:
         self.db.commit()
         return True
 
-    # --- Data Fetching for Widgets (Conceptual - to be expanded) ---
-    async def get_widget_data(
+    async def get_data_for_source(
         self,
-        widget_id: int,
+        data_source_config: schemas.DashboardWidgetDataSource, # Changed from widget_id
         tenant_id: int,
-        # Potentially pass user context for filtering data if widget data source is user-specific
-        # current_user: User
-    ) -> Dict[str, Any]:
+        # current_user: User, # User might be needed for RBAC or user-specific data sources
+    ) -> Any: # Return type will be the data payload itself
         """
-        Fetches and processes data for a specific dashboard widget.
-        This is a crucial method that will call other services (AnalyticsService, etc.)
-        based on the widget's data_source_config.
+        Fetches and processes data for a given data_source_config.
+        This method encapsulates the core data fetching logic.
         """
-        widget = self.get_widget(widget_id, tenant_id)
-        if not widget:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Widget configuration not found")
+        data_source_type = data_source_config.type
+        query_params = data_source_config.query_params or {} # Ensure query_params is a dict
 
-        data_source_type = widget.data_source_config.get("type")
-        query_params = widget.data_source_config.get("query_params", {})
-
-        # This is where the logic to call different services will go.
-        # Example:
-        # Need AnalyticsService to fetch underlying data
-        # This import should ideally be at the top level of the module
-        # from ..services.analytics_service import get_analytics_service, AnalyticsService
-        # For now, to avoid circular dependencies or complex setup, let's assume it's passed or accessible
-        # A better way would be dependency injection at router level if services depend on each other.
-        # For simplicity in this step, we might instantiate it directly if needed, or require it to be passed.
-        # Let's assume we can get it:
-
-        # To avoid direct import issues within service layer for now for this step,
         data_payload: Any = {"error": "Unknown data_source_type or data fetching failed."}
         limit = query_params.get("limit", 50) # Common parameter
 
@@ -176,16 +158,14 @@ class CustomDashboardService:
                 metric_name = query_params.get("metric_name")
                 entity_id = query_params.get("entity_id")
                 entity_type = query_params.get("entity_type")
-                # TODO: Add support for dimensions_values from query_params for more specific match
 
-                if metric_name: # entity_id and entity_type can be optional for some metrics
-                    # Fetch the latest matching metric
+                if metric_name:
                     metrics = self.analytics_service.get_performance_metrics(
                         tenant_id=tenant_id,
-                        metric_name=metric_name, # Assuming get_performance_metrics can filter by name
+                        metric_name=metric_name,
                         entity_id=entity_id,
                         entity_type=entity_type,
-                        limit=1 # We want the most recent one
+                        limit=1
                     )
                     if metrics:
                         metric_record = metrics[0]
@@ -217,21 +197,14 @@ class CustomDashboardService:
                 metric_name = query_params.get("metric_name")
                 entity_id = query_params.get("entity_id")
                 entity_type = query_params.get("entity_type")
-                # Additional params for time series:
-                # period_start, period_end, granularity (daily, weekly - for aggregation)
-                # For now, fetch all historical data for a specific metric name / entity
                 if metric_name:
-                    # This is a simplified version. Real timeseries might need specific querying
-                    # in AnalyticsService to get historical values, not just current ones.
-                    # Assuming get_performance_metrics returns records sorted by measurement_date
                     all_metric_records = self.analytics_service.get_performance_metrics(
                         tenant_id=tenant_id,
-                        metric_name=metric_name, # Needs get_performance_metrics to support name filtering
+                        metric_name=metric_name,
                         entity_id=entity_id,
                         entity_type=entity_type,
-                        limit=query_params.get("history_limit", 30) # Limit number of historical points
+                        limit=query_params.get("history_limit", 30)
                     )
-                    # And that PerformanceMetric model has a measurement_date or period_end
                     data_payload = [
                         {"timestamp": r.measurement_date or r.period_end, "value": r.current_value, "unit": r.measurement_unit}
                         for r in sorted(all_metric_records, key=lambda x: x.measurement_date or x.period_end) if r.measurement_date or r.period_end
@@ -240,7 +213,6 @@ class CustomDashboardService:
                          data_payload = {"error": f"No time series data found for metric '{metric_name}'."}
                 else:
                     data_payload = {"error": "Missing metric_name for performance_metric_timeseries."}
-
 
             elif data_source_type == "prediction_single":
                 prediction_id = query_params.get("prediction_id")
@@ -252,11 +224,11 @@ class CustomDashboardService:
                         data_payload = schemas.AnalyticsPredictionInDB.from_orm(prediction_record).dict()
                     else:
                         data_payload = {"error": "Prediction not found."}
-                else: # Fallback to fetching latest for model/entity if no ID
+                else:
                     model_id = query_params.get("model_id")
                     entity_id = query_params.get("entity_id")
                     entity_type = query_params.get("entity_type")
-                    if model_id: # entity_id and entity_type can be optional for some predictions
+                    if model_id:
                         predictions = self.analytics_service.get_predictions(
                             tenant_id=tenant_id, model_id=model_id, entity_id=entity_id, entity_type=entity_type, limit=1
                         )
@@ -308,7 +280,7 @@ class CustomDashboardService:
                         tenant_id=tenant_id,
                         benchmark_params=benchmark_filter_params
                     )
-                    data_payload = comparisons # Already a list of dicts
+                    data_payload = comparisons
                     if not comparisons:
                         data_payload = {"message": "No benchmark comparisons found for the given metric."}
                 else:
@@ -322,28 +294,54 @@ class CustomDashboardService:
                     active_only=query_params.get("active_only", True)
                 )
                 data_payload = [schemas.AnalyticsModelInDB.from_orm(m).dict() for m in models]
+            # TODO: Add more handlers for other data_source_types
 
-            # TODO: Add more handlers for other data_source_types like:
-            # "multi_dimensional_aggregation" (this one would call AnalyticsService.calculate_multi_dimensional_metrics)
-            # "prediction_accuracy_over_time", etc.
-
-        except HTTPException: # Re-raise HTTP exceptions
+        except HTTPException:
             raise
-        except ValueError as ve: # Specific error from service layer
-            # Log error ve
+        except ValueError as ve:
             data_payload = {"error": f"Data fetching error: {str(ve)}"}
         except Exception as e:
-            # Log error e
-            # In a production system, you might not want to expose raw error messages.
             data_payload = {"error": f"An unexpected error occurred: {str(e)}"}
 
+        return data_payload
+
+    # --- Data Fetching for Widgets (Conceptual - to be expanded) ---
+    async def get_widget_data(
+        self,
+        widget_id: int,
+        tenant_id: int,
+        # current_user: User, # Pass if get_data_for_source needs it
+    ) -> Dict[str, Any]:
+        widget = self.get_widget(widget_id, tenant_id)
+        if not widget:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Widget configuration not found")
+
+        # Ensure widget.data_source_config is a dictionary before attempting to create DashboardWidgetDataSource
+        if not isinstance(widget.data_source_config, dict):
+            # Log this unexpected state
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Invalid data_source_config format for widget {widget_id}")
+
+        try:
+            # Construct DashboardWidgetDataSource from the widget's JSON config
+            data_source_for_method = schemas.DashboardWidgetDataSource(**widget.data_source_config)
+        except Exception as e: # Handle potential Pydantic validation errors or other issues
+            # Log error e (e.g., using a logger)
+            # Consider raising a more specific error or logging more details
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Invalid data_source_config for widget {widget_id}: {str(e)}")
+
+        # Call the new centralized data fetching method
+        data_payload = await self.get_data_for_source(
+            data_source_config=data_source_for_method,
+            tenant_id=tenant_id,
+            # current_user=current_user # Pass if get_data_for_source is updated to use it
+        )
 
         return {
             "widget_id": widget_id,
             "widget_title": widget.title,
             "widget_type": widget.widget_type,
-            "data_source_config": widget.data_source_config,
-            "data": data_payload,
+            "data_source_config": widget.data_source_config, # Return original config for context
+            "data": data_payload, # This is the actual data fetched by the new method
             "display_options": widget.display_options
         }
 

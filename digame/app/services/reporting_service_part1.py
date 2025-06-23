@@ -989,52 +989,14 @@ def get_reporting_service(
                 try:
                     # This is where the call to the data fetching logic (now in CustomDashboardService) happens.
                     # We need to adapt this. For now, let's create a placeholder call.
-                    # This will be refined when CustomDashboardService is confirmed.
-                    # The `get_widget_data` in CustomDashboardService currently requires a widget_id.
-                    # This is a structural challenge for calling it directly.
-                    # We will simulate the data fetching part. This requires CustomDashboardService to be enhanced
-                    # or to duplicate logic.
-
-                    # For the current step, let's assume a method exists in CustomDashboardService
-                    # that takes a data_source object.
-                    # widget_data_response = await self.custom_dashboard_service.get_data_from_source_config(
-                    # tenant_id=tenant_id,
-                    # data_source_config=block_config.data_source.dict() # Pass as dict
-                    # )
-                    # block_data_payload = widget_data_response.get("data")
-
-                    # Given the current structure of get_widget_data, this is hard to call directly.
-                    # We will mock the outcome for now.
-                    # In a real implementation, CustomDashboardService.get_widget_data would be refactored,
-                    # or a new method exposed by it.
-
-                    # For now, let's construct a simplified call to the analytics_service directly,
-                    # similar to what get_widget_data does, to show the flow.
-                    # This means some logic from CustomDashboardService.get_widget_data is being
-                    # conceptually used here.
-                    source_type = block_config.data_source.type
-                    q_params = block_config.data_source.query_params
-
-                    # This is a simplified replication of logic within CustomDashboardService.get_widget_data
-                    if source_type == "performance_metric_list":
-                         metrics = self.custom_dashboard_service.analytics_service.get_performance_metrics(
-                            tenant_id=tenant_id, metric_type=q_params.get("metric_type"),
-                            category=q_params.get("category"), entity_type=q_params.get("entity_type"),
-                            entity_id=q_params.get("entity_id"), limit=q_params.get("limit", 50)
-                        )
-                         block_data_payload = [schemas.PerformanceMetricInDB.from_orm(m).dict() for m in metrics]
-                    elif source_type == "prediction_list":
-                        predictions = self.custom_dashboard_service.analytics_service.get_predictions(
-                            tenant_id=tenant_id, model_id=q_params.get("model_id"),
-                            entity_type=q_params.get("entity_type"), entity_id=q_params.get("entity_id"),
-                            limit=q_params.get("limit", 50)
-                        )
-                        block_data_payload = [schemas.AnalyticsPredictionInDB.from_orm(p).dict() for p in predictions]
-                    # Add other types as needed, mirroring CustomDashboardService.get_widget_data
-                    else:
-                        block_data_payload = {"error": f"Data source type '{source_type}' not yet supported in report generation."}
-
+                    # Call the new method in CustomDashboardService
+                    block_data_payload = await self.custom_dashboard_service.get_data_for_source(
+                        data_source_config=block_config.data_source,
+                        tenant_id=tenant_id
+                        # current_user might be needed here if get_data_for_source requires it
+                    )
                 except Exception as e:
+                    # Log the exception e
                     block_data_payload = {"error": f"Failed to fetch data for block '{block_config.title}': {str(e)}"}
 
             compiled_report_data["content"].append({
