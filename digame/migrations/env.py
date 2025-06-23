@@ -32,7 +32,9 @@ from digame.app.models.education import Education
 from digame.app.models.team import Team, TeamMember, TeamPerformanceMetric, TeamSkillGap, TeamWorkflow
 # Import dashboard and reporting models
 from digame.app.models.dashboard_custom import ReportDefinition, DashboardWidget, AnalyticsDashboard
-from digame.app.models.reporting import ReportSchedule
+from digame.app.models.reporting import Report, ReportExecution, ReportSchedule, ReportSubscription, ReportTemplate, ReportAuditLog, ReportCache
+# Import comparative benchmark models
+from digame.app.models.comparative_benchmark import ComparativeBenchmark
 # Also import any other models that might be relevant if they were missed by generic import
 # For example, if UserSetting was a separate file and not covered by app.models import:
 # from app.models.user_setting import UserSetting
@@ -82,26 +84,22 @@ def run_migrations_online() -> None:
     """Run migrations in 'online' mode.
     This is the standard online configuration.
     """
-    global target_metadata # Ensure target_metadata is available
-
-    # This path is taken by 'alembic revision --autogenerate'.
-    # Configure context for 'offline' comparison (metadata vs. migration history).
-    # No actual connection is made; URL is for dialect info.
-    # The actual context.run_migrations() that generates the script text
-    # is called by Alembic's revision command machinery after this env.py runs.
-    url = config.get_main_option("sqlalchemy.url")
-    context.configure(
-        url=url,
-        target_metadata=target_metadata,
-        dialect_opts={"paramstyle": "named"},
-        compare_type=True, # For autogenerate
-        compare_server_default=True, # For autogenerate
-        # Do not include literal_binds=True here.
-        # Do not include include_object or process_revision_directives here unless needed.
+    connectable = engine_from_config(
+        config.get_section(config.config_ini_section),
+        prefix="sqlalchemy.",
+        poolclass=pool.NullPool,
     )
-    # For 'revision --autogenerate', we only need to configure the context.
-    # No 'context.run_migrations()' or 'context.begin_transaction()' here,
-    # as that would be for applying migrations or for --sql mode output.
+
+    with connectable.connect() as connection:
+        context.configure(
+            connection=connection,
+            target_metadata=target_metadata,
+            compare_type=True,
+            compare_server_default=True,
+        )
+
+        with context.begin_transaction():
+            context.run_migrations()
 
 if context.is_offline_mode():
     run_migrations_offline()

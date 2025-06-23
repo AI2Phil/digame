@@ -25,6 +25,7 @@ from ..models.analytics import (
 from ..models.user import User
 from ..models.tenant import Tenant
 from ..models.comparative_benchmark import ComparativeBenchmark
+from .. import schemas
 
 
 class AnalyticsService:
@@ -113,7 +114,7 @@ class AnalyticsService:
         self,
         model_id: int,
         tenant_id: int,
-        model_update_data: "schemas.AnalyticsModelUpdate", # Use forward reference for schema
+        model_update_data: Dict[str, Any], # Simplified to avoid forward reference issues
         updated_by_user_id: int
     ) -> Optional[AnalyticsModel]:
         """Update an existing analytics model."""
@@ -606,37 +607,6 @@ class AnalyticsService:
             return base_value_for_single + np.random.normal(0, 15)
 
     def get_predictions(
-            base_score = 75.0
-            for feature_name, value in input_features.items():
-                val = float(value) if value is not None else 0
-                if "experience" in feature_name: base_score += val * 2
-                elif "tasks" in feature_name: base_score += val * 1.5
-                elif "hours" in feature_name: base_score += val * 0.5
-            return max(0, min(100, base_score + np.random.normal(0, 5)))
-            
-        elif model.model_type == "productivity":
-            base_index = 60.0
-            for feature_name, value in input_features.items():
-                val = float(value) if value is not None else 0
-                if "focus" in feature_name: base_index += val * 8
-                elif "interruptions" in feature_name: base_index -= val * 1.5
-                elif "collaboration" in feature_name: base_index += val * 2
-            return max(0, base_index + np.random.normal(0, 8))
-            
-        elif model.model_type == "roi":
-            base_roi = 15.0
-            for feature_name, value in input_features.items():
-                val = float(value) if value is not None else 0
-                if "investment" in feature_name and val > 0: base_roi += np.log(val) * 2
-                elif "duration" in feature_name: base_roi -= val * 0.05
-                elif "complexity" in feature_name: base_roi -= val * 2
-            return base_roi + np.random.normal(0, 10)
-            
-        else:
-            # Generic prediction
-            return 50.0 + np.random.normal(0, 15)
-
-    def get_predictions(
         self,
         tenant_id: int,
         model_id: Optional[int] = None,
@@ -705,7 +675,7 @@ class AnalyticsService:
         self,
         calculation_id: int,
         tenant_id: int,
-        roi_update_data: "schemas.ROICalculationUpdate", # Forward reference
+        roi_update_data: Dict[str, Any], # Simplified to avoid forward reference issues
         updated_by_user_id: int
     ) -> Optional[ROICalculation]:
         """Update an existing ROI calculation."""
@@ -1203,7 +1173,7 @@ class AnalyticsService:
     def update_benchmark(
         self,
         benchmark_id: int,
-        benchmark_update_data: "schemas.ComparativeBenchmarkUpdate", # Forward reference
+        benchmark_update_data: Dict[str, Any], # Simplified to avoid forward reference issues
         requesting_tenant_id: int, # Tenant ID of the user making the request
         updated_by_user_id: int
     ) -> Optional[ComparativeBenchmark]:

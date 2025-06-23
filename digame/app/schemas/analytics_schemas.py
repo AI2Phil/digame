@@ -372,6 +372,12 @@ class DashboardWidgetConfigBase(BaseModel):
 class DashboardWidgetConfigCreate(DashboardWidgetConfigBase):
     pass
 
+class DashboardWidgetConfigUpdate(BaseModel):
+    widget_type: Optional[str] = None
+    title: Optional[str] = None
+    data_source: Optional[DashboardWidgetDataSource] = None
+    display_options: Optional[Dict[str, Any]] = None
+
 class DashboardWidgetConfigInDB(DashboardWidgetConfigBase, BaseAuditModel):
     id: int # Assuming these are stored and have IDs
     widget_uuid: str
@@ -398,6 +404,12 @@ class AnalyticsDashboardBase(BaseModel):
 
 class AnalyticsDashboardCreate(AnalyticsDashboardBase):
     pass # user_id handled by service
+
+class AnalyticsDashboardUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    layout: Optional[List[DashboardLayoutItem]] = None
+    tags: Optional[List[str]] = None
 
 class AnalyticsDashboardInDB(AnalyticsDashboardBase, BaseAuditModel, TenantAssociatedModel):
     id: int

@@ -173,9 +173,11 @@ class ReportSchedule(Base):
     __tablename__ = "report_schedules"
 
     id = Column(Integer, primary_key=True, index=True)
-    report_id = Column(Integer, ForeignKey("reports.id"), nullable=False, index=True)
+    report_id = Column(Integer, ForeignKey("reports.id"), nullable=True, index=True)  # Nullable for new schedules
+    report_definition_id = Column(Integer, ForeignKey("report_definitions.id"), nullable=True, index=True)  # For new schedules
     tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=False, index=True)
     schedule_uuid = Column(String(36), unique=True, index=True, default=lambda: str(uuid.uuid4()))
+    schedule_type = Column(String(50), default="report", nullable=False)  # "report" or "report_definition"
     
     # Schedule configuration
     name = Column(String(255), nullable=False)
@@ -371,7 +373,7 @@ class ReportCache(Base):
     
     # Cached data
     result_data = Column(JSON, nullable=False)  # Serialized report data
-    metadata = Column(JSON, default={})  # Row count, generation time, etc.
+    cache_metadata = Column(JSON, default={})  # Row count, generation time, etc.
     
     # Cache control
     created_at = Column(DateTime, default=datetime.utcnow, index=True)

@@ -162,7 +162,7 @@ class Milestone(Base):
     __tablename__ = "milestones"
 
     id = Column(Integer, primary_key=True, index=True)
-    goal_id = Column(Integer, ForeignKey("goals.id"), nullable=False)
+    goal_id = Column(Integer, nullable=True)  # TODO: Add ForeignKey when goals table is created
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     
     # Milestone details

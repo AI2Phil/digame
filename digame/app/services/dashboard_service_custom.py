@@ -346,14 +346,14 @@ class CustomDashboardService:
         }
 
 
-from ..database import get_db, Session # Import get_db and Session
+from ..database import get_db, SessionLocal # Import get_db and SessionLocal
 # Need AnalyticsService and its models for some data fetching logic
 from ..models.analytics import PerformanceMetric, AnalyticsPrediction, AnalyticsModel, ROICalculation
 from ..services.analytics_service import get_analytics_service, AnalyticsService # Import AnalyticsService components
 
 # Dependency for getting the service
 def get_custom_dashboard_service(
-    db: Session = Depends(get_db),
+    db: SessionLocal = Depends(get_db),
     analytics_service: AnalyticsService = Depends(get_analytics_service)
 ) -> CustomDashboardService:
     return CustomDashboardService(db=db, analytics_service=analytics_service)

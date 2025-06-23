@@ -1,6 +1,6 @@
 import json # Added for validator
 from typing import List, Optional
-from pydantic import BaseModel, field_validator # Added field_validator
+from pydantic import BaseModel, validator # Changed to validator for Pydantic v1 compatibility
 from datetime import datetime
 
 class ProjectBase(BaseModel):
@@ -29,13 +29,13 @@ class ProjectInDBBase(ProjectBase):
     created_at: Optional[datetime] = None  # Add created_at from WIP
 
     class Config:
-        from_attributes = True  # Use Pydantic v2 syntax
+        orm_mode = True  # Use Pydantic v1 syntax
 
 class Project(ProjectInDBBase):
     pass
 
 class ProjectSchema(ProjectInDBBase):
-    @field_validator('technologiesUsed', mode='before')
+    @validator('technologiesUsed', pre=True)
     @classmethod
     def parse_technologies(cls, value):
         if isinstance(value, str):
