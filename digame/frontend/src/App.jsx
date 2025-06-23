@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ToastProvider } from './components/ui/Toast';
-import { AuthProvider } from './contexts/AuthContext';
-import ProtectedRoute from './components/auth/ProtectedRoute';
+import { AuthProvider } from './contexts/AuthContext.tsx';
+import ProtectedRoute from './components/auth/ProtectedRoute.tsx';
 import enhancedApiService from './services/enhancedApiService';
 import HomePage from './pages/HomePage';
 import FeaturesPage from './pages/FeaturesPage';
@@ -26,9 +26,9 @@ import BehavioralAnalyticsPage from './pages/BehavioralAnalyticsPage';
 import PredictiveAnalyticsPage from './pages/PredictiveAnalyticsPage';
 import ReportsPage from './pages/ReportsPage';
 // Team Collaboration Page
-import TeamsPage from './pages/TeamsPage';
+import TeamsPage from './pages/TeamsPage.tsx';
 // Authentication Page
-import AuthPage from './pages/AuthPage';
+import AuthPage from './pages/AuthPage.tsx';
 import './App.css';
 
 function App() {

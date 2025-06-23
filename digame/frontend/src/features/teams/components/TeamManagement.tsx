@@ -6,8 +6,8 @@ import { Badge } from '../../../components/ui/Badge';
 import { Avatar } from '../../../components/ui/Avatar';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../../../components/ui/Dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../../components/ui/Tabs';
-import { useTeamManagement } from '../hooks/useTeamManagement';
-import { useAuth } from '../../../contexts/AuthContext';
+import { useTeamManagement } from '../hooks/useTeamManagement.ts';
+import { useAuth } from '../../../contexts/AuthContext.tsx';
 
 interface Team {
   id: number;

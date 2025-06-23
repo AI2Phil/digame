@@ -4,8 +4,8 @@ import { Button } from '../../../components/ui/Button';
 import { Badge } from '../../../components/ui/Badge';
 import { Input } from '../../../components/ui/Input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../../../components/ui/Dialog';
-import { useTeamManagement } from '../hooks/useTeamManagement';
-import { teamService } from '../services/teamService';
+import { useTeamManagement } from '../hooks/useTeamManagement.ts';
+import { teamService } from '../services/teamService.ts';
 
 interface TeamSkillGap {
   id: number;

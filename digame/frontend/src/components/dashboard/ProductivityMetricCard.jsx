@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent } from '../../ui/Card'; // CardHeader, CardTitle, CardDescription might be useful later if structure changes
-import { Button } from '../../ui/Button';
-import { Progress } from '../../ui/Progress';
+import { Card, CardContent } from '../ui/Card'; // CardHeader, CardTitle, CardDescription might be useful later if structure changes
+import { Button } from '../ui/Button';
+import { Progress } from '../ui/Progress';
 import { ArrowUp, ArrowDown, ChevronRight } from 'lucide-react';
 
 const ProductivityMetricCard = ({ 

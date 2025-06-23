@@ -5,8 +5,8 @@ import { Badge } from '../../../components/ui/Badge';
 import { Input } from '../../../components/ui/Input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../../../components/ui/Dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../../components/ui/Tabs';
-import { useTeamManagement } from '../hooks/useTeamManagement';
-import { teamService } from '../services/teamService';
+import { useTeamManagement } from '../hooks/useTeamManagement.ts';
+import { teamService } from '../services/teamService.ts';
 
 interface TeamWorkflow {
   id: number;

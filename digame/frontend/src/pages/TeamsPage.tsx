@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/AuthContext.tsx';
 import { Button } from '../components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
 import { Menu, X, Users, BarChart3, Target, Workflow } from 'lucide-react';
-import TeamManagement from '../features/teams/components/TeamManagement';
-import TeamDashboard from '../features/teams/components/TeamDashboard';
-import SkillGapVisualization from '../features/teams/components/SkillGapVisualization';
-import WorkflowOptimization from '../features/teams/components/WorkflowOptimization';
+import TeamManagement from '../features/teams/components/TeamManagement.tsx';
+import TeamDashboard from '../features/teams/components/TeamDashboard.tsx';
+import SkillGapVisualization from '../features/teams/components/SkillGapVisualization.tsx';
+import WorkflowOptimization from '../features/teams/components/WorkflowOptimization.tsx';
 
 type TabType = 'management' | 'dashboard' | 'skills' | 'workflows';
 
