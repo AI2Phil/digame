@@ -1305,12 +1305,12 @@ Following the integration of OpenAI as the primary AI provider for several key s
     -   ✅ **Intelligent Coaching**: `BehaviorService`'s `get_ai_coaching_recommendations` method now uses OpenAI (via `openai_api_key`) to generate coaching advice based on behavioral patterns.
     -   ✅ **Writing Assistance**: `WritingAssistanceService` now integrates with OpenAI (via `openai_api_key`) for writing suggestions.
     -   ✅ **Core Logic Adaptation**: Service logic in the above has been adapted to OpenAI's request/response contracts, replacing previous mock/hypothetical calls. The standardized key `openai_api_key` is used.
-    -   ⏳ **Other AI Services**: Services like `CommunicationStyleService`, `MeetingInsightsService`, `EmailAnalysisService`, `LanguageLearningService` still use mock backends. They are structured to use `openai_api_key` but require specific OpenAI prompt engineering and integration similar to the completed services.
+    -   ✅ **Other AI Services**: Services like `CommunicationStyleService`, `MeetingInsightsService`, `EmailAnalysisService`, `LanguageLearningService` now integrate with OpenAI using the user's `openai_api_key` and `AIIntegrationService`. Specific prompt engineering has been implemented for each.
 -   **Mobile Client - Rich Entity Utilization**:
     -   ⏳ This remains a frontend task. `AdvancedMobileFeatures.jsx` and relevant components need updates to fully utilize the richer JSON-based intent and entity data now available from the OpenAI-powered `VoiceNLUService`.
 -   **Error Handling & User Experience**:
-    -   ✅ **Backend Error Handling**: Reviewed and improved in the integrated services (`VoiceNLUService`, `NotificationService`, `BehaviorService`, `WritingAssistanceService`) for API key issues, AI service errors (via `AIIntegrationService`), and response parsing.
-    -   ⏳ **Frontend User Experience**: Improving user feedback mechanisms for AI interactions (e.g., loading states, clear error messages for API key issues or AI failures) remains a frontend task.
+    -   ✅ **Backend Error Handling**: Reviewed and improved in the integrated services (`VoiceNLUService`, `NotificationService`, `BehaviorService`, `WritingAssistanceService`, `CommunicationStyleService`, `MeetingInsightsService`, `EmailAnalysisService`, `LanguageLearningService`) for API key issues, AI service errors (via `AIIntegrationService`), and response parsing.
+    -   ✅ **Frontend User Experience for Newly Integrated Services**: Frontend components for `CommunicationStyleService`, `MeetingInsightsService`, `EmailAnalysisService`, and `LanguageLearningService` have been developed with initial loading states and error message handling. A broader UX review for *all* AI interactions may still be beneficial.
 -   **Configuration & Administration (Optional Enhancement)**:
     *   Consider implementing a system for admins to provide default or fallback API keys (e.g., a system-wide `openai_api_key`) for AI services, to be used if users haven't configured their own.
     -   Explore options for securely managing these system-level keys.

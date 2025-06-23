@@ -1,80 +1,51 @@
 import json
+import logging
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status, Depends
 from typing import Dict, Any, Optional
 
-from ..crud import user_setting_crud
+from ..crud import user_crud, user_setting_crud, tenant_crud
 from ..models.user import User as UserModel
-from ..db import get_db # For the dependency injector
+from ..db import get_db
+from .ai_integration_service import AIIntegrationService
 
-# Placeholder for an external Language Learning API client
-class MockExternalLanguageClient:
-    def __init__(self, api_key: str):
-        if not api_key:
-            raise ValueError("API key must be provided for the external language service.")
-        self.api_key = api_key
-
-    def translate(self, text: str, target_language: str, source_language: Optional[str] = None) -> Dict[str, Any]:
-        if not text or not target_language:
-            return {"error": "Text and target language are required for translation."}
-
-        # Mock translation
-        translation = f"Mock translated '{text}' to {target_language.upper()}"
-        if source_language:
-            translation += f" from {source_language.upper()}"
-
-        if self.api_key == "invalid_lang_key":
-            raise ValueError("Invalid API key for external language service.")
-
-        return {
-            "original_text": text,
-            "translated_text": translation,
-            "target_language": target_language,
-            "source_language": source_language or "auto-detected (mock)",
-            "provider": "MockExternalLanguageProvider"
-        }
-
-    def define_word(self, word: str, language: str) -> Dict[str, Any]:
-        if not word or not language:
-            return {"error": "Word and language are required for definition."}
-
-        # Mock definition
-        definition = f"Mock definition for '{word}' in {language.upper()}: A sequence of sounds or letters that expresses a meaning."
-        example = f"Example: Use '{word}' in a sentence."
-
-        if self.api_key == "invalid_lang_key":
-            raise ValueError("Invalid API key for external language service.")
-
-        return {
-            "word": word,
-            "language": language,
-            "definition": definition,
-            "example": example,
-            "provider": "MockExternalLanguageProvider"
-        }
+logger = logging.getLogger(__name__)
 
 class LanguageLearningService:
-    def __init__(self, db: Session):
+    def __init__(self, db: Session, ai_integration_service: AIIntegrationService):
         self.db = db
+        self.ai_integration_service = ai_integration_service
 
-    def _check_feature_enabled_and_get_api_key(self, current_user: UserModel, required_key_name: str) -> str:
-        if not hasattr(current_user, 'tenants') or not current_user.tenants:
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User not associated with any tenant.")
+    async def _check_feature_and_get_key(self, current_user: UserModel) -> str:
+        """
+        Helper to check tenant feature enablement and retrieve OpenAI API key.
+        Now common for both translate and define methods.
+        """
+        user_from_db = user_crud.get_user(self.db, user_id=current_user.id)
+        if not user_from_db:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found.")
+        # Use the fresh user object for subsequent checks
 
-        user_tenant_link = current_user.tenants[0]
-        if not hasattr(user_tenant_link, 'tenant'):
-             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Tenant linkage error for user.")
+        tenant_id = getattr(user_from_db, 'tenant_id', None)
+        if not tenant_id and hasattr(user_from_db, 'tenants') and user_from_db.tenants:
+             user_tenant_link = user_from_db.tenants[0]
+             tenant_id = getattr(user_tenant_link, 'tenant_id', None)
 
-        tenant = user_tenant_link.tenant
+        if not tenant_id:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User not associated with any tenant or tenant ID missing.")
 
-        if not tenant: # Should be redundant
+        tenant = tenant_crud.get_tenant_by_id(self.db, tenant_id)
+        if not tenant:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Tenant information not found for user.")
 
-        try:
-            tenant_features = tenant.features if isinstance(tenant.features, dict) else json.loads(tenant.features or '{}')
-        except json.JSONDecodeError:
-            # Log error: Tenant features JSON is corrupted for tenant.id
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error reading tenant configuration.")
+        tenant_features = tenant.features
+        if isinstance(tenant_features, str):
+            try:
+                tenant_features = json.loads(tenant_features or '{}')
+            except json.JSONDecodeError:
+                 raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error parsing tenant features.")
+        elif not isinstance(tenant_features, dict):
+            tenant_features = {}
 
         if not tenant_features.get("language_learning_support"):
             raise HTTPException(
@@ -82,92 +53,176 @@ class LanguageLearningService:
                 detail="Language Learning Support feature is not enabled for your tenant."
             )
 
-        user_settings = user_setting_crud.get_user_setting(self.db, user_id=current_user.id)
+        user_settings = user_setting_crud.get_user_setting(self.db, user_id=user_from_db.id)
         if not user_settings or not user_settings.api_keys:
             raise HTTPException(
                 status_code=status.HTTP_402_PAYMENT_REQUIRED,
-                detail=f"API key '{required_key_name}' not found in your settings for Language Learning."
+                detail="API key for Language Learning not found. Please add 'openai_api_key' to your settings."
             )
 
         try:
             api_keys_dict = json.loads(user_settings.api_keys)
         except json.JSONDecodeError:
-            # Log error: User API keys JSON is corrupted for user_settings.id
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Error parsing your API key settings."
             )
 
-        service_api_key = api_keys_dict.get(required_key_name)
-        if not service_api_key:
+        openai_api_key = api_keys_dict.get("openai_api_key")
+        if not openai_api_key:
             raise HTTPException(
                 status_code=status.HTTP_402_PAYMENT_REQUIRED,
-                detail=f"The '{required_key_name}' is missing from your API key settings for Language Learning."
+                detail="The 'openai_api_key' for Language Learning is missing from your API key settings. Please add it."
             )
-        return service_api_key
+        return openai_api_key
 
-    def translate_text(self, current_user: UserModel, text: str, target_language: str, source_language: Optional[str] = None) -> Dict[str, Any]:
+    async def translate_text(self, current_user: UserModel, text: str, target_language: str, source_language: Optional[str] = None) -> Dict[str, Any]:
         if not current_user:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not authenticated.")
 
-        api_key = self._check_feature_enabled_and_get_api_key(current_user, "language_learning_api_key")
+        openai_api_key = await self._check_feature_and_get_key(current_user)
+
+        if not text.strip():
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Text to translate cannot be empty.")
+        if not target_language.strip():
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Target language cannot be empty.")
+
+        source_lang_instruction = f"from {source_language}" if source_language else "from auto-detected language"
+        system_prompt = f"""
+You are an AI assistant that translates text.
+Translate the user's text to {target_language} {source_lang_instruction}.
+Respond in JSON format with the following keys: "original_text", "translated_text", "target_language", "detected_source_language" (the language code, e.g., "en", "es", or "unknown" if not confident).
+Example:
+User text: "Hello, how are you?" (assuming target is Spanish)
+AI Response: {{
+  "original_text": "Hello, how are you?",
+  "translated_text": "Hola, ¿cómo estás?",
+  "target_language": "Spanish",
+  "detected_source_language": "en"
+}}
+"""
+        ai_payload = {
+            "model": "gpt-3.5-turbo",
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": text}
+            ],
+            "response_format": {"type": "json_object"}
+        }
 
         try:
-            external_client = MockExternalLanguageClient(api_key=api_key)
-            translation_result = external_client.translate(text, target_language, source_language)
+            logger.info(f"Requesting text translation for user {current_user.id} to {target_language}")
+            openai_response_data = await self.ai_integration_service.make_request(
+                api_key=openai_api_key,
+                base_url="https://api.openai.com/v1",
+                endpoint="chat/completions",
+                method="POST",
+                payload=ai_payload
+            )
 
-            if translation_result.get("error"): # Check for errors from the mock client's response
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"Error from Language Learning service: {translation_result['error']}"
-                )
+            if not openai_response_data.get("choices") or \
+               not openai_response_data["choices"][0].get("message") or \
+               not openai_response_data["choices"][0]["message"].get("content"):
+                logger.error(f"Unexpected OpenAI response for translation (user {current_user.id}): {openai_response_data}")
+                raise HTTPException(status_code=500, detail="AI provider returned an unexpected response format for translation.")
+
+            content_str = openai_response_data["choices"][0]["message"]["content"]
+            translation_result = json.loads(content_str)
+
+            required_keys = ["original_text", "translated_text", "target_language", "detected_source_language"]
+            if not all(key in translation_result for key in required_keys):
+                 logger.error(f"OpenAI response JSON missing required keys for translation (user {current_user.id}): {translation_result}")
+                 raise HTTPException(status_code=500, detail="AI provider's response missing required translation fields.")
+
+            logger.info(f"Successfully received translation for user {current_user.id}")
+            translation_result["model_provider"] = "openai"
+            # Ensure the output matches the original mock structure's source_language field if needed
+            translation_result["source_language"] = translation_result.pop("detected_source_language", source_language or "auto-detected")
             return translation_result
-        except ValueError as e:
-            # Log the specific error e
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Error with Language Learning service: {str(e)}"
-            )
-        except Exception as e:
-            # Log the exception e (e.g., logger.error(f"Unexpected external service error: {e}"))
-            raise HTTPException(
-                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail=f"External Language Learning service failed: {str(e)}. Please try again later."
-            )
 
-    def get_vocabulary_definition(self, current_user: UserModel, word: str, language: str) -> Dict[str, Any]:
+        except json.JSONDecodeError:
+            logger.error(f"Failed to parse JSON from OpenAI for translation (user {current_user.id}): {content_str if 'content_str' in locals() else 'N/A'}")
+            raise HTTPException(status_code=500, detail="Failed to parse AI provider's response for translation.")
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.error(f"Error during translation for user {current_user.id}: {str(e)}")
+            raise HTTPException(status_code=503, detail=f"Translation request to AI provider failed: {str(e)}")
+
+    async def get_vocabulary_definition(self, current_user: UserModel, word: str, language: str) -> Dict[str, Any]:
         if not current_user:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not authenticated.")
 
-        api_key = self._check_feature_enabled_and_get_api_key(current_user, "language_learning_api_key")
+        openai_api_key = await self._check_feature_and_get_key(current_user)
+
+        if not word.strip():
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Word to define cannot be empty.")
+        if not language.strip():
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Language for definition cannot be empty.")
+
+        system_prompt = f"""
+You are an AI assistant that provides vocabulary definitions.
+Provide a concise definition and a simple example sentence for the word "{word}" in {language}.
+Respond in JSON format with the following keys: "word", "language", "definition", and "example_sentence".
+Example for word "happy" in English:
+AI Response: {{
+  "word": "happy",
+  "language": "English",
+  "definition": "Feeling or showing pleasure or contentment.",
+  "example_sentence": "She was very happy with her birthday gift."
+}}
+"""
+        ai_payload = {
+            "model": "gpt-3.5-turbo",
+            "messages": [
+                {"role": "system", "content": system_prompt}
+                # User message is implicitly the word and language in the system prompt
+            ],
+            "response_format": {"type": "json_object"}
+        }
 
         try:
-            external_client = MockExternalLanguageClient(api_key=api_key)
-            definition_result = external_client.define_word(word, language)
+            logger.info(f"Requesting definition for '{word}' in {language} for user {current_user.id}")
+            openai_response_data = await self.ai_integration_service.make_request(
+                api_key=openai_api_key,
+                base_url="https://api.openai.com/v1",
+                endpoint="chat/completions",
+                method="POST",
+                payload=ai_payload
+            )
 
-            if definition_result.get("error"): # Check for errors from the mock client's response
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"Error from Language Learning service: {definition_result['error']}"
-                )
+            if not openai_response_data.get("choices") or \
+               not openai_response_data["choices"][0].get("message") or \
+               not openai_response_data["choices"][0]["message"].get("content"):
+                logger.error(f"Unexpected OpenAI response for definition (user {current_user.id}): {openai_response_data}")
+                raise HTTPException(status_code=500, detail="AI provider returned an unexpected response format for definition.")
+
+            content_str = openai_response_data["choices"][0]["message"]["content"]
+            definition_result = json.loads(content_str)
+
+            required_keys = ["word", "language", "definition", "example_sentence"]
+            if not all(key in definition_result for key in required_keys):
+                 logger.error(f"OpenAI response JSON missing required keys for definition (user {current_user.id}): {definition_result}")
+                 raise HTTPException(status_code=500, detail="AI provider's response missing required definition fields.")
+
+            logger.info(f"Successfully received definition for user {current_user.id}")
+            definition_result["model_provider"] = "openai"
+            # Match original mock field name if necessary
+            definition_result["example"] = definition_result.pop("example_sentence")
             return definition_result
-        except ValueError as e:
-            # Log the specific error e
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Error with Language Learning service: {str(e)}"
-            )
+
+        except json.JSONDecodeError:
+            logger.error(f"Failed to parse JSON from OpenAI for definition (user {current_user.id}): {content_str if 'content_str' in locals() else 'N/A'}")
+            raise HTTPException(status_code=500, detail="Failed to parse AI provider's response for definition.")
+        except HTTPException:
+            raise
         except Exception as e:
-            # Log the exception e
-            raise HTTPException(
-                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail=f"External Language Learning service failed: {str(e)}. Please try again later."
-            )
+            logger.error(f"Error during definition lookup for user {current_user.id}: {str(e)}")
+            raise HTTPException(status_code=503, detail=f"Definition request to AI provider failed: {str(e)}")
 
 # Dependency injector function
-def get_language_learning_service(db: Session = Depends(get_db)) -> LanguageLearningService:
-    """
-    Factory function for FastAPI dependency injection.
-    Provides an instance of LanguageLearningService with a DB session.
-    """
-    return LanguageLearningService(db)
+def get_language_learning_service(
+    db: Session = Depends(get_db),
+    ai_integration_service: AIIntegrationService = Depends(AIIntegrationService)
+) -> LanguageLearningService:
+    return LanguageLearningService(db=db, ai_integration_service=ai_integration_service)
