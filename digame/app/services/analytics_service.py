@@ -300,14 +300,63 @@ class AnalyticsService:
                     data[met] = np.random.normal(100, 20, n_samples)
 
         df = pd.DataFrame(data)
-        # Ensure all specified features, dimensions, and metrics columns exist, even if empty initially
-        all_cols = set(model.features) | set(model.dimensions) | set(model.metrics)
-        if model.target_variable:
-            all_cols.add(model.target_variable)
+        # Ensure all specified features, dimensions, and metrics columns exist.
+        # Start with features defined in the model
+        for feature in model.features:
+            if feature not in data:
+                # Add generic random data if not specifically generated above
+                data[feature] = np.random.normal(50, 15, n_samples)
 
-        for col in all_cols:
-            if col not in df.columns:
-                df[col] = 0 # Or np.nan, depending on desired handling
+        # Add dimension columns with sample categorical values
+        for i, dim_name in enumerate(model.dimensions):
+            if dim_name not in data: # Avoid overwriting if a feature has the same name
+                # Create more varied sample values for dimensions
+                num_categories = np.random.randint(2, 5) # 2 to 4 unique categories per dimension
+                categories = [f"{dim_name}_Cat{j+1}" for j in range(num_categories)]
+                data[dim_name] = np.random.choice(categories, n_samples)
+
+        # Generate target variable if not already present (e.g. in performance type)
+        if model.target_variable and model.target_variable not in data:
+            # Generic target based on sum of some features (if available) or random
+            if len(model.features) > 0:
+                # Ensure features used here are numeric and exist
+                numeric_features = [f for f in model.features if pd.api.types.is_numeric_dtype(pd.Series(data[f]))]
+                if numeric_features:
+                    base_target = pd.Series(data[numeric_features[0]]).fillna(0) * 0.5
+                    if len(numeric_features) > 1:
+                         base_target += pd.Series(data[numeric_features[1]]).fillna(0) * 0.3
+                    data[model.target_variable] = base_target + np.random.normal(0, 10, n_samples)
+                else:
+                    data[model.target_variable] = np.random.normal(75, 20, n_samples) # Fallback if no numeric features
+            else:
+                data[model.target_variable] = np.random.normal(75, 20, n_samples)
+
+        # Generate other metric columns if specified in model.metrics (for multi-output/multi-facet models)
+        # These are treated as additional target-like variables or observed metrics alongside the main target.
+        for metric_name in model.metrics:
+            if metric_name not in data and metric_name != model.target_variable:
+                # Similar generic generation as target_variable, potentially based on other features/dims
+                if len(model.features) > 0:
+                    numeric_features = [f for f in model.features if pd.api.types.is_numeric_dtype(pd.Series(data[f]))]
+                    if numeric_features:
+                        base_metric_val = pd.Series(data[numeric_features[0]]).fillna(0) * np.random.uniform(0.2, 0.6)
+                        data[metric_name] = base_metric_val + np.random.normal(0, 5, n_samples)
+                    else:
+                        data[metric_name] = np.random.normal(50, 10, n_samples) # Fallback
+                else:
+                    data[metric_name] = np.random.normal(50, 10, n_samples)
+
+        df = pd.DataFrame(data)
+
+        # Final check for any column specified in model that might have been missed (e.g. complex interactions)
+        # This should ideally not be needed if above logic is comprehensive
+        all_model_cols = set(model.features) | set(model.dimensions) | set(model.metrics)
+        if model.target_variable:
+            all_model_cols.add(model.target_variable)
+        for col_name in all_model_cols:
+            if col_name not in df.columns:
+                df[col_name] = 0 # Default fill for safety, though ideally all should be generated
+
         return df
 
     def _calculate_metrics(self, y_true, y_pred, algorithm: str) -> Dict[str, float]:
@@ -403,40 +452,108 @@ class AnalyticsService:
         """
         Calculate mock prediction value.
         Can return a float or a dict for multi-dimensional predictions.
-        Example multi-dim output: {"multi_dim": [{"dims": {"country": "US", "product": "A"}, "value": 100}, ...]}
+        Example multi-dim output: {"multi_dim": [{"dims": {"country": "US", "product": "A"}, "metric": "sales", "value": 100}, ...]}
         """
+        # Try to use a couple of input features to influence the mock prediction
+        feature_influence = 0
+        if input_features:
+            # Use first two numeric features found in input_features for some influence
+            numeric_inputs = [v for v in input_features.values() if isinstance(v, (int, float))]
+            if len(numeric_inputs) > 0:
+                feature_influence += numeric_inputs[0] * 0.1
+            if len(numeric_inputs) > 1:
+                feature_influence += numeric_inputs[1] * 0.05
 
-        # If model has dimensions, return a multi-dimensional mock prediction
+        # If model has dimensions and metrics, return a multi-dimensional mock prediction
         if model.dimensions and model.metrics:
-            # Create a few mock multi-dimensional data points
-            # This is highly dependent on how you want to structure multi_dim results
             mock_multi_dim_results = []
-            # Example: Create 2-3 combinations of first dimension's possible values
-            # And generate values for all specified metrics
-            dim1_values = [f"{model.dimensions[0]}_Val1", f"{model.dimensions[0]}_Val2"]
 
-            for dim_val in dim1_values:
-                current_dims = {model.dimensions[0]: dim_val}
-                # If more dimensions, you'd create more complex combinations
-                if len(model.dimensions) > 1:
-                    current_dims[model.dimensions[1]] = f"{model.dimensions[1]}_SubValA"
+            # Generate some sample dimension values dynamically
+            # This creates a very limited set of combinations for mock purposes
+            dim_value_options = {}
+            for i, dim_name in enumerate(model.dimensions):
+                # Create 1 or 2 sample categories for each dimension for the mock output
+                num_mock_categories = 1 if len(model.dimensions) > 1 and i > 0 else 2 # More categories for the first dim
+                dim_value_options[dim_name] = [f"{dim_name}_Sample{j+1}" for j in range(num_mock_categories)]
 
+            # Create combinations (simple version for 1 or 2 dimensions)
+            # For a more general solution, itertools.product could be used
+            if len(model.dimensions) == 1:
+                dim1_name = model.dimensions[0]
+                for dim1_val in dim_value_options[dim1_name]:
+                    current_dims = {dim1_name: dim1_val}
+                    for metric_name in model.metrics:
+                        base_metric_value = 50 + feature_influence + np.random.normal(0,10)
+                        mock_multi_dim_results.append({
+                            "dims": current_dims.copy(),
+                            "metric": metric_name,
+                            "value": round(base_metric_value + np.random.normal(0, 5) + (hash(dim1_val) % 10), 2) # Add slight variation per dim_val
+                        })
+            elif len(model.dimensions) >= 2:
+                dim1_name = model.dimensions[0]
+                dim2_name = model.dimensions[1]
+                for dim1_val in dim_value_options[dim1_name]:
+                    for dim2_val in dim_value_options[dim2_name]:
+                        current_dims = {dim1_name: dim1_val, dim2_name: dim2_val}
+                        # Include other dimensions with a fixed sample value if more than 2
+                        for i in range(2, len(model.dimensions)):
+                            other_dim_name = model.dimensions[i]
+                            current_dims[other_dim_name] = dim_value_options[other_dim_name][0] # Use first sample category
 
-                for metric_name in model.metrics:
-                    # Simulate a base value calculation similar to single value predictions
-                    base_metric_value = 50 + np.random.normal(0,10) # Simplified
-                    # You could make this more sophisticated by using input_features
-                    # and varying based on dim_val or metric_name
+                        for metric_name in model.metrics:
+                            base_metric_value = 50 + feature_influence + np.random.normal(0,10)
+                            mock_multi_dim_results.append({
+                                "dims": current_dims.copy(),
+                                "metric": metric_name,
+                                "value": round(base_metric_value + np.random.normal(0, 5) + (hash(dim1_val+dim2_val) % 10), 2)
+                            })
 
+            if not mock_multi_dim_results and model.metrics: # Fallback if no dimensions or complex case not handled
+                 for metric_name in model.metrics:
                     mock_multi_dim_results.append({
-                        "dims": current_dims.copy(), # ensure a copy if current_dims is modified later
-                        "metric": metric_name, # Store which metric this value is for
-                        "value": round(base_metric_value + np.random.normal(0, 5), 2)
+                        "dims": {}, # No specific dimensions
+                        "metric": metric_name,
+                        "value": round(50 + feature_influence + np.random.normal(0,15), 2)
                     })
+
             return {"multi_dim": mock_multi_dim_results}
 
         # Fallback to simple mock calculation based on model type (single value prediction)
+        # This part now also incorporates feature_influence
+        base_value_for_single = 50 + feature_influence # Generic base
+
         if model.model_type == "performance":
+            base_score = 75.0 + feature_influence
+            for feature_name, value in input_features.items(): # This specific logic remains if not multi-dim
+                val = float(value) if value is not None else 0
+                if "experience" in feature_name: base_score += val * 2
+                elif "tasks" in feature_name: base_score += val * 1.5
+                elif "hours" in feature_name: base_score += val * 0.5
+            return max(0, min(100, base_score + np.random.normal(0, 5)))
+
+        elif model.model_type == "productivity":
+            base_index = 60.0 + feature_influence
+            for feature_name, value in input_features.items():
+                val = float(value) if value is not None else 0
+                if "focus" in feature_name: base_index += val * 8
+                elif "interruptions" in feature_name: base_index -= val * 1.5
+                elif "collaboration" in feature_name: base_index += val * 2
+            return max(0, base_index + np.random.normal(0, 8))
+
+        elif model.model_type == "roi":
+            base_roi = 15.0 + feature_influence
+            for feature_name, value in input_features.items():
+                val = float(value) if value is not None else 0
+                if "investment" in feature_name and val > 0: base_roi += np.log(val) * 2
+                elif "duration" in feature_name: base_roi -= val * 0.05
+                elif "complexity" in feature_name: base_roi -= val * 2
+            return base_roi + np.random.normal(0, 10)
+
+        else:
+            # Generic prediction
+            return base_value_for_single + np.random.normal(0, 15)
+
+    def get_predictions(
             base_score = 75.0
             for feature_name, value in input_features.items():
                 val = float(value) if value is not None else 0
@@ -493,53 +610,9 @@ class AnalyticsService:
         return query.order_by(desc(AnalyticsPrediction.prediction_date)).limit(limit).all()
 
     # ROI Calculations
-    def create_roi_calculation(
-        self,
-        tenant_id: int,
-        roi_data: Dict[str, Any],
-        calculated_by_user_id: int
-    ) -> ROICalculation:
-        """Create a new ROI calculation"""
-        
-        roi_calc = ROICalculation(
-            tenant_id=tenant_id,
-            entity_type=roi_data["entity_type"],
-            entity_id=roi_data["entity_id"],
-            calculation_name=roi_data["calculation_name"],
-            description=roi_data.get("description"),
-            period_start=roi_data["period_start"],
-            period_end=roi_data["period_end"],
-            period_days=(roi_data["period_end"] - roi_data["period_start"]).days,
-            initial_investment=Decimal(str(roi_data.get("initial_investment", 0))),
-            operational_costs=Decimal(str(roi_data.get("operational_costs", 0))),
-            labor_costs=Decimal(str(roi_data.get("labor_costs", 0))),
-            technology_costs=Decimal(str(roi_data.get("technology_costs", 0))),
-            training_costs=Decimal(str(roi_data.get("training_costs", 0))),
-            other_costs=Decimal(str(roi_data.get("other_costs", 0))),
-            revenue_increase=Decimal(str(roi_data.get("revenue_increase", 0))),
-            cost_savings=Decimal(str(roi_data.get("cost_savings", 0))),
-            productivity_gains=Decimal(str(roi_data.get("productivity_gains", 0))),
-            efficiency_gains=Decimal(str(roi_data.get("efficiency_gains", 0))),
-            quality_improvements=Decimal(str(roi_data.get("quality_improvements", 0))),
-            risk_reduction=Decimal(str(roi_data.get("risk_reduction", 0))),
-            other_benefits=Decimal(str(roi_data.get("other_benefits", 0))),
-            calculation_method=roi_data.get("calculation_method", "simple"),
-            discount_rate=roi_data.get("discount_rate", 0.1),
-            assumptions=roi_data.get("assumptions", {}),
-            data_sources=roi_data.get("data_sources", []),
-            analytics_model_id=roi_data.get("analytics_model_id"),
-            calculated_by_user_id=calculated_by_user_id
-        )
-        
-        # Calculate totals and ROI metrics
-        roi_calc.update_totals()
-        roi_calc.calculate_roi_metrics()
-        
-        self.db.add(roi_calc)
-        self.db.commit()
-        self.db.refresh(roi_calc)
-        
-        return roi_calc
+    # The following create_roi_calculation is now the primary one,
+    # incorporating logic for metric_links. The previous simpler version is removed.
+    # def create_roi_calculation( ... ) - Simpler version removed.
 
     def get_roi_calculations(
         self,
@@ -624,7 +697,9 @@ class AnalyticsService:
             data_completeness=metric_data.get("data_completeness", 1.0),
             data_accuracy=metric_data.get("data_accuracy", 1.0),
             confidence_score=metric_data.get("confidence_score", 1.0),
-            measured_by_user_id=measured_by_user_id
+            measured_by_user_id=measured_by_user_id,
+            dimensions_values=metric_data.get("dimensions_values"),
+            predicted_by_model_id=metric_data.get("predicted_by_model_id")
         )
         
         # Calculate trend
@@ -913,6 +988,76 @@ class AnalyticsService:
                     self.db.refresh(prediction)
         return prediction
 
+    def compare_performance_metric_with_benchmarks(
+        self,
+        performance_metric_id: int,
+        tenant_id: int, # Explicit tenant_id for security/scoping
+        # Allow specifying benchmark matching parameters, otherwise infer from metric
+        benchmark_params: Optional[Dict[str, Any]] = None
+    ) -> List[Dict[str, Any]]:
+        """
+        Compares a given PerformanceMetric against relevant ComparativeBenchmark records.
+        Returns a list of comparisons.
+        """
+        metric = self.db.query(PerformanceMetric).filter(
+            PerformanceMetric.id == performance_metric_id,
+            PerformanceMetric.tenant_id == tenant_id # Ensure metric belongs to the tenant
+        ).first()
+
+        if not metric:
+            raise ValueError(f"PerformanceMetric with id {performance_metric_id} not found for tenant {tenant_id}")
+
+        comparisons = []
+
+        # Prepare parameters for get_benchmarks
+        # Prioritize explicitly passed benchmark_params, then infer from metric
+        effective_benchmark_params = {
+            "metric_name": metric.metric_name,
+            "category": benchmark_params.get("category", metric.category if metric.category else None), # Use metric's category if available
+            # Infer more specific params from metric.dimensions_values if not in benchmark_params
+            # This is an example; mapping from dimensions_values to benchmark fields might be complex
+            "industry_segment": benchmark_params.get("industry_segment", metric.dimensions_values.get("industry_segment") if metric.dimensions_values else None),
+            "region": benchmark_params.get("region", metric.dimensions_values.get("region") if metric.dimensions_values else None),
+            "company_size": benchmark_params.get("company_size", metric.dimensions_values.get("company_size") if metric.dimensions_values else None),
+        }
+        # Remove None values from params to avoid issues with get_benchmarks query
+        effective_benchmark_params = {k: v for k, v in effective_benchmark_params.items() if v is not None}
+
+        if benchmark_params: # If explicit params are given, they take precedence
+            effective_benchmark_params.update(benchmark_params)
+            # Ensure metric_name is always from the metric itself for relevance
+            effective_benchmark_params["metric_name"] = metric.metric_name
+
+
+        benchmarks = self.get_benchmarks(
+            tenant_id=tenant_id, # Pass tenant_id to get_benchmarks for global+tenant specific
+            **effective_benchmark_params
+        )
+
+        for benchmark in benchmarks:
+            comparison_data = {
+                "performance_metric_name": metric.metric_name,
+                "performance_metric_value": metric.current_value,
+                "performance_metric_unit": metric.measurement_unit,
+                "benchmark_name": benchmark.name,
+                "benchmark_value": benchmark.benchmark_value,
+                "benchmark_unit": benchmark.unit,
+                "benchmark_value_type": benchmark.value_type,
+                "difference": None,
+                "comparison_unit": metric.measurement_unit # Assume comparison in metric's unit
+            }
+            # Ensure units are compatible for a meaningful difference calculation
+            # This is a simplified check; real unit conversion might be needed.
+            if metric.measurement_unit == benchmark.unit or (not metric.measurement_unit and not benchmark.unit):
+                comparison_data["difference"] = metric.current_value - benchmark.benchmark_value
+            else:
+                # If units differ and no conversion logic, difference is not directly comparable
+                comparison_data["difference_comment"] = f"Units differ: Metric ({metric.measurement_unit}), Benchmark ({benchmark.unit})"
+
+            comparisons.append(comparison_data)
+
+        return comparisons
+
     # ROI Calculation Refinement
     def create_roi_calculation(
         self,
@@ -923,11 +1068,52 @@ class AnalyticsService:
         """Create a new ROI calculation, potentially using performance metrics for costs/benefits."""
 
         # Potential: Fetch performance metrics data to inform costs/benefits
-        # Example: if roi_data contains performance_metric_ids for cost/benefit components
-        # performance_metric_ids = roi_data.get("performance_metric_ids", {})
-        # if "cost_savings_metric_id" in performance_metric_ids:
-        #     metric = self.db.query(PerformanceMetric).get(performance_metric_ids["cost_savings_metric_id"])
-        #     if metric: roi_data["cost_savings"] = metric.current_value * some_factor
+        metric_links = roi_data.pop("metric_links", []) # Remove from roi_data to prevent direct assignment to model
+
+        for link in metric_links:
+            roi_field_to_update = link.get("roi_field_to_update")
+            source_type = link.get("source_type")
+            source_id = link.get("source_id")
+            value_path = link.get("value_path") # e.g. "predicted_value" or "current_value"
+            multiplier = link.get("multiplier", 1.0)
+            default_value = link.get("default_value", 0.0) # Value to use if source not found or path invalid
+
+            if not all([roi_field_to_update, source_type, source_id, value_path]):
+                # Log or raise warning about invalid link structure
+                continue
+
+            source_value = None
+            if source_type == "performance_metric":
+                metric = self.db.query(PerformanceMetric).filter(
+                    PerformanceMetric.id == source_id,
+                    PerformanceMetric.tenant_id == tenant_id # Ensure correct tenant
+                ).first()
+                if metric:
+                    source_value = getattr(metric, value_path, None)
+
+            elif source_type == "analytics_prediction":
+                prediction = self.db.query(AnalyticsPrediction).filter(
+                    AnalyticsPrediction.id == source_id,
+                    AnalyticsPrediction.tenant_id == tenant_id # Ensure correct tenant
+                ).first()
+                if prediction:
+                    # Handle simple attributes or JSON paths (simplified)
+                    if isinstance(prediction.raw_prediction_output, dict) and value_path in prediction.raw_prediction_output:
+                         source_value = prediction.raw_prediction_output.get(value_path)
+                    else:
+                         source_value = getattr(prediction, value_path, None)
+
+            if source_value is not None:
+                try:
+                    # Ensure the value is numeric before multiplication
+                    numeric_value = float(source_value)
+                    roi_data[roi_field_to_update] = roi_data.get(roi_field_to_update, 0.0) + (numeric_value * multiplier)
+                except (ValueError, TypeError):
+                    # Log or handle error if source_value is not numeric
+                    roi_data[roi_field_to_update] = roi_data.get(roi_field_to_update, 0.0) + default_value
+            else:
+                roi_data[roi_field_to_update] = roi_data.get(roi_field_to_update, 0.0) + default_value
+
 
         roi_calc = ROICalculation(
             tenant_id=tenant_id,

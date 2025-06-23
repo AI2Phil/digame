@@ -237,4 +237,217 @@ def test_generate_training_data_structure(analytics_service):
     assert "metric1" in df.columns
     assert len(df) == 1000 # Default n_samples
 
+# --- Tests for PerformanceMetric Enhancements ---
+
+@pytest.fixture
+def sample_performance_metric_data():
+    return {
+        "metric_name": "CPU Usage",
+        "display_name": "CPU Usage (%)",
+        "metric_type": "system_health",
+        "category": "server",
+        "entity_type": "server_node",
+        "entity_id": 101,
+        "measurement_unit": "%",
+        "calculation_method": "average",
+        "current_value": 75.5,
+        "period_start": datetime.utcnow() - timedelta(days=1),
+        "period_end": datetime.utcnow(),
+        "period_type": "daily",
+    }
+
+def test_record_performance_metric_with_new_fields(
+    analytics_service, mock_db_session, sample_tenant, sample_user, sample_performance_metric_data
+):
+    metric_data_enhanced = {
+        **sample_performance_metric_data,
+        "dimensions_values": {"region": "us-east-1", "instance_type": "m5.large"},
+        "predicted_by_model_id": 1 # Assuming an AnalyticsModel with ID 1 exists
+    }
+
+    # Mock the foreign key relation if your test setup doesn't handle it
+    # For this test, we assume the ID is valid for storage.
+
+    metric = analytics_service.record_performance_metric(
+        tenant_id=sample_tenant.id,
+        metric_data=metric_data_enhanced,
+        measured_by_user_id=sample_user.id
+    )
+
+    mock_db_session.add.assert_called_once()
+    mock_db_session.commit.assert_called_once()
+    mock_db_session.refresh.assert_called_once_with(metric)
+
+    assert metric.metric_name == metric_data_enhanced["metric_name"]
+    assert metric.dimensions_values == {"region": "us-east-1", "instance_type": "m5.large"}
+    assert metric.predicted_by_model_id == 1
+    assert metric.current_value == 75.5
+
+
+# --- Tests for ComparativeBenchmark System ---
+
+def test_compare_performance_metric_with_benchmarks(
+    analytics_service, mock_db_session, sample_tenant
+):
+    # Setup: Create a PerformanceMetric record
+    metric_instance = PerformanceMetric(
+        id=1,
+        tenant_id=sample_tenant.id,
+        metric_name="avg_response_time",
+        current_value=120.0,
+        measurement_unit="ms",
+        dimensions_values={"service": "API_GATEWAY"}
+    )
+    # Setup: Create some ComparativeBenchmark records
+    benchmark1 = ComparativeBenchmark(
+        name="Industry Standard API Response",
+        metric_name="avg_response_time",
+        benchmark_value=100.0,
+        unit="ms",
+        value_type="average",
+        is_active=True,
+        tenant_id=None # Global benchmark
+    )
+    benchmark2 = ComparativeBenchmark(
+        name="Internal Target API Response",
+        metric_name="avg_response_time",
+        benchmark_value=90.0,
+        unit="ms",
+        value_type="target",
+        is_active=True,
+        tenant_id=sample_tenant.id # Tenant-specific
+    )
+    benchmark_other_metric = ComparativeBenchmark(
+        name="CPU Load Benchmark",
+        metric_name="cpu_load", # Different metric
+        benchmark_value=50.0,
+        unit="%",
+        is_active=True,
+        tenant_id=None
+    )
+
+    # Mock DB calls
+    mock_metric_query = MagicMock()
+    mock_benchmark_query = MagicMock()
+
+    def query_side_effect(model_class):
+        if model_class == PerformanceMetric:
+            return mock_metric_query
+        if model_class == ComparativeBenchmark:
+            return mock_benchmark_query
+        return MagicMock() # Default mock for other queries
+
+    mock_db_session.query.side_effect = query_side_effect
+    mock_metric_query.filter.return_value.first.return_value = metric_instance
+
+    # This part needs to simulate the filtering done by get_benchmarks
+    mock_benchmark_query_chain = MagicMock()
+    mock_benchmark_query.filter.return_value = mock_benchmark_query_chain # for metric_name
+    mock_benchmark_query_chain.filter.return_value = mock_benchmark_query_chain # for is_active
+    mock_benchmark_query_chain.filter.return_value = mock_benchmark_query_chain # for tenant_id or_
+    mock_benchmark_query_chain.order_by.return_value.all.return_value = [benchmark1, benchmark2] # Return relevant benchmarks
+
+
+    comparisons = analytics_service.compare_performance_metric_with_benchmarks(
+        performance_metric_id=1,
+        tenant_id=sample_tenant.id
+    )
+
+    assert len(comparisons) == 2
+
+    comparison1 = next(c for c in comparisons if c["benchmark_name"] == "Industry Standard API Response")
+    assert comparison1["performance_metric_value"] == 120.0
+    assert comparison1["benchmark_value"] == 100.0
+    assert comparison1["difference"] == 20.0
+
+    comparison2 = next(c for c in comparisons if c["benchmark_name"] == "Internal Target API Response")
+    assert comparison2["benchmark_value"] == 90.0
+    assert comparison2["difference"] == 30.0
+
+    # Test with specific benchmark_params
+    mock_benchmark_query_chain.reset_mock() # Reset mocks for the next call
+    mock_benchmark_query_chain.order_by.return_value.all.return_value = [benchmark1] # Simulate filtering
+
+    comparisons_filtered = analytics_service.compare_performance_metric_with_benchmarks(
+        performance_metric_id=1,
+        tenant_id=sample_tenant.id,
+        benchmark_params={"source": "Global Report"} # This param isn't directly used in mock but shows structure
+    )
+    # The mock for get_benchmarks needs to be more sophisticated to test benchmark_params filtering
+    # For now, this test primarily checks the comparison logic itself.
+    # The actual filtering is tested in test_get_benchmarks.
+    # Here we just assert that the method runs and if benchmarks are returned, they are processed.
+    assert len(comparisons_filtered) > 0 # Assuming the mock setup for get_benchmarks would filter if implemented in test
+
+
+# --- Tests for ROI Calculation with Metric Links ---
+def test_create_roi_calculation_with_metric_links(
+    analytics_service, mock_db_session, sample_tenant, sample_user
+):
+    metric_for_savings = PerformanceMetric(id=10, tenant_id=sample_tenant.id, current_value=500.0)
+    prediction_for_revenue = AnalyticsPrediction(id=20, tenant_id=sample_tenant.id, predicted_value=2000.0)
+
+    # Mock DB calls for fetching linked metrics/predictions
+    def get_side_effect(model_class):
+        if model_class == PerformanceMetric:
+            mock_metric_q = MagicMock()
+            mock_metric_q.filter.return_value.first.return_value = metric_for_savings
+            return mock_metric_q
+        if model_class == AnalyticsPrediction:
+            mock_pred_q = MagicMock()
+            mock_pred_q.filter.return_value.first.return_value = prediction_for_revenue
+            return mock_pred_q
+        return MagicMock()
+
+    mock_db_session.query.side_effect = get_side_effect
+
+    roi_data_with_links = {
+        "entity_type": "campaign",
+        "entity_id": 5,
+        "calculation_name": "Q2 Marketing Campaign ROI",
+        "period_start": datetime(2024, 4, 1),
+        "period_end": datetime(2024, 6, 30),
+        "initial_investment": "5000.00",
+        "operational_costs": "1000.00",
+        "metric_links": [
+            {
+                "roi_field_to_update": "cost_savings",
+                "source_type": "performance_metric",
+                "source_id": 10, # ID of metric_for_savings
+                "value_path": "current_value", # Attribute to get from PerformanceMetric
+                "multiplier": 1.0
+            },
+            {
+                "roi_field_to_update": "revenue_increase",
+                "source_type": "analytics_prediction",
+                "source_id": 20, # ID of prediction_for_revenue
+                "value_path": "predicted_value", # Attribute to get from AnalyticsPrediction
+                "multiplier": 1.0
+            }
+        ]
+        # Other benefits/costs can be manually entered or also linked
+    }
+
+    roi_calc = analytics_service.create_roi_calculation(
+        tenant_id=sample_tenant.id,
+        roi_data=roi_data_with_links,
+        calculated_by_user_id=sample_user.id
+    )
+
+    mock_db_session.add.assert_called_once()
+    mock_db_session.commit.assert_called_once()
+    mock_db_session.refresh.assert_called_once_with(roi_calc)
+
+    # initial_investment (5000) + operational_costs (1000) = 6000
+    assert roi_calc.total_investment == Decimal("6000.00")
+
+    # cost_savings (from metric: 500) + revenue_increase (from prediction: 2000) = 2500
+    assert roi_calc.cost_savings == Decimal("500.00")
+    assert roi_calc.revenue_increase == Decimal("2000.00")
+    assert roi_calc.total_benefits == Decimal("2500.00")
+
+    # (2500 - 6000) / 6000 * 100 = -3500 / 6000 * 100 = -58.333...
+    assert roi_calc.roi_percentage == pytest.approx(-58.33333333)
+
+
 import asyncio # Required for running async functions in tests if not using pytest-asyncio

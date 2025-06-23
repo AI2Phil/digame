@@ -1,11 +1,27 @@
 Advanced Analytics: Predictive performance modeling, ROI measurement tools 
 The Advanced Analytics feature provides comprehensive predictive modeling and ROI measurement capabilities, enabling data-driven decision making and performance optimization for enterprise productivity platforms.
-   - **Multi-dimensional Performance Metrics**: Configuration for dimensions, metrics, and aggregation types within `AnalyticsModel`. Predictions can store multi-dimensional results.
-   - **Predictive Performance Modeling**: Enhanced services to train models and generate predictions that can be multi-dimensional or forecasts.
-   - **Comparative Benchmarking**: New `ComparativeBenchmark` model to store industry/peer benchmarks. `AnalyticsPrediction` can now store comparison data. Services updated to fetch and relate benchmark data to predictions.
-   - **ROI Measurement Tools**: `ROICalculation` service refined to potentially integrate more granular performance data.
-   - **Custom Analytics Dashboards**: New Pydantic models for custom widget and dashboard layouts (`WidgetConfig`, `DashboardLayout`, `CustomDashboard`). Dashboard service extended with (mock) CRUD operations for custom dashboards and methods to fetch data for new advanced analytics widgets.
-   - **Enhanced Reporting**: Reporting models and services updated to support more dynamic queries for interactive exploration and more detailed export configurations.
+   - **Multi-dimensional Performance Metrics**:
+     - `AnalyticsModel` configures dimensions, metrics, and aggregation types. Predictions can store multi-dimensional results.
+     - `PerformanceMetric` model now includes `dimensions_values` (JSON) to tag specific metric records with their dimensional context (e.g., `{"country": "USA", "department": "Sales"}`).
+     - `PerformanceMetric` also includes `predicted_by_model_id` to link a metric value if it's a forecast from an `AnalyticsModel`.
+   - **Predictive Performance Modeling**:
+     - Services enhanced for training models and generating multi-dimensional predictions or forecasts.
+     - `AnalyticsService._generate_training_data` and `_calculate_mock_prediction` are more dynamic to support these multi-dimensional aspects.
+   - **Comparative Benchmarking**:
+     - `ComparativeBenchmark` model (`comparative_benchmark.py`) stores industry/peer benchmarks.
+     - `AnalyticsPrediction.benchmark_comparison_data` stores comparison results for predictions.
+     - `AnalyticsService` includes `add_benchmark_data`, `get_benchmarks`, and `make_prediction_with_benchmark`.
+     - **New**: `AnalyticsService.compare_performance_metric_with_benchmarks` method allows direct comparison of any recorded `PerformanceMetric` against the benchmark dataset.
+   - **ROI Measurement Tools**:
+     - `ROICalculation` model and services provide robust ROI analysis.
+     - **Enhanced**: `AnalyticsService.create_roi_calculation` now supports `metric_links` in its input, allowing cost/benefit line items to be dynamically populated from `PerformanceMetric` records or `AnalyticsPrediction` results.
+   - **Custom Analytics Dashboards**:
+     - **New Models** (`dashboard_custom.py`): `AnalyticsDashboard` (stores dashboard configuration, layout, owner) and `DashboardWidget` (stores widget type, title, data source, display options).
+     - **New Service** (`dashboard_service_custom.py`): `CustomDashboardService` provides CRUD operations for these dashboards and widgets, and includes `get_widget_data(widget_id)` to fetch data for a widget based on its `data_source_config`. This method is designed to call other services like `AnalyticsService` to retrieve the actual data.
+     - **New Schemas** (`analytics_schemas.py`): Pydantic schemas for `AnalyticsDashboard`, `DashboardWidgetConfig`, and related inputs/outputs.
+   - **Enhanced Reporting**: Conceptual schemas for report definitions, scheduling, and export are defined in `analytics_schemas.py`. Backend implementation for generation and scheduling is pending further development.
+   - **API Endpoints**:
+     - A new router `advanced_analytics_router.py` exposes endpoints for managing performance metrics (including benchmark comparison), custom dashboards, and widgets. It also includes placeholder endpoints for other analytics entities.
    - Comprehensive analytics models with machine learning algorithms (Linear Regression, Random Forest, Logistic Regression).
    - Predictive modeling service with automated training, validation, and performance tracking.
    - Complete REST API endpoints for model management, predictions, training jobs, analytics dashboards, and custom dashboard configurations.

@@ -432,6 +432,7 @@ class PerformanceMetric(Base):
     # Measurement configuration
     entity_type = Column(String(100), nullable=False)  # user, project, task, etc.
     entity_id = Column(Integer, nullable=False, index=True)
+    dimensions_values = Column(JSON, nullable=True)  # E.g., {"country": "USA", "department": "Sales"}
     measurement_unit = Column(String(50), nullable=False)  # percentage, count, hours, etc.
     calculation_method = Column(String(100), nullable=False)  # sum, average, ratio, etc.
     
@@ -466,6 +467,11 @@ class PerformanceMetric(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     measured_by_user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    predicted_by_model_id = Column(Integer, ForeignKey("analytics_models.id"), nullable=True) # If this metric value is a forecast
+
+    # Relationships
+    predicted_by_model = relationship("AnalyticsModel", foreign_keys=[predicted_by_model_id])
+
 
     def __repr__(self):
         return f"<PerformanceMetric(id={self.id}, name='{self.metric_name}', value={self.current_value})>"
