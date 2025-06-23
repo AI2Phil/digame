@@ -1,6 +1,10 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import WritingAssistance from '../components/ai/WritingAssistance';
+import CommunicationStyleAnalyzer from '../components/ai/CommunicationStyleAnalyzer';
+import MeetingSummarizer from '../components/ai/MeetingSummarizer';
+import EmailAnalyzer from '../components/ai/EmailAnalyzer';
+import LanguageTool from '../components/ai/LanguageTool';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/Tabs';
@@ -15,7 +19,10 @@ import {
   ArrowLeft,
   Sparkles,
   Zap,
-  Target
+  Target,
+  Mail,
+  Languages,
+  ClipboardList // Icon for Email Analysis
 } from 'lucide-react';
 
 export default function AiToolsPage({ isDemoMode, onLogout }) {
@@ -27,17 +34,53 @@ export default function AiToolsPage({ isDemoMode, onLogout }) {
       id: 'writing',
       name: 'Writing Assistance',
       icon: Wand2,
-      description: 'AI-powered writing suggestions and improvements',
+      description: 'AI-powered writing suggestions and improvements.',
       status: 'available',
       tier: 'Professional+',
       component: WritingAssistance
     },
     {
-      id: 'insights',
-      name: 'AI Insights',
-      icon: Brain,
-      description: 'Behavioral pattern analysis and recommendations',
+      id: 'communication_style',
+      name: 'Communication Style Analyzer',
+      icon: MessageSquare, // Changed from 'chat' icon for AI Assistant
+      description: 'Analyze the style of your written communication.',
       status: 'available',
+      tier: 'Professional+',
+      component: CommunicationStyleAnalyzer
+    },
+    {
+      id: 'summarization', // Was 'Content Summarization'
+      name: 'Meeting Summarizer', // Renamed for clarity
+      icon: FileText,
+      description: 'Automatically summarize documents and meetings.',
+      status: 'available', // Changed from 'coming-soon'
+      tier: 'Enterprise',
+      component: MeetingSummarizer // Added component
+    },
+    {
+      id: 'email_analysis',
+      name: 'Email Pattern Analyzer',
+      icon: Mail, // Using Mail icon
+      description: 'Gain insights from your email communication patterns.',
+      status: 'available',
+      tier: 'Enterprise',
+      component: EmailAnalyzer
+    },
+    {
+      id: 'language_tools',
+      name: 'Language Tools',
+      icon: Languages,
+      description: 'Translate text and get word definitions.',
+      status: 'available',
+      tier: 'Professional+',
+      component: LanguageTool
+    },
+    {
+      id: 'insights', // Kept as is, maybe for behavioral insights
+      name: 'AI Insights (Behavioral)',
+      icon: Brain,
+      description: 'Behavioral pattern analysis and recommendations.',
+      status: 'available', // Assuming this was meant to be available but component not yet built
       tier: 'Professional+',
       component: null // Will be implemented later
     },
@@ -45,25 +88,16 @@ export default function AiToolsPage({ isDemoMode, onLogout }) {
       id: 'coaching',
       name: 'AI Coaching',
       icon: Target,
-      description: 'Personalized productivity coaching and goal setting',
-      status: 'available',
+      description: 'Personalized productivity coaching and goal setting.',
+      status: 'available', // Assuming this was meant to be available
       tier: 'Professional+',
       component: null // Will be implemented later
     },
     {
-      id: 'summarization',
-      name: 'Content Summarization',
-      icon: FileText,
-      description: 'Automatically summarize documents and meetings',
-      status: 'coming-soon',
-      tier: 'Enterprise',
-      component: null
-    },
-    {
-      id: 'chat',
-      name: 'AI Assistant',
-      icon: MessageSquare,
-      description: 'Conversational AI for productivity questions',
+      id: 'chat_assistant', // Renamed from 'chat' to avoid conflict if MessageSquare is reused
+      name: 'AI Assistant (Chat)',
+      icon: Users, // Changed icon to avoid reuse, placeholder
+      description: 'Conversational AI for productivity questions.',
       status: 'coming-soon',
       tier: 'Enterprise',
       component: null
@@ -72,12 +106,29 @@ export default function AiToolsPage({ isDemoMode, onLogout }) {
       id: 'predictions',
       name: 'Predictive Analytics',
       icon: TrendingUp,
-      description: 'Forecast productivity trends and outcomes',
-      status: 'available',
+      description: 'Forecast productivity trends and outcomes.',
+      status: 'available', // Assuming this was meant to be available
       tier: 'Professional+',
       component: null
     }
   ];
+
+  // Initialize activeTab to the first available tool's id if current activeTab is not available or writing
+  useEffect(() => {
+    const firstAvailableTool = aiTools.find(tool => tool.status === 'available');
+    if (firstAvailableTool && activeTab !== firstAvailableTool.id) {
+        // If 'writing' is available, keep it default, else pick the first one.
+        const writingTool = aiTools.find(tool => tool.id === 'writing' && tool.status === 'available');
+        if (writingTool) {
+            setActiveTab('writing');
+        } else {
+            setActiveTab(firstAvailableTool.id);
+        }
+    } else if (!firstAvailableTool) {
+        setActiveTab(''); // No tools available
+    }
+  }, []);
+
 
   const availableTools = aiTools.filter(tool => tool.status === 'available');
   const comingSoonTools = aiTools.filter(tool => tool.status === 'coming-soon');

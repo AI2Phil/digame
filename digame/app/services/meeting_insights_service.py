@@ -1,95 +1,49 @@
 import json
+import logging
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status, Depends
 
-from ..crud import user_setting_crud
+from ..crud import user_crud, user_setting_crud, tenant_crud
 from ..models.user import User as UserModel
-from ..db import get_db # For the dependency injector
+from ..db import get_db
+from .ai_integration_service import AIIntegrationService
 
-# Placeholder for an external NLP service client for meeting insights
-class MockExternalMeetingInsightsClient:
-    def __init__(self, api_key: str):
-        if not api_key:
-            raise ValueError("API key must be provided for external meeting insights service.")
-        self.api_key = api_key
-
-    def analyze_meeting_text(self, text: str) -> dict:
-        if not text:
-            return {"error": "Input meeting text cannot be empty."}
-
-        summary = f"This is a mock summary of the meeting: {text[:100]}..."
-        key_points = [
-            f"Mock key point 1 from text: {text[10:50]}",
-            f"Mock key point 2 from text: {text[50:90]}"
-        ]
-        action_items = [
-            "Mock action item 1: Follow up on topic X.",
-            "Mock action item 2: Schedule next meeting."
-        ]
-
-        if len(text) < 50: # Arbitrary condition for mock
-             action_items.append("Consider providing more detailed meeting notes for better insights.")
-
-        if self.api_key == "valid_meeting_key_premium":
-            return {
-                "summary": summary,
-                "key_points": key_points,
-                "action_items": action_items,
-                "analysis_level": "premium",
-                "text_length": len(text)
-            }
-        elif self.api_key == "valid_meeting_key_standard":
-            return {
-                "summary": summary,
-                "key_points": key_points[:1], # Fewer key points for standard
-                "action_items": action_items[:1], # Fewer action items
-                "analysis_level": "standard",
-                "text_length": len(text)
-            }
-        elif self.api_key == "invalid_meeting_key":
-            raise ValueError("Invalid API key provided to external meeting insights service.")
-
-        return {
-            "summary": f"Basic mock summary of: {text[:50]}...",
-            "key_points": [key_points[0]],
-            "action_items": [action_items[0]],
-            "analysis_level": "basic_mock",
-            "text_length": len(text)
-        }
+logger = logging.getLogger(__name__)
 
 class MeetingInsightsService:
-    def __init__(self, db: Session):
+    def __init__(self, db: Session, ai_integration_service: AIIntegrationService):
         self.db = db
+        self.ai_integration_service = ai_integration_service
 
-    def get_meeting_analysis(self, current_user: UserModel, meeting_text: str) -> dict:
+    async def get_meeting_analysis(self, current_user: UserModel, meeting_text: str) -> dict:
         if not current_user:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not authenticated.")
 
-        # Assuming current_user.tenants and current_user.tenants[0].tenant are valid.
-        # Proper error handling for these relationships would be important in a real app.
-        if not hasattr(current_user, 'tenants') or not current_user.tenants:
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User not associated with any tenant.")
+        user_from_db = user_crud.get_user(self.db, user_id=current_user.id)
+        if not user_from_db:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found.")
+        current_user = user_from_db
 
-        user_tenant_link = current_user.tenants[0]
-        if not hasattr(user_tenant_link, 'tenant'):
-             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Tenant linkage error for user.")
+        tenant_id = getattr(current_user, 'tenant_id', None)
+        if not tenant_id and hasattr(current_user, 'tenants') and current_user.tenants:
+             user_tenant_link = current_user.tenants[0]
+             tenant_id = getattr(user_tenant_link, 'tenant_id', None)
 
-        tenant = user_tenant_link.tenant
+        if not tenant_id:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User not associated with any tenant or tenant ID missing.")
 
+        tenant = tenant_crud.get_tenant_by_id(self.db, tenant_id)
         if not tenant:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Tenant information not found for user.")
 
-        try:
-            # Ensure tenant.features is parsed correctly, whether it's already a dict or a JSON string
-            if isinstance(tenant.features, str):
-                tenant_features = json.loads(tenant.features or '{}')
-            elif isinstance(tenant.features, dict):
-                tenant_features = tenant.features
-            else: # Default to empty if it's None or some other unexpected type
-                tenant_features = {}
-        except json.JSONDecodeError:
-            # Log error: Tenant features JSON is corrupted for tenant.id
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error reading tenant configuration.")
+        tenant_features = tenant.features
+        if isinstance(tenant_features, str):
+            try:
+                tenant_features = json.loads(tenant_features or '{}')
+            except json.JSONDecodeError:
+                 raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error parsing tenant features.")
+        elif not isinstance(tenant_features, dict):
+            tenant_features = {}
 
         if not tenant_features.get("meeting_insights"):
             raise HTTPException(
@@ -101,52 +55,100 @@ class MeetingInsightsService:
         if not user_settings or not user_settings.api_keys:
             raise HTTPException(
                 status_code=status.HTTP_402_PAYMENT_REQUIRED,
-                detail="API key for Meeting Insights not found in your settings. Please add it."
+                detail="API key for Meeting Insights not found. Please add 'openai_api_key' to your settings."
             )
 
         try:
             api_keys_dict = json.loads(user_settings.api_keys)
         except json.JSONDecodeError:
-            # Log error: User API keys JSON is corrupted for user_settings.id
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Error parsing your API key settings."
             )
 
-        insights_service_key = api_keys_dict.get("meeting_insights_service_key")
-        if not insights_service_key:
+        openai_api_key = api_keys_dict.get("openai_api_key")
+        if not openai_api_key:
             raise HTTPException(
                 status_code=status.HTTP_402_PAYMENT_REQUIRED,
-                detail="The 'meeting_insights_service_key' is missing from your API key settings."
+                detail="The 'openai_api_key' for Meeting Insights is missing from your API key settings. Please add it."
             )
+
+        if not meeting_text.strip():
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Meeting text cannot be empty.")
+
+        system_prompt = """
+You are an AI assistant that generates insights from meeting text (notes or transcripts).
+From the provided meeting text, extract the following:
+1. A concise summary of the meeting (2-3 sentences).
+2. A list of key discussion points (bullet points).
+3. A list of identified action items, clearly stating who is responsible if mentioned (bullet points).
+
+Respond in JSON format with the following keys: "summary" (string), "key_points" (list of strings), and "action_items" (list of strings).
+Example:
+User text: "Meeting Notes - Project Alpha - 2023-10-26. Discussed Q4 roadmap. John to finalize budget by next week. Alice presented marketing strategy. Team agreed on new UI design. Next meeting scheduled for Nov 2."
+AI Response: {
+  "summary": "The Project Alpha team discussed the Q4 roadmap, including budget finalization and marketing strategy. A new UI design was agreed upon, and the next meeting is set for November 2nd.",
+  "key_points": [
+    "Q4 roadmap discussion",
+    "Alice's marketing strategy presentation",
+    "Agreement on new UI design"
+  ],
+  "action_items": [
+    "John to finalize budget by next week",
+    "Schedule next meeting for Nov 2"
+  ]
+}
+"""
+        ai_payload = {
+            "model": "gpt-3.5-turbo", # Or a newer/more suitable model
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": meeting_text}
+            ],
+            "response_format": {"type": "json_object"}
+        }
 
         try:
-            external_service_client = MockExternalMeetingInsightsClient(api_key=insights_service_key)
-            analysis_result = external_service_client.analyze_meeting_text(text=meeting_text)
+            logger.info(f"Requesting meeting insights for user {current_user.id}")
+            openai_response_data = await self.ai_integration_service.make_request(
+                api_key=openai_api_key,
+                base_url="https://api.openai.com/v1",
+                endpoint="chat/completions",
+                method="POST",
+                payload=ai_payload
+            )
 
-            if analysis_result.get("error"): # Handle errors from the mock client's response
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"Error from Meeting Insights service: {analysis_result['error']}"
-                )
+            if not openai_response_data.get("choices") or \
+               not openai_response_data["choices"][0].get("message") or \
+               not openai_response_data["choices"][0]["message"].get("content"):
+                logger.error(f"Unexpected OpenAI response structure for meeting insights (user {current_user.id}): {openai_response_data}")
+                raise HTTPException(status_code=500, detail="AI provider returned an unexpected response format for meeting insights.")
+
+            content_str = openai_response_data["choices"][0]["message"]["content"]
+            analysis_result = json.loads(content_str)
+
+            required_keys = ["summary", "key_points", "action_items"]
+            if not all(key in analysis_result for key in required_keys):
+                logger.error(f"OpenAI response JSON missing required keys for meeting insights (user {current_user.id}): {analysis_result}")
+                raise HTTPException(status_code=500, detail="AI provider's response missing required meeting insights fields.")
+
+            logger.info(f"Successfully received meeting insights for user {current_user.id}")
+            analysis_result["text_length"] = len(meeting_text)
+            analysis_result["model_provider"] = "openai"
             return analysis_result
-        except ValueError as e: # Catch API key validation errors from the mock client
-            # Log the specific error e
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Error with Meeting Insights service API key: {str(e)}"
-            )
+
+        except json.JSONDecodeError:
+            logger.error(f"Failed to parse JSON from OpenAI response for meeting insights (user {current_user.id}): {content_str if 'content_str' in locals() else 'N/A'}")
+            raise HTTPException(status_code=500, detail="Failed to parse AI provider's response for meeting insights.")
+        except HTTPException:
+            raise
         except Exception as e:
-            # Log the exception e (e.g., logger.error(f"Unexpected error: {e}"))
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="An unexpected error occurred while generating meeting insights."
-            )
+            logger.error(f"Error during meeting insights generation for user {current_user.id}: {str(e)}")
+            raise HTTPException(status_code=503, detail=f"Meeting insights request to AI provider failed: {str(e)}")
 
 # Dependency injector function
-def get_meeting_insights_service(db: Session = Depends(get_db)) -> MeetingInsightsService:
-    """
-    Factory function for FastAPI dependency injection.
-    Provides an instance of MeetingInsightsService with a DB session.
-    """
-    return MeetingInsightsService(db)
+def get_meeting_insights_service(
+    db: Session = Depends(get_db),
+    ai_integration_service: AIIntegrationService = Depends(AIIntegrationService)
+) -> MeetingInsightsService:
+    return MeetingInsightsService(db=db, ai_integration_service=ai_integration_service)
