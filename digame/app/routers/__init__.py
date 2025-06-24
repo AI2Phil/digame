@@ -16,6 +16,7 @@ __all__ = [
     "email_analysis_router",
     "language_learning_router",
     "task_prioritization_router",
+    "document_processing_router", # Added new router
 ]
 
 from . import communication_style_router
@@ -23,3 +24,4 @@ from . import meeting_insights_router
 from . import email_analysis_router
 from . import language_learning_router
 from . import task_prioritization_router
+from . import document_processing_router # Added import

@@ -23,10 +23,10 @@ PERMISSION_VIEW_OWN_PROCESS_NOTES = "view_own_process_notes"
 PERMISSION_ADD_FEEDBACK_OWN_PROCESS_NOTES = "add_feedback_own_process_notes"
 
 
-@router.post("/users/{user_id}/trigger-process-discovery", 
+@router.post("/users/{user_id}/trigger-process-discovery",
              response_model=process_note_schemas.ProcessDiscoveryResponse,
              dependencies=[Depends(PermissionChecker(PERMISSION_TRIGGER_OWN_PROCESS_DISCOVERY))])
-async def trigger_process_discovery_for_user(
+async def trigger_process_discovery_for_user( # Already async, which is good
     user_id: int = Path(..., description="The ID of the user to trigger process discovery for"),
     db: Session = Depends(get_db),
     current_user: SQLAlchemyUser = Depends(get_current_active_user) # To check ownership
@@ -46,7 +46,8 @@ async def trigger_process_discovery_for_user(
         )
 
     try:
-        new_notes, updated_notes = process_note_service.identify_and_update_process_notes(db, user_id=user_id)
+        # Call the async version of the service function
+        new_notes, updated_notes = await process_note_service.identify_and_update_process_notes(db, user_id=user_id)
         return process_note_schemas.ProcessDiscoveryResponse(
             message=f"Process discovery triggered for user {user_id}.",
             user_id=user_id,

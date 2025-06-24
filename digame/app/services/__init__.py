@@ -41,6 +41,8 @@ __all__ = [
     "language_learning_service",
     "task_prioritization_service",
     "TeamService",
+    "ProcessNLPService", # Added new service
+    "DocumentProcessingService", # Added new service
 ]
 
 # from . import writing_assistance_service  # Temporarily commented out due to FastAPI/Pydantic v1/Python 3.13 compatibility issue
@@ -53,3 +55,5 @@ from .ai_integration_service import AIIntegrationService # Added import
 # from . import language_learning_service  # Temporarily commented out due to FastAPI/Pydantic v1/Python 3.13 compatibility issue
 # from . import task_prioritization_service  # Temporarily commented out due to FastAPI/Pydantic v1/Python 3.13 compatibility issue
 # from .team_service import TeamService  # Temporarily commented out due to FastAPI/Pydantic v1/Python 3.13 compatibility issue
+from .process_nlp_service import ProcessNLPService # Added import
+from .document_processing_service import DocumentProcessingService, get_document_processing_service # Added import

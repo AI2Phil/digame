@@ -60,6 +60,11 @@ __all__ = [
     "TeamSkillGapBase", "TeamSkillGapCreate", "TeamSkillGapUpdate", "TeamSkillGap",
     "TeamWorkflowBase", "TeamWorkflowCreate", "TeamWorkflowUpdate", "TeamWorkflow",
     "TeamAnalyticsDashboard", "TeamCollaborationPattern", "TeamRoleEnumSchema",
+    # Document Processing Schemas
+    "DocumentSummarizationRequest", "DocumentSummarizationResponse",
+    "MultiDocumentSynthesisRequest", "MultiDocumentSynthesisResponse", "SingleDocumentInput",
+    "DocumentActionItemRequest", "DocumentActionItemResponse",
+    "DocumentProcessingErrorResponse",
 ]
 
 from . import writing_assistance_schemas
@@ -68,3 +73,4 @@ from . import meeting_insights_schemas
 from . import email_analysis_schemas
 from . import language_learning_schemas
 from . import task_prioritization_schemas
+from . import document_processing_schemas # Import the new module
