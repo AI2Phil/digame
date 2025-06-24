@@ -527,6 +527,7 @@ class IntegrationProviderService:
         self.db = db
     
 from ..models.integration import DEFAULT_PROVIDERS as JOB_BOARD_PROVIDERS
+from .extended_integration_providers import EXTENDED_INTEGRATION_PROVIDERS
 
 
 class IntegrationProviderService:
@@ -636,6 +637,16 @@ class IntegrationProviderService:
 
         # Add job board providers
         for provider_data in JOB_BOARD_PROVIDERS:
+            existing = self.db.query(IntegrationProvider).filter(
+                IntegrationProvider.name == provider_data["name"]
+            ).first()
+
+            if not existing:
+                provider = IntegrationProvider(**provider_data)
+                self.db.add(provider)
+
+        # Add extended integration providers
+        for provider_data in EXTENDED_INTEGRATION_PROVIDERS:
             existing = self.db.query(IntegrationProvider).filter(
                 IntegrationProvider.name == provider_data["name"]
             ).first()
