@@ -16,7 +16,14 @@ from ..models.workflow_automation import (
     AutomationRule, WorkflowAction, WorkflowIntegration,
     WorkflowStatus, WorkflowStepType, WorkflowStepStatus, AutomationTriggerType
 )
-from ..database import get_db
+from ..database import get_db # Renamed to avoid conflict with local get_db
+from ..schemas.task_schemas import TaskCreate
+from ..crud import task_crud
+from .task_prioritization_service import TaskPrioritizationService
+# CalendarService might be used later if events are directly created/updated here
+# from .calendar_service import CalendarService
+from .reporting_service_part1 import ReportingService # For triggering reports
+from ..models.dashboard_custom import ReportDefinition # To fetch ReportDefinition for reporting service
 
 
 class WorkflowAutomationService:
@@ -24,9 +31,11 @@ class WorkflowAutomationService:
     Core workflow automation service for managing business process automation
     """
     
-    def __init__(self, db: Session):
+    def __init__(self, db: Session, task_prioritization_service: TaskPrioritizationService, reporting_service: ReportingService):
         self.db = db
-    
+        self.task_prioritization_service = task_prioritization_service
+        self.reporting_service = reporting_service # Added ReportingService
+
     def create_workflow_template(
         self,
         tenant_id: int,
@@ -162,7 +171,10 @@ class WorkflowAutomationService:
                 duration = (instance.execution_end_time - instance.execution_start_time).total_seconds()
                 instance.execution_duration = duration
             
-            self.db.commit()
+            # After main execution logic, try to trigger reports
+            self._try_trigger_workflow_reports(instance, "on_workflow_completion" if success else "on_workflow_failure")
+
+            self.db.commit() # Commit all changes including instance status and report triggers
             return success
             
         except Exception as e:
@@ -170,9 +182,214 @@ class WorkflowAutomationService:
             instance.last_error = str(e)
             instance.error_count += 1
             instance.execution_end_time = datetime.utcnow()
+            # Also attempt to trigger failure reports
+            self._try_trigger_workflow_reports(instance, "on_workflow_failure")
             self.db.commit()
             return False
+
+    def _try_trigger_workflow_reports(self, instance: WorkflowInstance, event_type: str):
+        """
+        Checks for and triggers any configured reports for the given workflow instance and event type.
+        """
+        if not self.reporting_service:
+            # Log that reporting service is not available
+            print("WorkflowAutomationService: ReportingService not available, skipping report trigger.")
+            return
+
+        try:
+            report_configs = self.db.query(WorkflowReportConfig).filter(
+                WorkflowReportConfig.workflow_template_id == instance.template_id,
+                WorkflowReportConfig.trigger_event_type == event_type,
+                WorkflowReportConfig.is_active == True
+            ).all()
+
+            for config in report_configs:
+                report_definition = self.db.query(ReportDefinition).get(config.report_definition_id)
+                if not report_definition:
+                    # Log missing report definition
+                    print(f"WorkflowReportConfig {config.id} references missing ReportDefinition {config.report_definition_id}")
+                    continue
+
+                # Prepare parameters for the report
+                # This is a simplified parameter mapping. Real-world might need a more robust templating/extraction.
+                report_parameters = {}
+                if config.parameter_mapping:
+                    for report_param, instance_path in config.parameter_mapping.items():
+                        # Example instance_path: "instance.id", "instance.input_data.some_key"
+                        value = instance
+                        try:
+                            for part in instance_path.split('.')[1:]: # Skip "instance"
+                                if isinstance(value, dict):
+                                    value = value.get(part)
+                                else:
+                                    value = getattr(value, part)
+                                if value is None: break
+                            report_parameters[report_param] = value
+                        except (AttributeError, KeyError):
+                            # Log that a mapped parameter was not found
+                            print(f"Could not resolve parameter path {instance_path} for report config {config.id}")
+
+                # Add default/contextual parameters
+                report_parameters["workflow_instance_id"] = instance.id
+                report_parameters["workflow_instance_name"] = instance.name
+                report_parameters["workflow_status"] = instance.status
+                report_parameters["workflow_triggered_by"] = instance.triggered_by
+
+                # Fetch data for the report (this is the tricky part without direct data source for workflow instance)
+                # generate_report_data in reporting_service uses CustomDashboardService.
+                # We need a way for ReportDefinition to source data from a specific workflow instance.
+                # This might require a new data source type in CustomDashboardService like "workflow_instance_data"
+                # that accepts an instance_id.
+                # For now, we assume `generate_report_data` can conceptually accept `report_parameters`
+                # that include `workflow_instance_id`, and its data sources can use this.
+
+                # This call to generate_report_data will use the existing mechanism, which relies on
+                # ReportDefinition.content_blocks and their data_source configurations.
+                # We must ensure that data_sources can be parameterized by workflow_instance_id.
+                # This is a significant dependency on how CustomDashboardService and AnalyticsService are structured.
+                # Let's assume `report_parameters` can be used by these services if the data_sources are designed for it.
+
+                print(f"Attempting to generate report for workflow instance {instance.id} based on config {config.id}")
+                # This will fetch data based on report_definition's configured blocks
+                # The `report_parameters` might be used by those blocks if they are designed to accept them.
+                # This is where the "Enhance ReportDefinition Data Sources" part of the plan is crucial.
+                # For now, we proceed with the call.
+                report_data_payload = asyncio.run(self.reporting_service.generate_report_data(
+                    report_definition_id=report_definition.id, # type: ignore
+                    tenant_id=instance.tenant_id,
+                    # We might need to pass `report_parameters` here if `generate_report_data` is adapted
+                ))
+
+                # Extract tabular data from payload (simplification)
+                data_for_file_generation: List[Dict[str, Any]] = []
+                if report_data_payload and report_data_payload.get("content"):
+                    for block in report_data_payload["content"]:
+                        if block.get("data") and isinstance(block["data"], list):
+                            data_for_file_generation.extend(block["data"])
+
+                output_format = config.output_format_override or report_definition.output_format or "pdf"
+
+                # Generate the report file
+                # This call creates and commits a ReportExecution
+                execution_record = asyncio.run(self.reporting_service.execute_and_generate_for_definition(
+                    report_definition=report_definition,
+                    report_data=data_for_file_generation, # Pass extracted data
+                    output_format=output_format,
+                    execution_type=f"workflow_triggered_{event_type}",
+                    parameters=report_parameters, # Pass mapped and contextual params
+                    user_id=config.created_by # The user who set up the config
+                ))
+
+                if execution_record and execution_record.status == "completed" and execution_record.file_path:
+                    print(f"Report {execution_record.id} generated for workflow instance {instance.id}. Path: {execution_record.file_path}")
+                    # Handle delivery if configured in WorkflowReportConfig
+                    if config.delivery_config_override:
+                        # This part requires delivery logic, similar to ReportSchedulingService
+                        # For now, just log the intent to deliver.
+                        # A shared delivery service/helper would be ideal.
+                        print(f"Delivery required for report {execution_record.id}: {config.delivery_config_override}")
+                        # Example: await self.shared_delivery_service.deliver_report(execution_record, config.delivery_config_override, report_definition)
+                else:
+                    # Log report generation failure
+                    print(f"Failed to generate report for workflow instance {instance.id} from config {config.id}. Status: {execution_record.status if execution_record else 'N/A'}")
+
+        except Exception as e:
+            # Log error during report triggering
+            print(f"Error triggering workflow reports for instance {instance.id}, event {event_type}: {str(e)}")
+            # This should not prevent the workflow execution status from being saved.
+
+    # --- WorkflowReportConfig CRUD ---
+    def create_workflow_report_config(
+        self,
+        tenant_id: int,
+        created_by_user_id: int,
+        config_data: Dict[str, Any] # Comes from WorkflowReportConfigCreate schema
+    ) -> WorkflowReportConfig:
+        # Validate that workflow_template_id and report_definition_id exist for the tenant
+        # (Simplified check here, could be more robust)
+        template = self.db.query(WorkflowTemplate).filter(
+            WorkflowTemplate.id == config_data["workflow_template_id"],
+            WorkflowTemplate.tenant_id == tenant_id
+        ).first()
+        if not template:
+            raise ValueError(f"WorkflowTemplate with id {config_data['workflow_template_id']} not found for tenant {tenant_id}")
+
+        report_def = self.db.query(ReportDefinition).filter(
+            ReportDefinition.id == config_data["report_definition_id"],
+            # ReportDefinition might not have tenant_id directly, or it's implicit via User/Dashboard
+            # This needs to align with how ReportDefinition is scoped. Assuming it's globally accessible or tenant-scoped.
+            # For now, let's assume ReportDefinition is accessible if it exists.
+            # A proper multi-tenancy check for ReportDefinition would be needed here.
+        ).first()
+        if not report_def:
+            raise ValueError(f"ReportDefinition with id {config_data['report_definition_id']} not found.")
+
+        db_config = WorkflowReportConfig(
+            tenant_id=tenant_id,
+            created_by=created_by_user_id,
+            name=config_data["name"],
+            description=config_data.get("description"),
+            workflow_template_id=config_data["workflow_template_id"],
+            report_definition_id=config_data["report_definition_id"],
+            trigger_event_type=config_data["trigger_event_type"],
+            trigger_event_config=config_data.get("trigger_event_config"),
+            output_format_override=config_data.get("output_format_override"),
+            delivery_config_override=config_data.get("delivery_config_override"),
+            parameter_mapping=config_data.get("parameter_mapping"),
+            is_active=config_data.get("is_active", True)
+        )
+        self.db.add(db_config)
+        self.db.commit()
+        self.db.refresh(db_config)
+        return db_config
+
+    def get_workflow_report_config(self, config_id: int, tenant_id: int) -> Optional[WorkflowReportConfig]:
+        return self.db.query(WorkflowReportConfig).filter(
+            WorkflowReportConfig.id == config_id,
+            WorkflowReportConfig.tenant_id == tenant_id
+        ).first()
+
+    def get_workflow_report_configs_for_template(self, workflow_template_id: int, tenant_id: int) -> List[WorkflowReportConfig]:
+        return self.db.query(WorkflowReportConfig).filter(
+            WorkflowReportConfig.workflow_template_id == workflow_template_id,
+            WorkflowReportConfig.tenant_id == tenant_id
+        ).order_by(WorkflowReportConfig.name).all()
     
+    def get_all_workflow_report_configs(self, tenant_id: int, skip: int = 0, limit: int = 100) -> List[WorkflowReportConfig]:
+        return self.db.query(WorkflowReportConfig).filter(
+            WorkflowReportConfig.tenant_id == tenant_id
+        ).order_by(WorkflowReportConfig.id.desc()).offset(skip).limit(limit).all()
+
+
+    def update_workflow_report_config(
+        self,
+        config_id: int,
+        tenant_id: int,
+        update_data: Dict[str, Any] # Comes from WorkflowReportConfigUpdate schema
+    ) -> Optional[WorkflowReportConfig]:
+        db_config = self.get_workflow_report_config(config_id, tenant_id)
+        if not db_config:
+            return None
+
+        for key, value in update_data.items():
+            if hasattr(db_config, key) and value is not None: # Ensure value is not None before setting
+                setattr(db_config, key, value)
+
+        db_config.updated_at = datetime.utcnow() # Manually update timestamp
+        self.db.commit()
+        self.db.refresh(db_config)
+        return db_config
+
+    def delete_workflow_report_config(self, config_id: int, tenant_id: int) -> bool:
+        db_config = self.get_workflow_report_config(config_id, tenant_id)
+        if not db_config:
+            return False
+
+        self.db.delete(db_config)
+        self.db.commit()
+        return True
+    # --- End WorkflowReportConfig CRUD ---
+
     def get_workflow_instances(
         self,
         tenant_id: int,
@@ -588,18 +805,110 @@ class WorkflowAutomationService:
         """
         step_type = step_execution.step_type
         
-        if step_type == "action":
+        if step_type == WorkflowStepType.ACTION.value: # Compare with enum value
             return self._execute_action_step(step_execution, instance)
-        elif step_type == "condition":
+        elif step_type == WorkflowStepType.CONDITION.value:
             return self._execute_condition_step(step_execution, instance)
-        elif step_type == "notification":
+        elif step_type == WorkflowStepType.NOTIFICATION.value:
             return self._execute_notification_step(step_execution, instance)
-        elif step_type == "integration":
+        elif step_type == WorkflowStepType.INTEGRATION.value:
             return self._execute_integration_step(step_execution, instance)
+        elif step_type == WorkflowStepType.HUMAN_TASK.value:
+            return self._execute_human_task_step(step_execution, instance)
+        # Add other step types like LOOP, PARALLEL, APPROVAL as needed
         else:
-            # For other step types, simulate execution
+            # For other step types, simulate execution for now
+            step_execution.output_data = {"message": f"Step type '{step_type}' processed with default simulation."}
             return True
-    
+
+    def _execute_human_task_step(self, step_execution: WorkflowStepExecution, instance: WorkflowInstance) -> bool:
+        """
+        Executes a human task step, creating a corresponding Task in the system.
+        """
+        try:
+            config = step_execution.step_config
+            assignee_id = config.get("assignee_id") # Expecting user ID
+            assignee_role = config.get("assignee_role") # Alternative way to assign
+
+            if not assignee_id and assignee_role:
+                # Future enhancement: look up user by role. For now, require assignee_id.
+                # This might involve querying the User model for users with that role,
+                # and then applying some logic (e.g., round-robin, least busy).
+                # For now, if no direct assignee_id, we can't create a task for a specific person.
+                # Fallback: assign to workflow instance creator or a default admin?
+                # For this implementation, we'll assume assignee_id is preferred.
+                # If not provided, we can log a warning or assign to instance.created_by if available.
+                # instance.created_by is not directly on the model, but template.created_by is.
+                # This logic needs to be robust based on how assignees are determined.
+                # For now, let's assume assignee_id must be resolvable.
+                # A simple approach: if assignee_id is not in config, this step might fail or be unassigned.
+                # Let's assume step_execution.assigned_to can be pre-filled during step initialization
+                # or that config must provide it.
+                # For now, we'll require assignee_id from config or step_execution.assigned_to (if it were populated earlier)
+                assignee_id = step_execution.assigned_to # Check if it was set on the step execution record directly
+
+            if not assignee_id:
+                step_execution.error_message = "Human task requires an assignee_id in step_config or on step_execution."
+                step_execution.output_data = {"task_created": False, "error": step_execution.error_message}
+                return False
+
+            task_description = config.get("task_description", step_execution.step_name)
+            # Add workflow instance context to description
+            task_description += f" (Workflow: {instance.name} - Step: {step_execution.step_name})"
+
+            due_date_str = config.get("due_date")
+            due_date = datetime.fromisoformat(due_date_str) if due_date_str else None
+
+            estimated_effort = config.get("estimated_effort_hours")
+
+            # Create TaskCreate schema object
+            task_data = TaskCreate(
+                description=task_description,
+                source_type="workflow_human_task",
+                source_identifier=f"wf_instance:{instance.id}_step_exec:{step_execution.id}",
+                status="suggested", # Or 'accepted' if human tasks are auto-accepted
+                notes=f"Generated from workflow instance {instance.id}, step {step_execution.step_id}. Config: {json.dumps(config)}",
+                due_date_inferred=due_date, # Or use 'deadline' if that's preferred for tasks
+                deadline=due_date, # Using new deadline field
+                estimated_effort_hours=estimated_effort,
+                assigned_resource_id=assignee_id,
+                # user_id for the task could be the assignee_id or the workflow initiator
+                # For clarity, let's assume user_id on Task is the person responsible (assignee)
+            )
+
+            # user_id for task_crud.create_task is the owner/creator of the task record,
+            # which can be the assignee themselves or a system/initiator user.
+            # Let's use assignee_id as the user_id for the task itself.
+            created_task = task_crud.create_task(db=self.db, task=task_data, user_id=assignee_id)
+
+            if created_task:
+                step_execution.output_data = {
+                    "task_created": True,
+                    "task_id": created_task.id,
+                    "task_assignee_id": assignee_id,
+                    "task_due_date": created_task.deadline.isoformat() if created_task.deadline else None
+                }
+                # Re-prioritize tasks for the assignee
+                if self.task_prioritization_service:
+                    self.task_prioritization_service.reprioritize_affected_tasks(user_id=assignee_id)
+
+                # The task is created. The workflow step is considered "completed" once the task is generated.
+                # The actual completion of the human work will be tracked by the Task's status.
+                # The workflow might need a mechanism to wait for the task completion if subsequent steps depend on it.
+                # This could be a `WorkflowStepStatus.WAITING` and an external trigger (e.g., webhook when task is done).
+                # For now, generating the task means this step of the workflow is done.
+                return True
+            else:
+                step_execution.error_message = "Failed to create task for human_task step."
+                step_execution.output_data = {"task_created": False, "error": step_execution.error_message}
+                return False
+
+        except Exception as e:
+            step_execution.error_message = f"Error executing human_task step: {str(e)}"
+            step_execution.output_data = {"task_created": False, "error": step_execution.error_message}
+            # Optionally, log the full traceback here
+            return False
+
     def _execute_action_step(self, step_execution: WorkflowStepExecution, instance: WorkflowInstance) -> bool:
         """
         Execute an action step
