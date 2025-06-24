@@ -28,6 +28,8 @@ const AdvancedMobileFeatures = ({ navigation }) => {
   const [aiNotificationsEnabled, setAiNotificationsEnabled] = useState(false);
   const [voiceRecognitionActive, setVoiceRecognitionActive] = useState(false);
   const [mobileAnalytics, setMobileAnalytics] = useState({});
+  const [nluInteractionDetails, setNluInteractionDetails] = useState(null);
+  const [nluDisplayTimeoutId, setNluDisplayTimeoutId] = useState(null);
   const [fadeAnim] = useState(new Animated.Value(0));
   const [pulseAnim] = useState(new Animated.Value(1));
 
@@ -205,28 +207,57 @@ const AdvancedMobileFeatures = ({ navigation }) => {
 
   const handleVoiceIntent = (nluResponse) => {
     // Log the full NLU response for debugging
-    console.log("Handling NLU Response:", JSON.stringify(nluResponse, null, 2));
+    console.log("Handling Rich NLU Response:", JSON.stringify(nluResponse, null, 2));
 
     if (!nluResponse || !nluResponse.intent) {
       Speech.speak("Sorry, I had trouble understanding that. Please try again.");
+      Alert.alert("NLU Error", "Response structure missing intent.");
       return;
     }
 
-    // Log entities for debugging
-    if (nluResponse.entities) {
-      console.log("NLU Entities:", nluResponse.entities);
+    const intent = nluResponse.intent;
+    const entities = nluResponse.entities || {}; // Ensure entities is an object
+
+    // Log extracted intent and entities for structured data handling
+    console.log(`Intent: ${intent}`);
+    console.log("Entities:", JSON.stringify(entities, null, 2));
+
+    // Example of preparing structured data for potential UI update
+    // This data could be passed to a state variable or a dedicated UI component later
+    const structuredUIData = {
+      intent: intent,
+      entities: entities,
+      originalQuery: nluResponse.originalText || "",
+      // Potentially add confidence scores if provided by OpenAI
+      confidence: nluResponse.confidence || null,
+    };
+    console.log("Prepared structured UI data:", JSON.stringify(structuredUIData, null, 2));
+
+    // Clear previous timeout if any
+    if (nluDisplayTimeoutId) {
+      clearTimeout(nluDisplayTimeoutId);
     }
 
-    switch (nluResponse.intent) {
+    setNluInteractionDetails(structuredUIData);
+
+    // Set a timeout to clear the NLU details display
+    const timeoutId = setTimeout(() => {
+      setNluInteractionDetails(null);
+    }, 15000); // Display for 15 seconds
+    setNluDisplayTimeoutId(timeoutId);
+
+    switch (intent) {
       case 'show_analytics':
       case 'VIEW_ANALYTICS':
         Speech.speak("Showing analytics.");
         navigation.navigate('Analytics');
+        // Future UI update: Could display "Showing analytics" with a confidence score
         break;
       case 'add_goal':
       case 'ADD_GOAL':
         Speech.speak("Opening goals to add a new one.");
         navigation.navigate('Goals');
+        // Future UI update: Could display "Navigating to Goals" and list any relevant entities found
         break;
       case 'update_progress':
       case 'UPDATE_PROGRESS':
@@ -234,29 +265,39 @@ const AdvancedMobileFeatures = ({ navigation }) => {
         navigation.navigate('Progress');
         break;
       case 'NAVIGATE_TO_SCREEN':
-        const screenName = nluResponse.entities?.screen_name;
-        if (screenName) {
-          if (typeof screenName === 'string' && screenName.trim() !== '') {
-            Speech.speak(`Navigating to ${screenName}.`);
-            const validScreens = ['Analytics', 'Goals', 'Progress', 'Settings', 'Home', 'Profile'];
-            if (validScreens.includes(screenName)) {
-               navigation.navigate(screenName);
-            } else {
-               Speech.speak(`Sorry, I can't navigate to a screen called ${screenName}.`);
-               console.warn(`Attempted to navigate to an invalid screen by voice: ${screenName}`);
-            }
+        const screenName = entities?.screen_name; // Assuming screen_name is a top-level entity
+        // If screen_name could be nested, e.g., entities.navigation_details.screen_name, adjust access accordingly
+        if (screenName && typeof screenName === 'string' && screenName.trim() !== '') {
+          Speech.speak(`Navigating to ${screenName}.`);
+          const validScreens = ['Analytics', 'Goals', 'Progress', 'Settings', 'Home', 'Profile'];
+          if (validScreens.includes(screenName)) {
+             navigation.navigate(screenName);
           } else {
-            Speech.speak("Sorry, the screen name provided is not valid.");
-            console.warn(`Invalid screen_name entity received: ${screenName}`);
+             Speech.speak(`Sorry, I can't navigate to a screen called ${screenName}.`);
+             console.warn(`Attempted to navigate to an invalid screen by voice: ${screenName}`);
+             Alert.alert("Navigation Error", `Screen "${screenName}" not found.`);
           }
         } else {
           Speech.speak("Sorry, I understood you want to navigate, but not to which screen.");
+          console.warn(`Invalid or missing screen_name entity for NAVIGATE_TO_SCREEN. Received: ${screenName}`);
+          Alert.alert("Navigation Error", "Screen name not specified or invalid.");
         }
+        break;
+      // Example of handling a more complex intent with multiple entities
+      case 'CREATE_REMINDER':
+        const reminderText = entities?.reminder_text || "your reminder";
+        const reminderTime = entities?.time_detail?.iso || "an unspecified time"; // Example of nested entity
+        Speech.speak(`Okay, creating a reminder: "${reminderText}" for ${reminderTime}.`);
+        // TODO: Implement actual reminder creation logic
+        // Future UI update: Display "Reminder: [text]" and "Time: [time]"
+        console.log(`Reminder to create: Text - ${reminderText}, Time - ${reminderTime}`);
+        Alert.alert("Reminder Intent", `Reminder: ${reminderText}\nTime: ${reminderTime}`);
         break;
       case 'unknown_command':
       default:
         const message = nluResponse.message || nluResponse.originalText || "Sorry, I couldn't understand that command.";
         Speech.speak(message.startsWith("Command not recognized:") ? message : `I heard "${nluResponse.originalText || 'that'}", but I'm not sure what to do.`);
+        Alert.alert("Unknown Command", `Heard: "${nluResponse.originalText || 'N/A'}" - Intent not recognized.`);
         break;
     }
   };
@@ -366,6 +407,7 @@ const AdvancedMobileFeatures = ({ navigation }) => {
             onStop={stopVoiceRecognition}
             onTestCommand={testVoiceCommand}
             pulseAnim={pulseAnim}
+            nluDetails={nluInteractionDetails}
           />
 
           {/* Advanced Analytics */}
@@ -465,8 +507,38 @@ const FeatureCard = ({
   </View>
 );
 
+// NLU Display Component
+// Exported for testing purposes
+export const NLUDisplay = ({ details }) => {
+  if (!details) {
+    return null;
+  }
+
+  const { intent, entities, originalQuery, confidence } = details;
+
+  return (
+    <View style={styles.nluDisplayContainer}>
+      <Text style={styles.nluTitle}>Voice Command Details:</Text>
+      {originalQuery && <Text style={styles.nluText}><Text style={styles.nluLabel}>You said:</Text> "{originalQuery}"</Text>}
+      <Text style={styles.nluText}><Text style={styles.nluLabel}>Intent:</Text> {intent}</Text>
+      {confidence && <Text style={styles.nluText}><Text style={styles.nluLabel}>Confidence:</Text> {Math.round(confidence * 100)}%</Text>}
+      {entities && Object.keys(entities).length > 0 && (
+        <View>
+          <Text style={styles.nluLabel}>Entities:</Text>
+          {Object.entries(entities).map(([key, value]) => (
+            <Text key={key} style={styles.nluEntityText}>
+              - {key}: {typeof value === 'object' ? JSON.stringify(value) : value}
+            </Text>
+          ))}
+        </View>
+      )}
+    </View>
+  );
+};
+
 // Voice Recognition Card Component
-const VoiceRecognitionCard = ({ active, onStart, onStop, onTestCommand, pulseAnim }) => (
+// Exported for testing purposes
+export const VoiceRecognitionCard = ({ active, onStart, onStop, onTestCommand, pulseAnim, nluDetails }) => (
   <View style={styles.featureCard}>
     <View style={styles.featureHeader}>
       <View style={styles.featureIconContainer}>
@@ -511,6 +583,7 @@ const VoiceRecognitionCard = ({ active, onStart, onStop, onTestCommand, pulseAni
         ))}
       </View>
     </View>
+    <NLUDisplay details={nluDetails} />
   </View>
 );
 
@@ -800,6 +873,35 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#6b7280',
   },
+  nluDisplayContainer: {
+    marginTop: 16,
+    padding: 12,
+    backgroundColor: '#f9fafb', // Lighter gray, almost white
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#e5e7eb', // Light gray border
+  },
+  nluTitle: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#1f2937', // Dark gray
+    marginBottom: 8,
+  },
+  nluText: {
+    fontSize: 14,
+    color: '#374151', // Medium-dark gray
+    marginBottom: 4,
+  },
+  nluLabel: {
+    fontWeight: 'bold',
+    color: '#4b5563', // Slightly lighter than text, but still dark
+  },
+  nluEntityText: {
+    fontSize: 13,
+    color: '#4b5563', // Medium gray
+    marginLeft: 8,
+    fontStyle: 'italic',
+  }
 });
 
 export default AdvancedMobileFeatures;
