@@ -43,7 +43,7 @@ These items represent significant features or enhancements that are crucial for 
     *   **Source**: `/docs/AI.md` (Section: "AI-Powered Writing Assistance", Current Status)
     *   **Justification**: Enables a key AI feature for users.
 
-3.  **Implement Report File Generation (PDF/CSV) for Advanced Reporting**
+3.  **Implement Report File Generation (PDF/CSV) for Advanced Reporting** (in Process)
     *   **Description**: Replace mock implementations in `ReportingService` with actual PDF (reportlab) and CSV (pandas/csv) generation capabilities. Dependent on Alembic fix.
     *   **Source**: `/docs/ANALYTICS.md` (Section: "PENDING NEXT STEPS: REPORTING SERVICE REFACTOR INTEGRATION", Phase 2, Item 4)
     *   **Justification**: Core functionality for the Advanced Reporting feature.
