@@ -6,7 +6,7 @@ from ..db import get_db
 from ..models.user import User as SQLAlchemyUser
 from ..auth.auth_dependencies import get_current_active_user
 from ..crud.job_crud import create_job, get_job_by_id, get_jobs_for_user, update_job_status
-from ..schemas.job_schemas import Job, JobCreate, JobResponse, JobUpdate
+from ..schemas.task_job_schemas import Job, JobCreate, JobResponse, JobUpdate # Updated import
 
 # Import the services that will be run asynchronously
 from ..services.behavior_service import train_behavioral_model

@@ -532,3 +532,79 @@ class ThirdPartyAPIService:
                 'remaining': int(remaining),
                 'reset_time': int(reset_time)
             }
+
+    async def search_jobs(
+        self,
+        connection: IntegrationConnection,
+        query: str,
+        location: Optional[str] = None,
+        limit: int = 25
+    ) -> List[Dict[str, Any]]:
+        """
+        Search for jobs on a third-party platform
+        """
+        provider = self.db.query(IntegrationProvider).filter(
+            IntegrationProvider.id == connection.provider_id
+        ).first()
+
+        if not provider:
+            raise ValueError("Provider not found")
+
+        if provider.name == 'indeed':
+            return await self._search_indeed_jobs(connection, query, location, limit)
+        # Add LinkedIn and Glassdoor later
+        # elif provider.name == 'linkedin':
+        #     return await self._search_linkedin_jobs(connection, query, location, limit)
+        # elif provider.name == 'glassdoor':
+        #     return await self._search_glassdoor_jobs(connection, query, location, limit)
+        else:
+            raise ValueError(f"Job search not implemented for {provider.name}")
+
+    async def _search_indeed_jobs(
+        self,
+        connection: IntegrationConnection,
+        query: str,
+        location: Optional[str] = None,
+        limit: int = 25
+    ) -> List[Dict[str, Any]]:
+        """
+        Search for jobs on Indeed
+        """
+        # This is a placeholder implementation.
+        # Actual implementation will depend on Indeed API specifics.
+        params = {
+            'q': query,
+            'limit': limit,
+        }
+        if location:
+            params['l'] = location
+
+        # Assuming Indeed API has an endpoint like 'ads/apisearch'
+        # and requires publisher ID or API key in params.
+        # This needs to be verified with actual Indeed API documentation.
+        # params['publisher'] = connection.auth_data.get('publisher_id')
+        # params['v'] = '2' # API version
+        # params['format'] = 'json'
+
+        response = await self.make_api_request(
+            connection,
+            'GET',
+            'ads/apisearch', # This is a guess, replace with actual endpoint
+            params=params
+        )
+
+        jobs = []
+        for item in response.get('results', []): # Adjust based on actual response structure
+            jobs.append({
+                'id': item.get('jobkey'),
+                'title': item.get('jobtitle'),
+                'company': item.get('company'),
+                'location': item.get('formattedLocation'),
+                'summary': item.get('snippet'),
+                'url': item.get('url'),
+                'posted_date': item.get('date'),
+                'salary_min': item.get('salaryMin'), # Example, may not exist
+                'salary_max': item.get('salaryMax'), # Example, may not exist
+                'source': 'Indeed'
+            })
+        return jobs

@@ -613,3 +613,45 @@ async def batch_sync_connections(
         "message": f"Batch sync completed for {len(connection_ids)} connections",
         "results": results
     }
+
+
+# Job Search Endpoints
+from ..schemas.job_schemas import JobSchema, JobSearchQuery # Correct import
+
+
+@router.post("/connections/{connection_id}/jobs/search", response_model=List[JobSchema])
+async def search_jobs_via_connection(
+    connection_id: int,
+    search_query: JobSearchQuery,
+    db: Session = Depends(get_db)
+):
+    """
+    Search jobs through a specific integration connection
+    """
+    from ..services.third_party_api_service import ThirdPartyAPIService # Lazy import
+
+    integration_service = IntegrationService(db)
+    connection = integration_service.db.query(IntegrationConnection).filter(IntegrationConnection.id == connection_id).first()
+
+    if not connection:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Connection not found")
+
+    if connection.status != "active":
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Connection is not active. Current status: {connection.status}")
+
+    api_service = ThirdPartyAPIService(db)
+
+    try:
+        jobs = await api_service.search_jobs(
+            connection=connection,
+            query=search_query.query,
+            location=search_query.location,
+            limit=search_query.limit
+        )
+        return jobs
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except Exception as e:
+        # Log the exception for debugging
+        # logger.error(f"Job search failed for connection {connection_id}: {str(e)}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Job search failed")

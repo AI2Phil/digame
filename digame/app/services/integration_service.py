@@ -526,10 +526,22 @@ class IntegrationProviderService:
     def __init__(self, db: Session):
         self.db = db
     
+from ..models.integration import DEFAULT_PROVIDERS as JOB_BOARD_PROVIDERS
+
+
+class IntegrationProviderService:
+    """
+    Service for managing integration provider configurations
+    """
+
+    def __init__(self, db: Session):
+        self.db = db
+
     def initialize_default_providers(self):
         """
         Initialize default integration providers
         """
+        # Existing default providers
         default_providers = [
             {
                 "name": "slack",
@@ -618,6 +630,16 @@ class IntegrationProviderService:
                 IntegrationProvider.name == provider_data["name"]
             ).first()
             
+            if not existing:
+                provider = IntegrationProvider(**provider_data)
+                self.db.add(provider)
+
+        # Add job board providers
+        for provider_data in JOB_BOARD_PROVIDERS:
+            existing = self.db.query(IntegrationProvider).filter(
+                IntegrationProvider.name == provider_data["name"]
+            ).first()
+
             if not existing:
                 provider = IntegrationProvider(**provider_data)
                 self.db.add(provider)

@@ -70,6 +70,43 @@ class IntegrationProvider(Base):
         return f"<IntegrationProvider(id={self.id}, name='{self.name}', category='{self.category}')>"
 
 
+# Predefined provider data
+# This is not ideal to have here, should be in a seeding script or configuration
+# For now, keeping it here for simplicity in initialization
+DEFAULT_PROVIDERS = [
+    {
+        "name": "indeed",
+        "display_name": "Indeed",
+        "description": "Job search engine.",
+        "category": "job_board",
+        "auth_type": "oauth2", # Assuming OAuth2, replace if different
+        "base_url": "https://api.indeed.com", # Placeholder
+        "supported_operations": ["search_jobs"],
+        "logo_url": "https://example.com/indeed_logo.png", # Placeholder
+    },
+    {
+        "name": "linkedin",
+        "display_name": "LinkedIn",
+        "description": "Professional networking and job searching.",
+        "category": "job_board",
+        "auth_type": "oauth2", # Assuming OAuth2
+        "base_url": "https://api.linkedin.com", # Placeholder
+        "supported_operations": ["search_jobs"],
+        "logo_url": "https://example.com/linkedin_logo.png", # Placeholder
+    },
+    {
+        "name": "glassdoor",
+        "display_name": "Glassdoor",
+        "description": "Job searching and company reviews.",
+        "category": "job_board",
+        "auth_type": "api_key", # Assuming API Key, replace if different
+        "base_url": "https://api.glassdoor.com", # Placeholder
+        "supported_operations": ["search_jobs"],
+        "logo_url": "https://example.com/glassdoor_logo.png", # Placeholder
+    },
+]
+
+
 class IntegrationConnection(Base):
     """
     User connections to third-party services

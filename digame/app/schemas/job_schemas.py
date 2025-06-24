@@ -1,42 +1,55 @@
-from typing import Optional, Dict, Any
+"""
+Pydantic schemas for job search related data.
+"""
+
+from pydantic import BaseModel, HttpUrl
+from typing import Optional, List
 from datetime import datetime
-from pydantic import BaseModel
 
+class JobSearchQuery(BaseModel):
+    """
+    Schema for job search query parameters.
+    """
+    query: str
+    location: Optional[str] = None
+    limit: int = 25
+    # Add other common search parameters like radius, job_type, experience_level etc. as needed.
+    # Example:
+    # radius_miles: Optional[int] = None
+    # job_type: Optional[str] = None # e.g., "fulltime", "contract", "internship"
+    # experience_level: Optional[str] = None # e.g., "entry_level", "mid_level", "senior_level"
 
-class JobBase(BaseModel):
-    """Base schema for job data."""
-    job_type: str
-    status: str = "pending"
-    progress: float = 0.0
-    result: Optional[Dict[str, Any]] = None
-    error: Optional[str] = None
-
-
-class JobCreate(JobBase):
-    """Schema for creating a new job."""
-    pass
-
-
-class JobUpdate(BaseModel):
-    """Schema for updating a job."""
-    status: Optional[str] = None
-    progress: Optional[float] = None
-    result: Optional[Dict[str, Any]] = None
-    error: Optional[str] = None
-
-
-class Job(JobBase):
-    """Schema for job response."""
-    id: int
-    user_id: int
-    created_at: datetime
-    updated_at: datetime
+class JobSchema(BaseModel):
+    """
+    Schema representing a job posting.
+    """
+    id: str # Provider specific job ID
+    title: str
+    company: Optional[str] = None
+    location: Optional[str] = None
+    description: Optional[str] = None # Or 'summary' / 'snippet'
+    url: HttpUrl
+    posted_date: Optional[datetime] = None
+    source: str # e.g., "Indeed", "LinkedIn", "Glassdoor"
+    salary_min: Optional[float] = None
+    salary_max: Optional[float] = None
+    salary_currency: Optional[str] = None
+    salary_period: Optional[str] = None # e.g., "hourly", "yearly"
+    # Add other relevant fields as needed
+    # Example:
+    # company_logo_url: Optional[HttpUrl] = None
+    # skills: Optional[List[str]] = None
+    # employment_type: Optional[str] = None # e.g., "Full-time", "Part-time"
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
-
-class JobResponse(BaseModel):
-    """Schema for job response with additional metadata."""
-    job: Job
-    message: str = "Job created successfully"
+class JobSearchResponse(BaseModel):
+    """
+    Schema for the response of a job search.
+    """
+    query: JobSearchQuery
+    results: List[JobSchema]
+    total_results: Optional[int] = None # If available from the API
+    page: Optional[int] = None # If pagination is supported
+    provider: str # The name of the job board provider
