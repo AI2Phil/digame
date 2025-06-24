@@ -44,3 +44,18 @@ class VoiceCommandResponse(BaseModel):
     # Optional: follow_up_prompt: Optional[str] = Field(default=None, description="If further interaction is needed")
     # Optional: confidence_score: Optional[float] = Field(default=None, description="NLU confidence in the interpretation")
 
+# --- AI Model Management Schemas ---
+
+class AIModelMetadataResponse(BaseModel):
+    model_name: str = Field(..., examples=["voice_recognition_en", "text_summarization_fr"])
+    version: str = Field(..., examples=["1.0.2", "2.1.0"])
+    language: Optional[str] = Field(default=None, examples=["en-US", "fr-FR"])
+    description: Optional[str] = Field(default=None, examples=["English voice recognition model, version 1.0.2"])
+    download_url: str = Field(..., examples=["/api/mobile-ai/models/download/voice_recognition_en_v1.0.2.model"])
+    size_bytes: Optional[int] = Field(default=None, examples=[5242880]) # Size in bytes
+    metadata: Optional[Dict[str, Any]] = Field(default_factory=dict, description="Additional model-specific metadata")
+    # E.g., {"accuracy": "95%", "dependencies": ["some_lib_v1.2"], "format": "tflite"}
+
+class AIModelListResponse(BaseModel):
+    models: List[AIModelMetadataResponse]
+    last_updated: datetime = Field(default_factory=datetime.utcnow)

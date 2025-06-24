@@ -7,13 +7,36 @@ from ..schemas.mobile_ai_schemas import (
     UserNotificationPrefsRequest,
     NotificationTrigger,
     VoiceCommandRequest,  # Added
-    VoiceCommandResponse  # Added
+    VoiceCommandResponse,  # Added
+    AIModelMetadataResponse, # Added
+    AIModelListResponse # Added
 )
 import re # For simple keyword parsing
+import os # For file system operations
+from fastapi import HTTPException
+from fastapi.responses import FileResponse
+from pathlib import Path # For path manipulation
+
+# Define a base directory for storing AI models on the server
+# This should be configured appropriately in a real application
+SERVER_AI_MODELS_DIR = Path(os.getenv("SERVER_AI_MODELS_DIR", "published_models"))
 
 class MobileAIService:
     def __init__(self, db: Session):
         self.db = db
+        # Ensure the server models directory exists
+        SERVER_AI_MODELS_DIR.mkdir(parents=True, exist_ok=True)
+        # Create a dummy model file for testing if it doesn't exist
+        dummy_model_path = SERVER_AI_MODELS_DIR / "voice_rec_en_v1.0.0.model"
+        if not dummy_model_path.exists():
+            with open(dummy_model_path, "w") as f:
+                f.write("This is a dummy voice recognition model for English v1.0.0")
+
+        dummy_model_path_v2 = SERVER_AI_MODELS_DIR / "voice_rec_en_v1.0.1.model"
+        if not dummy_model_path_v2.exists():
+            with open(dummy_model_path_v2, "w") as f:
+                f.write("This is a dummy voice recognition model for English v1.0.1 - updated")
+
 
     async def save_user_notification_preferences(
         self,
@@ -112,3 +135,71 @@ class MobileAIService:
                 "response_text": "Sorry, I didn't understand that. Can you try rephrasing?"
             }
             return VoiceCommandResponse(**response_data)
+
+    # --- AI Model Management Endpoints ---
+
+    async def list_available_ai_models(self) -> AIModelListResponse:
+        """
+        Lists available AI models that can be downloaded by the client.
+        This implementation scans the SERVER_AI_MODELS_DIR.
+        A more robust solution would use a database or configuration file.
+        File naming convention: <model_type>_<language_code>_v<version>.model
+        Example: voice_rec_en_v1.0.0.model
+        """
+        models = []
+        try:
+            for item in SERVER_AI_MODELS_DIR.iterdir():
+                if item.is_file() and item.name.endswith(".model"):
+                    parts = item.stem.split('_v') # item.stem is filename without .model
+                    if len(parts) == 2:
+                        name_lang_part = parts[0]
+                        version = parts[1]
+
+                        # Try to split name_lang_part further for model_type and language
+                        # This is a simple parser, might need more robust logic
+                        name_parts = name_lang_part.split('_')
+                        model_name = "_".join(name_parts[:-1]) if len(name_parts) > 1 else name_parts[0]
+                        language = name_parts[-1] if len(name_parts) > 1 else "unknown"
+
+                        models.append(AIModelMetadataResponse(
+                            model_name=model_name, # e.g., voice_rec
+                            version=version, # e.g., 1.0.0
+                            language=language, # e.g., en
+                            description=f"{model_name.replace('_', ' ').title()} model for {language}, version {version}.",
+                            # Construct a URL; this should ideally be based on app config
+                            download_url=f"/api/mobile-ai/models/download/{item.name}",
+                            # File size - in a real app, get this properly
+                            size_bytes=item.stat().st_size,
+                            # For simplicity, metadata might be part of a separate config or derived
+                            metadata={"trained_on": "general_corpus", "format": "proprietary"}
+                        ))
+        except Exception as e:
+            print(f"Error listing AI models: {e}") # Replace with proper logging
+            # Optionally re-raise or return an empty list with an error message
+            raise HTTPException(status_code=500, detail=f"Could not list AI models: {str(e)}")
+
+        return AIModelListResponse(models=models)
+
+    async def get_ai_model_file(self, file_name: str) -> FileResponse:
+        """
+        Serves an AI model file for download.
+        """
+        model_path = SERVER_AI_MODELS_DIR / file_name
+        if not model_path.exists() or not model_path.is_file():
+            raise HTTPException(status_code=404, detail=f"Model file '{file_name}' not found.")
+
+        # Ensure path traversal is not possible (though Path helps here)
+        try:
+            # Resolve the path to ensure it's within the intended directory
+            resolved_path = model_path.resolve()
+            if not str(resolved_path).startswith(str(SERVER_AI_MODELS_DIR.resolve())):
+                 raise HTTPException(status_code=403, detail="Access to this file is forbidden.")
+        except Exception as e: # Catches potential errors during path resolution
+            raise HTTPException(status_code=400, detail=f"Invalid file name: {str(e)}")
+
+
+        return FileResponse(
+            path=str(model_path),
+            filename=file_name,
+            media_type='application/octet-stream' # Generic binary file type
+        )
