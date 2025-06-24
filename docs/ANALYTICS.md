@@ -2,42 +2,82 @@ Advanced Analytics: Predictive performance modeling, ROI measurement tools
 
 The Advanced Analytics feature provides comprehensive predictive modeling and ROI measurement capabilities, enabling data-driven decision making and performance optimization for enterprise productivity platforms.
 
-   - **Multi-dimensional Performance Metrics**:
-     - `AnalyticsModel` configures dimensions, metrics, and aggregation types. Predictions can store multi-dimensional results.
-     - `PerformanceMetric` model now includes `dimensions_values` (JSON) to tag specific metric records with their dimensional context (e.g., `{"country": "USA", "department": "Sales"}`).
-     - `PerformanceMetric` also includes `predicted_by_model_id` to link a metric value if it's a forecast from an `AnalyticsModel`.
+## Core Enhancements (July 2025)
 
-   - **Predictive Performance Modeling**:
-     - Services enhanced for training models and generating multi-dimensional predictions or forecasts.
-     - `AnalyticsService._generate_training_data` and `_calculate_mock_prediction` are more dynamic to support these multi-dimensional aspects.
+Recent development has significantly enhanced the advanced performance analytics capabilities of the platform. These enhancements provide a more robust backend foundation for delivering deep insights. Key areas of improvement include:
 
-   - **Comparative Benchmarking**:
-     - `ComparativeBenchmark` model (`comparative_benchmark.py`) stores industry/peer benchmarks.
-     - `AnalyticsPrediction.benchmark_comparison_data` stores comparison results for predictions.
-     - `AnalyticsService` includes `add_benchmark_data`, `get_benchmarks`, and `make_prediction_with_benchmark`.
-     - **New**: `AnalyticsService.compare_performance_metric_with_benchmarks` method allows direct comparison of any recorded `PerformanceMetric` against the benchmark dataset.
+### 1. Multi-dimensional Performance Metrics
+-   **Functionality**: The system now supports defining, storing, and querying performance metrics that can be broken down by multiple business dimensions (e.g., sales by region and product, bugs per feature and module).
+-   **Models & Schemas**:
+    -   `PerformanceMetric` model's `dimensions_values` (JSON) field stores these dimensional attributes.
+    -   `AnalyticsModel` can be configured with specific `dimensions` (list of dimension names) and `metrics` (list of metric names) it operates on, along with `aggregation_types` (dict specifying aggregation per metric like sum, mean).
+-   **Services (`AnalyticsService`)**:
+    -   `get_performance_metrics`: Enhanced to support filtering by specific dimension values.
+    -   `calculate_multi_dimensional_metrics`: Processes a list of data records (dictionaries) into a Pandas DataFrame, then groups by dimensions and aggregates metrics according to the `AnalyticsModel` configuration.
+-   **API (`analytics_router.py`)**:
+    -   `GET /analytics/metrics`: Now accepts dynamic query parameters prefixed with `dimension_` (e.g., `?dimension_region=NA&dimension_department=Sales`) for filtering.
+    -   `POST /analytics/models/{model_id}/multi_dimensional_summary`: New endpoint that accepts a list of data records and returns aggregated multi-dimensional results based on the specified model's configuration.
 
-   - **ROI Measurement Tools**:
-     - `ROICalculation` model and services provide robust ROI analysis.
-     - **Enhanced**: `AnalyticsService.create_roi_calculation` now supports `metric_links` in its input, allowing cost/benefit line items to be dynamically populated from `PerformanceMetric` records or `AnalyticsPrediction` results.
-     
-   - **Custom Analytics Dashboards**:
-     - **New Models** (`dashboard_custom.py`): `AnalyticsDashboard` (stores dashboard configuration, layout, owner) and `DashboardWidget` (stores widget type, title, data source, display options).
-     - **New Service** (`dashboard_service_custom.py`): `CustomDashboardService` provides CRUD operations for these dashboards and widgets, and includes `get_widget_data(widget_id)` to fetch data for a widget based on its `data_source_config`. This method is designed to call other services like `AnalyticsService` to retrieve the actual data.
-     - **New Schemas** (`analytics_schemas.py`): Pydantic schemas for `AnalyticsDashboard`, `DashboardWidgetConfig`, and related inputs/outputs.
-   - **Enhanced Reporting**: Conceptual schemas for report definitions, scheduling, and export are defined in `analytics_schemas.py`. Backend implementation for generation and scheduling is pending further development.
-   - **API Endpoints**:
-     - A new router `advanced_analytics_router.py` exposes endpoints for managing performance metrics (including benchmark comparison), custom dashboards, and widgets. It also includes placeholder endpoints for other analytics entities.
-   - Comprehensive analytics models with machine learning algorithms (Linear Regression, Random Forest, Logistic Regression).
-   - Predictive modeling service with automated training, validation, and performance tracking.
-   - Complete REST API endpoints for model management, predictions, training jobs, analytics dashboards, and custom dashboard configurations.
-   - ROI calculation engine with investment tracking, benefits analysis, and portfolio-level ROI metrics.
-   - Performance metrics system with trend analysis, threshold monitoring, and automated insights.
-   - Advanced features: Feature importance analysis, prediction confidence intervals, model versioning.
-   - Enterprise-grade analytics with multi-tenant support, audit logging, and comprehensive reporting.
+### 2. Predictive Performance Modeling
+-   **Functionality**: The backend for predictive modeling has been upgraded from mock implementations to a basic functional machine learning pipeline using `scikit-learn`.
+-   **Models & Schemas**:
+    -   `AnalyticsModel` updated with `model_path` (String) to store the path to the serialized model file and `training_metadata` (JSON) to store processed feature names, original categorical features, etc.
+-   **Services (`AnalyticsService`)**:
+    -   `_execute_training`:
+        -   Performs basic preprocessing: one-hot encoding for categorical features (identified from `model.features` and data types) using `pandas.get_dummies()`. Numeric features are used directly. Simple mean imputation for NaNs in numeric features post-encoding.
+        -   Trains `scikit-learn` models based on `AnalyticsModel.algorithm` and `hyperparameters`.
+        -   Persists trained models using `joblib.dump()` to the path stored in `model.model_path`.
+        -   Stores essential metadata (e.g., list of feature columns after encoding, original categorical feature names) in `model.training_metadata`.
+    -   `_execute_prediction_pipeline` (refactored from `_calculate_mock_prediction`):
+        -   Loads the persisted model using `joblib.load()` from `model.model_path`.
+        -   Preprocesses input features (provided as a dictionary) consistently with the training phase, using `model.training_metadata` to align columns (adding missing dummies with 0, reordering) before prediction.
+        -   Performs prediction using the loaded model's `predict()` or `predict_proba()` method.
+-   **API**: Endpoints for model training and prediction (`POST /analytics/models/{model_id}/train`, `POST /analytics/models/{model_id}/predict`) now leverage this functional backend (though router responses might still be illustrative mocks pending full integration).
 
-Advanced Analytics feature is significantly enhanced with Phase 4 capabilities, including multi-dimensional analytics, benchmarking, and customizable dashboards, building upon the existing predictive modeling, ROI measurement, and performance analytics.
-- Pyrefly errors mentioned previously are considered static type checking warnings not affecting runtime.
+### 3. Comparative Benchmarking
+-   **Functionality**: The system for managing and utilizing comparative benchmarks has been fleshed out.
+-   **Models & Schemas**: `ComparativeBenchmark` model and associated Pydantic schemas are in place.
+-   **Services (`AnalyticsService`)**:
+    -   Provides methods like `add_benchmark_data`, `get_benchmarks` (fetches global and tenant-specific), `make_prediction_with_benchmark` (attaches comparison to `AnalyticsPrediction`), `compare_performance_metric_with_benchmarks`, and CRUD operations for benchmarks.
+    -   Authorization logic for update/delete clarified: tenant users manage their tenant's benchmarks; global benchmark modification requires higher privileges (not yet fully implemented in RBAC).
+-   **API (`analytics_router.py`)**:
+    -   Full CRUD API endpoints for `/analytics/benchmarks` are defined.
+    -   `POST /analytics/performance_metrics/{metric_id}/compare_benchmarks` endpoint defined for direct metric-to-benchmark comparison.
+    -   (Router endpoints largely use mock logic for now, but interfaces are defined).
+
+### 4. ROI Measurement Tools
+-   **Functionality**: Return on Investment (ROI) calculation tools have been reviewed and refined.
+-   **Models & Schemas**: `ROICalculation` model (with methods `update_totals`, `calculate_roi_metrics`) and Pydantic schemas are robust. `ROIMetricLink` schema allows linking metrics/predictions to ROI fields.
+-   **Services (`AnalyticsService`)**:
+    -   `create_roi_calculation`: Supports `metric_links` to dynamically populate cost/benefit fields from `PerformanceMetric` or `AnalyticsPrediction` data.
+    -   `update_roi_calculation`: Updates ROI record fields; recalculates totals and ROI metrics if relevant numeric fields change. Assumes if `metric_links` definition changes, user provides updated numeric values.
+-   **API (`analytics_router.py`)**:
+    -   `POST /analytics/roi` and `GET /analytics/roi` updated to use Pydantic schemas.
+    -   New endpoints `GET /analytics/roi/{calculation_id}`, `PUT /analytics/roi/{calculation_id}`, `DELETE /analytics/roi/{calculation_id}` added.
+    -   (Router endpoints largely use mock logic for now).
+
+### 5. Custom Analytics Dashboards (Foundation)
+-   **Functionality**: A foundational backend system for custom analytics dashboards has been implemented.
+-   **Models (`models/analytics.py`)**:
+    -   `AnalyticsDashboard`: Stores dashboard configuration (name, description, owner (`user_id`), `tenant_id`, `layout` as JSON).
+    -   `DashboardWidgetConfig`: Stores individual widget configurations (type, title, `data_source_config` as JSON, `display_options` as JSON, `dashboard_id`, `tenant_id`).
+-   **Schemas (`schemas/analytics_schemas.py`)**: Corresponding Pydantic schemas defined (`DashboardCreate`, `DashboardInDB`, `WidgetConfigCreate`, `WidgetConfigInDB`, `LayoutItem`, etc.).
+-   **Services (`AnalyticsService`)**:
+    -   Added CRUD methods for `AnalyticsDashboard` and `DashboardWidgetConfig` resources (e.g., `create_dashboard`, `get_dashboard`, `add_widget_to_dashboard`, `update_dashboard_layout`).
+-   **API (`analytics_router.py`)**:
+    -   Basic CRUD API endpoints under `/analytics/dashboards` (and nested `/widgets`) defined for managing dashboard and widget configurations.
+    -   (Router endpoints largely use mock logic for now).
+-   **Focus**: This stage primarily provides backend storage and management of dashboard configurations. Frontend rendering and dynamic data fetching for widgets are subsequent development phases.
+
+### 6. Database Migrations
+-   An Alembic migration script (`20250704_0001_add_dashboard_and_model_enhancements.py`) has been created to apply all schema changes:
+    -   Adds `model_path` and `training_metadata` to `analytics_models`.
+    -   Creates `analytics_dashboards` and `dashboard_widget_configs` tables.
+
+These enhancements provide a strong backend for sophisticated performance analytics and reporting, paving the way for advanced data visualization and actionable insights for users. Router endpoint implementations are the next step to make these fully functional via the API.
+
+---
+*(Existing content from "Phase 4 Implementation Highlights" onwards remains unchanged)*
 
 **📊 Phase 4 Implementation Highlights:**
 

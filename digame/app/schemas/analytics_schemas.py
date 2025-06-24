@@ -95,6 +95,9 @@ class BenchmarkComparisonResult(BaseModel):
     comparison_unit: Optional[str] = None
     difference_comment: Optional[str] = None
 
+class BenchmarkComparisonInputOptional(BaseModel): # New schema
+    benchmark_filter_params: Optional[Dict[str, Any]] = Field(None, example={"industry_segment": "SaaS"})
+
 
 # --- AnalyticsModel Schemas ---
 class AnalyticsModelBase(BaseModel):
@@ -160,6 +163,8 @@ class AnalyticsModelInDB(AnalyticsModelBase, BaseAuditModel, TenantAssociatedMod
     prediction_count: Optional[int] = 0
     last_prediction_at: Optional[datetime] = None
     created_by_user_id: int
+    model_path: Optional[str] = None
+    training_metadata: Optional[Dict[str, Any]] = None
 
     class Config:
         orm_mode = True
@@ -497,3 +502,84 @@ class ReportExportRequest(BaseModel):
     ad_hoc_definition: Optional[ReportDefinitionBase] = None # For on-the-fly reports
     output_format: Optional[str] = "pdf" # Override format if needed
     # Ensure either report_definition_id or ad_hoc_definition is provided
+
+class MultiDimensionalDataRecord(BaseModel):
+    # This is a flexible schema, assuming records are dicts.
+    # Specific expected fields would depend on the AnalyticsModel's dimensions and metrics.
+    # Example: {"date": "2023-01-01", "country": "US", "department": "Sales", "revenue": 100, "sessions": 50}
+    __root__: Dict[str, Any] # Allows any dict structure for a record
+
+class MultiDimensionalDataPayload(BaseModel):
+    records: List[MultiDimensionalDataRecord] = Field(..., description="List of data records for multi-dimensional analysis.")
+
+
+# --- Dashboard Schemas (Revisiting and Finalizing) ---
+
+# Renaming DashboardWidgetDataSource to WidgetDataSourceConfig for clarity
+class WidgetDataSourceConfig(BaseModel):
+    type: str = Field(..., example="performance_metric", description="Source type, e.g., performance_metric, analytics_prediction, roi_calculation")
+    params: Dict[str, Any] = Field(..., description="Parameters to query the data source, e.g., {'metric_name': 'cpu_utilization'}")
+
+# Renaming DashboardWidgetConfigBase to WidgetConfigBase
+class WidgetConfigBase(BaseModel):
+    widget_type: str = Field(..., example="line_chart", description="Type of widget, e.g., kpi_card, line_chart")
+    title: str = Field(..., example="CPU Utilization Over Time")
+    data_source_config: WidgetDataSourceConfig = Field(..., description="Configuration for the widget's data source")
+    display_options: Optional[Dict[str, Any]] = Field(default_factory=dict, description="Visual display options for the widget")
+
+class WidgetConfigCreate(WidgetConfigBase):
+    # dashboard_id will be set by path parameter or context in service
+    pass
+
+class WidgetConfigUpdate(BaseModel):
+    widget_type: Optional[str] = None
+    title: Optional[str] = None
+    data_source_config: Optional[WidgetDataSourceConfig] = None
+    display_options: Optional[Dict[str, Any]] = None
+
+class WidgetConfigInDB(WidgetConfigBase, BaseAuditModel, TenantAssociatedModel):
+    id: int
+    widget_uuid: str
+    dashboard_id: int # Explicitly show it's linked
+
+    class Config:
+        orm_mode = True
+
+# Renaming DashboardLayoutItem to LayoutItem
+class LayoutItem(BaseModel):
+    widget_config_id: int = Field(..., description="ID of the DashboardWidgetConfig this layout item refers to")
+    x: int = Field(..., description="Grid position X (column)")
+    y: int = Field(..., description="Grid position Y (row)")
+    w: int = Field(..., description="Width in grid units")
+    h: int = Field(..., description="Height in grid units")
+    static: Optional[bool] = Field(default=False, description="If true, widget cannot be moved or resized by user")
+
+# Renaming AnalyticsDashboardBase to DashboardBase
+class DashboardBase(BaseModel):
+    name: str = Field(..., example="My Main Dashboard")
+    description: Optional[str] = None
+    tags: Optional[List[str]] = Field(default_factory=list, example=["overview", "performance"])
+
+class DashboardCreate(DashboardBase):
+    # user_id and tenant_id will be set from context in service
+    # Initial layout and widgets can be empty or specified
+    layout: Optional[List[LayoutItem]] = Field(default_factory=list)
+    # Widgets can be created along with the dashboard or added later
+    widgets: Optional[List[WidgetConfigCreate]] = Field(default_factory=list, description="Initial widgets to create for this dashboard")
+
+
+class DashboardUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    tags: Optional[List[str]] = None
+    layout: Optional[List[LayoutItem]] = None # To update layout separately is also an option
+
+class DashboardInDB(DashboardBase, BaseAuditModel, TenantAssociatedModel):
+    id: int
+    dashboard_uuid: str
+    user_id: int
+    layout: List[LayoutItem] = Field(default_factory=list) # Ensure layout is always present, even if empty
+    widgets: List[WidgetConfigInDB] = Field(default_factory=list) # Full widget configs embedded
+
+    class Config:
+        orm_mode = True
