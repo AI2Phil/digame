@@ -211,7 +211,8 @@ Example: API documentation should be updated as new endpoints are added/modified
 **Suggested Prompt for Phase 2**:
 
 ```
-Please complete the Digame mobile application's AI capabilities by implementing the remaining Mobile AI Feature Enhancement tasks (Phase 2). The foundation is established with Enhanced Mobile NLU and Phase 1 implementations (notification optimization + insights dashboard):
+Please complete the Digame mobile application's AI capabilities by implementing the remaining Mobile AI Feature Enhancement tasks (Phase 2). 
+The foundation is established with Enhanced Mobile NLU and Phase 1 implementations (notification optimization + insights dashboard):
 
 ## Mobile AI Feature Enhancement Tasks - Phase 2
 
