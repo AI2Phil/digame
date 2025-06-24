@@ -1,131 +1,86 @@
-import React, { forwardRef } from 'react';
+import React from 'react';
+import { Loader2 } from 'lucide-react';
 
-const Button = forwardRef(({ 
-  children, 
-  variant = 'primary', 
-  size = 'md', 
-  disabled = false, 
+const Button = React.forwardRef(({
+  children,
+  variant = 'primary',
+  size = 'md',
   loading = false,
-  icon,
-  iconPosition = 'left',
-  fullWidth = false,
+  disabled = false,
   className = '',
   onClick,
   type = 'button',
-  ...props 
+  'aria-label': ariaLabel,
+  ...props
 }, ref) => {
-  
-  // Base button classes
   const baseClasses = `
-    inline-flex items-center justify-center font-medium rounded-lg
-    transition-all duration-200 ease-in-out
-    focus:outline-none focus:ring-2 focus:ring-offset-2
+    inline-flex items-center justify-center gap-2 font-medium rounded-lg
+    transition-all duration-200 ease-in-out focus-visible
     disabled:opacity-50 disabled:cursor-not-allowed
-    relative overflow-hidden
+    theme-transition
   `;
 
-  // Size variants
-  const sizeClasses = {
-    xs: 'px-2 py-1 text-xs h-6',
-    sm: 'px-3 py-1.5 text-sm h-8',
-    md: 'px-4 py-2 text-sm h-10',
-    lg: 'px-6 py-3 text-base h-12',
-    xl: 'px-8 py-4 text-lg h-14'
-  };
-
-  // Variant styles
-  const variantClasses = {
+  const variants = {
     primary: `
-      bg-gradient-to-r from-blue-600 to-blue-700 text-white
-      hover:from-blue-700 hover:to-blue-800
-      focus:ring-blue-500
-      shadow-lg hover:shadow-xl
-      transform hover:-translate-y-0.5
+      bg-blue-600 hover:bg-blue-700 text-white shadow-sm hover:shadow-md
+      dark:bg-blue-500 dark:hover:bg-blue-600
+      focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
+      dark:focus:ring-offset-gray-800
     `,
     secondary: `
-      bg-white text-gray-900 border border-gray-300
-      hover:bg-gray-50 hover:border-gray-400
-      focus:ring-gray-500
-      shadow-sm hover:shadow-md
-    `,
-    ghost: `
-      bg-transparent text-gray-700 
-      hover:bg-gray-100 hover:text-gray-900
-      focus:ring-gray-500
-    `,
-    destructive: `
-      bg-gradient-to-r from-red-600 to-red-700 text-white
-      hover:from-red-700 hover:to-red-800
-      focus:ring-red-500
-      shadow-lg hover:shadow-xl
-      transform hover:-translate-y-0.5
+      bg-gray-100 hover:bg-gray-200 text-gray-900 border border-gray-300
+      dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-100 dark:border-gray-600
+      focus:ring-2 focus:ring-gray-500 focus:ring-offset-2
+      dark:focus:ring-offset-gray-800
     `,
     outline: `
-      bg-transparent border-2 border-blue-600 text-blue-600
-      hover:bg-blue-600 hover:text-white
-      focus:ring-blue-500
-      transition-colors duration-200
+      bg-transparent hover:bg-gray-50 text-gray-700 border border-gray-300
+      dark:hover:bg-gray-800 dark:text-gray-300 dark:border-gray-600
+      focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
+      dark:focus:ring-offset-gray-800
+    `,
+    ghost: `
+      bg-transparent hover:bg-gray-100 text-gray-700
+      dark:hover:bg-gray-800 dark:text-gray-300
+      focus:ring-2 focus:ring-gray-500 focus:ring-offset-2
+      dark:focus:ring-offset-gray-800
+    `,
+    danger: `
+      bg-red-600 hover:bg-red-700 text-white shadow-sm hover:shadow-md
+      dark:bg-red-500 dark:hover:bg-red-600
+      focus:ring-2 focus:ring-red-500 focus:ring-offset-2
+      dark:focus:ring-offset-gray-800
     `,
     success: `
-      bg-gradient-to-r from-green-600 to-green-700 text-white
-      hover:from-green-700 hover:to-green-800
-      focus:ring-green-500
-      shadow-lg hover:shadow-xl
-      transform hover:-translate-y-0.5
+      bg-green-600 hover:bg-green-700 text-white shadow-sm hover:shadow-md
+      dark:bg-green-500 dark:hover:bg-green-600
+      focus:ring-2 focus:ring-green-500 focus:ring-offset-2
+      dark:focus:ring-offset-gray-800
     `,
     warning: `
-      bg-gradient-to-r from-orange-600 to-orange-700 text-white
-      hover:from-orange-700 hover:to-orange-800
-      focus:ring-orange-500
-      shadow-lg hover:shadow-xl
-      transform hover:-translate-y-0.5
+      bg-yellow-500 hover:bg-yellow-600 text-white shadow-sm hover:shadow-md
+      dark:bg-yellow-600 dark:hover:bg-yellow-700
+      focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2
+      dark:focus:ring-offset-gray-800
     `
   };
 
-  // Loading spinner component
-  const LoadingSpinner = () => (
-    <svg 
-      className="animate-spin h-4 w-4" 
-      xmlns="http://www.w3.org/2000/svg" 
-      fill="none" 
-      viewBox="0 0 24 24"
-    >
-      <circle 
-        className="opacity-25" 
-        cx="12" 
-        cy="12" 
-        r="10" 
-        stroke="currentColor" 
-        strokeWidth="4"
-      />
-      <path 
-        className="opacity-75" 
-        fill="currentColor" 
-        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-      />
-    </svg>
-  );
+  const sizes = {
+    sm: 'px-3 py-1.5 text-sm',
+    md: 'px-4 py-2 text-sm',
+    lg: 'px-6 py-3 text-base',
+    xl: 'px-8 py-4 text-lg'
+  };
 
-  // Shine effect for primary buttons
-  const ShineEffect = () => (
-    <div className="absolute inset-0 -top-px overflow-hidden rounded-lg">
-      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 -translate-x-full group-hover:animate-shine" />
-    </div>
-  );
-
-  // Combine all classes
-  const buttonClasses = `
+  const classes = `
     ${baseClasses}
-    ${sizeClasses[size]}
-    ${variantClasses[variant]}
-    ${fullWidth ? 'w-full' : ''}
-    ${loading ? 'cursor-wait' : ''}
+    ${variants[variant]}
+    ${sizes[size]}
     ${className}
-    group
-  `.trim().replace(/\s+/g, ' ');
+  `.replace(/\s+/g, ' ').trim();
 
   const handleClick = (e) => {
-    if (disabled || loading) {
+    if (loading || disabled) {
       e.preventDefault();
       return;
     }
@@ -136,102 +91,21 @@ const Button = forwardRef(({
     <button
       ref={ref}
       type={type}
-      className={buttonClasses}
-      disabled={disabled || loading}
+      className={classes}
       onClick={handleClick}
+      disabled={disabled || loading}
+      aria-label={ariaLabel}
+      aria-busy={loading}
       {...props}
     >
-      {/* Shine effect for gradient buttons */}
-      {(variant === 'primary' || variant === 'destructive' || variant === 'success' || variant === 'warning') && (
-        <ShineEffect />
-      )}
-      
-      {/* Loading state */}
       {loading && (
-        <div className="absolute inset-0 flex items-center justify-center">
-          <LoadingSpinner />
-        </div>
+        <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
       )}
-      
-      {/* Button content */}
-      <div className={`flex items-center space-x-2 ${loading ? 'opacity-0' : 'opacity-100'}`}>
-        {/* Left icon */}
-        {icon && iconPosition === 'left' && (
-          <span className="flex-shrink-0">
-            {typeof icon === 'string' ? <span>{icon}</span> : icon}
-          </span>
-        )}
-        
-        {/* Button text */}
-        {children && (
-          <span className="truncate">
-            {children}
-          </span>
-        )}
-        
-        {/* Right icon */}
-        {icon && iconPosition === 'right' && (
-          <span className="flex-shrink-0">
-            {typeof icon === 'string' ? <span>{icon}</span> : icon}
-          </span>
-        )}
-      </div>
+      {children}
     </button>
   );
 });
 
 Button.displayName = 'Button';
 
-// Button group component for related actions
-export const ButtonGroup = ({ children, className = '', orientation = 'horizontal' }) => {
-  const groupClasses = `
-    inline-flex
-    ${orientation === 'horizontal' ? 'flex-row' : 'flex-col'}
-    ${orientation === 'horizontal' ? '[&>button]:rounded-none [&>button:first-child]:rounded-l-lg [&>button:last-child]:rounded-r-lg' : '[&>button]:rounded-none [&>button:first-child]:rounded-t-lg [&>button:last-child]:rounded-b-lg'}
-    ${orientation === 'horizontal' ? '[&>button:not(:last-child)]:border-r-0' : '[&>button:not(:last-child)]:border-b-0'}
-    ${className}
-  `;
-
-  return (
-    <div className={groupClasses}>
-      {children}
-    </div>
-  );
-};
-
-// Icon button component
-export const IconButton = forwardRef(({ 
-  icon, 
-  'aria-label': ariaLabel,
-  size = 'md',
-  variant = 'ghost',
-  className = '',
-  ...props 
-}, ref) => {
-  const iconSizes = {
-    xs: 'w-6 h-6',
-    sm: 'w-8 h-8', 
-    md: 'w-10 h-10',
-    lg: 'w-12 h-12',
-    xl: 'w-14 h-14'
-  };
-
-  return (
-    <Button
-      ref={ref}
-      variant={variant}
-      size={size}
-      className={`${iconSizes[size]} p-0 ${className}`}
-      aria-label={ariaLabel}
-      {...props}
-    >
-      {typeof icon === 'string' ? <span className="text-lg">{icon}</span> : icon}
-    </Button>
-  );
-});
-
-IconButton.displayName = 'IconButton';
-
-// Named exports for compatibility
-export { Button };
 export default Button;

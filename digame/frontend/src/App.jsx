@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { ThemeProvider } from './contexts/ThemeContext';
 import { ToastProvider } from './components/ui/Toast';
 import { AuthProvider } from './contexts/AuthContext.tsx';
 import enhancedApiService from './services/enhancedApiService';
@@ -24,6 +25,9 @@ import FindPeersPage from './pages/FindPeersPage'; // Import FindPeersPage
 import BehavioralAnalyticsPage from './pages/BehavioralAnalyticsPage';
 import PredictiveAnalyticsPage from './pages/PredictiveAnalyticsPage';
 import ReportsPage from './pages/ReportsPage';
+// Integration Pages
+import IntegrationsPage from './pages/IntegrationsPage';
+import OAuthCallbackPage from './pages/OAuthCallbackPage';
 // Team Collaboration Pages
 import TeamsPage from './pages/TeamsPage.jsx';
 import TeamDashboardPage from './pages/TeamDashboardPage.jsx';
@@ -32,6 +36,7 @@ import WorkflowOptimizationPage from './pages/WorkflowOptimizationPage.jsx';
 // Authentication Page
 import AuthPage from './pages/AuthPage.tsx';
 import './App.css';
+import './styles/theme.css';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -145,9 +150,10 @@ function App() {
   }
 
   return (
-    <AuthProvider>
-      <ToastProvider position="top-right">
-        <Router>
+    <ThemeProvider>
+      <AuthProvider>
+        <ToastProvider position="top-right">
+          <Router>
           <div className="App">
             <Routes>
           <Route
@@ -487,17 +493,34 @@ function App() {
             }
           />
           
+          {/* Integration Management Routes */}
+          <Route
+            path="/integrations"
+            element={
+              isAuthenticated || isDemoMode ? (
+                <IntegrationsPage
+                  isDemoMode={isDemoMode}
+                  onLogout={handleLogout}
+                />
+              ) : (
+                <Navigate to="/" replace />
+              )
+            }
+          />
+          
+          <Route
+            path="/integrations/oauth/callback"
+            element={<OAuthCallbackPage />}
+          />
+          
           <Route
             path="/enterprise/integrations"
             element={
               isAuthenticated || isDemoMode ? (
-                <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-                  <div className="text-center">
-                    <div className="text-6xl mb-4">🔗</div>
-                    <h1 className="text-2xl font-bold text-gray-900 mb-2">Integration APIs</h1>
-                    <p className="text-gray-600">Third-party productivity tool integrations</p>
-                  </div>
-                </div>
+                <IntegrationsPage
+                  isDemoMode={isDemoMode}
+                  onLogout={handleLogout}
+                />
               ) : (
                 <Navigate to="/" replace />
               )
@@ -613,10 +636,11 @@ function App() {
             element={<Navigate to="/" replace />}
           />
           </Routes>
-        </div>
-      </Router>
-    </ToastProvider>
-    </AuthProvider>
+          </div>
+          </Router>
+        </ToastProvider>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
 
