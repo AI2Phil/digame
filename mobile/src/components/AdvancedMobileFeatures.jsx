@@ -337,7 +337,11 @@ const AdvancedMobileFeatures = ({ navigation }) => {
   };
 
   const viewPerformanceMetrics = () => {
-    navigation.navigate('MobileAnalytics');
+    navigation.navigate('MobileAnalytics'); // This is the old navigation
+  };
+
+  const viewInsightsDashboard = () => {
+    navigation.navigate('InsightsDashboardScreen'); // New navigation target
   };
 
   if (loading) {
@@ -388,10 +392,10 @@ const AdvancedMobileFeatures = ({ navigation }) => {
             icon="psychology"
             enabled={aiNotificationsEnabled}
             onToggle={toggleAiNotifications}
-            description="Delivers notifications at optimal times for maximum engagement"
+            description="Delivers notifications at optimal times for maximum engagement. Timings automatically adapt to your usage patterns."
             stats={[
               { label: 'Engagement Rate', value: '87%' },
-              { label: 'Optimal Times', value: '3 found' },
+              { label: 'Adaptive Mode', value: 'Active' }, // Changed 'Optimal Times' to 'Adaptive Mode'
               { label: 'Today', value: '12 sent' }
             ]}
             actionButton={{
@@ -410,11 +414,30 @@ const AdvancedMobileFeatures = ({ navigation }) => {
             nluDetails={nluInteractionDetails}
           />
 
-          {/* Advanced Analytics */}
+          {/* AI Insights Dashboard Link - using FeatureCard */}
+          <FeatureCard
+            title="AI Insights Dashboard"
+            subtitle="Personalized productivity intelligence"
+            icon="insights"
+            enabled={aiNotificationsEnabled} // Re-using aiNotificationsEnabled for the switch, or could be true
+            onToggle={toggleAiNotifications} // Or a dummy function if this switch means something else
+            description="Explore AI-driven recommendations, predictions, and suggestions to boost your productivity."
+            actionButton={{
+              title: 'Explore Insights',
+              onPress: viewInsightsDashboard,
+            }}
+          />
+          {/* The original AnalyticsCard that shows mobileAnalytics can be kept if needed,
+              or removed if InsightsDashboardScreen replaces its functionality.
+              For now, I'm replacing it. If 'MobileAnalytics' screen is still valuable,
+              another card or entry point would be needed for it.
+          */}
+          {/*
           <AnalyticsCard
             analytics={mobileAnalytics}
-            onViewDetails={viewPerformanceMetrics}
+            onViewDetails={viewPerformanceMetrics} // This navigates to 'MobileAnalytics'
           />
+          */}
 
         </View>
 
@@ -437,10 +460,10 @@ const AdvancedMobileFeatures = ({ navigation }) => {
               color="#06b6d4"
             />
             <QuickActionButton
-              icon="analytics"
-              title="Performance"
-              subtitle="View metrics"
-              onPress={viewPerformanceMetrics}
+              icon="insights" // Changed icon
+              title="AI Insights" // Changed title
+              subtitle="View dashboard" // Changed subtitle
+              onPress={viewInsightsDashboard} // Changed navigation target
               color="#10b981"
             />
             <QuickActionButton
