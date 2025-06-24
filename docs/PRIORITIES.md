@@ -214,7 +214,7 @@ Please enhance the Digame mobile application's AI capabilities by implementing t
 'Facing issues with the Jest test environment. 
 After trying to resolve module resolution errors (for expo-av, expo-notifications, @react-native-async-storage/async-storage) by adding them to the root package.json and running npm install, I encountered peer dependency issues. Using npm install --legacy-peer-deps seemed to resolve those but led to a new error: Validation Error: Module jest-expo should have "jest-preset.js" or "jest-preset.json" file at the root. This suggests the jest-expo installation might be compromised.
 Pending to fix the test environment (possiblyclean node_modules and reinstall, or is there a specific Jest/Expo configuration step I might be missing for this monorepo-like setup (root package.json + mobile/package.json)?
-
+Once the test environment issues you mentioned are resolved, these tests should be ready to run to verify the functionality.
 
 ### 2. Voice-to-Action Capabilities
 - Extend current voice recognition to execute complex multi-step actions
