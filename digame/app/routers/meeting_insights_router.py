@@ -17,17 +17,38 @@ def analyze_meeting_text_endpoint(
     service: MeetingInsightsService = Depends(get_meeting_insights_service),
 ):
     """
-    Analyzes the provided meeting text to generate a summary, key discussion points, and action items.
+    Analyzes the provided meeting text to generate a summary, key discussion points, action items,
+    and optionally, a draft follow-up email.
     This feature must be enabled for the user's tenant, and the user
-    must have a valid 'meeting_insights_service_key' in their API key settings.
+    must have a valid 'openai_api_key' in their API key settings.
     """
     try:
-        analysis_result = service.get_meeting_analysis(
-            current_user=current_user,
-            meeting_text=request_data.meeting_text
+        # The service method now expects current_user_id instead of the full UserModel object
+        analysis_result_dict = await service.get_meeting_analysis(
+            current_user_id=current_user.id,
+            meeting_text=request_data.meeting_text,
+            generate_draft_email=request_data.generate_draft_email
         )
+        # The service returns a dict, which matches MeetingAnalysisData structure
         response_data = {
             "original_text_length": len(request_data.meeting_text),
+            "analysis": schemas.MeetingAnalysisData(**analysis_result_dict)
+        }
+        return schemas.MeetingAnalysisResponse(**response_data)
+    except HTTPException as e:
+        # Re-raise HTTPExceptions directly from the service
+        raise e
+    except Exception as e:
+        # Log the error e in a real application
+        # logger.error(f"Unexpected error in analyze_meeting_text_endpoint: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"An unexpected error occurred during meeting analysis: {str(e)}"
+        )
+
+@router.get("/health", status_code=status.HTTP_200_OK)
+async def meeting_insights_health_check():
+    return {"status": "healthy", "service": "AI - Meeting Insights & Summaries"}
             "analysis": analysis_result
         }
         return schemas.MeetingAnalysisResponse(**response_data)

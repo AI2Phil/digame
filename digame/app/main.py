@@ -46,6 +46,7 @@ from .routers import user_profile_router # Import the new user profile router
 from .routers import dashboard_router # Import the dashboard router
 from .routers import team_router # Import the new team router
 from .routers import advanced_analytics_router # Import the new advanced analytics router
+from .routers import document_processing_router # Import the new document processing router
 from .api import gamification # Import the gamification API
 
 # Configure JSON logging
@@ -214,6 +215,7 @@ app.include_router(user_profile_router.router) # Add user profile router, prefix
 app.include_router(gamification.router, tags=["Gamification"]) # Add gamification router
 app.include_router(team_router.router, prefix="/api", tags=["Teams"]) # Add team router with API prefix
 app.include_router(advanced_analytics_router.router) # Add advanced analytics router, prefix and tags are in the router itself
+app.include_router(document_processing_router.router) # Add document processing router, prefix and tags are in router
 
 
 # Startup and shutdown events
