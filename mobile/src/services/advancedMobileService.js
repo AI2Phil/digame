@@ -259,6 +259,72 @@ const AdvancedMobileService = {
       throw error;
     }
   },
+
+  logUserActivity: async (activityData) => {
+    console.log('Logging user activity to backend:', activityData);
+    if (!activityData || typeof activityData !== 'object' || Object.keys(activityData).length === 0) {
+      console.warn('logUserActivity called with invalid or empty data');
+      return Promise.resolve({ status: 'no_data_logged' });
+    }
+    try {
+      // Assuming a new endpoint for logging user activity for notification optimization
+      // The actual endpoint might be different based on backend implementation.
+      const response = await authenticatedFetch(`${API_BASE_URL}/user-activity/log`, {
+        method: 'POST',
+        body: JSON.stringify(activityData),
+      });
+      console.log('User activity logged successfully:', response);
+      return response;
+    } catch (error) {
+      console.error('Error logging user activity:', error);
+      // It's important not to let activity logging errors break critical app flows.
+      // So, we catch the error and resolve, rather than rejecting.
+      return Promise.resolve({ status: 'logging_failed', error: error.message });
+    }
+  },
+
+  getPersonalizedNotificationSchedule: async () => {
+    console.log('Fetching personalized notification schedule from backend.');
+    try {
+      const schedule = await authenticatedFetch(`${API_BASE_URL}/notifications/schedule`);
+      console.log('Personalized notification schedule received:', schedule);
+      // Expected schedule format: { optimal_times: ["HH:MM", "HH:MM"], preferences: {...} }
+      // or { dynamic_triggers: [{type: "...", conditions: {...}}], ... }
+      return schedule;
+    } catch (error) {
+      console.error('Error fetching personalized notification schedule:', error);
+      // Fallback to a default schedule or empty if critical
+      return { optimal_times: [], preferences: {}, error: error.message };
+    }
+  },
+
+  getInsightsDashboardData: async () => {
+    console.log('Fetching insights dashboard data from backend.');
+    try {
+      // Assume this endpoint returns a comprehensive object with personalized recommendations,
+      // predictive analytics, AI-generated suggestions, and any current contextual insights.
+      const dashboardData = await authenticatedFetch(`${API_BASE_URL}/insights/dashboard`);
+      console.log('Insights dashboard data received:', dashboardData);
+      // Example expected structure:
+      // {
+      //   personalizedRecommendations: [ {id: "rec1", title: "...", description: "...", type: "productivity"} ],
+      //   predictiveAnalytics: { productivityScoreForecast: 85, focusTimeNextWeek: "10h" },
+      //   aiSuggestions: [ {id: "sug1", text: "Consider breaking down large tasks.", relatedGoalId: "goalX"} ],
+      //   contextualInsights: [ {id: "ctx1", message: "You often complete tasks like this in the morning."} ]
+      // }
+      return dashboardData;
+    } catch (error) {
+      console.error('Error fetching insights dashboard data:', error);
+      // Return a structured error or a default/empty state
+      return {
+        error: error.message,
+        personalizedRecommendations: [],
+        predictiveAnalytics: {},
+        aiSuggestions: [],
+        contextualInsights: []
+      };
+    }
+  },
 };
 
 export default AdvancedMobileService;
