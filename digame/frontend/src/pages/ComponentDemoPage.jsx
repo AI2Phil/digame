@@ -6,6 +6,7 @@ import Input, { SearchInput, NumberInput, FileInput } from '../components/ui/Inp
 import { DataTable } from '../components/ui/Table';
 import { Tabs, TabsList, TabsTrigger, TabsContent, TabBadge } from '../components/ui/Tabs';
 import { ToastProvider, useToast } from '../components/ui/Toast';
+import { Code } from '../components/ui/Code'; // Import Code component
 
 const ComponentDemoPage = () => {
   const [formData, setFormData] = useState({});
@@ -134,6 +135,11 @@ const ComponentDemoContent = ({
                     <Button variant="success">Success</Button>
                     <Button variant="warning">Warning</Button>
                   </div>
+                  <Code
+                    codeString={`<Button variant="primary">Primary</Button>\n<Button variant="secondary">Secondary</Button>\n<Button variant="ghost">Ghost</Button>\n<Button variant="destructive">Destructive</Button>\n<Button variant="outline">Outline</Button>\n<Button variant="success">Success</Button>\n<Button variant="warning">Warning</Button>`}
+                    language="jsx"
+                    className="mt-2"
+                  />
                 </div>
 
                 {/* Button Sizes */}
@@ -146,6 +152,11 @@ const ComponentDemoContent = ({
                     <Button size="lg">Large</Button>
                     <Button size="xl">Extra Large</Button>
                   </div>
+                  <Code
+                    codeString={`<Button size="xs">Extra Small</Button>\n<Button size="sm">Small</Button>\n<Button size="md">Medium</Button>\n<Button size="lg">Large</Button>\n<Button size="xl">Extra Large</Button>`}
+                    language="jsx"
+                    className="mt-2"
+                  />
                 </div>
 
                 {/* Button States */}
@@ -157,6 +168,11 @@ const ComponentDemoContent = ({
                     <Button icon="🚀">With Icon</Button>
                     <Button icon="📧" iconPosition="right">Icon Right</Button>
                   </div>
+                  <Code
+                    codeString={`<Button loading>Loading</Button>\n<Button disabled>Disabled</Button>\n<Button icon="🚀">With Icon</Button>\n<Button icon="📧" iconPosition="right">Icon Right</Button>`}
+                    language="jsx"
+                    className="mt-2"
+                  />
                 </div>
 
                 {/* Button Groups */}
@@ -167,6 +183,11 @@ const ComponentDemoContent = ({
                     <Button variant="outline">Center</Button>
                     <Button variant="outline">Right</Button>
                   </ButtonGroup>
+                  <Code
+                    codeString={`<ButtonGroup>\n  <Button variant="outline">Left</Button>\n  <Button variant="outline">Center</Button>\n  <Button variant="outline">Right</Button>\n</ButtonGroup>`}
+                    language="jsx"
+                    className="mt-2"
+                  />
                 </div>
 
                 {/* Icon Buttons */}
@@ -178,6 +199,11 @@ const ComponentDemoContent = ({
                     <IconButton icon="⚙️" aria-label="Settings" variant="ghost" />
                     <IconButton icon="🗑️" aria-label="Delete" variant="destructive" />
                   </div>
+                  <Code
+                    codeString={`<IconButton icon="❤️" aria-label="Like" />\n<IconButton icon="🔗" aria-label="Share" variant="outline" />\n<IconButton icon="⚙️" aria-label="Settings" variant="ghost" />\n<IconButton icon="🗑️" aria-label="Delete" variant="destructive" />`}
+                    language="jsx"
+                    className="mt-2"
+                  />
                 </div>
               </div>
             </div>
@@ -195,6 +221,11 @@ const ComponentDemoContent = ({
                     Open Alert Dialog
                   </Button>
                 </div>
+                <Code
+                  codeString={`<Button onClick={dialog.open}>Open Dialog</Button>\n<Button onClick={() => setAlertOpen(true)} variant="destructive">Open Alert Dialog</Button>`}
+                  language="jsx"
+                  className="mt-2"
+                />
 
                 <Dialog open={dialog.isOpen} onOpenChange={dialog.setIsOpen}>
                   <DialogContent>
@@ -227,6 +258,11 @@ const ComponentDemoContent = ({
                     </DialogFooter>
                   </DialogContent>
                 </Dialog>
+                <Code
+                  codeString={`<Dialog open={isOpen} onOpenChange={setIsOpen}>\n  <DialogContent>\n    <DialogHeader>\n      <DialogTitle>Dialog Title</DialogTitle>\n      <DialogDescription>Description...</DialogDescription>\n    </DialogHeader>\n    <DialogBody>...</DialogBody>\n    <DialogFooter>\n      <Button variant="ghost" onClick={closeDialog}>Cancel</Button>\n      <Button onClick={closeDialog}>Confirm</Button>\n    </DialogFooter>\n  </DialogContent>\n</Dialog>`}
+                  language="jsx"
+                  className="mt-2"
+                />
 
                 <AlertDialog
                   open={alertOpen}
@@ -239,6 +275,11 @@ const ComponentDemoContent = ({
                   onConfirm={() => {
                     toast.success('Deleted', 'Item has been deleted successfully');
                   }}
+                />
+                 <Code
+                  codeString={`<AlertDialog\n  open={isAlertOpen}\n  onOpenChange={setIsAlertOpen}\n  title="Confirm Action"\n  description="Are you sure?"\n  confirmText="Confirm"\n  onConfirm={handleConfirm}\n/>`}
+                  language="jsx"
+                  className="mt-2"
                 />
               </div>
             </div>
@@ -316,6 +357,11 @@ const ComponentDemoContent = ({
                   Submit Form
                 </FormSubmitButton>
               </Form>
+              <Code
+                codeString={`<Form onSubmit={handleSubmit} validation={rules}>\n  <FormField name="username">\n    <FormLabel>Username</FormLabel>\n    <FormInput name="username" />\n  </FormField>\n  <FormSubmitButton>Submit</FormSubmitButton>\n</Form>`}
+                language="jsx"
+                className="mt-4"
+              />
             </div>
           </TabsContent>
 
@@ -334,8 +380,13 @@ const ComponentDemoContent = ({
                     <Input variant="flushed" placeholder="Flushed input" />
                     <Input placeholder="With left icon" icon="🔍" />
                     <Input placeholder="With right icon" icon="📧" iconPosition="right" />
-                    <Input placeholder="Clearable input" clearable value="Clear me!" />
+                    <Input placeholder="Clearable input" clearable defaultValue="Clear me!" />
                   </div>
+                  <Code
+                    codeString={`<Input placeholder="Default" />\n<Input variant="filled" placeholder="Filled" />\n<Input placeholder="With icon" icon="🔍" />`}
+                    language="jsx"
+                    className="mt-2"
+                  />
                 </div>
 
                 {/* Input States */}
@@ -349,6 +400,11 @@ const ComponentDemoContent = ({
                     <Input placeholder="Disabled state" disabled />
                     <Input type="password" placeholder="Password input" />
                   </div>
+                  <Code
+                    codeString={`<Input placeholder="Error" error />\n<Input placeholder="Loading" loading />\n<Input type="password" placeholder="Password" />`}
+                    language="jsx"
+                    className="mt-2"
+                  />
                 </div>
 
                 {/* Special Inputs */}
@@ -360,7 +416,7 @@ const ComponentDemoContent = ({
                       onSearch={(term) => console.log('Searching:', term)}
                     />
                     <NumberInput 
-                      value="10" 
+                      defaultValue="10"
                       min={0} 
                       max={100} 
                       placeholder="Number input"
@@ -371,6 +427,11 @@ const ComponentDemoContent = ({
                       onChange={(e) => console.log('Files:', e.target.files)}
                     />
                   </div>
+                  <Code
+                    codeString={`<SearchInput placeholder="Search..." />\n<NumberInput defaultValue="10" min={0} max={100} />\n<FileInput accept="image/*" multiple />`}
+                    language="jsx"
+                    className="mt-2"
+                  />
                 </div>
               </div>
             </div>
@@ -396,6 +457,11 @@ const ComponentDemoContent = ({
                 onSelectionChange={(selected) => {
                   console.log('Selected rows:', selected);
                 }}
+              />
+              <Code
+                codeString={`<DataTable\n  data={data}\n  columns={columns}\n  searchable\n  filterable\n  sortable\n  pagination\n  pageSize={5}\n/>`}
+                language="jsx"
+                className="mt-4"
               />
             </div>
           </TabsContent>
@@ -434,6 +500,11 @@ const ComponentDemoContent = ({
                       </div>
                     </TabsContent>
                   </Tabs>
+                  <Code
+                    codeString={`<Tabs defaultValue="tab1">\n  <TabsList>\n    <TabsTrigger value="tab1">Tab 1</TabsTrigger>\n    <TabsTrigger value="tab2">Tab 2</TabsTrigger>\n  </TabsList>\n  <TabsContent value="tab1">Content 1</TabsContent>\n  <TabsContent value="tab2">Content 2</TabsContent>\n</Tabs>`}
+                    language="jsx"
+                    className="mt-2"
+                  />
                 </div>
 
                 {/* Pills Variant */}
@@ -465,6 +536,11 @@ const ComponentDemoContent = ({
                       </div>
                     </TabsContent>
                   </Tabs>
+                  <Code
+                    codeString={`<Tabs defaultValue="pill1" variant="pills">\n  <TabsList>\n    <TabsTrigger value="pill1"><TabBadge count={5}>Messages</TabBadge></TabsTrigger>\n  </TabsList>\n  <TabsContent value="pill1">...</TabsContent>\n</Tabs>`}
+                    language="jsx"
+                    className="mt-2"
+                  />
                 </div>
 
                 {/* Vertical Tabs */}
@@ -502,6 +578,11 @@ const ComponentDemoContent = ({
                       </div>
                     </TabsContent>
                   </Tabs>
+                  <Code
+                    codeString={`<Tabs defaultValue="vert1" orientation="vertical">...</Tabs>`}
+                    language="jsx"
+                    className="mt-2"
+                  />
                 </div>
               </div>
             </div>
@@ -532,6 +613,11 @@ const ComponentDemoContent = ({
                       Default Toast
                     </Button>
                   </div>
+                  <Code
+                    codeString={`toast.success('Success!', 'This is a success message');\ntoast.error('Error!', 'This is an error message');`}
+                    language="jsx"
+                    className="mt-2"
+                  />
                 </div>
 
                 <div>
@@ -552,6 +638,11 @@ const ComponentDemoContent = ({
                   >
                     Promise Toast Demo
                   </Button>
+                  <Code
+                    codeString={`toast.promise(myPromise,\n  {\n    loading: { title: 'Loading...' },\n    success: { title: 'Success!' },\n    error: { title: 'Error!' }\n  }\n);`}
+                    language="jsx"
+                    className="mt-2"
+                  />
                 </div>
               </div>
             </div>

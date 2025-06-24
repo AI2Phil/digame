@@ -18,6 +18,7 @@ import PerformanceMonitoringSection from '../components/analytics/PerformanceMon
 import UserBehaviorAnalyticsSection from '../components/analytics/UserBehaviorAnalyticsSection';
 import ApiAnalyticsSection from '../components/analytics/ApiAnalyticsSection';
 import MobileAnalyticsSection from '../components/analytics/MobileAnalyticsSection';
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '../components/ui/Resizable'; // Import Resizable components
 
 const AnalyticsDashboardPage = () => {
   const navigate = useNavigate();
@@ -264,10 +265,24 @@ const MetricCard = ({ title, value, change, trend, icon: Icon, color }) => {
 // Overview Section Component
 const OverviewSection = ({ analyticsData }) => (
   <div className="space-y-6">
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <SystemHealthOverview data={analyticsData} />
-      <RealTimeMetrics data={analyticsData} />
-    </div>
+    <ResizablePanelGroup
+      direction="horizontal"
+      className="rounded-lg border min-h-[300px] md:min-h-[400px]" // Added min-height for better UX
+    >
+      <ResizablePanel defaultSize={50}>
+        <div className="p-4 h-full overflow-auto"> {/* Added padding and overflow */}
+          <SystemHealthOverview data={analyticsData} />
+        </div>
+      </ResizablePanel>
+      <ResizableHandle withHandle />
+      <ResizablePanel defaultSize={50}>
+        <div className="p-4 h-full overflow-auto"> {/* Added padding and overflow */}
+          <RealTimeMetrics data={analyticsData} />
+        </div>
+      </ResizablePanel>
+    </ResizablePanelGroup>
+
+    {/* These are kept outside the resizable panel for now, or could be part of another one */}
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <TopPagesCard />
       <AlertsAndIssuesCard />

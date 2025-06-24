@@ -1,24 +1,11 @@
 import React, { useState, useEffect } from 'react';
-// Step 1: Assume Recharts is installed and import necessary components.
-// In a real environment: npm install recharts
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { Chart } from '../ui/Chart'; // Import the standard Chart component
 import enhancedApiService from '../../services/enhancedApiService';
+import { Skeleton } from '../ui/Skeleton'; // Import Skeleton for loading state
 
-// Helper function to format date as YYYY-MM-DD (keep existing)
-const formatDate = (date) => {
-  const d = new Date(date);
-  let month = '' + (d.getMonth() + 1);
-  let day = '' + d.getDate();
-  const year = d.getFullYear();
-
-  if (month.length < 2) month = '0' + month;
-  if (day.length < 2) day = '0' + day;
-
-  return [year, month, day].join('-');
-};
-
-const ProductivityChart = ({ userId }) => { // Removed default for userId, expect it from DashboardPage
-  const [chartData, setChartData] = useState([]);
+const ProductivityChart = ({ userId, dateRange }) => {
+  const [activityData, setActivityData] = useState([]);
+  const [activityLabels, setActivityLabels] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -26,7 +13,8 @@ const ProductivityChart = ({ userId }) => { // Removed default for userId, expec
     if (!userId) {
       setIsLoading(false);
       setError("User ID is required to fetch chart data.");
-      setChartData([]); // Clear data if no userId
+      setActivityData([]);
+      setActivityLabels([]);
       return;
     }
 
@@ -35,25 +23,28 @@ const ProductivityChart = ({ userId }) => { // Removed default for userId, expec
       setError(null);
       try {
         // Use enhanced API service which handles demo mode automatically
-        const data = await enhancedApiService.getProductivityData(userId, 'daily');
+        // Adapt the service call if it needs a date range or specific type of data
+        const data = await enhancedApiService.getProductivityData(
+          userId,
+          'daily',
+          dateRange?.from ? dateRange.from.toISOString().split('T')[0] : undefined,
+          dateRange?.to ? dateRange.to.toISOString().split('T')[0] : undefined
+        );
 
         if (!data || !Array.isArray(data)) {
           console.error("Fetched data is not an array:", data);
           throw new Error("Invalid data format from API.");
         }
 
-        // Transform the data for the chart
-        const formattedChartData = data.map(item => ({
-          date: item.date,
-          displayDate: new Date(item.date).toLocaleDateString(undefined, { month: 'numeric', day: 'numeric' }),
-          count: item.productivity || item.tasks || item.value || 0,
-          productivity: item.productivity || 0,
-          focus: item.focus || 0,
-          collaboration: item.collaboration || 0
-        }));
+        // Transform the data for the Chart component
+        // Chart expects `data` as an array of numbers and `labels` as an array of strings
+        const formattedData = data.map(item => item.productivity || item.tasks || item.value || 0);
+        const formattedLabels = data.map(item =>
+          new Date(item.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+        );
 
-        setChartData(formattedChartData);
-        console.log("Processed chart data for Recharts:", formattedChartData);
+        setActivityData(formattedData);
+        setActivityLabels(formattedLabels);
 
       } catch (e) {
         console.error("Failed to fetch or process chart data:", e);
@@ -64,41 +55,35 @@ const ProductivityChart = ({ userId }) => { // Removed default for userId, expec
     };
 
     fetchChartData();
-  }, [userId]);
-
+  }, [userId, dateRange]); // Add dateRange to dependency array
 
   return (
     <div className="bg-white shadow rounded-lg p-4 h-full flex flex-col">
-      <h3 className="text-lg font-semibold mb-2 text-gray-700">Productivity Trend (Activities per Day - Last 7 Days)</h3>
-      <div className="flex-grow" style={{ minHeight: '200px' }}> {/* Ensure container has height for ResponsiveContainer */}
-        {isLoading && <p className="text-gray-500 text-center pt-10">Loading chart data...</p>}
-        {error && <p className="text-sm text-red-500 text-center pt-10">Could not load chart data. ({error})</p>}
-        {!isLoading && !error && chartData.length === 0 && (
-          <p className="text-sm text-gray-500 text-center pt-10">No activity data to display chart for the last 7 days.</p>
+      {/* Title is now handled by DashboardPage, or can be added back if needed */}
+      {/* <h3 className="text-lg font-semibold mb-2 text-gray-700">Productivity Trend</h3> */}
+      <div className="flex-grow" style={{ minHeight: '250px' }}> {/* Ensure container has height */}
+        {isLoading && (
+          <div className="flex items-center justify-center h-full">
+            <Skeleton className="h-full w-full" />
+          </div>
         )}
-        {!isLoading && !error && chartData.length > 0 && (
-          // Step 2: Use ResponsiveContainer for a responsive chart.
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart
-              data={chartData}
-              margin={{
-                top: 5, right: 20, left: -20, bottom: 5, // Adjusted left margin for YAxis
-              }}
-            >
-              <CartesianGrid strokeDasharray="3 3" vertical={false} />
-              <XAxis dataKey="displayDate" tick={{ fontSize: 12 }} />
-              <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
-              <Tooltip
-                contentStyle={{ backgroundColor: 'white', border: '1px solid #ccc', borderRadius: '4px' }}
-                labelStyle={{ fontWeight: 'bold', color: '#333' }}
-                formatter={(value, name, props) => [`${value} activities`, null]}
-                labelFormatter={(label) => chartData.find(d => d.displayDate === label)?.date} // Show full date in tooltip
-              />
-              <Legend wrapperStyle={{ fontSize: '14px' }} />
-              {/* Step 3: Define the Bar. dataKey="count" should match your data structure. */}
-              <Bar dataKey="count" name="Activities" fill="#3B82F6" radius={[4, 4, 0, 0]} barSize={30} />
-            </BarChart>
-          </ResponsiveContainer>
+        {error && !isLoading && (
+          <div className="flex items-center justify-center h-full">
+            <p className="text-sm text-red-500 text-center">Could not load chart data. ({error})</p>
+          </div>
+        )}
+        {!isLoading && !error && activityData.length === 0 && (
+          <div className="flex items-center justify-center h-full">
+            <p className="text-sm text-gray-500 text-center">No activity data available for the selected period.</p>
+          </div>
+        )}
+        {!isLoading && !error && activityData.length > 0 && (
+          <Chart
+            data={activityData}
+            labels={activityLabels}
+            height={250} // Adjust height as needed
+            // className="mt-4" // Add any necessary styling
+          />
         )}
       </div>
     </div>
