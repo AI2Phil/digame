@@ -90,3 +90,28 @@ def delete_task(db: Session, task_id: int, user_id: Optional[int] = None) -> boo
 def get_tasks_by_process_note_id(db: Session, process_note_id: int) -> List[Task]:
     """Get all tasks generated from a specific process note"""
     return db.query(Task).filter(Task.process_note_id == process_note_id).all()
+
+def search_tasks_by_keywords(db: Session, user_id: int, keywords: str, limit: int = 10) -> List[Task]:
+    """Search tasks for a user by keywords in description or notes."""
+    if not keywords:
+        return []
+
+    # Split keywords string into individual terms
+    search_terms = keywords.lower().split()
+
+    # Build query filters for each term against description and notes
+    # We want tasks where ALL keywords are present in EITHER description OR notes.
+    # A more advanced search might use OR for terms, or rank by number of matches.
+    # For now, using ILIKE for case-insensitive matching.
+
+    query = db.query(Task).filter(Task.user_id == user_id)
+
+    for term in search_terms:
+        term_filter = Task.description.ilike(f"%{term}%") | Task.notes.ilike(f"%{term}%")
+        query = query.filter(term_filter)
+
+    return query.order_by(
+        Task.priority_score.desc().nullslast(),
+        Task.due_date_inferred.asc().nullslast(),
+        Task.created_at.desc()
+    ).limit(limit).all()
