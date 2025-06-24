@@ -184,31 +184,36 @@ def list_team_metrics(
 ):
     return team_service.get_metrics_for_team(team_id, current_user.id, skip, limit)
 
-@router.get("/metrics/{metric_id}", response_model=schemas.TeamPerformanceMetric) # No team_id in path, assuming metric_id is unique
+@router.get("/{team_id}/metrics/{metric_id}", response_model=schemas.TeamPerformanceMetric)
 def get_specific_team_metric(
+    team_id: int,
     metric_id: int,
     team_service: TeamService = Depends(get_team_service),
     current_user: User = Depends(get_current_active_user)
 ):
-    return team_service.get_team_metric(metric_id, current_user.id)
+    # Service method will also need to verify metric belongs to team_id for consistency,
+    # though auth is primary.
+    return team_service.get_team_metric_for_team(team_id=team_id, metric_id=metric_id, current_user_id=current_user.id)
 
 
-@router.put("/metrics/{metric_id}", response_model=schemas.TeamPerformanceMetric)
+@router.put("/{team_id}/metrics/{metric_id}", response_model=schemas.TeamPerformanceMetric)
 def update_specific_team_metric(
+    team_id: int,
     metric_id: int,
     metric_update: schemas.TeamPerformanceMetricUpdate,
     team_service: TeamService = Depends(get_team_service),
     current_user: User = Depends(get_current_active_user)
 ):
-    return team_service.update_team_metric(metric_id, metric_update, current_user.id)
+    return team_service.update_team_metric_for_team(team_id=team_id, metric_id=metric_id, metric_update=metric_update, current_user_id=current_user.id)
 
-@router.delete("/metrics/{metric_id}", status_code=status.HTTP_200_OK)
+@router.delete("/{team_id}/metrics/{metric_id}", status_code=status.HTTP_200_OK)
 def delete_specific_team_metric(
+    team_id: int,
     metric_id: int,
     team_service: TeamService = Depends(get_team_service),
     current_user: User = Depends(get_current_active_user)
 ):
-    return team_service.delete_team_metric_entry(metric_id, current_user.id)
+    return team_service.delete_team_metric_entry_for_team(team_id=team_id, metric_id=metric_id, current_user_id=current_user.id)
 
 
 # TeamSkillGap Endpoints
@@ -232,7 +237,33 @@ def list_team_skill_gaps(
 ):
     return team_service.get_skill_gaps_for_team(team_id, current_user.id, skip, limit)
 
-# ... GET by ID, PUT, DELETE for skillgaps similar to metrics ...
+@router.get("/{team_id}/skillgaps/{skill_gap_id}", response_model=schemas.TeamSkillGap)
+def get_specific_team_skill_gap(
+    team_id: int,
+    skill_gap_id: int,
+    team_service: TeamService = Depends(get_team_service),
+    current_user: User = Depends(get_current_active_user)
+):
+    return team_service.get_team_skill_gap_for_team(team_id=team_id, skill_gap_id=skill_gap_id, current_user_id=current_user.id)
+
+@router.put("/{team_id}/skillgaps/{skill_gap_id}", response_model=schemas.TeamSkillGap)
+def update_specific_team_skill_gap(
+    team_id: int,
+    skill_gap_id: int,
+    skill_gap_update: schemas.TeamSkillGapUpdate,
+    team_service: TeamService = Depends(get_team_service),
+    current_user: User = Depends(get_current_active_user)
+):
+    return team_service.update_team_skill_gap_entry_for_team(team_id=team_id, skill_gap_id=skill_gap_id, skill_gap_update=skill_gap_update, current_user_id=current_user.id)
+
+@router.delete("/{team_id}/skillgaps/{skill_gap_id}", status_code=status.HTTP_200_OK)
+def delete_specific_team_skill_gap(
+    team_id: int,
+    skill_gap_id: int,
+    team_service: TeamService = Depends(get_team_service),
+    current_user: User = Depends(get_current_active_user)
+):
+    return team_service.delete_team_skill_gap_entry_for_team(team_id=team_id, skill_gap_id=skill_gap_id, current_user_id=current_user.id)
 
 # TeamWorkflow Endpoints
 @router.post("/{team_id}/workflows", response_model=schemas.TeamWorkflow, status_code=status.HTTP_201_CREATED)
@@ -255,7 +286,34 @@ def list_team_workflows(
 ):
     return team_service.get_workflows_for_team(team_id, current_user.id, skip, limit)
 
-# ... GET by ID, PUT, DELETE for workflows similar to metrics ...
+@router.get("/{team_id}/workflows/{workflow_id}", response_model=schemas.TeamWorkflow)
+def get_specific_team_workflow(
+    team_id: int,
+    workflow_id: int,
+    team_service: TeamService = Depends(get_team_service),
+    current_user: User = Depends(get_current_active_user)
+):
+    return team_service.get_team_workflow_for_team(team_id=team_id, workflow_id=workflow_id, current_user_id=current_user.id)
+
+@router.put("/{team_id}/workflows/{workflow_id}", response_model=schemas.TeamWorkflow)
+def update_specific_team_workflow(
+    team_id: int,
+    workflow_id: int,
+    workflow_update: schemas.TeamWorkflowUpdate,
+    team_service: TeamService = Depends(get_team_service),
+    current_user: User = Depends(get_current_active_user)
+):
+    return team_service.update_team_workflow_entry_for_team(team_id=team_id, workflow_id=workflow_id, workflow_update=workflow_update, current_user_id=current_user.id)
+
+@router.delete("/{team_id}/workflows/{workflow_id}", status_code=status.HTTP_200_OK)
+def delete_specific_team_workflow(
+    team_id: int,
+    workflow_id: int,
+    team_service: TeamService = Depends(get_team_service),
+    current_user: User = Depends(get_current_active_user)
+):
+    return team_service.delete_team_workflow_entry_for_team(team_id=team_id, workflow_id=workflow_id, current_user_id=current_user.id)
+
 
 # Placeholder for remaining insight-related endpoints if they are not covered by analytics dashboard
 # e.g., specific endpoint for workflow optimization suggestions if needed separately.
