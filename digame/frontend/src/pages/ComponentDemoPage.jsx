@@ -7,6 +7,7 @@ import { DataTable } from '../components/ui/Table';
 import { Tabs, TabsList, TabsTrigger, TabsContent, TabBadge } from '../components/ui/Tabs';
 import { ToastProvider, useToast } from '../components/ui/Toast';
 import { Code } from '../components/ui/Code'; // Import Code component
+import LocalizedFormattingDemo from '../components/Demo/LocalizedFormattingDemo'; // Import the new demo component
 
 const ComponentDemoPage = () => {
   const [formData, setFormData] = useState({});
@@ -114,6 +115,7 @@ const ComponentDemoContent = ({
               <TabBadge count={3}>Tabs</TabBadge>
             </TabsTrigger>
             <TabsTrigger value="toasts">Toasts</TabsTrigger>
+            <TabsTrigger value="formatting">Formatting</TabsTrigger> {/* New Tab Trigger */}
             <TabsTrigger value="overview">Overview</TabsTrigger>
           </TabsList>
 
@@ -646,6 +648,11 @@ const ComponentDemoContent = ({
                 </div>
               </div>
             </div>
+          </TabsContent>
+
+          {/* Localized Formatting Demo */}
+          <TabsContent value="formatting">
+            <LocalizedFormattingDemo />
           </TabsContent>
 
           {/* Overview */}

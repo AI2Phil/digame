@@ -36,10 +36,13 @@ import WorkflowOptimizationPage from './pages/WorkflowOptimizationPage.jsx';
 import WorkflowAutomationPage from './pages/WorkflowAutomationPage.tsx';
 // Authentication Page
 import AuthPage from './pages/AuthPage.tsx';
+import LanguageSwitcher from './components/Layout/LanguageSwitcher'; // Import LanguageSwitcher
+import { useTranslation } from 'next-i18next'; // Import useTranslation
 import './App.css';
 import './styles/theme.css';
 
 function App() {
+  const { t } = useTranslation('common'); // Initialize useTranslation hook, assuming 'common' namespace
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isDemoMode, setIsDemoMode] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -142,8 +145,8 @@ function App() {
         <div className="text-center space-y-4">
           <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
           <div className="space-y-2">
-            <h2 className="text-lg font-semibold text-gray-900">Loading Digame...</h2>
-            <p className="text-gray-600">Preparing your digital twin platform</p>
+              <h2 className="text-lg font-semibold text-gray-900">{t('loadingDigame', 'Loading Digame...')}</h2>
+              <p className="text-gray-600">{t('preparingPlatform', 'Preparing your digital twin platform')}</p>
           </div>
         </div>
       </div>
@@ -156,6 +159,7 @@ function App() {
         <ToastProvider position="top-right">
           <Router>
           <div className="App">
+            <LanguageSwitcher /> {/* Add LanguageSwitcher here */}
             <Routes>
           <Route
             path="/"
