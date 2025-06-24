@@ -22,18 +22,36 @@ import {
   SkeletonAvatar
 } from '../components/ui/Skeleton';
 import { DatePicker } from '../components/ui/Calendar'; // Import DatePicker
+import { Sheet, SheetTrigger, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter, SheetClose } from '../components/ui/Sheet'; // Import Sheet components
+import { Form, FormField, FormInput, FormLabel, FormTextarea, FormSubmitButton } from '../components/ui/Form'; // Import Form components
+import { useToast } from '../components/ui/Toast'; // Import useToast for form submission feedback
+
 
 export default function DashboardPage({ isDemoMode, onLogout }) {
   const navigate = useNavigate();
+  const { toast } = useToast(); // Initialize toast
   const [currentUser, setCurrentUser] = useState(null);
   const [userLoading, setUserLoading] = useState(true);
   const [userError, setUserError] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [logActivitySheetOpen, setLogActivitySheetOpen] = useState(false);
   // State for DatePicker
   const [selectedDateRange, setSelectedDateRange] = useState({
     from: null, // new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // Default to last 7 days
     to: null,   // new Date()
   });
+
+  const handleLogActivitySubmit = (data) => {
+    console.log("Log Activity Data:", data);
+    // Here you would typically call an API service to save the activity
+    // For demo purposes, show a toast and close the sheet
+    toast({
+      title: "Activity Logged",
+      description: `Activity "${data.activityName}" has been logged.`,
+      variant: "success",
+    });
+    setLogActivitySheetOpen(false);
+  };
 
   useEffect(() => {
     const fetchCurrentUser = async () => {
@@ -326,24 +344,65 @@ export default function DashboardPage({ isDemoMode, onLogout }) {
                 Quick Actions
               </h3>
               <div className="space-y-3">
-                <button className="w-full text-left p-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors focus-ring">
-                  <div className="flex items-center space-x-3">
-                    <span className="text-lg">📝</span>
-                    <span className="text-sm font-medium text-gray-900">Log Activity</span>
-                  </div>
-                </button>
-                <button className="w-full text-left p-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors focus-ring">
+                <Sheet open={logActivitySheetOpen} onOpenChange={setLogActivitySheetOpen}>
+                  <SheetTrigger asChild>
+                    <Button variant="outline" className="w-full justify-start focus-ring">
+                      <div className="flex items-center space-x-3">
+                        <span className="text-lg">📝</span>
+                        <span className="text-sm font-medium text-gray-900">Log Activity</span>
+                      </div>
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent side="right" className="sm:max-w-lg">
+                    <SheetHeader>
+                      <SheetTitle>Log New Activity</SheetTitle>
+                      <SheetDescription>
+                        Manually log an activity or task you've completed.
+                      </SheetDescription>
+                    </SheetHeader>
+                    <Form
+                      onSubmit={handleLogActivitySubmit}
+                      defaultValues={{ activityName: '', duration: '30', notes: '' }}
+                      validation={{
+                        activityName: { required: 'Activity name is required.' },
+                        duration: { required: 'Duration is required.', pattern: /^\d+$/, patternMessage: 'Duration must be a number.' }
+                      }}
+                      className="py-4 space-y-4"
+                    >
+                      <FormField name="activityName">
+                        <FormLabel htmlFor="activityName">Activity Name</FormLabel>
+                        <FormInput id="activityName" name="activityName" placeholder="e.g., Project meeting, Code review" />
+                      </FormField>
+                      <FormField name="duration">
+                        <FormLabel htmlFor="duration">Duration (minutes)</FormLabel>
+                        <FormInput id="duration" name="duration" type="number" placeholder="e.g., 60" />
+                      </FormField>
+                      <FormField name="notes">
+                        <FormLabel htmlFor="notes">Notes (Optional)</FormLabel>
+                        <FormTextarea id="notes" name="notes" placeholder="Add any relevant details..." />
+                      </FormField>
+                      <SheetFooter className="mt-6">
+                        <SheetClose asChild>
+                          <Button type="button" variant="outline">Cancel</Button>
+                        </SheetClose>
+                        <FormSubmitButton>Log Activity</FormSubmitButton>
+                      </SheetFooter>
+                    </Form>
+                  </SheetContent>
+                </Sheet>
+
+                <Button variant="outline" className="w-full justify-start focus-ring">
                   <div className="flex items-center space-x-3">
                     <span className="text-lg">🎯</span>
                     <span className="text-sm font-medium text-gray-900">Set Goal</span>
                   </div>
-                </button>
-                <button className="w-full text-left p-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors focus-ring">
+                </Button>
+                <Button variant="outline" className="w-full justify-start focus-ring">
                   <div className="flex items-center space-x-3">
                     <span className="text-lg">📊</span>
                     <span className="text-sm font-medium text-gray-900">View Report</span>
                   </div>
-                </button>
+                </Button>
               </div>
             </div>
           </div>

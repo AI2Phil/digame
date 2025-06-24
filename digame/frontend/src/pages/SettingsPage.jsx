@@ -13,6 +13,7 @@ import { Select } from '../components/ui/Select';
 import { Slider } from '../components/ui/Slider';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/Tabs';
 import { Separator } from '../components/ui/Separator';
+import { ToggleGroup, ToggleGroupItem } from '../components/ui/ToggleGroup'; // Import ToggleGroup
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '../components/ui/AlertDialog';
 import { Badge } from '../components/ui/Badge';
 import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/Avatar';
@@ -573,21 +574,24 @@ const SettingsPage = () => {
               {/* Theme Selection */}
               <div className="space-y-2">
                 <Label>Theme</Label>
-                <div className="grid grid-cols-3 gap-3">
-                  {['light', 'dark', 'system'].map((theme) => (
-                    <Button
-                      key={theme}
-                      variant={settings.appearance.theme === theme ? 'default' : 'outline'}
-                      onClick={() => updateSetting('appearance', 'theme', theme)}
-                      className="flex items-center space-x-2"
-                    >
-                      {theme === 'light' && <Sun className="h-4 w-4" />}
-                      {theme === 'dark' && <Moon className="h-4 w-4" />}
-                      {theme === 'system' && <Eye className="h-4 w-4" />}
-                      <span className="capitalize">{theme}</span>
-                    </Button>
-                  ))}
-                </div>
+                <ToggleGroup
+                  type="single"
+                  value={settings.appearance.theme}
+                  onValueChange={(value) => {
+                    if (value) updateSetting('appearance', 'theme', value);
+                  }}
+                  className="grid grid-cols-3 gap-3"
+                >
+                  <ToggleGroupItem value="light" aria-label="Light theme" className="w-full">
+                    <Sun className="mr-2 h-4 w-4" /> Light
+                  </ToggleGroupItem>
+                  <ToggleGroupItem value="dark" aria-label="Dark theme" className="w-full">
+                    <Moon className="mr-2 h-4 w-4" /> Dark
+                  </ToggleGroupItem>
+                  <ToggleGroupItem value="system" aria-label="System theme" className="w-full">
+                    <Eye className="mr-2 h-4 w-4" /> System
+                  </ToggleGroupItem>
+                </ToggleGroup>
               </div>
 
               <Separator />

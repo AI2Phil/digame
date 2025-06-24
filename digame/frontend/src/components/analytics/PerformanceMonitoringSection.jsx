@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/Card';
 import { Button } from '../ui/Button';
+import { Chart } from '../ui/Chart'; // Import the Chart component
 import { Badge } from '../ui/Badge';
 import { Progress } from '../ui/Progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/Tabs';
@@ -268,17 +269,19 @@ const SystemResourceCard = ({ title, icon: Icon, usage, details, history }) => (
       </div>
       <p className="text-sm text-gray-600">{details}</p>
       <div className="space-y-2">
-        <p className="text-sm font-medium">Last 7 periods</p>
-        <div className="flex items-end gap-1 h-16">
-          {history.map((value, index) => (
-            <div
-              key={index}
-              className="bg-blue-200 rounded-sm flex-1"
-              style={{ height: `${(value / 100) * 100}%` }}
-              title={`${value}%`}
-            />
-          ))}
-        </div>
+        <p className="text-sm font-medium">Trend (Last 7 periods)</p>
+        {history && history.length > 0 ? (
+          <Chart
+            data={history}
+            labels={history.map((_, i) => `${i+1}`)} // Simple numeric labels
+            height={64} // Small height for sparkline-like chart
+            className="h-16" // Ensure parent div respects this if Chart component doesn't set it directly
+          />
+        ) : (
+          <div className="h-16 flex items-center justify-center text-xs text-gray-400">
+            No trend data available.
+          </div>
+        )}
       </div>
     </CardContent>
   </Card>

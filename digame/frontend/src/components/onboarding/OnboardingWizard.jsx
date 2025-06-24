@@ -5,13 +5,9 @@ import {
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/Card';
 import { Button } from '../ui/Button';
-// Input, Label, Select will be replaced or supplemented by Form components
-// import { Input } from '../ui/Input';
-// import { Label } from '../ui/Label';
 import { Switch } from '../ui/Switch';
-// import { Select } from '../ui/Select';
-import Progress, { ProgressSteps } from '../ui/Progress';
 import { Badge } from '../ui/Badge';
+import { Stepper, StepItem } from '../ui/Stepper'; // Import Stepper
 import {
   Form,
   FormField,
@@ -170,8 +166,18 @@ const OnboardingWizard = ({ onComplete, onSkip }) => {
     }
   };
 
-  const progress = ((currentStep + 1) / steps.length) * 100;
   const CurrentStepComponent = steps[currentStep].component;
+
+  const handleStepChange = (newStepIndex) => {
+    // If moving backwards, no need to mark completed
+    if (newStepIndex < currentStep) {
+      setCurrentStep(newStepIndex);
+      return;
+    }
+    // If moving forwards, mark current step as completed before changing
+    markStepCompleted(steps[currentStep].id);
+    setCurrentStep(newStepIndex);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
@@ -186,47 +192,47 @@ const OnboardingWizard = ({ onComplete, onSkip }) => {
           </p>
         </div>
 
-        {/* Progress */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <span className="text-sm font-medium text-gray-700">
-              Step {currentStep + 1} of {steps.length}
-            </span>
-            <span className="text-sm text-gray-500">
-              {Math.round(progress)}% complete
-            </span>
-          </div>
-          <Progress value={progress} className="h-2" />
+        {/* Stepper Component */}
+        <div className="mb-8 px-4 md:px-0">
+          <Stepper
+            initialStep={currentStep}
+            onStepChange={handleStepChange}
+            isClickable={true} // Allow users to click on previous steps
+            orientation="horizontal"
+            className="mb-6"
+          >
+            {steps.map((step, index) => (
+              <StepItem
+                key={step.id}
+                label={step.title}
+                icon={React.createElement(step.icon, { className: "w-5 h-5" })}
+                isCompleted={onboardingData.completed_steps.some(cs => cs.step_id === step.id) || currentStep > index}
+              >
+                {/* Content for each step is rendered below by CurrentStepComponent */}
+              </StepItem>
+            ))}
+          </Stepper>
         </div>
 
-        {/* Step Indicators */}
-        <div className="mb-8 px-4 md:px-0"> {/* Added padding for smaller screens */}
-          <ProgressSteps
-            steps={steps.map(step => ({
-              label: step.title,
-              icon: React.createElement(step.icon, {className: "w-5 h-5"})
-            }))}
-            currentStep={currentStep}
-            variant="default" // Matches blue theme, can be "success" for green
-          />
-        </div>
-
-        {/* Main Content */}
+        {/* Main Content based on CurrentStepComponent */}
+        {/* The Stepper itself doesn't render content; we do it here based on its state */}
         <Card className="mb-8">
           <CardHeader className="text-center">
+            {/* Title and description are now part of the StepItem label,
+                but we can keep a general header or remove it if redundant */}
             <CardTitle className="flex items-center justify-center gap-2">
-              {React.createElement(steps[currentStep].icon, { className: "w-6 h-6" })}
-              {steps[currentStep].title}
+               {React.createElement(steps[currentStep].icon, { className: "w-6 h-6" })}
+               {steps[currentStep].title}
             </CardTitle>
             <CardDescription>
               {steps[currentStep].description}
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <CurrentStepComponent 
+            <CurrentStepComponent
               data={onboardingData}
               updateData={updateOnboardingData}
-              onNext={nextStep}
+              onNext={nextStep} // This component might trigger nextStep
             />
           </CardContent>
         </Card>
@@ -246,18 +252,19 @@ const OnboardingWizard = ({ onComplete, onSkip }) => {
           <div className="flex items-center gap-4">
             <Button
               variant="ghost"
-              onClick={onSkip}
+              onClick={onSkip} // Assuming onSkip is passed from OnboardingPage
               className="text-gray-500"
             >
               Skip for now
             </Button>
             
             <Button
-              onClick={nextStep}
+              onClick={nextStep} // This button triggers the main nextStep logic
               className="flex items-center gap-2"
             >
-              {currentStep === steps.length - 1 ? 'Complete' : 'Next'}
-              <ChevronRight className="w-4 h-4" />
+              {currentStep === steps.length - 1 ? 'Complete Setup' : 'Next Step'}
+              {currentStep < steps.length - 1 && <ChevronRight className="w-4 h-4" />}
+              {currentStep === steps.length - 1 && <Check className="w-4 h-4" />}
             </Button>
           </div>
         </div>
