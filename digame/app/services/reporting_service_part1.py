@@ -15,6 +15,14 @@ from concurrent.futures import ThreadPoolExecutor
 import pandas as pd
 import io
 import base64
+import os # For file operations
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.mime.application import MIMEApplication
+import httpx # For webhooks
+import boto3 # For S3
+
 
 # PDF and Excel generation
 try:
@@ -1126,3 +1134,384 @@ def get_reporting_service(
                 details={"error": str(e), "execution_id": execution.id, "report_definition_id": report_definition.id}
             )
             raise # Re-raise the exception to be handled by the scheduler service
+
+    async def execute_definition_schedule_job(self, report_schedule_id: int):
+        """
+        Executes a scheduled job for a ReportDefinition.
+        Fetches data, generates report file(s), and handles basic status updates.
+        Delivery mechanisms will be added in a subsequent step.
+        """
+        report_schedule = self.db.query(ReportSchedule).filter(ReportSchedule.id == report_schedule_id).first()
+
+        if not report_schedule:
+            # Log error or raise, depending on how the calling scheduler service handles this
+            print(f"ReportSchedule with id {report_schedule_id} not found.")
+            # Consider logging this to ReportAuditLog as a system event if appropriate
+            return
+
+        if not report_schedule.is_active:
+            print(f"ReportSchedule with id {report_schedule_id} is not active. Skipping.")
+            return
+
+        if not report_schedule.report_definition_id:
+            print(f"ReportSchedule with id {report_schedule_id} is not linked to a ReportDefinition. Skipping.")
+            report_schedule.last_run_status = "failed"
+            report_schedule.last_run_at = datetime.utcnow()
+            # report_schedule.update_execution_stats(success=False) # This method might need adjustment for schedules
+            self.db.commit()
+            return
+
+        report_definition = self.get_report_definition(
+            report_schedule.report_definition_id,
+            report_schedule.tenant_id
+        )
+
+        if not report_definition:
+            print(f"ReportDefinition with id {report_schedule.report_definition_id} not found for schedule {report_schedule_id}.")
+            report_schedule.last_run_status = "failed"
+            report_schedule.last_run_at = datetime.utcnow()
+            # report_schedule.update_execution_stats(success=False)
+            self.db.commit()
+            return
+
+        execution_succeeded_overall = False
+        error_messages = []
+        generated_files_info = [] # To store info about generated files for delivery
+
+        try:
+            # 1. Fetch data for the report definition
+            # Assuming current_user is not strictly necessary for scheduled reports, or system user context is used.
+            # generate_report_data expects content_blocks to have data_source.
+            # The data is then fetched by custom_dashboard_service.get_data_for_source
+            print(f"Generating data for ReportDefinition {report_definition.id} (Schedule: {report_schedule.id})")
+            raw_report_data_payload = await self.generate_report_data(
+                report_definition_id=report_definition.id,
+                tenant_id=report_schedule.tenant_id
+            )
+            # generate_report_data returns a dict like {"report_name": ..., "content": [{"title": ..., "data": ...}]}
+            # The actual data to be rendered into files is in raw_report_data_payload["content"][block_index]["data"]
+            # For simplicity, we'll assume the current file generation methods can handle this structure
+            # or that we pass the relevant part.
+            # Let's assume `execute_and_generate_for_definition` expects the list of data items.
+            # The `execute_and_generate_for_definition` method's `report_data` param expects List[Dict[str, Any]]
+            # which should be the compiled data for the report, not the raw payload from generate_report_data.
+
+            # Re-shaping data: The file generation methods (e.g., _generate_pdf_report) typically expect a list of dicts (rows).
+            # The `raw_report_data_payload['content']` is a list of blocks.
+            # If the report is a single table/chart, we might extract data from the first relevant block.
+            # This part needs careful handling based on how `ReportDefinition` content maps to a single file output.
+            # For now, let's assume the first block with data is the primary source for a simple file.
+            # A more robust solution would iterate content_blocks and assemble data or generate multi-part files.
+
+            data_for_file_generation = []
+            if raw_report_data_payload and raw_report_data_payload.get("content"):
+                for block in raw_report_data_payload["content"]:
+                    if block.get("data") and isinstance(block["data"], list): # Assuming list data is typical for tables/charts
+                        data_for_file_generation.extend(block["data"]) # Simple concatenation for now
+                        # Or pick the first one: data_for_file_generation = block["data"]; break
+
+            if not data_for_file_generation and report_definition.content_blocks:
+                 print(f"Warning: No list-based data found in content blocks for ReportDefinition {report_definition.id}")
+                 # It could be a text-only report, or data structure is different.
+                 # For now, file generation might produce an empty or minimal report.
+
+            # 2. Generate report file(s) for each specified output format in the schedule
+            output_formats = report_schedule.output_formats or [report_definition.output_format] # Fallback to definition's default
+            if not isinstance(output_formats, list): # Ensure it's a list
+                output_formats = [output_formats]
+
+            for fmt in output_formats:
+                try:
+                    print(f"Generating file in format {fmt} for ReportDefinition {report_definition.id} (Schedule: {report_schedule.id})")
+                    # `execute_and_generate_for_definition` creates a ReportExecution record.
+                    # This might be okay, or we might want a single ReportExecution for the whole scheduled job.
+                    # For now, let's use it. It returns a ReportExecution object.
+                    report_execution_record = await self.execute_and_generate_for_definition(
+                        report_definition=report_definition,
+                        report_data=data_for_file_generation, # Pass the extracted data
+                        output_format=fmt,
+                        execution_type="scheduled_definition", # New type to distinguish
+                        user_id=report_schedule.created_by_user_id # Or a system user ID
+                    )
+
+                    if report_execution_record.status == "completed" and report_execution_record.file_path:
+                        generated_files_info.append({
+                            "format": fmt,
+                            "file_path": report_execution_record.file_path,
+                            "file_size_bytes": report_execution_record.file_size_bytes,
+                            "download_url": report_execution_record.download_url,
+                            "report_name": report_definition.name # For email subject etc.
+                        })
+                        print(f"Successfully generated {fmt} file: {report_execution_record.file_path}")
+                    else:
+                        error_msg = f"File generation for format {fmt} failed or no file path produced. Status: {report_execution_record.status}, Error: {report_execution_record.error_message}"
+                        print(error_msg)
+                        error_messages.append(error_msg)
+
+                except Exception as file_gen_exc:
+                    error_msg = f"Error generating file format {fmt} for schedule {report_schedule_id}: {str(file_gen_exc)}"
+                    print(error_msg)
+                    error_messages.append(error_msg)
+                    # Continue to try other formats if any
+
+            if not generated_files_info and error_messages: # All formats failed or no formats specified and error occurred
+                raise Exception("All file generation attempts failed or no data to generate. Errors: " + "; ".join(error_messages))
+            elif not generated_files_info:
+                 print(f"No files were generated for schedule {report_schedule_id}, possibly due to no data or configuration issues.")
+                 # This might not be an error if the report was empty by design.
+
+            # At this point, `generated_files_info` contains details of successfully generated files.
+            # Delivery will be handled in the next step. For now, success means files were generated.
+            if generated_files_info: # If at least one file was generated
+                execution_succeeded_overall = True
+            else: # No files generated, but also no critical errors during generation phase (e.g. empty report)
+                if not error_messages: # No files, no errors means it might be an empty report, treat as "success" for scheduling purposes
+                    execution_succeeded_overall = True
+                else: # No files, but there were errors
+                    execution_succeeded_overall = False
+
+
+        except Exception as e:
+            error_msg = f"Failed to execute scheduled job for ReportDefinition {report_definition.id} (Schedule: {report_schedule.id}): {str(e)}"
+            print(error_msg)
+            error_messages.append(error_msg)
+            execution_succeeded_overall = False
+
+        # 3. Update schedule statistics (basic update for now)
+        report_schedule.last_run_at = datetime.utcnow()
+        if execution_succeeded_overall:
+            report_schedule.last_run_status = "success"
+            # report_schedule.successful_executions += 1 # update_execution_stats handles this
+        else:
+            report_schedule.last_run_status = "failed: " + "; ".join(error_messages)[:250] # Truncate if too long for DB field
+            # report_schedule.failed_executions += 1 # update_execution_stats handles this
+
+        # report_schedule.total_executions += 1 # update_execution_stats handles this
+        report_schedule.update_execution_stats(success=execution_succeeded_overall)
+
+        # TODO: Update next_run_at based on cron_expression (this should be handled by the scheduler service)
+
+        self.db.commit()
+
+        if execution_succeeded_overall:
+            print(f"Report schedule {report_schedule_id} executed successfully. Files: {len(generated_files_info)}")
+            # Placeholder for delivery:
+            if generated_files_info:
+                print(f"Files to deliver: {generated_files_info}")
+        else:
+            print(f"Report schedule {report_schedule_id} execution failed. Errors: {'; '.join(error_messages)}")
+
+        # Return generated_files_info for the calling (scheduler) service to handle delivery,
+        # or handle delivery directly here in the next step.
+        # For now, this method's scope ends with generation and status update.
+        # --- Delivery Step ---
+        if execution_succeeded_overall and generated_files_info:
+            delivery_method = report_schedule.delivery_method
+            delivery_config = report_schedule.delivery_config or {}
+            delivery_successful = False
+            delivery_error_msg = ""
+
+            try:
+                if delivery_method == "email":
+                    print(f"Delivering via email for schedule {report_schedule_id}. Config: {delivery_config}")
+                    await self._deliver_via_email(generated_files_info, delivery_config, report_definition)
+                    delivery_successful = True
+                elif delivery_method == "s3":
+                    print(f"Delivering via S3 for schedule {report_schedule_id}. Config: {delivery_config}")
+                    await self._deliver_via_s3(generated_files_info, delivery_config, report_definition)
+                    delivery_successful = True
+                elif delivery_method == "webhook":
+                    print(f"Delivering via webhook for schedule {report_schedule_id}. Config: {delivery_config}")
+                    await self._deliver_via_webhook(generated_files_info, delivery_config, report_definition)
+                    delivery_successful = True
+                elif delivery_method: # Some method specified but not implemented
+                     delivery_error_msg = f"Delivery method '{delivery_method}' is not implemented for schedule {report_schedule_id}."
+                     print(delivery_error_msg)
+                     error_messages.append(delivery_error_msg) # Add to overall errors
+                     execution_succeeded_overall = False # Mark overall execution as failed if delivery fails critically
+                else: # No delivery method specified
+                    print(f"No delivery method specified for schedule {report_schedule_id}. Skipping delivery.")
+                    delivery_successful = True # No delivery attempted, so not a delivery failure
+
+            except Exception as delivery_exc:
+                delivery_error_msg = f"Error during {delivery_method} delivery for schedule {report_schedule_id}: {str(delivery_exc)}"
+                print(delivery_error_msg)
+                error_messages.append(delivery_error_msg)
+                execution_succeeded_overall = False # Delivery failure means overall job failure
+
+            if not delivery_successful and delivery_method:
+                report_schedule.last_run_status = f"failed: Delivery Error - {delivery_error_msg[:200]}"
+                report_schedule.update_execution_stats(success=False) # Update stats again if delivery failed
+                self.db.commit()
+            elif delivery_successful and execution_succeeded_overall: # Ensure it was overall success before this point
+                 # Status already set to "success" if generation was okay
+                 pass
+
+
+        # Cleanup generated local files after delivery attempt
+        for file_info in generated_files_info:
+            if file_info.get("file_path") and os.path.exists(file_info["file_path"]):
+                try:
+                    os.remove(file_info["file_path"])
+                    print(f"Cleaned up local file: {file_info['file_path']}")
+                except Exception as e:
+                    print(f"Error cleaning up file {file_info['file_path']}: {e}")
+
+        # Final update to status based on delivery outcome if it changed overall success
+        if not execution_succeeded_overall and report_schedule.last_run_status.startswith("success"):
+            final_error_summary = "; ".join(error_messages)
+            report_schedule.last_run_status = f"failed: {final_error_summary[:250]}"
+            # Ensure stats reflect failure if delivery caused it
+            # This might need careful thought if update_execution_stats was already called with True
+            # For simplicity, assume the last call to update_execution_stats (if any) reflects the true final state.
+
+        self.db.commit() # Commit any final status changes
+
+        return generated_files_info, execution_succeeded_overall
+
+    async def _deliver_via_email(self, generated_files_info: List[Dict], config: Dict, report_definition: ReportDefinition):
+        """Helper to deliver reports via email."""
+        recipients = config.get("recipients")
+        if not recipients or not isinstance(recipients, list):
+            raise ValueError("Email delivery config missing or invalid 'recipients' list.")
+
+        smtp_server = config.get("smtp_server", "localhost") # Placeholder
+        smtp_port = config.get("smtp_port", 25) # Placeholder
+        smtp_user = config.get("smtp_user")
+        smtp_password = config.get("smtp_password")
+        from_email = config.get("from_email", "noreply@digame.com")
+
+        subject = f"Scheduled Report: {report_definition.name}"
+        body = f"Please find attached your scheduled report: {report_definition.name}.\n\n"
+        body += "Generated files:\n"
+        for f_info in generated_files_info:
+            body += f"- {os.path.basename(f_info['file_path'])} ({f_info['format']})\n"
+            if f_info.get('download_url'):
+                 body += f"  Download link (if applicable): {f_info['download_url']}\n"
+
+
+        msg = MIMEMultipart()
+        msg['From'] = from_email
+        msg['To'] = ", ".join(recipients)
+        msg['Subject'] = subject
+        msg.attach(MIMEText(body, 'plain'))
+
+        for file_info in generated_files_info:
+            file_path = file_info["file_path"]
+            if os.path.exists(file_path):
+                with open(file_path, "rb") as f:
+                    part = MIMEApplication(f.read(), Name=os.path.basename(file_path))
+                part['Content-Disposition'] = f'attachment; filename="{os.path.basename(file_path)}"'
+                msg.attach(part)
+            else:
+                print(f"Warning: File {file_path} not found for email attachment.")
+
+
+        try:
+            # This is a simplified example. Production email sending should be more robust.
+            # E.g., use a dedicated email library or service (SendGrid, SES, etc.)
+            # For local testing, you might need a local SMTP server like `python -m smtpd -c DebuggingServer -n localhost:1025`
+            print(f"Attempting to send email via {smtp_server}:{smtp_port} to {recipients}")
+            server = smtplib.SMTP(smtp_server, smtp_port)
+            if smtp_user and smtp_password:
+                server.starttls() # If your server supports TLS
+                server.login(smtp_user, smtp_password)
+            server.sendmail(from_email, recipients, msg.as_string())
+            server.quit()
+            print("Email sent successfully.")
+        except Exception as e:
+            raise Exception(f"SMTP error sending email: {e}")
+
+    async def _deliver_via_s3(self, generated_files_info: List[Dict], config: Dict, report_definition: ReportDefinition):
+        """Helper to deliver reports by uploading to S3."""
+        bucket_name = config.get("bucket_name")
+        s3_path_prefix = config.get("path_prefix", "scheduled_reports/")
+        aws_access_key_id = config.get("aws_access_key_id") # Ideally use IAM roles
+        aws_secret_access_key = config.get("aws_secret_access_key")
+        region_name = config.get("region_name")
+
+        if not bucket_name:
+            raise ValueError("S3 delivery config missing 'bucket_name'.")
+
+        s3_client = boto3.client(
+            "s3",
+            aws_access_key_id=aws_access_key_id,
+            aws_secret_access_key=aws_secret_access_key,
+            region_name=region_name
+        )
+
+        uploaded_files = []
+        for file_info in generated_files_info:
+            file_path = file_info["file_path"]
+            if os.path.exists(file_path):
+                s3_key = os.path.join(s3_path_prefix, report_definition.name.replace(" ", "_"), os.path.basename(file_path))
+                try:
+                    print(f"Uploading {file_path} to S3 bucket {bucket_name} at key {s3_key}")
+                    s3_client.upload_file(file_path, bucket_name, s3_key)
+                    # Optionally generate presigned URL if needed for notification
+                    # presigned_url = s3_client.generate_presigned_url('get_object', Params={'Bucket': bucket_name, 'Key': s3_key}, ExpiresIn=3600*24)
+                    uploaded_files.append({"s3_bucket": bucket_name, "s3_key": s3_key})
+                    print(f"Successfully uploaded {s3_key} to S3.")
+                except Exception as e:
+                    raise Exception(f"S3 upload failed for {file_path}: {e}")
+            else:
+                 print(f"Warning: File {file_path} not found for S3 upload.")
+
+        if not uploaded_files and generated_files_info : # Files were expected but none uploaded
+             raise Exception("S3 Upload: No files were successfully uploaded, though some were generated.")
+        elif not generated_files_info: # No files were generated in the first place
+            print("S3 Upload: No files were generated, so nothing to upload.")
+
+
+    async def _deliver_via_webhook(self, generated_files_info: List[Dict], config: Dict, report_definition: ReportDefinition):
+        """Helper to deliver report notification via webhook."""
+        webhook_url = config.get("url")
+        if not webhook_url:
+            raise ValueError("Webhook delivery config missing 'url'.")
+
+        payload = {
+            "report_name": report_definition.name,
+            "report_definition_id": report_definition.id,
+            "generated_at": datetime.utcnow().isoformat(),
+            "files": []
+        }
+
+        for file_info in generated_files_info:
+            file_data = {
+                "format": file_info["format"],
+                "filename": os.path.basename(file_info["file_path"]),
+                "size_bytes": file_info.get("file_size_bytes"),
+            }
+            # Include download URL if available (e.g., from S3 upload or if served directly)
+            # For local files, this URL might not be meaningful unless they are accessible publicly.
+            # If files were uploaded to S3 and presigned URLs generated, those would be ideal here.
+            # For now, using the mock download_url from ReportExecution.
+            if file_info.get("download_url"):
+                file_data["download_url"] = file_info["download_url"]
+            elif file_info.get("s3_key"): # If S3 delivery happened before webhook
+                 file_data["s3_location"] = f"s3://{config.get('bucket_name')}/{file_info['s3_key']}"
+
+            payload["files"].append(file_data)
+
+        if not payload["files"] and generated_files_info:
+            raise Exception("Webhook: No file information to send, though files were generated.")
+        elif not generated_files_info:
+            print("Webhook: No files were generated, sending notification about empty/failed report generation.")
+            payload["status_message"] = "Report generation resulted in no files or encountered issues."
+
+
+        headers = config.get("headers", {})
+        headers.setdefault("Content-Type", "application/json")
+
+        timeout = config.get("timeout_seconds", 10)
+
+        async with httpx.AsyncClient(timeout=timeout) as client:
+            try:
+                print(f"Sending webhook notification to {webhook_url}")
+                response = await client.post(webhook_url, json=payload, headers=headers)
+                response.raise_for_status()  # Raise an exception for HTTP 4xx or 5xx status codes
+                print(f"Webhook notification sent successfully. Status: {response.status_code}")
+            except httpx.HTTPStatusError as e:
+                raise Exception(f"Webhook request failed with status {e.response.status_code}: {e.response.text}")
+            except httpx.RequestError as e:
+                raise Exception(f"Webhook request failed: {e}")
