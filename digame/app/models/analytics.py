@@ -11,9 +11,14 @@ import uuid
 # Use the existing Base from the project
 try:
     from ..database import Base
+    from ..models.user import User # Import User model
 except ImportError:
     # Fallback for development
     Base = declarative_base()
+    # Mock User if not found, for standalone model definition
+    class User(Base):
+        __tablename__ = "users"
+        id = Column(Integer, primary_key=True)
 
 
 class AnalyticsModel(Base):
@@ -72,6 +77,10 @@ class AnalyticsModel(Base):
     prediction_count = Column(Integer, default=0)
     last_prediction_at = Column(DateTime, nullable=True)
     
+    # Model persistence and training metadata
+    model_path = Column(String(512), nullable=True) # Path to the serialized model file
+    training_metadata = Column(JSON, nullable=True) # Stores training details like feature columns, encodings, etc.
+
     # Metadata
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -530,3 +539,85 @@ class PerformanceMetric(Base):
             self.trend_significance = "minor"
         else:
             self.trend_significance = "none"
+
+# Dashboard Models
+
+class AnalyticsDashboard(Base):
+    """
+    Represents a customizable analytics dashboard belonging to a user.
+    A dashboard consists of a name, description, tags, and a layout of widgets.
+    """
+    __tablename__ = "analytics_dashboards"
+
+    id = Column(Integer, primary_key=True, index=True)
+    dashboard_uuid = Column(String(36), unique=True, index=True, default=lambda: str(uuid.uuid4()))
+    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True) # Owner
+
+    name = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+
+    # Layout stores an array of objects: { widget_config_id: int, x: int, y: int, w: int, h: int }
+    # This means DashboardWidgetConfig instances are independent and can potentially be reused
+    # if we change this, but for now, let's assume layout directly references widgets owned by this dashboard.
+    # For simplicity, if widgets are strictly part of a dashboard (not shared),
+    # the layout might just be positions, and widgets have a dashboard_id FK.
+    # Let's go with widgets belonging to a dashboard for now.
+    # layout field will store grid positions of widgets linked by dashboard_id on DashboardWidgetConfig.
+    # So, layout here might be more about dashboard-level display preferences if widgets are fetched via relationship.
+    # Or, it can be the primary store for widget placement if widget configs are more generic.
+
+    # Simpler approach for now: layout stores widget IDs and their positions.
+    # Actual widget configurations are separate.
+    layout = Column(JSON, nullable=True, default=[]) # Example: [{"widget_id": 1, "x": 0, "y": 0, "w": 4, "h": 2}, ...]
+
+    tags = Column(JSON, nullable=True, default=[]) # List of strings
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationship: A dashboard has multiple widget configurations
+    # If DashboardWidgetConfig has a dashboard_id FK
+    widgets = relationship("DashboardWidgetConfig", back_populates="dashboard", cascade="all, delete-orphan")
+    owner = relationship("User") # Assuming User model is available via from ..models.user import User
+
+    def __repr__(self):
+        return f"<AnalyticsDashboard(id={self.id}, name='{self.name}')>"
+
+class DashboardWidgetConfig(Base):
+    """
+    Configuration for a single widget within an AnalyticsDashboard.
+    Defines the widget's type, title, data source, and display options.
+    Each widget is associated with a parent dashboard.
+    """
+    __tablename__ = "dashboard_widget_configs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    widget_uuid = Column(String(36), unique=True, index=True, default=lambda: str(uuid.uuid4()))
+
+    dashboard_id = Column(Integer, ForeignKey("analytics_dashboards.id"), nullable=False, index=True)
+    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=False, index=True) # For data scoping, matches dashboard's tenant
+
+    widget_type = Column(String(100), nullable=False) # E.g., "line_chart", "kpi_card", "bar_chart", "table"
+    title = Column(String(255), nullable=False)
+
+    # Defines the data to be fetched for this widget
+    # Example: {"type": "performance_metric", "params": {"metric_name": "cpu_usage", "entity_id": "server_1"}}
+    # Example: {"type": "analytics_prediction", "params": {"model_id": 1, "input_features": {...}}}
+    data_source_config = Column(JSON, nullable=False)
+
+    # Defines visual options for the widget
+    # Example: {"color_scheme": "blue", "time_range": "last_7_days", "show_legend": true}
+    display_options = Column(JSON, nullable=True, default={})
+
+    # Grid position - alternative to storing in AnalyticsDashboard.layout if widgets are always part of a specific dashboard cell
+    # For more flexible layouts (like react-grid-layout), storing x,y,w,h on the dashboard.layout referring to widget_id is better.
+    # Let's assume dashboard.layout handles placement. This model defines the widget's content and type.
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    dashboard = relationship("AnalyticsDashboard", back_populates="widgets")
+
+    def __repr__(self):
+        return f"<DashboardWidgetConfig(id={self.id}, title='{self.title}', type='{self.widget_type}')>"

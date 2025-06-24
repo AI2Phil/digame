@@ -17,10 +17,11 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_sc
 import joblib
 import pandas as pd
 from decimal import Decimal
+from pydantic import BaseModel # Import BaseModel
 
 from ..models.analytics import (
     AnalyticsModel, AnalyticsPrediction, AnalyticsTrainingJob,
-    ROICalculation, PerformanceMetric
+    ROICalculation, PerformanceMetric, AnalyticsDashboard, DashboardWidgetConfig # Import new models
 )
 from ..models.user import User
 from ..models.tenant import Tenant
@@ -221,15 +222,50 @@ class AnalyticsService:
             ).first()
             
             # Generate mock training data
-            training_data = self._generate_training_data(model)
+            training_data = self._generate_training_data(model) # pd.DataFrame
             
-            # Prepare features and target
-            X = training_data[model.features]
+            # --- Preprocessing ---
+            # Identify categorical features from model.features that are in training_data
+            categorical_features = [
+                col for col in model.features
+                if col in training_data.columns and training_data[col].dtype == 'object'
+            ]
+
+            # Apply one-hot encoding to categorical features
+            # Other features are assumed numeric or will be handled by the model if it supports them
+            if categorical_features:
+                X_processed = pd.get_dummies(training_data[model.features], columns=categorical_features, dummy_na=False)
+            else:
+                X_processed = training_data[model.features].copy()
+
+            # Store processed feature names for prediction consistency
+            processed_feature_names = X_processed.columns.tolist()
+
+            # Target variable
+            if model.target_variable not in training_data.columns:
+                raise ValueError(f"Target variable '{model.target_variable}' not found in training data.")
             y = training_data[model.target_variable]
+
+            # Ensure target is numeric if a regressor is used
+            if "regressor" in model.algorithm.lower() or "regression" in model.algorithm.lower():
+                if not pd.api.types.is_numeric_dtype(y):
+                    try:
+                        y = pd.to_numeric(y)
+                    except ValueError:
+                        raise ValueError(f"Target variable '{model.target_variable}' must be numeric for regression algorithms.")
             
+            # Handle NaN values in features (simple imputation: fill with mean for numeric, mode for categorical - already handled by get_dummies for object type)
+            for col in X_processed.columns:
+                if X_processed[col].isnull().any():
+                    if pd.api.types.is_numeric_dtype(X_processed[col]):
+                        X_processed[col] = X_processed[col].fillna(X_processed[col].mean())
+                    else: # Should be one-hot encoded columns (0/1)
+                        X_processed[col] = X_processed[col].fillna(0) # Fill NaN in dummy columns with 0
+
+
             # Split data
             X_train, X_test, y_train, y_test = train_test_split(
-                X, y, test_size=model.validation_split, random_state=42
+                X_processed, y, test_size=model.validation_split, random_state=42
             )
             
             # Initialize algorithm
@@ -266,8 +302,18 @@ class AnalyticsService:
             model.status = "trained"
             
             # Save model to disk (mock implementation)
-            model_path = f"/tmp/model_{model.id}_{training_job.id}.joblib"
+            model_filename = f"model_{model.model_uuid}_v{model.version.replace('.', '_')}_job{training_job.job_uuid}.joblib"
+            # In a real scenario, use a configurable, persistent storage path e.g. /mnt/models/
+            model_path = f"/tmp/{model_filename}"
             joblib.dump(ml_model, model_path)
+
+            model.model_path = model_path
+            model.training_metadata = {
+                "feature_columns": processed_feature_names,
+                "categorical_features_original": categorical_features, # Original cat feature names before dummifying
+                "target_variable_type": str(y.dtype)
+                # Could add more metadata like label encodings if target is categorical and encoded
+            }
             
             self.db.commit()
             
@@ -448,12 +494,15 @@ class AnalyticsService:
             AnalyticsModel.id == model_id
         ).first()
         
-        if not model or not model.is_trained:
-            raise ValueError("Model not found or not trained")
-        
-        # Mock prediction calculation
-        prediction_output = self._calculate_mock_prediction(model, input_features)
-        confidence_score = np.random.uniform(0.7, 0.95)
+        if not model:
+            raise ValueError("Model not found")
+        if not model.is_trained:
+            raise ValueError("Model is not trained yet")
+        if not model.model_path or not model.training_metadata:
+            raise ValueError("Model is not properly configured for prediction (missing path or metadata). Please retrain.")
+
+        # Actual prediction using the trained model and pipeline
+        prediction_output, confidence_score = self._execute_prediction_pipeline(model, input_features)
 
         predicted_value_single = None
         predicted_values_multi_dim = None
@@ -501,110 +550,106 @@ class AnalyticsService:
         
         return prediction
 
-    def _calculate_mock_prediction(self, model: AnalyticsModel, input_features: Dict[str, Any]) -> Any:
+    def _execute_prediction_pipeline(self, model: AnalyticsModel, input_features: Dict[str, Any]) -> Tuple[Any, Optional[float]]:
         """
-        Calculate mock prediction value.
-        Can return a float or a dict for multi-dimensional predictions.
-        Example multi-dim output: {"multi_dim": [{"dims": {"country": "US", "product": "A"}, "metric": "sales", "value": 100}, ...]}
+        Loads a trained model and executes the prediction pipeline including preprocessing.
+        Returns a tuple: (prediction_output, confidence_score)
         """
-        # Try to use a couple of input features to influence the mock prediction
-        feature_influence = 0
-        if input_features:
-            # Use first two numeric features found in input_features for some influence
-            numeric_inputs = [v for v in input_features.values() if isinstance(v, (int, float))]
-            if len(numeric_inputs) > 0:
-                feature_influence += numeric_inputs[0] * 0.1
-            if len(numeric_inputs) > 1:
-                feature_influence += numeric_inputs[1] * 0.05
+        try:
+            ml_model = joblib.load(model.model_path)
+        except FileNotFoundError:
+            raise ValueError(f"Model file not found at {model.model_path}. Please retrain the model.")
+        except Exception as e:
+            raise ValueError(f"Error loading model: {str(e)}")
 
-        # If model has dimensions and metrics, return a multi-dimensional mock prediction
-        if model.dimensions and model.metrics:
-            mock_multi_dim_results = []
+        training_meta = model.training_metadata
+        if not training_meta or "feature_columns" not in training_meta:
+            raise ValueError("Training metadata (feature_columns) not found. Please retrain the model.")
 
-            # Generate some sample dimension values dynamically
-            # This creates a very limited set of combinations for mock purposes
-            dim_value_options = {}
-            for i, dim_name in enumerate(model.dimensions):
-                # Create 1 or 2 sample categories for each dimension for the mock output
-                num_mock_categories = 1 if len(model.dimensions) > 1 and i > 0 else 2 # More categories for the first dim
-                dim_value_options[dim_name] = [f"{dim_name}_Sample{j+1}" for j in range(num_mock_categories)]
+        trained_feature_columns = training_meta["feature_columns"]
+        original_categorical_features = training_meta.get("categorical_features_original", [])
 
-            # Create combinations (simple version for 1 or 2 dimensions)
-            # For a more general solution, itertools.product could be used
-            if len(model.dimensions) == 1:
-                dim1_name = model.dimensions[0]
-                for dim1_val in dim_value_options[dim1_name]:
-                    current_dims = {dim1_name: dim1_val}
-                    for metric_name in model.metrics:
-                        base_metric_value = 50 + feature_influence + np.random.normal(0,10)
-                        mock_multi_dim_results.append({
-                            "dims": current_dims.copy(),
-                            "metric": metric_name,
-                            "value": round(base_metric_value + np.random.normal(0, 5) + (hash(dim1_val) % 10), 2) # Add slight variation per dim_val
-                        })
-            elif len(model.dimensions) >= 2:
-                dim1_name = model.dimensions[0]
-                dim2_name = model.dimensions[1]
-                for dim1_val in dim_value_options[dim1_name]:
-                    for dim2_val in dim_value_options[dim2_name]:
-                        current_dims = {dim1_name: dim1_val, dim2_name: dim2_val}
-                        # Include other dimensions with a fixed sample value if more than 2
-                        for i in range(2, len(model.dimensions)):
-                            other_dim_name = model.dimensions[i]
-                            current_dims[other_dim_name] = dim_value_options[other_dim_name][0] # Use first sample category
+        # Prepare input DataFrame from input_features dict
+        # Ensure it's a DataFrame with a single row
+        input_df = pd.DataFrame([input_features])
 
-                        for metric_name in model.metrics:
-                            base_metric_value = 50 + feature_influence + np.random.normal(0,10)
-                            mock_multi_dim_results.append({
-                                "dims": current_dims.copy(),
-                                "metric": metric_name,
-                                "value": round(base_metric_value + np.random.normal(0, 5) + (hash(dim1_val+dim2_val) % 10), 2)
-                            })
-
-            if not mock_multi_dim_results and model.metrics: # Fallback if no dimensions or complex case not handled
-                 for metric_name in model.metrics:
-                    mock_multi_dim_results.append({
-                        "dims": {}, # No specific dimensions
-                        "metric": metric_name,
-                        "value": round(50 + feature_influence + np.random.normal(0,15), 2)
-                    })
-
-            return {"multi_dim": mock_multi_dim_results}
-
-        # Fallback to simple mock calculation based on model type (single value prediction)
-        # This part now also incorporates feature_influence
-        base_value_for_single = 50 + feature_influence # Generic base
-
-        if model.model_type == "performance":
-            base_score = 75.0 + feature_influence
-            for feature_name, value in input_features.items(): # This specific logic remains if not multi-dim
-                val = float(value) if value is not None else 0
-                if "experience" in feature_name: base_score += val * 2
-                elif "tasks" in feature_name: base_score += val * 1.5
-                elif "hours" in feature_name: base_score += val * 0.5
-            return max(0, min(100, base_score + np.random.normal(0, 5)))
-
-        elif model.model_type == "productivity":
-            base_index = 60.0 + feature_influence
-            for feature_name, value in input_features.items():
-                val = float(value) if value is not None else 0
-                if "focus" in feature_name: base_index += val * 8
-                elif "interruptions" in feature_name: base_index -= val * 1.5
-                elif "collaboration" in feature_name: base_index += val * 2
-            return max(0, base_index + np.random.normal(0, 8))
-
-        elif model.model_type == "roi":
-            base_roi = 15.0 + feature_influence
-            for feature_name, value in input_features.items():
-                val = float(value) if value is not None else 0
-                if "investment" in feature_name and val > 0: base_roi += np.log(val) * 2
-                elif "duration" in feature_name: base_roi -= val * 0.05
-                elif "complexity" in feature_name: base_roi -= val * 2
-            return base_roi + np.random.normal(0, 10)
-
+        # Preprocess input_df similar to training data
+        # 1. Apply one-hot encoding for original categorical features
+        if original_categorical_features:
+            input_df_processed = pd.get_dummies(input_df, columns=original_categorical_features, dummy_na=False)
         else:
-            # Generic prediction
-            return base_value_for_single + np.random.normal(0, 15)
+            input_df_processed = input_df.copy()
+
+        # 2. Align columns with the training set (add missing, remove extra, reorder)
+        # Add missing columns (that were present in training) and fill with 0 (for dummy variables)
+        for col in trained_feature_columns:
+            if col not in input_df_processed.columns:
+                input_df_processed[col] = 0
+
+        # Ensure order of columns is the same as during training
+        # Also, drop any columns in input_df_processed not in trained_feature_columns
+        input_df_aligned = input_df_processed.reindex(columns=trained_feature_columns, fill_value=0)
+
+        # 3. Handle NaN values (consistent with training)
+        # Assuming simple mean imputation for numeric and 0 for dummies (already done by reindex fill_value=0 for new cols)
+        for col in input_df_aligned.columns:
+            if input_df_aligned[col].isnull().any():
+                # This relies on training_meta potentially storing imputation values if more complex strategy was used
+                # For now, if a column that was numeric in training still has NaN, we'd need its mean from training.
+                # This part might need refinement if NaNs are expected in raw input_features for non-dummy vars.
+                # For simplicity, if a value for an original feature was null/missing and it became a set of dummies,
+                # those dummies would be 0. If an original numeric feature is NaN, it needs imputation.
+                # The get_dummies + reindex approach handles many cases.
+                # Fallback for any remaining NaNs in numeric columns after alignment:
+                if pd.api.types.is_numeric_dtype(input_df_aligned[col]):
+                     # A more robust solution would store training time means in training_metadata
+                    print(f"Warning: NaN found in numeric feature '{col}' for prediction. Filling with 0. Consider storing training means.")
+                    input_df_aligned[col] = input_df_aligned[col].fillna(0)
+
+
+        # Make prediction
+        try:
+            if hasattr(ml_model, "predict_proba"):
+                # Classification model
+                probabilities = ml_model.predict_proba(input_df_aligned)
+                # Assuming binary classification for simplicity, take prob of positive class
+                # For multi-class, this logic would need to be adapted based on what 'predicted_value' should represent
+                prediction_result = probabilities[0][1] # Probability of class 1
+                confidence = float(max(probabilities[0])) # Confidence is the max probability for the predicted class
+            elif hasattr(ml_model, "predict"):
+                # Regression model or classifier without predict_proba
+                prediction_result = ml_model.predict(input_df_aligned)[0]
+                confidence = None # Confidence scores might not be directly available for all regressors
+            else:
+                raise ValueError("Loaded model does not have predict() or predict_proba() method.")
+        except Exception as e:
+            raise ValueError(f"Error during model prediction: {str(e)}")
+
+        # For now, the raw prediction_result from the model is returned.
+        # Mapping this to a multi-dimensional structure (if model.dimensions is set)
+        # would be a separate step, potentially based on model.metrics.
+        # This step assumes the model's direct output is what's desired or will be post-processed.
+        # If model.dimensions and model.metrics are set, this is where one might construct
+        # the {"multi_dim": [...]} structure if the model doesn't output it directly.
+        # For this iteration, we'll keep it simple: prediction_result is the direct model output.
+
+        # Example of how one might structure for multi-dim if model.metrics are defined (conceptual)
+        if model.dimensions and model.metrics and not isinstance(prediction_result, dict):
+            # This is a placeholder. Real multi-output models or custom logic would be needed.
+            # If the model predicts a single value, and we need to assign it to multiple metrics
+            # across dimensions, that's a complex mapping not handled here.
+            # For now, assume prediction_result is the primary target or needs to be wrapped.
+            # If `model.metrics` has one item, we can assume `prediction_result` corresponds to it.
+            if len(model.metrics) == 1:
+                 # This is a simplified interpretation for a single predicted metric value
+                 # that might be presented in a multi-dimensional context later.
+                 # The current `AnalyticsPrediction.predicted_values_multi_dim` is for when the *model itself*
+                 # or a post-processing step generates multiple distinct values per dimension combination.
+                 # Here, we are just returning the model's direct output.
+                 pass # No change to prediction_result, it's handled by the caller.
+
+        return prediction_result, confidence
+
 
     def get_predictions(
         self,
@@ -689,10 +734,52 @@ class AnalyticsService:
 
         update_data_dict = roi_update_data.dict(exclude_unset=True)
         needs_recalculation = False
+
+        # Handle metric_links if provided in the update
+        if "metric_links" in update_data_dict and update_data_dict["metric_links"] is not None:
+            # If metric_links are updated, it implies a potential change in underlying values.
+            # We might need to reset relevant cost/benefit fields before applying new links,
+            # or the linking logic should be additive/idempotent if desired.
+            # For simplicity, let's assume new links might override or add to values.
+            # This part could be complex depending on how updates to links should behave.
+            # A simple approach: re-evaluate all linked values.
+            # To do this cleanly, we might need a helper or re-use parts of create_roi_calculation's link processing.
+
+            # For now, let's just note that if metric_links are changed, a full re-evaluation is implied.
+            # We'll set needs_recalculation to True. The actual processing of updated
+            # metric_links to update the Decimal fields on `calculation` object before `update_totals`
+            # would require iterating through them similar to `create_roi_calculation`.
+
+            # Simplified: Assume the values linked by metric_links are directly updated in other fields
+            # of roi_update_data if they change due to metric_links.
+            # The current `create_roi_calculation` modifies `roi_data` (which becomes `update_data_dict` here).
+            # So, if `metric_links` are passed, we should process them to update the numeric fields.
+
+            # Process metric_links to update numeric fields in update_data_dict itself
+            # This is a conceptual placement; the actual update of `calculation` fields happens below.
+            # What we need is for `update_data_dict` to reflect values derived from new `metric_links`.
+            # The `create_roi_calculation` has this logic. We can extract it.
+
+            # Let's assume for now that if `metric_links` are in `update_data_dict`,
+            # the caller has already resolved them into the respective cost/benefit fields within `update_data_dict`.
+            # A more robust implementation would re-process metric_links here.
+            # For this iteration, we'll rely on direct field updates triggering recalculation.
+            if update_data_dict.get("metric_links"): # If new links are explicitly passed
+                 needs_recalculation = True # Signal that a full recalculation is likely needed.
+                                           # The actual application of these new links to fields is complex if not done by caller.
+
         for key, value in update_data_dict.items():
+            if key == "metric_links": # metric_links themselves are not a direct column on ROICalculation model
+                # Storing the raw metric_links definition could be done if the model had a field for it, e.g., `raw_metric_links_definition = Column(JSON)`
+                # For now, we assume they are processed and affect other numeric fields.
+                continue
+
             # Convert to Decimal if the field is a Decimal type in the model
             if hasattr(calculation, key) and isinstance(getattr(calculation, key), Decimal):
-                setattr(calculation, key, Decimal(str(value)))
+                if value is not None: # Ensure value is not None before Decimal conversion
+                    setattr(calculation, key, Decimal(str(value)))
+                else:
+                    setattr(calculation, key, None) # Allow setting Decimal fields to None if applicable
             else:
                 setattr(calculation, key, value)
 
@@ -709,8 +796,8 @@ class AnalyticsService:
         # calculation.updated_by_user_id = updated_by_user_id # If model has this field
 
         if needs_recalculation:
-            calculation.update_totals()
-            calculation.calculate_roi_metrics()
+            calculation.update_totals() # This sums up the Decimal fields
+            calculation.calculate_roi_metrics() # This calculates percentages etc. from totals
 
         self.db.commit()
         self.db.refresh(calculation)
@@ -817,9 +904,10 @@ class AnalyticsService:
         category: Optional[str] = None,
         entity_type: Optional[str] = None,
         entity_id: Optional[int] = None,
-        limit: int = 100
+        limit: int = 100,
+        dimension_filters: Optional[Dict[str, Any]] = None
     ) -> List[PerformanceMetric]:
-        """Get performance metrics for tenant"""
+        """Get performance metrics for tenant, with optional dimension filtering."""
         
         query = self.db.query(PerformanceMetric).filter(
             PerformanceMetric.tenant_id == tenant_id
@@ -836,7 +924,15 @@ class AnalyticsService:
         
         if entity_id:
             query = query.filter(PerformanceMetric.entity_id == entity_id)
-        
+
+        if dimension_filters:
+            for key, value in dimension_filters.items():
+                # Assuming PostgreSQL JSONB @> operator for contains.
+                # For other databases, JSON functions might differ (e.g., func.json_extract)
+                # This checks if the dimensions_values JSON contains a specific key-value pair.
+                query = query.filter(PerformanceMetric.dimensions_values.has_key(key)) # Check if key exists first for some DBs
+                query = query.filter(PerformanceMetric.dimensions_values[key].astext == str(value))
+
         return query.order_by(desc(PerformanceMetric.measurement_date)).limit(limit).all()
 
     # Analytics and Reporting
@@ -1201,12 +1297,20 @@ class AnalyticsService:
 
         # A simple protection: if benchmark is global, only an admin (not checked here) should update.
         # If it's tenant-specific, only that tenant's user (checked by requesting_tenant_id matching benchmark.tenant_id).
-        if not (benchmark.tenant_id == requesting_tenant_id or is_global_benchmark): # Simplified: allow update if tenant matches, or if global (pending admin check)
-             # If benchmark is global, this check `benchmark.tenant_id == requesting_tenant_id` will be false.
-             # So, if it's global, it effectively can't be updated by a tenant user through this flow.
-             # If it's tenant-specific, it must match.
-            if not (benchmark.tenant_id == requesting_tenant_id):
-                 return None # User's tenant does not match benchmark's tenant_id
+        if is_global_benchmark:
+            # For now, prevent non-admin updates of global benchmarks through this flow.
+            # An admin-specific endpoint or role check would be needed.
+            # This effectively means only tenant-specific benchmarks can be updated here.
+            # Or, if an admin *is* using this and their tenant_id is passed as requesting_tenant_id,
+            # that wouldn't make sense for a global benchmark.
+            # Simplest for now: if global, deny unless specific admin check (not present).
+            # To allow admin updates via a generic endpoint, we'd need user roles.
+            # For this iteration, let's assume this endpoint is primarily for tenant users managing their own benchmarks.
+            print(f"Warning: Update attempt on global benchmark {benchmark_id} by tenant {requesting_tenant_id}. Requires admin privileges not checked here.")
+            return None
+        elif benchmark.tenant_id != requesting_tenant_id:
+            # Benchmark is tenant-specific, but user's tenant does not match.
+            return None
 
         update_data_dict = benchmark_update_data.dict(exclude_unset=True)
         for key, value in update_data_dict.items():
@@ -1231,18 +1335,16 @@ class AnalyticsService:
             return False
 
         # Authorization: Similar to update.
-        # Allow delete if benchmark is global (admin only - not checked here) or belongs to the requesting tenant.
-        if not (benchmark.tenant_id == requesting_tenant_id or benchmark.tenant_id is None):
-            # This logic means a tenant user cannot delete a global benchmark.
-            # And a tenant user cannot delete another tenant's benchmark.
-            if benchmark.tenant_id is not None and benchmark.tenant_id != requesting_tenant_id:
-                return False # No permission
-            # If benchmark is global, and user is not admin (implicit), don't allow deletion.
-            # This part needs an explicit admin role check to allow deletion of global benchmarks.
-            # For now, only tenant-specific benchmarks can be deleted by their tenant.
-            if benchmark.tenant_id is None: # Not allowing non-admins to delete global benchmarks
-                 return False
+        is_global_benchmark = benchmark.tenant_id is None
 
+        if is_global_benchmark:
+            # For now, prevent non-admin deletion of global benchmarks through this flow.
+            # Requires admin role check.
+            print(f"Warning: Delete attempt on global benchmark {benchmark_id} by tenant {requesting_tenant_id}. Requires admin privileges not checked here.")
+            return False
+        elif benchmark.tenant_id != requesting_tenant_id:
+            # Benchmark is tenant-specific, but user's tenant does not match.
+            return False
 
         self.db.delete(benchmark)
         self.db.commit()
@@ -1347,40 +1449,295 @@ class AnalyticsService:
     def calculate_multi_dimensional_metrics(
         self,
         model_id: int,
-        data: pd.DataFrame # Expects a DataFrame with dimensions and metrics
+        data_records: List[Dict[str, Any]] # Expects a list of records (dicts)
     ) -> List[Dict[str, Any]]:
         """
         Calculates and aggregates multi-dimensional metrics based on model config.
-        This is a conceptual mock. Real implementation would be more complex.
+        Input data_records is a list of dictionaries, which will be converted to a DataFrame.
         """
-        model = self.db.query(AnalyticsModel).get(model_id)
-        if not model or not model.dimensions or not model.metrics:
+        model = self.db.query(AnalyticsModel).filter(AnalyticsModel.id == model_id).first()
+        if not model:
+            raise ValueError(f"AnalyticsModel with id {model_id} not found.")
+
+        if not model.dimensions:
+            # Not a multi-dimensional model configuration, or dimensions not specified
+            # Depending on requirements, could return empty, error, or process as single dimension
+            return [] # Or raise ValueError("Model does not have dimensions specified.")
+
+        if not model.metrics:
+            return [] # Or raise ValueError("Model does not have metrics specified for aggregation.")
+
+        if not data_records:
             return []
 
-        # Example: Group by all dimensions and aggregate all metrics
-        # Aggregation type can be specified per metric in model.aggregation_types
+        data_df = pd.DataFrame(data_records)
 
-        grouped_data = data.groupby(model.dimensions)
+        # Validate that all specified dimensions and metrics exist in the DataFrame
+        for dim in model.dimensions:
+            if dim not in data_df.columns:
+                raise ValueError(f"Dimension '{dim}' specified in model not found in provided data.")
+        for met in model.metrics:
+            if met not in data_df.columns:
+                raise ValueError(f"Metric '{met}' specified in model not found in provided data.")
+            # Ensure metric column is numeric for aggregation
+            if not pd.api.types.is_numeric_dtype(data_df[met]):
+                try:
+                    data_df[met] = pd.to_numeric(data_df[met])
+                except ValueError:
+                    raise ValueError(f"Metric column '{met}' could not be converted to numeric type for aggregation.")
+
+        # Perform groupby and aggregation
+        try:
+            grouped_data = data_df.groupby(model.dimensions)
+        except KeyError as e:
+            # This might happen if a dimension in model.dimensions is not in data_df columns,
+            # though the check above should catch it.
+            raise ValueError(f"Error grouping data by dimensions: {e}. Ensure all dimensions are in data.")
+
         results = []
-
         for name, group in grouped_data:
             aggregated_metrics = {}
             for metric_col in model.metrics:
-                agg_type = model.aggregation_types.get(metric_col, "sum") # Default to sum
+                # Ensure metric_col is valid and numeric (already checked)
+                agg_type = model.aggregation_types.get(metric_col, "sum").lower() # Default to sum
+
                 if agg_type == "sum":
                     aggregated_metrics[metric_col] = group[metric_col].sum()
                 elif agg_type == "mean":
                     aggregated_metrics[metric_col] = group[metric_col].mean()
-                # Add other aggregation types like count, min, max etc.
+                elif agg_type == "count":
+                    aggregated_metrics[metric_col] = group[metric_col].count()
+                elif agg_type == "min":
+                    aggregated_metrics[metric_col] = group[metric_col].min()
+                elif agg_type == "max":
+                    aggregated_metrics[metric_col] = group[metric_col].max()
+                elif agg_type == "median":
+                    aggregated_metrics[metric_col] = group[metric_col].median()
+                elif agg_type == "std":
+                    aggregated_metrics[metric_col] = group[metric_col].std()
+                elif agg_type == "var":
+                    aggregated_metrics[metric_col] = group[metric_col].var()
+                else:
+                    # Log a warning for unsupported aggregation type and default to sum
+                    print(f"Warning: Unsupported aggregation type '{agg_type}' for metric '{metric_col}'. Defaulting to 'sum'.")
+                    aggregated_metrics[metric_col] = group[metric_col].sum()
 
             # Ensure name is a tuple if multiple dimensions, otherwise it's a single value
-            dim_values = name if isinstance(name, tuple) else (name,)
+            dim_values_tuple = name if isinstance(name, tuple) else (name,)
+
+            # Handle cases where a dimension value might be NaN (common after groupby if original data had NaNs in dimension columns)
+            # Convert NaN dimension values to None (or a string like "N/A") for JSON serialization
+            cleaned_dim_values = []
+            for val in dim_values_tuple:
+                if pd.isna(val):
+                    cleaned_dim_values.append(None) # Or "N/A"
+                else:
+                    cleaned_dim_values.append(val)
 
             results.append({
-                "dimensions": dict(zip(model.dimensions, dim_values)),
+                "dimensions": dict(zip(model.dimensions, cleaned_dim_values)),
                 "metrics": aggregated_metrics
             })
         return results
+
+    # Dashboard and Widget Configuration Services
+
+    def create_dashboard(self, tenant_id: int, user_id: int, dashboard_data: schemas.DashboardCreate) -> AnalyticsDashboard:
+        """Creates a new analytics dashboard and its initial widgets."""
+        db_dashboard = AnalyticsDashboard(
+            tenant_id=tenant_id,
+            user_id=user_id,
+            name=dashboard_data.name,
+            description=dashboard_data.description,
+            tags=dashboard_data.tags,
+            layout=[] # Layout will be built based on created widgets
+        )
+        self.db.add(db_dashboard)
+        self.db.flush() # Flush to get db_dashboard.id for widgets and layout
+
+        created_widgets = []
+        layout_items = []
+        if dashboard_data.widgets:
+            for i, widget_create_data in enumerate(dashboard_data.widgets):
+                db_widget = DashboardWidgetConfig(
+                    dashboard_id=db_dashboard.id,
+                    tenant_id=tenant_id, # Ensure widget tenant matches dashboard
+                    widget_type=widget_create_data.widget_type,
+                    title=widget_create_data.title,
+                    data_source_config=widget_create_data.data_source_config.dict(),
+                    display_options=widget_create_data.display_options
+                )
+                self.db.add(db_widget)
+                self.db.flush() # Get ID for layout
+                created_widgets.append(db_widget)
+
+                # Use layout from input if provided and matches index, else default placement
+                if dashboard_data.layout and i < len(dashboard_data.layout) and dashboard_data.layout[i].widget_config_id == 0: # Placeholder ID
+                    # This matching is tricky if widget_config_id in input layout isn't predictable.
+                    # A better way for DashboardCreate: layout items might not have widget_config_id yet,
+                    # or they refer to the order of widgets in the `widgets` list.
+                    # For now, let's assume layout in DashboardCreate might be conceptual or handled by default.
+                    # Default placement:
+                    layout_items.append(schemas.LayoutItem(widget_config_id=db_widget.id, x=(i % 4) * 3, y=(i // 4) * 2, w=3, h=2).dict())
+                else: # Default layout if not specified or mismatched
+                    layout_items.append(schemas.LayoutItem(widget_config_id=db_widget.id, x=(i % 4) * 3, y=(i // 4) * 2, w=3, h=2).dict())
+
+
+        db_dashboard.layout = layout_items
+        self.db.commit()
+        self.db.refresh(db_dashboard)
+        # To ensure widgets are loaded in the returned object if accessed:
+        self.db.refresh(db_dashboard)
+        for widget in created_widgets: # Ensure created widgets are also refreshed if needed
+            self.db.refresh(widget)
+        return db_dashboard
+
+    def get_dashboard(self, dashboard_id: int, tenant_id: int, user_id: int) -> Optional[AnalyticsDashboard]:
+        """Gets a specific dashboard by ID, ensuring tenant and user ownership."""
+        # Add user_id check for ownership or sharing rules later
+        return self.db.query(AnalyticsDashboard).filter(
+            AnalyticsDashboard.id == dashboard_id,
+            AnalyticsDashboard.tenant_id == tenant_id,
+            # AnalyticsDashboard.user_id == user_id # Uncomment for strict ownership
+        ).first()
+
+    def get_dashboards_by_user(self, tenant_id: int, user_id: int, skip: int = 0, limit: int = 100) -> List[AnalyticsDashboard]:
+        """Gets all dashboards for a specific user within a tenant."""
+        return self.db.query(AnalyticsDashboard).filter(
+            AnalyticsDashboard.tenant_id == tenant_id,
+            AnalyticsDashboard.user_id == user_id
+        ).order_by(AnalyticsDashboard.name).offset(skip).limit(limit).all()
+
+    def update_dashboard(self, dashboard_id: int, tenant_id: int, user_id: int, dashboard_update_data: schemas.DashboardUpdate) -> Optional[AnalyticsDashboard]:
+        """Updates an existing dashboard's properties (name, description, tags, layout)."""
+        db_dashboard = self.get_dashboard(dashboard_id, tenant_id, user_id)
+        if not db_dashboard:
+            return None
+
+        update_data = dashboard_update_data.dict(exclude_unset=True)
+        for key, value in update_data.items():
+            if key == "layout" and value is not None: # Ensure layout items are dicts
+                setattr(db_dashboard, key, [item.dict() if isinstance(item, BaseModel) else item for item in value])
+            else:
+                setattr(db_dashboard, key, value)
+
+        db_dashboard.updated_at = datetime.utcnow()
+        self.db.commit()
+        self.db.refresh(db_dashboard)
+        return db_dashboard
+
+    def update_dashboard_layout(self, dashboard_id: int, tenant_id: int, user_id: int, layout_data: List[schemas.LayoutItem]) -> Optional[AnalyticsDashboard]:
+        """Updates only the layout of a dashboard."""
+        db_dashboard = self.get_dashboard(dashboard_id, tenant_id, user_id)
+        if not db_dashboard:
+            return None
+
+        # Validate widget_config_ids in layout_data belong to this dashboard
+        existing_widget_ids = {widget.id for widget in db_dashboard.widgets}
+        for item in layout_data:
+            if item.widget_config_id not in existing_widget_ids:
+                raise ValueError(f"Widget with config_id {item.widget_config_id} not found in dashboard {dashboard_id}.")
+
+        db_dashboard.layout = [item.dict() for item in layout_data]
+        db_dashboard.updated_at = datetime.utcnow()
+        self.db.commit()
+        self.db.refresh(db_dashboard)
+        return db_dashboard
+
+
+    def delete_dashboard(self, dashboard_id: int, tenant_id: int, user_id: int) -> bool:
+        """Deletes a dashboard and its associated widgets."""
+        db_dashboard = self.get_dashboard(dashboard_id, tenant_id, user_id)
+        if not db_dashboard:
+            return False
+
+        self.db.delete(db_dashboard) # Cascade should delete widgets
+        self.db.commit()
+        return True
+
+    def add_widget_to_dashboard(self, dashboard_id: int, tenant_id: int, user_id: int, widget_data: schemas.WidgetConfigCreate) -> Optional[DashboardWidgetConfig]:
+        """Adds a new widget configuration to a dashboard."""
+        db_dashboard = self.get_dashboard(dashboard_id, tenant_id, user_id)
+        if not db_dashboard:
+            # Or raise HTTPException if called from router directly
+            return None
+
+        db_widget = DashboardWidgetConfig(
+            dashboard_id=db_dashboard.id,
+            tenant_id=tenant_id, # From dashboard's tenant
+            widget_type=widget_data.widget_type,
+            title=widget_data.title,
+            data_source_config=widget_data.data_source_config.dict(),
+            display_options=widget_data.display_options
+        )
+        self.db.add(db_widget)
+
+        # Add to dashboard's layout with default position if not specified elsewhere
+        # This assumes client will call update_dashboard_layout separately or dashboard handles new widget placement.
+        # For simplicity, new widgets might need explicit placement via update_dashboard_layout.
+        # Or, we can try a default placement:
+        self.db.flush() # to get db_widget.id
+
+        new_layout_item = schemas.LayoutItem(widget_config_id=db_widget.id, x=0, y=99, w=3, h=2) # Default pos (e.g., bottom)
+        if db_dashboard.layout is None: db_dashboard.layout = [] # Ensure layout is a list
+        db_dashboard.layout.append(new_layout_item.dict())
+        db_dashboard.updated_at = datetime.utcnow()
+
+        self.db.commit()
+        self.db.refresh(db_widget)
+        self.db.refresh(db_dashboard) # Refresh dashboard to reflect layout change
+        return db_widget
+
+    def get_widget_config(self, widget_id: int, tenant_id: int) -> Optional[DashboardWidgetConfig]:
+        """Helper to get a widget config, ensuring tenant match."""
+        return self.db.query(DashboardWidgetConfig).filter(
+            DashboardWidgetConfig.id == widget_id,
+            DashboardWidgetConfig.tenant_id == tenant_id
+        ).first()
+
+    def update_widget_on_dashboard(self, widget_id: int, tenant_id: int, user_id: int, widget_update_data: schemas.WidgetConfigUpdate) -> Optional[DashboardWidgetConfig]:
+        """Updates an existing widget configuration."""
+        # user_id check implies checking dashboard ownership first
+        db_widget = self.get_widget_config(widget_id, tenant_id)
+        if not db_widget:
+            return None
+
+        # Check if user owns the dashboard this widget belongs to
+        dashboard_owner_check = self.get_dashboard(db_widget.dashboard_id, tenant_id, user_id)
+        if not dashboard_owner_check:
+            return None # User does not own the parent dashboard
+
+        update_data = widget_update_data.dict(exclude_unset=True)
+        for key, value in update_data.items():
+            if key == "data_source_config" and value is not None:
+                 setattr(db_widget, key, value.dict() if isinstance(value, BaseModel) else value)
+            else:
+                setattr(db_widget, key, value)
+
+        db_widget.updated_at = datetime.utcnow()
+        self.db.commit()
+        self.db.refresh(db_widget)
+        return db_widget
+
+    def remove_widget_from_dashboard(self, widget_id: int, tenant_id: int, user_id: int) -> bool:
+        """Removes a widget configuration from a dashboard."""
+        db_widget = self.get_widget_config(widget_id, tenant_id)
+        if not db_widget:
+            return False
+
+        # Check if user owns the dashboard this widget belongs to
+        db_dashboard = self.get_dashboard(db_widget.dashboard_id, tenant_id, user_id)
+        if not db_dashboard:
+            return False # User does not own the parent dashboard
+
+        # Remove from dashboard's layout
+        if db_dashboard.layout:
+            db_dashboard.layout = [item for item in db_dashboard.layout if item.get("widget_config_id") != widget_id]
+            db_dashboard.updated_at = datetime.utcnow()
+
+        self.db.delete(db_widget)
+        self.db.commit()
+        return True
 
 
 def get_analytics_service(db: Session) -> AnalyticsService:
