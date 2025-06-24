@@ -348,3 +348,94 @@ class WorkflowIntegration(Base):
     
     def __repr__(self):
         return f"<WorkflowIntegration(id={self.id}, name='{self.name}', integration_type='{self.integration_type}')>"
+
+
+class WorkflowReportConfig(Base):
+    """
+    Configuration for automatically generating reports based on workflow events.
+    Links a WorkflowTemplate to a ReportDefinition.
+    """
+    __tablename__ = "workflow_report_configs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=False, index=True)
+
+    name = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+
+    workflow_template_id = Column(Integer, ForeignKey("workflow_templates.id"), nullable=False, index=True)
+    report_definition_id = Column(Integer, ForeignKey("report_definitions.id"), nullable=False, index=True) # From dashboard_custom.py
+
+    # Triggering event for report generation
+    # Examples: "on_workflow_completion", "on_workflow_failure", "on_step_completion", "on_step_failure"
+    # Could also include specific step_ids if needed: {"event": "on_step_completion", "step_id": "xyz"}
+    trigger_event_type = Column(String(100), nullable=False) # e.g., on_workflow_completion
+    trigger_event_config = Column(JSON, nullable=True) # For more complex triggers, e.g. specific step_id or conditions
+
+    # Report generation settings
+    output_format_override = Column(String(50), nullable=True) # e.g., pdf, csv. Overrides ReportDefinition default.
+    # Delivery config can override ReportSchedule default delivery or provide ad-hoc delivery for this trigger.
+    # Example: {"method": "email", "recipients": ["manager@example.com"], "subject": "Workflow {instance_name} Completed"}
+    delivery_config_override = Column(JSON, nullable=True)
+
+    # Parameter mapping: How to map workflow instance data to report definition parameters
+    # Example: {"report_param_name_1": "workflow_instance.input_data.customer_id",
+    #           "report_param_name_2": "workflow_instance.id"}
+    parameter_mapping = Column(JSON, nullable=True)
+
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    created_by = Column(Integer, ForeignKey("users.id"), nullable=False)
+
+    # Relationships
+    tenant = relationship("Tenant")
+    workflow_template = relationship("WorkflowTemplate") # Add backref in WorkflowTemplate if needed
+    # report_definition relationship needs to be established carefully if ReportDefinition is in a different model file.
+    # Assuming ReportDefinition is imported and Base is shared, SQLAlchemy can handle this.
+    # report_definition = relationship("ReportDefinition") # This might need explicit primaryjoin/foreign_keys if ambiguous
+    creator = relationship("User")
+
+    def __repr__(self):
+        return f"<WorkflowReportConfig(id={self.id}, name='{self.name}', template_id={self.workflow_template_id}, report_def_id={self.report_definition_id})>"
+
+
+class OptimizationRecommendation(Base):
+    """
+    Stores recommendations for process optimization based on workflow analytics.
+    """
+    __tablename__ = "optimization_recommendations"
+
+    id = Column(Integer, primary_key=True, index=True)
+    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=False, index=True)
+
+    recommendation_type = Column(String(100), nullable=False, index=True,
+                                 comment="e.g., bottleneck_detected, high_error_rate_step, new_automation_candidate, underutilized_feature")
+    description = Column(Text, nullable=False, comment="Detailed description of the recommendation and the reasoning.")
+
+    # Context for the recommendation
+    affected_workflow_template_id = Column(Integer, ForeignKey("workflow_templates.id"), nullable=True, index=True)
+    affected_workflow_instance_id = Column(Integer, ForeignKey("workflow_instances.id"), nullable=True, index=True) # If specific to an instance
+    affected_step_id = Column(String(100), nullable=True, comment="Specific step ID within a workflow if applicable.")
+
+    # Suggested actions and potential impact
+    suggested_actions = Column(JSON, nullable=True, comment="List of suggested actions, e.g., ['review_step_config', 'add_error_handling', 'increase_timeout']")
+    potential_impact_score = Column(Float, nullable=True, comment="A score (e.g., 0-1) indicating potential positive impact if implemented.")
+    confidence_score = Column(Float, nullable=True, comment="Confidence in this recommendation (e.g., 0-1).")
+
+    # Status and metadata
+    status = Column(String(50), default="new", index=True, comment="e.g., new, viewed, investigating, implemented, dismissed")
+    priority = Column(Integer, default=5, comment="Priority of the recommendation (1-10, 1 highest)")
+
+    generated_at = Column(DateTime(timezone=True), server_default=func.now())
+    last_reviewed_at = Column(DateTime(timezone=True), nullable=True)
+    reviewed_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+
+    # Relationships
+    tenant = relationship("Tenant")
+    workflow_template = relationship("WorkflowTemplate") # Use foreign_keys if multiple FKs to same table exist elsewhere
+    workflow_instance = relationship("WorkflowInstance")
+    reviewer = relationship("User") # User who reviewed the recommendation
+
+    def __repr__(self):
+        return f"<OptimizationRecommendation(id={self.id}, type='{self.recommendation_type}', tenant_id={self.tenant_id})>"

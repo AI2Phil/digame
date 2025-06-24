@@ -294,7 +294,82 @@ class CustomDashboardService:
                     active_only=query_params.get("active_only", True)
                 )
                 data_payload = [schemas.AnalyticsModelInDB.from_orm(m).dict() for m in models]
-            # TODO: Add more handlers for other data_source_types
+
+            # --- New Workflow-related Data Sources ---
+            elif data_source_type == "workflow_instance_summary":
+                instance_id = query_params.get("workflow_instance_id")
+                if instance_id:
+                    # Assuming WorkflowInstance is importable and queryable here
+                    # This might require adding WorkflowInstance to __init__.py of models
+                    # and ensuring the DB session can access it.
+                    from ..models.workflow_automation import WorkflowInstance # Direct import
+
+                    wf_instance = self.db.query(WorkflowInstance).filter(
+                        WorkflowInstance.id == instance_id,
+                        WorkflowInstance.tenant_id == tenant_id # Ensure tenant isolation
+                    ).first()
+
+                    if wf_instance:
+                        # Manually construct a dictionary. Later, a Pydantic schema for this would be better.
+                        data_payload = {
+                            "id": wf_instance.id,
+                            "name": wf_instance.name,
+                            "status": wf_instance.status,
+                            "description": wf_instance.description,
+                            "input_data": wf_instance.input_data,
+                            "output_data": wf_instance.output_data,
+                            "context_data": wf_instance.context_data,
+                            "current_step_id": wf_instance.current_step_id,
+                            "progress_percentage": wf_instance.progress_percentage,
+                            "steps_completed": wf_instance.steps_completed,
+                            "steps_total": wf_instance.steps_total,
+                            "execution_start_time": wf_instance.execution_start_time.isoformat() if wf_instance.execution_start_time else None,
+                            "execution_end_time": wf_instance.execution_end_time.isoformat() if wf_instance.execution_end_time else None,
+                            "execution_duration": wf_instance.execution_duration,
+                            "error_count": wf_instance.error_count,
+                            "last_error": wf_instance.last_error,
+                            "triggered_by": wf_instance.triggered_by,
+                            "priority": wf_instance.priority,
+                            "created_at": wf_instance.created_at.isoformat() if wf_instance.created_at else None,
+                            "updated_at": wf_instance.updated_at.isoformat() if wf_instance.updated_at else None,
+                            "template_id": wf_instance.template_id,
+                        }
+                    else:
+                        data_payload = {"error": f"Workflow instance with ID {instance_id} not found for tenant {tenant_id}."}
+                else:
+                    data_payload = {"error": "Missing workflow_instance_id for workflow_instance_summary data source."}
+
+            elif data_source_type == "workflow_instance_steps":
+                instance_id = query_params.get("workflow_instance_id")
+                if instance_id:
+                    from ..models.workflow_automation import WorkflowStepExecution # Direct import
+                    steps = self.db.query(WorkflowStepExecution).filter(
+                        WorkflowStepExecution.workflow_instance_id == instance_id
+                    ).order_by(WorkflowStepExecution.execution_order).all()
+
+                    # Manually construct list of dicts. Pydantic schema would be better.
+                    data_payload = [{
+                        "id": step.id,
+                        "step_id": step.step_id,
+                        "step_name": step.step_name,
+                        "step_type": step.step_type,
+                        "status": step.status,
+                        "execution_order": step.execution_order,
+                        "start_time": step.start_time.isoformat() if step.start_time else None,
+                        "end_time": step.end_time.isoformat() if step.end_time else None,
+                        "execution_duration": step.execution_duration,
+                        "error_message": step.error_message,
+                        "input_data": step.input_data,
+                        "output_data": step.output_data,
+                        "assigned_to": step.assigned_to,
+                        "due_date": step.due_date.isoformat() if step.due_date else None,
+                    } for step in steps]
+                    if not data_payload:
+                        data_payload = {"message": f"No steps found for workflow instance {instance_id}."}
+                else:
+                    data_payload = {"error": "Missing workflow_instance_id for workflow_instance_steps data source."}
+
+            # TODO: Add more handlers for other data_source_types like workflow_template_performance
 
         except HTTPException:
             raise

@@ -40,8 +40,20 @@ def create_task(db: Session, task: TaskCreate, user_id: int) -> Task:
         "status": task.status or 'suggested',
         "notes": task.notes,
         "due_date_inferred": task.due_date_inferred,
-        "process_note_id": task.process_note_id
+        "process_note_id": task.process_note_id,
+        # New fields
+        "estimated_effort_hours": task.estimated_effort_hours,
+        "deadline": task.deadline,
+        "dependencies": task.dependencies if task.dependencies is not None else [],
+        "assigned_resource_id": task.assigned_resource_id,
+        "calendar_event_id": task.calendar_event_id,
     }
+    # Filter out None values for fields that should not be explicitly set to None if not provided
+    # However, for create, Pydantic model defaults should handle missing optional fields.
+    # If a field is explicitly passed as None from TaskCreate, it will be None.
+    # SQLAlchemy model defaults will apply if the key is missing from task_data,
+    # but Pydantic defaults ensure keys are present, possibly with None.
+
     db_task = Task(**task_data)
     db.add(db_task)
     db.commit()

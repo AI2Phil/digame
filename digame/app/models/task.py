@@ -36,11 +36,23 @@ class Task(Base):
     # Relationship to ProcessNote model (optional)
     process_note = relationship("ProcessNote", back_populates="generated_tasks")
 
+    # New fields for Smart Scheduling & Calendar Management
+    estimated_effort_hours = Column(Float(), nullable=True)
+    deadline = Column(DateTime(), nullable=True) # Specific deadline, complements due_date_inferred
+    dependencies = Column(JSON, nullable=True, default=[]) # List of task IDs this task depends on
+    assigned_resource_id = Column(Integer(), ForeignKey("users.id"), nullable=True, index=True) # Optional explicit assignment
+    calendar_event_id = Column(String(255), nullable=True) # External calendar event ID
+
+    # Relationship for assigned resource (can be the same as user_id or different if tasks can be assigned by others)
+    assigned_resource = relationship("User", foreign_keys=[assigned_resource_id])
+
+
     def __repr__(self):
         return f"<Task(id={self.id}, user_id={self.user_id}, description='{self.description[:30]}...', status='{self.status}')>"
 
 # To complete the bi-directional relationships:
 # User model (user.py) needs:
-#   tasks = relationship("Task", back_populates="user", cascade="all, delete-orphan")
+#   tasks = relationship("Task", back_populates="user", cascade="all, delete-orphan", foreign_keys="[Task.user_id]")
+#   assigned_tasks = relationship("Task", back_populates="assigned_resource", foreign_keys="[Task.assigned_resource_id]")
 # ProcessNote model (process_notes.py) needs:
 #   generated_tasks = relationship("Task", back_populates="process_note", cascade="all, delete-orphan") # Or other cascade option

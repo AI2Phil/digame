@@ -54,11 +54,18 @@ class User(Base):
     #     back_populates="user",
     #     cascade="all, delete-orphan"
     # )
-    # tasks = relationship(
-    #     "Task",
-    #     back_populates="user",
-    #     cascade="all, delete-orphan"
-    # )
+    tasks = relationship(
+        "Task",
+        back_populates="user", # This 'user' is the owner/creator of the task
+        cascade="all, delete-orphan",
+        foreign_keys="[Task.user_id]" # Specify which FK this relationship uses
+    )
+    assigned_tasks = relationship(
+        "Task",
+        back_populates="assigned_resource", # This 'assigned_resource' is who the task is assigned to
+        cascade="all, delete-orphan",
+        foreign_keys="[Task.assigned_resource_id]" # Specify which FK this relationship uses
+    )
     # behavioral_models = relationship(
     #     "BehavioralModel",
     #     back_populates="user",
