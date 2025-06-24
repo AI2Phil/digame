@@ -228,6 +228,12 @@ Once the test environment issues you mentioned are resolved, these tests should 
 - Add AI-generated suggestions based on user behavior and goals
 - Create contextual insights that appear at optimal moments
 
+Pending tests: I've re-created mobile/test/components/InsightsDashboard.test.js to ensure it exists with the correct content. The work completed includes:
+Notification Timing Optimization: Logic for adaptive scheduling and effectiveness tracking in advancedMobileService.js and notificationService.js, UI hints in AdvancedMobileFeatures.jsx, and associated tests.
+Enhanced AI-Powered Insights Display: A new InsightsDashboard.jsx component, a service method getInsightsDashboardData in advancedMobileService.js to fetch data for it, navigation updates in AdvancedMobileFeatures.jsx to show this dashboard, and tests for both the new service method and the component.
+Build/Test Configuration: Updates to package.json for Jest configuration, creation of babel.config.js, and additions of necessary dev dependencies to the root package.json to support the test environment.
+As per your previous instruction, I have not re-run the full test suite after the last fix, as you mentioned you would resolve the test environment issues. Assuming the file states are now correct for submission.
+
 ### 4. Offline AI Capability Caching
 - Implement local AI model caching for offline functionality
 - Create intelligent data synchronization when connectivity returns
