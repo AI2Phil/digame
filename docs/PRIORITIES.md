@@ -151,7 +151,7 @@ These items are valuable but can be addressed after higher-priority tasks are co
     *   **Source**: `/docs/SUMMARY.md` (Section: "NEW ENHANCEMENT OPPORTUNITIES", Item 10), `/docs/AI.md` (Various future AI features)
     *   **Justification**: Next-generation AI capabilities - now fully implemented.
 
-2.  **Workflow Automation & Task Management - Advanced Features**
+2.  **Workflow Automation & Task Management - Advanced Features** (In Process)
     *   **Description**: Smart scheduling, calendar management, automated report generation from workflows, advanced process optimization recommendations.
     *   **Source**: `/docs/NEXT_STEPS.md` (Section: "Phase 5: Advanced AI & Automation", Item 5.2)
     *   **Justification**: Extends automation capabilities.
