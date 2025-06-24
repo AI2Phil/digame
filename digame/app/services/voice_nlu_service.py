@@ -47,6 +47,9 @@ Example entities: {'task_name': 'buy groceries', 'location': 'London', 'recipien
 If the intent is unclear or not supported, respond with intent 'UNKNOWN' and empty entities.
 Supported intents:
 - CREATE_TASK: User wants to create a task. Entities: {'task_name': 'description of task', 'due_date': 'optional due date in YYYY-MM-DD', 'priority': 'optional priority high/medium/low'}
+- EDIT_TASK: User wants to modify an existing task. Entities: {'task_identifier_keywords': 'keywords to find the task', 'new_description': 'optional new task description', 'new_due_date': 'optional new due date in YYYY-MM-DD', 'new_priority': 'optional new priority high/medium/low', 'new_status': 'optional new status e.g., completed, in_progress'}
+- COMPLETE_TASK: User wants to mark a task as completed. Entities: {'task_identifier_keywords': 'keywords to find the task'}
+- FIND_TASK: User wants to find a specific task or list tasks. Entities: {'task_identifier_keywords': 'keywords to find the task'}
 - GET_PROFILE_INFO: User wants to retrieve some profile information. Entities: {'info_type': 'e.g., email, username, full_name'}
 - SET_REMINDER: User wants to set a reminder. Entities: {'reminder_text': 'text for reminder', 'reminder_time': 'time for reminder e.g., tomorrow 10am'}
 """
