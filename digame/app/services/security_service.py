@@ -1,573 +1,524 @@
-"""
-Enhanced security service layer for the Digame platform
-"""
-
 from sqlalchemy.orm import Session
-from sqlalchemy import and_, or_, desc
+from sqlalchemy import and_, func, desc, or_
 from typing import List, Optional, Dict, Any, Tuple
 from datetime import datetime, timedelta
-import hashlib
 import secrets
-import re
-import pyotp
 import qrcode
 import io
 import base64
-from passlib.context import CryptContext
+import pyotp
+from cryptography.fernet import Fernet
+import os
+import hashlib
 import ipaddress
+import json
+from collections import defaultdict
 
-from ..models.security import (
-    SecurityEvent, SecurityPolicy, UserSecurityProfile, 
-    ApiKey, SecurityAlert, ComplianceLog
+from digame.app.models.security import (
+    MFAConfig, SecurityAuditLog, SecurityPolicy, ThreatDetection,
+    SecurityIncident, AccessControl, SecurityMetrics
 )
-from ..models.tenant import User
-from ..database import get_db
+from digame.app.schemas.security_schemas import (
+    MFAConfigCreate, MFAConfigUpdate, MFASetupRequest, MFASetupResponse,
+    SecurityAuditLogCreate, ThreatDetectionCreate, SecurityIncidentCreate,
+    SecurityPolicyCreate, AccessControlCreate, EventType, Severity,
+    ThreatLevel, ThreatStatus, IncidentStatus
+)
 
-# Password hashing
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-
-class SecurityService:
-    """
-    Core security service for managing security policies and events
-    """
+class SecurityEncryptionService:
+    """Service for encrypting/decrypting security-sensitive data"""
     
-    def __init__(self, db: Session):
-        self.db = db
-    
-    def log_security_event(
-        self, 
-        tenant_id: int, 
-        event_type: str, 
-        user_id: Optional[int] = None,
-        ip_address: Optional[str] = None,
-        user_agent: Optional[str] = None,
-        endpoint: Optional[str] = None,
-        method: Optional[str] = None,
-        success: bool = True,
-        error_message: Optional[str] = None,
-        metadata: Optional[Dict[str, Any]] = None
-    ) -> SecurityEvent:
-        """
-        Log a security event for audit trail
-        """
-        # Determine risk level based on event type
-        risk_level = self._assess_event_risk(event_type, success, metadata)
-        
-        event = SecurityEvent(
-            tenant_id=tenant_id,
-            user_id=user_id,
-            event_type=event_type,
-            event_description=self._generate_event_description(event_type, success, metadata),
-            risk_level=risk_level,
-            ip_address=ip_address,
-            user_agent=user_agent,
-            endpoint=endpoint,
-            method=method,
-            success=success,
-            error_message=error_message,
-            metadata=metadata or {}
-        )
-        
-        self.db.add(event)
-        self.db.commit()
-        
-        # Check if this event should trigger an alert
-        self._check_for_security_alerts(event)
-        
-        return event
-    
-    def get_security_policy(self, tenant_id: int) -> Optional[SecurityPolicy]:
-        """
-        Get security policy for a tenant
-        """
-        return self.db.query(SecurityPolicy).filter(
-            SecurityPolicy.tenant_id == tenant_id
-        ).first()
-    
-    def create_security_policy(self, tenant_id: int, policy_data: Dict[str, Any]) -> SecurityPolicy:
-        """
-        Create or update security policy for a tenant
-        """
-        existing_policy = self.get_security_policy(tenant_id)
-        
-        if existing_policy:
-            # Update existing policy
-            for key, value in policy_data.items():
-                if hasattr(existing_policy, key):
-                    setattr(existing_policy, key, value)
-            existing_policy.updated_at = datetime.utcnow()
-            self.db.commit()
-            return existing_policy
+    def __init__(self):
+        key = os.getenv('SECURITY_ENCRYPTION_KEY')
+        if not key:
+            key = Fernet.generate_key()
+            print(f"Generated new security encryption key: {key.decode()}")
+            print("Please set SECURITY_ENCRYPTION_KEY environment variable")
         else:
-            # Create new policy
-            policy = SecurityPolicy(tenant_id=tenant_id, **policy_data)
-            self.db.add(policy)
-            self.db.commit()
-            return policy
+            key = key.encode()
+        
+        self.cipher_suite = Fernet(key)
     
-    def validate_password(self, password: str, tenant_id: int) -> Tuple[bool, List[str]]:
-        """
-        Validate password against tenant security policy
-        """
-        policy = self.get_security_policy(tenant_id)
-        if not policy:
-            # Default validation
-            policy = SecurityPolicy()
-        
-        errors = []
-        
-        # Length check
-        if len(password) < policy.min_password_length:
-            errors.append(f"Password must be at least {policy.min_password_length} characters long")
-        
-        # Character requirements
-        if policy.require_uppercase and not re.search(r'[A-Z]', password):
-            errors.append("Password must contain at least one uppercase letter")
-        
-        if policy.require_lowercase and not re.search(r'[a-z]', password):
-            errors.append("Password must contain at least one lowercase letter")
-        
-        if policy.require_numbers and not re.search(r'\d', password):
-            errors.append("Password must contain at least one number")
-        
-        if policy.require_special_chars and not re.search(r'[!@#$%^&*(),.?":{}|<>]', password):
-            errors.append("Password must contain at least one special character")
-        
-        return len(errors) == 0, errors
+    def encrypt(self, data: str) -> str:
+        return self.cipher_suite.encrypt(data.encode()).decode()
     
-    def check_account_lockout(self, user_id: int) -> Tuple[bool, Optional[datetime]]:
-        """
-        Check if user account is locked and when it will be unlocked
-        """
-        profile = self.get_user_security_profile(user_id)
-        if not profile:
-            return False, None
-        
-        if profile.is_locked:
-            if profile.locked_until and datetime.utcnow() > profile.locked_until:
-                # Auto-unlock expired lockout
-                self.unlock_user_account(user_id)
-                return False, None
-            return True, profile.locked_until
-        
-        return False, None
-    
-    def record_login_attempt(self, user_id: int, success: bool, ip_address: str) -> bool:
-        """
-        Record login attempt and handle account lockout
-        """
-        user = self.db.query(User).filter(User.id == user_id).first()
-        if not user:
-            return False
-        
-        profile = self.get_user_security_profile(user_id)
-        if not profile:
-            profile = self.create_user_security_profile(user_id)
-        
-        policy = self.get_security_policy(user.tenant_id)
-        if not policy:
-            policy = SecurityPolicy()
-        
-        if success:
-            # Reset failed attempts on successful login
-            profile.failed_login_attempts = 0
-            profile.last_login_ip = ip_address
-            profile.is_locked = False
-            profile.locked_until = None
-            
-            # Update user last login
-            user.last_login = datetime.utcnow()
-        else:
-            # Increment failed attempts
-            profile.failed_login_attempts += 1
-            profile.last_failed_login = datetime.utcnow()
-            
-            # Check if account should be locked
-            if profile.failed_login_attempts >= policy.max_login_attempts:
-                profile.is_locked = True
-                if policy.auto_unlock:
-                    profile.locked_until = datetime.utcnow() + timedelta(
-                        minutes=policy.lockout_duration_minutes
-                    )
-                
-                # Log security event
-                self.log_security_event(
-                    tenant_id=user.tenant_id,
-                    user_id=user_id,
-                    event_type="account_locked",
-                    ip_address=ip_address,
-                    metadata={"failed_attempts": profile.failed_login_attempts}
-                )
-        
-        self.db.commit()
-        return True
-    
-    def get_user_security_profile(self, user_id: int) -> Optional[UserSecurityProfile]:
-        """
-        Get user security profile
-        """
-        return self.db.query(UserSecurityProfile).filter(
-            UserSecurityProfile.user_id == user_id
-        ).first()
-    
-    def create_user_security_profile(self, user_id: int) -> UserSecurityProfile:
-        """
-        Create user security profile
-        """
-        profile = UserSecurityProfile(user_id=user_id)
-        self.db.add(profile)
-        self.db.commit()
-        return profile
-    
-    def unlock_user_account(self, user_id: int) -> bool:
-        """
-        Manually unlock user account
-        """
-        profile = self.get_user_security_profile(user_id)
-        if not profile:
-            return False
-        
-        profile.is_locked = False
-        profile.locked_until = None
-        profile.failed_login_attempts = 0
-        self.db.commit()
-        return True
-    
-    def assess_user_risk(self, user_id: int) -> float:
-        """
-        Assess user risk score based on various factors
-        """
-        profile = self.get_user_security_profile(user_id)
-        if not profile:
-            return 0.0
-        
-        risk_score = 0.0
-        risk_factors = []
-        
-        # Failed login attempts
-        if profile.failed_login_attempts > 0:
-            risk_score += min(profile.failed_login_attempts * 0.1, 0.3)
-            risk_factors.append("failed_login_attempts")
-        
-        # Account lockout history
-        if profile.is_locked:
-            risk_score += 0.4
-            risk_factors.append("account_locked")
-        
-        # Password age
-        if profile.password_last_changed:
-            days_since_change = (datetime.utcnow() - profile.password_last_changed).days
-            if days_since_change > 90:
-                risk_score += 0.2
-                risk_factors.append("old_password")
-        
-        # MFA status
-        if not profile.mfa_enabled:
-            risk_score += 0.1
-            risk_factors.append("no_mfa")
-        
-        # Unusual activity
-        if profile.unusual_activity_detected:
-            risk_score += 0.3
-            risk_factors.append("unusual_activity")
-        
-        # Update profile
-        profile.risk_score = min(risk_score, 1.0)
-        profile.risk_factors = risk_factors
-        profile.last_risk_assessment = datetime.utcnow()
-        self.db.commit()
-        
-        return profile.risk_score
-    
-    def _assess_event_risk(self, event_type: str, success: bool, metadata: Optional[Dict]) -> str:
-        """
-        Assess risk level of a security event
-        """
-        high_risk_events = [
-            "account_locked", "suspicious_activity", "permission_denied",
-            "export_data", "mfa_disabled"
-        ]
-        
-        medium_risk_events = [
-            "login_failure", "password_change", "api_access"
-        ]
-        
-        if event_type in high_risk_events:
-            return "high"
-        elif event_type in medium_risk_events:
-            return "medium"
-        elif not success:
-            return "medium"
-        else:
-            return "low"
-    
-    def _generate_event_description(self, event_type: str, success: bool, metadata: Optional[Dict]) -> str:
-        """
-        Generate human-readable event description
-        """
-        descriptions = {
-            "login_success": "User successfully logged in",
-            "login_failure": "Failed login attempt",
-            "password_change": "User changed password",
-            "permission_denied": "Access denied due to insufficient permissions",
-            "data_access": "User accessed sensitive data",
-            "suspicious_activity": "Suspicious activity detected",
-            "account_locked": "User account locked due to failed login attempts",
-            "mfa_enabled": "Multi-factor authentication enabled",
-            "mfa_disabled": "Multi-factor authentication disabled",
-            "api_access": "API access attempt",
-            "export_data": "Data export operation"
-        }
-        
-        base_description = descriptions.get(event_type, f"Security event: {event_type}")
-        
-        if not success:
-            base_description = f"Failed: {base_description}"
-        
-        return base_description
-    
-    def _check_for_security_alerts(self, event: SecurityEvent):
-        """
-        Check if a security event should trigger an alert
-        """
-        # Check for multiple failed logins
-        if event.event_type == "login_failure":
-            recent_failures = self.db.query(SecurityEvent).filter(
-                and_(
-                    SecurityEvent.tenant_id == event.tenant_id,
-                    SecurityEvent.user_id == event.user_id,
-                    SecurityEvent.event_type == "login_failure",
-                    SecurityEvent.created_at >= datetime.utcnow() - timedelta(minutes=15)
-                )
-            ).count()
-            
-            if recent_failures >= 3:
-                self._create_security_alert(
-                    tenant_id=event.tenant_id,
-                    user_id=event.user_id,
-                    alert_type="multiple_failed_logins",
-                    title="Multiple Failed Login Attempts",
-                    description=f"User has {recent_failures} failed login attempts in the last 15 minutes",
-                    severity="high",
-                    source_event_id=event.id
-                )
-    
-    def _create_security_alert(
-        self,
-        tenant_id: int,
-        alert_type: str,
-        title: str,
-        description: str,
-        severity: str = "medium",
-        user_id: Optional[int] = None,
-        source_event_id: Optional[int] = None
-    ) -> SecurityAlert:
-        """
-        Create a security alert
-        """
-        alert = SecurityAlert(
-            tenant_id=tenant_id,
-            user_id=user_id,
-            alert_type=alert_type,
-            title=title,
-            description=description,
-            severity=severity,
-            source_event_id=source_event_id
-        )
-        
-        self.db.add(alert)
-        self.db.commit()
-        return alert
+    def decrypt(self, encrypted_data: str) -> str:
+        return self.cipher_suite.decrypt(encrypted_data.encode()).decode()
 
+# Initialize encryption service
+security_encryption = SecurityEncryptionService()
 
 class MFAService:
-    """
-    Multi-Factor Authentication service
-    """
+    """Multi-Factor Authentication service"""
     
     def __init__(self, db: Session):
         self.db = db
     
-    def setup_totp(self, user_id: int) -> Tuple[str, str]:
-        """
-        Setup TOTP (Time-based One-Time Password) for user
-        Returns secret and QR code data URL
-        """
-        user = self.db.query(User).filter(User.id == user_id).first()
-        if not user:
-            raise ValueError("User not found")
+    def setup_mfa(self, user_id: int, setup_request: MFASetupRequest) -> MFASetupResponse:
+        """Set up MFA for a user"""
+        # Check if MFA already exists
+        existing_mfa = self.db.query(MFAConfig).filter(MFAConfig.user_id == user_id).first()
         
-        profile = self.db.query(UserSecurityProfile).filter(
-            UserSecurityProfile.user_id == user_id
-        ).first()
+        if existing_mfa:
+            # Update existing configuration
+            mfa_config = existing_mfa
+        else:
+            # Create new configuration
+            mfa_config = MFAConfig()
+            mfa_config.user_id = user_id
+            self.db.add(mfa_config)
         
-        if not profile:
-            profile = UserSecurityProfile(user_id=user_id)
-            self.db.add(profile)
+        # Generate TOTP secret
+        totp_secret = pyotp.random_base32()
+        encrypted_secret = security_encryption.encrypt(totp_secret)
         
-        # Generate secret
-        secret = pyotp.random_base32()
+        # Generate backup codes
+        backup_codes = [secrets.token_hex(4).upper() for _ in range(10)]
+        encrypted_backup_codes = [security_encryption.encrypt(code) for code in backup_codes]
         
-        # Create TOTP URI
-        totp_uri = pyotp.totp.TOTP(secret).provisioning_uri(
-            name=user.email,
-            issuer_name="Digame Platform"
-        )
+        # Update MFA configuration
+        mfa_config.totp_secret = encrypted_secret
+        mfa_config.backup_codes = encrypted_backup_codes
+        mfa_config.recovery_email = setup_request.recovery_email
+        mfa_config.phone_number = setup_request.phone_number
+        mfa_config.preferred_method = setup_request.method.value
+        mfa_config.is_enabled = True
         
-        # Generate QR code
-        qr = qrcode.QRCode(version=1, box_size=10, border=5)
-        qr.add_data(totp_uri)
-        qr.make(fit=True)
-        
-        img = qr.make_image(fill_color="black", back_color="white")
-        img_buffer = io.BytesIO()
-        img.save(img_buffer, format='PNG')
-        img_buffer.seek(0)
-        
-        qr_code_data = base64.b64encode(img_buffer.getvalue()).decode()
-        qr_code_url = f"data:image/png;base64,{qr_code_data}"
-        
-        # Store encrypted secret (in production, use proper encryption)
-        profile.mfa_secret = secret  # Should be encrypted
         self.db.commit()
         
-        return secret, qr_code_url
-    
-    def verify_totp(self, user_id: int, token: str) -> bool:
-        """
-        Verify TOTP token
-        """
-        profile = self.db.query(UserSecurityProfile).filter(
-            UserSecurityProfile.user_id == user_id
-        ).first()
+        # Generate QR code for TOTP
+        qr_code_url = None
+        if setup_request.method == "totp":
+            totp_uri = pyotp.totp.TOTP(totp_secret).provisioning_uri(
+                name=f"user_{user_id}",
+                issuer_name="Digame"
+            )
+            
+            qr = qrcode.QRCode(version=1, box_size=10, border=5)
+            qr.add_data(totp_uri)
+            qr.make(fit=True)
+            
+            img = qr.make_image(fill_color="black", back_color="white")
+            buffer = io.BytesIO()
+            img.save(buffer, format='PNG')
+            qr_code_data = base64.b64encode(buffer.getvalue()).decode()
+            qr_code_url = f"data:image/png;base64,{qr_code_data}"
         
-        if not profile or not profile.mfa_secret:
+        # Log the setup
+        self.log_security_event(
+            user_id=user_id,
+            event_type=EventType.MFA_SETUP,
+            description=f"MFA setup completed with method: {setup_request.method.value}",
+            severity=Severity.MEDIUM
+        )
+        
+        return MFASetupResponse(
+            qr_code_url=qr_code_url,
+            backup_codes=backup_codes,
+            secret_key=totp_secret if setup_request.method == "totp" else None
+        )
+    
+    def verify_mfa(self, user_id: int, code: str, method: Optional[str] = None) -> bool:
+        """Verify MFA code"""
+        mfa_config = self.db.query(MFAConfig).filter(MFAConfig.user_id == user_id).first()
+        
+        if not mfa_config or not mfa_config.is_enabled:
             return False
         
-        totp = pyotp.TOTP(profile.mfa_secret)
-        return totp.verify(token, valid_window=1)
-    
-    def enable_mfa(self, user_id: int, verification_token: str) -> bool:
-        """
-        Enable MFA after verifying setup token
-        """
-        if not self.verify_totp(user_id, verification_token):
-            return False
+        # Try TOTP verification
+        if mfa_config.totp_secret and (not method or method == "totp"):
+            try:
+                decrypted_secret = security_encryption.decrypt(mfa_config.totp_secret)
+                totp = pyotp.TOTP(decrypted_secret)
+                if totp.verify(code, valid_window=1):
+                    mfa_config.last_used_at = datetime.utcnow()
+                    self.db.commit()
+                    return True
+            except Exception as e:
+                print(f"TOTP verification failed: {e}")
         
-        profile = self.db.query(UserSecurityProfile).filter(
-            UserSecurityProfile.user_id == user_id
-        ).first()
-        
-        if profile:
-            profile.mfa_enabled = True
-            
-            # Generate backup codes
-            backup_codes = [secrets.token_hex(4) for _ in range(10)]
-            profile.backup_codes = backup_codes  # Should be encrypted
-            
-            self.db.commit()
-            return True
+        # Try backup code verification
+        if mfa_config.backup_codes:
+            try:
+                decrypted_codes = [security_encryption.decrypt(enc_code) for enc_code in mfa_config.backup_codes]
+                if code.upper() in decrypted_codes:
+                    # Remove used backup code
+                    used_code_encrypted = security_encryption.encrypt(code.upper())
+                    mfa_config.backup_codes.remove(used_code_encrypted)
+                    mfa_config.last_used_at = datetime.utcnow()
+                    self.db.commit()
+                    return True
+            except Exception as e:
+                print(f"Backup code verification failed: {e}")
         
         return False
     
     def disable_mfa(self, user_id: int) -> bool:
-        """
-        Disable MFA for user
-        """
-        profile = self.db.query(UserSecurityProfile).filter(
-            UserSecurityProfile.user_id == user_id
-        ).first()
+        """Disable MFA for a user"""
+        mfa_config = self.db.query(MFAConfig).filter(MFAConfig.user_id == user_id).first()
         
-        if profile:
-            profile.mfa_enabled = False
-            profile.mfa_secret = None
-            profile.backup_codes = []
-            self.db.commit()
-            return True
+        if not mfa_config:
+            return False
         
-        return False
+        mfa_config.is_enabled = False
+        mfa_config.totp_secret = None
+        mfa_config.backup_codes = None
+        self.db.commit()
+        
+        # Log the disable action
+        self.log_security_event(
+            user_id=user_id,
+            event_type=EventType.MFA_DISABLE,
+            description="MFA disabled by user",
+            severity=Severity.MEDIUM
+        )
+        
+        return True
+    
+    def get_mfa_config(self, user_id: int) -> Optional[MFAConfig]:
+        """Get MFA configuration for a user"""
+        return self.db.query(MFAConfig).filter(MFAConfig.user_id == user_id).first()
+    
+    def log_security_event(self, user_id: Optional[int], event_type: EventType, 
+                          description: str, severity: Severity, **kwargs):
+        """Log a security event"""
+        log_entry = SecurityAuditLog()
+        log_entry.user_id = user_id
+        log_entry.event_type = event_type.value
+        log_entry.event_category = "authentication"
+        log_entry.severity = severity.value
+        log_entry.description = description
+        log_entry.result = "success"
+        for key, value in kwargs.items():
+            setattr(log_entry, key, value)
+        self.db.add(log_entry)
+        self.db.commit()
 
+class ThreatDetectionService:
+    """Advanced threat detection service"""
+    
+    def __init__(self, db: Session):
+        self.db = db
+        self.detection_rules = self._load_detection_rules()
+    
+    def _load_detection_rules(self) -> Dict[str, Dict]:
+        """Load threat detection rules"""
+        return {
+            "brute_force": {
+                "threshold": 5,
+                "time_window": 300,  # 5 minutes
+                "confidence": 85
+            },
+            "anomalous_access": {
+                "threshold": 3,
+                "time_window": 3600,  # 1 hour
+                "confidence": 70
+            },
+            "suspicious_ip": {
+                "known_bad_ips": [],  # Would be populated from threat intelligence
+                "confidence": 95
+            },
+            "data_exfiltration": {
+                "data_threshold": 1000000,  # 1MB
+                "time_window": 300,
+                "confidence": 80
+            }
+        }
+    
+    def detect_brute_force(self, ip_address: str, user_id: Optional[int] = None) -> Optional[ThreatDetection]:
+        """Detect brute force attacks"""
+        rule = self.detection_rules["brute_force"]
+        time_threshold = datetime.utcnow() - timedelta(seconds=rule["time_window"])
+        
+        # Count failed login attempts from this IP
+        failed_attempts = self.db.query(SecurityAuditLog).filter(
+            and_(
+                SecurityAuditLog.ip_address == ip_address,
+                SecurityAuditLog.event_type == EventType.FAILED_LOGIN.value,
+                SecurityAuditLog.timestamp >= time_threshold
+            )
+        ).count()
+        
+        if failed_attempts >= rule["threshold"]:
+            return self._create_threat_detection(
+                detection_type="brute_force",
+                threat_level=ThreatLevel.HIGH,
+                source_ip=ip_address,
+                target_user_id=user_id,
+                detection_rule="brute_force_login",
+                confidence_score=rule["confidence"],
+                description=f"Brute force attack detected: {failed_attempts} failed login attempts from {ip_address}",
+                evidence={
+                    "failed_attempts": failed_attempts,
+                    "time_window": rule["time_window"],
+                    "threshold": rule["threshold"]
+                }
+            )
+        
+        return None
+    
+    def detect_anomalous_access(self, user_id: int, ip_address: str, user_agent: str) -> Optional[ThreatDetection]:
+        """Detect anomalous access patterns"""
+        # Check for unusual location (simplified - would use GeoIP in production)
+        recent_ips = self.db.query(SecurityAuditLog.ip_address).filter(
+            and_(
+                SecurityAuditLog.user_id == user_id,
+                SecurityAuditLog.event_type == EventType.LOGIN.value,
+                SecurityAuditLog.timestamp >= datetime.utcnow() - timedelta(days=30)
+            )
+        ).distinct().all()
+        
+        known_ips = [ip[0] for ip in recent_ips]
+        
+        if ip_address not in known_ips:
+            return self._create_threat_detection(
+                detection_type="anomalous_access",
+                threat_level=ThreatLevel.MEDIUM,
+                source_ip=ip_address,
+                target_user_id=user_id,
+                detection_rule="new_location_access",
+                confidence_score=70,
+                description=f"Access from new location detected for user {user_id}",
+                evidence={
+                    "new_ip": ip_address,
+                    "known_ips": known_ips[:5],  # Limit for privacy
+                    "user_agent": user_agent
+                }
+            )
+        
+        return None
+    
+    def _create_threat_detection(self, **kwargs) -> ThreatDetection:
+        """Create a new threat detection record"""
+        threat = ThreatDetection()
+        for key, value in kwargs.items():
+            setattr(threat, key, value)
+        self.db.add(threat)
+        self.db.commit()
+        self.db.refresh(threat)
+        return threat
+    
+    def resolve_threat(self, threat_id: int, resolved_by: int, mitigation_actions: Dict[str, Any]) -> bool:
+        """Resolve a threat detection"""
+        threat = self.db.query(ThreatDetection).filter(ThreatDetection.id == threat_id).first()
+        
+        if not threat:
+            return False
+        
+        threat.status = ThreatStatus.RESOLVED.value
+        threat.resolved_at = datetime.utcnow()
+        threat.resolved_by = resolved_by
+        threat.mitigation_actions = mitigation_actions
+        
+        self.db.commit()
+        return True
 
-class ApiKeyService:
-    """
-    API Key management service
-    """
+class SecurityAuditService:
+    """Security audit and logging service"""
     
     def __init__(self, db: Session):
         self.db = db
     
-    def create_api_key(
-        self,
-        tenant_id: int,
-        user_id: int,
-        name: str,
-        permissions: List[str] = None,
-        scopes: List[str] = None,
-        expires_in_days: Optional[int] = None
-    ) -> Tuple[str, ApiKey]:
-        """
-        Create a new API key
-        Returns the actual key and the stored record
-        """
-        # Generate API key
-        key = f"dgm_{secrets.token_urlsafe(32)}"
-        key_hash = hashlib.sha256(key.encode()).hexdigest()
-        key_prefix = key[:8]
-        
-        # Set expiration
-        expires_at = None
-        if expires_in_days:
-            expires_at = datetime.utcnow() + timedelta(days=expires_in_days)
-        
-        api_key = ApiKey(
-            tenant_id=tenant_id,
-            user_id=user_id,
-            name=name,
-            key_hash=key_hash,
-            key_prefix=key_prefix,
-            permissions=permissions or [],
-            scopes=scopes or [],
-            expires_at=expires_at
-        )
-        
-        self.db.add(api_key)
+    def log_event(self, log_data: SecurityAuditLogCreate) -> SecurityAuditLog:
+        """Log a security event"""
+        log_entry = SecurityAuditLog()
+        for key, value in log_data.dict().items():
+            setattr(log_entry, key, value)
+        self.db.add(log_entry)
         self.db.commit()
-        
-        return key, api_key
+        self.db.refresh(log_entry)
+        return log_entry
     
-    def validate_api_key(self, key: str) -> Optional[ApiKey]:
-        """
-        Validate API key and return associated record
-        """
-        key_hash = hashlib.sha256(key.encode()).hexdigest()
+    def get_audit_logs(self, filters: Dict[str, Any], skip: int = 0, limit: int = 100) -> List[SecurityAuditLog]:
+        """Get audit logs with filters"""
+        query = self.db.query(SecurityAuditLog)
         
-        api_key = self.db.query(ApiKey).filter(
+        if filters.get("user_id"):
+            query = query.filter(SecurityAuditLog.user_id == filters["user_id"])
+        
+        if filters.get("event_type"):
+            query = query.filter(SecurityAuditLog.event_type == filters["event_type"])
+        
+        if filters.get("severity"):
+            query = query.filter(SecurityAuditLog.severity == filters["severity"])
+        
+        if filters.get("start_date"):
+            query = query.filter(SecurityAuditLog.timestamp >= filters["start_date"])
+        
+        if filters.get("end_date"):
+            query = query.filter(SecurityAuditLog.timestamp <= filters["end_date"])
+        
+        if filters.get("ip_address"):
+            query = query.filter(SecurityAuditLog.ip_address == filters["ip_address"])
+        
+        return query.order_by(desc(SecurityAuditLog.timestamp)).offset(skip).limit(limit).all()
+    
+    def get_security_metrics(self, days: int = 30) -> Dict[str, Any]:
+        """Get security metrics for dashboard"""
+        start_date = datetime.utcnow() - timedelta(days=days)
+        
+        # Total events
+        total_events = self.db.query(SecurityAuditLog).filter(
+            SecurityAuditLog.timestamp >= start_date
+        ).count()
+        
+        # Events by severity
+        severity_counts = self.db.query(
+            SecurityAuditLog.severity,
+            func.count(SecurityAuditLog.id)
+        ).filter(
+            SecurityAuditLog.timestamp >= start_date
+        ).group_by(SecurityAuditLog.severity).all()
+        
+        # Failed login attempts
+        failed_logins = self.db.query(SecurityAuditLog).filter(
             and_(
-                ApiKey.key_hash == key_hash,
-                ApiKey.is_active == True,
-                or_(
-                    ApiKey.expires_at.is_(None),
-                    ApiKey.expires_at > datetime.utcnow()
-                )
+                SecurityAuditLog.event_type == EventType.FAILED_LOGIN.value,
+                SecurityAuditLog.timestamp >= start_date
             )
-        ).first()
+        ).count()
         
-        if api_key:
-            # Update usage tracking
-            api_key.last_used = datetime.utcnow()
-            api_key.usage_count += 1
-            self.db.commit()
+        # Successful logins
+        successful_logins = self.db.query(SecurityAuditLog).filter(
+            and_(
+                SecurityAuditLog.event_type == EventType.LOGIN.value,
+                SecurityAuditLog.timestamp >= start_date
+            )
+        ).count()
         
-        return api_key
+        return {
+            "total_events": total_events,
+            "severity_distribution": dict(severity_counts),
+            "failed_logins": failed_logins,
+            "successful_logins": successful_logins,
+            "login_success_rate": successful_logins / (successful_logins + failed_logins) if (successful_logins + failed_logins) > 0 else 0
+        }
+
+class SecurityPolicyService:
+    """Security policy management service"""
     
-    def revoke_api_key(self, api_key_id: int) -> bool:
-        """
-        Revoke an API key
-        """
-        api_key = self.db.query(ApiKey).filter(ApiKey.id == api_key_id).first()
-        if api_key:
-            api_key.is_active = False
-            self.db.commit()
-            return True
-        return False
+    def __init__(self, db: Session):
+        self.db = db
+    
+    def create_policy(self, policy_data: SecurityPolicyCreate, created_by: int) -> SecurityPolicy:
+        """Create a new security policy"""
+        policy = SecurityPolicy()
+        for key, value in policy_data.dict().items():
+            setattr(policy, key, value)
+        policy.created_by = created_by
+        self.db.add(policy)
+        self.db.commit()
+        self.db.refresh(policy)
+        return policy
+    
+    def get_active_policies(self, policy_type: Optional[str] = None) -> List[SecurityPolicy]:
+        """Get active security policies"""
+        query = self.db.query(SecurityPolicy).filter(SecurityPolicy.is_enabled == True)
+        
+        if policy_type:
+            query = query.filter(SecurityPolicy.policy_type == policy_type)
+        
+        return query.all()
+    
+    def evaluate_password_policy(self, password: str) -> Tuple[bool, List[str]]:
+        """Evaluate password against security policies"""
+        password_policies = self.get_active_policies("password")
+        errors = []
+        
+        for policy in password_policies:
+            config = policy.configuration
+            
+            if config.get("min_length") and len(password) < config["min_length"]:
+                errors.append(f"Password must be at least {config['min_length']} characters long")
+            
+            if config.get("require_uppercase") and not any(c.isupper() for c in password):
+                errors.append("Password must contain at least one uppercase letter")
+            
+            if config.get("require_lowercase") and not any(c.islower() for c in password):
+                errors.append("Password must contain at least one lowercase letter")
+            
+            if config.get("require_numbers") and not any(c.isdigit() for c in password):
+                errors.append("Password must contain at least one number")
+            
+            if config.get("require_special") and not any(c in "!@#$%^&*()_+-=[]{}|;:,.<>?" for c in password):
+                errors.append("Password must contain at least one special character")
+        
+        return len(errors) == 0, errors
+
+class SecurityDashboardService:
+    """Security dashboard and analytics service"""
+    
+    def __init__(self, db: Session):
+        self.db = db
+        self.mfa_service = MFAService(db)
+        self.audit_service = SecurityAuditService(db)
+        self.threat_service = ThreatDetectionService(db)
+    
+    def get_dashboard_summary(self) -> Dict[str, Any]:
+        """Get security dashboard summary"""
+        # MFA statistics
+        total_users = self.db.query(func.count(MFAConfig.user_id)).scalar() or 0
+        mfa_enabled_users = self.db.query(func.count(MFAConfig.user_id)).filter(
+            MFAConfig.is_enabled == True
+        ).scalar() or 0
+        
+        mfa_adoption_rate = (mfa_enabled_users / total_users * 100) if total_users > 0 else 0
+        
+        # Threat statistics
+        active_threats = self.db.query(func.count(ThreatDetection.id)).filter(
+            ThreatDetection.status == ThreatStatus.ACTIVE.value
+        ).scalar() or 0
+        
+        resolved_threats_today = self.db.query(func.count(ThreatDetection.id)).filter(
+            and_(
+                ThreatDetection.status == ThreatStatus.RESOLVED.value,
+                ThreatDetection.resolved_at >= datetime.utcnow().date()
+            )
+        ).scalar() or 0
+        
+        # Incident statistics
+        open_incidents = self.db.query(func.count(SecurityIncident.id)).filter(
+            SecurityIncident.status.in_([IncidentStatus.OPEN.value, IncidentStatus.INVESTIGATING.value])
+        ).scalar() or 0
+        
+        critical_incidents = self.db.query(func.count(SecurityIncident.id)).filter(
+            and_(
+                SecurityIncident.severity == Severity.CRITICAL.value,
+                SecurityIncident.status != IncidentStatus.CLOSED.value
+            )
+        ).scalar() or 0
+        
+        # Security metrics
+        metrics = self.audit_service.get_security_metrics()
+        
+        # Calculate security score (simplified)
+        security_score = min(100, max(0, 
+            int(mfa_adoption_rate * 0.3 + 
+                metrics["login_success_rate"] * 100 * 0.4 + 
+                (100 - min(active_threats * 10, 100)) * 0.3)
+        ))
+        
+        return {
+            "total_users_with_mfa": mfa_enabled_users,
+            "mfa_adoption_rate": round(float(mfa_adoption_rate), 2),
+            "active_threats": active_threats,
+            "resolved_threats_today": resolved_threats_today,
+            "open_incidents": open_incidents,
+            "critical_incidents": critical_incidents,
+            "failed_login_attempts_today": metrics["failed_logins"],
+            "security_score": security_score,
+            "recent_events": [],  # Would be populated with recent audit logs
+            "threat_trends": {},  # Would be populated with threat trend data
+            "policy_compliance": {}  # Would be populated with policy compliance data
+        }
+
+# Utility function to get service instances
+def get_security_services(db: Session) -> Dict[str, Any]:
+    """Get all security service instances"""
+    return {
+        "mfa": MFAService(db),
+        "threat_detection": ThreatDetectionService(db),
+        "audit": SecurityAuditService(db),
+        "policy": SecurityPolicyService(db),
+        "dashboard": SecurityDashboardService(db)
+    }
