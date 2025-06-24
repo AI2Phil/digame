@@ -2,16 +2,16 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Path, Body, status
 from sqlalchemy.orm import Session
 from typing import List, Optional
 
-from данной.services.process_optimization_service import ProcessOptimizationService, get_process_optimization_service
-from данной.schemas.workflow_automation_schemas import (
+from ..services.process_optimization_service import ProcessOptimizationService, get_process_optimization_service
+from ..schemas.workflow_automation_schemas import (
     OptimizationRecommendationResponse,
     OptimizationRecommendationUpdate
 )
-from данной.auth.auth_dependencies import get_current_active_user, PermissionChecker # Assuming standard auth
-from данной.models.user import User as SQLAlchemyUser # For current_user type hint
+from ..auth.auth_dependencies import get_current_active_user, PermissionChecker # Assuming standard auth
+from ..models.user import User as SQLAlchemyUser # For current_user type hint
 
 # Assuming get_db dependency is available from a central location like database.py
-from данной.database import get_db
+from ..database import get_db
 
 router = APIRouter(
     prefix="/optimization",

@@ -2,12 +2,12 @@ from fastapi import APIRouter, Depends, HTTPException, status, Path
 from sqlalchemy.orm import Session
 from fastapi.responses import PlainTextResponse # For returning .ics content
 
-from данной.services.calendar_service import CalendarService, get_calendar_service
-from данной.crud import task_crud
-from данной.auth.auth_dependencies import PermissionChecker, get_current_active_user # Assuming similar auth
-from данной.models.user import User as SQLAlchemyUser
+from ..services.calendar_service import CalendarService, get_calendar_service
+from ..crud import task_crud
+from ..auth.auth_dependencies import PermissionChecker, get_current_active_user # Assuming similar auth
+from ..models.user import User as SQLAlchemyUser
 # Assuming get_db dependency is available
-from .admin_rbac_router import get_db # Placeholder, replace with actual get_db path
+from ..database import get_db
 
 router = APIRouter(
     prefix="/calendar",

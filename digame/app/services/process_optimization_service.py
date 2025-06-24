@@ -3,17 +3,17 @@ from sqlalchemy import func, and_
 from typing import List, Optional, Dict, Any
 from datetime import datetime, timedelta
 
-from данной.models.workflow_automation import (
+from ..models.workflow_automation import (
     WorkflowInstance,
     WorkflowStepExecution,
     WorkflowTemplate,
     OptimizationRecommendation
 )
-from данной.schemas.workflow_automation_schemas import (
+from ..schemas.workflow_automation_schemas import (
     OptimizationRecommendationCreate,
     OptimizationRecommendationUpdate
 )
-# from данной.models.task import Task # If task data is used for analysis
+# from ..models.task import Task # If task data is used for analysis
 
 # Constants for analysis
 MIN_INSTANCES_FOR_TEMPLATE_ANALYSIS = 5
@@ -170,10 +170,20 @@ class ProcessOptimizationService:
 
     def _create_recommendation_from_schema(self, rec_create_schema: OptimizationRecommendationCreate, tenant_id: int) -> OptimizationRecommendation:
         """Helper to create and save an OptimizationRecommendation from its Pydantic schema."""
-        db_rec = OptimizationRecommendation(
-            tenant_id=tenant_id,
-            **rec_create_schema.dict()
-        )
+        rec_data = rec_create_schema.dict()
+        db_rec = OptimizationRecommendation()
+        db_rec.tenant_id = tenant_id
+        db_rec.recommendation_type = rec_data["recommendation_type"]
+        db_rec.description = rec_data["description"]
+        db_rec.affected_workflow_template_id = rec_data.get("affected_workflow_template_id")
+        db_rec.affected_workflow_instance_id = rec_data.get("affected_workflow_instance_id")
+        db_rec.affected_step_id = rec_data.get("affected_step_id")
+        db_rec.suggested_actions = rec_data.get("suggested_actions")
+        db_rec.potential_impact_score = rec_data.get("potential_impact_score")
+        db_rec.confidence_score = rec_data.get("confidence_score")
+        db_rec.status = rec_data.get("status", "new")
+        db_rec.priority = rec_data.get("priority", 5)
+        
         self.db.add(db_rec)
         self.db.commit()
         self.db.refresh(db_rec)
@@ -227,7 +237,5 @@ class ProcessOptimizationService:
         return recommendation
 
 # Dependency injector
-def get_process_optimization_service(db: Session = Depends(get_db)) -> ProcessOptimizationService:
-    # Ensure get_db is imported correctly at the top of the file
-    from ..database import get_db # This should be the standard way
+def get_process_optimization_service(db: Session) -> ProcessOptimizationService:
     return ProcessOptimizationService(db=db)

@@ -4,7 +4,7 @@ Calendar Service for generating calendar events for tasks.
 from datetime import datetime, timedelta, timezone
 from typing import Dict, Any, Optional
 
-from данной.app.models.task import Task # Using данной to refer to current app
+from ..models.task import Task
 
 # Using a third-party library for iCalendar generation might be good,
 # but for now, let's do a basic manual generation.
