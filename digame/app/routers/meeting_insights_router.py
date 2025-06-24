@@ -49,19 +49,3 @@ def analyze_meeting_text_endpoint(
 @router.get("/health", status_code=status.HTTP_200_OK)
 async def meeting_insights_health_check():
     return {"status": "healthy", "service": "AI - Meeting Insights & Summaries"}
-            "analysis": analysis_result
-        }
-        return schemas.MeetingAnalysisResponse(**response_data)
-    except HTTPException as e:
-        # Re-raise HTTPExceptions directly from the service
-        raise e
-    except Exception as e:
-        # Log the error e in a real application
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"An unexpected error occurred during meeting analysis: {str(e)}"
-        )
-
-@router.get("/health", status_code=status.HTTP_200_OK)
-async def meeting_insights_health_check():
-    return {"status": "healthy", "service": "AI - Meeting Insights & Summaries"}

@@ -10,6 +10,9 @@ from datetime import datetime, timezone
 from .auth.middleware import configure_auth_middleware
 from .auth.config import auth_settings
 
+# Import i18n utilities
+from .i18n import LocaleMiddleware, _ as i18n_gettext # Restore original alias
+
 # Import routers
 from .routers import predictive as predictive_router
 from .routers import admin_rbac_router
@@ -170,6 +173,12 @@ app = FastAPI(
     ]
 )
 
+# Add LocaleMiddleware - should be early in the stack but after CORS if CORS is very broad
+# It needs to run before routes and other middleware that might need translated messages.
+# If auth middleware also needs translated messages for errors, LocaleMiddleware should be before it.
+logger.info("Configuring LocaleMiddleware for i18n...")
+app.add_middleware(LocaleMiddleware)
+
 # Configure authentication middleware
 logger.info("Configuring authentication middleware...")
 configure_auth_middleware(app)
@@ -255,9 +264,12 @@ async def shutdown_event():
 
 # Health check endpoints
 @app.get("/", tags=["Health"])
-async def read_root():
+async def read_root(request: Request): # Add request: Request
+    # Runtime translation using imported i18n_gettext (aliased from i18n._)
+    # The string "Welcome to the Digame API" is manually maintained in .po files due to extraction issues.
+    welcome_message = i18n_gettext(request, "Welcome to the Digame API")
     return {
-        "message": "Welcome to the Digame API",
+        "message": welcome_message,
         "version": app.version,
         "title": app.title,
         "docs_url": "/docs",
