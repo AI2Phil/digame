@@ -567,71 +567,53 @@ class ReportingService:
 
     async def _generate_pdf_report(self, execution: ReportExecution, data: List[Dict[str, Any]], export_config: Dict[str, Any] = None) -> str:
         """Generate PDF report using ReportLab"""
-        
-        # Mock PDF generation for development
         file_path = f"/tmp/report_{execution.execution_uuid}.pdf"
+        export_config = export_config or {}
+
+        doc = SimpleDocTemplate(file_path, pagesize=letter)
+        styles = getSampleStyleSheet()
+        story = []
+
+        # Title
+        report_title_str = export_config.get("title", "Report")
+        report_title = Paragraph(report_title_str, styles['h1'])
+        story.append(report_title)
+        story.append(Spacer(1, 0.2 * inch))
+
+        if not data:
+            story.append(Paragraph("No data available for this report.", styles['Normal']))
+            doc.build(story)
+            return file_path
+
+        # Determine columns - use export_config or all keys from the first data item
+        columns = export_config.get("columns")
+        if not columns and data:
+            columns = list(data[0].keys())
         
-        # In production, this would use ReportLab to generate actual PDFs
-        mock_pdf_content = f"""
-        %PDF-1.4
-        1 0 obj
-        <<
-        /Type /Catalog
-        /Pages 2 0 R
-        >>
-        endobj
-        
-        2 0 obj
-        <<
-        /Type /Pages
-        /Kids [3 0 R]
-        /Count 1
-        >>
-        endobj
-        
-        3 0 obj
-        <<
-        /Type /Page
-        /Parent 2 0 R
-        /MediaBox [0 0 612 792]
-        /Contents 4 0 R
-        >>
-        endobj
-        
-        4 0 obj
-        <<
-        /Length 44
-        >>
-        stream
-        BT
-        /F1 12 Tf
-        72 720 Td
-        (Report Data: {len(data)} rows) Tj
-        ET
-        endstream
-        endobj
-        
-        xref
-        0 5
-        0000000000 65535 f 
-        0000000009 00000 n 
-        0000000058 00000 n 
-        0000000115 00000 n 
-        0000000206 00000 n 
-        trailer
-        <<
-        /Size 5
-        /Root 1 0 R
-        >>
-        startxref
-        299
-        %%EOF
-        """
-        
-        # Write mock PDF content
-        with open(file_path, 'w') as f:
-            f.write(mock_pdf_content)
-        
+        if not columns: # Still no columns (e.g. data was empty or malformed)
+            story.append(Paragraph("No columns defined for the report.", styles['Normal']))
+            doc.build(story)
+            return file_path
+
+        # Prepare data for the table
+        table_data = [columns] # Header row
+        for row_dict in data:
+            table_data.append([str(row_dict.get(col, "")) for col in columns])
+
+        # Create table
+        pdf_table = Table(table_data)
+        pdf_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black)
+        ]))
+        story.append(pdf_table)
+
+        doc.build(story)
         return file_path
 
     async def _generate_excel_report(self, execution: ReportExecution, data: List[Dict[str, Any]], export_config: Dict[str, Any] = None) -> str:
@@ -659,26 +641,44 @@ class ReportingService:
         return file_path
 
     async def _generate_csv_report(self, execution: ReportExecution, data: List[Dict[str, Any]], export_config: Dict[str, Any] = None) -> str:
-        """Generate CSV report"""
-        
+        """Generate CSV report using pandas"""
         file_path = f"/tmp/report_{execution.execution_uuid}.csv"
-        
-        if not data:
-            with open(file_path, 'w') as f:
-                f.write("No data available\n")
-            return file_path
-        
-        # Write CSV data
-        # export_config could specify delimiter, quoting, specific columns etc.
-        columns_to_export = export_config.get("columns") if export_config else list(data[0].keys())
-        headers = [col for col in columns_to_export if col in data[0]]
+        export_config = export_config or {}
 
-        with open(file_path, 'w') as f:
-            f.write(",".join(headers) + "\n")
-            
-            for row in data:
-                values = [str(row.get(header, "")).replace(",", ";") for header in headers] # Basic CSV escape
-                f.write(",".join(values) + "\n")
+        if not data:
+            # Create an empty CSV with a header if no data but columns are specified
+            # Or just an empty file, or a file with "No data available"
+            columns = export_config.get("columns")
+            if columns:
+                df = pd.DataFrame(columns=columns)
+                df.to_csv(file_path, index=False, sep=export_config.get("separator", ","))
+            else:
+                with open(file_path, 'w') as f:
+                    f.write("No data available\n")
+            return file_path
+
+        # Convert data to DataFrame
+        df = pd.DataFrame(data)
+
+        # Select columns if specified in export_config
+        columns_to_export = export_config.get("columns")
+        if columns_to_export:
+            # Ensure only existing columns are selected to avoid errors
+            df = df[[col for col in columns_to_export if col in df.columns]]
+
+        if df.empty and not columns_to_export: # Handles case where data was not empty but resulted in empty df after column selection
+             with open(file_path, 'w') as f:
+                f.write("No data available for selected columns\n")
+             return file_path
+
+
+        # Write to CSV
+        df.to_csv(
+            file_path,
+            index=False, # Don't write pandas index
+            sep=export_config.get("separator", ","),
+            header=export_config.get("include_header", True)
+        )
         
         return file_path
 
@@ -1007,3 +1007,122 @@ def get_reporting_service(
             })
 
         return compiled_report_data
+
+    async def execute_and_generate_for_definition(
+        self,
+        report_definition: ReportDefinition,
+        report_data: List[Dict[str, Any]],
+        output_format: str,
+        execution_type: str = "scheduled", # Or "manual_from_definition"
+        parameters: Optional[Dict[str, Any]] = None,
+        filters_applied: Optional[Dict[str, Any]] = None,
+        user_id: Optional[int] = None
+    ) -> ReportExecution:
+        """
+        Executes and generates a report file based on a ReportDefinition and its pre-fetched data.
+        Handles ReportExecution creation and file generation.
+        WARNING: This method assigns report_definition.id to ReportExecution.report_id,
+        which is semantically incorrect due to ReportExecution.report_id being a ForeignKey to Report.id.
+        This is a temporary workaround due to current schema constraints.
+        A proper fix would involve schema changes to ReportExecution.
+        """
+
+        # Create execution record
+        # TODO: Address the FK constraint: ReportExecution.report_id points to Report.id.
+        # Using report_definition.id here is a placeholder and assumes it might work or
+        # highlights the need for schema change (e.g., add report_definition_id to ReportExecution).
+        execution = ReportExecution(
+            report_id=report_definition.id, # FK MISMATCH - TEMPORARY WORKAROUND
+            tenant_id=report_definition.tenant_id,
+            executed_by_user_id=user_id,
+            execution_type=execution_type,
+            parameters=parameters or {},
+            filters_applied=filters_applied or {},
+            output_format=output_format,
+            status="running"
+            # execution_uuid is generated by default
+        )
+
+        self.db.add(execution)
+        self.db.commit()
+        self.db.refresh(execution)
+
+        file_path = None
+        render_time_ms = 0
+        start_time = datetime.utcnow()
+
+        try:
+            # Use report_definition.export_config for file generation
+            export_cfg = report_definition.export_config or {}
+
+            # Generate output file using the pre-fetched report_data
+            # Note: _generate_output_file normally gets export_config from a Report object.
+            # We are bypassing that by passing it directly.
+            # The `_generate_output_file` itself calls specific _generate_pdf_report etc.
+            # These specific methods already accept export_config.
+
+            # We need to ensure _generate_output_file can work without a valid Report object if execution.report_id is -1 or similar
+            # For now, we assume _generate_pdf_report etc. are called directly or _generate_output_file is adapted.
+            # Based on current _generate_output_file, it does `report = self.db.query(Report).filter(Report.id == execution.report_id).first()`
+            # This will fail if execution.report_id is not a valid Report.id.
+            #
+            # REVISED APPROACH:
+            # Call the specific _generate_X_report methods directly from here.
+
+            render_start = datetime.utcnow()
+            if output_format == "pdf":
+                file_path = await self._generate_pdf_report(execution, report_data, export_cfg)
+            elif output_format == "csv":
+                file_path = await self._generate_csv_report(execution, report_data, export_cfg)
+            elif output_format == "excel": # Assuming excel generation might be added
+                file_path = await self._generate_excel_report(execution, report_data, export_cfg)
+            else:
+                raise ValueError(f"Unsupported output format: {output_format} for definition-based report.")
+            render_time_ms = (datetime.utcnow() - render_start).total_seconds() * 1000
+
+            execution.status = "completed"
+            execution.completed_at = datetime.utcnow()
+            execution.execution_time_ms = (datetime.utcnow() - start_time).total_seconds() * 1000 # Includes data fetch + render
+            execution.query_time_ms = 0 # Data was pre-fetched
+            execution.render_time_ms = render_time_ms
+            execution.row_count = len(report_data) if isinstance(report_data, list) else 0
+            execution.file_path = file_path
+
+            if file_path:
+                execution.download_url = self._generate_download_url(file_path)
+                execution.expires_at = datetime.utcnow() + timedelta(hours=24)
+                execution.file_size_bytes = self._get_file_size(file_path)
+
+            self.db.commit()
+            self.db.refresh(execution)
+
+            # Log execution (optional, could be done by caller)
+            self._log_audit_event(
+                tenant_id=execution.tenant_id,
+                event_type="report_definition_executed",
+                event_category="execution",
+                # report_id=execution.report_id, # This is currently report_definition.id
+                details={
+                    "execution_id": execution.id,
+                    "report_definition_id": report_definition.id,
+                    "output_format": output_format,
+                    "row_count": execution.row_count,
+                    "execution_time_ms": execution.execution_time_ms
+                }
+            )
+            return execution
+
+        except Exception as e:
+            execution.status = "failed"
+            execution.completed_at = datetime.utcnow()
+            execution.error_message = str(e)
+            self.db.commit()
+            self.db.refresh(execution)
+            # Log error (optional, could be done by caller)
+            self._log_audit_event(
+                tenant_id=execution.tenant_id,
+                event_type="report_definition_execution_failed",
+                event_category="execution",
+                details={"error": str(e), "execution_id": execution.id, "report_definition_id": report_definition.id}
+            )
+            raise # Re-raise the exception to be handled by the scheduler service
