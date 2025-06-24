@@ -33,6 +33,7 @@ import TeamsPage from './pages/TeamsPage.jsx';
 import TeamDashboardPage from './pages/TeamDashboardPage.jsx';
 import SkillGapAnalysisPage from './pages/SkillGapAnalysisPage.jsx';
 import WorkflowOptimizationPage from './pages/WorkflowOptimizationPage.jsx';
+import WorkflowAutomationPage from './pages/WorkflowAutomationPage.tsx';
 // Authentication Page
 import AuthPage from './pages/AuthPage.tsx';
 import './App.css';
@@ -401,13 +402,7 @@ function App() {
             path="/ai/automation"
             element={
               isAuthenticated || isDemoMode ? (
-                <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-                  <div className="text-center">
-                    <div className="text-6xl mb-4">⚡</div>
-                    <h1 className="text-2xl font-bold text-gray-900 mb-2">Workflow Automation</h1>
-                    <p className="text-gray-600">Automated workflows coming soon...</p>
-                  </div>
-                </div>
+                <WorkflowAutomationPage />
               ) : (
                 <Navigate to="/" replace />
               )
@@ -531,13 +526,7 @@ function App() {
             path="/enterprise/workflows"
             element={
               isAuthenticated || isDemoMode ? (
-                <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-                  <div className="text-center">
-                    <div className="text-6xl mb-4">⚙️</div>
-                    <h1 className="text-2xl font-bold text-gray-900 mb-2">Workflow Automation</h1>
-                    <p className="text-gray-600">Business process automation and management</p>
-                  </div>
-                </div>
+                <WorkflowAutomationPage />
               ) : (
                 <Navigate to="/" replace />
               )
