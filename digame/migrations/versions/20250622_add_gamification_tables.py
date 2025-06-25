@@ -1,7 +1,7 @@
 """Add gamification tables
 
 Revision ID: 20250622_gamification
-Revises: manual_001_add_user_setting_table
+Revises: manual_001_user_settings
 Create Date: 2025-06-22 14:40:00.000000
 
 """
@@ -11,7 +11,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision = '20250622_gamification'
-down_revision = 'manual_001_add_user_setting_table'
+down_revision = 'manual_001_user_settings'
 branch_labels = None
 depends_on = None
 

@@ -1,7 +1,7 @@
 """Add reporting service models
 
 Revision ID: d76cb7e90278
-Revises: 20250622_add_team_collaboration_tables
+Revises: 20250622_team_collab
 Create Date: 2025-06-22 21:53:18.893708
 
 """
@@ -13,7 +13,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision: str = 'd76cb7e90278'
-down_revision: Union[str, None] = '20250622_add_team_collaboration_tables'
+down_revision: Union[str, None] = '20250622_team_collab'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

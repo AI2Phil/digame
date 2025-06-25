@@ -1,6 +1,6 @@
 """Add team collaboration tables
 
-Revision ID: 20250622_add_team_collaboration_tables
+Revision ID: 20250622_team_collab
 Revises: 20250622_add_gamification_tables
 Create Date: 2025-06-22 17:21:30.000000
 
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import sqlite
 
 # revision identifiers, used by Alembic.
-revision = '20250622_add_team_collaboration_tables'
+revision = '20250622_team_collab'
 down_revision = '20250622_gamification'
 branch_labels = None
 depends_on = None

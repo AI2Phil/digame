@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, Float, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, String, Text, Float, DateTime, ForeignKey, JSON
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
@@ -29,9 +29,8 @@ class Task(Base):
     created_at = Column(DateTime(), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(), server_default=func.now(), onupdate=func.now(), nullable=False)
 
-    # Temporarily commented out to resolve SQLAlchemy mapper issues
-    # # Relationship to User model
-    # user = relationship("User", back_populates="tasks")
+    # Relationship to User model
+    user = relationship("User", back_populates="tasks", foreign_keys=[user_id])
     
     # Relationship to ProcessNote model (optional)
     process_note = relationship("ProcessNote", back_populates="generated_tasks")

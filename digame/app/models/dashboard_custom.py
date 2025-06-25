@@ -3,11 +3,7 @@ from sqlalchemy.orm import relationship
 from datetime import datetime
 import uuid
 
-try:
-    from ..database import Base
-except ImportError:
-    from sqlalchemy.ext.declarative import declarative_base
-    Base = declarative_base()
+from .user import Base
 
 class DashboardWidget(Base):
     """
@@ -15,9 +11,9 @@ class DashboardWidget(Base):
     """
     __tablename__ = "dashboard_widgets"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer(), primary_key=True, index=True)
     widget_uuid = Column(String(36), unique=True, index=True, default=lambda: str(uuid.uuid4()))
-    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=False, index=True)
+    tenant_id = Column(Integer(), ForeignKey("tenants.id"), nullable=False, index=True)
     # user_id = Column(Integer, ForeignKey("users.id"), nullable=True) # Optional: if widgets can be user-specific beyond dashboard ownership
 
     title = Column(String(255), nullable=False)
@@ -32,8 +28,8 @@ class DashboardWidget(Base):
     # Example: {"color": "blue", "time_range": "last_7_days", "axes_labels": {"x": "Date", "y": "Value"}}
     display_options = Column(JSON, nullable=True, default=lambda: {})
 
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime(), default=datetime.utcnow)
+    updated_at = Column(DateTime(), default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # Relationship to dashboards (a widget might appear on multiple dashboards, or be unique to one)
     # For simplicity here, let's assume a widget is defined once and can be referenced.
@@ -50,13 +46,13 @@ class AnalyticsDashboard(Base):
     """
     __tablename__ = "analytics_dashboards"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer(), primary_key=True, index=True)
     dashboard_uuid = Column(String(36), unique=True, index=True, default=lambda: str(uuid.uuid4()))
-    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=False, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True) # Owner of the dashboard
+    tenant_id = Column(Integer(), ForeignKey("tenants.id"), nullable=False, index=True)
+    user_id = Column(Integer(), ForeignKey("users.id"), nullable=False, index=True) # Owner of the dashboard
 
     name = Column(String(255), nullable=False)
-    description = Column(Text, nullable=True)
+    description = Column(Text(), nullable=True)
 
     # Layout stores an array of objects, each defining a widget's position and reference.
     # Example: [{"widget_id": 1, "x": 0, "y": 0, "w": 4, "h": 2}, ...]
@@ -65,10 +61,10 @@ class AnalyticsDashboard(Base):
 
     tags = Column(JSON, nullable=True, default=lambda: []) # For categorization/searching dashboards
 
-    is_public = Column(Boolean, default=False) # If the dashboard can be viewed by others in the tenant
+    is_public = Column(Boolean(), default=False) # If the dashboard can be viewed by others in the tenant
 
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime(), default=datetime.utcnow)
+    updated_at = Column(DateTime(), default=datetime.utcnow, onupdate=datetime.utcnow)
 
     owner = relationship("User") # Relationship to the User model
 
@@ -85,11 +81,11 @@ class ReportDefinition(Base):
     """
     __tablename__ = "report_definitions"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer(), primary_key=True, index=True)
     definition_uuid = Column(String(36), unique=True, index=True, default=lambda: str(uuid.uuid4()))
 
     name = Column(String(255), nullable=False)
-    description = Column(Text, nullable=True)
+    description = Column(Text(), nullable=True)
     report_type = Column(String(100), default="generic", index=True) # E.g., "performance_summary", "custom_dashboard_export"
 
     # Storing complex structures like content_blocks and global_filters as JSON
@@ -100,11 +96,11 @@ class ReportDefinition(Base):
 
     output_format = Column(String(50), default="pdf") # Default output format
 
-    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=False, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True) # Creator/owner
+    tenant_id = Column(Integer(), ForeignKey("tenants.id"), nullable=False, index=True)
+    user_id = Column(Integer(), ForeignKey("users.id"), nullable=False, index=True) # Creator/owner
 
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime(), default=datetime.utcnow)
+    updated_at = Column(DateTime(), default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # Relationships
     owner = relationship("User") # Relationship to the User model for user_id
