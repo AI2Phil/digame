@@ -1,7 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import Optional
-
-from typing import Optional, Dict, Any # Added Dict, Any
+from typing import Optional, Dict, Any
 
 class WritingSuggestionRequest(BaseModel):
     text_input: str = Field(..., min_length=1, description="Text to get writing suggestions for.")

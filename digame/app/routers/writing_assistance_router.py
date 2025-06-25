@@ -11,7 +11,7 @@ router = APIRouter(
 )
 
 @router.post("/suggest", response_model=schemas.WritingSuggestionResponse)
-def get_writing_suggestion_endpoint(
+async def get_writing_suggestion_endpoint(
     request_data: schemas.WritingSuggestionRequest,
     current_user: UserModel = Depends(get_current_active_user),
     service: WritingAssistanceService = Depends(get_writing_assistance_service),

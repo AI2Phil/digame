@@ -1,4 +1,5 @@
 import json
+from typing import Optional, Dict, Any, Tuple
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status, Depends
 
@@ -159,7 +160,7 @@ class WritingAssistanceService:
             if not openai_response_data.get("choices") or \
                not openai_response_data["choices"][0].get("message") or \
                not openai_response_data["choices"][0]["message"].get("content"):
-                logger.error(f"Unexpected OpenAI response structure for writing assistance (user {current_user.id}): {openai_response_data}")
+                logger.error(f"Unexpected OpenAI response structure for writing assistance (user {current_user_id}): {openai_response_data}")
                 raise HTTPException(status_code=500, detail="Writing assistance received an unexpected response format from AI provider.")
 
             content_str = openai_response_data["choices"][0]["message"]["content"]

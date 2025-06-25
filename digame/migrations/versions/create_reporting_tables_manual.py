@@ -20,6 +20,44 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
     """Upgrade schema."""
+    # Create reports table first (required for foreign key references)
+    op.create_table('reports',
+        sa.Column('id', sa.Integer(), nullable=False),
+        sa.Column('tenant_id', sa.Integer(), nullable=False),
+        sa.Column('report_uuid', sa.String(length=36), nullable=True),
+        sa.Column('name', sa.String(length=255), nullable=False),
+        sa.Column('description', sa.Text(), nullable=True),
+        sa.Column('category', sa.String(length=100), nullable=False),
+        sa.Column('report_type', sa.String(length=50), nullable=False),
+        sa.Column('data_source', sa.String(length=100), nullable=False),
+        sa.Column('query_config', sa.JSON(), nullable=True),
+        sa.Column('visualization_config', sa.JSON(), nullable=True),
+        sa.Column('format_config', sa.JSON(), nullable=True),
+        sa.Column('export_config', sa.JSON(), nullable=True),
+        sa.Column('default_filters', sa.JSON(), nullable=True),
+        sa.Column('parameter_schema', sa.JSON(), nullable=True),
+        sa.Column('is_public', sa.Boolean(), nullable=True),
+        sa.Column('allowed_roles', sa.JSON(), nullable=True),
+        sa.Column('allowed_users', sa.JSON(), nullable=True),
+        sa.Column('is_scheduled', sa.Boolean(), nullable=True),
+        sa.Column('schedule_config', sa.JSON(), nullable=True),
+        sa.Column('is_active', sa.Boolean(), nullable=True),
+        sa.Column('created_at', sa.DateTime(), nullable=True),
+        sa.Column('updated_at', sa.DateTime(), nullable=True),
+        sa.Column('created_by_user_id', sa.Integer(), nullable=False),
+        sa.Column('last_generated_at', sa.DateTime(), nullable=True),
+        sa.Column('generation_count', sa.Integer(), nullable=True),
+        sa.Column('avg_generation_time_ms', sa.Float(), nullable=True),
+        sa.Column('last_generation_time_ms', sa.Float(), nullable=True),
+        sa.ForeignKeyConstraint(['created_by_user_id'], ['users.id'], ),
+        sa.ForeignKeyConstraint(['tenant_id'], ['tenants.id'], ),
+        sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index(op.f('ix_reports_category'), 'reports', ['category'], unique=False)
+    op.create_index(op.f('ix_reports_id'), 'reports', ['id'], unique=False)
+    op.create_index(op.f('ix_reports_report_uuid'), 'reports', ['report_uuid'], unique=True)
+    op.create_index(op.f('ix_reports_tenant_id'), 'reports', ['tenant_id'], unique=False)
+
     # Create report_definitions table
     op.create_table('report_definitions',
         sa.Column('id', sa.Integer(), nullable=False),
@@ -44,8 +82,7 @@ def upgrade() -> None:
     op.create_index(op.f('ix_report_definitions_tenant_id'), 'report_definitions', ['tenant_id'], unique=False)
     op.create_index(op.f('ix_report_definitions_user_id'), 'report_definitions', ['user_id'], unique=False)
 
-    # Create report_schedules table (assuming it doesn't exist yet)
-    # Since this is a new migration, we'll create the complete table
+    # Create report_schedules table (now that reports table exists)
     op.create_table('report_schedules',
         sa.Column('id', sa.Integer(), nullable=False),
         sa.Column('report_id', sa.Integer(), nullable=True),
@@ -87,7 +124,7 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     """Downgrade schema."""
-    # Drop report_schedules table completely
+    # Drop report_schedules table first (has foreign keys to reports)
     op.drop_index(op.f('ix_report_schedules_tenant_id'), table_name='report_schedules')
     op.drop_index(op.f('ix_report_schedules_schedule_uuid'), table_name='report_schedules')
     op.drop_index(op.f('ix_report_schedules_report_id'), table_name='report_schedules')
@@ -103,3 +140,10 @@ def downgrade() -> None:
     op.drop_index(op.f('ix_report_definitions_id'), table_name='report_definitions')
     op.drop_index(op.f('ix_report_definitions_definition_uuid'), table_name='report_definitions')
     op.drop_table('report_definitions')
+    
+    # Drop reports table last (referenced by report_schedules)
+    op.drop_index(op.f('ix_reports_tenant_id'), table_name='reports')
+    op.drop_index(op.f('ix_reports_report_uuid'), table_name='reports')
+    op.drop_index(op.f('ix_reports_id'), table_name='reports')
+    op.drop_index(op.f('ix_reports_category'), table_name='reports')
+    op.drop_table('reports')
