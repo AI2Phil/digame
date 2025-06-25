@@ -52,11 +52,11 @@ run_migrations() {
     cd /app/digame
     
     # Check if migrations need to be applied
-    if python3 deploy_migrations.py --check-only; then
+    if python3 scripts/deploy_migrations.py --check-only; then
         log "📊 Checking for pending migrations..."
         
         # Apply migrations
-        if python3 deploy_migrations.py; then
+        if python3 scripts/deploy_migrations.py; then
             log "✅ Migrations completed successfully"
         else
             log "❌ Migration failed"

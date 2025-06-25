@@ -11,6 +11,7 @@ from .activity import Activity
 from .activity_features import ActivityEnrichedFeature
 from .anomaly import DetectedAnomaly
 from .task import Task # Added new model
+from .behavior_model import BehavioralModel, BehavioralPattern # Added behavioral models
 from .user_setting import UserSetting # Import the new UserSetting model
 from .notification import Notification # Import the new Notification model
 # Import the actual models from the existing workflow_automation.py
@@ -57,6 +58,8 @@ __all__ = [
     "ActivityEnrichedFeature",
     "DetectedAnomaly",
     "Task", # Added new model
+    "BehavioralModel", # Added behavioral models
+    "BehavioralPattern",
     "UserSetting", # Add UserSetting to __all__
     "Notification", # Add Notification to __all__
     "WorkflowTemplate",

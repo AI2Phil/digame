@@ -17,6 +17,8 @@ if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 # Add the app directory to Python path for imports
+# In Docker container, we need to add /app to the path
+sys.path.insert(0, '/app')
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 # add your model's MetaData object here
@@ -67,6 +69,14 @@ def run_migrations_offline() -> None:
 
     """
     url = config.get_main_option("sqlalchemy.url")
+    
+    # Override with environment variable if available
+    if not url:
+        url = os.environ.get("DATABASE_URL")
+    
+    if not url:
+        raise ValueError("No database URL found. Set DATABASE_URL environment variable or configure sqlalchemy.url in alembic.ini")
+    
     context.configure(
         url=url,
         target_metadata=target_metadata,
@@ -84,8 +94,16 @@ def run_migrations_online() -> None:
     """Run migrations in 'online' mode.
     This is the standard online configuration.
     """
+    # Get configuration section
+    configuration = config.get_section(config.config_ini_section) or {}
+    
+    # Override database URL with environment variable if available
+    database_url = os.environ.get("DATABASE_URL")
+    if database_url:
+        configuration["sqlalchemy.url"] = database_url
+    
     connectable = engine_from_config(
-        config.get_section(config.config_ini_section),
+        configuration,
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
     )

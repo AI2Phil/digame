@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'manual_001_add_user_setting_table'
+revision: str = 'manual_001_user_settings'
 down_revision: Union[str, None] = '20250523_behavioral_models' # From the last empty autogen script
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
