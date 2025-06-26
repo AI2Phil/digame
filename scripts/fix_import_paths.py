@@ -109,9 +109,9 @@ class ImportPathFixer:
         elif 'from ...behavior import' in line:
             return line.replace('from ...behavior import', 'from ..behavior import')
         
-        elif 'from digame.app.' in line:
+        elif 'from app.' in line:
             # Convert absolute to relative import
-            relative_import = line.replace('from digame.app.', 'from .')
+            relative_import = line.replace('from app.', 'from .')
             return relative_import
         
         elif 'ActivityEnrichedFeature' in line:

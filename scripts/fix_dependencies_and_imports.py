@@ -179,7 +179,7 @@ def fix_import_paths():
                 content = content.replace('train_behavioral_model', 'train_and_save_behavior_model')
             
             # Fix relative import issues
-            content = content.replace('from digame.app.', 'from .')
+            content = content.replace('from app.', 'from .')
             
             if content != original_content:
                 with open(path, 'w') as f:

@@ -5,7 +5,7 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - ./digame:/app/digame
+      - app/app/digame
     environment:
       - DATABASE_URL=postgresql://digame_user:digame_password@db:5432/digame_db
       # Add other backend-specific environment variables here if needed

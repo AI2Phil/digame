@@ -35,7 +35,7 @@ COPY digame $APP_HOME/digame
 COPY models $APP_HOME/digame/app/models/
 
 # Copy entrypoint script
-COPY digame/entrypoint.sh $APP_HOME/entrypoint.sh
+COPY entrypoint.sh $APP_HOME/entrypoint.sh
 
 # Create and switch to a non-root user
 RUN addgroup --system app && adduser --system --ingroup app --home /home/app --shell /bin/bash app

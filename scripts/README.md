@@ -1,375 +1,340 @@
-# Digame Platform Scripts
+# Digame Platform Scripts (Backend/Infrastructure)
 
-This directory contains utility scripts for development, maintenance, and troubleshooting of the Digame platform. Each script serves a specific purpose in the development workflow.
+This directory contains backend-specific utility scripts for database migrations, Git operations, and infrastructure management within the Digame platform. These scripts are focused on deployment, database management, and version control operations.
 
 ## 📋 Script Overview
 
 | Script | Purpose | Usage | Status |
 |--------|---------|-------|--------|
-| [`activate_digame.sh`](#activate_digamesh) | Environment activation | `source scripts/activate_digame.sh` | ✅ Active |
-| [`setup_dev_env.py`](#setup_dev_envpy) | Development environment setup | `python scripts/setup_dev_env.py` | ✅ Active |
-| [`fix_dependencies_and_imports.py`](#fix_dependencies_and_importspy) | Comprehensive dependency fixes | `python scripts/fix_dependencies_and_imports.py` | ✅ Active |
-| [`fix_circular_imports.py`](#fix_circular_importspy) | Circular import analysis | `python scripts/fix_circular_imports.py` | ✅ Active |
-| [`fix_import_paths.py`](#fix_import_pathspy) | Import path corrections | `python scripts/fix_import_paths.py` | ✅ Active |
-| [`fix_pyrefly_errors.py`](#fix_pyrefly_errorspy) | Static analysis error fixes | `python scripts/fix_pyrefly_errors.py` | ✅ Active |
-| [`fix_remaining_test_errors.py`](#fix_remaining_test_errorspy) | Test-specific error fixes | `python scripts/fix_remaining_test_errors.py` | ✅ Active |
-| [`verify_and_cleanup_fixes.py`](#verify_and_cleanup_fixespy) | Fix verification and cleanup | `python scripts/verify_and_cleanup_fixes.py` | ✅ Active |
-| [`integration_helper.py`](#integration_helperpy) | Integration analysis tool | `python scripts/integration_helper.py` | ✅ Active |
+| [`deploy_migrations.py`](#deploy_migrationspy) | Database migration deployment | `python deploy_migrations.py` | ✅ Active |
+| [`test_migrations.py`](#test_migrationspy) | Migration testing and validation | `python test_migrations.py` | ✅ Active |
+| [`git-setup.py`](#git-setuppy) | Git repository initialization | `python git-setup.py init` | ✅ Active |
+| [`simple_git.py`](#simple_gitpy) | Basic Git operations | `python simple_git.py status` | ✅ Active |
+| [`git_remote.py`](#git_remotepy) | Remote repository management | `python git_remote.py push` | ✅ Active |
+| [`git_status_summary.py`](#git_status_summarypy) | Repository status and guidance | `python git_status_summary.py` | ✅ Active |
 
 ---
 
-## 🚀 Quick Start Scripts
+## 🗄️ Database Management Scripts
 
-### `activate_digame.sh`
-**Purpose**: Convenient environment activation script for development
+### `deploy_migrations.py`
+**Purpose**: Automated database migration deployment for production and staging environments
 
 **Description**: 
-- Activates the Python virtual environment
-- Displays helpful commands for running the application
-- Shows migration and deactivation instructions
+- Ensures database migrations are applied automatically during deployment
+- Provides safe migration deployment with database availability checks
+- Supports Docker containers, CI/CD pipelines, and manual deployments
+- Includes backup point creation and migration integrity verification
 
 **Usage**:
 ```bash
-# Make executable (first time only)
-chmod +x scripts/activate_digame.sh
+# Apply all pending migrations (production deployment)
+python digame/scripts/deploy_migrations.py
 
-# Activate environment
-source scripts/activate_digame.sh
+# Check migration status without applying
+python digame/scripts/deploy_migrations.py --check-only
+
+# Force apply migrations (bypass warnings)
+python digame/scripts/deploy_migrations.py --force
 ```
 
 **Features**:
-- ✅ Virtual environment activation
-- ✅ Command reference display
-- ✅ Cross-platform compatibility
+- ✅ **Database Availability Check**: Waits for database to be ready (max 30 attempts)
+- ✅ **Migration Status Verification**: Checks current vs head revisions
+- ✅ **Backup Point Creation**: Creates restore points before applying migrations
+- ✅ **Safe Migration Application**: Applies migrations with timeout protection (10 minutes)
+- ✅ **Integrity Verification**: Confirms migrations applied correctly
+- ✅ **Comprehensive Logging**: Timestamped logs for deployment tracking
+- ✅ **Error Handling**: Graceful failure with detailed error reporting
+
+**Deployment Integration**:
+```dockerfile
+# Docker entrypoint example
+RUN python digame/scripts/deploy_migrations.py
+```
+
+**CI/CD Integration**:
+```yaml
+# GitHub Actions example
+- name: Deploy Database Migrations
+  run: python digame/scripts/deploy_migrations.py --check-only
+```
 
 ---
 
-### `setup_dev_env.py`
-**Purpose**: Comprehensive development environment setup and configuration
+### `test_migrations.py`
+**Purpose**: Comprehensive testing of database migration processes
 
 **Description**: 
-- Sets up Python virtual environment from scratch
-- Installs all required dependencies
-- Validates Python version compatibility
-- Tests critical imports
-- Creates activation scripts
+- Tests migration application and rollback functionality
+- Verifies database schema creation and integrity
+- Supports both SQLite (testing) and PostgreSQL (production) databases
+- Validates foreign key constraints and table relationships
 
 **Usage**:
 ```bash
-# Full setup (recommended for new environments)
-python scripts/setup_dev_env.py
+# Test migrations with temporary SQLite database
+python digame/scripts/test_migrations.py
 
-# Clean install (removes existing venv)
-python scripts/setup_dev_env.py --clean
-
-# Check current environment status
-python scripts/setup_dev_env.py --check
+# Test migrations against Docker PostgreSQL
+python digame/scripts/test_migrations.py --docker
 ```
 
 **Features**:
-- ✅ Python 3.8+ version validation
-- ✅ Virtual environment creation
-- ✅ Dependency installation from requirements.txt
-- ✅ Development mode package installation
-- ✅ Import testing and validation
-- ✅ Cross-platform activation script creation
-- ✅ Comprehensive logging and error reporting
+- ✅ **SQLite Testing**: Uses temporary database for safe testing
+- ✅ **Schema Verification**: Confirms all expected tables are created
+- ✅ **Foreign Key Validation**: Checks relationship constraints
+- ✅ **Migration Rollback Testing**: Tests downgrade functionality
+- ✅ **Re-migration Testing**: Verifies migrations can be reapplied
+- ✅ **Docker Integration**: Tests against production-like PostgreSQL
+- ✅ **Data Integrity Checks**: Framework for testing data relationships
 
-**Output**: Creates `venv/` directory and platform-specific activation scripts
+**Expected Tables Verified**:
+- `users`, `roles`, `permissions`, `user_roles`, `role_permissions`
+- `activities`, `detected_anomalies`, `tasks`, `process_notes`, `jobs`
+- `behavioral_models`, `behavioral_patterns`, `alembic_version`
 
 ---
 
-## 🔧 Development & Maintenance Scripts
+## 🔧 Git Management Scripts
 
-### `fix_dependencies_and_imports.py`
-**Purpose**: Comprehensive solution for dependency and import issues
+### `git-setup.py`
+**Purpose**: Git repository initialization and configuration using pure Python
 
 **Description**: 
-- Addresses all four priority areas of dependency management
-- Sets up virtual environment if missing
-- Resolves circular dependencies
-- Fixes import paths and module references
-- Creates missing function aliases
+- Provides Git functionality when git binary is not available (e.g., in containers)
+- Uses dulwich (pure Python Git implementation) for all operations
+- Handles repository initialization, user configuration, and basic operations
 
 **Usage**:
 ```bash
-# Run all fixes (recommended)
-python scripts/fix_dependencies_and_imports.py --all
+# Initialize new Git repository
+python digame/scripts/git-setup.py init
 
-# Only setup environment
-python scripts/fix_dependencies_and_imports.py --env
+# Configure Git user
+python digame/scripts/git-setup.py config 'Your Name' 'your.email@example.com'
 
-# Only fix imports
-python scripts/fix_dependencies_and_imports.py --imports
+# Add files to staging
+python digame/scripts/git-setup.py add [files]
 
-# Check current status
-python scripts/fix_dependencies_and_imports.py --check
+# Commit changes
+python digame/scripts/git-setup.py commit 'Commit message'
+
+# Check repository status
+python digame/scripts/git-setup.py status
 ```
 
 **Features**:
-- ✅ Virtual environment setup and validation
-- ✅ Missing function import fixes (e.g., `train_behavioral_model` alias)
-- ✅ Circular import resolution
-- ✅ Import path corrections
-- ✅ Missing `__init__.py` file creation
-- ✅ Critical import testing
+- ✅ **Pure Python Implementation**: No git binary dependency
+- ✅ **Repository Initialization**: Creates new Git repositories
+- ✅ **User Configuration**: Sets up Git user name and email
+- ✅ **File Staging**: Adds files to Git staging area
+- ✅ **Commit Creation**: Creates commits with messages
+- ✅ **Status Checking**: Shows working tree status
+- ✅ **Error Handling**: Provides helpful error messages and tips
 
 ---
 
-### `fix_circular_imports.py`
-**Purpose**: Advanced circular import detection and resolution
+### `simple_git.py`
+**Purpose**: Simplified Git workflow interface for basic operations
 
 **Description**: 
-- Analyzes the entire codebase for circular dependencies
-- Uses AST parsing for accurate import analysis
-- Generates dependency graphs
-- Provides fix suggestions and strategies
-- Creates detailed analysis reports
+- Streamlined interface for common Git operations
+- Designed for environments where standard git commands are unavailable
+- Provides essential workflow commands with clear feedback
 
 **Usage**:
 ```bash
-# Analyze circular imports (default)
-python scripts/fix_circular_imports.py --analyze
+# Initialize repository
+python digame/scripts/simple_git.py init
 
-# Generate detailed report
-python scripts/fix_circular_imports.py --report
+# Configure user
+python digame/scripts/simple_git.py config 'Name' 'email'
 
-# Attempt automatic fixes
-python scripts/fix_circular_imports.py --fix
+# Add all files
+python digame/scripts/simple_git.py add-all
 
-# Analyze specific directory
-python scripts/fix_circular_imports.py --directory digame/app
+# Commit changes
+python digame/scripts/simple_git.py commit 'message'
+
+# Check status
+python digame/scripts/simple_git.py status
 ```
 
 **Features**:
-- ✅ AST-based import analysis
-- ✅ Dependency graph construction
-- ✅ Cycle detection algorithms
-- ✅ Fix strategy suggestions (late imports, TYPE_CHECKING, module restructuring)
-- ✅ Detailed markdown report generation
-- ✅ JSON analysis results export
-
-**Output**: 
-- `circular_import_analysis.json` - Analysis results
-- `import_analysis_report.md` - Detailed report (with --report flag)
+- ✅ **Simplified Commands**: Easy-to-remember command interface
+- ✅ **Add All Files**: Convenient staging of all changes
+- ✅ **Clear Feedback**: Success/error messages with emojis
+- ✅ **Usage Help**: Built-in help and examples
+- ✅ **Error Recovery**: Helpful tips for common issues
 
 ---
 
-### `fix_import_paths.py`
-**Purpose**: Targeted import path correction and standardization
+### `git_remote.py`
+**Purpose**: Remote repository operations and push functionality
 
 **Description**: 
-- Analyzes import statements for common issues
-- Fixes relative vs absolute import inconsistencies
-- Corrects missing function references
-- Updates problematic import patterns
-- Creates missing function aliases
+- Manages remote repository configuration
+- Handles pushing to remote repositories (GitHub, GitLab, etc.)
+- Provides remote repository listing and management
 
 **Usage**:
 ```bash
-# Analyze import paths (default)
-python scripts/fix_import_paths.py --analyze
+# Add remote repository
+python digame/scripts/git_remote.py add-remote origin https://github.com/user/repo.git
 
-# Apply fixes
-python scripts/fix_import_paths.py --fix
+# List configured remotes
+python digame/scripts/git_remote.py list-remotes
 
-# Preview fixes without applying
-python scripts/fix_import_paths.py --dry-run
+# Push to remote (default: origin main)
+python digame/scripts/git_remote.py push
+
+# Push to specific remote/branch
+python digame/scripts/git_remote.py push origin main
 ```
 
 **Features**:
-- ✅ Import pattern analysis and detection
-- ✅ Automatic fix suggestions
-- ✅ Dry-run mode for safe testing
-- ✅ Missing function alias creation
-- ✅ Relative/absolute import standardization
-- ✅ Missing model class detection
+- ✅ **Remote Management**: Add and configure remote repositories
+- ✅ **Push Operations**: Push commits to remote repositories
+- ✅ **Remote Listing**: Display configured remotes with URLs
+- ✅ **Authentication Support**: Works with SSH keys and tokens
+- ✅ **Error Guidance**: Helpful tips for authentication and setup issues
+
+**Supported Remote URLs**:
+- HTTPS: `https://github.com/username/repo.git`
+- SSH: `git@github.com:username/repo.git`
 
 ---
 
-## 🧪 Testing & Quality Scripts
-
-### `fix_pyrefly_errors.py`
-**Purpose**: Resolve static analysis errors in test files
+### `git_status_summary.py`
+**Purpose**: Comprehensive repository status and deployment guidance
 
 **Description**: 
-- Addresses SQLAlchemy model instantiation issues in tests
-- Creates proper mock object factories
-- Fixes unittest.main() call issues
-- Generates .pyrefly-ignore configuration
+- Provides detailed Git repository status and statistics
+- Shows commit history, remote configuration, and working tree status
+- Offers guidance for pushing to remote repositories
+- Includes multiple deployment strategy recommendations
 
 **Usage**:
 ```bash
-# Fix all Pyrefly errors in test files
-python scripts/fix_pyrefly_errors.py
+# Show comprehensive repository summary
+python digame/scripts/git_status_summary.py
 ```
 
 **Features**:
-- ✅ Mock SQLAlchemy model factory creation
-- ✅ Test file pattern detection and fixing
-- ✅ unittest.main() issue resolution
-- ✅ .pyrefly-ignore configuration generation
-- ✅ Automatic test file discovery
+- ✅ **Repository Statistics**: Commit count and latest commit info
+- ✅ **Remote Configuration**: Shows configured remotes and URLs
+- ✅ **Working Tree Status**: Displays untracked, modified, and staged files
+- ✅ **Deployment Guidance**: Multiple strategies for pushing to GitHub
+- ✅ **Authentication Options**: GitHub CLI, manual upload, SSH, VSCode integration
 
-**Output**: 
-- Modified test files with mock factories
-- `.pyrefly-ignore` configuration file
-
----
-
-### `fix_remaining_test_errors.py`
-**Purpose**: Address remaining test-specific static analysis issues
-
-**Description**: 
-- Enhanced mock model factory with better attribute handling
-- Fixes specific service reference issues
-- Updates mock patterns for better static analysis compatibility
-- Comprehensive .pyrefly-ignore pattern updates
-
-**Usage**:
-```bash
-# Fix remaining test errors
-python scripts/fix_remaining_test_errors.py
-```
-
-**Features**:
-- ✅ Enhanced MockModel class with `__getattr__` fallback
-- ✅ UserService.pwd_context reference fixes
-- ✅ unittest.main() call corrections
-- ✅ Comprehensive .pyrefly-ignore pattern updates
-- ✅ Default attribute handling for SQLAlchemy models
+**Deployment Strategies Provided**:
+1. **GitHub CLI**: `gh auth login` and `gh repo create`
+2. **Manual Upload**: Download/copy files and web interface upload
+3. **Container SSH/Git**: Rebuild with proper Git tools and authentication
+4. **VSCode Integration**: Use built-in Git extension and authentication
 
 ---
 
-### `verify_and_cleanup_fixes.py`
-**Purpose**: Final verification and cleanup of applied fixes
+## 🚀 Common Use Cases
 
-**Description**: 
-- Verifies the integrity of applied fixes
-- Cleans up any incorrectly transformed code
-- Ensures proper mock factory implementation
-- Applies final adjustments to test files
-
-**Usage**:
+### **Database Deployment Workflow**
 ```bash
-# Verify and cleanup all fixes
-python scripts/verify_and_cleanup_fixes.py
+# 1. Test migrations locally
+python digame/scripts/test_migrations.py
+
+# 2. Deploy to staging/production
+python digame/scripts/deploy_migrations.py --check-only
+python digame/scripts/deploy_migrations.py
+
+# 3. Verify deployment
+python digame/scripts/deploy_migrations.py --check-only
 ```
 
-**Features**:
-- ✅ Fix verification and validation
-- ✅ Assertion issue corrections
-- ✅ Mock factory usage cleanup
-- ✅ Multi-line call formatting fixes
-- ✅ Final test file adjustments
-
----
-
-## 🔗 Integration & Analysis Scripts
-
-### `integration_helper.py`
-**Purpose**: Analysis and assistance for platform integration tasks
-
-**Description**: 
-- Provides integration analysis capabilities
-- Assists with component migration and integration
-- Analyzes compatibility between different platform versions
-- Supports the DigitalTwinPro integration framework
-
-**Usage**:
+### **Git Repository Setup**
 ```bash
-# Run integration analysis
-python scripts/integration_helper.py --analyze
+# 1. Initialize repository
+python digame/scripts/git-setup.py init
 
-# Additional integration tasks (see script for specific options)
-python scripts/integration_helper.py --help
+# 2. Configure user
+python digame/scripts/git-setup.py config 'Your Name' 'your.email@example.com'
+
+# 3. Add and commit files
+python digame/scripts/simple_git.py add-all
+python digame/scripts/simple_git.py commit 'Initial commit'
+
+# 4. Set up remote and push
+python digame/scripts/git_remote.py add-remote origin https://github.com/user/repo.git
+python digame/scripts/git_remote.py push
 ```
 
-**Features**:
-- ✅ Integration compatibility analysis
-- ✅ Component migration assistance
-- ✅ Platform version comparison
-- ✅ Integration framework support
-
----
-
-## 📊 Script Execution Workflow
-
-### For New Development Environment Setup:
+### **Development Environment Git Operations**
 ```bash
-1. python scripts/setup_dev_env.py --clean
-2. source scripts/activate_digame.sh
-3. python scripts/fix_dependencies_and_imports.py --check
+# Quick status check
+python digame/scripts/git_status_summary.py
+
+# Add changes and commit
+python digame/scripts/simple_git.py add-all
+python digame/scripts/simple_git.py commit 'Feature implementation'
+
+# Push to remote
+python digame/scripts/git_remote.py push
 ```
 
-### For Import Issue Resolution:
+### **CI/CD Integration**
 ```bash
-1. python scripts/fix_circular_imports.py --analyze --report
-2. python scripts/fix_import_paths.py --fix
-3. python scripts/fix_dependencies_and_imports.py --imports
-```
+# Pre-deployment migration check
+python digame/scripts/test_migrations.py --docker
 
-### For Test Error Resolution:
-```bash
-1. python scripts/fix_pyrefly_errors.py
-2. python scripts/fix_remaining_test_errors.py
-3. python scripts/verify_and_cleanup_fixes.py
-```
+# Production deployment
+python digame/scripts/deploy_migrations.py
 
-### For Integration Tasks:
-```bash
-1. python scripts/integration_helper.py --analyze
-2. # Follow integration-specific workflow based on analysis results
+# Post-deployment verification
+python digame/scripts/deploy_migrations.py --check-only
 ```
 
 ---
 
-## 🛠️ Common Use Cases
+## 🔧 Technical Requirements
 
-### **New Developer Onboarding**
-```bash
-# Complete environment setup for new developers
-python scripts/setup_dev_env.py --clean
-source scripts/activate_digame.sh
-python scripts/fix_dependencies_and_imports.py --check
-```
+### **Python Dependencies**:
+- **dulwich**: Pure Python Git implementation
+- **subprocess**: Command execution
+- **sqlite3**: SQLite database testing
+- **tempfile**: Temporary file operations
+- **pathlib**: Path manipulation
 
-### **Resolving Import Errors**
-```bash
-# Comprehensive import issue resolution
-python scripts/fix_circular_imports.py --analyze
-python scripts/fix_import_paths.py --fix
-python scripts/fix_dependencies_and_imports.py --imports
-```
+### **External Dependencies**:
+- **Alembic**: Database migration tool
+- **PostgreSQL**: Production database (for Docker testing)
+- **Docker Compose**: Container orchestration (optional)
 
-### **Fixing Test Issues**
-```bash
-# Complete test error resolution workflow
-python scripts/fix_pyrefly_errors.py
-python scripts/fix_remaining_test_errors.py
-python scripts/verify_and_cleanup_fixes.py
-```
-
-### **Environment Troubleshooting**
-```bash
-# Diagnose and fix environment issues
-python scripts/setup_dev_env.py --check
-python scripts/fix_dependencies_and_imports.py --all
-```
-
----
-
-## 📝 Script Dependencies
-
-### **Python Requirements**:
+### **Environment Requirements**:
 - Python 3.8+
-- Standard library modules (ast, os, sys, subprocess, pathlib, etc.)
-- Project dependencies (when testing imports)
-
-### **System Requirements**:
-- Unix/Linux/macOS or Windows
-- Virtual environment support
+- Access to database (SQLite for testing, PostgreSQL for production)
 - Write permissions in project directory
+- Network access for remote Git operations
+
+---
+
+## 🛠️ Configuration
+
+### **Database Configuration**:
+Scripts use `alembic.ini` for database connection settings:
+```ini
+# PostgreSQL (production)
+sqlalchemy.url = postgresql://user:password@host:port/database
+
+# SQLite (testing)
+sqlalchemy.url = sqlite:///path/to/database.db
+```
+
+### **Git Configuration**:
+Scripts automatically configure Git user settings:
+```bash
+# Set via script
+python digame/scripts/git-setup.py config 'Your Name' 'your.email@example.com'
+```
 
 ---
 
@@ -377,53 +342,66 @@ python scripts/fix_dependencies_and_imports.py --all
 
 ### **Common Issues**:
 
-1. **Permission Errors**:
+1. **Database Connection Errors**:
    ```bash
-   chmod +x scripts/activate_digame.sh
+   # Check database availability
+   python digame/scripts/deploy_migrations.py --check-only
    ```
 
-2. **Python Version Issues**:
+2. **Migration Conflicts**:
    ```bash
-   python scripts/setup_dev_env.py --check
+   # Force apply migrations
+   python digame/scripts/deploy_migrations.py --force
    ```
 
-3. **Import Errors Persist**:
+3. **Git Authentication Issues**:
    ```bash
-   python scripts/fix_dependencies_and_imports.py --all
-   python scripts/fix_circular_imports.py --fix
+   # Check remote configuration
+   python digame/scripts/git_remote.py list-remotes
+   
+   # Get deployment guidance
+   python digame/scripts/git_status_summary.py
    ```
 
-4. **Test Errors Continue**:
+4. **Missing Dependencies**:
    ```bash
-   python scripts/fix_pyrefly_errors.py
-   python scripts/fix_remaining_test_errors.py
+   pip install dulwich alembic
    ```
 
 ### **Getting Help**:
-- Most scripts support `--help` flag for detailed usage information
+- Run scripts without arguments to see usage information
 - Check script output logs for specific error messages
-- Review generated reports (`.json`, `.md` files) for detailed analysis
+- Review alembic.ini for database configuration issues
 
 ---
 
 ## 📈 Script Maintenance
 
 ### **Adding New Scripts**:
-1. Place script in `/scripts/` directory
+1. Place script in `/digame/scripts/` directory
 2. Update this README.md with script documentation
-3. Follow naming convention: `action_target.py` or `action_target.sh`
+3. Follow naming convention: `action_target.py`
 4. Include proper argument parsing and help text
-5. Add logging and error handling
+5. Add comprehensive logging and error handling
 
 ### **Script Standards**:
 - ✅ Comprehensive argument parsing with `--help`
 - ✅ Detailed logging with timestamps
 - ✅ Error handling and graceful failure
-- ✅ Dry-run modes where applicable
 - ✅ Clear success/failure indicators
+- ✅ Database connection safety checks
 - ✅ Cross-platform compatibility
 
 ---
 
+## 🔗 Related Documentation
+
+- **Main Scripts**: `/scripts/README.md` - Root-level utility scripts
+- **Database Migrations**: `/migrations/README.md` - Migration files and history
+- **Deployment Guide**: `/docs/DEPLOYMENT.md` - Production deployment procedures
+- **Development Setup**: `/docs/DEVELOPMENT.md` - Local development environment
+
+---
+
 *Last Updated: June 22, 2025*
-*Digame Platform Development Team*
+*Digame Platform Backend Team*
