@@ -1,9 +1,11 @@
 # This file makes 'services' a Python package.
 
 from .rbac_service import (
+    RBACService,
+    get_rbac_service,
+    user_has_permission,
     get_user_roles,
-    get_user_permissions,
-    user_has_permission
+    get_user_permissions
 )
 
 from .process_note_service import (
@@ -22,9 +24,11 @@ from .anomaly_service import ( # Added new service
 )
 
 __all__ = [
+    "RBACService",
+    "get_rbac_service",
+    "user_has_permission",
     "get_user_roles",
     "get_user_permissions",
-    "user_has_permission",
     "identify_and_update_process_notes",
     "generate_features_for_activity", 
     "generate_features_for_user_activities",

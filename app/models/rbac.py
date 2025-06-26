@@ -1,7 +1,8 @@
-from sqlalchemy import Column, Integer, String, DateTime, Table, ForeignKey
+from sqlalchemy import Column, Integer, String, DateTime, Table, ForeignKey, Boolean, UniqueConstraint
 from sqlalchemy.orm import relationship
+from sqlalchemy.ext.associationproxy import association_proxy
 # Import Base from .user to ensure all models use the same Base instance
-from .user import Base 
+from .user import Base
 from datetime import datetime
 
 # Association Table: user_roles
@@ -25,17 +26,20 @@ class Role(Base):
     name = Column(String(), unique=True, index=True, nullable=False)
     description = Column(String(), nullable=True)
 
+    # Tenant support
+    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=True, index=True)
+
     created_at = Column(DateTime(), default=datetime.utcnow)
     updated_at = Column(DateTime(), default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    # Many-to-Many relationship with User
-    users = relationship(
-        "User", # Target model class name as a string
-        secondary=user_roles_table, # Reference the table object directly
-        back_populates="roles" # Corresponds to the 'roles' attribute in the User model
-    )
+    # Enhanced relationships for tenant-aware RBAC
+    user_roles = relationship("UserRole", back_populates="role")
+    users = association_proxy("user_roles", "user")  # Maintains backward compatibility
+    
+    # Tenant relationship
+    tenant = relationship("Tenant", back_populates="roles")
 
-    # Many-to-Many relationship with Permission
+    # Many-to-Many relationship with Permission (unchanged)
     permissions = relationship(
         "Permission",
         secondary=role_permissions_table, # Reference the table object directly
@@ -43,7 +47,7 @@ class Role(Base):
     )
 
     def __repr__(self):
-        return f"<Role(id={self.id}, name='{self.name}')>"
+        return f"<Role(id={self.id}, name='{self.name}', tenant_id={self.tenant_id})>"
 
 class Permission(Base):
     __tablename__ = "permissions"
@@ -64,3 +68,40 @@ class Permission(Base):
 
     def __repr__(self):
         return f"<Permission(id={self.id}, name='{self.name}')>"
+
+
+class UserRole(Base):
+    """
+    Enhanced UserRole model for tenant-aware role assignments
+    Replaces the simple many-to-many table approach
+    """
+    __tablename__ = "user_roles_enhanced"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    role_id = Column(Integer, ForeignKey("roles.id"), nullable=False, index=True)
+    
+    # Tenant support
+    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=True, index=True)
+    
+    # Assignment tracking
+    assigned_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    assigned_at = Column(DateTime, default=datetime.utcnow)
+    expires_at = Column(DateTime, nullable=True)
+    
+    # Status
+    is_active = Column(Boolean, default=True)
+    
+    # Relationships
+    user = relationship("User", foreign_keys=[user_id], back_populates="user_roles")
+    role = relationship("Role", back_populates="user_roles")
+    tenant = relationship("Tenant", back_populates="user_roles")
+    assigner = relationship("User", foreign_keys=[assigned_by])
+    
+    # Unique constraint: user can have role only once per tenant
+    __table_args__ = (
+        UniqueConstraint('user_id', 'role_id', 'tenant_id', name='unique_user_role_tenant'),
+    )
+
+    def __repr__(self):
+        return f"<UserRole(id={self.id}, user_id={self.user_id}, role_id={self.role_id}, tenant_id={self.tenant_id})>"

@@ -1,5 +1,6 @@
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, ForeignKey, JSON # Added ForeignKey, JSON
 from sqlalchemy.orm import relationship, DeclarativeBase
+from sqlalchemy.ext.associationproxy import association_proxy
 from datetime import datetime # Changed to just datetime for consistency, as utcnow is method of datetime
 
 class Base(DeclarativeBase):
@@ -16,6 +17,9 @@ class User(Base):
     first_name = Column(String(), nullable=True)
     last_name = Column(String(), nullable=True)
     
+    # Tenant support
+    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=True, index=True)
+    
     created_at = Column(DateTime(), default=datetime.utcnow)
     updated_at = Column(DateTime(), default=datetime.utcnow, onupdate=datetime.utcnow)
     
@@ -30,14 +34,12 @@ class User(Base):
     skills = Column(Text(), nullable=True)  # JSON string for list[str]
     kudos_count = Column(Integer(), default=0)
 
-    # Relationship to Role via user_roles_table
-    # The 'secondary' argument refers to the __tablename__ of the association table.
-    # This table (user_roles) will be defined in rbac.py.
-    roles = relationship(
-        "Role",
-        secondary="user_roles", 
-        back_populates="users"
-    )
+    # Enhanced relationships for tenant-aware RBAC
+    user_roles = relationship("UserRole", foreign_keys="UserRole.user_id", back_populates="user")
+    roles = association_proxy("user_roles", "role")  # Maintains backward compatibility
+    
+    # Tenant relationship
+    tenant = relationship("Tenant", back_populates="users")
     # Temporarily commented out to resolve SQLAlchemy mapper issues
     # process_notes = relationship(
     #     "ProcessNote",

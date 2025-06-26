@@ -43,9 +43,12 @@ class Tenant(Base):
     phone = Column(String(50), nullable=True)
     address = Column(Text, nullable=True)
     
-    # Note: User and Role relationships will be handled in their respective model files
-    # users = relationship("User", back_populates="tenant", cascade="all, delete-orphan")
-    # roles = relationship("Role", back_populates="tenant", cascade="all, delete-orphan")
+    # Relationships to User, Role, and UserRole models
+    users = relationship("User", back_populates="tenant")
+    roles = relationship("Role", back_populates="tenant")
+    user_roles = relationship("UserRole", back_populates="tenant")
+    
+    # Other tenant-specific relationships
     tenant_configurations = relationship("TenantSettings", back_populates="tenant", cascade="all, delete-orphan")
     invitations = relationship("TenantInvitation", back_populates="tenant", cascade="all, delete-orphan")
     audit_logs = relationship("TenantAuditLog", back_populates="tenant", cascade="all, delete-orphan")
