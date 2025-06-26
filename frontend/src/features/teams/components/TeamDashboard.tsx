@@ -3,8 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui
 import { Button } from '../../../components/ui/Button';
 import { Badge } from '../../../components/ui/Badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../../components/ui/Tabs';
-import { useTeamManagement } from '../hooks/useTeamManagement.ts';
-import { teamService } from '../services/teamService.ts';
+import { useTeamManagement } from '../hooks/useTeamManagement';
+import { teamService } from '../services/teamService';
 
 interface TeamPerformanceMetric {
   id: number;

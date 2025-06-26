@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { teamService } from '../services/teamService.ts';
+import { teamService } from '../services/teamService';
 
 interface Team {
   id: number;

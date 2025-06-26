@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { apiClient, clearTokens } from '../services/apiClient.ts';
+import { apiClient, clearTokens } from '../services/apiClient';
 
 interface User {
   id: number;

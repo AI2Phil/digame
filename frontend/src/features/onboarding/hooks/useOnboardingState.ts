@@ -66,7 +66,7 @@ export const useOnboardingState = () => {
     setIsLoading(true);
     setError(null);
     try {
-      const data = await apiClient.post<UserOnboardingStatus, OnboardingStepUpdatePayload>('/onboarding/step', stepUpdate);
+      const data = await apiClient.post<UserOnboardingStatus>('/onboarding/step', stepUpdate);
       setStatus(data);
       return data; // Return new status
     } catch (err) {
@@ -82,7 +82,7 @@ export const useOnboardingState = () => {
     setIsLoading(true);
     setError(null);
     try {
-      const data = await apiClient.post<UserOnboardingStatus, OnboardingPreferencesUpdatePayload>('/onboarding/preferences', preferencesUpdate);
+      const data = await apiClient.post<UserOnboardingStatus>('/onboarding/preferences', preferencesUpdate);
       setStatus(data);
       return data; // Return new status
     } catch (err) {

@@ -1,4 +1,4 @@
-import { apiClient } from './client';
+import { apiClient } from '../apiClient';
 
 export interface Dashboard {
   id: number;
@@ -125,102 +125,103 @@ export interface ReportFilter {
 class AnalyticsApi {
   // Dashboard Management
   async getDashboards(): Promise<Dashboard[]> {
-    const response = await apiClient.get('/analytics/dashboards');
-    return response.data;
+    return await apiClient.get<Dashboard[]>('/analytics/dashboards');
   }
 
   async getDashboard(id: number): Promise<Dashboard> {
-    const response = await apiClient.get(`/analytics/dashboards/${id}`);
-    return response.data;
+    return await apiClient.get<Dashboard>(`/analytics/dashboards/${id}`);
   }
 
   async createDashboard(dashboard: Partial<Dashboard>): Promise<Dashboard> {
-    const response = await apiClient.post('/analytics/dashboards', dashboard);
-    return response.data;
+    return await apiClient.post<Dashboard>('/analytics/dashboards', dashboard);
   }
 
   async updateDashboard(id: number, dashboard: Partial<Dashboard>): Promise<Dashboard> {
-    const response = await apiClient.put(`/analytics/dashboards/${id}`, dashboard);
-    return response.data;
+    return await apiClient.put<Dashboard>(`/analytics/dashboards/${id}`, dashboard);
   }
 
   async deleteDashboard(id: number): Promise<void> {
-    await apiClient.delete(`/analytics/dashboards/${id}`);
+    await apiClient.delete<void>(`/analytics/dashboards/${id}`);
   }
 
   async updateDashboardLayout(id: number, layout: LayoutItem[]): Promise<Dashboard> {
-    const response = await apiClient.put(`/analytics/dashboards/${id}/layout`, layout);
-    return response.data;
+    return await apiClient.put<Dashboard>(`/analytics/dashboards/${id}/layout`, layout);
   }
 
   // Widget Management
   async createWidget(widget: Partial<Widget>): Promise<Widget> {
-    const response = await apiClient.post('/analytics/dashboards/widgets', widget);
-    return response.data;
+    return await apiClient.post<Widget>('/analytics/dashboards/widgets', widget);
   }
 
   async updateWidget(id: number, widget: Partial<Widget>): Promise<Widget> {
-    const response = await apiClient.put(`/analytics/widgets/${id}`, widget);
-    return response.data;
+    return await apiClient.put<Widget>(`/analytics/widgets/${id}`, widget);
   }
 
   async deleteWidget(id: number): Promise<void> {
-    await apiClient.delete(`/analytics/widgets/${id}`);
+    await apiClient.delete<void>(`/analytics/widgets/${id}`);
   }
 
   async getWidgetData(widgetId: number, options: DashboardFilters = {}): Promise<WidgetData> {
-    const response = await apiClient.get(`/analytics/widgets/${widgetId}/data`, {
-      params: options
-    });
-    return response.data;
+    // Note: apiClient.get doesn't support params option, so we'll build query string manually
+    const queryParams = new URLSearchParams();
+    if (options.filters) {
+      Object.entries(options.filters).forEach(([key, value]) => {
+        queryParams.append(`filters.${key}`, String(value));
+      });
+    }
+    if (options.timeRange) {
+      Object.entries(options.timeRange).forEach(([key, value]) => {
+        queryParams.append(`timeRange.${key}`, String(value));
+      });
+    }
+    if (options.refresh_cache) {
+      queryParams.append('refresh_cache', String(options.refresh_cache));
+    }
+    
+    const queryString = queryParams.toString();
+    const endpoint = `/analytics/widgets/${widgetId}/data${queryString ? `?${queryString}` : ''}`;
+    return await apiClient.get<WidgetData>(endpoint);
   }
 
   async getWidgetDataBatch(widgetIds: number[], options: DashboardFilters = {}): Promise<Record<number, WidgetData>> {
-    const response = await apiClient.post('/analytics/widgets/batch-data', {
+    return await apiClient.post<Record<number, WidgetData>>('/analytics/widgets/batch-data', {
       widget_ids: widgetIds,
       ...options
     });
-    return response.data;
   }
 
   // Report Management
   async getReportDefinitions(): Promise<ReportDefinition[]> {
-    const response = await apiClient.get('/analytics/reports/definitions');
-    return response.data;
+    return await apiClient.get<ReportDefinition[]>('/analytics/reports/definitions');
   }
 
   async createReportDefinition(report: Partial<ReportDefinition>): Promise<ReportDefinition> {
-    const response = await apiClient.post('/analytics/reports/definitions', report);
-    return response.data;
+    return await apiClient.post<ReportDefinition>('/analytics/reports/definitions', report);
   }
 
   async updateReportDefinition(id: number, report: Partial<ReportDefinition>): Promise<ReportDefinition> {
-    const response = await apiClient.put(`/analytics/reports/definitions/${id}`, report);
-    return response.data;
+    return await apiClient.put<ReportDefinition>(`/analytics/reports/definitions/${id}`, report);
   }
 
   async deleteReportDefinition(id: number): Promise<void> {
-    await apiClient.delete(`/analytics/reports/definitions/${id}`);
+    await apiClient.delete<void>(`/analytics/reports/definitions/${id}`);
   }
 
   // Report Scheduling
   async getReportSchedules(): Promise<ReportSchedule[]> {
-    const response = await apiClient.get('/analytics/reports/schedules');
-    return response.data;
+    return await apiClient.get<ReportSchedule[]>('/analytics/reports/schedules');
   }
 
   async createReportSchedule(schedule: Partial<ReportSchedule>): Promise<ReportSchedule> {
-    const response = await apiClient.post('/analytics/reports/schedules', schedule);
-    return response.data;
+    return await apiClient.post<ReportSchedule>('/analytics/reports/schedules', schedule);
   }
 
   async updateReportSchedule(id: number, schedule: Partial<ReportSchedule>): Promise<ReportSchedule> {
-    const response = await apiClient.put(`/analytics/reports/schedules/${id}`, schedule);
-    return response.data;
+    return await apiClient.put<ReportSchedule>(`/analytics/reports/schedules/${id}`, schedule);
   }
 
   async deleteReportSchedule(id: number): Promise<void> {
-    await apiClient.delete(`/analytics/reports/schedules/${id}`);
+    await apiClient.delete<void>(`/analytics/reports/schedules/${id}`);
   }
 
   // Report Generation
@@ -229,19 +230,17 @@ class AnalyticsApi {
     filters?: Record<string, any>;
     time_range?: any;
   } = {}): Promise<{ report_id: string; download_url: string }> {
-    const response = await apiClient.post(`/analytics/reports/generate/${reportId}`, options);
-    return response.data;
+    return await apiClient.post<{ report_id: string; download_url: string }>(`/analytics/reports/generate/${reportId}`, options);
   }
 
   async generateAdHocReport(definition: Partial<ReportDefinition>, options: {
     output_format?: string;
     filters?: Record<string, any>;
   } = {}): Promise<{ report_id: string; download_url: string }> {
-    const response = await apiClient.post('/analytics/reports/generate-adhoc', {
+    return await apiClient.post<{ report_id: string; download_url: string }>('/analytics/reports/generate-adhoc', {
       ad_hoc_definition: definition,
       ...options
     });
-    return response.data;
   }
 
   // Dashboard Export
@@ -251,22 +250,19 @@ class AnalyticsApi {
     time_range?: any;
     filters?: Record<string, any>;
   }): Promise<{ download_url: string }> {
-    const response = await apiClient.post(`/analytics/dashboards/${dashboardId}/export`, options);
-    return response.data;
+    return await apiClient.post<{ download_url: string }>(`/analytics/dashboards/${dashboardId}/export`, options);
   }
 
   // Dashboard Templates
   async getDashboardTemplates(): Promise<Dashboard[]> {
-    const response = await apiClient.get('/analytics/dashboard-templates');
-    return response.data;
+    return await apiClient.get<Dashboard[]>('/analytics/dashboard-templates');
   }
 
   async createDashboardFromTemplate(templateId: number, name: string): Promise<Dashboard> {
-    const response = await apiClient.post('/analytics/dashboards/from-template', {
+    return await apiClient.post<Dashboard>('/analytics/dashboards/from-template', {
       template_id: templateId,
       name
     });
-    return response.data;
   }
 
   // Dashboard Sharing
@@ -276,12 +272,11 @@ class AnalyticsApi {
     permissions?: string[];
     expires_at?: string;
   }): Promise<{ share_url: string; share_token: string }> {
-    const response = await apiClient.post(`/analytics/dashboards/${dashboardId}/share`, options);
-    return response.data;
+    return await apiClient.post<{ share_url: string; share_token: string }>(`/analytics/dashboards/${dashboardId}/share`, options);
   }
 
   async revokeDashboardShare(dashboardId: number, shareToken: string): Promise<void> {
-    await apiClient.delete(`/analytics/dashboards/${dashboardId}/share/${shareToken}`);
+    await apiClient.delete<void>(`/analytics/dashboards/${dashboardId}/share/${shareToken}`);
   }
 
   // Performance Metrics
@@ -293,13 +288,23 @@ class AnalyticsApi {
     limit?: number;
     [key: string]: any; // For dimension filters
   } = {}): Promise<any[]> {
-    const response = await apiClient.get('/analytics/metrics', { params: filters });
-    return response.data.metrics;
+    // Build query string manually since apiClient.get doesn't support params
+    const queryParams = new URLSearchParams();
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== undefined) {
+        queryParams.append(key, String(value));
+      }
+    });
+    const queryString = queryParams.toString();
+    const endpoint = `/analytics/metrics${queryString ? `?${queryString}` : ''}`;
+    
+    const response = await apiClient.get<{ metrics: any[] }>(endpoint);
+    return response.metrics;
   }
 
   async createPerformanceMetric(metric: any): Promise<any> {
-    const response = await apiClient.post('/analytics/metrics', metric);
-    return response.data.metric;
+    const response = await apiClient.post<{ metric: any }>('/analytics/metrics', metric);
+    return response.metric;
   }
 
   // Analytics Models
@@ -308,8 +313,17 @@ class AnalyticsApi {
     category?: string;
     active_only?: boolean;
   } = {}): Promise<any[]> {
-    const response = await apiClient.get('/analytics/models', { params: filters });
-    return response.data.models;
+    const queryParams = new URLSearchParams();
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== undefined) {
+        queryParams.append(key, String(value));
+      }
+    });
+    const queryString = queryParams.toString();
+    const endpoint = `/analytics/models${queryString ? `?${queryString}` : ''}`;
+    
+    const response = await apiClient.get<{ models: any[] }>(endpoint);
+    return response.models;
   }
 
   // Predictions
@@ -319,8 +333,17 @@ class AnalyticsApi {
     entity_id?: number;
     limit?: number;
   } = {}): Promise<any[]> {
-    const response = await apiClient.get('/analytics/predictions', { params: filters });
-    return response.data.predictions;
+    const queryParams = new URLSearchParams();
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== undefined) {
+        queryParams.append(key, String(value));
+      }
+    });
+    const queryString = queryParams.toString();
+    const endpoint = `/analytics/predictions${queryString ? `?${queryString}` : ''}`;
+    
+    const response = await apiClient.get<{ predictions: any[] }>(endpoint);
+    return response.predictions;
   }
 
   // ROI Calculations
@@ -329,8 +352,17 @@ class AnalyticsApi {
     entity_id?: number;
     limit?: number;
   } = {}): Promise<any[]> {
-    const response = await apiClient.get('/analytics/roi', { params: filters });
-    return response.data.roi_calculations;
+    const queryParams = new URLSearchParams();
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== undefined) {
+        queryParams.append(key, String(value));
+      }
+    });
+    const queryString = queryParams.toString();
+    const endpoint = `/analytics/roi${queryString ? `?${queryString}` : ''}`;
+    
+    const response = await apiClient.get<{ roi_calculations: any[] }>(endpoint);
+    return response.roi_calculations;
   }
 }
 

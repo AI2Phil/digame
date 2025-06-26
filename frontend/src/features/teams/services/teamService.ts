@@ -1,4 +1,4 @@
-import { apiClient } from '../../../services/apiClient.ts';
+import { apiClient } from '../../../services/apiClient';
 
 interface Team {
   id: number;
