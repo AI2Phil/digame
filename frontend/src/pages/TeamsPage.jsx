@@ -30,8 +30,8 @@ const TeamsPage = ({ isDemoMode = false, onLogout }) => {
   const [roleFilter, setRoleFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
 
-  // Use prop if provided, otherwise fallback to localStorage
-  const isDemo = isDemoMode || localStorage.getItem('demo_mode') === 'true';
+  // Use prop if provided, otherwise fallback to localStorage (client-side only)
+  const isDemo = isDemoMode || (typeof window !== 'undefined' && localStorage.getItem('demo_mode') === 'true');
 
   const handleHomeClick = () => {
     navigate(isDemo ? '/dashboard' : '/');

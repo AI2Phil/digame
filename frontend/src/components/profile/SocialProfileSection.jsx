@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { 
-  Users, UserPlus, MessageCircle, Share2, 
-  Heart, ThumbsUp, Eye, Link, Github,
+import {
+  Users, UserPlus, MessageCircle, Share2,
+  Heart, ThumbsUp, Eye, Github,
   Linkedin, Twitter, Globe, MapPin,
   Calendar, Award, Target, TrendingUp
 } from 'lucide-react';

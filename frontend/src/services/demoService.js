@@ -12,15 +12,17 @@ class DemoService {
 
   setDemoMode(enabled) {
     this.isDemo = enabled;
-    if (enabled) {
-      localStorage.setItem('demo_mode', 'true');
-    } else {
-      localStorage.removeItem('demo_mode');
+    if (typeof window !== 'undefined') {
+      if (enabled) {
+        localStorage.setItem('demo_mode', 'true');
+      } else {
+        localStorage.removeItem('demo_mode');
+      }
     }
   }
 
   isDemoMode() {
-    return this.isDemo || localStorage.getItem('demo_mode') === 'true';
+    return this.isDemo || (typeof window !== 'undefined' && localStorage.getItem('demo_mode') === 'true');
   }
 
   initializeDemoData() {

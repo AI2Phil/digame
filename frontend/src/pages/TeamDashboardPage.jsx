@@ -14,8 +14,8 @@ import { Chart } from '../components/ui/Chart';
 const TeamDashboardPage = ({ isDemoMode = false, onLogout }) => {
   const navigate = useNavigate();
 
-  // Use prop if provided, otherwise fallback to localStorage
-  const isDemo = isDemoMode || localStorage.getItem('demo_mode') === 'true';
+  // Use prop if provided, otherwise fallback to localStorage (client-side only)
+  const isDemo = isDemoMode || (typeof window !== 'undefined' && localStorage.getItem('demo_mode') === 'true');
 
   const handleHomeClick = () => {
     navigate(isDemo ? '/dashboard' : '/');

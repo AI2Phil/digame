@@ -169,7 +169,7 @@ const EmailAnalyzer = () => {
               disabled={isLoading}
             />
              <CardDescription className="text-xs">
-                Expected format: Array of objects, e.g., `[{"subject": "...", "sender": "...", ...}]`. See placeholder for example.
+                Expected format: Array of objects, e.g., `[{`"subject": "...", "sender": "...", "..."`}]`. See placeholder for example.
              </CardDescription>
             <div className="flex items-center justify-between pt-1">
               <span className="text-xs text-gray-500">

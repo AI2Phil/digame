@@ -14,9 +14,9 @@ class EnhancedApiService {
 
   // Check if we're in demo mode
   isDemoMode() {
-    return this.demoService.isDemoMode() || 
-           localStorage.getItem('demo_mode') === 'true' ||
-           window.location.search.includes('demo=true');
+    return this.demoService.isDemoMode() ||
+           (typeof window !== 'undefined' && localStorage.getItem('demo_mode') === 'true') ||
+           (typeof window !== 'undefined' && window.location.search.includes('demo=true'));
   }
 
   // Enable demo mode

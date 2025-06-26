@@ -5,6 +5,9 @@ import { Button } from '../components/ui/Button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/Tabs';
 import { Badge } from '../components/ui/Badge';
 import { Progress } from '../components/ui/Progress';
+import { Label } from '../components/ui/Label';
+import { Switch } from '../components/ui/Switch';
+import { Skeleton } from '../components/ui/Skeleton';
 import { 
   Building, 
   Users, 
@@ -31,246 +34,6 @@ import {
   RefreshCw
 } from 'lucide-react';
 import { Alert, AlertTitle, AlertDescription } from '../components/ui/Alert';
-
-export default function EnterpriseDashboardPage({ isDemoMode, onLogout }) {
-  const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'overview');
-  const [loading, setLoading] = useState(false);
-  const [enterpriseData, setEnterpriseData] = useState({
-    tenants: 5,
-    totalUsers: 247,
-    activeUsers: 189,
-    aiTasksGenerated: 1543,
-    automationsSaved: 89,
-    securityAlerts: 3,
-    apiCalls: 45672,
-    storageUsed: 78.5,
-    uptime: 99.97
-  });
-
-  const [aiMetrics, setAiMetrics] = useState({
-    taskSuggestions: {
-      total: 1543,
-      accepted: 1205,
-      automated: 89,
-      avgPriority: 0.73
-    },
-    writingAssistance: {
-      documentsProcessed: 2847,
-      suggestionsApplied: 5692,
-      timesSaved: 127.5
-    },
-    insights: {
-      behavioralPatterns: 156,
-      productivityGains: 23.4,
-      processOptimizations: 67
-    }
-  });
-
-  const [tenants, setTenants] = useState([
-    {
-      id: 1,
-      name: "Acme Corporation",
-      users: 45,
-      subscription: "enterprise",
-      status: "active",
-      aiFeatures: true,
-      lastActivity: "2025-05-24T10:30:00Z"
-    },
-    {
-      id: 2,
-      name: "TechStart Inc",
-      users: 23,
-      subscription: "professional",
-      status: "active",
-      aiFeatures: true,
-      lastActivity: "2025-05-24T09:15:00Z"
-    },
-    {
-      id: 3,
-      name: "Global Dynamics",
-      users: 89,
-      subscription: "enterprise",
-      status: "active",
-      aiFeatures: true,
-      lastActivity: "2025-05-24T11:45:00Z"
-    }
-  ]);
-
-  const getSubscriptionColor = (tier) => {
-    switch (tier) {
-      case 'enterprise': return 'bg-purple-100 text-purple-800';
-      case 'professional': return 'bg-blue-100 text-blue-800';
-      case 'basic': return 'bg-gray-100 text-gray-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const renderOverviewTab = () => (
-    <div className="space-y-6">
-      {/* Key Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
-              <Building className="h-4 w-4" />
-              Active Tenants
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{enterpriseData.tenants}</div>
-            <p className="text-xs text-green-600">+2 this month</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
-              <Users className="h-4 w-4" />
-              Total Users
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{enterpriseData.totalUsers}</div>
-            <p className="text-xs text-green-600">{enterpriseData.activeUsers} active</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
-              <Brain className="h-4 w-4" />
-              AI Tasks Generated
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{enterpriseData.aiTasksGenerated}</div>
-            <p className="text-xs text-blue-600">{aiMetrics.taskSuggestions.accepted} accepted</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
-              <Zap className="h-4 w-4" />
-              Automations
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{enterpriseData.automationsSaved}</div>
-            <p className="text-xs text-green-600">Active workflows</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* System Health */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Activity className="h-5 w-5 text-green-600" />
-              System Health
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">Uptime</span>
-              <span className="text-sm text-green-600">{enterpriseData.uptime}%</span>
-            </div>
-            <Progress value={enterpriseData.uptime} className="h-2" />
-            
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">Storage Usage</span>
-              <span className="text-sm">{enterpriseData.storageUsed}%</span>
-            </div>
-            <Progress value={enterpriseData.storageUsed} className="h-2" />
-            
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">API Calls Today</span>
-              <span className="text-sm">{enterpriseData.apiCalls.toLocaleString()}</span>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Shield className="h-5 w-5 text-blue-600" />
-              Security Overview
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">Security Alerts</span>
-              <Badge variant={enterpriseData.securityAlerts > 5 ? "destructive" : "secondary"}>
-                {enterpriseData.securityAlerts}
-              </Badge>
-            </div>
-            
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 text-sm">
-                <CheckCircle className="h-4 w-4 text-green-600" />
-                <span>SSO Configuration: Active</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm">
-                <CheckCircle className="h-4 w-4 text-green-600" />
-                <span>Data Encryption: Enabled</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm">
-                <CheckCircle className="h-4 w-4 text-green-600" />
-                <span>Audit Logging: Active</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Recent Activity */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Clock className="h-5 w-5 text-gray-600" />
-            Recent Enterprise Activity
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg">
-              <Brain className="h-5 w-5 text-blue-600" />
-              <div className="flex-1">
-                <p className="text-sm font-medium">AI Task Suggestions Generated</p>
-                <p className="text-xs text-gray-600">45 new task suggestions across 3 tenants</p>
-              </div>
-              <span className="text-xs text-gray-500">2 hours ago</span>
-            </div>
-            
-            <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg">
-              <Users className="h-5 w-5 text-green-600" />
-              <div className="flex-1">
-                <p className="text-sm font-medium">New Tenant Onboarded</p>
-                <p className="text-xs text-gray-600">Global Dynamics joined with Enterprise plan</p>
-              </div>
-              <span className="text-xs text-gray-500">1 day ago</span>
-            </div>
-            
-            <div className="flex items-center gap-3 p-3 bg-purple-50 rounded-lg">
-              <Zap className="h-5 w-5 text-purple-600" />
-              <div className="flex-1">
-                <p className="text-sm font-medium">Automation Milestone</p>
-                <p className="text-xs text-gray-600">100+ processes automated across platform</p>
-              </div>
-              <span className="text-xs text-gray-500">3 days ago</span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
-
-import { Switch } from '../components/ui/Switch'; // Assuming Switch component exists
-import { Label } from '../components/ui/Label';   // Assuming Label component exists
-import { Skeleton } from '../components/ui/Skeleton'; // For loading states
 
 // Mock API service (replace with actual implementation)
 const mockApiService = {
@@ -337,6 +100,15 @@ const aiFeatureConfigDefinition = [
   { key: "enable_skill_gap_analysis", label: "Skill Gap Analysis" },
   { key: "enable_personalized_learning_recommendations", label: "Personalized Learning Recommendations" },
 ];
+
+const getSubscriptionColor = (tier) => {
+  switch (tier) {
+    case 'enterprise': return 'bg-purple-100 text-purple-800';
+    case 'professional': return 'bg-blue-100 text-blue-800';
+    case 'basic': return 'bg-gray-100 text-gray-800';
+    default: return 'bg-gray-100 text-gray-800';
+  }
+};
 
 
 export default function EnterpriseDashboardPage({ isDemoMode, onLogout }) {

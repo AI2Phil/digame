@@ -147,8 +147,8 @@ const AdvancedWebAnalyticsDashboard = () => {
               <Button
                 variant="ghost"
                 onClick={() => {
-                  // Check if we're in demo mode
-                  const isDemoMode = localStorage.getItem('demo_mode') === 'true';
+                  // Check if we're in demo mode (only on client side)
+                  const isDemoMode = typeof window !== 'undefined' && localStorage.getItem('demo_mode') === 'true';
                   navigate(isDemoMode ? '/dashboard' : '/');
                 }}
                 className="mr-2 text-gray-600 hover:text-gray-900"

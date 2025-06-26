@@ -61,7 +61,7 @@ let mockUserProfilesStore = {
 class ApiService {
   constructor() {
     this.baseURL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
-    this.token = localStorage.getItem('token');
+    this.token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
   }
 
   // Helper method to get headers with authentication

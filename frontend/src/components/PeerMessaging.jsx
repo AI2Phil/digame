@@ -14,7 +14,7 @@ const PeerMessaging = ({ peerId, peerName, onClose }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState('connected');
   const messagesEndRef = useRef(null);
-  const currentUserId = parseInt(localStorage.getItem('userId') || '1');
+  const currentUserId = parseInt((typeof window !== 'undefined' ? localStorage.getItem('userId') : null) || '1');
 
   useEffect(() => {
     loadMessages();
