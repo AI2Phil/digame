@@ -58,7 +58,8 @@ def delete_existing_role(role_id: int, db: Session = Depends(get_db)):
     success = rbac_crud.delete_role(db, role_id=role_id)
     if not success:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Role not found")
-    return {"ok": True} # Or no content
+    # Return None for 204 No Content - don't return a dict
+    return None
 
 # --- Permissions Endpoints ---
 @router.post("/permissions/", response_model=rbac_schemas.PermissionResponse, status_code=status.HTTP_201_CREATED)
@@ -98,7 +99,8 @@ def delete_existing_permission(permission_id: int, db: Session = Depends(get_db)
     success = rbac_crud.delete_permission(db, permission_id=permission_id)
     if not success:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Permission not found")
-    return {"ok": True}
+    # Return None for 204 No Content - don't return a dict
+    return None
 
 
 # --- Assignment Endpoints ---

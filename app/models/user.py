@@ -36,7 +36,11 @@ class User(Base):
 
     # Enhanced relationships for tenant-aware RBAC
     user_roles = relationship("UserRole", foreign_keys="UserRole.user_id", back_populates="user")
-    roles = association_proxy("user_roles", "role")  # Maintains backward compatibility
+    
+    @property
+    def roles(self):
+        """Backward compatibility property to access roles through user_roles"""
+        return [ur.role for ur in self.user_roles if ur.role]
     
     # Tenant relationship
     tenant = relationship("Tenant", back_populates="users")

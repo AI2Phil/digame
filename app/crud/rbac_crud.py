@@ -94,22 +94,39 @@ def delete_permission(db: Session, permission_id: int) -> bool:
 # --- Assignment Operations ---
 
 def assign_role_to_user(db: Session, user_id: int, role_id: int) -> Optional[User]:
+    from ..models.rbac import UserRole
+    
     user = db.query(User).filter(User.id == user_id).first()
     role = get_role(db, role_id)
     if user and role:
-        if role not in user.roles:
-            user.roles.append(role)
+        # Check if user already has this role
+        existing_user_role = db.query(UserRole).filter(
+            UserRole.user_id == user_id,
+            UserRole.role_id == role_id
+        ).first()
+        
+        if not existing_user_role:
+            user_role = UserRole(user_id=user_id, role_id=role_id)
+            db.add(user_role)
             db.commit()
             db.refresh(user)
         return user
     return None
 
 def remove_role_from_user(db: Session, user_id: int, role_id: int) -> Optional[User]:
+    from ..models.rbac import UserRole
+    
     user = db.query(User).filter(User.id == user_id).first()
     role = get_role(db, role_id) # Fetch the role to ensure it exists
     if user and role:
-        if role in user.roles:
-            user.roles.remove(role)
+        # Find and remove the UserRole entry
+        user_role = db.query(UserRole).filter(
+            UserRole.user_id == user_id,
+            UserRole.role_id == role_id
+        ).first()
+        
+        if user_role:
+            db.delete(user_role)
             db.commit()
             db.refresh(user)
         return user
@@ -139,22 +156,39 @@ def remove_permission_from_role(db: Session, role_id: int, permission_id: int) -
 
 # Helper for assigning by name (used by endpoints that take names)
 def assign_role_to_user_by_names(db: Session, user_id: int, role_name: str) -> Optional[User]:
+    from ..models.rbac import UserRole
+    
     user = db.query(User).filter(User.id == user_id).first()
     role = get_role_by_name(db, role_name)
     if user and role:
-        if role not in user.roles:
-            user.roles.append(role)
+        # Check if user already has this role
+        existing_user_role = db.query(UserRole).filter(
+            UserRole.user_id == user_id,
+            UserRole.role_id == role.id
+        ).first()
+        
+        if not existing_user_role:
+            user_role = UserRole(user_id=user_id, role_id=role.id)
+            db.add(user_role)
             db.commit()
             db.refresh(user)
         return user
     return None
 
 def remove_role_from_user_by_names(db: Session, user_id: int, role_name: str) -> Optional[User]:
+    from ..models.rbac import UserRole
+    
     user = db.query(User).filter(User.id == user_id).first()
     role = get_role_by_name(db, role_name)
     if user and role:
-        if role in user.roles:
-            user.roles.remove(role)
+        # Find and remove the UserRole entry
+        user_role = db.query(UserRole).filter(
+            UserRole.user_id == user_id,
+            UserRole.role_id == role.id
+        ).first()
+        
+        if user_role:
+            db.delete(user_role)
             db.commit()
             db.refresh(user)
         return user
