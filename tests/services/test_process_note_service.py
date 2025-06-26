@@ -78,18 +78,20 @@ def create_mock_activity(id: int, user_id: int, activity_type: str, timestamp: d
 
 # --- Test Scenarios ---
 
-def test_no_activities_for_user(mock_db_session: MagicMock, sample_user: User):
+@pytest.mark.asyncio
+async def test_no_activities_for_user(mock_db_session: MagicMock, sample_user: User):
     """Test behavior when a user has no activities."""
     # mock_db_session.query(Activity)...all() already returns [] by default from fixture
     
-    new_count, updated_count = identify_and_update_process_notes(mock_db_session, user_id=sample_user.id)
+    new_count, updated_count = await identify_and_update_process_notes(mock_db_session, user_id=sample_user.id)
     
     assert new_count == 0
     assert updated_count == 0
     mock_db_session.add.assert_not_called()
     mock_db_session.commit.assert_not_called()
 
-def test_not_enough_activities_for_sequence(mock_db_session: MagicMock, sample_user: User):
+@pytest.mark.asyncio
+async def test_not_enough_activities_for_sequence(mock_db_session: MagicMock, sample_user: User):
     """Test behavior when activities are fewer than min_sequence_len."""
     activities = [
         create_mock_activity(1, sample_user.id, "A", datetime(2023, 1, 1, 10, 0, 0)),
@@ -97,16 +99,17 @@ def test_not_enough_activities_for_sequence(mock_db_session: MagicMock, sample_u
     ]
     mock_db_session.query(Activity).filter().order_by().all.return_value = activities
     
-    new_count, updated_count = identify_and_update_process_notes(
-        mock_db_session, 
-        user_id=sample_user.id, 
+    new_count, updated_count = await identify_and_update_process_notes(
+        mock_db_session,
+        user_id=sample_user.id,
         min_sequence_len=3 # Default
     )
     
     assert new_count == 0
     assert updated_count == 0
 
-def test_new_process_note_creation(mock_db_session: MagicMock, sample_user: User):
+@pytest.mark.asyncio
+async def test_new_process_note_creation(mock_db_session: MagicMock, sample_user: User):
     """Test creation of a new ProcessNote when a recurring sequence is found."""
     user_id = sample_user.id
     common_sequence = ["Login", "ViewDashboard", "EditProfile"]
@@ -128,9 +131,9 @@ def test_new_process_note_creation(mock_db_session: MagicMock, sample_user: User
 
     mock_db_session.query(Activity).filter().order_by().all.return_value = activities
     # Ensure no existing ProcessNote is found for this sequence
-    mock_db_session.query(ProcessNote).filter().first.return_value = None 
+    mock_db_session.query(ProcessNote).filter().first.return_value = None
     
-    new_count, updated_count = identify_and_update_process_notes(mock_db_session, user_id=user_id)
+    new_count, updated_count = await identify_and_update_process_notes(mock_db_session, user_id=user_id)
     
     assert new_count == 1 # One new note for the "Login -> ViewDashboard -> EditProfile" sequence
     assert updated_count == 0
@@ -148,11 +151,12 @@ def test_new_process_note_creation(mock_db_session: MagicMock, sample_user: User
     assert added_note.source_activity_ids == [1, 2, 3] # IDs of the first instance
     assert added_note.first_observed_at == datetime(2023, 1, 1, 10, 0, 0)
     # Last observed: Login (act_id 9, 10:08), ViewDashboard (act_id 10, 10:09), EditProfile (act_id 11, 10:10)
-    assert added_note.last_observed_at == datetime(2023, 1, 1, 10, 10, 0) 
+    assert added_note.last_observed_at == datetime(2023, 1, 1, 10, 10, 0)
     
     mock_db_session.commit.assert_called_once()
 
-def test_existing_process_note_update(mock_db_session: MagicMock, sample_user: User):
+@pytest.mark.asyncio
+async def test_existing_process_note_update(mock_db_session: MagicMock, sample_user: User):
     """Test update of an existing ProcessNote when a pattern recurs."""
     user_id = sample_user.id
     common_sequence = ["A", "B", "C"]
@@ -189,7 +193,7 @@ def test_existing_process_note_update(mock_db_session: MagicMock, sample_user: U
     )
     mock_db_session.query(ProcessNote).filter().first.return_value = existing_note
     
-    new_count, updated_count = identify_and_update_process_notes(mock_db_session, user_id=user_id)
+    new_count, updated_count = await identify_and_update_process_notes(mock_db_session, user_id=user_id)
     
     assert new_count == 0
     assert updated_count == 1 # One note updated
@@ -197,14 +201,15 @@ def test_existing_process_note_update(mock_db_session: MagicMock, sample_user: U
     mock_db_session.add.assert_not_called() # No new notes added
     assert existing_note.occurrence_count == 4 # Updated count
     # Last observed: A (id 10, 10:09), B (id 11, 10:10), C (id 12, 10:11)
-    assert existing_note.last_observed_at == datetime(2023, 1, 1, 10, 11, 0) 
+    assert existing_note.last_observed_at == datetime(2023, 1, 1, 10, 11, 0)
     # First observed and source_activity_ids should not change if we only update count and last_observed_at
-    assert existing_note.first_observed_at == datetime(2023, 1, 1, 9, 0, 0) 
+    assert existing_note.first_observed_at == datetime(2023, 1, 1, 9, 0, 0)
     assert existing_note.source_activity_ids == first_instance_ids
 
     mock_db_session.commit.assert_called_once()
 
-def test_multiple_patterns_found(mock_db_session: MagicMock, sample_user: User):
+@pytest.mark.asyncio
+async def test_multiple_patterns_found(mock_db_session: MagicMock, sample_user: User):
     """Test handling of multiple distinct patterns meeting criteria."""
     user_id = sample_user.id
     seq1 = ["Open", "Read", "Reply"] # 3 times
@@ -230,14 +235,15 @@ def test_multiple_patterns_found(mock_db_session: MagicMock, sample_user: User):
     # Simulate no existing notes, so both should be created
     mock_db_session.query(ProcessNote).filter().first.side_effect = [None, None] # First call for seq1, second for seq2
 
-    new_count, updated_count = identify_and_update_process_notes(mock_db_session, user_id=user_id)
+    new_count, updated_count = await identify_and_update_process_notes(mock_db_session, user_id=user_id)
 
     assert new_count == 2 # Two new notes
     assert updated_count == 0
     assert mock_db_session.add.call_count == 2
     mock_db_session.commit.assert_called_once()
 
-def test_sequence_length_constraints(mock_db_session: MagicMock, sample_user: User):
+@pytest.mark.asyncio
+async def test_sequence_length_constraints(mock_db_session: MagicMock, sample_user: User):
     """Test that only sequences within min/max length are processed."""
     user_id = sample_user.id
     activities = [
@@ -261,7 +267,7 @@ def test_sequence_length_constraints(mock_db_session: MagicMock, sample_user: Us
     mock_db_session.query(ProcessNote).filter().first.return_value = None # No existing notes
 
     # Test with min_len=3, max_len=3, threshold=3
-    new_count, _ = identify_and_update_process_notes(mock_db_session, user_id, min_sequence_len=3, max_sequence_len=3, recurrence_threshold=3)
+    new_count, _ = await identify_and_update_process_notes(mock_db_session, user_id, min_sequence_len=3, max_sequence_len=3, recurrence_threshold=3)
     
     assert new_count == 1 # Only "A -> B -> C" should be found 3 times
     added_note = mock_db_session.add.call_args[0][0]
@@ -277,7 +283,7 @@ def test_sequence_length_constraints(mock_db_session: MagicMock, sample_user: Us
     # The current implementation of identify_and_update_process_notes will find all sub-sequences.
     # We are testing if the parameters are respected.
     # Let's find A->B. It occurs 3 times in the data.
-    new_count_short, _ = identify_and_update_process_notes(mock_db_session, user_id, min_sequence_len=2, max_sequence_len=2, recurrence_threshold=3)
+    new_count_short, _ = await identify_and_update_process_notes(mock_db_session, user_id, min_sequence_len=2, max_sequence_len=2, recurrence_threshold=3)
     assert new_count_short > 0 # Expecting A->B (3 times) and B->C (3 times) etc.
     
     found_ab = False
@@ -288,7 +294,8 @@ def test_sequence_length_constraints(mock_db_session: MagicMock, sample_user: Us
             found_ab = True
     assert found_ab, "Sequence A -> B was not found or not added correctly."
 
-def test_db_commit_error_handling(mock_db_session: MagicMock, sample_user: User):
+@pytest.mark.asyncio
+async def test_db_commit_error_handling(mock_db_session: MagicMock, sample_user: User):
     """Test that database errors during commit are handled (e.g., rollbacked)."""
     user_id = sample_user.id
     activities = [create_mock_activity(i, user_id, chr(65+ (i%3)), datetime.now() + timedelta(minutes=i)) for i in range(9)] # A,B,C,A,B,C,A,B,C
@@ -299,7 +306,7 @@ def test_db_commit_error_handling(mock_db_session: MagicMock, sample_user: User)
     mock_db_session.commit.side_effect = Exception("Simulated DB commit error")
 
     with pytest.raises(Exception, match="Simulated DB commit error"):
-        identify_and_update_process_notes(mock_db_session, user_id=user_id)
+        await identify_and_update_process_notes(mock_db_session, user_id=user_id)
     
     mock_db_session.add.assert_called() # Attempted to add
     mock_db_session.commit.assert_called_once() # Attempted to commit

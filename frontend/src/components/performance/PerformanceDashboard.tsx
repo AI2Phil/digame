@@ -40,7 +40,7 @@ import {
   Legend,
   Filler
 } from 'chart.js';
-import { performanceApi } from '../../services/api';
+import { performanceApi, DashboardData, SystemHealthStatus } from '../../services/performanceApi';
 
 // Register Chart.js components
 ChartJS.register(
@@ -55,68 +55,6 @@ ChartJS.register(
   Legend,
   Filler
 );
-
-interface DashboardData {
-  time_range_hours: number;
-  system_metrics: {
-    [key: string]: {
-      current: number;
-      average: number;
-      max: number;
-      min: number;
-      sample_count: number;
-    };
-  };
-  database_performance: {
-    total_queries: number;
-    slow_queries_count: number;
-    slow_query_percentage: number;
-    avg_execution_time_ms: number;
-    p95_execution_time_ms: number;
-    p99_execution_time_ms: number;
-  };
-  user_experience: {
-    total_interactions: number;
-    avg_load_time_ms: number;
-    error_rate_percent: number;
-    bounce_rate_percent: number;
-    unique_users: number;
-  };
-  active_alerts: Array<{
-    id: number;
-    name: string;
-    severity: string;
-    created_at: string;
-    description: string;
-  }>;
-  recent_incidents: Array<{
-    id: number;
-    title: string;
-    severity: string;
-    status: string;
-    started_at: string;
-    resolved_at?: string;
-  }>;
-  trends: {
-    response_time_trend: string;
-    error_rate_trend: string;
-    throughput_trend: string;
-  };
-  last_updated: string;
-}
-
-interface SystemHealthStatus {
-  overall_status: string;
-  components: {
-    [key: string]: {
-      status: string;
-      last_check: string;
-      response_time_ms: number;
-      error_message?: string;
-    };
-  };
-  last_check: string;
-}
 
 const PerformanceDashboard: React.FC = () => {
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
@@ -525,7 +463,7 @@ const PerformanceDashboard: React.FC = () => {
               >
                 <Box>
                   <Typography variant="body1" fontWeight="bold">
-                    {alert.name}
+                    {alert.alert_name}
                   </Typography>
                   <Typography variant="body2">
                     {alert.description}

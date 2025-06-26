@@ -10,7 +10,9 @@ import secrets
 import json # For TenantSettings value handling
 
 # Updated model imports
-from ..models.tenant import Tenant, User, Role, UserRole, TenantSettings, TenantInvitation, TenantAuditLog
+from ..models.tenant import Tenant, TenantSettings, TenantInvitation, TenantAuditLog
+from ..models.user import User
+from ..models.rbac import Role, user_roles_table
 from ..database import get_db
 from passlib.context import CryptContext
 

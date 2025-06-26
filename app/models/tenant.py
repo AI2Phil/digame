@@ -43,8 +43,9 @@ class Tenant(Base):
     phone = Column(String(50), nullable=True)
     address = Column(Text, nullable=True)
     
-    users = relationship("User", back_populates="tenant", cascade="all, delete-orphan")
-    roles = relationship("Role", back_populates="tenant", cascade="all, delete-orphan")
+    # Note: User and Role relationships will be handled in their respective model files
+    # users = relationship("User", back_populates="tenant", cascade="all, delete-orphan")
+    # roles = relationship("Role", back_populates="tenant", cascade="all, delete-orphan")
     tenant_configurations = relationship("TenantSettings", back_populates="tenant", cascade="all, delete-orphan")
     invitations = relationship("TenantInvitation", back_populates="tenant", cascade="all, delete-orphan")
     audit_logs = relationship("TenantAuditLog", back_populates="tenant", cascade="all, delete-orphan")
@@ -52,94 +53,9 @@ class Tenant(Base):
     def __repr__(self):
         return f"<Tenant(id={self.id}, name='{self.name}', domain='{self.domain}')>"
 
+# Note: User and Role models are defined in user.py and rbac.py respectively
+# The tenant relationships will be added to those existing models
 
-class User(Base):
-    """
-    Enhanced user model with multi-tenant support
-    """
-    __tablename__ = "users"
-
-    id = Column(Integer, primary_key=True, index=True)
-    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=False, index=True)
-    
-    username = Column(String(100), nullable=False, index=True)
-    email = Column(String(255), nullable=False, index=True)
-    first_name = Column(String(100), nullable=True)
-    last_name = Column(String(100), nullable=True)
-    
-    hashed_password = Column(String(255), nullable=False)
-    is_active = Column(Boolean, default=True)
-    is_verified = Column(Boolean, default=False)
-    
-    job_title = Column(String(200), nullable=True)
-    department = Column(String(100), nullable=True)
-    manager_id = Column(Integer, ForeignKey("users.id"), nullable=True)
-    
-    profile_data = Column(JSON, default={})
-    preferences = Column(JSON, default={})
-    
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
-    last_login = Column(DateTime(timezone=True), nullable=True)
-    
-    tenant = relationship("Tenant", back_populates="users")
-    roles = relationship("UserRole", back_populates="user", cascade="all, delete-orphan")
-    manager = relationship("User", remote_side=[id], backref="direct_reports")
-    
-    # Using list of strings for foreign_keys as per some SQLAlchemy examples for forward refs
-    sent_invitations = relationship("TenantInvitation", foreign_keys=["TenantInvitation.invited_by_user_id"], back_populates="invited_by", cascade="all, delete-orphan")
-    audit_log_entries = relationship("TenantAuditLog", foreign_keys=["TenantAuditLog.user_id"], back_populates="user", cascade="all, delete-orphan")
-    assigned_user_roles = relationship("UserRole", foreign_keys=["UserRole.assigned_by"], back_populates="assigner", cascade="all, delete-orphan")
-
-    def __repr__(self):
-        return f"<User(id={self.id}, username='{self.username}', tenant_id={self.tenant_id})>"
-
-
-class Role(Base):
-    """
-    Role-based access control for multi-tenant system
-    """
-    __tablename__ = "roles"
-
-    id = Column(Integer, primary_key=True, index=True)
-    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=False, index=True)
-    
-    name = Column(String(100), nullable=False)
-    description = Column(Text, nullable=True)
-    permissions = Column(JSON, default=[])
-    
-    is_system_role = Column(Boolean, default=False)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
-    
-    tenant = relationship("Tenant", back_populates="roles")
-    user_roles = relationship("UserRole", back_populates="role", cascade="all, delete-orphan")
-    
-    def __repr__(self):
-        return f"<Role(id={self.id}, name='{self.name}', tenant_id={self.tenant_id})>"
-
-
-class UserRole(Base):
-    """
-    Many-to-many relationship between users and roles
-    """
-    __tablename__ = "user_roles"
-
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    role_id = Column(Integer, ForeignKey("roles.id"), nullable=False)
-    
-    assigned_by = Column(Integer, ForeignKey("users.id"), nullable=True)
-    assigned_at = Column(DateTime(timezone=True), server_default=func.now())
-    expires_at = Column(DateTime(timezone=True), nullable=True)
-    
-    user = relationship("User", foreign_keys=[user_id], back_populates="roles") # This UserRole.user links to User.roles
-    role = relationship("Role", back_populates="user_roles")
-    # This UserRole.assigner links to User.assigned_user_roles
-    assigner = relationship("User", foreign_keys=[assigned_by], back_populates="assigned_user_roles")
-    
-    def __repr__(self):
-        return f"<UserRole(user_id={self.user_id}, role_id={self.role_id})>"
 
 
 class TenantSettings(Base):
@@ -182,7 +98,8 @@ class TenantInvitation(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     tenant = relationship("Tenant", back_populates="invitations")
-    invited_by = relationship("User", foreign_keys=[invited_by_user_id], back_populates="sent_invitations")
+    # Note: User relationship will be handled in user.py
+    # invited_by = relationship("User", foreign_keys=[invited_by_user_id], back_populates="sent_invitations")
 
     def __repr__(self):
         return f"<TenantInvitation(email='{self.email}', tenant_id={self.tenant_id})>"
@@ -206,7 +123,8 @@ class TenantAuditLog(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now(), index=True)
 
     tenant = relationship("Tenant", back_populates="audit_logs")
-    user = relationship("User", foreign_keys=[user_id], back_populates="audit_log_entries")
+    # Note: User relationship will be handled in user.py
+    # user = relationship("User", foreign_keys=[user_id], back_populates="audit_log_entries")
 
     def __repr__(self):
         return f"<TenantAuditLog(action='{self.action}', tenant_id={self.tenant_id}, user_id={self.user_id})>"

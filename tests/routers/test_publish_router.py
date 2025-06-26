@@ -10,9 +10,7 @@ from sqlalchemy.pool import StaticPool
 
 from app.main import app
 from app.db import get_db
-from app.database import Base
-from app.models.user import User
-from app.models.behavior_model import BehavioralModel
+from app.models import Base, User, BehavioralModel
 from app.schemas.user_schemas import UserCreate # Assuming this schema exists for creating users
 
 # Database setup for testing

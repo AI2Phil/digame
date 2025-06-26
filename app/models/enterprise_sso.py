@@ -20,7 +20,7 @@ class SSOProvider(Base):
     
     # Provider Configuration
     configuration = Column(JSON, nullable=False)  # Provider-specific config
-    metadata = Column(Text)  # SAML metadata or OIDC discovery document
+    provider_metadata = Column(Text)  # SAML metadata or OIDC discovery document
     
     # Authentication Settings
     auto_provision_users = Column(Boolean, default=True)

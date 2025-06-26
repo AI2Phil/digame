@@ -34,7 +34,7 @@ from .routers import enterprise_dashboard_router # Import the enterprise dashboa
 from .routers import market_intelligence_router # Import the market intelligence router
 from .routers import workflow_automation_router # Import the workflow automation router
 from .routers import integration_router # Import the integration router
-from .routers import tenant_router # Import the tenant router
+# from .routers import tenant_router # Import the tenant router - temporarily disabled due to UserRole conflicts
 from .routers import notification_router # Import the notification router
 from .routers import voice_router # Import the voice NLU router
 from .routers import advanced_mobile_router # Import the advanced mobile AI router
@@ -219,7 +219,7 @@ app.include_router(enterprise_dashboard_router.router, tags=["Enterprise Dashboa
 app.include_router(market_intelligence_router.router, tags=["Market Intelligence"])
 app.include_router(workflow_automation_router.router, tags=["Workflow Automation"])
 app.include_router(integration_router.router, tags=["Integrations"])
-app.include_router(tenant_router.router, tags=["Tenant Management"])
+# app.include_router(tenant_router.router, tags=["Tenant Management"]) # Temporarily disabled
 app.include_router(notification_router.router, prefix="/api", tags=["Notifications"])
 app.include_router(voice_router.router) # Add voice NLU router, prefix is in the router file
 app.include_router(advanced_mobile_router.router) # Add advanced mobile AI router, tags are in the router

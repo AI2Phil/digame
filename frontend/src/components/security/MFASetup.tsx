@@ -87,7 +87,7 @@ export const MFASetup: React.FC<MFASetupProps> = ({ onSetupComplete }) => {
 
   const copyBackupCode = (code: string, index: number) => {
     navigator.clipboard.writeText(code);
-    setCopiedCodes(prev => new Set([...prev, index]));
+    setCopiedCodes(prev => new Set(Array.from(prev).concat([index])));
     
     // Reset copied state after 2 seconds
     setTimeout(() => {

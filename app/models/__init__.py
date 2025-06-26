@@ -21,7 +21,8 @@ from .workflow_automation import (
     WorkflowStepExecution,
     AutomationRule,
     WorkflowAction,
-    WorkflowIntegration
+    WorkflowIntegration,
+    WorkflowReportConfig
     # Note: The WorkflowLogStatus enum was part of the simpler model definition,
     # the existing advanced models use strings for status fields.
 )
@@ -39,11 +40,13 @@ from .gamification import (
     Badge, UserBadge, LeaderboardEntry, AchievementType, AchievementRarity
 ) # Import gamification models
 from .team import Team, TeamMember, TeamPerformanceMetric, TeamSkillGap, TeamWorkflow, TeamRoleEnum
-from .comparative_benchmark import ComparativeBenchmark
+# from .comparative_benchmark import ComparativeBenchmark # Temporarily disabled due to tenant dependency
 from .analytics import AnalyticsModel, AnalyticsPrediction, AnalyticsTrainingJob, ROICalculation, PerformanceMetric
 from .dashboard_models import ProductivityChartDataPoint, ProductivityChart, ActivityBreakdownItem, ActivityBreakdown, ProductivityMetric, ProductivityMetricsGroup, RecentActivityItem, RecentActivities
 from .reporting import Report, ReportExecution, ReportSchedule, ReportSubscription, ReportTemplate, ReportAuditLog, ReportCache
-from .dashboard_custom import AnalyticsDashboard, DashboardWidget, ReportDefinition # Added for custom dashboards
+# from .dashboard_custom import AnalyticsDashboard, DashboardWidget, ReportDefinition # Added for custom dashboards - temporarily disabled due to tenant dependency
+from .tenant import Tenant, TenantSettings, TenantInvitation, TenantAuditLog # Added tenant models
+# from .enterprise_sso import TenantSSOConfiguration # Added enterprise SSO models - temporarily disabled
 
 # Optionally, define __all__ to specify what is exported when 'from .models import *' is used
 __all__ = [
@@ -68,6 +71,7 @@ __all__ = [
     "AutomationRule",
     "WorkflowAction",
     "WorkflowIntegration",
+    "WorkflowReportConfig",
     "Project", # Add Project to __all__
     "Experience", # Add Experience to __all__
     "Education", # Add Education to __all__
@@ -98,7 +102,7 @@ __all__ = [
     "TeamSkillGap",
     "TeamWorkflow",
     "TeamRoleEnum",
-    "ComparativeBenchmark",
+    # "ComparativeBenchmark", # Temporarily disabled due to tenant dependency
     "AnalyticsModel",
     "AnalyticsPrediction",
     "AnalyticsTrainingJob",
@@ -119,7 +123,12 @@ __all__ = [
     "ReportTemplate",
     "ReportAuditLog",
     "ReportCache",
-    "AnalyticsDashboard", # Added for custom dashboards
-    "DashboardWidget",    # Added for custom dashboards
-    "ReportDefinition",   # Added for custom dashboards
+    # "AnalyticsDashboard", # Added for custom dashboards - temporarily disabled
+    # "DashboardWidget",    # Added for custom dashboards - temporarily disabled
+    # "ReportDefinition",   # Added for custom dashboards - temporarily disabled
+    "Tenant",             # Added tenant models
+    "TenantSettings",
+    "TenantInvitation",
+    "TenantAuditLog",
+    # "TenantSSOConfiguration", # Added enterprise SSO models - temporarily disabled
 ]

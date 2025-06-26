@@ -540,11 +540,12 @@ export const DashboardBuilder: React.FC<DashboardBuilderProps> = ({
         <WidgetConfigDialog
           open={isWidgetDialogOpen}
           widget={selectedWidget}
-          dataSourceTypes={DATA_SOURCE_TYPES}
           onSave={handleSaveWidget}
-          onClose={() => {
-            setIsWidgetDialogOpen(false);
-            setSelectedWidget(null);
+          onOpenChange={(open) => {
+            setIsWidgetDialogOpen(open);
+            if (!open) {
+              setSelectedWidget(null);
+            }
           }}
         />
 
