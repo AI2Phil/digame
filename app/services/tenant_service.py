@@ -2,7 +2,7 @@
 Multi-tenant service layer for the Digame platform
 """
 
-from sqlalchemy.orm import Session, relationship
+from sqlalchemy.orm import Session, relationship, joinedload
 from sqlalchemy import and_, or_
 from typing import List, Optional, Dict, Any
 from datetime import datetime, timedelta, timezone # Added timezone
@@ -12,7 +12,7 @@ import json # For TenantSettings value handling
 # Updated model imports
 from ..models.tenant import Tenant, TenantSettings, TenantInvitation, TenantAuditLog
 from ..models.user import User
-from ..models.rbac import Role, user_roles_table
+from ..models.rbac import Role, UserRole  # Now imports the model class
 from ..database import get_db
 from passlib.context import CryptContext
 
@@ -455,7 +455,7 @@ class TenantService:
             return []
 
         permissions = set()
-        user_roles = self.db.query(UserRole).join(Role).filter(UserRole.user_id == user_id).options(relationship(Role.permissions)).all()
+        user_roles = self.db.query(UserRole).join(Role).filter(UserRole.user_id == user_id).options(joinedload("role.permissions")).all()
         
         for ur in user_roles:
             if ur.role and isinstance(ur.role.permissions, list): # ur.role should be eagerly loaded if using options correctly

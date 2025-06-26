@@ -12,7 +12,8 @@ from app.db import get_db
 from app.models import Base
 from app.schemas import rbac_schemas
 from app.models.user import User as SQLAlchemyUser
-from app.models.rbac import Role as SQLAlchemyRole, Permission as SQLAlchemyPermission
+from app.models.rbac import Role as SQLAlchemyRole, Permission as SQLAlchemyPermission, UserRole
+from app.models.tenant import Tenant  # Import Tenant to ensure table is created
 from app.auth.auth_dependencies import get_current_active_admin_user, MANAGE_RBAC_PERMISSION
 
 # Database setup for testing

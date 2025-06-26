@@ -5,7 +5,7 @@ Multi-tenant architecture models for the Digame platform
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, JSON, ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
-from ..database import Base # Assuming Base is in a directory above the current models directory
+from .user import Base  # Use the same Base as User model
 from typing import Optional, Dict, Any # Keep for type hinting if used elsewhere, though not directly in models
 from datetime import datetime # Keep for type hinting if used elsewhere
 
