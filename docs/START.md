@@ -7,6 +7,7 @@ Welcome to **Digame** - the Digital Professional Twin Platform! This guide will 
 - [Quick Start](#-quick-start)
 - [Prerequisites](#-prerequisites)
 - [Installation](#-installation)
+- [Running the Full Application](#-running-the-full-application)
 - [Authentication Setup](#-authentication-setup)
 - [First Steps](#-first-steps)
 - [API Documentation](#-api-documentation)
@@ -16,26 +17,42 @@ Welcome to **Digame** - the Digital Professional Twin Platform! This guide will 
 
 ## ⚡ Quick Start
 
-Get Digame running in 5 minutes:
+Get Digame running in 5 minutes with both backend API and frontend web interface:
+
+### Option 1: Docker (Recommended)
 
 ```bash
 # 1. Clone and setup
 git clone <repository-url>
 cd digame
 
-# 2. Create virtual environment
+# 2. Start backend and database with Docker
+docker-compose up --build
+
+# 3. In a new terminal, start the frontend
+cd digame/frontend
+npm install
+npm run dev
+```
+
+### Option 2: Manual Setup
+
+```bash
+# 1. Clone and setup
+git clone <repository-url>
+cd digame
+
+# 2. Backend Setup
 python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
-
-# 3. Install dependencies
 pip install -r requirements.txt
 
-# 4. Set environment variables
+# 3. Set environment variables
 export DIGAME_AUTH_SECRET_KEY="your-super-secret-key-at-least-32-characters-long"
 export DIGAME_AUTH_DEFAULT_ADMIN_EMAIL="admin@yourdomain.com"
 export DIGAME_AUTH_DEFAULT_ADMIN_PASSWORD="secure-admin-password"
 
-# 5. Initialize database
+# 4. Initialize database
 python -c "
 from digame.app.auth.init_auth_db import initialize_auth_database
 from digame.app.db import get_db
@@ -45,11 +62,19 @@ print('✅ Database initialized!' if success else '❌ Initialization failed')
 db.close()
 "
 
-# 6. Start the server
+# 5. Start the backend server
 python -m uvicorn digame.app.main:app --reload
+
+# 6. In a new terminal, start the frontend
+cd digame/frontend
+npm install
+npm run dev
 ```
 
-🎉 **That's it!** Your Digame platform is now running at http://localhost:8000
+🎉 **That's it!** Your Digame platform is now running:
+- **Backend API**: http://localhost:8000
+- **Frontend Web App**: http://localhost:3000
+- **API Documentation**: http://localhost:8000/docs
 
 ## 🔧 Prerequisites
 
@@ -83,16 +108,18 @@ venv\Scripts\activate     # Windows
 pip install -r requirements.txt
 ```
 
-### Option 2: Docker Installation
+### Option 2: Docker Installation (Backend + Database)
 
 ```bash
 # Clone the repository
 git clone <repository-url>
 cd digame
 
-# Build and run with Docker Compose
+# Build and run backend with Docker Compose
 docker-compose up --build
 ```
+
+**Note**: This starts the backend API and database only. For the web interface, you'll need to start the frontend separately (see [Running the Full Application](#-running-the-full-application)).
 
 ### Option 3: Development Setup
 
@@ -106,6 +133,105 @@ pip install -e .
 
 # Install development dependencies
 pip install -r requirements-dev.txt
+```
+
+## 🚀 Running the Full Application
+
+### Complete Application Stack
+
+To access the full Digame platform with both the web interface and API, you need to run both the backend and frontend:
+
+#### Method 1: Docker + Frontend (Recommended)
+
+```bash
+# Terminal 1: Start backend and database
+docker-compose up --build
+
+# Terminal 2: Start frontend (in a new terminal)
+cd digame/frontend
+npm install
+npm run dev
+```
+
+#### Method 2: Manual Setup (Both Services)
+
+```bash
+# Terminal 1: Start backend
+cd digame
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+pip install -r requirements.txt
+python -m uvicorn digame.app.main:app --reload
+
+# Terminal 2: Start frontend (in a new terminal)
+cd digame/frontend
+npm install
+npm run dev
+```
+
+### Access Points
+
+Once both services are running:
+
+| Service | URL | Description |
+|---------|-----|-------------|
+| **Frontend Web App** | http://localhost:3000 | Main user interface |
+| **Backend API** | http://localhost:8000 | REST API endpoints |
+| **API Documentation** | http://localhost:8000/docs | Interactive API docs |
+| **API Health Check** | http://localhost:8000/health | Backend status |
+
+### Service Status Check
+
+Verify both services are running:
+
+```bash
+# Check backend
+curl http://localhost:8000/health
+
+# Check frontend (should return HTML)
+curl http://localhost:3000
+```
+
+### Troubleshooting Startup
+
+#### Backend Issues
+```bash
+# Check Docker containers
+docker-compose ps
+
+# View backend logs
+docker-compose logs backend
+
+# Restart backend only
+docker-compose restart backend
+```
+
+#### Frontend Issues
+```bash
+# Check Node.js version (requires 18+)
+node --version
+
+# Clear npm cache and reinstall
+cd digame/frontend
+rm -rf node_modules package-lock.json
+npm install
+
+# Check for port conflicts
+lsof -i :3000
+```
+
+#### Port Conflicts
+If you encounter port conflicts:
+
+```bash
+# Backend (change from 8000)
+docker-compose down
+# Edit docker-compose.yml: "8001:8000"
+docker-compose up
+
+# Frontend (change from 3000)
+cd digame/frontend
+npm run dev -- --port 3001
 ```
 
 ## 🔐 Authentication Setup
@@ -179,11 +305,19 @@ curl http://localhost:8000/auth/health
 
 ## 🎯 First Steps
 
-### 1. Access the API Documentation
+### 1. Access the Application
 
-Open your browser and navigate to:
+#### Web Interface (Recommended for Users)
+- **Main Application**: http://localhost:3000
+- **User Dashboard**: http://localhost:3000/dashboard
+- **Login Page**: http://localhost:3000/auth/login
+
+#### API Documentation (For Developers)
 - **Swagger UI**: http://localhost:8000/docs
 - **ReDoc**: http://localhost:8000/redoc
+- **API Health**: http://localhost:8000/health
+
+**Note**: To access the web interface, make sure both backend and frontend are running (see [Running the Full Application](#-running-the-full-application)).
 
 ### 2. Login as Admin
 

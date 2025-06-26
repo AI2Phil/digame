@@ -3,7 +3,7 @@ import { appWithTranslation } from 'next-i18next';
 import { ThemeProvider, CssBaseline } from '@mui/material';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
-import { NotistackProvider } from 'notistack'; // Assuming this is how notistack is used based on package.json
+import { SnackbarProvider } from 'notistack';
 
 // Assuming you have a theme file, e.g., theme.js or similar
 // import theme from '../styles/theme'; // Adjust path as necessary
@@ -14,7 +14,7 @@ const defaultTheme = createTheme();
 
 // Import global styles if you have them
 // import '../styles/globals.css'; // Or your main CSS file like App.css or index.css if they contain global styles
-import '../App.css'; // From file listing, this seems to be a global style sheet
+// import '../App.css'; // Temporarily commented out due to PostCSS issues
 import '../index.css'; // This also seems to be a global style sheet
 
 
@@ -25,9 +25,9 @@ function MyApp({ Component, pageProps }) {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider theme={defaultTheme}> {/* Replace defaultTheme with your actual theme */}
         <CssBaseline /> {/* MUI's baseline CSS */}
-        <NotistackProvider maxSnack={3}> {/* Basic Notistack setup */}
+        <SnackbarProvider maxSnack={3}> {/* Basic Notistack setup */}
           <Component {...pageProps} />
-        </NotistackProvider>
+        </SnackbarProvider>
       </ThemeProvider>
       <ReactQueryDevtools initialIsOpen={false} />
     </QueryClientProvider>
