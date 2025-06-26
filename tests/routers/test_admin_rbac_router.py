@@ -282,34 +282,4 @@ def test_remove_permission_from_role_as_admin(client: TestClient, setup_role_and
 # - Test edge cases for updates (e.g., updating role name to an existing different role's name).
 # - Test operations on non-existent entities (e.g., get/update/delete non-existent role).
 # - Test behavior when user/role/permission for assignment doesn't exist.
-# - Test the `skip` and `limit` parameters for list endpoints.I have created the `digame/tests/routers/test_admin_rbac_router.py` file and populated it with a comprehensive set of unit tests for the RBAC management API endpoints.
-
-**Key features of the tests:**
-
-1.  **TestClient Usage**: Uses `fastapi.testclient.TestClient` with the main application instance (`fastapi_app` from `digame.app.main`).
-2.  **Database Isolation**: Leverages the `db_session_test` fixture from `conftest.py`, which uses an in-memory SQLite database. The `client` fixture ensures that the application's `get_db` dependency is overridden to use this test database session. Tables are created once per test session.
-3.  **Authentication/Authorization Testing**:
-    *   The `get_current_active_admin_user` dependency in the FastAPI application is overridden within tests.
-    *   `test_admin_user` fixture (from `conftest.py`) provides a user object that is configured with the necessary `MANAGE_RBAC_PERMISSION`. This user is injected via the dependency override to simulate an authenticated admin.
-    *   `test_non_admin_user` fixture (from `conftest.py`) provides a user without this permission. This user is injected to test that non-admin users are denied access (HTTP 403).
-    *   Helper functions `get_admin_auth_headers` and `get_non_admin_auth_headers` are included as placeholders, though the current tests rely on direct dependency overrides of the user object rather than token processing. This is suitable because the `auth_dependencies.py` itself uses mock token processing.
-4.  **CRUD Operations Testing**:
-    *   **Roles**: Tests for creation (success, duplicate name), reading (all, single), updating, and deletion of roles by an admin. Also tests that non-admins cannot create roles.
-    *   **Permissions**: Tests for creation of permissions by an admin and denial for non-admins. (Read, update, delete tests for permissions can be added if these operations are common; often permissions are predefined).
-5.  **Assignment Operations Testing**:
-    *   Tests for assigning a role to a user and removing it.
-    *   Tests for adding a permission to a role and removing it.
-    *   Includes fixtures (`setup_user_and_role_for_assignment`, `setup_role_and_permission_for_assignment`) to create necessary entities (users, roles, permissions) via API calls before testing assignment logic.
-    *   Verifies changes both in the API response and by querying the test database directly.
-6.  **Error Handling**:
-    *   Tests for expected HTTP error codes (e.g., 400 for bad requests like duplicates, 403 for forbidden access, 404 for not found entities, 200/201/204 for successful operations).
-    *   Checks for specific error messages in response details where applicable.
-
-**Overall State of Implementation:**
--   **Step 1 (Pydantic Schemas):** Completed.
--   **Step 2 (CRUD Operations):** Completed.
--   **Step 3 (API Router):** Completed.
--   **Step 4 (Protect APIs):** Completed with placeholder auth dependencies and application to the router.
--   **Step 5 (Unit Tests):** The `test_admin_rbac_router.py` file has been created and populated with initial tests covering core success and failure paths for RBAC management, including authorization checks.
-
-The subtask is now complete. The RBAC API endpoints are defined, protected (with mock authentication), and have a foundational set of unit tests.
+# - Test the `skip` and `limit` parameters for list endpoints.

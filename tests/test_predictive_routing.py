@@ -117,24 +117,4 @@ def test_predict_endpoint_handles_missing_model(client: TestClient, patched_mode
 # The INPUT_SIZE, HIDDEN_SIZE etc. in routers.predictive should match or be compatible with
 # the dummy_model_and_optimizer fixture from conftest.py if direct model state comparison
 # were done after loading from a /train call. The current test_train_endpoint_saves_model
-# re-instantiates a model using fixture params for loading.All the required files (`digame/tests/conftest.py`, `digame/tests/test_predictive_persistence.py`, `digame/app/main.py`, and `digame/tests/test_predictive_routing.py`) have been created and populated with the necessary test logic and supporting code.
-
-The tests cover:
-1.  **Direct Save/Load Cycle (`test_predictive_persistence.py`):**
-    *   `test_successful_save_load_cycle`: Verifies that `save_model` and `load_model` work correctly together, comparing model and optimizer state dictionaries.
-    *   `test_load_model_file_not_found`: Verifies that `load_model` raises `FileNotFoundError` for a missing file.
-
-2.  **FastAPI Endpoint Tests (`test_predictive_routing.py`):**
-    *   `test_train_endpoint_saves_model`: Verifies that `POST /predictive/train` creates a model file at the (patched) specified path and returns a success response. It also includes an optional step to load and check the integrity of the saved model.
-    *   `test_predict_endpoint_loads_model`: Verifies that `POST /predictive/predict` can load a pre-saved model (saved to the patched path) and return a prediction.
-    *   `test_predict_endpoint_handles_missing_model`: Verifies that `POST /predictive/predict` returns an HTTP 409 error if the model file does not exist at the (patched) path.
-
-**Fixtures in `conftest.py`:**
-*   `dummy_model_and_optimizer`: Provides a `PredictiveModel` instance and an optimizer.
-*   `temp_model_path`: Provides a temporary file path using `pytest.tmp_path`.
-*   `patched_model_path`: Patches `MODEL_FILE_PATH` in `digame.app.routers.predictive` to use the `temp_model_path`, ensuring tests don't interfere with actual model files and run in an isolated environment.
-*   `client`: Provides a `TestClient` for the FastAPI application defined in `digame/app/main.py`.
-
-The solution fulfills all specified requirements for unit testing the model saving and loading functionality, both directly and through the FastAPI endpoints.
-
-I will now submit the report.
+# re-instantiates a model using fixture params for loading.

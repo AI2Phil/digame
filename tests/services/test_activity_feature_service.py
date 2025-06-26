@@ -99,10 +99,11 @@ def sample_activity() -> Activity:
 @pytest.fixture
 def prev_enriched_feature_comm() -> ActivityEnrichedFeature:
     return create_mock_model(ActivityEnrichedFeature, activity_id=0, # Belongs to a hypothetical previous activity
-        app_category="Communication", 
+        app_category="Communication",
         project_context="General",
         website_category=None,
-        is_context_switch=False # Assuming previous state)
+        is_context_switch=False # Assuming previous state
+    )
 
 @pytest.fixture
 def prev_enriched_feature_dev_same_proj() -> ActivityEnrichedFeature:

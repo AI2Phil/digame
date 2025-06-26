@@ -96,19 +96,6 @@ class LocaleMiddleware:
         scope["state"]["ngettext"] = translator.ngettext
         
         await self.app(scope, receive, send)
-        locale = get_locale_from_request(request)
-        request.state.locale = locale
-
-        # Store the translator function in request state for easy access in endpoints
-        # This translator will use the determined locale for the current request
-        translator = get_translation_for_locale(locale)
-        request.state.gettext = translator.gettext
-        request.state.ngettext = translator.ngettext
-        # For pgettext, you might need a more complex setup if using it extensively,
-        # or handle it directly with gettext.translation().dpgettext if needed.
-
-        response = await call_next(request)
-        return response
 
 # Helper function to be used in your application code (e.g., routers)
 def _(request: Request, text: str) -> str:

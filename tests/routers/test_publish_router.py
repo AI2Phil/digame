@@ -9,7 +9,8 @@ from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy.pool import StaticPool
 
 from app.main import app
-from app.db import get_db, Base
+from app.db import get_db
+from app.database import Base
 from app.models.user import User
 from app.models.behavior_model import BehavioralModel
 from app.schemas.user_schemas import UserCreate # Assuming this schema exists for creating users
@@ -103,8 +104,9 @@ def test_publish_model_success(mock_subprocess_run, client: TestClient, db_sessi
         user_id=test_user.id,
         name="Test_Model_Name",
         version="1.0.alpha",
-        algorithm="test_algo",
-        # Add other required fields for BehavioralModel if any)
+        algorithm="test_algo"
+        # Add other required fields for BehavioralModel if any
+    )
     db_session.add(test_model)
     db_session.commit()
     db_session.refresh(test_model)
@@ -291,32 +293,4 @@ def test_publish_model_git_add_fails(mock_subprocess_run, client: TestClient, db
 # A pytest `tmp_path` fixture would be the canonical way to handle this,
 # by writing outputs to a temporary directory that pytest manages.
 # This avoids interfering with the project's actual `published_models` directory.
-# I'll proceed with the current file content as generated, it's a good start.I've created the test file `digame/tests/routers/test_publish_router.py` with the initial structure, fixtures, and the two main test cases: `test_publish_model_success` and `test_publish_model_not_found`. I've also included `test_publish_model_git_add_fails` as requested.
-
-The key aspects implemented are:
-1.  **Test Database Setup**: Using an in-memory SQLite database (`sqlite:///:memory:`) with `pytest` fixtures (`setup_db`, `db_session`) to manage database creation, session lifecycle, and teardown.
-2.  **Test Client**: A `client` fixture is set up to interact with the FastAPI application, with `get_db` overridden to use the test database session.
-3.  **`test_publish_model_not_found`**: This test checks that a 404 error is returned when trying to publish a model ID that does not exist in the database.
-4.  **`test_publish_model_success`**:
-    *   **Arrange**: Creates a `User` and a `BehavioralModel` in the test database.
-    *   **Mock**: Uses `@patch('digame.app.routers.publish_router.subprocess.run')` to mock the `subprocess.run` calls for Git operations. The mock is configured to simulate successful execution of `git add`, `git commit`, and `git push`.
-    *   **Act**: Sends a POST request to `/publish/model/{model_id}`.
-    *   **Assert**:
-        *   Checks for a 200 HTTP status code.
-        *   Verifies the success message in the JSON response, including the path to the generated file.
-        *   Asserts that `subprocess.run` was called at least three times.
-        *   Includes `assert_any_call` for `git add`, finding the `git commit` call and checking its message, and `git push`.
-        *   Confirms the creation of the JSON model file in the `published_models/` directory with the correct naming convention.
-        *   Validates key content within the generated JSON file (model ID, name, user ID, version, and presence of "patterns" key).
-        *   **Cleanup**: Removes the generated JSON file. If the `published_models/` directory is empty after removing the file, it also removes the directory. This cleanup is conditional to avoid errors if the directory contains other files (e.g., `.gitkeep` or files from other tests).
-5.  **`test_publish_model_git_add_fails`**:
-    *   **Arrange**: Sets up a user and model.
-    *   **Mock**: Configures `subprocess.run` to simulate a failure specifically for the `git add` command.
-    *   **Act**: Sends the POST request.
-    *   **Assert**: Checks for a 500 HTTP status code and verifies that the error message in the response indicates a "Git add failed" scenario, including the mocked stderr.
-    *   **Cleanup**: Includes logic to remove the JSON file if it was created, and the directory if it's empty and was created by the test.
-
-The structure and content align with the subtask requirements.
-I've considered the implications of the `published_models` directory potentially containing `.gitkeep` or being managed by the project structure, and the cleanup logic in the tests is designed to be reasonably safe by only removing the directory if it's empty after the test-specific file is deleted.
-
-This set of tests provides good coverage for the success path, a common error path (model not found), and a Git operation failure path.
+# I'll proceed with the current file content as generated, it's a good start.
