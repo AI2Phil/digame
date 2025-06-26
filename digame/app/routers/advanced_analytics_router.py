@@ -26,9 +26,9 @@ router = APIRouter(
 async def record_performance_metric(
     metric_data: schemas.PerformanceMetricCreate,
     db: Session = Depends(get_db),
-    service: AnalyticsService = Depends(get_analytics_service),
     current_user: User = Depends(get_current_active_user) # Requires tenant_id from user or context
 ):
+    service = get_analytics_service(db)
     # Assuming tenant_id can be derived from current_user or a header/token
     # For now, let's assume a placeholder or that service handles it if not in metric_data
     # This will need proper tenant handling based on your auth setup
@@ -60,9 +60,9 @@ async def list_performance_metrics(
     entity_id: Optional[int] = None,
     limit: int = 100,
     db: Session = Depends(get_db),
-    service: AnalyticsService = Depends(get_analytics_service),
     current_user: User = Depends(get_current_active_user)
 ):
+    service = get_analytics_service(db)
     tenant_id = current_user.tenant_id
     if not tenant_id:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Tenant ID not found for current user.")
@@ -85,9 +85,9 @@ async def list_performance_metrics(
 async def get_performance_metric(
     metric_id: int,
     db: Session = Depends(get_db),
-    service: AnalyticsService = Depends(get_analytics_service),
     current_user: User = Depends(get_current_active_user)
 ):
+    service = get_analytics_service(db)
     tenant_id = current_user.tenant_id
     if not tenant_id:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Tenant ID not found for current user.")
@@ -114,9 +114,9 @@ async def get_performance_metric(
 async def compare_metric_with_benchmarks(
     comparison_input: schemas.BenchmarkComparisonInput,
     db: Session = Depends(get_db),
-    service: AnalyticsService = Depends(get_analytics_service),
     current_user: User = Depends(get_current_active_user)
 ):
+    service = get_analytics_service(db)
     tenant_id = current_user.tenant_id
     if not tenant_id:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Tenant ID not found.")
@@ -136,9 +136,10 @@ async def compare_metric_with_benchmarks(
 @router.post("/models/", response_model=schemas.AnalyticsModelInDB, status_code=status.HTTP_201_CREATED, summary="Create an analytics model")
 async def create_analytics_model_endpoint(
     model_data: schemas.AnalyticsModelCreate,
-    service: AnalyticsService = Depends(get_analytics_service),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
+    service = get_analytics_service(db)
     tenant_id = current_user.tenant_id
     if not tenant_id:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Tenant ID not found for current user.")
@@ -155,9 +156,10 @@ async def list_analytics_models_endpoint(
     model_type: Optional[str] = None,
     category: Optional[str] = None,
     active_only: bool = True,
-    service: AnalyticsService = Depends(get_analytics_service),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
+    service = get_analytics_service(db)
     tenant_id = current_user.tenant_id
     if not tenant_id:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Tenant ID not found for current user.")
@@ -173,9 +175,10 @@ async def list_analytics_models_endpoint(
 @router.get("/models/{model_id}", response_model=schemas.AnalyticsModelInDB, summary="Get a specific analytics model")
 async def get_analytics_model_endpoint(
     model_id: int,
-    service: AnalyticsService = Depends(get_analytics_service),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
+    service = get_analytics_service(db)
     tenant_id = current_user.tenant_id
     if not tenant_id:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Tenant ID not found for current user.")
@@ -189,9 +192,10 @@ async def get_analytics_model_endpoint(
 async def update_analytics_model_endpoint(
     model_id: int,
     model_update_data: schemas.AnalyticsModelUpdate, # Schema to be created
-    service: AnalyticsService = Depends(get_analytics_service),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
+    service = get_analytics_service(db)
     tenant_id = current_user.tenant_id
     if not tenant_id:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Tenant ID not found for current user.")
@@ -209,9 +213,10 @@ async def update_analytics_model_endpoint(
 @router.delete("/models/{model_id}", status_code=status.HTTP_204_NO_CONTENT, summary="Delete an analytics model")
 async def delete_analytics_model_endpoint(
     model_id: int,
-    service: AnalyticsService = Depends(get_analytics_service),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
+    service = get_analytics_service(db)
     tenant_id = current_user.tenant_id
     if not tenant_id:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Tenant ID not found for current user.")
@@ -224,12 +229,13 @@ async def delete_analytics_model_endpoint(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Analytics model with id {model_id} not found or delete failed.")
     return
 
-@router.post("/models/{model_id}/train", response_model=schemas.AnalyticsTrainingJobInDB, summary="Train an analytics model") # Assuming a schema for Training Job
+@router.post("/models/{model_id}/train", response_model=Dict[str, Any], summary="Train an analytics model") # Using generic response
 async def train_analytics_model_endpoint(
     model_id: int,
-    service: AnalyticsService = Depends(get_analytics_service),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
+    service = get_analytics_service(db)
     tenant_id = current_user.tenant_id # Used to verify model ownership/access before training
     if not tenant_id:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Tenant ID not found for current user.")
@@ -257,9 +263,10 @@ async def train_analytics_model_endpoint(
 @router.post("/predictions/", response_model=schemas.AnalyticsPredictionInDB, status_code=status.HTTP_201_CREATED, summary="Make an analytics prediction")
 async def make_analytics_prediction_endpoint(
     prediction_data: schemas.AnalyticsPredictionCreate, # This schema might need adjustment based on service method
-    service: AnalyticsService = Depends(get_analytics_service),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
+    service = get_analytics_service(db)
     tenant_id = current_user.tenant_id
     if not tenant_id:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Tenant ID not found for current user.")
@@ -303,9 +310,10 @@ async def list_analytics_predictions_endpoint(
     entity_type: Optional[str] = None,
     entity_id: Optional[int] = None,
     limit: int = 50,
-    service: AnalyticsService = Depends(get_analytics_service),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
+    service = get_analytics_service(db)
     tenant_id = current_user.tenant_id
     if not tenant_id:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Tenant ID not found for current user.")
@@ -322,9 +330,10 @@ async def list_analytics_predictions_endpoint(
 @router.get("/predictions/{prediction_id}", response_model=schemas.AnalyticsPredictionInDB, summary="Get a specific analytics prediction")
 async def get_analytics_prediction_endpoint(
     prediction_id: int,
-    service: AnalyticsService = Depends(get_analytics_service),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
+    service = get_analytics_service(db)
     tenant_id = current_user.tenant_id
     if not tenant_id:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Tenant ID not found for current user.")
@@ -341,9 +350,10 @@ async def get_analytics_prediction_endpoint(
 @router.post("/roi-calculations/", response_model=schemas.ROICalculationInDB, status_code=status.HTTP_201_CREATED, summary="Create an ROI calculation")
 async def create_roi_calculation_endpoint(
     roi_data: schemas.ROICalculationCreate,
-    service: AnalyticsService = Depends(get_analytics_service),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
+    service = get_analytics_service(db)
     tenant_id = current_user.tenant_id
     if not tenant_id:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Tenant ID not found for current user.")
@@ -360,9 +370,10 @@ async def list_roi_calculations_endpoint(
     entity_type: Optional[str] = None,
     entity_id: Optional[int] = None,
     limit: int = 50,
-    service: AnalyticsService = Depends(get_analytics_service),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
+    service = get_analytics_service(db)
     tenant_id = current_user.tenant_id
     if not tenant_id:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Tenant ID not found for current user.")
@@ -378,9 +389,10 @@ async def list_roi_calculations_endpoint(
 @router.get("/roi-calculations/{calculation_id}", response_model=schemas.ROICalculationInDB, summary="Get a specific ROI calculation")
 async def get_roi_calculation_endpoint(
     calculation_id: int,
-    service: AnalyticsService = Depends(get_analytics_service),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
+    service = get_analytics_service(db)
     tenant_id = current_user.tenant_id
     if not tenant_id:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Tenant ID not found for current user.")
@@ -397,9 +409,10 @@ async def get_roi_calculation_endpoint(
 async def update_roi_calculation_endpoint(
     calculation_id: int,
     roi_update_data: schemas.ROICalculationUpdate, # Schema to be created
-    service: AnalyticsService = Depends(get_analytics_service),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
+    service = get_analytics_service(db)
     tenant_id = current_user.tenant_id
     if not tenant_id:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Tenant ID not found for current user.")
@@ -417,9 +430,10 @@ async def update_roi_calculation_endpoint(
 @router.delete("/roi-calculations/{calculation_id}", status_code=status.HTTP_204_NO_CONTENT, summary="Delete an ROI calculation")
 async def delete_roi_calculation_endpoint(
     calculation_id: int,
-    service: AnalyticsService = Depends(get_analytics_service),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
+    service = get_analytics_service(db)
     tenant_id = current_user.tenant_id
     if not tenant_id:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Tenant ID not found for current user.")
@@ -436,9 +450,10 @@ async def delete_roi_calculation_endpoint(
 @router.post("/benchmarks/", response_model=schemas.ComparativeBenchmarkInDB, status_code=status.HTTP_201_CREATED, summary="Add a comparative benchmark")
 async def add_comparative_benchmark_endpoint(
     benchmark_data: schemas.ComparativeBenchmarkCreate,
-    service: AnalyticsService = Depends(get_analytics_service),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
+    service = get_analytics_service(db)
     # tenant_id for benchmark can be None (global) or specific.
     # The ComparativeBenchmarkCreate schema should include an optional tenant_id.
     # If benchmark_data.tenant_id is provided, it's a tenant-specific benchmark.
@@ -472,9 +487,10 @@ async def list_comparative_benchmarks_endpoint(
     industry_segment: Optional[str] = None,
     region: Optional[str] = None,
     company_size: Optional[str] = None,
-    service: AnalyticsService = Depends(get_analytics_service),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user) # tenant_id from current_user used to fetch global + tenant-specific
 ):
+    service = get_analytics_service(db)
     tenant_id = current_user.tenant_id # This will be used to fetch tenant-specific + global benchmarks
     # The service.get_benchmarks method already handles filtering for global (tenant_id=None) and specific tenant_id.
     # It needs metric_name to be effective, though.
@@ -497,9 +513,10 @@ async def list_comparative_benchmarks_endpoint(
 @router.get("/benchmarks/{benchmark_id}", response_model=schemas.ComparativeBenchmarkInDB, summary="Get a specific comparative benchmark")
 async def get_comparative_benchmark_endpoint(
     benchmark_id: int,
-    service: AnalyticsService = Depends(get_analytics_service),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user) # tenant_id for access check
 ):
+    service = get_analytics_service(db)
     # Benchmarks can be global (tenant_id is None) or tenant-specific.
     # A user should be able to fetch any global benchmark, or a benchmark specific to their tenant.
     benchmark = service.get_benchmark_by_id( # Method to be created in service
@@ -514,9 +531,10 @@ async def get_comparative_benchmark_endpoint(
 async def update_comparative_benchmark_endpoint(
     benchmark_id: int,
     benchmark_update_data: schemas.ComparativeBenchmarkUpdate, # Schema to be created
-    service: AnalyticsService = Depends(get_analytics_service),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
+    service = get_analytics_service(db)
     # Similar to creation, updates need to respect tenant ownership or admin rights for global benchmarks.
     # The service method will need to handle this logic.
     # We pass current_user.tenant_id to the service to check if the user is allowed to update this benchmark.
@@ -533,9 +551,10 @@ async def update_comparative_benchmark_endpoint(
 @router.delete("/benchmarks/{benchmark_id}", status_code=status.HTTP_204_NO_CONTENT, summary="Delete a comparative benchmark")
 async def delete_comparative_benchmark_endpoint(
     benchmark_id: int,
-    service: AnalyticsService = Depends(get_analytics_service),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
+    service = get_analytics_service(db)
     # Similar access control logic as update.
     success = service.delete_benchmark( # Method to be created in service
         benchmark_id=benchmark_id,
@@ -546,7 +565,6 @@ async def delete_comparative_benchmark_endpoint(
     return
 
 # --- Custom Analytics Dashboards Endpoints ---
-dashboard_service_dependency = Depends(get_custom_dashboard_service)
 
 @router.post(
     "/dashboards/",
@@ -556,9 +574,10 @@ dashboard_service_dependency = Depends(get_custom_dashboard_service)
 )
 async def create_analytics_dashboard(
     dashboard_data: schemas.AnalyticsDashboardCreate,
-    service: CustomDashboardService = dashboard_service_dependency,
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
+    service = get_custom_dashboard_service(db)
     tenant_id = current_user.tenant_id
     if not tenant_id:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Tenant ID not found.")
@@ -570,9 +589,10 @@ async def create_analytics_dashboard(
     summary="List custom analytics dashboards for the current user"
 )
 async def list_analytics_dashboards(
-    service: CustomDashboardService = dashboard_service_dependency,
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
+    service = get_custom_dashboard_service(db)
     tenant_id = current_user.tenant_id
     if not tenant_id:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Tenant ID not found.")
@@ -585,9 +605,10 @@ async def list_analytics_dashboards(
 )
 async def get_analytics_dashboard(
     dashboard_id: int,
-    service: CustomDashboardService = dashboard_service_dependency,
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
+    service = get_custom_dashboard_service(db)
     tenant_id = current_user.tenant_id
     if not tenant_id:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Tenant ID not found.")
@@ -604,9 +625,10 @@ async def get_analytics_dashboard(
 async def update_analytics_dashboard(
     dashboard_id: int,
     dashboard_update_data: schemas.AnalyticsDashboardUpdate,
-    service: CustomDashboardService = dashboard_service_dependency,
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
+    service = get_custom_dashboard_service(db)
     tenant_id = current_user.tenant_id
     if not tenant_id:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Tenant ID not found.")
@@ -627,9 +649,10 @@ async def update_analytics_dashboard(
 )
 async def delete_analytics_dashboard(
     dashboard_id: int,
-    service: CustomDashboardService = dashboard_service_dependency,
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
+    service = get_custom_dashboard_service(db)
     tenant_id = current_user.tenant_id
     if not tenant_id:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Tenant ID not found.")
@@ -647,9 +670,10 @@ async def delete_analytics_dashboard(
 )
 async def create_dashboard_widget(
     widget_data: schemas.DashboardWidgetConfigCreate, # Changed from DashboardWidgetCreate
-    service: CustomDashboardService = dashboard_service_dependency,
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
+    service = get_custom_dashboard_service(db)
     tenant_id = current_user.tenant_id
     if not tenant_id:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Tenant ID not found.")
@@ -662,9 +686,10 @@ async def create_dashboard_widget(
 )
 async def get_dashboard_widget(
     widget_id: int,
-    service: CustomDashboardService = dashboard_service_dependency,
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
+    service = get_custom_dashboard_service(db)
     tenant_id = current_user.tenant_id
     if not tenant_id:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Tenant ID not found.")
@@ -682,9 +707,10 @@ async def get_dashboard_widget(
 )
 async def get_dashboard_widget_data(
     widget_id: int,
-    service: CustomDashboardService = dashboard_service_dependency,
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
+    service = get_custom_dashboard_service(db)
     tenant_id = current_user.tenant_id
     if not tenant_id:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Tenant ID not found.")

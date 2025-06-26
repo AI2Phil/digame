@@ -7,6 +7,7 @@ from typing import Optional, List, Dict, Any, Tuple
 from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, or_, desc, asc
+from fastapi import Depends
 import uuid
 import json
 import hashlib
@@ -48,6 +49,7 @@ from ..models.tenant import Tenant
 from ..models.dashboard_custom import ReportDefinition # Assuming ReportDefinition is in dashboard_custom
 from .dashboard_service_custom import CustomDashboardService, get_custom_dashboard_service
 from ..schemas import analytics_schemas # For ReportDefinition schema types
+from ..database import get_db
 
 
 class ReportingService:
@@ -796,9 +798,6 @@ def get_reporting_service(
     custom_dashboard_service: CustomDashboardService = Depends(get_custom_dashboard_service)
 ) -> ReportingService:
     """Get reporting service instance"""
-    # Need to import Depends and get_db
-    from fastapi import Depends
-    from ..database import get_db
     return ReportingService(db=db, custom_dashboard_service=custom_dashboard_service)
 
     # --- New Methods for ReportDefinition ---

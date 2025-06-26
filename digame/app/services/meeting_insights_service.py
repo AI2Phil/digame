@@ -241,7 +241,7 @@ End with a generic closing like "Best regards,". Do not add a sender name.
 
 # Dependency injector function
 def get_meeting_insights_service(
-    db: Session = Depends(get_db),
-    ai_integration_service: AIIntegrationService = Depends(AIIntegrationService)
+    db: Session = Depends(get_db)
 ) -> MeetingInsightsService:
+    ai_integration_service = AIIntegrationService(db=db)
     return MeetingInsightsService(db=db, ai_integration_service=ai_integration_service)

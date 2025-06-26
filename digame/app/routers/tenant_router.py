@@ -5,6 +5,7 @@ Multi-tenant API router for the Digame platform
 from fastapi import APIRouter, Depends, HTTPException, status, Request # Added Request for IP/User-Agent
 from sqlalchemy.orm import Session
 from typing import List, Optional, Dict, Any # Dict, Any might not be needed if schemas are strict
+from pydantic import BaseModel
 
 from ..database import get_db
 from ..services.tenant_service import TenantService, UserService

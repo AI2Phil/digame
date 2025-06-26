@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, RootModel
 from typing import Optional, List, Dict, Any
 from datetime import datetime
 from decimal import Decimal
@@ -503,11 +503,11 @@ class ReportExportRequest(BaseModel):
     output_format: Optional[str] = "pdf" # Override format if needed
     # Ensure either report_definition_id or ad_hoc_definition is provided
 
-class MultiDimensionalDataRecord(BaseModel):
+class MultiDimensionalDataRecord(RootModel[Dict[str, Any]]):
     # This is a flexible schema, assuming records are dicts.
     # Specific expected fields would depend on the AnalyticsModel's dimensions and metrics.
     # Example: {"date": "2023-01-01", "country": "US", "department": "Sales", "revenue": 100, "sessions": 50}
-    __root__: Dict[str, Any] # Allows any dict structure for a record
+    root: Dict[str, Any] # Allows any dict structure for a record
 
 class MultiDimensionalDataPayload(BaseModel):
     records: List[MultiDimensionalDataRecord] = Field(..., description="List of data records for multi-dimensional analysis.")

@@ -26,7 +26,7 @@ from ..models.analytics import (
 from ..models.user import User
 from ..models.tenant import Tenant
 from ..models.comparative_benchmark import ComparativeBenchmark
-from .. import schemas
+from ..schemas import analytics_schemas
 
 
 class AnalyticsService:
@@ -1542,7 +1542,7 @@ class AnalyticsService:
 
     # Dashboard and Widget Configuration Services
 
-    def create_dashboard(self, tenant_id: int, user_id: int, dashboard_data: schemas.DashboardCreate) -> AnalyticsDashboard:
+    def create_dashboard(self, tenant_id: int, user_id: int, dashboard_data: analytics_schemas.DashboardCreate) -> AnalyticsDashboard:
         """Creates a new analytics dashboard and its initial widgets."""
         db_dashboard = AnalyticsDashboard(
             tenant_id=tenant_id,
@@ -1578,9 +1578,9 @@ class AnalyticsService:
                     # or they refer to the order of widgets in the `widgets` list.
                     # For now, let's assume layout in DashboardCreate might be conceptual or handled by default.
                     # Default placement:
-                    layout_items.append(schemas.LayoutItem(widget_config_id=db_widget.id, x=(i % 4) * 3, y=(i // 4) * 2, w=3, h=2).dict())
+                    layout_items.append(analytics_schemas.LayoutItem(widget_config_id=db_widget.id, x=(i % 4) * 3, y=(i // 4) * 2, w=3, h=2).dict())
                 else: # Default layout if not specified or mismatched
-                    layout_items.append(schemas.LayoutItem(widget_config_id=db_widget.id, x=(i % 4) * 3, y=(i // 4) * 2, w=3, h=2).dict())
+                    layout_items.append(analytics_schemas.LayoutItem(widget_config_id=db_widget.id, x=(i % 4) * 3, y=(i // 4) * 2, w=3, h=2).dict())
 
 
         db_dashboard.layout = layout_items
@@ -1608,7 +1608,7 @@ class AnalyticsService:
             AnalyticsDashboard.user_id == user_id
         ).order_by(AnalyticsDashboard.name).offset(skip).limit(limit).all()
 
-    def update_dashboard(self, dashboard_id: int, tenant_id: int, user_id: int, dashboard_update_data: schemas.DashboardUpdate) -> Optional[AnalyticsDashboard]:
+    def update_dashboard(self, dashboard_id: int, tenant_id: int, user_id: int, dashboard_update_data: analytics_schemas.DashboardUpdate) -> Optional[AnalyticsDashboard]:
         """Updates an existing dashboard's properties (name, description, tags, layout)."""
         db_dashboard = self.get_dashboard(dashboard_id, tenant_id, user_id)
         if not db_dashboard:
@@ -1626,7 +1626,7 @@ class AnalyticsService:
         self.db.refresh(db_dashboard)
         return db_dashboard
 
-    def update_dashboard_layout(self, dashboard_id: int, tenant_id: int, user_id: int, layout_data: List[schemas.LayoutItem]) -> Optional[AnalyticsDashboard]:
+    def update_dashboard_layout(self, dashboard_id: int, tenant_id: int, user_id: int, layout_data: List[analytics_schemas.LayoutItem]) -> Optional[AnalyticsDashboard]:
         """Updates only the layout of a dashboard."""
         db_dashboard = self.get_dashboard(dashboard_id, tenant_id, user_id)
         if not db_dashboard:
@@ -1655,7 +1655,7 @@ class AnalyticsService:
         self.db.commit()
         return True
 
-    def add_widget_to_dashboard(self, dashboard_id: int, tenant_id: int, user_id: int, widget_data: schemas.WidgetConfigCreate) -> Optional[DashboardWidgetConfig]:
+    def add_widget_to_dashboard(self, dashboard_id: int, tenant_id: int, user_id: int, widget_data: analytics_schemas.WidgetConfigCreate) -> Optional[DashboardWidgetConfig]:
         """Adds a new widget configuration to a dashboard."""
         db_dashboard = self.get_dashboard(dashboard_id, tenant_id, user_id)
         if not db_dashboard:
@@ -1678,7 +1678,7 @@ class AnalyticsService:
         # Or, we can try a default placement:
         self.db.flush() # to get db_widget.id
 
-        new_layout_item = schemas.LayoutItem(widget_config_id=db_widget.id, x=0, y=99, w=3, h=2) # Default pos (e.g., bottom)
+        new_layout_item = analytics_schemas.LayoutItem(widget_config_id=db_widget.id, x=0, y=99, w=3, h=2) # Default pos (e.g., bottom)
         if db_dashboard.layout is None: db_dashboard.layout = [] # Ensure layout is a list
         db_dashboard.layout.append(new_layout_item.dict())
         db_dashboard.updated_at = datetime.utcnow()
@@ -1695,7 +1695,7 @@ class AnalyticsService:
             DashboardWidgetConfig.tenant_id == tenant_id
         ).first()
 
-    def update_widget_on_dashboard(self, widget_id: int, tenant_id: int, user_id: int, widget_update_data: schemas.WidgetConfigUpdate) -> Optional[DashboardWidgetConfig]:
+    def update_widget_on_dashboard(self, widget_id: int, tenant_id: int, user_id: int, widget_update_data: analytics_schemas.WidgetConfigUpdate) -> Optional[DashboardWidgetConfig]:
         """Updates an existing widget configuration."""
         # user_id check implies checking dashboard ownership first
         db_widget = self.get_widget_config(widget_id, tenant_id)

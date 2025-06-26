@@ -13,11 +13,8 @@ from ..database import get_db
 from ..services.workflow_automation_service import WorkflowAutomationService, WorkflowTemplateService
 from ..models.workflow_automation import (
     WorkflowTemplate, WorkflowInstance, WorkflowStepExecution,
-    AutomationRule, WorkflowAction, WorkflowIntegration
-from ..models.workflow_automation import (
-    WorkflowTemplate, WorkflowInstance, WorkflowStepExecution,
     AutomationRule, WorkflowAction, WorkflowIntegration,
-    WorkflowReportConfig # Added import
+    WorkflowReportConfig
 )
 # Import the new schemas
 from ..schemas import workflow_automation_schemas as wfas

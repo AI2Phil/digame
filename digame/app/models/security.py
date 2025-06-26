@@ -41,7 +41,7 @@ class SecurityAuditLog(Base):
     resource_accessed = Column(String(255), nullable=True)
     action_taken = Column(String(100), nullable=True)
     result = Column(String(20), nullable=False)  # 'success', 'failure', 'blocked'
-    metadata = Column(JSON, nullable=True)  # Additional event-specific data
+    event_metadata = Column(JSON, nullable=True)  # Additional event-specific data
     timestamp = Column(DateTime(timezone=True), server_default=func.now(), index=True)
     
     # Relationship

@@ -138,7 +138,7 @@ AI Response: {"identified_style": "Passive", "confidence_score": 0.90, "explanat
 
 # Dependency injector function
 def get_communication_style_service(
-    db: Session = Depends(get_db),
-    ai_integration_service: AIIntegrationService = Depends(AIIntegrationService) # Add AIIntegrationService dependency
+    db: Session = Depends(get_db)
 ) -> CommunicationStyleService:
+    ai_integration_service = AIIntegrationService(db=db)
     return CommunicationStyleService(db=db, ai_integration_service=ai_integration_service)

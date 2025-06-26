@@ -1,4 +1,4 @@
-from fastapi import HTTPException, status
+from fastapi import HTTPException, status, Depends
 from sqlalchemy.orm import Session
 from typing import List, Optional, Dict, Any
 import uuid

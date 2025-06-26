@@ -835,13 +835,13 @@ async def record_performance_metric(
 
 @router.get("/metrics", response_model=dict) # Added response_model for consistency
 async def get_performance_metrics(
+    request: Request, # To access raw query parameters for dimensions
     metric_type: Optional[str] = Query(None),
     category: Optional[str] = Query(None),
     entity_type: Optional[str] = Query(None),
     entity_id: Optional[int] = Query(None),
     skip: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=100),
-    request: Request, # To access raw query parameters for dimensions
     current_user=Depends(get_current_user),
     tenant_id: int = Depends(get_current_tenant),
     db: Session = Depends(get_db)

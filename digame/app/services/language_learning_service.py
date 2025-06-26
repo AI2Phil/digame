@@ -222,7 +222,7 @@ AI Response: {{
 
 # Dependency injector function
 def get_language_learning_service(
-    db: Session = Depends(get_db),
-    ai_integration_service: AIIntegrationService = Depends(AIIntegrationService)
+    db: Session = Depends(get_db)
 ) -> LanguageLearningService:
+    ai_integration_service = AIIntegrationService(db=db)
     return LanguageLearningService(db=db, ai_integration_service=ai_integration_service)

@@ -25,5 +25,5 @@ class GenerateTextRequest(BaseModel):
 class GenerateTextResponse(BaseModel):
     template_type: str
     generated_text: str
-    model_provider: Optional[str] = None
+    provider: Optional[str] = None
     error_message: Optional[str] = None

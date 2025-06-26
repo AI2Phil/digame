@@ -74,7 +74,28 @@ def get_locale_from_request(request: Request) -> str:
 
 
 class LocaleMiddleware:
-    async def __call__(self, request: Request, call_next):
+    def __init__(self, app):
+        self.app = app
+    
+    async def __call__(self, scope, receive, send):
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+        
+        # Create a request object to extract locale information
+        from starlette.requests import Request
+        request = Request(scope, receive)
+        
+        locale = get_locale_from_request(request)
+        scope["state"] = getattr(scope, "state", {})
+        scope["state"]["locale"] = locale
+        
+        # Store the translator function in scope state for easy access in endpoints
+        translator = get_translation_for_locale(locale)
+        scope["state"]["gettext"] = translator.gettext
+        scope["state"]["ngettext"] = translator.ngettext
+        
+        await self.app(scope, receive, send)
         locale = get_locale_from_request(request)
         request.state.locale = locale
 

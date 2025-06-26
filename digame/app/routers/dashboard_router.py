@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException # Assuming HTTPException for auth later
+from fastapi import APIRouter, Depends, HTTPException, Query # Assuming HTTPException for auth later
 from typing import Dict
 
 from digame.app.models.dashboard_models import (

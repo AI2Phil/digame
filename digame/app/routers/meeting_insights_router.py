@@ -11,7 +11,7 @@ router = APIRouter(
 )
 
 @router.post("/analyze", response_model=schemas.MeetingAnalysisResponse)
-def analyze_meeting_text_endpoint(
+async def analyze_meeting_text_endpoint(
     request_data: schemas.MeetingAnalysisRequest,
     current_user: UserModel = Depends(get_current_active_user),
     service: MeetingInsightsService = Depends(get_meeting_insights_service),

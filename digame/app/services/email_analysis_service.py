@@ -181,7 +181,7 @@ AI Response: {
 
 # Dependency injector function
 def get_email_analysis_service(
-    db: Session = Depends(get_db),
-    ai_integration_service: AIIntegrationService = Depends(AIIntegrationService)
+    db: Session = Depends(get_db)
 ) -> EmailAnalysisService:
+    ai_integration_service = AIIntegrationService(db=db)
     return EmailAnalysisService(db=db, ai_integration_service=ai_integration_service)

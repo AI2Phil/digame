@@ -2,17 +2,12 @@
 Market Intelligence router for industry trend analysis and competitive intelligence
 """
 
-from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
-from sqlalchemy.orm import Session
-from typing import List, Optional, Dict, Any
-from datetime import datetime, timedelta
-import logging
-
 from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks, Body, Path, status
 from sqlalchemy.orm import Session
 from typing import List, Optional, Dict, Any
 from datetime import datetime, timedelta
-import logging # For logging, can be replaced by a more structured logger
+import logging
+from pydantic import BaseModel, Field
 
 from ..services.market_intelligence_service import MarketIntelligenceService, get_market_intelligence_service
 # from ..services.market_intelligence_reports_service import get_market_intelligence_reports_service # If used
@@ -48,9 +43,10 @@ async def list_market_trends_endpoint(
     skip: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=100),
     tenant_id: int = Depends(get_tenant_id), # Get tenant_id from auth
-    service: MarketIntelligenceService = Depends(get_market_intelligence_service)
+    db: Session = Depends(get_db)
 ):
     """List market trends for the current tenant."""
+    service = get_market_intelligence_service(db)
     trends = service.get_market_trends(
         tenant_id=tenant_id, industry=industry, category=category,
         trend_type=trend_type, impact_level=impact_level, active_only=active_only
@@ -67,9 +63,10 @@ async def create_market_trend_endpoint(
     trend_data: mi_schemas.MarketTrendCreate,
     tenant_id: int = Depends(get_tenant_id),
     current_user: SQLAlchemyUser = Depends(get_current_active_user),
-    service: MarketIntelligenceService = Depends(get_market_intelligence_service)
+    db: Session = Depends(get_db)
 ):
     """Create a new market trend."""
+    service = get_market_intelligence_service(db)
     try:
         trend = service.create_market_trend(
             tenant_id=tenant_id,
@@ -89,9 +86,10 @@ async def create_market_trend_endpoint(
 async def analyze_trend_impact_endpoint(
     trend_id: int = Path(..., description="ID of the market trend"),
     tenant_id: int = Depends(get_tenant_id), # Ensure trend belongs to user's tenant
-    service: MarketIntelligenceService = Depends(get_market_intelligence_service)
+    db: Session = Depends(get_db)
 ):
     """Analyze the impact of a specific market trend."""
+    service = get_market_intelligence_service(db)
     # Ensure trend_id is accessible by tenant_id first
     trend = service.db.query(MarketTrend).filter(MarketTrend.id == trend_id, MarketTrend.tenant_id == tenant_id).first()
     if not trend:
@@ -115,9 +113,10 @@ async def create_market_data_source_endpoint(
     source_data: mi_schemas.MarketDataSourceCreate,
     tenant_id: int = Depends(get_tenant_id),
     current_user: SQLAlchemyUser = Depends(get_current_active_user),
-    service: MarketIntelligenceService = Depends(get_market_intelligence_service)
+    db: Session = Depends(get_db)
 ):
     """Create a new market data source."""
+    service = get_market_intelligence_service(db)
     data_source = service.create_market_data_source(
         tenant_id=tenant_id, source_data=source_data, created_by_user_id=current_user.id
     )
@@ -132,9 +131,10 @@ async def list_market_data_sources_endpoint(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=100),
     tenant_id: int = Depends(get_tenant_id),
-    service: MarketIntelligenceService = Depends(get_market_intelligence_service)
+    db: Session = Depends(get_db)
 ):
     """List market data sources for the current tenant."""
+    service = get_market_intelligence_service(db)
     sources = service.list_market_data_sources(
         tenant_id=tenant_id, source_type=source_type, is_active=is_active, skip=skip, limit=limit
     )
@@ -146,9 +146,10 @@ async def list_market_data_sources_endpoint(
 async def get_market_data_source_endpoint(
     source_id: int = Path(..., description="ID of the market data source"),
     tenant_id: int = Depends(get_tenant_id),
-    service: MarketIntelligenceService = Depends(get_market_intelligence_service)
+    db: Session = Depends(get_db)
 ):
     """Get a specific market data source."""
+    service = get_market_intelligence_service(db)
     source = service.get_market_data_source(source_id=source_id, tenant_id=tenant_id)
     if not source:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Market data source not found.")
@@ -161,9 +162,10 @@ async def update_market_data_source_endpoint(
     source_id: int = Path(..., description="ID of the market data source to update"),
     update_data: mi_schemas.MarketDataSourceUpdate = Body(...),
     tenant_id: int = Depends(get_tenant_id),
-    service: MarketIntelligenceService = Depends(get_market_intelligence_service)
+    db: Session = Depends(get_db)
 ):
     """Update a market data source."""
+    service = get_market_intelligence_service(db)
     updated_source = service.update_market_data_source(
         source_id=source_id, tenant_id=tenant_id, update_data=update_data
     )
@@ -177,9 +179,10 @@ async def update_market_data_source_endpoint(
 async def delete_market_data_source_endpoint(
     source_id: int = Path(..., description="ID of the market data source to delete"),
     tenant_id: int = Depends(get_tenant_id),
-    service: MarketIntelligenceService = Depends(get_market_intelligence_service)
+    db: Session = Depends(get_db)
 ):
     """Delete a market data source."""
+    service = get_market_intelligence_service(db)
     if not service.delete_market_data_source(source_id=source_id, tenant_id=tenant_id):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Market data source not found.")
     return
@@ -198,12 +201,13 @@ async def process_uploaded_industry_report_endpoint(
     upload_data: ReportTrendUpload,
     tenant_id: int = Depends(get_tenant_id),
     current_user: SQLAlchemyUser = Depends(get_current_active_user),
-    service: MarketIntelligenceService = Depends(get_market_intelligence_service)
+    db: Session = Depends(get_db)
 ):
     """
     Processes structured trend data extracted from an uploaded industry report
     and creates MarketTrend entries.
     """
+    service = get_market_intelligence_service(db)
     try:
         created_trends = service.process_uploaded_industry_report(
             report_data_source_id=upload_data.report_data_source_id,
@@ -228,11 +232,12 @@ async def get_skill_demand_forecast_endpoint(
     time_horizon_months: int = Query(6, ge=1, le=24, description="Historical data window in months"),
     job_sample_size: int = Query(200, ge=50, le=1000, description="Conceptual sample size for job analysis"),
     tenant_id: int = Depends(get_tenant_id),
-    service: MarketIntelligenceService = Depends(get_market_intelligence_service)
+    db: Session = Depends(get_db)
 ):
     """
     Provides a forecast for skill demand based on job postings and industry trends.
     """
+    service = get_market_intelligence_service(db)
     if not skills:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="At least one skill keyword must be provided.")
     try:
@@ -263,9 +268,10 @@ async def list_competitive_analyses_endpoint(
     skip: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=100),
     tenant_id: int = Depends(get_tenant_id),
-    service: MarketIntelligenceService = Depends(get_market_intelligence_service)
+    db: Session = Depends(get_db)
 ):
     """Refactored: Get competitive analyses for tenant."""
+    service = get_market_intelligence_service(db)
     analyses = service.get_competitive_analyses(
         tenant_id=tenant_id, industry=industry, analysis_type=analysis_type, limit=limit
     )
@@ -280,9 +286,10 @@ async def create_competitive_analysis_endpoint(
     analysis_data: mi_schemas.CompetitiveAnalysisCreate, # Example
     tenant_id: int = Depends(get_tenant_id),
     current_user: SQLAlchemyUser = Depends(get_current_active_user),
-    service: MarketIntelligenceService = Depends(get_market_intelligence_service)
+    db: Session = Depends(get_db)
 ):
     """Refactored: Create a new competitive analysis."""
+    service = get_market_intelligence_service(db)
     try:
         analysis = service.create_competitive_analysis(
             tenant_id=tenant_id, analysis_data=analysis_data.dict(), created_by_user_id=current_user.id
@@ -303,9 +310,10 @@ async def create_competitive_analysis_endpoint(
 @router.get("/dashboard", response_model=Dict[str, Any], dependencies=[Depends(PermissionChecker(PERM_VIEW_MI))])
 async def get_market_intelligence_dashboard_endpoint(
     tenant_id: int = Depends(get_tenant_id),
-    service: MarketIntelligenceService = Depends(get_market_intelligence_service)
+    db: Session = Depends(get_db)
 ):
     """Refactored: Get market intelligence dashboard data."""
+    service = get_market_intelligence_service(db)
     try:
         dashboard_data = service.get_market_intelligence_dashboard(tenant_id=tenant_id)
         return {"success": True, "dashboard": dashboard_data, "generated_at": datetime.utcnow().isoformat()}

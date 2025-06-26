@@ -16,7 +16,7 @@ from ..schemas.mobile_ai_schemas import (
 from ..services.mobile_ai_service import MobileAIService
 from ..models.user import User as UserModel
 from fastapi.responses import FileResponse # Added for file downloads
-from pathlib import Path # Added
+from fastapi import Path # Added for path parameters
 
 async def get_current_active_user(db: Session = Depends(get_db)) -> UserModel:
     user = db.query(UserModel).first()

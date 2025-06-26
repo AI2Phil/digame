@@ -14,7 +14,8 @@ from enum import Enum
 from ..models.workflow_automation import (
     WorkflowTemplate, WorkflowInstance, WorkflowStepExecution,
     AutomationRule, WorkflowAction, WorkflowIntegration,
-    WorkflowStatus, WorkflowStepType, WorkflowStepStatus, AutomationTriggerType
+    WorkflowStatus, WorkflowStepType, WorkflowStepStatus, AutomationTriggerType,
+    WorkflowReportConfig
 )
 from ..database import get_db # Renamed to avoid conflict with local get_db
 from ..schemas.task_schemas import TaskCreate

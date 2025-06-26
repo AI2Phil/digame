@@ -146,3 +146,17 @@ class PermissionChecker:
 #             )
 #         return current_user
 #     return permission_checker
+
+# --- Tenant ID Dependency ---
+async def get_tenant_id(current_user: SQLAlchemyUser = Depends(get_current_active_user)) -> int:
+    """
+    Dependency to get the current user's tenant ID.
+    This is a simplified implementation - in a real multi-tenant system,
+    you would have proper tenant relationships in your User model.
+    """
+    # For now, return a default tenant ID of 1
+    # In a real implementation, you would:
+    # - Have a tenant relationship in your User model
+    # - Return current_user.tenant_id or current_user.tenants[0].id
+    # - Handle cases where user has multiple tenants
+    return 1  # Default tenant ID for development

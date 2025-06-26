@@ -233,7 +233,7 @@ Respond ONLY with the synthesized text.
 
 # Dependency injector function
 def get_document_processing_service(
-    db: Session = Depends(get_db),
-    ai_integration_service: AIIntegrationService = Depends(AIIntegrationService) # Assuming AIIntegrationService is injectable
+    db: Session = Depends(get_db)
 ) -> DocumentProcessingService:
+    ai_integration_service = AIIntegrationService(db=db)
     return DocumentProcessingService(db=db, ai_integration_service=ai_integration_service)
