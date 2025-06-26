@@ -1,8 +1,216 @@
-import React from 'react';
-import Head from 'next/head';
+import React, { useState } from 'react';
 import Link from 'next/link';
+import Head from 'next/head';
+// import Button from '../components/ui/Button';
 
-export default function Home() {
+// Temporary Button component
+const Button = ({ children, onClick, variant = 'primary', size = 'md', className = '', ...props }) => {
+  const baseClasses = 'inline-flex items-center justify-center font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2';
+  const variantClasses = {
+    primary: 'bg-blue-600 hover:bg-blue-700 text-white focus:ring-blue-500',
+    secondary: 'bg-gray-100 hover:bg-gray-200 text-gray-900 focus:ring-gray-500',
+    outline: 'border border-gray-300 bg-transparent hover:bg-gray-50 text-gray-700 focus:ring-blue-500',
+    ghost: 'bg-transparent hover:bg-gray-100 text-gray-700 focus:ring-gray-500'
+  };
+  const sizeClasses = {
+    sm: 'px-3 py-1.5 text-sm',
+    md: 'px-4 py-2 text-sm',
+    lg: 'px-6 py-3 text-base',
+    xl: 'px-8 py-4 text-lg'
+  };
+  
+  return (
+    <button
+      className={`${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
+      onClick={onClick}
+      {...props}
+    >
+      {children}
+    </button>
+  );
+};
+import { Badge } from '../components/ui/Badge';
+import { Progress } from '../components/ui/Progress';
+import { useTranslation } from 'next-i18next';
+import { Avatar } from '../components/ui/Avatar';
+import AuthForm from '../components/auth/AuthForm';
+import { Card, CardContent } from '../components/ui/Card';
+
+export default function HomePage({ onDemoAccess, onLogin }) {
+  const { t } = useTranslation('common');
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [showAuthForm, setShowAuthForm] = useState(false);
+
+  const handleGetStarted = () => {
+    setShowOnboarding(true);
+  };
+
+  const handleDemoClick = () => {
+    window.location.href = '/demo';
+  };
+
+  const handleSignUp = () => {
+    setShowAuthForm(true);
+  };
+
+  const handleAuthClose = () => {
+    setShowAuthForm(false);
+  };
+
+  const handleAuthSuccess = (userData, tokens) => {
+    setShowAuthForm(false);
+    onLogin?.(userData, tokens);
+  };
+
+  if (showOnboarding) {
+    return (
+      <>
+        <Head>
+          <title>Get Started - Digame</title>
+          <meta name="description" content="Choose your Digame experience - try our demo or create your personal digital twin." />
+          <meta name="viewport" content="width=device-width, initial-scale=1" />
+          <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+        </Head>
+        
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+          <div className="container mx-auto px-4 py-8">
+            {/* Header */}
+            <div className="flex justify-between items-center mb-8">
+              <Link href="/" className="flex items-center space-x-2">
+                <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                  <span className="text-white font-bold text-sm">D</span>
+                </div>
+                <span className="text-xl font-bold text-gray-900">Digame</span>
+              </Link>
+              <Button variant="ghost" onClick={() => setShowOnboarding(false)}>
+                ← Back
+              </Button>
+            </div>
+
+            {/* Onboarding Content */}
+            <div className="max-w-4xl mx-auto">
+              <div className="text-center mb-12">
+                <h1 className="text-4xl font-bold text-gray-900 mb-4">
+                  Choose Your Experience
+                </h1>
+                <p className="text-xl text-gray-600">
+                  Explore Digame with our interactive demo or create your personal digital twin
+                </p>
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-8">
+                {/* Demo Option */}
+                <Card className="rounded-2xl shadow-xl border border-gray-100 hover:shadow-2xl transition-shadow">
+                  <CardContent className="p-8">
+                    <div className="text-center mb-6">
+                      <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <span className="text-2xl">🚀</span>
+                      </div>
+                      <h3 className="text-2xl font-bold text-gray-900 mb-2">Try the Demo</h3>
+                      <p className="text-gray-600">
+                        Experience the full platform with sample data and see how your digital twin works
+                      </p>
+                    </div>
+
+                    <div className="space-y-4 mb-8">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center">
+                          <span className="text-green-600 text-xs">✓</span>
+                        </div>
+                        <span className="text-gray-700">Interactive productivity dashboard</span>
+                      </div>
+                      <div className="flex items-center space-x-3">
+                        <div className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center">
+                          <span className="text-green-600 text-xs">✓</span>
+                        </div>
+                        <span className="text-gray-700">Behavioral pattern analysis</span>
+                      </div>
+                      <div className="flex items-center space-x-3">
+                        <div className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center">
+                          <span className="text-green-600 text-xs">✓</span>
+                        </div>
+                        <span className="text-gray-700">Predictive insights and recommendations</span>
+                      </div>
+                      <div className="flex items-center space-x-3">
+                        <div className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center">
+                          <span className="text-green-600 text-xs">✓</span>
+                        </div>
+                        <span className="text-gray-700">No registration required</span>
+                      </div>
+                    </div>
+
+                    <Button
+                      onClick={handleDemoClick}
+                      variant="primary"
+                      size="lg"
+                      className="w-full"
+                    >
+                      🚀 Launch Demo Dashboard
+                    </Button>
+                  </CardContent>
+                </Card>
+
+                {/* Sign Up Option */}
+                <Card className="rounded-2xl shadow-xl border border-gray-100 hover:shadow-2xl transition-shadow">
+                  <CardContent className="p-8">
+                    <div className="text-center mb-6">
+                      <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <span className="text-2xl">🎯</span>
+                      </div>
+                      <h3 className="text-2xl font-bold text-gray-900 mb-2">Create Your Account</h3>
+                      <p className="text-gray-600">
+                        Start building your personal digital twin with real data and personalized insights
+                      </p>
+                    </div>
+
+                    <div className="space-y-4 mb-8">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center">
+                          <span className="text-green-600 text-xs">✓</span>
+                        </div>
+                        <span className="text-gray-700">Personalized digital twin</span>
+                      </div>
+                      <div className="flex items-center space-x-3">
+                        <div className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center">
+                          <span className="text-green-600 text-xs">✓</span>
+                        </div>
+                        <span className="text-gray-700">Real-time productivity tracking</span>
+                      </div>
+                      <div className="flex items-center space-x-3">
+                        <div className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center">
+                          <span className="text-green-600 text-xs">✓</span>
+                        </div>
+                        <span className="text-gray-700">AI-powered career coaching</span>
+                      </div>
+                      <div className="flex items-center space-x-3">
+                        <div className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center">
+                          <span className="text-green-600 text-xs">✓</span>
+                        </div>
+                        <span className="text-gray-700">30-day free trial</span>
+                      </div>
+                    </div>
+
+                    <Button
+                      onClick={handleSignUp}
+                      variant="primary"
+                      size="lg"
+                      className="w-full"
+                    >
+                      🎯 Create Account
+                    </Button>
+                    <p className="text-center text-sm text-gray-500 mt-3">
+                      Free 30-day trial • No credit card required
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          </div>
+        </div>
+      </>
+    );
+  }
+
   return (
     <>
       <Head>
@@ -23,13 +231,17 @@ export default function Home() {
               <span className="text-xl font-bold text-gray-900">Digame</span>
             </Link>
             <div className="hidden md:flex space-x-8">
-              <Link href="/features" className="text-gray-600 hover:text-gray-900">Features</Link>
-              <Link href="/how-it-works" className="text-gray-600 hover:text-gray-900">How it Works</Link>
-              <Link href="/pricing" className="text-gray-600 hover:text-gray-900">Pricing</Link>
+              <Link href="/features" className="text-gray-600 hover:text-gray-900 transition-colors">Features</Link>
+              <Link href="/how-it-works" className="text-gray-600 hover:text-gray-900 transition-colors">How it Works</Link>
+              <Link href="/pricing" className="text-gray-600 hover:text-gray-900 transition-colors">Pricing</Link>
             </div>
-            <button className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
-              🚀 Get Started
-            </button>
+            <Button
+              onClick={handleGetStarted}
+              variant="primary"
+              size="md"
+            >
+              🚀 {t('getStarted', 'Get Started')}
+            </Button>
           </div>
         </nav>
 
@@ -37,78 +249,82 @@ export default function Home() {
         <div className="container mx-auto px-4 py-16">
           <div className="text-center max-w-4xl mx-auto">
             <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6">
-              Your Digital
-              <span className="text-blue-600"> Professional Twin</span>
+              {t('heroTitlePart1', 'Your Digital')}
+              <span className="text-blue-600"> {t('heroTitlePart2', 'Professional Twin')}</span>
             </h1>
             <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-              Unlock your professional potential with AI-powered behavioral analysis, predictive insights, and personalized career development recommendations.
+              {t('heroSubtitle', 'Unlock your professional potential with AI-powered behavioral analysis, predictive insights, and personalized career development recommendations.')}
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-              <button className="bg-blue-600 text-white px-8 py-4 rounded-lg hover:bg-blue-700 transition-colors text-lg">
+              <Button
+                onClick={handleGetStarted}
+                variant="primary"
+                size="xl"
+                className="text-lg"
+              >
                 🎯 Start Your Journey
-              </button>
-              <button className="border border-blue-600 text-blue-600 px-8 py-4 rounded-lg hover:bg-blue-50 transition-colors text-lg">
+              </Button>
+              <Button
+                onClick={handleDemoClick}
+                variant="outline"
+                size="xl"
+                className="text-lg"
+              >
                 🚀 Try Demo
-              </button>
+              </Button>
             </div>
 
-            {/* Hero Preview */}
-            <div className="bg-white rounded-2xl shadow-2xl max-w-4xl mx-auto p-8">
-              <div className="bg-gray-50 rounded-lg p-6">
-                <div className="flex items-center space-x-2 mb-4">
-                  <div className="w-3 h-3 bg-red-400 rounded-full"></div>
-                  <div className="w-3 h-3 bg-yellow-400 rounded-full"></div>
-                  <div className="w-3 h-3 bg-green-400 rounded-full"></div>
-                  <span className="text-sm text-gray-500 ml-4">Digame Dashboard Preview</span>
-                </div>
-                <div className="bg-white rounded-lg p-6 shadow-sm">
-                  <div className="grid grid-cols-3 gap-4 mb-6">
-                    <div className="bg-blue-50 p-4 rounded-lg">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="text-2xl font-bold text-blue-600">87%</div>
-                        <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">High</span>
-                      </div>
-                      <div className="text-sm text-gray-600 mb-2">Productivity Score</div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div className="bg-blue-600 h-2 rounded-full" style={{width: '87%'}}></div>
-                      </div>
-                    </div>
-                    <div className="bg-green-50 p-4 rounded-lg">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="text-2xl font-bold text-green-600">6.2h</div>
-                        <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">+15%</span>
-                      </div>
-                      <div className="text-sm text-gray-600 mb-2">Focus Time</div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div className="bg-green-600 h-2 rounded-full" style={{width: '75%'}}></div>
-                      </div>
-                    </div>
-                    <div className="bg-purple-50 p-4 rounded-lg">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="text-2xl font-bold text-purple-600">+12%</div>
-                        <span className="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded">Trending</span>
-                      </div>
-                      <div className="text-sm text-gray-600 mb-2">Growth</div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div className="bg-purple-600 h-2 rounded-full" style={{width: '62%'}}></div>
-                      </div>
-                    </div>
+            {/* Hero Image/Demo Preview */}
+            <Card className="rounded-2xl shadow-2xl max-w-4xl mx-auto">
+              <CardContent className="p-8">
+                <div className="bg-gray-50 rounded-lg p-6">
+                  <div className="flex items-center space-x-2 mb-4">
+                    <div className="w-3 h-3 bg-red-400 rounded-full"></div>
+                    <div className="w-3 h-3 bg-yellow-400 rounded-full"></div>
+                    <div className="w-3 h-3 bg-green-400 rounded-full"></div>
+                    <span className="text-sm text-gray-500 ml-4">Digame Dashboard Preview</span>
                   </div>
-                  <div className="bg-gray-100 h-32 rounded-lg flex flex-col items-center justify-center">
-                    <span className="text-gray-500 mb-2">📊 Interactive Productivity Chart</span>
-                    <div className="w-3/4 bg-gray-200 rounded-full h-2">
-                      <div className="bg-blue-600 h-2 rounded-full animate-pulse" style={{width: '45%'}}></div>
+                  <div className="bg-white rounded-lg p-6 shadow-sm">
+                    <div className="grid grid-cols-3 gap-4 mb-6">
+                      <div className="bg-blue-50 p-4 rounded-lg">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="text-2xl font-bold text-blue-600">87%</div>
+                          <Badge variant="default" size="sm">High</Badge>
+                        </div>
+                        <div className="text-sm text-gray-600 mb-2">Productivity Score</div>
+                        <Progress value={87} className="h-2" />
+                      </div>
+                      <div className="bg-green-50 p-4 rounded-lg">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="text-2xl font-bold text-green-600">6.2h</div>
+                          <Badge variant="secondary" size="sm">+15%</Badge>
+                        </div>
+                        <div className="text-sm text-gray-600 mb-2">Focus Time</div>
+                        <Progress value={75} className="h-2" />
+                      </div>
+                      <div className="bg-purple-50 p-4 rounded-lg">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="text-2xl font-bold text-purple-600">+12%</div>
+                          <Badge variant="outline" size="sm">Trending</Badge>
+                        </div>
+                        <div className="text-sm text-gray-600 mb-2">Growth</div>
+                        <Progress value={62} className="h-2" />
+                      </div>
+                    </div>
+                    <div className="bg-gray-100 h-32 rounded-lg flex flex-col items-center justify-center">
+                      <span className="text-gray-500 mb-2">📊 Interactive Productivity Chart</span>
+                      <Progress value={45} className="w-3/4 h-2" />
                     </div>
                   </div>
                 </div>
-              </div>
-            </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
 
         {/* Features Section */}
-        <div className="bg-white py-16">
+        <div id="features" className="bg-white py-16">
           <div className="container mx-auto px-4">
             <div className="text-center mb-12">
               <h2 className="text-3xl font-bold text-gray-900 mb-4">
@@ -124,9 +340,9 @@ export default function Home() {
                 <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
                   <span className="text-2xl">🧠</span>
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">Behavioral Analysis</h3>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">{t('featureBehavioralAnalysisTitle', 'Behavioral Analysis')}</h3>
                 <p className="text-gray-600">
-                  Advanced ML algorithms analyze your work patterns and identify optimization opportunities
+                  {t('featureBehavioralAnalysisText', 'Advanced ML algorithms analyze your work patterns and identify optimization opportunities')}
                 </p>
               </div>
 
@@ -134,9 +350,9 @@ export default function Home() {
                 <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                   <span className="text-2xl">🔮</span>
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">Predictive Insights</h3>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">{t('featurePredictiveInsightsTitle', 'Predictive Insights')}</h3>
                 <p className="text-gray-600">
-                  Get personalized predictions about your career trajectory and skill development
+                  {t('featurePredictiveInsightsText', 'Get personalized predictions about your career trajectory and skill development')}
                 </p>
               </div>
 
@@ -144,11 +360,75 @@ export default function Home() {
                 <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
                   <span className="text-2xl">🎯</span>
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">Goal Achievement</h3>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">{t('featureGoalAchievementTitle', 'Goal Achievement')}</h3>
                 <p className="text-gray-600">
-                  Set and track professional goals with AI-powered recommendations and progress monitoring
+                  {t('featureGoalAchievementText', 'Set and track professional goals with AI-powered recommendations and progress monitoring')}
                 </p>
               </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Testimonials Section */}
+        <div className="bg-gray-50 py-16">
+          <div className="container mx-auto px-4">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl font-bold text-gray-900 mb-4">
+                Trusted by Professionals Worldwide
+              </h2>
+              <p className="text-xl text-gray-600">
+                See how digital twins are transforming careers
+              </p>
+            </div>
+            
+            <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+              <Card className="rounded-lg shadow-sm">
+                <CardContent className="p-6">
+                  <div className="flex items-center mb-4">
+                    <Avatar name="Sarah Chen" className="mr-3" />
+                    <div>
+                      <div className="font-semibold text-gray-900">Sarah Chen</div>
+                      <div className="text-sm text-gray-600">Product Manager</div>
+                    </div>
+                  </div>
+                  <p className="text-gray-700 italic">
+                    "Digame helped me identify productivity patterns I never knew existed.
+                    I've increased my efficiency by 40% in just 3 months."
+                  </p>
+                </CardContent>
+              </Card>
+              
+              <Card className="rounded-lg shadow-sm">
+                <CardContent className="p-6">
+                  <div className="flex items-center mb-4">
+                    <Avatar name="Marcus Rodriguez" className="mr-3" />
+                    <div>
+                      <div className="font-semibold text-gray-900">Marcus Rodriguez</div>
+                      <div className="text-sm text-gray-600">Software Engineer</div>
+                    </div>
+                  </div>
+                  <p className="text-gray-700 italic">
+                    "The predictive insights are incredible. Digame predicted my promotion
+                    6 months before it happened and helped me prepare perfectly."
+                  </p>
+                </CardContent>
+              </Card>
+              
+              <Card className="rounded-lg shadow-sm">
+                <CardContent className="p-6">
+                  <div className="flex items-center mb-4">
+                    <Avatar name="Emily Watson" className="mr-3" />
+                    <div>
+                      <div className="font-semibold text-gray-900">Emily Watson</div>
+                      <div className="text-sm text-gray-600">Marketing Director</div>
+                    </div>
+                  </div>
+                  <p className="text-gray-700 italic">
+                    "My digital twin became my career coach. The personalized recommendations
+                    led to a 60% salary increase within a year."
+                  </p>
+                </CardContent>
+              </Card>
             </div>
           </div>
         </div>
@@ -162,9 +442,14 @@ export default function Home() {
             <p className="text-xl text-blue-100 mb-8">
               Join thousands of professionals who are already using their digital twins to accelerate their careers
             </p>
-            <button className="bg-white text-blue-600 px-8 py-4 rounded-lg hover:bg-gray-50 transition-colors text-lg">
+            <Button
+              onClick={handleGetStarted}
+              variant="secondary"
+              size="xl"
+              className="bg-white text-blue-600 hover:bg-gray-50 text-lg"
+            >
               ⚡ Get Started Today
-            </button>
+            </Button>
           </div>
         </div>
 
@@ -178,11 +463,29 @@ export default function Home() {
               <span className="text-lg font-bold">Digame</span>
             </div>
             <p className="text-gray-400">
-              © 2025 Digame. Your Digital Professional Twin Platform.
+              {t('footerCopyright', '© 2025 Digame. Your Digital Professional Twin Platform.')}
             </p>
           </div>
         </footer>
+
+        {/* Authentication Modal */}
+        {showAuthForm && (
+          <AuthForm
+            onLogin={handleAuthSuccess}
+            onClose={handleAuthClose}
+          />
+        )}
       </div>
     </>
   );
+}
+
+export async function getStaticProps({ locale }) {
+  const { serverSideTranslations } = await import('next-i18next/serverSideTranslations');
+  
+  return {
+    props: {
+      ...(await serverSideTranslations(locale, ['common'])),
+    },
+  };
 }
