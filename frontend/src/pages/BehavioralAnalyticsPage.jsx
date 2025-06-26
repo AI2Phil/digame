@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import enhancedApiService from '../services/enhancedApiService';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
+import { safeNavigate } from '../hooks/useClientNavigation';
 
 const BehavioralAnalyticsPage = ({ isDemoMode, onLogout }) => {
-  const navigate = useNavigate();
   const [behaviorData, setBehaviorData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedTimeRange, setSelectedTimeRange] = useState('7d');
@@ -46,7 +45,7 @@ const BehavioralAnalyticsPage = ({ isDemoMode, onLogout }) => {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-4">
               <button
-                onClick={() => navigate('/dashboard')}
+                onClick={() => safeNavigate('/dashboard')}
                 className="text-gray-600 hover:text-gray-900 text-sm font-medium"
               >
                 ← Back to Dashboard

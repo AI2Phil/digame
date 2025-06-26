@@ -201,4 +201,6 @@ export const ToastProvider = ({ children, position = 'top-right', maxToasts = 5 
   );
 };
 
+// Named exports for convenience
+export { Toast };
 export default Toast;

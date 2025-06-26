@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Avatar, Button, Card, Pagination, Select, Input, Spinner } from '@nextui-org/react'; // Assuming NextUI components
+import { safeNavigate } from '../hooks/useClientNavigation';
 // import apiService from '../services/apiService'; // Uncomment when apiService is ready
 
 // Mock apiService for now
@@ -24,7 +24,6 @@ const mockApiService = {
 };
 
 const UserListPage = () => {
-  const navigate = useNavigate();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -156,7 +155,7 @@ const UserListPage = () => {
                     size="sm"
                     auto
                     ghost
-                    onClick={() => navigate(`/users/${user.id}/profile_overview`)}
+                    onClick={() => safeNavigate(`/users/${user.id}/profile_overview`)}
                   >
                     View Profile
                   </Button>

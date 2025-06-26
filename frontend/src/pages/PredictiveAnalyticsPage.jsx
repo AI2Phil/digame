@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import enhancedApiService from '../services/enhancedApiService';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
+import { safeNavigate } from '../hooks/useClientNavigation';
 
 const PredictiveAnalyticsPage = ({ isDemoMode, onLogout }) => {
-  const navigate = useNavigate();
   const [predictiveData, setPredictiveData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedMetric, setSelectedMetric] = useState('productivity');
@@ -64,7 +63,7 @@ const PredictiveAnalyticsPage = ({ isDemoMode, onLogout }) => {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-4">
               <button
-                onClick={() => navigate('/dashboard')}
+                onClick={() => safeNavigate('/dashboard')}
                 className="text-gray-600 hover:text-gray-900 text-sm font-medium"
               >
                 ← Back to Dashboard

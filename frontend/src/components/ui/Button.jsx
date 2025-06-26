@@ -108,4 +108,64 @@ const Button = React.forwardRef(({
 
 Button.displayName = 'Button';
 
+// ButtonGroup component
+export const ButtonGroup = ({ children, className = '', size = 'md', variant = 'primary' }) => {
+  return (
+    <div className={`inline-flex rounded-lg shadow-sm ${className}`} role="group">
+      {React.Children.map(children, (child, index) => {
+        if (React.isValidElement(child)) {
+          const isFirst = index === 0;
+          const isLast = index === React.Children.count(children) - 1;
+          
+          return React.cloneElement(child, {
+            size,
+            variant,
+            className: `
+              ${child.props.className || ''}
+              ${isFirst ? 'rounded-r-none' : ''}
+              ${isLast ? 'rounded-l-none' : ''}
+              ${!isFirst && !isLast ? 'rounded-none' : ''}
+              ${!isFirst ? 'border-l-0' : ''}
+            `.trim()
+          });
+        }
+        return child;
+      })}
+    </div>
+  );
+};
+
+// IconButton component
+export const IconButton = React.forwardRef(({
+  children,
+  variant = 'ghost',
+  size = 'md',
+  className = '',
+  'aria-label': ariaLabel,
+  ...props
+}, ref) => {
+  const sizeClasses = {
+    sm: 'p-1.5',
+    md: 'p-2',
+    lg: 'p-3',
+    xl: 'p-4'
+  };
+
+  return (
+    <Button
+      ref={ref}
+      variant={variant}
+      className={`${sizeClasses[size]} ${className}`}
+      aria-label={ariaLabel}
+      {...props}
+    >
+      {children}
+    </Button>
+  );
+});
+
+IconButton.displayName = 'IconButton';
+
+// Named export for convenience
+export { Button };
 export default Button;

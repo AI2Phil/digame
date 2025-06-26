@@ -345,4 +345,6 @@ export const SimpleSlider = ({
   );
 };
 
+// Named export for convenience
+export { Slider };
 export default Slider;

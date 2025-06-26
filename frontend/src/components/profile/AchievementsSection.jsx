@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
   Trophy, Award, Star, Medal, Crown,
   Target, TrendingUp, Calendar, CheckCircle,
-  Lock, Unlock, Gift, Zap, Fire, BookOpen, Users,
+  Lock, Unlock, Gift, Zap, Flame, BookOpen, Users,
   Sparkles, Gem, Shield, Sword
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/Card';
@@ -175,7 +175,7 @@ const AchievementsSection = ({ achievements }) => {
     switch (iconName) {
       case 'target': return Target;
       case 'trophy': return Trophy;
-      case 'fire': return Fire;
+      case 'fire': return Flame;
       case 'star': return Star;
       case 'crown': return Crown;
       case 'medal': return Medal;
