@@ -51,5 +51,5 @@ class OnboardingDataResponse(OnboardingDataBase):
     user_id: int # For context, linking back to the user
 
     class Config:
-        orm_mode = True # Though this schema is not directly mapped from User.onboarding_data as a whole ORM object.
-                        # It's constructed. Still, good practice.
+        from_attributes = True # Though this schema is not directly mapped from User.onboarding_data as a whole ORM object.
+                               # It's constructed. Still, good practice.

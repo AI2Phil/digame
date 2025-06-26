@@ -17,7 +17,7 @@ class ProcessNoteResponse(ProcessNoteBase):
     last_observed_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 # Schema for the trigger response
 class ProcessDiscoveryResponse(BaseModel):

@@ -29,7 +29,7 @@ class ProjectInDBBase(ProjectBase):
     created_at: Optional[datetime] = None  # Add created_at from WIP
 
     class Config:
-        orm_mode = True  # Use Pydantic v1 syntax
+        from_attributes = True  # Use Pydantic v2 syntax
 
 class Project(ProjectInDBBase):
     pass

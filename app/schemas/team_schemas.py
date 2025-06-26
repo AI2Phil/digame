@@ -29,7 +29,7 @@ class TeamMember(TeamMemberBase):
     joined_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class TeamBase(BaseModel):
     name: str = Field(..., min_length=3, max_length=100)
@@ -52,7 +52,7 @@ class Team(TeamBase):
     # We can add performance_metrics, skill_gaps, workflows later if needed for full team object responses
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 # Performance Metric Schemas
 class TeamPerformanceMetricBase(BaseModel):
@@ -74,7 +74,7 @@ class TeamPerformanceMetric(TeamPerformanceMetricBase):
     recorded_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 # Skill Gap Schemas
 class TeamSkillGapBase(BaseModel):
@@ -98,7 +98,7 @@ class TeamSkillGap(TeamSkillGapBase):
     identified_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 # Workflow Schemas
 class TeamWorkflowBase(BaseModel):
@@ -125,7 +125,7 @@ class TeamWorkflow(TeamWorkflowBase):
     updated_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 # Schemas for Team Insights - these might be more complex and derived, not direct CRUD

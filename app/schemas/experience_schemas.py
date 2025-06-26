@@ -21,7 +21,7 @@ class ExperienceInDBBase(ExperienceBase):
     user_id: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class ExperienceSchema(ExperienceInDBBase):
     pass

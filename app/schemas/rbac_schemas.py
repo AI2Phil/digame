@@ -20,7 +20,7 @@ class PermissionResponse(PermissionBase):
     updated_at: datetime
 
     class Config:
-        orm_mode = True # For SQLAlchemy model conversion
+        from_attributes = True # For SQLAlchemy model conversion (Pydantic v2)
 
 # --- Role Schemas ---
 class RoleBase(BaseModel):
@@ -42,7 +42,7 @@ class RoleResponse(RoleBase):
     permissions: List[PermissionResponse] = [] # Show permissions associated with the role
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 # --- Assignment Schemas ---
 class UserRoleAssignRequest(BaseModel):
@@ -70,10 +70,10 @@ class UserMinimumResponse(BaseModel): # A very basic User representation
     is_active: bool
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class UserWithRolesResponse(UserMinimumResponse):
     roles: List[RoleResponse] = [] # Or List[RoleBase] if full permission details are not needed here
 
     class Config:
-        orm_mode = True
+        from_attributes = True

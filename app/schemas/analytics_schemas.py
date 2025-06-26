@@ -76,7 +76,7 @@ class PerformanceMetricInDB(PerformanceMetricBase, BaseAuditModel, TenantAssocia
     measured_by_user_id: Optional[int] = None
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class BenchmarkComparisonInput(BaseModel):
     performance_metric_id: int
@@ -167,7 +167,7 @@ class AnalyticsModelInDB(AnalyticsModelBase, BaseAuditModel, TenantAssociatedMod
     training_metadata: Optional[Dict[str, Any]] = None
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 # --- AnalyticsPrediction Schemas ---
 class AnalyticsPredictionBase(BaseModel):
@@ -206,7 +206,7 @@ class AnalyticsPredictionInDB(AnalyticsPredictionBase, BaseAuditModel, TenantAss
     created_by_user_id: Optional[int] = None # Can be system generated
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 # --- ROICalculation Schemas ---
@@ -295,7 +295,7 @@ class ROICalculationInDB(ROICalculationBase, BaseAuditModel, TenantAssociatedMod
     approved_at: Optional[datetime] = None
 
     class Config:
-        orm_mode = True
+        from_attributes = True
         json_encoders = {
             Decimal: lambda v: float(v) if v is not None else None
         }
@@ -358,7 +358,7 @@ class ComparativeBenchmarkInDB(ComparativeBenchmarkBase, BaseAuditModel):
     created_by_user_id: Optional[int] = None
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 # --- Dashboard & Reporting Schemas (Conceptual) ---
 
@@ -388,7 +388,7 @@ class DashboardWidgetConfigInDB(DashboardWidgetConfigBase, BaseAuditModel):
     widget_uuid: str
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 # Dashboard Layout and Structure
 class DashboardLayoutItem(BaseModel):
@@ -422,7 +422,7 @@ class AnalyticsDashboardInDB(AnalyticsDashboardBase, BaseAuditModel, TenantAssoc
     user_id: int # Owner of the dashboard
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 # --- Reporting Schemas ---
 class ReportFilter(BaseModel):
@@ -439,7 +439,7 @@ class ReportContentBlock(BaseModel):
     text_content: Optional[str] = Field(None, example="This section summarizes key findings.") # For block_type="text"
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class ReportDefinitionBase(BaseModel):
@@ -468,7 +468,7 @@ class ReportDefinitionInDB(ReportDefinitionBase, BaseAuditModel, TenantAssociate
     user_id: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class ReportScheduleBase(BaseModel):
     report_definition_id: int
@@ -487,7 +487,7 @@ class ReportScheduleInDB(ReportScheduleBase, BaseAuditModel, TenantAssociatedMod
     last_run_status: Optional[str] = None # success, failed
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class GeneratedReportInfo(BaseModel):
     report_id: str # Could be a file ID or internal ID
@@ -543,7 +543,7 @@ class WidgetConfigInDB(WidgetConfigBase, BaseAuditModel, TenantAssociatedModel):
     dashboard_id: int # Explicitly show it's linked
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 # Renaming DashboardLayoutItem to LayoutItem
 class LayoutItem(BaseModel):
@@ -582,4 +582,4 @@ class DashboardInDB(DashboardBase, BaseAuditModel, TenantAssociatedModel):
     widgets: List[WidgetConfigInDB] = Field(default_factory=list) # Full widget configs embedded
 
     class Config:
-        orm_mode = True
+        from_attributes = True
