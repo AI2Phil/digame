@@ -127,7 +127,7 @@ class AnalyticsService:
         if not model:
             return None
 
-        update_data_dict = model_update_data.dict(exclude_unset=True)
+        update_data_dict = model_update_data.model_dump(exclude_unset=True)
         for key, value in update_data_dict.items():
             setattr(model, key, value)
 
@@ -732,7 +732,7 @@ class AnalyticsService:
         if not calculation:
             return None
 
-        update_data_dict = roi_update_data.dict(exclude_unset=True)
+        update_data_dict = roi_update_data.model_dump(exclude_unset=True)
         needs_recalculation = False
 
         # Handle metric_links if provided in the update
@@ -1312,7 +1312,7 @@ class AnalyticsService:
             # Benchmark is tenant-specific, but user's tenant does not match.
             return None
 
-        update_data_dict = benchmark_update_data.dict(exclude_unset=True)
+        update_data_dict = benchmark_update_data.model_dump(exclude_unset=True)
         for key, value in update_data_dict.items():
             setattr(benchmark, key, value)
 
@@ -1564,7 +1564,7 @@ class AnalyticsService:
                     tenant_id=tenant_id, # Ensure widget tenant matches dashboard
                     widget_type=widget_create_data.widget_type,
                     title=widget_create_data.title,
-                    data_source_config=widget_create_data.data_source_config.dict(),
+                    data_source_config=widget_create_data.data_source_config.model_dump(),
                     display_options=widget_create_data.display_options
                 )
                 self.db.add(db_widget)
@@ -1578,9 +1578,9 @@ class AnalyticsService:
                     # or they refer to the order of widgets in the `widgets` list.
                     # For now, let's assume layout in DashboardCreate might be conceptual or handled by default.
                     # Default placement:
-                    layout_items.append(analytics_schemas.LayoutItem(widget_config_id=db_widget.id, x=(i % 4) * 3, y=(i // 4) * 2, w=3, h=2).dict())
+                    layout_items.append(analytics_schemas.LayoutItem(widget_config_id=db_widget.id, x=(i % 4) * 3, y=(i // 4) * 2, w=3, h=2).model_dump())
                 else: # Default layout if not specified or mismatched
-                    layout_items.append(analytics_schemas.LayoutItem(widget_config_id=db_widget.id, x=(i % 4) * 3, y=(i // 4) * 2, w=3, h=2).dict())
+                    layout_items.append(analytics_schemas.LayoutItem(widget_config_id=db_widget.id, x=(i % 4) * 3, y=(i // 4) * 2, w=3, h=2).model_dump())
 
 
         db_dashboard.layout = layout_items
@@ -1614,10 +1614,10 @@ class AnalyticsService:
         if not db_dashboard:
             return None
 
-        update_data = dashboard_update_data.dict(exclude_unset=True)
+        update_data = dashboard_update_data.model_dump(exclude_unset=True)
         for key, value in update_data.items():
             if key == "layout" and value is not None: # Ensure layout items are dicts
-                setattr(db_dashboard, key, [item.dict() if isinstance(item, BaseModel) else item for item in value])
+                setattr(db_dashboard, key, [item.model_dump() if isinstance(item, BaseModel) else item for item in value])
             else:
                 setattr(db_dashboard, key, value)
 
@@ -1638,7 +1638,7 @@ class AnalyticsService:
             if item.widget_config_id not in existing_widget_ids:
                 raise ValueError(f"Widget with config_id {item.widget_config_id} not found in dashboard {dashboard_id}.")
 
-        db_dashboard.layout = [item.dict() for item in layout_data]
+        db_dashboard.layout = [item.model_dump() for item in layout_data]
         db_dashboard.updated_at = datetime.utcnow()
         self.db.commit()
         self.db.refresh(db_dashboard)
@@ -1667,7 +1667,7 @@ class AnalyticsService:
             tenant_id=tenant_id, # From dashboard's tenant
             widget_type=widget_data.widget_type,
             title=widget_data.title,
-            data_source_config=widget_data.data_source_config.dict(),
+            data_source_config=widget_data.data_source_config.model_dump(),
             display_options=widget_data.display_options
         )
         self.db.add(db_widget)
@@ -1680,7 +1680,7 @@ class AnalyticsService:
 
         new_layout_item = analytics_schemas.LayoutItem(widget_config_id=db_widget.id, x=0, y=99, w=3, h=2) # Default pos (e.g., bottom)
         if db_dashboard.layout is None: db_dashboard.layout = [] # Ensure layout is a list
-        db_dashboard.layout.append(new_layout_item.dict())
+        db_dashboard.layout.append(new_layout_item.model_dump())
         db_dashboard.updated_at = datetime.utcnow()
 
         self.db.commit()
@@ -1707,10 +1707,10 @@ class AnalyticsService:
         if not dashboard_owner_check:
             return None # User does not own the parent dashboard
 
-        update_data = widget_update_data.dict(exclude_unset=True)
+        update_data = widget_update_data.model_dump(exclude_unset=True)
         for key, value in update_data.items():
             if key == "data_source_config" and value is not None:
-                 setattr(db_widget, key, value.dict() if isinstance(value, BaseModel) else value)
+                 setattr(db_widget, key, value.model_dump() if isinstance(value, BaseModel) else value)
             else:
                 setattr(db_widget, key, value)
 

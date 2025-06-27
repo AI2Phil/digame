@@ -440,7 +440,7 @@ class ReportSchedulingService:
         if not db_schedule:
             return None
 
-        update_data = schedule_update_data.dict(exclude_unset=True)
+        update_data = schedule_update_data.model_dump(exclude_unset=True)
 
         if "cron_schedule" in update_data or "timezone" in update_data:
             cron = update_data.get("cron_schedule", db_schedule.cron_expression)

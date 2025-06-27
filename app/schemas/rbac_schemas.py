@@ -10,7 +10,7 @@ class PermissionBase(BaseModel):
 class PermissionCreate(PermissionBase):
     pass
 
-class PermissionUpdate(PermissionBase): # If partial updates are allowed, make fields Optional
+class PermissionUpdate(BaseModel): # Don't inherit from PermissionBase to avoid type conflicts
     name: Optional[str] = None
     description: Optional[str] = None
 
@@ -30,7 +30,7 @@ class RoleBase(BaseModel):
 class RoleCreate(RoleBase):
     pass
 
-class RoleUpdate(RoleBase): # If partial updates are allowed, make fields Optional
+class RoleUpdate(BaseModel): # Don't inherit from RoleBase to avoid type conflicts
     name: Optional[str] = None
     description: Optional[str] = None
     # permissions: Optional[List[int]] = None # For updating permissions by ID list
@@ -72,8 +72,34 @@ class UserMinimumResponse(BaseModel): # A very basic User representation
     class Config:
         from_attributes = True
 
-class UserWithRolesResponse(UserMinimumResponse):
-    roles: List[RoleResponse] = [] # Or List[RoleBase] if full permission details are not needed here
+# Simplified role response for user assignments (without nested permissions)
+class RoleBasicResponse(BaseModel):
+    id: int
+    name: str
+    description: Optional[str] = None
+    created_at: datetime
+    updated_at: datetime
 
     class Config:
         from_attributes = True
+
+class UserWithRolesResponse(UserMinimumResponse):
+    roles: List[RoleBasicResponse] = [] # Use simplified role response to avoid deep nesting
+    
+    @classmethod
+    def from_user(cls, user):
+        """Custom factory method to safely serialize User with roles"""
+        return cls(
+            id=user.id,
+            username=user.username,
+            is_active=user.is_active,
+            roles=[
+                RoleBasicResponse(
+                    id=role.id,
+                    name=role.name,
+                    description=role.description,
+                    created_at=role.created_at,
+                    updated_at=role.updated_at
+                ) for role in user.get_roles()
+            ]
+        )

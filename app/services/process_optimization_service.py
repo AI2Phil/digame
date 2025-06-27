@@ -170,7 +170,7 @@ class ProcessOptimizationService:
 
     def _create_recommendation_from_schema(self, rec_create_schema: OptimizationRecommendationCreate, tenant_id: int) -> OptimizationRecommendation:
         """Helper to create and save an OptimizationRecommendation from its Pydantic schema."""
-        rec_data = rec_create_schema.dict()
+        rec_data = rec_create_schema.model_dump()
         db_rec = OptimizationRecommendation()
         db_rec.tenant_id = tenant_id
         db_rec.recommendation_type = rec_data["recommendation_type"]
@@ -223,7 +223,7 @@ class ProcessOptimizationService:
         if not recommendation:
             return None
 
-        update_data = status_update.dict(exclude_unset=True)
+        update_data = status_update.model_dump(exclude_unset=True)
 
         for key, value in update_data.items():
             if hasattr(recommendation, key):

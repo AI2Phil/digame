@@ -815,14 +815,14 @@ def get_reporting_service(
         # The content_blocks in report_def_create are Pydantic models.
         # If ReportDefinition SQLAlchemy model stores content_blocks as JSON,
         # they need to be converted.
-        content_blocks_as_dict = [block.dict() for block in report_def_create.content_blocks]
+        content_blocks_as_dict = [block.model_dump() for block in report_def_create.content_blocks]
 
         db_report_def = ReportDefinition(
             name=report_def_create.name,
             description=report_def_create.description,
             report_type=report_def_create.report_type,
             content_blocks=content_blocks_as_dict, # Store as JSON
-            global_filters=[filter.dict() for filter in report_def_create.global_filters], # Store as JSON
+            global_filters=[filter.model_dump() for filter in report_def_create.global_filters], # Store as JSON
             output_format=report_def_create.output_format,
             tenant_id=tenant_id,
             user_id=user_id, # Assuming ReportDefinition model has user_id
@@ -876,12 +876,12 @@ def get_reporting_service(
              # Or raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to update this report definition")
             return None
 
-        update_data = report_def_update.dict(exclude_unset=True)
+        update_data = report_def_update.model_dump(exclude_unset=True)
         for key, value in update_data.items():
             if key == "content_blocks" and value is not None:
-                setattr(db_report_def, key, [block.dict() for block in value])
+                setattr(db_report_def, key, [block.model_dump() for block in value])
             elif key == "global_filters" and value is not None:
-                setattr(db_report_def, key, [filter.dict() for filter in value])
+                setattr(db_report_def, key, [filter.model_dump() for filter in value])
             elif hasattr(db_report_def, key):
                 setattr(db_report_def, key, value)
 

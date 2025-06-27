@@ -6,14 +6,23 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "build:analyze": "ANALYZE=true next build",
     "start": "next start",
     "lint": "next lint",
+    "lint:fix": "next lint --fix",
     "type-check": "tsc --noEmit",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
+    "test:performance": "npm run build && npm run lighthouse",
     "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build"
+    "build-storybook": "storybook build",
+    "lighthouse": "lighthouse http://localhost:3000 --output=html --output-path=./lighthouse-report.html --chrome-flags='--headless'",
+    "performance:audit": "npm run build:analyze && npm run lighthouse",
+    "optimize": "npm run lint:fix && npm run type-check && npm run test:coverage && npm run build:analyze",
+    "bundle:analyze": "npx webpack-bundle-analyzer .next/static/chunks/*.js",
+    "clean": "rm -rf .next out node_modules/.cache",
+    "reinstall": "npm run clean && npm install"
   },
   "dependencies": {
     "@emotion/react": "^11.11.1",

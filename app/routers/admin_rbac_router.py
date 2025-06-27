@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from typing import List
 
@@ -108,7 +109,7 @@ def delete_existing_permission(permission_id: int, db: Session = Depends(get_db)
 # --- Assignment Endpoints ---
 # Using names for assignment as per schemas for user-friendliness
 
-@router.post("/users/assign-role", response_model=rbac_schemas.UserWithRolesResponse) # Adjust response model as needed
+@router.post("/users/assign-role") # Remove response_model to avoid serialization issues
 def assign_role_to_user_endpoint(assignment: rbac_schemas.UserRoleAssignRequest, db: Session = Depends(get_db)):
     user = rbac_crud.assign_role_to_user_by_names(db, user_id=assignment.user_id, role_name=assignment.role_name)
     if user is None:
@@ -121,9 +122,32 @@ def assign_role_to_user_endpoint(assignment: rbac_schemas.UserRoleAssignRequest,
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Role '{assignment.role_name}' not found.")
         # If both exist but assignment failed for other reasons (e.g. already assigned, though current crud handles it)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Could not assign role to user.")
-    return user # This user object will have its roles loaded due to `assign_role_to_user_by_names`
+    
+    # Manually query roles to avoid the problematic @property method
+    from ..models.rbac import UserRole, Role
+    user_roles = db.query(UserRole).filter(UserRole.user_id == user.id).all()
+    roles_data = []
+    for user_role in user_roles:
+        role = db.query(Role).filter(Role.id == user_role.role_id).first()
+        if role:
+            roles_data.append({
+                "id": role.id,
+                "name": role.name,
+                "description": role.description,
+                "created_at": role.created_at.isoformat() if role.created_at else None,
+                "updated_at": role.updated_at.isoformat() if role.updated_at else None
+            })
+    
+    # Use JSONResponse to explicitly control serialization
+    response_data = {
+        "id": user.id,
+        "username": user.username,
+        "is_active": user.is_active,
+        "roles": roles_data
+    }
+    return JSONResponse(content=response_data, status_code=200)
 
-@router.post("/users/remove-role", response_model=rbac_schemas.UserWithRolesResponse) # Adjust response model
+@router.post("/users/remove-role") # Remove response_model to avoid serialization issues
 def remove_role_from_user_endpoint(assignment: rbac_schemas.UserRoleRemoveRequest, db: Session = Depends(get_db)):
     user = rbac_crud.remove_role_from_user_by_names(db, user_id=assignment.user_id, role_name=assignment.role_name)
     if user is None:
@@ -134,7 +158,30 @@ def remove_role_from_user_endpoint(assignment: rbac_schemas.UserRoleRemoveReques
         if not db_role:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Role '{assignment.role_name}' not found.")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Could not remove role from user.")
-    return user
+    
+    # Manually query roles to avoid the problematic @property method
+    from ..models.rbac import UserRole, Role
+    user_roles = db.query(UserRole).filter(UserRole.user_id == user.id).all()
+    roles_data = []
+    for user_role in user_roles:
+        role = db.query(Role).filter(Role.id == user_role.role_id).first()
+        if role:
+            roles_data.append({
+                "id": role.id,
+                "name": role.name,
+                "description": role.description,
+                "created_at": role.created_at.isoformat() if role.created_at else None,
+                "updated_at": role.updated_at.isoformat() if role.updated_at else None
+            })
+    
+    # Use JSONResponse to explicitly control serialization
+    response_data = {
+        "id": user.id,
+        "username": user.username,
+        "is_active": user.is_active,
+        "roles": roles_data
+    }
+    return JSONResponse(content=response_data, status_code=200)
 
 @router.post("/roles/add-permission", response_model=rbac_schemas.RoleResponse)
 def add_permission_to_role_endpoint(assignment: rbac_schemas.RolePermissionAssignRequest, db: Session = Depends(get_db)):

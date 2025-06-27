@@ -96,7 +96,7 @@ class AdminConfigService:
         if not db_config:
             return None
         
-        update_data = config_update.dict(exclude_unset=True)
+        update_data = config_update.model_dump(exclude_unset=True)
         
         # Encrypt API key if provided
         if 'api_key' in update_data and update_data['api_key']:
@@ -380,7 +380,7 @@ class AdminConfigService:
         if not db_config:
             return None
         
-        update_data = config_update.dict(exclude_unset=True)
+        update_data = config_update.model_dump(exclude_unset=True)
         
         # Encrypt sensitive values
         if 'config_value' in update_data and db_config.is_sensitive:

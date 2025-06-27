@@ -20,7 +20,7 @@ class CustomDashboardService:
         dashboard_data: schemas.AnalyticsDashboardCreate
     ) -> AnalyticsDashboard:
         db_dashboard = AnalyticsDashboard(
-            **dashboard_data.dict(),
+            **dashboard_data.model_dump(),
             tenant_id=tenant_id,
             user_id=user_id,
             dashboard_uuid=str(uuid.uuid4())
@@ -53,7 +53,7 @@ class CustomDashboardService:
         if not db_dashboard or db_dashboard.user_id != user_id:
             return None # Or raise HTTPException for permission issues
 
-        update_data = dashboard_update_data.dict(exclude_unset=True)
+        update_data = dashboard_update_data.model_dump(exclude_unset=True)
         for key, value in update_data.items():
             setattr(db_dashboard, key, value)
 
@@ -81,7 +81,7 @@ class CustomDashboardService:
         widget_data: schemas.DashboardWidgetConfigCreate
     ) -> DashboardWidget:
         db_widget = DashboardWidget(
-            **widget_data.dict(),
+            **widget_data.model_dump(),
             tenant_id=tenant_id,
             widget_uuid=str(uuid.uuid4())
         )
@@ -111,7 +111,7 @@ class CustomDashboardService:
         if not db_widget:
             return None
 
-        update_data = widget_update_data.dict(exclude_unset=True)
+        update_data = widget_update_data.model_dump(exclude_unset=True)
         for key, value in update_data.items():
             setattr(db_widget, key, value)
 
@@ -191,7 +191,7 @@ class CustomDashboardService:
                     entity_id=query_params.get("entity_id"),
                     limit=limit
                 )
-                data_payload = [schemas.PerformanceMetricInDB.from_orm(m).dict() for m in metrics]
+                data_payload = [schemas.PerformanceMetricInDB.model_validate(m).model_dump() for m in metrics]
 
             elif data_source_type == "performance_metric_timeseries":
                 metric_name = query_params.get("metric_name")
@@ -221,7 +221,7 @@ class CustomDashboardService:
                         prediction_id=prediction_id, tenant_id=tenant_id
                     )
                     if prediction_record:
-                        data_payload = schemas.AnalyticsPredictionInDB.from_orm(prediction_record).dict()
+                        data_payload = schemas.AnalyticsPredictionInDB.model_validate(prediction_record).model_dump()
                     else:
                         data_payload = {"error": "Prediction not found."}
                 else:
@@ -233,7 +233,7 @@ class CustomDashboardService:
                             tenant_id=tenant_id, model_id=model_id, entity_id=entity_id, entity_type=entity_type, limit=1
                         )
                         if predictions:
-                            data_payload = schemas.AnalyticsPredictionInDB.from_orm(predictions[0]).dict()
+                            data_payload = schemas.AnalyticsPredictionInDB.model_validate(predictions[0]).model_dump()
                         else:
                             data_payload = {"error": "Prediction not found for model/entity."}
                     else:
@@ -247,7 +247,7 @@ class CustomDashboardService:
                     entity_id=query_params.get("entity_id"),
                     limit=limit
                 )
-                data_payload = [schemas.AnalyticsPredictionInDB.from_orm(p).dict() for p in predictions]
+                data_payload = [schemas.AnalyticsPredictionInDB.model_validate(p).model_dump() for p in predictions]
 
             elif data_source_type == "roi_calculation_detail":
                 calculation_id = query_params.get("calculation_id")
@@ -256,7 +256,7 @@ class CustomDashboardService:
                         calculation_id=calculation_id, tenant_id=tenant_id
                     )
                     if calculation:
-                        data_payload = schemas.ROICalculationInDB.from_orm(calculation).dict()
+                        data_payload = schemas.ROICalculationInDB.model_validate(calculation).model_dump()
                     else:
                         data_payload = {"error": "ROI Calculation not found."}
                 else:
@@ -269,7 +269,7 @@ class CustomDashboardService:
                     entity_id=query_params.get("entity_id"),
                     limit=limit
                 )
-                data_payload = [schemas.ROICalculationInDB.from_orm(c).dict() for c in calculations]
+                data_payload = [schemas.ROICalculationInDB.model_validate(c).model_dump() for c in calculations]
 
             elif data_source_type == "benchmark_comparison_detail":
                 metric_id = query_params.get("performance_metric_id")
@@ -293,7 +293,7 @@ class CustomDashboardService:
                     category=query_params.get("category"),
                     active_only=query_params.get("active_only", True)
                 )
-                data_payload = [schemas.AnalyticsModelInDB.from_orm(m).dict() for m in models]
+                data_payload = [schemas.AnalyticsModelInDB.model_validate(m).model_dump() for m in models]
 
             # --- New Workflow-related Data Sources ---
             elif data_source_type == "workflow_instance_summary":

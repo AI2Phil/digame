@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware # Added for GZip compression
+from fastapi.responses import JSONResponse
 import logging
 from pythonjsonlogger import jsonlogger
 import sys # Required for sys.stdout
@@ -301,12 +302,18 @@ async def add_request_context(request: Request, call_next):
 # Custom 404 and 500 handlers were in the original, kept them simplified here.
 @app.exception_handler(404)
 async def not_found_handler(request: Request, exc):
-    return {"detail": f"Resource not found: {request.url.path}", "status_code": 404}
+    return JSONResponse(
+        status_code=404,
+        content={"detail": f"Resource not found: {request.url.path}", "status_code": 404}
+    )
 
 @app.exception_handler(500)
 async def internal_error_handler(request: Request, exc):
     logger.error(f"Internal server error on {request.method} {request.url}: {exc}", exc_info=True)
-    return {"detail": "Internal Server Error", "status_code": 500}
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Internal Server Error", "status_code": 500}
+    )
 
 # Development server runner
 if __name__ == "__main__":

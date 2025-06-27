@@ -1,24 +1,173 @@
-import * as React from 'react';
-import { cn } from '../../lib/utils'; // Using the cn utility from Phase 1
+import React, { useState } from 'react';
+import { Eye, EyeOff, AlertCircle, CheckCircle } from 'lucide-react';
+import { cn } from '../../lib/utils';
 
-export interface InputProps
-  extends React.InputHTMLAttributes<HTMLInputElement> {}
+export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+  label?: string;
+  error?: string;
+  success?: string;
+  helperText?: string;
+  containerClassName?: string;
+  leftIcon?: React.ReactElement;
+  rightIcon?: React.ReactElement;
+  showPasswordToggle?: boolean;
+}
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ className, type, ...props }, ref) => {
+  ({
+    type = 'text',
+    label,
+    placeholder,
+    error,
+    success,
+    helperText,
+    required = false,
+    disabled = false,
+    className = '',
+    containerClassName = '',
+    leftIcon,
+    rightIcon,
+    showPasswordToggle = false,
+    ...props
+  }, ref) => {
+    const [showPassword, setShowPassword] = useState(false);
+    const [focused, setFocused] = useState(false);
+
+    const inputType = type === 'password' && showPassword ? 'text' : type;
+    const hasError = !!error;
+    const hasSuccess = !!success;
+    const hasLeftIcon = !!leftIcon;
+    const hasRightIcon = !!rightIcon || (type === 'password' && showPasswordToggle) || hasError || hasSuccess;
+
+    const handlePasswordToggle = () => {
+      setShowPassword(!showPassword);
+    };
+
+    const renderIcon = (icon: React.ReactElement | undefined, position: 'left' | 'right') => {
+      const positionClasses = position === 'left' ? 'left-3' : 'right-3';
+      const iconClasses = `absolute ${positionClasses} top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500`;
+
+      if (position === 'right' && type === 'password' && showPasswordToggle) {
+        return (
+          <button
+            type="button"
+            onClick={handlePasswordToggle}
+            className={cn(iconClasses, 'hover:text-gray-600 dark:hover:text-gray-300 focus:outline-none focus:text-gray-600 dark:focus:text-gray-300')}
+            aria-label={showPassword ? 'Hide password' : 'Show password'}
+          >
+            {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+          </button>
+        );
+      }
+
+      if (position === 'right' && hasError) {
+        return (
+          <AlertCircle className={cn(iconClasses, 'text-red-500 w-4 h-4')} aria-hidden="true" />
+        );
+      }
+
+      if (position === 'right' && hasSuccess) {
+        return (
+          <CheckCircle className={cn(iconClasses, 'text-green-500 w-4 h-4')} aria-hidden="true" />
+        );
+      }
+
+      if (icon) {
+        return React.cloneElement(icon, {
+          className: cn(iconClasses, 'w-4 h-4'),
+          'aria-hidden': 'true'
+        });
+      }
+
+      return null;
+    };
+
     return (
-      <input
-        type={type}
-        className={cn(
-          'flex h-10 w-full rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:text-slate-50 dark:focus-visible:ring-slate-400 dark:placeholder:text-slate-500',
-          className
+      <div className={cn('space-y-1', containerClassName)}>
+        {label && (
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+            {label}
+            {required && <span className="text-red-500 ml-1" aria-label="required">*</span>}
+          </label>
         )}
-        ref={ref}
-        {...props}
-      />
+        
+        <div className="relative">
+          <input
+            ref={ref}
+            type={inputType}
+            placeholder={placeholder}
+            disabled={disabled}
+            required={required}
+            className={cn(
+              'w-full px-3 py-2 text-sm bg-white dark:bg-gray-800 border rounded-lg',
+              'placeholder-gray-400 dark:placeholder-gray-500',
+              'text-gray-900 dark:text-gray-100',
+              'transition-all duration-200 ease-in-out theme-transition',
+              'focus:outline-none focus:ring-2 focus:ring-offset-2',
+              'dark:focus:ring-offset-gray-800',
+              'disabled:opacity-50 disabled:cursor-not-allowed',
+              hasError
+                ? 'border-red-300 dark:border-red-600 focus:border-red-500 focus:ring-red-500'
+                : hasSuccess
+                ? 'border-green-300 dark:border-green-600 focus:border-green-500 focus:ring-green-500'
+                : 'border-gray-300 dark:border-gray-600 focus:border-blue-500 focus:ring-blue-500',
+              hasLeftIcon ? 'pl-10' : 'pl-3',
+              hasRightIcon ? 'pr-10' : 'pr-3',
+              className
+            )}
+            onFocus={() => setFocused(true)}
+            onBlur={() => setFocused(false)}
+            aria-invalid={hasError}
+            aria-describedby={
+              error ? `${props.id || 'input'}-error` : 
+              success ? `${props.id || 'input'}-success` : 
+              helperText ? `${props.id || 'input'}-helper` : undefined
+            }
+            {...props}
+          />
+          
+          {hasLeftIcon && renderIcon(leftIcon, 'left')}
+          {hasRightIcon && renderIcon(rightIcon, 'right')}
+        </div>
+
+        {/* Helper text, error, or success message */}
+        {(error || success || helperText) && (
+          <div className="text-xs">
+            {error && (
+              <p
+                id={`${props.id || 'input'}-error`}
+                className="text-red-600 dark:text-red-400 flex items-center gap-1"
+                role="alert"
+              >
+                <AlertCircle className="w-3 h-3" aria-hidden="true" />
+                {error}
+              </p>
+            )}
+            {success && !error && (
+              <p
+                id={`${props.id || 'input'}-success`}
+                className="text-green-600 dark:text-green-400 flex items-center gap-1"
+              >
+                <CheckCircle className="w-3 h-3" aria-hidden="true" />
+                {success}
+              </p>
+            )}
+            {helperText && !error && !success && (
+              <p
+                id={`${props.id || 'input'}-helper`}
+                className="text-gray-500 dark:text-gray-400"
+              >
+                {helperText}
+              </p>
+            )}
+          </div>
+        )}
+      </div>
     );
   }
 );
+
 Input.displayName = 'Input';
 
 export { Input };
+export default Input;

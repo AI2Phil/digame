@@ -322,7 +322,7 @@ class SecurityAuditService:
     def log_event(self, log_data: SecurityAuditLogCreate) -> SecurityAuditLog:
         """Log a security event"""
         log_entry = SecurityAuditLog()
-        for key, value in log_data.dict().items():
+        for key, value in log_data.model_dump().items():
             setattr(log_entry, key, value)
         self.db.add(log_entry)
         self.db.commit()
@@ -403,7 +403,7 @@ class SecurityPolicyService:
     def create_policy(self, policy_data: SecurityPolicyCreate, created_by: int) -> SecurityPolicy:
         """Create a new security policy"""
         policy = SecurityPolicy()
-        for key, value in policy_data.dict().items():
+        for key, value in policy_data.model_dump().items():
             setattr(policy, key, value)
         policy.created_by = created_by
         self.db.add(policy)
