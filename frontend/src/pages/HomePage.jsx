@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import Button from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { Progress } from '../components/ui/Progress';
@@ -10,6 +10,7 @@ import { Card, CardContent } from '../components/ui/Card';
 
 export default function HomePage({ onDemoAccess, onLogin }) {
   const { t } = useTranslation('common'); // Assuming 'common' namespace
+  const navigate = useNavigate();
   const [showOnboarding, setShowOnboarding] = useState(false);
 
   const handleGetStarted = () => {
@@ -17,7 +18,7 @@ export default function HomePage({ onDemoAccess, onLogin }) {
   };
 
   const handleDemoClick = () => {
-    window.location.href = '/demo';
+    navigate('/demo');
   };
 
   const [showAuthForm, setShowAuthForm] = useState(false);
@@ -109,9 +110,8 @@ export default function HomePage({ onDemoAccess, onLogin }) {
                   variant="primary"
                   size="lg"
                   className="w-full"
-                  icon="🚀"
                 >
-                  Launch Demo Dashboard
+                  🚀 Launch Demo Dashboard
                 </Button>
               </CardContent>
             </Card>
@@ -157,13 +157,12 @@ export default function HomePage({ onDemoAccess, onLogin }) {
                 </div>
 
                 <Button
-                  onClick={handleSignUp}
+                  onClick={() => navigate('/auth')}
                   variant="primary"
                   size="lg"
                   className="w-full"
-                  icon="🎯"
                 >
-                  Create Account
+                  🎯 Create Account
                 </Button>
                 <p className="text-center text-sm text-gray-500 mt-3">
                   Free 30-day trial • No credit card required
@@ -197,9 +196,8 @@ export default function HomePage({ onDemoAccess, onLogin }) {
             onClick={handleGetStarted}
             variant="primary"
             size="md"
-            icon="🚀"
           >
-            {t('getStarted', 'Get Started')}
+            🚀 {t('getStarted', 'Get Started')}
           </Button>
         </div>
       </nav>
@@ -220,19 +218,17 @@ export default function HomePage({ onDemoAccess, onLogin }) {
               onClick={handleGetStarted}
               variant="primary"
               size="xl"
-              icon="🎯"
               className="text-lg"
             >
-              Start Your Journey
+              🎯 Start Your Journey
             </Button>
             <Button
               onClick={handleDemoClick}
               variant="outline"
               size="xl"
-              icon="🚀"
               className="text-lg"
             >
-              Try Demo
+              🚀 Try Demo
             </Button>
           </div>
 
@@ -413,10 +409,9 @@ export default function HomePage({ onDemoAccess, onLogin }) {
             onClick={handleGetStarted}
             variant="secondary"
             size="xl"
-            icon="⚡"
             className="bg-white text-blue-600 hover:bg-gray-50 text-lg"
           >
-            Get Started Today
+            ⚡ Get Started Today
           </Button>
         </div>
       </div>

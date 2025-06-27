@@ -182,7 +182,9 @@ app.add_middleware(LocaleMiddleware)
 
 # Configure authentication middleware
 logger.info("Configuring authentication middleware...")
-configure_auth_middleware(app)
+from .auth.config import get_middleware_config
+middleware_config = get_middleware_config()
+configure_auth_middleware(app, middleware_config)
 
 # Add GZip middleware for response compression
 # Note: Temporarily commented out due to type issues
