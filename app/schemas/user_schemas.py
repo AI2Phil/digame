@@ -53,6 +53,7 @@ class User(UserBase): # UserBase already includes detailed_bio, contact_info, sk
     created_at: datetime
     updated_at: datetime
     kudos_count: Optional[int] = 0
+    onboarding_completed: bool = False
 
     # Relationships
     projects: List[ProjectSchema] = Field(default_factory=list)

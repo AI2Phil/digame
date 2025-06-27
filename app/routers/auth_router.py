@@ -19,11 +19,18 @@ class Token(BaseModel):
     refresh_token: str
     token_type: str
 
+class AuthResponse(BaseModel):
+    access_token: str
+    refresh_token: str
+    token_type: str
+    needs_onboarding: bool
+    user: UserSchema
+
 class UserLogin(BaseModel):
     username: str
     password: str
 
-@router.post("/register", response_model=UserSchema, status_code=status.HTTP_201_CREATED)
+@router.post("/register", response_model=AuthResponse, status_code=status.HTTP_201_CREATED)
 def register_user(
     user_data: UserCreate,
     db: Session = Depends(get_db)
@@ -32,7 +39,17 @@ def register_user(
     Register a new user
     """
     user, tokens = auth_service.register_user(db, user_data)
-    return user
+    
+    # Convert SQLAlchemy model to Pydantic schema
+    user_schema = UserSchema.from_orm(user)
+    
+    return AuthResponse(
+        access_token=tokens["access_token"],
+        refresh_token=tokens["refresh_token"],
+        token_type=tokens["token_type"],
+        needs_onboarding=not user.onboarding_completed,
+        user=user_schema
+    )
 
 @router.post("/token", response_model=Token)
 def login_for_access_token(
