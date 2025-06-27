@@ -156,3 +156,274 @@ RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
 COPY --from=builder /app/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
+USER nextjs
+
+EXPOSE 3000
+ENV PORT 3000
+
+CMD ["node", "server.js"]
+```
+
+#### **Backend Dockerfile**
+```dockerfile
+# Production Dockerfile for FastAPI
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    gcc \
+    postgresql-client \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy application code
+COPY . .
+
+# Create non-root user
+RUN useradd --create-home --shell /bin/bash app
+RUN chown -R app:app /app
+USER app
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
+
+EXPOSE 8000
+
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]
+```
+
+### **Docker Compose (Production)**
+```yaml
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.prod
+    ports:
+      - "8000:8000"
+    environment:
+      - ENVIRONMENT=production
+    depends_on:
+      - db
+      - redis
+    restart: unless-stopped
+
+  db:
+    image: postgres:14
+    environment:
+      POSTGRES_DB: digame_prod
+      POSTGRES_USER: digame_user
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backups:/backups
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+      - ./ssl:/etc/ssl
+    depends_on:
+      - frontend
+      - backend
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+```
+
+## 🚦 **DEPLOYMENT STEPS**
+
+### **1. Pre-Deployment Preparation**
+```bash
+# Clone repository
+git clone https://github.com/your-org/digame.git
+cd digame
+
+# Checkout production branch
+git checkout main
+
+# Verify all tests pass
+cd backend && python -m pytest
+cd ../frontend && npm test
+
+# Build and verify
+cd frontend && npm run build
+cd ../backend && python -m pytest --cov=app
+```
+
+### **2. Database Setup**
+```bash
+# Create production database
+createdb digame_prod
+
+# Run migrations
+cd backend
+alembic upgrade head
+
+# Verify schema
+psql digame_prod -c "\dt"
+```
+
+### **3. SSL Certificate Setup**
+```bash
+# Using Let's Encrypt (recommended)
+certbot certonly --webroot -w /var/www/html -d app.digame.com -d api.digame.com
+
+# Or upload custom certificates to ./ssl/
+```
+
+### **4. Deploy with Docker Compose**
+```bash
+# Set environment variables
+export DB_PASSWORD=your-secure-password
+
+# Deploy
+docker-compose -f docker-compose.prod.yml up -d
+
+# Verify deployment
+docker-compose ps
+docker-compose logs -f
+```
+
+### **5. Post-Deployment Verification**
+```bash
+# Health checks
+curl https://api.digame.com/health
+curl https://app.digame.com/api/health
+
+# Performance verification
+npm run lighthouse
+
+# Security scan
+npm audit
+```
+
+## 📊 **MONITORING & MAINTENANCE**
+
+### **Application Monitoring**
+- **Health Checks**: `/health` endpoints for all services
+- **Performance Metrics**: Real-time monitoring dashboard
+- **Error Tracking**: Sentry integration for error monitoring
+- **Uptime Monitoring**: External monitoring service (Pingdom/DataDog)
+
+### **Database Monitoring**
+- **Connection Pooling**: Monitor active connections
+- **Query Performance**: Slow query logging and analysis
+- **Backup Verification**: Automated backup testing
+- **Replication Lag**: Monitor master-slave synchronization
+
+### **Security Monitoring**
+- **SSL Certificate**: Automated renewal and monitoring
+- **Security Headers**: Verify CSP and security policies
+- **Access Logs**: Monitor for suspicious activity
+- **Dependency Updates**: Automated security updates
+
+## 🔄 **BACKUP & RECOVERY**
+
+### **Database Backups**
+```bash
+# Daily automated backup
+pg_dump digame_prod | gzip > /backups/digame_$(date +%Y%m%d).sql.gz
+
+# Backup retention (keep 30 days)
+find /backups -name "digame_*.sql.gz" -mtime +30 -delete
+```
+
+### **Application Backups**
+```bash
+# Code repository (Git)
+git push origin main --tags
+
+# Static assets
+aws s3 sync /app/public s3://digame-assets-backup/
+
+# Configuration files
+tar -czf /backups/config_$(date +%Y%m%d).tar.gz /app/config/
+```
+
+### **Recovery Procedures**
+```bash
+# Database recovery
+gunzip -c /backups/digame_20250626.sql.gz | psql digame_prod
+
+# Application recovery
+git checkout main
+docker-compose -f docker-compose.prod.yml up -d
+```
+
+## 🚨 **INCIDENT RESPONSE**
+
+### **Escalation Procedures**
+1. **Level 1**: Automated alerts and self-healing
+2. **Level 2**: On-call engineer notification
+3. **Level 3**: Team lead and management notification
+4. **Level 4**: Executive and customer communication
+
+### **Common Issues & Solutions**
+- **High Memory Usage**: Scale horizontally or optimize queries
+- **Database Locks**: Identify and terminate long-running queries
+- **SSL Expiry**: Automated renewal with Let's Encrypt
+- **Performance Degradation**: Activate automated optimization workflows
+
+## 📈 **SCALING CONSIDERATIONS**
+
+### **Horizontal Scaling**
+- **Frontend**: Multiple Next.js instances behind load balancer
+- **Backend**: Multiple FastAPI workers with shared Redis cache
+- **Database**: Read replicas for query distribution
+
+### **Vertical Scaling**
+- **Memory**: Increase for better caching and performance
+- **CPU**: Scale based on concurrent user load
+- **Storage**: Monitor growth and scale proactively
+
+## ✅ **PRODUCTION DEPLOYMENT CHECKLIST**
+
+- [ ] Environment variables configured
+- [ ] SSL certificates installed
+- [ ] Database migrations completed
+- [ ] Docker containers deployed
+- [ ] Health checks passing
+- [ ] Monitoring configured
+- [ ] Backups scheduled
+- [ ] Security scan completed
+- [ ] Performance baseline established
+- [ ] Incident response procedures documented
+
+---
+
+**Deployment Status**: Ready for Production  
+**Next Review**: 30 days post-deployment  
+**Support Contact**: DevOps Team <devops@digame.com>
