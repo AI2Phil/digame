@@ -2,7 +2,7 @@
 Multi-tenant architecture models for the Digame platform
 """
 
-from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, JSON, ForeignKey
+from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, JSON, ForeignKey, Float
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from .user import Base  # Use the same Base as User model
@@ -26,17 +26,35 @@ class Tenant(Base):
     features = Column(JSON, default={})
     branding = Column(JSON, nullable=True, default={})
 
-    subscription_tier = Column(String(50), default="basic")
-    max_users = Column(Integer, nullable=True, default=10)
-    storage_limit_gb = Column(Integer, nullable=True, default=5)
-    api_rate_limit = Column(Integer, nullable=True, default=1000)
+    # Subscription Information
+    subscription_tier = Column(String(50), default="free")  # free, team, enterprise
+    subscription_status = Column(String(50), default="trial")  # trial, active, suspended, cancelled
+    subscription_expires = Column(DateTime, nullable=True)
+    billing_email = Column(String(255), nullable=True)
+    
+    # Platform Owner Management
+    owner_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)  # Tenant owner
+    created_by = Column(Integer, ForeignKey("users.id"), nullable=True)  # Platform Owner who created
+    managed_by = Column(Integer, ForeignKey("users.id"), nullable=True)   # Assigned Platform Owner manager
+    
+    # Tenant Limits (based on subscription tier)
+    max_users = Column(Integer, nullable=True, default=1)
+    max_storage_gb = Column(Integer, nullable=True, default=1)
+    max_api_calls_monthly = Column(Integer, nullable=True, default=1000)
+    
+    # Usage Tracking
+    current_users = Column(Integer, default=0)
+    current_storage_gb = Column(Float, default=0.0)
+    current_api_calls_monthly = Column(Integer, default=0)
     
     is_active = Column(Boolean, default=True)
     is_trial = Column(Boolean, default=True)
     trial_ends_at = Column(DateTime, nullable=True)
 
+    # Audit Fields
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    last_activity = Column(DateTime, default=func.now())
 
     admin_email = Column(String(255), nullable=False)
     admin_name = Column(String(255), nullable=False)
@@ -44,9 +62,11 @@ class Tenant(Base):
     address = Column(Text, nullable=True)
     
     # Relationships to User, Role, and UserRole models
-    users = relationship("User", back_populates="tenant")
+    users = relationship("User", back_populates="tenant", foreign_keys="User.tenant_id")
     roles = relationship("Role", back_populates="tenant")
     user_roles = relationship("UserRole", back_populates="tenant")
+    creator = relationship("User", foreign_keys=[created_by])
+    manager = relationship("User", foreign_keys=[managed_by])
     
     # Other tenant-specific relationships
     tenant_configurations = relationship("TenantSettings", back_populates="tenant", cascade="all, delete-orphan")

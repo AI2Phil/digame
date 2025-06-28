@@ -58,6 +58,8 @@ from .routers import digital_twin_onboarding_router # Import the digital twin on
 from .routers import guest_experience_router # Import the guest experience router
 from .routers import guest_analytics_router # Import the guest analytics router
 from .routers import guest_integrations_router # Import the guest integrations router
+from .routers import platform_management_router # Import the platform management router
+from .routers import aco_router # Import the ACO integration router
 
 # Configure JSON logging
 logger = logging.getLogger("digame_app") # Use a specific name for the main app logger
@@ -183,6 +185,14 @@ app = FastAPI(
         {
             "name": "Guest Integrations",
             "description": "External integrations and mobile-responsive features for guest users"
+        },
+        {
+            "name": "Platform Management",
+            "description": "Platform Owner management, analytics, and tenant oversight capabilities"
+        },
+        {
+            "name": "ACO Integration",
+            "description": "Automated Customer Operations including subscription management, revenue tracking, and founding member program"
         }
     ]
 )
@@ -211,6 +221,8 @@ app.include_router(digital_twin_onboarding_router.router, prefix="/api", tags=["
 app.include_router(guest_experience_router.router, prefix="/api", tags=["Guest Experience"])
 app.include_router(guest_analytics_router.router, tags=["Guest Analytics"])
 app.include_router(guest_integrations_router.router, tags=["Guest Integrations"])
+app.include_router(platform_management_router.router, prefix="/api/v1", tags=["Platform Management"])
+app.include_router(aco_router.router, tags=["ACO Integration"])
 
 # Include dashboard and onboarding routers
 app.include_router(dashboard_router.router, tags=["Dashboard"])

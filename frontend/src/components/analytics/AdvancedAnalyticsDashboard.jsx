@@ -25,15 +25,20 @@ ChartJS.register(
   ArcElement
 );
 
-const AdvancedAnalyticsDashboard = () => {
+const AdvancedAnalyticsDashboard = ({ isPlatformOwner = false }) => {
   const [analyticsData, setAnalyticsData] = useState(null);
+  const [platformData, setPlatformData] = useState(null);
   const [timeframe, setTimeframe] = useState('week');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [activeTab, setActiveTab] = useState(isPlatformOwner ? 'platform' : 'guest');
 
   useEffect(() => {
     fetchAnalyticsData();
-  }, [timeframe]);
+    if (isPlatformOwner) {
+      fetchPlatformData();
+    }
+  }, [timeframe, isPlatformOwner]);
 
   const fetchAnalyticsData = async () => {
     try {
@@ -55,6 +60,33 @@ const AdvancedAnalyticsDashboard = () => {
       setError(err.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchPlatformData = async () => {
+    try {
+      const [overviewResponse, revenueResponse] = await Promise.all([
+        fetch(`/api/v1/platform/overview?days=${timeframe === 'week' ? 7 : timeframe === 'month' ? 30 : 90}`, {
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        }),
+        fetch(`/api/v1/platform/analytics/revenue?period=${timeframe === 'week' ? '7d' : timeframe === 'month' ? '30d' : '90d'}`, {
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        })
+      ]);
+
+      if (overviewResponse.ok && revenueResponse.ok) {
+        const [overviewData, revenueData] = await Promise.all([
+          overviewResponse.json(),
+          revenueResponse.json()
+        ]);
+        
+        setPlatformData({
+          overview: overviewData.data,
+          revenue: revenueData.data
+        });
+      }
+    } catch (err) {
+      console.error('Failed to fetch platform data:', err);
     }
   };
 
@@ -193,8 +225,15 @@ const AdvancedAnalyticsDashboard = () => {
       <div className="bg-white shadow rounded-lg p-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Advanced Analytics Dashboard</h1>
-            <p className="text-gray-600 mt-1">Comprehensive insights into user behavior and platform performance</p>
+            <h1 className="text-2xl font-bold text-gray-900">
+              {isPlatformOwner ? 'Platform Owner Dashboard' : 'Advanced Analytics Dashboard'}
+            </h1>
+            <p className="text-gray-600 mt-1">
+              {isPlatformOwner
+                ? 'Complete platform oversight and management capabilities'
+                : 'Comprehensive insights into user behavior and platform performance'
+              }
+            </p>
           </div>
           <div className="flex items-center space-x-4">
             <select
@@ -215,9 +254,173 @@ const AdvancedAnalyticsDashboard = () => {
             </button>
           </div>
         </div>
+        
+        {/* Platform Owner Tabs */}
+        {isPlatformOwner && (
+          <div className="mt-6 border-b border-gray-200">
+            <nav className="-mb-px flex space-x-8">
+              <button
+                onClick={() => setActiveTab('platform')}
+                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'platform'
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                Platform Overview
+              </button>
+              <button
+                onClick={() => setActiveTab('revenue')}
+                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'revenue'
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                Revenue Analytics
+              </button>
+              <button
+                onClick={() => setActiveTab('tenants')}
+                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'tenants'
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                Tenant Management
+              </button>
+              <button
+                onClick={() => setActiveTab('guest')}
+                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'guest'
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                Guest Analytics
+              </button>
+            </nav>
+          </div>
+        )}
       </div>
 
-      {/* Key Metrics */}
+      {/* Platform Owner Content */}
+      {isPlatformOwner && activeTab === 'platform' && platformData && (
+        <div className="space-y-6">
+          {/* Platform Key Metrics */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="bg-white shadow rounded-lg p-6">
+              <div className="flex items-center">
+                <div className="flex-shrink-0">
+                  <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                    <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                    </svg>
+                  </div>
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">Total Tenants</p>
+                  <p className="text-2xl font-semibold text-gray-900">
+                    {platformData.overview?.overview?.total_tenants || 0}
+                  </p>
+                  <p className="text-sm text-green-600">
+                    {platformData.overview?.overview?.active_tenants || 0} active
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white shadow rounded-lg p-6">
+              <div className="flex items-center">
+                <div className="flex-shrink-0">
+                  <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                    <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                    </svg>
+                  </div>
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">Monthly Revenue</p>
+                  <p className="text-2xl font-semibold text-gray-900">
+                    ${platformData.overview?.overview?.estimated_mrr || 0}
+                  </p>
+                  <p className="text-sm text-gray-500">Estimated MRR</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white shadow rounded-lg p-6">
+              <div className="flex items-center">
+                <div className="flex-shrink-0">
+                  <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                    <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+                    </svg>
+                  </div>
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">Platform Users</p>
+                  <p className="text-2xl font-semibold text-gray-900">
+                    {platformData.overview?.overview?.total_users || 0}
+                  </p>
+                  <p className="text-sm text-green-600">
+                    {platformData.overview?.overview?.active_users || 0} active
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white shadow rounded-lg p-6">
+              <div className="flex items-center">
+                <div className="flex-shrink-0">
+                  <div className="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center">
+                    <svg className="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4" />
+                    </svg>
+                  </div>
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">Storage Used</p>
+                  <p className="text-2xl font-semibold text-gray-900">
+                    {platformData.overview?.overview?.total_storage_gb || 0} GB
+                  </p>
+                  <p className="text-sm text-gray-500">Across all tenants</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Revenue Breakdown */}
+          {platformData.revenue && (
+            <div className="bg-white shadow rounded-lg p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Revenue by Subscription Tier</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {platformData.revenue.mrr_by_tier?.map((tier, index) => (
+                  <div key={index} className="bg-gray-50 rounded-lg p-4">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600 capitalize">{tier.tier}</p>
+                        <p className="text-lg font-semibold text-gray-900">${tier.mrr}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm text-gray-500">{tier.subscribers} users</p>
+                        <p className="text-xs text-gray-400">
+                          ${tier.subscribers > 0 ? (tier.mrr / tier.subscribers).toFixed(0) : 0}/user
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Guest Analytics Content (existing content) */}
+      {(!isPlatformOwner || activeTab === 'guest') && (
+        <>
+          {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <div className="bg-white shadow rounded-lg p-6">
           <div className="flex items-center">
@@ -462,6 +665,8 @@ const AdvancedAnalyticsDashboard = () => {
           </div>
         </div>
       </div>
+        </>
+      )}
     </div>
   );
 };

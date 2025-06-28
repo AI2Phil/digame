@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, ForeignKey, JSON # Added ForeignKey, JSON
+from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, ForeignKey, JSON, Float # Added ForeignKey, JSON, Float
 from sqlalchemy.orm import relationship, DeclarativeBase
 from sqlalchemy.ext.associationproxy import association_proxy
 from datetime import datetime # Changed to just datetime for consistency, as utcnow is method of datetime
@@ -29,6 +29,26 @@ class User(Base):
     is_guest = Column(Boolean(), default=False)
     guest_expires_at = Column(DateTime(), nullable=True)
     
+    # Platform Owner Identification
+    is_platform_owner = Column(Boolean(), default=False, nullable=False)
+    platform_owner_level = Column(Integer(), default=0)  # 0=regular, 1=admin, 2=super_admin, 3=platform_owner
+    
+    # ACO Tier Information
+    subscription_tier = Column(String(), default="free")  # free, individual_pro, team, enterprise
+    subscription_status = Column(String(), default="active")  # active, suspended, cancelled
+    subscription_expires = Column(DateTime(), nullable=True)
+    is_founding_member = Column(Boolean(), default=False)
+    founding_member_enrolled_at = Column(DateTime(), nullable=True)
+    founding_member_discount_percent = Column(Integer(), nullable=True)
+    founding_member_monthly_price = Column(Float(), nullable=True)
+    subscription_updated_at = Column(DateTime(), nullable=True)
+    
+    # Enhanced Security
+    last_login = Column(DateTime(), nullable=True)
+    failed_login_attempts = Column(Integer(), default=0)
+    account_locked_until = Column(DateTime(), nullable=True)
+    password_changed_at = Column(DateTime(), default=datetime.utcnow)
+    
     # Email verification
     email_verified = Column(Boolean(), default=False)
     email_verification_token = Column(String(), nullable=True)
@@ -37,6 +57,9 @@ class User(Base):
     # Account upgrade tracking
     upgraded_from_guest = Column(Boolean(), default=False)
     upgrade_date = Column(DateTime(), nullable=True)
+    
+    # Audit Fields
+    created_by = Column(Integer(), ForeignKey("users.id"), nullable=True)
     
     onboarding_completed = Column(Boolean(), default=False)
     onboarding_data = Column(Text(), nullable=True)
