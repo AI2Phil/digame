@@ -25,8 +25,22 @@ class User(Base):
     
     is_active = Column(Boolean(), default=True) # Changed Integer to Boolean for clarity
     
+    # Guest user support
+    is_guest = Column(Boolean(), default=False)
+    guest_expires_at = Column(DateTime(), nullable=True)
+    
+    # Email verification
+    email_verified = Column(Boolean(), default=False)
+    email_verification_token = Column(String(), nullable=True)
+    email_verification_sent_at = Column(DateTime(), nullable=True)
+    
+    # Account upgrade tracking
+    upgraded_from_guest = Column(Boolean(), default=False)
+    upgrade_date = Column(DateTime(), nullable=True)
+    
     onboarding_completed = Column(Boolean(), default=False)
     onboarding_data = Column(Text(), nullable=True)
+    onboarding_step = Column(Integer(), default=0)  # Track current onboarding step
 
     # New profile fields
     detailed_bio = Column(Text(), nullable=True)
@@ -117,9 +131,17 @@ class User(Base):
         cascade="all, delete-orphan"
     )
 
-    # Relationship to UserOnboardingProgress (One-to-One)
+    # Relationship to GuestOnboardingProgress (One-to-One)
     # onboarding_progress = relationship(
-    #     "UserOnboardingProgress",
+    #     "GuestOnboardingProgress",
+    #     back_populates="user",
+    #     uselist=False,
+    #     cascade="all, delete-orphan"
+    # )
+    
+    # Relationship to DigitalTwinProfile (One-to-One)
+    # digital_twin_profile = relationship(
+    #     "DigitalTwinProfile",
     #     back_populates="user",
     #     uselist=False,
     #     cascade="all, delete-orphan"

@@ -38,12 +38,25 @@ const LoginPage = () => {
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1500));
       
-      // Use 'values' from the Form component, not the local formData state
-      if (values.email === 'demo@digame.com' && values.password === 'demo123') {
+      // Demo user credentials validation
+      const demoCredentials = [
+        { username: 'demo', password: 'demo' },
+        { username: 'sarah_demo', password: 'demo123' },
+        { username: 'alex_demo', password: 'demo123' },
+        { username: 'guest', password: 'guest' }
+      ];
+      
+      // Check if credentials match any demo user (using username or email)
+      const isValidDemo = demoCredentials.some(cred =>
+        (values.email === cred.username || values.email === `${cred.username}@digame.com`) &&
+        values.password === cred.password
+      );
+      
+      if (isValidDemo) {
         // Successful login - redirect to dashboard
         window.location.href = '/dashboard';
       } else {
-        setError('Invalid email or password. Try demo@digame.com / demo123');
+        setError('Invalid credentials. Please use one of the demo accounts shown above.');
       }
     } catch (err) {
       setError('Login failed. Please try again.');
@@ -72,9 +85,49 @@ const LoginPage = () => {
         <div className="text-center space-y-2">
           <h1 className="text-3xl font-bold text-gray-900">Welcome to Digame</h1>
           <p className="text-gray-600">Sign in to your account to continue</p>
-          <Badge variant="secondary" className="mt-2">
-            Demo: demo@digame.com / demo123
-          </Badge>
+          {/* Demo Credentials Card */}
+          <Card className="bg-blue-50 border-blue-200">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg text-blue-800 flex items-center gap-2">
+                🧪 Test User Credentials
+              </CardTitle>
+              <CardDescription className="text-blue-600">
+                Use these demo accounts to explore the platform
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="grid gap-2 text-sm">
+                <div className="flex justify-between items-center p-2 bg-white rounded border">
+                  <div>
+                    <span className="font-medium text-gray-900">demo</span>
+                    <span className="text-gray-500 ml-2">/ demo</span>
+                  </div>
+                  <Badge variant="success" className="text-xs">Fully Onboarded</Badge>
+                </div>
+                <div className="flex justify-between items-center p-2 bg-white rounded border">
+                  <div>
+                    <span className="font-medium text-gray-900">sarah_demo</span>
+                    <span className="text-gray-500 ml-2">/ demo123</span>
+                  </div>
+                  <Badge variant="default" className="text-xs">Product Manager</Badge>
+                </div>
+                <div className="flex justify-between items-center p-2 bg-white rounded border">
+                  <div>
+                    <span className="font-medium text-gray-900">alex_demo</span>
+                    <span className="text-gray-500 ml-2">/ demo123</span>
+                  </div>
+                  <Badge variant="secondary" className="text-xs">New User</Badge>
+                </div>
+                <div className="flex justify-between items-center p-2 bg-white rounded border">
+                  <div>
+                    <span className="font-medium text-gray-900">guest</span>
+                    <span className="text-gray-500 ml-2">/ guest</span>
+                  </div>
+                  <Badge variant="outline" className="text-xs">Guest Access</Badge>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Login Card */}

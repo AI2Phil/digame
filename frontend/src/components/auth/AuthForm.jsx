@@ -85,7 +85,7 @@ const AuthForm = ({ onLogin, onClose }) => {
     loginData.append('username', values.username);
     loginData.append('password', values.password);
 
-    const response = await fetch('http://localhost:8000/auth/login', {
+    const response = await fetch('http://localhost:8001/auth/login', {
       method: 'POST',
       body: loginData
     });
@@ -119,7 +119,7 @@ const AuthForm = ({ onLogin, onClose }) => {
       last_name: values.lastName || null
     };
 
-    const response = await fetch('http://localhost:8000/auth/register', {
+    const response = await fetch('http://localhost:8001/auth/register', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -291,12 +291,45 @@ const AuthForm = ({ onLogin, onClose }) => {
             </p>
           </div>
 
-          {/* Demo note */}
-          <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-            <p className="text-sm text-blue-700">
-              <strong>Demo Users:</strong> You can create a test account or use the demo mode to explore the platform.
-            </p>
-          </div>
+          {/* Demo Credentials Card */}
+          {isLogin && (
+            <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="text-center mb-3">
+                <h3 className="text-sm font-semibold text-blue-800">🧪 Test User Credentials</h3>
+                <p className="text-xs text-blue-600 mt-1">Use these demo accounts to explore the platform</p>
+              </div>
+              <div className="space-y-2 text-xs">
+                <div className="flex justify-between items-center p-2 bg-white rounded border">
+                  <div>
+                    <span className="font-medium text-gray-900">demo</span>
+                    <span className="text-gray-500 ml-2">/ demo</span>
+                  </div>
+                  <span className="text-green-600 font-medium">Fully Onboarded</span>
+                </div>
+                <div className="flex justify-between items-center p-2 bg-white rounded border">
+                  <div>
+                    <span className="font-medium text-gray-900">sarah_demo</span>
+                    <span className="text-gray-500 ml-2">/ demo123</span>
+                  </div>
+                  <span className="text-blue-600 font-medium">Product Manager</span>
+                </div>
+                <div className="flex justify-between items-center p-2 bg-white rounded border">
+                  <div>
+                    <span className="font-medium text-gray-900">alex_demo</span>
+                    <span className="text-gray-500 ml-2">/ demo123</span>
+                  </div>
+                  <span className="text-gray-600 font-medium">New User</span>
+                </div>
+                <div className="flex justify-between items-center p-2 bg-white rounded border">
+                  <div>
+                    <span className="font-medium text-gray-900">guest</span>
+                    <span className="text-gray-500 ml-2">/ guest</span>
+                  </div>
+                  <span className="text-purple-600 font-medium">Guest Access</span>
+                </div>
+              </div>
+            </div>
+          )}
         </Card>
       </div>
 

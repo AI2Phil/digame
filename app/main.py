@@ -53,6 +53,11 @@ from .routers import advanced_analytics_router # Import the new advanced analyti
 from .routers import document_processing_router # Import the new document processing router
 from .routers import security_router # Import the security router
 from .api import gamification # Import the gamification API
+from .routers import guest_auth_router # Import the guest authentication router
+from .routers import digital_twin_onboarding_router # Import the digital twin onboarding router
+from .routers import guest_experience_router # Import the guest experience router
+from .routers import guest_analytics_router # Import the guest analytics router
+from .routers import guest_integrations_router # Import the guest integrations router
 
 # Configure JSON logging
 logger = logging.getLogger("digame_app") # Use a specific name for the main app logger
@@ -170,6 +175,14 @@ app = FastAPI(
         {
             "name": "Security",
             "description": "Advanced security features including MFA, threat detection, and policy management"
+        },
+        {
+            "name": "Guest Analytics",
+            "description": "Advanced analytics and insights for guest user behavior and conversion tracking"
+        },
+        {
+            "name": "Guest Integrations",
+            "description": "External integrations and mobile-responsive features for guest users"
         }
     ]
 )
@@ -193,6 +206,11 @@ logger.info("GZipMiddleware configuration skipped due to type compatibility")
 
 # Include authentication router first (no authentication required)
 app.include_router(auth_router, tags=["Authentication"])
+app.include_router(guest_auth_router.router, prefix="/api/guest", tags=["Guest Authentication"])
+app.include_router(digital_twin_onboarding_router.router, prefix="/api", tags=["Digital Twin Onboarding"])
+app.include_router(guest_experience_router.router, prefix="/api", tags=["Guest Experience"])
+app.include_router(guest_analytics_router.router, tags=["Guest Analytics"])
+app.include_router(guest_integrations_router.router, tags=["Guest Integrations"])
 
 # Include dashboard and onboarding routers
 app.include_router(dashboard_router.router, tags=["Dashboard"])

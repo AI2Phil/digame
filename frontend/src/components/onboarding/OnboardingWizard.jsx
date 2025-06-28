@@ -1,644 +1,704 @@
-import React, { useState } from 'react';
-import {
-  ChevronRight, ChevronLeft, Check, User, Settings,
-  Target, Zap, Bell, Shield, Palette
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+import { Button } from '../ui/button';
+import { Input } from '../ui/input';
+import { Label } from '../ui/label';
+import { Badge } from '../ui/badge';
+import { Progress } from '../ui/progress';
+import { Textarea } from '../ui/textarea';
+import { 
+  ChevronLeft, 
+  ChevronRight, 
+  User, 
+  Brain, 
+  Target, 
+  Users, 
+  Settings,
+  Sparkles,
+  CheckCircle,
+  Star,
+  Clock,
+  TrendingUp
 } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/Card';
-import { Button } from '../ui/Button';
-import { Switch } from '../ui/Switch';
-import { Badge } from '../ui/Badge';
-import { Stepper, StepItem } from '../ui/Stepper'; // Import Stepper
-import {
-  Form,
-  FormField,
-  FormLabel,
-  FormInput,
-  FormSelect,
-  // FormCheckbox, // Using Switch for now, so not importing FormCheckbox
-  // FormSubmitButton // Using existing Buttons for next/prev logic
-} from '../ui/Form';
 
-const OnboardingWizard = ({ onComplete, onSkip }) => {
-  const [currentStep, setCurrentStep] = useState(0);
-  const [onboardingData, setOnboardingData] = useState({
-    current_step_id: 'welcome',
-    completed_steps: [],
-    user_preferences: {
-      notifications: {
-        email: true,
-        push: true,
-        frequency: 'normal'
-      },
-      privacy: {
-        analytics: true,
-        data_sharing: false
-      },
-      appearance: {
-        theme: 'system',
-        language: 'en'
-      }
-    },
-    goals: {
-      primary_goal: '',
-      productivity_target: 'moderate',
-      focus_areas: []
-    },
-    feature_exploration: {},
-    is_completed: false
+const OnboardingWizard = ({ onComplete, user }) => {
+  const [currentStep, setCurrentStep] = useState(1);
+  const [formData, setFormData] = useState({
+    // Step 1: Profile Setup
+    professional_title: '',
+    industry: '',
+    experience_level: '',
+    
+    // Step 2: Skills Assessment
+    technical_skills: [],
+    soft_skills: [],
+    skill_confidence_scores: {},
+    
+    // Step 3: Personality Profile
+    personality_type: '',
+    communication_style: '',
+    work_style_preferences: {},
+    
+    // Step 4: Work Style
+    collaboration_preference: '',
+    meeting_preferences: '',
+    
+    // Step 5: Goals Setup
+    short_term_goals: [],
+    long_term_goals: [],
+    learning_interests: [],
+    career_aspirations: '',
+    
+    // Step 6: Preview (generated)
+    ai_generated_summary: ''
   });
 
+  const [loading, setLoading] = useState(false);
+  const [stepData, setStepData] = useState({});
+  const [onboardingOptions, setOnboardingOptions] = useState({});
+
   const steps = [
-    {
-      id: 'welcome',
-      title: 'Welcome to Digame',
-      description: 'Your Digital Professional Twin Platform',
-      icon: User,
-      component: WelcomeStep
+    { 
+      number: 1, 
+      title: 'Profile Setup', 
+      icon: User, 
+      description: 'Tell us about your professional background',
+      estimatedTime: '3 min'
     },
-    {
-      id: 'preferences',
-      title: 'Set Your Preferences',
-      description: 'Customize your experience',
-      icon: Settings,
-      component: PreferencesStep
+    { 
+      number: 2, 
+      title: 'Skills Assessment', 
+      icon: Brain, 
+      description: 'Assess your technical and soft skills',
+      estimatedTime: '5 min'
     },
-    {
-      id: 'goals',
-      title: 'Define Your Goals',
-      description: 'What do you want to achieve?',
-      icon: Target,
-      component: GoalsStep
+    { 
+      number: 3, 
+      title: 'Personality Profile', 
+      icon: Sparkles, 
+      description: 'Discover your work personality type',
+      estimatedTime: '4 min'
     },
-    {
-      id: 'features',
-      title: 'Explore Features',
-      description: 'Discover what Digame can do',
-      icon: Zap,
-      component: FeaturesStep
+    { 
+      number: 4, 
+      title: 'Work Style', 
+      icon: Users, 
+      description: 'Define your collaboration preferences',
+      estimatedTime: '3 min'
     },
-    {
-      id: 'complete',
-      title: 'All Set!',
-      description: 'You\'re ready to start',
-      icon: Check,
-      component: CompleteStep
+    { 
+      number: 5, 
+      title: 'Goals Setup', 
+      icon: Target, 
+      description: 'Set your learning and career goals',
+      estimatedTime: '4 min'
+    },
+    { 
+      number: 6, 
+      title: 'Twin Preview', 
+      icon: Settings, 
+      description: 'Review your digital twin profile',
+      estimatedTime: '2 min'
     }
   ];
 
-  const updateOnboardingData = (updates) => {
-    setOnboardingData(prev => ({
-      ...prev,
-      ...updates,
-      current_step_id: steps[currentStep].id
-    }));
-  };
+  useEffect(() => {
+    fetchOnboardingOptions();
+  }, []);
 
-  const markStepCompleted = (stepId) => {
-    const completedStep = {
-      step_id: stepId,
-      completed_at: new Date().toISOString()
-    };
+  useEffect(() => {
+    if (currentStep <= 5) {
+      fetchStepData(currentStep);
+    }
+  }, [currentStep]);
 
-    setOnboardingData(prev => ({
-      ...prev,
-      completed_steps: [
-        ...prev.completed_steps.filter(step => step.step_id !== stepId),
-        completedStep
-      ]
-    }));
-  };
-
-  const nextStep = () => {
-    markStepCompleted(steps[currentStep].id);
-    
-    if (currentStep < steps.length - 1) {
-      setCurrentStep(currentStep + 1);
-    } else {
-      completeOnboarding();
+  const fetchOnboardingOptions = async () => {
+    try {
+      const response = await fetch('/api/onboarding/digital-twin/options');
+      if (response.ok) {
+        const result = await response.json();
+        setOnboardingOptions(result.data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch onboarding options:', error);
     }
   };
 
-  const prevStep = () => {
-    if (currentStep > 0) {
+  const fetchStepData = async (stepNumber) => {
+    try {
+      const response = await fetch(`/api/onboarding/digital-twin/step/${stepNumber}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      if (response.ok) {
+        const result = await response.json();
+        setStepData(result.data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch step data:', error);
+    }
+  };
+
+  const saveStepData = async (stepNumber, data) => {
+    try {
+      setLoading(true);
+      const response = await fetch(`/api/onboarding/digital-twin/step/${stepNumber}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          step_number: stepNumber,
+          data: data
+        })
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        return result;
+      } else {
+        throw new Error('Failed to save step data');
+      }
+    } catch (error) {
+      console.error('Failed to save step data:', error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const generateTwinSummary = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('/api/onboarding/digital-twin/generate-summary', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        setFormData(prev => ({
+          ...prev,
+          ai_generated_summary: result.data.summary
+        }));
+        return result.data;
+      } else {
+        throw new Error('Failed to generate summary');
+      }
+    } catch (error) {
+      console.error('Failed to generate summary:', error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleNext = async () => {
+    try {
+      if (currentStep <= 5) {
+        const stepData = getStepData(currentStep);
+        await saveStepData(currentStep, stepData);
+      }
+
+      if (currentStep === 5) {
+        // Generate AI summary before moving to step 6
+        await generateTwinSummary();
+      }
+
+      if (currentStep < 6) {
+        setCurrentStep(currentStep + 1);
+      } else {
+        // Complete onboarding
+        onComplete && onComplete(formData);
+      }
+    } catch (error) {
+      alert('Failed to save progress. Please try again.');
+    }
+  };
+
+  const handlePrevious = () => {
+    if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
     }
   };
 
-  const completeOnboarding = async () => {
-    const finalData = {
-      ...onboardingData,
-      is_completed: true,
-      current_step_id: 'complete'
-    };
-
-    // Check if we're in demo mode
-    const isDemoMode = localStorage.getItem('demo_mode') === 'true';
-    
-    if (isDemoMode) {
-      // In demo mode, redirect to CTA page instead of completing onboarding
-      console.log('Demo mode: Redirecting to Call-to-Action page');
-      // Redirect to pricing page with demo completion context
-      window.location.href = '/pricing?demo_completed=true';
-      return;
+  const getStepData = (step) => {
+    switch (step) {
+      case 1:
+        return {
+          professional_title: formData.professional_title,
+          industry: formData.industry,
+          experience_level: formData.experience_level
+        };
+      case 2:
+        return {
+          technical_skills: formData.technical_skills,
+          soft_skills: formData.soft_skills,
+          skill_confidence_scores: formData.skill_confidence_scores
+        };
+      case 3:
+        return {
+          personality_type: formData.personality_type,
+          communication_style: formData.communication_style,
+          work_style_preferences: formData.work_style_preferences
+        };
+      case 4:
+        return {
+          collaboration_preference: formData.collaboration_preference,
+          meeting_preferences: formData.meeting_preferences
+        };
+      case 5:
+        return {
+          short_term_goals: formData.short_term_goals,
+          long_term_goals: formData.long_term_goals,
+          learning_interests: formData.learning_interests,
+          career_aspirations: formData.career_aspirations
+        };
+      default:
+        return {};
     }
+  };
 
-    try {
-      const response = await fetch('/onboarding/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify(finalData)
-      });
+  const updateFormData = (field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
 
-      if (response.ok) {
-        onComplete && onComplete(finalData);
-      } else {
-        // If API fails, still complete the onboarding for better UX
-        console.warn('Onboarding API failed, completing locally');
-        onComplete && onComplete(finalData);
+  const toggleArrayItem = (field, item) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: prev[field].includes(item) 
+        ? prev[field].filter(i => i !== item)
+        : [...prev[field], item]
+    }));
+  };
+
+  const updateConfidenceScore = (skill, score) => {
+    setFormData(prev => ({
+      ...prev,
+      skill_confidence_scores: {
+        ...prev.skill_confidence_scores,
+        [skill]: score
       }
-    } catch (error) {
-      console.warn('Failed to save onboarding data, completing locally:', error);
-      // Still complete the onboarding even if API fails
-      onComplete && onComplete(finalData);
+    }));
+  };
+
+  const renderStepContent = () => {
+    switch (currentStep) {
+      case 1:
+        return (
+          <div className="space-y-6">
+            <div>
+              <Label htmlFor="professional_title">Professional Title</Label>
+              <Input
+                id="professional_title"
+                value={formData.professional_title}
+                onChange={(e) => updateFormData('professional_title', e.target.value)}
+                placeholder="e.g., Software Engineer, Product Manager"
+                className="mt-1"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="industry">Industry</Label>
+              <select
+                id="industry"
+                value={formData.industry}
+                onChange={(e) => updateFormData('industry', e.target.value)}
+                className="w-full mt-1 p-2 border border-gray-300 rounded-md"
+              >
+                <option value="">Select your industry</option>
+                {onboardingOptions.industries?.map(industry => (
+                  <option key={industry} value={industry}>{industry}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <Label htmlFor="experience_level">Experience Level</Label>
+              <select
+                id="experience_level"
+                value={formData.experience_level}
+                onChange={(e) => updateFormData('experience_level', e.target.value)}
+                className="w-full mt-1 p-2 border border-gray-300 rounded-md"
+              >
+                <option value="">Select your experience level</option>
+                {onboardingOptions.experience_levels?.map(level => (
+                  <option key={level} value={level}>{level}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+        );
+
+      case 2:
+        return (
+          <div className="space-y-6">
+            <div>
+              <Label>Technical Skills</Label>
+              <p className="text-sm text-gray-600 mb-3">Select your technical skills</p>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                {Object.entries(onboardingOptions.skill_categories || {}).map(([category, skills]) => (
+                  <div key={category} className="space-y-2">
+                    <h4 className="font-medium text-sm text-gray-700">{category}</h4>
+                    {skills.map(skill => (
+                      <div key={skill} className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          id={`tech-${skill}`}
+                          checked={formData.technical_skills.includes(skill)}
+                          onChange={() => toggleArrayItem('technical_skills', skill)}
+                          className="rounded"
+                        />
+                        <label htmlFor={`tech-${skill}`} className="text-sm">{skill}</label>
+                      </div>
+                    ))}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {formData.technical_skills.length > 0 && (
+              <div>
+                <Label>Confidence Levels</Label>
+                <p className="text-sm text-gray-600 mb-3">Rate your confidence (1-5)</p>
+                <div className="space-y-3">
+                  {formData.technical_skills.map(skill => (
+                    <div key={skill} className="flex items-center justify-between">
+                      <span className="text-sm">{skill}</span>
+                      <div className="flex space-x-1">
+                        {[1, 2, 3, 4, 5].map(score => (
+                          <button
+                            key={score}
+                            type="button"
+                            onClick={() => updateConfidenceScore(skill, score)}
+                            className={`w-8 h-8 rounded-full text-xs ${
+                              formData.skill_confidence_scores[skill] >= score
+                                ? 'bg-blue-600 text-white'
+                                : 'bg-gray-200 text-gray-600'
+                            }`}
+                          >
+                            {score}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        );
+
+      case 3:
+        return (
+          <div className="space-y-6">
+            <div>
+              <Label>Personality Type</Label>
+              <p className="text-sm text-gray-600 mb-3">Choose the type that best describes you</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {onboardingOptions.personality_types?.map(type => (
+                  <div
+                    key={type}
+                    onClick={() => updateFormData('personality_type', type)}
+                    className={`p-3 border rounded-lg cursor-pointer transition-colors ${
+                      formData.personality_type === type
+                        ? 'border-blue-600 bg-blue-50'
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
+                    <div className="font-medium text-sm">{type}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="communication_style">Communication Style</Label>
+              <select
+                id="communication_style"
+                value={formData.communication_style}
+                onChange={(e) => updateFormData('communication_style', e.target.value)}
+                className="w-full mt-1 p-2 border border-gray-300 rounded-md"
+              >
+                <option value="">Select your communication style</option>
+                <option value="Direct">Direct</option>
+                <option value="Collaborative">Collaborative</option>
+                <option value="Analytical">Analytical</option>
+                <option value="Visual">Visual</option>
+                <option value="Hands-on">Hands-on</option>
+              </select>
+            </div>
+          </div>
+        );
+
+      case 4:
+        return (
+          <div className="space-y-6">
+            <div>
+              <Label>Collaboration Preference</Label>
+              <div className="grid grid-cols-1 gap-3 mt-3">
+                {['Team-based', 'Independent', 'Hybrid', 'Mentoring others', 'Being mentored'].map(pref => (
+                  <div
+                    key={pref}
+                    onClick={() => updateFormData('collaboration_preference', pref)}
+                    className={`p-3 border rounded-lg cursor-pointer transition-colors ${
+                      formData.collaboration_preference === pref
+                        ? 'border-blue-600 bg-blue-50'
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
+                    <div className="font-medium text-sm">{pref}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <Label>Meeting Preferences</Label>
+              <div className="grid grid-cols-1 gap-3 mt-3">
+                {['Video calls', 'In-person', 'Async communication', 'Quick standups', 'Detailed discussions'].map(pref => (
+                  <div
+                    key={pref}
+                    onClick={() => updateFormData('meeting_preferences', pref)}
+                    className={`p-3 border rounded-lg cursor-pointer transition-colors ${
+                      formData.meeting_preferences === pref
+                        ? 'border-blue-600 bg-blue-50'
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
+                    <div className="font-medium text-sm">{pref}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        );
+
+      case 5:
+        return (
+          <div className="space-y-6">
+            <div>
+              <Label>Short-term Goals (next 6 months)</Label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-3">
+                {['Learn new programming language', 'Get promoted', 'Complete certification', 'Build portfolio', 'Network more', 'Improve skills'].map(goal => (
+                  <div key={goal} className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id={`short-${goal}`}
+                      checked={formData.short_term_goals.includes(goal)}
+                      onChange={() => toggleArrayItem('short_term_goals', goal)}
+                      className="rounded"
+                    />
+                    <label htmlFor={`short-${goal}`} className="text-sm">{goal}</label>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <Label>Learning Interests</Label>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-3">
+                {['Artificial Intelligence', 'Web Development', 'Data Science', 'Mobile Development', 'Cloud Computing', 'Cybersecurity', 'DevOps', 'UI/UX Design', 'Project Management', 'Leadership', 'Entrepreneurship', 'Digital Marketing'].map(interest => (
+                  <div key={interest} className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id={`interest-${interest}`}
+                      checked={formData.learning_interests.includes(interest)}
+                      onChange={() => toggleArrayItem('learning_interests', interest)}
+                      className="rounded"
+                    />
+                    <label htmlFor={`interest-${interest}`} className="text-sm">{interest}</label>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="career_aspirations">Career Aspirations</Label>
+              <Textarea
+                id="career_aspirations"
+                value={formData.career_aspirations}
+                onChange={(e) => updateFormData('career_aspirations', e.target.value)}
+                placeholder="Describe your long-term career goals..."
+                className="mt-1"
+                rows={3}
+              />
+            </div>
+          </div>
+        );
+
+      case 6:
+        return (
+          <div className="space-y-6">
+            <div className="text-center">
+              <CheckCircle className="h-16 w-16 text-green-600 mx-auto mb-4" />
+              <h3 className="text-xl font-bold mb-2">Your Digital Twin is Ready!</h3>
+              <p className="text-gray-600">
+                We've analyzed your profile and created a personalized experience just for you.
+              </p>
+            </div>
+
+            {formData.ai_generated_summary && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <h4 className="font-medium mb-2 flex items-center">
+                  <Sparkles className="h-4 w-4 mr-2 text-blue-600" />
+                  AI-Generated Profile Summary
+                </h4>
+                <p className="text-sm text-gray-700">{formData.ai_generated_summary}</p>
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="text-center p-4 bg-green-50 rounded-lg">
+                <TrendingUp className="h-8 w-8 text-green-600 mx-auto mb-2" />
+                <div className="font-medium">Profile Complete</div>
+                <div className="text-sm text-gray-600">100% ready for personalization</div>
+              </div>
+              
+              <div className="text-center p-4 bg-blue-50 rounded-lg">
+                <Star className="h-8 w-8 text-blue-600 mx-auto mb-2" />
+                <div className="font-medium">Skills Assessed</div>
+                <div className="text-sm text-gray-600">{formData.technical_skills.length} skills identified</div>
+              </div>
+              
+              <div className="text-center p-4 bg-purple-50 rounded-lg">
+                <Target className="h-8 w-8 text-purple-600 mx-auto mb-2" />
+                <div className="font-medium">Goals Set</div>
+                <div className="text-sm text-gray-600">{formData.short_term_goals.length} goals defined</div>
+              </div>
+            </div>
+
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+              <h4 className="font-medium mb-2">What's Next?</h4>
+              <ul className="text-sm text-gray-700 space-y-1">
+                <li>• Get personalized learning recommendations</li>
+                <li>• Connect with like-minded professionals</li>
+                <li>• Track your progress with AI insights</li>
+                <li>• Unlock achievements and milestones</li>
+              </ul>
+            </div>
+          </div>
+        );
+
+      default:
+        return null;
     }
   };
 
-  const CurrentStepComponent = steps[currentStep].component;
-
-  const handleStepChange = (newStepIndex) => {
-    // If moving backwards, no need to mark completed
-    if (newStepIndex < currentStep) {
-      setCurrentStep(newStepIndex);
-      return;
-    }
-    // If moving forwards, mark current step as completed before changing
-    markStepCompleted(steps[currentStep].id);
-    setCurrentStep(newStepIndex);
-  };
+  const currentStepInfo = steps[currentStep - 1];
+  const progressPercentage = (currentStep / steps.length) * 100;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-      <div className="w-full max-w-4xl">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Welcome to Digame
-          </h1>
-          <p className="text-gray-600">
-            Let's set up your digital professional twin in just a few steps
-          </p>
+    <div className="min-h-screen bg-gray-50 p-6">
+      <div className="max-w-4xl mx-auto">
+        {/* Progress Header */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <h1 className="text-2xl font-bold">Digital Twin Onboarding</h1>
+            <Badge variant="outline">
+              Step {currentStep} of {steps.length}
+            </Badge>
+          </div>
+          
+          <Progress value={progressPercentage} className="mb-4" />
+          
+          <div className="flex items-center space-x-2 text-sm text-gray-600">
+            <Clock className="h-4 w-4" />
+            <span>Estimated time: {currentStepInfo?.estimatedTime}</span>
+          </div>
         </div>
 
-        {/* Stepper Component */}
-        <div className="mb-8 px-4 md:px-0">
-          <Stepper
-            initialStep={currentStep}
-            onStepChange={handleStepChange}
-            isClickable={true} // Allow users to click on previous steps
-            orientation="horizontal"
-            className="mb-6"
-          >
-            {steps.map((step, index) => (
-              <StepItem
-                key={step.id}
-                label={step.title}
-                icon={React.createElement(step.icon, { className: "w-5 h-5" })}
-                isCompleted={onboardingData.completed_steps.some(cs => cs.step_id === step.id) || currentStep > index}
-              >
-                {/* Content for each step is rendered below by CurrentStepComponent */}
-              </StepItem>
-            ))}
-          </Stepper>
+        {/* Step Navigation */}
+        <div className="flex justify-center mb-8">
+          <div className="flex space-x-4">
+            {steps.map((step) => {
+              const Icon = step.icon;
+              const isActive = step.number === currentStep;
+              const isCompleted = step.number < currentStep;
+              
+              return (
+                <div
+                  key={step.number}
+                  className={`flex flex-col items-center space-y-2 ${
+                    isActive ? 'text-blue-600' : isCompleted ? 'text-green-600' : 'text-gray-400'
+                  }`}
+                >
+                  <div
+                    className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                      isActive
+                        ? 'bg-blue-600 text-white'
+                        : isCompleted
+                        ? 'bg-green-600 text-white'
+                        : 'bg-gray-200'
+                    }`}
+                  >
+                    {isCompleted ? (
+                      <CheckCircle className="h-5 w-5" />
+                    ) : (
+                      <Icon className="h-5 w-5" />
+                    )}
+                  </div>
+                  <div className="text-xs text-center max-w-20">
+                    {step.title}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
 
-        {/* Main Content based on CurrentStepComponent */}
-        {/* The Stepper itself doesn't render content; we do it here based on its state */}
-        <Card className="mb-8">
-          <CardHeader className="text-center">
-            {/* Title and description are now part of the StepItem label,
-                but we can keep a general header or remove it if redundant */}
-            <CardTitle className="flex items-center justify-center gap-2">
-               {React.createElement(steps[currentStep].icon, { className: "w-6 h-6" })}
-               {steps[currentStep].title}
+        {/* Main Content */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <currentStepInfo.icon className="h-5 w-5" />
+              <span>{currentStepInfo.title}</span>
             </CardTitle>
-            <CardDescription>
-              {steps[currentStep].description}
-            </CardDescription>
+            <p className="text-gray-600">{currentStepInfo.description}</p>
           </CardHeader>
           <CardContent>
-            <CurrentStepComponent
-              data={onboardingData}
-              updateData={updateOnboardingData}
-              onNext={nextStep} // This component might trigger nextStep
-            />
+            {renderStepContent()}
           </CardContent>
         </Card>
 
-        {/* Navigation */}
-        <div className="flex items-center justify-between">
+        {/* Navigation Buttons */}
+        <div className="flex justify-between mt-6">
           <Button
             variant="outline"
-            onClick={prevStep}
-            disabled={currentStep === 0}
-            className="flex items-center gap-2"
+            onClick={handlePrevious}
+            disabled={currentStep === 1}
+            className="flex items-center space-x-2"
           >
-            <ChevronLeft className="w-4 h-4" />
-            Previous
+            <ChevronLeft className="h-4 w-4" />
+            <span>Previous</span>
           </Button>
 
-          <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              onClick={onSkip} // Assuming onSkip is passed from OnboardingPage
-              className="text-gray-500"
-            >
-              Skip for now
-            </Button>
-            
-            <Button
-              onClick={nextStep} // This button triggers the main nextStep logic
-              className="flex items-center gap-2"
-            >
-              {currentStep === steps.length - 1 ? 'Complete Setup' : 'Next Step'}
-              {currentStep < steps.length - 1 && <ChevronRight className="w-4 h-4" />}
-              {currentStep === steps.length - 1 && <Check className="w-4 h-4" />}
-            </Button>
-          </div>
+          <Button
+            onClick={handleNext}
+            disabled={loading}
+            className="flex items-center space-x-2"
+          >
+            <span>
+              {loading 
+                ? 'Saving...' 
+                : currentStep === 6 
+                ? 'Complete Onboarding' 
+                : 'Next'
+              }
+            </span>
+            {!loading && currentStep < 6 && <ChevronRight className="h-4 w-4" />}
+          </Button>
         </div>
       </div>
     </div>
   );
 };
-
-// Step Components
-const WelcomeStep = ({ data, updateData }) => (
-  <div className="text-center space-y-6">
-    <div className="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center mx-auto">
-      <User className="w-12 h-12 text-blue-600" />
-    </div>
-    <div>
-      <h3 className="text-xl font-semibold mb-2">
-        Welcome to Your Digital Professional Twin
-      </h3>
-      <p className="text-gray-600 max-w-2xl mx-auto">
-        Digame helps you understand your work patterns, boost productivity, and achieve your professional goals 
-        through intelligent behavioral analysis and personalized insights.
-      </p>
-    </div>
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
-      <div className="p-4 bg-blue-50 rounded-lg">
-        <Bell className="w-8 h-8 text-blue-600 mb-2" />
-        <h4 className="font-medium">Smart Notifications</h4>
-        <p className="text-sm text-gray-600">Get timely reminders and insights</p>
-      </div>
-      <div className="p-4 bg-green-50 rounded-lg">
-        <Target className="w-8 h-8 text-green-600 mb-2" />
-        <h4 className="font-medium">Goal Tracking</h4>
-        <p className="text-sm text-gray-600">Monitor your progress and achievements</p>
-      </div>
-      <div className="p-4 bg-purple-50 rounded-lg">
-        <Zap className="w-8 h-8 text-purple-600 mb-2" />
-        <h4 className="font-medium">AI Insights</h4>
-        <p className="text-sm text-gray-600">Discover patterns in your work</p>
-      </div>
-    </div>
-  </div>
-);
-
-const PreferencesStep = ({ data, updateData, onNext }) => {
-  const handleSwitchChange = (category, key, checked) => {
-    updateData({
-      user_preferences: {
-        ...data.user_preferences,
-        [category]: {
-          ...data.user_preferences[category],
-          [key]: checked
-        }
-      }
-    });
-  };
-
-  // Form's onSubmit will call this, then the main "Next" button handles step progression
-  const handleFormSubmit = (formDataFromFormContext) => {
-    // formDataFromFormContext here will only contain fields managed by FormInput, FormSelect etc.
-    // So, we merge it with the existing user_preferences which holds switch values.
-    updateData({
-      user_preferences: {
-        ...data.user_preferences, // keep existing values like those from switches
-        appearance: { // Assuming 'appearance.theme' is the only field managed by FormSelect here
-            ...data.user_preferences.appearance,
-            theme: formDataFromFormContext['appearance.theme']
-        }
-      }
-    });
-    // Actual step progression is handled by the main "Next" button in OnboardingWizard
-  };
-
-  return (
-    <Form
-      onSubmit={handleFormSubmit}
-      defaultValues={{
-        'appearance.theme': data.user_preferences.appearance.theme
-      }} // Only fields for FormSelect/FormInput
-      // Add validation if needed, e.g.
-      // validation={{ 'appearance.theme': { required: 'Theme is required' } }}
-    >
-      <div className="space-y-6">
-        <div>
-          <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <Bell className="w-5 h-5" />
-            Notification Preferences
-          </h3>
-          <div className="space-y-4">
-            {/* Email Notifications Switch */}
-            <div className="flex items-center justify-between">
-              <div>
-                <FormLabel htmlFor="notifications.email">Email Notifications</FormLabel>
-                <p className="text-sm text-gray-500">Receive updates via email</p>
-              </div>
-              <Switch
-                id="notifications.email"
-                checked={data.user_preferences.notifications.email}
-                onCheckedChange={(checked) => handleSwitchChange('notifications', 'email', checked)}
-              />
-            </div>
-            {/* Push Notifications Switch */}
-            <div className="flex items-center justify-between">
-              <div>
-                <FormLabel htmlFor="notifications.push">Push Notifications</FormLabel>
-                <p className="text-sm text-gray-500">Get real-time alerts</p>
-              </div>
-              <Switch
-                id="notifications.push"
-                checked={data.user_preferences.notifications.push}
-                onCheckedChange={(checked) => handleSwitchChange('notifications', 'push', checked)}
-              />
-            </div>
-          </div>
-        </div>
-
-        <div>
-          <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <Shield className="w-5 h-5" />
-            Privacy Settings
-          </h3>
-          <div className="space-y-4">
-            {/* Analytics Switch */}
-            <div className="flex items-center justify-between">
-              <div>
-                <FormLabel htmlFor="privacy.analytics">Analytics</FormLabel>
-                <p className="text-sm text-gray-500">Help improve Digame with usage data</p>
-              </div>
-              <Switch
-                id="privacy.analytics"
-                checked={data.user_preferences.privacy.analytics}
-                onCheckedChange={(checked) => handleSwitchChange('privacy', 'analytics', checked)}
-              />
-            </div>
-          </div>
-        </div>
-
-        <div>
-          <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <Palette className="w-5 h-5" />
-            Appearance
-          </h3>
-          <div className="space-y-4">
-            <div>
-              <FormLabel htmlFor="appearance.theme">Theme</FormLabel>
-              <FormField name="appearance.theme">
-                <FormSelect
-                  name="appearance.theme" // Name for Form context
-                  id="appearance.theme"   // For label association
-                  options={[
-                    { value: 'light', label: 'Light' },
-                    { value: 'dark', label: 'Dark' },
-                    { value: 'system', label: 'System' },
-                  ]}
-                  placeholder="Select a theme..."
-                  // value and onChange are handled by FormContext
-                  className="mt-1"
-                />
-              </FormField>
-            </div>
-          </div>
-        </div>
-      </div>
-      {/* The main "Next" button of the wizard will implicitly trigger form validation if mode is onSubmit */}
-      {/* Or validation happens onChange/onBlur based on Form settings */}
-    </Form>
-  );
-};
-
-const GoalsStep = ({ data, updateData, onNext }) => {
-  // This function will be called by the Form's onSubmit
-  const handleFormSubmit = (formDataFromFormContext) => {
-    // formDataFromFormContext will contain 'primary_goal'
-    // We merge it with existing goals data (productivity_target, focus_areas)
-    updateData({
-      goals: {
-        ...data.goals, // Preserve existing target and focus areas
-        primary_goal: formDataFromFormContext.primary_goal,
-      }
-    });
-    // Actual step progression is handled by the main "Next" button
-  };
-
-  const goalValidationRules = {
-    primary_goal: {
-      required: 'Primary professional goal is required.',
-      minLength: 5 // Example validation
-    },
-    // productivity_target and focus_areas are handled by buttons, not direct form inputs for validation here
-  };
-
-  const focusAreasOptions = [
-    'Time Management', 'Deep Work', 'Communication', 'Learning',
-    'Health & Wellness', 'Team Collaboration', 'Innovation', 'Leadership'
-  ];
-
-  // Handler for focus areas, separate from Form context
-  const toggleFocusArea = (area) => {
-    const currentFocusAreas = data.goals.focus_areas || [];
-    const updatedFocusAreas = currentFocusAreas.includes(area)
-      ? currentFocusAreas.filter(a => a !== area)
-      : [...currentFocusAreas, area];
-    updateData({ goals: { ...data.goals, focus_areas: updatedFocusAreas } });
-  };
-
-  // Handler for productivity target, separate from Form context
-  const updateProductivityTarget = (level) => {
-    updateData({ goals: { ...data.goals, productivity_target: level } });
-  };
-
-  return (
-    <Form
-      onSubmit={handleFormSubmit}
-      defaultValues={{ primary_goal: data.goals.primary_goal || '' }}
-      validation={goalValidationRules}
-      mode="onChange" // Or onBlur/onSubmit
-    >
-      <div className="space-y-6">
-        <div>
-          <FormLabel htmlFor="primary_goal" required>What's your primary professional goal?</FormLabel>
-          <FormField name="primary_goal">
-            <FormInput
-              name="primary_goal" // Critical for Form context
-              id="primary-goal"   // For label association
-              placeholder="e.g., Improve productivity, Better work-life balance, Learn new skills"
-              className="mt-1"    // FormLabel has mb-1, so input gets mt-1
-            />
-          </FormField>
-        </div>
-
-        <div>
-          <FormLabel>Productivity Target</FormLabel>
-          <div className="grid grid-cols-3 gap-3 mt-1">
-            {['gentle', 'moderate', 'ambitious'].map((level) => (
-              <Button
-                type="button" // Important: prevent default form submission
-                key={level}
-                variant={data.goals.productivity_target === level ? 'default' : 'outline'}
-                onClick={() => updateProductivityTarget(level)}
-                className="capitalize"
-              >
-                {level}
-              </Button>
-            ))}
-          </div>
-        </div>
-
-        <div>
-          <FormLabel>Focus Areas (select all that apply)</FormLabel>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-1"> {/* Adjusted grid for better layout */}
-            {focusAreasOptions.map((area) => (
-              <Button
-                type="button" // Important: prevent default form submission
-                key={area}
-                variant={(data.goals.focus_areas || []).includes(area) ? 'default' : 'outline'}
-                onClick={() => toggleFocusArea(area)}
-                size="sm" // Keep size small for these buttons
-              >
-                {area}
-              </Button>
-            ))}
-          </div>
-        </div>
-      </div>
-      {/* Main "Next" button outside this component will trigger form submission/validation */}
-    </Form>
-  );
-};
-
-const FeaturesStep = ({ data, updateData }) => {
-  const features = [
-    {
-      id: 'dashboard',
-      name: 'Analytics Dashboard',
-      description: 'View your productivity metrics and trends',
-      icon: '📊'
-    },
-    {
-      id: 'goals',
-      name: 'Goal Tracking',
-      description: 'Set and monitor your professional objectives',
-      icon: '🎯'
-    },
-    {
-      id: 'insights',
-      name: 'AI Insights',
-      description: 'Get personalized recommendations',
-      icon: '🧠'
-    },
-    {
-      id: 'notifications',
-      name: 'Smart Notifications',
-      description: 'Receive timely productivity reminders',
-      icon: '🔔'
-    }
-  ];
-
-  const markFeatureExplored = (featureId) => {
-    updateData({
-      feature_exploration: {
-        ...data.feature_exploration,
-        [featureId]: true
-      }
-    });
-  };
-
-  return (
-    <div className="space-y-6">
-      <div className="text-center">
-        <h3 className="text-lg font-semibold mb-2">Explore Key Features</h3>
-        <p className="text-gray-600">Click on each feature to learn more</p>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {features.map((feature) => {
-          const isExplored = data.feature_exploration[feature.id];
-          
-          return (
-            <Card
-              key={feature.id}
-              className={`cursor-pointer transition-all hover:shadow-md ${
-                isExplored ? 'ring-2 ring-green-500 bg-green-50' : ''
-              }`}
-              onClick={() => markFeatureExplored(feature.id)}
-            >
-              <CardContent className="p-4">
-                <div className="flex items-start gap-3">
-                  <span className="text-2xl">{feature.icon}</span>
-                  <div className="flex-1">
-                    <h4 className="font-medium flex items-center gap-2">
-                      {feature.name}
-                      {isExplored && <Check className="w-4 h-4 text-green-600" />}
-                    </h4>
-                    <p className="text-sm text-gray-600 mt-1">
-                      {feature.description}
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
-
-      <div className="text-center">
-        <Badge variant="secondary">
-          {Object.keys(data.feature_exploration).length} of {features.length} features explored
-        </Badge>
-      </div>
-    </div>
-  );
-};
-
-const CompleteStep = ({ data }) => (
-  <div className="text-center space-y-6">
-    <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto">
-      <Check className="w-12 h-12 text-green-600" />
-    </div>
-    <div>
-      <h3 className="text-xl font-semibold mb-2">You're All Set!</h3>
-      <p className="text-gray-600 max-w-2xl mx-auto">
-        Your Digame profile is now configured. You can always update your preferences 
-        in the settings later.
-      </p>
-    </div>
-    <div className="bg-blue-50 p-4 rounded-lg">
-      <h4 className="font-medium mb-2">What's Next?</h4>
-      <ul className="text-sm text-gray-600 space-y-1">
-        <li>• Explore your personalized dashboard</li>
-        <li>• Set up your first productivity goals</li>
-        <li>• Connect your tools and apps</li>
-        <li>• Start tracking your professional growth</li>
-      </ul>
-    </div>
-  </div>
-);
 
 export default OnboardingWizard;
