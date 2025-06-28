@@ -66,7 +66,7 @@ class PredictResponse(BaseModel):
 # Path where models are saved. This should match what's used in predictive.py's train/save.
 # It might be user-specific if models are per user.
 # For now, let's make it a template that can include user_id.
-DEFAULT_MODEL_PATH_TEMPLATE = "digame/app/models/user_{user_id}_predictive_model"
+DEFAULT_MODEL_PATH_TEMPLATE = "models/user_{user_id}_predictive_model"
 
 # --- Endpoints ---
 

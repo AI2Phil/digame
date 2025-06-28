@@ -15,7 +15,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Default directory for saving models if only a filename is provided
-DEFAULT_MODEL_DIR = "digame/app/models"
+DEFAULT_MODEL_DIR = "models"
 os.makedirs(DEFAULT_MODEL_DIR, exist_ok=True)
 
 # Default path for the primary model, used by core functions.
