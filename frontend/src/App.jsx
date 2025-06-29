@@ -35,6 +35,8 @@ import TeamDashboardPage from './pages/TeamDashboardPage.jsx';
 import SkillGapAnalysisPage from './pages/SkillGapAnalysisPage.jsx';
 import WorkflowOptimizationPage from './pages/WorkflowOptimizationPage.jsx';
 import WorkflowAutomationPage from './pages/WorkflowAutomationPage.tsx';
+// Digital Twin Page
+import TwinDashboard from './components/digital-twin/TwinDashboard.tsx';
 // Authentication Page
 import AuthPage from './pages/AuthPage.tsx';
 import LanguageSwitcher from './components/Layout/LanguageSwitcher'; // Import LanguageSwitcher
@@ -616,6 +618,21 @@ function App() {
                 <WorkflowOptimizationPage
                   isDemoMode={isDemoMode}
                   onLogout={handleLogout}
+                />
+              ) : (
+                <Navigate to="/" replace />
+              )
+            }
+          />
+
+          {/* Digital Twin Route */}
+          <Route
+            path="/digital-twin/:twinId"
+            element={
+              isAuthenticated || isDemoMode ? (
+                <TwinDashboard
+                  twinId={window.location.pathname.split('/')[2]}
+                  userId="current-user"
                 />
               ) : (
                 <Navigate to="/" replace />

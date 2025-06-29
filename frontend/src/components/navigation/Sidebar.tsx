@@ -28,6 +28,7 @@ interface MenuSection {
 interface ExpandedSections {
   analytics: boolean;
   aiTools: boolean;
+  digitalTwin: boolean;
   teams: boolean;
   social: boolean;
   tasks: boolean;
@@ -47,6 +48,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isDemoMode, onLogout, currentUser, is
   const [expandedSections, setExpandedSections] = useState<ExpandedSections>({
     analytics: false,
     aiTools: false,
+    digitalTwin: false,
     teams: false,
     social: false,
     tasks: false,
@@ -82,6 +84,17 @@ const Sidebar: React.FC<SidebarProps> = ({ isDemoMode, onLogout, currentUser, is
         { label: 'AI Task Suggestions', icon: '📋', path: '/tasks', subtitle: 'TASK MANAGEMENT' },
         { label: 'AI Insights', icon: '🧠', path: '/ai-tools?tab=insights', subtitle: 'INSIGHTS & ANALYTICS' },
         { label: 'AI Coaching', icon: '🎯', path: '/ai-tools?tab=coaching', subtitle: 'INSIGHTS & ANALYTICS' }
+      ]
+    },
+    {
+      id: 'digitalTwin',
+      title: 'Digital Twin',
+      icon: '🧠',
+      items: [
+        { label: 'My Digital Twin', icon: '🤖', path: '/digital-twin/my-twin', subtitle: 'AI-POWERED' },
+        { label: 'Twin Analytics', icon: '📊', path: '/digital-twin/analytics', subtitle: 'AI-POWERED' },
+        { label: 'Twin Workspace', icon: '💬', path: '/digital-twin/workspace', subtitle: 'AI-POWERED' },
+        { label: 'Twin Settings', icon: '⚙️', path: '/digital-twin/settings', subtitle: 'AI-POWERED' }
       ]
     },
     {

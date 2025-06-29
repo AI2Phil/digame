@@ -170,6 +170,13 @@ class User(Base):
     #     cascade="all, delete-orphan"
     # )
 
+    # Digital Twin relationship (One-to-Many)
+    digital_twins = relationship(
+        "DigitalTwin",
+        back_populates="user",
+        cascade="all, delete-orphan"
+    )
+
     # Temporarily commented out to resolve SQLAlchemy mapper issues
     # # Relationships for messages
     # sent_messages = relationship(

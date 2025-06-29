@@ -47,6 +47,10 @@ from .reporting import Report, ReportExecution, ReportSchedule, ReportSubscripti
 # from .dashboard_custom import AnalyticsDashboard, DashboardWidget, ReportDefinition # Added for custom dashboards - temporarily disabled due to tenant dependency
 from .tenant import Tenant, TenantSettings, TenantInvitation, TenantAuditLog # Added tenant models
 # from .enterprise_sso import TenantSSOConfiguration # Added enterprise SSO models - temporarily disabled
+from .digital_twin import (
+    DigitalTwin, ActivityPattern, BehavioralLearning, PredictionModel,
+    SimulationResult, TwinInteraction, ActivityStream, TwinKnowledge, TwinStatus
+) # Added Digital Twin models
 
 # Optionally, define __all__ to specify what is exported when 'from .models import *' is used
 __all__ = [
@@ -132,4 +136,13 @@ __all__ = [
     "TenantInvitation",
     "TenantAuditLog",
     # "TenantSSOConfiguration", # Added enterprise SSO models - temporarily disabled
+    "DigitalTwin",        # Added Digital Twin models
+    "ActivityPattern",
+    "BehavioralLearning",
+    "PredictionModel",
+    "SimulationResult",
+    "TwinInteraction",
+    "ActivityStream",
+    "TwinKnowledge",
+    "TwinStatus",
 ]

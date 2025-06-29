@@ -64,6 +64,7 @@ from .routers import notifications_router # Import the notifications router
 from .routers import mfa_router # Import the MFA router
 from .routers import advanced_analytics_router # Import the advanced analytics router
 from .routers import aco_router # Import the ACO integration router
+from .routers import digital_twin_router # Import the digital twin router
 
 # Configure JSON logging
 logger = logging.getLogger("digame_app") # Use a specific name for the main app logger
@@ -213,6 +214,10 @@ app = FastAPI(
         {
             "name": "ACO Integration",
             "description": "Automated Customer Operations including subscription management, revenue tracking, and founding member program"
+        },
+        {
+            "name": "Digital Twins",
+            "description": "Digital twin creation, management, and AI-powered productivity insights"
         }
     ]
 )
@@ -288,6 +293,7 @@ app.include_router(team_router.router, prefix="/api", tags=["Teams"]) # Add team
 app.include_router(advanced_analytics_router.router) # Add advanced analytics router, prefix and tags are in the router itself
 app.include_router(document_processing_router.router) # Add document processing router, prefix and tags are in router
 # app.include_router(security_router.router, prefix="/api", tags=["Security"]) # Add security router - temporarily disabled
+app.include_router(digital_twin_router.router, tags=["Digital Twins"]) # Add digital twin router
 
 
 # Startup and shutdown events
