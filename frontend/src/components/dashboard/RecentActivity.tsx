@@ -1,12 +1,30 @@
 import React, { useState, useEffect } from 'react';
 import enhancedApiService from '../../services/enhancedApiService';
 
-const RecentActivity = ({ userId = 1 }) => {
-  const [activities, setActivities] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+interface Activity {
+  id: string | number;
+  title?: string;
+  description: string;
+  type: string;
+  timestamp: string;
+  category?: string;
+  impact?: 'high' | 'medium' | 'low';
+}
 
-  const activityIcons = {
+interface RecentActivityProps {
+  userId?: number;
+}
+
+interface ActivityIcons {
+  [key: string]: string;
+}
+
+const RecentActivity: React.FC<RecentActivityProps> = ({ userId = 1 }) => {
+  const [activities, setActivities] = useState<Activity[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const activityIcons: ActivityIcons = {
     'analysis': '📊',
     'meeting': '📞',
     'coding': '💻',
@@ -18,7 +36,7 @@ const RecentActivity = ({ userId = 1 }) => {
     'default': '⚡'
   };
 
-  const getActivityIcon = (activityType) => {
+  const getActivityIcon = (activityType: string): string => {
     if (typeof activityType === 'string') {
       return activityIcons[activityType.toLowerCase()] || activityIcons['default'];
     }
@@ -26,7 +44,7 @@ const RecentActivity = ({ userId = 1 }) => {
   };
 
   // Simplified timestamp formatter
-  const formatTimestamp = (isoTimestamp) => {
+  const formatTimestamp = (isoTimestamp: string): string => {
     const date = new Date(isoTimestamp);
     const today = new Date();
     const yesterday = new Date(today);
@@ -42,7 +60,7 @@ const RecentActivity = ({ userId = 1 }) => {
   };
 
   useEffect(() => {
-    const fetchRecentActivities = async () => {
+    const fetchRecentActivities = async (): Promise<void> => {
       try {
         setLoading(true);
         setError(null);
@@ -52,8 +70,6 @@ const RecentActivity = ({ userId = 1 }) => {
         } else {
           console.error('Recent activities data is not an array:', data);
           setActivities([]); // Default to empty array if data is not as expected
-          // Optionally, set an error state here as well if non-array is critical
-          // setError('Failed to load recent activities due to invalid data format.');
         }
       } catch (err) {
         console.error('Error fetching recent activities:', err);

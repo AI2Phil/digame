@@ -2,12 +2,30 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '../ui/Card';
 import { Progress } from '../ui/Progress';
 
-const ActivityBreakdown = ({ userId }) => {
-  const [activityData, setActivityData] = useState(null);
-  const [loading, setLoading] = useState(true);
+interface ActivityCategory {
+  name: string;
+  value: number;
+  color: string;
+  icon: string;
+}
+
+interface ActivityData {
+  categories: ActivityCategory[];
+  totalHours: number;
+  mostProductiveTime: string;
+  efficiency: number;
+}
+
+interface ActivityBreakdownProps {
+  userId: number;
+}
+
+const ActivityBreakdown: React.FC<ActivityBreakdownProps> = ({ userId }) => {
+  const [activityData, setActivityData] = useState<ActivityData | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
 
   // Sample data for demo mode
-  const sampleData = {
+  const sampleData: ActivityData = {
     categories: [
       { name: 'Development', value: 45, color: '#2563eb', icon: '💻' },
       { name: 'Meetings', value: 25, color: '#7c3aed', icon: '📞' },
@@ -22,7 +40,7 @@ const ActivityBreakdown = ({ userId }) => {
 
   useEffect(() => {
     // Simulate API call
-    const fetchActivityData = async () => {
+    const fetchActivityData = async (): Promise<void> => {
       try {
         setLoading(true);
         // In demo mode, use sample data
@@ -52,7 +70,7 @@ const ActivityBreakdown = ({ userId }) => {
         </CardHeader>
         <CardContent>
           <div className="animate-pulse">
-            <div className="h-4 bg-gray-200 rounded mb-4 py-1"></div> {/* Added py-1 to give some visual height like a progress bar line */}
+            <div className="h-4 bg-gray-200 rounded mb-4 py-1"></div>
             <div className="h-4 bg-gray-200 rounded mb-4 py-1"></div>
             <div className="h-4 bg-gray-200 rounded mb-4 py-1"></div>
           </div>
@@ -88,7 +106,7 @@ const ActivityBreakdown = ({ userId }) => {
         <div className="space-y-4 mb-6">
           {categories.map((category, index) => (
             <div key={index} className="activity-item">
-              <div className="flex items-center justify-between mb-1"> {/* Reduced mb for tighter spacing with Progress */}
+              <div className="flex items-center justify-between mb-1">
                 <div className="flex items-center space-x-3">
                   <span className="text-lg">{category.icon}</span>
                   <span className="text-sm font-medium text-gray-900">{category.name}</span>
@@ -112,7 +130,7 @@ const ActivityBreakdown = ({ userId }) => {
               <div className="text-xs text-gray-600">Efficiency</div>
             </div>
             <div className="text-center">
-              <div className="text-xs font-medium text-gray-900">Peak Time</div> {/* Changed from text-2xl to text-xs for consistency */}
+              <div className="text-xs font-medium text-gray-900">Peak Time</div>
               <div className="text-xs text-gray-600">{mostProductiveTime}</div>
             </div>
           </div>
@@ -125,7 +143,7 @@ const ActivityBreakdown = ({ userId }) => {
               <div key={index} className="flex items-center space-x-2 cursor-pointer hover:opacity-75 transition-opacity">
                 <div
                   className="w-3 h-3 rounded-full"
-                  style={{ backgroundColor: category.color }} // Custom color dots for legend remain
+                  style={{ backgroundColor: category.color }}
                 ></div>
                 <span className="text-xs text-gray-600">{category.name}</span>
               </div>

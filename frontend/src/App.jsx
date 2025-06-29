@@ -14,6 +14,7 @@ import ComponentDemoPage from './pages/ComponentDemoPage';
 import OnboardingPage from './pages/OnboardingPage';
 import AdvancedWebAnalyticsDashboard from './pages/AdvancedWebAnalyticsDashboard';
 import AdvancedMobileAnalyticsDashboard from './pages/AdvancedMobileAnalyticsDashboard';
+import AnalyticsDashboardPage from './pages/AnalyticsDashboardPage';
 import EnhancedSocialCollaborationDashboard from './pages/EnhancedSocialCollaborationDashboard';
 import AiToolsPage from './pages/AiToolsPage';
 import TaskManagementPage from './pages/TaskManagementPage';
@@ -291,6 +292,17 @@ function App() {
                   isDemoMode={isDemoMode}
                   onLogout={handleLogout}
                 />
+              ) : (
+                <Navigate to="/" replace />
+              )
+            }
+          />
+          
+          <Route
+            path="/analytics"
+            element={
+              isAuthenticated || isDemoMode ? (
+                <AnalyticsDashboardPage />
               ) : (
                 <Navigate to="/" replace />
               )

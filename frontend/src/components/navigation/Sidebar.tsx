@@ -6,9 +6,45 @@ import { Badge } from '../ui/Badge';
 import { Avatar, AvatarFallback } from '../ui/Avatar';
 import { Separator } from '../ui/Separator';
 
-const Sidebar = ({ isDemoMode, onLogout, currentUser, isOpen, onToggle }) => {
+interface User {
+  name?: string;
+  role?: string;
+}
+
+interface MenuItem {
+  label: string;
+  icon: string;
+  path: string;
+  subtitle?: string;
+}
+
+interface MenuSection {
+  id: string;
+  title: string;
+  icon: string;
+  items: MenuItem[];
+}
+
+interface ExpandedSections {
+  analytics: boolean;
+  aiTools: boolean;
+  teams: boolean;
+  social: boolean;
+  tasks: boolean;
+  enterprise: boolean;
+}
+
+interface SidebarProps {
+  isDemoMode: boolean;
+  onLogout: () => void;
+  currentUser?: User | null;
+  isOpen: boolean;
+  onToggle: () => void;
+}
+
+const Sidebar: React.FC<SidebarProps> = ({ isDemoMode, onLogout, currentUser, isOpen, onToggle }) => {
   const navigate = useNavigate();
-  const [expandedSections, setExpandedSections] = useState({
+  const [expandedSections, setExpandedSections] = useState<ExpandedSections>({
     analytics: false,
     aiTools: false,
     teams: false,
@@ -17,14 +53,14 @@ const Sidebar = ({ isDemoMode, onLogout, currentUser, isOpen, onToggle }) => {
     enterprise: false
   });
 
-  const toggleSection = (section) => {
+  const toggleSection = (section: keyof ExpandedSections): void => {
     setExpandedSections(prev => ({
       ...prev,
       [section]: !prev[section]
     }));
   };
 
-  const menuSections = [
+  const menuSections: MenuSection[] = [
     {
       id: 'analytics',
       title: 'Analytics',
@@ -113,7 +149,7 @@ const Sidebar = ({ isDemoMode, onLogout, currentUser, isOpen, onToggle }) => {
             </div>
             <span className="text-xl font-bold text-gray-900">Digame</span>
             {isDemoMode && (
-              <Badge variant="info" className="text-xs">Demo</Badge>
+              <Badge variant="info" className="text-xs" icon="" onRemove={() => {}}>Demo</Badge>
             )}
           </div>
           <Button 
@@ -134,14 +170,17 @@ const Sidebar = ({ isDemoMode, onLogout, currentUser, isOpen, onToggle }) => {
             className="w-full justify-start text-blue-700 bg-blue-50 hover:bg-blue-100 font-semibold"
             onClick={() => {
               navigate('/dashboard');
-              onToggle();
+              // Only close sidebar on mobile
+              if (window.innerWidth < 1024) {
+                onToggle();
+              }
             }}
           >
             <span className="mr-3 text-lg">🏠</span>
             Dashboard
           </Button>
 
-          <Separator className="my-4" />
+          <Separator />
 
           {/* Menu Sections */}
           {menuSections.map((section) => (
@@ -149,13 +188,13 @@ const Sidebar = ({ isDemoMode, onLogout, currentUser, isOpen, onToggle }) => {
               <Button
                 variant="ghost"
                 className="w-full justify-between text-gray-700 hover:text-gray-900 hover:bg-gray-100 font-medium"
-                onClick={() => toggleSection(section.id)}
+                onClick={() => toggleSection(section.id as keyof ExpandedSections)}
               >
                 <div className="flex items-center">
                   <span className="mr-3 text-lg">{section.icon}</span>
                   {section.title}
                 </div>
-                {expandedSections[section.id] ? (
+                {expandedSections[section.id as keyof ExpandedSections] ? (
                   <ChevronDown className="w-4 h-4" />
                 ) : (
                   <ChevronRight className="w-4 h-4" />
@@ -163,7 +202,7 @@ const Sidebar = ({ isDemoMode, onLogout, currentUser, isOpen, onToggle }) => {
               </Button>
 
               {/* Collapsible Section Items */}
-              {expandedSections[section.id] && (
+              {expandedSections[section.id as keyof ExpandedSections] && (
                 <div className="ml-6 space-y-1 border-l border-gray-200 pl-4">
                   {section.items.map((item, index) => (
                     <div key={index}>
@@ -177,7 +216,10 @@ const Sidebar = ({ isDemoMode, onLogout, currentUser, isOpen, onToggle }) => {
                         className="w-full justify-start text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50"
                         onClick={() => {
                           navigate(item.path);
-                          onToggle();
+                          // Only close sidebar on mobile
+                          if (window.innerWidth < 1024) {
+                            onToggle();
+                          }
                         }}
                       >
                         <span className="mr-2 text-sm">{item.icon}</span>
@@ -190,7 +232,7 @@ const Sidebar = ({ isDemoMode, onLogout, currentUser, isOpen, onToggle }) => {
             </div>
           ))}
 
-          <Separator className="my-4" />
+          <Separator />
 
           {/* Reports */}
           <Button
@@ -198,7 +240,10 @@ const Sidebar = ({ isDemoMode, onLogout, currentUser, isOpen, onToggle }) => {
             className="w-full justify-start text-gray-700 hover:text-gray-900 hover:bg-gray-100 font-medium"
             onClick={() => {
               navigate('/reports');
-              onToggle();
+              // Only close sidebar on mobile
+              if (window.innerWidth < 1024) {
+                onToggle();
+              }
             }}
           >
             <span className="mr-3 text-lg">📋</span>
@@ -212,7 +257,10 @@ const Sidebar = ({ isDemoMode, onLogout, currentUser, isOpen, onToggle }) => {
               className="w-full justify-start text-gray-700 hover:text-gray-900 hover:bg-gray-100 font-medium"
               onClick={() => {
                 navigate('/admin/dashboard');
-                onToggle();
+                // Only close sidebar on mobile
+                if (window.innerWidth < 1024) {
+                  onToggle();
+                }
               }}
             >
               <Shield className="w-4 h-4 mr-3" />
@@ -224,14 +272,19 @@ const Sidebar = ({ isDemoMode, onLogout, currentUser, isOpen, onToggle }) => {
         {/* Footer */}
         <div className="p-4 border-t border-gray-200">
           <div className="flex items-center mb-4">
-            <Avatar className="w-10 h-10 mr-3">
-              <AvatarFallback className="text-base">👤</AvatarFallback>
-            </Avatar>
+            <Avatar
+              className="w-10 h-10 mr-3"
+              fallback={<span className="text-base">👤</span>}
+              src=""
+              alt=""
+              name=""
+              status=""
+            />
             <div className="flex-1">
               <p className="text-sm font-medium text-gray-900">
                 {isDemoMode ? "Demo User" : currentUser?.name || "User"}
               </p>
-              {isDemoMode && <Badge variant="outline" className="text-xs">Demo Account</Badge>}
+              {isDemoMode && <Badge variant="outline" className="text-xs" icon="" onRemove={() => {}}>Demo Account</Badge>}
             </div>
           </div>
           <Button
@@ -239,7 +292,10 @@ const Sidebar = ({ isDemoMode, onLogout, currentUser, isOpen, onToggle }) => {
             className="w-full"
             onClick={() => {
               onLogout();
-              onToggle();
+              // Only close sidebar on mobile
+              if (window.innerWidth < 1024) {
+                onToggle();
+              }
             }}
           >
             {isDemoMode ? 'Exit Demo' : 'Logout'}

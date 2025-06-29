@@ -3,11 +3,28 @@ import { Chart } from '../ui/Chart'; // Import the standard Chart component
 import enhancedApiService from '../../services/enhancedApiService';
 import { Skeleton } from '../ui/Skeleton'; // Import Skeleton for loading state
 
-const ProductivityChart = ({ userId, dateRange }) => {
-  const [activityData, setActivityData] = useState([]);
-  const [activityLabels, setActivityLabels] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
+interface DateRange {
+  from?: Date;
+  to?: Date;
+}
+
+interface ProductivityDataItem {
+  date: string;
+  productivity?: number;
+  tasks?: number;
+  value?: number;
+}
+
+interface ProductivityChartProps {
+  userId: number;
+  dateRange?: DateRange | null;
+}
+
+const ProductivityChart: React.FC<ProductivityChartProps> = ({ userId, dateRange }) => {
+  const [activityData, setActivityData] = useState<number[]>([]);
+  const [activityLabels, setActivityLabels] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!userId) {
@@ -18,7 +35,7 @@ const ProductivityChart = ({ userId, dateRange }) => {
       return;
     }
 
-    const fetchChartData = async () => {
+    const fetchChartData = async (): Promise<void> => {
       setIsLoading(true);
       setError(null);
       try {
@@ -26,9 +43,7 @@ const ProductivityChart = ({ userId, dateRange }) => {
         // Adapt the service call if it needs a date range or specific type of data
         const data = await enhancedApiService.getProductivityData(
           userId,
-          'daily',
-          dateRange?.from ? dateRange.from.toISOString().split('T')[0] : undefined,
-          dateRange?.to ? dateRange.to.toISOString().split('T')[0] : undefined
+          'daily'
         );
 
         if (!data || !Array.isArray(data)) {
@@ -38,15 +53,17 @@ const ProductivityChart = ({ userId, dateRange }) => {
 
         // Transform the data for the Chart component
         // Chart expects `data` as an array of numbers and `labels` as an array of strings
-        const formattedData = data.map(item => item.productivity || item.tasks || item.value || 0);
-        const formattedLabels = data.map(item =>
+        const formattedData = data.map((item: ProductivityDataItem) => 
+          item.productivity || item.tasks || item.value || 0
+        );
+        const formattedLabels = data.map((item: ProductivityDataItem) =>
           new Date(item.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
         );
 
         setActivityData(formattedData);
         setActivityLabels(formattedLabels);
 
-      } catch (e) {
+      } catch (e: any) {
         console.error("Failed to fetch or process chart data:", e);
         setError(e.message);
       } finally {
@@ -64,7 +81,7 @@ const ProductivityChart = ({ userId, dateRange }) => {
       <div className="flex-grow" style={{ minHeight: '250px' }}> {/* Ensure container has height */}
         {isLoading && (
           <div className="flex items-center justify-center h-full">
-            <Skeleton className="h-full w-full" />
+            <Skeleton className="h-full w-full" width="100%" height="100%" />
           </div>
         )}
         {error && !isLoading && (
@@ -79,10 +96,11 @@ const ProductivityChart = ({ userId, dateRange }) => {
         )}
         {!isLoading && !error && activityData.length > 0 && (
           <Chart
+            className=""
             data={activityData}
             labels={activityLabels}
-            height={250} // Adjust height as needed
-            // className="mt-4" // Add any necessary styling
+            height={250}
+            secondaryData={[]}
           />
         )}
       </div>

@@ -16,27 +16,22 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   currentUser,
   onLogout = () => {}
 }) => {
-  const [sidebarOpen, setSidebarOpen] = useState(false); // Start closed to test toggle
+  const [sidebarOpen, setSidebarOpen] = useState(false); // Mobile sidebar state
 
   const toggleSidebar = () => {
-    console.log('Hamburger menu clicked! Current state:', sidebarOpen);
-    alert('Hamburger menu clicked! Current state: ' + sidebarOpen);
     setSidebarOpen(!sidebarOpen);
-    console.log('New state will be:', !sidebarOpen);
   };
 
   return (
     <div className="flex h-screen bg-gray-100">
-      {/* Sidebar - Always visible on desktop */}
-      {sidebarOpen && (
-        <Sidebar
-          isDemoMode={isDemoMode}
-          onLogout={onLogout}
-          currentUser={currentUser}
-          isOpen={sidebarOpen}
-          onToggle={toggleSidebar}
-        />
-      )}
+      {/* Sidebar - Always visible on desktop, toggleable on mobile */}
+      <Sidebar
+        isDemoMode={isDemoMode}
+        onLogout={onLogout}
+        currentUser={currentUser}
+        isOpen={sidebarOpen}
+        onToggle={toggleSidebar}
+      />
       
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
@@ -46,17 +41,10 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
             <div className="flex items-center gap-4">
               <button
                 onClick={toggleSidebar}
-                className="p-2 hover:bg-gray-100 rounded-md bg-red-200"
-                style={{
-                  border: '3px solid red',
-                  backgroundColor: 'yellow',
-                  minWidth: '40px',
-                  minHeight: '40px',
-                  zIndex: 9999
-                }}
+                className="lg:hidden p-2 hover:bg-gray-100 rounded-md"
                 type="button"
               >
-                <Menu className="w-5 h-5 text-black" />
+                <Menu className="w-5 h-5" />
               </button>
               <h1 className="text-xl font-semibold text-gray-900">Digame Dashboard</h1>
               {isDemoMode && (
