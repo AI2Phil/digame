@@ -1,7 +1,7 @@
 import json
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status, Depends
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, cast
 from datetime import datetime, timedelta
 
 # Assuming Task model is correctly imported via models package
@@ -135,7 +135,7 @@ class TaskPrioritizationService:
                 detail="Intelligent Task Prioritization feature is not enabled for your tenant."
             )
 
-        user_tasks = task_crud.get_tasks_by_user_id(self.db, user_id=current_user.id, exclude_statuses=["completed", "archived"])
+        user_tasks = task_crud.get_tasks_by_user_id(self.db, user_id=cast(int, current_user.id), exclude_statuses=["completed", "archived"])
 
         if not user_tasks:
             return []

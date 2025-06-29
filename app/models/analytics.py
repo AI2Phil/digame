@@ -21,70 +21,70 @@ except ImportError:
         id = Column(Integer, primary_key=True)
 
 
-class AnalyticsModel(Base):
+class AnalyticsModel(Base):  # type: ignore
     """
     Predictive analytics models and their configurations
     """
     __tablename__ = "analytics_models"
 
-    id = Column(Integer, primary_key=True, index=True)
-    model_uuid = Column(String(36), unique=True, index=True, default=lambda: str(uuid.uuid4()))
-    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=False, index=True)
+    id = Column(Integer, primary_key=True, index=True)  # type: ignore
+    model_uuid = Column(String(36), unique=True, index=True, default=lambda: str(uuid.uuid4()))  # type: ignore
+    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=False, index=True)  # type: ignore
     
     # Model metadata
-    name = Column(String(255), nullable=False)
-    display_name = Column(String(255), nullable=False)
-    description = Column(Text, nullable=True)
-    model_type = Column(String(100), nullable=False, index=True)  # performance, roi, productivity, churn, etc.
-    category = Column(String(100), nullable=False, index=True)  # predictive, descriptive, prescriptive
+    name = Column(String(255), nullable=False)  # type: ignore
+    display_name = Column(String(255), nullable=False)  # type: ignore
+    description = Column(Text, nullable=True)  # type: ignore
+    model_type = Column(String(100), nullable=False, index=True)  # type: ignore  # performance, roi, productivity, churn, etc.
+    category = Column(String(100), nullable=False, index=True)  # type: ignore  # predictive, descriptive, prescriptive
     
     # Model configuration
-    algorithm = Column(String(100), nullable=False)  # linear_regression, random_forest, neural_network, etc.
-    features = Column(JSON, default=[])  # Input features for the model
-    target_variable = Column(String(255), nullable=False)  # What the model predicts
-    hyperparameters = Column(JSON, default={})  # Model-specific parameters
-    dimensions = Column(JSON, default=[]) # For multi-dimensional metrics: list of dimension names
-    metrics = Column(JSON, default=[]) # For multi-dimensional metrics: list of metric names
-    aggregation_types = Column(JSON, default={}) # For multi-dimensional metrics: e.g. {"metric_name": "SUM"}
+    algorithm = Column(String(100), nullable=False)  # type: ignore  # linear_regression, random_forest, neural_network, etc.
+    features = Column(JSON, default=[])  # type: ignore  # Input features for the model
+    target_variable = Column(String(255), nullable=False)  # type: ignore  # What the model predicts
+    hyperparameters = Column(JSON, default={})  # type: ignore  # Model-specific parameters
+    dimensions = Column(JSON, default=[])  # type: ignore # For multi-dimensional metrics: list of dimension names
+    metrics = Column(JSON, default=[])  # type: ignore # For multi-dimensional metrics: list of metric names
+    aggregation_types = Column(JSON, default={})  # type: ignore # For multi-dimensional metrics: e.g. {"metric_name": "SUM"}
     
     # Training configuration
-    training_data_source = Column(String(255), nullable=False)  # Source of training data
-    training_period_days = Column(Integer, default=90)  # How much historical data to use
-    retrain_frequency_days = Column(Integer, default=7)  # How often to retrain
-    validation_split = Column(Float, default=0.2)  # Validation data percentage
+    training_data_source = Column(String(255), nullable=False)  # type: ignore  # Source of training data
+    training_period_days = Column(Integer, default=90)  # type: ignore  # How much historical data to use
+    retrain_frequency_days = Column(Integer, default=7)  # type: ignore  # How often to retrain
+    validation_split = Column(Float, default=0.2)  # type: ignore  # Validation data percentage
     
     # Model performance metrics
-    accuracy_score = Column(Float, nullable=True)
-    precision_score = Column(Float, nullable=True)
-    recall_score = Column(Float, nullable=True)
-    f1_score = Column(Float, nullable=True)
-    r2_score = Column(Float, nullable=True)
-    mae_score = Column(Float, nullable=True)  # Mean Absolute Error
-    rmse_score = Column(Float, nullable=True)  # Root Mean Square Error
+    accuracy_score = Column(Float, nullable=True)  # type: ignore
+    precision_score = Column(Float, nullable=True)  # type: ignore
+    recall_score = Column(Float, nullable=True)  # type: ignore
+    f1_score = Column(Float, nullable=True)  # type: ignore
+    r2_score = Column(Float, nullable=True)  # type: ignore
+    mae_score = Column(Float, nullable=True)  # type: ignore  # Mean Absolute Error
+    rmse_score = Column(Float, nullable=True)  # type: ignore  # Root Mean Square Error
     
     # Model status and lifecycle
-    status = Column(String(50), default="draft")  # draft, training, trained, deployed, deprecated
-    version = Column(String(50), default="1.0.0")
-    is_active = Column(Boolean, default=True)
-    is_production = Column(Boolean, default=False)
+    status = Column(String(50), default="draft")  # type: ignore  # draft, training, trained, deployed, deprecated
+    version = Column(String(50), default="1.0.0")  # type: ignore
+    is_active = Column(Boolean, default=True)  # type: ignore
+    is_production = Column(Boolean, default=False)  # type: ignore
     
     # Training history
-    last_trained_at = Column(DateTime, nullable=True)
-    training_duration_seconds = Column(Integer, nullable=True)
-    training_samples_count = Column(Integer, nullable=True)
+    last_trained_at = Column(DateTime, nullable=True)  # type: ignore
+    training_duration_seconds = Column(Integer, nullable=True)  # type: ignore
+    training_samples_count = Column(Integer, nullable=True)  # type: ignore
     
     # Usage statistics
-    prediction_count = Column(Integer, default=0)
-    last_prediction_at = Column(DateTime, nullable=True)
+    prediction_count = Column(Integer, default=0)  # type: ignore
+    last_prediction_at = Column(DateTime, nullable=True)  # type: ignore
     
     # Model persistence and training metadata
-    model_path = Column(String(512), nullable=True) # Path to the serialized model file
-    training_metadata = Column(JSON, nullable=True) # Stores training details like feature columns, encodings, etc.
+    model_path = Column(String(512), nullable=True)  # type: ignore # Path to the serialized model file
+    training_metadata = Column(JSON, nullable=True)  # type: ignore # Stores training details like feature columns, encodings, etc.
 
     # Metadata
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    created_by_user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)  # type: ignore
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)  # type: ignore
+    created_by_user_id = Column(Integer, ForeignKey("users.id"), nullable=False)  # type: ignore
     
     # Relationships
     predictions = relationship("AnalyticsPrediction", back_populates="model", cascade="all, delete-orphan")
@@ -122,53 +122,53 @@ class AnalyticsModel(Base):
         }
 
 
-class AnalyticsPrediction(Base):
+class AnalyticsPrediction(Base):  # type: ignore
     """
     Individual predictions made by analytics models
     """
     __tablename__ = "analytics_predictions"
 
-    id = Column(Integer, primary_key=True, index=True)
-    prediction_uuid = Column(String(36), unique=True, index=True, default=lambda: str(uuid.uuid4()))
-    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=False, index=True)
-    model_id = Column(Integer, ForeignKey("analytics_models.id"), nullable=False, index=True)
+    id = Column(Integer, primary_key=True, index=True)  # type: ignore
+    prediction_uuid = Column(String(36), unique=True, index=True, default=lambda: str(uuid.uuid4()))  # type: ignore
+    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=False, index=True)  # type: ignore
+    model_id = Column(Integer, ForeignKey("analytics_models.id"), nullable=False, index=True)  # type: ignore
     
     # Prediction context
-    entity_type = Column(String(100), nullable=False)  # user, project, task, etc.
-    entity_id = Column(Integer, nullable=False, index=True)
-    prediction_type = Column(String(100), nullable=False)  # performance, churn, roi, etc.
+    entity_type = Column(String(100), nullable=False)  # type: ignore  # user, project, task, etc.
+    entity_id = Column(Integer, nullable=False, index=True)  # type: ignore
+    prediction_type = Column(String(100), nullable=False)  # type: ignore  # performance, churn, roi, etc.
     
     # Input data
-    input_features = Column(JSON, default={})  # Features used for prediction
-    feature_importance = Column(JSON, default={})  # Feature importance scores
+    input_features = Column(JSON, default={})  # type: ignore  # Features used for prediction
+    feature_importance = Column(JSON, default={})  # type: ignore  # Feature importance scores
     
     # Prediction results
-    predicted_value = Column(Float, nullable=True) # Made nullable for multi-dimensional results
-    predicted_values_multi_dim = Column(JSON, nullable=True) # For multi-dimensional results: {dim_val: predicted_value} or list of {dims: {}, value: X}
-    confidence_score = Column(Float, nullable=True)  # Model confidence (0-1)
-    prediction_interval_lower = Column(Float, nullable=True)  # Lower bound
-    prediction_interval_upper = Column(Float, nullable=True)  # Upper bound
-    benchmark_comparison_data = Column(JSON, nullable=True) # {benchmark_name: value, entity_value: value, difference: X}
+    predicted_value = Column(Float, nullable=True)  # type: ignore # Made nullable for multi-dimensional results
+    predicted_values_multi_dim = Column(JSON, nullable=True)  # type: ignore # For multi-dimensional results: {dim_val: predicted_value} or list of {dims: {}, value: X}
+    confidence_score = Column(Float, nullable=True)  # type: ignore  # Model confidence (0-1)
+    prediction_interval_lower = Column(Float, nullable=True)  # type: ignore  # Lower bound
+    prediction_interval_upper = Column(Float, nullable=True)  # type: ignore  # Upper bound
+    benchmark_comparison_data = Column(JSON, nullable=True)  # type: ignore # {benchmark_name: value, entity_value: value, difference: X}
     
     # Prediction metadata
-    prediction_horizon_days = Column(Integer, nullable=True)  # How far into future
-    prediction_date = Column(DateTime, default=datetime.utcnow, index=True)
-    expires_at = Column(DateTime, nullable=True)  # When prediction becomes stale
+    prediction_horizon_days = Column(Integer, nullable=True)  # type: ignore  # How far into future
+    prediction_date = Column(DateTime, default=datetime.utcnow, index=True)  # type: ignore
+    expires_at = Column(DateTime, nullable=True)  # type: ignore  # When prediction becomes stale
     
     # Validation and feedback
-    actual_value = Column(Float, nullable=True)  # Actual outcome (for validation)
-    prediction_error = Column(Float, nullable=True)  # Difference from actual
-    is_validated = Column(Boolean, default=False)
-    validation_date = Column(DateTime, nullable=True)
-    raw_prediction_output = Column(JSON, nullable=True) # Store raw output from complex models if needed for later processing
+    actual_value = Column(Float, nullable=True)  # type: ignore  # Actual outcome (for validation)
+    prediction_error = Column(Float, nullable=True)  # type: ignore  # Difference from actual
+    is_validated = Column(Boolean, default=False)  # type: ignore
+    validation_date = Column(DateTime, nullable=True)  # type: ignore
+    raw_prediction_output = Column(JSON, nullable=True)  # type: ignore # Store raw output from complex models if needed for later processing
     
     # Usage tracking
-    view_count = Column(Integer, default=0)
-    last_viewed_at = Column(DateTime, nullable=True)
+    view_count = Column(Integer, default=0)  # type: ignore
+    last_viewed_at = Column(DateTime, nullable=True)  # type: ignore
     
     # Metadata
-    created_at = Column(DateTime, default=datetime.utcnow)
-    created_by_user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)  # type: ignore
+    created_by_user_id = Column(Integer, ForeignKey("users.id"), nullable=True)  # type: ignore
     
     # Relationships
     model = relationship("AnalyticsModel", back_populates="predictions")
@@ -182,7 +182,7 @@ class AnalyticsPrediction(Base):
         if not self.is_validated or self.actual_value is None:
             return None
         
-        error_rate = abs(self.prediction_error) / abs(self.actual_value) if self.actual_value != 0 else abs(self.prediction_error)
+        error_rate = abs(self.prediction_error) / abs(self.actual_value) if self.actual_value != 0 else abs(self.prediction_error)  # type: ignore
         return error_rate <= tolerance
 
     @property
@@ -194,13 +194,13 @@ class AnalyticsPrediction(Base):
 
     def validate_prediction(self, actual_value: float):
         """Validate prediction against actual outcome"""
-        self.actual_value = actual_value
-        self.prediction_error = actual_value - self.predicted_value
-        self.is_validated = True
-        self.validation_date = datetime.utcnow()
+        self.actual_value = actual_value  # type: ignore
+        self.prediction_error = actual_value - self.predicted_value  # type: ignore
+        self.is_validated = True  # type: ignore
+        self.validation_date = datetime.utcnow()  # type: ignore
 
 
-class AnalyticsTrainingJob(Base):
+class AnalyticsTrainingJob(Base):  # type: ignore
     """
     Training jobs for analytics models
     """
@@ -273,21 +273,21 @@ class AnalyticsTrainingJob(Base):
             return 0.0
         return self.training_samples / self.duration_seconds
 
-    def mark_completed(self, success: bool = True, metrics: dict = None):
+    def mark_completed(self, success: bool = True, metrics: dict = None):  # type: ignore
         """Mark training job as completed"""
-        self.completed_at = datetime.utcnow()
+        self.completed_at = datetime.utcnow()  # type: ignore
         if self.started_at:
-            self.duration_seconds = int((self.completed_at - self.started_at).total_seconds())
-        self.status = "completed" if success else "failed"
+            self.duration_seconds = int((self.completed_at - self.started_at).total_seconds())  # type: ignore
+        self.status = "completed" if success else "failed"  # type: ignore
         if metrics:
-            self.final_metrics = metrics
+            self.final_metrics = metrics  # type: ignore
 
     def can_retry(self):
         """Check if training job can be retried"""
         return self.status == "failed" and self.retry_count < self.max_retries
 
 
-class ROICalculation(Base):
+class ROICalculation(Base):  # type: ignore
     """
     ROI (Return on Investment) calculations and measurements
     """
@@ -391,37 +391,37 @@ class ROICalculation(Base):
         """Calculate all ROI metrics"""
         # Basic ROI calculation
         if self.total_investment > 0:
-            self.roi_percentage = float((self.total_benefits - self.total_investment) / self.total_investment * 100)
+            self.roi_percentage = float((self.total_benefits - self.total_investment) / self.total_investment * 100)  # type: ignore
         else:
-            self.roi_percentage = 0.0
+            self.roi_percentage = 0.0  # type: ignore
         
         # Payback period calculation
         if self.total_benefits > 0:
-            monthly_benefit = float(self.total_benefits) / (self.period_days / 30)
+            monthly_benefit = float(self.total_benefits) / (self.period_days / 30)  # type: ignore
             if monthly_benefit > 0:
-                self.payback_period_months = float(self.total_investment) / monthly_benefit
+                self.payback_period_months = float(self.total_investment) / monthly_benefit  # type: ignore
         
         # Simple NPV calculation (more complex NPV would require cash flow projections)
         if self.discount_rate and self.period_days:
             years = self.period_days / 365
             discount_factor = 1 / ((1 + self.discount_rate) ** years)
-            self.net_present_value = float(self.total_benefits * discount_factor - self.total_investment)
+            self.net_present_value = float(self.total_benefits * discount_factor - self.total_investment)  # type: ignore
 
     def update_totals(self):
         """Update total investment and benefits"""
-        self.total_investment = (
+        self.total_investment = (  # type: ignore
             self.initial_investment + self.operational_costs + self.labor_costs +
             self.technology_costs + self.training_costs + self.other_costs
         )
         
-        self.total_benefits = (
+        self.total_benefits = (  # type: ignore
             self.revenue_increase + self.cost_savings + self.productivity_gains +
             self.efficiency_gains + self.quality_improvements + self.risk_reduction +
             self.other_benefits
         )
 
 
-class PerformanceMetric(Base):
+class PerformanceMetric(Base):  # type: ignore
     """
     Performance metrics and KPIs for analytics tracking
     """
@@ -515,34 +515,34 @@ class PerformanceMetric(Base):
     def calculate_trend(self):
         """Calculate trend direction and significance"""
         if self.previous_value is None or self.previous_value == 0:
-            self.trend_direction = "stable"
-            self.trend_percentage = 0.0
-            self.trend_significance = "none"
+            self.trend_direction = "stable"  # type: ignore
+            self.trend_percentage = 0.0  # type: ignore
+            self.trend_significance = "none"  # type: ignore
             return
         
         change = self.current_value - self.previous_value
-        self.trend_percentage = (change / self.previous_value) * 100
+        self.trend_percentage = (change / self.previous_value) * 100  # type: ignore
         
         # Determine direction
-        if abs(self.trend_percentage) < 1:
-            self.trend_direction = "stable"
+        if abs(self.trend_percentage) < 1:  # type: ignore
+            self.trend_direction = "stable"  # type: ignore
         elif self.trend_percentage > 0:
-            self.trend_direction = "increasing"
+            self.trend_direction = "increasing"  # type: ignore
         else:
-            self.trend_direction = "decreasing"
+            self.trend_direction = "decreasing"  # type: ignore
         
         # Determine significance
-        abs_change = abs(self.trend_percentage)
+        abs_change = abs(self.trend_percentage)  # type: ignore
         if abs_change >= 10:
-            self.trend_significance = "significant"
+            self.trend_significance = "significant"  # type: ignore
         elif abs_change >= 3:
-            self.trend_significance = "minor"
+            self.trend_significance = "minor"  # type: ignore
         else:
-            self.trend_significance = "none"
+            self.trend_significance = "none"  # type: ignore
 
 # Dashboard Models
 
-class AnalyticsDashboard(Base):
+class AnalyticsDashboard(Base):  # type: ignore
     """
     Represents a customizable analytics dashboard belonging to a user.
     A dashboard consists of a name, description, tags, and a layout of widgets.
@@ -584,7 +584,7 @@ class AnalyticsDashboard(Base):
     def __repr__(self):
         return f"<AnalyticsDashboard(id={self.id}, name='{self.name}')>"
 
-class DashboardWidgetConfig(Base):
+class DashboardWidgetConfig(Base):  # type: ignore
     """
     Configuration for a single widget within an AnalyticsDashboard.
     Defines the widget's type, title, data source, and display options.

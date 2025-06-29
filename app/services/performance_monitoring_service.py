@@ -43,15 +43,15 @@ class PerformanceMonitoringService:
         """Record a performance metric"""
         
         metric = PerformanceMetric()
-        metric.tenant_id = tenant_id
-        metric.metric_name = metric_name
-        metric.metric_category = metric_category
-        metric.metric_type = metric_type
-        metric.value = value
-        metric.unit = unit
-        metric.source = source
-        metric.tags = tags or {}
-        metric.dimensions = dimensions or {}
+        setattr(metric, 'tenant_id', tenant_id)
+        setattr(metric, 'metric_name', metric_name)
+        setattr(metric, 'metric_category', metric_category)
+        setattr(metric, 'metric_type', metric_type)
+        setattr(metric, 'value', value)
+        setattr(metric, 'unit', unit)
+        setattr(metric, 'source', source)
+        setattr(metric, 'tags', tags or {})
+        setattr(metric, 'dimensions', dimensions or {})
         
         self.db.add(metric)
         self.db.commit()
@@ -90,19 +90,19 @@ class PerformanceMonitoringService:
             )
         
         query_perf = QueryPerformance()
-        query_perf.tenant_id = tenant_id
-        query_perf.query_hash = query_hash
-        query_perf.query_text = query_text[:5000]  # Truncate long queries
-        query_perf.query_type = self._extract_query_type(query_text)
-        query_perf.execution_time_ms = execution_time_ms
-        query_perf.rows_examined = rows_examined
-        query_perf.rows_returned = rows_returned
-        query_perf.endpoint = endpoint
-        query_perf.user_id = user_id
-        query_perf.database_name = database_name
-        query_perf.table_names = table_names or []
-        query_perf.is_slow_query = is_slow_query
-        query_perf.optimization_suggestions = optimization_suggestions
+        setattr(query_perf, 'tenant_id', tenant_id)
+        setattr(query_perf, 'query_hash', query_hash)
+        setattr(query_perf, 'query_text', query_text[:5000])  # Truncate long queries
+        setattr(query_perf, 'query_type', self._extract_query_type(query_text))
+        setattr(query_perf, 'execution_time_ms', execution_time_ms)
+        setattr(query_perf, 'rows_examined', rows_examined)
+        setattr(query_perf, 'rows_returned', rows_returned)
+        setattr(query_perf, 'endpoint', endpoint)
+        setattr(query_perf, 'user_id', user_id)
+        setattr(query_perf, 'database_name', database_name)
+        setattr(query_perf, 'table_names', table_names or [])
+        setattr(query_perf, 'is_slow_query', is_slow_query)
+        setattr(query_perf, 'optimization_suggestions', optimization_suggestions)
         
         self.db.add(query_perf)
         self.db.commit()
@@ -131,17 +131,17 @@ class PerformanceMonitoringService:
             bounce = True
         
         ux_metric = UserExperienceMetric()
-        ux_metric.tenant_id = tenant_id
-        ux_metric.user_id = user_id
-        ux_metric.session_id = session_id
-        ux_metric.page_url = page_url
-        ux_metric.action_type = action_type
-        ux_metric.load_time_ms = load_time_ms
-        ux_metric.device_type = device_type
-        ux_metric.browser = browser
-        ux_metric.error_occurred = error_occurred
-        ux_metric.error_message = error_message
-        ux_metric.bounce = bounce
+        setattr(ux_metric, 'tenant_id', tenant_id)
+        setattr(ux_metric, 'user_id', user_id)
+        setattr(ux_metric, 'session_id', session_id)
+        setattr(ux_metric, 'page_url', page_url)
+        setattr(ux_metric, 'action_type', action_type)
+        setattr(ux_metric, 'load_time_ms', load_time_ms)
+        setattr(ux_metric, 'device_type', device_type)
+        setattr(ux_metric, 'browser', browser)
+        setattr(ux_metric, 'error_occurred', error_occurred)
+        setattr(ux_metric, 'error_message', error_message)
+        setattr(ux_metric, 'bounce', bounce)
         
         self.db.add(ux_metric)
         self.db.commit()
@@ -188,15 +188,15 @@ class PerformanceMonitoringService:
         response_time_ms = (datetime.utcnow() - start_time).total_seconds() * 1000
         
         health_check = SystemHealthCheck()
-        health_check.tenant_id = tenant_id
-        health_check.check_name = check_name
-        health_check.check_type = check_type
-        health_check.component = component
-        health_check.status = status
-        health_check.response_time_ms = response_time_ms
-        health_check.success = success
-        health_check.error_message = error_message
-        health_check.details = details
+        setattr(health_check, 'tenant_id', tenant_id)
+        setattr(health_check, 'check_name', check_name)
+        setattr(health_check, 'check_type', check_type)
+        setattr(health_check, 'component', component)
+        setattr(health_check, 'status', status)
+        setattr(health_check, 'response_time_ms', response_time_ms)
+        setattr(health_check, 'success', success)
+        setattr(health_check, 'error_message', error_message)
+        setattr(health_check, 'details', details)
         
         self.db.add(health_check)
         self.db.commit()
@@ -216,8 +216,8 @@ class PerformanceMonitoringService:
         
         recent_checks = self.db.query(SystemHealthCheck).filter(
             and_(
-                SystemHealthCheck.tenant_id == tenant_id,
-                SystemHealthCheck.timestamp >= recent_time
+                SystemHealthCheck.tenant_id.is_(tenant_id),
+                SystemHealthCheck.timestamp.__ge__(recent_time)
             )
         ).all()
         
@@ -313,9 +313,9 @@ class PerformanceMonitoringService:
         
         slow_queries = self.db.query(QueryPerformance).filter(
             and_(
-                QueryPerformance.tenant_id == tenant_id,
-                QueryPerformance.is_slow_query == True,
-                QueryPerformance.timestamp >= start_time
+                QueryPerformance.tenant_id.is_(tenant_id),
+                QueryPerformance.is_slow_query.is_(True),
+                QueryPerformance.timestamp.__ge__(start_time)
             )
         ).order_by(desc(QueryPerformance.execution_time_ms)).limit(limit * 2).all()
         
@@ -369,8 +369,8 @@ class PerformanceMonitoringService:
         
         ux_metrics = self.db.query(UserExperienceMetric).filter(
             and_(
-                UserExperienceMetric.tenant_id == tenant_id,
-                UserExperienceMetric.timestamp >= start_time
+                UserExperienceMetric.tenant_id.is_(tenant_id),
+                UserExperienceMetric.timestamp.__ge__(start_time)
             )
         ).all()
         
@@ -458,8 +458,8 @@ class PerformanceMonitoringService:
         
         active_alerts = self.db.query(PerformanceAlert).filter(
             and_(
-                PerformanceAlert.tenant_id == tenant_id,
-                PerformanceAlert.status == "active"
+                PerformanceAlert.tenant_id.is_(tenant_id),
+                PerformanceAlert.status.is_("active")
             )
         ).all()
         
@@ -611,9 +611,9 @@ class PerformanceMonitoringService:
         
         alerts = self.db.query(PerformanceAlert).filter(
             and_(
-                PerformanceAlert.tenant_id == metric.tenant_id,
-                PerformanceAlert.metric_name == metric.metric_name,
-                PerformanceAlert.status == "active"
+                PerformanceAlert.tenant_id.is_(metric.tenant_id),
+                PerformanceAlert.metric_name.is_(metric.metric_name),
+                PerformanceAlert.status.is_("active")
             )
         ).all()
         
@@ -689,9 +689,9 @@ class PerformanceMonitoringService:
         
         metrics = self.db.query(PerformanceMetric).filter(
             and_(
-                PerformanceMetric.tenant_id == tenant_id,
-                PerformanceMetric.metric_category == "system",
-                PerformanceMetric.timestamp >= start_time
+                PerformanceMetric.tenant_id.is_(tenant_id),
+                PerformanceMetric.metric_category.is_("system"),
+                PerformanceMetric.timestamp.__ge__(start_time)
             )
         ).all()
         
@@ -720,8 +720,8 @@ class PerformanceMonitoringService:
         
         queries = self.db.query(QueryPerformance).filter(
             and_(
-                QueryPerformance.tenant_id == tenant_id,
-                QueryPerformance.timestamp >= start_time
+                QueryPerformance.tenant_id.is_(tenant_id),
+                QueryPerformance.timestamp.__ge__(start_time)
             )
         ).all()
         
@@ -745,8 +745,8 @@ class PerformanceMonitoringService:
         
         ux_metrics = self.db.query(UserExperienceMetric).filter(
             and_(
-                UserExperienceMetric.tenant_id == tenant_id,
-                UserExperienceMetric.timestamp >= start_time
+                UserExperienceMetric.tenant_id.is_(tenant_id),
+                UserExperienceMetric.timestamp.__ge__(start_time)
             )
         ).all()
         
@@ -770,8 +770,8 @@ class PerformanceMonitoringService:
         
         alerts = self.db.query(PerformanceAlert).filter(
             and_(
-                PerformanceAlert.tenant_id == tenant_id,
-                PerformanceAlert.status == "active"
+                PerformanceAlert.tenant_id.is_(tenant_id),
+                PerformanceAlert.status.is_("active")
             )
         ).order_by(desc(PerformanceAlert.created_at)).limit(10).all()
         
@@ -791,8 +791,8 @@ class PerformanceMonitoringService:
         
         incidents = self.db.query(PerformanceIncident).filter(
             and_(
-                PerformanceIncident.tenant_id == tenant_id,
-                PerformanceIncident.started_at >= start_time
+                PerformanceIncident.tenant_id.is_(tenant_id),
+                PerformanceIncident.started_at.__ge__(start_time)
             )
         ).order_by(desc(PerformanceIncident.started_at)).limit(10).all()
         

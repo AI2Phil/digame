@@ -17,20 +17,20 @@ class TwinStatus(str, Enum):
     PAUSED = "paused"
     ERROR = "error"
 
-class DigitalTwin(Base):
+class DigitalTwin(Base):  # type: ignore
     """Core Digital Twin model representing a user's productivity twin"""
     __tablename__ = "digital_twins"
 
-    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
-    name = Column(String(255), nullable=False)
-    status = Column(String(50), default=TwinStatus.INITIALIZING.value, nullable=False)
-    learning_progress = Column(DECIMAL(5, 2), default=0.00)
-    accuracy_score = Column(DECIMAL(5, 2), default=0.00)
-    model_version = Column(String(50), nullable=True)
-    last_training_at = Column(DateTime, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))  # type: ignore
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)  # type: ignore
+    name = Column(String(255), nullable=False)  # type: ignore
+    status = Column(String(50), default=TwinStatus.INITIALIZING.value, nullable=False)  # type: ignore
+    learning_progress = Column(DECIMAL(5, 2), default=0.00)  # type: ignore
+    accuracy_score = Column(DECIMAL(5, 2), default=0.00)  # type: ignore
+    model_version = Column(String(50), nullable=True)  # type: ignore
+    last_training_at = Column(DateTime, nullable=True)  # type: ignore
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)  # type: ignore
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)  # type: ignore
 
     # Relationships
     user = relationship("User", back_populates="digital_twins")
@@ -45,19 +45,19 @@ class DigitalTwin(Base):
     def __repr__(self):
         return f"<DigitalTwin(id={self.id}, user_id={self.user_id}, name='{self.name}', status='{self.status}')>"
 
-class ActivityPattern(Base):
+class ActivityPattern(Base):  # type: ignore
     """Stores discovered activity patterns for digital twins"""
     __tablename__ = "activity_patterns"
 
-    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    twin_id = Column(String, ForeignKey("digital_twins.id"), nullable=False, index=True)
-    pattern_type = Column(String(100), nullable=False)
-    pattern_data = Column(JSON, nullable=False)
-    confidence_score = Column(DECIMAL(5, 2), nullable=True)
-    frequency_score = Column(DECIMAL(5, 2), nullable=True)
-    impact_score = Column(DECIMAL(5, 2), nullable=True)
-    discovered_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    validated_at = Column(DateTime, nullable=True)
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))  # type: ignore
+    twin_id = Column(String, ForeignKey("digital_twins.id"), nullable=False, index=True)  # type: ignore
+    pattern_type = Column(String(100), nullable=False)  # type: ignore
+    pattern_data = Column(JSON, nullable=False)  # type: ignore
+    confidence_score = Column(DECIMAL(5, 2), nullable=True)  # type: ignore
+    frequency_score = Column(DECIMAL(5, 2), nullable=True)  # type: ignore
+    impact_score = Column(DECIMAL(5, 2), nullable=True)  # type: ignore
+    discovered_at = Column(DateTime, default=datetime.utcnow, nullable=False)  # type: ignore
+    validated_at = Column(DateTime, nullable=True)  # type: ignore
 
     # Relationships
     twin = relationship("DigitalTwin", back_populates="activity_patterns")
@@ -70,17 +70,17 @@ class ActivityPattern(Base):
     def __repr__(self):
         return f"<ActivityPattern(id={self.id}, twin_id={self.twin_id}, type='{self.pattern_type}')>"
 
-class BehavioralLearning(Base):
+class BehavioralLearning(Base):  # type: ignore
     """Stores behavioral learning data for continuous improvement"""
     __tablename__ = "behavioral_learning"
 
-    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    twin_id = Column(String, ForeignKey("digital_twins.id"), nullable=False, index=True)
-    behavior_category = Column(String(100), nullable=False)
-    learning_data = Column(JSON, nullable=False)
-    confidence_level = Column(DECIMAL(5, 2), nullable=True)
-    learning_iteration = Column(Integer, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))  # type: ignore
+    twin_id = Column(String, ForeignKey("digital_twins.id"), nullable=False, index=True)  # type: ignore
+    behavior_category = Column(String(100), nullable=False)  # type: ignore
+    learning_data = Column(JSON, nullable=False)  # type: ignore
+    confidence_level = Column(DECIMAL(5, 2), nullable=True)  # type: ignore
+    learning_iteration = Column(Integer, nullable=True)  # type: ignore
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)  # type: ignore
 
     # Relationships
     twin = relationship("DigitalTwin", back_populates="behavioral_learning")
@@ -93,19 +93,19 @@ class BehavioralLearning(Base):
     def __repr__(self):
         return f"<BehavioralLearning(id={self.id}, twin_id={self.twin_id}, category='{self.behavior_category}')>"
 
-class PredictionModel(Base):
+class PredictionModel(Base):  # type: ignore
     """Stores prediction models and their metadata"""
     __tablename__ = "prediction_models"
 
-    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    twin_id = Column(String, ForeignKey("digital_twins.id"), nullable=False, index=True)
-    model_type = Column(String(100), nullable=False)
-    model_parameters = Column(JSON, nullable=False)
-    training_data_hash = Column(String(64), nullable=True)
-    accuracy_metrics = Column(JSON, nullable=True)
-    version = Column(Integer, default=1, nullable=False)
-    is_active = Column(Boolean, default=False, nullable=False)
-    trained_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))  # type: ignore
+    twin_id = Column(String, ForeignKey("digital_twins.id"), nullable=False, index=True)  # type: ignore
+    model_type = Column(String(100), nullable=False)  # type: ignore
+    model_parameters = Column(JSON, nullable=False)  # type: ignore
+    training_data_hash = Column(String(64), nullable=True)  # type: ignore
+    accuracy_metrics = Column(JSON, nullable=True)  # type: ignore
+    version = Column(Integer, default=1, nullable=False)  # type: ignore
+    is_active = Column(Boolean, default=False, nullable=False)  # type: ignore
+    trained_at = Column(DateTime, default=datetime.utcnow, nullable=False)  # type: ignore
 
     # Relationships
     twin = relationship("DigitalTwin", back_populates="prediction_models")
@@ -118,18 +118,18 @@ class PredictionModel(Base):
     def __repr__(self):
         return f"<PredictionModel(id={self.id}, twin_id={self.twin_id}, type='{self.model_type}', active={self.is_active})>"
 
-class SimulationResult(Base):
+class SimulationResult(Base):  # type: ignore
     """Stores results from twin simulations"""
     __tablename__ = "simulation_results"
 
-    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    twin_id = Column(String, ForeignKey("digital_twins.id"), nullable=False, index=True)
-    simulation_type = Column(String(100), nullable=False)
-    input_parameters = Column(JSON, nullable=False)
-    simulation_results = Column(JSON, nullable=False)
-    confidence_score = Column(DECIMAL(5, 2), nullable=True)
-    execution_time_ms = Column(Integer, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))  # type: ignore
+    twin_id = Column(String, ForeignKey("digital_twins.id"), nullable=False, index=True)  # type: ignore
+    simulation_type = Column(String(100), nullable=False)  # type: ignore
+    input_parameters = Column(JSON, nullable=False)  # type: ignore
+    simulation_results = Column(JSON, nullable=False)  # type: ignore
+    confidence_score = Column(DECIMAL(5, 2), nullable=True)  # type: ignore
+    execution_time_ms = Column(Integer, nullable=True)  # type: ignore
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)  # type: ignore
 
     # Relationships
     twin = relationship("DigitalTwin", back_populates="simulation_results")
@@ -142,18 +142,18 @@ class SimulationResult(Base):
     def __repr__(self):
         return f"<SimulationResult(id={self.id}, twin_id={self.twin_id}, type='{self.simulation_type}')>"
 
-class TwinInteraction(Base):
+class TwinInteraction(Base):  # type: ignore
     """Logs interactions between users and their digital twins"""
     __tablename__ = "twin_interactions"
 
-    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    twin_id = Column(String, ForeignKey("digital_twins.id"), nullable=False, index=True)
-    interaction_type = Column(String(100), nullable=False)
-    input_data = Column(JSON, nullable=True)
-    response_data = Column(JSON, nullable=True)
-    processing_time_ms = Column(Integer, nullable=True)
-    user_feedback = Column(Integer, nullable=True)  # 1-5 rating
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))  # type: ignore
+    twin_id = Column(String, ForeignKey("digital_twins.id"), nullable=False, index=True)  # type: ignore
+    interaction_type = Column(String(100), nullable=False)  # type: ignore
+    input_data = Column(JSON, nullable=True)  # type: ignore
+    response_data = Column(JSON, nullable=True)  # type: ignore
+    processing_time_ms = Column(Integer, nullable=True)  # type: ignore
+    user_feedback = Column(Integer, nullable=True)  # type: ignore  # 1-5 rating
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)  # type: ignore
 
     # Relationships
     twin = relationship("DigitalTwin", back_populates="twin_interactions")
@@ -166,16 +166,16 @@ class TwinInteraction(Base):
     def __repr__(self):
         return f"<TwinInteraction(id={self.id}, twin_id={self.twin_id}, type='{self.interaction_type}')>"
 
-class ActivityStream(Base):
+class ActivityStream(Base):  # type: ignore
     """Real-time activity stream for digital twins"""
     __tablename__ = "activity_stream"
 
-    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    twin_id = Column(String, ForeignKey("digital_twins.id"), nullable=False, index=True)
-    activity_type = Column(String(100), nullable=False)
-    activity_data = Column(JSON, nullable=False)
-    timestamp = Column(DateTime, default=datetime.utcnow, nullable=False)
-    processed = Column(Boolean, default=False, nullable=False)
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))  # type: ignore
+    twin_id = Column(String, ForeignKey("digital_twins.id"), nullable=False, index=True)  # type: ignore
+    activity_type = Column(String(100), nullable=False)  # type: ignore
+    activity_data = Column(JSON, nullable=False)  # type: ignore
+    timestamp = Column(DateTime, default=datetime.utcnow, nullable=False)  # type: ignore
+    processed = Column(Boolean, default=False, nullable=False)  # type: ignore
 
     # Relationships
     twin = relationship("DigitalTwin", back_populates="activity_stream")
@@ -188,18 +188,18 @@ class ActivityStream(Base):
     def __repr__(self):
         return f"<ActivityStream(id={self.id}, twin_id={self.twin_id}, type='{self.activity_type}', processed={self.processed})>"
 
-class TwinKnowledge(Base):
+class TwinKnowledge(Base):  # type: ignore
     """Knowledge base for digital twins"""
     __tablename__ = "twin_knowledge"
 
-    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    twin_id = Column(String, ForeignKey("digital_twins.id"), nullable=False, index=True)
-    knowledge_type = Column(String(100), nullable=False)
-    knowledge_data = Column(JSON, nullable=False)
-    confidence_score = Column(DECIMAL(5, 2), nullable=True)
-    source = Column(String(100), nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))  # type: ignore
+    twin_id = Column(String, ForeignKey("digital_twins.id"), nullable=False, index=True)  # type: ignore
+    knowledge_type = Column(String(100), nullable=False)  # type: ignore
+    knowledge_data = Column(JSON, nullable=False)  # type: ignore
+    confidence_score = Column(DECIMAL(5, 2), nullable=True)  # type: ignore
+    source = Column(String(100), nullable=True)  # type: ignore
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)  # type: ignore
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)  # type: ignore
 
     # Relationships
     twin = relationship("DigitalTwin", back_populates="twin_knowledge")

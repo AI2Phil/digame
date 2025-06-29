@@ -2,7 +2,7 @@ import json
 import logging
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status, Depends
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, cast
 from collections import Counter
 import re
 
@@ -45,7 +45,7 @@ class EmailAnalysisService:
         if not current_user:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not authenticated.")
 
-        user_from_db = user_crud.get_user(self.db, user_id=current_user.id)
+        user_from_db = user_crud.get_user(self.db, user_id=cast(int, current_user.id))
         if not user_from_db:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found.")
         current_user = user_from_db
@@ -77,7 +77,7 @@ class EmailAnalysisService:
                 detail="Email Pattern Analysis feature is not enabled for your tenant."
             )
 
-        user_settings = user_setting_crud.get_user_setting(self.db, user_id=current_user.id)
+        user_settings = user_setting_crud.get_user_setting(self.db, user_id=cast(int, current_user.id))
         api_keys_dict: Optional[Dict[str, str]] = None
         if user_settings and user_settings.api_keys:
             try:

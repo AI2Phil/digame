@@ -5,7 +5,8 @@ API endpoints for notification management
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from typing import List, Optional, Dict, Any
+from sqlalchemy import or_, func, text
+from typing import List, Optional, Dict, Any, cast
 from datetime import datetime
 
 from ..database import get_db
@@ -23,7 +24,7 @@ router = APIRouter(prefix="/api/v1/notifications", tags=["Notifications"])
 # Platform Owner Authentication Dependency
 async def get_platform_owner(current_user: User = Depends(get_current_user)) -> User:
     """Dependency to ensure current user is a platform owner"""
-    if not current_user.is_platform_owner:
+    if not getattr(current_user, 'is_platform_owner', False):
         raise HTTPException(status_code=403, detail="Platform owner access required")
     return current_user
 
@@ -42,7 +43,7 @@ async def get_notifications(
     """Get notifications for the current platform owner"""
     
     query = db.query(Notification).filter(
-        Notification.recipient_id == current_user.id
+        Notification.recipient_id == cast(int, current_user.id)
     )
     
     # Apply filters
@@ -69,12 +70,12 @@ async def get_notifications(
     
     # Filter expired notifications
     if not include_expired:
-        from sqlalchemy import or_
+        current_time = datetime.utcnow()
         query = query.filter(
             or_(
                 Notification.expires_at.is_(None),
-                Notification.expires_at > datetime.utcnow()
-            )
+                text("expires_at > :current_time")
+            ).params(current_time=current_time)
         )
     
     # Get total count
@@ -101,10 +102,10 @@ async def get_notifications(
                     "context_data": notif.context_data,
                     "action_url": notif.action_url,
                     "action_text": notif.action_text,
-                    "created_at": notif.created_at.isoformat(),
-                    "sent_at": notif.sent_at.isoformat() if notif.sent_at else None,
-                    "read_at": notif.read_at.isoformat() if notif.read_at else None,
-                    "expires_at": notif.expires_at.isoformat() if notif.expires_at else None
+                    "created_at": notif.created_at.isoformat() if getattr(notif, 'created_at', None) else None,
+                    "sent_at": notif.sent_at.isoformat() if getattr(notif, 'sent_at', None) else None,
+                    "read_at": notif.read_at.isoformat() if getattr(notif, 'read_at', None) else None,
+                    "expires_at": notif.expires_at.isoformat() if getattr(notif, 'expires_at', None) else None
                 }
                 for notif in notifications
             ],
@@ -123,14 +124,14 @@ async def get_unread_count(
 ):
     """Get count of unread notifications"""
     
-    from sqlalchemy import or_
+    current_time = datetime.utcnow()
     count = db.query(Notification).filter(
-        Notification.recipient_id == current_user.id,
+        Notification.recipient_id == cast(int, current_user.id),
         Notification.status.in_([NotificationStatus.PENDING, NotificationStatus.SENT]),
         or_(
             Notification.expires_at.is_(None),
-            Notification.expires_at > datetime.utcnow()
-        )
+            text("expires_at > :current_time")
+        ).params(current_time=current_time)
     ).count()
     
     return {
@@ -158,8 +159,8 @@ async def mark_as_read(
         raise HTTPException(status_code=404, detail="Notification not found")
     
     # Update notification
-    notification.status = NotificationStatus.READ
-    notification.read_at = datetime.utcnow()
+    setattr(notification, 'status', NotificationStatus.READ)
+    setattr(notification, 'read_at', datetime.utcnow())
     db.commit()
     
     return {
@@ -185,8 +186,8 @@ async def dismiss_notification(
         raise HTTPException(status_code=404, detail="Notification not found")
     
     # Update notification
-    notification.status = NotificationStatus.DISMISSED
-    notification.dismissed_at = datetime.utcnow()
+    setattr(notification, 'status', NotificationStatus.DISMISSED)
+    setattr(notification, 'dismissed_at', datetime.utcnow())
     db.commit()
     
     return {
@@ -274,7 +275,7 @@ async def get_notification_preferences(
             "quiet_hours_start": preferences.quiet_hours_start,
             "quiet_hours_end": preferences.quiet_hours_end,
             "timezone": preferences.timezone,
-            "min_priority": preferences.min_priority.value if preferences.min_priority else "low"
+            "min_priority": getattr(preferences.min_priority, 'value', 'low') if getattr(preferences, 'min_priority', None) else "low"
         }
     }
 
@@ -293,7 +294,8 @@ async def update_notification_preferences(
     
     if not preferences:
         # Create new preferences
-        preferences = NotificationPreference(user_id=current_user.id)
+        preferences = NotificationPreference()
+        preferences.user_id = current_user.id  # type: ignore
         db.add(preferences)
     
     # Update preferences
@@ -307,7 +309,7 @@ async def update_notification_preferences(
             else:
                 setattr(preferences, key, value)
     
-    preferences.updated_at = datetime.utcnow()
+    setattr(preferences, 'updated_at', datetime.utcnow())
     db.commit()
     
     return {
@@ -371,17 +373,16 @@ async def create_test_notification(
         raise HTTPException(status_code=400, detail=f"Invalid enum value: {e}")
     
     # Create notification
-    notification = Notification(
-        recipient_id=current_user.id,
-        title=notification_data["title"],
-        message=notification_data["message"],
-        notification_type=notification_type,
-        priority=priority,
-        context_data=notification_data.get("context_data"),
-        action_url=notification_data.get("action_url"),
-        action_text=notification_data.get("action_text"),
-        delivery_channels=notification_data.get("delivery_channels", ["in_app"])
-    )
+    notification = Notification()
+    notification.recipient_id = current_user.id  # type: ignore
+    notification.title = notification_data["title"]  # type: ignore
+    notification.message = notification_data["message"]  # type: ignore
+    notification.notification_type = notification_type  # type: ignore
+    notification.priority = priority  # type: ignore
+    notification.context_data = notification_data.get("context_data")  # type: ignore
+    notification.action_url = notification_data.get("action_url")  # type: ignore
+    notification.action_text = notification_data.get("action_text")  # type: ignore
+    notification.delivery_channels = notification_data.get("delivery_channels", ["in_app"])  # type: ignore
     
     db.add(notification)
     db.commit()

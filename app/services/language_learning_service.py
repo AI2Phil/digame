@@ -2,7 +2,7 @@ import json
 import logging
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status, Depends
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, cast
 
 from ..crud import user_crud, user_setting_crud, tenant_crud
 from ..models.user import User as UserModel
@@ -21,7 +21,7 @@ class LanguageLearningService:
         Helper to check tenant feature enablement and retrieve OpenAI API key.
         Now common for both translate and define methods.
         """
-        user_from_db = user_crud.get_user(self.db, user_id=current_user.id)
+        user_from_db = user_crud.get_user(self.db, user_id=cast(int, current_user.id))
         if not user_from_db:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found.")
         # Use the fresh user object for subsequent checks

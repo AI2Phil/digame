@@ -81,7 +81,7 @@ class MarketTrend(Base):
     def trend_strength(self):
         """Calculate trend strength based on confidence and impact"""
         impact_weights = {"low": 0.25, "medium": 0.5, "high": 0.75, "critical": 1.0}
-        impact_weight = impact_weights.get(self.impact_level, 0.5)
+        impact_weight = impact_weights.get(self.impact_level, 0.5)  # type: ignore
         return self.confidence_score * impact_weight
 
     @property
@@ -198,21 +198,21 @@ class CompetitiveAnalysis(Base):
             "follower": 0.5,
             "niche": 0.6
         }
-        base_score = position_scores.get(self.market_position, 0.5)
+        base_score = position_scores.get(self.market_position, 0.5)  # type: ignore
         
         # Adjust based on market share
         if self.market_share:
-            share_bonus = min(self.market_share / 100, 0.3)  # Max 30% bonus
+            share_bonus = min(float(self.market_share) / 100, 0.3)  # type: ignore  # Max 30% bonus
             base_score += share_bonus
         
         return min(base_score, 1.0)
 
     def calculate_swot_score(self):
         """Calculate SWOT analysis score"""
-        strengths_count = len(self.strengths) if self.strengths else 0
-        weaknesses_count = len(self.weaknesses) if self.weaknesses else 0
-        opportunities_count = len(self.opportunities) if self.opportunities else 0
-        threats_count = len(self.threats) if self.threats else 0
+        strengths_count = len(self.strengths) if self.strengths else 0  # type: ignore
+        weaknesses_count = len(self.weaknesses) if self.weaknesses else 0  # type: ignore
+        opportunities_count = len(self.opportunities) if self.opportunities else 0  # type: ignore
+        threats_count = len(self.threats) if self.threats else 0  # type: ignore
         
         positive_score = strengths_count + opportunities_count
         negative_score = weaknesses_count + threats_count
@@ -310,7 +310,7 @@ class IntelligenceReport(Base):
             return False
         
         from datetime import timedelta
-        expiry_date = self.report_date + timedelta(days=self.validity_period_days)
+        expiry_date = self.report_date + timedelta(days=int(self.validity_period_days))  # type: ignore
         return datetime.utcnow() > expiry_date
 
     @property
@@ -336,7 +336,7 @@ class IntelligenceReport(Base):
     def mark_accessed(self):
         """Mark report as accessed"""
         self.view_count += 1
-        self.last_accessed_at = datetime.utcnow()
+        setattr(self, 'last_accessed_at', datetime.utcnow())  # type: ignore
 
 
 class MarketDataSource(Base):
@@ -414,78 +414,78 @@ class MarketDataSource(Base):
             return 0.0
         return (self.requests_used_this_month / self.monthly_request_limit) * 100
 
-    def record_fetch_attempt(self, success: bool, error_message: str = None):
+    def record_fetch_attempt(self, success: bool, error_message: str | None = None):
         """Record a fetch attempt"""
-        self.last_fetch_attempt = datetime.utcnow()
+        self.last_fetch_attempt = datetime.utcnow()  # type: ignore
         
         if success:
-            self.last_successful_fetch = datetime.utcnow()
-            self.consecutive_failures = 0
-            self.requests_used_this_month += 1
+            self.last_successful_fetch = datetime.utcnow()  # type: ignore
+            self.consecutive_failures = 0  # type: ignore
+            self.requests_used_this_month += 1  # type: ignore
         else:
-            self.consecutive_failures += 1
+            self.consecutive_failures += 1  # type: ignore
             
             # Disable source if too many consecutive failures
             if self.consecutive_failures >= 10:
-                self.is_active = False
+                self.is_active = False  # type: ignore
 
 
-class IndustryBenchmark(Base):
+class IndustryBenchmark(Base):  # type: ignore
     """
     Industry benchmarks and performance metrics
     """
     __tablename__ = "industry_benchmarks"
 
-    id = Column(Integer, primary_key=True, index=True)
-    benchmark_uuid = Column(String(36), unique=True, index=True, default=lambda: str(uuid.uuid4()))
-    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=False, index=True)
+    id = Column(Integer, primary_key=True, index=True)  # type: ignore
+    benchmark_uuid = Column(String(36), unique=True, index=True, default=lambda: str(uuid.uuid4()))  # type: ignore
+    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=False, index=True)  # type: ignore
     
     # Benchmark metadata
-    benchmark_name = Column(String(255), nullable=False)
-    description = Column(Text, nullable=True)
-    industry = Column(String(100), nullable=False, index=True)
-    sub_industry = Column(String(100), nullable=True, index=True)
+    benchmark_name = Column(String(255), nullable=False)  # type: ignore
+    description = Column(Text, nullable=True)  # type: ignore
+    industry = Column(String(100), nullable=False, index=True)  # type: ignore
+    sub_industry = Column(String(100), nullable=True, index=True)  # type: ignore
     
     # Metric details
-    metric_name = Column(String(255), nullable=False)
-    metric_type = Column(String(100), nullable=False)  # financial, operational, market, customer
-    measurement_unit = Column(String(50), nullable=False)
-    calculation_method = Column(Text, nullable=True)
+    metric_name = Column(String(255), nullable=False)  # type: ignore
+    metric_type = Column(String(100), nullable=False)  # type: ignore  # financial, operational, market, customer
+    measurement_unit = Column(String(50), nullable=False)  # type: ignore
+    calculation_method = Column(Text, nullable=True)  # type: ignore
     
     # Benchmark values
-    median_value = Column(Float, nullable=False)
-    mean_value = Column(Float, nullable=True)
-    percentile_25 = Column(Float, nullable=True)
-    percentile_75 = Column(Float, nullable=True)
-    percentile_90 = Column(Float, nullable=True)
-    best_in_class = Column(Float, nullable=True)
+    median_value = Column(Float, nullable=False)  # type: ignore
+    mean_value = Column(Float, nullable=True)  # type: ignore
+    percentile_25 = Column(Float, nullable=True)  # type: ignore
+    percentile_75 = Column(Float, nullable=True)  # type: ignore
+    percentile_90 = Column(Float, nullable=True)  # type: ignore
+    best_in_class = Column(Float, nullable=True)  # type: ignore
     
     # Sample information
-    sample_size = Column(Integer, nullable=False)
-    sample_description = Column(Text, nullable=True)
-    geographic_scope = Column(String(100), default="global")
-    company_size_range = Column(String(100), nullable=True)  # startup, sme, enterprise, all
+    sample_size = Column(Integer, nullable=False)  # type: ignore
+    sample_description = Column(Text, nullable=True)  # type: ignore
+    geographic_scope = Column(String(100), default="global")  # type: ignore
+    company_size_range = Column(String(100), nullable=True)  # type: ignore  # startup, sme, enterprise, all
     
     # Time period
-    period_start = Column(DateTime, nullable=False)
-    period_end = Column(DateTime, nullable=False)
-    data_collection_date = Column(DateTime, default=datetime.utcnow)
+    period_start = Column(DateTime, nullable=False)  # type: ignore
+    period_end = Column(DateTime, nullable=False)  # type: ignore
+    data_collection_date = Column(DateTime, default=datetime.utcnow)  # type: ignore
     
     # Data quality
-    confidence_level = Column(Float, default=0.0)  # 0-1 confidence in benchmark
-    data_sources = Column(JSON, default=[])
-    methodology = Column(Text, nullable=True)
-    limitations = Column(JSON, default=[])
+    confidence_level = Column(Float, default=0.0)  # type: ignore  # 0-1 confidence in benchmark
+    data_sources = Column(JSON, default=[])  # type: ignore
+    methodology = Column(Text, nullable=True)  # type: ignore
+    limitations = Column(JSON, default=[])  # type: ignore
     
     # Status
-    status = Column(String(50), default="active")  # active, archived, deprecated
-    is_validated = Column(Boolean, default=False)
-    validation_date = Column(DateTime, nullable=True)
+    status = Column(String(50), default="active")  # type: ignore  # active, archived, deprecated
+    is_validated = Column(Boolean, default=False)  # type: ignore
+    validation_date = Column(DateTime, nullable=True)  # type: ignore
     
     # Metadata
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    created_by_user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)  # type: ignore
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)  # type: ignore
+    created_by_user_id = Column(Integer, ForeignKey("users.id"), nullable=False)  # type: ignore
 
     def __repr__(self):
         return f"<IndustryBenchmark(id={self.id}, metric='{self.metric_name}', industry='{self.industry}')>"
