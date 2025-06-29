@@ -1,134 +1,499 @@
-import json
-import logging
-from typing import Optional, Dict, Any
+"""
+Platform Owner Notification Service
+Handles creation, delivery, and management of notifications
+"""
 
+from typing import List, Optional, Dict, Any, Union
 from sqlalchemy.orm import Session
-from fastapi import HTTPException
+from sqlalchemy import and_, or_, desc
+from datetime import datetime, timedelta
+import logging
+import json
 
-from .ai_integration_service import AIIntegrationService
-from ..crud import user_setting_crud, notification_crud
-from ..models.user_setting import UserSetting
-from ..schemas.notification_schemas import NotificationCreate, Notification
+from ..models.notifications import (
+    Notification, NotificationTemplate, NotificationPreference, NotificationLog,
+    NotificationType, NotificationPriority, NotificationStatus
+)
+from ..models.user import User
+from ..models.tenant import Tenant
+from ..database import get_db
 
 logger = logging.getLogger(__name__)
 
+
 class NotificationService:
+    """Service for managing Platform Owner notifications"""
+    
     def __init__(self, db: Session):
         self.db = db
-        self.ai_integration_service = AIIntegrationService(db=db)
-
-    async def optimize_user_notifications_with_ai(
+    
+    def create_notification(
         self,
-        user_id: int,
-        user_behavior_summary: Optional[Dict[str, Any]] = None
-    ) -> Dict[str, Any]:
-        """
-        Optimizes user notification settings using an AI service.
-        """
-        logger.info(f"Attempting to optimize notifications for user_id: {user_id}")
-
-        user_settings = user_setting_crud.get_user_setting(self.db, user_id=user_id)
-        api_key = None
-        if user_settings and user_settings.api_keys:
-            try:
-                api_keys_dict = json.loads(user_settings.api_keys)
-                api_key = api_keys_dict.get("openai_api_key") # Standardized key name
-            except json.JSONDecodeError:
-                logger.error(f"Failed to parse API keys JSON for user {user_id}")
-                raise HTTPException(status_code=500, detail="Error parsing API key configuration.")
-
-        if not api_key:
-            logger.warning(f"Notification AI API key not configured for user_id: {user_id}")
-            raise HTTPException(
-                status_code=400,
-                detail="OpenAI API key ('openai_api_key') not configured by user for Notification AI."
-            )
-
-        openai_api_base_url = "https://api.openai.com/v1"
-        openai_endpoint = "chat/completions"
-
-        system_prompt = """You are an AI assistant that helps optimize user notifications.
-Given a user's behavior summary and current notifications, decide if a new notification is warranted,
-suggest optimal timing, or rephrase an existing notification for better engagement.
-Respond in JSON format. The top-level JSON should be an object with a key "suggestions",
-which is a list of suggestion objects. Each suggestion object should have:
-'action' (string, e.g., 'CREATE_NEW', 'ADJUST_EXISTING', 'DO_NOTHING'),
-'user_id' (integer, the user_id this suggestion is for),
-'title' (string, optional, for new or adjusted notifications),
-'message' (string, optional, for new or adjusted notifications),
-'type' (string, e.g., 'ai_optimized_suggestion', 'engagement_prompt'),
-'reasoning' (string, explaining why this suggestion is made).
-If 'action' is 'ADJUST_EXISTING', also include 'original_notification_id' (integer).
-If no specific optimization is clear or no action is needed, provide a suggestion with action 'DO_NOTHING'.
-Base your suggestions on the provided user_behavior_summary.
-Example user_behavior_summary: {"last_active_at": "2023-10-26T10:00:00Z", "preferred_contact_hours": ["09:00-12:00", "14:00-17:00"], "completed_tasks_today": 2, "pending_high_priority_tasks": 1, "recent_app_usage_minutes": 15}
-"""
-        user_prompt_content = f"User ID: {user_id}. User behavior summary: {json.dumps(user_behavior_summary or {})}"
-
-        ai_payload = {
-            "model": "gpt-3.5-turbo",
-            "messages": [
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt_content}
-            ],
-            "response_format": {"type": "json_object"}
-        }
-
-        logger.debug(f"Calling OpenAI notification optimization for user {user_id} at {openai_api_base_url}/{openai_endpoint}")
-
+        recipient_id: int,
+        title: str,
+        message: str,
+        notification_type: NotificationType,
+        priority: NotificationPriority = NotificationPriority.MEDIUM,
+        tenant_id: Optional[int] = None,
+        user_context_id: Optional[int] = None,
+        context_data: Optional[Dict[str, Any]] = None,
+        action_url: Optional[str] = None,
+        action_text: Optional[str] = None,
+        delivery_channels: Optional[List[str]] = None,
+        scheduled_for: Optional[datetime] = None,
+        expires_at: Optional[datetime] = None
+    ) -> Notification:
+        """Create a new notification"""
+        
+        notification = Notification(
+            recipient_id=recipient_id,
+            title=title,
+            message=message,
+            notification_type=notification_type,
+            priority=priority,
+            tenant_id=tenant_id,
+            user_context_id=user_context_id,
+            context_data=context_data,
+            action_url=action_url,
+            action_text=action_text,
+            delivery_channels=delivery_channels or ["in_app"],
+            scheduled_for=scheduled_for,
+            expires_at=expires_at
+        )
+        
+        self.db.add(notification)
+        self.db.commit()
+        self.db.refresh(notification)
+        
+        # Send immediately if not scheduled
+        if not scheduled_for:
+            self._deliver_notification(notification)
+        
+        logger.info(f"Created notification {notification.id} for user {recipient_id}")
+        return notification
+    
+    def create_from_template(
+        self,
+        template_name: str,
+        recipient_id: int,
+        template_vars: Dict[str, Any],
+        tenant_id: Optional[int] = None,
+        user_context_id: Optional[int] = None,
+        context_data: Optional[Dict[str, Any]] = None,
+        scheduled_for: Optional[datetime] = None
+    ) -> Optional[Notification]:
+        """Create notification from template"""
+        
+        template = self.db.query(NotificationTemplate).filter(
+            NotificationTemplate.name == template_name,
+            NotificationTemplate.is_active == True
+        ).first()
+        
+        if not template:
+            logger.error(f"Template '{template_name}' not found or inactive")
+            return None
+        
+        # Render template
         try:
-            openai_response_data = await self.ai_integration_service.make_request(
-                api_key=api_key,
-                base_url=openai_api_base_url,
-                endpoint=openai_endpoint,
-                method="POST",
-                payload=ai_payload,
+            title = template.title_template.format(**template_vars)
+            message = template.message_template.format(**template_vars)
+            action_text = template.action_text_template.format(**template_vars) if template.action_text_template else None
+            action_url = template.action_url_template.format(**template_vars) if template.action_url_template else None
+        except KeyError as e:
+            logger.error(f"Template variable missing: {e}")
+            return None
+        
+        # Calculate expiry
+        expires_at = None
+        if template.auto_dismiss_hours:
+            expires_at = datetime.utcnow() + timedelta(hours=template.auto_dismiss_hours)
+        
+        return self.create_notification(
+            recipient_id=recipient_id,
+            title=title,
+            message=message,
+            notification_type=template.notification_type,
+            priority=template.priority,
+            tenant_id=tenant_id,
+            user_context_id=user_context_id,
+            context_data=context_data,
+            action_url=action_url,
+            action_text=action_text,
+            delivery_channels=template.delivery_channels,
+            scheduled_for=scheduled_for,
+            expires_at=expires_at
+        )
+    
+    def get_notifications(
+        self,
+        recipient_id: int,
+        status: Optional[NotificationStatus] = None,
+        notification_type: Optional[NotificationType] = None,
+        priority: Optional[NotificationPriority] = None,
+        limit: int = 50,
+        offset: int = 0,
+        include_expired: bool = False
+    ) -> List[Notification]:
+        """Get notifications for a user"""
+        
+        query = self.db.query(Notification).filter(
+            Notification.recipient_id == recipient_id
+        )
+        
+        if status:
+            query = query.filter(Notification.status == status)
+        
+        if notification_type:
+            query = query.filter(Notification.notification_type == notification_type)
+        
+        if priority:
+            query = query.filter(Notification.priority == priority)
+        
+        if not include_expired:
+            query = query.filter(
+                or_(
+                    Notification.expires_at.is_(None),
+                    Notification.expires_at > datetime.utcnow()
+                )
             )
-
-            if not openai_response_data.get("choices") or not openai_response_data["choices"][0].get("message") or not openai_response_data["choices"][0]["message"].get("content"):
-                logger.error(f"Unexpected OpenAI response structure for user {user_id}: {openai_response_data}")
-                raise HTTPException(status_code=500, detail="Notification AI service received an unexpected response format from AI provider.")
-
-            content_str = openai_response_data["choices"][0]["message"]["content"]
-            ai_suggestions_response = json.loads(content_str)
-
-            logger.info(f"Successfully received and parsed AI notification suggestions for user {user_id}: {ai_suggestions_response}")
-
-            processed_suggestions = []
-            if ai_suggestions_response and "suggestions" in ai_suggestions_response:
-                for suggestion in ai_suggestions_response["suggestions"]:
-                    action = suggestion.get("action")
-                    # Potentially create notifications in DB based on action 'CREATE_NEW'
-                    if action == "CREATE_NEW" and suggestion.get("title") and suggestion.get("message"):
-                        try:
-                            created_notification = notification_crud.create_notification(
-                                db=self.db,
-                                notification=NotificationCreate(
-                                    user_id=user_id, # Ensure suggestion.get("user_id") matches or use the one from context
-                                    title=suggestion["title"],
-                                    message=suggestion["message"],
-                                    type=suggestion.get("type", "ai_optimized"),
-                                    # status="pending" # Assuming a status field exists
-                                )
-                            )
-                            processed_suggestions.append({
-                                "created_notification_id": created_notification.id,
-                                "details": suggestion
-                            })
-                        except Exception as e_crud:
-                            logger.error(f"Failed to create notification from AI suggestion for user {user_id}: {e_crud}. Suggestion: {suggestion}")
-                            processed_suggestions.append({"error_creating_notification": str(e_crud), "suggestion": suggestion})
-                    else:
-                        # For 'ADJUST_EXISTING' or 'DO_NOTHING', just pass along the suggestion for now
-                        processed_suggestions.append({"action_taken": action, "details": suggestion})
-
-            return {"success": True, "processed_suggestions": processed_suggestions, "raw_ai_response": ai_suggestions_response}
-
-        except json.JSONDecodeError:
-            logger.error(f"Failed to parse JSON from OpenAI response content for user {user_id}: {content_str}")
-            raise HTTPException(status_code=500, detail="Notification AI service failed to parse AI provider's response.")
-        except HTTPException: # Re-raise HTTPExceptions
-            raise
+        
+        return query.order_by(desc(Notification.created_at)).offset(offset).limit(limit).all()
+    
+    def mark_as_read(self, notification_id: int, user_id: int) -> bool:
+        """Mark notification as read"""
+        
+        notification = self.db.query(Notification).filter(
+            Notification.id == notification_id,
+            Notification.recipient_id == user_id
+        ).first()
+        
+        if not notification:
+            return False
+        
+        notification.status = NotificationStatus.READ
+        notification.read_at = datetime.utcnow()
+        self.db.commit()
+        
+        logger.info(f"Marked notification {notification_id} as read")
+        return True
+    
+    def dismiss_notification(self, notification_id: int, user_id: int) -> bool:
+        """Dismiss notification"""
+        
+        notification = self.db.query(Notification).filter(
+            Notification.id == notification_id,
+            Notification.recipient_id == user_id
+        ).first()
+        
+        if not notification:
+            return False
+        
+        notification.status = NotificationStatus.DISMISSED
+        notification.dismissed_at = datetime.utcnow()
+        self.db.commit()
+        
+        logger.info(f"Dismissed notification {notification_id}")
+        return True
+    
+    def get_unread_count(self, user_id: int) -> int:
+        """Get count of unread notifications"""
+        
+        return self.db.query(Notification).filter(
+            Notification.recipient_id == user_id,
+            Notification.status.in_([NotificationStatus.PENDING, NotificationStatus.SENT]),
+            or_(
+                Notification.expires_at.is_(None),
+                Notification.expires_at > datetime.utcnow()
+            )
+        ).count()
+    
+    def _deliver_notification(self, notification: Notification) -> None:
+        """Deliver notification through configured channels"""
+        
+        # Get user preferences
+        preferences = self.db.query(NotificationPreference).filter(
+            NotificationPreference.user_id == notification.recipient_id
+        ).first()
+        
+        # Check if notification type is enabled
+        if preferences and not self._is_notification_type_enabled(preferences, notification.notification_type):
+            logger.info(f"Notification type {notification.notification_type} disabled for user {notification.recipient_id}")
+            return
+        
+        # Check priority filter
+        if preferences and self._is_below_min_priority(preferences, notification.priority):
+            logger.info(f"Notification priority {notification.priority} below minimum for user {notification.recipient_id}")
+            return
+        
+        # Deliver through each channel
+        for channel in notification.delivery_channels:
+            if self._is_channel_enabled(preferences, channel):
+                self._deliver_to_channel(notification, channel, preferences)
+        
+        # Update notification status
+        notification.status = NotificationStatus.SENT
+        notification.sent_at = datetime.utcnow()
+        self.db.commit()
+    
+    def _is_notification_type_enabled(self, preferences: NotificationPreference, notification_type: NotificationType) -> bool:
+        """Check if notification type is enabled in preferences"""
+        
+        type_mapping = {
+            NotificationType.SECURITY_ALERT: preferences.security_alerts_enabled,
+            NotificationType.SYSTEM_HEALTH: preferences.system_health_enabled,
+            NotificationType.BUSINESS_ALERT: preferences.business_alerts_enabled,
+            NotificationType.REVENUE_ALERT: preferences.revenue_alerts_enabled,
+            NotificationType.USER_ACTIVITY: preferences.user_activity_enabled,
+            NotificationType.TENANT_ACTIVITY: preferences.tenant_activity_enabled,
+        }
+        
+        return type_mapping.get(notification_type, True)
+    
+    def _is_below_min_priority(self, preferences: NotificationPreference, priority: NotificationPriority) -> bool:
+        """Check if notification priority is below minimum"""
+        
+        priority_levels = {
+            NotificationPriority.LOW: 1,
+            NotificationPriority.MEDIUM: 2,
+            NotificationPriority.HIGH: 3,
+            NotificationPriority.CRITICAL: 4
+        }
+        
+        min_level = priority_levels.get(preferences.min_priority, 1)
+        notification_level = priority_levels.get(priority, 1)
+        
+        return notification_level < min_level
+    
+    def _is_channel_enabled(self, preferences: Optional[NotificationPreference], channel: str) -> bool:
+        """Check if delivery channel is enabled"""
+        
+        if not preferences:
+            return channel == "in_app"  # Default to in-app only
+        
+        channel_mapping = {
+            "in_app": preferences.in_app_enabled,
+            "email": preferences.email_enabled,
+            "sms": preferences.sms_enabled,
+            "webhook": preferences.webhook_enabled,
+        }
+        
+        return channel_mapping.get(channel, False)
+    
+    def _deliver_to_channel(self, notification: Notification, channel: str, preferences: Optional[NotificationPreference]) -> None:
+        """Deliver notification to specific channel"""
+        
+        log_entry = NotificationLog(
+            notification_id=notification.id,
+            channel=channel,
+            status="pending",
+            attempted_at=datetime.utcnow()
+        )
+        
+        try:
+            if channel == "in_app":
+                # In-app notifications are stored in database (already done)
+                log_entry.status = "success"
+                log_entry.delivered_at = datetime.utcnow()
+                
+            elif channel == "email":
+                self._send_email_notification(notification, preferences, log_entry)
+                
+            elif channel == "sms":
+                self._send_sms_notification(notification, preferences, log_entry)
+                
+            elif channel == "webhook":
+                self._send_webhook_notification(notification, preferences, log_entry)
+                
         except Exception as e:
-            logger.error(f"Exception during AI notification optimization for user {user_id}: {e}")
-            raise HTTPException(status_code=503, detail=f"Failed to optimize notifications via AI: {str(e)}")
+            log_entry.status = "failed"
+            log_entry.error_message = str(e)
+            logger.error(f"Failed to deliver notification {notification.id} via {channel}: {e}")
+        
+        self.db.add(log_entry)
+        self.db.commit()
+    
+    def _send_email_notification(self, notification: Notification, preferences: Optional[NotificationPreference], log_entry: NotificationLog) -> None:
+        """Send email notification (placeholder implementation)"""
+        
+        # Get email address
+        email = preferences.email_address if preferences and preferences.email_address else notification.recipient.email
+        log_entry.recipient_address = email
+        
+        # TODO: Implement actual email sending
+        # For now, just mark as success
+        log_entry.status = "success"
+        log_entry.delivered_at = datetime.utcnow()
+        log_entry.provider = "placeholder"
+        
+        logger.info(f"Email notification sent to {email} (placeholder)")
+    
+    def _send_sms_notification(self, notification: Notification, preferences: Optional[NotificationPreference], log_entry: NotificationLog) -> None:
+        """Send SMS notification (placeholder implementation)"""
+        
+        if not preferences or not preferences.phone_number:
+            raise ValueError("No phone number configured")
+        
+        log_entry.recipient_address = preferences.phone_number
+        
+        # TODO: Implement actual SMS sending
+        # For now, just mark as success
+        log_entry.status = "success"
+        log_entry.delivered_at = datetime.utcnow()
+        log_entry.provider = "placeholder"
+        
+        logger.info(f"SMS notification sent to {preferences.phone_number} (placeholder)")
+    
+    def _send_webhook_notification(self, notification: Notification, preferences: Optional[NotificationPreference], log_entry: NotificationLog) -> None:
+        """Send webhook notification (placeholder implementation)"""
+        
+        if not preferences or not preferences.webhook_url:
+            raise ValueError("No webhook URL configured")
+        
+        log_entry.recipient_address = preferences.webhook_url
+        
+        # TODO: Implement actual webhook sending
+        # For now, just mark as success
+        log_entry.status = "success"
+        log_entry.delivered_at = datetime.utcnow()
+        log_entry.provider = "webhook"
+        
+        logger.info(f"Webhook notification sent to {preferences.webhook_url} (placeholder)")
+    
+    def process_scheduled_notifications(self) -> int:
+        """Process notifications scheduled for delivery"""
+        
+        scheduled_notifications = self.db.query(Notification).filter(
+            Notification.status == NotificationStatus.PENDING,
+            Notification.scheduled_for <= datetime.utcnow()
+        ).all()
+        
+        count = 0
+        for notification in scheduled_notifications:
+            self._deliver_notification(notification)
+            count += 1
+        
+        logger.info(f"Processed {count} scheduled notifications")
+        return count
+    
+    def cleanup_expired_notifications(self) -> int:
+        """Clean up expired notifications"""
+        
+        expired_notifications = self.db.query(Notification).filter(
+            Notification.expires_at <= datetime.utcnow(),
+            Notification.status != NotificationStatus.DISMISSED
+        ).all()
+        
+        count = 0
+        for notification in expired_notifications:
+            notification.status = NotificationStatus.DISMISSED
+            notification.dismissed_at = datetime.utcnow()
+            count += 1
+        
+        self.db.commit()
+        logger.info(f"Cleaned up {count} expired notifications")
+        return count
+
+
+# Convenience functions for common notification types
+def notify_security_alert(
+    db: Session,
+    recipient_id: int,
+    title: str,
+    message: str,
+    tenant_id: Optional[int] = None,
+    user_context_id: Optional[int] = None,
+    context_data: Optional[Dict[str, Any]] = None
+) -> Notification:
+    """Create security alert notification"""
+    
+    service = NotificationService(db)
+    return service.create_notification(
+        recipient_id=recipient_id,
+        title=title,
+        message=message,
+        notification_type=NotificationType.SECURITY_ALERT,
+        priority=NotificationPriority.HIGH,
+        tenant_id=tenant_id,
+        user_context_id=user_context_id,
+        context_data=context_data,
+        delivery_channels=["in_app", "email"]
+    )
+
+
+def notify_system_health(
+    db: Session,
+    recipient_id: int,
+    title: str,
+    message: str,
+    priority: NotificationPriority = NotificationPriority.MEDIUM,
+    context_data: Optional[Dict[str, Any]] = None
+) -> Notification:
+    """Create system health notification"""
+    
+    service = NotificationService(db)
+    return service.create_notification(
+        recipient_id=recipient_id,
+        title=title,
+        message=message,
+        notification_type=NotificationType.SYSTEM_HEALTH,
+        priority=priority,
+        context_data=context_data,
+        delivery_channels=["in_app", "email"] if priority in [NotificationPriority.HIGH, NotificationPriority.CRITICAL] else ["in_app"]
+    )
+
+
+def notify_business_alert(
+    db: Session,
+    recipient_id: int,
+    title: str,
+    message: str,
+    tenant_id: Optional[int] = None,
+    context_data: Optional[Dict[str, Any]] = None,
+    action_url: Optional[str] = None,
+    action_text: Optional[str] = None
+) -> Notification:
+    """Create business alert notification"""
+    
+    service = NotificationService(db)
+    return service.create_notification(
+        recipient_id=recipient_id,
+        title=title,
+        message=message,
+        notification_type=NotificationType.BUSINESS_ALERT,
+        priority=NotificationPriority.MEDIUM,
+        tenant_id=tenant_id,
+        context_data=context_data,
+        action_url=action_url,
+        action_text=action_text,
+        delivery_channels=["in_app", "email"]
+    )
+
+
+def notify_revenue_alert(
+    db: Session,
+    recipient_id: int,
+    title: str,
+    message: str,
+    priority: NotificationPriority = NotificationPriority.HIGH,
+    context_data: Optional[Dict[str, Any]] = None
+) -> Notification:
+    """Create revenue alert notification"""
+    
+    service = NotificationService(db)
+    return service.create_notification(
+        recipient_id=recipient_id,
+        title=title,
+        message=message,
+        notification_type=NotificationType.REVENUE_ALERT,
+        priority=priority,
+        context_data=context_data,
+        delivery_channels=["in_app", "email"]
+    )
+
+
+def get_notification_service(db: Optional[Session] = None) -> NotificationService:
+    """Factory function to get notification service instance"""
+    if db is None:
+        db = next(get_db())
+    
+    return NotificationService(db)

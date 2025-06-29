@@ -28,4 +28,7 @@
 
 ## 📌 Conclusion
 
-The codebase review task itself is complete. Frontend tests were partially executed, with remaining failures documented. Backend tests could not be executed due to fundamental build incompatibilities of the specified dependencies with the Python 3.12 environment under the given constraints (no modification of `requirements.txt`). These testing impediments are noted.
+The codebase review task itself is complete. 
+Frontend tests were partially executed, with remaining failures documented. 
+Backend tests could not be executed due to fundamental build incompatibilities of the specified dependencies with the Python 3.12 environment under the given constraints (no modification of `requirements.txt`). 
+These testing impediments are noted.

@@ -59,6 +59,10 @@ from .routers import guest_experience_router # Import the guest experience route
 from .routers import guest_analytics_router # Import the guest analytics router
 from .routers import guest_integrations_router # Import the guest integrations router
 from .routers import platform_management_router # Import the platform management router
+from .routers import platform_analytics_router # Import the platform analytics router
+from .routers import notifications_router # Import the notifications router
+from .routers import mfa_router # Import the MFA router
+from .routers import advanced_analytics_router # Import the advanced analytics router
 from .routers import aco_router # Import the ACO integration router
 
 # Configure JSON logging
@@ -191,6 +195,22 @@ app = FastAPI(
             "description": "Platform Owner management, analytics, and tenant oversight capabilities"
         },
         {
+            "name": "Platform Analytics",
+            "description": "Comprehensive analytics dashboard and insights for Platform Owners"
+        },
+        {
+            "name": "Notifications",
+            "description": "Platform Owner notification system for alerts, security events, and business insights"
+        },
+        {
+            "name": "Multi-Factor Authentication",
+            "description": "MFA device management, IP restrictions, and advanced security features"
+        },
+        {
+            "name": "Advanced Analytics",
+            "description": "ML-based predictions, anomaly detection, behavioral analysis, and intelligent insights"
+        },
+        {
             "name": "ACO Integration",
             "description": "Automated Customer Operations including subscription management, revenue tracking, and founding member program"
         }
@@ -222,6 +242,10 @@ app.include_router(guest_experience_router.router, prefix="/api", tags=["Guest E
 app.include_router(guest_analytics_router.router, tags=["Guest Analytics"])
 app.include_router(guest_integrations_router.router, tags=["Guest Integrations"])
 app.include_router(platform_management_router.router, prefix="/api/v1", tags=["Platform Management"])
+app.include_router(platform_analytics_router.router, tags=["Platform Analytics"])
+app.include_router(notifications_router.router, tags=["Notifications"])
+app.include_router(mfa_router.router, tags=["Multi-Factor Authentication"])
+app.include_router(advanced_analytics_router.router, tags=["Advanced Analytics"])
 app.include_router(aco_router.router, tags=["ACO Integration"])
 
 # Include dashboard and onboarding routers
