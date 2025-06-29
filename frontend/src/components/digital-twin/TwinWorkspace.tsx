@@ -201,29 +201,50 @@ export const TwinWorkspace: React.FC<TwinWorkspaceProps> = ({ twinId }) => {
     setIsLoading(true);
 
     try {
-      const response = await digitalTwinApi.interactWithTwin({
-        query: userMessage.content,
-        context: {
-          intent: intentClassification.intent,
-          entities: intentClassification.entities,
-          conversation_history: messages.slice(-5),
-          timestamp: new Date().toISOString(),
-        }
+      // Use Phase 2 conversation engine
+      const response = await fetch('/api/twin/phase2/conversation/query', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          twin_id: twinId,
+          query: userMessage.content,
+          context: {
+            intent: intentClassification.intent,
+            entities: intentClassification.entities,
+            conversation_history: messages.slice(-5),
+            timestamp: new Date().toISOString(),
+          }
+        })
       });
 
-      if (response.success && response.data) {
-        const twinMessage: Message = {
-          id: `twin-${Date.now()}`,
-          type: 'twin',
-          content: response.data.response?.text || 'I received your message but had trouble generating a response.',
-          timestamp: new Date(),
-          confidence: response.data.response?.confidence,
-          suggestions: intentClassification.suggestions,
-        };
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
 
-        setMessages(prev => [...prev, twinMessage]);
-      } else {
-        throw new Error(response.message || 'Failed to get response from twin');
+      const data = await response.json();
+      
+      const twinMessage: Message = {
+        id: `twin-${Date.now()}`,
+        type: 'twin',
+        content: data.response || 'I received your message but had trouble generating a response.',
+        timestamp: new Date(),
+        confidence: data.confidence,
+        suggestions: data.actions || intentClassification.suggestions,
+        intent: data.intent,
+      };
+
+      setMessages(prev => [...prev, twinMessage]);
+      
+      // Update current intent with actual classified intent
+      if (data.intent !== intentClassification.intent) {
+        setCurrentIntent({
+          intent: data.intent,
+          confidence: data.confidence,
+          entities: intentClassification.entities,
+          suggestions: data.actions || []
+        });
       }
     } catch (error: any) {
       toast({
