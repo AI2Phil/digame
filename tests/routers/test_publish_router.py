@@ -2,6 +2,9 @@ import pytest
 import os
 import json
 from unittest.mock import patch, Mock
+from typing import Any, Type, TypeVar, cast
+
+T = TypeVar('T')
 
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
@@ -50,12 +53,12 @@ def client(db_session):
 
 
 # --- Test Cases ---
-def create_mock_model(model_class, **kwargs):
+def create_mock_model(model_class: Type[T], **kwargs: Any) -> T:
     """Create a mock instance of a SQLAlchemy model with given attributes."""
     # For testing purposes, we'll create a simple mock object
     # that behaves like the model but doesn't require database instantiation
     class MockModel:
-        def __init__(self, **attrs):
+        def __init__(self, **attrs: Any):
             for key, value in attrs.items():
                 setattr(self, key, value)
             # Set some default attributes that SQLAlchemy models typically have
@@ -64,8 +67,15 @@ def create_mock_model(model_class, **kwargs):
             if not hasattr(self, 'created_at'):
                 from datetime import datetime, timezone
                 self.created_at = datetime.now(timezone.utc)
+            # Add common attributes for BehavioralModel
+            if not hasattr(self, 'user_id'):
+                self.user_id = 1
+            if not hasattr(self, 'version'):
+                self.version = "1.0"
+            if not hasattr(self, 'name'):
+                self.name = "DefaultModel"
         
-        def __repr__(self):
+        def __repr__(self) -> str:
             attrs = []
             for key, value in self.__dict__.items():
                 if not key.startswith('_'):
@@ -75,7 +85,7 @@ def create_mock_model(model_class, **kwargs):
                         attrs.append(f"{key}={repr(value)}")
             return f"<{model_class.__name__}({', '.join(attrs)})>"
     
-    return MockModel(**kwargs)
+    return cast(T, MockModel(**kwargs))
 
 
 def test_publish_model_not_found(client: TestClient):

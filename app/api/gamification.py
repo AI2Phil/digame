@@ -3,7 +3,7 @@ Gamification API Endpoints
 Provides REST API for achievements, streaks, leaderboards, and user progress
 """
 
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, cast
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
@@ -79,8 +79,9 @@ async def get_user_achievements(
 ):
     """Get all achievements for the current user"""
     service = GamificationService(db)
-    user_achievements = service.get_user_achievements(current_user.id)
-    available_achievements = service.get_available_achievements(current_user.id)
+    user_id = cast(int, current_user.id)
+    user_achievements = service.get_user_achievements(user_id)
+    available_achievements = service.get_available_achievements(user_id)
     
     # Combine earned and available achievements
     achievements = []
@@ -89,16 +90,16 @@ async def get_user_achievements(
     for ua in user_achievements:
         if ua.earned:
             achievements.append(AchievementResponse(
-                id=ua.achievement.id,
-                title=ua.achievement.title,
-                description=ua.achievement.description,
-                category=ua.achievement.category,
+                id=cast(int, ua.achievement.id),
+                title=cast(str, ua.achievement.title),
+                description=cast(str, ua.achievement.description),
+                category=cast(str, ua.achievement.category),
                 rarity=ua.achievement.rarity.value,
-                points=ua.achievement.points,
-                icon=ua.achievement.icon,
-                max_progress=ua.achievement.max_progress,
+                points=cast(int, ua.achievement.points),
+                icon=cast(str, ua.achievement.icon),
+                max_progress=cast(int, ua.achievement.max_progress),
                 is_earned=True,
-                current_progress=ua.current_progress,
+                current_progress=cast(int, ua.current_progress) or 0,
                 earned_at=ua.earned_at.isoformat() if ua.earned_at else None,
                 progress_percentage=100.0
             ))
@@ -111,17 +112,17 @@ async def get_user_achievements(
         progress_percentage = (current_progress / achievement.max_progress) * 100 if achievement.max_progress > 0 else 0
         
         achievements.append(AchievementResponse(
-            id=achievement.id,
-            title=achievement.title,
-            description=achievement.description,
-            category=achievement.category,
+            id=cast(int, achievement.id),
+            title=cast(str, achievement.title),
+            description=cast(str, achievement.description),
+            category=cast(str, achievement.category),
             rarity=achievement.rarity.value,
-            points=achievement.points,
-            icon=achievement.icon,
-            max_progress=achievement.max_progress,
+            points=cast(int, achievement.points),
+            icon=cast(str, achievement.icon),
+            max_progress=cast(int, achievement.max_progress),
             is_earned=False,
-            current_progress=current_progress,
-            progress_percentage=progress_percentage
+            current_progress=cast(int, current_progress) or 0,
+            progress_percentage=cast(float, progress_percentage) or 0.0
         ))
     
     return achievements
@@ -141,7 +142,8 @@ async def get_achievement_details(
         raise HTTPException(status_code=404, detail="Achievement not found")
     
     # Get user's progress on this achievement
-    user_achievement = service.check_achievement_progress(current_user.id, achievement_id)
+    user_id = cast(int, current_user.id)
+    user_achievement = service.check_achievement_progress(user_id, achievement_id)
     
     return {
         "achievement": achievement,
@@ -157,15 +159,16 @@ async def get_user_streaks(
 ):
     """Get all streaks for the current user"""
     service = GamificationService(db)
-    streaks = service.get_user_streaks(current_user.id)
+    user_id = cast(int, current_user.id)
+    streaks = service.get_user_streaks(user_id)
     
     return [
         StreakResponse(
-            id=streak.id,
-            streak_type=streak.streak_type,
-            current_count=streak.current_count,
-            longest_count=streak.longest_count,
-            is_active=streak.is_active,
+            id=cast(int, streak.id),
+            streak_type=cast(str, streak.streak_type),
+            current_count=cast(int, streak.current_count) or 0,
+            longest_count=cast(int, streak.longest_count) or 0,
+            is_active=cast(bool, streak.is_active) or False,
             start_date=streak.start_date.isoformat(),
             last_activity_date=streak.last_activity_date.isoformat()
         )
@@ -180,7 +183,8 @@ async def update_streak(
 ):
     """Update a specific streak type"""
     service = GamificationService(db)
-    streak = service.update_streak(current_user.id, streak_type)
+    user_id = cast(int, current_user.id)
+    streak = service.update_streak(user_id, streak_type)
     
     return {
         "message": f"Streak {streak_type} updated",
@@ -199,17 +203,18 @@ async def get_user_points(
 ):
     """Get user's points and level information"""
     service = GamificationService(db)
-    points = service.get_user_points(current_user.id)
+    user_id = cast(int, current_user.id)
+    points = service.get_user_points(user_id)
     
     return UserPointsResponse(
-        total_points=points.total_points,
-        level=points.level,
-        experience_points=points.experience_points,
-        level_progress_percentage=points.level_progress_percentage,
-        achievement_points=points.achievement_points,
-        goal_points=points.goal_points,
-        streak_points=points.streak_points,
-        social_points=points.social_points
+        total_points=cast(int, points.total_points) or 0,
+        level=cast(int, points.level) or 0,
+        experience_points=cast(int, points.experience_points) or 0,
+        level_progress_percentage=cast(float, points.level_progress_percentage) or 0.0,
+        achievement_points=cast(int, points.achievement_points) or 0,
+        goal_points=cast(int, points.goal_points) or 0,
+        streak_points=cast(int, points.streak_points) or 0,
+        social_points=cast(int, points.social_points) or 0
     )
 
 @router.post("/points/add")
@@ -221,7 +226,8 @@ async def add_points(
 ):
     """Add points to user account (admin/system use)"""
     service = GamificationService(db)
-    user_points = service.add_points(current_user.id, points, category)
+    user_id = cast(int, current_user.id)
+    user_points = service.add_points(user_id, points, category)
     
     return {
         "message": f"Added {points} points",
@@ -250,7 +256,8 @@ async def get_user_stats(
 ):
     """Get comprehensive user gamification statistics"""
     service = GamificationService(db)
-    stats = service.get_user_stats(current_user.id)
+    user_id = cast(int, current_user.id)
+    stats = service.get_user_stats(user_id)
     
     return UserStatsResponse(**stats)
 
@@ -265,7 +272,8 @@ async def handle_task_progress(
 ):
     """Handle task progress updates for gamification"""
     service = GamificationService(db)
-    service.handle_task_progress(current_user.id, task_id, old_status, new_status)
+    user_id = cast(int, current_user.id)
+    service.handle_task_progress(user_id, task_id, old_status, new_status)
     
     return {"message": "Task progress processed for gamification"}
 
@@ -277,7 +285,8 @@ async def handle_task_completion(
 ):
     """Handle task completion for gamification"""
     service = GamificationService(db)
-    service.handle_task_completion(current_user.id, task_id)
+    user_id = cast(int, current_user.id)
+    service.handle_task_completion(user_id, task_id)
     
     return {"message": "Task completion processed for gamification"}
 
@@ -309,7 +318,8 @@ async def update_achievement_progress(
 ):
     """Update achievement progress for current user"""
     service = GamificationService(db)
-    success = service.update_achievement_progress(current_user.id, achievement_id, progress)
+    user_id = cast(int, current_user.id)
+    success = service.update_achievement_progress(user_id, achievement_id, progress)
     
     if success:
         return {"message": "Achievement progress updated"}

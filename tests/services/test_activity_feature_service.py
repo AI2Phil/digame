@@ -3,6 +3,9 @@ from unittest.mock import MagicMock, patch, call, ANY
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
 import json
+from typing import Any, Type, TypeVar, cast
+
+T = TypeVar('T')
 
 from app.services.activity_feature_service import (
     generate_features_for_activity,
@@ -19,12 +22,12 @@ from app.models.user import User # For context, if needed
 
 
 # --- Helper Function Tests ---
-def create_mock_model(model_class, **kwargs):
+def create_mock_model(model_class: Type[T], **kwargs: Any) -> T:
     """Create a mock instance of a SQLAlchemy model with given attributes."""
     # For testing purposes, we'll create a simple mock object
     # that behaves like the model but doesn't require database instantiation
     class MockModel:
-        def __init__(self, **attrs):
+        def __init__(self, **attrs: Any):
             for key, value in attrs.items():
                 setattr(self, key, value)
             # Set some default attributes that SQLAlchemy models typically have
@@ -34,7 +37,7 @@ def create_mock_model(model_class, **kwargs):
                 from datetime import datetime, timezone
                 self.created_at = datetime.now(timezone.utc)
         
-        def __repr__(self):
+        def __repr__(self) -> str:
             attrs = []
             for key, value in self.__dict__.items():
                 if not key.startswith('_'):
@@ -44,7 +47,7 @@ def create_mock_model(model_class, **kwargs):
                         attrs.append(f"{key}={repr(value)}")
             return f"<{model_class.__name__}({', '.join(attrs)})>"
     
-    return MockModel(**kwargs)
+    return cast(T, MockModel(**kwargs))
 
 
 def test_parse_activity_details():

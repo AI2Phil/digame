@@ -44,14 +44,19 @@ def test_train_endpoint_saves_model(client: TestClient, patched_model_path, dumm
     loaded_optimizer = torch.optim.Adam(loaded_model.parameters()) # Fresh optimizer
 
     try:
-        load_model(loaded_model, loaded_optimizer, file_path=patched_model_path)
+        # Use the new load_model function signature
+        returned_model, returned_optimizer, encoders, scaler, model_params = load_model(patched_model_path)
+        if returned_model is None:
+            pytest.fail("Failed to load the model saved by the /train endpoint")
+        loaded_model = returned_model
     except Exception as e:
         pytest.fail(f"Failed to load the model saved by the /train endpoint: {e}")
     
     # A simple check: ensure model is in training mode by default after loading (if not set to eval)
     # Or check some parameter values if they are deterministic from the dummy training
     # For now, just successful loading is a good sign.
-    assert loaded_model.training, "Loaded model should be in training mode by default after load_model (unless specified otherwise)."
+    if loaded_model is not None:
+        assert loaded_model.training, "Loaded model should be in training mode by default after load_model (unless specified otherwise)."
 
 
 def test_predict_endpoint_loads_model(client: TestClient, patched_model_path, dummy_model_and_optimizer):
@@ -62,7 +67,22 @@ def test_predict_endpoint_loads_model(client: TestClient, patched_model_path, du
     model_to_save, optimizer_to_save = dummy_model_and_optimizer
     
     # Setup: Save a dummy model to the patched_model_path so /predict can load it
-    save_model(model_to_save, optimizer_to_save, file_path=str(patched_model_path))
+    # Create dummy encoders_scalers and model_params for testing
+    dummy_encoders_scalers = {
+        'activity_encoder': None,
+        'user_encoder': None,
+        'cluster_encoder': None,
+        'scaler': None
+    }
+    dummy_model_params = {
+        'input_dim': model_to_save.lstm.input_size,
+        'hidden_dim': model_to_save.hidden_dim,
+        'output_dim': model_to_save.fc.out_features,
+        'num_layers': model_to_save.num_layers,
+        'sequence_length': 10,
+        'dropout_prob': 0.2
+    }
+    save_model(model_to_save, optimizer_to_save, dummy_encoders_scalers, dummy_model_params, str(patched_model_path))
     assert os.path.exists(str(patched_model_path)), "Pre-saved model file does not exist for predict test."
 
     # Action: Call the /predictive/predict endpoint

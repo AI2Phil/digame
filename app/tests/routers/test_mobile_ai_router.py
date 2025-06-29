@@ -187,4 +187,3 @@ class TestMobileAIRouterVoiceCommands:
 
 # TODO: Add tests for authentication failures (e.g., user not authenticated).
 # TODO: Add tests for validation errors (e.g., missing 'text' in VoiceCommandRequest).
-```

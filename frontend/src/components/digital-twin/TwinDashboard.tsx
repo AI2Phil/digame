@@ -131,18 +131,22 @@ export const TwinDashboard: React.FC<TwinDashboardProps> = ({ twinId, userId }) 
         <CardContent className="pt-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <Avatar className="h-16 w-16">
-                <AvatarFallback className="bg-blue-100 text-blue-600 text-lg font-semibold">
-                  <Brain className="h-8 w-8" />
-                </AvatarFallback>
-              </Avatar>
+              <Avatar
+                src=""
+                className="h-16 w-16"
+                size="xl"
+                fallback={<Brain className="h-8 w-8" />}
+                status={null}
+              />
               
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">{twin.name}</h1>
                 <div className="flex items-center space-x-2 mt-1">
-                  <Badge 
-                    variant="secondary" 
+                  <Badge
+                    variant="secondary"
                     className={`${getStatusColor(twin.status)} text-white`}
+                    icon={null}
+                    onRemove={() => {}}
                   >
                     {getStatusText(twin.status)}
                   </Badge>
@@ -250,7 +254,7 @@ export const TwinDashboard: React.FC<TwinDashboardProps> = ({ twinId, userId }) 
         </TabsContent>
 
         <TabsContent value="workspace" className="space-y-4">
-          <TwinWorkspace twinId={twinId} twin={twin} />
+          <TwinWorkspace twinId={twinId} />
         </TabsContent>
 
         <TabsContent value="analytics" className="space-y-4">

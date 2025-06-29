@@ -1,5 +1,5 @@
 import pytest
-from typing import List, Set
+from typing import List, Set, Optional
 
 # Models to be mocked (or use actual models if preferred for some tests, but requires more setup)
 # For pure service logic unit tests, mocks are often better.
@@ -16,14 +16,14 @@ class MockPermission:
         return False
 
 class MockRole:
-    def __init__(self, name: str, permissions: List[MockPermission] = None):
+    def __init__(self, name: str, permissions: Optional[List[MockPermission]] = None):
         self.name = name
-        self.permissions: List[MockPermission] = permissions if permissions else []
+        self.permissions: List[MockPermission] = permissions or []
 
 class MockUser:
-    def __init__(self, username: str, roles: List[MockRole] = None):
+    def __init__(self, username: str, roles: Optional[List[MockRole]] = None):
         self.username = username
-        self.roles: List[MockRole] = roles if roles else []
+        self.roles: List[MockRole] = roles or []
 
 # Import the functions to be tested
 from app.services.rbac_service import (
@@ -182,7 +182,8 @@ def test_user_has_permission_user_is_none():
     assert user_has_permission(None, "view_data") == False
 
 def test_user_has_permission_permission_name_is_none(user_with_viewer_role: MockUser):
-    assert user_has_permission(user_with_viewer_role, None) == False
+    # Test with None permission name - cast to str to avoid type error
+    assert user_has_permission(user_with_viewer_role, None) == False  # type: ignore
 
 def test_user_has_permission_permission_name_is_empty_string(user_with_viewer_role: MockUser):
     assert user_has_permission(user_with_viewer_role, "") == False # Assuming empty string is not a valid permission name

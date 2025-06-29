@@ -23,31 +23,46 @@ def test_successful_save_load_cycle(dummy_model_and_optimizer, temp_model_path):
     model_path_str = str(temp_model_path)
 
     # Action: Save the model and optimizer
-    save_model(original_model, original_optimizer, file_path=model_path_str)
+    # Create dummy encoders_scalers and model_params for testing
+    dummy_encoders_scalers = {
+        'activity_encoder': None,
+        'user_encoder': None,
+        'cluster_encoder': None,
+        'scaler': None
+    }
+    dummy_model_params = {
+        'input_dim': original_model.lstm.input_size,
+        'hidden_dim': original_model.hidden_dim,
+        'output_dim': original_model.fc.out_features,
+        'num_layers': original_model.num_layers,
+        'sequence_length': 10,
+        'dropout_prob': 0.2
+    }
+    save_model(original_model, original_optimizer, dummy_encoders_scalers, dummy_model_params, model_path_str)
     assert os.path.exists(model_path_str), "Model file was not created by save_model."
 
     # Action: Create new instances and load the saved state
     # Use the same parameters as in the dummy_model_and_optimizer fixture
     loaded_model = PredictiveModel(
-        input_size=dummy_model_and_optimizer[0].lstm.input_size, # Accessing from original_model for clarity
-        hidden_size=dummy_model_and_optimizer[0].hidden_size,
-        num_layers=dummy_model_and_optimizer[0].num_layers,
-        output_size=dummy_model_and_optimizer[0].fc.out_features
+        input_dim=dummy_model_and_optimizer[0].lstm.input_size, # Accessing from original_model for clarity
+        hidden_dim=dummy_model_and_optimizer[0].hidden_dim,
+        output_dim=dummy_model_and_optimizer[0].fc.out_features,
+        num_layers=dummy_model_and_optimizer[0].num_layers
     )
     # Create a new optimizer for the loaded model
     # It's important that the optimizer is for the loaded_model's parameters
     loaded_optimizer = torch.optim.Adam(loaded_model.parameters()) 
 
-    # Load the state
-    returned_model, returned_optimizer = load_model(loaded_model, loaded_optimizer, file_path=model_path_str)
+    # Load the state using the new load_model function
+    returned_model, returned_optimizer, encoders, scaler, model_params = load_model(model_path_str)
 
     # Verification
-    assert returned_model is loaded_model, "load_model should return the same model instance it received."
-    assert returned_optimizer is loaded_optimizer, "load_model should return the same optimizer instance it received."
+    assert returned_model is not None, "load_model should return a valid model instance."
+    assert returned_optimizer is not None, "load_model should return a valid optimizer instance."
 
     # Compare model state dictionaries
     original_model_sd = original_model.state_dict()
-    loaded_model_sd = loaded_model.state_dict()
+    loaded_model_sd = returned_model.state_dict()
     assert compare_state_dicts(original_model_sd, loaded_model_sd), \
         "Model state dictionaries do not match after loading."
 
@@ -55,7 +70,7 @@ def test_successful_save_load_cycle(dummy_model_and_optimizer, temp_model_path):
     # Note: Optimizer state dict comparison can be tricky if learning rates or other params change.
     # For a simple save/load cycle, they should match.
     original_optimizer_sd = original_optimizer.state_dict()
-    loaded_optimizer_sd = loaded_optimizer.state_dict()
+    loaded_optimizer_sd = returned_optimizer.state_dict()
     
     # Optimizer state dicts can have device differences in tensors (e.g. 'step').
     # For simplicity, we'll compare the 'param_groups' which holds LR etc.
@@ -88,4 +103,4 @@ def test_load_model_file_not_found(dummy_model_and_optimizer, temp_model_path):
     non_existent_path = str(temp_model_path / "non_existent_model.pth")
 
     with pytest.raises(FileNotFoundError):
-        load_model(model, optimizer, file_path=non_existent_path)
+        load_model(non_existent_path)

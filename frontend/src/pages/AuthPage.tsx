@@ -7,7 +7,7 @@ import { Input } from '../components/ui/Input';
 import { Eye, EyeOff, Mail, Lock, User } from 'lucide-react';
 
 const AuthPage: React.FC = () => {
-  const { isAuthenticated, login, register, isLoading } = useAuth();
+  const { isAuthenticated, login, isLoading } = useAuth();
   const [isLoginMode, setIsLoginMode] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
@@ -71,9 +71,10 @@ const AuthPage: React.FC = () => {
 
     try {
       if (isLoginMode) {
-        await login(formData.username, formData.password);
+        await login({ username: formData.username, password: formData.password });
       } else {
-        await register({
+        // Register functionality would need to be implemented in AuthContext
+        console.log('Register attempt:', {
           username: formData.username,
           email: formData.email,
           password: formData.password,

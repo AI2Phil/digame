@@ -55,7 +55,7 @@ fake_users_db = {
 }
 
 # --- Simulated Token Decoding and User Fetching ---
-async def fake_decode_token(token: str, db: Session) -> Optional[SQLAlchemyUser]:
+async def fake_decode_token(token: str, db: Session) -> Optional[MockDBUser]:
     """
     Simulates token decoding. In a real app, this would verify the token,
     extract the user identifier (e.g., username or user_id), and fetch the user from the DB.
@@ -63,21 +63,14 @@ async def fake_decode_token(token: str, db: Session) -> Optional[SQLAlchemyUser]
     # This is a very basic simulation.
     # A real implementation would use jwt.decode() and handle exceptions.
     if token == "fake-admin-token":
-        # Simulate fetching a SQLAlchemy user object from the database
-        # user = user_crud.get_user_by_email(db, email="admin@example.com")
-        # For this placeholder, we return a mock SQLAlchemy-like user object
-        mock_sqla_user = SQLAlchemyUser(id=1, username="admin", email="admin@example.com", hashed_password="...", is_active=True)
-        # Manually attach mock roles/permissions for the service layer to work
-        mock_sqla_user.roles = [role_admin] 
-        return mock_sqla_user
+        # Return the mock admin user
+        return fake_users_db["admin@example.com"]
     elif token == "fake-user-token":
-        # mock_sqla_user = user_crud.get_user_by_email(db, email="user@example.com")
-        mock_sqla_user = SQLAlchemyUser(id=2, username="user", email="user@example.com", hashed_password="...", is_active=True)
-        mock_sqla_user.roles = [role_viewer]
-        return mock_sqla_user
+        # Return the mock regular user
+        return fake_users_db["user@example.com"]
     return None
 
-async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)) -> SQLAlchemyUser:
+async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)) -> MockDBUser:
     """
     Dependency to get the current user from a token.
     Placeholder implementation.
@@ -96,7 +89,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = De
     #     raise credentials_exception
     return user # Should be an SQLAlchemy User model instance
 
-async def get_current_active_user(current_user: SQLAlchemyUser = Depends(get_current_user)) -> SQLAlchemyUser:
+async def get_current_active_user(current_user: MockDBUser = Depends(get_current_user)) -> MockDBUser:
     """
     Dependency to get the current active user.
     Checks if the user (obtained from get_current_user) is active.
@@ -105,7 +98,7 @@ async def get_current_active_user(current_user: SQLAlchemyUser = Depends(get_cur
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Inactive user")
     return current_user
 
-async def get_current_active_admin_user(current_user: SQLAlchemyUser = Depends(get_current_active_user)) -> SQLAlchemyUser:
+async def get_current_active_admin_user(current_user: MockDBUser = Depends(get_current_active_user)) -> MockDBUser:
     """
     Dependency to ensure the current user is active AND has the MANAGE_RBAC_PERMISSION.
     """
@@ -128,7 +121,7 @@ class PermissionChecker:
     def __init__(self, required_permission: str):
         self.required_permission = required_permission
 
-    async def __call__(self, current_user: SQLAlchemyUser = Depends(get_current_active_user)) -> SQLAlchemyUser:
+    async def __call__(self, current_user: MockDBUser = Depends(get_current_active_user)) -> MockDBUser:
         if not user_has_permission(user=current_user, permission_name=self.required_permission):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
@@ -138,7 +131,7 @@ class PermissionChecker:
 
 # Example of a permission-specific dependency if needed for more granularity
 # def require_permission(permission_name: str):
-#     async def permission_checker(current_user: SQLAlchemyUser = Depends(get_current_active_user)):
+#     async def permission_checker(current_user: MockDBUser = Depends(get_current_active_user)):
 #         if not user_has_permission(user=current_user, permission_name=permission_name):
 #             raise HTTPException(
 #                 status_code=status.HTTP_403_FORBIDDEN,
@@ -148,7 +141,7 @@ class PermissionChecker:
 #     return permission_checker
 
 # --- Tenant ID Dependency ---
-async def get_tenant_id(current_user: SQLAlchemyUser = Depends(get_current_active_user)) -> int:
+async def get_tenant_id(current_user: MockDBUser = Depends(get_current_active_user)) -> int:
     """
     Dependency to get the current user's tenant ID.
     This is a simplified implementation - in a real multi-tenant system,
@@ -160,3 +153,17 @@ async def get_tenant_id(current_user: SQLAlchemyUser = Depends(get_current_activ
     # - Return current_user.tenant_id or current_user.tenants[0].id
     # - Handle cases where user has multiple tenants
     return 1  # Default tenant ID for development
+
+# --- WebSocket Authentication ---
+async def get_current_user_websocket(token: str, db: Session) -> Optional[MockDBUser]:
+    """
+    WebSocket-specific user authentication function.
+    Similar to get_current_user but doesn't use FastAPI dependencies.
+    """
+    try:
+        user = await fake_decode_token(token, db)
+        if user is None or not user.is_active:
+            return None
+        return user
+    except Exception:
+        return None

@@ -1,5 +1,6 @@
 import pytest
 import json
+from typing import List
 from unittest.mock import MagicMock, patch
 from datetime import datetime
 
@@ -36,7 +37,8 @@ def mock_tenant_model_email_analysis(): # Renamed
     tenant = create_mock_model(TenantModel, id=4,
         name="Email Analysis Tenant",
         admin_email="admin@emailtenant.com",
-        features={"email_pattern_analysis": True} # Default to enabled)
+        features={"email_pattern_analysis": True} # Default to enabled
+    )
     return tenant
 
 @pytest.fixture
@@ -57,7 +59,7 @@ def mock_user_setting_model_email_analysis_no_key(): # For internal analysis
 
 @pytest.fixture
 def mock_tenant_user_link_email_analysis(mock_user_model_email_analysis, mock_tenant_model_email_analysis): # Renamed
-    link = Tenantcreate_mock_model(UserModel, user_id=mock_user_model_email_analysis.id, tenant_id=mock_tenant_model_email_analysis.id)
+    link = create_mock_model(TenantUserModel, user_id=mock_user_model_email_analysis.id, tenant_id=mock_tenant_model_email_analysis.id)
     link.user = mock_user_model_email_analysis
     link.tenant = mock_tenant_model_email_analysis
     mock_user_model_email_analysis.tenants.append(link)

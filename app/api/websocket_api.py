@@ -4,7 +4,7 @@ Provides real-time communication for twin updates, team coordination, and notifi
 """
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends, HTTPException, Query
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, cast
 import logging
 import json
 from datetime import datetime
@@ -319,7 +319,7 @@ async def test_broadcast(
 ):
     """Test endpoint for broadcasting messages"""
     try:
-        message_type_enum = MessageType(message_type)
+        message_type_enum = cast(MessageType, MessageType(message_type))
         sent_count = await connection_manager.broadcast_to_channel(
             channel=channel,
             message_type=message_type_enum,

@@ -32,7 +32,8 @@ def mock_tenant_model_comm_style(): # Renamed to avoid conflict if used in same 
     tenant = create_mock_model(TenantModel, id=1,
         name="Comm Style Tenant",
         admin_email="admin@commtenant.com",
-        features={"communication_style_analysis": True} # Default to enabled)
+        features={"communication_style_analysis": True} # Default to enabled
+    )
     return tenant
 
 @pytest.fixture
@@ -45,7 +46,7 @@ def mock_user_setting_model_comm_style(): # Renamed
 
 @pytest.fixture
 def mock_tenant_user_link_comm_style(mock_user_model, mock_tenant_model_comm_style): # Renamed
-    link = Tenantcreate_mock_model(UserModel, user_id=mock_user_model.id, tenant_id=mock_tenant_model_comm_style.id)
+    link = create_mock_model(TenantUserModel, user_id=mock_user_model.id, tenant_id=mock_tenant_model_comm_style.id)
     link.user = mock_user_model
     link.tenant = mock_tenant_model_comm_style
     mock_user_model.tenants.append(link)

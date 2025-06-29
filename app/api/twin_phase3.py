@@ -5,7 +5,7 @@ Provides REST endpoints for team management, multi-twin orchestration, and colla
 
 from fastapi import APIRouter, HTTPException, BackgroundTasks, Depends
 from pydantic import BaseModel
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any, Optional, cast
 from datetime import datetime
 import logging
 
@@ -76,7 +76,7 @@ async def create_team(request: TeamCreateRequest, db: AsyncSession = Depends(get
         manager = TeamTwinManager(db_session=db)
         result = await manager.create_team(
             name=request.name,
-            description=request.description,
+            description=request.description or "",
             team_lead_twin_id=request.team_lead_twin_id,
             organization_id=request.organization_id
         )
@@ -115,7 +115,7 @@ async def add_team_member(team_id: str, request: TeamMemberRequest, db: AsyncSes
             team_id=team_id,
             twin_id=request.twin_id,
             user_id=request.user_id,
-            role=request.role,
+            role=request.role or "member",
             skills=request.skills,
             specializations=request.specializations
         )
@@ -177,15 +177,15 @@ async def start_team_coordination(request: CoordinationRequest, background_tasks
         
         # Validate coordination type
         try:
-            coordination_type = CoordinationType(request.coordination_type)
+            coordination_type = cast(CoordinationType, CoordinationType(request.coordination_type))
         except ValueError:
             raise HTTPException(status_code=400, detail=f"Invalid coordination type: {request.coordination_type}")
         
         # Validate priority
         try:
-            priority = CoordinationPriority(request.priority or "medium")
+            priority = cast(CoordinationPriority, CoordinationPriority(request.priority or "medium"))
         except ValueError:
-            priority = CoordinationPriority.MEDIUM
+            priority = cast(CoordinationPriority, CoordinationPriority.MEDIUM)
         
         # Create coordination request
         coord_request = TeamCoordinationRequest(
@@ -526,7 +526,7 @@ async def get_phase3_status():
                 },
                 "coordination_engine": {
                     "status": "active",
-                    "coordination_types": [ct.value for ct in CoordinationType],
+                    "coordination_types": ["workload_balancing", "skill_optimization", "meeting_optimization", "absence_planning", "resource_allocation", "collaboration_sync"],
                     "active_coordinations": 0  # Would be actual count
                 },
                 "analytics_engine": {

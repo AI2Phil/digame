@@ -1,14 +1,17 @@
 import pytest
+from typing import Any, Type, TypeVar, cast
 from app.services.onboarding_service import OnboardingService, ONBOARDING_DB, ONBOARDING_STEP_SEQUENCE
 from app.models.onboarding_models import OnboardingStepUpdate, OnboardingPreferencesUpdate, UserOnboardingStatus, OnboardingStep
 
+T = TypeVar('T')
 
-def create_mock_model(model_class, **kwargs):
+
+def create_mock_model(model_class: Type[T], **kwargs: Any) -> T:
     """Create a mock instance of a SQLAlchemy model with given attributes."""
     # For testing purposes, we'll create a simple mock object
     # that behaves like the model but doesn't require database instantiation
     class MockModel:
-        def __init__(self, **attrs):
+        def __init__(self, **attrs: Any):
             for key, value in attrs.items():
                 setattr(self, key, value)
             # Set some default attributes that SQLAlchemy models typically have
@@ -18,7 +21,7 @@ def create_mock_model(model_class, **kwargs):
                 from datetime import datetime, timezone
                 self.created_at = datetime.now(timezone.utc)
         
-        def __repr__(self):
+        def __repr__(self) -> str:
             attrs = []
             for key, value in self.__dict__.items():
                 if not key.startswith('_'):
@@ -28,7 +31,7 @@ def create_mock_model(model_class, **kwargs):
                         attrs.append(f"{key}={repr(value)}")
             return f"<{model_class.__name__}({', '.join(attrs)})>"
     
-    return MockModel(**kwargs)
+    return cast(T, MockModel(**kwargs))
 
 
 @pytest.fixture(autouse=True)
@@ -55,7 +58,7 @@ async def test_update_onboarding_step():
     await service.get_user_onboarding_status(user_id) # Initialize
 
     step_data = {"name": "Jules"}
-    update = create_mock_model(OnboardingStepUpdate, step_id=ONBOARDING_STEP_SEQUENCE[0], data=step_data)
+    update = OnboardingStepUpdate(step_id=ONBOARDING_STEP_SEQUENCE[0], data=step_data)
     status = await service.update_onboarding_step(user_id, update)
 
     assert status.steps[0].completed
@@ -68,7 +71,7 @@ async def test_complete_all_steps():
     user_id = "test_user_3"
 
     for step_id in ONBOARDING_STEP_SEQUENCE:
-        update = create_mock_model(OnboardingStepUpdate, step_id=step_id, data={"completed_field": True})
+        update = OnboardingStepUpdate(step_id=step_id, data={"completed_field": True})
         status = await service.update_onboarding_step(user_id, update)
 
     assert status.completed_all

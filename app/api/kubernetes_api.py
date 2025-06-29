@@ -6,7 +6,7 @@ Phase 5: Production Deployment with Kubernetes orchestration, monitoring, and se
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, and_
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any, Optional, cast
 from datetime import datetime, timedelta
 import asyncio
 import logging

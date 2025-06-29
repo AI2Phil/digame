@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Card } from '../ui/Card';
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card';
 import { Button } from '../ui/Button';
-import { Select } from '../ui/Select';
+import Select from '../ui/Select';
 import { Badge } from '../ui/Badge';
-import { Tabs } from '../ui/Tabs';
-import { Progress } from '../ui/Progress';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/Tabs';
+import Progress from '../ui/Progress';
 import { useTeamCoordination } from '../../hooks/useTeamCoordination';
 import { CoordinationType, TeamMember, CoordinationResult } from '../../types/team';
 
@@ -69,57 +69,57 @@ export const TeamCoordination: React.FC<TeamCoordinationProps> = ({ teamId, memb
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <Tabs.List>
-          <Tabs.Trigger value="workload">Workload</Tabs.Trigger>
-          <Tabs.Trigger value="skills">Skills</Tabs.Trigger>
-          <Tabs.Trigger value="meetings">Meetings</Tabs.Trigger>
-          <Tabs.Trigger value="planning">Planning</Tabs.Trigger>
-          <Tabs.Trigger value="history">History</Tabs.Trigger>
-        </Tabs.List>
+        <TabsList>
+          <TabsTrigger value="workload">Workload</TabsTrigger>
+          <TabsTrigger value="skills">Skills</TabsTrigger>
+          <TabsTrigger value="meetings">Meetings</TabsTrigger>
+          <TabsTrigger value="planning">Planning</TabsTrigger>
+          <TabsTrigger value="history">History</TabsTrigger>
+        </TabsList>
 
-        <Tabs.Content value="workload">
-          <WorkloadCoordination 
+        <TabsContent value="workload">
+          <WorkloadCoordination
             teamId={teamId}
             members={members}
             onCoordinate={handleStartCoordination}
             isCoordinating={isCoordinating}
             result={coordinationResult}
           />
-        </Tabs.Content>
+        </TabsContent>
 
-        <Tabs.Content value="skills">
-          <SkillOptimization 
+        <TabsContent value="skills">
+          <SkillOptimization
             teamId={teamId}
             members={members}
             onCoordinate={handleStartCoordination}
             isCoordinating={isCoordinating}
             result={coordinationResult}
           />
-        </Tabs.Content>
+        </TabsContent>
 
-        <Tabs.Content value="meetings">
-          <MeetingOptimization 
+        <TabsContent value="meetings">
+          <MeetingOptimization
             teamId={teamId}
             members={members}
             onCoordinate={handleStartCoordination}
             isCoordinating={isCoordinating}
             result={coordinationResult}
           />
-        </Tabs.Content>
+        </TabsContent>
 
-        <Tabs.Content value="planning">
-          <AbsencePlanning 
+        <TabsContent value="planning">
+          <AbsencePlanning
             teamId={teamId}
             members={members}
             onCoordinate={handleStartCoordination}
             isCoordinating={isCoordinating}
             result={coordinationResult}
           />
-        </Tabs.Content>
+        </TabsContent>
 
-        <Tabs.Content value="history">
+        <TabsContent value="history">
           <CoordinationHistory history={coordinationHistory} />
-        </Tabs.Content>
+        </TabsContent>
       </Tabs>
     </div>
   );
@@ -135,11 +135,11 @@ const WorkloadCoordination: React.FC<{
   return (
     <div className="workload-coordination">
       <Card>
-        <Card.Header>
-          <h4>⚖️ Workload Balancing</h4>
+        <CardHeader>
+          <CardTitle>⚖️ Workload Balancing</CardTitle>
           <p>Optimize workload distribution across team members</p>
-        </Card.Header>
-        <Card.Content>
+        </CardHeader>
+        <CardContent>
           <div className="current-workloads">
             <h5>Current Workload Distribution</h5>
             <div className="workload-grid">
@@ -147,7 +147,11 @@ const WorkloadCoordination: React.FC<{
                 <div key={member.twinId} className="workload-item">
                   <div className="member-info">
                     <span className="member-name">{member.name}</span>
-                    <Badge variant={member.availability === 'available' ? 'success' : 'warning'}>
+                    <Badge
+                      variant={member.availability === 'available' ? 'success' : 'warning'}
+                      icon={null}
+                      onRemove={() => {}}
+                    >
                       {member.availability}
                     </Badge>
                   </div>
@@ -187,7 +191,11 @@ const WorkloadCoordination: React.FC<{
                 <h6>Recommendations:</h6>
                 {result.results.recommendations?.map((rec: any, index: number) => (
                   <div key={index} className="recommendation">
-                    <Badge variant={rec.priority === 'high' ? 'destructive' : 'secondary'}>
+                    <Badge
+                      variant={rec.priority === 'high' ? 'destructive' : 'secondary'}
+                      icon={null}
+                      onRemove={() => {}}
+                    >
                       {rec.priority}
                     </Badge>
                     <span>{rec.description}</span>
@@ -207,7 +215,7 @@ const WorkloadCoordination: React.FC<{
               {isCoordinating ? 'Optimizing Workload...' : 'Optimize Workload Distribution'}
             </Button>
           </div>
-        </Card.Content>
+        </CardContent>
       </Card>
     </div>
   );
@@ -223,11 +231,11 @@ const SkillOptimization: React.FC<{
   return (
     <div className="skill-optimization">
       <Card>
-        <Card.Header>
-          <h4>🎯 Skill Optimization</h4>
+        <CardHeader>
+          <CardTitle>🎯 Skill Optimization</CardTitle>
           <p>Optimize skill utilization and identify gaps</p>
-        </Card.Header>
-        <Card.Content>
+        </CardHeader>
+        <CardContent>
           <div className="skills-matrix">
             <h5>Team Skills Matrix</h5>
             <div className="skills-grid">
@@ -259,7 +267,7 @@ const SkillOptimization: React.FC<{
                 <h6>Identified Skill Gaps:</h6>
                 {result.results.skillGaps?.map((gap: any, index: number) => (
                   <div key={index} className="gap-item">
-                    <Badge variant="destructive">{gap.skill}</Badge>
+                    <Badge variant="destructive" icon={null} onRemove={() => {}}>{gap.skill}</Badge>
                     <span>Gap Level: {gap.level}</span>
                     <span>Impact: {gap.impact}</span>
                   </div>
@@ -270,7 +278,7 @@ const SkillOptimization: React.FC<{
                 <h6>Skill Overlaps:</h6>
                 {result.results.skillOverlaps?.map((overlap: any, index: number) => (
                   <div key={index} className="overlap-item">
-                    <Badge variant="secondary">{overlap.skill}</Badge>
+                    <Badge variant="secondary" icon={null} onRemove={() => {}}>{overlap.skill}</Badge>
                     <span>Redundancy: {overlap.redundancy}</span>
                     <span>Optimization Opportunity: {overlap.opportunity}</span>
                   </div>
@@ -288,7 +296,7 @@ const SkillOptimization: React.FC<{
               {isCoordinating ? 'Analyzing Skills...' : 'Optimize Skill Utilization'}
             </Button>
           </div>
-        </Card.Content>
+        </CardContent>
       </Card>
     </div>
   );
@@ -310,11 +318,11 @@ const MeetingOptimization: React.FC<{
   return (
     <div className="meeting-optimization">
       <Card>
-        <Card.Header>
-          <h4>📅 Meeting Optimization</h4>
+        <CardHeader>
+          <CardTitle>📅 Meeting Optimization</CardTitle>
           <p>Find optimal meeting times and reduce scheduling conflicts</p>
-        </Card.Header>
-        <Card.Content>
+        </CardHeader>
+        <CardContent>
           <div className="meeting-config">
             <h5>Meeting Configuration</h5>
             <div className="config-grid">
@@ -322,7 +330,7 @@ const MeetingOptimization: React.FC<{
                 <label>Duration (minutes)</label>
                 <Select
                   value={meetingParameters.duration.toString()}
-                  onValueChange={(value) => setMeetingParameters(prev => ({
+                  onChange={(value) => setMeetingParameters(prev => ({
                     ...prev,
                     duration: parseInt(value)
                   }))}
@@ -338,7 +346,7 @@ const MeetingOptimization: React.FC<{
                 <label>Frequency</label>
                 <Select
                   value={meetingParameters.frequency}
-                  onValueChange={(value) => setMeetingParameters(prev => ({
+                  onChange={(value) => setMeetingParameters(prev => ({
                     ...prev,
                     frequency: value
                   }))}
@@ -397,7 +405,7 @@ const MeetingOptimization: React.FC<{
               {isCoordinating ? 'Optimizing Schedule...' : 'Find Optimal Meeting Times'}
             </Button>
           </div>
-        </Card.Content>
+        </CardContent>
       </Card>
     </div>
   );
@@ -420,11 +428,11 @@ const AbsencePlanning: React.FC<{
   return (
     <div className="absence-planning">
       <Card>
-        <Card.Header>
-          <h4>🏖️ Absence Planning</h4>
+        <CardHeader>
+          <CardTitle>🏖️ Absence Planning</CardTitle>
           <p>Plan for team member absences and ensure coverage</p>
-        </Card.Header>
-        <Card.Content>
+        </CardHeader>
+        <CardContent>
           <div className="absence-form">
             <h5>Plan Absence</h5>
             <div className="form-grid">
@@ -432,7 +440,7 @@ const AbsencePlanning: React.FC<{
                 <label>Team Member</label>
                 <Select
                   value={absenceInfo.memberTwinId}
-                  onValueChange={(value) => setAbsenceInfo(prev => ({
+                  onChange={(value) => setAbsenceInfo(prev => ({
                     ...prev,
                     memberTwinId: value
                   }))}
@@ -488,7 +496,11 @@ const AbsencePlanning: React.FC<{
                   <div key={index} className="assignment">
                     <span className="assignee">{assignment.assignee}</span>
                     <span className="responsibility">{assignment.responsibility}</span>
-                    <Badge variant={assignment.confidence > 0.8 ? 'success' : 'warning'}>
+                    <Badge
+                      variant={assignment.confidence > 0.8 ? 'success' : 'warning'}
+                      icon={null}
+                      onRemove={() => {}}
+                    >
                       {(assignment.confidence * 100).toFixed(0)}% confidence
                     </Badge>
                   </div>
@@ -499,7 +511,11 @@ const AbsencePlanning: React.FC<{
                 <h6>Risk Assessment:</h6>
                 {result.results.riskAssessment?.risks?.map((risk: any, index: number) => (
                   <div key={index} className="risk-item">
-                    <Badge variant={risk.severity === 'high' ? 'destructive' : 'secondary'}>
+                    <Badge
+                      variant={risk.severity === 'high' ? 'destructive' : 'secondary'}
+                      icon={null}
+                      onRemove={() => {}}
+                    >
                       {risk.severity}
                     </Badge>
                     <span>{risk.description}</span>
@@ -520,7 +536,7 @@ const AbsencePlanning: React.FC<{
               {isCoordinating ? 'Planning Coverage...' : 'Plan Absence Coverage'}
             </Button>
           </div>
-        </Card.Content>
+        </CardContent>
       </Card>
     </div>
   );
@@ -532,17 +548,17 @@ const CoordinationHistory: React.FC<{
   return (
     <div className="coordination-history">
       <Card>
-        <Card.Header>
-          <h4>📊 Coordination History</h4>
+        <CardHeader>
+          <CardTitle>📊 Coordination History</CardTitle>
           <p>Recent team coordination activities and results</p>
-        </Card.Header>
-        <Card.Content>
+        </CardHeader>
+        <CardContent>
           <div className="history-list">
             {history.map((item, index) => (
               <div key={index} className="history-item">
                 <div className="coordination-info">
                   <div className="type-badge">
-                    <Badge variant="outline">{item.coordinationType}</Badge>
+                    <Badge variant="outline" icon={null} onRemove={() => {}}>{item.coordinationType}</Badge>
                   </div>
                   <div className="coordination-details">
                     <span className="title">{item.title}</span>
@@ -552,7 +568,11 @@ const CoordinationHistory: React.FC<{
                 <div className="coordination-metrics">
                   <div className="metric">
                     <span className="label">Status:</span>
-                    <Badge variant={item.status === 'completed' ? 'success' : 'secondary'}>
+                    <Badge
+                      variant={item.status === 'completed' ? 'success' : 'secondary'}
+                      icon={null}
+                      onRemove={() => {}}
+                    >
                       {item.status}
                     </Badge>
                   </div>
@@ -568,7 +588,7 @@ const CoordinationHistory: React.FC<{
               </div>
             ))}
           </div>
-        </Card.Content>
+        </CardContent>
       </Card>
     </div>
   );
