@@ -91,10 +91,14 @@ const Sidebar: React.FC<SidebarProps> = ({ isDemoMode, onLogout, currentUser, is
       title: 'Digital Twin',
       icon: '🧠',
       items: [
-        { label: 'My Digital Twin', icon: '🤖', path: '/digital-twin/my-twin', subtitle: 'AI-POWERED' },
-        { label: 'Twin Analytics', icon: '📊', path: '/digital-twin/analytics', subtitle: 'AI-POWERED' },
-        { label: 'Twin Workspace', icon: '💬', path: '/digital-twin/workspace', subtitle: 'AI-POWERED' },
-        { label: 'Twin Settings', icon: '⚙️', path: '/digital-twin/settings', subtitle: 'AI-POWERED' }
+        { label: 'My Digital Twin', icon: '🤖', path: '/digital-twin/my-twin', subtitle: 'CORE PLATFORM' },
+        { label: 'Pattern Recognition', icon: '🎯', path: '/digital-twin/patterns', subtitle: 'PHASE 1A' },
+        { label: 'AI Predictions', icon: '📈', path: '/digital-twin/predictions', subtitle: 'PHASE 1B' },
+        { label: 'Twin Workspace', icon: '💬', path: '/digital-twin/workspace', subtitle: 'PHASE 1C' },
+        { label: 'Twin Simulation', icon: '🔬', path: '/digital-twin/simulation', subtitle: 'PHASE 1C' },
+        { label: 'Intelligence API', icon: '🧮', path: '/digital-twin/intelligence', subtitle: 'PHASE 1B' },
+        { label: 'Twin Analytics', icon: '📊', path: '/digital-twin/analytics', subtitle: 'INSIGHTS' },
+        { label: 'Twin Settings', icon: '⚙️', path: '/digital-twin/settings', subtitle: 'CONFIGURATION' }
       ]
     },
     {

@@ -1,0 +1,330 @@
+import React, { useState, useRef, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card';
+import { Button } from '../ui/Button';
+import { Input } from '../ui/Input';
+import { Badge } from '../ui/Badge';
+import { 
+  MessageSquare, 
+  Send, 
+  Bot, 
+  User, 
+  Clock,
+  ThumbsUp,
+  ThumbsDown,
+  RefreshCw
+} from 'lucide-react';
+// Note: useToast hook would need to be implemented or use a simple alert for now
+const useToast = () => ({
+  toast: ({ title, description, variant }: any) => {
+    console.log(`${variant === 'destructive' ? 'Error' : 'Info'}: ${title} - ${description}`);
+    alert(`${title}: ${description}`);
+  }
+});
+import { digitalTwinApi } from '../../services/digitalTwinApi';
+
+interface TwinInteractionPanelProps {
+  twinId: string;
+}
+
+interface Message {
+  id: string;
+  type: 'user' | 'twin';
+  content: string;
+  timestamp: Date;
+  confidence?: number;
+  interactionId?: string;
+}
+
+export const TwinInteractionPanel: React.FC<TwinInteractionPanelProps> = ({ twinId }) => {
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [inputValue, setInputValue] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [loadingHistory, setLoadingHistory] = useState(true);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    loadInteractionHistory();
+  }, [twinId]);
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const loadInteractionHistory = async () => {
+    try {
+      setLoadingHistory(true);
+      const response = await digitalTwinApi.getTwinInteractions(undefined, 10);
+      
+      if (response.success && response.data) {
+        const historyMessages: Message[] = response.data.interactions.map(interaction => [
+          {
+            id: `${interaction.id}-input`,
+            type: 'user' as const,
+            content: interaction.input_data?.query || 'Previous interaction',
+            timestamp: new Date(interaction.created_at || Date.now()),
+          },
+          {
+            id: `${interaction.id}-response`,
+            type: 'twin' as const,
+            content: interaction.response_data?.text || 'Previous response',
+            timestamp: new Date(interaction.created_at || Date.now()),
+            confidence: interaction.response_data?.confidence,
+            interactionId: interaction.id,
+          }
+        ]).flat().sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+
+        setMessages(historyMessages);
+      }
+    } catch (error) {
+      console.error('Failed to load interaction history:', error);
+    } finally {
+      setLoadingHistory(false);
+    }
+  };
+
+  const sendMessage = async () => {
+    if (!inputValue.trim() || isLoading) return;
+
+    const userMessage: Message = {
+      id: `user-${Date.now()}`,
+      type: 'user',
+      content: inputValue.trim(),
+      timestamp: new Date(),
+    };
+
+    setMessages(prev => [...prev, userMessage]);
+    setInputValue('');
+    setIsLoading(true);
+
+    try {
+      const response = await digitalTwinApi.interactWithTwin({
+        query: userMessage.content,
+        context: {
+          conversation_history: messages.slice(-5), // Last 5 messages for context
+          timestamp: new Date().toISOString(),
+        }
+      });
+
+      if (response.success && response.data) {
+        const twinMessage: Message = {
+          id: `twin-${Date.now()}`,
+          type: 'twin',
+          content: response.data.response?.text || 'I received your message but had trouble generating a response.',
+          timestamp: new Date(),
+          confidence: response.data.response?.confidence,
+          interactionId: response.data.interaction_id,
+        };
+
+        setMessages(prev => [...prev, twinMessage]);
+      } else {
+        throw new Error(response.message || 'Failed to get response from twin');
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to send message to twin",
+        variant: "destructive",
+      });
+
+      // Add error message
+      const errorMessage: Message = {
+        id: `error-${Date.now()}`,
+        type: 'twin',
+        content: 'Sorry, I encountered an error processing your message. Please try again.',
+        timestamp: new Date(),
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  };
+
+  const getConfidenceColor = (confidence?: number) => {
+    if (!confidence) return 'bg-gray-500';
+    if (confidence >= 0.8) return 'bg-green-500';
+    if (confidence >= 0.6) return 'bg-yellow-500';
+    return 'bg-red-500';
+  };
+
+  const formatTime = (date: Date) => {
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+
+  const suggestedQuestions = [
+    "How is my productivity trending?",
+    "What patterns have you discovered?",
+    "Can you predict my energy levels tomorrow?",
+    "What recommendations do you have for me?",
+    "Show me my recent work patterns",
+  ];
+
+  const handleSuggestedQuestion = (question: string) => {
+    setInputValue(question);
+  };
+
+  if (loadingHistory) {
+    return (
+      <Card>
+        <CardContent className="flex items-center justify-center h-64">
+          <RefreshCw className="h-8 w-8 animate-spin mr-2" />
+          <span>Loading conversation history...</span>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center">
+            <MessageSquare className="h-5 w-5 mr-2" />
+            Chat with Your Digital Twin
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {/* Messages Area */}
+            <div className="h-96 w-full border rounded-lg p-4 overflow-y-auto">
+              <div className="space-y-4">
+                {messages.length === 0 ? (
+                  <div className="text-center text-gray-500 py-8">
+                    <Bot className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                    <p>Start a conversation with your digital twin!</p>
+                    <p className="text-sm mt-2">Ask about your productivity patterns, predictions, or get recommendations.</p>
+                  </div>
+                ) : (
+                  messages.map((message) => (
+                    <div
+                      key={message.id}
+                      className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
+                    >
+                      <div
+                        className={`max-w-[80%] rounded-lg p-3 ${
+                          message.type === 'user'
+                            ? 'bg-blue-500 text-white'
+                            : 'bg-gray-100 text-gray-900'
+                        }`}
+                      >
+                        <div className="flex items-start space-x-2">
+                          {message.type === 'twin' && (
+                            <Bot className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                          )}
+                          {message.type === 'user' && (
+                            <User className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                          )}
+                          <div className="flex-1">
+                            <p className="text-sm">{message.content}</p>
+                            <div className="flex items-center justify-between mt-2">
+                              <div className="flex items-center space-x-2">
+                                <Clock className="h-3 w-3 opacity-70" />
+                                <span className="text-xs opacity-70">
+                                  {formatTime(message.timestamp)}
+                                </span>
+                              </div>
+                              {message.confidence && (
+                                <span
+                                  className={`text-xs px-2 py-1 rounded ${getConfidenceColor(message.confidence)} text-white`}
+                                >
+                                  {Math.round(message.confidence * 100)}% confident
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+                {isLoading && (
+                  <div className="flex justify-start">
+                    <div className="bg-gray-100 rounded-lg p-3 max-w-[80%]">
+                      <div className="flex items-center space-x-2">
+                        <Bot className="h-4 w-4" />
+                        <div className="flex space-x-1">
+                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                <div ref={messagesEndRef} />
+              </div>
+            </div>
+
+            {/* Suggested Questions */}
+            {messages.length === 0 && (
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-gray-700">Suggested questions:</p>
+                <div className="flex flex-wrap gap-2">
+                  {suggestedQuestions.map((question, index) => (
+                    <Button
+                      key={index}
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleSuggestedQuestion(question)}
+                      className="text-xs"
+                    >
+                      {question}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Input Area */}
+            <div className="flex space-x-2">
+              <Input
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                onKeyPress={handleKeyPress}
+                placeholder="Ask your digital twin anything..."
+                disabled={isLoading}
+                className="flex-1"
+              />
+              <Button 
+                onClick={sendMessage} 
+                disabled={!inputValue.trim() || isLoading}
+                size="sm"
+              >
+                {isLoading ? (
+                  <RefreshCw className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Send className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
+
+            {/* Quick Actions */}
+            <div className="flex justify-between items-center text-xs text-gray-500">
+              <span>Press Enter to send, Shift+Enter for new line</span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={loadInteractionHistory}
+                className="text-xs"
+              >
+                <RefreshCw className="h-3 w-3 mr-1" />
+                Refresh History
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};

@@ -1,0 +1,1 @@
+export { default as IntelligenceInsights } from './IntelligenceInsights';

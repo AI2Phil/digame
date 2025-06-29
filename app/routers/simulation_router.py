@@ -1,533 +1,480 @@
 """
-Simulation and Decision Support API router for scenario planning and strategic analysis
+Simulation Router - API endpoints for digital twin simulation functionality
+Provides REST API access to simulation engine operations
 """
 
-from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, Query, Path, Body
-from fastapi import status
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from typing import List, Optional, Dict, Any
-from datetime import datetime, timedelta
+from typing import Dict, List, Optional, Any
+from pydantic import BaseModel, Field
+from datetime import datetime
 
-from ..database import get_db
-from ..services.simulation_service import SimulationService, get_simulation_service
-from ..models.simulation import Simulation, Scenario, DecisionAnalysis, RiskAssessment, StrategicPlan
-from ..schemas.simulation_schemas import (
-    SimulationCreate, SimulationUpdate, SimulationResponse, SimulationSummary,
-    ScenarioCreate, ScenarioResponse,
-    DecisionAnalysisCreate, DecisionAnalysisResponse,
-    RiskAssessmentCreate, RiskAssessmentResponse,
-    StrategicPlanCreate, StrategicPlanResponse,
-    SimulationTemplateCreate, SimulationTemplateResponse,
-    ScenarioPlanningRequest, DecisionImpactRequest, RiskAssessmentRequest,
-    StrategicPlanningRequest, ResourceOptimizationRequest, PerformanceForecastingRequest,
-    SimulationExecutionRequest, SimulationResults, SimulationAnalytics
-)
+from app.database import get_db
+from app.services.simulation_engine import SimulationEngine, SimulationParameters, SimulationType
+from app.crud.digital_twin_crud import get_digital_twin
+from app.models.user import User
+from app.auth.auth_dependencies import get_current_user
 
-router = APIRouter(prefix="/api/simulation", tags=["simulation-decision-support"])
+router = APIRouter(prefix="/api/simulation", tags=["Simulation"])
 
+# Pydantic models for request/response
+class SimulationRequest(BaseModel):
+    simulation_type: str = Field(..., description="Type of simulation to run")
+    time_horizon: int = Field(7, description="Number of days to simulate (1-30)")
+    optimization_target: str = Field("productivity", description="Optimization target: productivity, efficiency, balance")
+    constraints: Dict[str, Any] = Field(default_factory=dict, description="Simulation constraints")
+    variables: Dict[str, Any] = Field(default_factory=dict, description="Simulation variables")
 
-# Simulation Management Endpoints
+class SimulationResponse(BaseModel):
+    success: bool
+    message: Optional[str] = None
+    data: Optional[Dict[str, Any]] = None
 
-@router.post("/simulations", response_model=SimulationResponse, status_code=status.HTTP_201_CREATED)
-async def create_simulation(
-    simulation_data: SimulationCreate,
-    tenant_id: int = Query(..., description="Tenant ID"),
-    created_by: int = Query(..., description="Creator user ID"),
-    simulation_service: SimulationService = Depends(get_simulation_service)
-):
-    """
-    Create a new simulation
-    """
+class SimulationResultResponse(BaseModel):
+    simulation_id: str
+    simulation_type: str
+    status: str
+    results: Optional[Dict[str, Any]] = None
+    metrics: Optional[Dict[str, float]] = None
+    recommendations: Optional[List[Dict[str, Any]]] = None
+    confidence_score: Optional[float] = None
+    execution_time_ms: Optional[int] = None
+    created_at: str
+
+# Global simulation engine instance
+simulation_engine = SimulationEngine()
+
+def get_user_id(user: User) -> int:
+    """Helper function to safely extract user ID from SQLAlchemy model"""
     try:
-        simulation = simulation_service.create_simulation(
-            tenant_id=tenant_id,
-            created_by=created_by,
-            simulation_data=simulation_data.dict()
-        )
-        return SimulationResponse.from_orm(simulation)
-    except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
-    except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+        return int(str(user.id))
+    except (ValueError, TypeError):
+        return int(str(user.id))
 
-
-@router.get("/simulations", response_model=List[SimulationSummary])
-async def get_simulations(
-    tenant_id: int = Query(..., description="Tenant ID"),
-    simulation_type: Optional[str] = Query(None, description="Filter by simulation type"),
-    status_filter: Optional[str] = Query(None, alias="status", description="Filter by status"),
-    skip: int = Query(0, ge=0),
-    limit: int = Query(100, ge=1, le=200),
-    simulation_service: SimulationService = Depends(get_simulation_service)
-):
-    """
-    Get simulations for a tenant with optional filtering
-    """
-    try:
-        simulations = simulation_service.get_simulations(
-            tenant_id=tenant_id,
-            simulation_type=simulation_type,
-            status=status_filter,
-            skip=skip,
-            limit=limit
-        )
-        
-        # Convert to summary format
-        summaries = []
-        for sim in simulations:
-            # Handle insights and recommendations safely
-            insights_data = sim.insights if hasattr(sim, 'insights') and sim.insights else []
-            recommendations_data = sim.recommendations if hasattr(sim, 'recommendations') and sim.recommendations else []
-            
-            # Convert to list if it's a JSON field
-            if isinstance(insights_data, str):
-                try:
-                    import json
-                    insights_data = json.loads(insights_data)
-                except:
-                    insights_data = []
-            if isinstance(recommendations_data, str):
-                try:
-                    import json
-                    recommendations_data = json.loads(recommendations_data)
-                except:
-                    recommendations_data = []
-            
-            summary = SimulationSummary(
-                id=sim.id,
-                name=sim.name,
-                simulation_type=sim.simulation_type,
-                status=sim.status,
-                confidence_score=sim.confidence_score,
-                created_at=sim.created_at,
-                execution_duration=sim.execution_duration,
-                insights_count=len(insights_data) if isinstance(insights_data, list) else 0,
-                recommendations_count=len(recommendations_data) if isinstance(recommendations_data, list) else 0
-            )
-            summaries.append(summary)
-        
-        return summaries
-    except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
-
-
-@router.get("/simulations/{simulation_id}", response_model=SimulationResponse)
-async def get_simulation(
-    simulation_id: int = Path(..., description="Simulation ID"),
-    tenant_id: int = Query(..., description="Tenant ID"),
-    simulation_service: SimulationService = Depends(get_simulation_service)
-):
-    """
-    Get a specific simulation by ID
-    """
-    try:
-        simulation = simulation_service.get_simulation(simulation_id, tenant_id)
-        if not simulation:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Simulation not found")
-        
-        return SimulationResponse.from_orm(simulation)
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
-
-
-@router.post("/simulations/{simulation_id}/execute", response_model=SimulationResults)
-async def execute_simulation(
-    simulation_id: int = Path(..., description="Simulation ID"),
-    execution_request: SimulationExecutionRequest = Body(...),
-    tenant_id: int = Query(..., description="Tenant ID"),
-    background_tasks: BackgroundTasks = Depends(),
-    simulation_service: SimulationService = Depends(get_simulation_service)
-):
-    """
-    Execute a simulation and return results
-    """
-    try:
-        # Verify simulation exists and belongs to tenant
-        simulation = simulation_service.get_simulation(simulation_id, tenant_id)
-        if not simulation:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Simulation not found")
-        
-        # Execute simulation
-        results = simulation_service.run_simulation(simulation_id)
-        
-        return SimulationResults(
-            simulation_id=simulation_id,
-            execution_time=results.get("execution_time", 0.0),
-            results=results["results"],
-            insights=results["insights"],
-            recommendations=results["recommendations"],
-            confidence_score=results["confidence_score"],
-            status="completed"
-        )
-    except HTTPException:
-        raise
-    except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
-    except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
-
-
-# Specialized Simulation Creation Endpoints
-
-@router.post("/scenario-planning", response_model=SimulationResponse, status_code=status.HTTP_201_CREATED)
-async def create_scenario_planning_simulation(
-    request: ScenarioPlanningRequest,
-    tenant_id: int = Query(..., description="Tenant ID"),
-    created_by: int = Query(..., description="Creator user ID"),
-    simulation_service: SimulationService = Depends(get_simulation_service)
-):
-    """
-    Create a scenario planning simulation
-    """
-    try:
-        simulation_data = {
-            "name": request.name,
-            "description": request.description,
-            "simulation_type": "scenario_planning",
-            "base_scenario": request.base_scenario,
-            "variables": request.variables,
-            "simulation_parameters": {
-                "num_alternative_scenarios": request.num_alternative_scenarios,
-                "variable_weights": request.variable_weights
-            },
-            "tags": request.tags
-        }
-        
-        simulation = simulation_service.create_simulation(
-            tenant_id=tenant_id,
-            created_by=created_by,
-            simulation_data=simulation_data
-        )
-        return SimulationResponse.from_orm(simulation)
-    except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
-
-
-@router.post("/decision-impact", response_model=SimulationResponse, status_code=status.HTTP_201_CREATED)
-async def create_decision_impact_simulation(
-    request: DecisionImpactRequest,
-    tenant_id: int = Query(..., description="Tenant ID"),
-    created_by: int = Query(..., description="Creator user ID"),
-    simulation_service: SimulationService = Depends(get_simulation_service)
-):
-    """
-    Create a decision impact analysis simulation
-    """
-    try:
-        simulation_data = {
-            "name": request.name,
-            "description": request.description,
-            "simulation_type": "decision_impact",
-            "base_scenario": request.base_scenario,
-            "simulation_parameters": {
-                "decision_options": request.decision_options,
-                "criteria": request.criteria
-            },
-            "tags": request.tags
-        }
-        
-        simulation = simulation_service.create_simulation(
-            tenant_id=tenant_id,
-            created_by=created_by,
-            simulation_data=simulation_data
-        )
-        return SimulationResponse.from_orm(simulation)
-    except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
-
-
-@router.post("/risk-assessment", response_model=SimulationResponse, status_code=status.HTTP_201_CREATED)
-async def create_risk_assessment_simulation(
-    request: RiskAssessmentRequest,
-    tenant_id: int = Query(..., description="Tenant ID"),
-    created_by: int = Query(..., description="Creator user ID"),
-    simulation_service: SimulationService = Depends(get_simulation_service)
-):
-    """
-    Create a risk assessment simulation
-    """
-    try:
-        simulation_data = {
-            "name": request.name,
-            "description": request.description,
-            "simulation_type": "risk_assessment",
-            "base_scenario": request.base_scenario,
-            "simulation_parameters": {
-                "risk_categories": request.risk_categories,
-                "assessment_scope": request.assessment_scope
-            },
-            "tags": request.tags
-        }
-        
-        simulation = simulation_service.create_simulation(
-            tenant_id=tenant_id,
-            created_by=created_by,
-            simulation_data=simulation_data
-        )
-        return SimulationResponse.from_orm(simulation)
-    except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
-
-
-@router.post("/strategic-planning", response_model=SimulationResponse, status_code=status.HTTP_201_CREATED)
-async def create_strategic_planning_simulation(
-    request: StrategicPlanningRequest,
-    tenant_id: int = Query(..., description="Tenant ID"),
-    created_by: int = Query(..., description="Creator user ID"),
-    simulation_service: SimulationService = Depends(get_simulation_service)
-):
-    """
-    Create a strategic planning simulation
-    """
-    try:
-        simulation_data = {
-            "name": request.name,
-            "description": request.description,
-            "simulation_type": "strategic_planning",
-            "base_scenario": request.base_scenario,
-            "simulation_parameters": {
-                "objectives": request.objectives,
-                "time_horizon_months": request.time_horizon_months,
-                "vision": request.vision,
-                "mission": request.mission
-            },
-            "tags": request.tags
-        }
-        
-        simulation = simulation_service.create_simulation(
-            tenant_id=tenant_id,
-            created_by=created_by,
-            simulation_data=simulation_data
-        )
-        return SimulationResponse.from_orm(simulation)
-    except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
-
-
-@router.post("/resource-optimization", response_model=SimulationResponse, status_code=status.HTTP_201_CREATED)
-async def create_resource_optimization_simulation(
-    request: ResourceOptimizationRequest,
-    tenant_id: int = Query(..., description="Tenant ID"),
-    created_by: int = Query(..., description="Creator user ID"),
-    simulation_service: SimulationService = Depends(get_simulation_service)
-):
-    """
-    Create a resource optimization simulation
-    """
-    try:
-        simulation_data = {
-            "name": request.name,
-            "description": request.description,
-            "simulation_type": "resource_optimization",
-            "base_scenario": request.base_scenario,
-            "simulation_parameters": {
-                "resources": request.resources,
-                "objectives": request.objectives
-            },
-            "constraints": request.constraints,
-            "tags": request.tags
-        }
-        
-        simulation = simulation_service.create_simulation(
-            tenant_id=tenant_id,
-            created_by=created_by,
-            simulation_data=simulation_data
-        )
-        return SimulationResponse.from_orm(simulation)
-    except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
-
-
-@router.post("/performance-forecasting", response_model=SimulationResponse, status_code=status.HTTP_201_CREATED)
-async def create_performance_forecasting_simulation(
-    request: PerformanceForecastingRequest,
-    tenant_id: int = Query(..., description="Tenant ID"),
-    created_by: int = Query(..., description="Creator user ID"),
-    simulation_service: SimulationService = Depends(get_simulation_service)
-):
-    """
-    Create a performance forecasting simulation
-    """
-    try:
-        simulation_data = {
-            "name": request.name,
-            "description": request.description,
-            "simulation_type": "performance_forecasting",
-            "base_scenario": request.base_scenario,
-            "simulation_parameters": {
-                "historical_data": request.historical_data,
-                "metrics": request.metrics,
-                "forecast_horizon_months": request.forecast_horizon_months
-            },
-            "tags": request.tags
-        }
-        
-        simulation = simulation_service.create_simulation(
-            tenant_id=tenant_id,
-            created_by=created_by,
-            simulation_data=simulation_data
-        )
-        return SimulationResponse.from_orm(simulation)
-    except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
-
-
-# Analytics and Insights Endpoints
-
-@router.get("/analytics", response_model=SimulationAnalytics)
-async def get_simulation_analytics(
-    tenant_id: int = Query(..., description="Tenant ID"),
-    time_period_days: int = Query(30, ge=1, le=365, description="Analysis period in days"),
-    simulation_service: SimulationService = Depends(get_simulation_service)
-):
-    """
-    Get comprehensive simulation analytics for a tenant
-    """
-    try:
-        # Get simulations for the time period
-        start_date = datetime.utcnow() - timedelta(days=time_period_days)
-        
-        # This would be implemented in the service layer
-        # For now, return a basic structure
-        analytics = SimulationAnalytics(
-            total_simulations=0,
-            completed_simulations=0,
-            average_execution_time=0.0,
-            success_rate=0.0,
-            simulation_types={},
-            recent_simulations=[],
-            top_insights=[],
-            common_recommendations=[]
-        )
-        
-        return analytics
-    except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
-
-
-@router.get("/insights/trending")
-async def get_trending_insights(
-    tenant_id: int = Query(..., description="Tenant ID"),
-    limit: int = Query(10, ge=1, le=50),
-    simulation_service: SimulationService = Depends(get_simulation_service)
-):
-    """
-    Get trending insights across all simulations
-    """
-    try:
-        # This would analyze insights across simulations to find common patterns
-        trending_insights = [
-            {
-                "insight": "Resource allocation optimization shows 15% efficiency gains on average",
-                "frequency": 8,
-                "confidence": 0.85,
-                "simulation_types": ["resource_optimization", "strategic_planning"]
-            },
-            {
-                "insight": "Risk mitigation strategies reduce impact by 30% in most scenarios",
-                "frequency": 6,
-                "confidence": 0.78,
-                "simulation_types": ["risk_assessment", "scenario_planning"]
-            }
-        ]
-        
-        return {
-            "trending_insights": trending_insights[:limit],
-            "analysis_period": f"Last {30} days",
-            "total_insights_analyzed": 150
-        }
-    except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
-
-
-@router.get("/recommendations/actionable")
-async def get_actionable_recommendations(
-    tenant_id: int = Query(..., description="Tenant ID"),
-    priority: Optional[str] = Query(None, description="Filter by priority (high, medium, low)"),
-    category: Optional[str] = Query(None, description="Filter by category"),
-    limit: int = Query(20, ge=1, le=100),
-    simulation_service: SimulationService = Depends(get_simulation_service)
-):
-    """
-    Get actionable recommendations from recent simulations
-    """
-    try:
-        # This would aggregate recommendations across simulations
-        recommendations = [
-            {
-                "recommendation": "Implement automated resource reallocation based on demand forecasting",
-                "priority": "high",
-                "category": "resource_optimization",
-                "estimated_impact": "15-20% efficiency improvement",
-                "implementation_effort": "medium",
-                "source_simulations": [1, 3, 7],
-                "confidence": 0.88
-            },
-            {
-                "recommendation": "Establish early warning system for identified risk factors",
-                "priority": "high",
-                "category": "risk_management",
-                "estimated_impact": "30% risk reduction",
-                "implementation_effort": "low",
-                "source_simulations": [2, 5, 9],
-                "confidence": 0.82
-            }
-        ]
-        
-        # Apply filters
-        if priority:
-            recommendations = [r for r in recommendations if r["priority"] == priority]
-        if category:
-            recommendations = [r for r in recommendations if r["category"] == category]
-        
-        return {
-            "actionable_recommendations": recommendations[:limit],
-            "total_recommendations": len(recommendations),
-            "filters_applied": {"priority": priority, "category": category}
-        }
-    except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
-
-
-# Simulation Templates
-
-@router.get("/templates", response_model=List[SimulationTemplateResponse])
-async def get_simulation_templates(
-    tenant_id: int = Query(..., description="Tenant ID"),
-    category: Optional[str] = Query(None, description="Filter by category"),
-    simulation_type: Optional[str] = Query(None, description="Filter by simulation type"),
-    is_public: Optional[bool] = Query(None, description="Filter by public status"),
+@router.post("/run", response_model=SimulationResponse)
+async def run_simulation(
+    request: SimulationRequest,
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """
-    Get available simulation templates
+    Run a new simulation for the user's digital twin
     """
     try:
-        # This would be implemented to fetch templates
-        # For now, return empty list
-        return []
+        # Verify user has a digital twin
+        twin = get_digital_twin(db, user_id=get_user_id(current_user))
+        if not twin:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Digital twin not found. Please initialize your twin first."
+            )
+        
+        # Validate simulation type
+        try:
+            sim_type = SimulationType(request.simulation_type)
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid simulation type: {request.simulation_type}"
+            )
+        
+        # Create simulation parameters
+        parameters = SimulationParameters(
+            simulation_type=sim_type,
+            time_horizon=request.time_horizon,
+            optimization_target=request.optimization_target,
+            constraints=request.constraints,
+            variables=request.variables
+        )
+        
+        # Run simulation
+        result = await simulation_engine.run_simulation(parameters)
+        
+        # Convert result to response format
+        response_data = {
+            "simulation_id": result.simulation_id,
+            "simulation_type": result.simulation_type.value,
+            "status": "completed",
+            "results": result.results,
+            "metrics": result.metrics,
+            "recommendations": result.recommendations,
+            "confidence_score": result.confidence_score,
+            "execution_time_ms": result.execution_time_ms,
+            "created_at": result.created_at.isoformat()
+        }
+        
+        return SimulationResponse(
+            success=True,
+            message="Simulation completed successfully",
+            data=response_data
+        )
+        
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to run simulation: {str(e)}"
+        )
 
+@router.get("/result/{simulation_id}", response_model=SimulationResponse)
+async def get_simulation_result(
+    simulation_id: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Get results from a specific simulation
+    """
+    try:
+        # Verify user has a digital twin
+        twin = get_digital_twin(db, user_id=get_user_id(current_user))
+        if not twin:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Digital twin not found."
+            )
+        
+        # Get simulation result
+        result = simulation_engine.get_simulation_result(simulation_id)
+        if not result:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Simulation {simulation_id} not found"
+            )
+        
+        # Convert result to response format
+        response_data = {
+            "simulation_id": result.simulation_id,
+            "simulation_type": result.simulation_type.value,
+            "status": "completed",
+            "results": result.results,
+            "metrics": result.metrics,
+            "recommendations": result.recommendations,
+            "confidence_score": result.confidence_score,
+            "execution_time_ms": result.execution_time_ms,
+            "created_at": result.created_at.isoformat()
+        }
+        
+        return SimulationResponse(
+            success=True,
+            data=response_data
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get simulation result: {str(e)}"
+        )
 
-# Health check endpoint
-@router.get("/health")
-async def simulation_health():
+@router.get("/history", response_model=SimulationResponse)
+async def get_simulation_history(
+    limit: Optional[int] = 10,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
     """
-    Health check for simulation and decision support service
+    Get simulation history for the user
     """
-    return {
-        "status": "healthy",
-        "service": "simulation-decision-support",
-        "timestamp": datetime.utcnow().isoformat(),
-        "features": [
-            "scenario_planning",
-            "decision_impact_analysis",
-            "risk_assessment",
-            "strategic_planning",
-            "resource_optimization",
-            "performance_forecasting"
+    try:
+        # Verify user has a digital twin
+        twin = get_digital_twin(db, user_id=get_user_id(current_user))
+        if not twin:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Digital twin not found."
+            )
+        
+        # Get all simulation IDs
+        simulation_ids = simulation_engine.list_simulations()
+        
+        # Get results for each simulation (limited)
+        simulations = []
+        for sim_id in simulation_ids[:limit]:
+            result = simulation_engine.get_simulation_result(sim_id)
+            if result:
+                simulations.append({
+                    "simulation_id": result.simulation_id,
+                    "simulation_type": result.simulation_type.value,
+                    "status": "completed",
+                    "metrics": result.metrics,
+                    "confidence_score": result.confidence_score,
+                    "execution_time_ms": result.execution_time_ms,
+                    "created_at": result.created_at.isoformat()
+                })
+        
+        return SimulationResponse(
+            success=True,
+            data={
+                "simulations": simulations,
+                "total_count": len(simulations)
+            }
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get simulation history: {str(e)}"
+        )
+
+@router.post("/schedule-optimization", response_model=SimulationResponse)
+async def run_schedule_optimization(
+    time_horizon: int = 7,
+    optimization_target: str = "productivity",
+    work_hours_start: int = 9,
+    work_hours_end: int = 17,
+    break_duration: int = 15,
+    break_frequency: int = 2,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Quick schedule optimization simulation
+    """
+    try:
+        # Verify user has a digital twin
+        twin = get_digital_twin(db, user_id=get_user_id(current_user))
+        if not twin:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Digital twin not found. Please initialize your twin first."
+            )
+        
+        # Create simulation request
+        request = SimulationRequest(
+            simulation_type="schedule_optimization",
+            time_horizon=time_horizon,
+            optimization_target=optimization_target,
+            constraints={
+                "work_hours": {"start": work_hours_start, "end": work_hours_end},
+                "breaks": {"duration": break_duration, "frequency": break_frequency}
+            },
+            variables={
+                "current_schedule": [],
+                "energy_patterns": {"morning": 80, "afternoon": 60, "evening": 40}
+            }
+        )
+        
+        # Run the simulation
+        return await run_simulation(request, current_user, db)
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to run schedule optimization: {str(e)}"
+        )
+
+@router.post("/productivity-scenario", response_model=SimulationResponse)
+async def run_productivity_scenario(
+    scenarios: List[str] = ["baseline", "optimized", "stressed"],
+    time_horizon: int = 7,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Quick productivity scenario simulation
+    """
+    try:
+        # Verify user has a digital twin
+        twin = get_digital_twin(db, user_id=get_user_id(current_user))
+        if not twin:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Digital twin not found. Please initialize your twin first."
+            )
+        
+        # Create simulation request
+        request = SimulationRequest(
+            simulation_type="productivity_scenario",
+            time_horizon=time_horizon,
+            optimization_target="productivity",
+            constraints={},
+            variables={
+                "scenarios": scenarios,
+                "baseline_productivity": 70
+            }
+        )
+        
+        # Run the simulation
+        return await run_simulation(request, current_user, db)
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to run productivity scenario: {str(e)}"
+        )
+
+@router.post("/workload-analysis", response_model=SimulationResponse)
+async def run_workload_analysis(
+    current_workload: int = 100,
+    capacity: int = 120,
+    time_horizon: int = 7,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Quick workload analysis simulation
+    """
+    try:
+        # Verify user has a digital twin
+        twin = get_digital_twin(db, user_id=get_user_id(current_user))
+        if not twin:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Digital twin not found. Please initialize your twin first."
+            )
+        
+        # Create simulation request
+        request = SimulationRequest(
+            simulation_type="workload_analysis",
+            time_horizon=time_horizon,
+            optimization_target="efficiency",
+            constraints={},
+            variables={
+                "current_workload": current_workload,
+                "capacity": capacity
+            }
+        )
+        
+        # Run the simulation
+        return await run_simulation(request, current_user, db)
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to run workload analysis: {str(e)}"
+        )
+
+@router.post("/energy-management", response_model=SimulationResponse)
+async def run_energy_management(
+    morning_energy: int = 80,
+    afternoon_energy: int = 60,
+    evening_energy: int = 40,
+    time_horizon: int = 7,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Quick energy management simulation
+    """
+    try:
+        # Verify user has a digital twin
+        twin = get_digital_twin(db, user_id=get_user_id(current_user))
+        if not twin:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Digital twin not found. Please initialize your twin first."
+            )
+        
+        # Create simulation request
+        request = SimulationRequest(
+            simulation_type="energy_management",
+            time_horizon=time_horizon,
+            optimization_target="balance",
+            constraints={},
+            variables={
+                "energy_patterns": {
+                    "morning": morning_energy,
+                    "afternoon": afternoon_energy,
+                    "evening": evening_energy
+                }
+            }
+        )
+        
+        # Run the simulation
+        return await run_simulation(request, current_user, db)
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to run energy management simulation: {str(e)}"
+        )
+
+@router.delete("/clear-cache", response_model=SimulationResponse)
+async def clear_simulation_cache(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Clear the simulation cache (admin function)
+    """
+    try:
+        # Verify user has a digital twin
+        twin = get_digital_twin(db, user_id=get_user_id(current_user))
+        if not twin:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Digital twin not found."
+            )
+        
+        # Clear cache
+        simulation_engine.clear_cache()
+        
+        return SimulationResponse(
+            success=True,
+            message="Simulation cache cleared successfully"
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to clear simulation cache: {str(e)}"
+        )
+
+@router.get("/types", response_model=SimulationResponse)
+async def get_simulation_types():
+    """
+    Get available simulation types and their descriptions
+    """
+    try:
+        simulation_types = [
+            {
+                "type": "schedule_optimization",
+                "name": "Schedule Optimization",
+                "description": "Optimize your daily schedule for maximum productivity",
+                "parameters": ["time_horizon", "optimization_target", "work_hours", "breaks"]
+            },
+            {
+                "type": "productivity_scenario",
+                "name": "Productivity Scenario",
+                "description": "Compare different productivity scenarios and their outcomes",
+                "parameters": ["scenarios", "time_horizon", "baseline_productivity"]
+            },
+            {
+                "type": "workload_analysis",
+                "name": "Workload Analysis",
+                "description": "Analyze optimal workload distribution and capacity utilization",
+                "parameters": ["current_workload", "capacity", "time_horizon"]
+            },
+            {
+                "type": "energy_management",
+                "name": "Energy Management",
+                "description": "Optimize energy levels and work patterns for sustainability",
+                "parameters": ["energy_patterns", "time_horizon", "optimization_target"]
+            }
         ]
-    }
+        
+        return SimulationResponse(
+            success=True,
+            data={"simulation_types": simulation_types}
+        )
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get simulation types: {str(e)}"
+        )

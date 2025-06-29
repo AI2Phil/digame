@@ -65,6 +65,9 @@ from .routers import mfa_router # Import the MFA router
 from .routers import advanced_analytics_router # Import the advanced analytics router
 from .routers import aco_router # Import the ACO integration router
 from .routers import digital_twin_router # Import the digital twin router
+from .routers import simulation_router # Import the simulation router
+from .routers import intelligence_router # Import the intelligence router
+from .routers import platform_owner_router # Import the platform owner router
 
 # Configure JSON logging
 logger = logging.getLogger("digame_app") # Use a specific name for the main app logger
@@ -218,6 +221,14 @@ app = FastAPI(
         {
             "name": "Digital Twins",
             "description": "Digital twin creation, management, and AI-powered productivity insights"
+        },
+        {
+            "name": "Intelligence",
+            "description": "Pattern recognition, predictive analytics, and AI-powered insights"
+        },
+        {
+            "name": "Platform Owner",
+            "description": "Platform owner management, settings, and testing capabilities"
         }
     ]
 )
@@ -294,6 +305,9 @@ app.include_router(advanced_analytics_router.router) # Add advanced analytics ro
 app.include_router(document_processing_router.router) # Add document processing router, prefix and tags are in router
 # app.include_router(security_router.router, prefix="/api", tags=["Security"]) # Add security router - temporarily disabled
 app.include_router(digital_twin_router.router, tags=["Digital Twins"]) # Add digital twin router
+app.include_router(simulation_router.router, tags=["Simulation"]) # Add simulation router
+app.include_router(intelligence_router.router, tags=["Intelligence"]) # Add intelligence router
+app.include_router(platform_owner_router.router, tags=["Platform Owner"]) # Add platform owner router
 
 
 # Startup and shutdown events

@@ -2,292 +2,307 @@
 CRUD operations for Digital Twin models
 """
 
-from typing import List, Optional, Dict, Any
 from sqlalchemy.orm import Session
-from sqlalchemy import and_, desc, func
-from app.models.digital_twin import (
-    DigitalTwin, ActivityPattern, BehavioralLearning, 
-    TwinInteraction, ActivityStream, TwinKnowledge, TwinStatus
-)
-from app.schemas.digital_twin_schemas import (
-    DigitalTwinCreate, DigitalTwinUpdate, ActivityPatternCreate,
-    TwinInteractionCreate, ActivityDataInput
-)
-import uuid
+from sqlalchemy import and_, desc
+from typing import Dict, List, Optional, Any
 from datetime import datetime
 
-class DigitalTwinCRUD:
-    """CRUD operations for Digital Twin"""
+from app.models.digital_twin import DigitalTwin, ActivityPattern, BehavioralLearning, TwinInteraction
+
+def get_digital_twin(db: Session, user_id: Optional[int] = None, twin_id: Optional[str] = None) -> Optional[DigitalTwin]:
+    """
+    Get digital twin by user_id or twin_id
     
-    def __init__(self, db: Session):
-        self.db = db
-    
-    # Digital Twin CRUD
-    def create_digital_twin(self, user_id: int, twin_data: DigitalTwinCreate) -> DigitalTwin:
-        """Create a new digital twin"""
-        twin = DigitalTwin(
-            id=str(uuid.uuid4()),
-            user_id=user_id,
-            name=twin_data.name,
-            status=twin_data.status.value if twin_data.status else TwinStatus.INITIALIZING.value
-        )
-        self.db.add(twin)
-        self.db.commit()
-        self.db.refresh(twin)
-        return twin
-    
-    def get_digital_twin(self, twin_id: str) -> Optional[DigitalTwin]:
-        """Get digital twin by ID"""
-        return self.db.query(DigitalTwin).filter(DigitalTwin.id == twin_id).first()
-    
-    def get_digital_twins_by_user(self, user_id: int, skip: int = 0, limit: int = 100) -> List[DigitalTwin]:
-        """Get all digital twins for a user"""
-        return self.db.query(DigitalTwin)\
-            .filter(DigitalTwin.user_id == user_id)\
-            .offset(skip)\
-            .limit(limit)\
-            .all()
-    
-    def update_digital_twin(self, twin_id: str, twin_data: DigitalTwinUpdate) -> Optional[DigitalTwin]:
-        """Update digital twin"""
-        twin = self.get_digital_twin(twin_id)
-        if not twin:
-            return None
+    Args:
+        db: Database session
+        user_id: User ID to find twin for
+        twin_id: Twin ID to find
         
-        update_data = twin_data.dict(exclude_unset=True)
-        for field, value in update_data.items():
-            if field == "status" and value:
-                setattr(twin, field, value.value)
-            else:
-                setattr(twin, field, value)
-        
-        # updated_at will be automatically set by SQLAlchemy onupdate
-        self.db.commit()
-        self.db.refresh(twin)
-        return twin
+    Returns:
+        DigitalTwin object or None
+    """
+    if twin_id:
+        return db.query(DigitalTwin).filter(DigitalTwin.id == twin_id).first()
+    elif user_id:
+        return db.query(DigitalTwin).filter(DigitalTwin.user_id == user_id).first()
+    else:
+        return None
+
+def create_digital_twin(db: Session, twin_data: Dict[str, Any]) -> DigitalTwin:
+    """
+    Create a new digital twin
     
-    def delete_digital_twin(self, twin_id: str) -> bool:
-        """Delete digital twin"""
-        twin = self.get_digital_twin(twin_id)
-        if not twin:
-            return False
+    Args:
+        db: Database session
+        twin_data: Dictionary containing twin data
         
-        self.db.delete(twin)
-        self.db.commit()
-        return True
+    Returns:
+        Created DigitalTwin object
+    """
+    twin = DigitalTwin(
+        user_id=twin_data["user_id"],
+        name=twin_data["name"],
+        status=twin_data.get("status", "initializing"),
+        learning_progress=twin_data.get("learning_progress", 0.0),
+        accuracy_score=twin_data.get("accuracy_score", 0.0),
+        model_version=twin_data.get("model_version", "1.0.0"),
+        last_training_at=twin_data.get("last_training_at"),
+        created_at=datetime.utcnow(),
+        updated_at=datetime.utcnow()
+    )
     
-    # Activity Pattern CRUD
-    def create_activity_pattern(self, pattern_data: ActivityPatternCreate) -> ActivityPattern:
-        """Create a new activity pattern"""
-        pattern = ActivityPattern(
-            id=str(uuid.uuid4()),
-            twin_id=pattern_data.twin_id,
-            pattern_type=pattern_data.pattern_type,
-            pattern_data=pattern_data.pattern_data,
-            confidence_score=pattern_data.confidence_score,
-            frequency_score=pattern_data.frequency_score,
-            impact_score=pattern_data.impact_score
-        )
-        self.db.add(pattern)
-        self.db.commit()
-        self.db.refresh(pattern)
-        return pattern
+    db.add(twin)
+    db.commit()
+    db.refresh(twin)
+    return twin
+
+def update_digital_twin(db: Session, twin_id: str, update_data: Dict[str, Any]) -> Optional[DigitalTwin]:
+    """
+    Update digital twin
     
-    def get_activity_patterns(self, twin_id: str, skip: int = 0, limit: int = 100) -> List[ActivityPattern]:
-        """Get activity patterns for a twin"""
-        return self.db.query(ActivityPattern)\
-            .filter(ActivityPattern.twin_id == twin_id)\
-            .order_by(desc(ActivityPattern.discovered_at))\
-            .offset(skip)\
-            .limit(limit)\
-            .all()
-    
-    def get_activity_patterns_by_type(self, twin_id: str, pattern_type: str) -> List[ActivityPattern]:
-        """Get activity patterns by type"""
-        return self.db.query(ActivityPattern)\
-            .filter(and_(
-                ActivityPattern.twin_id == twin_id,
-                ActivityPattern.pattern_type == pattern_type
-            ))\
-            .order_by(desc(ActivityPattern.discovered_at))\
-            .all()
-    
-    # Twin Interaction CRUD
-    def create_twin_interaction(self, twin_id: str, interaction_data: TwinInteractionCreate) -> TwinInteraction:
-        """Create a new twin interaction"""
-        interaction = TwinInteraction(
-            id=str(uuid.uuid4()),
-            twin_id=twin_id,
-            interaction_type=interaction_data.interaction_type,
-            input_data=interaction_data.input_data,
-            user_feedback=interaction_data.user_feedback
-        )
-        self.db.add(interaction)
-        self.db.commit()
-        self.db.refresh(interaction)
-        return interaction
-    
-    def get_twin_interactions(self, twin_id: str, skip: int = 0, limit: int = 100) -> List[TwinInteraction]:
-        """Get twin interactions"""
-        return self.db.query(TwinInteraction)\
-            .filter(TwinInteraction.twin_id == twin_id)\
-            .order_by(desc(TwinInteraction.created_at))\
-            .offset(skip)\
-            .limit(limit)\
-            .all()
-    
-    def update_interaction_response(self, interaction_id: str, response_data: Dict[str, Any], processing_time_ms: int) -> Optional[TwinInteraction]:
-        """Update interaction with response data"""
-        interaction = self.db.query(TwinInteraction).filter(TwinInteraction.id == interaction_id).first()
-        if not interaction:
-            return None
+    Args:
+        db: Database session
+        twin_id: Twin ID to update
+        update_data: Dictionary containing update data
         
-        interaction.response_data = response_data
-        interaction.processing_time_ms = processing_time_ms
-        self.db.commit()
-        self.db.refresh(interaction)
-        return interaction
+    Returns:
+        Updated DigitalTwin object or None
+    """
+    twin = db.query(DigitalTwin).filter(DigitalTwin.id == twin_id).first()
+    if not twin:
+        return None
     
-    # Activity Stream CRUD
-    def create_activity_stream(self, twin_id: str, activity_data: ActivityDataInput) -> ActivityStream:
-        """Create activity stream entry"""
-        stream_entry = ActivityStream(
-            id=str(uuid.uuid4()),
-            twin_id=twin_id,
-            activity_type=activity_data.activity_type,
-            activity_data=activity_data.activity_data,
-            timestamp=activity_data.timestamp or datetime.utcnow(),
-            processed=False
-        )
-        self.db.add(stream_entry)
-        self.db.commit()
-        self.db.refresh(stream_entry)
-        return stream_entry
+    for key, value in update_data.items():
+        if hasattr(twin, key):
+            setattr(twin, key, value)
     
-    def get_unprocessed_activities(self, twin_id: str, limit: int = 100) -> List[ActivityStream]:
-        """Get unprocessed activities for a twin"""
-        return self.db.query(ActivityStream)\
-            .filter(and_(
-                ActivityStream.twin_id == twin_id,
-                ActivityStream.processed == False
-            ))\
-            .order_by(ActivityStream.timestamp)\
-            .limit(limit)\
-            .all()
+    twin.updated_at = datetime.utcnow()
+    db.commit()
+    db.refresh(twin)
+    return twin
+
+def delete_digital_twin(db: Session, twin_id: str) -> bool:
+    """
+    Delete digital twin
     
-    def mark_activity_processed(self, activity_id: str) -> bool:
-        """Mark activity as processed"""
-        activity = self.db.query(ActivityStream).filter(ActivityStream.id == activity_id).first()
-        if not activity:
-            return False
+    Args:
+        db: Database session
+        twin_id: Twin ID to delete
         
-        activity.processed = True
-        self.db.commit()
-        return True
+    Returns:
+        True if deleted, False if not found
+    """
+    twin = db.query(DigitalTwin).filter(DigitalTwin.id == twin_id).first()
+    if not twin:
+        return False
     
-    # Behavioral Learning CRUD
-    def create_behavioral_learning(self, twin_id: str, behavior_category: str, learning_data: Dict[str, Any]) -> BehavioralLearning:
-        """Create behavioral learning entry"""
-        learning = BehavioralLearning(
-            id=str(uuid.uuid4()),
-            twin_id=twin_id,
-            behavior_category=behavior_category,
-            learning_data=learning_data,
-            confidence_level=70.0,  # Default
-            learning_iteration=1
-        )
-        self.db.add(learning)
-        self.db.commit()
-        self.db.refresh(learning)
-        return learning
+    db.delete(twin)
+    db.commit()
+    return True
+
+def get_user_twins(db: Session, user_id: int) -> List[DigitalTwin]:
+    """
+    Get all digital twins for a user
     
-    def get_behavioral_learning(self, twin_id: str, behavior_category: Optional[str] = None) -> List[BehavioralLearning]:
-        """Get behavioral learning data"""
-        query = self.db.query(BehavioralLearning).filter(BehavioralLearning.twin_id == twin_id)
+    Args:
+        db: Database session
+        user_id: User ID
         
-        if behavior_category:
-            query = query.filter(BehavioralLearning.behavior_category == behavior_category)
-        
-        return query.order_by(desc(BehavioralLearning.created_at)).all()
+    Returns:
+        List of DigitalTwin objects
+    """
+    return db.query(DigitalTwin).filter(DigitalTwin.user_id == user_id).all()
+
+def create_activity_pattern(db: Session, pattern_data: Dict[str, Any]) -> ActivityPattern:
+    """
+    Create activity pattern
     
-    # Twin Knowledge CRUD
-    def create_twin_knowledge(self, twin_id: str, knowledge_type: str, knowledge_data: Dict[str, Any], source: Optional[str] = None) -> TwinKnowledge:
-        """Create twin knowledge entry"""
-        knowledge = TwinKnowledge(
-            id=str(uuid.uuid4()),
-            twin_id=twin_id,
-            knowledge_type=knowledge_type,
-            knowledge_data=knowledge_data,
-            confidence_score=80.0,  # Default
-            source=source
-        )
-        self.db.add(knowledge)
-        self.db.commit()
-        self.db.refresh(knowledge)
-        return knowledge
+    Args:
+        db: Database session
+        pattern_data: Pattern data dictionary
+        
+    Returns:
+        Created ActivityPattern object
+    """
+    pattern = ActivityPattern(
+        twin_id=pattern_data["twin_id"],
+        pattern_type=pattern_data["pattern_type"],
+        pattern_data=pattern_data["pattern_data"],
+        confidence_score=pattern_data.get("confidence_score"),
+        frequency_score=pattern_data.get("frequency_score"),
+        impact_score=pattern_data.get("impact_score"),
+        discovered_at=pattern_data.get("discovered_at", datetime.utcnow()),
+        validated_at=pattern_data.get("validated_at")
+    )
     
-    def get_twin_knowledge(self, twin_id: str, knowledge_type: Optional[str] = None) -> List[TwinKnowledge]:
-        """Get twin knowledge"""
-        query = self.db.query(TwinKnowledge).filter(TwinKnowledge.twin_id == twin_id)
-        
-        if knowledge_type:
-            query = query.filter(TwinKnowledge.knowledge_type == knowledge_type)
-        
-        return query.order_by(desc(TwinKnowledge.updated_at)).all()
+    db.add(pattern)
+    db.commit()
+    db.refresh(pattern)
+    return pattern
+
+def get_twin_patterns(db: Session, twin_id: str, pattern_type: Optional[str] = None,
+                     limit: Optional[int] = None) -> List[ActivityPattern]:
+    """
+    Get activity patterns for a twin
     
-    # Statistics and Analytics
-    def get_twin_statistics(self, twin_id: str) -> Dict[str, Any]:
-        """Get twin statistics"""
-        patterns_count = self.db.query(func.count(ActivityPattern.id))\
-            .filter(ActivityPattern.twin_id == twin_id)\
-            .scalar()
+    Args:
+        db: Database session
+        twin_id: Twin ID
+        pattern_type: Optional pattern type filter
+        limit: Optional limit on results
         
-        interactions_count = self.db.query(func.count(TwinInteraction.id))\
-            .filter(TwinInteraction.twin_id == twin_id)\
-            .scalar()
-        
-        activities_count = self.db.query(func.count(ActivityStream.id))\
-            .filter(ActivityStream.twin_id == twin_id)\
-            .scalar()
-        
-        processed_activities = self.db.query(func.count(ActivityStream.id))\
-            .filter(and_(
-                ActivityStream.twin_id == twin_id,
-                ActivityStream.processed == True
-            ))\
-            .scalar()
-        
-        return {
-            "patterns_discovered": patterns_count,
-            "total_interactions": interactions_count,
-            "total_activities": activities_count,
-            "processed_activities": processed_activities,
-            "processing_rate": (processed_activities / activities_count * 100) if activities_count > 0 else 0
-        }
+    Returns:
+        List of ActivityPattern objects
+    """
+    query = db.query(ActivityPattern).filter(ActivityPattern.twin_id == twin_id)
     
-    def get_recent_activity_summary(self, twin_id: str, days: int = 7) -> Dict[str, Any]:
-        """Get recent activity summary"""
-        from datetime import timedelta
+    if pattern_type:
+        query = query.filter(ActivityPattern.pattern_type == pattern_type)
+    
+    query = query.order_by(desc(ActivityPattern.discovered_at))
+    
+    if limit:
+        query = query.limit(limit)
+    
+    return query.all()
+
+def create_behavioral_learning(db: Session, learning_data: Dict[str, Any]) -> BehavioralLearning:
+    """
+    Create behavioral learning entry
+    
+    Args:
+        db: Database session
+        learning_data: Learning data dictionary
         
-        cutoff_date = datetime.utcnow() - timedelta(days=days)
+    Returns:
+        Created BehavioralLearning object
+    """
+    learning = BehavioralLearning(
+        twin_id=learning_data["twin_id"],
+        behavior_category=learning_data["behavior_category"],
+        learning_data=learning_data["learning_data"],
+        confidence_level=learning_data.get("confidence_level"),
+        learning_iteration=learning_data.get("learning_iteration", 1),
+        created_at=datetime.utcnow()
+    )
+    
+    db.add(learning)
+    db.commit()
+    db.refresh(learning)
+    return learning
+
+def get_twin_learning_data(db: Session, twin_id: str,
+                          behavior_category: Optional[str] = None) -> List[BehavioralLearning]:
+    """
+    Get behavioral learning data for a twin
+    
+    Args:
+        db: Database session
+        twin_id: Twin ID
+        behavior_category: Optional category filter
         
-        recent_patterns = self.db.query(func.count(ActivityPattern.id))\
-            .filter(and_(
-                ActivityPattern.twin_id == twin_id,
-                ActivityPattern.discovered_at >= cutoff_date
-            ))\
-            .scalar()
+    Returns:
+        List of BehavioralLearning objects
+    """
+    query = db.query(BehavioralLearning).filter(BehavioralLearning.twin_id == twin_id)
+    
+    if behavior_category:
+        query = query.filter(BehavioralLearning.behavior_category == behavior_category)
+    
+    return query.order_by(desc(BehavioralLearning.created_at)).all()
+
+def create_twin_interaction(db: Session, interaction_data: Dict[str, Any]) -> TwinInteraction:
+    """
+    Create twin interaction log entry
+    
+    Args:
+        db: Database session
+        interaction_data: Interaction data dictionary
         
-        recent_interactions = self.db.query(func.count(TwinInteraction.id))\
-            .filter(and_(
-                TwinInteraction.twin_id == twin_id,
-                TwinInteraction.created_at >= cutoff_date
-            ))\
-            .scalar()
+    Returns:
+        Created TwinInteraction object
+    """
+    interaction = TwinInteraction(
+        twin_id=interaction_data["twin_id"],
+        interaction_type=interaction_data["interaction_type"],
+        input_data=interaction_data.get("input_data"),
+        response_data=interaction_data.get("response_data"),
+        processing_time_ms=interaction_data.get("processing_time_ms"),
+        user_feedback=interaction_data.get("user_feedback"),
+        created_at=datetime.utcnow()
+    )
+    
+    db.add(interaction)
+    db.commit()
+    db.refresh(interaction)
+    return interaction
+
+def get_twin_interactions(db: Session, twin_id: str,
+                         interaction_type: Optional[str] = None,
+                         limit: Optional[int] = None) -> List[TwinInteraction]:
+    """
+    Get twin interactions
+    
+    Args:
+        db: Database session
+        twin_id: Twin ID
+        interaction_type: Optional interaction type filter
+        limit: Optional limit on results
         
-        return {
-            "period_days": days,
-            "new_patterns": recent_patterns,
-            "interactions": recent_interactions,
-            "summary_generated_at": datetime.utcnow().isoformat()
-        }
+    Returns:
+        List of TwinInteraction objects
+    """
+    query = db.query(TwinInteraction).filter(TwinInteraction.twin_id == twin_id)
+    
+    if interaction_type:
+        query = query.filter(TwinInteraction.interaction_type == interaction_type)
+    
+    query = query.order_by(desc(TwinInteraction.created_at))
+    
+    if limit:
+        query = query.limit(limit)
+    
+    return query.all()
+
+def get_twin_statistics(db: Session, twin_id: str) -> Dict[str, Any]:
+    """
+    Get statistics for a twin
+    
+    Args:
+        db: Database session
+        twin_id: Twin ID
+        
+    Returns:
+        Dictionary containing twin statistics
+    """
+    twin = get_digital_twin(db, twin_id=twin_id)
+    if not twin:
+        return {}
+    
+    # Count patterns
+    pattern_count = db.query(ActivityPattern).filter(ActivityPattern.twin_id == twin_id).count()
+    
+    # Count interactions
+    interaction_count = db.query(TwinInteraction).filter(TwinInteraction.twin_id == twin_id).count()
+    
+    # Count learning entries
+    learning_count = db.query(BehavioralLearning).filter(BehavioralLearning.twin_id == twin_id).count()
+    
+    # Get recent activity
+    recent_interactions = get_twin_interactions(db, twin_id, limit=5)
+    recent_patterns = get_twin_patterns(db, twin_id, limit=5)
+    
+    return {
+        "twin_id": twin_id,
+        "status": twin.status,
+        "learning_progress": twin.learning_progress,
+        "accuracy_score": twin.accuracy_score,
+        "pattern_count": pattern_count,
+        "interaction_count": interaction_count,
+        "learning_count": learning_count,
+        "recent_interactions": len(recent_interactions),
+        "recent_patterns": len(recent_patterns),
+        "last_training": twin.last_training_at.isoformat() if twin.last_training_at else None,
+        "created_at": twin.created_at.isoformat() if twin.created_at else None,
+        "updated_at": twin.updated_at.isoformat() if twin.updated_at else None
+    }

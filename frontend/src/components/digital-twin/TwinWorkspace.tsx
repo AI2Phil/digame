@@ -1,329 +1,563 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card';
 import { Button } from '../ui/Button';
-import { Badge } from '../ui/Badge';
+import { Input } from '../ui/Input';
 import { 
-  MessageCircle, 
+  MessageSquare, 
   Send, 
   Bot, 
   User, 
-  Lightbulb,
   Clock,
-  TrendingUp
+  Brain,
+  Target,
+  TrendingUp,
+  Lightbulb,
+  Settings,
+  RefreshCw,
+  Mic,
+  MicOff,
+  FileText,
+  BarChart3
 } from 'lucide-react';
+import { digitalTwinApi } from '../../services/digitalTwinApi';
 
-interface DigitalTwin {
-  id: string;
-  name: string;
-  status: string;
-  learning_progress: number;
-  accuracy_score: number;
+interface TwinWorkspaceProps {
+  twinId: string;
 }
 
 interface Message {
   id: string;
+  type: 'user' | 'twin';
   content: string;
-  sender: 'user' | 'twin';
-  timestamp: string;
+  timestamp: Date;
+  intent?: string;
   confidence?: number;
+  suggestions?: string[];
 }
 
-interface TwinWorkspaceProps {
-  twinId: string;
-  twin: DigitalTwin;
+interface IntentClassification {
+  intent: string;
+  confidence: number;
+  entities: Record<string, any>;
+  suggestions: string[];
 }
 
-export const TwinWorkspace: React.FC<TwinWorkspaceProps> = ({ twinId, twin }) => {
+// Note: useToast hook would need to be implemented or use a simple alert for now
+const useToast = () => ({
+  toast: ({ title, description, variant }: any) => {
+    console.log(`${variant === 'destructive' ? 'Error' : 'Info'}: ${title} - ${description}`);
+    alert(`${title}: ${description}`);
+  }
+});
+
+export const TwinWorkspace: React.FC<TwinWorkspaceProps> = ({ twinId }) => {
   const [messages, setMessages] = useState<Message[]>([]);
-  const [input, setInput] = useState('');
-  const [isTyping, setIsTyping] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [inputValue, setInputValue] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const [currentIntent, setCurrentIntent] = useState<IntentClassification | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    // Add welcome message
-    setMessages([
-      {
-        id: '1',
-        content: `Hello! I'm ${twin.name}, your digital productivity twin. I'm currently ${twin.learning_progress}% through learning your patterns. How can I help you optimize your productivity today?`,
-        sender: 'twin',
-        timestamp: new Date().toISOString(),
-        confidence: 0.9
-      }
-    ]);
-  }, [twin]);
+  const { toast } = useToast();
 
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
 
+  useEffect(() => {
+    // Load conversation history
+    loadConversationHistory();
+  }, [twinId]);
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const handleSend = async () => {
-    if (!input.trim() || loading) return;
+  const loadConversationHistory = async () => {
+    try {
+      const response = await digitalTwinApi.getTwinInteractions(undefined, 20);
+      if (response.success && response.data) {
+        const historyMessages: Message[] = response.data.interactions.map(interaction => [
+          {
+            id: `${interaction.id}-input`,
+            type: 'user' as const,
+            content: interaction.input_data?.query || 'Previous interaction',
+            timestamp: new Date(interaction.created_at || Date.now()),
+          },
+          {
+            id: `${interaction.id}-response`,
+            type: 'twin' as const,
+            content: interaction.response_data?.text || 'Previous response',
+            timestamp: new Date(interaction.created_at || Date.now()),
+            confidence: interaction.response_data?.confidence,
+          }
+        ]).flat().sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+
+        setMessages(historyMessages);
+      }
+    } catch (error) {
+      console.error('Failed to load conversation history:', error);
+    }
+  };
+
+  const _classify_intent = (query: string): IntentClassification => {
+    const queryLower = query.toLowerCase();
+    
+    // Intent classification logic
+    if (queryLower.includes('predict') || queryLower.includes('forecast') || queryLower.includes('future')) {
+      return {
+        intent: 'prediction_request',
+        confidence: 0.9,
+        entities: { type: 'productivity', timeframe: 'week' },
+        suggestions: [
+          'Generate productivity forecast for next week',
+          'Predict task completion rates',
+          'Show energy level predictions'
+        ]
+      };
+    }
+    
+    if (queryLower.includes('pattern') || queryLower.includes('trend') || queryLower.includes('behavior')) {
+      return {
+        intent: 'pattern_analysis',
+        confidence: 0.85,
+        entities: { type: 'behavioral', scope: 'recent' },
+        suggestions: [
+          'Show my productivity patterns',
+          'Analyze work behavior trends',
+          'Display focus time patterns'
+        ]
+      };
+    }
+    
+    if (queryLower.includes('recommend') || queryLower.includes('suggest') || queryLower.includes('advice')) {
+      return {
+        intent: 'recommendation_request',
+        confidence: 0.8,
+        entities: { category: 'productivity', urgency: 'normal' },
+        suggestions: [
+          'Get productivity recommendations',
+          'Suggest schedule optimizations',
+          'Recommend focus strategies'
+        ]
+      };
+    }
+    
+    if (queryLower.includes('status') || queryLower.includes('progress') || queryLower.includes('how am i')) {
+      return {
+        intent: 'status_inquiry',
+        confidence: 0.9,
+        entities: { metric: 'overall', period: 'current' },
+        suggestions: [
+          'Show my current progress',
+          'Display productivity status',
+          'Check learning progress'
+        ]
+      };
+    }
+    
+    if (queryLower.includes('schedule') || queryLower.includes('calendar') || queryLower.includes('time')) {
+      return {
+        intent: 'schedule_optimization',
+        confidence: 0.75,
+        entities: { scope: 'daily', focus: 'optimization' },
+        suggestions: [
+          'Optimize my daily schedule',
+          'Suggest better time blocks',
+          'Analyze calendar efficiency'
+        ]
+      };
+    }
+    
+    // Default intent
+    return {
+      intent: 'general_inquiry',
+      confidence: 0.6,
+      entities: {},
+      suggestions: [
+        'Ask about productivity patterns',
+        'Request predictions',
+        'Get recommendations'
+      ]
+    };
+  };
+
+  const sendMessage = async () => {
+    if (!inputValue.trim() || isLoading) return;
+
+    // Classify intent before sending
+    const intentClassification = _classify_intent(inputValue.trim());
+    setCurrentIntent(intentClassification);
 
     const userMessage: Message = {
-      id: Date.now().toString(),
-      content: input,
-      sender: 'user',
-      timestamp: new Date().toISOString()
+      id: `user-${Date.now()}`,
+      type: 'user',
+      content: inputValue.trim(),
+      timestamp: new Date(),
+      intent: intentClassification.intent,
     };
 
     setMessages(prev => [...prev, userMessage]);
-    setInput('');
-    setIsTyping(true);
-    setLoading(true);
+    setInputValue('');
+    setIsLoading(true);
 
     try {
-      const response = await fetch(`/api/v1/digital-twins/${twinId}/chat`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          message: input,
-          context: {}
-        })
+      const response = await digitalTwinApi.interactWithTwin({
+        query: userMessage.content,
+        context: {
+          intent: intentClassification.intent,
+          entities: intentClassification.entities,
+          conversation_history: messages.slice(-5),
+          timestamp: new Date().toISOString(),
+        }
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        
+      if (response.success && response.data) {
         const twinMessage: Message = {
-          id: (Date.now() + 1).toString(),
-          content: data.response.text || 'I apologize, but I encountered an issue processing your request.',
-          sender: 'twin',
-          timestamp: new Date().toISOString(),
-          confidence: data.confidence || 0.8
+          id: `twin-${Date.now()}`,
+          type: 'twin',
+          content: response.data.response?.text || 'I received your message but had trouble generating a response.',
+          timestamp: new Date(),
+          confidence: response.data.response?.confidence,
+          suggestions: intentClassification.suggestions,
         };
 
         setMessages(prev => [...prev, twinMessage]);
       } else {
-        throw new Error('Failed to get response');
+        throw new Error(response.message || 'Failed to get response from twin');
       }
-    } catch (error) {
-      console.error('Error sending message:', error);
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to send message to twin",
+        variant: "destructive",
+      });
+
       const errorMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        content: 'I apologize, but I encountered an error. Please try again.',
-        sender: 'twin',
-        timestamp: new Date().toISOString(),
-        confidence: 0.5
+        id: `error-${Date.now()}`,
+        type: 'twin',
+        content: 'Sorry, I encountered an error processing your message. Please try again.',
+        timestamp: new Date(),
       };
       setMessages(prev => [...prev, errorMessage]);
     } finally {
-      setIsTyping(false);
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      handleSend();
+      sendMessage();
     }
   };
 
-  const suggestedQuestions = [
-    "How productive was I today?",
-    "What patterns do you see in my work?",
-    "How can I optimize my schedule?",
-    "What are my peak productivity hours?",
-    "Give me productivity recommendations"
+  const getIntentIcon = (intent?: string) => {
+    switch (intent) {
+      case 'prediction_request': return <TrendingUp className="h-4 w-4" />;
+      case 'pattern_analysis': return <BarChart3 className="h-4 w-4" />;
+      case 'recommendation_request': return <Lightbulb className="h-4 w-4" />;
+      case 'status_inquiry': return <Target className="h-4 w-4" />;
+      case 'schedule_optimization': return <Clock className="h-4 w-4" />;
+      default: return <MessageSquare className="h-4 w-4" />;
+    }
+  };
+
+  const getIntentColor = (intent?: string) => {
+    switch (intent) {
+      case 'prediction_request': return 'text-blue-600 bg-blue-50';
+      case 'pattern_analysis': return 'text-green-600 bg-green-50';
+      case 'recommendation_request': return 'text-yellow-600 bg-yellow-50';
+      case 'status_inquiry': return 'text-purple-600 bg-purple-50';
+      case 'schedule_optimization': return 'text-orange-600 bg-orange-50';
+      default: return 'text-gray-600 bg-gray-50';
+    }
+  };
+
+  const formatTime = (date: Date) => {
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+
+  const quickActions = [
+    { 
+      label: 'Show Patterns', 
+      intent: 'pattern_analysis',
+      query: 'Show me my recent productivity patterns',
+      icon: <BarChart3 className="h-4 w-4" />
+    },
+    { 
+      label: 'Get Predictions', 
+      intent: 'prediction_request',
+      query: 'Generate productivity predictions for next week',
+      icon: <TrendingUp className="h-4 w-4" />
+    },
+    { 
+      label: 'Recommendations', 
+      intent: 'recommendation_request',
+      query: 'What recommendations do you have for improving my productivity?',
+      icon: <Lightbulb className="h-4 w-4" />
+    },
+    { 
+      label: 'Status Check', 
+      intent: 'status_inquiry',
+      query: 'How is my productivity progress?',
+      icon: <Target className="h-4 w-4" />
+    },
   ];
 
-  const handleSuggestionClick = (suggestion: string) => {
-    setInput(suggestion);
+  const handleQuickAction = (action: typeof quickActions[0]) => {
+    setInputValue(action.query);
   };
 
   return (
-    <div className="space-y-6">
-      {/* Chat Interface */}
-      <Card className="h-96">
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <MessageCircle className="h-5 w-5 text-blue-600" />
-            <span>Chat with {twin.name}</span>
-            <Badge
-              variant={twin.status === 'active' ? 'success' : 'warning'}
-              icon={undefined}
-              onRemove={undefined}
-            >
-              {twin.status}
-            </Badge>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-col h-80">
-          {/* Messages */}
-          <div className="flex-1 overflow-y-auto space-y-4 mb-4">
-            {messages.map((message) => (
-              <div
-                key={message.id}
-                className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
-              >
-                <div
-                  className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-                    message.sender === 'user'
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-100 text-gray-900'
-                  }`}
-                >
-                  <div className="flex items-start space-x-2">
-                    {message.sender === 'twin' && (
-                      <Bot className="h-4 w-4 mt-0.5 flex-shrink-0" />
+    <div className="max-w-6xl mx-auto p-6 space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold flex items-center">
+            <Brain className="h-8 w-8 mr-3 text-blue-500" />
+            Twin Workspace
+          </h1>
+          <p className="text-gray-600 mt-1">
+            Advanced conversation interface with intent recognition
+          </p>
+        </div>
+        <div className="flex items-center space-x-2">
+          {currentIntent && (
+            <div className={`px-3 py-1 rounded-full text-sm ${getIntentColor(currentIntent.intent)}`}>
+              <div className="flex items-center space-x-1">
+                {getIntentIcon(currentIntent.intent)}
+                <span className="capitalize">{currentIntent.intent.replace('_', ' ')}</span>
+                <span className="text-xs">({Math.round(currentIntent.confidence * 100)}%)</span>
+              </div>
+            </div>
+          )}
+          <Button variant="outline" size="sm" onClick={loadConversationHistory}>
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Refresh
+          </Button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        {/* Main Chat Interface */}
+        <div className="lg:col-span-3">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <MessageSquare className="h-5 w-5 mr-2" />
+                Conversation with Your Digital Twin
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {/* Messages Area */}
+                <div className="h-96 w-full border rounded-lg p-4 overflow-y-auto bg-gray-50">
+                  <div className="space-y-4">
+                    {messages.length === 0 ? (
+                      <div className="text-center text-gray-500 py-8">
+                        <Bot className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                        <p>Start a conversation with your digital twin!</p>
+                        <p className="text-sm mt-2">I can help with patterns, predictions, recommendations, and more.</p>
+                      </div>
+                    ) : (
+                      messages.map((message) => (
+                        <div
+                          key={message.id}
+                          className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
+                        >
+                          <div
+                            className={`max-w-[80%] rounded-lg p-3 ${
+                              message.type === 'user'
+                                ? 'bg-blue-500 text-white'
+                                : 'bg-white text-gray-900 border'
+                            }`}
+                          >
+                            <div className="flex items-start space-x-2">
+                              {message.type === 'twin' && (
+                                <Bot className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                              )}
+                              {message.type === 'user' && (
+                                <User className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                              )}
+                              <div className="flex-1">
+                                <p className="text-sm">{message.content}</p>
+                                <div className="flex items-center justify-between mt-2">
+                                  <div className="flex items-center space-x-2">
+                                    <Clock className="h-3 w-3 opacity-70" />
+                                    <span className="text-xs opacity-70">
+                                      {formatTime(message.timestamp)}
+                                    </span>
+                                    {message.intent && (
+                                      <div className="flex items-center space-x-1">
+                                        {getIntentIcon(message.intent)}
+                                        <span className="text-xs opacity-70 capitalize">
+                                          {message.intent.replace('_', ' ')}
+                                        </span>
+                                      </div>
+                                    )}
+                                  </div>
+                                  {message.confidence && (
+                                    <span className="text-xs px-2 py-1 bg-green-100 text-green-800 rounded">
+                                      {Math.round(message.confidence * 100)}% confident
+                                    </span>
+                                  )}
+                                </div>
+                                {message.suggestions && message.suggestions.length > 0 && (
+                                  <div className="mt-2 pt-2 border-t border-gray-200">
+                                    <p className="text-xs text-gray-600 mb-1">Suggestions:</p>
+                                    <div className="flex flex-wrap gap-1">
+                                      {message.suggestions.slice(0, 2).map((suggestion, idx) => (
+                                        <button
+                                          key={idx}
+                                          onClick={() => setInputValue(suggestion)}
+                                          className="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded transition-colors"
+                                        >
+                                          {suggestion}
+                                        </button>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))
                     )}
-                    {message.sender === 'user' && (
-                      <User className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                    {isLoading && (
+                      <div className="flex justify-start">
+                        <div className="bg-white border rounded-lg p-3 max-w-[80%]">
+                          <div className="flex items-center space-x-2">
+                            <Bot className="h-4 w-4" />
+                            <div className="flex space-x-1">
+                              <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                              <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                              <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
                     )}
-                    <div className="flex-1">
-                      <p className="text-sm">{message.content}</p>
-                      <div className="flex items-center justify-between mt-1">
-                        <span className="text-xs opacity-70">
-                          {new Date(message.timestamp).toLocaleTimeString()}
-                        </span>
-                        {message.confidence && message.sender === 'twin' && (
-                          <span className="text-xs opacity-70">
-                            {Math.round(message.confidence * 100)}% confident
-                          </span>
-                        )}
+                    <div ref={messagesEndRef} />
+                  </div>
+                </div>
+
+                {/* Input Area */}
+                <div className="flex space-x-2">
+                  <Input
+                    value={inputValue}
+                    onChange={(e) => setInputValue(e.target.value)}
+                    onKeyPress={handleKeyPress}
+                    placeholder="Ask your digital twin anything..."
+                    disabled={isLoading}
+                    className="flex-1"
+                  />
+                  <Button 
+                    onClick={sendMessage} 
+                    disabled={!inputValue.trim() || isLoading}
+                    size="sm"
+                  >
+                    {isLoading ? (
+                      <RefreshCw className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Send className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Sidebar */}
+        <div className="space-y-4">
+          {/* Quick Actions */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Quick Actions</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {quickActions.map((action, index) => (
+                  <Button
+                    key={index}
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleQuickAction(action)}
+                    className="w-full justify-start"
+                  >
+                    {action.icon}
+                    <span className="ml-2">{action.label}</span>
+                  </Button>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Intent Classification */}
+          {currentIntent && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Intent Analysis</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div className={`p-3 rounded-lg ${getIntentColor(currentIntent.intent)}`}>
+                    <div className="flex items-center space-x-2 mb-2">
+                      {getIntentIcon(currentIntent.intent)}
+                      <span className="font-medium capitalize">
+                        {currentIntent.intent.replace('_', ' ')}
+                      </span>
+                    </div>
+                    <div className="text-sm">
+                      Confidence: {Math.round(currentIntent.confidence * 100)}%
+                    </div>
+                  </div>
+                  {Object.keys(currentIntent.entities).length > 0 && (
+                    <div>
+                      <h4 className="font-medium text-sm mb-2">Entities:</h4>
+                      <div className="space-y-1">
+                        {Object.entries(currentIntent.entities).map(([key, value]) => (
+                          <div key={key} className="text-xs bg-gray-100 p-2 rounded">
+                            <span className="font-medium">{key}:</span> {String(value)}
+                          </div>
+                        ))}
                       </div>
                     </div>
-                  </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Conversation Stats */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Session Stats</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span>Messages:</span>
+                  <span className="font-medium">{messages.length}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>User Messages:</span>
+                  <span className="font-medium">{messages.filter(m => m.type === 'user').length}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Twin Responses:</span>
+                  <span className="font-medium">{messages.filter(m => m.type === 'twin').length}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Intents Detected:</span>
+                  <span className="font-medium">{messages.filter(m => m.intent).length}</span>
                 </div>
               </div>
-            ))}
-            
-            {isTyping && (
-              <div className="flex justify-start">
-                <div className="bg-gray-100 text-gray-900 px-4 py-2 rounded-lg">
-                  <div className="flex items-center space-x-2">
-                    <Bot className="h-4 w-4" />
-                    <div className="flex space-x-1">
-                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-            <div ref={messagesEndRef} />
-          </div>
-
-          {/* Input Area */}
-          <div className="flex space-x-2">
-            <textarea
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyPress={handleKeyPress}
-              placeholder="Ask your digital twin anything..."
-              className="flex-1 resize-none border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              rows={2}
-              disabled={loading}
-            />
-            <Button 
-              onClick={handleSend} 
-              disabled={!input.trim() || loading}
-              className="self-end"
-            >
-              <Send className="h-4 w-4" />
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Suggested Questions */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <Lightbulb className="h-5 w-5 text-yellow-600" />
-            <span>Suggested Questions</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-            {suggestedQuestions.map((question, index) => (
-              <Button
-                key={index}
-                variant="outline"
-                size="sm"
-                onClick={() => handleSuggestionClick(question)}
-                className="text-left justify-start h-auto py-2 px-3"
-              >
-                {question}
-              </Button>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center space-x-3">
-              <TrendingUp className="h-8 w-8 text-green-600" />
-              <div>
-                <h3 className="font-medium">Productivity Analysis</h3>
-                <p className="text-sm text-gray-600">Get insights about your productivity patterns</p>
-              </div>
-            </div>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="mt-3 w-full"
-              onClick={() => handleSuggestionClick("Analyze my productivity patterns")}
-            >
-              Analyze Now
-            </Button>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center space-x-3">
-              <Clock className="h-8 w-8 text-blue-600" />
-              <div>
-                <h3 className="font-medium">Schedule Optimization</h3>
-                <p className="text-sm text-gray-600">Optimize your daily schedule</p>
-              </div>
-            </div>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="mt-3 w-full"
-              onClick={() => handleSuggestionClick("How can I optimize my schedule?")}
-            >
-              Optimize
-            </Button>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center space-x-3">
-              <Lightbulb className="h-8 w-8 text-yellow-600" />
-              <div>
-                <h3 className="font-medium">Recommendations</h3>
-                <p className="text-sm text-gray-600">Get personalized productivity tips</p>
-              </div>
-            </div>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="mt-3 w-full"
-              onClick={() => handleSuggestionClick("Give me productivity recommendations")}
-            >
-              Get Tips
-            </Button>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );
 };
-
-export default TwinWorkspace;
