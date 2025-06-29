@@ -6,7 +6,7 @@ import secrets
 
 from app.database import get_db
 from app.models.user import User
-from app.models.security import ThreatDetection, SecurityIncident, AccessControl
+from app.models.security import ThreatDetection, SecurityEvent, SecurityPolicy, AuditLog
 from app.services.security_service import get_security_services
 from app.schemas.security_schemas import (
     MFAConfigResponse, MFASetupRequest, MFASetupResponse, MFAVerifyRequest,

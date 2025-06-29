@@ -11,10 +11,10 @@ from typing import Dict, List, Optional, Any
 from datetime import datetime
 
 from ..db import get_db
-from ..auth.platform_decorators import require_platform_owner_level
+from ..auth.platform_decorators import require_platform_owner
 from ..services.aco_integration_service import ACOIntegrationService
 from ..models.user import User
-from ..auth.jwt_handler import get_current_user_from_token
+from ..auth.jwt_handler import get_current_user
 
 router = APIRouter(prefix="/api/v1/aco", tags=["ACO Integration"])
 
@@ -23,7 +23,7 @@ async def check_subscription_limits(
     action: str = Query(..., description="Action to check (create_tenant, add_user, etc.)"),
     tenant_id: Optional[int] = Query(None, description="Tenant ID for tenant-specific actions"),
     file_size_gb: Optional[float] = Query(None, description="File size in GB for storage actions"),
-    current_user: User = Depends(get_current_user_from_token),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """
@@ -54,10 +54,10 @@ async def check_subscription_limits(
         raise HTTPException(status_code=500, detail=f"Error checking subscription limits: {str(e)}")
 
 @router.get("/revenue/metrics")
-@require_platform_owner_level(1)  # Admin level required
+@require_platform_owner("can_view_platform_analytics")
 async def get_revenue_metrics(
     period_days: int = Query(30, description="Number of days to analyze"),
-    current_user: User = Depends(get_current_user_from_token),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """
@@ -78,10 +78,10 @@ async def get_revenue_metrics(
         raise HTTPException(status_code=500, detail=f"Error calculating revenue metrics: {str(e)}")
 
 @router.get("/subscription/analytics")
-@require_platform_owner_level(1)  # Admin level required
+@require_platform_owner("can_view_platform_analytics")
 async def get_subscription_analytics(
     days: int = Query(30, description="Number of days to analyze"),
-    current_user: User = Depends(get_current_user_from_token),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """
@@ -105,7 +105,7 @@ async def get_subscription_analytics(
 async def upgrade_subscription(
     new_tier: str,
     target_user_id: Optional[int] = None,  # For Platform Owners to upgrade other users
-    current_user: User = Depends(get_current_user_from_token),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """
@@ -148,7 +148,7 @@ async def upgrade_subscription(
 @router.get("/founding-member/eligibility")
 async def check_founding_member_eligibility(
     target_user_id: Optional[int] = Query(None, description="User ID to check (Platform Owners only)"),
-    current_user: User = Depends(get_current_user_from_token),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """
@@ -187,7 +187,7 @@ async def check_founding_member_eligibility(
 @router.post("/founding-member/enroll")
 async def enroll_founding_member(
     target_user_id: Optional[int] = None,  # For Platform Owners to enroll other users
-    current_user: User = Depends(get_current_user_from_token),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """
@@ -229,7 +229,7 @@ async def enroll_founding_member(
 @router.get("/founding-member/benefits")
 async def get_founding_member_benefits(
     target_user_id: Optional[int] = Query(None, description="User ID to check (Platform Owners only)"),
-    current_user: User = Depends(get_current_user_from_token),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """
@@ -266,9 +266,9 @@ async def get_founding_member_benefits(
         raise HTTPException(status_code=500, detail=f"Error getting founding member benefits: {str(e)}")
 
 @router.get("/founding-member/list")
-@require_platform_owner_level(1)  # Admin level required
+@require_platform_owner("can_manage_platform_users")
 async def list_founding_members(
-    current_user: User = Depends(get_current_user_from_token),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """
@@ -289,9 +289,9 @@ async def list_founding_members(
         raise HTTPException(status_code=500, detail=f"Error listing founding members: {str(e)}")
 
 @router.get("/founding-member/stats")
-@require_platform_owner_level(2)  # Super Admin level required
+@require_platform_owner("can_modify_platform_settings")
 async def get_founding_member_stats(
-    current_user: User = Depends(get_current_user_from_token),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """
@@ -314,7 +314,7 @@ async def get_founding_member_stats(
 @router.get("/tier-limits")
 async def get_tier_limits(
     tier: Optional[str] = Query(None, description="Specific tier to get limits for"),
-    current_user: User = Depends(get_current_user_from_token),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """

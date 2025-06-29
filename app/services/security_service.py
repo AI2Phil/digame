@@ -15,8 +15,8 @@ import json
 from collections import defaultdict
 
 from app.models.security import (
-    MFAConfig, SecurityAuditLog, SecurityPolicy, ThreatDetection,
-    SecurityIncident, AccessControl, SecurityMetrics
+    MFADevice, SecurityEvent, SecurityPolicy, ThreatDetection,
+    AuditLog, IPRestriction, SessionToken
 )
 from app.schemas.security_schemas import (
     MFAConfigCreate, MFAConfigUpdate, MFASetupRequest, MFASetupResponse,
@@ -57,14 +57,14 @@ class MFAService:
     def setup_mfa(self, user_id: int, setup_request: MFASetupRequest) -> MFASetupResponse:
         """Set up MFA for a user"""
         # Check if MFA already exists
-        existing_mfa = self.db.query(MFAConfig).filter(MFAConfig.user_id == user_id).first()
+        existing_mfa = self.db.query(MFADevice).filter(MFADevice.user_id == user_id).first()
         
         if existing_mfa:
             # Update existing configuration
             mfa_config = existing_mfa
         else:
             # Create new configuration
-            mfa_config = MFAConfig()
+            mfa_config = MFADevice()
             mfa_config.user_id = user_id
             self.db.add(mfa_config)
         
@@ -77,12 +77,13 @@ class MFAService:
         encrypted_backup_codes = [security_encryption.encrypt(code) for code in backup_codes]
         
         # Update MFA configuration
-        mfa_config.totp_secret = encrypted_secret
+        mfa_config.secret_key = encrypted_secret
         mfa_config.backup_codes = encrypted_backup_codes
-        mfa_config.recovery_email = setup_request.recovery_email
         mfa_config.phone_number = setup_request.phone_number
-        mfa_config.preferred_method = setup_request.method.value
-        mfa_config.is_enabled = True
+        mfa_config.device_type = setup_request.method.value
+        mfa_config.device_name = f"{setup_request.method.value}_device"
+        mfa_config.is_active = True
+        mfa_config.is_verified = True
         
         self.db.commit()
         
@@ -120,15 +121,15 @@ class MFAService:
     
     def verify_mfa(self, user_id: int, code: str, method: Optional[str] = None) -> bool:
         """Verify MFA code"""
-        mfa_config = self.db.query(MFAConfig).filter(MFAConfig.user_id == user_id).first()
+        mfa_config = self.db.query(MFADevice).filter(MFADevice.user_id == user_id).first()
         
-        if not mfa_config or not mfa_config.is_enabled:
+        if not mfa_config or not mfa_config.is_active:
             return False
         
         # Try TOTP verification
-        if mfa_config.totp_secret and (not method or method == "totp"):
+        if mfa_config.secret_key and (not method or method == "totp"):
             try:
-                decrypted_secret = security_encryption.decrypt(mfa_config.totp_secret)
+                decrypted_secret = security_encryption.decrypt(mfa_config.secret_key)
                 totp = pyotp.TOTP(decrypted_secret)
                 if totp.verify(code, valid_window=1):
                     mfa_config.last_used_at = datetime.utcnow()
@@ -155,13 +156,13 @@ class MFAService:
     
     def disable_mfa(self, user_id: int) -> bool:
         """Disable MFA for a user"""
-        mfa_config = self.db.query(MFAConfig).filter(MFAConfig.user_id == user_id).first()
+        mfa_config = self.db.query(MFADevice).filter(MFADevice.user_id == user_id).first()
         
         if not mfa_config:
             return False
         
-        mfa_config.is_enabled = False
-        mfa_config.totp_secret = None
+        mfa_config.is_active = False
+        mfa_config.secret_key = None
         mfa_config.backup_codes = None
         self.db.commit()
         
@@ -175,14 +176,14 @@ class MFAService:
         
         return True
     
-    def get_mfa_config(self, user_id: int) -> Optional[MFAConfig]:
+    def get_mfa_config(self, user_id: int) -> Optional[MFADevice]:
         """Get MFA configuration for a user"""
-        return self.db.query(MFAConfig).filter(MFAConfig.user_id == user_id).first()
+        return self.db.query(MFADevice).filter(MFADevice.user_id == user_id).first()
     
     def log_security_event(self, user_id: Optional[int], event_type: EventType, 
                           description: str, severity: Severity, **kwargs):
         """Log a security event"""
-        log_entry = SecurityAuditLog()
+        log_entry = SecurityEvent()
         log_entry.user_id = user_id
         log_entry.event_type = event_type.value
         log_entry.event_category = "authentication"
@@ -231,11 +232,11 @@ class ThreatDetectionService:
         time_threshold = datetime.utcnow() - timedelta(seconds=rule["time_window"])
         
         # Count failed login attempts from this IP
-        failed_attempts = self.db.query(SecurityAuditLog).filter(
+        failed_attempts = self.db.query(SecurityEvent).filter(
             and_(
-                SecurityAuditLog.ip_address == ip_address,
-                SecurityAuditLog.event_type == EventType.FAILED_LOGIN.value,
-                SecurityAuditLog.timestamp >= time_threshold
+                SecurityEvent.ip_address == ip_address,
+                SecurityEvent.event_type == EventType.FAILED_LOGIN.value,
+                SecurityEvent.created_at >= time_threshold
             )
         ).count()
         
@@ -260,11 +261,11 @@ class ThreatDetectionService:
     def detect_anomalous_access(self, user_id: int, ip_address: str, user_agent: str) -> Optional[ThreatDetection]:
         """Detect anomalous access patterns"""
         # Check for unusual location (simplified - would use GeoIP in production)
-        recent_ips = self.db.query(SecurityAuditLog.ip_address).filter(
+        recent_ips = self.db.query(SecurityEvent.ip_address).filter(
             and_(
-                SecurityAuditLog.user_id == user_id,
-                SecurityAuditLog.event_type == EventType.LOGIN.value,
-                SecurityAuditLog.timestamp >= datetime.utcnow() - timedelta(days=30)
+                SecurityEvent.user_id == user_id,
+                SecurityEvent.event_type == EventType.LOGIN.value,
+                SecurityEvent.created_at >= datetime.utcnow() - timedelta(days=30)
             )
         ).distinct().all()
         
@@ -319,9 +320,9 @@ class SecurityAuditService:
     def __init__(self, db: Session):
         self.db = db
     
-    def log_event(self, log_data: SecurityAuditLogCreate) -> SecurityAuditLog:
+    def log_event(self, log_data: SecurityAuditLogCreate) -> AuditLog:
         """Log a security event"""
-        log_entry = SecurityAuditLog()
+        log_entry = AuditLog()
         for key, value in log_data.model_dump().items():
             setattr(log_entry, key, value)
         self.db.add(log_entry)
@@ -329,66 +330,63 @@ class SecurityAuditService:
         self.db.refresh(log_entry)
         return log_entry
     
-    def get_audit_logs(self, filters: Dict[str, Any], skip: int = 0, limit: int = 100) -> List[SecurityAuditLog]:
+    def get_audit_logs(self, filters: Dict[str, Any], skip: int = 0, limit: int = 100) -> List[AuditLog]:
         """Get audit logs with filters"""
-        query = self.db.query(SecurityAuditLog)
+        query = self.db.query(AuditLog)
         
         if filters.get("user_id"):
-            query = query.filter(SecurityAuditLog.user_id == filters["user_id"])
+            query = query.filter(AuditLog.user_id == filters["user_id"])
         
         if filters.get("event_type"):
-            query = query.filter(SecurityAuditLog.event_type == filters["event_type"])
-        
-        if filters.get("severity"):
-            query = query.filter(SecurityAuditLog.severity == filters["severity"])
+            query = query.filter(AuditLog.action == filters["event_type"])
         
         if filters.get("start_date"):
-            query = query.filter(SecurityAuditLog.timestamp >= filters["start_date"])
+            query = query.filter(AuditLog.created_at >= filters["start_date"])
         
         if filters.get("end_date"):
-            query = query.filter(SecurityAuditLog.timestamp <= filters["end_date"])
+            query = query.filter(AuditLog.created_at <= filters["end_date"])
         
         if filters.get("ip_address"):
-            query = query.filter(SecurityAuditLog.ip_address == filters["ip_address"])
+            query = query.filter(AuditLog.ip_address == filters["ip_address"])
         
-        return query.order_by(desc(SecurityAuditLog.timestamp)).offset(skip).limit(limit).all()
+        return query.order_by(desc(AuditLog.created_at)).offset(skip).limit(limit).all()
     
     def get_security_metrics(self, days: int = 30) -> Dict[str, Any]:
         """Get security metrics for dashboard"""
         start_date = datetime.utcnow() - timedelta(days=days)
         
         # Total events
-        total_events = self.db.query(SecurityAuditLog).filter(
-            SecurityAuditLog.timestamp >= start_date
+        total_events = self.db.query(AuditLog).filter(
+            AuditLog.created_at >= start_date
         ).count()
         
-        # Events by severity
-        severity_counts = self.db.query(
-            SecurityAuditLog.severity,
-            func.count(SecurityAuditLog.id)
+        # Events by action type (simplified)
+        action_counts = self.db.query(
+            AuditLog.action,
+            func.count(AuditLog.id)
         ).filter(
-            SecurityAuditLog.timestamp >= start_date
-        ).group_by(SecurityAuditLog.severity).all()
+            AuditLog.created_at >= start_date
+        ).group_by(AuditLog.action).all()
         
-        # Failed login attempts
-        failed_logins = self.db.query(SecurityAuditLog).filter(
+        # Failed login attempts (simplified)
+        failed_logins = self.db.query(AuditLog).filter(
             and_(
-                SecurityAuditLog.event_type == EventType.FAILED_LOGIN.value,
-                SecurityAuditLog.timestamp >= start_date
+                AuditLog.action.like('%failed%'),
+                AuditLog.created_at >= start_date
             )
         ).count()
         
-        # Successful logins
-        successful_logins = self.db.query(SecurityAuditLog).filter(
+        # Successful logins (simplified)
+        successful_logins = self.db.query(AuditLog).filter(
             and_(
-                SecurityAuditLog.event_type == EventType.LOGIN.value,
-                SecurityAuditLog.timestamp >= start_date
+                AuditLog.action.like('%login%'),
+                AuditLog.created_at >= start_date
             )
         ).count()
         
         return {
             "total_events": total_events,
-            "severity_distribution": dict(severity_counts),
+            "action_distribution": dict(action_counts),
             "failed_logins": failed_logins,
             "successful_logins": successful_logins,
             "login_success_rate": successful_logins / (successful_logins + failed_logins) if (successful_logins + failed_logins) > 0 else 0
@@ -413,7 +411,7 @@ class SecurityPolicyService:
     
     def get_active_policies(self, policy_type: Optional[str] = None) -> List[SecurityPolicy]:
         """Get active security policies"""
-        query = self.db.query(SecurityPolicy).filter(SecurityPolicy.is_enabled == True)
+        query = self.db.query(SecurityPolicy).filter(SecurityPolicy.is_active == True)
         
         if policy_type:
             query = query.filter(SecurityPolicy.policy_type == policy_type)
@@ -426,7 +424,7 @@ class SecurityPolicyService:
         errors = []
         
         for policy in password_policies:
-            config = policy.configuration
+            config = policy.config
             
             if config.get("min_length") and len(password) < config["min_length"]:
                 errors.append(f"Password must be at least {config['min_length']} characters long")
@@ -457,9 +455,9 @@ class SecurityDashboardService:
     def get_dashboard_summary(self) -> Dict[str, Any]:
         """Get security dashboard summary"""
         # MFA statistics
-        total_users = self.db.query(func.count(MFAConfig.user_id)).scalar() or 0
-        mfa_enabled_users = self.db.query(func.count(MFAConfig.user_id)).filter(
-            MFAConfig.is_enabled == True
+        total_users = self.db.query(func.count(MFADevice.user_id)).scalar() or 0
+        mfa_enabled_users = self.db.query(func.count(MFADevice.user_id)).filter(
+            MFADevice.is_active == True
         ).scalar() or 0
         
         mfa_adoption_rate = (mfa_enabled_users / total_users * 100) if total_users > 0 else 0
@@ -477,14 +475,15 @@ class SecurityDashboardService:
         ).scalar() or 0
         
         # Incident statistics
-        open_incidents = self.db.query(func.count(SecurityIncident.id)).filter(
-            SecurityIncident.status.in_([IncidentStatus.OPEN.value, IncidentStatus.INVESTIGATING.value])
+        # Simplified incident tracking using threat detections
+        open_incidents = self.db.query(func.count(ThreatDetection.id)).filter(
+            ThreatDetection.status == "detected"
         ).scalar() or 0
         
-        critical_incidents = self.db.query(func.count(SecurityIncident.id)).filter(
+        critical_incidents = self.db.query(func.count(ThreatDetection.id)).filter(
             and_(
-                SecurityIncident.severity == Severity.CRITICAL.value,
-                SecurityIncident.status != IncidentStatus.CLOSED.value
+                ThreatDetection.threat_level == "critical",
+                ThreatDetection.status == "detected"
             )
         ).scalar() or 0
         

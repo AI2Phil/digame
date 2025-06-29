@@ -51,7 +51,7 @@ from .routers import dashboard_router # Import the dashboard router
 from .routers import team_router # Import the new team router
 from .routers import advanced_analytics_router # Import the new advanced analytics router
 from .routers import document_processing_router # Import the new document processing router
-from .routers import security_router # Import the security router
+# from .routers import security_router # Import the security router - temporarily disabled
 from .api import gamification # Import the gamification API
 from .routers import guest_auth_router # Import the guest authentication router
 from .routers import digital_twin_onboarding_router # Import the digital twin onboarding router
@@ -287,7 +287,7 @@ app.include_router(gamification.router, tags=["Gamification"]) # Add gamificatio
 app.include_router(team_router.router, prefix="/api", tags=["Teams"]) # Add team router with API prefix
 app.include_router(advanced_analytics_router.router) # Add advanced analytics router, prefix and tags are in the router itself
 app.include_router(document_processing_router.router) # Add document processing router, prefix and tags are in router
-app.include_router(security_router.router, prefix="/api", tags=["Security"]) # Add security router
+# app.include_router(security_router.router, prefix="/api", tags=["Security"]) # Add security router - temporarily disabled
 
 
 # Startup and shutdown events

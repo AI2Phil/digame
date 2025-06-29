@@ -116,7 +116,7 @@ class PlatformUsageMetrics(Base):
     """
     Platform usage metrics for tracking user activity and API usage
     """
-    __tablename__ = "platform_usage_metrics"
+    __tablename__ = "platform_usage_tracking"
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
