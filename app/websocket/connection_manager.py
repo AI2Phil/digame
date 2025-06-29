@@ -50,7 +50,7 @@ class WebSocketConnection:
     """Individual WebSocket connection wrapper"""
     
     def __init__(self, websocket: WebSocket, connection_id: str, user_id: str, 
-                 connection_type: ConnectionType, metadata: Dict[str, Any] = None):
+                 connection_type: ConnectionType, metadata: Optional[Dict[str, Any]] = None):
         self.websocket = websocket
         self.connection_id = connection_id
         self.user_id = user_id
@@ -117,7 +117,7 @@ class ConnectionManager:
     
     async def connect(self, websocket: WebSocket, user_id: str, 
                      connection_type: ConnectionType = ConnectionType.TWIN_OWNER,
-                     metadata: Dict[str, Any] = None) -> str:
+                     metadata: Optional[Dict[str, Any]] = None) -> str:
         """Accept a new WebSocket connection"""
         await websocket.accept()
         

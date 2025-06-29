@@ -1,54 +1,189 @@
-# Git / Version Control
+# Digital Twin Platform - Docker Ignore File
+# Exclude unnecessary files from Docker build context for security and performance
+
+# Version control
 .git
 .gitignore
+.gitattributes
 
-# Python specific
+# Documentation
+README.md
+docs/
+*.md
+
+# Development files
+.env
+.env.local
+.env.development
+.env.test
+*.log
+logs/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Python
 __pycache__/
-*.pyc
-*.pyo
-*.pyd
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
 *.egg-info/
-pip-wheel-metadata/
+.installed.cfg
+*.egg
+MANIFEST
 
 # Virtual environments
 venv/
-.venv/
 env/
-.env # Local environment configurations not for image
+ENV/
+env.bak/
+venv.bak/
 
-# IDE / Editor specific
-.idea/
-.vscode/
-*.swp
-*.swo
-
-# Log files
-*.log
-
-# Docker files (not needed in context if copied explicitly or not part of APP_CODE)
-Dockerfile
-docker-compose.yml
-# We don't need to ignore README.md typically
-
-# OS specific
-.DS_Store
-Thumbs.db
-
-# Local instance data / test outputs that might be generated in project
-instance/
-htmlcov/
+# Testing
+.coverage
 .pytest_cache/
 .tox/
-# Add other project-specific temporary or output directories if known
+.nox/
+htmlcov/
+.coverage.*
+coverage.xml
+*.cover
+.hypothesis/
 
-# If models are explicitly copied from a specific source (e.g. root ./models)
-# and we don't want other versions from the main app code copy to interfere
-# or be unnecessarily included if they are just dev artifacts.
-# The Dockerfile currently copies ./digame to /app/digame
-# and ./models to /app/digame/app/models.
-# If ./digame/app/models exists on the host and contains e.g. example models,
-# they would first be copied by `COPY digame /app/digame`, then the contents of
-# ./models would be copied into /app/digame/app/models.
-# To keep it clean and ensure only models from root ./models are used,
-# we can ignore the host's ./digame/app/models.
-digame/app/models/
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+.eslintcache
+
+# Frontend build artifacts
+frontend/dist/
+frontend/build/
+frontend/.next/
+frontend/out/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.temp
+
+# Security sensitive files
+*.key
+*.pem
+*.crt
+*.p12
+*.pfx
+secrets/
+.secrets/
+
+# Kubernetes
+k8s/secrets/
+*.kubeconfig
+
+# Docker
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.travis.yml
+Jenkinsfile
+
+# Backup files
+*.bak
+*.backup
+*.old
+
+# Large files that shouldn't be in containers
+*.iso
+*.dmg
+*.zip
+*.tar.gz
+*.rar
+
+# Development databases
+*.db-journal
+*.db-wal
+*.db-shm
+
+# Cache directories
+.cache/
+.parcel-cache/
+.next/cache/
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Microbundle cache
+.rpt2_cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/
+
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+# dotenv environment variables file
+.env.test.local
+.env.production.local
+
+# Stores VSCode versions used for testing VSCode extensions
+.vscode-test
+
+# yarn v2
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
+.pnp.*

@@ -1,5 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Button, Select, Badge, Tabs, Progress } from '../ui';
+import { Card } from '../ui/Card';
+import { Button } from '../ui/Button';
+import { Select } from '../ui/Select';
+import { Badge } from '../ui/Badge';
+import { Tabs } from '../ui/Tabs';
+import { Progress } from '../ui/Progress';
 import { useTeamCoordination } from '../../hooks/useTeamCoordination';
 import { CoordinationType, TeamMember, CoordinationResult } from '../../types/team';
 

@@ -1,0 +1,176 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: digital-twin-api
+  namespace: digital-twin-platform
+  labels:
+    app: digital-twin-api
+    component: backend
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: prometheus
+  namespace: digital-twin-platform
+  labels:
+    app: prometheus
+    component: monitoring
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: digital-twin-api-role
+rules:
+- apiGroups: [""]
+  resources: ["pods", "services", "endpoints"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["apps"]
+  resources: ["deployments", "replicasets"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["metrics.k8s.io"]
+  resources: ["pods", "nodes"]
+  verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: prometheus-role
+rules:
+- apiGroups: [""]
+  resources: ["nodes", "nodes/proxy", "services", "endpoints", "pods"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["extensions"]
+  resources: ["ingresses"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: [""]
+  resources: ["configmaps"]
+  verbs: ["get"]
+- nonResourceURLs: ["/metrics"]
+  verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: digital-twin-api-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: digital-twin-api-role
+subjects:
+- kind: ServiceAccount
+  name: digital-twin-api
+  namespace: digital-twin-platform
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: prometheus-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: prometheus-role
+subjects:
+- kind: ServiceAccount
+  name: prometheus
+  namespace: digital-twin-platform
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: digital-twin-secrets
+  namespace: digital-twin-platform
+type: Opaque
+stringData:
+  database-url: "postgresql://user:password@postgresql-service:5432/digital_twin_platform"
+  redis-url: "redis://:password@redis-service:6379/0"
+  jwt-secret: "super-secret-jwt-key-for-production-deployment"
+  openai-api-key: "sk-proj-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: postgresql-secret
+  namespace: digital-twin-platform
+type: Opaque
+stringData:
+  username: "postgres"
+  password: "secure-postgres-password"
+  data-source-name: "postgresql://postgres:secure-postgres-password@localhost:5432/digital_twin_platform?sslmode=disable"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: redis-secret
+  namespace: digital-twin-platform
+type: Opaque
+stringData:
+  password: "secure-redis-password"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: grafana-secret
+  namespace: digital-twin-platform
+type: Opaque
+stringData:
+  admin-password: "secure-grafana-admin-password"
+  db-username: "grafana"
+  db-password: "secure-grafana-db-password"
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: digital-twin-network-policy
+  namespace: digital-twin-platform
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: digital-twin-platform
+    - namespaceSelector:
+        matchLabels:
+          name: ingress-nginx
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: digital-twin-platform
+  - to: []
+    ports:
+    - protocol: TCP
+      port: 53
+    - protocol: UDP
+      port: 53
+  - to: []
+    ports:
+    - protocol: TCP
+      port: 443
+    - protocol: TCP
+      port: 80
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: digital-twin-api-pdb
+  namespace: digital-twin-platform
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: digital-twin-api
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: postgresql-pdb
+  namespace: digital-twin-platform
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: postgresql

@@ -234,7 +234,7 @@ async def broadcast_analytics_update(twin_id: str, analytics_type: str, insights
     )
 
 async def broadcast_notification(user_id: str, notification_type: str, 
-                                title: str, message: str, data: Dict[str, Any] = None):
+                                title: str, message: str, data: Optional[Dict[str, Any]] = None):
     """Send notification to specific user"""
     await connection_manager.send_to_user(
         user_id=user_id,

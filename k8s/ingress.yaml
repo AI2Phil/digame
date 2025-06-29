@@ -1,0 +1,288 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: digital-twin-ingress
+  namespace: digital-twin-platform
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
+    nginx.ingress.kubernetes.io/websocket-services: "digital-twin-api-service"
+    nginx.ingress.kubernetes.io/upstream-hash-by: "$remote_addr"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/rate-limit: "100"
+    nginx.ingress.kubernetes.io/rate-limit-window: "1m"
+spec:
+  tls:
+  - hosts:
+    - api.digitaltwin.example.com
+    - app.digitaltwin.example.com
+    - grafana.digitaltwin.example.com
+    secretName: digital-twin-tls
+  rules:
+  - host: api.digitaltwin.example.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: digital-twin-api-service
+            port:
+              number: 80
+      - path: /ws
+        pathType: Prefix
+        backend:
+          service:
+            name: digital-twin-api-service
+            port:
+              number: 8001
+  - host: app.digitaltwin.example.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: digital-twin-frontend-service
+            port:
+              number: 80
+  - host: grafana.digitaltwin.example.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: grafana-service
+            port:
+              number: 3000
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: digital-twin-frontend
+  namespace: digital-twin-platform
+  labels:
+    app: digital-twin-frontend
+    component: frontend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: digital-twin-frontend
+  template:
+    metadata:
+      labels:
+        app: digital-twin-frontend
+        component: frontend
+    spec:
+      containers:
+      - name: frontend
+        image: nginx:alpine
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - name: frontend-config
+          mountPath: /etc/nginx/nginx.conf
+          subPath: nginx.conf
+        - name: frontend-static
+          mountPath: /usr/share/nginx/html
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "50m"
+          limits:
+            memory: "128Mi"
+            cpu: "100m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 80
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 80
+          initialDelaySeconds: 5
+          periodSeconds: 5
+      volumes:
+      - name: frontend-config
+        configMap:
+          name: frontend-nginx-config
+      - name: frontend-static
+        configMap:
+          name: frontend-static-files
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: digital-twin-frontend-service
+  namespace: digital-twin-platform
+  labels:
+    app: digital-twin-frontend
+    component: frontend
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+    targetPort: 80
+    protocol: TCP
+    name: http
+  selector:
+    app: digital-twin-frontend
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: frontend-nginx-config
+  namespace: digital-twin-platform
+data:
+  nginx.conf: |
+    user nginx;
+    worker_processes auto;
+    error_log /var/log/nginx/error.log warn;
+    pid /var/run/nginx.pid;
+    
+    events {
+        worker_connections 1024;
+        use epoll;
+        multi_accept on;
+    }
+    
+    http {
+        include /etc/nginx/mime.types;
+        default_type application/octet-stream;
+        
+        log_format main '$remote_addr - $remote_user [$time_local] "$request" '
+                        '$status $body_bytes_sent "$http_referer" '
+                        '"$http_user_agent" "$http_x_forwarded_for"';
+        
+        access_log /var/log/nginx/access.log main;
+        
+        sendfile on;
+        tcp_nopush on;
+        tcp_nodelay on;
+        keepalive_timeout 65;
+        types_hash_max_size 2048;
+        client_max_body_size 50M;
+        
+        # Gzip compression
+        gzip on;
+        gzip_vary on;
+        gzip_min_length 1024;
+        gzip_proxied any;
+        gzip_comp_level 6;
+        gzip_types
+            text/plain
+            text/css
+            text/xml
+            text/javascript
+            application/json
+            application/javascript
+            application/xml+rss
+            application/atom+xml
+            image/svg+xml;
+        
+        # Security headers
+        add_header X-Frame-Options DENY;
+        add_header X-Content-Type-Options nosniff;
+        add_header X-XSS-Protection "1; mode=block";
+        add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+        
+        server {
+            listen 80;
+            server_name _;
+            root /usr/share/nginx/html;
+            index index.html;
+            
+            # Health check endpoint
+            location /health {
+                access_log off;
+                return 200 "healthy\n";
+                add_header Content-Type text/plain;
+            }
+            
+            # Static assets with long cache
+            location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
+                expires 1y;
+                add_header Cache-Control "public, immutable";
+                try_files $uri =404;
+            }
+            
+            # PWA files
+            location = /manifest.json {
+                expires 1d;
+                add_header Cache-Control "public";
+            }
+            
+            location = /sw.js {
+                expires 0;
+                add_header Cache-Control "no-cache, no-store, must-revalidate";
+            }
+            
+            # API proxy
+            location /api/ {
+                proxy_pass http://digital-twin-api-service/;
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto $scheme;
+                proxy_connect_timeout 30s;
+                proxy_send_timeout 30s;
+                proxy_read_timeout 30s;
+            }
+            
+            # WebSocket proxy
+            location /ws/ {
+                proxy_pass http://digital-twin-api-service:8001/;
+                proxy_http_version 1.1;
+                proxy_set_header Upgrade $http_upgrade;
+                proxy_set_header Connection "upgrade";
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto $scheme;
+                proxy_connect_timeout 7d;
+                proxy_send_timeout 7d;
+                proxy_read_timeout 7d;
+            }
+            
+            # SPA routing
+            location / {
+                try_files $uri $uri/ /index.html;
+                expires 1h;
+                add_header Cache-Control "public";
+            }
+        }
+    }
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: digital-twin-frontend-hpa
+  namespace: digital-twin-platform
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: digital-twin-frontend
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80

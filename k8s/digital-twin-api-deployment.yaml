@@ -1,0 +1,237 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: digital-twin-api
+  namespace: digital-twin-platform
+  labels:
+    app: digital-twin-api
+    component: backend
+    version: v1.0.0
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: digital-twin-api
+  template:
+    metadata:
+      labels:
+        app: digital-twin-api
+        component: backend
+        version: v1.0.0
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8000"
+        prometheus.io/path: "/metrics"
+    spec:
+      serviceAccountName: digital-twin-api
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+      containers:
+      - name: digital-twin-api
+        image: digital-twin-platform/api:1.0.0
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8000
+          name: http
+          protocol: TCP
+        - containerPort: 8001
+          name: websocket
+          protocol: TCP
+        env:
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: digital-twin-secrets
+              key: database-url
+        - name: REDIS_URL
+          valueFrom:
+            secretKeyRef:
+              name: digital-twin-secrets
+              key: redis-url
+        - name: JWT_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: digital-twin-secrets
+              key: jwt-secret
+        - name: OPENAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: digital-twin-secrets
+              key: openai-api-key
+        - name: ENVIRONMENT
+          value: "production"
+        - name: LOG_LEVEL
+          value: "INFO"
+        - name: METRICS_ENABLED
+          value: "true"
+        - name: WEBSOCKET_ENABLED
+          value: "true"
+        - name: PWA_ENABLED
+          value: "true"
+        envFrom:
+        - configMapRef:
+            name: digital-twin-config
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        startupProbe:
+          httpGet:
+            path: /startup
+            port: 8000
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 30
+        volumeMounts:
+        - name: app-config
+          mountPath: /app/config
+          readOnly: true
+        - name: logs
+          mountPath: /app/logs
+        - name: temp
+          mountPath: /tmp
+      - name: metrics-exporter
+        image: prom/node-exporter:latest
+        ports:
+        - containerPort: 9100
+          name: metrics
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "50m"
+          limits:
+            memory: "128Mi"
+            cpu: "100m"
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 65534
+      volumes:
+      - name: app-config
+        configMap:
+          name: digital-twin-config
+      - name: logs
+        emptyDir: {}
+      - name: temp
+        emptyDir: {}
+      nodeSelector:
+        kubernetes.io/os: linux
+      tolerations:
+      - key: "node.kubernetes.io/not-ready"
+        operator: "Exists"
+        effect: "NoExecute"
+        tolerationSeconds: 300
+      - key: "node.kubernetes.io/unreachable"
+        operator: "Exists"
+        effect: "NoExecute"
+        tolerationSeconds: 300
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - digital-twin-api
+              topologyKey: kubernetes.io/hostname
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: digital-twin-api-service
+  namespace: digital-twin-platform
+  labels:
+    app: digital-twin-api
+    component: backend
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "8000"
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+    targetPort: 8000
+    protocol: TCP
+    name: http
+  - port: 8001
+    targetPort: 8001
+    protocol: TCP
+    name: websocket
+  - port: 9100
+    targetPort: 9100
+    protocol: TCP
+    name: metrics
+  selector:
+    app: digital-twin-api
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: digital-twin-api-hpa
+  namespace: digital-twin-platform
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: digital-twin-api
+  minReplicas: 3
+  maxReplicas: 20
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+      - type: Percent
+        value: 10
+        periodSeconds: 60
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      policies:
+      - type: Percent
+        value: 50
+        periodSeconds: 60
+      - type: Pods
+        value: 2
+        periodSeconds: 60
+      selectPolicy: Max
