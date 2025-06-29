@@ -7,7 +7,8 @@ import {
   TrendingUp, AlertTriangle, CheckCircle, Clock,
   Settings, Eye, ArrowRight, RefreshCw, MessageSquare,
   UserPlus, Webhook, Monitor, Smartphone, Code, FileText,
-  TestTube, GitBranch, Brain, WifiOff, Bell, Search, Hash, Filter
+  TestTube, GitBranch, Brain, WifiOff, Bell, Search, Hash, Filter,
+  Download
 } from 'lucide-react';
 
 // Import the enhanced components
@@ -31,6 +32,11 @@ import { AIMLDashboard } from '../../components/ai/AIMLDashboard';
 import { PWADashboard } from '../../components/pwa/PWADashboard';
 import { AdvancedSearchDashboard } from '../../components/search/AdvancedSearchDashboard';
 import { RealTimeCollaborationDashboard } from '../../components/collaboration/RealTimeCollaborationDashboard';
+import { AdvancedSecurityDashboard } from '../../components/security/AdvancedSecurityDashboard';
+import { AdvancedNotificationCenter } from '../../components/notifications/AdvancedNotificationCenter';
+import { PlatformAnalyticsDashboard } from '../../components/analytics/PlatformAnalyticsDashboard';
+import { CustomDashboardBuilder } from '../../components/dashboard/CustomDashboardBuilder';
+import { AdvancedExportTools } from '../../components/export/AdvancedExportTools';
 
 interface DashboardStats {
   security: {
@@ -60,7 +66,7 @@ interface DashboardStats {
 }
 
 const MainDashboard: React.FC = () => {
-  const [activeView, setActiveView] = useState<'overview' | 'security' | 'mfa' | 'analytics' | 'workflows' | 'platform' | 'social' | 'onboarding' | 'integrations' | 'performance' | 'mobile' | 'api' | 'reporting' | 'settings' | 'testing' | 'deployment' | 'monitoring' | 'ai' | 'pwa' | 'search' | 'collaboration'>('overview');
+  const [activeView, setActiveView] = useState<'overview' | 'security' | 'mfa' | 'analytics' | 'workflows' | 'platform' | 'social' | 'onboarding' | 'integrations' | 'performance' | 'mobile' | 'api' | 'reporting' | 'settings' | 'testing' | 'deployment' | 'monitoring' | 'ai' | 'pwa' | 'search' | 'collaboration' | 'advanced-security' | 'notifications' | 'platform-analytics' | 'dashboard-builder' | 'export-tools'>('overview');
   const [stats, setStats] = useState<DashboardStats>({
     security: {
       mfa_enabled: true,
@@ -1161,6 +1167,276 @@ const MainDashboard: React.FC = () => {
             </div>
           </CardContent>
         </Card>
+
+        {/* Advanced Security & Compliance */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Shield className="h-5 w-5 text-red-600" />
+              Advanced Security & Compliance
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div>
+                <h4 className="font-medium text-gray-900">Compliance Score</h4>
+                <p className="text-sm text-gray-600">Multi-framework compliance monitoring</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Badge variant="success" size="sm" icon={null} onRemove={() => {}}>
+                  94% Score
+                </Badge>
+                <Button variant="outline" size="sm" onClick={() => setActiveView('advanced-security')}>
+                  <Shield className="h-3 w-3 mr-1" />
+                  Monitor
+                </Button>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div>
+                <h4 className="font-medium text-gray-900">Policy Management</h4>
+                <p className="text-sm text-gray-600">Security policies and access reviews</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Badge variant="warning" size="sm" icon={null} onRemove={() => {}}>
+                  8 Pending
+                </Badge>
+                <Button variant="outline" size="sm" onClick={() => setActiveView('advanced-security')}>
+                  <Settings className="h-3 w-3 mr-1" />
+                  Review
+                </Button>
+              </div>
+            </div>
+
+            <div className="pt-3 border-t">
+              <Button
+                className="w-full"
+                onClick={() => setActiveView('advanced-security')}
+              >
+                <Shield className="h-4 w-4 mr-2" />
+                View Security Dashboard
+                <ArrowRight className="h-4 w-4 ml-2" />
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Advanced Notification Center */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Bell className="h-5 w-5 text-indigo-600" />
+              Notification Center
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div>
+                <h4 className="font-medium text-gray-900">Unread Notifications</h4>
+                <p className="text-sm text-gray-600">Critical alerts and updates</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Badge variant="error" size="sm" icon={null} onRemove={() => {}}>
+                  23 Unread
+                </Badge>
+                <Button variant="outline" size="sm" onClick={() => setActiveView('notifications')}>
+                  <Bell className="h-3 w-3 mr-1" />
+                  View
+                </Button>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div>
+                <h4 className="font-medium text-gray-900">Delivery Rate</h4>
+                <p className="text-sm text-gray-600">Multi-channel notification delivery</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Badge variant="success" size="sm" icon={null} onRemove={() => {}}>
+                  98.5% Rate
+                </Badge>
+                <Button variant="outline" size="sm" onClick={() => setActiveView('notifications')}>
+                  <BarChart3 className="h-3 w-3 mr-1" />
+                  Analytics
+                </Button>
+              </div>
+            </div>
+
+            <div className="pt-3 border-t">
+              <Button
+                className="w-full"
+                onClick={() => setActiveView('notifications')}
+              >
+                <Bell className="h-4 w-4 mr-2" />
+                View Notification Center
+                <ArrowRight className="h-4 w-4 ml-2" />
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Platform Analytics & Insights */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <BarChart3 className="h-5 w-5 text-blue-600" />
+              Platform Analytics & Insights
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div>
+                <h4 className="font-medium text-gray-900">Usage Analytics</h4>
+                <p className="text-sm text-gray-600">Advanced platform usage and optimization insights</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Badge variant="success" size="sm" icon={null} onRemove={() => {}}>
+                  12.8K Users
+                </Badge>
+                <Button variant="outline" size="sm" onClick={() => setActiveView('platform-analytics')}>
+                  <BarChart3 className="h-3 w-3 mr-1" />
+                  View
+                </Button>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div>
+                <h4 className="font-medium text-gray-900">Optimization Insights</h4>
+                <p className="text-sm text-gray-600">AI-powered recommendations for improvement</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Badge variant="warning" size="sm" icon={null} onRemove={() => {}}>
+                  3 Insights
+                </Badge>
+                <Button variant="outline" size="sm" onClick={() => setActiveView('platform-analytics')}>
+                  <TrendingUp className="h-3 w-3 mr-1" />
+                  Optimize
+                </Button>
+              </div>
+            </div>
+
+            <div className="pt-3 border-t">
+              <Button
+                className="w-full"
+                onClick={() => setActiveView('platform-analytics')}
+              >
+                <BarChart3 className="h-4 w-4 mr-2" />
+                View Platform Analytics
+                <ArrowRight className="h-4 w-4 ml-2" />
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Custom Dashboard Builder */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Settings className="h-5 w-5 text-purple-600" />
+              Custom Dashboard Builder
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div>
+                <h4 className="font-medium text-gray-900">Custom Dashboards</h4>
+                <p className="text-sm text-gray-600">Create personalized dashboard views</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Badge variant="info" size="sm" icon={null} onRemove={() => {}}>
+                  5 Dashboards
+                </Badge>
+                <Button variant="outline" size="sm" onClick={() => setActiveView('dashboard-builder')}>
+                  <Settings className="h-3 w-3 mr-1" />
+                  Build
+                </Button>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div>
+                <h4 className="font-medium text-gray-900">Widget Templates</h4>
+                <p className="text-sm text-gray-600">Drag-and-drop dashboard components</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Badge variant="success" size="sm" icon={null} onRemove={() => {}}>
+                  15+ Templates
+                </Badge>
+                <Button variant="outline" size="sm" onClick={() => setActiveView('dashboard-builder')}>
+                  <Eye className="h-3 w-3 mr-1" />
+                  Browse
+                </Button>
+              </div>
+            </div>
+
+            <div className="pt-3 border-t">
+              <Button
+                className="w-full"
+                onClick={() => setActiveView('dashboard-builder')}
+              >
+                <Settings className="h-4 w-4 mr-2" />
+                View Dashboard Builder
+                <ArrowRight className="h-4 w-4 ml-2" />
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Advanced Export & Integration Tools */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Download className="h-5 w-5 text-green-600" />
+              Export & Integration Tools
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div>
+                <h4 className="font-medium text-gray-900">Data Exports</h4>
+                <p className="text-sm text-gray-600">Scheduled and on-demand data exports</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Badge variant="success" size="sm" icon={null} onRemove={() => {}}>
+                  8 Jobs
+                </Badge>
+                <Button variant="outline" size="sm" onClick={() => setActiveView('export-tools')}>
+                  <Download className="h-3 w-3 mr-1" />
+                  Export
+                </Button>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div>
+                <h4 className="font-medium text-gray-900">System Integrations</h4>
+                <p className="text-sm text-gray-600">External system connections and data sync</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Badge variant="info" size="sm" icon={null} onRemove={() => {}}>
+                  4 Connected
+                </Badge>
+                <Button variant="outline" size="sm" onClick={() => setActiveView('export-tools')}>
+                  <Webhook className="h-3 w-3 mr-1" />
+                  Integrate
+                </Button>
+              </div>
+            </div>
+
+            <div className="pt-3 border-t">
+              <Button
+                className="w-full"
+                onClick={() => setActiveView('export-tools')}
+              >
+                <Download className="h-4 w-4 mr-2" />
+                View Export & Integration Tools
+                <ArrowRight className="h-4 w-4 ml-2" />
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Recent Activity */}
@@ -1267,6 +1543,11 @@ const MainDashboard: React.FC = () => {
         {activeView === 'pwa' && <PWADashboard />}
         {activeView === 'search' && <AdvancedSearchDashboard />}
         {activeView === 'collaboration' && <RealTimeCollaborationDashboard />}
+        {activeView === 'advanced-security' && <AdvancedSecurityDashboard />}
+        {activeView === 'notifications' && <AdvancedNotificationCenter />}
+        {activeView === 'platform-analytics' && <PlatformAnalyticsDashboard />}
+        {activeView === 'dashboard-builder' && <CustomDashboardBuilder />}
+        {activeView === 'export-tools' && <AdvancedExportTools />}
       </div>
     </div>
   );
