@@ -99,21 +99,11 @@ const Sidebar = ({ isDemoMode, onLogout, currentUser, isOpen, onToggle }) => {
 
   return (
     <>
-      {/* Overlay for mobile */}
-      {isOpen && (
-        <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
-          onClick={onToggle}
-        />
-      )}
-      
       {/* Sidebar */}
       <div className={`
-        fixed top-0 left-0 h-full bg-white shadow-xl border-r border-gray-200 z-50
-        transform transition-transform duration-300 ease-in-out
-        ${isOpen ? 'translate-x-0' : '-translate-x-full'}
-        lg:translate-x-0 lg:static lg:z-auto
-        w-80 flex flex-col
+        bg-white border-r border-gray-200 flex flex-col h-full w-80
+        ${isOpen ? 'block' : 'hidden lg:block'}
+        lg:block
       `}>
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">

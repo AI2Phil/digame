@@ -9,7 +9,7 @@ import FeaturesPage from './pages/FeaturesPage';
 import HowItWorksPage from './pages/HowItWorksPage';
 import PricingPage from './pages/PricingPage';
 import DemoPage from './pages/DemoPage';
-import DashboardPage from './pages/DashboardPage';
+import DashboardPage from './pages/dashboard/index.tsx';
 import ComponentDemoPage from './pages/ComponentDemoPage';
 import OnboardingPage from './pages/OnboardingPage';
 import AdvancedWebAnalyticsDashboard from './pages/AdvancedWebAnalyticsDashboard';

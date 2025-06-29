@@ -2,16 +2,17 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Button from '../components/ui/Button';
 import { Card, CardContent } from '../components/ui/Card';
-import demoService from '../services/demoService';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function DemoPage({ onDemoAccess }) {
   const [selectedDemo, setSelectedDemo] = useState(null);
   const navigate = useNavigate();
+  const { enterDemoMode } = useAuth();
 
   const handleDemoSelect = (demoType) => {
     setSelectedDemo(demoType);
-    // Enable demo mode
-    demoService.setDemoMode(true);
+    // Enable demo mode using auth context
+    enterDemoMode();
     if (onDemoAccess) {
       onDemoAccess();
     }
