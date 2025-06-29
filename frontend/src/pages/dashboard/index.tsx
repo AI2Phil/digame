@@ -6,7 +6,8 @@ import {
   Shield, BarChart3, Zap, Building2, Users, Activity,
   TrendingUp, AlertTriangle, CheckCircle, Clock,
   Settings, Eye, ArrowRight, RefreshCw, MessageSquare,
-  UserPlus, Webhook, Monitor, Smartphone, Code, FileText
+  UserPlus, Webhook, Monitor, Smartphone, Code, FileText,
+  TestTube, GitBranch, Brain, WifiOff, Bell, Search, Hash, Filter
 } from 'lucide-react';
 
 // Import the enhanced components
@@ -23,6 +24,13 @@ import { MobileNavigationDashboard } from '../../components/mobile/MobileNavigat
 import { APIManagementDashboard } from '../../components/api/APIManagementDashboard';
 import { AdvancedReportingDashboard } from '../../components/reporting/AdvancedReportingDashboard';
 import { SystemConfigurationDashboard } from '../../components/settings/SystemConfigurationDashboard';
+import { TestingSuite } from '../../components/testing/TestingSuite';
+import { DeploymentPipeline } from '../../components/deployment/DeploymentPipeline';
+import { AdvancedMonitoringDashboard } from '../../components/monitoring/AdvancedMonitoringDashboard';
+import { AIMLDashboard } from '../../components/ai/AIMLDashboard';
+import { PWADashboard } from '../../components/pwa/PWADashboard';
+import { AdvancedSearchDashboard } from '../../components/search/AdvancedSearchDashboard';
+import { RealTimeCollaborationDashboard } from '../../components/collaboration/RealTimeCollaborationDashboard';
 
 interface DashboardStats {
   security: {
@@ -52,7 +60,7 @@ interface DashboardStats {
 }
 
 const MainDashboard: React.FC = () => {
-  const [activeView, setActiveView] = useState<'overview' | 'security' | 'mfa' | 'analytics' | 'workflows' | 'platform' | 'social' | 'onboarding' | 'integrations' | 'performance' | 'mobile' | 'api' | 'reporting' | 'settings'>('overview');
+  const [activeView, setActiveView] = useState<'overview' | 'security' | 'mfa' | 'analytics' | 'workflows' | 'platform' | 'social' | 'onboarding' | 'integrations' | 'performance' | 'mobile' | 'api' | 'reporting' | 'settings' | 'testing' | 'deployment' | 'monitoring' | 'ai' | 'pwa' | 'search' | 'collaboration'>('overview');
   const [stats, setStats] = useState<DashboardStats>({
     security: {
       mfa_enabled: true,
@@ -775,6 +783,384 @@ const MainDashboard: React.FC = () => {
             </div>
           </CardContent>
         </Card>
+
+        {/* Testing Suite */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TestTube className="h-5 w-5 text-amber-600" />
+              Testing Suite
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div>
+                <h4 className="font-medium text-gray-900">Automated Testing</h4>
+                <p className="text-sm text-gray-600">Comprehensive test execution</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Badge variant="success" size="sm" icon={null} onRemove={() => {}}>
+                  98% Pass Rate
+                </Badge>
+                <Button variant="outline" size="sm" onClick={() => setActiveView('testing')}>
+                  <TestTube className="h-3 w-3 mr-1" />
+                  Run Tests
+                </Button>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div>
+                <h4 className="font-medium text-gray-900">Test Coverage</h4>
+                <p className="text-sm text-gray-600">Code coverage analysis</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Badge variant="info" size="sm" icon={null} onRemove={() => {}}>
+                  87% Coverage
+                </Badge>
+                <Button variant="outline" size="sm" onClick={() => setActiveView('testing')}>
+                  <BarChart3 className="h-3 w-3 mr-1" />
+                  Analyze
+                </Button>
+              </div>
+            </div>
+
+            <div className="pt-3 border-t">
+              <Button
+                className="w-full"
+                onClick={() => setActiveView('testing')}
+              >
+                <TestTube className="h-4 w-4 mr-2" />
+                View Testing Suite
+                <ArrowRight className="h-4 w-4 ml-2" />
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Deployment Pipeline */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <GitBranch className="h-5 w-5 text-slate-600" />
+              Deployment Pipeline
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div>
+                <h4 className="font-medium text-gray-900">CI/CD Pipelines</h4>
+                <p className="text-sm text-gray-600">Automated deployment</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Badge variant="success" size="sm" icon={null} onRemove={() => {}}>
+                  5 Active
+                </Badge>
+                <Button variant="outline" size="sm" onClick={() => setActiveView('deployment')}>
+                  <GitBranch className="h-3 w-3 mr-1" />
+                  Manage
+                </Button>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div>
+                <h4 className="font-medium text-gray-900">Environment Health</h4>
+                <p className="text-sm text-gray-600">Production monitoring</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Badge variant="warning" size="sm" icon={null} onRemove={() => {}}>
+                  3 Environments
+                </Badge>
+                <Button variant="outline" size="sm" onClick={() => setActiveView('deployment')}>
+                  <Monitor className="h-3 w-3 mr-1" />
+                  Monitor
+                </Button>
+              </div>
+            </div>
+
+            <div className="pt-3 border-t">
+              <Button
+                className="w-full"
+                onClick={() => setActiveView('deployment')}
+              >
+                <GitBranch className="h-4 w-4 mr-2" />
+                View Deployment Pipeline
+                <ArrowRight className="h-4 w-4 ml-2" />
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Advanced Monitoring */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Activity className="h-5 w-5 text-red-600" />
+              Advanced Monitoring
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div>
+                <h4 className="font-medium text-gray-900">Real-time Alerts</h4>
+                <p className="text-sm text-gray-600">System monitoring and alerting</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Badge variant="success" size="sm" icon={null} onRemove={() => {}}>
+                  3 Active
+                </Badge>
+                <Button variant="outline" size="sm" onClick={() => setActiveView('monitoring')}>
+                  <Activity className="h-3 w-3 mr-1" />
+                  Monitor
+                </Button>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div>
+                <h4 className="font-medium text-gray-900">Service Health</h4>
+                <p className="text-sm text-gray-600">Infrastructure monitoring</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Badge variant="warning" size="sm" icon={null} onRemove={() => {}}>
+                  99.9% Uptime
+                </Badge>
+                <Button variant="outline" size="sm" onClick={() => setActiveView('monitoring')}>
+                  <Monitor className="h-3 w-3 mr-1" />
+                  View
+                </Button>
+              </div>
+            </div>
+
+            <div className="pt-3 border-t">
+              <Button
+                className="w-full"
+                onClick={() => setActiveView('monitoring')}
+              >
+                <Activity className="h-4 w-4 mr-2" />
+                View Monitoring Dashboard
+                <ArrowRight className="h-4 w-4 ml-2" />
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* AI & Machine Learning */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Brain className="h-5 w-5 text-indigo-600" />
+              AI & Machine Learning
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div>
+                <h4 className="font-medium text-gray-900">ML Models</h4>
+                <p className="text-sm text-gray-600">Intelligent predictions and insights</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Badge variant="success" size="sm" icon={null} onRemove={() => {}}>
+                  4 Active
+                </Badge>
+                <Button variant="outline" size="sm" onClick={() => setActiveView('ai')}>
+                  <Brain className="h-3 w-3 mr-1" />
+                  Manage
+                </Button>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div>
+                <h4 className="font-medium text-gray-900">AI Insights</h4>
+                <p className="text-sm text-gray-600">Automated recommendations</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Badge variant="info" size="sm" icon={null} onRemove={() => {}}>
+                  12 New
+                </Badge>
+                <Button variant="outline" size="sm" onClick={() => setActiveView('ai')}>
+                  <TrendingUp className="h-3 w-3 mr-1" />
+                  Review
+                </Button>
+              </div>
+            </div>
+
+            <div className="pt-3 border-t">
+              <Button
+                className="w-full"
+                onClick={() => setActiveView('ai')}
+              >
+                <Brain className="h-4 w-4 mr-2" />
+                View AI/ML Dashboard
+                <ArrowRight className="h-4 w-4 ml-2" />
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Progressive Web App */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <WifiOff className="h-5 w-5 text-cyan-600" />
+              Progressive Web App
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div>
+                <h4 className="font-medium text-gray-900">Offline Capabilities</h4>
+                <p className="text-sm text-gray-600">App-like experience</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Badge variant="success" size="sm" icon={null} onRemove={() => {}}>
+                  Available
+                </Badge>
+                <Button variant="outline" size="sm" onClick={() => setActiveView('pwa')}>
+                  <Smartphone className="h-3 w-3 mr-1" />
+                  Install
+                </Button>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div>
+                <h4 className="font-medium text-gray-900">Push Notifications</h4>
+                <p className="text-sm text-gray-600">Real-time updates</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Badge variant="warning" size="sm" icon={null} onRemove={() => {}}>
+                  67% Enabled
+                </Badge>
+                <Button variant="outline" size="sm" onClick={() => setActiveView('pwa')}>
+                  <Bell className="h-3 w-3 mr-1" />
+                  Configure
+                </Button>
+              </div>
+            </div>
+
+            <div className="pt-3 border-t">
+              <Button
+                className="w-full"
+                onClick={() => setActiveView('pwa')}
+              >
+                <WifiOff className="h-4 w-4 mr-2" />
+                View PWA Dashboard
+                <ArrowRight className="h-4 w-4 ml-2" />
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Advanced Search */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Search className="h-5 w-5 text-emerald-600" />
+              Advanced Search
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div>
+                <h4 className="font-medium text-gray-900">Intelligent Search</h4>
+                <p className="text-sm text-gray-600">Search across all platform data</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Badge variant="success" size="sm" icon={null} onRemove={() => {}}>
+                  12K+ Results
+                </Badge>
+                <Button variant="outline" size="sm" onClick={() => setActiveView('search')}>
+                  <Search className="h-3 w-3 mr-1" />
+                  Search
+                </Button>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div>
+                <h4 className="font-medium text-gray-900">Smart Filters</h4>
+                <p className="text-sm text-gray-600">Advanced filtering and analytics</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Badge variant="info" size="sm" icon={null} onRemove={() => {}}>
+                  8 Filters
+                </Badge>
+                <Button variant="outline" size="sm" onClick={() => setActiveView('search')}>
+                  <Filter className="h-3 w-3 mr-1" />
+                  Filter
+                </Button>
+              </div>
+            </div>
+
+            <div className="pt-3 border-t">
+              <Button
+                className="w-full"
+                onClick={() => setActiveView('search')}
+              >
+                <Search className="h-4 w-4 mr-2" />
+                View Search Dashboard
+                <ArrowRight className="h-4 w-4 ml-2" />
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Real-time Collaboration */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Hash className="h-5 w-5 text-purple-600" />
+              Team Collaboration
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div>
+                <h4 className="font-medium text-gray-900">Real-time Chat</h4>
+                <p className="text-sm text-gray-600">Team communication channels</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Badge variant="success" size="sm" icon={null} onRemove={() => {}}>
+                  4 Channels
+                </Badge>
+                <Button variant="outline" size="sm" onClick={() => setActiveView('collaboration')}>
+                  <MessageSquare className="h-3 w-3 mr-1" />
+                  Chat
+                </Button>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div>
+                <h4 className="font-medium text-gray-900">Video Calls</h4>
+                <p className="text-sm text-gray-600">Voice and video collaboration</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Badge variant="warning" size="sm" icon={null} onRemove={() => {}}>
+                  1 Active
+                </Badge>
+                <Button variant="outline" size="sm" onClick={() => setActiveView('collaboration')}>
+                  <Users className="h-3 w-3 mr-1" />
+                  Join
+                </Button>
+              </div>
+            </div>
+
+            <div className="pt-3 border-t">
+              <Button
+                className="w-full"
+                onClick={() => setActiveView('collaboration')}
+              >
+                <Hash className="h-4 w-4 mr-2" />
+                View Collaboration Dashboard
+                <ArrowRight className="h-4 w-4 ml-2" />
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Recent Activity */}
@@ -873,6 +1259,14 @@ const MainDashboard: React.FC = () => {
         {activeView === 'mobile' && <MobileNavigationDashboard />}
         {activeView === 'api' && <APIManagementDashboard />}
         {activeView === 'reporting' && <AdvancedReportingDashboard />}
+        {activeView === 'settings' && <SystemConfigurationDashboard />}
+        {activeView === 'testing' && <TestingSuite />}
+        {activeView === 'deployment' && <DeploymentPipeline />}
+        {activeView === 'monitoring' && <AdvancedMonitoringDashboard />}
+        {activeView === 'ai' && <AIMLDashboard />}
+        {activeView === 'pwa' && <PWADashboard />}
+        {activeView === 'search' && <AdvancedSearchDashboard />}
+        {activeView === 'collaboration' && <RealTimeCollaborationDashboard />}
       </div>
     </div>
   );
