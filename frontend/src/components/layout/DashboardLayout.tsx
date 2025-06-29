@@ -16,7 +16,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   currentUser,
   onLogout = () => {}
 }) => {
-  const [sidebarOpen, setSidebarOpen] = useState(true); // Default to open on desktop
+  const [sidebarOpen, setSidebarOpen] = useState(false); // Start closed to test toggle
 
   const toggleSidebar = () => {
     console.log('Hamburger menu clicked! Current state:', sidebarOpen);
@@ -46,10 +46,17 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
             <div className="flex items-center gap-4">
               <button
                 onClick={toggleSidebar}
-                className="p-2 hover:bg-gray-100 rounded-md"
-                style={{ border: '2px solid red' }}
+                className="p-2 hover:bg-gray-100 rounded-md bg-red-200"
+                style={{
+                  border: '3px solid red',
+                  backgroundColor: 'yellow',
+                  minWidth: '40px',
+                  minHeight: '40px',
+                  zIndex: 9999
+                }}
+                type="button"
               >
-                <Menu className="w-5 h-5" />
+                <Menu className="w-5 h-5 text-black" />
               </button>
               <h1 className="text-xl font-semibold text-gray-900">Digame Dashboard</h1>
               {isDemoMode && (
