@@ -215,10 +215,9 @@ class PerformanceMonitoringService:
         recent_time = datetime.utcnow() - timedelta(minutes=15)
         
         recent_checks = self.db.query(SystemHealthCheck).filter(
-            and_(
-                SystemHealthCheck.tenant_id == tenant_id,
-                SystemHealthCheck.timestamp >= recent_time
-            )
+            SystemHealthCheck.tenant_id == tenant_id
+        ).filter(
+            SystemHealthCheck.timestamp >= recent_time
         ).all()
         
         if not recent_checks:
@@ -312,11 +311,11 @@ class PerformanceMonitoringService:
         start_time = datetime.utcnow() - timedelta(days=7)
         
         slow_queries = self.db.query(QueryPerformance).filter(
-            and_(
-                QueryPerformance.tenant_id == tenant_id,
-                QueryPerformance.is_slow_query == True,
-                QueryPerformance.timestamp >= start_time
-            )
+            QueryPerformance.tenant_id == tenant_id
+        ).filter(
+            QueryPerformance.is_slow_query == True
+        ).filter(
+            QueryPerformance.timestamp >= start_time
         ).order_by(desc(QueryPerformance.execution_time_ms)).limit(limit * 2).all()
         
         # Group by query hash and aggregate
@@ -368,10 +367,9 @@ class PerformanceMonitoringService:
         start_time = datetime.utcnow() - timedelta(hours=time_range_hours)
         
         ux_metrics = self.db.query(UserExperienceMetric).filter(
-            and_(
-                UserExperienceMetric.tenant_id == tenant_id,
-                UserExperienceMetric.timestamp >= start_time
-            )
+            UserExperienceMetric.tenant_id == tenant_id
+        ).filter(
+            UserExperienceMetric.timestamp >= start_time
         ).all()
         
         if not ux_metrics:
@@ -380,8 +378,10 @@ class PerformanceMonitoringService:
         # Page performance analysis
         page_performance = defaultdict(list)
         for metric in ux_metrics:
-            if metric.load_time_ms:
-                page_performance[metric.page_url].append(metric.load_time_ms)
+            load_time_ms = getattr(metric, 'load_time_ms', None)  # type: ignore
+            page_url = getattr(metric, 'page_url', '')  # type: ignore
+            if load_time_ms:
+                page_performance[page_url].append(load_time_ms)
         
         slow_pages = []
         for page, load_times in page_performance.items():
@@ -397,14 +397,16 @@ class PerformanceMonitoringService:
         # Device performance analysis
         device_performance = defaultdict(list)
         for metric in ux_metrics:
-            if metric.load_time_ms and metric.device_type:
-                device_performance[metric.device_type].append(metric.load_time_ms)
+            load_time_ms = getattr(metric, 'load_time_ms', None)  # type: ignore
+            device_type = getattr(metric, 'device_type', None)  # type: ignore
+            if load_time_ms and device_type:
+                device_performance[device_type].append(load_time_ms)
         
         # Error analysis
-        error_rate = len([m for m in ux_metrics if m.error_occurred]) / len(ux_metrics) * 100
+        error_rate = len([m for m in ux_metrics if getattr(m, 'error_occurred', False)]) / len(ux_metrics) * 100
         
         # Bounce rate analysis
-        bounce_rate = len([m for m in ux_metrics if m.bounce]) / len(ux_metrics) * 100
+        bounce_rate = len([m for m in ux_metrics if getattr(m, 'bounce', False)]) / len(ux_metrics) * 100
         
         return {
             "time_range_hours": time_range_hours,
@@ -457,10 +459,9 @@ class PerformanceMonitoringService:
         """Check all active alerts for a tenant"""
         
         active_alerts = self.db.query(PerformanceAlert).filter(
-            and_(
-                PerformanceAlert.tenant_id == tenant_id,
-                PerformanceAlert.status == "active"
-            )
+            PerformanceAlert.tenant_id == tenant_id
+        ).filter(
+            PerformanceAlert.status == "active"
         ).all()
         
         triggered_alerts = []
@@ -474,10 +475,11 @@ class PerformanceMonitoringService:
             ).all()
             
             for metric in recent_metrics:
-                metric_value = float(metric.value) if metric.value is not None else 0.0
-                threshold_value = float(alert.threshold_value) if alert.threshold_value is not None else 0.0
+                metric_value = float(getattr(metric, 'value', 0)) if getattr(metric, 'value', None) is not None else 0.0
+                threshold_value = float(getattr(alert, 'threshold_value', 0)) if getattr(alert, 'threshold_value', None) is not None else 0.0
+                threshold_operator = getattr(alert, 'threshold_operator', '>')  # type: ignore
                 
-                if self._evaluate_threshold(metric_value, threshold_value, alert.threshold_operator):
+                if self._evaluate_threshold(metric_value, threshold_value, threshold_operator):
                     self._trigger_alert(alert, metric_value)
                     triggered_alerts.append({
                         "alert_id": alert.id,
@@ -609,19 +611,23 @@ class PerformanceMonitoringService:
     def _check_metric_alerts(self, metric: PerformanceMetric):
         """Check if metric triggers any alerts"""
         
+        metric_tenant_id = getattr(metric, 'tenant_id', 0)  # type: ignore
+        metric_name = getattr(metric, 'metric_name', '')  # type: ignore
+        
         alerts = self.db.query(PerformanceAlert).filter(
-            and_(
-                PerformanceAlert.tenant_id == metric.tenant_id,
-                PerformanceAlert.metric_name == metric.metric_name,
-                PerformanceAlert.status == "active"
-            )
+            PerformanceAlert.tenant_id == metric_tenant_id
+        ).filter(
+            PerformanceAlert.metric_name == metric_name
+        ).filter(
+            PerformanceAlert.status == "active"
         ).all()
         
         for alert in alerts:
             metric_value = float(getattr(metric, 'value', 0)) if getattr(metric, 'value', None) is not None else 0.0
-            threshold_value = float(alert.threshold_value) if alert.threshold_value is not None else 0.0
+            threshold_value = float(getattr(alert, 'threshold_value', 0)) if getattr(alert, 'threshold_value', None) is not None else 0.0
+            threshold_operator = getattr(alert, 'threshold_operator', '>')  # type: ignore
             
-            if self._evaluate_threshold(metric_value, threshold_value, alert.threshold_operator):
+            if self._evaluate_threshold(metric_value, threshold_value, threshold_operator):
                 self._trigger_alert(alert, metric_value)
     
     def _evaluate_threshold(self, value: float, threshold: float, operator: str) -> bool:
@@ -649,14 +655,17 @@ class PerformanceMonitoringService:
         # and send notifications through the configured channels
         
         # Create incident if severity is high or critical
-        if alert.severity in ["high", "critical"]:
+        severity = getattr(alert, 'severity', 'medium')  # type: ignore
+        if severity in ["high", "critical"]:
             self._create_alert_incident(alert, current_value)
     
     def _create_health_incident(self, health_check: SystemHealthCheck):
         """Create incident from failed health check"""
         
-        severity = "high" if health_check.status == "critical" else "medium"
-        description = health_check.error_message or "Health check failed"
+        health_check_status = getattr(health_check, 'status', 'unknown')  # type: ignore
+        severity = "high" if health_check_status == "critical" else "medium"
+        error_message = getattr(health_check, 'error_message', None)  # type: ignore
+        description = error_message or "Health check failed"
         
         incident = PerformanceIncident()
         setattr(incident, 'tenant_id', health_check.tenant_id)  # type: ignore
@@ -688,11 +697,11 @@ class PerformanceMonitoringService:
         """Get system metrics summary"""
         
         metrics = self.db.query(PerformanceMetric).filter(
-            and_(
-                PerformanceMetric.tenant_id == tenant_id,
-                PerformanceMetric.metric_category == "system",
-                PerformanceMetric.timestamp >= start_time
-            )
+            PerformanceMetric.tenant_id == tenant_id
+        ).filter(
+            PerformanceMetric.metric_category == "system"
+        ).filter(
+            PerformanceMetric.timestamp >= start_time
         ).all()
         
         if not metrics:
@@ -701,7 +710,9 @@ class PerformanceMonitoringService:
         # Group by metric name
         metric_groups = defaultdict(list)
         for metric in metrics:
-            metric_groups[metric.metric_name].append(float(metric.value) if metric.value else 0.0)
+            metric_name = getattr(metric, 'metric_name', 'unknown')  # type: ignore
+            metric_value = getattr(metric, 'value', 0)  # type: ignore
+            metric_groups[metric_name].append(float(metric_value) if metric_value else 0.0)
         
         summary = {}
         for name, values in metric_groups.items():
@@ -719,17 +730,16 @@ class PerformanceMonitoringService:
         """Get database performance summary"""
         
         queries = self.db.query(QueryPerformance).filter(
-            and_(
-                QueryPerformance.tenant_id == tenant_id,
-                QueryPerformance.timestamp >= start_time
-            )
+            QueryPerformance.tenant_id == tenant_id
+        ).filter(
+            QueryPerformance.timestamp >= start_time
         ).all()
         
         if not queries:
             return {}
         
-        execution_times = [float(q.execution_time_ms) for q in queries]
-        slow_queries_count = len([q for q in queries if q.is_slow_query])
+        execution_times = [float(getattr(q, 'execution_time_ms', 0)) for q in queries]
+        slow_queries_count = len([q for q in queries if getattr(q, 'is_slow_query', False)])
         
         return {
             "total_queries": len(queries),
@@ -744,35 +754,33 @@ class PerformanceMonitoringService:
         """Get user experience summary"""
         
         ux_metrics = self.db.query(UserExperienceMetric).filter(
-            and_(
-                UserExperienceMetric.tenant_id == tenant_id,
-                UserExperienceMetric.timestamp >= start_time
-            )
+            UserExperienceMetric.tenant_id == tenant_id
+        ).filter(
+            UserExperienceMetric.timestamp >= start_time
         ).all()
         
         if not ux_metrics:
             return {}
         
-        load_times = [float(m.load_time_ms) for m in ux_metrics if m.load_time_ms]
-        error_count = len([m for m in ux_metrics if m.error_occurred])
-        bounce_count = len([m for m in ux_metrics if m.bounce])
+        load_times = [float(getattr(m, 'load_time_ms', 0)) for m in ux_metrics if getattr(m, 'load_time_ms', None)]
+        error_count = len([m for m in ux_metrics if getattr(m, 'error_occurred', False)])
+        bounce_count = len([m for m in ux_metrics if getattr(m, 'bounce', False)])
         
         return {
             "total_interactions": len(ux_metrics),
             "avg_load_time_ms": statistics.mean(load_times) if load_times else 0,
             "error_rate_percent": (error_count / len(ux_metrics)) * 100,
             "bounce_rate_percent": (bounce_count / len(ux_metrics)) * 100,
-            "unique_users": len(set(m.user_id for m in ux_metrics if m.user_id))
+            "unique_users": len(set(getattr(m, 'user_id', None) for m in ux_metrics if getattr(m, 'user_id', None)))
         }
     
     def _get_active_alerts(self, tenant_id: int) -> List[Dict[str, Any]]:
         """Get active alerts"""
         
         alerts = self.db.query(PerformanceAlert).filter(
-            and_(
-                PerformanceAlert.tenant_id == tenant_id,
-                PerformanceAlert.status == "active"
-            )
+            PerformanceAlert.tenant_id == tenant_id
+        ).filter(
+            PerformanceAlert.status == "active"
         ).order_by(desc(PerformanceAlert.created_at)).limit(10).all()
         
         return [
@@ -790,10 +798,9 @@ class PerformanceMonitoringService:
         """Get recent incidents"""
         
         incidents = self.db.query(PerformanceIncident).filter(
-            and_(
-                PerformanceIncident.tenant_id == tenant_id,
-                PerformanceIncident.started_at >= start_time
-            )
+            PerformanceIncident.tenant_id == tenant_id
+        ).filter(
+            PerformanceIncident.started_at >= start_time
         ).order_by(desc(PerformanceIncident.started_at)).limit(10).all()
         
         return [

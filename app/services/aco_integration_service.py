@@ -107,13 +107,16 @@ class ACOIntegrationService:
             if not user:
                 return False, "User not found"
             
-            tier = user.subscription_tier or 'free'
+            # Safe access to subscription_tier
+            tier = getattr(user, 'subscription_tier', None) or 'free'
             limits = self.tier_limits.get(tier, self.tier_limits['free'])
             
             if action == 'create_tenant':
                 return await self._check_tenant_limit(user, limits)
             elif action == 'add_user_to_tenant':
                 tenant_id = kwargs.get('tenant_id')
+                if tenant_id is None:
+                    return False, "Tenant ID required for user limit check"
                 return await self._check_user_limit(user, tenant_id, limits)
             elif action == 'upload_file':
                 file_size_gb = kwargs.get('file_size_gb', 0)
@@ -139,8 +142,10 @@ class ACOIntegrationService:
         if max_tenants == -1:  # Unlimited
             return True, None
             
+        # Safe access to user.id
+        user_id = getattr(user, 'id', 0)
         current_tenants = self.db.query(func.count(Tenant.id)).filter(
-            Tenant.owner_id == user.id
+            Tenant.owner_id == user_id
         ).scalar()
         
         if current_tenants >= max_tenants:
@@ -188,8 +193,10 @@ class ACOIntegrationService:
         # Get current month's API usage
         start_of_month = datetime.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
         
+        # Safe access to user.id
+        user_id = getattr(user, 'id', 0)
         current_calls = self.db.query(func.count(PlatformUsageMetrics.id)).filter(
-            PlatformUsageMetrics.user_id == user.id,
+            PlatformUsageMetrics.user_id == user_id,
             PlatformUsageMetrics.timestamp >= start_of_month,
             PlatformUsageMetrics.metric_type == 'api_call'
         ).scalar()
@@ -213,11 +220,11 @@ class ACOIntegrationService:
             end_date = datetime.now()
             start_date = end_date - timedelta(days=period_days)
             
-            # Get all active subscriptions
+            # Get all active subscriptions with safe boolean handling
             active_users = self.db.query(User).filter(
                 User.subscription_tier.isnot(None),
                 User.subscription_tier != 'free',
-                User.is_active == True
+                User.is_active.is_(True)
             ).all()
             
             # Calculate MRR by tier
@@ -228,7 +235,8 @@ class ACOIntegrationService:
                 if tier == 'free':
                     continue
                     
-                tier_users = [u for u in active_users if u.subscription_tier == tier]
+                # Safe access to subscription_tier
+                tier_users = [u for u in active_users if getattr(u, 'subscription_tier', None) == tier]
                 tier_mrr = price * len(tier_users)
                 tier_data = {
                     'tier': tier,
@@ -338,12 +346,19 @@ class ACOIntegrationService:
         if not user:
             return {'eligible': False, 'reason': 'User not found'}
         
-        # Eligibility criteria
+        # Eligibility criteria with safe attribute access
+        created_at = getattr(user, 'created_at', datetime.now())
+        is_platform_owner = getattr(user, 'is_platform_owner', False)
+        subscription_tier = getattr(user, 'subscription_tier', None)
+        is_active = getattr(user, 'is_active', False)
+        # Use safe attribute access for account_locked (may not exist on all User models)
+        account_locked = getattr(user, 'account_locked', False)
+        
         criteria = {
-            'early_adopter': user.created_at < datetime(2025, 12, 31),  # Before end of 2025
-            'platform_owner': user.is_platform_owner,
-            'active_subscription': user.subscription_tier not in [None, 'free'],
-            'good_standing': user.is_active and not user.account_locked
+            'early_adopter': created_at < datetime(2025, 12, 31),  # Before end of 2025
+            'platform_owner': is_platform_owner,
+            'active_subscription': subscription_tier not in [None, 'free'],
+            'good_standing': is_active and not account_locked
         }
         
         eligible = all(criteria.values())
@@ -368,8 +383,10 @@ class ACOIntegrationService:
         setattr(user, 'founding_member_enrolled_at', datetime.now())  # type: ignore
         
         # Apply founding member benefits (50% discount for life)
-        if user.subscription_tier in self.tier_pricing:
-            original_price = self.tier_pricing[user.subscription_tier]
+        # Safe access to subscription_tier
+        subscription_tier = getattr(user, 'subscription_tier', None)
+        if subscription_tier and subscription_tier in self.tier_pricing:
+            original_price = self.tier_pricing[subscription_tier]
             setattr(user, 'founding_member_discount_percent', 50)  # type: ignore
             setattr(user, 'founding_member_monthly_price', float(original_price * Decimal('0.5')))  # type: ignore
         
@@ -378,9 +395,9 @@ class ACOIntegrationService:
         return {
             'success': True,
             'user_id': user_id,
-            'enrolled_at': user.founding_member_enrolled_at.isoformat(),
-            'discount_percent': user.founding_member_discount_percent,
-            'monthly_price': user.founding_member_monthly_price
+            'enrolled_at': getattr(user, 'founding_member_enrolled_at', datetime.now()).isoformat() if user else datetime.now().isoformat(),
+            'discount_percent': getattr(user, 'founding_member_discount_percent', 0) if user else 0,
+            'monthly_price': getattr(user, 'founding_member_monthly_price', 0) if user else 0
         }
 
     async def _get_founding_member_benefits(self, user_id: int) -> Dict[str, Any]:
@@ -405,8 +422,10 @@ class ACOIntegrationService:
             'savings_per_month': 0
         }
         
-        if user.subscription_tier in self.tier_pricing:
-            original_price = float(self.tier_pricing[user.subscription_tier])
+        # Safe access to subscription_tier
+        subscription_tier = getattr(user, 'subscription_tier', None)
+        if subscription_tier and subscription_tier in self.tier_pricing:
+            original_price = float(self.tier_pricing[subscription_tier])
             discounted_price = getattr(user, 'founding_member_monthly_price', 0) or 0  # type: ignore
             benefits['savings_per_month'] = original_price - discounted_price
         
@@ -456,8 +475,9 @@ class ACOIntegrationService:
         
         potential_revenue = 0
         for member in founding_members:
-            if member.subscription_tier in self.tier_pricing:
-                potential_revenue += int(float(self.tier_pricing[member.subscription_tier]))
+            subscription_tier = getattr(member, 'subscription_tier', None)
+            if subscription_tier and subscription_tier in self.tier_pricing:
+                potential_revenue += int(float(self.tier_pricing[subscription_tier]))
         
         discount_impact = potential_revenue - float(total_revenue_impact)
         
@@ -490,7 +510,9 @@ class ACOIntegrationService:
             if new_tier not in self.tier_pricing:
                 return {'success': False, 'error': f'Invalid subscription tier: {new_tier}'}
             
-            old_tier = user.subscription_tier or 'free'
+            # Safe access to subscription_tier
+            old_tier_value = getattr(user, 'subscription_tier', None)
+            old_tier = old_tier_value or 'free'
             old_price = self.tier_pricing.get(old_tier, Decimal('0.00'))
             new_price = self.tier_pricing[new_tier]
             

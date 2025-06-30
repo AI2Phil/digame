@@ -42,7 +42,8 @@ class OAuth2Service:
         if not provider:
             raise ValueError("Provider not found")
         
-        auth_config = provider.auth_config
+        # Safe access to auth_config
+        auth_config = getattr(provider, 'auth_config', {})
         
         # Generate PKCE parameters
         code_verifier = base64.urlsafe_b64encode(secrets.token_bytes(32)).decode('utf-8').rstrip('=')
@@ -73,10 +74,11 @@ class OAuth2Service:
             'code_challenge_method': 'S256'
         }
         
-        # Add provider-specific parameters
-        if provider.name == 'microsoft':
+        # Add provider-specific parameters with safe attribute access
+        provider_name = getattr(provider, 'name', '')
+        if provider_name == 'microsoft':
             auth_params['response_mode'] = 'query'
-        elif provider.name == 'google':
+        elif provider_name == 'google':
             auth_params['access_type'] = 'offline'
             auth_params['prompt'] = 'consent'
         
@@ -107,7 +109,10 @@ class OAuth2Service:
             IntegrationProvider.id == provider_id
         ).first()
         
-        auth_config = provider.auth_config
+        # Safe access to auth_config with null check
+        if not provider:
+            raise ValueError("Provider not found")
+        auth_config = getattr(provider, 'auth_config', {})
         
         # Prepare token request
         token_data = {
@@ -125,8 +130,10 @@ class OAuth2Service:
         }
         
         async with aiohttp.ClientSession() as session:
+            # Safe access to token_endpoint
+            token_endpoint = auth_config.get('token_endpoint', '')
             async with session.post(
-                auth_config['token_endpoint'],
+                token_endpoint,
                 data=token_data,
                 headers=headers
             ) as response:
@@ -158,8 +165,11 @@ class OAuth2Service:
             IntegrationProvider.id == connection.provider_id
         ).first()
         
-        auth_config = provider.auth_config
-        auth_data = connection.auth_data
+        # Safe access to auth_config and auth_data with null checks
+        if not provider:
+            raise ValueError("Provider not found")
+        auth_config = getattr(provider, 'auth_config', {})
+        auth_data = getattr(connection, 'auth_data', {})
         
         if 'refresh_token' not in auth_data:
             raise ValueError("No refresh token available")
@@ -188,25 +198,31 @@ class OAuth2Service:
                 
                 tokens = await response.json()
                 
-                # Update connection with new tokens
-                connection.auth_data.update({
+                # Update connection with new tokens using safe attribute access
+                current_auth_data = getattr(connection, 'auth_data', {})
+                current_auth_data.update({
                     'access_token': tokens['access_token'],
                     'token_type': tokens.get('token_type', 'Bearer'),
                     'obtained_at': datetime.utcnow().isoformat()
                 })
+                setattr(connection, 'auth_data', current_auth_data)  # type: ignore
                 
                 if 'expires_in' in tokens:
                     expires_at = datetime.utcnow() + timedelta(seconds=tokens['expires_in'])
-                    connection.token_expires_at = expires_at
-                    connection.auth_data['expires_at'] = expires_at.isoformat()
+                    setattr(connection, 'token_expires_at', expires_at)  # type: ignore
+                    current_auth_data['expires_at'] = expires_at.isoformat()
+                    setattr(connection, 'auth_data', current_auth_data)  # type: ignore
                 
                 if 'refresh_token' in tokens:
-                    connection.auth_data['refresh_token'] = tokens['refresh_token']
-                    connection.refresh_token = tokens['refresh_token']
+                    # Safe dictionary update for refresh token
+                    if isinstance(current_auth_data, dict):
+                        current_auth_data['refresh_token'] = tokens['refresh_token']
+                        setattr(connection, 'auth_data', current_auth_data)  # type: ignore
+                    setattr(connection, 'refresh_token', tokens['refresh_token'])  # type: ignore
                 
-                connection.status = "active"
-                connection.last_error = None
-                connection.updated_at = datetime.utcnow()
+                setattr(connection, 'status', "active")  # type: ignore
+                setattr(connection, 'last_error', None)  # type: ignore
+                setattr(connection, 'updated_at', datetime.utcnow())  # type: ignore
                 
                 self.db.commit()
                 
@@ -219,11 +235,14 @@ class OAuth2Service:
         """
         Validate if access token is still valid
         """
-        if not connection.auth_data.get('access_token'):
+        # Safe access to auth_data
+        auth_data = getattr(connection, 'auth_data', {})
+        if not auth_data.get('access_token'):
             return False
         
-        # Check expiration
-        if connection.token_expires_at and connection.token_expires_at <= datetime.utcnow():
+        # Check expiration with safe attribute access
+        token_expires_at = getattr(connection, 'token_expires_at', None)
+        if token_expires_at and token_expires_at <= datetime.utcnow():
             return False
         
         provider = self.db.query(IntegrationProvider).filter(
@@ -232,8 +251,11 @@ class OAuth2Service:
         
         # Test token with a simple API call
         try:
+            # Safe access to auth_data and access_token
+            auth_data = getattr(connection, 'auth_data', {})
+            access_token = auth_data.get('access_token', '')
             headers = {
-                'Authorization': f"Bearer {connection.auth_data['access_token']}",
+                'Authorization': f"Bearer {access_token}",
                 'Accept': 'application/json'
             }
             
@@ -246,7 +268,11 @@ class OAuth2Service:
                 'dropbox': 'https://api.dropboxapi.com/2/users/get_current_account'
             }
             
-            validation_url = validation_endpoints.get(provider.name)
+            # Safe access to provider name with null check
+            if not provider:
+                return True  # Assume valid if no provider
+            provider_name = getattr(provider, 'name', '')
+            validation_url = validation_endpoints.get(provider_name)
             if not validation_url:
                 return True  # Assume valid if no validation endpoint
             
@@ -268,17 +294,22 @@ class OAuth2Service:
             IntegrationProvider.id == connection.provider_id
         ).first()
         
-        auth_config = provider.auth_config
+        # Safe access to auth_config with null check
+        if not provider:
+            return False
+        auth_config = getattr(provider, 'auth_config', {})
         revoke_endpoint = auth_config.get('revoke_endpoint')
         
         if not revoke_endpoint:
             return True  # No revoke endpoint, consider it revoked
         
         try:
+            # Safe access to auth_data
+            auth_data = getattr(connection, 'auth_data', {})
             token_data = {
-                'token': connection.auth_data.get('access_token'),
-                'client_id': auth_config['client_id'],
-                'client_secret': auth_config['client_secret']
+                'token': auth_data.get('access_token'),
+                'client_id': auth_config.get('client_id', ''),
+                'client_secret': auth_config.get('client_secret', '')
             }
             
             headers = {

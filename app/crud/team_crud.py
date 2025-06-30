@@ -1,7 +1,10 @@
 from sqlalchemy.orm import Session
-from typing import List, Optional, Type, Any
+from typing import List, Optional, Type, Any, TypeVar, cast
 from pydantic import BaseModel
 from app import models, schemas # Assuming models and schemas are accessible this way
+
+# TypeVar for generic CRUD operations
+T = TypeVar('T', bound=models.Base)
 
 # CRUD for Team
 def create_team(db: Session, team: schemas.TeamCreate, created_by_user_id: Optional[int] = None) -> models.Team:
@@ -16,7 +19,10 @@ def create_team(db: Session, team: schemas.TeamCreate, created_by_user_id: Optio
 
     if team.initial_members:
         for member_data in team.initial_members:
-            create_team_member(db, team_id=db_team.id, member=member_data)
+            # Safe access to db_team.id using getattr with type assertion
+            team_id = getattr(db_team, 'id', None)
+            if team_id is not None:
+                create_team_member(db, team_id=team_id, member=member_data)
     db.refresh(db_team) # Refresh again to get members if any were added
     return db_team
 
@@ -87,7 +93,7 @@ def delete_team_member(db: Session, team_id: int, user_id: int) -> Optional[mode
     return db_member
 
 # Generic CRUD creator for PerformanceMetric, SkillGap, Workflow
-def _create_team_related_item(db: Session, item_create_schema: BaseModel, model_cls: Type[models.Base]) -> models.Base:
+def _create_team_related_item(db: Session, item_create_schema: BaseModel, model_cls: Type[T]) -> T:
     item_data = item_create_schema.dict()
     db_item = model_cls(**item_data)
     db.add(db_item)
@@ -96,17 +102,25 @@ def _create_team_related_item(db: Session, item_create_schema: BaseModel, model_
     return db_item
 
 # Generic CRUD getter for PerformanceMetric, SkillGap, Workflow by ID
-def _get_team_related_item_by_id(db: Session, item_id: int, model_cls: Type[models.Base]) -> Optional[models.Base]:
-    return db.query(model_cls).filter(model_cls.id == item_id).first()
+def _get_team_related_item_by_id(db: Session, item_id: int, model_cls: Type[T]) -> Optional[T]:
+    # Safe attribute access using getattr for id field
+    id_attr = getattr(model_cls, 'id', None)
+    if id_attr is not None:
+        return db.query(model_cls).filter(id_attr == item_id).first()
+    return None
 
 # Generic CRUD getter for PerformanceMetric, SkillGap, Workflow by Team ID
-def _get_team_related_items_by_team_id(db: Session, team_id: int, model_cls: Type[models.Base], skip: int = 0, limit: int = 100) -> List[models.Base]:
-    return db.query(model_cls).filter(model_cls.team_id == team_id).offset(skip).limit(limit).all()
+def _get_team_related_items_by_team_id(db: Session, team_id: int, model_cls: Type[T], skip: int = 0, limit: int = 100) -> List[T]:
+    # Safe attribute access using getattr for team_id field
+    team_id_attr = getattr(model_cls, 'team_id', None)
+    if team_id_attr is not None:
+        return db.query(model_cls).filter(team_id_attr == team_id).offset(skip).limit(limit).all()
+    return []
 
 # Generic CRUD updater for PerformanceMetric, SkillGap, Workflow
-def _update_team_related_item(db: Session, item_id: int, item_update_schema: BaseModel, model_cls: Type[models.Base]) -> Optional[models.Base]:
+def _update_team_related_item(db: Session, item_id: int, item_update_schema: BaseModel, model_cls: Type[T]) -> Optional[T]:
     db_item = _get_team_related_item_by_id(db, item_id, model_cls)
-    if db_item:
+    if db_item is not None:
         update_data = item_update_schema.dict(exclude_unset=True)
         for key, value in update_data.items():
             setattr(db_item, key, value)
@@ -115,9 +129,9 @@ def _update_team_related_item(db: Session, item_id: int, item_update_schema: Bas
     return db_item
 
 # Generic CRUD deleter for PerformanceMetric, SkillGap, Workflow
-def _delete_team_related_item(db: Session, item_id: int, model_cls: Type[models.Base]) -> Optional[models.Base]:
+def _delete_team_related_item(db: Session, item_id: int, model_cls: Type[T]) -> Optional[T]:
     db_item = _get_team_related_item_by_id(db, item_id, model_cls)
-    if db_item:
+    if db_item is not None:
         db.delete(db_item)
         db.commit()
     return db_item
@@ -125,50 +139,62 @@ def _delete_team_related_item(db: Session, item_id: int, model_cls: Type[models.
 
 # CRUD for TeamPerformanceMetric
 def create_team_performance_metric(db: Session, metric: schemas.TeamPerformanceMetricCreate) -> models.TeamPerformanceMetric:
-    return _create_team_related_item(db, metric, models.TeamPerformanceMetric)
+    return cast(models.TeamPerformanceMetric, _create_team_related_item(db, metric, models.TeamPerformanceMetric))
 
 def get_team_performance_metric(db: Session, metric_id: int) -> Optional[models.TeamPerformanceMetric]:
-    return _get_team_related_item_by_id(db, metric_id, models.TeamPerformanceMetric)
+    result = _get_team_related_item_by_id(db, metric_id, models.TeamPerformanceMetric)
+    return cast(models.TeamPerformanceMetric, result) if result else None
 
 def get_team_performance_metrics_for_team(db: Session, team_id: int, skip: int = 0, limit: int = 100) -> List[models.TeamPerformanceMetric]:
-    return _get_team_related_items_by_team_id(db, team_id, models.TeamPerformanceMetric, skip, limit)
+    results = _get_team_related_items_by_team_id(db, team_id, models.TeamPerformanceMetric, skip, limit)
+    return cast(List[models.TeamPerformanceMetric], results)
 
 def update_team_performance_metric(db: Session, metric_id: int, metric_update: schemas.TeamPerformanceMetricUpdate) -> Optional[models.TeamPerformanceMetric]:
-    return _update_team_related_item(db, metric_id, metric_update, models.TeamPerformanceMetric)
+    result = _update_team_related_item(db, metric_id, metric_update, models.TeamPerformanceMetric)
+    return cast(models.TeamPerformanceMetric, result) if result else None
 
 def delete_team_performance_metric(db: Session, metric_id: int) -> Optional[models.TeamPerformanceMetric]:
-    return _delete_team_related_item(db, metric_id, models.TeamPerformanceMetric)
+    result = _delete_team_related_item(db, metric_id, models.TeamPerformanceMetric)
+    return cast(models.TeamPerformanceMetric, result) if result else None
 
 
 # CRUD for TeamSkillGap
 def create_team_skill_gap(db: Session, skill_gap: schemas.TeamSkillGapCreate) -> models.TeamSkillGap:
-    return _create_team_related_item(db, skill_gap, models.TeamSkillGap)
+    return cast(models.TeamSkillGap, _create_team_related_item(db, skill_gap, models.TeamSkillGap))
 
 def get_team_skill_gap(db: Session, skill_gap_id: int) -> Optional[models.TeamSkillGap]:
-    return _get_team_related_item_by_id(db, skill_gap_id, models.TeamSkillGap)
+    result = _get_team_related_item_by_id(db, skill_gap_id, models.TeamSkillGap)
+    return cast(models.TeamSkillGap, result) if result else None
 
 def get_team_skill_gaps_for_team(db: Session, team_id: int, skip: int = 0, limit: int = 100) -> List[models.TeamSkillGap]:
-    return _get_team_related_items_by_team_id(db, team_id, models.TeamSkillGap, skip, limit)
+    results = _get_team_related_items_by_team_id(db, team_id, models.TeamSkillGap, skip, limit)
+    return cast(List[models.TeamSkillGap], results)
 
 def update_team_skill_gap(db: Session, skill_gap_id: int, skill_gap_update: schemas.TeamSkillGapUpdate) -> Optional[models.TeamSkillGap]:
-    return _update_team_related_item(db, skill_gap_id, skill_gap_update, models.TeamSkillGap)
+    result = _update_team_related_item(db, skill_gap_id, skill_gap_update, models.TeamSkillGap)
+    return cast(models.TeamSkillGap, result) if result else None
 
 def delete_team_skill_gap(db: Session, skill_gap_id: int) -> Optional[models.TeamSkillGap]:
-    return _delete_team_related_item(db, skill_gap_id, models.TeamSkillGap)
+    result = _delete_team_related_item(db, skill_gap_id, models.TeamSkillGap)
+    return cast(models.TeamSkillGap, result) if result else None
 
 
 # CRUD for TeamWorkflow
 def create_team_workflow(db: Session, workflow: schemas.TeamWorkflowCreate) -> models.TeamWorkflow:
-    return _create_team_related_item(db, workflow, models.TeamWorkflow)
+    return cast(models.TeamWorkflow, _create_team_related_item(db, workflow, models.TeamWorkflow))
 
 def get_team_workflow(db: Session, workflow_id: int) -> Optional[models.TeamWorkflow]:
-    return _get_team_related_item_by_id(db, workflow_id, models.TeamWorkflow)
+    result = _get_team_related_item_by_id(db, workflow_id, models.TeamWorkflow)
+    return cast(models.TeamWorkflow, result) if result else None
 
 def get_team_workflows_for_team(db: Session, team_id: int, skip: int = 0, limit: int = 100) -> List[models.TeamWorkflow]:
-    return _get_team_related_items_by_team_id(db, team_id, models.TeamWorkflow, skip, limit)
+    results = _get_team_related_items_by_team_id(db, team_id, models.TeamWorkflow, skip, limit)
+    return cast(List[models.TeamWorkflow], results)
 
 def update_team_workflow(db: Session, workflow_id: int, workflow_update: schemas.TeamWorkflowUpdate) -> Optional[models.TeamWorkflow]:
-    return _update_team_related_item(db, workflow_id, workflow_update, models.TeamWorkflow)
+    result = _update_team_related_item(db, workflow_id, workflow_update, models.TeamWorkflow)
+    return cast(models.TeamWorkflow, result) if result else None
 
 def delete_team_workflow(db: Session, workflow_id: int) -> Optional[models.TeamWorkflow]:
-    return _delete_team_related_item(db, workflow_id, models.TeamWorkflow)
+    result = _delete_team_related_item(db, workflow_id, models.TeamWorkflow)
+    return cast(models.TeamWorkflow, result) if result else None

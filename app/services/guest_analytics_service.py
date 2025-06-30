@@ -124,7 +124,7 @@ class GuestAnalyticsService:
         
         # Funnel stages
         total_guests = len(guests)
-        email_verified = len([g for g in guests if g.email_verified])
+        email_verified = len([g for g in guests if getattr(g, 'email_verified', False)])
         onboarding_started = self.db.query(GuestOnboardingProgress).join(User).filter(
             User.created_at >= start_date,
             User.created_at <= end_date,
@@ -201,8 +201,10 @@ class GuestAnalyticsService:
         
         session_durations = []
         for progress in progress_records:
-            if progress.started_at and progress.last_activity_at:
-                duration = (progress.last_activity_at - progress.started_at).total_seconds() / 60
+            started_at = getattr(progress, 'started_at', None)
+            last_activity_at = getattr(progress, 'last_activity_at', None)
+            if started_at and last_activity_at:
+                duration = (last_activity_at - started_at).total_seconds() / 60
                 session_durations.append(min(duration, 120))  # Cap at 2 hours for realistic sessions
         
         avg_session_duration = sum(session_durations) / len(session_durations) if session_durations else 0
@@ -245,26 +247,28 @@ class GuestAnalyticsService:
         
         for record in onboarding_records:
             # Count completed steps
-            if record.profile_setup_completed:
+            if getattr(record, 'profile_setup_completed', False):
                 step_completions["1"] += 1
-            if record.skills_assessment_completed:
+            if getattr(record, 'skills_assessment_completed', False):
                 step_completions["2"] += 1
-            if record.personality_profile_completed:
+            if getattr(record, 'personality_profile_completed', False):
                 step_completions["3"] += 1
-            if record.work_style_completed:
+            if getattr(record, 'work_style_completed', False):
                 step_completions["4"] += 1
-            if record.goals_setup_completed:
+            if getattr(record, 'goals_setup_completed', False):
                 step_completions["5"] += 1
-            if record.twin_preview_completed:
+            if getattr(record, 'twin_preview_completed', False):
                 step_completions["6"] += 1
             
             # Calculate completion time for completed onboardings
-            if record.completed_at and record.started_at:
-                completion_time = (record.completed_at - record.started_at).total_seconds() / 60
+            completed_at = getattr(record, 'completed_at', None)
+            started_at = getattr(record, 'started_at', None)
+            if completed_at and started_at:
+                completion_time = (completed_at - started_at).total_seconds() / 60
                 completion_times.append(completion_time)
         
         total_started = len(onboarding_records)
-        completed = len([r for r in onboarding_records if r.completion_percentage >= 100])
+        completed = len([r for r in onboarding_records if getattr(r, 'completion_percentage', 0) >= 100])
         
         step_completion_rates = {
             f"step_{i}": (step_completions[str(i)] / total_started * 100) if total_started > 0 else 0
@@ -292,13 +296,14 @@ class GuestAnalyticsService:
         
         completeness_distribution = defaultdict(int)
         for profile in profiles:
-            score_range = int(profile.profile_completeness_score // 10) * 10
+            completeness_score = getattr(profile, 'profile_completeness_score', 0.0)
+            score_range = int(completeness_score // 10) * 10
             completeness_distribution[f"{score_range}-{score_range + 9}%"] += 1
         
         # Skills assessment adoption
-        skills_completed = len([p for p in profiles if p.technical_skills])
-        personality_completed = len([p for p in profiles if p.personality_type])
-        goals_completed = len([p for p in profiles if p.short_term_goals])
+        skills_completed = len([p for p in profiles if getattr(p, 'technical_skills', None)])
+        personality_completed = len([p for p in profiles if getattr(p, 'personality_type', None)])
+        goals_completed = len([p for p in profiles if getattr(p, 'short_term_goals', None)])
         
         total_profiles = len(profiles)
         
@@ -353,9 +358,10 @@ class GuestAnalyticsService:
         ).all()
         
         for activity in activities:
-            if activity.last_activity_at:
-                hour = activity.last_activity_at.hour
-                day = activity.last_activity_at.strftime('%A')
+            last_activity_at = getattr(activity, 'last_activity_at', None)
+            if last_activity_at:
+                hour = last_activity_at.hour
+                day = last_activity_at.strftime('%A')
                 activity_by_hour[hour] += 1
                 activity_by_day[day] += 1
         
@@ -788,8 +794,8 @@ class GuestAnalyticsService:
         if not progress_records:
             return 0.0
         
-        total_engagement = sum(record.completion_percentage for record in progress_records)
-        return total_engagement / len(progress_records)
+        total_engagement = sum(getattr(record, 'completion_percentage', 0) for record in progress_records)
+        return float(total_engagement / len(progress_records))
     
     def _calculate_time_to_value(self, start_date: datetime, end_date: datetime) -> float:
         """Calculate average time to value (completion)"""
@@ -804,8 +810,10 @@ class GuestAnalyticsService:
         
         completion_times = []
         for record in completed_records:
-            if record.started_at and record.completed_at:
-                time_diff = (record.completed_at - record.started_at).total_seconds() / 3600  # hours
+            started_at = getattr(record, 'started_at', None)
+            completed_at = getattr(record, 'completed_at', None)
+            if started_at and completed_at:
+                time_diff = (completed_at - started_at).total_seconds() / 3600  # hours
                 completion_times.append(time_diff)
         
         return sum(completion_times) / len(completion_times) if completion_times else 0.0
