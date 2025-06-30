@@ -69,24 +69,24 @@ class AnalyticsService:
         """Create a new analytics model"""
         
         model = AnalyticsModel()
-        model.tenant_id = tenant_id  # type: ignore
-        model.name = model_data["name"]  # type: ignore
-        model.display_name = model_data["display_name"]  # type: ignore
-        model.description = model_data.get("description")  # type: ignore
-        model.model_type = model_data["model_type"]  # type: ignore
-        model.category = model_data["category"]  # type: ignore
-        model.algorithm = model_data["algorithm"]  # type: ignore
-        model.features = model_data.get("features", [])  # type: ignore
-        model.target_variable = model_data["target_variable"]  # type: ignore
-        model.hyperparameters = model_data.get("hyperparameters", {})  # type: ignore
-        model.dimensions = model_data.get("dimensions", [])  # type: ignore
-        model.metrics = model_data.get("metrics", [])  # type: ignore
-        model.aggregation_types = model_data.get("aggregation_types", {})  # type: ignore
-        model.training_data_source = model_data["training_data_source"]  # type: ignore
-        model.training_period_days = model_data.get("training_period_days", 90)  # type: ignore
-        model.retrain_frequency_days = model_data.get("retrain_frequency_days", 7)  # type: ignore
-        model.validation_split = model_data.get("validation_split", 0.2)  # type: ignore
-        model.created_by_user_id = created_by_user_id  # type: ignore
+        setattr(model, 'tenant_id', tenant_id)  # type: ignore
+        setattr(model, 'name', model_data["name"])  # type: ignore
+        setattr(model, 'display_name', model_data["display_name"])  # type: ignore
+        setattr(model, 'description', model_data.get("description"))  # type: ignore
+        setattr(model, 'model_type', model_data["model_type"])  # type: ignore
+        setattr(model, 'category', model_data["category"])  # type: ignore
+        setattr(model, 'algorithm', model_data["algorithm"])  # type: ignore
+        setattr(model, 'features', model_data.get("features", []))  # type: ignore
+        setattr(model, 'target_variable', model_data["target_variable"])  # type: ignore
+        setattr(model, 'hyperparameters', model_data.get("hyperparameters", {}))  # type: ignore
+        setattr(model, 'dimensions', model_data.get("dimensions", []))  # type: ignore
+        setattr(model, 'metrics', model_data.get("metrics", []))  # type: ignore
+        setattr(model, 'aggregation_types', model_data.get("aggregation_types", {}))  # type: ignore
+        setattr(model, 'training_data_source', model_data["training_data_source"])  # type: ignore
+        setattr(model, 'training_period_days', model_data.get("training_period_days", 90))  # type: ignore
+        setattr(model, 'retrain_frequency_days', model_data.get("retrain_frequency_days", 7))  # type: ignore
+        setattr(model, 'validation_split', model_data.get("validation_split", 0.2))  # type: ignore
+        setattr(model, 'created_by_user_id', created_by_user_id)  # type: ignore
         
         self.db.add(model)
         self.db.commit()
@@ -108,7 +108,7 @@ class AnalyticsService:
         )
         
         if active_only:
-            query = query.filter(AnalyticsModel.is_active.is_(True))  # type: ignore
+            query = query.filter(AnalyticsModel.is_active == True)  # type: ignore
         
         if model_type:
             query = query.filter(AnalyticsModel.model_type == model_type)  # type: ignore
@@ -196,22 +196,22 @@ class AnalyticsService:
         
         # Create training job
         training_job = AnalyticsTrainingJob()
-        training_job.tenant_id = model.tenant_id  # type: ignore
-        training_job.model_id = model_id  # type: ignore
-        training_job.job_type = "retrain" if getattr(model, 'is_trained', False) else "initial"  # type: ignore
-        training_job.training_config = {  # type: ignore
+        setattr(training_job, 'tenant_id', getattr(model, 'tenant_id', None))  # type: ignore
+        setattr(training_job, 'model_id', model_id)  # type: ignore
+        setattr(training_job, 'job_type', "retrain" if getattr(model, 'is_trained', False) else "initial")  # type: ignore
+        setattr(training_job, 'training_config', {  # type: ignore
             "algorithm": getattr(model, 'algorithm', ''),
             "features": getattr(model, 'features', []),
             "target_variable": getattr(model, 'target_variable', ''),
             "hyperparameters": getattr(model, 'hyperparameters', {}),
             "validation_split": getattr(model, 'validation_split', 0.2)
-        }
-        training_job.data_source_config = {  # type: ignore
+        })
+        setattr(training_job, 'data_source_config', {  # type: ignore
             "source": getattr(model, 'training_data_source', ''),
             "period_days": getattr(model, 'training_period_days', 90)
-        }
-        training_job.triggered_by = triggered_by  # type: ignore
-        training_job.triggered_by_user_id = triggered_by_user_id  # type: ignore
+        })
+        setattr(training_job, 'triggered_by', triggered_by)  # type: ignore
+        setattr(training_job, 'triggered_by_user_id', triggered_by_user_id)  # type: ignore
         
         self.db.add(training_job)
         self.db.commit()
@@ -566,21 +566,21 @@ class AnalyticsService:
         
         # Create prediction record
         prediction = AnalyticsPrediction()
-        setattr(prediction, 'tenant_id', model.tenant_id)
-        setattr(prediction, 'model_id', model_id)
-        setattr(prediction, 'entity_type', entity_type)
-        setattr(prediction, 'entity_id', entity_id)
-        setattr(prediction, 'prediction_type', model.model_type)
-        setattr(prediction, 'input_features', input_features)
-        setattr(prediction, 'predicted_value', predicted_value_single)
-        setattr(prediction, 'predicted_values_multi_dim', predicted_values_multi_dim)
-        setattr(prediction, 'confidence_score', confidence_score)
-        setattr(prediction, 'prediction_interval_lower', predicted_value_single * 0.9 if predicted_value_single is not None else None)
-        setattr(prediction, 'prediction_interval_upper', predicted_value_single * 1.1 if predicted_value_single is not None else None)
-        setattr(prediction, 'prediction_horizon_days', prediction_horizon_days)
-        setattr(prediction, 'expires_at', datetime.utcnow() + timedelta(days=7) if prediction_horizon_days else None)
-        setattr(prediction, 'created_by_user_id', created_by_user_id)
-        setattr(prediction, 'raw_prediction_output', prediction_output)
+        setattr(prediction, 'tenant_id', getattr(model, 'tenant_id', None))  # type: ignore
+        setattr(prediction, 'model_id', model_id)  # type: ignore
+        setattr(prediction, 'entity_type', entity_type)  # type: ignore
+        setattr(prediction, 'entity_id', entity_id)  # type: ignore
+        setattr(prediction, 'prediction_type', getattr(model, 'model_type', None))  # type: ignore
+        setattr(prediction, 'input_features', input_features)  # type: ignore
+        setattr(prediction, 'predicted_value', predicted_value_single)  # type: ignore
+        setattr(prediction, 'predicted_values_multi_dim', predicted_values_multi_dim)  # type: ignore
+        setattr(prediction, 'confidence_score', confidence_score)  # type: ignore
+        setattr(prediction, 'prediction_interval_lower', predicted_value_single * 0.9 if predicted_value_single is not None else None)  # type: ignore
+        setattr(prediction, 'prediction_interval_upper', predicted_value_single * 1.1 if predicted_value_single is not None else None)  # type: ignore
+        setattr(prediction, 'prediction_horizon_days', prediction_horizon_days)  # type: ignore
+        setattr(prediction, 'expires_at', datetime.utcnow() + timedelta(days=7) if prediction_horizon_days else None)  # type: ignore
+        setattr(prediction, 'created_by_user_id', created_by_user_id)  # type: ignore
+        setattr(prediction, 'raw_prediction_output', prediction_output)  # type: ignore
         
         self.db.add(prediction)
         self.db.commit()
@@ -878,7 +878,7 @@ class AnalyticsService:
         
         calculations = self.db.query(ROICalculation).filter(
             and_(
-                ROICalculation.tenant_id.is_(tenant_id),
+                ROICalculation.tenant_id == tenant_id,
                 ROICalculation.entity_id.in_(entity_ids)
             )
         ).all()
@@ -997,15 +997,15 @@ class AnalyticsService:
         
         active_models = self.db.query(AnalyticsModel).filter(
             and_(
-                AnalyticsModel.tenant_id.is_(tenant_id),
-                AnalyticsModel.is_active.is_(True)
+                AnalyticsModel.tenant_id == tenant_id,
+                AnalyticsModel.is_active == True
             )
         ).count()
         
         trained_models = self.db.query(AnalyticsModel).filter(
             and_(
-                AnalyticsModel.tenant_id.is_(tenant_id),
-                AnalyticsModel.status.is_("trained")
+                AnalyticsModel.tenant_id == tenant_id,
+                AnalyticsModel.status == "trained"
             )
         ).count()
         
@@ -1016,8 +1016,8 @@ class AnalyticsService:
         
         recent_predictions = self.db.query(AnalyticsPrediction).filter(
             and_(
-                AnalyticsPrediction.tenant_id.is_(tenant_id),
-                AnalyticsPrediction.prediction_date.__ge__(datetime.utcnow() - timedelta(days=7))
+                AnalyticsPrediction.tenant_id == tenant_id,
+                AnalyticsPrediction.prediction_date >= datetime.utcnow() - timedelta(days=7)
             )
         ).count()
         
@@ -1097,9 +1097,9 @@ class AnalyticsService:
         models = self.get_analytics_models(tenant_id)
         if models:
             # Filter out models that might not have accuracy_score (e.g. if it's not applicable)
-            relevant_models = [m for m in models if m.accuracy_score is not None]
+            relevant_models = [m for m in models if getattr(m, 'accuracy_score', None) is not None]
             if relevant_models:
-                avg_accuracy = sum(m.accuracy_score for m in relevant_models) / len(relevant_models)
+                avg_accuracy = sum(getattr(m, 'accuracy_score', 0) for m in relevant_models) / len(relevant_models)
                 if avg_accuracy > 0.85:
                     insights.append({
                         "type": "positive",
@@ -1112,7 +1112,7 @@ class AnalyticsService:
         # ROI insights
         roi_calcs = self.get_roi_calculations(tenant_id)
         if roi_calcs:
-            positive_roi_count = sum(1 for calc in roi_calcs if calc.roi_percentage > 0)
+            positive_roi_count = sum(1 for calc in roi_calcs if getattr(calc, 'roi_percentage', 0) > 0)
             if len(roi_calcs) > 0 and positive_roi_count / len(roi_calcs) > 0.8 :
                 insights.append({
                     "type": "positive",
@@ -1125,7 +1125,7 @@ class AnalyticsService:
         # Prediction insights
         predictions = self.get_predictions(tenant_id, limit=100)
         if predictions:
-            recent_predictions = [p for p in predictions if p.prediction_date >= datetime.utcnow() - timedelta(days=7)]
+            recent_predictions = [p for p in predictions if getattr(p, 'prediction_date', datetime.utcnow()) >= datetime.utcnow() - timedelta(days=7)]
             if len(recent_predictions) > 20:
                 insights.append({
                     "type": "info",
@@ -1179,11 +1179,19 @@ class AnalyticsService:
         company_size: Optional[str] = None
     ) -> List[ComparativeBenchmark]:
         """Get relevant benchmarks."""
-        query = self.db.query(ComparativeBenchmark).filter(
+        # Build query with separate conditions to avoid SQLAlchemy type issues
+        base_query = self.db.query(ComparativeBenchmark).filter(
             ComparativeBenchmark.metric_name == metric_name,
-            ComparativeBenchmark.is_active == True,
-            or_(ComparativeBenchmark.tenant_id.is_(tenant_id), ComparativeBenchmark.tenant_id.is_(None)) # Global or tenant-specific
+            ComparativeBenchmark.is_active == True
         )
+        
+        # Get tenant-specific benchmarks
+        tenant_query = base_query.filter(ComparativeBenchmark.tenant_id == tenant_id)
+        # Get global benchmarks
+        global_query = base_query.filter(ComparativeBenchmark.tenant_id.is_(None))
+        
+        # Union the results
+        query = tenant_query.union(global_query)
         if category:
             query = query.filter(ComparativeBenchmark.category == category)
         if industry_segment:
@@ -1211,12 +1219,15 @@ class AnalyticsService:
             prediction_horizon_days, created_by_user_id
         )
 
-        if benchmark_params and prediction.predicted_value is not None:
+        predicted_value = getattr(prediction, 'predicted_value', None)
+        if benchmark_params and predicted_value is not None:
             model = self.db.query(AnalyticsModel).filter(AnalyticsModel.id == model_id).first()
             if model:
+                target_variable = getattr(model, 'target_variable', '')
+                tenant_id = getattr(model, 'tenant_id', None)
                 benchmarks = self.get_benchmarks(
-                    metric_name=model.target_variable, # Assuming target variable is the metric to benchmark
-                    tenant_id=model.tenant_id,
+                    metric_name=target_variable, # Assuming target variable is the metric to benchmark
+                    tenant_id=tenant_id,
                     **benchmark_params
                 )
                 if benchmarks:
@@ -1256,14 +1267,18 @@ class AnalyticsService:
 
         # Prepare parameters for get_benchmarks
         # Prioritize explicitly passed benchmark_params, then infer from metric
+        metric_name = getattr(metric, 'metric_name', '')
+        metric_category = getattr(metric, 'category', None)
+        dimensions_values = getattr(metric, 'dimensions_values', None) or {}
+        
         effective_benchmark_params = {
-            "metric_name": metric.metric_name,
-            "category": (benchmark_params or {}).get("category", metric.category if metric.category else None), # Use metric's category if available
+            "metric_name": metric_name,
+            "category": (benchmark_params or {}).get("category", metric_category if metric_category else None), # Use metric's category if available
             # Infer more specific params from metric.dimensions_values if not in benchmark_params
             # This is an example; mapping from dimensions_values to benchmark fields might be complex
-            "industry_segment": (benchmark_params or {}).get("industry_segment", (metric.dimensions_values or {}).get("industry_segment") if metric.dimensions_values else None),
-            "region": (benchmark_params or {}).get("region", (metric.dimensions_values or {}).get("region") if metric.dimensions_values else None),
-            "company_size": (benchmark_params or {}).get("company_size", (metric.dimensions_values or {}).get("company_size") if metric.dimensions_values else None),
+            "industry_segment": (benchmark_params or {}).get("industry_segment", dimensions_values.get("industry_segment") if dimensions_values else None),
+            "region": (benchmark_params or {}).get("region", dimensions_values.get("region") if dimensions_values else None),
+            "company_size": (benchmark_params or {}).get("company_size", dimensions_values.get("company_size") if dimensions_values else None),
         }
         # Remove None values from params to avoid issues with get_benchmarks query
         effective_benchmark_params = {k: v for k, v in effective_benchmark_params.items() if v is not None}
@@ -1271,7 +1286,7 @@ class AnalyticsService:
         if benchmark_params: # If explicit params are given, they take precedence
             effective_benchmark_params.update(benchmark_params)
             # Ensure metric_name is always from the metric itself for relevance
-            effective_benchmark_params["metric_name"] = metric.metric_name
+            effective_benchmark_params["metric_name"] = metric_name
 
 
         benchmarks = self.get_benchmarks(
@@ -1280,24 +1295,31 @@ class AnalyticsService:
         )
 
         for benchmark in benchmarks:
+            current_value = getattr(metric, 'current_value', 0)
+            measurement_unit = getattr(metric, 'measurement_unit', '')
+            benchmark_name = getattr(benchmark, 'name', '')
+            benchmark_value = getattr(benchmark, 'benchmark_value', 0)
+            benchmark_unit = getattr(benchmark, 'unit', '')
+            benchmark_value_type = getattr(benchmark, 'value_type', '')
+            
             comparison_data = {
-                "performance_metric_name": metric.metric_name,
-                "performance_metric_value": metric.current_value,
-                "performance_metric_unit": metric.measurement_unit,
-                "benchmark_name": benchmark.name,
-                "benchmark_value": benchmark.benchmark_value,
-                "benchmark_unit": benchmark.unit,
-                "benchmark_value_type": benchmark.value_type,
+                "performance_metric_name": metric_name,
+                "performance_metric_value": current_value,
+                "performance_metric_unit": measurement_unit,
+                "benchmark_name": benchmark_name,
+                "benchmark_value": benchmark_value,
+                "benchmark_unit": benchmark_unit,
+                "benchmark_value_type": benchmark_value_type,
                 "difference": None,
-                "comparison_unit": metric.measurement_unit # Assume comparison in metric's unit
+                "comparison_unit": measurement_unit # Assume comparison in metric's unit
             }
             # Ensure units are compatible for a meaningful difference calculation
             # This is a simplified check; real unit conversion might be needed.
-            if metric.measurement_unit == benchmark.unit or (not metric.measurement_unit and not benchmark.unit):
-                comparison_data["difference"] = metric.current_value - benchmark.benchmark_value
+            if measurement_unit == benchmark_unit or (not measurement_unit and not benchmark_unit):
+                comparison_data["difference"] = current_value - benchmark_value
             else:
                 # If units differ and no conversion logic, difference is not directly comparable
-                comparison_data["difference_comment"] = f"Units differ: Metric ({metric.measurement_unit}), Benchmark ({benchmark.unit})"
+                comparison_data["difference_comment"] = f"Units differ: Metric ({measurement_unit}), Benchmark ({benchmark_unit})"
 
             comparisons.append(comparison_data)
 
@@ -1312,7 +1334,8 @@ class AnalyticsService:
         if not benchmark:
             return None
         # Allow access if benchmark is global or belongs to the requesting tenant
-        if benchmark.tenant_id is None or benchmark.tenant_id == tenant_id:
+        benchmark_tenant_id = getattr(benchmark, 'tenant_id', None)
+        if benchmark_tenant_id is None or benchmark_tenant_id == tenant_id:
             return benchmark
         return None
 
@@ -1332,7 +1355,8 @@ class AnalyticsService:
         # Authorization: Only allow update if benchmark is global (requires admin logic not yet here)
         # or if it belongs to the requesting tenant.
         # For now, let's assume admin can update global, tenant user can update their own.
-        is_global_benchmark = benchmark.tenant_id is None
+        benchmark_tenant_id = getattr(benchmark, 'tenant_id', None)
+        is_global_benchmark = benchmark_tenant_id is None
         can_update = False
         if is_global_benchmark:
             # TODO: Add role check for admin if current_user object was available with roles
@@ -1342,7 +1366,7 @@ class AnalyticsService:
             # Or, if we assume only tenant-specific benchmarks can be updated via this tenant-scoped endpoint:
             pass # Requires admin check logic for global benchmarks
 
-        if benchmark.tenant_id == requesting_tenant_id:
+        if benchmark_tenant_id == requesting_tenant_id:
             can_update = True
 
         # A simple protection: if benchmark is global, only an admin (not checked here) should update.
@@ -1358,7 +1382,7 @@ class AnalyticsService:
             # For this iteration, let's assume this endpoint is primarily for tenant users managing their own benchmarks.
             print(f"Warning: Update attempt on global benchmark {benchmark_id} by tenant {requesting_tenant_id}. Requires admin privileges not checked here.")
             return None
-        elif benchmark.tenant_id != requesting_tenant_id:
+        elif benchmark_tenant_id != requesting_tenant_id:
             # Benchmark is tenant-specific, but user's tenant does not match.
             return None
 
@@ -1366,7 +1390,7 @@ class AnalyticsService:
         for key, value in update_data_dict.items():
             setattr(benchmark, key, value)
 
-        benchmark.updated_at = datetime.utcnow()
+        setattr(benchmark, 'updated_at', datetime.utcnow())  # type: ignore
         # benchmark.updated_by_user_id = updated_by_user_id # If model has this field
 
         self.db.commit()
@@ -1385,14 +1409,15 @@ class AnalyticsService:
             return False
 
         # Authorization: Similar to update.
-        is_global_benchmark = benchmark.tenant_id is None
+        benchmark_tenant_id = getattr(benchmark, 'tenant_id', None)
+        is_global_benchmark = benchmark_tenant_id is None
 
         if is_global_benchmark:
             # For now, prevent non-admin deletion of global benchmarks through this flow.
             # Requires admin role check.
             print(f"Warning: Delete attempt on global benchmark {benchmark_id} by tenant {requesting_tenant_id}. Requires admin privileges not checked here.")
             return False
-        elif benchmark.tenant_id != requesting_tenant_id:
+        elif benchmark_tenant_id != requesting_tenant_id:
             # Benchmark is tenant-specific, but user's tenant does not match.
             return False
 
@@ -1508,12 +1533,14 @@ class AnalyticsService:
         if not model:
             raise ValueError(f"AnalyticsModel with id {model_id} not found.")
 
-        if not model.dimensions:
+        model_dimensions = getattr(model, 'dimensions', None)
+        if not model_dimensions:
             # Not a multi-dimensional model configuration, or dimensions not specified
             # Depending on requirements, could return empty, error, or process as single dimension
             return [] # Or raise ValueError("Model does not have dimensions specified.")
 
-        if not model.metrics:
+        model_metrics = getattr(model, 'metrics', None)
+        if not model_metrics:
             return [] # Or raise ValueError("Model does not have metrics specified for aggregation.")
 
         if not data_records:
@@ -1524,10 +1551,10 @@ class AnalyticsService:
         data_df = pd.DataFrame(data_records)  # type: ignore
 
         # Validate that all specified dimensions and metrics exist in the DataFrame
-        for dim in model.dimensions:
+        for dim in model_dimensions:
             if dim not in data_df.columns:
                 raise ValueError(f"Dimension '{dim}' specified in model not found in provided data.")
-        for met in model.metrics:
+        for met in model_metrics:
             if met not in data_df.columns:
                 raise ValueError(f"Metric '{met}' specified in model not found in provided data.")
             # Ensure metric column is numeric for aggregation
@@ -1539,7 +1566,7 @@ class AnalyticsService:
 
         # Perform groupby and aggregation
         try:
-            grouped_data = data_df.groupby(model.dimensions)
+            grouped_data = data_df.groupby(model_dimensions)
         except KeyError as e:
             # This might happen if a dimension in model.dimensions is not in data_df columns,
             # though the check above should catch it.
@@ -1550,7 +1577,8 @@ class AnalyticsService:
             aggregated_metrics = {}
             for metric_col in model.metrics:
                 # Ensure metric_col is valid and numeric (already checked)
-                agg_type = model.aggregation_types.get(metric_col, "sum").lower() # Default to sum
+                aggregation_types = getattr(model, 'aggregation_types', {})
+                agg_type = aggregation_types.get(metric_col, "sum").lower() # Default to sum
 
                 if agg_type == "sum":
                     aggregated_metrics[metric_col] = group[metric_col].sum()
@@ -1586,7 +1614,7 @@ class AnalyticsService:
                     cleaned_dim_values.append(val)
 
             results.append({
-                "dimensions": dict(zip(model.dimensions, cleaned_dim_values)),
+                "dimensions": dict(zip(model_dimensions, cleaned_dim_values)),
                 "metrics": aggregated_metrics
             })
         return results

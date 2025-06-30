@@ -13,23 +13,23 @@ class TenantAssociatedModel(BaseModel):
 
 # --- PerformanceMetric Schemas ---
 class PerformanceMetricBase(BaseModel):
-    metric_name: str = Field(..., example="Task Completion Rate")
-    display_name: str = Field(..., example="Task Completion Rate (%)")
+    metric_name: str = Field(..., description="Task Completion Rate")
+    display_name: str = Field(..., description="Task Completion Rate (%)")
     description: Optional[str] = None
-    metric_type: str = Field(..., example="productivity") # productivity, quality, efficiency, engagement
-    category: str = Field(..., example="user") # user, project, team, system
-    entity_type: str = Field(..., example="user")
-    entity_id: int = Field(..., example=1)
-    dimensions_values: Optional[Dict[str, Any]] = Field(None, example={"project_id": 10, "priority": "high"})
-    measurement_unit: str = Field(..., example="%")
-    calculation_method: str = Field(..., example="ratio") # sum, average, ratio, etc.
+    metric_type: str = Field(..., description="productivity, quality, efficiency, engagement")
+    category: str = Field(..., description="user, project, team, system")
+    entity_type: str = Field(..., description="user")
+    entity_id: int = Field(..., description="Entity ID")
+    dimensions_values: Optional[Dict[str, Any]] = Field(None, description="Additional dimensions")
+    measurement_unit: str = Field(..., description="Unit of measurement")
+    calculation_method: str = Field(..., description="sum, average, ratio, etc.")
     current_value: float
     previous_value: Optional[float] = None
     baseline_value: Optional[float] = None
     target_value: Optional[float] = None
     period_start: datetime
     period_end: datetime
-    period_type: str = Field(..., example="weekly") # daily, weekly, monthly, quarterly
+    period_type: str = Field(..., description="daily, weekly, monthly, quarterly")
     warning_threshold: Optional[float] = None
     critical_threshold: Optional[float] = None
     data_completeness: Optional[float] = Field(default=1.0)
@@ -81,7 +81,7 @@ class PerformanceMetricInDB(PerformanceMetricBase, BaseAuditModel, TenantAssocia
 class BenchmarkComparisonInput(BaseModel):
     performance_metric_id: int
     # Optional: specific parameters to narrow down benchmark search
-    benchmark_filter_params: Optional[Dict[str, Any]] = Field(None, example={"industry_segment": "SaaS", "region": "North America"})
+    benchmark_filter_params: Optional[Dict[str, Any]] = Field(None, description="Filter parameters for benchmark search")
 
 class BenchmarkComparisonResult(BaseModel):
     performance_metric_name: str
@@ -96,24 +96,24 @@ class BenchmarkComparisonResult(BaseModel):
     difference_comment: Optional[str] = None
 
 class BenchmarkComparisonInputOptional(BaseModel): # New schema
-    benchmark_filter_params: Optional[Dict[str, Any]] = Field(None, example={"industry_segment": "SaaS"})
+    benchmark_filter_params: Optional[Dict[str, Any]] = Field(None, description="Filter parameters for benchmark")
 
 
 # --- AnalyticsModel Schemas ---
 class AnalyticsModelBase(BaseModel):
-    name: str = Field(..., example="User Churn Predictor")
-    display_name: str = Field(..., example="User Churn Prediction Model")
+    name: str = Field(..., description="Model name")
+    display_name: str = Field(..., description="Display name for the model")
     description: Optional[str] = None
-    model_type: str = Field(..., example="churn_prediction") # performance, roi, productivity, churn
-    category: str = Field(..., example="predictive") # predictive, descriptive, prescriptive
-    algorithm: str = Field(..., example="random_forest_classifier")
-    features: List[str] = Field(default_factory=list, example=["login_frequency", "feature_usage_rate"])
-    target_variable: str = Field(..., example="has_churned")
-    hyperparameters: Dict[str, Any] = Field(default_factory=dict, example={"n_estimators": 100, "max_depth": 10})
-    dimensions: List[str] = Field(default_factory=list, example=["user_segment", "country"]) # For multi-dimensional metrics
-    metrics: List[str] = Field(default_factory=list, example=["churn_rate", "avg_session_length"]) # For multi-dimensional metrics/multi-output models
-    aggregation_types: Dict[str, str] = Field(default_factory=dict, example={"churn_rate": "mean", "avg_session_length": "mean"})
-    training_data_source: str = Field(..., example="user_activity_table")
+    model_type: str = Field(..., description="performance, roi, productivity, churn")
+    category: str = Field(..., description="predictive, descriptive, prescriptive")
+    algorithm: str = Field(..., description="Algorithm used")
+    features: List[str] = Field(default_factory=list, description="List of feature names")
+    target_variable: str = Field(..., description="Target variable name")
+    hyperparameters: Dict[str, Any] = Field(default_factory=dict, description="Model hyperparameters")
+    dimensions: List[str] = Field(default_factory=list, description="Dimensions for multi-dimensional metrics")
+    metrics: List[str] = Field(default_factory=list, description="Metrics for multi-output models")
+    aggregation_types: Dict[str, str] = Field(default_factory=dict, description="Aggregation types for metrics")
+    training_data_source: str = Field(..., description="Data source for training")
     training_period_days: int = Field(default=90)
     retrain_frequency_days: int = Field(default=7)
     validation_split: float = Field(default=0.2)
@@ -172,9 +172,9 @@ class AnalyticsModelInDB(AnalyticsModelBase, BaseAuditModel, TenantAssociatedMod
 # --- AnalyticsPrediction Schemas ---
 class AnalyticsPredictionBase(BaseModel):
     model_id: int
-    entity_type: str = Field(..., example="user")
-    entity_id: int = Field(..., example=123)
-    input_features: Dict[str, Any] = Field(..., example={"login_frequency": 0.8, "feature_usage_rate": 0.5})
+    entity_type: str = Field(..., description="Type of entity")
+    entity_id: int = Field(..., description="Entity ID")
+    input_features: Dict[str, Any] = Field(..., description="Input features for prediction")
     prediction_horizon_days: Optional[int] = None
     # benchmark_params for make_prediction_with_benchmark
     benchmark_params: Optional[Dict[str, Any]] = Field(None, description="Parameters to find relevant benchmark for comparison")
@@ -211,17 +211,17 @@ class AnalyticsPredictionInDB(AnalyticsPredictionBase, BaseAuditModel, TenantAss
 
 # --- ROICalculation Schemas ---
 class ROIMetricLink(BaseModel):
-    roi_field_to_update: str = Field(..., example="cost_savings") # Must match a field in ROICalculation
-    source_type: str = Field(..., example="performance_metric") # "performance_metric" or "analytics_prediction"
-    source_id: int = Field(..., example=1)
-    value_path: str = Field(..., example="current_value") # Attribute name or key in JSON
+    roi_field_to_update: str = Field(..., description="Field to update in ROICalculation")
+    source_type: str = Field(..., description="performance_metric or analytics_prediction")
+    source_id: int = Field(..., description="Source ID")
+    value_path: str = Field(..., description="Attribute name or key in JSON")
     multiplier: Optional[float] = Field(default=1.0)
     default_value: Optional[float] = Field(default=0.0) # Value if source/path is invalid
 
 class ROICalculationBase(BaseModel):
-    entity_type: str = Field(..., example="project")
-    entity_id: int = Field(..., example=1)
-    calculation_name: str = Field(..., example="Q1 Project Alpha ROI")
+    entity_type: str = Field(..., description="Type of entity")
+    entity_id: int = Field(..., description="Entity ID")
+    calculation_name: str = Field(..., description="Name of the calculation")
     description: Optional[str] = None
     period_start: datetime
     period_end: datetime
@@ -302,18 +302,18 @@ class ROICalculationInDB(ROICalculationBase, BaseAuditModel, TenantAssociatedMod
 
 # --- ComparativeBenchmark Schemas ---
 class ComparativeBenchmarkBase(BaseModel):
-    name: str = Field(..., example="Industry Average Task Completion Time")
+    name: str = Field(..., description="Benchmark name")
     description: Optional[str] = None
-    category: str = Field(..., example="performance_kpi")
-    source: Optional[str] = Field(None, example="Global Dev Report 2024")
-    metric_name: str = Field(..., example="task_completion_time_hours")
-    entity_type: Optional[str] = Field(None, example="task")
-    industry_segment: Optional[str] = Field(None, example="Software Development")
-    region: Optional[str] = Field(None, example="Global")
-    company_size: Optional[str] = Field(None, example="Any")
+    category: str = Field(..., description="Benchmark category")
+    source: Optional[str] = Field(None, description="Data source")
+    metric_name: str = Field(..., description="Metric name")
+    entity_type: Optional[str] = Field(None, description="Entity type")
+    industry_segment: Optional[str] = Field(None, description="Industry segment")
+    region: Optional[str] = Field(None, description="Geographic region")
+    company_size: Optional[str] = Field(None, description="Company size")
     benchmark_value: float
     value_type: Optional[str] = Field(default="average") # average, median, percentile_75
-    unit: Optional[str] = Field(None, example="hours")
+    unit: Optional[str] = Field(None, description="Unit of measurement")
     period_start_date: Optional[datetime] = None
     period_end_date: Optional[datetime] = None
     data_freshness_date: Optional[datetime] = None
@@ -321,7 +321,7 @@ class ComparativeBenchmarkBase(BaseModel):
     lower_bound: Optional[float] = None
     upper_bound: Optional[float] = None
     sample_size: Optional[int] = None
-    dimensions: Optional[Dict[str, Any]] = Field(None, example={"programming_language": "Python"})
+    dimensions: Optional[Dict[str, Any]] = Field(None, description="Additional dimensions")
     is_active: Optional[bool] = True
 
 class ComparativeBenchmarkCreate(ComparativeBenchmarkBase):
@@ -364,15 +364,15 @@ class ComparativeBenchmarkInDB(ComparativeBenchmarkBase, BaseAuditModel):
 
 # Widget Configuration
 class DashboardWidgetDataSource(BaseModel):
-    type: str # e.g., "performance_metric", "analytics_prediction", "roi_calculation", "benchmark_comparison"
-    query_params: Dict[str, Any] # Specific parameters to fetch data, e.g., metric_name, model_id, entity_id
+    type: str = Field(..., description="performance_metric, analytics_prediction, roi_calculation, benchmark_comparison")
+    query_params: Dict[str, Any] = Field(..., description="Parameters to fetch data")
     # For multi-dimensional, might include group_by dimensions, aggregation_type
 
 class DashboardWidgetConfigBase(BaseModel):
-    widget_type: str = Field(..., example="line_chart") # e.g., "kpi_card", "line_chart", "bar_chart", "table"
+    widget_type: str = Field(..., description="kpi_card, line_chart, bar_chart, table")
     title: str
     data_source: DashboardWidgetDataSource
-    display_options: Optional[Dict[str, Any]] = Field(default_factory=dict) # e.g., color, time_range, axes_labels
+    display_options: Optional[Dict[str, Any]] = Field(default_factory=dict, description="Display options")
 
 class DashboardWidgetConfigCreate(DashboardWidgetConfigBase):
     pass
@@ -432,20 +432,20 @@ class ReportFilter(BaseModel):
 
 # Report Content Block
 class ReportContentBlock(BaseModel):
-    title: Optional[str] = Field(None, example="Monthly Active Users Trend")
-    block_type: str = Field(..., example="chart")  # e.g., "chart", "table", "kpi_summary", "text"
+    title: Optional[str] = Field(None, description="Block title")
+    block_type: str = Field(..., description="chart, table, kpi_summary, text")
     data_source: Optional[DashboardWidgetDataSource] = None # Source of data for this block, not needed for "text" type
-    display_options: Optional[Dict[str, Any]] = Field(default_factory=dict, example={"chart_type": "line", "x_axis": "date", "y_axis": "mau"})
-    text_content: Optional[str] = Field(None, example="This section summarizes key findings.") # For block_type="text"
+    display_options: Optional[Dict[str, Any]] = Field(default_factory=dict, description="Display options")
+    text_content: Optional[str] = Field(None, description="Text content for text blocks")
 
     class Config:
         from_attributes = True
 
 
 class ReportDefinitionBase(BaseModel):
-    name: str = Field(..., example="Quarterly Performance Review")
+    name: str = Field(..., description="Report name")
     description: Optional[str] = None
-    report_type: str = Field(default="generic", example="performance_summary") # For categorization
+    report_type: str = Field(default="generic", description="Report type for categorization")
     content_blocks: List[ReportContentBlock] = Field(default_factory=list)
     global_filters: Optional[List[ReportFilter]] = Field(default_factory=list, description="Filters applied to all applicable data sources in content blocks")
     output_format: str = Field(default="pdf") # Default output format: pdf, csv, json_data
@@ -472,8 +472,8 @@ class ReportDefinitionInDB(ReportDefinitionBase, BaseAuditModel, TenantAssociate
 
 class ReportScheduleBase(BaseModel):
     report_definition_id: int
-    cron_schedule: str = Field(..., example="0 0 * * MON") # e.g., weekly on Monday at midnight
-    recipients: List[str] = Field(default_factory=list, example=["user@example.com"]) # Email addresses
+    cron_schedule: str = Field(..., description="Cron schedule expression")
+    recipients: List[str] = Field(default_factory=list, description="Email addresses")
     is_active: bool = True
 
 class ReportScheduleCreate(ReportScheduleBase):
@@ -517,13 +517,13 @@ class MultiDimensionalDataPayload(BaseModel):
 
 # Renaming DashboardWidgetDataSource to WidgetDataSourceConfig for clarity
 class WidgetDataSourceConfig(BaseModel):
-    type: str = Field(..., example="performance_metric", description="Source type, e.g., performance_metric, analytics_prediction, roi_calculation")
-    params: Dict[str, Any] = Field(..., description="Parameters to query the data source, e.g., {'metric_name': 'cpu_utilization'}")
+    type: str = Field(..., description="Source type: performance_metric, analytics_prediction, roi_calculation")
+    params: Dict[str, Any] = Field(..., description="Parameters to query the data source")
 
 # Renaming DashboardWidgetConfigBase to WidgetConfigBase
 class WidgetConfigBase(BaseModel):
-    widget_type: str = Field(..., example="line_chart", description="Type of widget, e.g., kpi_card, line_chart")
-    title: str = Field(..., example="CPU Utilization Over Time")
+    widget_type: str = Field(..., description="Type of widget: kpi_card, line_chart")
+    title: str = Field(..., description="Widget title")
     data_source_config: WidgetDataSourceConfig = Field(..., description="Configuration for the widget's data source")
     display_options: Optional[Dict[str, Any]] = Field(default_factory=dict, description="Visual display options for the widget")
 
@@ -556,16 +556,16 @@ class LayoutItem(BaseModel):
 
 # Renaming AnalyticsDashboardBase to DashboardBase
 class DashboardBase(BaseModel):
-    name: str = Field(..., example="My Main Dashboard")
+    name: str = Field(..., description="Dashboard name")
     description: Optional[str] = None
-    tags: Optional[List[str]] = Field(default_factory=list, example=["overview", "performance"])
+    tags: Optional[List[str]] = Field(default_factory=list, description="Dashboard tags")
 
 class DashboardCreate(DashboardBase):
     # user_id and tenant_id will be set from context in service
     # Initial layout and widgets can be empty or specified
     layout: Optional[List[LayoutItem]] = Field(default_factory=list)
     # Widgets can be created along with the dashboard or added later
-    widgets: Optional[List[WidgetConfigCreate]] = Field(default_factory=list, description="Initial widgets to create for this dashboard")
+    widgets: Optional[List[WidgetConfigCreate]] = Field(default_factory=list, description="Initial widgets")
 
 
 class DashboardUpdate(BaseModel):

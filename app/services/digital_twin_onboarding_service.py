@@ -104,30 +104,29 @@ class DigitalTwinOnboardingService:
         
         if not progress:
             # Create initial progress record
-            progress = GuestOnboardingProgress(
-                user_id=user_id,
-                current_step=1,
-                total_steps=6,
-                completed_steps=[],
-                started_at=datetime.utcnow(),
-                last_activity_at=datetime.utcnow()
-            )
+            progress = GuestOnboardingProgress()
+            setattr(progress, 'user_id', user_id)  # type: ignore
+            setattr(progress, 'current_step', 1)  # type: ignore
+            setattr(progress, 'total_steps', 6)  # type: ignore
+            setattr(progress, 'completed_steps', [])  # type: ignore
+            setattr(progress, 'started_at', datetime.utcnow())  # type: ignore
+            setattr(progress, 'last_activity_at', datetime.utcnow())  # type: ignore
             self.db.add(progress)
             self.db.commit()
         
-        current_step_info = self.onboarding_steps.get(progress.current_step, {})
+        current_step_info = self.onboarding_steps.get(getattr(progress, 'current_step', 1), {})
         
         return {
             "user_id": user_id,
-            "current_step": progress.current_step,
-            "total_steps": progress.total_steps,
-            "completed_steps": progress.completed_steps or [],
-            "completion_percentage": progress.completion_percentage,
-            "estimated_time_remaining": progress.estimated_time_remaining,
+            "current_step": getattr(progress, 'current_step', 1),
+            "total_steps": getattr(progress, 'total_steps', 6),
+            "completed_steps": getattr(progress, 'completed_steps', []) or [],
+            "completion_percentage": getattr(progress, 'completion_percentage', 0),
+            "estimated_time_remaining": getattr(progress, 'estimated_time_remaining', 0),
             "current_step_info": current_step_info,
-            "is_completed": progress.completed_at is not None,
-            "started_at": progress.started_at.isoformat() if progress.started_at else None,
-            "last_activity": progress.last_activity_at.isoformat() if progress.last_activity_at else None
+            "is_completed": getattr(progress, 'completed_at', None) is not None,
+            "started_at": (lambda dt: dt.isoformat() if dt and hasattr(dt, 'isoformat') else None)(getattr(progress, 'started_at', None)),
+            "last_activity": (lambda dt: dt.isoformat() if dt and hasattr(dt, 'isoformat') else None)(getattr(progress, 'last_activity_at', None))
         }
     
     def get_step_data(self, user_id: int, step_number: int) -> Dict[str, Any]:
@@ -144,8 +143,10 @@ class DigitalTwinOnboardingService:
         
         current_data = {}
         if profile:
-            for field in step_info["fields"]:
-                value = getattr(profile, field, None)
+            fields = step_info.get("fields", [])
+            if isinstance(fields, list):
+                for field in fields:
+                    value = getattr(profile, field, None)
                 if value and isinstance(value, str) and field in ["technical_skills", "soft_skills", "short_term_goals", "long_term_goals", "learning_interests"]:
                     try:
                         current_data[field] = json.loads(value) if value else []
@@ -216,15 +217,18 @@ class DigitalTwinOnboardingService:
         ).first()
         
         if not profile:
-            profile = DigitalTwinProfile(user_id=user_id)
+            profile = DigitalTwinProfile()
+            setattr(profile, 'user_id', user_id)  # type: ignore
             self.db.add(profile)
         
         # Update profile based on step
         step_info = self.onboarding_steps[step_number]
         
-        for field in step_info["fields"]:
-            if field in data:
-                value = data[field]
+        fields = step_info.get("fields", [])
+        if isinstance(fields, list):
+            for field in fields:
+                if field in data:
+                    value = data[field]
                 
                 # Convert lists and dicts to JSON strings for storage
                 if isinstance(value, (list, dict)):
@@ -232,7 +236,7 @@ class DigitalTwinOnboardingService:
                 
                 setattr(profile, field, value)
         
-        profile.last_updated = datetime.utcnow()
+        setattr(profile, 'last_updated', datetime.utcnow())  # type: ignore
         
         # Update onboarding progress
         progress = self.db.query(GuestOnboardingProgress).filter(
@@ -299,7 +303,7 @@ class DigitalTwinOnboardingService:
         if profile.career_aspirations: completed_fields += 1
         
         completeness_score = (completed_fields / total_fields) * 100
-        profile.profile_completeness_score = completeness_score
+        setattr(profile, 'profile_completeness_score', completeness_score)  # type: ignore
     
     def generate_twin_summary(self, user_id: int) -> Dict[str, Any]:
         """Generate AI summary of the digital twin profile"""

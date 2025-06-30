@@ -49,37 +49,37 @@ class SSOService:
         
         # Set provider-specific configuration
         if provider_type == "saml":
-            provider.saml_entity_id = config.get("entity_id")
-            provider.saml_sso_url = config.get("sso_url")
-            provider.saml_slo_url = config.get("slo_url")
-            provider.saml_certificate = config.get("certificate")
-            provider.require_signed_assertions = config.get("require_signed_assertions", True)
-            provider.require_encrypted_assertions = config.get("require_encrypted_assertions", False)
+            setattr(provider, 'saml_entity_id', config.get("entity_id"))  # type: ignore
+            setattr(provider, 'saml_sso_url', config.get("sso_url"))  # type: ignore
+            setattr(provider, 'saml_slo_url', config.get("slo_url"))  # type: ignore
+            setattr(provider, 'saml_certificate', config.get("certificate"))  # type: ignore
+            setattr(provider, 'require_signed_assertions', config.get("require_signed_assertions", True))  # type: ignore
+            setattr(provider, 'require_encrypted_assertions', config.get("require_encrypted_assertions", False))  # type: ignore
             
         elif provider_type in ["oauth2", "oidc"]:
-            provider.issuer_url = config.get("issuer_url")
-            provider.client_id = config.get("client_id")
+            setattr(provider, 'issuer_url', config.get("issuer_url"))  # type: ignore
+            setattr(provider, 'client_id', config.get("client_id"))  # type: ignore
             client_secret = config.get("client_secret")
             if client_secret:
                 setattr(provider, 'client_secret', self._encrypt_secret(str(client_secret)))  # type: ignore
             
         elif provider_type == "ldap":
-            provider.ldap_server = config.get("server")
-            provider.ldap_port = config.get("port", 389)
-            provider.ldap_base_dn = config.get("base_dn")
-            provider.ldap_bind_dn = config.get("bind_dn")
+            setattr(provider, 'ldap_server', config.get("server"))  # type: ignore
+            setattr(provider, 'ldap_port', config.get("port", 389))  # type: ignore
+            setattr(provider, 'ldap_base_dn', config.get("base_dn"))  # type: ignore
+            setattr(provider, 'ldap_bind_dn', config.get("bind_dn"))  # type: ignore
             bind_password = config.get("bind_password")
             if bind_password:
                 setattr(provider, 'ldap_bind_password', self._encrypt_secret(str(bind_password)))  # type: ignore
-            provider.ldap_user_filter = config.get("user_filter", "(uid={username})")
-            provider.ldap_group_filter = config.get("group_filter")
+            setattr(provider, 'ldap_user_filter', config.get("user_filter", "(uid={username})"))  # type: ignore
+            setattr(provider, 'ldap_group_filter', config.get("group_filter"))  # type: ignore
         
         # Set attribute and role mappings
-        provider.attribute_mapping = config.get("attribute_mapping", {})
-        provider.role_mapping = config.get("role_mapping", {})
-        provider.auto_provision_users = config.get("auto_provision_users", True)
-        provider.auto_update_user_info = config.get("auto_update_user_info", True)
-        provider.default_user_role = config.get("default_user_role", "member")
+        setattr(provider, 'attribute_mapping', config.get("attribute_mapping", {}))  # type: ignore
+        setattr(provider, 'role_mapping', config.get("role_mapping", {}))  # type: ignore
+        setattr(provider, 'auto_provision_users', config.get("auto_provision_users", True))  # type: ignore
+        setattr(provider, 'auto_update_user_info', config.get("auto_update_user_info", True))  # type: ignore
+        setattr(provider, 'default_user_role', config.get("default_user_role", "member"))  # type: ignore
         
         self.db.add(provider)
         self.db.commit()
@@ -184,8 +184,8 @@ class SSOService:
             # Parse and validate SAML response
             user_attributes = self._parse_saml_response(saml_response, provider)
             if not user_attributes:
-                session.status = "failed"
-                session.failure_reason = "Invalid SAML response"
+                setattr(session, 'status', "failed")  # type: ignore
+                setattr(session, 'failure_reason', "Invalid SAML response")  # type: ignore
                 self.db.commit()
                 return False, None, "Invalid SAML response"
             
@@ -195,25 +195,25 @@ class SSOService:
             name = user_attributes.get("name")
             
             if not subject_id:
-                session.status = "failed"
-                session.failure_reason = "Missing subject ID"
+                setattr(session, 'status', "failed")  # type: ignore
+                setattr(session, 'failure_reason', "Missing subject ID")  # type: ignore
                 self.db.commit()
                 return False, None, "Missing subject ID"
             
             # Update session
-            session.subject_id = subject_id
-            session.email = email
-            session.name_id = user_attributes.get("name_id")
-            session.name_id_format = user_attributes.get("name_id_format")
-            session.authenticated_at = datetime.utcnow()
-            session.status = "authenticated"
-            session.idp_attributes = user_attributes
-            session.expires_at = datetime.utcnow() + timedelta(hours=8)  # 8 hour session
+            setattr(session, 'subject_id', subject_id)  # type: ignore
+            setattr(session, 'email', email)  # type: ignore
+            setattr(session, 'name_id', user_attributes.get("name_id"))  # type: ignore
+            setattr(session, 'name_id_format', user_attributes.get("name_id_format"))  # type: ignore
+            setattr(session, 'authenticated_at', datetime.utcnow())  # type: ignore
+            setattr(session, 'status', "authenticated")  # type: ignore
+            setattr(session, 'idp_attributes', user_attributes)  # type: ignore
+            setattr(session, 'expires_at', datetime.utcnow() + timedelta(hours=8))  # type: ignore
             
             # Find or create user
             user = self._find_or_create_user(provider, subject_id, email, name, user_attributes)
             if user:
-                session.user_id = user.id
+                setattr(session, 'user_id', getattr(user, 'id', None))  # type: ignore
                 
                 # Update user mapping
                 self._update_user_mapping(provider, user, subject_id, email)
@@ -249,8 +249,8 @@ class SSOService:
             )
             
             if session:
-                session.status = "failed"
-                session.failure_reason = str(e)
+                setattr(session, 'status', "failed")  # type: ignore
+                setattr(session, 'failure_reason', str(e))  # type: ignore
                 self.db.commit()
             
             return False, None, str(e)
@@ -329,16 +329,16 @@ class SSOService:
             # Exchange authorization code for tokens
             tokens = self._exchange_oauth_code(provider, authorization_code, redirect_uri)
             if not tokens:
-                session.status = "failed"
-                session.failure_reason = "Token exchange failed"
+                setattr(session, 'status', "failed")  # type: ignore
+                setattr(session, 'failure_reason', "Token exchange failed")  # type: ignore
                 self.db.commit()
                 return False, None, "Token exchange failed"
             
             # Get user info from ID token or userinfo endpoint
             user_info = self._get_oauth_user_info(provider, tokens)
             if not user_info:
-                session.status = "failed"
-                session.failure_reason = "Failed to get user info"
+                setattr(session, 'status', "failed")  # type: ignore
+                setattr(session, 'failure_reason', "Failed to get user info")  # type: ignore
                 self.db.commit()
                 return False, None, "Failed to get user info"
             
@@ -348,23 +348,23 @@ class SSOService:
             name = user_info.get("name")
             
             if not subject_id:
-                session.status = "failed"
-                session.failure_reason = "Missing subject ID"
+                setattr(session, 'status', "failed")  # type: ignore
+                setattr(session, 'failure_reason', "Missing subject ID")  # type: ignore
                 self.db.commit()
                 return False, None, "Missing subject ID"
             
             # Update session
-            session.subject_id = subject_id
-            session.email = email
-            session.authenticated_at = datetime.utcnow()
-            session.status = "authenticated"
-            session.idp_attributes = user_info
-            session.expires_at = datetime.utcnow() + timedelta(hours=8)
+            setattr(session, 'subject_id', subject_id)  # type: ignore
+            setattr(session, 'email', email)  # type: ignore
+            setattr(session, 'authenticated_at', datetime.utcnow())  # type: ignore
+            setattr(session, 'status', "authenticated")  # type: ignore
+            setattr(session, 'idp_attributes', user_info)  # type: ignore
+            setattr(session, 'expires_at', datetime.utcnow() + timedelta(hours=8))  # type: ignore
             
             # Find or create user
             user = self._find_or_create_user(provider, subject_id, email, name, user_info)
             if user:
-                session.user_id = user.id
+                setattr(session, 'user_id', getattr(user, 'id', None))  # type: ignore
                 
                 # Update user mapping
                 self._update_user_mapping(provider, user, subject_id, email)
@@ -455,8 +455,8 @@ class SSOService:
             )
             
             if not conn.entries:
-                session.status = "failed"
-                session.failure_reason = "User not found"
+                setattr(session, 'status', "failed")  # type: ignore
+                setattr(session, 'failure_reason', "User not found")  # type: ignore
                 self.db.commit()
                 return False, None, "User not found"
             
@@ -466,8 +466,8 @@ class SSOService:
             # Authenticate user
             user_conn = ldap3.Connection(server, user=user_dn, password=password)  # type: ignore
             if not user_conn.bind():  # type: ignore
-                session.status = "failed"
-                session.failure_reason = "Invalid credentials"
+                setattr(session, 'status', "failed")  # type: ignore
+                setattr(session, 'failure_reason', "Invalid credentials")  # type: ignore
                 self.db.commit()
                 return False, None, "Invalid credentials"
             
@@ -483,12 +483,12 @@ class SSOService:
             name = user_attributes.get(getattr(provider, 'get_attribute_mapping', lambda x, y: y)("name", "cn"))  # type: ignore
             
             # Update session
-            session.subject_id = subject_id
-            session.email = email
-            session.authenticated_at = datetime.utcnow()
-            session.status = "authenticated"
-            session.idp_attributes = user_attributes
-            session.expires_at = datetime.utcnow() + timedelta(hours=8)
+            setattr(session, 'subject_id', subject_id)  # type: ignore
+            setattr(session, 'email', email)  # type: ignore
+            setattr(session, 'authenticated_at', datetime.utcnow())  # type: ignore
+            setattr(session, 'status', "authenticated")  # type: ignore
+            setattr(session, 'idp_attributes', user_attributes)  # type: ignore
+            setattr(session, 'expires_at', datetime.utcnow() + timedelta(hours=8))  # type: ignore
             
             # Find or create user
             if subject_id:

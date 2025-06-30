@@ -81,14 +81,14 @@ class WorkflowAutomationService:
         """
         query = self.db.query(WorkflowTemplate).filter(
             WorkflowTemplate.tenant_id == tenant_id,  # type: ignore
-            WorkflowTemplate.is_active.is_(is_active)  # type: ignore
+            WorkflowTemplate.is_active == is_active  # type: ignore
         )
         
         if category:
             query = query.filter(WorkflowTemplate.category == category)  # type: ignore
         
         if is_public is not None:
-            query = query.filter(WorkflowTemplate.is_public.is_(is_public))  # type: ignore
+            query = query.filter(WorkflowTemplate.is_public == is_public)  # type: ignore
         
         return query.order_by(WorkflowTemplate.created_at.desc()).all()  # type: ignore
     
@@ -105,7 +105,7 @@ class WorkflowAutomationService:
         template = self.db.query(WorkflowTemplate).filter(
             WorkflowTemplate.id == template_id,  # type: ignore
             WorkflowTemplate.tenant_id == tenant_id  # type: ignore
-        ).first()  # type: ignore
+        ).first()
         
         if not template:
             raise ValueError("Template not found")
@@ -144,7 +144,7 @@ class WorkflowAutomationService:
         """
         instance = self.db.query(WorkflowInstance).filter(
             WorkflowInstance.id == instance_id  # type: ignore
-        ).first()  # type: ignore
+        ).first()
         
         if not instance:
             raise ValueError("Workflow instance not found")
@@ -203,14 +203,14 @@ class WorkflowAutomationService:
             report_configs = self.db.query(WorkflowReportConfig).filter(
                 WorkflowReportConfig.workflow_template_id == getattr(instance, 'template_id', None),  # type: ignore
                 WorkflowReportConfig.trigger_event_type == event_type,  # type: ignore
-                WorkflowReportConfig.is_active.is_(True)  # type: ignore
-            ).all()  # type: ignore
+                WorkflowReportConfig.is_active == True  # type: ignore
+            ).all()
 
             for config in report_configs:
-                report_definition = self.db.query(ReportDefinition).get(getattr(config, 'report_definition_id', None))  # type: ignore
+                report_definition = self.db.query(ReportDefinition).get(getattr(config, 'report_definition_id', None))
                 if not report_definition:
                     # Log missing report definition
-                    print(f"WorkflowReportConfig {config.id} references missing ReportDefinition {config.report_definition_id}")
+                    print(f"WorkflowReportConfig {getattr(config, 'id', 'unknown')} references missing ReportDefinition {getattr(config, 'report_definition_id', 'unknown')}")
                     continue
 
                 # Prepare parameters for the report
@@ -253,7 +253,7 @@ class WorkflowAutomationService:
                 # This is a significant dependency on how CustomDashboardService and AnalyticsService are structured.
                 # Let's assume `report_parameters` can be used by these services if the data_sources are designed for it.
 
-                print(f"Attempting to generate report for workflow instance {instance.id} based on config {config.id}")
+                print(f"Attempting to generate report for workflow instance {getattr(instance, 'id', 'unknown')} based on config {getattr(config, 'id', 'unknown')}")
                 # This will fetch data based on report_definition's configured blocks
                 # The `report_parameters` might be used by those blocks if they are designed to accept them.
                 # This is where the "Enhance ReportDefinition Data Sources" part of the plan is crucial.
@@ -289,7 +289,7 @@ class WorkflowAutomationService:
                 ))
 
                 if execution_record and getattr(execution_record, 'status', None) == "completed" and getattr(execution_record, 'file_path', None):
-                    print(f"Report {execution_record.id} generated for workflow instance {instance.id}. Path: {execution_record.file_path}")
+                    print(f"Report {getattr(execution_record, 'id', 'unknown')} generated for workflow instance {getattr(instance, 'id', 'unknown')}. Path: {getattr(execution_record, 'file_path', 'unknown')}")
                     # Handle delivery if configured in WorkflowReportConfig
                     delivery_config = getattr(config, 'delivery_config_override', None)
                     if delivery_config:
@@ -319,7 +319,7 @@ class WorkflowAutomationService:
         template = self.db.query(WorkflowTemplate).filter(
             WorkflowTemplate.id == config_data["workflow_template_id"],  # type: ignore
             WorkflowTemplate.tenant_id == tenant_id  # type: ignore
-        ).first()  # type: ignore
+        ).first()
         if not template:
             raise ValueError(f"WorkflowTemplate with id {config_data['workflow_template_id']} not found for tenant {tenant_id}")
 
@@ -329,7 +329,7 @@ class WorkflowAutomationService:
             # This needs to align with how ReportDefinition is scoped. Assuming it's globally accessible or tenant-scoped.
             # For now, let's assume ReportDefinition is accessible if it exists.
             # A proper multi-tenancy check for ReportDefinition would be needed here.
-        ).first()  # type: ignore
+        ).first()
         if not report_def:
             raise ValueError(f"ReportDefinition with id {config_data['report_definition_id']} not found.")
 
@@ -485,46 +485,52 @@ class WorkflowAutomationService:
             return None
         
         # Evaluate conditions
-        if not self._evaluate_conditions(rule.conditions, trigger_data):
+        if not self._evaluate_conditions(getattr(rule, 'conditions', []), trigger_data):
             return None
         
         try:
             # Create workflow instance
             instance_data = {
-                "name": f"Auto: {rule.name} - {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')}",
-                "description": f"Automatically triggered by rule: {rule.name}",
-                "input_data": {**rule.action_config, **trigger_data},
-                "priority": rule.priority
+                "name": f"Auto: {getattr(rule, 'name', 'Unknown')} - {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')}",
+                "description": f"Automatically triggered by rule: {getattr(rule, 'name', 'Unknown')}",
+                "input_data": {**getattr(rule, 'action_config', {}), **trigger_data},
+                "priority": getattr(rule, 'priority', 5)
             }
             
             instance = self.create_workflow_instance(
-                tenant_id=rule.tenant_id,
-                template_id=rule.workflow_template_id,
+                tenant_id=getattr(rule, 'tenant_id', 0),
+                template_id=getattr(rule, 'workflow_template_id', 0),
                 instance_data=instance_data,
-                triggered_by=f"automation_rule_{rule.id}"
+                triggered_by=f"automation_rule_{getattr(rule, 'id', 0)}"
             )
             
             # Update rule statistics
-            rule.total_executions += 1
-            rule.last_execution = datetime.utcnow()
+            current_total = getattr(rule, 'total_executions', 0)
+            setattr(rule, 'total_executions', current_total + 1)  # type: ignore
+            setattr(rule, 'last_execution', datetime.utcnow())  # type: ignore
             
             # Execute workflow instance
             success = self.execute_workflow_instance(getattr(instance, 'id', 0))  # type: ignore
             
             if success:
-                rule.successful_executions += 1
+                current_successful = getattr(rule, 'successful_executions', 0)
+                setattr(rule, 'successful_executions', current_successful + 1)  # type: ignore
             else:
-                rule.failed_executions += 1
+                current_failed = getattr(rule, 'failed_executions', 0)
+                setattr(rule, 'failed_executions', current_failed + 1)  # type: ignore
             
             # Update success rate
-            if rule.total_executions > 0:
-                rule.success_rate = (rule.successful_executions / rule.total_executions) * 100
+            total_executions = getattr(rule, 'total_executions', 0)
+            successful_executions = getattr(rule, 'successful_executions', 0)
+            if total_executions > 0:
+                setattr(rule, 'success_rate', (successful_executions / total_executions) * 100)  # type: ignore
             
             self.db.commit()
             return instance
             
         except Exception as e:
-            rule.failed_executions += 1
+            current_failed = getattr(rule, 'failed_executions', 0)
+            setattr(rule, 'failed_executions', current_failed + 1)  # type: ignore
             self.db.commit()
             return None
     
@@ -593,15 +599,15 @@ class WorkflowAutomationService:
             result = self._execute_action_test(action, test_config)
             
             # Update action test results
-            action.last_tested = datetime.utcnow()
-            action.test_success = result["success"]
+            setattr(action, 'last_tested', datetime.utcnow())  # type: ignore
+            setattr(action, 'test_success', result["success"])  # type: ignore
             
             self.db.commit()
             return result
             
         except Exception as e:
-            action.last_tested = datetime.utcnow()
-            action.test_success = False
+            setattr(action, 'last_tested', datetime.utcnow())  # type: ignore
+            setattr(action, 'test_success', False)  # type: ignore
             self.db.commit()
             
             return {
@@ -771,7 +777,7 @@ class WorkflowAutomationService:
         """
         # Get step executions in order
         step_executions = self.db.query(WorkflowStepExecution).filter(
-            WorkflowStepExecution.workflow_instance_id == instance.id
+            WorkflowStepExecution.workflow_instance_id == getattr(instance, 'id', None)
         ).order_by(WorkflowStepExecution.execution_order).all()
         
         completed_steps = 0
@@ -779,21 +785,23 @@ class WorkflowAutomationService:
         for step_execution in step_executions:
             try:
                 # Execute step
-                step_execution.status = "running"
-                step_execution.start_time = datetime.utcnow()
+                setattr(step_execution, 'status', "running")  # type: ignore
+                setattr(step_execution, 'start_time', datetime.utcnow())  # type: ignore
                 
                 success = self._execute_single_step(step_execution, instance)
                 
-                step_execution.end_time = datetime.utcnow()
-                if step_execution.start_time:
-                    duration = (step_execution.end_time - step_execution.start_time).total_seconds()
-                    step_execution.execution_duration = duration
+                setattr(step_execution, 'end_time', datetime.utcnow())  # type: ignore
+                start_time = getattr(step_execution, 'start_time', None)
+                end_time = getattr(step_execution, 'end_time', None)
+                if start_time and end_time:
+                    duration = (end_time - start_time).total_seconds()
+                    setattr(step_execution, 'execution_duration', duration)  # type: ignore
                 
                 if success:
-                    step_execution.status = "completed"
+                    setattr(step_execution, 'status', "completed")  # type: ignore
                     completed_steps += 1
                 else:
-                    step_execution.status = "failed"
+                    setattr(step_execution, 'status', "failed")  # type: ignore
                     return False
                 
                 # Update instance progress
@@ -803,9 +811,9 @@ class WorkflowAutomationService:
                 setattr(instance, 'current_step_id', getattr(step_execution, 'step_id', None))  # type: ignore
                 
             except Exception as e:
-                step_execution.status = "failed"
-                step_execution.error_message = str(e)
-                step_execution.end_time = datetime.utcnow()
+                setattr(step_execution, 'status', "failed")  # type: ignore
+                setattr(step_execution, 'error_message', str(e))  # type: ignore
+                setattr(step_execution, 'end_time', datetime.utcnow())  # type: ignore
                 return False
         
         return True
@@ -814,7 +822,7 @@ class WorkflowAutomationService:
         """
         Execute a single workflow step
         """
-        step_type = step_execution.step_type
+        step_type = getattr(step_execution, 'step_type', None)
         
         if step_type == WorkflowStepType.ACTION.value: # Compare with enum value
             return self._execute_action_step(step_execution, instance)
@@ -837,7 +845,7 @@ class WorkflowAutomationService:
         Executes a human task step, creating a corresponding Task in the system.
         """
         try:
-            config = step_execution.step_config
+            config = getattr(step_execution, 'step_config', {})
             assignee_id = config.get("assignee_id") # Expecting user ID
             assignee_role = config.get("assignee_role") # Alternative way to assign
 
@@ -856,7 +864,7 @@ class WorkflowAutomationService:
                 # Let's assume step_execution.assigned_to can be pre-filled during step initialization
                 # or that config must provide it.
                 # For now, we'll require assignee_id from config or step_execution.assigned_to (if it were populated earlier)
-                assignee_id = step_execution.assigned_to # Check if it was set on the step execution record directly
+                assignee_id = getattr(step_execution, 'assigned_to', None) # Check if it was set on the step execution record directly
 
             if not assignee_id:
                 error_msg = "Human task requires an assignee_id in step_config or on step_execution."
@@ -864,9 +872,9 @@ class WorkflowAutomationService:
                 setattr(step_execution, 'output_data', {"task_created": False, "error": error_msg})  # type: ignore
                 return False
 
-            task_description = config.get("task_description", step_execution.step_name)
+            task_description = config.get("task_description", getattr(step_execution, 'step_name', 'Unknown Step'))
             # Add workflow instance context to description
-            task_description += f" (Workflow: {instance.name} - Step: {step_execution.step_name})"
+            task_description += f" (Workflow: {getattr(instance, 'name', 'Unknown')} - Step: {getattr(step_execution, 'step_name', 'Unknown Step')})"
 
             due_date_str = config.get("due_date")
             due_date = datetime.fromisoformat(due_date_str) if due_date_str else None
@@ -963,11 +971,11 @@ class WorkflowAutomationService:
         # Check executions in the last hour
         one_hour_ago = datetime.utcnow() - timedelta(hours=1)
         recent_executions = self.db.query(WorkflowInstance).filter(
-            WorkflowInstance.triggered_by == f"automation_rule_{rule.id}",
+            WorkflowInstance.triggered_by == f"automation_rule_{getattr(rule, 'id', 0)}",
             WorkflowInstance.created_at >= one_hour_ago
         ).count()
         
-        return recent_executions < rule.rate_limit
+        return recent_executions < getattr(rule, 'rate_limit', 100)
     
     def _evaluate_conditions(self, conditions: List[Dict[str, Any]], trigger_data: Dict[str, Any]) -> bool:
         """
@@ -1003,7 +1011,7 @@ class WorkflowAutomationService:
         Execute action test
         """
         # Simulate action test execution based on action type
-        action_type = action.action_type
+        action_type = getattr(action, 'action_type', 'unknown')
         
         if action_type == "email":
             return {

@@ -43,15 +43,15 @@ class PerformanceMonitoringService:
         """Record a performance metric"""
         
         metric = PerformanceMetric()
-        setattr(metric, 'tenant_id', tenant_id)
-        setattr(metric, 'metric_name', metric_name)
-        setattr(metric, 'metric_category', metric_category)
-        setattr(metric, 'metric_type', metric_type)
-        setattr(metric, 'value', value)
-        setattr(metric, 'unit', unit)
-        setattr(metric, 'source', source)
-        setattr(metric, 'tags', tags or {})
-        setattr(metric, 'dimensions', dimensions or {})
+        setattr(metric, 'tenant_id', tenant_id)  # type: ignore
+        setattr(metric, 'metric_name', metric_name)  # type: ignore
+        setattr(metric, 'metric_category', metric_category)  # type: ignore
+        setattr(metric, 'metric_type', metric_type)  # type: ignore
+        setattr(metric, 'value', value)  # type: ignore
+        setattr(metric, 'unit', unit)  # type: ignore
+        setattr(metric, 'source', source)  # type: ignore
+        setattr(metric, 'tags', tags or {})  # type: ignore
+        setattr(metric, 'dimensions', dimensions or {})  # type: ignore
         
         self.db.add(metric)
         self.db.commit()
@@ -90,19 +90,19 @@ class PerformanceMonitoringService:
             )
         
         query_perf = QueryPerformance()
-        setattr(query_perf, 'tenant_id', tenant_id)
-        setattr(query_perf, 'query_hash', query_hash)
-        setattr(query_perf, 'query_text', query_text[:5000])  # Truncate long queries
-        setattr(query_perf, 'query_type', self._extract_query_type(query_text))
-        setattr(query_perf, 'execution_time_ms', execution_time_ms)
-        setattr(query_perf, 'rows_examined', rows_examined)
-        setattr(query_perf, 'rows_returned', rows_returned)
-        setattr(query_perf, 'endpoint', endpoint)
-        setattr(query_perf, 'user_id', user_id)
-        setattr(query_perf, 'database_name', database_name)
-        setattr(query_perf, 'table_names', table_names or [])
-        setattr(query_perf, 'is_slow_query', is_slow_query)
-        setattr(query_perf, 'optimization_suggestions', optimization_suggestions)
+        setattr(query_perf, 'tenant_id', tenant_id)  # type: ignore
+        setattr(query_perf, 'query_hash', query_hash)  # type: ignore
+        setattr(query_perf, 'query_text', query_text[:5000])  # type: ignore
+        setattr(query_perf, 'query_type', self._extract_query_type(query_text))  # type: ignore
+        setattr(query_perf, 'execution_time_ms', execution_time_ms)  # type: ignore
+        setattr(query_perf, 'rows_examined', rows_examined)  # type: ignore
+        setattr(query_perf, 'rows_returned', rows_returned)  # type: ignore
+        setattr(query_perf, 'endpoint', endpoint)  # type: ignore
+        setattr(query_perf, 'user_id', user_id)  # type: ignore
+        setattr(query_perf, 'database_name', database_name)  # type: ignore
+        setattr(query_perf, 'table_names', table_names or [])  # type: ignore
+        setattr(query_perf, 'is_slow_query', is_slow_query)  # type: ignore
+        setattr(query_perf, 'optimization_suggestions', optimization_suggestions)  # type: ignore
         
         self.db.add(query_perf)
         self.db.commit()
@@ -131,17 +131,17 @@ class PerformanceMonitoringService:
             bounce = True
         
         ux_metric = UserExperienceMetric()
-        setattr(ux_metric, 'tenant_id', tenant_id)
-        setattr(ux_metric, 'user_id', user_id)
-        setattr(ux_metric, 'session_id', session_id)
-        setattr(ux_metric, 'page_url', page_url)
-        setattr(ux_metric, 'action_type', action_type)
-        setattr(ux_metric, 'load_time_ms', load_time_ms)
-        setattr(ux_metric, 'device_type', device_type)
-        setattr(ux_metric, 'browser', browser)
-        setattr(ux_metric, 'error_occurred', error_occurred)
-        setattr(ux_metric, 'error_message', error_message)
-        setattr(ux_metric, 'bounce', bounce)
+        setattr(ux_metric, 'tenant_id', tenant_id)  # type: ignore
+        setattr(ux_metric, 'user_id', user_id)  # type: ignore
+        setattr(ux_metric, 'session_id', session_id)  # type: ignore
+        setattr(ux_metric, 'page_url', page_url)  # type: ignore
+        setattr(ux_metric, 'action_type', action_type)  # type: ignore
+        setattr(ux_metric, 'load_time_ms', load_time_ms)  # type: ignore
+        setattr(ux_metric, 'device_type', device_type)  # type: ignore
+        setattr(ux_metric, 'browser', browser)  # type: ignore
+        setattr(ux_metric, 'error_occurred', error_occurred)  # type: ignore
+        setattr(ux_metric, 'error_message', error_message)  # type: ignore
+        setattr(ux_metric, 'bounce', bounce)  # type: ignore
         
         self.db.add(ux_metric)
         self.db.commit()
@@ -188,15 +188,15 @@ class PerformanceMonitoringService:
         response_time_ms = (datetime.utcnow() - start_time).total_seconds() * 1000
         
         health_check = SystemHealthCheck()
-        setattr(health_check, 'tenant_id', tenant_id)
-        setattr(health_check, 'check_name', check_name)
-        setattr(health_check, 'check_type', check_type)
-        setattr(health_check, 'component', component)
-        setattr(health_check, 'status', status)
-        setattr(health_check, 'response_time_ms', response_time_ms)
-        setattr(health_check, 'success', success)
-        setattr(health_check, 'error_message', error_message)
-        setattr(health_check, 'details', details)
+        setattr(health_check, 'tenant_id', tenant_id)  # type: ignore
+        setattr(health_check, 'check_name', check_name)  # type: ignore
+        setattr(health_check, 'check_type', check_type)  # type: ignore
+        setattr(health_check, 'component', component)  # type: ignore
+        setattr(health_check, 'status', status)  # type: ignore
+        setattr(health_check, 'response_time_ms', response_time_ms)  # type: ignore
+        setattr(health_check, 'success', success)  # type: ignore
+        setattr(health_check, 'error_message', error_message)  # type: ignore
+        setattr(health_check, 'details', details)  # type: ignore
         
         self.db.add(health_check)
         self.db.commit()
@@ -216,8 +216,8 @@ class PerformanceMonitoringService:
         
         recent_checks = self.db.query(SystemHealthCheck).filter(
             and_(
-                SystemHealthCheck.tenant_id.is_(tenant_id),
-                SystemHealthCheck.timestamp.__ge__(recent_time)
+                SystemHealthCheck.tenant_id == tenant_id,
+                SystemHealthCheck.timestamp >= recent_time
             )
         ).all()
         
@@ -313,9 +313,9 @@ class PerformanceMonitoringService:
         
         slow_queries = self.db.query(QueryPerformance).filter(
             and_(
-                QueryPerformance.tenant_id.is_(tenant_id),
-                QueryPerformance.is_slow_query.is_(True),
-                QueryPerformance.timestamp.__ge__(start_time)
+                QueryPerformance.tenant_id == tenant_id,
+                QueryPerformance.is_slow_query == True,
+                QueryPerformance.timestamp >= start_time
             )
         ).order_by(desc(QueryPerformance.execution_time_ms)).limit(limit * 2).all()
         
@@ -369,8 +369,8 @@ class PerformanceMonitoringService:
         
         ux_metrics = self.db.query(UserExperienceMetric).filter(
             and_(
-                UserExperienceMetric.tenant_id.is_(tenant_id),
-                UserExperienceMetric.timestamp.__ge__(start_time)
+                UserExperienceMetric.tenant_id == tenant_id,
+                UserExperienceMetric.timestamp >= start_time
             )
         ).all()
         
@@ -437,15 +437,15 @@ class PerformanceMonitoringService:
         """Create a performance alert"""
         
         alert = PerformanceAlert()
-        alert.tenant_id = tenant_id
-        alert.alert_name = alert_name
-        alert.metric_name = metric_name
-        alert.alert_type = "threshold"
-        alert.severity = severity
-        alert.threshold_value = threshold_value
-        alert.threshold_operator = threshold_operator
-        alert.notification_channels = notification_channels or []
-        alert.description = f"Alert when {metric_name} {threshold_operator} {threshold_value}"
+        setattr(alert, 'tenant_id', tenant_id)  # type: ignore
+        setattr(alert, 'alert_name', alert_name)  # type: ignore
+        setattr(alert, 'metric_name', metric_name)  # type: ignore
+        setattr(alert, 'alert_type', "threshold")  # type: ignore
+        setattr(alert, 'severity', severity)  # type: ignore
+        setattr(alert, 'threshold_value', threshold_value)  # type: ignore
+        setattr(alert, 'threshold_operator', threshold_operator)  # type: ignore
+        setattr(alert, 'notification_channels', notification_channels or [])  # type: ignore
+        setattr(alert, 'description', f"Alert when {metric_name} {threshold_operator} {threshold_value}")  # type: ignore
         
         self.db.add(alert)
         self.db.commit()
@@ -458,8 +458,8 @@ class PerformanceMonitoringService:
         
         active_alerts = self.db.query(PerformanceAlert).filter(
             and_(
-                PerformanceAlert.tenant_id.is_(tenant_id),
-                PerformanceAlert.status.is_("active")
+                PerformanceAlert.tenant_id == tenant_id,
+                PerformanceAlert.status == "active"
             )
         ).all()
         
@@ -510,15 +510,15 @@ class PerformanceMonitoringService:
         )
         
         optimization = PerformanceOptimization()
-        optimization.tenant_id = tenant_id
-        optimization.optimization_type = optimization_type
-        optimization.component = component
-        optimization.title = title
-        optimization.description = description
-        optimization.current_performance = current_performance
-        optimization.expected_improvement = expected_improvement
-        optimization.effort_estimate = effort_estimate
-        optimization.priority_score = priority_score
+        setattr(optimization, 'tenant_id', tenant_id)  # type: ignore
+        setattr(optimization, 'optimization_type', optimization_type)  # type: ignore
+        setattr(optimization, 'component', component)  # type: ignore
+        setattr(optimization, 'title', title)  # type: ignore
+        setattr(optimization, 'description', description)  # type: ignore
+        setattr(optimization, 'current_performance', current_performance)  # type: ignore
+        setattr(optimization, 'expected_improvement', expected_improvement)  # type: ignore
+        setattr(optimization, 'effort_estimate', effort_estimate)  # type: ignore
+        setattr(optimization, 'priority_score', priority_score)  # type: ignore
         
         self.db.add(optimization)
         self.db.commit()
@@ -611,14 +611,14 @@ class PerformanceMonitoringService:
         
         alerts = self.db.query(PerformanceAlert).filter(
             and_(
-                PerformanceAlert.tenant_id.is_(metric.tenant_id),
-                PerformanceAlert.metric_name.is_(metric.metric_name),
-                PerformanceAlert.status.is_("active")
+                PerformanceAlert.tenant_id == metric.tenant_id,
+                PerformanceAlert.metric_name == metric.metric_name,
+                PerformanceAlert.status == "active"
             )
         ).all()
         
         for alert in alerts:
-            metric_value = float(metric.value) if metric.value is not None else 0.0
+            metric_value = float(getattr(metric, 'value', 0)) if getattr(metric, 'value', None) is not None else 0.0
             threshold_value = float(alert.threshold_value) if alert.threshold_value is not None else 0.0
             
             if self._evaluate_threshold(metric_value, threshold_value, alert.threshold_operator):
@@ -659,13 +659,13 @@ class PerformanceMonitoringService:
         description = health_check.error_message or "Health check failed"
         
         incident = PerformanceIncident()
-        incident.tenant_id = health_check.tenant_id
-        incident.health_check_id = health_check.id
-        incident.title = f"Health check failed: {health_check.check_name}"
-        incident.description = description
-        incident.severity = severity
-        incident.category = "availability"
-        incident.affected_components = [health_check.component]
+        setattr(incident, 'tenant_id', health_check.tenant_id)  # type: ignore
+        setattr(incident, 'health_check_id', health_check.id)  # type: ignore
+        setattr(incident, 'title', f"Health check failed: {health_check.check_name}")  # type: ignore
+        setattr(incident, 'description', description)  # type: ignore
+        setattr(incident, 'severity', severity)  # type: ignore
+        setattr(incident, 'category', "availability")  # type: ignore
+        setattr(incident, 'affected_components', [health_check.component])  # type: ignore
         
         self.db.add(incident)
         self.db.commit()
@@ -674,12 +674,12 @@ class PerformanceMonitoringService:
         """Create incident from triggered alert"""
         
         incident = PerformanceIncident()
-        incident.tenant_id = alert.tenant_id
-        incident.alert_id = alert.id
-        incident.title = f"Performance alert: {alert.alert_name}"
-        incident.description = f"Alert triggered: {alert.alert_name} - Current value: {current_value}"
-        incident.severity = alert.severity
-        incident.category = "performance"
+        setattr(incident, 'tenant_id', alert.tenant_id)  # type: ignore
+        setattr(incident, 'alert_id', alert.id)  # type: ignore
+        setattr(incident, 'title', f"Performance alert: {alert.alert_name}")  # type: ignore
+        setattr(incident, 'description', f"Alert triggered: {alert.alert_name} - Current value: {current_value}")  # type: ignore
+        setattr(incident, 'severity', alert.severity)  # type: ignore
+        setattr(incident, 'category', "performance")  # type: ignore
         
         self.db.add(incident)
         self.db.commit()
@@ -689,9 +689,9 @@ class PerformanceMonitoringService:
         
         metrics = self.db.query(PerformanceMetric).filter(
             and_(
-                PerformanceMetric.tenant_id.is_(tenant_id),
-                PerformanceMetric.metric_category.is_("system"),
-                PerformanceMetric.timestamp.__ge__(start_time)
+                PerformanceMetric.tenant_id == tenant_id,
+                PerformanceMetric.metric_category == "system",
+                PerformanceMetric.timestamp >= start_time
             )
         ).all()
         
@@ -720,8 +720,8 @@ class PerformanceMonitoringService:
         
         queries = self.db.query(QueryPerformance).filter(
             and_(
-                QueryPerformance.tenant_id.is_(tenant_id),
-                QueryPerformance.timestamp.__ge__(start_time)
+                QueryPerformance.tenant_id == tenant_id,
+                QueryPerformance.timestamp >= start_time
             )
         ).all()
         
@@ -745,8 +745,8 @@ class PerformanceMonitoringService:
         
         ux_metrics = self.db.query(UserExperienceMetric).filter(
             and_(
-                UserExperienceMetric.tenant_id.is_(tenant_id),
-                UserExperienceMetric.timestamp.__ge__(start_time)
+                UserExperienceMetric.tenant_id == tenant_id,
+                UserExperienceMetric.timestamp >= start_time
             )
         ).all()
         
@@ -770,8 +770,8 @@ class PerformanceMonitoringService:
         
         alerts = self.db.query(PerformanceAlert).filter(
             and_(
-                PerformanceAlert.tenant_id.is_(tenant_id),
-                PerformanceAlert.status.is_("active")
+                PerformanceAlert.tenant_id == tenant_id,
+                PerformanceAlert.status == "active"
             )
         ).order_by(desc(PerformanceAlert.created_at)).limit(10).all()
         
@@ -791,8 +791,8 @@ class PerformanceMonitoringService:
         
         incidents = self.db.query(PerformanceIncident).filter(
             and_(
-                PerformanceIncident.tenant_id.is_(tenant_id),
-                PerformanceIncident.started_at.__ge__(start_time)
+                PerformanceIncident.tenant_id == tenant_id,
+                PerformanceIncident.started_at >= start_time
             )
         ).order_by(desc(PerformanceIncident.started_at)).limit(10).all()
         

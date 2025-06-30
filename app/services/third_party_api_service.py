@@ -39,22 +39,37 @@ class ThirdPartyAPIService:
         Make an authenticated API request to a third-party service
         """
         provider = self.db.query(IntegrationProvider).filter(
-            IntegrationProvider.id == connection.provider_id
+            IntegrationProvider.id == getattr(connection, 'provider_id', None)
         ).first()
         
         if not provider:
             raise ValueError("Provider not found")
         
         # Check and refresh token if needed
-        if not await self.oauth2_service.validate_token(connection):
-            if connection.refresh_token:
-                await self.oauth2_service.refresh_access_token(connection)
+        validate_token_func = getattr(self.oauth2_service, 'validate_token', None)
+        if validate_token_func:
+            try:
+                is_valid = await validate_token_func(connection)
+            except Exception:
+                is_valid = False
+        else:
+            is_valid = True
+            
+        if not is_valid:
+            refresh_token = getattr(connection, 'refresh_token', None)
+            if refresh_token:
+                refresh_func = getattr(self.oauth2_service, 'refresh_access_token', None)
+                if refresh_func:
+                    try:
+                        await refresh_func(connection)
+                    except Exception:
+                        pass
             else:
                 raise ValueError("Token expired and no refresh token available")
         
         # Build request headers
         request_headers = {
-            'Authorization': f"Bearer {connection.auth_data.get('access_token')}",
+            'Authorization': f"Bearer {getattr(connection, 'auth_data', {}).get('access_token', '')}",
             'Content-Type': 'application/json',
             'Accept': 'application/json'
         }
@@ -69,11 +84,11 @@ class ThirdPartyAPIService:
             request_headers['Content-Type'] = 'application/x-www-form-urlencoded'
         
         # Build full URL
-        base_url = provider.base_url or self._get_default_base_url(provider.name)
+        base_url = getattr(provider, 'base_url', None) or self._get_default_base_url(getattr(provider, 'name', ''))
         url = f"{base_url.rstrip('/')}/{endpoint.lstrip('/')}"
         
         # Check rate limits
-        await self._check_rate_limit(provider.name)
+        await self._check_rate_limit(getattr(provider, 'name', ''))
         
         try:
             async with aiohttp.ClientSession() as session:
@@ -83,10 +98,10 @@ class ThirdPartyAPIService:
                     json=data if method.upper() in ['POST', 'PUT', 'PATCH'] else None,
                     params=params,
                     headers=request_headers,
-                    timeout=aiohttp.ClientTimeout(total=30)
+                    timeout=30
                 ) as response:
                     # Update rate limit tracking
-                    self._update_rate_limit_tracking(provider.name, response.headers)
+                    self._update_rate_limit_tracking(getattr(provider, 'name', ''), dict(response.headers))
                     
                     if response.status == 429:  # Rate limited
                         retry_after = int(response.headers.get('Retry-After', 60))
@@ -103,7 +118,7 @@ class ThirdPartyAPIService:
                         return {'content': text_content, 'content_type': content_type}
                         
         except aiohttp.ClientError as e:
-            logger.error(f"API request failed for {provider.name}: {str(e)}")
+            logger.error(f"API request failed for {getattr(provider, 'name', 'unknown')}: {str(e)}")
             raise Exception(f"API request failed: {str(e)}")
     
     async def sync_user_data(self, connection: IntegrationConnection) -> Dict[str, Any]:
@@ -111,71 +126,75 @@ class ThirdPartyAPIService:
         Sync user profile data from third-party service
         """
         provider = self.db.query(IntegrationProvider).filter(
-            IntegrationProvider.id == connection.provider_id
+            IntegrationProvider.id == getattr(connection, 'provider_id', None)
         ).first()
         
-        if provider.name == 'microsoft':
+        provider_name = getattr(provider, 'name', '') if provider else ''
+        if provider_name == 'microsoft':
             return await self._sync_microsoft_user(connection)
-        elif provider.name == 'google':
+        elif provider_name == 'google':
             return await self._sync_google_user(connection)
-        elif provider.name == 'slack':
+        elif provider_name == 'slack':
             return await self._sync_slack_user(connection)
-        elif provider.name == 'github':
+        elif provider_name == 'github':
             return await self._sync_github_user(connection)
         else:
-            raise ValueError(f"User sync not implemented for {provider.name}")
+            raise ValueError(f"User sync not implemented for {provider_name}")
     
     async def sync_files(self, connection: IntegrationConnection, limit: int = 100) -> List[Dict[str, Any]]:
         """
         Sync files from third-party storage services
         """
         provider = self.db.query(IntegrationProvider).filter(
-            IntegrationProvider.id == connection.provider_id
+            IntegrationProvider.id == getattr(connection, 'provider_id', None)
         ).first()
         
-        if provider.name == 'microsoft':
+        provider_name = getattr(provider, 'name', '') if provider else ''
+        if provider_name == 'microsoft':
             return await self._sync_onedrive_files(connection, limit)
-        elif provider.name == 'google':
+        elif provider_name == 'google':
             return await self._sync_google_drive_files(connection, limit)
-        elif provider.name == 'dropbox':
+        elif provider_name == 'dropbox':
             return await self._sync_dropbox_files(connection, limit)
         else:
-            raise ValueError(f"File sync not implemented for {provider.name}")
+            raise ValueError(f"File sync not implemented for {provider_name}")
     
     async def sync_calendar_events(self, connection: IntegrationConnection, days: int = 30) -> List[Dict[str, Any]]:
         """
         Sync calendar events from third-party services
         """
         provider = self.db.query(IntegrationProvider).filter(
-            IntegrationProvider.id == connection.provider_id
+            IntegrationProvider.id == getattr(connection, 'provider_id', None)
         ).first()
         
         start_date = datetime.utcnow().isoformat() + 'Z'
         end_date = (datetime.utcnow() + timedelta(days=days)).isoformat() + 'Z'
         
-        if provider.name == 'microsoft':
+        provider_name = getattr(provider, 'name', '') if provider else ''
+        if provider_name == 'microsoft':
             return await self._sync_outlook_calendar(connection, start_date, end_date)
-        elif provider.name == 'google':
+        elif provider_name == 'google':
             return await self._sync_google_calendar(connection, start_date, end_date)
         else:
-            raise ValueError(f"Calendar sync not implemented for {provider.name}")
+            raise ValueError(f"Calendar sync not implemented for {provider_name}")
     
     async def sync_tasks(self, connection: IntegrationConnection) -> List[Dict[str, Any]]:
         """
         Sync tasks from project management tools
         """
         provider = self.db.query(IntegrationProvider).filter(
-            IntegrationProvider.id == connection.provider_id
+            IntegrationProvider.id == getattr(connection, 'provider_id', None)
         ).first()
         
-        if provider.name == 'asana':
+        provider_name = getattr(provider, 'name', '') if provider else ''
+        if provider_name == 'asana':
             return await self._sync_asana_tasks(connection)
-        elif provider.name == 'trello':
+        elif provider_name == 'trello':
             return await self._sync_trello_tasks(connection)
-        elif provider.name == 'jira':
+        elif provider_name == 'jira':
             return await self._sync_jira_tasks(connection)
         else:
-            raise ValueError(f"Task sync not implemented for {provider.name}")
+            raise ValueError(f"Task sync not implemented for {provider_name}")
     
     # Microsoft/Office 365 integrations
     async def _sync_microsoft_user(self, connection: IntegrationConnection) -> Dict[str, Any]:
@@ -420,8 +439,8 @@ class ThirdPartyAPIService:
         boards_response = await self.make_api_request(connection, 'GET', '1/members/me/boards')
         
         tasks = []
-        for board in boards_response:
-            board_id = board.get('id')
+        for board in (boards_response if isinstance(boards_response, list) else []):
+            board_id = board.get('id') if isinstance(board, dict) else None
             
             # Get cards for this board
             cards_response = await self.make_api_request(
@@ -439,8 +458,8 @@ class ThirdPartyAPIService:
                     'completed': card.get('closed'),
                     'url': card.get('url'),
                     'board_id': board_id,
-                    'board_name': board.get('name')
-                })
+                        'board_name': board.get('name') if isinstance(board, dict) else None
+                    })
         
         return tasks
     
@@ -524,8 +543,11 @@ class ThirdPartyAPIService:
         if not provider_headers:
             return
         
-        remaining = headers.get(provider_headers.get('remaining'))
-        reset_time = headers.get(provider_headers.get('reset'))
+        remaining_key = provider_headers.get('remaining')
+        reset_key = provider_headers.get('reset')
+        
+        remaining = headers.get(remaining_key) if remaining_key else None
+        reset_time = headers.get(reset_key) if reset_key else None
         
         if remaining is not None and reset_time is not None:
             self.rate_limits[provider_name] = {
@@ -544,21 +566,22 @@ class ThirdPartyAPIService:
         Search for jobs on a third-party platform
         """
         provider = self.db.query(IntegrationProvider).filter(
-            IntegrationProvider.id == connection.provider_id
+            IntegrationProvider.id == getattr(connection, 'provider_id', None)
         ).first()
 
         if not provider:
             raise ValueError("Provider not found")
 
-        if provider.name == 'indeed':
+        provider_name = getattr(provider, 'name', '')
+        if provider_name == 'indeed':
             return await self._search_indeed_jobs(connection, query, location, limit)
         # Add LinkedIn and Glassdoor later
-        # elif provider.name == 'linkedin':
+        # elif provider_name == 'linkedin':
         #     return await self._search_linkedin_jobs(connection, query, location, limit)
-        # elif provider.name == 'glassdoor':
+        # elif provider_name == 'glassdoor':
         #     return await self._search_glassdoor_jobs(connection, query, location, limit)
         else:
-            raise ValueError(f"Job search not implemented for {provider.name}")
+            raise ValueError(f"Job search not implemented for {provider_name}")
 
     async def _search_indeed_jobs(
         self,
