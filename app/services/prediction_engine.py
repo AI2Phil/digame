@@ -10,6 +10,7 @@ try:
     from sklearn.ensemble import RandomForestRegressor
     from sklearn.preprocessing import StandardScaler
     from sklearn.metrics import mean_squared_error, r2_score
+    SKLEARN_AVAILABLE = True
 except ImportError:
     # Fallback for missing ML dependencies
     np = None
@@ -19,8 +20,9 @@ except ImportError:
     StandardScaler = None
     mean_squared_error = None
     r2_score = None
+    SKLEARN_AVAILABLE = False
 
-from typing import Dict, List, Any, Optional, Tuple
+from typing import Dict, List, Any, Optional, Tuple, Union
 from datetime import datetime, timedelta
 import asyncio
 import logging
@@ -32,19 +34,19 @@ class PredictionEngine:
     Advanced prediction engine for productivity forecasting and insights
     """
     
-    def __init__(self):
-        if LinearRegression and RandomForestRegressor and StandardScaler:
-            self.productivity_model = LinearRegression()  # type: ignore
-            self.task_completion_model = RandomForestRegressor(n_estimators=50, random_state=42)  # type: ignore
-            self.energy_model = LinearRegression()  # type: ignore
-            self.scaler = StandardScaler()  # type: ignore
+    def __init__(self) -> None:
+        if SKLEARN_AVAILABLE and LinearRegression and RandomForestRegressor and StandardScaler:
+            self.productivity_model: Optional[Any] = LinearRegression()
+            self.task_completion_model: Optional[Any] = RandomForestRegressor(n_estimators=50, random_state=42)
+            self.energy_model: Optional[Any] = LinearRegression()
+            self.scaler: Optional[Any] = StandardScaler()
         else:
-            self.productivity_model = None  # type: ignore
-            self.task_completion_model = None  # type: ignore
-            self.energy_model = None  # type: ignore
-            self.scaler = None  # type: ignore
-        self.is_trained = False
-        self.model_accuracy = {}
+            self.productivity_model: Optional[Any] = None
+            self.task_completion_model: Optional[Any] = None
+            self.energy_model: Optional[Any] = None
+            self.scaler: Optional[Any] = None
+        self.is_trained: bool = False
+        self.model_accuracy: Dict[str, float] = {}
         
     async def predict_productivity_score(self, user_data: Dict[str, Any], 
                                        prediction_horizon: int = 7) -> Dict[str, Any]:
@@ -81,8 +83,12 @@ class PredictionEngine:
                 )
                 
                 # Make prediction
-                if self.productivity_model:
-                    predicted_score = self.productivity_model.predict([features])[0]
+                if self.productivity_model and hasattr(self.productivity_model, 'predict'):
+                    try:
+                        prediction_result = self.productivity_model.predict([features])
+                        predicted_score = float(prediction_result[0]) if prediction_result is not None else 0.7
+                    except (AttributeError, IndexError, TypeError, ValueError):
+                        predicted_score = 0.7
                 else:
                     # Fallback prediction
                     predicted_score = 0.7  # Default productivity score
@@ -222,8 +228,12 @@ class PredictionEngine:
                     )
                     
                     # Predict energy level
-                    if self.energy_model:
-                        predicted_energy = self.energy_model.predict([features])[0]
+                    if self.energy_model and hasattr(self.energy_model, 'predict'):
+                        try:
+                            prediction_result = self.energy_model.predict([features])
+                            predicted_energy = float(prediction_result[0]) if prediction_result is not None else 0.5
+                        except (AttributeError, IndexError, TypeError, ValueError):
+                            predicted_energy = 0.5
                     else:
                         # Fallback energy prediction based on hour
                         if 6 <= hour <= 10:
@@ -252,7 +262,7 @@ class PredictionEngine:
                     "hourly_predictions": daily_energy,
                     "optimal_periods": optimal_periods,
                     "daily_energy_score": float(sum(h["predicted_energy"] for h in daily_energy) / len(daily_energy)) if daily_energy else 0.0,
-                    "peak_energy_hours": [h["hour"] for h in daily_energy if h["predicted_energy"] > 0.8]
+                    "peak_energy_hours": [h["hour"] for h in daily_energy if isinstance(h.get("predicted_energy"), (int, float)) and h["predicted_energy"] > 0.8]
                 })
             
             # Generate scheduling recommendations
@@ -325,161 +335,216 @@ class PredictionEngine:
     # Helper methods for data preparation
     def _prepare_productivity_data(self, user_data: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Prepare productivity data for model training"""
-        productivity_data = []
+        productivity_data: List[Dict[str, Any]] = []
         
-        if 'productivity_history' in user_data:
+        if 'productivity_history' in user_data and isinstance(user_data['productivity_history'], list):
             for entry in user_data['productivity_history']:
-                if 'date' in entry and 'score' in entry:
-                    productivity_data.append({
-                        'date': entry['date'],
-                        'score': float(entry['score']),
-                        'day_of_week': self._get_day_of_week(entry['date']),
-                        'tasks_completed': entry.get('tasks_completed', 0),
-                        'focus_time': entry.get('focus_time', 0),
-                        'interruptions': entry.get('interruptions', 0)
-                    })
+                if isinstance(entry, dict) and 'date' in entry and 'score' in entry:
+                    try:
+                        score_value = float(entry['score'])
+                        productivity_data.append({
+                            'date': str(entry['date']),
+                            'score': score_value,
+                            'day_of_week': self._get_day_of_week(str(entry['date'])),
+                            'tasks_completed': int(entry.get('tasks_completed', 0)),
+                            'focus_time': float(entry.get('focus_time', 0)),
+                            'interruptions': int(entry.get('interruptions', 0))
+                        })
+                    except (ValueError, TypeError):
+                        continue
         
         return sorted(productivity_data, key=lambda x: x['date'])
     
     def _prepare_task_data(self, task_data: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Prepare task completion data for model training"""
-        completion_data = []
+        completion_data: List[Dict[str, Any]] = []
         
-        if 'task_history' in task_data:
+        if 'task_history' in task_data and isinstance(task_data['task_history'], list):
             for task in task_data['task_history']:
-                if 'completed_at' in task:
-                    completion_data.append({
-                        'completed_at': task['completed_at'],
-                        'priority': task.get('priority', 'medium'),
-                        'estimated_duration': task.get('estimated_duration', 60),
-                        'actual_duration': task.get('actual_duration', 60),
-                        'complexity': task.get('complexity', 'medium'),
-                        'day_of_week': self._get_day_of_week(task['completed_at'])
-                    })
+                if isinstance(task, dict) and 'completed_at' in task:
+                    try:
+                        completion_data.append({
+                            'completed_at': str(task['completed_at']),
+                            'priority': str(task.get('priority', 'medium')),
+                            'estimated_duration': float(task.get('estimated_duration', 60)),
+                            'actual_duration': float(task.get('actual_duration', 60)),
+                            'complexity': str(task.get('complexity', 'medium')),
+                            'day_of_week': self._get_day_of_week(str(task['completed_at']))
+                        })
+                    except (ValueError, TypeError):
+                        continue
         
         return sorted(completion_data, key=lambda x: x['completed_at'])
     
     def _prepare_energy_data(self, energy_data: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Prepare energy level data for model training"""
-        energy_history = []
+        energy_history: List[Dict[str, Any]] = []
         
-        if 'energy_history' in energy_data:
+        if 'energy_history' in energy_data and isinstance(energy_data['energy_history'], list):
             for entry in energy_data['energy_history']:
-                if 'timestamp' in entry and 'energy_level' in entry:
-                    energy_history.append({
-                        'timestamp': entry['timestamp'],
-                        'energy_level': float(entry['energy_level']),
-                        'hour': self._get_hour(entry['timestamp']),
-                        'day_of_week': self._get_day_of_week(entry['timestamp']),
-                        'sleep_quality': entry.get('sleep_quality', 0.7),
-                        'exercise': entry.get('exercise', False),
-                        'caffeine': entry.get('caffeine', False)
-                    })
+                if isinstance(entry, dict) and 'timestamp' in entry and 'energy_level' in entry:
+                    try:
+                        energy_level_value = float(entry['energy_level'])
+                        energy_history.append({
+                            'timestamp': str(entry['timestamp']),
+                            'energy_level': energy_level_value,
+                            'hour': self._get_hour(str(entry['timestamp'])),
+                            'day_of_week': self._get_day_of_week(str(entry['timestamp'])),
+                            'sleep_quality': float(entry.get('sleep_quality', 0.7)),
+                            'exercise': bool(entry.get('exercise', False)),
+                            'caffeine': bool(entry.get('caffeine', False))
+                        })
+                    except (ValueError, TypeError):
+                        continue
         
         return sorted(energy_history, key=lambda x: x['timestamp'])
     
     # Model training methods
-    async def _train_productivity_model(self, historical_data: List[Dict[str, Any]]):
+    async def _train_productivity_model(self, historical_data: List[Dict[str, Any]]) -> None:
         """Train the productivity prediction model"""
-        if len(historical_data) < 7 or not self.productivity_model or not r2_score:
+        if (len(historical_data) < 7 or not self.productivity_model or
+            not hasattr(self.productivity_model, 'fit') or not r2_score):
             return
         
         # Prepare features and targets
-        features = []
-        targets = []
+        features: List[List[float]] = []
+        targets: List[float] = []
         
         for entry in historical_data:
-            feature_vector = [
-                entry['day_of_week'],
-                entry['tasks_completed'],
-                entry['focus_time'],
-                entry['interruptions'],
-                self._get_week_number(entry['date']),
-                self._get_month_number(entry['date'])
-            ]
-            features.append(feature_vector)
-            targets.append(entry['score'])
+            try:
+                feature_vector = [
+                    float(entry['day_of_week']),
+                    float(entry['tasks_completed']),
+                    float(entry['focus_time']),
+                    float(entry['interruptions']),
+                    float(self._get_week_number(entry['date'])),
+                    float(self._get_month_number(entry['date']))
+                ]
+                features.append(feature_vector)
+                targets.append(float(entry['score']))
+            except (ValueError, TypeError, KeyError):
+                continue
+        
+        if len(features) < 7 or len(targets) < 7:
+            return
         
         try:
             # Train the model
-            self.productivity_model.fit(features, targets)
-            
-            # Calculate model accuracy
-            predictions = self.productivity_model.predict(features)
-            self.model_accuracy['productivity'] = float(r2_score(targets, predictions))
-            
-            self.is_trained = True
+            if self.productivity_model and hasattr(self.productivity_model, 'fit'):
+                self.productivity_model.fit(features, targets)
+                
+                # Calculate model accuracy
+                if hasattr(self.productivity_model, 'predict'):
+                    predictions = self.productivity_model.predict(features)
+                    if predictions is not None:
+                        self.model_accuracy['productivity'] = float(r2_score(targets, predictions))
+                    else:
+                        self.model_accuracy['productivity'] = 0.0
+                
+                self.is_trained = True
         except Exception as e:
             logger.error(f"Error training productivity model: {e}")
             self.model_accuracy['productivity'] = 0.0
     
-    async def _train_task_completion_model(self, completion_data: List[Dict[str, Any]]):
+    async def _train_task_completion_model(self, completion_data: List[Dict[str, Any]]) -> None:
         """Train the task completion prediction model"""
-        if len(completion_data) < 10 or not self.task_completion_model or not r2_score:
+        if (len(completion_data) < 10 or not self.task_completion_model or
+            not hasattr(self.task_completion_model, 'fit') or not r2_score):
             return
         
         # Prepare features for task completion prediction
-        features = []
-        targets = []
+        features: List[List[float]] = []
+        targets: List[float] = []
         
         # Group by day and calculate completion rates
-        daily_completions = {}
+        daily_completions: Dict[str, List[Dict[str, Any]]] = {}
         for task in completion_data:
-            date = task['completed_at'][:10]  # Extract date part
-            if date not in daily_completions:
-                daily_completions[date] = []
-            daily_completions[date].append(task)
+            try:
+                date = str(task['completed_at'])[:10]  # Extract date part
+                if date not in daily_completions:
+                    daily_completions[date] = []
+                daily_completions[date].append(task)
+            except (KeyError, TypeError):
+                continue
         
         for date, tasks in daily_completions.items():
-            feature_vector = [
-                self._get_day_of_week(date),
-                len(tasks),
-                sum(1 for t in tasks if t['priority'] == 'high'),
-                sum(t['actual_duration'] for t in tasks) / len(tasks),
-                self._get_week_number(date)
-            ]
-            features.append(feature_vector)
-            targets.append(len(tasks))
+            if not tasks:
+                continue
+            try:
+                high_priority_count = sum(1 for t in tasks if str(t.get('priority', '')).lower() == 'high')
+                avg_duration = sum(float(t.get('actual_duration', 0)) for t in tasks) / len(tasks)
+                
+                feature_vector = [
+                    float(self._get_day_of_week(date)),
+                    float(len(tasks)),
+                    float(high_priority_count),
+                    float(avg_duration),
+                    float(self._get_week_number(date))
+                ]
+                features.append(feature_vector)
+                targets.append(float(len(tasks)))
+            except (ValueError, TypeError, ZeroDivisionError):
+                continue
+        
+        if len(features) < 5 or len(targets) < 5:
+            return
         
         try:
             # Train the model
-            self.task_completion_model.fit(features, targets)
-            
-            # Calculate accuracy
-            predictions = self.task_completion_model.predict(features)
-            self.model_accuracy['task_completion'] = float(r2_score(targets, predictions))
+            if self.task_completion_model and hasattr(self.task_completion_model, 'fit'):
+                self.task_completion_model.fit(features, targets)
+                
+                # Calculate accuracy
+                if hasattr(self.task_completion_model, 'predict'):
+                    predictions = self.task_completion_model.predict(features)
+                    if predictions is not None:
+                        self.model_accuracy['task_completion'] = float(r2_score(targets, predictions))
+                    else:
+                        self.model_accuracy['task_completion'] = 0.0
         except Exception as e:
             logger.error(f"Error training task completion model: {e}")
             self.model_accuracy['task_completion'] = 0.0
     
-    async def _train_energy_model(self, energy_history: List[Dict[str, Any]]):
+    async def _train_energy_model(self, energy_history: List[Dict[str, Any]]) -> None:
         """Train the energy level prediction model"""
-        if len(energy_history) < 14 or not self.energy_model or not r2_score:
+        if (len(energy_history) < 14 or not self.energy_model or
+            not hasattr(self.energy_model, 'fit') or not r2_score):
             return
         
         # Prepare features and targets
-        features = []
-        targets = []
+        features: List[List[float]] = []
+        targets: List[float] = []
         
         for entry in energy_history:
-            feature_vector = [
-                entry['hour'],
-                entry['day_of_week'],
-                entry['sleep_quality'],
-                1 if entry['exercise'] else 0,
-                1 if entry['caffeine'] else 0,
-                self._get_week_number(entry['timestamp'])
-            ]
-            features.append(feature_vector)
-            targets.append(entry['energy_level'])
+            try:
+                feature_vector = [
+                    float(entry['hour']),
+                    float(entry['day_of_week']),
+                    float(entry['sleep_quality']),
+                    float(1 if entry['exercise'] else 0),
+                    float(1 if entry['caffeine'] else 0),
+                    float(self._get_week_number(entry['timestamp']))
+                ]
+                features.append(feature_vector)
+                targets.append(float(entry['energy_level']))
+            except (ValueError, TypeError, KeyError):
+                continue
+        
+        if len(features) < 14 or len(targets) < 14:
+            return
         
         try:
             # Train the model
-            self.energy_model.fit(features, targets)
-            
-            # Calculate accuracy
-            predictions = self.energy_model.predict(features)
-            self.model_accuracy['energy'] = float(r2_score(targets, predictions))
+            if self.energy_model and hasattr(self.energy_model, 'fit'):
+                self.energy_model.fit(features, targets)
+                
+                # Calculate accuracy
+                if hasattr(self.energy_model, 'predict'):
+                    predictions = self.energy_model.predict(features)
+                    if predictions is not None:
+                        self.model_accuracy['energy'] = float(r2_score(targets, predictions))
+                    else:
+                        self.model_accuracy['energy'] = 0.0
         except Exception as e:
             logger.error(f"Error training energy model: {e}")
             self.model_accuracy['energy'] = 0.0
@@ -515,48 +580,61 @@ class PredictionEngine:
         return [hour, day_of_week, sleep_quality, exercise, caffeine, week_number]
     
     # Utility methods
-    def _get_day_of_week(self, date_str: str) -> int:
+    def _get_day_of_week(self, date_str: Union[str, datetime]) -> int:
         """Get day of week as integer (0=Monday, 6=Sunday)"""
         try:
             if isinstance(date_str, str):
-                date_obj = datetime.fromisoformat(date_str.replace('Z', '+00:00'))
-            else:
+                # Handle various date formats
+                clean_date = date_str.replace('Z', '+00:00')
+                date_obj = datetime.fromisoformat(clean_date)
+            elif isinstance(date_str, datetime):
                 date_obj = date_str
+            else:
+                return 0
             return date_obj.weekday()
-        except:
+        except (ValueError, TypeError, AttributeError):
             return 0
     
-    def _get_hour(self, timestamp_str: str) -> int:
+    def _get_hour(self, timestamp_str: Union[str, datetime]) -> int:
         """Extract hour from timestamp"""
         try:
             if isinstance(timestamp_str, str):
-                timestamp = datetime.fromisoformat(timestamp_str.replace('Z', '+00:00'))
-            else:
+                clean_timestamp = timestamp_str.replace('Z', '+00:00')
+                timestamp = datetime.fromisoformat(clean_timestamp)
+            elif isinstance(timestamp_str, datetime):
                 timestamp = timestamp_str
+            else:
+                return 12
             return timestamp.hour
-        except:
+        except (ValueError, TypeError, AttributeError):
             return 12
     
-    def _get_week_number(self, date_str: str) -> int:
+    def _get_week_number(self, date_str: Union[str, datetime]) -> int:
         """Get week number of the year"""
         try:
             if isinstance(date_str, str):
-                date_obj = datetime.fromisoformat(date_str.replace('Z', '+00:00'))
-            else:
+                clean_date = date_str.replace('Z', '+00:00')
+                date_obj = datetime.fromisoformat(clean_date)
+            elif isinstance(date_str, datetime):
                 date_obj = date_str
+            else:
+                return 1
             return date_obj.isocalendar()[1]
-        except:
+        except (ValueError, TypeError, AttributeError):
             return 1
     
-    def _get_month_number(self, date_str: str) -> int:
+    def _get_month_number(self, date_str: Union[str, datetime]) -> int:
         """Get month number"""
         try:
             if isinstance(date_str, str):
-                date_obj = datetime.fromisoformat(date_str.replace('Z', '+00:00'))
-            else:
+                clean_date = date_str.replace('Z', '+00:00')
+                date_obj = datetime.fromisoformat(clean_date)
+            elif isinstance(date_str, datetime):
                 date_obj = date_str
+            else:
+                return 1
             return date_obj.month
-        except:
+        except (ValueError, TypeError, AttributeError):
             return 1
     
     # Baseline prediction methods (when insufficient data)
@@ -741,34 +819,43 @@ class PredictionEngine:
         
         return recommendations
     
-    def _predict_daily_completion_rate(self, forecast_date: datetime, 
+    def _predict_daily_completion_rate(self, forecast_date: datetime,
                                      completion_data: List[Dict[str, Any]]) -> float:
         """Predict task completion rate for a specific day"""
-        day_of_week = forecast_date.weekday()
-        
-        # Simple baseline: weekdays have higher completion rates
-        if day_of_week < 5:  # Weekday
-            return 0.8
-        else:  # Weekend
-            return 0.6
+        try:
+            day_of_week = forecast_date.weekday()
+            
+            # Simple baseline: weekdays have higher completion rates
+            if day_of_week < 5:  # Weekday
+                return 0.8
+            else:  # Weekend
+                return 0.6
+        except (AttributeError, TypeError):
+            return 0.7  # Default completion rate
     
-    def _estimate_task_volume(self, forecast_date: datetime, 
+    def _estimate_task_volume(self, forecast_date: datetime,
                             completion_data: List[Dict[str, Any]]) -> float:
         """Estimate number of tasks for a specific day"""
-        day_of_week = forecast_date.weekday()
-        
-        # Simple baseline: more tasks on weekdays
-        if day_of_week < 5:  # Weekday
-            return 6.0
-        else:  # Weekend
-            return 3.0
+        try:
+            day_of_week = forecast_date.weekday()
+            
+            # Simple baseline: more tasks on weekdays
+            if day_of_week < 5:  # Weekday
+                return 6.0
+            else:  # Weekend
+                return 3.0
+        except (AttributeError, TypeError):
+            return 5.0  # Default task volume
     
     def _classify_day_type(self, date: datetime) -> str:
         """Classify day type for task forecasting"""
-        if date.weekday() < 5:
-            return "weekday"
-        else:
-            return "weekend"
+        try:
+            if date.weekday() < 5:
+                return "weekday"
+            else:
+                return "weekend"
+        except (AttributeError, TypeError):
+            return "unknown"
     
     def _calculate_task_forecast_confidence(self, completion_data: List[Dict[str, Any]]) -> float:
         """Calculate confidence for task completion forecasts"""
@@ -786,14 +873,18 @@ class PredictionEngine:
         if not daily_forecasts:
             return {"pattern": "no_data"}
         
-        weekday_completions = [f["estimated_completions"] for f in daily_forecasts if f["day_type"] == "weekday"]
-        weekend_completions = [f["estimated_completions"] for f in daily_forecasts if f["day_type"] == "weekend"]
+        weekday_completions = [f.get("estimated_completions", 0) for f in daily_forecasts if isinstance(f.get("estimated_completions"), (int, float)) and f.get("day_type") == "weekday"]
+        weekend_completions = [f.get("estimated_completions", 0) for f in daily_forecasts if isinstance(f.get("estimated_completions"), (int, float)) and f.get("day_type") == "weekend"]
+        
+        # Safe calculation of max value for peak days
+        completion_values = [f.get("estimated_completions", 0) for f in daily_forecasts if isinstance(f.get("estimated_completions"), (int, float))]
+        max_completions = max(completion_values) if completion_values else 0
         
         analysis = {
             "weekday_average": float(sum(weekday_completions) / len(weekday_completions)) if weekday_completions else 0,
             "weekend_average": float(sum(weekend_completions) / len(weekend_completions)) if weekend_completions else 0,
-            "total_estimated": sum(f["estimated_completions"] for f in daily_forecasts),
-            "peak_days": [f["date"] for f in daily_forecasts if f["estimated_completions"] == max(f["estimated_completions"] for f in daily_forecasts)]
+            "total_estimated": sum(f.get("estimated_completions", 0) for f in daily_forecasts if isinstance(f.get("estimated_completions"), (int, float))),
+            "peak_days": [f["date"] for f in daily_forecasts if isinstance(f.get("estimated_completions"), (int, float)) and f["estimated_completions"] == max_completions]
         }
         
         return analysis
@@ -825,7 +916,8 @@ class PredictionEngine:
         """Suggest task optimization strategies"""
         suggestions = []
         
-        avg_completion_rate = sum(f["completion_probability"] for f in daily_forecasts) / len(daily_forecasts)
+        completion_probs = [f.get("completion_probability", 0) for f in daily_forecasts if isinstance(f.get("completion_probability"), (int, float))]
+        avg_completion_rate = sum(completion_probs) / len(completion_probs) if completion_probs else 0.7
         
         if avg_completion_rate < 0.7:
             suggestions.append("Consider breaking large tasks into smaller, manageable chunks")

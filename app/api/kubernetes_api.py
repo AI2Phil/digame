@@ -49,15 +49,15 @@ async def get_deployment_status(
                 "available_replicas": deployment.available_replicas,
                 "status": deployment.status,
                 "phase": deployment.phase,
-                "image": f"{deployment.image_name}:{deployment.image_tag}" if deployment.image_name else None,
-                "strategy": deployment.deployment_strategy,
-                "last_updated": deployment.updated_at.isoformat() if deployment.updated_at else None,
-                "last_deployed": deployment.last_deployed_at.isoformat() if deployment.last_deployed_at else None
+                "image": f"{getattr(deployment, 'image_name', '')}:{getattr(deployment, 'image_tag', '')}" if getattr(deployment, 'image_name', None) else None,  # type: ignore
+                "strategy": getattr(deployment, 'deployment_strategy', None),  # type: ignore
+                "last_updated": getattr(deployment, 'updated_at', None).isoformat() if getattr(deployment, 'updated_at', None) else None,  # type: ignore
+                "last_deployed": getattr(deployment, 'last_deployed_at', None).isoformat() if getattr(deployment, 'last_deployed_at', None) else None  # type: ignore
             })
         
         # Calculate overall health
         total_deployments = len(deployments)
-        healthy_deployments = len([d for d in deployments if d.status == "Running" and d.ready_replicas == d.desired_replicas])
+        healthy_deployments = len([d for d in deployments if getattr(d, 'status', None) == "Running" and getattr(d, 'ready_replicas', 0) == getattr(d, 'desired_replicas', 0)])  # type: ignore
         health_percentage = (healthy_deployments / total_deployments * 100) if total_deployments > 0 else 0
         
         return {
@@ -119,16 +119,18 @@ async def get_pod_metrics(
                 "ready_containers": pod.ready_containers,
                 "total_containers": pod.container_count,
                 "pod_ip": pod.pod_ip,
-                "started_at": pod.started_at.isoformat() if pod.started_at else None
+                "started_at": getattr(pod, 'started_at', None).isoformat() if getattr(pod, 'started_at', None) else None  # type: ignore
             }
             pod_data.append(pod_info)
             
-            if pod.status == "Running":
+            if getattr(pod, 'status', None) == "Running":  # type: ignore
                 running_pods += 1
-                if pod.cpu_usage_percentage:
-                    total_cpu_usage += pod.cpu_usage_percentage
-                if pod.memory_usage_percentage:
-                    total_memory_usage += pod.memory_usage_percentage
+                cpu_usage_pct = getattr(pod, 'cpu_usage_percentage', None)  # type: ignore
+                if cpu_usage_pct:
+                    total_cpu_usage += float(cpu_usage_pct)
+                memory_usage_pct = getattr(pod, 'memory_usage_percentage', None)  # type: ignore
+                if memory_usage_pct:
+                    total_memory_usage += float(memory_usage_pct)
         
         # Calculate averages
         avg_cpu_usage = (total_cpu_usage / running_pods) if running_pods > 0 else 0
@@ -142,7 +144,7 @@ async def get_pod_metrics(
                 "running_pods": running_pods,
                 "avg_cpu_usage_percentage": round(float(avg_cpu_usage), 2),
                 "avg_memory_usage_percentage": round(float(avg_memory_usage), 2),
-                "pods_with_restarts": len([p for p, _ in pods_with_deployments if p.restart_count > 0])
+                "pods_with_restarts": len([p for p, _ in pods_with_deployments if getattr(p, 'restart_count', 0) > 0])  # type: ignore
             },
             "timestamp": datetime.utcnow().isoformat()
         }
@@ -188,7 +190,7 @@ async def get_service_health(
             }
             service_data.append(service_info)
             
-            if service.health_status == "Healthy":
+            if getattr(service, 'health_status', None) == "Healthy":  # type: ignore
                 healthy_services += 1
         
         # Calculate overall service health
@@ -244,15 +246,15 @@ async def get_scaling_status(
                 "target_memory_utilization": hpa.target_memory_utilization,
                 "current_memory_utilization": hpa.current_memory_utilization,
                 "status": hpa.status,
-                "last_scale_time": hpa.last_scale_time.isoformat() if hpa.last_scale_time else None,
-                "scaling_active": hpa.current_replicas != hpa.desired_replicas
+                "last_scale_time": getattr(hpa, 'last_scale_time', None).isoformat() if getattr(hpa, 'last_scale_time', None) else None,  # type: ignore
+                "scaling_active": getattr(hpa, 'current_replicas', 0) != getattr(hpa, 'desired_replicas', 0)  # type: ignore
             }
             hpa_data.append(hpa_info)
         
         # Calculate scaling summary
         total_hpas = len(hpas)
-        stable_hpas = len([h for h in hpas if h.status == "Stable"])
-        scaling_hpas = len([h for h in hpas if h.current_replicas != h.desired_replicas])
+        stable_hpas = len([h for h in hpas if getattr(h, 'status', None) == "Stable"])  # type: ignore
+        scaling_hpas = len([h for h in hpas if getattr(h, 'current_replicas', 0) != getattr(h, 'desired_replicas', 0)])  # type: ignore
         
         return {
             "namespace": namespace,
@@ -296,7 +298,8 @@ async def get_storage_status(
         for storage in storage_resources:
             # Parse capacity and usage (assuming format like "10Gi", "2.5Gi")
             try:
-                capacity_str = str(storage.capacity) if storage.capacity else "0Gi"
+                capacity_value = getattr(storage, 'capacity', None)  # type: ignore
+                capacity_str = str(capacity_value) if capacity_value else "0Gi"
                 capacity_value = float(capacity_str.replace('Gi', '').replace('Mi', '').replace('Ki', ''))
                 if 'Gi' in capacity_str:
                     capacity_gb = capacity_value
@@ -306,7 +309,8 @@ async def get_storage_status(
                     capacity_gb = capacity_value / (1024 * 1024)
                 
                 used_gb = 0.0
-                if storage.used_capacity:
+                used_capacity = getattr(storage, 'used_capacity', None)  # type: ignore
+                if used_capacity:
                     used_str = str(storage.used_capacity)
                     used_value = float(used_str.replace('Gi', '').replace('Mi', '').replace('Ki', ''))
                     if 'Gi' in used_str:
@@ -335,13 +339,13 @@ async def get_storage_status(
                 "volume_mode": storage.volume_mode,
                 "storage_backend": storage.storage_backend,
                 "backup_enabled": storage.backup_enabled,
-                "last_backup": storage.last_backup_at.isoformat() if storage.last_backup_at else None,
+                "last_backup": getattr(storage, 'last_backup_at', None).isoformat() if getattr(storage, 'last_backup_at', None) else None,  # type: ignore
                 "snapshot_count": storage.snapshot_count
             }
             storage_data.append(storage_info)
         
         # Calculate storage summary
-        bound_volumes = len([s for s in storage_resources if s.status == "Bound"])
+        bound_volumes = len([s for s in storage_resources if getattr(s, 'status', None) == "Bound"])
         total_volumes = len(storage_resources)
         overall_usage = (total_used / total_capacity * 100) if total_capacity > 0 else 0
         
@@ -354,7 +358,7 @@ async def get_storage_status(
                 "total_capacity_gb": round(total_capacity, 2),
                 "total_used_gb": round(total_used, 2),
                 "overall_usage_percentage": round(float(overall_usage), 2),
-                "backup_enabled_count": len([s for s in storage_resources if s.backup_enabled])
+                "backup_enabled_count": len([s for s in storage_resources if getattr(s, 'backup_enabled', False)])
             },
             "timestamp": datetime.utcnow().isoformat()
         }
@@ -399,8 +403,8 @@ async def get_security_status(
                 "permissions": security.permissions,
                 "access_count": security.access_count,
                 "violation_count": security.violation_count,
-                "last_audit": security.last_audit.isoformat() if security.last_audit else None,
-                "last_access": security.last_access.isoformat() if security.last_access else None
+                "last_audit": (lambda dt: dt.isoformat() if dt else None)(getattr(security, 'last_audit', None)),
+                "last_access": (lambda dt: dt.isoformat() if dt else None)(getattr(security, 'last_access', None))
             }
             security_data.append(security_info)
             
@@ -408,7 +412,7 @@ async def get_security_status(
             resource_type = security.resource_type
             resource_counts[resource_type] = resource_counts.get(resource_type, 0) + 1
             
-            if security.compliance_status == "Compliant":
+            if getattr(security, 'compliance_status', None) == "Compliant":
                 compliant_resources += 1
         
         # Calculate security summary
@@ -468,11 +472,11 @@ async def get_monitoring_status(
                 "cpu_usage": component.cpu_usage,
                 "memory_usage": component.memory_usage,
                 "disk_usage": component.disk_usage,
-                "last_health_check": component.last_health_check.isoformat() if component.last_health_check else None
+                "last_health_check": (lambda dt: dt.isoformat() if dt else None)(getattr(component, 'last_health_check', None))
             }
             
             # Add component-specific metrics
-            if component.component_name == "prometheus":
+            if getattr(component, 'component_name', None) == "prometheus":
                 component_info.update({
                     "targets_up": component.targets_up,
                     "targets_total": component.targets_total,
@@ -480,26 +484,28 @@ async def get_monitoring_status(
                     "data_retention": component.data_retention,
                     "storage_size": component.storage_size
                 })
-            elif component.component_name == "grafana":
+            elif getattr(component, 'component_name', None) == "grafana":
                 component_info.update({
                     "dashboards_count": component.dashboards_count,
                     "users_count": component.users_count,
                     "alerts_count": component.alerts_count
                 })
-                if component.alerts_count:
-                    total_alerts += int(component.alerts_count) if component.alerts_count is not None else 0
-            elif component.component_name == "alertmanager":
+                alerts_count = getattr(component, 'alerts_count', None)
+                if alerts_count:
+                    total_alerts += int(alerts_count) if alerts_count is not None else 0
+            elif getattr(component, 'component_name', None) == "alertmanager":
                 component_info.update({
                     "active_alerts": component.active_alerts,
                     "silenced_alerts": component.silenced_alerts,
                     "inhibited_alerts": component.inhibited_alerts
                 })
-                if component.active_alerts:
-                    total_alerts += int(component.active_alerts) if component.active_alerts is not None else 0
+                active_alerts = getattr(component, 'active_alerts', None)
+                if active_alerts:
+                    total_alerts += int(active_alerts) if active_alerts is not None else 0
             
             component_data.append(component_info)
             
-            if component.status == "Running":
+            if getattr(component, 'status', None) == "Running":
                 running_components += 1
         
         # Calculate monitoring summary
@@ -552,7 +558,7 @@ async def get_ingress_status(
             # Check SSL certificate expiry
             ssl_status = "N/A"
             days_until_expiry = None
-            if ingress.tls_enabled and ingress.certificate_expiry:
+            if getattr(ingress, 'tls_enabled', False) and getattr(ingress, 'certificate_expiry', None):
                 days_until_expiry = (ingress.certificate_expiry - datetime.utcnow()).days
                 if days_until_expiry > 30:
                     ssl_status = "Valid"
@@ -568,7 +574,7 @@ async def get_ingress_status(
                 "backend_services": ingress.backend_services,
                 "tls_enabled": ingress.tls_enabled,
                 "ssl_certificate_status": ssl_status,
-                "certificate_expiry": ingress.certificate_expiry.isoformat() if ingress.certificate_expiry else None,
+                "certificate_expiry": (lambda dt: dt.isoformat() if dt else None)(getattr(ingress, 'certificate_expiry', None)),
                 "days_until_expiry": days_until_expiry,
                 "load_balancer_ip": ingress.load_balancer_ip,
                 "load_balancer_hostname": ingress.load_balancer_hostname,
@@ -579,17 +585,19 @@ async def get_ingress_status(
                 "error_count_24h": ingress.error_count_24h,
                 "avg_response_time": ingress.avg_response_time,
                 "rate_limit_enabled": ingress.rate_limit_enabled,
-                "last_health_check": ingress.last_health_check.isoformat() if ingress.last_health_check else None
+                "last_health_check": (lambda dt: dt.isoformat() if dt else None)(getattr(ingress, 'last_health_check', None))
             }
             ingress_data.append(ingress_info)
             
-            if ingress.status == "Active":
+            if getattr(ingress, 'status', None) == "Active":
                 active_ingresses += 1
-            if ingress.tls_enabled:
+            if getattr(ingress, 'tls_enabled', False):
                 ssl_enabled_count += 1
             
-            total_requests_24h += int(ingress.request_count_24h) if ingress.request_count_24h is not None else 0
-            total_errors_24h += int(ingress.error_count_24h) if ingress.error_count_24h is not None else 0
+            request_count = getattr(ingress, 'request_count_24h', None)
+            error_count = getattr(ingress, 'error_count_24h', None)
+            total_requests_24h += int(request_count) if request_count is not None else 0
+            total_errors_24h += int(error_count) if error_count is not None else 0
         
         # Calculate ingress summary
         total_ingresses = len(ingress_resources)

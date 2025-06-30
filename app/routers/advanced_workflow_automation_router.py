@@ -38,7 +38,7 @@ class WorkflowPerformanceMetrics(BaseModel):
 
 class SmartSchedulingRequest(BaseModel):
     workflow_template_id: int
-    priority: int = Field(default=5, gt=0, le=10)
+    priority: int = Field(default=5)
     preferred_start_time: Optional[datetime] = None
     deadline: Optional[datetime] = None
     resource_requirements: Dict[str, Any] = Field(default_factory=dict)
@@ -113,47 +113,47 @@ async def get_workflow_performance_dashboard(
                 
             # Calculate performance metrics
             total_instances = len(instances)
-            completed_instances = [i for i in instances if i.status == "completed"]
+            completed_instances = [i for i in instances if getattr(i, 'status', None) == "completed"]
             success_rate = len(completed_instances) / total_instances if total_instances > 0 else 0
             
             avg_execution_time = 0
             if completed_instances:
-                execution_times = [i.execution_duration for i in completed_instances if i.execution_duration]
+                execution_times = [getattr(i, 'execution_duration', 0) for i in completed_instances if getattr(i, 'execution_duration', None)]
                 avg_execution_time = sum(execution_times) / len(execution_times) if execution_times else 0
             
             # Identify bottleneck steps (simplified analysis)
             bottleneck_steps = []
-            if template.workflow_definition and "steps" in template.workflow_definition:
+            if getattr(template, 'workflow_definition', None) and "steps" in getattr(template, 'workflow_definition', {}):
                 for step in template.workflow_definition["steps"]:
                     bottleneck_steps.append({
                         "step_id": step.get("id", "unknown"),
                         "step_name": step.get("name", "Unknown Step"),
-                        "avg_duration": avg_execution_time / len(template.workflow_definition["steps"]),
+                        "avg_duration": avg_execution_time / len(getattr(template, 'workflow_definition', {}).get("steps", [])),
                         "failure_rate": 0.1  # Placeholder
                     })
             
             # Calculate optimization score (0-100)
-            optimization_score = min(100, success_rate * 100 * (1 - min(avg_execution_time / 3600, 1)))
+            optimization_score = min(100.0, success_rate * 100 * (1 - min(float(avg_execution_time) / 3600.0, 1.0)))
             
             # Get recommendations count if requested
             recommendations_count = 0
             if include_recommendations:
                 recommendations = optimization_service.list_recommendations(
                     tenant_id=tenant_id,
-                    workflow_template_id=template.id
+                    workflow_template_id=getattr(template, 'id', 0)
                 )
                 recommendations_count = len(recommendations)
             
-            performance_metrics.append(WorkflowPerformanceMetrics(
-                template_id=template.id,
-                template_name=template.name,
-                total_instances=total_instances,
-                success_rate=success_rate,
-                avg_execution_time=avg_execution_time,
-                bottleneck_steps=bottleneck_steps,
-                optimization_score=optimization_score,
-                recommendations_count=recommendations_count
-            ))
+            performance_metrics.append(WorkflowPerformanceMetrics(**{
+                'template_id': getattr(template, 'id', 0),
+                'template_name': getattr(template, 'name', ''),
+                'total_instances': total_instances,
+                'success_rate': success_rate,
+                'avg_execution_time': float(avg_execution_time),
+                'bottleneck_steps': bottleneck_steps,
+                'optimization_score': optimization_score,
+                'recommendations_count': recommendations_count
+            }))
         
         return performance_metrics
         
@@ -200,7 +200,7 @@ async def smart_workflow_scheduling(
         recommended_start_time = preferred_start + timedelta(minutes=delay_minutes)
         
         # Estimate completion time
-        estimated_duration = template.estimated_duration or 60  # Default 60 minutes
+        estimated_duration = getattr(template, 'estimated_duration', None) or 60  # Default 60 minutes
         estimated_completion_time = recommended_start_time + timedelta(minutes=estimated_duration)
         
         # Check deadline constraints
@@ -246,7 +246,7 @@ async def smart_workflow_scheduling(
         
         instance = workflow_service.create_workflow_instance(
             tenant_id=tenant_id,
-            template_id=template.id,
+            template_id=getattr(template, 'id', 0),
             instance_data=instance_data,
             triggered_by="smart_scheduler"
         )
@@ -254,13 +254,13 @@ async def smart_workflow_scheduling(
         # Schedule execution for the recommended start time
         if recommended_start_time <= current_time + timedelta(minutes=5):
             # Execute immediately if start time is within 5 minutes
-            background_tasks.add_task(workflow_service.execute_workflow_instance, instance.id)
+            background_tasks.add_task(workflow_service.execute_workflow_instance, getattr(instance, 'id', 0))
         
         # Calculate confidence score based on various factors
         confidence_factors = []
         confidence_score = 0.8  # Base confidence
         
-        if template.success_rate > 0.9:
+        if getattr(template, 'success_rate', 0) > 0.9:
             confidence_score += 0.1
             confidence_factors.append("high_template_success_rate")
         
@@ -276,18 +276,18 @@ async def smart_workflow_scheduling(
         
         confidence_score = min(confidence_score, 1.0)
         
-        return SmartSchedulingResponse(
-            scheduled_instance_id=instance.id,
-            recommended_start_time=recommended_start_time,
-            estimated_completion_time=estimated_completion_time,
-            resource_allocation={
+        return SmartSchedulingResponse(**{
+            'scheduled_instance_id': getattr(instance, 'id', 0),
+            'recommended_start_time': recommended_start_time,
+            'estimated_completion_time': estimated_completion_time,
+            'resource_allocation': {
                 "cpu_priority": "normal" if load_factor < 0.7 else "low",
                 "memory_allocation": "standard",
                 "concurrent_limit": max(1, 5 - int(load_factor * 5))
             },
-            confidence_score=confidence_score,
-            scheduling_factors=confidence_factors
-        )
+            'confidence_score': confidence_score,
+            'scheduling_factors': confidence_factors
+        })
         
     except HTTPException:
         raise
@@ -452,7 +452,7 @@ async def get_workflow_optimization_suggestions(
         
         # Convert recommendations to optimization suggestions
         for rec in recommendations:
-            impact_score = rec.potential_impact_score or 0.5
+            impact_score = getattr(rec, 'potential_impact_score', None) or 0.5
             
             # Determine implementation effort based on recommendation type
             effort_mapping = {
@@ -462,27 +462,27 @@ async def get_workflow_optimization_suggestions(
                 "underutilized_feature": "low"
             }
             
-            effort = effort_mapping.get(rec.recommendation_type, "medium")
+            effort = effort_mapping.get(getattr(rec, 'recommendation_type', ''), "medium")
             
             # Extract affected components
             affected_components = []
-            if rec.affected_step_id:
+            if getattr(rec, 'affected_step_id', None):
                 affected_components.append(f"Step: {rec.affected_step_id}")
-            if rec.affected_workflow_template_id:
+            if getattr(rec, 'affected_workflow_template_id', None):
                 affected_components.append(f"Template: {rec.affected_workflow_template_id}")
             
-            suggestions.append(WorkflowOptimizationSuggestion(
-                suggestion_type=rec.recommendation_type,
-                description=rec.description,
-                impact_score=impact_score,
-                implementation_effort=effort,
-                affected_components=affected_components
-            ))
+            suggestions.append(WorkflowOptimizationSuggestion(**{
+                'suggestion_type': getattr(rec, 'recommendation_type', ''),
+                'description': getattr(rec, 'description', ''),
+                'impact_score': float(impact_score),
+                'implementation_effort': effort,
+                'affected_components': affected_components
+            }))
         
         # Add additional AI-generated suggestions based on analysis depth
         if analysis_depth in ["standard", "deep"]:
             # Analyze workflow definition for optimization opportunities
-            if template.workflow_definition and "steps" in template.workflow_definition:
+            if getattr(template, 'workflow_definition', None) and "steps" in getattr(template, 'workflow_definition', {}):
                 steps = template.workflow_definition["steps"]
                 
                 # Suggest parallelization opportunities
@@ -517,10 +517,10 @@ async def get_workflow_optimization_suggestions(
             
             if instances:
                 # Analyze execution patterns
-                execution_times = [i.execution_duration for i in instances if i.execution_duration]
+                execution_times = [getattr(i, 'execution_duration', 0) for i in instances if getattr(i, 'execution_duration', None)]
                 if execution_times:
                     avg_time = sum(execution_times) / len(execution_times)
-                    if avg_time > 3600:  # More than 1 hour
+                    if getattr(template, 'workflow_definition', None) and avg_time > 3600:  # More than 1 hour
                         suggestions.append(WorkflowOptimizationSuggestion(
                             suggestion_type="performance_optimization",
                             description=f"Average execution time of {avg_time/60:.1f} minutes suggests need for performance optimization",

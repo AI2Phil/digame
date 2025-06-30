@@ -44,28 +44,29 @@ class PlatformAuthService:
             return None
             
         # Check if account is locked
-        if user.account_locked_until and user.account_locked_until > datetime.utcnow():
+        account_locked_until = getattr(user, 'account_locked_until', None)
+        if account_locked_until and account_locked_until > datetime.utcnow():
             raise HTTPException(status_code=423, detail="Account temporarily locked")
             
         # Verify password
-        if not verify_password(password, user.hashed_password):
-            user.failed_login_attempts += 1
-            if user.failed_login_attempts >= 5:
-                user.account_locked_until = datetime.utcnow() + timedelta(minutes=30)
+        if not verify_password(password, getattr(user, 'hashed_password', '')):
+            setattr(user, 'failed_login_attempts', getattr(user, 'failed_login_attempts', 0) + 1)
+            if getattr(user, 'failed_login_attempts', 0) >= 5:
+                setattr(user, 'account_locked_until', datetime.utcnow() + timedelta(minutes=30))
             self.db.commit()
             return None
             
         # Reset failed attempts on successful login
-        user.failed_login_attempts = 0
-        user.last_login = datetime.utcnow()
-        user.account_locked_until = None
+        setattr(user, 'failed_login_attempts', 0)
+        setattr(user, 'last_login', datetime.utcnow())
+        setattr(user, 'account_locked_until', None)
         self.db.commit()
         
         return user
     
     def get_platform_owner_permissions(self, user: User) -> Dict[str, bool]:
         """Get comprehensive platform owner permissions"""
-        if not user.is_platform_owner:
+        if not getattr(user, 'is_platform_owner', False):
             return {}
             
         platform_roles = self.db.query(PlatformRole).join(UserPlatformRole).filter(
@@ -92,16 +93,16 @@ class PlatformAuthService:
         """Create new platform owner (only by existing platform owner)"""
         hashed_password = get_password_hash(password)
         
-        user = User(
-            email=email,
-            username=email.split('@')[0],
-            hashed_password=hashed_password,
-            is_platform_owner=True,
-            platform_owner_level=level,
-            tenant_id=None,  # Platform owners don't belong to tenants
-            subscription_tier="platform_owner",
-            subscription_status="active"
-        )
+        user = User(**{
+            'email': email,
+            'username': email.split('@')[0],
+            'hashed_password': hashed_password,
+            'is_platform_owner': True,
+            'platform_owner_level': level,
+            'tenant_id': None,  # Platform owners don't belong to tenants
+            'subscription_tier': "platform_owner",
+            'subscription_status': "active"
+        })
         
         self.db.add(user)
         self.db.commit()
@@ -113,11 +114,11 @@ class PlatformAuthService:
         ).first()
         
         if platform_role:
-            user_role = UserPlatformRole(
-                user_id=user.id,
-                platform_role_id=platform_role.id,
-                assigned_by=user.id  # Self-assigned for first platform owner
-            )
+            user_role = UserPlatformRole(**{
+                'user_id': getattr(user, 'id', 0),
+                'platform_role_id': getattr(platform_role, 'id', 0),
+                'assigned_by': getattr(user, 'id', 0)  # Self-assigned for first platform owner
+            })
             self.db.add(user_role)
             self.db.commit()
             
@@ -131,32 +132,33 @@ class PlatformAuthService:
             return None
             
         # Check if account is locked
-        if user.account_locked_until and user.account_locked_until > datetime.utcnow():
+        account_locked_until = getattr(user, 'account_locked_until', None)
+        if account_locked_until and account_locked_until > datetime.utcnow():
             raise HTTPException(status_code=423, detail="Account temporarily locked")
             
         # Check subscription status
-        if user.subscription_status == "suspended":
+        if getattr(user, 'subscription_status', None) == "suspended":
             raise HTTPException(status_code=402, detail="Account suspended")
             
         # Verify password
-        if not verify_password(password, user.hashed_password):
-            user.failed_login_attempts += 1
-            if user.failed_login_attempts >= 5:
-                user.account_locked_until = datetime.utcnow() + timedelta(minutes=30)
+        if not verify_password(password, getattr(user, 'hashed_password', '')):
+            setattr(user, 'failed_login_attempts', getattr(user, 'failed_login_attempts', 0) + 1)
+            if getattr(user, 'failed_login_attempts', 0) >= 5:
+                setattr(user, 'account_locked_until', datetime.utcnow() + timedelta(minutes=30))
             self.db.commit()
             return None
             
         # Reset failed attempts on successful login
-        user.failed_login_attempts = 0
-        user.last_login = datetime.utcnow()
-        user.account_locked_until = None
+        setattr(user, 'failed_login_attempts', 0)
+        setattr(user, 'last_login', datetime.utcnow())
+        setattr(user, 'account_locked_until', None)
         self.db.commit()
         
         return user
     
     def has_platform_permission(self, user: User, permission: str) -> bool:
         """Check if user has specific platform permission"""
-        if not user.is_platform_owner:
+        if not getattr(user, 'is_platform_owner', False):
             return False
             
         permissions = self.get_platform_owner_permissions(user)
@@ -172,18 +174,18 @@ class PlatformAuthService:
             "platform_owner": 999
         }
         
-        user_tier = user.subscription_tier
+        user_tier = getattr(user, 'subscription_tier', 'free')
         
         # Founding members get Individual Pro equivalent
-        if user.is_founding_member and user_tier == "free":
+        if getattr(user, 'is_founding_member', False) and user_tier == "free":
             user_tier = "individual_pro"
             
-        return tier_hierarchy.get(user_tier, 0)
+        return tier_hierarchy.get(str(user_tier), 0)
     
     def can_access_tenant(self, user: User, tenant_id: int) -> bool:
         """Check if user can access specific tenant"""
         # Platform owners can access any tenant
-        if user.is_platform_owner:
+        if getattr(user, 'is_platform_owner', False):
             return True
             
         # Regular users can only access their own tenant

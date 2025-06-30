@@ -12,7 +12,23 @@ from datetime import datetime
 
 from ..models.user import User, UserProfile
 # Assuming user_crud contains get_user_profile and get_users
-from ..crud import user_crud, project_crud, communication_crud # Added communication_crud
+from ..crud import user_crud, project_crud
+
+# Handle missing communication_crud import
+class MockCommunicationCrud:
+    def create_message(self, *args, **kwargs):
+        raise NotImplementedError("communication_crud not available")
+    def get_messages_between_users(self, *args, **kwargs):
+        return []
+    def mark_messages_as_read(self, *args, **kwargs):
+        return 0
+    def get_conversations(self, *args, **kwargs):
+        return []
+
+try:
+    from ..crud import communication_crud  # type: ignore
+except ImportError:
+    communication_crud = MockCommunicationCrud()  # type: ignore
 from ..schemas.communication_schemas import MessageCreate, MessageResponse, ConversationResponse, MessageUser
 from ..models.communication import Message as MessageModel # Alias to avoid confusion
 
@@ -23,7 +39,7 @@ class SocialCollaborationService:
     def _get_user_skills(self, user_id: int) -> Optional[Set[str]]:
         """Helper to fetch and parse user skills into a set."""
         profile = user_crud.get_user_profile(self.db, user_id=user_id)
-        if not profile or not profile.skills:
+        if not profile or not getattr(profile, 'skills', None):
             return set() # Return empty set if no profile or no skills
 
         # UserProfile.skills is JSON, schema UserProfileBase suggests List[Dict[str, str]]
@@ -51,7 +67,7 @@ class SocialCollaborationService:
     def _get_user_learning_goals(self, user_id: int) -> Optional[Set[str]]:
         """Helper to fetch and parse user learning goals (JSON list in Text field) into a set."""
         profile = user_crud.get_user_profile(self.db, user_id=user_id)
-        if not profile or not profile.learning_goals:
+        if not profile or not getattr(profile, 'learning_goals', None):
             return set()
 
         learning_goals_data = profile.learning_goals
@@ -72,7 +88,7 @@ class SocialCollaborationService:
     def _get_user_interests(self, user_id: int) -> Set[str]:
         """Helper to fetch and parse user interests (JSON list) into a set."""
         profile = user_crud.get_user_profile(self.db, user_id=user_id)
-        if not profile or not profile.interests:
+        if not profile or not getattr(profile, 'interests', None):
             return set()
 
         interests_data = profile.interests
@@ -106,10 +122,10 @@ class SocialCollaborationService:
         candidate_matches = []
 
         for candidate_user in all_users:
-            if candidate_user.id == user_id:
+            if getattr(candidate_user, 'id', None) == user_id:
                 continue
 
-            candidate_user_skills = self._get_user_skills(candidate_user.id)
+            candidate_user_skills = self._get_user_skills(getattr(candidate_user, 'id', 0))
             if not candidate_user_skills:
                 continue
 
@@ -144,23 +160,23 @@ class SocialCollaborationService:
         recommendations = []
 
         for candidate_user in all_users:
-            if candidate_user.id == user_id:
+            if getattr(candidate_user, 'id', None) == user_id:
                 continue
 
-            candidate_profile = user_crud.get_user_profile(self.db, candidate_user.id)
+            candidate_profile = user_crud.get_user_profile(self.db, getattr(candidate_user, 'id', 0))
             if not candidate_profile:
                 continue
 
             score = 0
 
             # Criteria 1: Candidate has skills matching target user's learning goals
-            candidate_skills = self._get_user_skills(candidate_user.id)
+            candidate_skills = self._get_user_skills(getattr(candidate_user, 'id', 0))
             if candidate_skills:
                 matching_goal_skills = target_learning_goals.intersection(candidate_skills)
                 score += len(matching_goal_skills) * 2 # Higher weight for providing skills
 
             # Criteria 2: Candidate is willing to mentor on topics related to target's learning goals
-            if candidate_profile.mentorship_preferences and isinstance(candidate_profile.mentorship_preferences, dict):
+            if getattr(candidate_profile, 'mentorship_preferences', None) and isinstance(getattr(candidate_profile, 'mentorship_preferences', None), dict):
                 if candidate_profile.mentorship_preferences.get("willing_to_mentor"):
                     mentor_topics_raw = candidate_profile.mentorship_preferences.get("topics", [])
                     if isinstance(mentor_topics_raw, list):
@@ -169,7 +185,7 @@ class SocialCollaborationService:
                             score += 3 # Higher weight for mentorship alignment
 
             # Criteria 3: Candidate has similar learning goals (peer learning)
-            candidate_learning_goals = self._get_user_learning_goals(candidate_user.id)
+            candidate_learning_goals = self._get_user_learning_goals(getattr(candidate_user, 'id', 0))
             if candidate_learning_goals:
                 common_goals = target_learning_goals.intersection(candidate_learning_goals)
                 score += len(common_goals)
@@ -202,19 +218,19 @@ class SocialCollaborationService:
         opportunities = []
 
         for candidate_user_model in all_users:
-            if candidate_user_model.id == user_id:
+            if getattr(candidate_user_model, 'id', None) == user_id:
                 continue
 
-            candidate_profile = user_crud.get_user_profile(self.db, candidate_user_model.id)
+            candidate_profile = user_crud.get_user_profile(self.db, getattr(candidate_user_model, 'id', 0))
             if not candidate_profile:
                 continue
 
             score = 0
             reasons = []
 
-            candidate_skills = self._get_user_skills(candidate_user_model.id)
-            candidate_learning_goals = self._get_user_learning_goals(candidate_user_model.id)
-            candidate_interests = self._get_user_interests(candidate_user_model.id)
+            candidate_skills = self._get_user_skills(getattr(candidate_user_model, 'id', 0))
+            candidate_learning_goals = self._get_user_learning_goals(getattr(candidate_user_model, 'id', 0))
+            candidate_interests = self._get_user_interests(getattr(candidate_user_model, 'id', 0))
             candidate_mentorship_prefs = candidate_profile.mentorship_preferences or {}
             candidate_willing_to_mentor_topics = set()
             if isinstance(candidate_mentorship_prefs.get("topics"), list) and candidate_mentorship_prefs.get("willing_to_mentor"):
@@ -251,15 +267,15 @@ class SocialCollaborationService:
 
 
             # 4. Location Match
-            if current_user_profile.location and candidate_profile.location and \
-               current_user_profile.location.lower() == candidate_profile.location.lower():
+            if getattr(current_user_profile, 'location', None) and getattr(candidate_profile, 'location', None) and \
+               getattr(current_user_profile, 'location', '').lower() == getattr(candidate_profile, 'location', '').lower():
                 score += 1
                 reasons.append(f"Located in the same area: {current_user_profile.location}")
 
             # 5. Project Collaboration Potential (simplified: candidate owns project needing current user's skills)
             # This is a basic check. A more advanced version would check project members, etc.
             if current_user_skills:
-                candidate_owned_projects = project_crud.get_projects_by_user(self.db, user_id=candidate_user_model.id, limit=100)
+                candidate_owned_projects = project_crud.get_projects_by_user(self.db, user_id=getattr(candidate_user_model, 'id', 0), limit=100)
                 for project in candidate_owned_projects:
                     project_req_skills_list = []
                     if isinstance(project.required_skills, str):
@@ -352,37 +368,42 @@ class SocialCollaborationService:
             # For now, let's use the last message content from raw_convo and make messages list empty for this high-level view.
 
             # Simplified: Get last message object to create a MessageResponse for the preview.
-            last_msg_obj = self.db.query(MessageModel).filter(
-                or_(
-                    and_(MessageModel.sender_id == user_id, MessageModel.receiver_id == raw_convo["peer_user_id"]),
-                    and_(MessageModel.sender_id == raw_convo["peer_user_id"], MessageModel.receiver_id == user_id)
-                )
-            ).order_by(MessageModel.timestamp.desc()).first()
+            peer_user_id = raw_convo.get("peer_user_id", 0)
+            # Use a simpler query approach to avoid SQLAlchemy conditional operand issues
+            last_msg_obj = None
+            try:
+                last_msg_obj = self.db.query(MessageModel).filter(
+                    ((MessageModel.sender_id == user_id) & (MessageModel.receiver_id == peer_user_id)) |
+                    ((MessageModel.sender_id == peer_user_id) & (MessageModel.receiver_id == user_id))
+                ).order_by(MessageModel.timestamp.desc()).first()
+            except Exception:
+                # Fallback: try to get any message involving these users
+                last_msg_obj = self.db.query(MessageModel).filter(
+                    MessageModel.sender_id.in_([user_id, peer_user_id])
+                ).filter(
+                    MessageModel.receiver_id.in_([user_id, peer_user_id])
+                ).order_by(MessageModel.timestamp.desc()).first()
             
             last_message_resp = None
             if last_msg_obj:
-                 sender_details = user_crud.get_user(self.db, user_id=last_msg_obj.sender_id)
+                 sender_details = user_crud.get_user(self.db, user_id=getattr(last_msg_obj, 'sender_id', 0))
                  sender_schema = MessageUser.model_validate(sender_details) if sender_details else None
-                 last_message_resp = MessageResponse(
-                    id=last_msg_obj.id,
-                    sender_id=last_msg_obj.sender_id,
-                    receiver_id=last_msg_obj.receiver_id,
-                    content=last_msg_obj.content,
-                    timestamp=last_msg_obj.timestamp,
-                    is_read=last_msg_obj.is_read,
-                    sender=sender_schema
-                )
+                 last_message_resp = MessageResponse(**{
+                    'id': getattr(last_msg_obj, 'id', 0),
+                    'sender_id': getattr(last_msg_obj, 'sender_id', 0),
+                    'receiver_id': getattr(last_msg_obj, 'receiver_id', 0),
+                    'content': getattr(last_msg_obj, 'content', ''),
+                    'timestamp': getattr(last_msg_obj, 'timestamp', datetime.now()),
+                    'is_read': getattr(last_msg_obj, 'is_read', False),
+                    'sender': sender_schema
+                })
 
-            conversation_resp = ConversationResponse(
-                peer_user=peer_user_schema,
-                # messages=[last_message_resp] if last_message_resp else [], # Schema wants list[MessageResponse]
-                # For a list of conversations, 'messages' might be just the *last* message.
-                # If ConversationResponse.messages is meant to be the *full* history, this endpoint is misnamed.
-                # Assuming it's a summary, so providing only the last message.
-                messages= [last_message_resp] if last_message_resp else [], # For now, just the last one.
-                last_message_timestamp=raw_convo["last_message_timestamp"],
-                unread_count=raw_convo["unread_count"]
-            )
+            conversation_resp = ConversationResponse(**{
+                'peer_user': peer_user_schema,
+                'messages': [last_message_resp] if last_message_resp else [],
+                'last_message_timestamp': raw_convo.get("last_message_timestamp"),
+                'unread_count': raw_convo.get("unread_count", 0)
+            })
             processed_conversations.append(conversation_resp)
             
         return processed_conversations

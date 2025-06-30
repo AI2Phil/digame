@@ -366,16 +366,25 @@ class TeamTwinManager:
         """
         try:
             # Get team availability and preferences
-            availability_data = await getattr(self, '_get_team_availability', lambda tid, tids: {})  # type: ignore
-            availability_data = availability_data(team_id, twin_ids) if callable(availability_data) else {}
+            get_availability_method = getattr(self, '_get_team_availability', lambda tid, tids: {})  # type: ignore
+            if callable(get_availability_method):
+                availability_data = await get_availability_method(team_id, twin_ids) if asyncio.iscoroutinefunction(get_availability_method) else get_availability_method(team_id, twin_ids)
+            else:
+                availability_data = {}
             
             # Find optimal meeting times
             find_optimal_method = getattr(self, '_find_optimal_meeting_times', lambda data, params: [])  # type: ignore
-            optimal_times = await find_optimal_method(availability_data, parameters) if callable(find_optimal_method) else []
+            if callable(find_optimal_method):
+                optimal_times = await find_optimal_method(availability_data, parameters) if asyncio.iscoroutinefunction(find_optimal_method) else find_optimal_method(availability_data, parameters)
+            else:
+                optimal_times = []
             
             # Generate meeting recommendations
             generate_recommendations = getattr(self, '_generate_meeting_recommendations', lambda times, params: [])  # type: ignore
-            recommendations = await generate_recommendations(optimal_times, parameters) if callable(generate_recommendations) else []
+            if callable(generate_recommendations):
+                recommendations = await generate_recommendations(optimal_times, parameters) if asyncio.iscoroutinefunction(generate_recommendations) else generate_recommendations(optimal_times, parameters)
+            else:
+                recommendations = []
             
             # Calculate collaboration efficiency
             calc_efficiency = getattr(self, '_calculate_meeting_efficiency', lambda data: 0.0)  # type: ignore
@@ -394,7 +403,7 @@ class TeamTwinManager:
                 "projected_efficiency": projected_efficiency,
                 "estimated_improvement": improvement,
                 "confidence": 0.78,
-                "scheduling_conflicts_resolved": len([r for r in recommendations if r["type"] == "conflict_resolution"])
+                "scheduling_conflicts_resolved": len([r for r in (recommendations if isinstance(recommendations, list) else []) if isinstance(r, dict) and r.get("type") == "conflict_resolution"])
             }
             
         except Exception as e:
@@ -426,11 +435,17 @@ class TeamTwinManager:
             
             # Analyze team coverage capabilities
             analyze_coverage = getattr(self, '_analyze_team_coverage', lambda tid, tids, info: {})  # type: ignore
-            coverage_analysis = await analyze_coverage(team_id, twin_ids, absence_info) if callable(analyze_coverage) else {}
+            if callable(analyze_coverage):
+                coverage_analysis = await analyze_coverage(team_id, twin_ids, absence_info) if asyncio.iscoroutinefunction(analyze_coverage) else analyze_coverage(team_id, twin_ids, absence_info)
+            else:
+                coverage_analysis = {}
             
             # Generate coverage plan
             generate_plan = getattr(self, '_generate_coverage_plan', lambda analysis, reqs: {})  # type: ignore
-            coverage_plan = await generate_plan(coverage_analysis, coverage_requirements) if callable(generate_plan) else {}
+            if callable(generate_plan):
+                coverage_plan = await generate_plan(coverage_analysis, coverage_requirements) if asyncio.iscoroutinefunction(generate_plan) else generate_plan(coverage_analysis, coverage_requirements)
+            else:
+                coverage_plan = {}
             
             # Calculate coverage adequacy
             calc_adequacy = getattr(self, '_calculate_coverage_adequacy', lambda plan: 0.0)  # type: ignore
@@ -447,7 +462,7 @@ class TeamTwinManager:
                 "risk_assessment": risk_assessment,
                 "estimated_improvement": float(coverage_score) * 100 if coverage_score else 0.0,  # type: ignore
                 "confidence": 0.88,
-                "coverage_gaps": len([gap for gap in coverage_plan.get("gaps", []) if gap["severity"] > 0.5])
+                "coverage_gaps": len([gap for gap in (coverage_plan.get("gaps", []) if isinstance(coverage_plan, dict) else []) if isinstance(gap, dict) and gap.get("severity", 0) > 0.5])
             }
             
         except Exception as e:
@@ -475,14 +490,28 @@ class TeamTwinManager:
         try:
             # Get current resource allocation
             get_resource_data = getattr(self, '_get_team_resource_data', lambda tid, tids: {})  # type: ignore
-            resource_data = await get_resource_data(team_id, twin_ids) if callable(get_resource_data) else {}
+            if callable(get_resource_data):
+                resource_data = await get_resource_data(team_id, twin_ids) if asyncio.iscoroutinefunction(get_resource_data) else get_resource_data(team_id, twin_ids)
+            else:
+                resource_data = {}
             
             # Optimize resource distribution
             optimize_allocation = getattr(self, '_optimize_resource_allocation', lambda data, params: {})  # type: ignore
-            optimal_allocation = await optimize_allocation(resource_data, parameters) if callable(optimize_allocation) else {}
+            if callable(optimize_allocation):
+                optimal_allocation = await optimize_allocation(resource_data, parameters) if asyncio.iscoroutinefunction(optimize_allocation) else optimize_allocation(resource_data, parameters)
+            else:
+                optimal_allocation = {}
             
             # Generate allocation recommendations
-            recommendations = await getattr(self, '_generate_resource_recommendations', lambda *args: [])(resource_data, optimal_allocation)  # type: ignore
+            generate_resource_recommendations = getattr(self, '_generate_resource_recommendations', lambda data, allocation: [])  # type: ignore
+            if callable(generate_resource_recommendations):
+                try:
+                    recommendations = await generate_resource_recommendations(resource_data, optimal_allocation) if asyncio.iscoroutinefunction(generate_resource_recommendations) else generate_resource_recommendations(resource_data, optimal_allocation)
+                except TypeError:
+                    # Fallback for lambda with *args signature
+                    recommendations = []
+            else:
+                recommendations = []
             
             # Calculate efficiency improvement
             current_efficiency = getattr(self, '_calculate_resource_efficiency', lambda *args: 0.7)(resource_data)  # type: ignore
@@ -498,7 +527,7 @@ class TeamTwinManager:
                 "projected_efficiency": projected_efficiency,
                 "estimated_improvement": improvement,
                 "confidence": 0.83,
-                "resource_optimizations": len(recommendations)
+                "resource_optimizations": len(recommendations) if isinstance(recommendations, list) else 0
             }
             
         except Exception as e:
@@ -525,13 +554,33 @@ class TeamTwinManager:
         """
         try:
             # Analyze current collaboration patterns
-            collaboration_data = await getattr(self, '_analyze_team_collaboration', lambda *args: {})(team_id, twin_ids)  # type: ignore
+            analyze_collaboration = getattr(self, '_analyze_team_collaboration', lambda tid, tids: {})  # type: ignore
+            if callable(analyze_collaboration):
+                try:
+                    collaboration_data = await analyze_collaboration(team_id, twin_ids) if asyncio.iscoroutinefunction(analyze_collaboration) else analyze_collaboration(team_id, twin_ids)
+                except TypeError:
+                    # Fallback for lambda with *args signature
+                    collaboration_data = {}
+            else:
+                collaboration_data = {}
             
             # Identify synchronization opportunities
-            sync_opportunities = await getattr(self, '_identify_sync_opportunities', lambda *args: [])(collaboration_data)  # type: ignore
+            identify_sync = getattr(self, '_identify_sync_opportunities', lambda *args: [])  # type: ignore
+            if callable(identify_sync):
+                sync_opportunities = await identify_sync(collaboration_data) if asyncio.iscoroutinefunction(identify_sync) else identify_sync(collaboration_data)
+            else:
+                sync_opportunities = []
             
             # Generate synchronization plan
-            sync_plan = await getattr(self, '_generate_sync_plan', lambda *args: {})(sync_opportunities, parameters)  # type: ignore
+            generate_sync_plan = getattr(self, '_generate_sync_plan', lambda opps, params: {})  # type: ignore
+            if callable(generate_sync_plan):
+                try:
+                    sync_plan = await generate_sync_plan(sync_opportunities, parameters) if asyncio.iscoroutinefunction(generate_sync_plan) else generate_sync_plan(sync_opportunities, parameters)
+                except TypeError:
+                    # Fallback for lambda with *args signature
+                    sync_plan = {}
+            else:
+                sync_plan = {}
             
             # Calculate collaboration improvement
             current_sync = getattr(self, '_calculate_collaboration_sync', lambda *args: 0.7)(collaboration_data)  # type: ignore
@@ -547,7 +596,7 @@ class TeamTwinManager:
                 "projected_sync_score": projected_sync,
                 "estimated_improvement": improvement,
                 "confidence": 0.80,
-                "sync_actions": len(sync_plan.get("actions", []))
+                "sync_actions": len(sync_plan.get("actions", []) if isinstance(sync_plan, dict) else [])
             }
             
         except Exception as e:
@@ -732,7 +781,7 @@ class TeamTwinManager:
                     }
                     for coord in recent_coordinations
                 ],
-                "last_coordination_at": team.last_coordination_at.isoformat() if team.last_coordination_at else None,
+                "last_coordination_at": getattr(team, 'last_coordination_at').isoformat() if getattr(team, 'last_coordination_at', None) is not None else None,  # type: ignore
                 "created_at": team.created_at.isoformat()
             }
             
@@ -756,14 +805,15 @@ class TeamTwinManager:
         workload_balance = 1.0 - (np.std(workloads) / 100.0) if workloads else 0.0
         
         # Calculate availability rate
-        available_count = sum(1 for member in members if member.availability_status == "available")
+        available_count = sum(1 for member in members if getattr(member, 'availability_status', None) == "available")  # type: ignore
         availability_rate = available_count / len(members)
         
         # Calculate skill coverage (simplified)
         all_skills = set()
         for member in members:
-            if member.skills:
-                all_skills.update(member.skills.keys())
+            member_skills = getattr(member, 'skills', None)  # type: ignore
+            if member_skills:
+                all_skills.update(member_skills.keys())
         skill_coverage = len(all_skills) / 10.0  # Normalize to 0-1 scale
         
         # Use team's stored metrics or calculate defaults

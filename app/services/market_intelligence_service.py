@@ -37,7 +37,10 @@ class MarketIntelligenceService:
         created_by_user_id: int
     ) -> MarketDataSource:
         db_source = MarketDataSource()  # type: ignore
-        source_data_dict = getattr(source_data, 'model_dump', lambda: {})()
+        if hasattr(source_data, 'model_dump'):
+            source_data_dict = source_data.model_dump()
+        else:
+            source_data_dict = {}
         for key, value in source_data_dict.items():
             setattr(db_source, key, value)  # type: ignore
         setattr(db_source, 'tenant_id', tenant_id)  # type: ignore
@@ -78,7 +81,10 @@ class MarketIntelligenceService:
         if not db_source:
             return None
 
-        update_dict = getattr(update_data, 'model_dump', lambda exclude_unset=True: {})(exclude_unset=True)
+        if hasattr(update_data, 'model_dump'):
+            update_dict = update_data.model_dump(exclude_unset=True)
+        else:
+            update_dict = {}
         for key, value in update_dict.items():
             setattr(db_source, key, value)  # type: ignore
 
@@ -110,12 +116,16 @@ class MarketIntelligenceService:
         report_source = self.get_market_data_source(report_data_source_id, tenant_id)
         if not report_source:
             raise ValueError(f"MarketDataSource with ID {report_data_source_id} not found for tenant {tenant_id}.")
-        if report_source.source_type not in ["manual_report_upload", "unstructured_text_report", "industry_report_feed"]: # Example types
+        source_type = getattr(report_source, 'source_type', None)
+        if source_type not in ["manual_report_upload", "unstructured_text_report", "industry_report_feed"]:
             raise ValueError(f"MarketDataSource ID {report_data_source_id} is not of a report type.")
 
         created_trends = []
         for trend_data_schema in extracted_trends_data:
-            trend_data_dict = getattr(trend_data_schema, 'model_dump', lambda: {})()
+            if hasattr(trend_data_schema, 'model_dump'):
+                trend_data_dict = trend_data_schema.model_dump()
+            else:
+                trend_data_dict = {}
 
             # Ensure the trend's data_sources field includes a reference to this report source
             source_reference = {"type": "report_source_id", "id": report_data_source_id, "name": getattr(report_source, 'source_name', 'Unknown')}
@@ -534,7 +544,7 @@ class MarketIntelligenceService:
         
         high_impact_trends = self.db.query(MarketTrend).filter(
             MarketTrend.tenant_id == tenant_id,
-            getattr(MarketTrend.impact_level, 'in_', lambda x: True)(["high", "critical"])
+            MarketTrend.impact_level.in_(["high", "critical"])
         ).count()
         
         # Analysis statistics
@@ -780,7 +790,12 @@ class MarketIntelligenceService:
             demand_trend_str = "very_low_demand"
 
         # Refine trend based on directionality from market trends (if strong signal)
-        net_trend_direction_score = sum(ev.score_contribution for ev in evidence_list if ev.source_type == "industry_report_trend" and ev.score_contribution)
+        net_trend_direction_score = sum(
+            getattr(ev, 'score_contribution', 0) if hasattr(ev, 'score_contribution') else ev.get('score_contribution', 0)
+            for ev in evidence_list
+            if (hasattr(ev, 'source_type') and getattr(ev, 'source_type') == "industry_report_trend") or
+               (isinstance(ev, dict) and ev.get('source_type') == "industry_report_trend")
+        )
         if net_trend_direction_score > 0.1: # Strong positive signal from trends
             if demand_trend_str in ["moderate_demand", "high_demand", "very_high_demand"]:
                  demand_trend_str = "increasing"
@@ -863,10 +878,16 @@ class MarketIntelligenceService:
 
         for i in range(sample_size):
             try:
-                title = np.random.choice(common_job_titles)
                 try:
-                    selected_phrases = np.random.choice(common_phrases, size=3, replace=False)
-                    base_desc = " ".join(str(phrase) for phrase in selected_phrases)
+                    title = str(np.random.choice(common_job_titles))
+                except Exception:
+                    title = "Software Engineer"
+                try:
+                    try:
+                        selected_phrases = np.random.choice(common_phrases, size=3, replace=False)
+                        base_desc = " ".join(str(phrase) for phrase in selected_phrases)
+                    except Exception:
+                        base_desc = "seeking a talented individual join our dynamic team responsibilities include"
                 except Exception:
                     base_desc = "seeking a talented individual join our dynamic team responsibilities include"
             except Exception:
@@ -878,14 +899,20 @@ class MarketIntelligenceService:
             if i < num_with_keywords and keywords:
                 # Embed some of the keywords
                 try:
-                    num_kws_to_embed = np.random.randint(1, len(keywords) + 1)
-                    kws_to_embed = np.random.choice(keywords, size=num_kws_to_embed, replace=False)
+                    try:
+                        num_kws_to_embed = int(np.random.randint(1, len(keywords) + 1))
+                        kws_to_embed = np.random.choice(keywords, size=num_kws_to_embed, replace=False)
+                    except Exception:
+                        kws_to_embed = keywords[:1] if keywords else []
                     try:
                         content_parts.extend([str(kw) for kw in kws_to_embed])
                     except Exception:
                         content_parts.extend(keywords[:1])
                     # Add some more filler
-                    content_parts.append(np.random.choice(common_phrases))
+                    try:
+                        content_parts.append(str(np.random.choice(common_phrases)))
+                    except Exception:
+                        content_parts.append("excellent communication skills")
                 except Exception:
                     content_parts.extend(keywords[:1])  # Add at least one keyword
 
@@ -897,7 +924,11 @@ class MarketIntelligenceService:
 
             # Simulate a posted date within the last year
             try:
-                sim_date = datetime.utcnow() - timedelta(days=np.random.randint(0, 365))
+                try:
+                    days_back = int(np.random.randint(0, 365))
+                    sim_date = datetime.utcnow() - timedelta(days=days_back)
+                except Exception:
+                    sim_date = datetime.utcnow() - timedelta(days=30)
             except Exception:
                 sim_date = datetime.utcnow() - timedelta(days=30)
 

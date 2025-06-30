@@ -3,7 +3,7 @@ Advanced Reporting Service - Part 2
 Scheduling, templates, subscriptions, and advanced features
 """
 
-from typing import Optional, List, Dict, Any, Tuple
+from typing import Optional, List, Dict, Any, Tuple, Union
 from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, or_, desc, asc
@@ -19,13 +19,17 @@ from email.mime.base import MIMEBase
 from email import encoders
 try:
     import schedule
+    SCHEDULE_AVAILABLE = True
 except ImportError:
-    schedule = None  # type: ignore
+    schedule = None
+    SCHEDULE_AVAILABLE = False
 import time
 try:
     from croniter import croniter
+    CRONITER_AVAILABLE = True
 except ImportError:
-    croniter = None  # type: ignore
+    croniter = None
+    CRONITER_AVAILABLE = False
 
 from ..models.reporting import (
     Report, ReportExecution, ReportSchedule, ReportSubscription,
@@ -43,7 +47,7 @@ from .reporting_service_part1 import ReportingService # Import Part 1 service
 class ReportSchedulingService:
     """Service for managing report scheduling and automation"""
 
-    def __init__(self, db: Session, reporting_service_part1: ReportingService):
+    def __init__(self, db: Session, reporting_service_part1: ReportingService) -> None:
         self.db = db
         self.reporting_service_part1 = reporting_service_part1
 
@@ -92,18 +96,20 @@ class ReportSchedulingService:
         now = datetime.utcnow()
         return self.db.query(ReportSchedule).filter(
             and_(
-                ReportSchedule.is_active == True,
-                ReportSchedule.next_run_at <= now
+                ReportSchedule.is_active.is_(True),  # type: ignore
+                ReportSchedule.next_run_at <= now  # type: ignore
             )
         ).all()
 
     async def execute_scheduled_report(self, schedule: ReportSchedule) -> bool:
         """Execute a scheduled report based on its type."""
         try:
-            if schedule.schedule_type == "report_definition" and schedule.report_definition_id is not None:
+            schedule_type = getattr(schedule, 'schedule_type', None)
+            if schedule_type == "report_definition" and getattr(schedule, 'report_definition_id', None) is not None:
                 result = await self._execute_definition_schedule_logic(schedule)
-            elif schedule.schedule_type == "report" and schedule.report_id is not None: # Legacy report
-                report = self.db.query(Report).filter(Report.id == schedule.report_id).first()
+            elif schedule_type == "report" and getattr(schedule, 'report_id', None) is not None: # Legacy report
+                report_id = getattr(schedule, 'report_id', None)
+                report = self.db.query(Report).filter(Report.id == report_id).first() if report_id else None
                 if not report:
                     self._handle_schedule_failure(schedule, "Legacy report not found")
                     return False
@@ -144,8 +150,8 @@ class ReportSchedulingService:
             getattr(schedule, 'timezone', 'UTC')
         ))  # type: ignore
         # Log the error
-        self._log_audit_event(
-            schedule.tenant_id,
+        _log_audit_event(
+            getattr(schedule, 'tenant_id', 0),
             "scheduled_report_failed",
             "execution",
             report_id=getattr(schedule, 'report_id', None),  # This might be null for definition schedules
@@ -214,7 +220,7 @@ class ReportSchedulingService:
                 # Since we can't create proper ReportExecution objects due to FK constraints,
                 # we'll create minimal mock objects for the delivery system
                 class MockExecution:
-                    def __init__(self):
+                    def __init__(self) -> None:
                         self.execution_uuid = str(uuid.uuid4())
                         self.output_format = output_format
                         self.file_path = f"/tmp/mock_report_{uuid.uuid4()}.{output_format}"
@@ -222,7 +228,7 @@ class ReportSchedulingService:
                         self.tenant_id = getattr(schedule, 'tenant_id', None)
                 
                 mock_execution = MockExecution()
-                generated_executions.append(mock_execution)
+                generated_executions.append(mock_execution)  # type: ignore
 
             if not generated_executions:
                 self._handle_schedule_failure(schedule, "No files generated for schedule.")
@@ -361,12 +367,12 @@ class ReportSchedulingService:
         schedule: ReportSchedule,
         report: Report,
         output_format: str
-    ) -> ReportExecution:
+    ) -> Optional[ReportExecution]:
         """Execute report for scheduled delivery"""
         
         # Use the existing reporting service instance
         if not self.reporting_service_part1:
-            return None  # type: ignore
+            return None
         
         reporting_service = self.reporting_service_part1
         
@@ -463,22 +469,23 @@ class ReportSchedulingService:
 
     def _validate_cron_expression(self, cron_expr: str) -> bool:
         """Validate cron expression format"""
-        if croniter is None:
+        if not CRONITER_AVAILABLE or croniter is None:
             return True  # Assume valid if croniter not available
         try:
             croniter(cron_expr)
             return True
-        except:
+        except Exception:
             return False
 
     def _calculate_next_run(self, cron_expr: str, timezone: str = "UTC") -> datetime:
         """Calculate next run time for cron expression"""
-        if croniter is None:
+        if not CRONITER_AVAILABLE or croniter is None:
             return datetime.utcnow() + timedelta(hours=1)
         try:
             cron = croniter(cron_expr, datetime.utcnow())
-            return cron.get_next(datetime)
-        except:
+            next_time = cron.get_next(datetime)
+            return next_time if isinstance(next_time, datetime) else datetime.utcnow() + timedelta(hours=1)
+        except Exception:
             # Fallback to 1 hour from now
             return datetime.utcnow() + timedelta(hours=1)
 
@@ -488,8 +495,8 @@ class ReportSchedulingService:
         for email in recipients:
             subscription = self.db.query(ReportSubscription).filter(
                 and_(
-                    ReportSubscription.report_id == report_id,
-                    ReportSubscription.delivery_address == email
+                    ReportSubscription.report_id == report_id,  # type: ignore
+                    ReportSubscription.delivery_address == email  # type: ignore
                 )
             ).first()
             
@@ -503,7 +510,7 @@ class ReportSchedulingService:
 class ReportTemplateService:
     """Service for managing report templates"""
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         self.db = db
 
     def create_template(
@@ -544,12 +551,12 @@ class ReportTemplateService:
         if tenant_id:
             query = query.filter(
                 or_(
-                    ReportTemplate.is_public == True,
-                    ReportTemplate.tenant_id == tenant_id
+                    ReportTemplate.is_public.is_(True),  # type: ignore
+                    ReportTemplate.tenant_id == tenant_id  # type: ignore
                 )
             )
         else:
-            query = query.filter(ReportTemplate.is_public == True)
+            query = query.filter(ReportTemplate.is_public.is_(True))  # type: ignore
         
         if category:
             query = query.filter(ReportTemplate.category == category)
@@ -563,7 +570,7 @@ class ReportTemplateService:
         name: str,
         parameters: Dict[str, Any],
         created_by_user_id: int
-    ) -> Report:
+    ) -> Any:
         """Create a new report from a template"""
         
         template = self.db.query(ReportTemplate).filter(
@@ -605,7 +612,7 @@ class ReportTemplateService:
 class ReportSubscriptionService:
     """Service for managing report subscriptions"""
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         self.db = db
 
     def create_subscription(
@@ -640,9 +647,9 @@ class ReportSubscriptionService:
         
         return self.db.query(ReportSubscription).filter(
             and_(
-                ReportSubscription.user_id == user_id,
-                ReportSubscription.tenant_id == tenant_id,
-                ReportSubscription.is_active == True
+                ReportSubscription.user_id == user_id,  # type: ignore
+                ReportSubscription.tenant_id == tenant_id,  # type: ignore
+                ReportSubscription.is_active.is_(True)  # type: ignore
             )
         ).all()
 
@@ -651,8 +658,8 @@ class ReportSubscriptionService:
         
         return self.db.query(ReportSubscription).filter(
             and_(
-                ReportSubscription.report_id == report_id,
-                ReportSubscription.is_active == True
+                ReportSubscription.report_id == report_id,  # type: ignore
+                ReportSubscription.is_active.is_(True)  # type: ignore
             )
         ).all()
 
@@ -660,7 +667,7 @@ class ReportSubscriptionService:
 class ReportAnalyticsService:
     """Service for report usage analytics and insights"""
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         self.db = db
 
     def get_report_usage_stats(
@@ -773,7 +780,7 @@ class ReportAnalyticsService:
 class ReportCacheService:
     """Service for managing report result caching"""
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         self.db = db
 
     def cleanup_expired_cache(self):
@@ -826,7 +833,7 @@ class ReportCacheService:
 class ReportExportService:
     """Service for advanced report export and sharing"""
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         self.db = db
 
     async def export_report_data(
@@ -841,7 +848,7 @@ class ReportExportService:
             ReportExecution.id == execution_id
         ).first()
         
-        if not execution or not execution.is_completed:
+        if not execution or not getattr(execution, 'is_completed', False):
             raise ValueError("Execution not found or not completed")
         
         # Generate export based on format
@@ -979,13 +986,13 @@ def get_reporting_services(
 class ReportScheduler:
     """Background scheduler for automated report execution"""
     
-    def __init__(self, db: Session, reporting_service_part1: ReportingService):
+    def __init__(self, db: Session, reporting_service_part1: ReportingService) -> None:
         self.db = db
         # Pass reporting_service_part1 to ReportSchedulingService constructor
         self.scheduling_service = ReportSchedulingService(db, reporting_service_part1=reporting_service_part1)
-        self.running = False
+        self.running: bool = False
     
-    async def start(self):
+    async def start(self) -> None:
         """Start the report scheduler"""
         self.running = True
         
@@ -1005,7 +1012,7 @@ class ReportScheduler:
                 print(f"Scheduler error: {e}")
                 await asyncio.sleep(60)
     
-    def stop(self):
+    def stop(self) -> None:
         """Stop the report scheduler"""
         self.running = False
 

@@ -90,7 +90,7 @@ class SSOService:
             tenant_id,
             "provider_created",
             "configuration",
-            provider_id=provider.id,
+            provider_id=getattr(provider, 'id', None),
             user_id=created_by_user_id,
             details={"provider_name": name, "provider_type": provider_type}
         )
@@ -145,15 +145,15 @@ class SSOService:
         self.db.refresh(session)
         
         # Generate SAML AuthnRequest
-        authn_request = self._generate_saml_authn_request(provider, session.session_uuid, relay_state)
+        authn_request = self._generate_saml_authn_request(provider, getattr(session, 'session_uuid', ''), relay_state)
         
         # Log authentication initiation
         self._log_sso_event(
-            provider.tenant_id,
+            getattr(provider, 'tenant_id', None),
             "saml_auth_initiated",
             "authentication",
             provider_id=provider_id,
-            session_id=session.id,
+            session_id=getattr(session, 'id', None),
             ip_address=ip_address,
             details={"relay_state": relay_state}
         )
@@ -177,7 +177,7 @@ class SSOService:
             if not session:
                 return False, None, "Invalid session"
             
-            provider = self.get_sso_provider(session.provider_id)
+            provider = self.get_sso_provider(getattr(session, 'provider_id', 0))
             if not provider:
                 return False, None, "Invalid provider"
             
@@ -222,12 +222,12 @@ class SSOService:
             
             # Log successful authentication
             self._log_sso_event(
-                provider.tenant_id,
+                getattr(provider, 'tenant_id', None),
                 "saml_auth_success",
                 "authentication",
-                provider_id=provider.id,
-                session_id=session.id,
-                user_id=user.id if user else None,
+                provider_id=getattr(provider, 'id', None),
+                session_id=getattr(session, 'id', None),
+                user_id=getattr(user, 'id', None) if user else None,
                 subject_id=subject_id,
                 email=email,
                 ip_address=ip_address,
@@ -237,6 +237,9 @@ class SSOService:
             return True, user, None
             
         except Exception as e:
+            # Initialize session as None if not defined
+            session = locals().get('session', None)
+            
             # Log authentication failure
             self._log_sso_event(
                 getattr(session, 'provider', {}).get('tenant_id') if session else None,  # type: ignore
@@ -284,15 +287,15 @@ class SSOService:
         self.db.refresh(session)
         
         # Generate OAuth2 authorization URL
-        auth_url = self._generate_oauth_auth_url(provider, redirect_uri, session.state_token)
+        auth_url = self._generate_oauth_auth_url(provider, redirect_uri, getattr(session, 'state_token', ''))
         
         # Log authentication initiation
         self._log_sso_event(
-            provider.tenant_id,
+            getattr(provider, 'tenant_id', None),
             "oauth_auth_initiated",
             "authentication",
             provider_id=provider_id,
-            session_id=session.id,
+            session_id=getattr(session, 'id', None),
             ip_address=ip_address,
             details={"redirect_uri": redirect_uri}
         )
@@ -373,12 +376,12 @@ class SSOService:
             
             # Log successful authentication
             self._log_sso_event(
-                provider.tenant_id,
+                getattr(provider, 'tenant_id', None),
                 "oauth_auth_success",
                 "authentication",
                 provider_id=provider_id,
-                session_id=session.id,
-                user_id=user.id if user else None,
+                session_id=getattr(session, 'id', None),
+                user_id=getattr(user, 'id', None) if user else None,
                 subject_id=subject_id,
                 email=email,
                 ip_address=ip_address
@@ -491,6 +494,7 @@ class SSOService:
             setattr(session, 'expires_at', datetime.utcnow() + timedelta(hours=8))  # type: ignore
             
             # Find or create user
+            user = None
             if subject_id:
                 user = self._find_or_create_user(provider, str(subject_id), email, name, user_attributes)
                 if user:
@@ -503,12 +507,12 @@ class SSOService:
             
             # Log successful authentication
             self._log_sso_event(
-                provider.tenant_id,
+                getattr(provider, 'tenant_id', None),
                 "ldap_auth_success",
                 "authentication",
                 provider_id=provider_id,
-                session_id=session.id,
-                user_id=user.id if user else None,
+                session_id=getattr(session, 'id', None),
+                user_id=getattr(user, 'id', None) if user else None,
                 subject_id=subject_id,
                 email=email,
                 ip_address=ip_address
@@ -556,12 +560,12 @@ class SSOService:
             
             # Log session termination
             self._log_sso_event(
-                session.tenant_id,
+                getattr(session, 'tenant_id', None),
                 "session_terminated",
                 "authentication",
-                provider_id=session.provider_id,
-                session_id=session.id,
-                user_id=session.user_id,
+                provider_id=getattr(session, 'provider_id', None),
+                session_id=getattr(session, 'id', None),
+                user_id=getattr(session, 'user_id', None),
                 details={"reason": reason}
             )
             
@@ -655,7 +659,7 @@ class SSOService:
                 'code': code,
                 'redirect_uri': redirect_uri,
                 'client_id': provider.client_id,
-                'client_secret': self._decrypt_secret(provider.client_secret)
+                'client_secret': self._decrypt_secret(getattr(provider, 'client_secret', ''))
             }
             
             response = requests.post(token_url, data=data)

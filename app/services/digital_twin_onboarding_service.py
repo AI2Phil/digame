@@ -146,19 +146,19 @@ class DigitalTwinOnboardingService:
             fields = step_info.get("fields", [])
             if isinstance(fields, list):
                 for field in fields:
-                    value = getattr(profile, field, None)
-                if value and isinstance(value, str) and field in ["technical_skills", "soft_skills", "short_term_goals", "long_term_goals", "learning_interests"]:
-                    try:
-                        current_data[field] = json.loads(value) if value else []
-                    except:
-                        current_data[field] = []
-                elif value and isinstance(value, str) and field == "skill_confidence_scores":
-                    try:
-                        current_data[field] = json.loads(value) if value else {}
-                    except:
-                        current_data[field] = {}
-                else:
-                    current_data[field] = value
+                    value = getattr(profile, field, None)  # type: ignore
+                    if value and isinstance(value, str) and field in ["technical_skills", "soft_skills", "short_term_goals", "long_term_goals", "learning_interests"]:
+                        try:
+                            current_data[field] = json.loads(value) if value else []
+                        except:
+                            current_data[field] = []
+                    elif value and isinstance(value, str) and field == "skill_confidence_scores":
+                        try:
+                            current_data[field] = json.loads(value) if value else {}
+                        except:
+                            current_data[field] = {}
+                    else:
+                        current_data[field] = value
         
         # Prepare step-specific options
         step_options = {}
@@ -229,12 +229,12 @@ class DigitalTwinOnboardingService:
             for field in fields:
                 if field in data:
                     value = data[field]
-                
-                # Convert lists and dicts to JSON strings for storage
-                if isinstance(value, (list, dict)):
-                    value = json.dumps(value)
-                
-                setattr(profile, field, value)
+                    
+                    # Convert lists and dicts to JSON strings for storage
+                    if isinstance(value, (list, dict)):
+                        value = json.dumps(value)
+                    
+                    setattr(profile, field, value)  # type: ignore
         
         setattr(profile, 'last_updated', datetime.utcnow())  # type: ignore
         
@@ -244,32 +244,33 @@ class DigitalTwinOnboardingService:
         ).first()
         
         if progress:
-            completed_steps = progress.completed_steps or []
+            completed_steps = getattr(progress, 'completed_steps', None) or []  # type: ignore
             if step_number not in completed_steps:
                 completed_steps.append(step_number)
-                progress.completed_steps = completed_steps
-                progress.completion_percentage = (len(completed_steps) / progress.total_steps) * 100
-                progress.last_activity_at = datetime.utcnow()
+                setattr(progress, 'completed_steps', completed_steps)  # type: ignore
+                total_steps = getattr(progress, 'total_steps', 6)  # type: ignore
+                setattr(progress, 'completion_percentage', (len(completed_steps) / total_steps) * 100)  # type: ignore
+                setattr(progress, 'last_activity_at', datetime.utcnow())  # type: ignore
                 
                 # Update current step to next incomplete step
                 next_step = step_number + 1
-                if next_step <= progress.total_steps:
-                    progress.current_step = next_step
+                if next_step <= total_steps:
+                    setattr(progress, 'current_step', next_step)  # type: ignore
                 
                 # Mark specific step as completed
                 if step_number == 1:
-                    progress.profile_setup_completed = True
+                    setattr(progress, 'profile_setup_completed', True)  # type: ignore
                 elif step_number == 2:
-                    progress.skills_assessment_completed = True
+                    setattr(progress, 'skills_assessment_completed', True)  # type: ignore
                 elif step_number == 3:
-                    progress.personality_profile_completed = True
+                    setattr(progress, 'personality_profile_completed', True)  # type: ignore
                 elif step_number == 4:
-                    progress.work_style_completed = True
+                    setattr(progress, 'work_style_completed', True)  # type: ignore
                 elif step_number == 5:
-                    progress.goals_setup_completed = True
+                    setattr(progress, 'goals_setup_completed', True)  # type: ignore
                 elif step_number == 6:
-                    progress.twin_preview_completed = True
-                    progress.completed_at = datetime.utcnow()
+                    setattr(progress, 'twin_preview_completed', True)  # type: ignore
+                    setattr(progress, 'completed_at', datetime.utcnow())  # type: ignore
         
         # Calculate profile completeness
         self._calculate_profile_completeness(profile)
@@ -279,9 +280,9 @@ class DigitalTwinOnboardingService:
         return {
             "success": True,
             "step_completed": step_number,
-            "next_step": progress.current_step if progress else step_number + 1,
-            "completion_percentage": progress.completion_percentage if progress else 0,
-            "profile_completeness": profile.profile_completeness_score
+            "next_step": getattr(progress, 'current_step', step_number + 1) if progress else step_number + 1,  # type: ignore
+            "completion_percentage": getattr(progress, 'completion_percentage', 0) if progress else 0,  # type: ignore
+            "profile_completeness": getattr(profile, 'profile_completeness_score', 0)  # type: ignore
         }
     
     def _calculate_profile_completeness(self, profile: DigitalTwinProfile):
@@ -289,18 +290,18 @@ class DigitalTwinOnboardingService:
         total_fields = 12
         completed_fields = 0
         
-        if profile.professional_title: completed_fields += 1
-        if profile.industry: completed_fields += 1
-        if profile.experience_level: completed_fields += 1
-        if profile.technical_skills: completed_fields += 1
-        if profile.soft_skills: completed_fields += 1
-        if profile.personality_type: completed_fields += 1
-        if profile.work_style_preferences: completed_fields += 1
-        if profile.communication_style: completed_fields += 1
-        if profile.short_term_goals: completed_fields += 1
-        if profile.long_term_goals: completed_fields += 1
-        if profile.learning_interests: completed_fields += 1
-        if profile.career_aspirations: completed_fields += 1
+        if getattr(profile, 'professional_title', None): completed_fields += 1  # type: ignore
+        if getattr(profile, 'industry', None): completed_fields += 1  # type: ignore
+        if getattr(profile, 'experience_level', None): completed_fields += 1  # type: ignore
+        if getattr(profile, 'technical_skills', None): completed_fields += 1  # type: ignore
+        if getattr(profile, 'soft_skills', None): completed_fields += 1  # type: ignore
+        if getattr(profile, 'personality_type', None): completed_fields += 1  # type: ignore
+        if getattr(profile, 'work_style_preferences', None): completed_fields += 1  # type: ignore
+        if getattr(profile, 'communication_style', None): completed_fields += 1  # type: ignore
+        if getattr(profile, 'short_term_goals', None): completed_fields += 1  # type: ignore
+        if getattr(profile, 'long_term_goals', None): completed_fields += 1  # type: ignore
+        if getattr(profile, 'learning_interests', None): completed_fields += 1  # type: ignore
+        if getattr(profile, 'career_aspirations', None): completed_fields += 1  # type: ignore
         
         completeness_score = (completed_fields / total_fields) * 100
         setattr(profile, 'profile_completeness_score', completeness_score)  # type: ignore
@@ -317,23 +318,30 @@ class DigitalTwinOnboardingService:
         # Generate a summary based on the profile data
         summary_parts = []
         
-        if profile.professional_title and profile.industry:
-            summary_parts.append(f"A {profile.experience_level or 'professional'} {profile.professional_title} in the {profile.industry} industry")
+        professional_title = getattr(profile, 'professional_title', None)  # type: ignore
+        industry = getattr(profile, 'industry', None)  # type: ignore
+        experience_level = getattr(profile, 'experience_level', None)  # type: ignore
         
-        if profile.technical_skills:
+        if professional_title and industry:
+            summary_parts.append(f"A {experience_level or 'professional'} {professional_title} in the {industry} industry")
+        
+        technical_skills = getattr(profile, 'technical_skills', None)  # type: ignore
+        if technical_skills:
             try:
-                tech_skills = json.loads(profile.technical_skills)
+                tech_skills = json.loads(str(technical_skills))
                 if tech_skills:
                     summary_parts.append(f"with expertise in {', '.join(tech_skills[:3])}")
             except:
                 pass
         
-        if profile.personality_type:
-            summary_parts.append(f"Known for being {profile.personality_type.lower()}")
+        personality_type = getattr(profile, 'personality_type', None)  # type: ignore
+        if personality_type:
+            summary_parts.append(f"Known for being {str(personality_type).lower()}")
         
-        if profile.short_term_goals:
+        short_term_goals = getattr(profile, 'short_term_goals', None)  # type: ignore
+        if short_term_goals:
             try:
-                goals = json.loads(profile.short_term_goals)
+                goals = json.loads(str(short_term_goals))
                 if goals:
                     summary_parts.append(f"Currently focused on {goals[0].lower()}")
             except:
@@ -342,18 +350,20 @@ class DigitalTwinOnboardingService:
         ai_summary = ". ".join(summary_parts) + "."
         
         # Save the summary
-        profile.ai_generated_summary = ai_summary
-        profile.last_updated = datetime.utcnow()
+        setattr(profile, 'ai_generated_summary', ai_summary)  # type: ignore
+        setattr(profile, 'last_updated', datetime.utcnow())  # type: ignore
         
         # Calculate twin accuracy (simplified)
-        profile.twin_accuracy_score = min(profile.profile_completeness_score * 0.9, 95.0)
+        completeness_score = getattr(profile, 'profile_completeness_score', 0)  # type: ignore
+        accuracy_score = min(float(completeness_score) * 0.9, 95.0)
+        setattr(profile, 'twin_accuracy_score', accuracy_score)  # type: ignore
         
         self.db.commit()
         
         return {
             "summary": ai_summary,
-            "completeness_score": profile.profile_completeness_score,
-            "accuracy_score": profile.twin_accuracy_score,
+            "completeness_score": getattr(profile, 'profile_completeness_score', 0),  # type: ignore
+            "accuracy_score": getattr(profile, 'twin_accuracy_score', 0),  # type: ignore
             "recommendations": self._generate_recommendations(profile)
         }
     
@@ -361,19 +371,24 @@ class DigitalTwinOnboardingService:
         """Generate recommendations for profile improvement"""
         recommendations = []
         
-        if not profile.technical_skills:
+        technical_skills = getattr(profile, 'technical_skills', None)  # type: ignore
+        if not technical_skills:
             recommendations.append("Add technical skills to showcase your expertise")
         
-        if not profile.soft_skills:
+        soft_skills = getattr(profile, 'soft_skills', None)  # type: ignore
+        if not soft_skills:
             recommendations.append("Include soft skills to highlight your interpersonal abilities")
         
-        if not profile.short_term_goals:
+        short_term_goals = getattr(profile, 'short_term_goals', None)  # type: ignore
+        if not short_term_goals:
             recommendations.append("Set short-term goals to track your progress")
         
-        if not profile.learning_interests:
+        learning_interests = getattr(profile, 'learning_interests', None)  # type: ignore
+        if not learning_interests:
             recommendations.append("Specify learning interests to get personalized recommendations")
         
-        if profile.profile_completeness_score < 80:
+        completeness_score = getattr(profile, 'profile_completeness_score', 0)  # type: ignore
+        if float(completeness_score) < 80:
             recommendations.append("Complete more profile sections to improve your twin accuracy")
         
         return recommendations

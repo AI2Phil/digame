@@ -1,13 +1,15 @@
 try:
     from fastapi import HTTPException, status, Depends
+    FASTAPI_AVAILABLE = True
 except ImportError:
     # Fallback for missing FastAPI
     HTTPException = None
     status = None
     Depends = None
+    FASTAPI_AVAILABLE = False
 
 from sqlalchemy.orm import Session
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Union
 import uuid
 
 from ..models.dashboard_custom import AnalyticsDashboard, DashboardWidget
@@ -15,7 +17,7 @@ from ..schemas import analytics_schemas as schemas # Using the new analytics_sch
 from ..services.analytics_service import AnalyticsService # Import AnalyticsService
 
 class CustomDashboardService:
-    def __init__(self, db: Session, analytics_service: AnalyticsService):
+    def __init__(self, db: Session, analytics_service: AnalyticsService) -> None:
         self.db = db
         self.analytics_service = analytics_service
 
@@ -63,7 +65,7 @@ class CustomDashboardService:
         dashboard_update_data: schemas.AnalyticsDashboardUpdate # Pydantic schema for update
     ) -> Optional[AnalyticsDashboard]:
         db_dashboard = self.get_dashboard(dashboard_id, tenant_id)
-        if not db_dashboard or db_dashboard.user_id != user_id:
+        if not db_dashboard or getattr(db_dashboard, 'user_id', None) != user_id:
             return None # Or raise HTTPException for permission issues
 
         update_data = dashboard_update_data.model_dump(exclude_unset=True)
@@ -76,7 +78,7 @@ class CustomDashboardService:
 
     def delete_dashboard(self, dashboard_id: int, tenant_id: int, user_id: int) -> bool:
         db_dashboard = self.get_dashboard(dashboard_id, tenant_id)
-        if not db_dashboard or db_dashboard.user_id != user_id:
+        if not db_dashboard or getattr(db_dashboard, 'user_id', None) != user_id:
             # Consider raising HTTPException for not found or permission denied
             return False
 
@@ -405,12 +407,12 @@ class CustomDashboardService:
 
             # TODO: Add more handlers for other data_source_types like workflow_template_performance
 
-        except Exception as http_exc:
-            if HTTPException and isinstance(http_exc, type(HTTPException)):
-                raise
         except ValueError as ve:
             data_payload = {"error": f"Data fetching error: {str(ve)}"}
         except Exception as e:
+            # Check if it's an HTTPException first
+            if HTTPException and isinstance(e, type(HTTPException)):
+                raise
             data_payload = {"error": f"An unexpected error occurred: {str(e)}"}
 
         return data_payload
@@ -545,10 +547,10 @@ class CustomDashboardService:
         if filters:
             enhanced_params.update(filters)
         
-        # Create enhanced data source config
-        enhanced_config = schemas.DashboardWidgetDataSource()
-        setattr(enhanced_config, 'type', data_source_config.type)  # type: ignore
-        setattr(enhanced_config, 'query_params', enhanced_params)  # type: ignore
+        # Create enhanced data source config by copying the original and updating params
+        enhanced_config = data_source_config
+        if hasattr(enhanced_config, 'query_params'):
+            setattr(enhanced_config, 'query_params', enhanced_params)  # type: ignore
         
         return enhanced_config
 
@@ -806,7 +808,7 @@ from datetime import datetime
 
 # Dependency for getting the service
 def get_custom_dashboard_service(
-    db: Optional[SessionLocal] = None,
+    db: Optional[Session] = None,
     analytics_service: Optional[AnalyticsService] = None
 ) -> CustomDashboardService:
     if db is None:
@@ -818,14 +820,18 @@ def get_custom_dashboard_service(
         from ..services.analytics_service import AnalyticsService
         analytics_service = AnalyticsService(db)
     
+    # Ensure db is not None before creating service
+    if db is None:
+        raise ValueError("Database session is required")
+    
     return CustomDashboardService(db=db, analytics_service=analytics_service)
 
 # FastAPI dependency version (when FastAPI is available)
 def get_custom_dashboard_service_fastapi():
-    if Depends:
+    if FASTAPI_AVAILABLE and Depends:
         def _get_service(
-            db: SessionLocal = Depends(get_db),
-            analytics_service: AnalyticsService = Depends(get_analytics_service)
+            db: Session = Depends(get_db),  # type: ignore
+            analytics_service: AnalyticsService = Depends(get_analytics_service)  # type: ignore
         ) -> CustomDashboardService:
             return CustomDashboardService(db=db, analytics_service=analytics_service)
         return _get_service
