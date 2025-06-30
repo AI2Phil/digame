@@ -28,10 +28,12 @@ class WritingAssistanceService:
         if not user_from_db:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found.")
 
-        tenant_id = getattr(user_from_db, 'tenant_id', None)
-        if not tenant_id and hasattr(user_from_db, 'tenants') and user_from_db.tenants:
-             user_tenant_link = user_from_db.tenants[0]
-             tenant_id = getattr(user_tenant_link, 'tenant_id', None)
+        tenant_id = getattr(user_from_db, 'tenant_id', None)  # type: ignore
+        if not tenant_id and hasattr(user_from_db, 'tenants'):
+            user_tenants = getattr(user_from_db, 'tenants', [])  # type: ignore
+            if user_tenants:
+                user_tenant_link = user_tenants[0]
+                tenant_id = getattr(user_tenant_link, 'tenant_id', None)  # type: ignore
 
         if not tenant_id:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User not associated with a tenant.")
@@ -40,7 +42,7 @@ class WritingAssistanceService:
         if not tenant:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Tenant information not found.")
 
-        tenant_features = tenant.features
+        tenant_features = getattr(tenant, 'features', None)  # type: ignore
         if isinstance(tenant_features, str):
             try:
                 tenant_features = json.loads(tenant_features or '{}')
@@ -56,13 +58,14 @@ class WritingAssistanceService:
             )
 
         user_settings = user_setting_crud.get_user_setting(self.db, user_id=current_user_id)
-        if not user_settings or not user_settings.api_keys:
+        if not user_settings or not getattr(user_settings, 'api_keys', None):  # type: ignore
             raise HTTPException(
                 status_code=status.HTTP_402_PAYMENT_REQUIRED,
                 detail=f"API key for '{feature_name}' not found. Please add 'openai_api_key' to your settings."
             )
         try:
-            api_keys_dict = json.loads(user_settings.api_keys)
+            api_keys_str = getattr(user_settings, 'api_keys', '{}')  # type: ignore
+            api_keys_dict = json.loads(api_keys_str)
             openai_api_key = api_keys_dict.get("openai_api_key")
         except json.JSONDecodeError:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error parsing API key settings.")

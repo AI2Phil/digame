@@ -19,15 +19,20 @@ class CommunicationStyleService:
         if not current_user:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not authenticated.")
 
-        user_from_db = user_crud.get_user(self.db, user_id=current_user.id)
+        current_user_id = getattr(current_user, 'id', None)  # type: ignore
+        if current_user_id is None:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User ID not found.")
+        user_from_db = user_crud.get_user(self.db, user_id=current_user_id)
         if not user_from_db:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found.")
         current_user = user_from_db
 
-        tenant_id = getattr(current_user, 'tenant_id', None)
-        if not tenant_id and hasattr(current_user, 'tenants') and current_user.tenants:
-             user_tenant_link = current_user.tenants[0]
-             tenant_id = getattr(user_tenant_link, 'tenant_id', None)
+        tenant_id = getattr(current_user, 'tenant_id', None)  # type: ignore
+        if not tenant_id and hasattr(current_user, 'tenants'):
+            user_tenants = getattr(current_user, 'tenants', [])  # type: ignore
+            if user_tenants:
+                user_tenant_link = user_tenants[0]
+                tenant_id = getattr(user_tenant_link, 'tenant_id', None)  # type: ignore
 
         if not tenant_id:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User not associated with any tenant or tenant ID missing.")
@@ -36,7 +41,7 @@ class CommunicationStyleService:
         if not tenant:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Tenant information not found for user.")
 
-        tenant_features = tenant.features
+        tenant_features = getattr(tenant, 'features', None)  # type: ignore
         if isinstance(tenant_features, str):
             try:
                 tenant_features = json.loads(tenant_features or '{}')
@@ -51,15 +56,16 @@ class CommunicationStyleService:
                 detail="Communication Style Analysis feature is not enabled for your tenant."
             )
 
-        user_settings = user_setting_crud.get_user_setting(self.db, user_id=current_user.id)
-        if not user_settings or not user_settings.api_keys:
+        user_settings = user_setting_crud.get_user_setting(self.db, user_id=int(current_user_id))
+        if not user_settings or not getattr(user_settings, 'api_keys', None):  # type: ignore
             raise HTTPException(
                 status_code=status.HTTP_402_PAYMENT_REQUIRED,
                 detail="API key for Communication Style Analysis not found. Please add 'openai_api_key' to your settings."
             )
 
         try:
-            api_keys_dict = json.loads(user_settings.api_keys)
+            api_keys_str = getattr(user_settings, 'api_keys', '{}')  # type: ignore
+            api_keys_dict = json.loads(api_keys_str)
         except json.JSONDecodeError:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -97,7 +103,7 @@ AI Response: {"identified_style": "Passive", "confidence_score": 0.90, "explanat
         }
 
         try:
-            logger.info(f"Requesting communication style analysis for user {current_user.id}")
+            logger.info(f"Requesting communication style analysis for user {current_user_id}")
             openai_response_data = await self.ai_integration_service.make_request(
                 api_key=openai_api_key,
                 base_url="https://api.openai.com/v1",
@@ -109,7 +115,7 @@ AI Response: {"identified_style": "Passive", "confidence_score": 0.90, "explanat
             if not openai_response_data.get("choices") or \
                not openai_response_data["choices"][0].get("message") or \
                not openai_response_data["choices"][0]["message"].get("content"):
-                logger.error(f"Unexpected OpenAI response structure for comm style (user {current_user.id}): {openai_response_data}")
+                logger.error(f"Unexpected OpenAI response structure for comm style (user {current_user_id}): {openai_response_data}")
                 raise HTTPException(status_code=500, detail="AI provider returned an unexpected response format.")
 
             content_str = openai_response_data["choices"][0]["message"]["content"]
@@ -118,22 +124,22 @@ AI Response: {"identified_style": "Passive", "confidence_score": 0.90, "explanat
             # Validate expected keys in the parsed JSON
             required_keys = ["identified_style", "confidence_score", "explanation"]
             if not all(key in analysis_result for key in required_keys):
-                logger.error(f"OpenAI response JSON missing required keys for comm style (user {current_user.id}): {analysis_result}")
+                logger.error(f"OpenAI response JSON missing required keys for comm style (user {current_user_id}): {analysis_result}")
                 raise HTTPException(status_code=500, detail="AI provider's response missing required analysis fields.")
 
-            logger.info(f"Successfully received communication style analysis for user {current_user.id}")
+            logger.info(f"Successfully received communication style analysis for user {current_user_id}")
             # Add original text length for consistency with old mock, if desired by API contract
             analysis_result["raw_text_length"] = len(text_input)
             analysis_result["model_provider"] = "openai" # Indicate the provider
             return analysis_result
 
         except json.JSONDecodeError:
-            logger.error(f"Failed to parse JSON from OpenAI response for comm style (user {current_user.id}): {content_str if 'content_str' in locals() else 'N/A'}")
+            logger.error(f"Failed to parse JSON from OpenAI response for comm style (user {current_user_id}): {content_str if 'content_str' in locals() else 'N/A'}")
             raise HTTPException(status_code=500, detail="Failed to parse AI provider's response.")
         except HTTPException: # Re-raise HTTPExceptions (e.g., from tenant/key checks)
             raise
         except Exception as e:
-            logger.error(f"Error during communication style analysis for user {current_user.id}: {str(e)}")
+            logger.error(f"Error during communication style analysis for user {current_user_id}: {str(e)}")
             raise HTTPException(status_code=503, detail=f"Communication style analysis request to AI provider failed: {str(e)}")
 
 # Dependency injector function

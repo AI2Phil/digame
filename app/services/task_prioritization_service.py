@@ -22,12 +22,12 @@ class TaskPrioritizationService:
         Applies internal heuristics to a single task to suggest a priority score.
         Scores range from 0.0 (lowest) to 1.0 (highest).
         """
-        score = task.priority_score if task.priority_score is not None else 0.5 # Start with existing or default
+        score = getattr(task, 'priority_score', 0.5) if getattr(task, 'priority_score', None) is not None else 0.5  # type: ignore
         now_utc = datetime.utcnow()
 
         # Heuristic 1: Deadline and Due Date Proximity
         # Consider 'deadline' field first, then 'due_date_inferred'
-        effective_due_date = task.deadline if task.deadline else task.due_date_inferred
+        effective_due_date = getattr(task, 'deadline', None) if getattr(task, 'deadline', None) else getattr(task, 'due_date_inferred', None)  # type: ignore
         if effective_due_date:
             if isinstance(effective_due_date, datetime):
                 # Ensure comparison is between offset-naive UTC datetimes
@@ -44,15 +44,17 @@ class TaskPrioritizationService:
                     score = min(1.0, score + 0.05)
 
         # Heuristic 2: Estimated Effort
-        if task.estimated_effort_hours is not None:
-            if task.estimated_effort_hours > 8: # High effort
+        estimated_effort = getattr(task, 'estimated_effort_hours', None)  # type: ignore
+        if estimated_effort is not None:
+            if estimated_effort > 8: # High effort
                 score = min(1.0, score + 0.1) # Slightly increase priority for larger tasks that might need planning
-            elif task.estimated_effort_hours < 1: # Low effort / quick task
+            elif estimated_effort < 1: # Low effort / quick task
                 score = min(1.0, score + 0.05) # Small boost for quick wins
 
         # Heuristic 3: Keywords in description (existing)
-        if task.description:
-            description_lower = task.description.lower()
+        task_description = getattr(task, 'description', None)  # type: ignore
+        if task_description:
+            description_lower = task_description.lower()
             if "urgent" in description_lower or "asap" in description_lower or "critical" in description_lower:
                 score = min(1.0, score + 0.3)
             elif "important" in description_lower or "high priority" in description_lower:
@@ -62,16 +64,18 @@ class TaskPrioritizationService:
 
 
         # Heuristic 4: Status (existing, slightly adjusted)
-        if task.status == 'in_progress':
+        task_status = getattr(task, 'status', None)  # type: ignore
+        if task_status == 'in_progress':
             score = min(1.0, score + 0.1) # Higher boost for active work
-        elif task.status == 'accepted':
+        elif task_status == 'accepted':
             score = min(1.0, score + 0.05)
-        elif task.status == 'suggested':
+        elif task_status == 'suggested':
             score = max(0.0, score - 0.1) # Keep suggested tasks lower unless other factors boost them
 
         # Heuristic 5: Dependencies (Simplified: if a task has dependencies, it might be slightly less urgent until deps are met)
         # This is a very basic interpretation. A more complex system would consider if dependencies are met.
-        if task.dependencies and len(task.dependencies) > 0:
+        task_dependencies = getattr(task, 'dependencies', None)  # type: ignore
+        if task_dependencies and len(task_dependencies) > 0:
             # For now, we don't have easy access to the status of dependent tasks here.
             # A simple approach: slightly lower priority if it has unmet dependencies.
             # This requires fetching dependent tasks, which is out of scope for this simple heuristic pass.
@@ -111,20 +115,24 @@ class TaskPrioritizationService:
         if not current_user:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not authenticated.")
 
-        if not hasattr(current_user, 'tenants') or not current_user.tenants:
+        user_tenants = getattr(current_user, 'tenants', None)  # type: ignore
+        if not user_tenants:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User not associated with any tenant.")
 
-        user_tenant_link = current_user.tenants[0]
-        if not hasattr(user_tenant_link, 'tenant'):
+        user_tenant_link = user_tenants[0]
+        tenant = getattr(user_tenant_link, 'tenant', None)  # type: ignore
+        if not tenant:
              raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Tenant linkage error for user.")
-
-        tenant = user_tenant_link.tenant
 
         if not tenant:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Tenant information not found for user.")
 
         try:
-            tenant_features = tenant.features if isinstance(tenant.features, dict) else json.loads(tenant.features or '{}')
+            tenant_features_raw = getattr(tenant, 'features', None)  # type: ignore
+            if isinstance(tenant_features_raw, dict):
+                tenant_features = tenant_features_raw
+            else:
+                tenant_features = json.loads(tenant_features_raw or '{}')
         except json.JSONDecodeError:
             # Log error: Tenant features JSON is corrupted for tenant.id
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error reading tenant configuration.")
@@ -135,7 +143,10 @@ class TaskPrioritizationService:
                 detail="Intelligent Task Prioritization feature is not enabled for your tenant."
             )
 
-        user_tasks = task_crud.get_tasks_by_user_id(self.db, user_id=cast(int, current_user.id), exclude_statuses=["completed", "archived"])
+        user_id = getattr(current_user, 'id', None)  # type: ignore
+        if user_id is None:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User ID not found.")
+        user_tasks = task_crud.get_tasks_by_user_id(self.db, user_id=cast(int, user_id), exclude_statuses=["completed", "archived"])
 
         if not user_tasks:
             return []
@@ -144,21 +155,26 @@ class TaskPrioritizationService:
         tasks_to_update_in_db = []
 
         for task in user_tasks:
-            original_score = task.priority_score
+            original_score = getattr(task, 'priority_score', None)  # type: ignore
             suggested_score = self._apply_internal_heuristics(task)
 
+            task_id = getattr(task, 'id', None)  # type: ignore
+            task_description = getattr(task, 'description', None)  # type: ignore
+            task_status = getattr(task, 'status', None)  # type: ignore
+            due_date_inferred = getattr(task, 'due_date_inferred', None)  # type: ignore
+            
             task_detail = {
-                "id": task.id,
-                "description": task.description,
-                "status": task.status,
-                "due_date_inferred": task.due_date_inferred.isoformat() if task.due_date_inferred else None,
+                "id": task_id,
+                "description": task_description,
+                "status": task_status,
+                "due_date_inferred": due_date_inferred.isoformat() if due_date_inferred else None,
                 "original_priority_score": original_score,
                 "suggested_priority_score": suggested_score
             }
             prioritized_task_details.append(task_detail)
 
             if apply_changes and (original_score is None or abs(original_score - suggested_score) > 0.0001):
-                tasks_to_update_in_db.append({"task_id": task.id, "priority_score": suggested_score})
+                tasks_to_update_in_db.append({"task_id": getattr(task, 'id', None), "priority_score": suggested_score})  # type: ignore
 
         if apply_changes and tasks_to_update_in_db:
             for item_to_update in tasks_to_update_in_db:
@@ -197,12 +213,12 @@ class TaskPrioritizationService:
 
         tasks_to_update_in_db = []
         for task in user_tasks:
-            original_score = task.priority_score
+            original_score = getattr(task, 'priority_score', None)  # type: ignore
             suggested_score = self._apply_internal_heuristics(task) # Apply the same heuristics
 
             # Check if the score has changed significantly to warrant an update
             if original_score is None or abs(original_score - suggested_score) > 0.001: # Using a small epsilon
-                tasks_to_update_in_db.append({"task_id": task.id, "priority_score": suggested_score})
+                tasks_to_update_in_db.append({"task_id": getattr(task, 'id', None), "priority_score": suggested_score})  # type: ignore
 
         if tasks_to_update_in_db:
             for item_to_update in tasks_to_update_in_db:

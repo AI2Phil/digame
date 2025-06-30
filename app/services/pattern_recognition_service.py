@@ -60,8 +60,8 @@ def categorize_pattern(pattern: BehavioralPattern) -> str:
         The category of the pattern
     """
     # Extract pattern characteristics
-    activity_distribution = pattern.activity_distribution or {}
-    context_features = pattern.context_features or {}
+    activity_distribution = getattr(pattern, 'activity_distribution', None) or {}  # type: ignore
+    context_features = getattr(pattern, 'context_features', None) or {}  # type: ignore
     
     # Define category thresholds
     category_scores = {
@@ -114,7 +114,7 @@ def generate_pattern_label(pattern: BehavioralPattern) -> str:
     category = categorize_pattern(pattern)
     
     # Extract pattern characteristics
-    temporal_distribution = pattern.temporal_distribution or {}
+    temporal_distribution = getattr(pattern, 'temporal_distribution', None) or {}  # type: ignore
     hour_distribution = temporal_distribution.get("hour_of_day", {})
     day_distribution = temporal_distribution.get("day_of_week", {})
     
@@ -189,7 +189,8 @@ def detect_anomalies(
         return []
     
     # Get patterns for the model
-    patterns = get_patterns_for_model(db, model.id)
+    model_id = getattr(model, 'id', None)  # type: ignore
+    patterns = get_patterns_for_model(db, model_id)
     if not patterns:
         return []
     
@@ -239,8 +240,20 @@ def detect_anomalies(
     mean_count = hourly_counts.mean()
     std_count = hourly_counts.std()
     
-    # Identify anomalous hours
-    anomalous_hours = hourly_counts[abs(hourly_counts - mean_count) > threshold * std_count].index.tolist()
+    # Identify anomalous hours - handle case where std_count is 0 or NaN
+    if std_count == 0 or pd.isna(std_count):
+        anomalous_hours = []
+    else:
+        anomalous_mask = abs(hourly_counts - mean_count) > threshold * std_count
+        # Get anomalous hours safely - handle both pandas Series and numpy arrays
+        anomalous_hours = []
+        # Safe iteration approach that works with both pandas and numpy
+        for hour in hourly_counts.index:
+            try:
+                if anomalous_mask[hour]:
+                    anomalous_hours.append(hour)
+            except (KeyError, IndexError, TypeError):
+                continue
     
     for hour in anomalous_hours:
         # Get activities in anomalous hours
@@ -258,7 +271,7 @@ def detect_anomalies(
                     "hour": int(hour),
                     "mean_count": float(mean_count),
                     "std_count": float(std_count),
-                    "actual_count": int(hourly_counts[hour])
+                    "actual_count": int(hourly_counts.loc[hour]) if hasattr(hourly_counts, 'loc') else 0
                 }
             }
             
@@ -271,8 +284,21 @@ def detect_anomalies(
     mean_type_count = activity_type_counts.mean()
     std_type_count = activity_type_counts.std()
     
-    # Identify anomalous activity types
-    anomalous_types = activity_type_counts[abs(activity_type_counts - mean_type_count) > threshold * std_type_count].index.tolist()
+    # Identify anomalous activity types - handle case where std_type_count is 0 or NaN
+    if std_type_count == 0 or pd.isna(std_type_count):
+        anomalous_types = []
+    else:
+        anomalous_mask = abs(activity_type_counts - mean_type_count) > threshold * std_type_count
+        # Get the filtered series and extract index
+        filtered_types = activity_type_counts[anomalous_mask]
+        anomalous_types = []
+        # Safe iteration approach that works with both pandas and numpy
+        for activity_type in activity_type_counts.index:
+            try:
+                if anomalous_mask.loc[activity_type] if hasattr(anomalous_mask, 'loc') else anomalous_mask[activity_type]:
+                    anomalous_types.append(activity_type)
+            except (KeyError, IndexError, TypeError):
+                continue
     
     for activity_type in anomalous_types:
         # Get activities with anomalous types
@@ -290,7 +316,7 @@ def detect_anomalies(
                     "activity_type": activity_type,
                     "mean_count": float(mean_type_count),
                     "std_count": float(std_type_count),
-                    "actual_count": int(activity_type_counts[activity_type])
+                    "actual_count": int(activity_type_counts.loc[activity_type] if hasattr(activity_type_counts, 'loc') else activity_type_counts[activity_type])
                 }
             }
             

@@ -45,15 +45,18 @@ class EmailAnalysisService:
         if not current_user:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not authenticated.")
 
-        user_from_db = user_crud.get_user(self.db, user_id=cast(int, current_user.id))
+        current_user_id = getattr(current_user, 'id', None)  # type: ignore
+        user_from_db = user_crud.get_user(self.db, user_id=cast(int, current_user_id))
         if not user_from_db:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found.")
         current_user = user_from_db
 
-        tenant_id = getattr(current_user, 'tenant_id', None)
-        if not tenant_id and hasattr(current_user, 'tenants') and current_user.tenants:
-             user_tenant_link = current_user.tenants[0]
-             tenant_id = getattr(user_tenant_link, 'tenant_id', None)
+        tenant_id = getattr(current_user, 'tenant_id', None)  # type: ignore
+        if not tenant_id and hasattr(current_user, 'tenants'):
+            user_tenants = getattr(current_user, 'tenants', [])  # type: ignore
+            if user_tenants:
+                user_tenant_link = user_tenants[0]
+                tenant_id = getattr(user_tenant_link, 'tenant_id', None)  # type: ignore
 
         if not tenant_id:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User not associated with any tenant or tenant ID missing.")
@@ -62,7 +65,7 @@ class EmailAnalysisService:
         if not tenant:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Tenant information not found for user.")
 
-        tenant_features = tenant.features
+        tenant_features = getattr(tenant, 'features', None)  # type: ignore
         if isinstance(tenant_features, str):
             try:
                 tenant_features = json.loads(tenant_features or '{}')
@@ -77,19 +80,20 @@ class EmailAnalysisService:
                 detail="Email Pattern Analysis feature is not enabled for your tenant."
             )
 
-        user_settings = user_setting_crud.get_user_setting(self.db, user_id=cast(int, current_user.id))
+        user_settings = user_setting_crud.get_user_setting(self.db, user_id=cast(int, current_user_id))
         api_keys_dict: Optional[Dict[str, str]] = None
-        if user_settings and user_settings.api_keys:
+        if user_settings and getattr(user_settings, 'api_keys', None):  # type: ignore
             try:
-                api_keys_dict = json.loads(user_settings.api_keys)
+                api_keys_str = getattr(user_settings, 'api_keys', '{}')  # type: ignore
+                api_keys_dict = json.loads(api_keys_str)
             except json.JSONDecodeError:
-                logger.warning(f"Failed to parse API keys JSON for user {current_user.id}")
+                logger.warning(f"Failed to parse API keys JSON for user {current_user_id}")
                 api_keys_dict = None
 
         openai_api_key = api_keys_dict.get("openai_api_key") if api_keys_dict else None
 
         if not emails_data: # Handle empty email list early
-             logger.info(f"No email data provided for analysis by user {current_user.id}. Performing basic internal summary.")
+             logger.info(f"No email data provided for analysis by user {current_user_id}. Performing basic internal summary.")
              return self._perform_internal_analysis(emails_data)
 
 
@@ -133,7 +137,7 @@ AI Response: {
             }
 
             try:
-                logger.info(f"Requesting email pattern analysis (OpenAI) for user {current_user.id}")
+                logger.info(f"Requesting email pattern analysis (OpenAI) for user {current_user_id}")
                 openai_response_data = await self.ai_integration_service.make_request(
                     api_key=openai_api_key,
                     base_url="https://api.openai.com/v1",
@@ -145,9 +149,9 @@ AI Response: {
                 if not openai_response_data.get("choices") or \
                    not openai_response_data["choices"][0].get("message") or \
                    not openai_response_data["choices"][0]["message"].get("content"):
-                    logger.error(f"Unexpected OpenAI response for email analysis (user {current_user.id}): {openai_response_data}")
+                    logger.error(f"Unexpected OpenAI response for email analysis (user {current_user_id}): {openai_response_data}")
                     # Fallback to internal analysis on unexpected AI response format
-                    logger.warning(f"Falling back to internal email analysis for user {current_user.id} due to AI response error.")
+                    logger.warning(f"Falling back to internal email analysis for user {current_user_id} due to AI response error.")
                     return self._perform_internal_analysis(emails_data)
 
                 content_str = openai_response_data["choices"][0]["message"]["content"]
@@ -155,11 +159,11 @@ AI Response: {
 
                 required_keys = ["common_themes", "overall_sentiment", "sentiment_confidence", "productivity_insights"]
                 if not all(key in analysis_result for key in required_keys):
-                    logger.error(f"OpenAI response JSON missing required keys for email analysis (user {current_user.id}): {analysis_result}")
-                    logger.warning(f"Falling back to internal email analysis for user {current_user.id} due to AI key missing in response.")
+                    logger.error(f"OpenAI response JSON missing required keys for email analysis (user {current_user_id}): {analysis_result}")
+                    logger.warning(f"Falling back to internal email analysis for user {current_user_id} due to AI key missing in response.")
                     return self._perform_internal_analysis(emails_data)
 
-                logger.info(f"Successfully received email pattern analysis (OpenAI) for user {current_user.id}")
+                logger.info(f"Successfully received email pattern analysis (OpenAI) for user {current_user_id}")
                 analysis_result["total_emails_processed_by_ai_prompt"] = len(email_subjects_sample)
                 analysis_result["total_emails_provided_by_user"] = len(emails_data)
                 analysis_result["analysis_type"] = "openai_assisted"
@@ -167,16 +171,16 @@ AI Response: {
                 return analysis_result
 
             except json.JSONDecodeError:
-                logger.error(f"Failed to parse JSON from OpenAI (email analysis, user {current_user.id}): {content_str if 'content_str' in locals() else 'N/A'}. Falling back.")
+                logger.error(f"Failed to parse JSON from OpenAI (email analysis, user {current_user_id}): {content_str if 'content_str' in locals() else 'N/A'}. Falling back.")
                 return self._perform_internal_analysis(emails_data)
             except HTTPException as e: # If make_request itself raises an HTTPException (e.g. API key error for other service)
-                logger.error(f"HTTPException during OpenAI email analysis (user {current_user.id}): {e.detail}. Falling back.")
+                logger.error(f"HTTPException during OpenAI email analysis (user {current_user_id}): {e.detail}. Falling back.")
                 return self._perform_internal_analysis(emails_data)
             except Exception as e:
-                logger.error(f"Generic error during OpenAI email analysis (user {current_user.id}): {str(e)}. Falling back.")
+                logger.error(f"Generic error during OpenAI email analysis (user {current_user_id}): {str(e)}. Falling back.")
                 return self._perform_internal_analysis(emails_data)
         else:
-            logger.info(f"No OpenAI API key for user {current_user.id}. Performing internal email analysis.")
+            logger.info(f"No OpenAI API key for user {current_user_id}. Performing internal email analysis.")
             return self._perform_internal_analysis(emails_data)
 
 # Dependency injector function

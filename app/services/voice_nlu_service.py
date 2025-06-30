@@ -23,9 +23,10 @@ class VoiceNLUService:
 
         user_settings = user_setting_crud.get_user_setting(self.db, user_id=user_id)
         api_key = None
-        if user_settings and user_settings.api_keys:
+        if user_settings and getattr(user_settings, 'api_keys', None):  # type: ignore
             try:
-                api_keys_dict = json.loads(user_settings.api_keys)
+                api_keys_str = getattr(user_settings, 'api_keys', '{}')  # type: ignore
+                api_keys_dict = json.loads(api_keys_str)
                 api_key = api_keys_dict.get("openai_api_key") # Standardized key name
             except json.JSONDecodeError:
                 logger.error(f"Failed to parse API keys for user {user_id}.")

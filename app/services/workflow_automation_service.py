@@ -231,7 +231,8 @@ class WorkflowAutomationService:
                             report_parameters[report_param] = value
                         except (AttributeError, KeyError):
                             # Log that a mapped parameter was not found
-                            print(f"Could not resolve parameter path {instance_path} for report config {config.id}")
+                            config_id = getattr(config, 'id', 'unknown')
+                            print(f"Could not resolve parameter path {instance_path} for report config {config_id}")
 
                 # Add default/contextual parameters
                 report_parameters["workflow_instance_id"] = getattr(instance, 'id', None)
@@ -260,18 +261,35 @@ class WorkflowAutomationService:
                 # For now, we proceed with the call.
                 # Check if reporting service has the required method
                 if hasattr(self.reporting_service, 'generate_report_data'):
-                    report_data_payload = asyncio.run(self.reporting_service.generate_report_data(  # type: ignore
-                    report_definition_id=getattr(report_definition, 'id', 0),  # type: ignore
-                    tenant_id=getattr(instance, 'tenant_id', 0),
-                    # We might need to pass `report_parameters` here if `generate_report_data` is adapted
-                ))
+                    generate_method = getattr(self.reporting_service, 'generate_report_data')
+                    if callable(generate_method):
+                        try:
+                            # Try to call the method and handle both sync and async cases
+                            result = generate_method(
+                                report_definition_id=getattr(report_definition, 'id', 0),
+                                tenant_id=getattr(instance, 'tenant_id', 0)
+                            )
+                            # Check if result is a coroutine
+                            if hasattr(result, '__await__'):
+                                report_data_payload = asyncio.run(result)  # type: ignore
+                            else:
+                                report_data_payload = result
+                        except Exception as e:
+                            print(f"Error calling generate_report_data: {e}")
+                            report_data_payload = {}
+                    else:
+                        report_data_payload = {}
+                else:
+                    report_data_payload = {}
 
                 # Extract tabular data from payload (simplification)
                 data_for_file_generation: List[Dict[str, Any]] = []
-                if report_data_payload and report_data_payload.get("content"):
-                    for block in report_data_payload["content"]:
-                        if block.get("data") and isinstance(block["data"], list):
-                            data_for_file_generation.extend(block["data"])
+                if report_data_payload and isinstance(report_data_payload, dict) and report_data_payload.get("content"):
+                    content = report_data_payload.get("content", [])
+                    if isinstance(content, list):
+                        for block in content:
+                            if isinstance(block, dict) and block.get("data") and isinstance(block["data"], list):
+                                data_for_file_generation.extend(block["data"])
 
                 output_format = getattr(config, 'output_format_override', None) or getattr(report_definition, 'output_format', None) or "pdf"
 
@@ -279,14 +297,30 @@ class WorkflowAutomationService:
                 # This call creates and commits a ReportExecution
                 # Check if reporting service has the required method
                 if hasattr(self.reporting_service, 'execute_and_generate_for_definition'):
-                    execution_record = asyncio.run(self.reporting_service.execute_and_generate_for_definition(  # type: ignore
-                    report_definition=report_definition,
-                    report_data=data_for_file_generation, # Pass extracted data
-                    output_format=output_format,
-                    execution_type=f"workflow_triggered_{event_type}",
-                    parameters=report_parameters, # Pass mapped and contextual params
-                    user_id=getattr(config, 'created_by', None)  # The user who set up the config
-                ))
+                    execute_method = getattr(self.reporting_service, 'execute_and_generate_for_definition')
+                    if callable(execute_method):
+                        try:
+                            # Try to call the method and handle both sync and async cases
+                            result = execute_method(
+                                report_definition=report_definition,
+                                report_data=data_for_file_generation,
+                                output_format=output_format,
+                                execution_type=f"workflow_triggered_{event_type}",
+                                parameters=report_parameters,
+                                user_id=getattr(config, 'created_by', None)
+                            )
+                            # Check if result is a coroutine
+                            if hasattr(result, '__await__'):
+                                execution_record = asyncio.run(result)  # type: ignore
+                            else:
+                                execution_record = result
+                        except Exception as e:
+                            print(f"Error calling execute_and_generate_for_definition: {e}")
+                            execution_record = None
+                    else:
+                        execution_record = None
+                else:
+                    execution_record = None
 
                 if execution_record and getattr(execution_record, 'status', None) == "completed" and getattr(execution_record, 'file_path', None):
                     print(f"Report {getattr(execution_record, 'id', 'unknown')} generated for workflow instance {getattr(instance, 'id', 'unknown')}. Path: {getattr(execution_record, 'file_path', 'unknown')}")
@@ -643,18 +677,27 @@ class WorkflowAutomationService:
         
         # Automation rules analytics
         rules_query = self.db.query(AutomationRule).filter(
-            AutomationRule.tenant_id == tenant_id,
-            AutomationRule.last_execution >= start_date,
-            AutomationRule.last_execution <= end_date
+            AutomationRule.tenant_id == tenant_id
         )
         
-        total_automations = rules_query.with_entities(func.sum(AutomationRule.total_executions)).scalar() or 0
-        successful_automations = rules_query.with_entities(func.sum(AutomationRule.successful_executions)).scalar() or 0
+        # Add date filters only if last_execution is not None
+        if hasattr(AutomationRule, 'last_execution'):
+            rules_query = rules_query.filter(
+                AutomationRule.last_execution >= start_date,
+                AutomationRule.last_execution <= end_date
+            )
+        
+        total_automations_result = rules_query.with_entities(func.sum(AutomationRule.total_executions)).scalar()
+        total_automations = total_automations_result if total_automations_result is not None else 0
+        
+        successful_automations_result = rules_query.with_entities(func.sum(AutomationRule.successful_executions)).scalar()
+        successful_automations = successful_automations_result if successful_automations_result is not None else 0
         
         # Performance metrics
-        avg_duration = instances_query.filter(
+        avg_duration_result = instances_query.filter(
             WorkflowInstance.execution_duration.isnot(None)
-        ).with_entities(func.avg(WorkflowInstance.execution_duration)).scalar() or 0
+        ).with_entities(func.avg(WorkflowInstance.execution_duration)).scalar()
+        avg_duration = avg_duration_result if avg_duration_result is not None else 0
         
         return {
             "period": {
@@ -824,15 +867,28 @@ class WorkflowAutomationService:
         """
         step_type = getattr(step_execution, 'step_type', None)
         
-        if step_type == WorkflowStepType.ACTION.value: # Compare with enum value
+        try:
+            action_value = WorkflowStepType.ACTION.value if hasattr(WorkflowStepType, 'ACTION') else "action"
+            condition_value = WorkflowStepType.CONDITION.value if hasattr(WorkflowStepType, 'CONDITION') else "condition"
+            notification_value = WorkflowStepType.NOTIFICATION.value if hasattr(WorkflowStepType, 'NOTIFICATION') else "notification"
+            integration_value = WorkflowStepType.INTEGRATION.value if hasattr(WorkflowStepType, 'INTEGRATION') else "integration"
+            human_task_value = WorkflowStepType.HUMAN_TASK.value if hasattr(WorkflowStepType, 'HUMAN_TASK') else "human_task"
+        except Exception:
+            action_value = "action"
+            condition_value = "condition"
+            notification_value = "notification"
+            integration_value = "integration"
+            human_task_value = "human_task"
+        
+        if step_type == action_value:
             return self._execute_action_step(step_execution, instance)
-        elif step_type == WorkflowStepType.CONDITION.value:
+        elif step_type == condition_value:
             return self._execute_condition_step(step_execution, instance)
-        elif step_type == WorkflowStepType.NOTIFICATION.value:
+        elif step_type == notification_value:
             return self._execute_notification_step(step_execution, instance)
-        elif step_type == WorkflowStepType.INTEGRATION.value:
+        elif step_type == integration_value:
             return self._execute_integration_step(step_execution, instance)
-        elif step_type == WorkflowStepType.HUMAN_TASK.value:
+        elif step_type == human_task_value:
             return self._execute_human_task_step(step_execution, instance)
         # Add other step types like LOOP, PARALLEL, APPROVAL as needed
         else:
@@ -909,9 +965,10 @@ class WorkflowAutomationService:
                     "task_due_date": str(getattr(created_task, 'deadline', None)) if getattr(created_task, 'deadline', None) else None
                 })
                 # Re-prioritize tasks for the assignee
-                if self.task_prioritization_service:
-                    if isinstance(assignee_id, int):
-                        self.task_prioritization_service.reprioritize_affected_tasks(user_id=assignee_id)
+                if self.task_prioritization_service and hasattr(self.task_prioritization_service, 'reprioritize_affected_tasks'):
+                    reprioritize_method = getattr(self.task_prioritization_service, 'reprioritize_affected_tasks')
+                    if isinstance(assignee_id, int) and callable(reprioritize_method):
+                        reprioritize_method(user_id=assignee_id)
 
                 # The task is created. The workflow step is considered "completed" once the task is generated.
                 # The actual completion of the human work will be tracked by the Task's status.

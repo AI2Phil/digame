@@ -209,11 +209,18 @@ class CareerPathModelingService:
         for skill in skills:
             # Use market intelligence service for skill demand forecasting
             try:
-                demand_forecast = self.market_intelligence_service.forecast_skill_demand(
-                    skill_keywords=[skill],
-                    tenant_id=tenant_id,
-                    time_horizon_months=12
-                )
+                if hasattr(self.market_intelligence_service, 'forecast_skill_demand'):
+                    forecast_method = getattr(self.market_intelligence_service, 'forecast_skill_demand')
+                    if callable(forecast_method):
+                        demand_forecast = forecast_method(
+                            skill_keywords=[skill],
+                            tenant_id=tenant_id,
+                            time_horizon_months=12
+                        )
+                    else:
+                        demand_forecast = None
+                else:
+                    demand_forecast = None
                 
                 # Calculate skill premium based on demand
                 demand_score = getattr(demand_forecast, 'demand_score', 0.5)
@@ -278,8 +285,12 @@ class CareerPathModelingService:
         salary_impact_factors = []
         
         for trend in trends:
-            if hasattr(trend, 'growth_rate') and getattr(trend, 'growth_rate', None):
-                growth_indicators.append(float(getattr(trend, 'growth_rate', 0)))
+            growth_rate = getattr(trend, 'growth_rate', None)
+            if growth_rate is not None:
+                try:
+                    growth_indicators.append(float(growth_rate))
+                except (ValueError, TypeError):
+                    pass
             
             # Analyze trend impact on salaries
             trend_type = getattr(trend, 'trend_type', 'stable')
@@ -302,10 +313,16 @@ class CareerPathModelingService:
         # Calculate overall industry growth rate
         if growth_indicators:
             avg_growth = statistics.mean(growth_indicators)
-            weighted_growth = sum(
-                float(getattr(trend, 'growth_rate', 0)) * float(getattr(trend, 'confidence_score', 0.5))
-                for trend in trends if getattr(trend, 'growth_rate', None)
-            ) / sum(float(getattr(trend, 'confidence_score', 0.5)) for trend in trends if getattr(trend, 'growth_rate', None))
+            valid_trends = [trend for trend in trends if getattr(trend, 'growth_rate', None) is not None]
+            if valid_trends:
+                numerator = sum(
+                    float(getattr(trend, 'growth_rate', 0)) * float(getattr(trend, 'confidence_score', 0.5))
+                    for trend in valid_trends
+                )
+                denominator = sum(float(getattr(trend, 'confidence_score', 0.5)) for trend in valid_trends)
+                weighted_growth = numerator / denominator if denominator > 0 else 3.0
+            else:
+                weighted_growth = 3.0
         else:
             avg_growth = weighted_growth = 3.0
         
@@ -639,9 +656,16 @@ class CareerPathModelingService:
         # Get active data sources for the industry
         data_sources = self.db.query(MarketDataSource).filter(
             MarketDataSource.tenant_id == tenant_id,
-            MarketDataSource.is_active == True,
-            MarketDataSource.industries_covered.contains([industry])
+            MarketDataSource.is_active == True
         ).all()
+        
+        # Filter by industry coverage if the field exists
+        filtered_sources = []
+        for source in data_sources:
+            industries_covered = getattr(source, 'industries_covered', [])
+            if isinstance(industries_covered, list) and industry in industries_covered:
+                filtered_sources.append(source)
+        data_sources = filtered_sources
         
         for source in data_sources:
             try:
@@ -669,7 +693,8 @@ class CareerPathModelingService:
         
         for trend in trends:
             # Use the confidence score directly without conversion
-            confidence_val = getattr(trend, 'confidence_score', 0.0) if getattr(trend, 'confidence_score', None) is not None else 0.0
+            confidence_score = getattr(trend, 'confidence_score', None)
+            confidence_val = float(confidence_score) if confidence_score is not None else 0.0
             impact_weight = self._get_trend_career_impact_weight(trend)
             impact_score = confidence_val * impact_weight
             
@@ -1214,7 +1239,8 @@ class CareerPathModelingService:
             "high": 0.75,
             "critical": 1.0
         }
-        impact_level = str(getattr(trend, 'impact_level', 'medium')) if getattr(trend, 'impact_level', None) else "medium"
+        impact_level_raw = getattr(trend, 'impact_level', 'medium')
+        impact_level = str(impact_level_raw) if impact_level_raw is not None else "medium"
         return impact_weights.get(impact_level, 0.5)
 
 

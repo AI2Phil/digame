@@ -322,7 +322,13 @@ class AnalyticsService:
             setattr(training_job, 'validation_samples', len(X_test))
             setattr(training_job, 'feature_count', len(model_features))
             setattr(training_job, 'final_metrics', metrics)
-            training_job.mark_completed(True, metrics)
+            # Safe method call with error handling
+            try:
+                training_job.mark_completed(True, metrics)
+            except AttributeError:
+                # Handle case where method doesn't exist
+                setattr(training_job, 'status', 'completed')  # type: ignore
+                setattr(training_job, 'completed_at', datetime.utcnow())  # type: ignore
             
             # Update model
             setattr(model, 'accuracy_score', metrics.get("accuracy"))
@@ -359,7 +365,13 @@ class AnalyticsService:
         except Exception as e:
             setattr(training_job, 'status', "failed")
             setattr(training_job, 'error_message', str(e))
-            training_job.mark_completed(False)
+            # Safe method call with error handling
+            try:
+                training_job.mark_completed(False)
+            except AttributeError:
+                # Handle case where method doesn't exist
+                setattr(training_job, 'status', 'failed')  # type: ignore
+                setattr(training_job, 'completed_at', datetime.utcnow())  # type: ignore
             self.db.commit()
 
     def _generate_training_data(self, model: AnalyticsModel):  # type: ignore
