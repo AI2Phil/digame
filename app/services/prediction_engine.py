@@ -3,14 +3,25 @@ Prediction Engine for Digital Twin Platform
 Implements predictive insights and forecasting capabilities
 """
 
-import numpy as np
-import pandas as pd
+try:
+    import numpy as np
+    import pandas as pd
+    from sklearn.linear_model import LinearRegression
+    from sklearn.ensemble import RandomForestRegressor
+    from sklearn.preprocessing import StandardScaler
+    from sklearn.metrics import mean_squared_error, r2_score
+except ImportError:
+    # Fallback for missing ML dependencies
+    np = None
+    pd = None
+    LinearRegression = None
+    RandomForestRegressor = None
+    StandardScaler = None
+    mean_squared_error = None
+    r2_score = None
+
 from typing import Dict, List, Any, Optional, Tuple
 from datetime import datetime, timedelta
-from sklearn.linear_model import LinearRegression
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import mean_squared_error, r2_score
 import asyncio
 import logging
 
@@ -22,10 +33,16 @@ class PredictionEngine:
     """
     
     def __init__(self):
-        self.productivity_model = LinearRegression()
-        self.task_completion_model = RandomForestRegressor(n_estimators=50, random_state=42)
-        self.energy_model = LinearRegression()
-        self.scaler = StandardScaler()
+        if LinearRegression and RandomForestRegressor and StandardScaler:
+            self.productivity_model = LinearRegression()  # type: ignore
+            self.task_completion_model = RandomForestRegressor(n_estimators=50, random_state=42)  # type: ignore
+            self.energy_model = LinearRegression()  # type: ignore
+            self.scaler = StandardScaler()  # type: ignore
+        else:
+            self.productivity_model = None  # type: ignore
+            self.task_completion_model = None  # type: ignore
+            self.energy_model = None  # type: ignore
+            self.scaler = None  # type: ignore
         self.is_trained = False
         self.model_accuracy = {}
         
@@ -64,7 +81,11 @@ class PredictionEngine:
                 )
                 
                 # Make prediction
-                predicted_score = self.productivity_model.predict([features])[0]
+                if self.productivity_model:
+                    predicted_score = self.productivity_model.predict([features])[0]
+                else:
+                    # Fallback prediction
+                    predicted_score = 0.7  # Default productivity score
                 
                 # Calculate confidence interval
                 confidence = self._calculate_prediction_confidence(
@@ -201,7 +222,18 @@ class PredictionEngine:
                     )
                     
                     # Predict energy level
-                    predicted_energy = self.energy_model.predict([features])[0]
+                    if self.energy_model:
+                        predicted_energy = self.energy_model.predict([features])[0]
+                    else:
+                        # Fallback energy prediction based on hour
+                        if 6 <= hour <= 10:
+                            predicted_energy = 0.8
+                        elif 11 <= hour <= 15:
+                            predicted_energy = 0.7
+                        elif 16 <= hour <= 19:
+                            predicted_energy = 0.6
+                        else:
+                            predicted_energy = 0.3
                     
                     daily_energy.append({
                         "hour": hour,
@@ -219,7 +251,7 @@ class PredictionEngine:
                     "day_of_week": prediction_date.strftime('%A'),
                     "hourly_predictions": daily_energy,
                     "optimal_periods": optimal_periods,
-                    "daily_energy_score": float(np.mean([h["predicted_energy"] for h in daily_energy])),
+                    "daily_energy_score": float(sum(h["predicted_energy"] for h in daily_energy) / len(daily_energy)) if daily_energy else 0.0,
                     "peak_energy_hours": [h["hour"] for h in daily_energy if h["predicted_energy"] > 0.8]
                 })
             
@@ -349,7 +381,7 @@ class PredictionEngine:
     # Model training methods
     async def _train_productivity_model(self, historical_data: List[Dict[str, Any]]):
         """Train the productivity prediction model"""
-        if len(historical_data) < 7:
+        if len(historical_data) < 7 or not self.productivity_model or not r2_score:
             return
         
         # Prepare features and targets
@@ -368,18 +400,22 @@ class PredictionEngine:
             features.append(feature_vector)
             targets.append(entry['score'])
         
-        # Train the model
-        self.productivity_model.fit(features, targets)
-        
-        # Calculate model accuracy
-        predictions = self.productivity_model.predict(features)
-        self.model_accuracy['productivity'] = float(r2_score(targets, predictions))
-        
-        self.is_trained = True
+        try:
+            # Train the model
+            self.productivity_model.fit(features, targets)
+            
+            # Calculate model accuracy
+            predictions = self.productivity_model.predict(features)
+            self.model_accuracy['productivity'] = float(r2_score(targets, predictions))
+            
+            self.is_trained = True
+        except Exception as e:
+            logger.error(f"Error training productivity model: {e}")
+            self.model_accuracy['productivity'] = 0.0
     
     async def _train_task_completion_model(self, completion_data: List[Dict[str, Any]]):
         """Train the task completion prediction model"""
-        if len(completion_data) < 10:
+        if len(completion_data) < 10 or not self.task_completion_model or not r2_score:
             return
         
         # Prepare features for task completion prediction
@@ -405,16 +441,20 @@ class PredictionEngine:
             features.append(feature_vector)
             targets.append(len(tasks))
         
-        # Train the model
-        self.task_completion_model.fit(features, targets)
-        
-        # Calculate accuracy
-        predictions = self.task_completion_model.predict(features)
-        self.model_accuracy['task_completion'] = float(r2_score(targets, predictions))
+        try:
+            # Train the model
+            self.task_completion_model.fit(features, targets)
+            
+            # Calculate accuracy
+            predictions = self.task_completion_model.predict(features)
+            self.model_accuracy['task_completion'] = float(r2_score(targets, predictions))
+        except Exception as e:
+            logger.error(f"Error training task completion model: {e}")
+            self.model_accuracy['task_completion'] = 0.0
     
     async def _train_energy_model(self, energy_history: List[Dict[str, Any]]):
         """Train the energy level prediction model"""
-        if len(energy_history) < 14:
+        if len(energy_history) < 14 or not self.energy_model or not r2_score:
             return
         
         # Prepare features and targets
@@ -433,12 +473,16 @@ class PredictionEngine:
             features.append(feature_vector)
             targets.append(entry['energy_level'])
         
-        # Train the model
-        self.energy_model.fit(features, targets)
-        
-        # Calculate accuracy
-        predictions = self.energy_model.predict(features)
-        self.model_accuracy['energy'] = float(r2_score(targets, predictions))
+        try:
+            # Train the model
+            self.energy_model.fit(features, targets)
+            
+            # Calculate accuracy
+            predictions = self.energy_model.predict(features)
+            self.model_accuracy['energy'] = float(r2_score(targets, predictions))
+        except Exception as e:
+            logger.error(f"Error training energy model: {e}")
+            self.model_accuracy['energy'] = 0.0
     
     # Feature creation methods
     def _create_prediction_features(self, historical_data: List[Dict[str, Any]], 

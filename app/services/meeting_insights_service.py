@@ -35,7 +35,7 @@ class MeetingInsightsService:
         if not tenant:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Tenant information not found.")
 
-        tenant_features = tenant.features
+        tenant_features = getattr(tenant, 'features', {})
         if isinstance(tenant_features, str):
             try:
                 tenant_features = json.loads(tenant_features or '{}')
@@ -51,13 +51,13 @@ class MeetingInsightsService:
             )
 
         user_settings = user_setting_crud.get_user_setting(self.db, user_id=current_user_id)
-        if not user_settings or not user_settings.api_keys:
+        if not user_settings or not getattr(user_settings, 'api_keys', None):
             raise HTTPException(
                 status_code=status.HTTP_402_PAYMENT_REQUIRED,
                 detail=f"API key for '{feature_name}' not found. Please add 'openai_api_key' to your settings."
             )
         try:
-            api_keys_dict = json.loads(user_settings.api_keys)
+            api_keys_dict = json.loads(getattr(user_settings, 'api_keys', '{}'))
             openai_api_key = api_keys_dict.get("openai_api_key")
         except json.JSONDecodeError:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error parsing API key settings.")
@@ -105,23 +105,25 @@ If no action items are found, "action_items" should be an empty list.
                 payload=ai_payload
             )
 
-            if not openai_response_data.get("choices") or \
-               not openai_response_data["choices"][0].get("message") or \
-               not openai_response_data["choices"][0]["message"].get("content"):
+            choices = openai_response_data.get("choices", [])
+            if not choices or not choices[0].get("message") or not choices[0]["message"].get("content"):
                 logger.error(f"Unexpected OpenAI response structure for meeting insights (user {current_user_id}): {openai_response_data}")
-                raise HTTPException(status_code=500, detail="AI provider returned an unexpected response format for meeting insights.")
+                raise HTTPException(status_code=getattr(status, 'HTTP_500_INTERNAL_SERVER_ERROR', 500), detail="AI provider returned an unexpected response format for meeting insights.")
 
-            content_str = openai_response_data["choices"][0]["message"]["content"]
+            choices = openai_response_data.get("choices", [])
+            message = choices[0].get("message", {}) if choices else {}
+            content_str = message.get("content", "")
             analysis_result = json.loads(content_str)
 
             required_keys = ["summary", "key_points", "action_items"]
             if not all(key in analysis_result for key in required_keys) or not isinstance(analysis_result.get("action_items"), list):
                 logger.error(f"OpenAI response JSON missing required keys or action_items not a list (user {current_user_id}): {analysis_result}")
-                raise HTTPException(status_code=500, detail="AI provider's response missing required meeting insights fields or invalid action_items format.")
+                raise HTTPException(status_code=getattr(status, 'HTTP_500_INTERNAL_SERVER_ERROR', 500), detail="AI provider's response missing required meeting insights fields or invalid action_items format.")
 
             # Validate structure of action items
             validated_action_items = []
-            for item in analysis_result.get("action_items", []):
+            action_items_list = analysis_result.get("action_items", [])
+            for item in action_items_list:
                 if isinstance(item, dict) and "action" in item:
                     validated_action_items.append({
                         "action": item.get("action"),
@@ -151,13 +153,14 @@ If no action items are found, "action_items" should be an empty list.
             return analysis_result
 
         except json.JSONDecodeError:
-            logger.error(f"Failed to parse JSON from OpenAI response for meeting insights (user {current_user_id}): {content_str if 'content_str' in locals() else 'N/A'}")
-            raise HTTPException(status_code=500, detail="Failed to parse AI provider's response for meeting insights.")
+            content_str_safe = content_str if 'content_str' in locals() else 'N/A'
+            logger.error(f"Failed to parse JSON from OpenAI response for meeting insights (user {current_user_id}): {content_str_safe}")
+            raise HTTPException(status_code=getattr(status, 'HTTP_500_INTERNAL_SERVER_ERROR', 500), detail="Failed to parse AI provider's response for meeting insights.")
         except HTTPException:
             raise
         except Exception as e:
             logger.error(f"Error during meeting insights generation for user {current_user_id}: {str(e)}")
-            raise HTTPException(status_code=503, detail=f"Meeting insights request to AI provider failed: {str(e)}")
+            raise HTTPException(status_code=getattr(status, 'HTTP_503_SERVICE_UNAVAILABLE', 503), detail=f"Meeting insights request to AI provider failed: {str(e)}")
 
     async def _generate_draft_email_from_analysis(
         self, openai_api_key:str, summary: str, key_points: list, action_items: list # action_items are List[Dict]
@@ -169,9 +172,13 @@ If no action items are found, "action_items" should be an empty list.
         if action_items:
             action_items_str = "\n\nKey Action Items:\n"
             for item in action_items:
-                assignee_part = f" (Assigned to: {item.get('assignee')})" if item.get('assignee') else ""
-                due_part = f" (Due: {item.get('due_text')})" if item.get('due_text') else ""
-                action_items_str += f"- {item.get('action', 'N/A')}{assignee_part}{due_part}\n"
+                assignee = item.get('assignee') if isinstance(item, dict) else None
+                due_text = item.get('due_text') if isinstance(item, dict) else None
+                action = item.get('action', 'N/A') if isinstance(item, dict) else 'N/A'
+                
+                assignee_part = f" (Assigned to: {assignee})" if assignee else ""
+                due_part = f" (Due: {due_text})" if due_text else ""
+                action_items_str += f"- {action}{assignee_part}{due_part}\n"
         else:
             action_items_str = "\n\nNo specific action items were identified in this pass."
 
@@ -232,7 +239,9 @@ End with a generic closing like "Best regards,". Do not add a sender name.
                 method="POST",
                 payload=ai_payload
             )
-            draft_email = openai_response_data.get("choices", [{}])[0].get("message", {}).get("content", "").strip()
+            choices = openai_response_data.get("choices", [])
+            message = choices[0].get("message", {}) if choices else {}
+            draft_email = message.get("content", "").strip()
             return draft_email
         except Exception as e:
             logger.error(f"Error generating draft email via OpenAI: {e}")

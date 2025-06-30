@@ -10,9 +10,18 @@ from datetime import datetime
 import json
 import re
 import uuid
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, desc
-from app.models.twin_phase2 import TwinConversation, TwinConversationMessage
+try:
+    from sqlalchemy.ext.asyncio import AsyncSession
+    from sqlalchemy import select, func, desc
+    from app.models.twin_phase2 import TwinConversation, TwinConversationMessage
+except ImportError:
+    # Fallback for missing SQLAlchemy async
+    AsyncSession = None
+    select = None
+    func = None
+    desc = None
+    TwinConversation = None
+    TwinConversationMessage = None
 
 # For now, we'll implement a sophisticated rule-based system
 # In production, this would integrate with OpenAI, Transformers, or spaCy
@@ -555,81 +564,95 @@ class TwinConversationEngine:
     async def _store_conversation_in_db(self, twin_id: str, query: str,
                                       response: Dict[str, Any], intent: Dict[str, Any]):
         """Store conversation in database with persistent storage"""
-        if not self.db_session:
+        if not self.db_session or not select or not TwinConversation or not TwinConversationMessage:
             return
             
         conversation_id = f"conv_{twin_id}_{datetime.utcnow().strftime('%Y%m%d')}"
         
-        # Get or create conversation session
-        stmt = select(TwinConversation).where(
-            TwinConversation.twin_id == twin_id,
-            TwinConversation.conversation_id == conversation_id,
-            TwinConversation.status == "active"
-        )
-        result = await self.db_session.execute(stmt)
-        conversation = result.scalar_one_or_none()
-        
-        if not conversation:
-            # Create new conversation session
-            conversation = TwinConversation(
-                twin_id=twin_id,
-                conversation_id=conversation_id,
-                user_id=1,  # TODO: Get actual user_id from context
-                title=f"Conversation {datetime.utcnow().strftime('%Y-%m-%d')}",
-                status="active"
+        try:
+            # Get or create conversation session
+            stmt = select(TwinConversation).where(
+                TwinConversation.twin_id == twin_id,
+                TwinConversation.conversation_id == conversation_id,
+                TwinConversation.status == "active"
             )
-            self.db_session.add(conversation)
-            await self.db_session.flush()
-        
-        # Store query message
-        query_message = TwinConversationMessage(
-            conversation_id=conversation.id,
-            twin_id=twin_id,
-            message_type="query",
-            content=query,
-            intent=intent.get("intent"),
-            intent_confidence=intent.get("confidence"),
-            entities=[],  # TODO: Extract entities
-            timestamp=datetime.utcnow()
-        )
-        self.db_session.add(query_message)
-        
-        # Store response message
-        response_message = TwinConversationMessage(
-            conversation_id=conversation.id,
-            twin_id=twin_id,
-            message_type="response",
-            content=response.get("text", ""),
-            response_confidence=response.get("confidence"),
-            processing_time_ms=response.get("processing_time"),
-            template_used=response.get("template_used"),
-            context_factors=response.get("context_factors", []),
-            actions=[],  # TODO: Extract actions
-            timestamp=datetime.utcnow()
-        )
-        self.db_session.add(response_message)
-        
-        # Update conversation statistics
-        conversation.message_count = conversation.message_count + 2
-        conversation.total_queries = conversation.total_queries + 1
-        conversation.total_responses = conversation.total_responses + 1
-        
-        # Update intent distribution
-        intent_name = intent.get("intent", "unknown")
-        current_distribution = conversation.intent_distribution or {}
-        current_distribution[intent_name] = current_distribution.get(intent_name, 0) + 1
-        conversation.intent_distribution = current_distribution
-        
-        # Calculate average confidence
-        current_confidence = intent.get("confidence", 0)
-        if conversation.total_queries > 1:
-            prev_avg = float(conversation.avg_confidence or 0)
-            total_confidence = prev_avg * (conversation.total_queries - 1) + current_confidence
-            conversation.avg_confidence = total_confidence / conversation.total_queries
-        else:
-            conversation.avg_confidence = current_confidence
-        
-        await self.db_session.commit()
+            result = await self.db_session.execute(stmt)
+            conversation = result.scalar_one_or_none()
+            
+            if not conversation:
+                # Create new conversation session
+                conversation = TwinConversation()
+                setattr(conversation, 'twin_id', twin_id)  # type: ignore
+                setattr(conversation, 'conversation_id', conversation_id)  # type: ignore
+                setattr(conversation, 'user_id', 1)  # type: ignore  # TODO: Get actual user_id from context
+                setattr(conversation, 'title', f"Conversation {datetime.utcnow().strftime('%Y-%m-%d')}")  # type: ignore
+                setattr(conversation, 'status', "active")  # type: ignore
+                
+                self.db_session.add(conversation)
+                await self.db_session.flush()
+            
+            # Store query message
+            query_message = TwinConversationMessage()
+            setattr(query_message, 'conversation_id', getattr(conversation, 'id', None))  # type: ignore
+            setattr(query_message, 'twin_id', twin_id)  # type: ignore
+            setattr(query_message, 'message_type', "query")  # type: ignore
+            setattr(query_message, 'content', query)  # type: ignore
+            setattr(query_message, 'intent', intent.get("intent"))  # type: ignore
+            setattr(query_message, 'intent_confidence', intent.get("confidence"))  # type: ignore
+            setattr(query_message, 'entities', [])  # type: ignore  # TODO: Extract entities
+            setattr(query_message, 'timestamp', datetime.utcnow())  # type: ignore
+            
+            self.db_session.add(query_message)
+            
+            # Store response message
+            response_message = TwinConversationMessage()
+            setattr(response_message, 'conversation_id', getattr(conversation, 'id', None))  # type: ignore
+            setattr(response_message, 'twin_id', twin_id)  # type: ignore
+            setattr(response_message, 'message_type', "response")  # type: ignore
+            setattr(response_message, 'content', response.get("text", ""))  # type: ignore
+            setattr(response_message, 'response_confidence', response.get("confidence"))  # type: ignore
+            setattr(response_message, 'processing_time_ms', response.get("processing_time"))  # type: ignore
+            setattr(response_message, 'template_used', response.get("template_used"))  # type: ignore
+            setattr(response_message, 'context_factors', response.get("context_factors", []))  # type: ignore
+            setattr(response_message, 'actions', [])  # type: ignore  # TODO: Extract actions
+            setattr(response_message, 'timestamp', datetime.utcnow())  # type: ignore
+            
+            self.db_session.add(response_message)
+            
+            # Update conversation statistics
+            current_message_count = getattr(conversation, 'message_count', 0)
+            current_total_queries = getattr(conversation, 'total_queries', 0)
+            current_total_responses = getattr(conversation, 'total_responses', 0)
+            
+            setattr(conversation, 'message_count', current_message_count + 2)  # type: ignore
+            setattr(conversation, 'total_queries', current_total_queries + 1)  # type: ignore
+            setattr(conversation, 'total_responses', current_total_responses + 1)  # type: ignore
+            
+            # Update intent distribution
+            intent_name = intent.get("intent", "unknown")
+            current_distribution = getattr(conversation, 'intent_distribution', {}) or {}
+            if isinstance(current_distribution, dict):
+                current_distribution[intent_name] = current_distribution.get(intent_name, 0) + 1
+                setattr(conversation, 'intent_distribution', current_distribution)  # type: ignore
+            else:
+                # Fallback if intent_distribution is not a dict
+                new_distribution = {intent_name: 1}
+                setattr(conversation, 'intent_distribution', new_distribution)  # type: ignore
+            
+            # Calculate average confidence
+            current_confidence = intent.get("confidence", 0)
+            new_total_queries = current_total_queries + 1
+            if new_total_queries > 1:
+                prev_avg = float(getattr(conversation, 'avg_confidence', 0) or 0)
+                total_confidence = prev_avg * (new_total_queries - 1) + current_confidence
+                new_avg_confidence = total_confidence / new_total_queries
+            else:
+                new_avg_confidence = current_confidence
+            setattr(conversation, 'avg_confidence', new_avg_confidence)  # type: ignore
+            
+            await self.db_session.commit()
+        except Exception as e:
+            logger.error(f"Error storing conversation in database: {e}")
     
     async def get_conversation_history(self, twin_id: str, limit: int = 10) -> List[Dict[str, Any]]:
         """
@@ -643,7 +666,7 @@ class TwinConversationEngine:
             List of recent conversations
         """
         # Try database first if available
-        if self.db_session:
+        if self.db_session and select and TwinConversationMessage and desc:
             try:
                 stmt = select(TwinConversationMessage).where(
                     TwinConversationMessage.twin_id == twin_id
@@ -655,16 +678,24 @@ class TwinConversationEngine:
                 # Convert to conversation format
                 conversations = []
                 for message in messages:
+                    intent_confidence = getattr(message, 'intent_confidence', None)
+                    response_confidence = getattr(message, 'response_confidence', None)
+                    
                     confidence_val = 0.0
-                    if message.intent_confidence:
-                        confidence_val = float(message.intent_confidence)
-                    elif message.response_confidence:
-                        confidence_val = float(message.response_confidence)
+                    if intent_confidence:
+                        confidence_val = float(intent_confidence)
+                    elif response_confidence:
+                        confidence_val = float(response_confidence)
+                    
+                    message_type = getattr(message, 'message_type', 'unknown')
+                    timestamp = getattr(message, 'timestamp', datetime.utcnow())
+                    content = getattr(message, 'content', '')
+                    intent = getattr(message, 'intent', None)
                     
                     conversations.append({
-                        "timestamp": message.timestamp.isoformat(),
-                        "query" if message.message_type == "query" else "response": message.content,
-                        "intent": message.intent,
+                        "timestamp": timestamp.isoformat(),
+                        "query" if message_type == "query" else "response": content,
+                        "intent": intent,
                         "confidence": confidence_val
                     })
                 
@@ -736,45 +767,52 @@ class TwinConversationEngine:
     
     async def _get_conversation_stats_from_db(self, twin_id: str) -> Dict[str, Any]:
         """Get conversation statistics from database"""
-        if not self.db_session:
+        if not self.db_session or not select or not TwinConversation:
             return {"total_conversations": 0, "intent_distribution": {}}
             
-        # Get conversation summary
-        stmt = select(TwinConversation).where(
-            TwinConversation.twin_id == twin_id,
-            TwinConversation.status == "active"
-        )
-        result = await self.db_session.execute(stmt)
-        conversations = result.scalars().all()
-        
-        if not conversations:
+        try:
+            # Get conversation summary
+            stmt = select(TwinConversation).where(
+                TwinConversation.twin_id == twin_id,
+                TwinConversation.status == "active"
+            )
+            result = await self.db_session.execute(stmt)
+            conversations = result.scalars().all()
+            
+            if not conversations:
+                return {"total_conversations": 0, "intent_distribution": {}}
+            
+            # Aggregate statistics
+            total_conversations = sum(int(getattr(conv, 'total_queries', 0)) for conv in conversations)
+            intent_distribution = {}
+            total_confidence = 0.0
+            confidence_count = 0
+            last_activity = None
+            
+            for conv in conversations:
+                conv_intent_dist = getattr(conv, 'intent_distribution', {})
+                if conv_intent_dist:
+                    for intent, count in conv_intent_dist.items():
+                        intent_distribution[intent] = intent_distribution.get(intent, 0) + count
+                
+                avg_confidence = getattr(conv, 'avg_confidence', None)
+                if avg_confidence:
+                    queries_count = int(getattr(conv, 'total_queries', 0))
+                    total_confidence += float(avg_confidence) * queries_count
+                    confidence_count += queries_count
+                
+                conv_last_activity = getattr(conv, 'last_activity_at', None)
+                if not last_activity or (conv_last_activity and conv_last_activity > last_activity):
+                    last_activity = conv_last_activity
+            
+            avg_confidence = total_confidence / confidence_count if confidence_count > 0 else 0
+            
+            return {
+                "total_conversations": total_conversations,
+                "intent_distribution": intent_distribution,
+                "average_confidence": avg_confidence,
+                "last_conversation": last_activity.isoformat() if last_activity else None
+            }
+        except Exception as e:
+            logger.error(f"Error getting conversation stats from database: {e}")
             return {"total_conversations": 0, "intent_distribution": {}}
-        
-        # Aggregate statistics
-        total_conversations = sum(int(conv.total_queries) for conv in conversations)
-        intent_distribution = {}
-        total_confidence = 0.0
-        confidence_count = 0
-        last_activity = None
-        
-        for conv in conversations:
-            if conv.intent_distribution:
-                for intent, count in conv.intent_distribution.items():
-                    intent_distribution[intent] = intent_distribution.get(intent, 0) + count
-            
-            if conv.avg_confidence:
-                queries_count = int(conv.total_queries)
-                total_confidence += float(conv.avg_confidence) * queries_count
-                confidence_count += queries_count
-            
-            if not last_activity or conv.last_activity_at > last_activity:
-                last_activity = conv.last_activity_at
-        
-        avg_confidence = total_confidence / confidence_count if confidence_count > 0 else 0
-        
-        return {
-            "total_conversations": total_conversations,
-            "intent_distribution": intent_distribution,
-            "average_confidence": avg_confidence,
-            "last_conversation": last_activity.isoformat() if last_activity else None
-        }

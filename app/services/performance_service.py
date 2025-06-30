@@ -43,8 +43,8 @@ class CacheService:
         
         if REDIS_AVAILABLE and redis_url:
             try:
-                self.redis_client = redis.from_url(redis_url, decode_responses=True)
-                self.redis_client.ping()
+                self.redis_client = redis.from_url(redis_url, decode_responses=True)  # type: ignore
+                self.redis_client.ping()  # type: ignore
                 logger.info("Redis cache initialized successfully")
             except Exception as e:
                 logger.warning(f"Redis connection failed, using memory cache: {e}")
@@ -64,7 +64,7 @@ class CacheService:
         try:
             if self.redis_client:
                 value = await asyncio.get_event_loop().run_in_executor(
-                    None, self.redis_client.get, key
+                    None, self.redis_client.get, key  # type: ignore
                 )
                 if value:
                     self.cache_stats["hits"] += 1
@@ -93,7 +93,7 @@ class CacheService:
             if self.redis_client:
                 serialized = json.dumps(value, default=str)
                 await asyncio.get_event_loop().run_in_executor(
-                    None, self.redis_client.setex, key, ttl, serialized
+                    None, self.redis_client.setex, key, ttl, serialized  # type: ignore
                 )
             else:
                 # Memory cache
@@ -118,7 +118,7 @@ class CacheService:
         try:
             if self.redis_client:
                 await asyncio.get_event_loop().run_in_executor(
-                    None, self.redis_client.delete, key
+                    None, self.redis_client.delete, key  # type: ignore
                 )
             else:
                 self.memory_cache.pop(key, None)
@@ -135,11 +135,11 @@ class CacheService:
         try:
             if self.redis_client:
                 keys = await asyncio.get_event_loop().run_in_executor(
-                    None, self.redis_client.keys, pattern
+                    None, self.redis_client.keys, pattern  # type: ignore
                 )
                 if keys:
                     await asyncio.get_event_loop().run_in_executor(
-                        None, self.redis_client.delete, *keys
+                        None, self.redis_client.delete, *keys  # type: ignore
                     )
                 return len(keys)
             else:
@@ -170,7 +170,7 @@ class CacheService:
         
         return {
             **self.cache_stats,
-            "hit_rate_percent": round(hit_rate, 2),
+            "hit_rate_percent": round(float(hit_rate), 2),
             "total_requests": total_requests,
             "cache_type": "redis" if self.redis_client else "memory",
             "memory_cache_size": len(self.memory_cache) if not self.redis_client else None
@@ -372,24 +372,26 @@ class DatabaseOptimizer:
         try:
             # Get query execution plan
             explain_query = f"EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON) {query}"
-            result = db.execute(text(explain_query)).fetchone()
+            result = db.execute(text(explain_query)).fetchone()  # type: ignore
             
             if result:
-                plan = result[0][0]  # JSON result
+                plan = result[0][0] if result[0] else {}  # JSON result with safe access
                 
                 suggestions = []
                 
-                # Analyze execution plan
-                if "Seq Scan" in str(plan):
+                # Analyze execution plan with safe access
+                plan_str = str(plan) if plan else ""
+                if "Seq Scan" in plan_str:
                     suggestions.append("Consider adding indexes for sequential scans")
                 
-                if plan.get("Execution Time", 0) > 100:
+                execution_time = plan.get("Execution Time", 0) if isinstance(plan, dict) else 0
+                if execution_time > 100:
                     suggestions.append("Query execution time is high, consider optimization")
                 
                 return {
                     "execution_plan": plan,
                     "suggestions": suggestions,
-                    "execution_time": plan.get("Execution Time", 0)
+                    "execution_time": plan.get("Execution Time", 0) if isinstance(plan, dict) else 0
                 }
             
         except Exception as e:

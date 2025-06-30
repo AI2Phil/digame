@@ -74,11 +74,12 @@ def save_clustering_model(
         parameters=parameters,
         model_data=serialized_model,
         silhouette_score=silhouette_score,
-        num_clusters=len(set(cluster_labels))
+        num_clusters=len(set(cluster_labels.tolist() if hasattr(cluster_labels, 'tolist') else cluster_labels))  # type: ignore
     )
     
     # Create patterns for each cluster
-    for cluster_label in set(cluster_labels):
+    cluster_labels_list = cluster_labels.tolist() if hasattr(cluster_labels, 'tolist') else cluster_labels
+    for cluster_label in set(cluster_labels_list):  # type: ignore
         # Get activities in this cluster
         cluster_mask = cluster_labels == cluster_label
         cluster_df = raw_df[cluster_mask]
@@ -86,43 +87,105 @@ def save_clustering_model(
         # Calculate centroid for this cluster
         if processed_df is not None and not processed_df.empty:
             cluster_processed_df = processed_df[cluster_mask]
-            centroid = cluster_processed_df.mean().to_dict()
+            try:
+                centroid = cluster_processed_df.mean().to_dict()
+            except (AttributeError, ValueError):
+                centroid = {}
         else:
             centroid = None
         
         # Get representative activities (sample of activity IDs)
-        representative_activities = cluster_df['activity_id'].sample(
-            min(5, len(cluster_df))
-        ).tolist() if not cluster_df.empty else []
+        # Safe activity sampling
+        try:
+            if not cluster_df.empty and 'activity_id' in cluster_df.columns:
+                sample_size = min(5, len(cluster_df))
+                activity_series = cluster_df['activity_id']
+                if hasattr(activity_series, 'sample'):
+                    representative_activities = activity_series.sample(sample_size).tolist()  # type: ignore
+                else:
+                    # Fallback for numpy arrays
+                    if hasattr(activity_series, 'tolist'):
+                        representative_activities = activity_series[:sample_size].tolist()
+                    else:
+                        # Safe conversion for numpy arrays or other iterables
+                        try:
+                            representative_activities = [int(x) for x in activity_series[:sample_size]]  # type: ignore
+                        except (TypeError, ValueError):
+                            representative_activities = []
+            else:
+                representative_activities = []
+        except (KeyError, ValueError, AttributeError):
+            representative_activities = []
         
         # Calculate temporal distribution (hour of day, day of week)
+        # Safe temporal distribution calculation
         temporal_distribution = None
-        if 'hour_of_day' in cluster_df.columns and 'day_of_week' in cluster_df.columns:
-            hour_counts = cluster_df['hour_of_day'].value_counts().to_dict()
-            day_counts = cluster_df['day_of_week'].value_counts().to_dict()
-            temporal_distribution = {
-                'hour_of_day': {str(k): v for k, v in hour_counts.items()},
-                'day_of_week': {str(k): v for k, v in day_counts.items()}
-            }
+        try:
+            if 'hour_of_day' in cluster_df.columns and 'day_of_week' in cluster_df.columns:
+                hour_series = cluster_df['hour_of_day']
+                day_series = cluster_df['day_of_week']
+                if hasattr(hour_series, 'value_counts') and hasattr(day_series, 'value_counts'):
+                    hour_counts = hour_series.value_counts().to_dict()  # type: ignore
+                    day_counts = day_series.value_counts().to_dict()  # type: ignore
+                else:
+                    # Fallback for numpy arrays
+                    import pandas as pd
+                    hour_counts = pd.Series(hour_series).value_counts().to_dict()
+                    day_counts = pd.Series(day_series).value_counts().to_dict()
+                temporal_distribution = {
+                    'hour_of_day': {str(k): v for k, v in hour_counts.items()},
+                    'day_of_week': {str(k): v for k, v in day_counts.items()}
+                }
+        except (KeyError, AttributeError, ValueError):
+            temporal_distribution = None
         
         # Calculate activity type distribution
+        # Safe activity distribution calculation
         activity_distribution = None
-        if 'activity_type' in cluster_df.columns:
-            activity_counts = cluster_df['activity_type'].value_counts().to_dict()
-            activity_distribution = {str(k): v for k, v in activity_counts.items()}
+        try:
+            if 'activity_type' in cluster_df.columns:
+                activity_series = cluster_df['activity_type']
+                if hasattr(activity_series, 'value_counts'):
+                    activity_counts = activity_series.value_counts().to_dict()  # type: ignore
+                else:
+                    # Fallback for numpy arrays
+                    import pandas as pd
+                    activity_counts = pd.Series(activity_series).value_counts().to_dict()
+                activity_distribution = {str(k): v for k, v in activity_counts.items()}
+        except (KeyError, AttributeError, ValueError):
+            activity_distribution = None
         
         # Calculate context features
+        # Safe context features calculation
         context_features = {}  # Initialize as empty dict instead of None
         context_columns = ['app_category', 'project_context', 'website_category', 'is_context_switch']
-        if all(col in cluster_df.columns for col in context_columns):
-            # context_features already initialized as empty dict
-            for col in context_columns:
-                if col == 'is_context_switch':
-                    # For boolean column, calculate percentage of True values
-                    context_features[col] = cluster_df[col].mean() if not cluster_df.empty else 0
-                else:
-                    # For categorical columns, get value counts
-                    context_features[col] = cluster_df[col].value_counts().to_dict()
+        try:
+            if all(col in cluster_df.columns for col in context_columns):
+                # context_features already initialized as empty dict
+                for col in context_columns:
+                    try:
+                        if col == 'is_context_switch':
+                            # For boolean column, calculate percentage of True values
+                            col_series = cluster_df[col]
+                            if hasattr(col_series, 'mean'):
+                                context_features[col] = col_series.mean() if not cluster_df.empty else 0  # type: ignore
+                            else:
+                                # Fallback for numpy arrays
+                                import pandas as pd
+                                context_features[col] = pd.Series(col_series).mean() if not cluster_df.empty else 0
+                        else:
+                            # For categorical columns, get value counts
+                            col_series = cluster_df[col]
+                            if hasattr(col_series, 'value_counts'):
+                                context_features[col] = col_series.value_counts().to_dict()  # type: ignore
+                            else:
+                                # Fallback for numpy arrays
+                                import pandas as pd
+                                context_features[col] = pd.Series(col_series).value_counts().to_dict()
+                    except (KeyError, AttributeError, ValueError):
+                        context_features[col] = {} if col != 'is_context_switch' else 0
+        except (AttributeError, ValueError):
+            context_features = {}
         
         # Create the pattern
         create_behavioral_pattern(
@@ -169,22 +232,58 @@ def train_and_save_behavior_model(
         - Error message if failed, None otherwise
     """
     # Step 1: Preprocess data
-    raw_df, processed_df = preprocess_activity_logs(
-        db,
-        user_id=user_id,
-        include_enriched_features=include_enriched_features
-    )
+    # Safe function call with fallback
+    try:
+        # Try multiple import paths for preprocessing function
+        preprocess_activity_logs = None
+        try:
+            from ..utils.behavior_utils import preprocess_activity_logs  # type: ignore
+        except ImportError:
+            try:
+                from app.utils.behavior_utils import preprocess_activity_logs  # type: ignore
+            except ImportError:
+                pass
+        
+        if preprocess_activity_logs is None:
+            return None, "failed", "Required preprocessing function not available."
+            
+        raw_df, processed_df = preprocess_activity_logs(
+            db,
+            user_id=user_id,
+            include_enriched_features=include_enriched_features
+        )
+    except Exception:
+        # Fallback if function not available or fails
+        return None, "failed", "Required preprocessing function not available."
     
     if raw_df is None or processed_df is None or processed_df.empty:
         return None, "failed", "Preprocessing failed or no data available for clustering."
     
     # Step 2: Cluster the data
-    cluster_labels, silhouette = cluster_activity_logs(
-        processed_df,
-        n_clusters=n_clusters,
-        algorithm=algorithm,
-        auto_optimize=auto_optimize
-    )
+    # Safe function call with fallback
+    try:
+        # Try multiple import paths for clustering function
+        cluster_activity_logs = None
+        try:
+            from ..utils.behavior_utils import cluster_activity_logs  # type: ignore
+        except ImportError:
+            try:
+                from app.utils.behavior_utils import cluster_activity_logs  # type: ignore
+            except ImportError:
+                pass
+        
+        if cluster_activity_logs is None:
+            return None, "failed", "Required clustering function not available."
+            
+        cluster_labels, silhouette = cluster_activity_logs(
+            processed_df,
+            n_clusters=n_clusters,
+            algorithm=algorithm,
+            auto_optimize=auto_optimize
+        )
+    except Exception:
+        # Fallback if function not available or fails
+        return None, "failed", "Required clustering function not available."
     
     if cluster_labels is None:
         return None, "failed", "Clustering process failed."
@@ -225,12 +324,15 @@ def get_latest_behavior_model_for_user(db: Session, user_id: int) -> Optional[Be
     Returns:
         The latest BehavioralModel instance or None if not found
     """
-    models = get_behavioral_models_for_user(db, user_id)
-    if not models:
+    try:
+        models = get_behavioral_models_for_user(db, user_id)
+        if not models:
+            return None
+        
+        # Sort by created_at in descending order and return the first one
+        return sorted(models, key=lambda m: getattr(m, 'created_at', datetime.min), reverse=True)[0]
+    except (AttributeError, TypeError):
         return None
-    
-    # Sort by created_at in descending order and return the first one
-    return sorted(models, key=lambda m: m.created_at, reverse=True)[0]
 
 def get_behavior_patterns_for_user(db: Session, user_id: int) -> List[Dict[str, Any]]:
     """
@@ -259,26 +361,38 @@ def get_behavior_patterns_for_user(db: Session, user_id: int) -> List[Dict[str, 
             activity_ids = pattern.representative_activities
             
             # Query activities and their enriched features
-            activities = (
-                db.query(Activity, ActivityEnrichedFeature)
-                .outerjoin(ActivityEnrichedFeature, Activity.id == ActivityEnrichedFeature.activity_id)
-                .filter(Activity.id.in_(activity_ids))
-                .all()
-            )
-            
-            # Convert to dictionaries
-            for activity, feature in activities:
-                activity_dict = {
-                    "activity_id": activity.id,
-                    "timestamp": activity.timestamp,
-                    "activity_type": activity.activity_type,
-                    "cluster_label": pattern.pattern_label,
-                    "app_category": feature.app_category if feature else None,
-                    "project_context": feature.project_context if feature else None,
-                    "website_category": feature.website_category if feature else None,
-                    "is_context_switch": feature.is_context_switch if feature else None
-                }
-                result.append(activity_dict)
+            try:
+                # Safe SQLAlchemy query with proper join condition
+                try:
+                    activities = (
+                        db.query(Activity, ActivityEnrichedFeature)
+                        .outerjoin(ActivityEnrichedFeature, ActivityEnrichedFeature.activity_id == Activity.id)  # type: ignore
+                        .filter(Activity.id.in_(activity_ids))
+                        .all()
+                    )
+                except Exception as query_error:
+                    logger.error(f"Database query error for activities: {query_error}")
+                    activities = []
+                
+                # Convert to dictionaries with safe attribute access
+                for activity, feature in activities:
+                    activity_dict = {
+                        "activity_id": getattr(activity, 'id', None),
+                        "timestamp": getattr(activity, 'timestamp', None),
+                        "activity_type": getattr(activity, 'activity_type', None),
+                        "cluster_label": getattr(pattern, 'pattern_label', None),
+                        "app_category": getattr(feature, 'app_category', None) if feature else None,
+                        "project_context": getattr(feature, 'project_context', None) if feature else None,
+                        "website_category": getattr(feature, 'website_category', None) if feature else None,
+                        "is_context_switch": getattr(feature, 'is_context_switch', None) if feature else None
+                    }
+                    result.append(activity_dict)
+            except Exception as e:
+                # Log error but continue processing other patterns
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.error(f"Error processing activities for pattern {getattr(pattern, 'pattern_label', 'unknown')}: {e}")
+                continue
     
     return result
 
@@ -306,16 +420,22 @@ class BehaviorService:
 
         logger.info(f"Generating AI coaching recommendations for user_id: {user_id}")
 
-        user_settings = user_setting_crud.get_user_setting(self.db, user_id=user_id)
-        api_key = None
-        if user_settings and user_settings.api_keys:
-            try:
-                api_keys_dict = json.loads(user_settings.api_keys)
-                api_key = api_keys_dict.get("openai_api_key")
-            except json.JSONDecodeError:
-                logger.error(f"Failed to parse API keys for user {user_id} in BehaviorService.")
-                # Not raising HTTPException here, allow fallback or specific handling if desired
-                # For now, if key parsing fails, api_key remains None.
+        # Safe user settings and API key access
+        try:
+            user_settings = user_setting_crud.get_user_setting(self.db, user_id=user_id)
+            api_key = None
+            if user_settings and getattr(user_settings, 'api_keys', None):
+                try:
+                    api_keys_str = getattr(user_settings, 'api_keys', '{}')
+                    api_keys_dict = json.loads(api_keys_str)
+                    api_key = api_keys_dict.get("openai_api_key")
+                except json.JSONDecodeError:
+                    logger.error(f"Failed to parse API keys for user {user_id} in BehaviorService.")
+                    # Not raising HTTPException here, allow fallback or specific handling if desired
+                    # For now, if key parsing fails, api_key remains None.
+        except Exception as e:
+            logger.error(f"Error accessing user settings for user {user_id}: {e}")
+            api_key = None
 
         if not api_key:
             logger.warning(f"OpenAI API key ('openai_api_key') not configured for user {user_id}. Cannot get AI coaching.")
@@ -325,38 +445,53 @@ class BehaviorService:
 
         ai_integration_service = AIIntegrationService(db=self.db)
 
-        # 1. Fetch behavioral data
-        latest_model = get_latest_behavior_model_for_user(self.db, user_id)
-        if not latest_model:
-            logger.info(f"No behavioral model found for user {user_id}. Cannot generate coaching.")
-            return {"info": "No behavioral model found. AI coaching requires behavioral data."}
+        # 1. Fetch behavioral data with safe access
+        try:
+            latest_model = get_latest_behavior_model_for_user(self.db, user_id)
+            if not latest_model:
+                logger.info(f"No behavioral model found for user {user_id}. Cannot generate coaching.")
+                return {"info": "No behavioral model found. AI coaching requires behavioral data."}
 
-        patterns = get_patterns_for_model(self.db, latest_model.id)
-        if not patterns:
-            logger.info(f"No behavioral patterns found for user {user_id} in model {latest_model.id}.")
-            return {"info": "No behavioral patterns found. AI coaching requires behavioral patterns."}
+            model_id = getattr(latest_model, 'id', None)
+            if not model_id:
+                logger.error(f"Invalid model ID for user {user_id}")
+                return {"error": "Invalid behavioral model data."}
+
+            patterns = get_patterns_for_model(self.db, model_id)
+            if not patterns:
+                logger.info(f"No behavioral patterns found for user {user_id} in model {model_id}.")
+                return {"info": "No behavioral patterns found. AI coaching requires behavioral patterns."}
+        except Exception as e:
+            logger.error(f"Error fetching behavioral data for user {user_id}: {e}")
+            return {"error": "Failed to fetch behavioral data for coaching."}
 
         # 2. Summarize behavioral data for the prompt
         # We need to convert SQLAlchemy models (BehavioralPattern) to dicts for JSON serialization
         patterns_summary = []
+        # Safe pattern data extraction
         for p in patterns:
-            pattern_dict = {
-                "pattern_label": p.pattern_label,
-                "size": p.size,
-                "name": p.name,
-                "description": p.description,
-                "centroid": p.centroid, # Already a dict
-                "temporal_distribution": p.temporal_distribution, # Already a dict
-                "activity_distribution": p.activity_distribution, # Already a dict
-                "context_features": p.context_features # Already a dict
-            }
-            patterns_summary.append(pattern_dict)
+            try:
+                pattern_dict = {
+                    "pattern_label": getattr(p, 'pattern_label', None),
+                    "size": getattr(p, 'size', 0),
+                    "name": getattr(p, 'name', ''),
+                    "description": getattr(p, 'description', ''),
+                    "centroid": getattr(p, 'centroid', {}),  # Already a dict
+                    "temporal_distribution": getattr(p, 'temporal_distribution', {}),  # Already a dict
+                    "activity_distribution": getattr(p, 'activity_distribution', {}),  # Already a dict
+                    "context_features": getattr(p, 'context_features', {})  # Already a dict
+                }
+                patterns_summary.append(pattern_dict)
+            except Exception as e:
+                logger.error(f"Error processing pattern {getattr(p, 'pattern_label', 'unknown')}: {e}")
+                continue
 
+        # Safe model data extraction
         behavioral_data_summary = {
-            "model_name": latest_model.name,
-            "model_algorithm": latest_model.algorithm,
-            "num_clusters": latest_model.num_clusters,
-            "silhouette_score": latest_model.silhouette_score,
+            "model_name": getattr(latest_model, 'name', ''),
+            "model_algorithm": getattr(latest_model, 'algorithm', ''),
+            "num_clusters": getattr(latest_model, 'num_clusters', 0),
+            "silhouette_score": getattr(latest_model, 'silhouette_score', None),
             "patterns": patterns_summary
         }
         # Potentially add analytics summary here if available/integrated
@@ -398,14 +533,16 @@ If patterns are too generic or insufficient, provide general productivity tips.
                 payload=ai_payload,
             )
 
-            if not openai_response_data.get("choices") or \
-               not openai_response_data["choices"][0].get("message") or \
-               not openai_response_data["choices"][0]["message"].get("content"):
+            # Safe nested dictionary access for OpenAI response
+            choices = openai_response_data.get("choices", []) if openai_response_data else []
+            first_choice = choices[0] if choices else {}
+            message = first_choice.get("message", {}) if first_choice else {}
+            content_str = message.get("content", "") if message else ""
+            
+            if not content_str:
                 logger.error(f"Unexpected OpenAI response structure for coaching for user {user_id}: {openai_response_data}")
                 # Avoid raising HTTPException directly from service layer if possible, return error dict
                 return {"error": "Coaching AI service received an unexpected response format."}
-
-            content_str = openai_response_data["choices"][0]["message"]["content"]
             coaching_result = json.loads(content_str)
 
             logger.info(f"Successfully received and parsed AI coaching recommendations for user {user_id}: {coaching_result}")

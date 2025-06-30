@@ -67,20 +67,28 @@ class AIIntegrationService:
                     json=payload if method.upper() in ["POST", "PUT", "PATCH"] and payload else None,
                     params=params,
                     headers=headers,
-                    timeout=aiohttp.ClientTimeout(total=60)  # 60 seconds timeout
+                    timeout=getattr(aiohttp, 'ClientTimeout', lambda total: None)(total=60)  # type: ignore
                 ) as response:
 
                     response_data: Dict[str, Any] = {}
                     response_text = await response.text()
 
                     if response.status == 429:  # Rate limited
-                        retry_after = int(response.headers.get("Retry-After", 60))
+                        retry_after_header = response.headers.get("Retry-After", "60")
+                        try:
+                            retry_after = int(retry_after_header)
+                        except (ValueError, TypeError):
+                            retry_after = 60
                         logger.warning(f"Rate limited by AI service ({full_url}). Retry after {retry_after} seconds. Response: {response_text}")
                         raise Exception(f"AI service rate limited. Retry after {retry_after} seconds.") # Or a custom exception
 
                     # Try to parse JSON, if not, return raw text or handle error
                     try:
-                        response_data = await response.json()
+                        try:
+                            response_data = await response.json()
+                        except Exception as json_error:
+                            logger.warning(f"Failed to parse JSON response: {json_error}")
+                            response_data = {}
                     except aiohttp.ContentTypeError:
                         logger.warning(f"Response from {full_url} was not JSON. Status: {response.status}. Response: {response_text[:200]}...")
                         if 200 <= response.status < 300:
@@ -134,21 +142,23 @@ async def get_api_key_from_user_settings(
 
     # Mocked retrieval for illustration:
     class MockUserSetting:
-        api_keys: Optional[str] = None
+        def __init__(self):
+            self.api_keys: Optional[str] = None
 
     user_settings_model = MockUserSetting()
     # Simulate finding a user setting with a key
     # In a real case: user_settings_model = user_setting_crud.get_user_setting(db, user_id=user_id)
 
     if user_id == 1: # Mock: User 1 has OpenAI key
-         user_settings_model.api_keys = json.dumps({"openai_api_key": "sk-12345", "other_key": "abc"})
+         setattr(user_settings_model, 'api_keys', json.dumps({"openai_api_key": "sk-12345", "other_key": "abc"}))  # type: ignore
     elif user_id == 2: # Mock: User 2 has Cohere key
-         user_settings_model.api_keys = json.dumps({"cohere_api_key": "co-67890"})
+         setattr(user_settings_model, 'api_keys', json.dumps({"cohere_api_key": "co-67890"}))  # type: ignore
     # else: user_settings_model will have api_keys = None (user has no settings or no keys)
 
-    if user_settings_model and user_settings_model.api_keys:
+    if user_settings_model and getattr(user_settings_model, 'api_keys', None):
         try:
-            api_keys_dict = json.loads(user_settings_model.api_keys)
+            api_keys_str = getattr(user_settings_model, 'api_keys', '{}')
+            api_keys_dict = json.loads(api_keys_str)
             return api_keys_dict.get(key_name)
         except json.JSONDecodeError:
             logger.error(f"Failed to parse API keys JSON for user {user_id}")

@@ -30,12 +30,16 @@ class CalendarService:
         """
         Generates an iCalendar (.ics) file content for a given task.
         """
-        if not task.id or not task.description:
+        if not getattr(task, 'id', None) or not getattr(task, 'description', None):
             raise ValueError("Task must have an ID and description to generate an iCS file.")
 
-        uid = f"task-{task.id}-{task.created_at.strftime('%Y%m%dT%H%M%S')}@digame.com"
-        summary = task.description[:75] # Keep summary concise
-        description = task.notes or task.description # Use notes if available, else full description
+        task_id = getattr(task, 'id', 0)
+        created_at = getattr(task, 'created_at', datetime.utcnow())
+        uid = f"task-{task_id}-{created_at.strftime('%Y%m%dT%H%M%S')}@digame.com"
+        task_description = getattr(task, 'description', '')
+        summary = task_description[:75] # Keep summary concise
+        task_notes = getattr(task, 'notes', None)
+        description = task_notes or task_description # Use notes if available, else full description
 
         # Determine DTSTART and DTEND
         # If task has a due_date_inferred or deadline, use it.
@@ -46,7 +50,9 @@ class CalendarService:
         dtend_str = ""
 
         # Prioritize deadline, then due_date_inferred
-        event_date = task.deadline if task.deadline else task.due_date_inferred
+        deadline = getattr(task, 'deadline', None)
+        due_date_inferred = getattr(task, 'due_date_inferred', None)
+        event_date = deadline if deadline else due_date_inferred
 
         if event_date:
             # If it's just a date (no time), assume start of day or make it an all-day event
@@ -58,8 +64,9 @@ class CalendarService:
             else:
                 # Event with specific time
                 dtstart_obj = event_date
-                if task.estimated_effort_hours and task.estimated_effort_hours > 0:
-                    dtend_obj = dtstart_obj + timedelta(hours=task.estimated_effort_hours)
+                estimated_effort_hours = getattr(task, 'estimated_effort_hours', None)
+                if estimated_effort_hours and estimated_effort_hours > 0:
+                    dtend_obj = dtstart_obj + timedelta(hours=estimated_effort_hours)
                 else:
                     # Default to 1 hour duration if no effort is specified
                     dtend_obj = dtstart_obj + timedelta(hours=1)
@@ -88,7 +95,7 @@ class CalendarService:
             "BEGIN:VEVENT",
             f"UID:{uid}",
             f"SUMMARY:{summary}",
-            f"DESCRIPTION:{description.replacechr(10, chr(92) + 'n')}", # Escape newlines
+            f"DESCRIPTION:{description.replace(chr(10), chr(92) + 'n')}", # Escape newlines
         ]
 
         if dtstart_str:
@@ -98,35 +105,36 @@ class CalendarService:
 
         # Add created and last_modified timestamps
         ics_content.append(f"DTSTAMP:{self._format_datetime_for_ical(datetime.utcnow())}")
-        if task.created_at:
-            ics_content.append(f"CREATED:{self._format_datetime_for_ical(task.created_at)}")
-        if task.updated_at:
-            ics_content.append(f"LAST-MODIFIED:{self._format_datetime_for_ical(task.updated_at)}")
+        if getattr(task, 'created_at', None):
+            ics_content.append(f"CREATED:{self._format_datetime_for_ical(getattr(task, 'created_at', None))}")
+        if getattr(task, 'updated_at', None):
+            ics_content.append(f"LAST-MODIFIED:{self._format_datetime_for_ical(getattr(task, 'updated_at', None))}")
 
         # Add status if relevant (VTODO might be better for tasks with status)
         # For VEVENT, we can put it in description or use X-properties.
         # Example: ics_content.append(f"X-DIGAME-STATUS:{task.status}")
 
-        if task.priority_score is not None:
+        priority_score = getattr(task, 'priority_score', None)
+        if priority_score is not None:
             # Map priority score (0.0-1.0) to iCalendar priority (0-9)
             # 0: undefined, 1: highest, 9: lowest.
             # Our score: 1.0 is highest.
             ical_priority = 0
-            if task.priority_score >= 0.9:
+            if priority_score >= 0.9:
                 ical_priority = 1
-            elif task.priority_score >= 0.75:
+            elif priority_score >= 0.75:
                 ical_priority = 2
-            elif task.priority_score >= 0.6:
+            elif priority_score >= 0.6:
                 ical_priority = 3
-            elif task.priority_score >= 0.5:
+            elif priority_score >= 0.5:
                 ical_priority = 5 # Medium
-            elif task.priority_score >= 0.3:
+            elif priority_score >= 0.3:
                 ical_priority = 7
-            elif task.priority_score > 0:
+            elif priority_score > 0:
                 ical_priority = 8
 
             if ical_priority > 0:
-                 ics_content.append(f"PRIORITY:{ical_priority}")
+                ics_content.append(f"PRIORITY:{ical_priority}")
 
 
         ics_content.append("END:VEVENT")

@@ -21,7 +21,10 @@ class LanguageLearningService:
         Helper to check tenant feature enablement and retrieve OpenAI API key.
         Now common for both translate and define methods.
         """
-        user_from_db = user_crud.get_user(self.db, user_id=cast(int, current_user.id))
+        user_id = getattr(current_user, 'id', None)
+        if user_id is None:
+            raise HTTPException(status_code=getattr(status, 'HTTP_400_BAD_REQUEST', 400), detail="Invalid user ID.")
+        user_from_db = user_crud.get_user(self.db, user_id=cast(int, user_id))
         if not user_from_db:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found.")
         # Use the fresh user object for subsequent checks
@@ -38,7 +41,7 @@ class LanguageLearningService:
         if not tenant:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Tenant information not found for user.")
 
-        tenant_features = tenant.features
+        tenant_features = getattr(tenant, 'features', {})
         if isinstance(tenant_features, str):
             try:
                 tenant_features = json.loads(tenant_features or '{}')
@@ -53,15 +56,18 @@ class LanguageLearningService:
                 detail="Language Learning Support feature is not enabled for your tenant."
             )
 
-        user_settings = user_setting_crud.get_user_setting(self.db, user_id=user_from_db.id)
-        if not user_settings or not user_settings.api_keys:
+        user_db_id = getattr(user_from_db, 'id', None)
+        if user_db_id is None:
+            raise HTTPException(status_code=getattr(status, 'HTTP_400_BAD_REQUEST', 400), detail="Invalid user database ID.")
+        user_settings = user_setting_crud.get_user_setting(self.db, user_id=user_db_id)
+        if not user_settings or not getattr(user_settings, 'api_keys', None):
             raise HTTPException(
                 status_code=status.HTTP_402_PAYMENT_REQUIRED,
                 detail="API key for Language Learning not found. Please add 'openai_api_key' to your settings."
             )
 
         try:
-            api_keys_dict = json.loads(user_settings.api_keys)
+            api_keys_dict = json.loads(getattr(user_settings, 'api_keys', '{}'))
         except json.JSONDecodeError:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -111,7 +117,8 @@ AI Response: {{
         }
 
         try:
-            logger.info(f"Requesting text translation for user {current_user.id} to {target_language}")
+            user_id = getattr(current_user, 'id', 'unknown')
+            logger.info(f"Requesting text translation for user {user_id} to {target_language}")
             openai_response_data = await self.ai_integration_service.make_request(
                 api_key=openai_api_key,
                 base_url="https://api.openai.com/v1",
@@ -120,34 +127,41 @@ AI Response: {{
                 payload=ai_payload
             )
 
-            if not openai_response_data.get("choices") or \
-               not openai_response_data["choices"][0].get("message") or \
-               not openai_response_data["choices"][0]["message"].get("content"):
-                logger.error(f"Unexpected OpenAI response for translation (user {current_user.id}): {openai_response_data}")
-                raise HTTPException(status_code=500, detail="AI provider returned an unexpected response format for translation.")
+            choices = openai_response_data.get("choices", [])
+            if not choices or not choices[0].get("message") or not choices[0]["message"].get("content"):
+                user_id = getattr(current_user, 'id', 'unknown')
+                logger.error(f"Unexpected OpenAI response for translation (user {user_id}): {openai_response_data}")
+                raise HTTPException(status_code=getattr(status, 'HTTP_500_INTERNAL_SERVER_ERROR', 500), detail="AI provider returned an unexpected response format for translation.")
 
-            content_str = openai_response_data["choices"][0]["message"]["content"]
+            choices = openai_response_data.get("choices", [])
+            message = choices[0].get("message", {}) if choices else {}
+            content_str = message.get("content", "")
             translation_result = json.loads(content_str)
 
             required_keys = ["original_text", "translated_text", "target_language", "detected_source_language"]
             if not all(key in translation_result for key in required_keys):
-                 logger.error(f"OpenAI response JSON missing required keys for translation (user {current_user.id}): {translation_result}")
-                 raise HTTPException(status_code=500, detail="AI provider's response missing required translation fields.")
+                 user_id = getattr(current_user, 'id', 'unknown')
+                 logger.error(f"OpenAI response JSON missing required keys for translation (user {user_id}): {translation_result}")
+                 raise HTTPException(status_code=getattr(status, 'HTTP_500_INTERNAL_SERVER_ERROR', 500), detail="AI provider's response missing required translation fields.")
 
-            logger.info(f"Successfully received translation for user {current_user.id}")
+            user_id = getattr(current_user, 'id', 'unknown')
+            logger.info(f"Successfully received translation for user {user_id}")
             translation_result["model_provider"] = "openai"
             # Ensure the output matches the original mock structure's source_language field if needed
             translation_result["source_language"] = translation_result.pop("detected_source_language", source_language or "auto-detected")
             return translation_result
 
         except json.JSONDecodeError:
-            logger.error(f"Failed to parse JSON from OpenAI for translation (user {current_user.id}): {content_str if 'content_str' in locals() else 'N/A'}")
-            raise HTTPException(status_code=500, detail="Failed to parse AI provider's response for translation.")
+            user_id = getattr(current_user, 'id', 'unknown')
+            content_str_safe = content_str if 'content_str' in locals() else 'N/A'
+            logger.error(f"Failed to parse JSON from OpenAI for translation (user {user_id}): {content_str_safe}")
+            raise HTTPException(status_code=getattr(status, 'HTTP_500_INTERNAL_SERVER_ERROR', 500), detail="Failed to parse AI provider's response for translation.")
         except HTTPException:
             raise
         except Exception as e:
-            logger.error(f"Error during translation for user {current_user.id}: {str(e)}")
-            raise HTTPException(status_code=503, detail=f"Translation request to AI provider failed: {str(e)}")
+            user_id = getattr(current_user, 'id', 'unknown')
+            logger.error(f"Error during translation for user {user_id}: {str(e)}")
+            raise HTTPException(status_code=getattr(status, 'HTTP_503_SERVICE_UNAVAILABLE', 503), detail=f"Translation request to AI provider failed: {str(e)}")
 
     async def get_vocabulary_definition(self, current_user: UserModel, word: str, language: str) -> Dict[str, Any]:
         if not current_user:
@@ -182,7 +196,8 @@ AI Response: {{
         }
 
         try:
-            logger.info(f"Requesting definition for '{word}' in {language} for user {current_user.id}")
+            user_id = getattr(current_user, 'id', 'unknown')
+            logger.info(f"Requesting definition for '{word}' in {language} for user {user_id}")
             openai_response_data = await self.ai_integration_service.make_request(
                 api_key=openai_api_key,
                 base_url="https://api.openai.com/v1",
@@ -191,34 +206,41 @@ AI Response: {{
                 payload=ai_payload
             )
 
-            if not openai_response_data.get("choices") or \
-               not openai_response_data["choices"][0].get("message") or \
-               not openai_response_data["choices"][0]["message"].get("content"):
-                logger.error(f"Unexpected OpenAI response for definition (user {current_user.id}): {openai_response_data}")
-                raise HTTPException(status_code=500, detail="AI provider returned an unexpected response format for definition.")
+            choices = openai_response_data.get("choices", [])
+            if not choices or not choices[0].get("message") or not choices[0]["message"].get("content"):
+                user_id = getattr(current_user, 'id', 'unknown')
+                logger.error(f"Unexpected OpenAI response for definition (user {user_id}): {openai_response_data}")
+                raise HTTPException(status_code=getattr(status, 'HTTP_500_INTERNAL_SERVER_ERROR', 500), detail="AI provider returned an unexpected response format for definition.")
 
-            content_str = openai_response_data["choices"][0]["message"]["content"]
+            choices = openai_response_data.get("choices", [])
+            message = choices[0].get("message", {}) if choices else {}
+            content_str = message.get("content", "")
             definition_result = json.loads(content_str)
 
             required_keys = ["word", "language", "definition", "example_sentence"]
             if not all(key in definition_result for key in required_keys):
-                 logger.error(f"OpenAI response JSON missing required keys for definition (user {current_user.id}): {definition_result}")
-                 raise HTTPException(status_code=500, detail="AI provider's response missing required definition fields.")
+                 user_id = getattr(current_user, 'id', 'unknown')
+                 logger.error(f"OpenAI response JSON missing required keys for definition (user {user_id}): {definition_result}")
+                 raise HTTPException(status_code=getattr(status, 'HTTP_500_INTERNAL_SERVER_ERROR', 500), detail="AI provider's response missing required definition fields.")
 
-            logger.info(f"Successfully received definition for user {current_user.id}")
+            user_id = getattr(current_user, 'id', 'unknown')
+            logger.info(f"Successfully received definition for user {user_id}")
             definition_result["model_provider"] = "openai"
             # Match original mock field name if necessary
             definition_result["example"] = definition_result.pop("example_sentence")
             return definition_result
 
         except json.JSONDecodeError:
-            logger.error(f"Failed to parse JSON from OpenAI for definition (user {current_user.id}): {content_str if 'content_str' in locals() else 'N/A'}")
-            raise HTTPException(status_code=500, detail="Failed to parse AI provider's response for definition.")
+            user_id = getattr(current_user, 'id', 'unknown')
+            content_str_safe = content_str if 'content_str' in locals() else 'N/A'
+            logger.error(f"Failed to parse JSON from OpenAI for definition (user {user_id}): {content_str_safe}")
+            raise HTTPException(status_code=getattr(status, 'HTTP_500_INTERNAL_SERVER_ERROR', 500), detail="Failed to parse AI provider's response for definition.")
         except HTTPException:
             raise
         except Exception as e:
-            logger.error(f"Error during definition lookup for user {current_user.id}: {str(e)}")
-            raise HTTPException(status_code=503, detail=f"Definition request to AI provider failed: {str(e)}")
+            user_id = getattr(current_user, 'id', 'unknown')
+            logger.error(f"Error during definition lookup for user {user_id}: {str(e)}")
+            raise HTTPException(status_code=getattr(status, 'HTTP_503_SERVICE_UNAVAILABLE', 503), detail=f"Definition request to AI provider failed: {str(e)}")
 
 # Dependency injector function
 def get_language_learning_service(

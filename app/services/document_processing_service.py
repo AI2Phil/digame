@@ -1,8 +1,18 @@
 import json
 import logging
-from sqlalchemy.orm import Session
-from fastapi import HTTPException, status, Depends
 from typing import List, Dict, Any, Optional
+
+try:
+    from sqlalchemy.orm import Session
+except ImportError:
+    Session = None  # type: ignore
+
+try:
+    from fastapi import HTTPException, status, Depends
+except ImportError:
+    HTTPException = None  # type: ignore
+    status = None  # type: ignore
+    Depends = None  # type: ignore
 
 from ..crud import user_crud, user_setting_crud, tenant_crud
 from ..models.user import User as UserModel
@@ -23,7 +33,10 @@ class DocumentProcessingService:
         """Helper to get user, check tenant feature, and retrieve API key."""
         user_from_db = user_crud.get_user(self.db, user_id=current_user_id)
         if not user_from_db:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found.")
+            if HTTPException and status:
+                raise HTTPException(status_code=getattr(status, 'HTTP_404_NOT_FOUND', 404), detail="User not found.")
+            else:
+                raise ValueError("User not found.")
 
         tenant_id = getattr(user_from_db, 'tenant_id', None)
         if not tenant_id and hasattr(user_from_db, 'tenants') and user_from_db.tenants:
@@ -31,52 +44,81 @@ class DocumentProcessingService:
              tenant_id = getattr(user_tenant_link, 'tenant_id', None)
 
         if not tenant_id:
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User not associated with a tenant.")
+            if HTTPException:
+                status_code = getattr(status, 'HTTP_403_FORBIDDEN', 403) if status else 403
+                raise HTTPException(status_code=status_code, detail="User not associated with a tenant.")
+            else:
+                raise ValueError("User not associated with a tenant.")
 
         tenant = tenant_crud.get_tenant_by_id(self.db, tenant_id)
         if not tenant:
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Tenant information not found.")
+            if HTTPException:
+                status_code = getattr(status, 'HTTP_403_FORBIDDEN', 403) if status else 403
+                raise HTTPException(status_code=status_code, detail="Tenant information not found.")
+            else:
+                raise ValueError("Tenant information not found.")
 
-        tenant_features = tenant.features
+        tenant_features = getattr(tenant, 'features', {})
         if isinstance(tenant_features, str):
             try:
                 tenant_features = json.loads(tenant_features or '{}')
             except json.JSONDecodeError:
-                 raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error parsing tenant features.")
+                 if HTTPException:
+                     status_code = getattr(status, 'HTTP_500_INTERNAL_SERVER_ERROR', 500) if status else 500
+                     raise HTTPException(status_code=status_code, detail="Error parsing tenant features.")
+                 else:
+                     raise ValueError("Error parsing tenant features.")
         elif not isinstance(tenant_features, dict): # Ensure it's a dict
             tenant_features = {}
 
         # Assume feature names like 'document_summarization', 'document_synthesis', 'document_action_items'
         if not tenant_features.get(feature_name, False): # Default to False if feature key missing
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"Feature '{feature_name}' is not enabled for your tenant."
-            )
+            if HTTPException and status:
+                raise HTTPException(
+                    status_code=getattr(status, 'HTTP_403_FORBIDDEN', 403),
+                    detail=f"Feature '{feature_name}' is not enabled for your tenant."
+                )
+            else:
+                raise ValueError(f"Feature '{feature_name}' is not enabled for your tenant.")
 
         user_settings = user_setting_crud.get_user_setting(self.db, user_id=current_user_id)
-        if not user_settings or not user_settings.api_keys:
-            raise HTTPException(
-                status_code=status.HTTP_402_PAYMENT_REQUIRED,
-                detail=f"API key for '{feature_name}' not found. Please add 'openai_api_key' to your settings."
-            )
+        if not user_settings or not getattr(user_settings, 'api_keys', None):
+            if HTTPException and status:
+                raise HTTPException(
+                    status_code=getattr(status, 'HTTP_402_PAYMENT_REQUIRED', 402),
+                    detail=f"API key for '{feature_name}' not found. Please add 'openai_api_key' to your settings."
+                )
+            else:
+                raise ValueError(f"API key for '{feature_name}' not found. Please add 'openai_api_key' to your settings.")
         try:
-            api_keys_dict = json.loads(user_settings.api_keys)
+            api_keys_dict = json.loads(getattr(user_settings, 'api_keys', '{}'))
             openai_api_key = api_keys_dict.get("openai_api_key")
         except json.JSONDecodeError:
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error parsing API key settings.")
+            if HTTPException:
+                status_code = getattr(status, 'HTTP_500_INTERNAL_SERVER_ERROR', 500) if status else 500
+                raise HTTPException(status_code=status_code, detail="Error parsing API key settings.")
+            else:
+                raise ValueError("Error parsing API key settings.")
 
         if not openai_api_key:
-            raise HTTPException(
-                status_code=status.HTTP_402_PAYMENT_REQUIRED,
-                detail=f"The 'openai_api_key' for '{feature_name}' is missing. Please add it."
-            )
+            if HTTPException and status:
+                raise HTTPException(
+                    status_code=getattr(status, 'HTTP_402_PAYMENT_REQUIRED', 402),
+                    detail=f"The 'openai_api_key' for '{feature_name}' is missing. Please add it."
+                )
+            else:
+                raise ValueError(f"The 'openai_api_key' for '{feature_name}' is missing. Please add it.")
         return openai_api_key
 
     async def summarize_document(self, current_user_id: int, document_text: str, summary_length_preference: str = "medium") -> Dict[str, Any]:
         openai_api_key = await self._get_user_and_api_key(current_user_id, "document_summarization")
 
         if not document_text.strip():
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Document text cannot be empty.")
+            if HTTPException:
+                status_code = getattr(status, 'HTTP_400_BAD_REQUEST', 400) if status else 400
+                raise HTTPException(status_code=status_code, detail="Document text cannot be empty.")
+            else:
+                raise ValueError("Document text cannot be empty.")
 
         length_instructions = {
             "short": "a very concise summary (1-2 sentences).",
@@ -118,13 +160,21 @@ Respond ONLY with the summary text, no other conversational text or pleasantries
             }
         except Exception as e:
             logger.error(f"Error during document summarization for user {current_user_id}: {e}")
-            raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=f"Summarization request failed: {e}")
+            if HTTPException:
+                status_code = getattr(status, 'HTTP_503_SERVICE_UNAVAILABLE', 503) if status else 503
+                raise HTTPException(status_code=status_code, detail=f"Summarization request failed: {e}")
+            else:
+                raise Exception(f"Summarization request failed: {e}")
 
     async def extract_action_items_from_document(self, current_user_id: int, document_text: str) -> Dict[str, Any]:
         openai_api_key = await self._get_user_and_api_key(current_user_id, "document_action_items")
 
         if not document_text.strip():
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Document text cannot be empty.")
+            if HTTPException:
+                status_code = getattr(status, 'HTTP_400_BAD_REQUEST', 400) if status else 400
+                raise HTTPException(status_code=status_code, detail="Document text cannot be empty.")
+            else:
+                raise ValueError("Document text cannot be empty.")
 
         system_prompt = """
 You are an AI assistant that extracts action items from text.
@@ -163,16 +213,28 @@ If no action items are found, return an empty list.
             }
         except json.JSONDecodeError:
             logger.error(f"Failed to parse JSON from OpenAI for action items (user {current_user_id})")
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="AI provider returned invalid JSON for action items.")
+            if HTTPException:
+                status_code = getattr(status, 'HTTP_500_INTERNAL_SERVER_ERROR', 500) if status else 500
+                raise HTTPException(status_code=status_code, detail="AI provider returned invalid JSON for action items.")
+            else:
+                raise ValueError("AI provider returned invalid JSON for action items.")
         except Exception as e:
             logger.error(f"Error extracting action items for user {current_user_id}: {e}")
-            raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=f"Action item extraction failed: {e}")
+            if HTTPException:
+                status_code = getattr(status, 'HTTP_503_SERVICE_UNAVAILABLE', 503) if status else 503
+                raise HTTPException(status_code=status_code, detail=f"Action item extraction failed: {e}")
+            else:
+                raise Exception(f"Action item extraction failed: {e}")
 
     async def synthesize_documents(self, current_user_id: int, documents: List[Dict[str, str]], synthesis_goal: str, output_format: str) -> Dict[str, Any]:
         openai_api_key = await self._get_user_and_api_key(current_user_id, "document_synthesis")
 
         if not documents or len(documents) < 2:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="At least two documents are required for synthesis.")
+            if HTTPException:
+                status_code = getattr(status, 'HTTP_400_BAD_REQUEST', 400) if status else 400
+                raise HTTPException(status_code=status_code, detail="At least two documents are required for synthesis.")
+            else:
+                raise ValueError("At least two documents are required for synthesis.")
 
         # Simple concatenation for now. For very long documents, pre-summarization of each might be needed.
         # This could hit token limits quickly.
@@ -181,7 +243,11 @@ If no action items are found, return an empty list.
             doc_text = doc_input.get("text_content", "")
             doc_id = doc_input.get("identifier", f"Document {i+1}")
             if not doc_text.strip():
-                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"{doc_id} text cannot be empty.")
+                if HTTPException:
+                    status_code = getattr(status, 'HTTP_400_BAD_REQUEST', 400) if status else 400
+                    raise HTTPException(status_code=status_code, detail=f"{doc_id} text cannot be empty.")
+                else:
+                    raise ValueError(f"{doc_id} text cannot be empty.")
             combined_text += f"--- START OF {doc_id} ---\n{doc_text}\n--- END OF {doc_id} ---\n\n"
 
         # Basic check for combined length (very rough estimate)
@@ -228,12 +294,16 @@ Respond ONLY with the synthesized text.
             }
         except Exception as e:
             logger.error(f"Error during document synthesis for user {current_user_id}: {e}")
-            raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=f"Document synthesis request failed: {e}")
+            if HTTPException:
+                status_code = getattr(status, 'HTTP_503_SERVICE_UNAVAILABLE', 503) if status else 503
+                raise HTTPException(status_code=status_code, detail=f"Document synthesis request failed: {e}")
+            else:
+                raise Exception(f"Document synthesis request failed: {e}")
 
 
 # Dependency injector function
 def get_document_processing_service(
-    db: Session = Depends(get_db)
+    db: Session = getattr(Depends, '__call__', lambda x: x)(get_db) if Depends else get_db  # type: ignore
 ) -> DocumentProcessingService:
     ai_integration_service = AIIntegrationService(db=db)
     return DocumentProcessingService(db=db, ai_integration_service=ai_integration_service)

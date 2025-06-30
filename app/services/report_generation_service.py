@@ -20,11 +20,27 @@ from pydantic import BaseModel
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-from reportlab.lib import colors
-from reportlab.lib.pagesizes import letter, A4
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.lib.units import inch
+# Optional reportlab imports
+try:
+    from reportlab.lib import colors
+    from reportlab.lib.pagesizes import letter, A4
+    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.units import inch
+    REPORTLAB_AVAILABLE = True
+except ImportError:
+    REPORTLAB_AVAILABLE = False
+    # Create mock objects for type checking
+    colors = None
+    A4 = None
+    SimpleDocTemplate = None
+    Table = None
+    TableStyle = None
+    Paragraph = None
+    Spacer = None
+    Image = None
+    getSampleStyleSheet = None
+    inch = 1
 from jinja2 import Template
 import plotly.graph_objects as go
 import plotly.express as px
@@ -126,7 +142,7 @@ class ReportGenerationService:
             return {
                 "report_id": report_id,
                 "file_path": str(file_path),
-                "file_size": file_path.stat().st_size,
+                "file_size": file_path.stat().st_size if file_path.exists() else 0,
                 "generated_at": timestamp.isoformat(),
                 "format": report_definition.output_format,
                 "status": "completed"
@@ -161,28 +177,36 @@ class ReportGenerationService:
                         "display_options": block.display_options
                     })
                 
-                elif block.data_source:
-                    # Fetch data using dashboard service
-                    data = await self.dashboard_service.get_data_for_source(
-                        data_source_config=block.data_source,
-                        tenant_id=tenant_id
-                    )
-                    
-                    # Process data based on block type
-                    processed_data = await self._process_block_data(
-                        block.block_type,
-                        data,
-                        block.display_options,
-                        filters,
-                        time_range
-                    )
-                    
-                    content_data.append({
-                        "type": block.block_type,
-                        "title": block.title,
-                        "data": processed_data,
-                        "display_options": block.display_options
-                    })
+                elif getattr(block, 'data_source', None):
+                    try:
+                        # Fetch data using dashboard service
+                        data = await self.dashboard_service.get_data_for_source(
+                            data_source_config=block.data_source,
+                            tenant_id=tenant_id
+                        )
+                        
+                        # Process data based on block type
+                        processed_data = await self._process_block_data(
+                            block.block_type,
+                            data,
+                            block.display_options,
+                            filters,
+                            time_range
+                        )
+                        
+                        content_data.append({
+                            "type": block.block_type,
+                            "title": block.title,
+                            "data": processed_data,
+                            "display_options": block.display_options
+                        })
+                    except Exception as e:
+                        content_data.append({
+                            "type": "error",
+                            "title": block.title or "Data Source Error",
+                            "error": f"Failed to fetch data: {str(e)}",
+                            "display_options": block.display_options
+                        })
                 
             except Exception as e:
                 content_data.append({
@@ -211,7 +235,7 @@ class ReportGenerationService:
         elif block_type == "kpi_summary":
             return await self._process_kpi_data(raw_data, display_options)
         elif block_type == "dashboard_snapshot":
-            return await self._process_dashboard_snapshot(raw_data, display_options)
+            return await self._process_dashboard_snapshot_data(raw_data, display_options)
         else:
             return {"raw_data": raw_data}
 
@@ -311,6 +335,19 @@ class ReportGenerationService:
         
         return {"error": "No valid data for KPI"}
 
+    async def _process_dashboard_snapshot_data(self, data: Any, options: Dict[str, Any]) -> Dict[str, Any]:
+        """Process data for dashboard snapshot"""
+        
+        if isinstance(data, dict):
+            return {
+                "snapshot_type": "dashboard",
+                "widgets_count": data.get("widgets_count", 0),
+                "last_updated": data.get("last_updated"),
+                "summary": data.get("summary", "Dashboard snapshot")
+            }
+        
+        return {"error": "No valid data for dashboard snapshot"}
+
     async def _generate_pdf_report(
         self,
         report_def: ReportDefinition,
@@ -321,13 +358,19 @@ class ReportGenerationService:
         
         file_path = self.temp_dir / f"report_{context['report_id']}.pdf"
         
-        # Create PDF document
-        doc = SimpleDocTemplate(str(file_path), pagesize=A4)
-        styles = getSampleStyleSheet()
-        story = []
+        # Check if reportlab is available and create PDF document
+        if not REPORTLAB_AVAILABLE:
+            raise ValueError("ReportLab is required for PDF generation but not installed")
+        
+        if SimpleDocTemplate and A4 and getSampleStyleSheet:
+            doc = SimpleDocTemplate(str(file_path), pagesize=A4)
+            styles = getSampleStyleSheet()
+            story = []
+        else:
+            raise ValueError("ReportLab components not available")
         
         # Cover page
-        if report_def.include_cover_page:
+        if report_def.include_cover_page and Paragraph and Spacer:
             story.append(Paragraph(report_def.name, styles['Title']))
             story.append(Spacer(1, 12))
             story.append(Paragraph(f"Generated: {context['generated_at']}", styles['Normal']))
@@ -338,58 +381,79 @@ class ReportGenerationService:
         
         # Content blocks
         for block in content_data:
-            if block["type"] == "text":
+            if block["type"] == "text" and Paragraph and Spacer:
                 if block.get("title"):
                     story.append(Paragraph(block["title"], styles['Heading2']))
-                story.append(Paragraph(block["content"], styles['Normal']))
+                story.append(Paragraph(block.get("content", ""), styles['Normal']))
                 story.append(Spacer(1, 12))
             
-            elif block["type"] == "chart":
+            elif block["type"] == "chart" and Paragraph:
                 if block.get("title"):
                     story.append(Paragraph(block["title"], styles['Heading2']))
                 
-                if "image_data" in block["data"]:
-                    # Save chart image temporarily
-                    img_path = self.temp_dir / f"chart_{uuid.uuid4()}.png"
-                    with open(img_path, "wb") as f:
-                        f.write(block["data"]["image_data"])
+                block_data = block.get("data", {})
+                if isinstance(block_data, dict) and "image_data" in block_data:
+                    try:
+                        # Save chart image temporarily
+                        img_path = self.temp_dir / f"chart_{uuid.uuid4()}.png"
+                        with open(img_path, "wb") as f:
+                            f.write(block_data["image_data"])
+                        
+                        # Add image to PDF
+                        if Image and Spacer:
+                            img = Image(str(img_path), width=6*inch, height=4*inch)
+                            story.append(img)
+                            story.append(Spacer(1, 12))
+                    except Exception:
+                        # Skip images that can't be processed
+                        story.append(Paragraph("Chart could not be rendered", styles['Normal']))
+                        story.append(Spacer(1, 12))
+            
+            elif block["type"] == "table" and Paragraph:
+                if block.get("title"):
+                    story.append(Paragraph(block["title"], styles['Heading2']))
+                
+                block_data = block.get("data", {})
+                if isinstance(block_data, dict) and "headers" in block_data and "rows" in block_data:
+                    try:
+                        if Table and TableStyle and colors and Spacer:
+                            table_data = [block_data["headers"]] + block_data["rows"]
+                            table = Table(table_data)
+                            table.setStyle(TableStyle([
+                                ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+                                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                                ('FONTSIZE', (0, 0), (-1, 0), 14),
+                                ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+                                ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+                                ('GRID', (0, 0), (-1, -1), 1, colors.black)
+                            ]))
+                            story.append(table)
+                            story.append(Spacer(1, 12))
+                    except Exception:
+                        # Skip tables that can't be processed
+                        if Paragraph and Spacer:
+                            story.append(Paragraph("Table could not be rendered", styles['Normal']))
+                            story.append(Spacer(1, 12))
+            
+            elif block["type"] == "kpi_summary" and Paragraph:
+                if block.get("title"):
+                    story.append(Paragraph(block["title"], styles['Heading2']))
+                
+                block_data = block.get("data", {})
+                if isinstance(block_data, dict):
+                    kpi_text = f"Value: {block_data.get('formatted_value', block_data.get('value', 'N/A'))}"
+                    change_percent = block_data.get("change_percent")
+                    if change_percent is not None:
+                        try:
+                            kpi_text += f" ({float(change_percent):+.1f}%)"
+                        except (ValueError, TypeError):
+                            pass
                     
-                    # Add image to PDF
-                    img = Image(str(img_path), width=6*inch, height=4*inch)
-                    story.append(img)
-                    story.append(Spacer(1, 12))
-            
-            elif block["type"] == "table":
-                if block.get("title"):
-                    story.append(Paragraph(block["title"], styles['Heading2']))
-                
-                if "headers" in block["data"] and "rows" in block["data"]:
-                    table_data = [block["data"]["headers"]] + block["data"]["rows"]
-                    table = Table(table_data)
-                    table.setStyle(TableStyle([
-                        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
-                        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-                        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-                        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                        ('FONTSIZE', (0, 0), (-1, 0), 14),
-                        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-                        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
-                        ('GRID', (0, 0), (-1, -1), 1, colors.black)
-                    ]))
-                    story.append(table)
-                    story.append(Spacer(1, 12))
-            
-            elif block["type"] == "kpi_summary":
-                if block.get("title"):
-                    story.append(Paragraph(block["title"], styles['Heading2']))
-                
-                kpi_data = block["data"]
-                kpi_text = f"Value: {kpi_data.get('formatted_value', kpi_data.get('value', 'N/A'))}"
-                if kpi_data.get("change_percent"):
-                    kpi_text += f" ({kpi_data['change_percent']:+.1f}%)"
-                
-                story.append(Paragraph(kpi_text, styles['Normal']))
-                story.append(Spacer(1, 12))
+                    if Paragraph and Spacer:
+                        story.append(Paragraph(kpi_text, styles['Normal']))
+                        story.append(Spacer(1, 12))
         
         # Build PDF
         doc.build(story)
@@ -418,17 +482,26 @@ class ReportGenerationService:
             # Content sheets
             sheet_num = 1
             for block in content_data:
-                if block["type"] == "table" and "headers" in block["data"]:
-                    df = pd.DataFrame(block["data"]["rows"], columns=block["data"]["headers"])
-                    sheet_name = block.get("title", f"Data_{sheet_num}")[:31]  # Excel sheet name limit
-                    df.to_excel(writer, sheet_name=sheet_name, index=False)
-                    sheet_num += 1
+                block_data = block.get("data", {})
+                if block.get("type") == "table" and isinstance(block_data, dict) and "headers" in block_data and "rows" in block_data:
+                    try:
+                        df = pd.DataFrame(block_data["rows"], columns=block_data["headers"])
+                        sheet_name = block.get("title", f"Data_{sheet_num}")[:31]  # Excel sheet name limit
+                        df.to_excel(writer, sheet_name=sheet_name, index=False)
+                        sheet_num += 1
+                    except Exception:
+                        # Skip tables that can't be processed
+                        continue
                 
-                elif block["type"] == "kpi_summary":
-                    kpi_df = pd.DataFrame([block["data"]])
-                    sheet_name = block.get("title", f"KPI_{sheet_num}")[:31]
-                    kpi_df.to_excel(writer, sheet_name=sheet_name, index=False)
-                    sheet_num += 1
+                elif block.get("type") == "kpi_summary" and isinstance(block_data, dict):
+                    try:
+                        kpi_df = pd.DataFrame([block_data])
+                        sheet_name = block.get("title", f"KPI_{sheet_num}")[:31]
+                        kpi_df.to_excel(writer, sheet_name=sheet_name, index=False)
+                        sheet_num += 1
+                    except Exception:
+                        # Skip KPIs that can't be processed
+                        continue
         
         return file_path
 
@@ -571,17 +644,30 @@ class ReportGenerationService:
         
         # Create report definition from dashboard
         content_blocks = []
-        for widget in dashboard.widgets:
-            content_blocks.append(ReportContentBlock(
-                title=widget.title,
-                block_type="chart" if widget.widget_type in ["line_chart", "bar_chart", "pie_chart"] else "table",
-                data_source=schemas.WidgetDataSourceConfig(**widget.data_source_config),
-                display_options=widget.display_options
-            ))
+        dashboard_widgets = getattr(dashboard, 'widgets', [])  # type: ignore
+        for widget in dashboard_widgets:
+            widget_title = getattr(widget, 'title', 'Untitled Widget')  # type: ignore
+            widget_type = getattr(widget, 'widget_type', 'table')  # type: ignore
+            data_source_config = getattr(widget, 'data_source_config', {})  # type: ignore
+            display_options = getattr(widget, 'display_options', {})  # type: ignore
+            
+            try:
+                content_blocks.append(ReportContentBlock(
+                    title=widget_title,
+                    block_type="chart" if widget_type in ["line_chart", "bar_chart", "pie_chart"] else "table",
+                    data_source=schemas.WidgetDataSourceConfig(**data_source_config) if data_source_config else None,
+                    display_options=display_options
+                ))
+            except Exception:
+                # Skip widgets that can't be processed
+                continue
+        
+        dashboard_name = getattr(dashboard, 'name', 'Untitled Dashboard')  # type: ignore
+        dashboard_description = getattr(dashboard, 'description', None)  # type: ignore
         
         report_def = ReportDefinition(
-            name=f"Dashboard Export: {dashboard.name}",
-            description=dashboard.description,
+            name=f"Dashboard Export: {dashboard_name}",
+            description=dashboard_description,
             content_blocks=content_blocks,
             output_format=export_format
         )

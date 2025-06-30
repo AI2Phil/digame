@@ -69,19 +69,15 @@ class GuestAnalyticsService:
         
         # Total registrations in timeframe
         total_registrations = self.db.query(User).filter(
-            and_(
-                User.created_at >= start_date,
-                User.created_at <= end_date
-            )
+            User.created_at >= start_date,
+            User.created_at <= end_date
         ).count()
         
         # Guest vs full user registrations
         guest_registrations = self.db.query(User).filter(
-            and_(
-                User.created_at >= start_date,
-                User.created_at <= end_date,
-                User.is_guest == True
-            )
+            User.created_at >= start_date,
+            User.created_at <= end_date,
+            User.is_guest == True
         ).count()
         
         full_registrations = total_registrations - guest_registrations
@@ -89,10 +85,8 @@ class GuestAnalyticsService:
         # Daily registration breakdown
         daily_registrations = self._get_daily_breakdown(
             self.db.query(User).filter(
-                and_(
-                    User.created_at >= start_date,
-                    User.created_at <= end_date
-                )
+                User.created_at >= start_date,
+                User.created_at <= end_date
             ),
             start_date,
             end_date,
@@ -101,11 +95,9 @@ class GuestAnalyticsService:
         
         # Email verification rates
         verified_users = self.db.query(User).filter(
-            and_(
-                User.created_at >= start_date,
-                User.created_at <= end_date,
-                User.email_verified == True
-            )
+            User.created_at >= start_date,
+            User.created_at <= end_date,
+            User.email_verified == True
         ).count()
         
         verification_rate = (verified_users / total_registrations * 100) if total_registrations > 0 else 0
@@ -125,39 +117,31 @@ class GuestAnalyticsService:
         
         # Get all guests in timeframe
         guests = self.db.query(User).filter(
-            and_(
-                User.created_at >= start_date,
-                User.created_at <= end_date,
-                User.is_guest == True
-            )
+            User.created_at >= start_date,
+            User.created_at <= end_date,
+            User.is_guest == True
         ).all()
         
         # Funnel stages
         total_guests = len(guests)
         email_verified = len([g for g in guests if g.email_verified])
         onboarding_started = self.db.query(GuestOnboardingProgress).join(User).filter(
-            and_(
-                User.created_at >= start_date,
-                User.created_at <= end_date,
-                User.is_guest == True
-            )
+            User.created_at >= start_date,
+            User.created_at <= end_date,
+            User.is_guest == True
         ).count()
         
         onboarding_completed = self.db.query(GuestOnboardingProgress).join(User).filter(
-            and_(
-                User.created_at >= start_date,
-                User.created_at <= end_date,
-                User.is_guest == True,
-                GuestOnboardingProgress.completion_percentage >= 100
-            )
+            User.created_at >= start_date,
+            User.created_at <= end_date,
+            User.is_guest == True,
+            GuestOnboardingProgress.completion_percentage >= 100
         ).count()
         
         upgraded_users = self.db.query(User).filter(
-            and_(
-                User.created_at >= start_date,
-                User.created_at <= end_date,
-                User.upgraded_from_guest == True
-            )
+            User.created_at >= start_date,
+            User.created_at <= end_date,
+            User.upgraded_from_guest == True
         ).count()
         
         # Calculate conversion rates
@@ -205,18 +189,14 @@ class GuestAnalyticsService:
         
         # Active users (users with onboarding progress updates)
         active_users = self.db.query(GuestOnboardingProgress).filter(
-            and_(
-                GuestOnboardingProgress.last_activity_at >= start_date,
-                GuestOnboardingProgress.last_activity_at <= end_date
-            )
+            GuestOnboardingProgress.last_activity_at >= start_date,
+            GuestOnboardingProgress.last_activity_at <= end_date
         ).count()
         
         # Session duration analysis (estimated from onboarding progress)
         progress_records = self.db.query(GuestOnboardingProgress).filter(
-            and_(
-                GuestOnboardingProgress.last_activity_at >= start_date,
-                GuestOnboardingProgress.last_activity_at <= end_date
-            )
+            GuestOnboardingProgress.last_activity_at >= start_date,
+            GuestOnboardingProgress.last_activity_at <= end_date
         ).all()
         
         session_durations = []
@@ -246,10 +226,8 @@ class GuestAnalyticsService:
         """Analyze onboarding flow performance"""
         
         onboarding_records = self.db.query(GuestOnboardingProgress).filter(
-            and_(
-                GuestOnboardingProgress.started_at >= start_date,
-                GuestOnboardingProgress.started_at <= end_date
-            )
+            GuestOnboardingProgress.started_at >= start_date,
+            GuestOnboardingProgress.started_at <= end_date
         ).all()
         
         if not onboarding_records:
@@ -308,10 +286,8 @@ class GuestAnalyticsService:
         
         # Profile completeness distribution
         profiles = self.db.query(DigitalTwinProfile).join(User).filter(
-            and_(
-                User.created_at >= start_date,
-                User.created_at <= end_date
-            )
+            User.created_at >= start_date,
+            User.created_at <= end_date
         ).all()
         
         completeness_distribution = defaultdict(int)
@@ -346,12 +322,10 @@ class GuestAnalyticsService:
         # Check how many returned during the timeframe
         returning_user_ids = set()
         for progress in self.db.query(GuestOnboardingProgress).filter(
-            and_(
-                GuestOnboardingProgress.last_activity_at >= start_date,
-                GuestOnboardingProgress.last_activity_at <= end_date
-            )
+            GuestOnboardingProgress.last_activity_at >= start_date,
+            GuestOnboardingProgress.last_activity_at <= end_date
         ).all():
-            returning_user_ids.add(progress.user_id)
+            returning_user_ids.add(getattr(progress, 'user_id', None))
         
         returned_users = len([u for u in earlier_users if u.id in returning_user_ids])
         
@@ -374,10 +348,8 @@ class GuestAnalyticsService:
         activity_by_day = defaultdict(int)
         
         activities = self.db.query(GuestOnboardingProgress).filter(
-            and_(
-                GuestOnboardingProgress.last_activity_at >= start_date,
-                GuestOnboardingProgress.last_activity_at <= end_date
-            )
+            GuestOnboardingProgress.last_activity_at >= start_date,
+            GuestOnboardingProgress.last_activity_at <= end_date
         ).all()
         
         for activity in activities:
@@ -459,11 +431,9 @@ class GuestAnalyticsService:
                     week_end = check_date + timedelta(days=7)
                     
                     activity = self.db.query(GuestOnboardingProgress).filter(
-                        and_(
-                            GuestOnboardingProgress.user_id == user.id,
-                            GuestOnboardingProgress.last_activity_at >= week_start,
-                            GuestOnboardingProgress.last_activity_at <= week_end
-                        )
+                        GuestOnboardingProgress.user_id == getattr(user, 'id', None),
+                        GuestOnboardingProgress.last_activity_at >= week_start,
+                        GuestOnboardingProgress.last_activity_at <= week_end
                     ).first()
                     
                     if activity:
@@ -488,10 +458,8 @@ class GuestAnalyticsService:
         
         # Customer Acquisition Cost (estimated)
         total_users = self.db.query(User).filter(
-            and_(
-                User.created_at >= start_date,
-                User.created_at <= end_date
-            )
+            User.created_at >= start_date,
+            User.created_at <= end_date
         ).count()
         
         # Lifetime Value (estimated based on engagement)
@@ -548,10 +516,8 @@ class GuestAnalyticsService:
         previous_start = start_date - timedelta(days=period_length)
         
         previous_count = self.db.query(User).filter(
-            and_(
-                User.created_at >= previous_start,
-                User.created_at < start_date
-            )
+            User.created_at >= previous_start,
+            User.created_at < start_date
         ).count()
         
         if previous_count == 0:
@@ -613,10 +579,8 @@ class GuestAnalyticsService:
             day_end = datetime.combine(current_date, datetime.max.time())
             
             active_count = self.db.query(GuestOnboardingProgress).filter(
-                and_(
-                    GuestOnboardingProgress.last_activity_at >= day_start,
-                    GuestOnboardingProgress.last_activity_at <= day_end
-                )
+                GuestOnboardingProgress.last_activity_at >= day_start,
+                GuestOnboardingProgress.last_activity_at <= day_end
             ).count()
             
             daily_active.append({
@@ -817,10 +781,8 @@ class GuestAnalyticsService:
     def _calculate_average_engagement(self, start_date: datetime, end_date: datetime) -> float:
         """Calculate average engagement score"""
         progress_records = self.db.query(GuestOnboardingProgress).filter(
-            and_(
-                GuestOnboardingProgress.last_activity_at >= start_date,
-                GuestOnboardingProgress.last_activity_at <= end_date
-            )
+            GuestOnboardingProgress.last_activity_at >= start_date,
+            GuestOnboardingProgress.last_activity_at <= end_date
         ).all()
         
         if not progress_records:
@@ -832,11 +794,9 @@ class GuestAnalyticsService:
     def _calculate_time_to_value(self, start_date: datetime, end_date: datetime) -> float:
         """Calculate average time to value (completion)"""
         completed_records = self.db.query(GuestOnboardingProgress).filter(
-            and_(
-                GuestOnboardingProgress.completed_at >= start_date,
-                GuestOnboardingProgress.completed_at <= end_date,
-                GuestOnboardingProgress.completion_percentage >= 100
-            )
+            GuestOnboardingProgress.completed_at >= start_date,
+            GuestOnboardingProgress.completed_at <= end_date,
+            GuestOnboardingProgress.completion_percentage >= 100
         ).all()
         
         if not completed_records:
@@ -859,19 +819,15 @@ class GuestAnalyticsService:
     def _calculate_overall_conversion_rate(self, start_date: datetime, end_date: datetime) -> float:
         """Calculate overall conversion rate"""
         total_users = self.db.query(User).filter(
-            and_(
-                User.created_at >= start_date,
-                User.created_at <= end_date,
-                User.is_guest == True
-            )
+            User.created_at >= start_date,
+            User.created_at <= end_date,
+            User.is_guest == True
         ).count()
         
         converted_users = self.db.query(User).filter(
-            and_(
-                User.created_at >= start_date,
-                User.created_at <= end_date,
-                User.upgraded_from_guest == True
-            )
+            User.created_at >= start_date,
+            User.created_at <= end_date,
+            User.upgraded_from_guest == True
         ).count()
         
         return (converted_users / total_users * 100) if total_users > 0 else 0.0

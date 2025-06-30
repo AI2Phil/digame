@@ -45,7 +45,10 @@ def generate_pattern_heatmap(
         return {"error": "No behavioral model found for user"}
     
     # Get patterns for the model
-    patterns = get_patterns_for_model(db, model.id)
+    model_id = getattr(model, 'id', None)  # type: ignore
+    if not model_id:
+        return {"error": "Invalid model ID"}
+    patterns = get_patterns_for_model(db, model_id)
     if not patterns:
         return {"error": "No patterns found for model"}
     
@@ -66,7 +69,8 @@ def generate_pattern_heatmap(
     
     # Process patterns
     for pattern in patterns:
-        if not pattern.temporal_distribution:
+        temporal_distribution = getattr(pattern, 'temporal_distribution', None)  # type: ignore
+        if not temporal_distribution:
             continue
         
         # Get pattern category
@@ -75,8 +79,8 @@ def generate_pattern_heatmap(
             category_matrices[category] = np.zeros((7, 24))
         
         # Extract hour and day distributions
-        hour_dist = pattern.temporal_distribution.get("hour_of_day", {})
-        day_dist = pattern.temporal_distribution.get("day_of_week", {})
+        hour_dist = temporal_distribution.get("hour_of_day", {})
+        day_dist = temporal_distribution.get("day_of_week", {})
         
         # Calculate the total count for normalization
         total_hours = sum(int(count) for count in hour_dist.values())
@@ -95,7 +99,8 @@ def generate_pattern_heatmap(
             for hour_idx, hour in enumerate(range(24)):  # 0-23 for hours
                 hour_prob = hour_probs.get(hour, 0)
                 # Joint probability (assuming independence)
-                joint_prob = day_prob * hour_prob * pattern.size
+                pattern_size = getattr(pattern, 'size', 1)  # type: ignore
+                joint_prob = day_prob * hour_prob * pattern_size
                 activity_matrix[day_idx, hour_idx] += joint_prob
                 category_matrices[category][day_idx, hour_idx] += joint_prob
     
@@ -108,11 +113,17 @@ def generate_pattern_heatmap(
         for hour_idx, hour in enumerate(hours):
             if not isinstance(heatmap_data["data"], list):
                 heatmap_data["data"] = []
+            
+            # Safe numpy array access
+            try:
+                matrix_value = float(activity_matrix[day_idx, hour_idx])  # type: ignore
+            except (IndexError, TypeError):
+                matrix_value = 0.0
                 
-            heatmap_data["data"].append({
+            heatmap_data["data"].append({  # type: ignore
                 "day": day,
                 "hour": hour,
-                "value": float(activity_matrix[day_idx, hour_idx])
+                "value": matrix_value
             })
     
     # Process category matrices
@@ -123,16 +134,23 @@ def generate_pattern_heatmap(
         category_data = []
         for day_idx, day in enumerate(days):
             for hour_idx, hour in enumerate(hours):
+                # Safe numpy array access
+                try:
+                    matrix_value = float(matrix[day_idx, hour_idx])  # type: ignore
+                except (IndexError, TypeError):
+                    matrix_value = 0.0
+                    
                 category_data.append({
                     "day": day,
                     "hour": hour,
-                    "value": float(matrix[day_idx, hour_idx])
+                    "value": matrix_value
                 })
         
         if "categories" not in heatmap_data:
             heatmap_data["categories"] = {}
             
-        heatmap_data["categories"][category] = category_data
+        if isinstance(heatmap_data["categories"], dict):
+            heatmap_data["categories"][category] = category_data  # type: ignore
     
     return heatmap_data
 
@@ -170,7 +188,10 @@ def generate_pattern_sankey(
         return {"error": "No behavioral model found for user"}
     
     # Get patterns for the model
-    patterns = get_patterns_for_model(db, model.id)
+    model_id = getattr(model, 'id', None)  # type: ignore
+    if not model_id:
+        return {"error": "Invalid model ID"}
+    patterns = get_patterns_for_model(db, model_id)
     if not patterns:
         return {"error": "No patterns found for model"}
     
@@ -189,11 +210,14 @@ def generate_pattern_sankey(
     # Get pattern assignments for activities
     activity_patterns = {}
     for pattern in patterns:
-        if not pattern.representative_activities:
+        representative_activities = getattr(pattern, 'representative_activities', None)  # type: ignore
+        if not representative_activities:
             continue
         
-        for activity_id in pattern.representative_activities:
-            activity_patterns[activity_id] = pattern.id
+        pattern_id = getattr(pattern, 'id', None)  # type: ignore
+        if pattern_id:
+            for activity_id in representative_activities:
+                activity_patterns[activity_id] = pattern_id
     
     # Count transitions between patterns
     transitions = {}
@@ -201,10 +225,11 @@ def generate_pattern_sankey(
     
     prev_pattern_id = None
     for activity in activities:
-        if activity.id not in activity_patterns:
+        activity_id = getattr(activity, 'id', None)  # type: ignore
+        if not activity_id or activity_id not in activity_patterns:
             continue
         
-        pattern_id = activity_patterns[activity.id]
+        pattern_id = activity_patterns[activity_id]
         
         # Count pattern occurrences
         if pattern_id not in pattern_counts:
@@ -229,13 +254,14 @@ def generate_pattern_sankey(
     
     # Add nodes
     for i, pattern in enumerate(patterns):
-        if pattern.id in pattern_counts:
-            pattern_to_index[pattern.id] = i
+        pattern_id = getattr(pattern, 'id', None)  # type: ignore
+        if pattern_id and pattern_id in pattern_counts:
+            pattern_to_index[pattern_id] = i
             nodes.append({
-                "id": pattern.id,
+                "id": pattern_id,
                 "name": generate_pattern_label(pattern),
                 "category": categorize_pattern(pattern),
-                "count": pattern_counts.get(pattern.id, 0)
+                "count": pattern_counts.get(pattern_id, 0)
             })
     
     # Add links
@@ -285,21 +311,31 @@ def generate_pattern_radar(
         return {"error": "No behavioral model found for user"}
     
     # Get patterns for the model
-    patterns = get_patterns_for_model(db, model.id)
+    model_id = getattr(model, 'id', None)  # type: ignore
+    if not model_id:
+        return {"error": "Invalid model ID"}
+    patterns = get_patterns_for_model(db, model_id)
     if not patterns:
         return {"error": "No patterns found for model"}
     
     # Count patterns by category
-    category_counts = {}
+    category_counts: Dict[str, int] = {}
     total_size = 0
     
     for pattern in patterns:
-        category = categorize_pattern(pattern)
-        if category not in category_counts:
-            category_counts[category] = 0
-        
-        category_counts[category] += pattern.size
-        total_size += pattern.size
+        try:
+            category = categorize_pattern(pattern)
+            if category and isinstance(category, str):
+                if category not in category_counts:
+                    category_counts[category] = 0
+                
+                pattern_size = getattr(pattern, 'size', 0)  # type: ignore
+                if isinstance(pattern_size, (int, float)):
+                    category_counts[category] += int(pattern_size)
+                    total_size += int(pattern_size)
+        except Exception:
+            # Skip patterns that can't be categorized
+            continue
     
     # Calculate percentages
     categories = []
@@ -348,7 +384,10 @@ def generate_pattern_timeline(
         return {"error": "No behavioral model found for user"}
     
     # Get patterns for the model
-    patterns = get_patterns_for_model(db, model.id)
+    model_id = getattr(model, 'id', None)  # type: ignore
+    if not model_id:
+        return {"error": "Invalid model ID"}
+    patterns = get_patterns_for_model(db, model_id)
     if not patterns:
         return {"error": "No patterns found for model"}
     
@@ -370,25 +409,32 @@ def generate_pattern_timeline(
     pattern_info = {}
     
     for pattern in patterns:
-        if not pattern.representative_activities:
+        representative_activities = getattr(pattern, 'representative_activities', None)  # type: ignore
+        if not representative_activities:
             continue
         
-        pattern_info[pattern.id] = {
-            "id": pattern.id,
-            "label": generate_pattern_label(pattern),
-            "category": categorize_pattern(pattern)
-        }
-        
-        for activity_id in pattern.representative_activities:
-            activity_patterns[activity_id] = pattern.id
+        pattern_id = getattr(pattern, 'id', None)  # type: ignore
+        if pattern_id:
+            pattern_info[pattern_id] = {
+                "id": pattern_id,
+                "label": generate_pattern_label(pattern),
+                "category": categorize_pattern(pattern)
+            }
+            
+            for activity_id in representative_activities:
+                activity_patterns[activity_id] = pattern_id
     
     # Group activities by day and hour
     timeline_data = {}
     
     for activity in activities:
         # Format date as YYYY-MM-DD
-        date_str = activity.timestamp.strftime("%Y-%m-%d")
-        hour = activity.timestamp.hour
+        activity_timestamp = getattr(activity, 'timestamp', None)  # type: ignore
+        if not activity_timestamp:
+            continue
+            
+        date_str = activity_timestamp.strftime("%Y-%m-%d")
+        hour = activity_timestamp.hour
         
         if date_str not in timeline_data:
             timeline_data[date_str] = {hour: {} for hour in range(24)}
@@ -396,7 +442,8 @@ def generate_pattern_timeline(
         if hour not in timeline_data[date_str]:
             timeline_data[date_str][hour] = {}
         
-        pattern_id = activity_patterns.get(activity.id)
+        activity_id = getattr(activity, 'id', None)  # type: ignore
+        pattern_id = activity_patterns.get(activity_id) if activity_id else None
         if pattern_id:
             pattern_key = str(pattern_id)
             if pattern_key not in timeline_data[date_str][hour]:
@@ -415,17 +462,22 @@ def generate_pattern_timeline(
         for hour in result["hours"]:
             hour_data = timeline_data[date].get(hour, {})
             for pattern_id, count in hour_data.items():
-                if pattern_id in pattern_info:
-                    if "data" not in result:
-                        result["data"] = []
+                try:
+                    pattern_id_int = int(pattern_id)
+                    if pattern_id_int in pattern_info:
+                        if "data" not in result:
+                            result["data"] = []
                         
-                    result["data"].append({
-                        "date": date,
-                        "hour": hour,
-                        "pattern_id": int(pattern_id),
-                        "pattern_label": pattern_info[int(pattern_id)]["label"],
-                        "pattern_category": pattern_info[int(pattern_id)]["category"],
-                        "count": count
-                    })
+                        if isinstance(result["data"], list):
+                            result["data"].append({  # type: ignore
+                                "date": date,
+                                "hour": hour,
+                                "pattern_id": pattern_id_int,
+                                "pattern_label": pattern_info[pattern_id_int]["label"],
+                                "pattern_category": pattern_info[pattern_id_int]["category"],
+                                "count": count
+                            })
+                except (ValueError, KeyError):
+                    continue
     
     return result

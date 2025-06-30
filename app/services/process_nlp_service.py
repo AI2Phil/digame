@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 class ProcessNLPService:
     def __init__(self, ai_integration_service: AIIntegrationService):
         self.ai_integration_service = ai_integration_service
-        self.openai_api_url = settings.OPENAI_API_BASE_URL # e.g., "https://api.openai.com/v1"
+        self.openai_api_url = getattr(settings, 'OPENAI_API_BASE_URL', "https://api.openai.com/v1")  # type: ignore
 
     async def generate_enhanced_task_name(self, description: str, user_api_key: str) -> str:
         """
@@ -32,7 +32,7 @@ class ProcessNLPService:
         )
 
         payload = {
-            "model": settings.OPENAI_MODEL_NAME, # e.g., "gpt-3.5-turbo"
+            "model": getattr(settings, 'OPENAI_MODEL_NAME', "gpt-3.5-turbo"),  # type: ignore
             "messages": [
                 {"role": "system", "content": "You are an expert in understanding user workflows and naming processes concisely."},
                 {"role": "user", "content": prompt}
@@ -49,7 +49,11 @@ class ProcessNLPService:
                 method="POST",
                 payload=payload
             )
-            enhanced_name = response.get("choices", [{}])[0].get("message", {}).get("content", "").strip()
+            # Safe nested dictionary access for OpenAI response
+            choices = response.get("choices", []) if response else []
+            first_choice = choices[0] if choices else {}
+            message = first_choice.get("message", {}) if first_choice else {}
+            enhanced_name = message.get("content", "").strip() if message else ""
             if enhanced_name:
                 # Basic cleaning: remove quotes if AI wraps output in quotes
                 if enhanced_name.startswith('"') and enhanced_name.endswith('"'):
@@ -82,7 +86,7 @@ class ProcessNLPService:
         )
 
         payload = {
-            "model": settings.OPENAI_MODEL_NAME,
+            "model": getattr(settings, 'OPENAI_MODEL_NAME', "gpt-3.5-turbo"),  # type: ignore
             "messages": [
                 {"role": "system", "content": "You are an expert in keyword extraction and process categorization."},
                 {"role": "user", "content": prompt}
@@ -100,7 +104,11 @@ class ProcessNLPService:
                 method="POST",
                 payload=payload
             )
-            raw_suggestions = response.get("choices", [{}])[0].get("message", {}).get("content", "").strip()
+            # Safe nested dictionary access for OpenAI response
+            choices = response.get("choices", []) if response else []
+            first_choice = choices[0] if choices else {}
+            message = first_choice.get("message", {}) if first_choice else {}
+            raw_suggestions = message.get("content", "").strip() if message else ""
             if raw_suggestions:
                 # Process comma-separated string into a list of clean tags
                 suggested_tags = [tag.strip().lower() for tag in raw_suggestions.split(',') if tag.strip()]
@@ -135,7 +143,7 @@ class ProcessNLPService:
             f"Return the keywords as a comma-separated list. Focus on terms that best describe the process steps and goals."
         )
         payload = {
-            "model": settings.OPENAI_MODEL_NAME,
+            "model": getattr(settings, 'OPENAI_MODEL_NAME', "gpt-3.5-turbo"),  # type: ignore
             "messages": [
                 {"role": "system", "content": "You are an expert in information extraction and identifying key terms in text."},
                 {"role": "user", "content": prompt}
@@ -152,7 +160,11 @@ class ProcessNLPService:
                 method="POST",
                 payload=payload
             )
-            raw_keywords = response.get("choices", [{}])[0].get("message", {}).get("content", "").strip()
+            # Safe nested dictionary access for OpenAI response
+            choices = response.get("choices", []) if response else []
+            first_choice = choices[0] if choices else {}
+            message = first_choice.get("message", {}) if first_choice else {}
+            raw_keywords = message.get("content", "").strip() if message else ""
             if raw_keywords:
                 keywords = [kw.strip().lower() for kw in raw_keywords.split(',') if kw.strip()]
                 keywords = [kw for kw in keywords if kw]
@@ -181,14 +193,15 @@ class ProcessNLPService:
 # Alternatively, pass these as __init__ params if preferred.
 # For now, I will add placeholder values if settings cannot be imported.
 
+# Safe import handling for settings
 try:
     from app.config import settings
 except ImportError:
-    logger.warning("Could not import 'settings' from 'digame.app.config'. Using placeholder values for OpenAI URL and model.")
+    logger.warning("Could not import 'settings' from 'app.config'. Using placeholder values for OpenAI URL and model.")
     class PlaceholderSettings:
         OPENAI_API_BASE_URL: str = "https://api.openai.com/v1"
         OPENAI_MODEL_NAME: str = "gpt-3.5-turbo" # Or another default model
-    settings = PlaceholderSettings()
+    settings = PlaceholderSettings()  # type: ignore
 
 logger.info(f"ProcessNLPService initialized. OpenAI Base URL: {settings.OPENAI_API_BASE_URL}, Model: {settings.OPENAI_MODEL_NAME}")
 

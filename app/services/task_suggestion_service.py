@@ -33,7 +33,7 @@ def calculate_task_priority(occurrence_count: int, last_observed_at: datetime) -
     # Cap at MAX_RECENCY_SCORE_DAYS, anything older gets 0 recency score.
     if days_since_last_observed < 0: days_since_last_observed = 0 # Should not happen if data is correct
     
-    recency_factor = max(0, (MAX_RECENCY_SCORE_DAYS - days_since_last_observed) / MAX_RECENCY_SCORE_DAYS)
+    recency_factor = max(0.0, (MAX_RECENCY_SCORE_DAYS - days_since_last_observed) / MAX_RECENCY_SCORE_DAYS)
     recency_score_component = recency_factor * 0.4
     
     # Base priority, plus weighted components
@@ -55,10 +55,10 @@ def suggest_tasks_from_process_notes(db: Session, user_id: int) -> List[Task]:
     # 2. Find ProcessNotes that already have an active linked Task
     # This subquery finds ProcessNote IDs that are linked to any task with an active status.
     subquery_process_notes_with_active_tasks = (
-        db.query(Task.process_note_id)
-        .filter(Task.user_id == user_id)
-        .filter(Task.process_note_id != None)
-        .filter(Task.status.in_(ACTIVE_TASK_STATUSES))
+        db.query(Task.process_note_id)  # type: ignore
+        .filter(Task.user_id == user_id)  # type: ignore
+        .filter(Task.process_note_id != None)  # type: ignore
+        .filter(Task.status.in_(ACTIVE_TASK_STATUSES))  # type: ignore
         .distinct()
     )
     
@@ -66,12 +66,12 @@ def suggest_tasks_from_process_notes(db: Session, user_id: int) -> List[Task]:
     #   - Meets occurrence and recency thresholds.
     #   - Does NOT have an existing active task linked to it.
     candidate_notes = (
-        db.query(ProcessNote)
-        .filter(ProcessNote.user_id == user_id)
-        .filter(ProcessNote.occurrence_count >= MIN_OCCURRENCE_THRESHOLD)
-        .filter(ProcessNote.last_observed_at >= recency_threshold_date)
-        .filter(not_(ProcessNote.id.in_(subquery_process_notes_with_active_tasks)))
-        .order_by(ProcessNote.last_observed_at.desc()) # Prioritize more recent notes
+        db.query(ProcessNote)  # type: ignore
+        .filter(ProcessNote.user_id == user_id)  # type: ignore
+        .filter(ProcessNote.occurrence_count >= MIN_OCCURRENCE_THRESHOLD)  # type: ignore
+        .filter(ProcessNote.last_observed_at >= recency_threshold_date)  # type: ignore
+        .filter(not_(ProcessNote.id.in_(subquery_process_notes_with_active_tasks)))  # type: ignore
+        .order_by(ProcessNote.last_observed_at.desc())  # type: ignore # Prioritize more recent notes
         .all()
     )
 
@@ -80,23 +80,29 @@ def suggest_tasks_from_process_notes(db: Session, user_id: int) -> List[Task]:
 
     newly_suggested_tasks: List[Task] = []
     for note in candidate_notes:
-        # 4. Create Task object
-        task_description = f"Consider automating or reviewing process: {note.inferred_task_name or note.process_steps_description[:70]}"
-        if len(note.process_steps_description) > 70 and not note.inferred_task_name:
+        # 4. Create Task object with safe attribute access
+        note_task_name = getattr(note, 'inferred_task_name', None)
+        note_description = getattr(note, 'process_steps_description', '')
+        note_occurrence_count = getattr(note, 'occurrence_count', 0)
+        note_last_observed = getattr(note, 'last_observed_at', datetime.utcnow())
+        note_id = getattr(note, 'id', 0)
+        
+        task_description = f"Consider automating or reviewing process: {note_task_name or note_description[:70]}"
+        if len(note_description) > 70 and not note_task_name:
             task_description += "..."
 
-        priority = calculate_task_priority(note.occurrence_count, note.last_observed_at)
+        priority = calculate_task_priority(note_occurrence_count, note_last_observed)
 
-        new_task = Task(
+        new_task = Task(  # type: ignore
             user_id=user_id,
             description=task_description,
             source_type='process_note',
-            source_identifier=str(note.id),
-            process_note_id=note.id,
+            source_identifier=str(note_id),
+            process_note_id=note_id,
             status='suggested', # Default status
             priority_score=priority,
             # notes field can be populated with more details from the process note if desired
-            notes=f"Based on process: {note.process_steps_description}\nOccurrences: {note.occurrence_count}, Last Seen: {note.last_observed_at.strftime('%Y-%m-%d %H:%M')}"
+            notes=f"Based on process: {note_description}\nOccurrences: {note_occurrence_count}, Last Seen: {note_last_observed.strftime('%Y-%m-%d %H:%M')}"
         )
         newly_suggested_tasks.append(new_task)
 

@@ -146,12 +146,10 @@ class CareerPathModelingService:
         
         # Query industry benchmarks
         benchmarks = self.db.query(IndustryBenchmark).filter(
-            and_(
-                IndustryBenchmark.industry == industry,
-                IndustryBenchmark.metric_type == "financial",
-                IndustryBenchmark.metric_name.like(f"%salary%"),
-                IndustryBenchmark.status == "active"
-            )
+            IndustryBenchmark.industry == industry,
+            IndustryBenchmark.metric_type == "financial",
+            IndustryBenchmark.metric_name.like(f"%salary%"),
+            IndustryBenchmark.status == "active"
         ).all()
         
         # Simulate job market data (in real implementation, use job board APIs)
@@ -218,14 +216,14 @@ class CareerPathModelingService:
                 )
                 
                 # Calculate skill premium based on demand
-                demand_score = demand_forecast.demand_score
+                demand_score = getattr(demand_forecast, 'demand_score', 0.5)
                 skill_premium = self._calculate_skill_premium(demand_score, skill, industry)
                 
                 skill_analysis[skill] = {
                     "demand_score": demand_score,
-                    "demand_trend": demand_forecast.demand_trend,
+                    "demand_trend": getattr(demand_forecast, 'demand_trend', 'stable'),
                     "salary_premium_percent": skill_premium,
-                    "market_confidence": demand_forecast.confidence,
+                    "market_confidence": getattr(demand_forecast, 'confidence', 0.5),
                     "growth_potential": self._assess_skill_growth_potential(demand_forecast)
                 }
                 
@@ -262,11 +260,9 @@ class CareerPathModelingService:
         
         # Query market trends for the industry
         trends = self.db.query(MarketTrend).filter(
-            and_(
-                MarketTrend.industry == industry,
-                MarketTrend.status == "active",
-                MarketTrend.period_end >= datetime.utcnow() - timedelta(days=365)
-            )
+            MarketTrend.industry == industry,
+            MarketTrend.status == "active",
+            MarketTrend.period_end >= datetime.utcnow() - timedelta(days=365)
         ).order_by(desc(MarketTrend.confidence_score)).all()
         
         if not trends:
@@ -282,19 +278,23 @@ class CareerPathModelingService:
         salary_impact_factors = []
         
         for trend in trends:
-            if hasattr(trend, 'growth_rate') and trend.growth_rate:
-                growth_indicators.append(float(trend.growth_rate))
+            if hasattr(trend, 'growth_rate') and getattr(trend, 'growth_rate', None):
+                growth_indicators.append(float(getattr(trend, 'growth_rate', 0)))
             
             # Analyze trend impact on salaries
-            if trend.trend_type == "emerging" and trend.impact_level in ["high", "critical"]:
+            trend_type = getattr(trend, 'trend_type', 'stable')
+            impact_level = getattr(trend, 'impact_level', 'medium')
+            trend_name = getattr(trend, 'trend_name', 'Unknown trend')
+            
+            if trend_type == "emerging" and impact_level in ["high", "critical"]:
                 salary_impact_factors.append({
-                    "factor": trend.trend_name,
+                    "factor": trend_name,
                     "impact": "positive",
-                    "magnitude": 5.0 if trend.impact_level == "critical" else 3.0
+                    "magnitude": 5.0 if impact_level == "critical" else 3.0
                 })
-            elif trend.trend_type == "declining":
+            elif trend_type == "declining":
                 salary_impact_factors.append({
-                    "factor": trend.trend_name,
+                    "factor": trend_name,
                     "impact": "negative",
                     "magnitude": -2.0
                 })
@@ -303,15 +303,15 @@ class CareerPathModelingService:
         if growth_indicators:
             avg_growth = statistics.mean(growth_indicators)
             weighted_growth = sum(
-                float(trend.growth_rate) * float(trend.confidence_score) 
-                for trend in trends if trend.growth_rate
-            ) / sum(float(trend.confidence_score) for trend in trends if trend.growth_rate)
+                float(getattr(trend, 'growth_rate', 0)) * float(getattr(trend, 'confidence_score', 0.5))
+                for trend in trends if getattr(trend, 'growth_rate', None)
+            ) / sum(float(getattr(trend, 'confidence_score', 0.5)) for trend in trends if getattr(trend, 'growth_rate', None))
         else:
             avg_growth = weighted_growth = 3.0
         
         # Determine trend direction
-        positive_trends = len([t for t in trends if t.trend_type in ["emerging", "growing"]])
-        negative_trends = len([t for t in trends if t.trend_type == "declining"])
+        positive_trends = len([t for t in trends if getattr(t, 'trend_type', 'stable') in ["emerging", "growing"]])
+        negative_trends = len([t for t in trends if getattr(t, 'trend_type', 'stable') == "declining"])
         
         if positive_trends > negative_trends * 2:
             trend_direction = "growing"
@@ -323,14 +323,14 @@ class CareerPathModelingService:
         return {
             "growth_rate": weighted_growth,
             "trend_direction": trend_direction,
-            "confidence": statistics.mean([float(t.confidence_score) for t in trends]) if trends else 0.5,
+            "confidence": statistics.mean([float(getattr(t, 'confidence_score', 0.5)) for t in trends]) if trends else 0.5,
             "salary_impact_factors": salary_impact_factors,
             "key_trends": [
                 {
-                    "name": trend.trend_name,
-                    "type": trend.trend_type,
-                    "impact_level": trend.impact_level,
-                    "confidence": float(trend.confidence_score)
+                    "name": getattr(trend, 'trend_name', 'Unknown'),
+                    "type": getattr(trend, 'trend_type', 'stable'),
+                    "impact_level": getattr(trend, 'impact_level', 'medium'),
+                    "confidence": float(getattr(trend, 'confidence_score', 0.5))
                 }
                 for trend in trends[:5]  # Top 5 trends
             ]
@@ -596,11 +596,9 @@ class CareerPathModelingService:
         
         # Get latest market trends
         recent_trends = self.db.query(MarketTrend).filter(
-            and_(
-                MarketTrend.industry == industry,
-                MarketTrend.status == "active",
-                MarketTrend.created_at >= datetime.utcnow() - timedelta(days=30)
-            )
+            MarketTrend.industry == industry,
+            MarketTrend.status == "active",
+            MarketTrend.created_at >= datetime.utcnow() - timedelta(days=30)
         ).order_by(desc(MarketTrend.confidence_score)).all()
         
         # Analyze trend impact on careers
@@ -620,8 +618,8 @@ class CareerPathModelingService:
             "last_updated": datetime.utcnow().isoformat(),
             "trend_summary": {
                 "total_trends": len(recent_trends),
-                "emerging_trends": len([t for t in recent_trends if t.trend_type == "emerging"]),
-                "high_impact_trends": len([t for t in recent_trends if t.impact_level in ["high", "critical"]])
+                "emerging_trends": len([t for t in recent_trends if getattr(t, 'trend_type', 'stable') == "emerging"]),
+                "high_impact_trends": len([t for t in recent_trends if getattr(t, 'impact_level', 'medium') in ["high", "critical"]])
             },
             "career_impact_analysis": career_impact_analysis,
             "salary_trends": salary_trends,
@@ -640,11 +638,9 @@ class CareerPathModelingService:
         
         # Get active data sources for the industry
         data_sources = self.db.query(MarketDataSource).filter(
-            and_(
-                MarketDataSource.tenant_id == tenant_id,
-                MarketDataSource.is_active == True,
-                MarketDataSource.industries_covered.contains([industry])
-            )
+            MarketDataSource.tenant_id == tenant_id,
+            MarketDataSource.is_active == True,
+            MarketDataSource.industries_covered.contains([industry])
         ).all()
         
         for source in data_sources:
@@ -652,11 +648,12 @@ class CareerPathModelingService:
                 # Simulate data refresh (in real implementation, call actual APIs)
                 self._simulate_data_refresh(source, industry)
                 # Update source status
-                source.consecutive_failures = 0
+                setattr(source, 'consecutive_failures', 0)  # type: ignore
             except Exception as e:
-                source.consecutive_failures += 1
-                if source.consecutive_failures >= 5:
-                    source.is_active = False
+                current_failures = getattr(source, 'consecutive_failures', 0)
+                setattr(source, 'consecutive_failures', current_failures + 1)  # type: ignore
+                if getattr(source, 'consecutive_failures', 0) >= 5:
+                    setattr(source, 'is_active', False)  # type: ignore
         
         self.db.commit()
     
@@ -672,30 +669,35 @@ class CareerPathModelingService:
         
         for trend in trends:
             # Use the confidence score directly without conversion
-            confidence_val = trend.confidence_score if trend.confidence_score is not None else 0.0
+            confidence_val = getattr(trend, 'confidence_score', 0.0) if getattr(trend, 'confidence_score', None) is not None else 0.0
             impact_weight = self._get_trend_career_impact_weight(trend)
             impact_score = confidence_val * impact_weight
             
-            if trend.trend_type in ["emerging", "growing"] and trend.impact_level in ["high", "critical"]:
+            trend_type = getattr(trend, 'trend_type', 'stable')
+            impact_level = getattr(trend, 'impact_level', 'medium')
+            trend_name = getattr(trend, 'trend_name', 'Unknown trend')
+            category = getattr(trend, 'category', 'general')
+            
+            if trend_type in ["emerging", "growing"] and impact_level in ["high", "critical"]:
                 positive_impacts.append({
-                    "trend_name": trend.trend_name,
-                    "impact_description": f"Creates new opportunities in {trend.category}",
+                    "trend_name": trend_name,
+                    "impact_description": f"Creates new opportunities in {category}",
                     "confidence": confidence_val,
                     "timeline": "1-3 years"
                 })
                 positive_score += impact_score
-            elif trend.trend_type == "declining":
+            elif trend_type == "declining":
                 negative_impacts.append({
-                    "trend_name": trend.trend_name,
-                    "impact_description": f"May reduce opportunities in traditional {trend.category}",
+                    "trend_name": trend_name,
+                    "impact_description": f"May reduce opportunities in traditional {category}",
                     "confidence": confidence_val,
                     "timeline": "2-5 years"
                 })
                 negative_score += impact_score
             else:
                 neutral_impacts.append({
-                    "trend_name": trend.trend_name,
-                    "impact_description": f"Gradual changes in {trend.category}",
+                    "trend_name": trend_name,
+                    "impact_description": f"Gradual changes in {category}",
                     "confidence": confidence_val
                 })
         
@@ -791,11 +793,12 @@ class CareerPathModelingService:
     
     def _assess_skill_growth_potential(self, demand_forecast) -> str:
         """Assess growth potential of a skill"""
-        if demand_forecast.demand_trend in ["very_high_demand", "increasing"]:
+        demand_trend = getattr(demand_forecast, 'demand_trend', 'stable')
+        if demand_trend in ["very_high_demand", "increasing"]:
             return "high"
-        elif demand_forecast.demand_trend in ["high_demand", "emerging_positive"]:
+        elif demand_trend in ["high_demand", "emerging_positive"]:
             return "moderate"
-        elif demand_forecast.demand_trend in ["decreasing", "very_low_demand"]:
+        elif demand_trend in ["decreasing", "very_low_demand"]:
             return "low"
         else:
             return "stable"
@@ -1200,7 +1203,8 @@ class CareerPathModelingService:
         """Simulate refreshing data from external source"""
         # In real implementation, this would make actual API calls
         # For now, just update the request count
-        source.requests_used_this_month += 1
+        current_requests = getattr(source, 'requests_used_this_month', 0)
+        setattr(source, 'requests_used_this_month', current_requests + 1)  # type: ignore
     
     def _get_trend_career_impact_weight(self, trend: MarketTrend) -> float:
         """Get weight for trend's impact on careers"""
@@ -1210,7 +1214,7 @@ class CareerPathModelingService:
             "high": 0.75,
             "critical": 1.0
         }
-        impact_level = str(trend.impact_level) if trend.impact_level else "medium"
+        impact_level = str(getattr(trend, 'impact_level', 'medium')) if getattr(trend, 'impact_level', None) else "medium"
         return impact_weights.get(impact_level, 0.5)
 
 
