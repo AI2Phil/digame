@@ -56,15 +56,14 @@ class AdminAPIKeyConfigCRUD:
         # Encrypt the API key
         encrypted_api_key = encryption_service.encrypt(config.api_key)
         
-        db_config = AdminAPIKeyConfig(
-            service_name=config.service_name.value,
-            api_key=encrypted_api_key,
-            description=config.description,
-            is_active=config.is_active,
-            usage_limit_per_user=config.usage_limit_per_user,
-            allowed_endpoints=config.allowed_endpoints,
-            created_by=created_by
-        )
+        db_config = AdminAPIKeyConfig()
+        setattr(db_config, 'service_name', config.service_name.value)  # type: ignore
+        setattr(db_config, 'api_key', encrypted_api_key)  # type: ignore
+        setattr(db_config, 'description', config.description)  # type: ignore
+        setattr(db_config, 'is_active', config.is_active)  # type: ignore
+        setattr(db_config, 'usage_limit_per_user', config.usage_limit_per_user)  # type: ignore
+        setattr(db_config, 'allowed_endpoints', config.allowed_endpoints)  # type: ignore
+        setattr(db_config, 'created_by', created_by)  # type: ignore
         
         db.add(db_config)
         db.commit()
@@ -135,7 +134,8 @@ class AdminAPIKeyConfigCRUD:
             return None
         
         try:
-            return encryption_service.decrypt(config.api_key)
+            api_key = getattr(config, 'api_key', '')
+            return encryption_service.decrypt(api_key)
         except Exception as e:
             print(f"Failed to decrypt API key for {service_name}: {e}")
             return None
@@ -144,7 +144,8 @@ class AdminAPIKeyConfigCRUD:
     def get_masked_api_key(config: AdminAPIKeyConfig) -> str:
         """Get masked API key for display"""
         try:
-            decrypted_key = encryption_service.decrypt(config.api_key)
+            api_key = getattr(config, 'api_key', '')
+            decrypted_key = encryption_service.decrypt(api_key)
             return encryption_service.mask_api_key(decrypted_key)
         except Exception:
             return "***ENCRYPTED***"
@@ -155,7 +156,9 @@ class APIKeyUsageLogCRUD:
     @staticmethod
     def create(db: Session, usage_log: APIKeyUsageLogCreate) -> APIKeyUsageLog:
         """Create a new API key usage log entry"""
-        db_log = APIKeyUsageLog(**usage_log.dict())
+        db_log = APIKeyUsageLog()
+        for key, value in usage_log.dict().items():
+            setattr(db_log, key, value)  # type: ignore
         db.add(db_log)
         db.commit()
         db.refresh(db_log)
@@ -182,29 +185,33 @@ class APIKeyUsageLogCRUD:
         logs = query.all()
         
         total_requests = len(logs)
-        successful_requests = len([log for log in logs if log.response_status == ResponseStatus.SUCCESS.value])
+        successful_requests = len([log for log in logs if getattr(log, 'response_status', '') == ResponseStatus.SUCCESS.value])
         failed_requests = total_requests - successful_requests
-        total_tokens = sum([log.tokens_used or 0 for log in logs])
+        total_tokens = sum([getattr(log, 'tokens_used', 0) or 0 for log in logs])
         
         # Calculate cost estimate
-        total_cost = sum([float(log.cost_estimate or "0") for log in logs])
+        total_cost = sum([float(getattr(log, 'cost_estimate', '0') or "0") for log in logs])
         
         # Top users
         user_usage = {}
         for log in logs:
-            user_usage[log.user_id] = user_usage.get(log.user_id, 0) + 1
-        top_users = [{"user_id": uid, "requests": count} for uid, count in 
+            user_id = getattr(log, 'user_id', None)
+            if user_id:
+                user_usage[user_id] = user_usage.get(user_id, 0) + 1
+        top_users = [{"user_id": uid, "requests": count} for uid, count in
                     sorted(user_usage.items(), key=lambda x: x[1], reverse=True)[:10]]
         
         # Usage by endpoint
         endpoint_usage = {}
         for log in logs:
-            endpoint_usage[log.endpoint] = endpoint_usage.get(log.endpoint, 0) + 1
+            endpoint = getattr(log, 'endpoint', 'unknown')
+            endpoint_usage[endpoint] = endpoint_usage.get(endpoint, 0) + 1
         
         # Usage by day
         day_usage = {}
         for log in logs:
-            day_key = log.request_timestamp.strftime('%Y-%m-%d')
+            timestamp = getattr(log, 'request_timestamp', datetime.utcnow())
+            day_key = timestamp.strftime('%Y-%m-%d')
             day_usage[day_key] = day_usage.get(day_key, 0) + 1
         
         return {
@@ -244,15 +251,14 @@ class AdminSystemConfigCRUD:
         if config.is_sensitive:
             config_value = encryption_service.encrypt(config_value)
         
-        db_config = AdminSystemConfig(
-            config_key=config.config_key,
-            config_value=config_value,
-            config_type=config.config_type.value,
-            description=config.description,
-            is_sensitive=config.is_sensitive,
-            category=config.category.value,
-            created_by=created_by
-        )
+        db_config = AdminSystemConfig()
+        setattr(db_config, 'config_key', config.config_key)  # type: ignore
+        setattr(db_config, 'config_value', config_value)  # type: ignore
+        setattr(db_config, 'config_type', config.config_type.value)  # type: ignore
+        setattr(db_config, 'description', config.description)  # type: ignore
+        setattr(db_config, 'is_sensitive', config.is_sensitive)  # type: ignore
+        setattr(db_config, 'category', config.category.value)  # type: ignore
+        setattr(db_config, 'created_by', created_by)  # type: ignore
         
         db.add(db_config)
         db.commit()
@@ -289,7 +295,7 @@ class AdminSystemConfigCRUD:
         update_data = config_update.dict(exclude_unset=True)
         
         # Encrypt sensitive values
-        if 'config_value' in update_data and db_config.is_sensitive:
+        if 'config_value' in update_data and getattr(db_config, 'is_sensitive', False):
             update_data['config_value'] = encryption_service.encrypt(update_data['config_value'])
         
         for field, value in update_data.items():
@@ -317,10 +323,10 @@ class AdminSystemConfigCRUD:
         if not config:
             return default
         
-        value = config.config_value
+        value = getattr(config, 'config_value', '')
         
         # Decrypt if sensitive
-        if config.is_sensitive:
+        if getattr(config, 'is_sensitive', False):
             try:
                 value = encryption_service.decrypt(value)
             except Exception as e:
@@ -328,16 +334,17 @@ class AdminSystemConfigCRUD:
                 return default
         
         # Convert to appropriate type
-        if config.config_type == ConfigType.INTEGER.value:
+        config_type = getattr(config, 'config_type', '')
+        if config_type == ConfigType.INTEGER.value:
             try:
                 return int(value)
             except ValueError:
                 return default
-        elif config.config_type == ConfigType.BOOLEAN.value:
-            return value.lower() in ('true', '1', 'yes', 'on')
-        elif config.config_type == ConfigType.JSON.value:
+        elif config_type == ConfigType.BOOLEAN.value:
+            return str(value).lower() in ('true', '1', 'yes', 'on')
+        elif config_type == ConfigType.JSON.value:
             try:
-                return json.loads(value)
+                return json.loads(str(value))
             except json.JSONDecodeError:
                 return default
         
@@ -346,11 +353,12 @@ class AdminSystemConfigCRUD:
     @staticmethod
     def get_masked_value(config: AdminSystemConfig) -> Optional[str]:
         """Get masked value for sensitive configurations"""
-        if not config.is_sensitive:
-            return config.config_value
+        if not getattr(config, 'is_sensitive', False):
+            return getattr(config, 'config_value', '')
         
         try:
-            decrypted_value = encryption_service.decrypt(config.config_value)
+            config_value = getattr(config, 'config_value', '')
+            decrypted_value = encryption_service.decrypt(config_value)
             if len(decrypted_value) <= 8:
                 return "*" * len(decrypted_value)
             return decrypted_value[:2] + "*" * (len(decrypted_value) - 4) + decrypted_value[-2:]
@@ -361,17 +369,19 @@ class AdminSystemConfigCRUD:
 def get_fallback_api_key(db: Session, service_name: ServiceName, user_id: int, endpoint: str) -> Optional[str]:
     """Get fallback API key for a service if user is allowed to use it"""
     config = AdminAPIKeyConfigCRUD.get_by_service(db, service_name)
-    if not config or not config.is_active:
+    if not config or not getattr(config, 'is_active', False):
         return None
     
     # Check usage limits
-    if config.usage_limit_per_user:
+    usage_limit = getattr(config, 'usage_limit_per_user', None)
+    if usage_limit:
         usage_count = APIKeyUsageLogCRUD.get_user_usage_count(db, user_id, service_name)
-        if usage_count >= config.usage_limit_per_user:
+        if usage_count >= usage_limit:
             return None
     
     # Check allowed endpoints
-    if config.allowed_endpoints and endpoint not in config.allowed_endpoints:
+    allowed_endpoints = getattr(config, 'allowed_endpoints', None)
+    if allowed_endpoints and endpoint not in allowed_endpoints:
         return None
     
     return AdminAPIKeyConfigCRUD.get_decrypted_api_key(db, service_name)

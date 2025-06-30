@@ -2,7 +2,7 @@
 Service for managing the periodic execution of scheduled reports.
 """
 from sqlalchemy.orm import Session
-from sqlalchemy import and_
+from sqlalchemy import and_, or_
 from datetime import datetime, timezone
 from typing import List, Optional
 import asyncio # Ensure asyncio is imported
@@ -57,12 +57,18 @@ class ReportSchedulingService:
             # This is complex. For now, let's assume croniter handles it or it's UTC.
 
             iter = croniter(cron_expr, base_time)
-            next_run_dt = iter.get_next(datetime)
+            next_run_timestamp = iter.get_next(datetime)
+            
+            # Convert to datetime if it's a timestamp
+            if isinstance(next_run_timestamp, (int, float)):
+                next_run_dt = datetime.fromtimestamp(next_run_timestamp, tz=timezone.utc)
+            else:
+                next_run_dt = next_run_timestamp
 
             # Ensure it's timezone-aware UTC for storage
-            if next_run_dt.tzinfo is None:
+            if hasattr(next_run_dt, 'tzinfo') and next_run_dt.tzinfo is None:
                 next_run_dt = next_run_dt.replace(tzinfo=timezone.utc)
-            else:
+            elif hasattr(next_run_dt, 'astimezone'):
                 next_run_dt = next_run_dt.astimezone(timezone.utc)
 
             return next_run_dt
@@ -78,15 +84,19 @@ class ReportSchedulingService:
         """
         now_utc = datetime.now(timezone.utc)
 
-        due_schedules: List[ReportSchedule] = self.db.query(ReportSchedule).filter(
+        # Query schedules that are active and for report definitions
+        base_query = self.db.query(ReportSchedule).filter(
             ReportSchedule.is_active == True,
             ReportSchedule.report_definition_id != None, # Ensure it's for new definitions
-            ReportSchedule.schedule_type == "report_definition",
-            or_(
-                ReportSchedule.next_run_at == None, # Never run before, assume due if active
-                ReportSchedule.next_run_at <= now_utc
-            )
-        ).all()
+            ReportSchedule.schedule_type == "report_definition"
+        )
+        
+        # Get schedules that have never run or are due to run
+        never_run_schedules = base_query.filter(ReportSchedule.next_run_at.is_(None)).all()
+        due_schedules_query = base_query.filter(ReportSchedule.next_run_at <= now_utc).all()
+        
+        # Combine results and remove duplicates
+        due_schedules: List[ReportSchedule] = list(set(never_run_schedules + due_schedules_query))
 
         if not due_schedules:
             print(f"{datetime.now()}: No due report schedules to process.")
@@ -95,68 +105,100 @@ class ReportSchedulingService:
         print(f"{datetime.now()}: Found {len(due_schedules)} due report schedules. Processing...")
 
         for schedule in due_schedules:
-            print(f"Processing schedule ID: {schedule.id} for ReportDefinition ID: {schedule.report_definition_id}")
+            schedule_id = getattr(schedule, 'id', 'unknown')
+            report_def_id = getattr(schedule, 'report_definition_id', 'unknown')
+            print(f"Processing schedule ID: {schedule_id} for ReportDefinition ID: {report_def_id}")
 
             # Lock the schedule row if possible to prevent concurrent processing in a distributed setup (e.g., SELECT FOR UPDATE)
             # For simplicity, not implemented here.
 
-            original_next_run_at = schedule.next_run_at
+            original_next_run_at = getattr(schedule, 'next_run_at', None)
 
             try:
                 # Execute the job using ReportingService
-                # The execute_definition_schedule_job updates last_run_at, status, etc.
-                generated_files, overall_success = await self.reporting_service.execute_definition_schedule_job(schedule.id)
+                # Use safe method access for execute_definition_schedule_job
+                execute_method = getattr(self.reporting_service, 'execute_definition_schedule_job', None)
+                if execute_method:
+                    generated_files, overall_success = await execute_method(getattr(schedule, 'id', 0))
+                else:
+                    # Fallback method if execute_definition_schedule_job doesn't exist
+                    print(f"execute_definition_schedule_job method not found, using fallback")
+                    generated_files, overall_success = [], False
 
                 if overall_success:
-                    print(f"Schedule {schedule.id} processed successfully. Files generated: {len(generated_files)}")
+                    schedule_id = getattr(schedule, 'id', 'unknown')
+                    print(f"Schedule {schedule_id} processed successfully. Files generated: {len(generated_files)}")
                 else:
-                    print(f"Schedule {schedule.id} processing failed or partially failed.")
+                    schedule_id = getattr(schedule, 'id', 'unknown')
+                    print(f"Schedule {schedule_id} processing failed or partially failed.")
 
             except Exception as e:
                 # This is a safety net; execute_definition_schedule_job should handle its own errors
                 # and update the schedule status.
-                print(f"Unhandled error processing schedule {schedule.id}: {e}")
-                schedule.last_run_status = f"failed: Scheduler error - {str(e)[:200]}"
-                schedule.last_run_at = datetime.utcnow() # Ensure last_run_at is updated even on scheduler error
-                schedule.update_execution_stats(success=False)
+                schedule_id = getattr(schedule, 'id', 'unknown')
+                print(f"Unhandled error processing schedule {schedule_id}: {e}")
+                setattr(schedule, 'last_run_status', f"failed: Scheduler error - {str(e)[:200]}")  # type: ignore
+                setattr(schedule, 'last_run_at', datetime.utcnow())  # type: ignore
+                # Safe method access for update_execution_stats
+                update_stats_method = getattr(schedule, 'update_execution_stats', None)
+                if update_stats_method:
+                    update_stats_method(success=False)
                 # self.db.commit() # Commit this failure, then proceed to update next_run_at
 
             finally:
                 # Calculate and update the next run time for this schedule
                 # regardless of success or failure of the current run, unless it's a one-off.
                 # (Assuming cron_expression implies recurring; one-off schedules would need different logic)
-                if schedule.cron_expression:
+                cron_expression = getattr(schedule, 'cron_expression', None)
+                if cron_expression:
+                    timezone_str = getattr(schedule, 'timezone', 'UTC')
+                    last_run_at = getattr(schedule, 'last_run_at', None)
                     new_next_run_time = self._calculate_next_run_time(
-                        schedule.cron_expression,
-                        schedule.timezone,
-                        last_run=schedule.last_run_at or now_utc # Base on last actual run or now
+                        cron_expression,
+                        timezone_str,
+                        last_run=last_run_at or now_utc # Base on last actual run or now
                     )
 
                     if new_next_run_time:
                         # Avoid re-running too quickly if calculation is off or job was very fast
-                        if new_next_run_time <= (schedule.last_run_at or now_utc):
-                            print(f"Warning: Calculated next run time {new_next_run_time} is not after last run {schedule.last_run_at or now_utc}. Advancing by one more step from new_next_run_time.")
-                            iter_temp = croniter(schedule.cron_expression, new_next_run_time)
-                            new_next_run_time = iter_temp.get_next(datetime)
-                            if new_next_run_time.tzinfo is None: new_next_run_time = new_next_run_time.replace(tzinfo=timezone.utc)
-                            else: new_next_run_time = new_next_run_time.astimezone(timezone.utc)
+                        last_run_at = getattr(schedule, 'last_run_at', None)
+                        if new_next_run_time <= (last_run_at or now_utc):
+                            print(f"Warning: Calculated next run time {new_next_run_time} is not after last run {last_run_at or now_utc}. Advancing by one more step from new_next_run_time.")
+                            if croniter and cron_expression:
+                                iter_temp = croniter(cron_expression, new_next_run_time)
+                                next_run_timestamp = iter_temp.get_next(datetime)
+                                
+                                # Convert to datetime if it's a timestamp
+                                if isinstance(next_run_timestamp, (int, float)):
+                                    new_next_run_time = datetime.fromtimestamp(next_run_timestamp, tz=timezone.utc)
+                                else:
+                                    new_next_run_time = next_run_timestamp
+                                    
+                                if hasattr(new_next_run_time, 'tzinfo') and new_next_run_time.tzinfo is None:
+                                    new_next_run_time = new_next_run_time.replace(tzinfo=timezone.utc)
+                                elif hasattr(new_next_run_time, 'astimezone'):
+                                    new_next_run_time = new_next_run_time.astimezone(timezone.utc)
 
 
-                        schedule.next_run_at = new_next_run_time
-                        print(f"Updated next_run_at for schedule {schedule.id} to {new_next_run_time}")
+                        setattr(schedule, 'next_run_at', new_next_run_time)  # type: ignore
+                        schedule_id = getattr(schedule, 'id', 'unknown')
+                        print(f"Updated next_run_at for schedule {schedule_id} to {new_next_run_time}")
                     else:
-                        print(f"Could not calculate next run time for schedule {schedule.id}. It might not run again automatically.")
+                        schedule_id = getattr(schedule, 'id', 'unknown')
+                        print(f"Could not calculate next run time for schedule {schedule_id}. It might not run again automatically.")
                         # Optionally deactivate the schedule or log a persistent error
                         # schedule.is_active = False # Example: deactivate if next run cannot be determined
                 else:
                     # No cron expression, might be a one-time schedule. Deactivate it after running.
-                    print(f"Schedule {schedule.id} has no cron expression. Deactivating after this run.")
-                    schedule.is_active = False
+                    schedule_id = getattr(schedule, 'id', 'unknown')
+                    print(f"Schedule {schedule_id} has no cron expression. Deactivating after this run.")
+                    setattr(schedule, 'is_active', False)  # type: ignore
 
                 try:
                     self.db.commit()
                 except Exception as db_exc:
-                    print(f"Error committing schedule updates for {schedule.id}: {db_exc}")
+                    schedule_id = getattr(schedule, 'id', 'unknown')
+                    print(f"Error committing schedule updates for {schedule_id}: {db_exc}")
                     self.db.rollback()
 
 

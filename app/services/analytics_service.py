@@ -251,6 +251,8 @@ class AnalyticsService:
             # --- Preprocessing ---
             # Identify categorical features from model.features that are in training_data
             model_features = getattr(model, 'features', [])
+            if not model_features:
+                model_features = []
             categorical_features = [
                 col for col in model_features
                 if col in training_data.columns and training_data[col].dtype == 'object'
@@ -286,11 +288,13 @@ class AnalyticsService:
             if isinstance(X_processed, pd.DataFrame):
                 for col in X_processed.columns:
                     col_series = X_processed[col]
-                    if pd.isna(col_series).any():
-                        if pd.api.types.is_numeric_dtype(col_series):
-                            X_processed[col] = col_series.fillna(col_series.mean())
-                        else: # Should be one-hot encoded columns (0/1)
-                            X_processed[col] = col_series.fillna(0) # Fill NaN in dummy columns with 0
+                    if hasattr(col_series, 'isna'):
+                        has_na = col_series.isna()
+                        if hasattr(has_na, 'any') and bool(has_na.any()):
+                            if pd.api.types.is_numeric_dtype(col_series):
+                                X_processed[col] = col_series.fillna(col_series.mean())
+                            else: # Should be one-hot encoded columns (0/1)
+                                X_processed[col] = col_series.fillna(0) # Fill NaN in dummy columns with 0
 
 
             # Split data
@@ -472,9 +476,9 @@ class AnalyticsService:
 
         # Generate target variable if not already present (e.g. in performance type)
         target_var = getattr(model, 'target_variable', None)
+        model_features = getattr(model, 'features', [])  # Define model_features early
         if target_var and target_var not in data:
             # Generic target based on sum of some features (if available) or random
-            model_features = getattr(model, 'features', [])
             if len(model_features) > 0:
                 # Ensure features used here are numeric and exist
                 numeric_features = [f for f in model_features if pd.api.types.is_numeric_dtype(pd.Series(data[f]))]  # type: ignore
@@ -661,18 +665,21 @@ class AnalyticsService:
         # 3. Handle NaN values (consistent with training)
         # Assuming simple mean imputation for numeric and 0 for dummies (already done by reindex fill_value=0 for new cols)
         for col in input_df_aligned.columns:
-            if input_df_aligned[col].isnull().any():
-                # This relies on training_meta potentially storing imputation values if more complex strategy was used
-                # For now, if a column that was numeric in training still has NaN, we'd need its mean from training.
-                # This part might need refinement if NaNs are expected in raw input_features for non-dummy vars.
-                # For simplicity, if a value for an original feature was null/missing and it became a set of dummies,
-                # those dummies would be 0. If an original numeric feature is NaN, it needs imputation.
-                # The get_dummies + reindex approach handles many cases.
-                # Fallback for any remaining NaNs in numeric columns after alignment:
-                if pd.api.types.is_numeric_dtype(input_df_aligned[col]):
-                     # A more robust solution would store training time means in training_metadata
-                    print(f"Warning: NaN found in numeric feature '{col}' for prediction. Filling with 0. Consider storing training means.")
-                    input_df_aligned[col] = input_df_aligned[col].fillna(0)
+            col_series = input_df_aligned[col]
+            if hasattr(col_series, 'isnull'):
+                has_null = col_series.isnull()
+                if hasattr(has_null, 'any') and bool(has_null.any()):
+                    # This relies on training_meta potentially storing imputation values if more complex strategy was used
+                    # For now, if a column that was numeric in training still has NaN, we'd need its mean from training.
+                    # This part might need refinement if NaNs are expected in raw input_features for non-dummy vars.
+                    # For simplicity, if a value for an original feature was null/missing and it became a set of dummies,
+                    # those dummies would be 0. If an original numeric feature is NaN, it needs imputation.
+                    # The get_dummies + reindex approach handles many cases.
+                    # Fallback for any remaining NaNs in numeric columns after alignment:
+                    if pd.api.types.is_numeric_dtype(col_series):
+                         # A more robust solution would store training time means in training_metadata
+                        print(f"Warning: NaN found in numeric feature '{col}' for prediction. Filling with 0. Consider storing training means.")
+                        input_df_aligned[col] = col_series.fillna(0)
 
 
         # Make prediction
@@ -1111,7 +1118,7 @@ class AnalyticsService:
             PerformanceMetric.tenant_id == tenant_id
         ).group_by(PerformanceMetric.category).all()
         
-        return {cat.category: cat.count for cat in categories}
+        return {str(getattr(cat, 'category', '')): int(getattr(cat, 'count', 0)) for cat in categories}
 
     def generate_insights(self, tenant_id: int) -> List[Dict[str, Any]]:
         """Generate AI-powered insights from analytics data"""
@@ -1680,21 +1687,23 @@ class AnalyticsService:
                     # or they refer to the order of widgets in the `widgets` list.
                     # For now, let's assume layout in DashboardCreate might be conceptual or handled by default.
                     # Default placement:
-                    layout_item = analytics_schemas.LayoutItem()
-                    setattr(layout_item, 'widget_config_id', db_widget.id)
-                    setattr(layout_item, 'x', (i % 4) * 3)
-                    setattr(layout_item, 'y', (i // 4) * 2)
-                    setattr(layout_item, 'w', 3)
-                    setattr(layout_item, 'h', 2)
-                    layout_items.append(layout_item.model_dump())
+                    layout_item_dict = {
+                        "widget_config_id": getattr(db_widget, 'id', 0),
+                        "x": (i % 4) * 3,
+                        "y": (i // 4) * 2,
+                        "w": 3,
+                        "h": 2
+                    }
+                    layout_items.append(layout_item_dict)
                 else: # Default layout if not specified or mismatched
-                    layout_item = analytics_schemas.LayoutItem()
-                    setattr(layout_item, 'widget_config_id', db_widget.id)
-                    setattr(layout_item, 'x', (i % 4) * 3)
-                    setattr(layout_item, 'y', (i // 4) * 2)
-                    setattr(layout_item, 'w', 3)
-                    setattr(layout_item, 'h', 2)
-                    layout_items.append(layout_item.model_dump())
+                    layout_item_dict = {
+                        "widget_config_id": getattr(db_widget, 'id', 0),
+                        "x": (i % 4) * 3,
+                        "y": (i // 4) * 2,
+                        "w": 3,
+                        "h": 2
+                    }
+                    layout_items.append(layout_item_dict)
 
 
         setattr(db_dashboard, 'layout', layout_items)  # type: ignore
@@ -1791,15 +1800,16 @@ class AnalyticsService:
         # Or, we can try a default placement:
         self.db.flush() # to get db_widget.id
 
-        new_layout_item = analytics_schemas.LayoutItem()
-        setattr(new_layout_item, 'widget_config_id', db_widget.id)
-        setattr(new_layout_item, 'x', 0)
-        setattr(new_layout_item, 'y', 99)
-        setattr(new_layout_item, 'w', 3)
-        setattr(new_layout_item, 'h', 2) # Default pos (e.g., bottom)
+        new_layout_item_dict = {
+            "widget_config_id": getattr(db_widget, 'id', 0),
+            "x": 0,
+            "y": 99,
+            "w": 3,
+            "h": 2
+        }
         if getattr(db_dashboard, 'layout', None) is None:
             setattr(db_dashboard, 'layout', [])  # type: ignore # Ensure layout is a list
-        db_dashboard.layout.append(new_layout_item.model_dump())
+        db_dashboard.layout.append(new_layout_item_dict)
         setattr(db_dashboard, 'updated_at', datetime.utcnow())  # type: ignore
 
         self.db.commit()
@@ -1850,7 +1860,7 @@ class AnalyticsService:
             return False # User does not own the parent dashboard
 
         # Remove from dashboard's layout
-        if db_dashboard.layout:
+        if getattr(db_dashboard, 'layout', None):
             current_layout = getattr(db_dashboard, 'layout', [])
             setattr(db_dashboard, 'layout', [item for item in current_layout if item.get("widget_config_id") != widget_id])  # type: ignore
             setattr(db_dashboard, 'updated_at', datetime.utcnow())  # type: ignore

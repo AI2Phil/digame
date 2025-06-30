@@ -1,6 +1,11 @@
 import json
 from typing import Dict, Optional
-import redis # Added for caching
+try:
+    import redis # Added for caching
+    from redis import exceptions as redis_exceptions
+except ImportError:
+    redis = None  # type: ignore
+    redis_exceptions = None  # type: ignore
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
@@ -18,17 +23,19 @@ router = APIRouter(
 
 # Initialize Redis client
 # For robustness, this URL should come from config in a real application.
-try:
-    redis_client = redis.Redis.from_url("redis://localhost:6379/0", decode_responses=False) # Store bytes/str, handle decode in app
-    redis_client.ping() # Check connection
-except redis.exceptions.ConnectionError as e:
-    # Handle connection error gracefully, e.g., log and disable caching
-    # For this example, we'll let it raise if it can't connect at startup,
-    # or set redis_client to None and check in functions.
-    # For now, let's assume it connects or allow failure at startup.
-    # A more robust solution would involve a global flag or dummy client.
-    print(f"Could not connect to Redis: {e}") # Or use proper logging
-    redis_client = None # Fallback to no caching if connection fails
+redis_client = None
+if redis is not None:
+    try:
+        redis_client = redis.Redis.from_url("redis://localhost:6379/0", decode_responses=False) # Store bytes/str, handle decode in app
+        redis_client.ping() # Check connection
+    except Exception as e:
+        # Handle connection error gracefully, e.g., log and disable caching
+        # For this example, we'll let it raise if it can't connect at startup,
+        # or set redis_client to None and check in functions.
+        # For now, let's assume it connects or allow failure at startup.
+        # A more robust solution would involve a global flag or dummy client.
+        print(f"Could not connect to Redis: {e}") # Or use proper logging
+        redis_client = None # Fallback to no caching if connection fails
 
 def _parse_api_keys(api_keys_json: Optional[str]) -> Dict[str, str]:
     """Helper function to parse JSON string api_keys to Dict."""
@@ -50,7 +57,10 @@ def get_api_keys(
     If settings don't exist, they are created with empty API keys.
     Implements caching for API keys.
     """
-    cache_key = f"user_settings:api_keys:{current_user.id}"
+    user_id = getattr(current_user, 'id', None)
+    if user_id is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User ID not found")
+    cache_key = f"user_settings:api_keys:{user_id}"
 
     if redis_client:
         try:
@@ -72,48 +82,59 @@ def get_api_keys(
                 # For this example, we'll fetch the original object to get other fields if cache is hit.
                 # This makes the cache primarily for the `api_keys` field itself.
 
-                db_user_settings = crud.get_user_setting(db, user_id=current_user.id)
+                db_user_settings = crud.get_user_setting(db, user_id=user_id)
                 if not db_user_settings: # Should not happen if cache exists, but good check
+                     try:
+                         create_settings = schemas.UserSettingCreate(api_keys={})  # type: ignore
+                     except TypeError:
+                         create_settings = schemas.UserSettingCreate()  # type: ignore
+                         setattr(create_settings, 'api_keys', {})  # type: ignore
                      db_user_settings = crud.create_user_setting(
-                        db, user_id=current_user.id, settings=schemas.UserSettingCreate()
+                        db, user_id=user_id, settings=create_settings
                      )
 
                 user_setting_data = {
-                    "user_id": db_user_settings.user_id,
+                    "user_id": getattr(db_user_settings, 'user_id', user_id),
                     "api_keys": api_keys_dict, # Use cached api_keys
-                    "created_at": db_user_settings.created_at,
-                    "updated_at": db_user_settings.updated_at
+                    "created_at": getattr(db_user_settings, 'created_at', None),
+                    "updated_at": getattr(db_user_settings, 'updated_at', None)
                 }
                 return schemas.UserSetting(**user_setting_data)
-        except redis.exceptions.RedisError as e:
+        except Exception as e:
             # Log Redis error and fall through to DB
             print(f"Redis error during GET: {e}") # Or use proper logging
             pass # Fall through to database query
 
     # Cache miss or Redis error, fetch from DB
-    db_user_settings = crud.get_user_setting(db, user_id=current_user.id)
+    db_user_settings = crud.get_user_setting(db, user_id=user_id)
     created_new = False
     if not db_user_settings:
+        try:
+            create_settings = schemas.UserSettingCreate(api_keys={})  # type: ignore
+        except TypeError:
+            create_settings = schemas.UserSettingCreate()  # type: ignore
+            setattr(create_settings, 'api_keys', {})  # type: ignore
         db_user_settings = crud.create_user_setting(
-            db, user_id=current_user.id, settings=schemas.UserSettingCreate()
+            db, user_id=user_id, settings=create_settings
         )
         created_new = True # Flag that we created it
 
-    api_keys_dict = _parse_api_keys(db_user_settings.api_keys)
+    api_keys_dict = _parse_api_keys(getattr(db_user_settings, 'api_keys', None))
 
-    if redis_client and (not created_new or db_user_settings.api_keys): # Cache if found or created with actual keys
+    api_keys_value = getattr(db_user_settings, 'api_keys', None)
+    if redis_client and (not created_new or api_keys_value): # Cache if found or created with actual keys
         try:
             # Cache the dictionary form, serialized to JSON string
             redis_client.set(cache_key, json.dumps(api_keys_dict), ex=3600)  # 1 hour expiry
-        except redis.exceptions.RedisError as e:
+        except Exception as e:
             print(f"Redis error during SET: {e}") # Or use proper logging
             pass # Don't fail request if cache set fails
 
     user_setting_data = {
-        "user_id": db_user_settings.user_id,
+        "user_id": getattr(db_user_settings, 'user_id', user_id),
         "api_keys": api_keys_dict,
-        "created_at": db_user_settings.created_at,
-        "updated_at": db_user_settings.updated_at
+        "created_at": getattr(db_user_settings, 'created_at', None),
+        "updated_at": getattr(db_user_settings, 'updated_at', None)
     }
     return schemas.UserSetting(**user_setting_data)
 @router.post("/api-keys", response_model=schemas.UserSetting)
@@ -126,15 +147,23 @@ def update_api_keys(
     Sets or updates API keys for the current user.
     Invalidates cache on update.
     """
-    db_user_settings = crud.get_user_setting(db, user_id=current_user.id)
+    user_id = getattr(current_user, 'id', None)
+    if user_id is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User ID not found")
+    
+    db_user_settings = crud.get_user_setting(db, user_id=user_id)
     if db_user_settings:
         updated_settings = crud.update_user_setting(
-            db, user_id=current_user.id, settings=api_key_data
+            db, user_id=user_id, settings=api_key_data
         )
     else:
-        create_data = schemas.UserSettingCreate()
+        try:
+            create_data = schemas.UserSettingCreate(api_keys={})  # type: ignore
+        except TypeError:
+            create_data = schemas.UserSettingCreate()  # type: ignore
+            setattr(create_data, 'api_keys', {})  # type: ignore
         updated_settings = crud.create_user_setting(
-            db, user_id=current_user.id, settings=create_data
+            db, user_id=user_id, settings=create_data
         )
     
     if not updated_settings:
@@ -142,22 +171,23 @@ def update_api_keys(
 
     # Invalidate cache
     if redis_client:
-        cache_key = f"user_settings:api_keys:{current_user.id}"
+        cache_key = f"user_settings:api_keys:{user_id}"
         try:
             redis_client.delete(cache_key)
-        except redis.exceptions.RedisError as e:
+        except Exception as e:
             print(f"Redis error during DELETE (cache invalidation): {e}") # Or use proper logging
             pass # Don't fail request if cache delete fails
 
-    api_keys_dict = _parse_api_keys(updated_settings.api_keys)
+    api_keys_dict = _parse_api_keys(getattr(updated_settings, 'api_keys', None))
     user_setting_data = {
-        "id": updated_settings.id,
-        "user_id": updated_settings.user_id,
+        "id": getattr(updated_settings, 'id', None),
+        "user_id": getattr(updated_settings, 'user_id', user_id),
         "api_keys": api_keys_dict,
-        "created_at": updated_settings.created_at,
-        "updated_at": updated_settings.updated_at
+        "created_at": getattr(updated_settings, 'created_at', None),
+        "updated_at": getattr(updated_settings, 'updated_at', None)
     }
     return schemas.UserSetting(**user_setting_data)
+@router.delete("/api-keys/{key_name}", response_model=schemas.UserSetting)
 def delete_api_key(
     key_name: str,
     db: Session = Depends(get_db),
@@ -167,11 +197,16 @@ def delete_api_key(
     Deletes a specific API key by its name for the current user.
     Invalidates cache on update.
     """
-    db_user_settings = crud.get_user_setting(db, user_id=current_user.id)
-    if not db_user_settings or not db_user_settings.api_keys:
+    user_id = getattr(current_user, 'id', None)
+    if user_id is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User ID not found")
+    
+    db_user_settings = crud.get_user_setting(db, user_id=user_id)
+    api_keys_value = getattr(db_user_settings, 'api_keys', None) if db_user_settings else None
+    if not db_user_settings or not api_keys_value:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="API key not found or no API keys set")
 
-    api_keys_dict = _parse_api_keys(db_user_settings.api_keys)
+    api_keys_dict = _parse_api_keys(api_keys_value)
 
     if key_name not in api_keys_dict:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"API key '{key_name}' not found")
@@ -180,7 +215,7 @@ def delete_api_key(
 
     update_schema = schemas.UserSettingUpdate(**{"api_keys": api_keys_dict})
     updated_settings = crud.update_user_setting(
-        db, user_id=current_user.id, settings=update_schema
+        db, user_id=user_id, settings=update_schema
     )
 
     if not updated_settings:
@@ -188,18 +223,18 @@ def delete_api_key(
 
     # Invalidate cache
     if redis_client:
-        cache_key = f"user_settings:api_keys:{current_user.id}"
+        cache_key = f"user_settings:api_keys:{user_id}"
         try:
             redis_client.delete(cache_key)
-        except redis.exceptions.RedisError as e:
+        except Exception as e:
             print(f"Redis error during DELETE (cache invalidation): {e}") # Or use proper logging
             pass # Don't fail request if cache delete fails
 
     user_setting_data = {
-        "id": updated_settings.id,
-        "user_id": updated_settings.user_id,
+        "id": getattr(updated_settings, 'id', None),
+        "user_id": getattr(updated_settings, 'user_id', user_id),
         "api_keys": api_keys_dict,
-        "created_at": updated_settings.created_at,
-        "updated_at": updated_settings.updated_at
+        "created_at": getattr(updated_settings, 'created_at', None),
+        "updated_at": getattr(updated_settings, 'updated_at', None)
     }
     return schemas.UserSetting(**user_setting_data)
