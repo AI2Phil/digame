@@ -8,12 +8,8 @@ from sqlalchemy.orm import relationship
 from datetime import datetime
 import uuid
 
-# Use the existing Base from the project
-try:
-    from ..database import Base
-except ImportError:
-    # Fallback for development
-    Base = declarative_base()
+# Import Base from user module which should have the correct Base
+from .user import Base
 
 
 class MarketTrend(Base):

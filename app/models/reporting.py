@@ -17,53 +17,53 @@ except ImportError:
 
 from .dashboard_custom import ReportDefinition # Import ReportDefinition
 
-class Report(Base):
+class Report(Base):  # type: ignore
     """
     Report definition and configuration
     """
     __tablename__ = "reports"
 
-    id = Column(Integer, primary_key=True, index=True)
-    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=False, index=True)
-    report_uuid = Column(String(36), unique=True, index=True, default=lambda: str(uuid.uuid4()))
+    id = Column(Integer, primary_key=True, index=True)  # type: ignore
+    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=False, index=True)  # type: ignore
+    report_uuid = Column(String(36), unique=True, index=True, default=lambda: str(uuid.uuid4()))  # type: ignore
     
     # Report metadata
-    name = Column(String(255), nullable=False)
-    description = Column(Text, nullable=True)
-    category = Column(String(100), nullable=False, index=True)  # analytics, financial, operational, compliance
-    report_type = Column(String(50), nullable=False)  # dashboard, table, chart, pdf, excel
+    name = Column(String(255), nullable=False)  # type: ignore
+    description = Column(Text, nullable=True)  # type: ignore
+    category = Column(String(100), nullable=False, index=True)  # type: ignore  # analytics, financial, operational, compliance
+    report_type = Column(String(50), nullable=False)  # type: ignore  # dashboard, table, chart, pdf, excel
     
     # Report configuration
-    data_source = Column(String(100), nullable=False)  # users, analytics, activities, etc.
-    query_config = Column(JSON, default={})  # SQL query parameters, filters, etc.
-    visualization_config = Column(JSON, default={})  # Chart types, colors, layout, interactive elements (e.g., drilldown_fields)
-    format_config = Column(JSON, default={})  # PDF layout, Excel formatting, etc.
-    export_config = Column(JSON, default={}) # Specific columns for export, data transformations, etc.
+    data_source = Column(String(100), nullable=False)  # type: ignore  # users, analytics, activities, etc.
+    query_config = Column(JSON, default={})  # type: ignore  # SQL query parameters, filters, etc.
+    visualization_config = Column(JSON, default={})  # type: ignore  # Chart types, colors, layout, interactive elements (e.g., drilldown_fields)
+    format_config = Column(JSON, default={})  # type: ignore  # PDF layout, Excel formatting, etc.
+    export_config = Column(JSON, default={})  # type: ignore # Specific columns for export, data transformations, etc.
     
     # Filters and parameters
-    default_filters = Column(JSON, default={})
-    parameter_schema = Column(JSON, default={})  # Define user-configurable parameters (e.g., for interactive exploration)
+    default_filters = Column(JSON, default={})  # type: ignore
+    parameter_schema = Column(JSON, default={})  # type: ignore  # Define user-configurable parameters (e.g., for interactive exploration)
     
     # Access control
-    is_public = Column(Boolean, default=False)  # Available to all tenant users
-    allowed_roles = Column(JSON, default=[])  # Specific roles that can access
-    allowed_users = Column(JSON, default=[])  # Specific users that can access
+    is_public = Column(Boolean, default=False)  # type: ignore  # Available to all tenant users
+    allowed_roles = Column(JSON, default=[])  # type: ignore  # Specific roles that can access
+    allowed_users = Column(JSON, default=[])  # type: ignore  # Specific users that can access
     
     # Scheduling
-    is_scheduled = Column(Boolean, default=False)
-    schedule_config = Column(JSON, default={})  # Cron expression, timezone, etc.
+    is_scheduled = Column(Boolean, default=False)  # type: ignore
+    schedule_config = Column(JSON, default={})  # type: ignore  # Cron expression, timezone, etc.
     
     # Status and metadata
-    is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    created_by_user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    last_generated_at = Column(DateTime, nullable=True)
-    generation_count = Column(Integer, default=0)
+    is_active = Column(Boolean, default=True)  # type: ignore
+    created_at = Column(DateTime, default=datetime.utcnow)  # type: ignore
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)  # type: ignore
+    created_by_user_id = Column(Integer, ForeignKey("users.id"), nullable=False)  # type: ignore
+    last_generated_at = Column(DateTime, nullable=True)  # type: ignore
+    generation_count = Column(Integer, default=0)  # type: ignore
     
     # Performance metrics
-    avg_generation_time_ms = Column(Float, nullable=True)
-    last_generation_time_ms = Column(Float, nullable=True)
+    avg_generation_time_ms = Column(Float, nullable=True)  # type: ignore
+    last_generation_time_ms = Column(Float, nullable=True)  # type: ignore
     
     # Relationships
     executions = relationship("ReportExecution", back_populates="report", cascade="all, delete-orphan")
@@ -99,47 +99,47 @@ class Report(Base):
         return False
 
 
-class ReportExecution(Base):
+class ReportExecution(Base):  # type: ignore
     """
     Report execution history and results
     """
     __tablename__ = "report_executions"
 
-    id = Column(Integer, primary_key=True, index=True)
-    report_id = Column(Integer, ForeignKey("reports.id"), nullable=False, index=True)
-    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=False, index=True)
-    execution_uuid = Column(String(36), unique=True, index=True, default=lambda: str(uuid.uuid4()))
+    id = Column(Integer, primary_key=True, index=True)  # type: ignore
+    report_id = Column(Integer, ForeignKey("reports.id"), nullable=False, index=True)  # type: ignore
+    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=False, index=True)  # type: ignore
+    execution_uuid = Column(String(36), unique=True, index=True, default=lambda: str(uuid.uuid4()))  # type: ignore
     
     # Execution context
-    executed_by_user_id = Column(Integer, ForeignKey("users.id"), nullable=True)  # Null for scheduled reports
-    execution_type = Column(String(50), nullable=False)  # manual, scheduled, api
+    executed_by_user_id = Column(Integer, ForeignKey("users.id"), nullable=True)  # type: ignore  # Null for scheduled reports
+    execution_type = Column(String(50), nullable=False)  # type: ignore  # manual, scheduled, api
     
     # Parameters and filters used
-    parameters = Column(JSON, default={})
-    filters_applied = Column(JSON, default={})
-    date_range = Column(JSON, default={})  # start_date, end_date
+    parameters = Column(JSON, default={})  # type: ignore
+    filters_applied = Column(JSON, default={})  # type: ignore
+    date_range = Column(JSON, default={})  # type: ignore  # start_date, end_date
     
     # Execution details
-    started_at = Column(DateTime, default=datetime.utcnow, index=True)
-    completed_at = Column(DateTime, nullable=True)
-    execution_time_ms = Column(Float, nullable=True)
+    started_at = Column(DateTime, default=datetime.utcnow, index=True)  # type: ignore
+    completed_at = Column(DateTime, nullable=True)  # type: ignore
+    execution_time_ms = Column(Float, nullable=True)  # type: ignore
     
     # Results
-    status = Column(String(50), default="running")  # running, completed, failed, cancelled
-    error_message = Column(Text, nullable=True)
-    row_count = Column(Integer, nullable=True)
-    file_size_bytes = Column(Integer, nullable=True)
+    status = Column(String(50), default="running")  # type: ignore  # running, completed, failed, cancelled
+    error_message = Column(Text, nullable=True)  # type: ignore
+    row_count = Column(Integer, nullable=True)  # type: ignore
+    file_size_bytes = Column(Integer, nullable=True)  # type: ignore
     
     # Output files
-    output_format = Column(String(20), nullable=True)  # pdf, excel, csv, json
-    file_path = Column(String(500), nullable=True)  # S3 path or local path
-    download_url = Column(String(500), nullable=True)  # Signed URL for download
-    expires_at = Column(DateTime, nullable=True)  # When download URL expires
+    output_format = Column(String(20), nullable=True)  # type: ignore  # pdf, excel, csv, json
+    file_path = Column(String(500), nullable=True)  # type: ignore  # S3 path or local path
+    download_url = Column(String(500), nullable=True)  # type: ignore  # Signed URL for download
+    expires_at = Column(DateTime, nullable=True)  # type: ignore  # When download URL expires
     
     # Performance metrics
-    query_time_ms = Column(Float, nullable=True)
-    render_time_ms = Column(Float, nullable=True)
-    upload_time_ms = Column(Float, nullable=True)
+    query_time_ms = Column(Float, nullable=True)  # type: ignore
+    render_time_ms = Column(Float, nullable=True)  # type: ignore
+    upload_time_ms = Column(Float, nullable=True)  # type: ignore
     
     # Relationships
     report = relationship("Report", back_populates="executions")
@@ -166,48 +166,48 @@ class ReportExecution(Base):
         return None
 
 
-class ReportSchedule(Base):
+class ReportSchedule(Base):  # type: ignore
     """
     Report scheduling configuration
     """
     __tablename__ = "report_schedules"
 
-    id = Column(Integer, primary_key=True, index=True)
-    report_id = Column(Integer, ForeignKey("reports.id"), nullable=True, index=True)  # Nullable for new schedules
-    report_definition_id = Column(Integer, ForeignKey("report_definitions.id"), nullable=True, index=True)  # For new schedules
-    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=False, index=True)
-    schedule_uuid = Column(String(36), unique=True, index=True, default=lambda: str(uuid.uuid4()))
-    schedule_type = Column(String(50), default="report", nullable=False)  # "report" or "report_definition"
+    id = Column(Integer, primary_key=True, index=True)  # type: ignore
+    report_id = Column(Integer, ForeignKey("reports.id"), nullable=True, index=True)  # type: ignore  # Nullable for new schedules
+    report_definition_id = Column(Integer, ForeignKey("report_definitions.id"), nullable=True, index=True)  # type: ignore  # For new schedules
+    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=False, index=True)  # type: ignore
+    schedule_uuid = Column(String(36), unique=True, index=True, default=lambda: str(uuid.uuid4()))  # type: ignore
+    schedule_type = Column(String(50), default="report", nullable=False)  # type: ignore  # "report" or "report_definition"
     
     # Schedule configuration
-    name = Column(String(255), nullable=False)
-    cron_expression = Column(String(100), nullable=False)  # Standard cron format
-    timezone = Column(String(50), default="UTC")
+    name = Column(String(255), nullable=False)  # type: ignore
+    cron_expression = Column(String(100), nullable=False)  # type: ignore  # Standard cron format
+    timezone = Column(String(50), default="UTC")  # type: ignore
     
     # Parameters for scheduled execution
-    default_parameters = Column(JSON, default={})
-    default_filters = Column(JSON, default={})
+    default_parameters = Column(JSON, default={})  # type: ignore
+    default_filters = Column(JSON, default={})  # type: ignore
     
     # Output configuration
-    output_formats = Column(JSON, default=["pdf"])  # List of formats to generate
-    delivery_method = Column(String(50), default="email")  # email, s3, webhook
-    delivery_config = Column(JSON, default={})  # Email addresses, S3 bucket, webhook URL
+    output_formats = Column(JSON, default=["pdf"])  # type: ignore  # List of formats to generate
+    delivery_method = Column(String(50), default="email")  # type: ignore  # email, s3, webhook
+    delivery_config = Column(JSON, default={})  # type: ignore  # Email addresses, S3 bucket, webhook URL
     
     # Status and control
-    is_active = Column(Boolean, default=True)
-    next_run_at = Column(DateTime, nullable=True, index=True)
-    last_run_at = Column(DateTime, nullable=True)
-    last_run_status = Column(String(50), nullable=True)
+    is_active = Column(Boolean, default=True)  # type: ignore
+    next_run_at = Column(DateTime, nullable=True, index=True)  # type: ignore
+    last_run_at = Column(DateTime, nullable=True)  # type: ignore
+    last_run_status = Column(String(50), nullable=True)  # type: ignore
     
     # Execution history
-    total_executions = Column(Integer, default=0)
-    successful_executions = Column(Integer, default=0)
-    failed_executions = Column(Integer, default=0)
+    total_executions = Column(Integer, default=0)  # type: ignore
+    successful_executions = Column(Integer, default=0)  # type: ignore
+    failed_executions = Column(Integer, default=0)  # type: ignore
     
     # Metadata
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    created_by_user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)  # type: ignore
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)  # type: ignore
+    created_by_user_id = Column(Integer, ForeignKey("users.id"), nullable=False)  # type: ignore
     
     # Relationships
     report = relationship("Report", back_populates="schedules") # For legacy schedules
@@ -227,47 +227,47 @@ class ReportSchedule(Base):
 
     def update_execution_stats(self, success: bool):
         """Update execution statistics"""
-        self.total_executions += 1
+        self.total_executions += 1  # type: ignore
         if success:
-            self.successful_executions += 1
+            self.successful_executions += 1  # type: ignore
         else:
-            self.failed_executions += 1
-        self.last_run_at = datetime.utcnow()
-        self.last_run_status = "success" if success else "failed"
+            self.failed_executions += 1  # type: ignore
+        setattr(self, 'last_run_at', datetime.utcnow())  # type: ignore
+        setattr(self, 'last_run_status', "success" if success else "failed")  # type: ignore
 
 
-class ReportSubscription(Base):
+class ReportSubscription(Base):  # type: ignore
     """
     User subscriptions to scheduled reports
     """
     __tablename__ = "report_subscriptions"
 
-    id = Column(Integer, primary_key=True, index=True)
-    report_id = Column(Integer, ForeignKey("reports.id"), nullable=False, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
-    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=False, index=True)
+    id = Column(Integer, primary_key=True, index=True)  # type: ignore
+    report_id = Column(Integer, ForeignKey("reports.id"), nullable=False, index=True)  # type: ignore
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)  # type: ignore
+    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=False, index=True)  # type: ignore
     
     # Subscription preferences
-    delivery_method = Column(String(50), default="email")  # email, dashboard, webhook
-    delivery_address = Column(String(255), nullable=True)  # Email address or webhook URL
-    preferred_format = Column(String(20), default="pdf")  # pdf, excel, csv
+    delivery_method = Column(String(50), default="email")  # type: ignore  # email, dashboard, webhook
+    delivery_address = Column(String(255), nullable=True)  # type: ignore  # Email address or webhook URL
+    preferred_format = Column(String(20), default="pdf")  # type: ignore  # pdf, excel, csv
     
     # Frequency preferences (can override report schedule)
-    frequency_override = Column(String(50), nullable=True)  # daily, weekly, monthly
-    custom_schedule = Column(String(100), nullable=True)  # Custom cron expression
+    frequency_override = Column(String(50), nullable=True)  # type: ignore  # daily, weekly, monthly
+    custom_schedule = Column(String(100), nullable=True)  # type: ignore  # Custom cron expression
     
     # Filters and parameters
-    custom_parameters = Column(JSON, default={})
-    custom_filters = Column(JSON, default={})
+    custom_parameters = Column(JSON, default={})  # type: ignore
+    custom_filters = Column(JSON, default={})  # type: ignore
     
     # Status
-    is_active = Column(Boolean, default=True)
-    last_delivered_at = Column(DateTime, nullable=True)
-    delivery_count = Column(Integer, default=0)
+    is_active = Column(Boolean, default=True)  # type: ignore
+    last_delivered_at = Column(DateTime, nullable=True)  # type: ignore
+    delivery_count = Column(Integer, default=0)  # type: ignore
     
     # Metadata
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.utcnow)  # type: ignore
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)  # type: ignore
     
     # Relationships
     report = relationship("Report", back_populates="subscriptions")
@@ -276,110 +276,110 @@ class ReportSubscription(Base):
         return f"<ReportSubscription(id={self.id}, report_id={self.report_id}, user_id={self.user_id})>"
 
 
-class ReportTemplate(Base):
+class ReportTemplate(Base):  # type: ignore
     """
     Reusable report templates
     """
     __tablename__ = "report_templates"
 
-    id = Column(Integer, primary_key=True, index=True)
-    template_uuid = Column(String(36), unique=True, index=True, default=lambda: str(uuid.uuid4()))
+    id = Column(Integer, primary_key=True, index=True)  # type: ignore
+    template_uuid = Column(String(36), unique=True, index=True, default=lambda: str(uuid.uuid4()))  # type: ignore
     
     # Template metadata
-    name = Column(String(255), nullable=False)
-    description = Column(Text, nullable=True)
-    category = Column(String(100), nullable=False, index=True)
-    tags = Column(JSON, default=[])
+    name = Column(String(255), nullable=False)  # type: ignore
+    description = Column(Text, nullable=True)  # type: ignore
+    category = Column(String(100), nullable=False, index=True)  # type: ignore
+    tags = Column(JSON, default=[])  # type: ignore
     
     # Template configuration
-    template_config = Column(JSON, nullable=False)  # Complete report configuration
-    parameter_schema = Column(JSON, default={})  # Required parameters
+    template_config = Column(JSON, nullable=False)  # type: ignore  # Complete report configuration
+    parameter_schema = Column(JSON, default={})  # type: ignore  # Required parameters
     
     # Availability
-    is_public = Column(Boolean, default=False)  # Available to all tenants
-    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=True)  # Tenant-specific template
+    is_public = Column(Boolean, default=False)  # type: ignore  # Available to all tenants
+    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=True)  # type: ignore  # Tenant-specific template
     
     # Usage statistics
-    usage_count = Column(Integer, default=0)
-    last_used_at = Column(DateTime, nullable=True)
+    usage_count = Column(Integer, default=0)  # type: ignore
+    last_used_at = Column(DateTime, nullable=True)  # type: ignore
     
     # Metadata
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    created_by_user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)  # type: ignore
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)  # type: ignore
+    created_by_user_id = Column(Integer, ForeignKey("users.id"), nullable=True)  # type: ignore
     
     # Version control
-    version = Column(String(20), default="1.0")
-    parent_template_id = Column(Integer, ForeignKey("report_templates.id"), nullable=True)
+    version = Column(String(20), default="1.0")  # type: ignore
+    parent_template_id = Column(Integer, ForeignKey("report_templates.id"), nullable=True)  # type: ignore
 
     def __repr__(self):
         return f"<ReportTemplate(id={self.id}, name='{self.name}', category='{self.category}')>"
 
     def increment_usage(self):
         """Increment usage statistics"""
-        self.usage_count += 1
-        self.last_used_at = datetime.utcnow()
+        self.usage_count += 1  # type: ignore
+        setattr(self, 'last_used_at', datetime.utcnow())  # type: ignore
 
 
-class ReportAuditLog(Base):
+class ReportAuditLog(Base):  # type: ignore
     """
     Audit log for report activities
     """
     __tablename__ = "report_audit_logs"
 
-    id = Column(Integer, primary_key=True, index=True)
-    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=False, index=True)
-    report_id = Column(Integer, ForeignKey("reports.id"), nullable=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
+    id = Column(Integer, primary_key=True, index=True)  # type: ignore
+    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=False, index=True)  # type: ignore
+    report_id = Column(Integer, ForeignKey("reports.id"), nullable=True, index=True)  # type: ignore
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)  # type: ignore
     
     # Event details
-    event_type = Column(String(100), nullable=False, index=True)  # created, executed, scheduled, shared, etc.
-    event_category = Column(String(50), nullable=False, index=True)  # management, execution, security
+    event_type = Column(String(100), nullable=False, index=True)  # type: ignore  # created, executed, scheduled, shared, etc.
+    event_category = Column(String(50), nullable=False, index=True)  # type: ignore  # management, execution, security
     
     # Context
-    resource_type = Column(String(50), nullable=True)  # report, schedule, subscription
-    resource_id = Column(String(100), nullable=True)
+    resource_type = Column(String(50), nullable=True)  # type: ignore  # report, schedule, subscription
+    resource_id = Column(String(100), nullable=True)  # type: ignore
     
     # Event data
-    details = Column(JSON, default={})
-    old_values = Column(JSON, default={})  # For update operations
-    new_values = Column(JSON, default={})  # For update operations
+    details = Column(JSON, default={})  # type: ignore
+    old_values = Column(JSON, default={})  # type: ignore  # For update operations
+    new_values = Column(JSON, default={})  # type: ignore  # For update operations
     
     # Security context
-    ip_address = Column(String(45), nullable=True)
-    user_agent = Column(Text, nullable=True)
+    ip_address = Column(String(45), nullable=True)  # type: ignore
+    user_agent = Column(Text, nullable=True)  # type: ignore
     
     # Timing
-    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)  # type: ignore
 
     def __repr__(self):
         return f"<ReportAuditLog(id={self.id}, event_type='{self.event_type}', tenant_id={self.tenant_id})>"
 
 
-class ReportCache(Base):
+class ReportCache(Base):  # type: ignore
     """
     Cache for report results to improve performance
     """
     __tablename__ = "report_cache"
 
-    id = Column(Integer, primary_key=True, index=True)
-    cache_key = Column(String(255), unique=True, nullable=False, index=True)
-    report_id = Column(Integer, ForeignKey("reports.id"), nullable=False, index=True)
-    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=False, index=True)
+    id = Column(Integer, primary_key=True, index=True)  # type: ignore
+    cache_key = Column(String(255), unique=True, nullable=False, index=True)  # type: ignore
+    report_id = Column(Integer, ForeignKey("reports.id"), nullable=False, index=True)  # type: ignore
+    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=False, index=True)  # type: ignore
     
     # Cache metadata
-    parameters_hash = Column(String(64), nullable=False)  # MD5 hash of parameters
-    data_hash = Column(String(64), nullable=False)  # MD5 hash of result data
+    parameters_hash = Column(String(64), nullable=False)  # type: ignore  # MD5 hash of parameters
+    data_hash = Column(String(64), nullable=False)  # type: ignore  # MD5 hash of result data
     
     # Cached data
-    result_data = Column(JSON, nullable=False)  # Serialized report data
-    cache_metadata = Column(JSON, default={})  # Row count, generation time, etc.
+    result_data = Column(JSON, nullable=False)  # type: ignore  # Serialized report data
+    cache_metadata = Column(JSON, default={})  # type: ignore  # Row count, generation time, etc.
     
     # Cache control
-    created_at = Column(DateTime, default=datetime.utcnow, index=True)
-    expires_at = Column(DateTime, nullable=False, index=True)
-    hit_count = Column(Integer, default=0)
-    last_accessed_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)  # type: ignore
+    expires_at = Column(DateTime, nullable=False, index=True)  # type: ignore
+    hit_count = Column(Integer, default=0)  # type: ignore
+    last_accessed_at = Column(DateTime, default=datetime.utcnow)  # type: ignore
 
     def __repr__(self):
         return f"<ReportCache(id={self.id}, cache_key='{self.cache_key}', report_id={self.report_id})>"
@@ -390,5 +390,5 @@ class ReportCache(Base):
 
     def increment_hit_count(self):
         """Increment cache hit statistics"""
-        self.hit_count += 1
-        self.last_accessed_at = datetime.utcnow()
+        self.hit_count += 1  # type: ignore
+        setattr(self, 'last_accessed_at', datetime.utcnow())  # type: ignore
