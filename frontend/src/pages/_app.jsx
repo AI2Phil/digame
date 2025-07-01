@@ -4,6 +4,7 @@ import { ThemeProvider, CssBaseline } from '@mui/material';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { SnackbarProvider } from 'notistack';
+import { TenantProvider } from '../contexts/TenantContext';
 
 // Assuming you have a theme file, e.g., theme.js or similar
 // import theme from '../styles/theme'; // Adjust path as necessary
@@ -26,7 +27,9 @@ function MyApp({ Component, pageProps }) {
       <ThemeProvider theme={defaultTheme}> {/* Replace defaultTheme with your actual theme */}
         <CssBaseline /> {/* MUI's baseline CSS */}
         <SnackbarProvider maxSnack={3}> {/* Basic Notistack setup */}
-          <Component {...pageProps} />
+          <TenantProvider>
+            <Component {...pageProps} />
+          </TenantProvider>
         </SnackbarProvider>
       </ThemeProvider>
       <ReactQueryDevtools initialIsOpen={false} />
