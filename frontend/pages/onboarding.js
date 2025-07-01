@@ -1,371 +1,380 @@
 import React, { useState, useEffect } from 'react';
+import { useAuth } from '../src/contexts/AuthContext';
 import { useRouter } from 'next/router';
-import Button from '../src/components/ui/Button';
-import { Card, CardContent, CardHeader, CardTitle } from '../src/components/ui/Card';
-import { Input } from '../src/components/ui/Input';
-import { Progress } from '../src/components/ui/Progress';
-import { Badge } from '../src/components/ui/Badge';
-import { ChevronRight, ChevronLeft, Check } from 'lucide-react';
 
-export default function OnboardingPage() {
+const OnboardingPage = () => {
+  const { user, isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(1);
-  const [isLoading, setIsLoading] = useState(false);
   const [onboardingData, setOnboardingData] = useState({
-    role: '',
-    experience: '',
+    interests: [],
     goals: [],
-    skills: [],
-    workStyle: '',
-    preferences: {
-      notifications: true,
-      analytics: true,
-      coaching: true
+    experience: '',
+    notifications: {
+      email: true,
+      push: true,
+      marketing: false
     }
   });
 
-  const totalSteps = 4;
-  const progress = (currentStep / totalSteps) * 100;
-
   useEffect(() => {
-    // Check if user is authenticated
-    const token = localStorage.getItem('access_token');
-    if (!token) {
-      router.push('/auth');
+    if (!isLoading && !isAuthenticated) {
+      router.push('/login');
     }
-  }, [router]);
+  }, [isAuthenticated, isLoading, router]);
 
-  const handleInputChange = (field, value) => {
+  const interests = [
+    'Analytics & Data Science',
+    'Artificial Intelligence',
+    'Team Management',
+    'Professional Development',
+    'Digital Transformation',
+    'Productivity Tools',
+    'Social Networking',
+    'Project Management',
+    'Business Intelligence',
+    'Automation'
+  ];
+
+  const goals = [
+    'Improve team productivity',
+    'Gain insights from data',
+    'Enhance professional skills',
+    'Build professional network',
+    'Automate workflows',
+    'Track performance metrics',
+    'Collaborate more effectively',
+    'Make data-driven decisions'
+  ];
+
+  const experienceLevels = [
+    { value: 'beginner', label: 'Beginner - New to digital tools' },
+    { value: 'intermediate', label: 'Intermediate - Some experience' },
+    { value: 'advanced', label: 'Advanced - Very experienced' },
+    { value: 'expert', label: 'Expert - Industry professional' }
+  ];
+
+  const handleInterestToggle = (interest) => {
     setOnboardingData(prev => ({
       ...prev,
-      [field]: value
+      interests: prev.interests.includes(interest)
+        ? prev.interests.filter(i => i !== interest)
+        : [...prev.interests, interest]
     }));
   };
 
-  const handleArrayToggle = (field, item) => {
+  const handleGoalToggle = (goal) => {
     setOnboardingData(prev => ({
       ...prev,
-      [field]: prev[field].includes(item)
-        ? prev[field].filter(i => i !== item)
-        : [...prev[field], item]
+      goals: prev.goals.includes(goal)
+        ? prev.goals.filter(g => g !== goal)
+        : [...prev.goals, goal]
     }));
   };
 
-  const handleNext = () => {
-    if (currentStep < totalSteps) {
-      setCurrentStep(currentStep + 1);
-    } else {
-      handleComplete();
-    }
-  };
-
-  const handlePrevious = () => {
-    if (currentStep > 1) {
-      setCurrentStep(currentStep - 1);
-    }
+  const handleNotificationChange = (type) => {
+    setOnboardingData(prev => ({
+      ...prev,
+      notifications: {
+        ...prev.notifications,
+        [type]: !prev.notifications[type]
+      }
+    }));
   };
 
   const handleComplete = async () => {
-    setIsLoading(true);
-    
     try {
-      const token = localStorage.getItem('access_token');
-      const response = await fetch('http://localhost:8000/api/auth/onboarding', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(onboardingData),
+      // Save onboarding data to user profile
+      const success = await user?.updateProfile?.({
+        onboardingCompleted: true,
+        interests: onboardingData.interests,
+        goals: onboardingData.goals,
+        experienceLevel: onboardingData.experience,
+        preferences: {
+          ...user.preferences,
+          ...onboardingData.notifications
+        }
       });
 
-      if (response.ok) {
-        router.push('/dashboard');
-      } else {
-        console.error('Onboarding failed');
-        // For demo purposes, still redirect to dashboard
-        router.push('/dashboard');
+      if (success) {
+        router.push('/dashboard?welcome=true');
       }
     } catch (error) {
-      console.error('Onboarding error:', error);
-      // For demo purposes, still redirect to dashboard
-      router.push('/dashboard');
-    } finally {
-      setIsLoading(false);
+      console.error('Onboarding completion error:', error);
+      // Continue to dashboard even if profile update fails
+      router.push('/dashboard?welcome=true');
     }
   };
 
-  const renderStep = () => {
-    switch (currentStep) {
-      case 1:
-        return (
-          <div className="space-y-6">
-            <div className="text-center">
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">What's your role?</h2>
-              <p className="text-gray-600">Help us understand your professional background</p>
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4">
-              {[
-                'Software Engineer', 'Product Manager', 'Designer', 'Data Scientist',
-                'Marketing Manager', 'Sales Representative', 'Consultant', 'Other'
-              ].map((role) => (
-                <Button
-                  key={role}
-                  variant={onboardingData.role === role ? 'primary' : 'outline'}
-                  onClick={() => handleInputChange('role', role)}
-                  className="h-16 text-left justify-start"
-                >
-                  {role}
-                </Button>
-              ))}
-            </div>
-            
-            {onboardingData.role === 'Other' && (
-              <Input
-                placeholder="Please specify your role"
-                value={onboardingData.customRole || ''}
-                onChange={(e) => handleInputChange('customRole', e.target.value)}
-              />
-            )}
-          </div>
-        );
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
-      case 2:
-        return (
-          <div className="space-y-6">
-            <div className="text-center">
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">Experience Level</h2>
-              <p className="text-gray-600">How many years of professional experience do you have?</p>
-            </div>
-            
-            <div className="space-y-3">
-              {[
-                { value: 'entry', label: '0-2 years (Entry Level)', icon: '🌱' },
-                { value: 'mid', label: '3-5 years (Mid Level)', icon: '🌿' },
-                { value: 'senior', label: '6-10 years (Senior Level)', icon: '🌳' },
-                { value: 'expert', label: '10+ years (Expert Level)', icon: '🏆' }
-              ].map((exp) => (
-                <Button
-                  key={exp.value}
-                  variant={onboardingData.experience === exp.value ? 'primary' : 'outline'}
-                  onClick={() => handleInputChange('experience', exp.value)}
-                  className="w-full h-16 text-left justify-start"
-                >
-                  <span className="mr-3 text-xl">{exp.icon}</span>
-                  {exp.label}
-                </Button>
-              ))}
-            </div>
-          </div>
-        );
+  if (!isAuthenticated) {
+    return null;
+  }
 
-      case 3:
-        return (
-          <div className="space-y-6">
-            <div className="text-center">
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">Your Goals</h2>
-              <p className="text-gray-600">What do you want to achieve? (Select all that apply)</p>
-            </div>
-            
-            <div className="grid grid-cols-1 gap-3">
-              {[
-                { value: 'productivity', label: 'Increase Productivity', icon: '📈' },
-                { value: 'skills', label: 'Develop New Skills', icon: '🎯' },
-                { value: 'career', label: 'Advance Career', icon: '🚀' },
-                { value: 'leadership', label: 'Improve Leadership', icon: '👥' },
-                { value: 'balance', label: 'Work-Life Balance', icon: '⚖️' },
-                { value: 'networking', label: 'Build Network', icon: '🤝' }
-              ].map((goal) => (
-                <Button
-                  key={goal.value}
-                  variant={onboardingData.goals.includes(goal.value) ? 'primary' : 'outline'}
-                  onClick={() => handleArrayToggle('goals', goal.value)}
-                  className="w-full h-16 text-left justify-start"
-                >
-                  <span className="mr-3 text-xl">{goal.icon}</span>
-                  {goal.label}
-                  {onboardingData.goals.includes(goal.value) && (
-                    <Check className="ml-auto h-5 w-5" />
-                  )}
-                </Button>
-              ))}
-            </div>
-          </div>
-        );
-
-      case 4:
-        return (
-          <div className="space-y-6">
-            <div className="text-center">
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">Preferences</h2>
-              <p className="text-gray-600">Customize your Digame experience</p>
-            </div>
-            
-            <div className="space-y-4">
-              <Card className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="font-medium text-gray-900">Smart Notifications</h3>
-                    <p className="text-sm text-gray-600">Get AI-powered insights and reminders</p>
-                  </div>
-                  <Button
-                    variant={onboardingData.preferences.notifications ? 'primary' : 'outline'}
-                    size="sm"
-                    onClick={() => handleInputChange('preferences', {
-                      ...onboardingData.preferences,
-                      notifications: !onboardingData.preferences.notifications
-                    })}
-                  >
-                    {onboardingData.preferences.notifications ? 'On' : 'Off'}
-                  </Button>
-                </div>
-              </Card>
-
-              <Card className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="font-medium text-gray-900">Advanced Analytics</h3>
-                    <p className="text-sm text-gray-600">Detailed productivity and behavior analysis</p>
-                  </div>
-                  <Button
-                    variant={onboardingData.preferences.analytics ? 'primary' : 'outline'}
-                    size="sm"
-                    onClick={() => handleInputChange('preferences', {
-                      ...onboardingData.preferences,
-                      analytics: !onboardingData.preferences.analytics
-                    })}
-                  >
-                    {onboardingData.preferences.analytics ? 'On' : 'Off'}
-                  </Button>
-                </div>
-              </Card>
-
-              <Card className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="font-medium text-gray-900">AI Coaching</h3>
-                    <p className="text-sm text-gray-600">Personalized recommendations and guidance</p>
-                  </div>
-                  <Button
-                    variant={onboardingData.preferences.coaching ? 'primary' : 'outline'}
-                    size="sm"
-                    onClick={() => handleInputChange('preferences', {
-                      ...onboardingData.preferences,
-                      coaching: !onboardingData.preferences.coaching
-                    })}
-                  >
-                    {onboardingData.preferences.coaching ? 'On' : 'Off'}
-                  </Button>
-                </div>
-              </Card>
-            </div>
-
-            <div className="bg-blue-50 p-4 rounded-lg">
-              <h3 className="font-medium text-blue-900 mb-2">🎉 You're all set!</h3>
-              <p className="text-sm text-blue-700">
-                Your digital twin is ready to start learning about your work patterns and providing personalized insights.
-              </p>
-            </div>
-          </div>
-        );
-
-      default:
-        return null;
-    }
-  };
-
-  const canProceed = () => {
-    switch (currentStep) {
-      case 1:
-        return onboardingData.role !== '';
-      case 2:
-        return onboardingData.experience !== '';
-      case 3:
-        return onboardingData.goals.length > 0;
-      case 4:
-        return true;
-      default:
-        return false;
-    }
-  };
+  const totalSteps = 4;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 relative overflow-hidden">
-      {/* Glassmorphic Background Elements */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-blue-400/20 to-purple-600/20 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-tr from-purple-400/20 to-pink-600/20 rounded-full blur-3xl animate-pulse delay-1000"></div>
-      </div>
-
-      <div className="relative z-10 container mx-auto px-4 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-2xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="flex items-center justify-center space-x-2 mb-4">
-            <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">D</span>
-            </div>
-            <span className="text-xl font-bold text-gray-900">Digame Onboarding</span>
+          <div className="mx-auto h-16 w-16 flex items-center justify-center rounded-full bg-indigo-600 mb-4">
+            <span className="text-white font-bold text-2xl">D</span>
           </div>
-          <div className="max-w-md mx-auto">
-            <div className="flex items-center justify-between text-sm text-gray-600 mb-2">
-              <span>Step {currentStep} of {totalSteps}</span>
-              <span>{Math.round(progress)}% Complete</span>
-            </div>
-            <Progress value={progress} className="h-2" />
+          <h1 className="text-3xl font-extrabold text-gray-900">
+            Welcome to Digame, {user?.firstName}!
+          </h1>
+          <p className="mt-2 text-lg text-gray-600">
+            Let's personalize your experience
+          </p>
+        </div>
+
+        {/* Progress Bar */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-medium text-gray-700">
+              Step {currentStep} of {totalSteps}
+            </span>
+            <span className="text-sm text-gray-500">
+              {Math.round((currentStep / totalSteps) * 100)}% complete
+            </span>
+          </div>
+          <div className="w-full bg-gray-200 rounded-full h-2">
+            <div 
+              className="bg-indigo-600 h-2 rounded-full transition-all duration-300"
+              style={{ width: `${(currentStep / totalSteps) * 100}%` }}
+            ></div>
           </div>
         </div>
 
-        {/* Onboarding Card */}
-        <div className="max-w-2xl mx-auto">
-          <Card className="shadow-xl backdrop-blur-lg bg-white/90 border border-white/20">
-            <CardContent className="p-8">
-              {renderStep()}
-              
-              {/* Navigation */}
-              <div className="flex justify-between mt-8">
-                <Button
-                  variant="outline"
-                  onClick={handlePrevious}
-                  disabled={currentStep === 1}
-                  className="flex items-center"
-                >
-                  <ChevronLeft className="h-4 w-4 mr-1" />
-                  Previous
-                </Button>
-                
-                <Button
-                  onClick={handleNext}
-                  disabled={!canProceed() || isLoading}
-                  loading={isLoading && currentStep === totalSteps}
-                  className="flex items-center bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-                >
-                  {currentStep === totalSteps ? (
-                    isLoading ? 'Completing...' : 'Complete Setup'
-                  ) : (
-                    <>
-                      Next
-                      <ChevronRight className="h-4 w-4 ml-1" />
-                    </>
-                  )}
-                </Button>
+        {/* Step Content */}
+        <div className="bg-white rounded-lg shadow-lg p-8">
+          {currentStep === 1 && (
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-4">
+                What are your interests?
+              </h2>
+              <p className="text-gray-600 mb-6">
+                Select the areas you're most interested in to help us customize your experience.
+              </p>
+              <div className="grid grid-cols-2 gap-3">
+                {interests.map((interest) => (
+                  <button
+                    key={interest}
+                    onClick={() => handleInterestToggle(interest)}
+                    className={`p-3 text-left rounded-lg border transition-colors ${
+                      onboardingData.interests.includes(interest)
+                        ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
+                        : 'border-gray-300 hover:border-gray-400'
+                    }`}
+                  >
+                    <div className="flex items-center">
+                      <div className={`w-4 h-4 rounded border mr-3 ${
+                        onboardingData.interests.includes(interest)
+                          ? 'bg-indigo-600 border-indigo-600'
+                          : 'border-gray-300'
+                      }`}>
+                        {onboardingData.interests.includes(interest) && (
+                          <svg className="w-3 h-3 text-white ml-0.5 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
+                        )}
+                      </div>
+                      <span className="text-sm font-medium">{interest}</span>
+                    </div>
+                  </button>
+                ))}
               </div>
-            </CardContent>
-          </Card>
-        </div>
+            </div>
+          )}
 
-        {/* Skip Option */}
-        <div className="text-center mt-6">
-          <Button
-            variant="link"
-            onClick={() => router.push('/dashboard')}
-            className="text-gray-600 hover:text-gray-900"
-            disabled={isLoading}
-          >
-            Skip for now
-          </Button>
+          {currentStep === 2 && (
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-4">
+                What are your goals?
+              </h2>
+              <p className="text-gray-600 mb-6">
+                Tell us what you want to achieve with Digame.
+              </p>
+              <div className="space-y-3">
+                {goals.map((goal) => (
+                  <button
+                    key={goal}
+                    onClick={() => handleGoalToggle(goal)}
+                    className={`w-full p-4 text-left rounded-lg border transition-colors ${
+                      onboardingData.goals.includes(goal)
+                        ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
+                        : 'border-gray-300 hover:border-gray-400'
+                    }`}
+                  >
+                    <div className="flex items-center">
+                      <div className={`w-5 h-5 rounded border mr-3 ${
+                        onboardingData.goals.includes(goal)
+                          ? 'bg-indigo-600 border-indigo-600'
+                          : 'border-gray-300'
+                      }`}>
+                        {onboardingData.goals.includes(goal) && (
+                          <svg className="w-4 h-4 text-white ml-0.5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
+                        )}
+                      </div>
+                      <span className="font-medium">{goal}</span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {currentStep === 3 && (
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-4">
+                What's your experience level?
+              </h2>
+              <p className="text-gray-600 mb-6">
+                This helps us provide the right level of guidance and features.
+              </p>
+              <div className="space-y-3">
+                {experienceLevels.map((level) => (
+                  <label
+                    key={level.value}
+                    className={`block p-4 rounded-lg border cursor-pointer transition-colors ${
+                      onboardingData.experience === level.value
+                        ? 'border-indigo-600 bg-indigo-50'
+                        : 'border-gray-300 hover:border-gray-400'
+                    }`}
+                  >
+                    <div className="flex items-center">
+                      <input
+                        type="radio"
+                        name="experience"
+                        value={level.value}
+                        checked={onboardingData.experience === level.value}
+                        onChange={(e) => setOnboardingData(prev => ({ ...prev, experience: e.target.value }))}
+                        className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300"
+                      />
+                      <span className="ml-3 font-medium text-gray-900">{level.label}</span>
+                    </div>
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {currentStep === 4 && (
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-4">
+                Notification preferences
+              </h2>
+              <p className="text-gray-600 mb-6">
+                Choose how you'd like to stay updated.
+              </p>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-4 border border-gray-300 rounded-lg">
+                  <div>
+                    <h3 className="font-medium text-gray-900">Email notifications</h3>
+                    <p className="text-sm text-gray-500">Get updates about your account and platform features</p>
+                  </div>
+                  <button
+                    onClick={() => handleNotificationChange('email')}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                      onboardingData.notifications.email ? 'bg-indigo-600' : 'bg-gray-200'
+                    }`}
+                  >
+                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      onboardingData.notifications.email ? 'translate-x-6' : 'translate-x-1'
+                    }`} />
+                  </button>
+                </div>
+
+                <div className="flex items-center justify-between p-4 border border-gray-300 rounded-lg">
+                  <div>
+                    <h3 className="font-medium text-gray-900">Push notifications</h3>
+                    <p className="text-sm text-gray-500">Get real-time alerts in your browser</p>
+                  </div>
+                  <button
+                    onClick={() => handleNotificationChange('push')}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                      onboardingData.notifications.push ? 'bg-indigo-600' : 'bg-gray-200'
+                    }`}
+                  >
+                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      onboardingData.notifications.push ? 'translate-x-6' : 'translate-x-1'
+                    }`} />
+                  </button>
+                </div>
+
+                <div className="flex items-center justify-between p-4 border border-gray-300 rounded-lg">
+                  <div>
+                    <h3 className="font-medium text-gray-900">Marketing emails</h3>
+                    <p className="text-sm text-gray-500">Receive tips, updates, and special offers</p>
+                  </div>
+                  <button
+                    onClick={() => handleNotificationChange('marketing')}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                      onboardingData.notifications.marketing ? 'bg-indigo-600' : 'bg-gray-200'
+                    }`}
+                  >
+                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      onboardingData.notifications.marketing ? 'translate-x-6' : 'translate-x-1'
+                    }`} />
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Navigation Buttons */}
+          <div className="flex justify-between mt-8">
+            <button
+              onClick={() => setCurrentStep(Math.max(1, currentStep - 1))}
+              disabled={currentStep === 1}
+              className="px-6 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Previous
+            </button>
+
+            {currentStep < totalSteps ? (
+              <button
+                onClick={() => setCurrentStep(Math.min(totalSteps, currentStep + 1))}
+                className="px-6 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+              >
+                Next
+              </button>
+            ) : (
+              <button
+                onClick={handleComplete}
+                className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+              >
+                Complete Setup
+              </button>
+            )}
+          </div>
+
+          {/* Skip Option */}
+          <div className="text-center mt-4">
+            <button
+              onClick={() => router.push('/dashboard')}
+              className="text-sm text-gray-500 hover:text-gray-700"
+            >
+              Skip for now
+            </button>
+          </div>
         </div>
       </div>
     </div>
   );
-}
+};
+
+export default OnboardingPage;

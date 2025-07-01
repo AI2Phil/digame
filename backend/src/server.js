@@ -4,6 +4,11 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 require('dotenv').config();
 
+// Import routes and middleware
+const authRoutes = require('./routes/auth');
+const teamRoutes = require('./routes/teams');
+const { detectDemoMode } = require('./middleware/auth');
+
 const app = express();
 const PORT = process.env.PORT || 8001;
 
@@ -11,114 +16,34 @@ const PORT = process.env.PORT || 8001;
 app.use(helmet());
 app.use(morgan('combined'));
 app.use(cors({
-  origin: 'http://localhost:3000',
+  origin: ['http://localhost:3000', 'http://localhost:3001'],
   credentials: true
 }));
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Global middleware
+app.use(detectDemoMode);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
-  res.json({ status: 'OK', message: 'Digame Backend Server is running' });
-});
-
-// Auth routes
-app.post('/auth/login', (req, res) => {
-  console.log('Login attempt:', req.body);
-  
-  const { username, password } = req.body;
-  
-  // For demo purposes, accept any credentials
-  if (username && password) {
-    const token = 'demo-jwt-token-' + Date.now();
-    const user = {
-      id: 1,
-      name: username === 'admin' ? 'Admin User' : 'Demo User',
-      email: username === 'admin' ? 'admin@digame.com' : 'demo@digame.com',
-      role: username === 'admin' ? 'admin' : 'user',
-      username: username
-    };
-    
-    console.log('Login successful for:', user);
-    
-    res.json({
-      success: true,
-      token,
-      user
-    });
-  } else {
-    console.log('Login failed: Missing credentials');
-    res.status(401).json({ 
-      success: false,
-      error: 'Invalid credentials',
-      message: 'Username and password are required'
-    });
-  }
-});
-
-// Demo mode endpoint
-app.post('/auth/demo', (req, res) => {
-  console.log('Demo mode access requested');
-  
-  const token = 'demo-mode-token-' + Date.now();
-  const user = {
-    id: 999,
-    name: 'Demo User',
-    email: 'demo@digame.com',
-    role: 'admin',
-    username: 'demo',
-    isDemoMode: true
-  };
-  
   res.json({
-    success: true,
-    token,
-    user,
-    isDemoMode: true
+    status: 'OK',
+    message: 'Digame Backend Server is running',
+    timestamp: new Date().toISOString(),
+    version: '2.0.0',
+    features: {
+      authentication: true,
+      rbac: true,
+      teamCollaboration: true,
+      jwtTokens: true
+    }
   });
 });
 
-// User profile endpoint
-app.get('/auth/profile', (req, res) => {
-  const authHeader = req.headers.authorization;
-  
-  if (!authHeader) {
-    return res.status(401).json({ error: 'No token provided' });
-  }
-  
-  // For demo purposes, return user data based on token
-  const token = authHeader.replace('Bearer ', '');
-  
-  if (token.includes('demo')) {
-    res.json({
-      success: true,
-      user: {
-        id: 999,
-        name: 'Demo User',
-        email: 'demo@digame.com',
-        role: 'admin',
-        username: 'demo',
-        isDemoMode: true
-      }
-    });
-  } else {
-    res.json({
-      success: true,
-      user: {
-        id: 1,
-        name: 'Authenticated User',
-        email: 'user@digame.com',
-        role: 'user',
-        username: 'user'
-      }
-    });
-  }
-});
-
-// Logout endpoint
-app.post('/auth/logout', (req, res) => {
-  console.log('Logout requested');
-  res.json({ success: true, message: 'Logged out successfully' });
-});
+// API Routes
+app.use('/auth', authRoutes);
+app.use('/teams', teamRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

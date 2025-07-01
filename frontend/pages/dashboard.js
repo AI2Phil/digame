@@ -1,283 +1,481 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '../src/contexts/AuthContext';
 import { useRouter } from 'next/router';
-import NextJSComprehensiveNavigation from '../src/components/navigation/NextJSComprehensiveNavigation';
+import ProgressiveOnboarding from '../src/components/onboarding/ProgressiveOnboarding';
+import TeamManagement from '../src/components/team/TeamManagement';
 
-export default function Dashboard() {
+const Dashboard = () => {
+  const { user, logout, hasFeatureAccess } = useAuth();
   const router = useRouter();
-  
-  const mockUser = {
-    name: 'Demo User',
-    role: 'admin',
-    is_platform_owner: true,
-    subscription_tier: 'enterprise',
-    tenant_id: 1,
-    tenant_name: 'Demo Tenant',
-    permissions: ['read', 'write', 'admin', 'platform_owner']
+  const [activeSection, setActiveSection] = useState('overview');
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [userStats, setUserStats] = useState({
+    totalProjects: 0,
+    activeTeams: 0,
+    completedTasks: 0,
+    recentActivity: []
+  });
+
+  useEffect(() => {
+    if (!user) {
+      router.push('/auth');
+      return;
+    }
+
+    // Check if user needs onboarding
+    if (!user.onboardingCompleted) {
+      setShowOnboarding(true);
+    }
+
+    loadUserStats();
+  }, [user, router]);
+
+  const loadUserStats = async () => {
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001';
+      const response = await fetch(`${apiUrl}/auth/stats`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setUserStats(data.stats || {
+          totalProjects: 0,
+          activeTeams: 0,
+          completedTasks: 0,
+          recentActivity: []
+        });
+      }
+    } catch (error) {
+      console.error('Failed to load user stats:', error);
+    }
   };
-  
+
+  const handleOnboardingComplete = () => {
+    setShowOnboarding(false);
+    loadUserStats(); // Refresh stats after onboarding
+  };
+
+  const handleTeamCreated = (team) => {
+    loadUserStats(); // Refresh stats when team is created
+  };
+
   const handleLogout = () => {
-    // Clear any stored tokens/data
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
-    // Redirect to home
+    logout();
     router.push('/');
   };
 
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-indigo-600"></div>
+      </div>
+    );
+  }
+
+  if (showOnboarding) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <ProgressiveOnboarding onComplete={handleOnboardingComplete} />
+      </div>
+    );
+  }
+
+  const navigationItems = [
+    { id: 'overview', label: 'Overview', icon: '📊', available: true },
+    { id: 'projects', label: 'Projects', icon: '📁', available: hasFeatureAccess('projects.view') },
+    { id: 'teams', label: 'Teams', icon: '👥', available: hasFeatureAccess('team.view') },
+    { id: 'analytics', label: 'Analytics', icon: '📈', available: hasFeatureAccess('analytics.view') },
+    { id: 'integrations', label: 'Integrations', icon: '🔗', available: hasFeatureAccess('integrations.view') },
+    { id: 'settings', label: 'Settings', icon: '⚙️', available: true }
+  ];
+
+  const availableNavItems = navigationItems.filter(item => item.available);
+
   return (
-    <div className="flex h-screen bg-gray-100">
-      <NextJSComprehensiveNavigation
-        isDemoMode={true}
-        onLogout={handleLogout}
-        currentUser={mockUser}
-        isOpen={true}
-        onToggle={() => {}}
-        showAllFeatures={true}
-      />
-      
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <header className="bg-white shadow-sm border-b border-gray-200">
-          <div className="flex items-center justify-between px-6 py-4">
-            <h1 className="text-xl font-semibold text-gray-900">
-              Digame Dashboard - Complete Platform Access
-            </h1>
-            <div className="text-sm text-gray-600">
-              All Backend Features Available
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <header className="bg-white shadow-sm border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center">
+              <h1 className="text-2xl font-bold text-gray-900">
+                Digame Digital Twin Platform
+              </h1>
             </div>
-          </div>
-        </header>
-        
-        <main className="flex-1 overflow-y-auto p-6">
-          <div className="max-w-6xl mx-auto">
-            <div className="bg-white rounded-lg shadow-sm p-8">
-              <h2 className="text-3xl font-bold text-gray-900 mb-6">
-                🎯 Welcome to Your Digital Professional Twin Platform
-              </h2>
-              
-              <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6 rounded-lg mb-8">
-                <h3 className="text-xl font-bold mb-3">
-                  ✅ Complete Backend Integration Active
-                </h3>
-                <p className="text-blue-100 mb-4">
-                  Your comprehensive navigation provides genuine access to ALL backend features and functionality.
-                  Every menu item connects to real backend routers and endpoints for complete platform coverage.
-                </p>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                  <div>
-                    <div className="font-semibold">16 Major Sections</div>
-                    <div className="text-blue-200">Complete coverage</div>
+            
+            <div className="flex items-center space-x-4">
+              {/* User Info */}
+              <div className="flex items-center space-x-3">
+                <div className="h-8 w-8 bg-indigo-600 rounded-full flex items-center justify-center">
+                  <span className="text-white text-sm font-medium">
+                    {user.firstName?.[0] || user.username[0]}
+                  </span>
+                </div>
+                <div className="hidden md:block">
+                  <div className="text-sm font-medium text-gray-900">
+                    {user.firstName} {user.lastName}
                   </div>
-                  <div>
-                    <div className="font-semibold">80+ Features</div>
-                    <div className="text-blue-200">All backend endpoints</div>
-                  </div>
-                  <div>
-                    <div className="font-semibold">Role-Based Access</div>
-                    <div className="text-blue-200">RBAC implementation</div>
-                  </div>
-                  <div>
-                    <div className="font-semibold">Search Functionality</div>
-                    <div className="text-blue-200">Real-time filtering</div>
+                  <div className="text-xs text-gray-500">
+                    {user.subscriptionTier} • {user.email}
                   </div>
                 </div>
               </div>
 
-              {/* Quick Access Dashboard */}
-              <div className="bg-gray-50 p-6 rounded-lg mb-8">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                  🚀 Quick Access Dashboard
-                </h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <button
-                    onClick={() => router.push('/analytics/web')}
-                    className="p-4 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow text-left"
-                  >
-                    <div className="text-2xl mb-2">📊</div>
-                    <div className="font-medium text-gray-900">Web Analytics</div>
-                    <div className="text-xs text-gray-600">Real-time insights</div>
-                  </button>
-                  
-                  <button
-                    onClick={() => router.push('/ai-tools')}
-                    className="p-4 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow text-left"
-                  >
-                    <div className="text-2xl mb-2">🤖</div>
-                    <div className="font-medium text-gray-900">AI Tools Hub</div>
-                    <div className="text-xs text-gray-600">AI-powered features</div>
-                  </button>
-                  
-                  <button
-                    onClick={() => router.push('/digital-twin/my-twin')}
-                    className="p-4 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow text-left"
-                  >
-                    <div className="text-2xl mb-2">🧠</div>
-                    <div className="font-medium text-gray-900">Digital Twin</div>
-                    <div className="text-xs text-gray-600">Your AI twin</div>
-                  </button>
-                  
-                  <button
-                    onClick={() => router.push('/platform-owner/console')}
-                    className="p-4 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow text-left"
-                  >
-                    <div className="text-2xl mb-2">👑</div>
-                    <div className="font-medium text-gray-900">Platform Console</div>
-                    <div className="text-xs text-gray-600">Owner tools</div>
-                  </button>
-                </div>
-              </div>
+              {/* Subscription Badge */}
+              <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                user.subscriptionTier === 'enterprise' 
+                  ? 'bg-purple-100 text-purple-800'
+                  : user.subscriptionTier === 'team'
+                  ? 'bg-blue-100 text-blue-800'
+                  : user.subscriptionTier === 'individual_pro'
+                  ? 'bg-green-100 text-green-800'
+                  : 'bg-gray-100 text-gray-800'
+              }`}>
+                {user.subscriptionTier.replace('_', ' ').toUpperCase()}
+              </span>
 
-              {/* Backend Router Coverage */}
-              <div className="bg-white border border-gray-200 rounded-lg p-6 mb-8">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                  🔗 Backend Router Coverage
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                  <div className="space-y-2">
-                    <div className="font-medium text-gray-900">Core Routers</div>
-                    <div className="space-y-1 text-gray-600">
-                      <div>• /api/auth/* - Authentication & Authorization</div>
-                      <div>• /api/users/* - User Management</div>
-                      <div>• /api/dashboard/* - Dashboard Data</div>
-                      <div>• /api/notifications/* - Notification System</div>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="font-medium text-gray-900">Analytics Routers</div>
-                    <div className="space-y-1 text-gray-600">
-                      <div>• /api/analytics/web/* - Web Analytics</div>
-                      <div>• /api/analytics/mobile/* - Mobile Analytics</div>
-                      <div>• /api/analytics/behavioral/* - Behavioral Data</div>
-                      <div>• /api/analytics/predictive/* - Predictive Models</div>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="font-medium text-gray-900">AI & Digital Twin</div>
-                    <div className="space-y-1 text-gray-600">
-                      <div>• /api/ai-tools/* - AI Tools & Automation</div>
-                      <div>• /api/digital-twin/* - Digital Twin Management</div>
-                      <div>• /api/intelligence/* - Intelligence API</div>
-                      <div>• /api/simulation/* - Twin Simulation</div>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="font-medium text-gray-900">Enterprise & Platform</div>
-                    <div className="space-y-1 text-gray-600">
-                      <div>• /api/enterprise/* - Enterprise Features</div>
-                      <div>• /api/platform-owner/* - Platform Management</div>
-                      <div>• /api/teams/* - Team Collaboration</div>
-                      <div>• /api/workflow/* - Workflow Automation</div>
-                    </div>
-                  </div>
-                </div>
+              {/* Logout Button */}
+              <button
+                onClick={handleLogout}
+                className="text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md text-sm font-medium"
+              >
+                Logout
+              </button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="flex">
+          {/* Sidebar Navigation */}
+          <div className="w-64 mr-8">
+            <nav className="bg-white rounded-lg shadow-sm p-4">
+              <div className="space-y-2">
+                {availableNavItems.map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() => setActiveSection(item.id)}
+                    className={`w-full flex items-center px-3 py-2 text-left rounded-md text-sm font-medium transition-colors ${
+                      activeSection === item.id
+                        ? 'bg-indigo-100 text-indigo-700'
+                        : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                    }`}
+                  >
+                    <span className="mr-3">{item.icon}</span>
+                    {item.label}
+                  </button>
+                ))}
               </div>
-              
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                <div className="bg-blue-50 p-6 rounded-lg">
-                  <h3 className="text-lg font-semibold text-blue-900 mb-3">
-                    📊 Analytics & Intelligence
-                  </h3>
-                  <p className="text-sm text-blue-800 mb-3">
-                    Comprehensive analytics with AI-powered insights, behavioral analysis, and predictive capabilities.
-                  </p>
-                  <button 
-                    onClick={() => router.push('/analytics/web')}
-                    className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-                  >
-                    Explore Analytics →
-                  </button>
+            </nav>
+
+            {/* Quick Stats */}
+            <div className="mt-6 bg-white rounded-lg shadow-sm p-4">
+              <h3 className="text-sm font-medium text-gray-900 mb-3">Quick Stats</h3>
+              <div className="space-y-3">
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-500">Projects</span>
+                  <span className="text-sm font-medium text-gray-900">{userStats.totalProjects}</span>
                 </div>
-                
-                <div className="bg-green-50 p-6 rounded-lg">
-                  <h3 className="text-lg font-semibold text-green-900 mb-3">
-                    🤖 AI Tools & Automation
-                  </h3>
-                  <p className="text-sm text-green-800 mb-3">
-                    AI-powered tools for writing, voice processing, document analysis, and workflow automation.
-                  </p>
-                  <button 
-                    onClick={() => router.push('/ai-tools')}
-                    className="text-green-600 hover:text-green-800 text-sm font-medium"
-                  >
-                    Explore AI Tools →
-                  </button>
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-500">Teams</span>
+                  <span className="text-sm font-medium text-gray-900">{userStats.activeTeams}</span>
                 </div>
-                
-                <div className="bg-purple-50 p-6 rounded-lg">
-                  <h3 className="text-lg font-semibold text-purple-900 mb-3">
-                    🧠 Digital Twin & Intelligence
-                  </h3>
-                  <p className="text-sm text-purple-800 mb-3">
-                    Create and manage your digital twin with AI predictions, behavior modeling, and simulation.
-                  </p>
-                  <button 
-                    onClick={() => router.push('/digital-twin/my-twin')}
-                    className="text-purple-600 hover:text-purple-800 text-sm font-medium"
-                  >
-                    Explore Digital Twin →
-                  </button>
-                </div>
-                
-                <div className="bg-orange-50 p-6 rounded-lg">
-                  <h3 className="text-lg font-semibold text-orange-900 mb-3">
-                    👥 Team Collaboration
-                  </h3>
-                  <p className="text-sm text-orange-800 mb-3">
-                    Team management, social collaboration, mentorship programs, and skill gap analysis.
-                  </p>
-                  <button 
-                    onClick={() => router.push('/teams')}
-                    className="text-orange-600 hover:text-orange-800 text-sm font-medium"
-                  >
-                    Explore Teams →
-                  </button>
-                </div>
-                
-                <div className="bg-red-50 p-6 rounded-lg">
-                  <h3 className="text-lg font-semibold text-red-900 mb-3">
-                    🏢 Enterprise Features
-                  </h3>
-                  <p className="text-sm text-red-800 mb-3">
-                    Enterprise-grade features including multi-tenant management and advanced analytics.
-                  </p>
-                  <button 
-                    onClick={() => router.push('/enterprise')}
-                    className="text-red-600 hover:text-red-800 text-sm font-medium"
-                  >
-                    Explore Enterprise →
-                  </button>
-                </div>
-                
-                <div className="bg-yellow-50 p-6 rounded-lg">
-                  <h3 className="text-lg font-semibold text-yellow-900 mb-3">
-                    👑 Platform Owner Tools
-                  </h3>
-                  <p className="text-sm text-yellow-800 mb-3">
-                    Platform owner exclusive tools for tenant management, revenue analytics, and system health.
-                  </p>
-                  <button 
-                    onClick={() => router.push('/platform-owner/console')}
-                    className="text-yellow-600 hover:text-yellow-800 text-sm font-medium"
-                  >
-                    Explore Platform Tools →
-                  </button>
-                </div>
-              </div>
-              
-              <div className="bg-gradient-to-r from-green-600 to-blue-600 text-white p-6 rounded-lg">
-                <h3 className="text-xl font-bold mb-3">
-                  🚀 Ready for Production Use
-                </h3>
-                <p className="text-green-100 mb-4">
-                  This is your genuine application dashboard with complete access to all backend functionality. 
-                  The comprehensive navigation in the sidebar provides real access to every feature, not demo placeholders.
-                </p>
-                <div className="text-sm text-green-200">
-                  Use the search functionality in the sidebar to quickly find any feature across the entire platform.
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-500">Tasks</span>
+                  <span className="text-sm font-medium text-gray-900">{userStats.completedTasks}</span>
                 </div>
               </div>
             </div>
           </div>
-        </main>
+
+          {/* Main Content */}
+          <div className="flex-1">
+            {activeSection === 'overview' && (
+              <DashboardOverview 
+                user={user} 
+                stats={userStats} 
+                hasFeatureAccess={hasFeatureAccess}
+                onNavigate={setActiveSection}
+              />
+            )}
+
+            {activeSection === 'projects' && (
+              <ProjectsSection hasFeatureAccess={hasFeatureAccess} />
+            )}
+
+            {activeSection === 'teams' && (
+              <TeamManagement onTeamCreated={handleTeamCreated} />
+            )}
+
+            {activeSection === 'analytics' && (
+              <AnalyticsSection hasFeatureAccess={hasFeatureAccess} />
+            )}
+
+            {activeSection === 'integrations' && (
+              <IntegrationsSection hasFeatureAccess={hasFeatureAccess} />
+            )}
+
+            {activeSection === 'settings' && (
+              <SettingsSection user={user} />
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
-}
+};
+
+// Dashboard Overview Component
+const DashboardOverview = ({ user, stats, hasFeatureAccess, onNavigate }) => {
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good morning';
+    if (hour < 18) return 'Good afternoon';
+    return 'Good evening';
+  };
+
+  const quickActions = [
+    {
+      id: 'create-project',
+      title: 'Create Project',
+      description: 'Start a new digital twin project',
+      icon: '🚀',
+      action: () => onNavigate('projects'),
+      available: hasFeatureAccess('projects.create')
+    },
+    {
+      id: 'invite-team',
+      title: 'Invite Team Members',
+      description: 'Collaborate with your team',
+      icon: '👥',
+      action: () => onNavigate('teams'),
+      available: hasFeatureAccess('team.invite')
+    },
+    {
+      id: 'view-analytics',
+      title: 'View Analytics',
+      description: 'Analyze your performance',
+      icon: '📊',
+      action: () => onNavigate('analytics'),
+      available: hasFeatureAccess('analytics.view')
+    },
+    {
+      id: 'setup-integrations',
+      title: 'Setup Integrations',
+      description: 'Connect external tools',
+      icon: '🔗',
+      action: () => onNavigate('integrations'),
+      available: hasFeatureAccess('integrations.setup')
+    }
+  ];
+
+  const availableActions = quickActions.filter(action => action.available);
+
+  return (
+    <div className="space-y-6">
+      {/* Welcome Section */}
+      <div className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-lg p-8 text-white">
+        <h1 className="text-3xl font-bold mb-2">
+          {getGreeting()}, {user.firstName || user.username}!
+        </h1>
+        <p className="text-indigo-100 text-lg">
+          Welcome to your Digital Twin Platform dashboard. Let's build something amazing today.
+        </p>
+        <div className="mt-4 flex items-center space-x-4">
+          <span className="bg-white/20 px-3 py-1 rounded-full text-sm">
+            {user.subscriptionTier.replace('_', ' ').toUpperCase()} Plan
+          </span>
+          {user.isVerified && (
+            <span className="bg-green-500/20 px-3 py-1 rounded-full text-sm">
+              ✓ Verified Account
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="bg-white rounded-lg shadow-sm p-6">
+          <div className="flex items-center">
+            <div className="p-2 bg-blue-100 rounded-lg">
+              <span className="text-2xl">📁</span>
+            </div>
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-600">Total Projects</p>
+              <p className="text-2xl font-bold text-gray-900">{stats.totalProjects}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow-sm p-6">
+          <div className="flex items-center">
+            <div className="p-2 bg-green-100 rounded-lg">
+              <span className="text-2xl">👥</span>
+            </div>
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-600">Active Teams</p>
+              <p className="text-2xl font-bold text-gray-900">{stats.activeTeams}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow-sm p-6">
+          <div className="flex items-center">
+            <div className="p-2 bg-purple-100 rounded-lg">
+              <span className="text-2xl">✅</span>
+            </div>
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-600">Completed Tasks</p>
+              <p className="text-2xl font-bold text-gray-900">{stats.completedTasks}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Quick Actions */}
+      <div className="bg-white rounded-lg shadow-sm p-6">
+        <h2 className="text-xl font-semibold text-gray-900 mb-4">Quick Actions</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {availableActions.map((action) => (
+            <button
+              key={action.id}
+              onClick={action.action}
+              className="p-4 border border-gray-200 rounded-lg hover:border-indigo-300 hover:shadow-md transition-all text-left"
+            >
+              <div className="text-2xl mb-2">{action.icon}</div>
+              <h3 className="font-medium text-gray-900 mb-1">{action.title}</h3>
+              <p className="text-sm text-gray-600">{action.description}</p>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Recent Activity */}
+      <div className="bg-white rounded-lg shadow-sm p-6">
+        <h2 className="text-xl font-semibold text-gray-900 mb-4">Recent Activity</h2>
+        {stats.recentActivity?.length > 0 ? (
+          <div className="space-y-3">
+            {stats.recentActivity.map((activity, index) => (
+              <div key={index} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                <div className="text-lg">{activity.icon}</div>
+                <div>
+                  <p className="text-sm font-medium text-gray-900">{activity.title}</p>
+                  <p className="text-xs text-gray-500">{activity.timestamp}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-8">
+            <div className="text-4xl mb-2">🎯</div>
+            <p className="text-gray-600">No recent activity. Start by creating your first project!</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// Placeholder sections for other features
+const ProjectsSection = ({ hasFeatureAccess }) => (
+  <div className="bg-white rounded-lg shadow-sm p-8 text-center">
+    <div className="text-6xl mb-4">🚀</div>
+    <h2 className="text-2xl font-bold text-gray-900 mb-4">Projects</h2>
+    <p className="text-gray-600 mb-6">
+      Create and manage your digital twin projects here.
+    </p>
+    {hasFeatureAccess('projects.create') ? (
+      <button className="bg-indigo-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-indigo-700">
+        Create Your First Project
+      </button>
+    ) : (
+      <div className="text-sm text-gray-500">
+        Upgrade your plan to access project features
+      </div>
+    )}
+  </div>
+);
+
+const AnalyticsSection = ({ hasFeatureAccess }) => (
+  <div className="bg-white rounded-lg shadow-sm p-8 text-center">
+    <div className="text-6xl mb-4">📈</div>
+    <h2 className="text-2xl font-bold text-gray-900 mb-4">Analytics</h2>
+    <p className="text-gray-600 mb-6">
+      Advanced analytics and insights for your digital twin projects.
+    </p>
+    {hasFeatureAccess('analytics.view') ? (
+      <div className="text-sm text-gray-500">
+        Analytics dashboard coming soon!
+      </div>
+    ) : (
+      <div className="text-sm text-gray-500">
+        Upgrade to Individual Pro or higher to access analytics
+      </div>
+    )}
+  </div>
+);
+
+const IntegrationsSection = ({ hasFeatureAccess }) => (
+  <div className="bg-white rounded-lg shadow-sm p-8 text-center">
+    <div className="text-6xl mb-4">🔗</div>
+    <h2 className="text-2xl font-bold text-gray-900 mb-4">Integrations</h2>
+    <p className="text-gray-600 mb-6">
+      Connect with external tools and services to enhance your workflow.
+    </p>
+    {hasFeatureAccess('integrations.setup') ? (
+      <div className="text-sm text-gray-500">
+        Integration marketplace coming soon!
+      </div>
+    ) : (
+      <div className="text-sm text-gray-500">
+        Upgrade to Team or Enterprise to access integrations
+      </div>
+    )}
+  </div>
+);
+
+const SettingsSection = ({ user }) => (
+  <div className="bg-white rounded-lg shadow-sm p-8">
+    <h2 className="text-2xl font-bold text-gray-900 mb-6">Account Settings</h2>
+    <div className="space-y-6">
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">Username</label>
+        <input
+          type="text"
+          value={user.username}
+          disabled
+          className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50"
+        />
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+        <input
+          type="email"
+          value={user.email}
+          disabled
+          className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50"
+        />
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">Subscription</label>
+        <input
+          type="text"
+          value={user.subscriptionTier.replace('_', ' ').toUpperCase()}
+          disabled
+          className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50"
+        />
+      </div>
+      <div className="pt-4">
+        <button className="bg-indigo-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-indigo-700">
+          Update Profile
+        </button>
+      </div>
+    </div>
+  </div>
+);
+
+export default Dashboard;
