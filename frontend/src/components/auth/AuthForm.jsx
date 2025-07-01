@@ -1,10 +1,11 @@
 import React, { useState, useMemo } from 'react';
 import { X } from 'lucide-react';
-import Button from '../ui/Button'; // Will be used for non-submit buttons
+import Button from '../ui/button'; // Will be used for non-submit buttons
 // Input from '../ui/Input' is no longer needed directly, FormInput will be used.
-import { Card } from '../ui/Card';
+import { Card } from '../ui/card';
 import { Toast } from '../ui/Toast';
-import { Form, FormField, FormLabel, FormInput, FormSubmitButton } from '../ui/Form';
+import { Form, FormField, FormLabel, FormInput, FormSubmitButton, FormCheckbox } from '../ui/Form';
+import apiService from '../../services/apiService';
 
 const AuthForm = ({ onLogin, onClose }) => {
   const [isLogin, setIsLogin] = useState(true);
@@ -20,7 +21,8 @@ const AuthForm = ({ onLogin, onClose }) => {
     password: '',
     confirmPassword: '',
     firstName: '',
-    lastName: ''
+    lastName: '',
+    rememberMe: false
   });
 
   // handleInputChange is no longer needed as FormInput handles its own state via context.
@@ -81,18 +83,17 @@ const AuthForm = ({ onLogin, onClose }) => {
   };
 
   const handleLogin = async (values) => {
-    const loginData = new FormData();
-    loginData.append('username', values.username);
-    loginData.append('password', values.password);
+    const loginData = {
+      username: values.username,
+      password: values.password,
+      rememberMe: formData.rememberMe || false
+    };
 
-    const response = await fetch('http://localhost:8001/auth/login', {
-      method: 'POST',
-      body: loginData
-    });
+    const response = await apiService.post('/auth/login', loginData);
 
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.detail || 'Login failed');
+      throw new Error(errorData.message || errorData.detail || 'Login failed');
     }
 
     const data = await response.json();
@@ -115,21 +116,15 @@ const AuthForm = ({ onLogin, onClose }) => {
       username: values.username,
       email: values.email,
       password: values.password,
-      first_name: values.firstName || null,
-      last_name: values.lastName || null
+      firstName: values.firstName || null,
+      lastName: values.lastName || null
     };
 
-    const response = await fetch('http://localhost:8001/auth/register', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(registerData)
-    });
+    const response = await apiService.post('/auth/register', registerData);
 
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.detail || 'Registration failed');
+      throw new Error(errorData.message || errorData.detail || 'Registration failed');
     }
 
     const data = await response.json();
@@ -263,7 +258,23 @@ const AuthForm = ({ onLogin, onClose }) => {
               </FormField>
             )}
 
-            <FormSubmitButton className="w-full" disabled={isLoading}>
+            {isLogin && (
+              <div className="flex items-center space-x-2 py-2">
+                <label className="flex items-center space-x-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    name="rememberMe"
+                    checked={formData.rememberMe || false}
+                    onChange={(e) => setFormData(prev => ({ ...prev, rememberMe: e.target.checked }))}
+                    disabled={isLoading}
+                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+                  />
+                  <span className="text-sm text-gray-700 select-none">Remember me for 30 days</span>
+                </label>
+              </div>
+            )}
+
+            <FormSubmitButton className="w-full mt-6" disabled={isLoading}>
               {isLoading ? (
                 <div className="flex items-center justify-center space-x-2">
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>

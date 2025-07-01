@@ -7,7 +7,7 @@ class ApiService {
   constructor() {
     this.baseUrl = null;
     this.isInitialized = false;
-    this.commonPorts = [8001, 8000, 3001, 5000, 4000]; // Common backend ports
+    this.commonPorts = [8000, 8001, 3001, 5000, 4000]; // Common backend ports
   }
 
   /**
@@ -106,8 +106,8 @@ class ApiService {
       },
     };
 
-    // Add authentication token if available
-    const token = localStorage.getItem('accessToken');
+    // Add authentication token if available (check both localStorage and sessionStorage)
+    const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken');
     if (token) {
       defaultOptions.headers['Authorization'] = `Bearer ${token}`;
     }

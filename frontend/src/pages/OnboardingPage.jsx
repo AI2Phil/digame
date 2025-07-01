@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import OnboardingWizard from '../components/onboarding/OnboardingWizard';
-import onboardingService from '../services/onboardingService';
+import { useAuth } from '../contexts/AuthContext';
 import { Toast } from '../components/ui/Toast';
-import { Button } from '../components/ui/Button';
+import { Button } from '../components/ui/button';
 import { Alert, AlertDescription } from '../components/ui/Alert';
 
 const OnboardingPage = () => {
   const navigate = useNavigate();
-  const [user, setUser] = useState(null);
+  const { user, updateProfile, isDemoMode } = useAuth();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -18,33 +18,14 @@ const OnboardingPage = () => {
 
   const initializeOnboarding = async () => {
     try {
-      // Check if we're in demo mode
-      const isDemoMode = localStorage.getItem('demo_mode') === 'true';
-      
       if (isDemoMode) {
-        // In demo mode, create a demo user and skip completion check
-        const demoUser = {
-          id: 'demo_user_001',
-          username: 'demo_user',
-          email: 'demo@digame.com',
-          firstName: 'Demo',
-          lastName: 'User',
-          role: 'Professional'
-        };
-        setUser(demoUser);
+        // Demo mode users already have onboarding completed
         setLoading(false);
         return;
       }
 
-      // Get user data from localStorage or API
-      const userData = localStorage.getItem('user');
-      if (userData) {
-        setUser(JSON.parse(userData));
-      }
-
       // Check if onboarding is already completed
-      const isCompleted = onboardingService.isOnboardingCompleted();
-      if (isCompleted) {
+      if (user?.onboardingCompleted) {
         navigate('/dashboard');
         return;
       }
@@ -61,57 +42,59 @@ const OnboardingPage = () => {
     try {
       setLoading(true);
 
-      // Validate the data
-      const profileValidation = onboardingService.validateProfileData(onboardingData.profile);
-      const goalsValidation = onboardingService.validateGoalsData(onboardingData.goals);
-
-      if (!profileValidation.isValid) {
-        setError(profileValidation.errors.join(', '));
-        setLoading(false);
-        return;
-      }
-
-      if (!goalsValidation.isValid) {
-        setError(goalsValidation.errors.join(', '));
-        setLoading(false);
-        return;
-      }
-
-      // Track completion
-      onboardingService.trackOnboardingCompletion(onboardingData);
-
-      // Try to save to backend
-      try {
-        await onboardingService.saveOnboardingData(onboardingData);
-        
-        // Also save user preferences and goals separately
-        await onboardingService.updateUserPreferences(onboardingData.preferences);
-        await onboardingService.createUserGoals(onboardingData.goals);
-        
-      } catch (apiError) {
-        console.warn('Failed to save to backend, saving locally:', apiError);
-        // Fallback to local storage
-        onboardingService.saveOnboardingDataLocally(onboardingData);
-      }
-
-      // Update user data in localStorage
-      const updatedUser = {
-        ...user,
-        ...onboardingData.profile,
-        onboarding_completed: true,
-        preferences: onboardingData.preferences,
-        goals: onboardingData.goals,
-        features: onboardingData.features
+      // Convert onboarding wizard data to the format expected by updateProfile
+      const profileUpdates = {
+        onboardingCompleted: true,
+        onboardingData: {
+          interests: onboardingData.learning_interests || [],
+          goals: onboardingData.short_term_goals || [],
+          experienceLevel: onboardingData.experience_level || 'intermediate',
+          industry: onboardingData.industry || '',
+          professionalTitle: onboardingData.professional_title || '',
+          personalityType: onboardingData.personality_type || '',
+          communicationStyle: onboardingData.communication_style || '',
+          collaborationPreference: onboardingData.collaboration_preference || '',
+          meetingPreferences: onboardingData.meeting_preferences || '',
+          careerAspirations: onboardingData.career_aspirations || '',
+          technicalSkills: onboardingData.technical_skills || [],
+          softSkills: onboardingData.soft_skills || [],
+          skillConfidenceScores: onboardingData.skill_confidence_scores || {},
+          workStylePreferences: onboardingData.work_style_preferences || {},
+          longTermGoals: onboardingData.long_term_goals || []
+        },
+        unlockedFeatures: [
+          'basic_analytics',
+          'advanced_analytics',
+          'ai_recommendations',
+          'goal_tracking',
+          'progress_insights',
+          'ai_coaching',
+          'advanced_features',
+          'team_creation',
+          'collaboration_tools',
+          'full_platform_access'
+        ],
+        preferences: {
+          emailNotifications: true,
+          pushNotifications: true,
+          marketingEmails: false,
+          theme: 'light',
+          dashboardView: 'overview'
+        }
       };
-      
-      localStorage.setItem('user', JSON.stringify(updatedUser));
-      localStorage.setItem('onboardingCompleted', 'true');
 
-      // Show success message
-      Toast.success('Welcome to Digame! Your account is now set up.');
+      // Save to backend using AuthContext
+      const success = await updateProfile(profileUpdates);
 
-      // Navigate to dashboard
-      navigate('/dashboard', { replace: true });
+      if (success) {
+        // Show success message
+        Toast.success('Welcome to Digame! Your account is now set up.');
+        
+        // Navigate to dashboard
+        navigate('/dashboard', { replace: true });
+      } else {
+        throw new Error('Failed to save onboarding data');
+      }
 
     } catch (error) {
       console.error('Failed to complete onboarding:', error);
@@ -120,10 +103,53 @@ const OnboardingPage = () => {
     }
   };
 
-  const handleSkipOnboarding = () => {
+  const handleSkipOnboarding = async () => {
     // Allow users to skip onboarding with default settings
-    const defaultData = onboardingService.getDefaultOnboardingData(user);
-    handleOnboardingComplete(defaultData);
+    try {
+      setLoading(true);
+      
+      const defaultProfileUpdates = {
+        onboardingCompleted: true,
+        onboardingData: {
+          interests: ['productivity'],
+          goals: ['improve_efficiency'],
+          experienceLevel: 'intermediate',
+          industry: 'Technology',
+          professionalTitle: 'Professional',
+          personalityType: 'Balanced',
+          communicationStyle: 'Collaborative',
+          collaborationPreference: 'Hybrid',
+          meetingPreferences: 'Video calls',
+          careerAspirations: 'Professional growth',
+          technicalSkills: [],
+          softSkills: [],
+          skillConfidenceScores: {},
+          workStylePreferences: {},
+          longTermGoals: []
+        },
+        unlockedFeatures: ['basic_analytics', 'goal_tracking'],
+        preferences: {
+          emailNotifications: true,
+          pushNotifications: true,
+          marketingEmails: false,
+          theme: 'light',
+          dashboardView: 'overview'
+        }
+      };
+
+      const success = await updateProfile(defaultProfileUpdates);
+      
+      if (success) {
+        Toast.success('Welcome to Digame! Default setup completed.');
+        navigate('/dashboard', { replace: true });
+      } else {
+        throw new Error('Failed to save default settings');
+      }
+    } catch (error) {
+      console.error('Failed to skip onboarding:', error);
+      setError('Failed to complete setup. Please try again.');
+      setLoading(false);
+    }
   };
 
   if (loading) {

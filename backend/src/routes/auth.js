@@ -16,7 +16,7 @@ router.use(rateLimit(10, 5 * 60 * 1000)); // 10 requests per 5 minutes
  */
 router.post('/login', async (req, res) => {
   try {
-    const { username, email, password } = req.body;
+    const { username, email, password, rememberMe } = req.body;
 
     if (!password) {
       return res.status(400).json({
@@ -50,11 +50,11 @@ router.post('/login', async (req, res) => {
       });
     }
 
-    // Generate tokens
-    const tokens = jwtService.generateTokenPair(user);
+    // Generate tokens with rememberMe option
+    const tokens = jwtService.generateTokenPair(user, rememberMe);
 
     // Log successful login
-    console.log(`Login successful: ${user.email} (${user.role})`);
+    console.log(`Login successful: ${user.email} (${user.role}) - Remember Me: ${rememberMe ? 'Yes' : 'No'}`);
 
     res.json({
       success: true,
@@ -100,8 +100,15 @@ router.post('/refresh', async (req, res) => {
       });
     }
 
-    // Generate new token pair
-    const tokens = jwtService.generateTokenPair(user);
+    // Preserve rememberMe preference from the original refresh token
+    // Check if the refresh token has a longer expiration (indicating rememberMe was used)
+    const tokenExp = decoded.exp * 1000; // Convert to milliseconds
+    const now = Date.now();
+    const timeUntilExpiry = tokenExp - now;
+    const isLongLived = timeUntilExpiry > (7 * 24 * 60 * 60 * 1000); // More than 7 days remaining
+    
+    // Generate new token pair preserving the rememberMe preference
+    const tokens = jwtService.generateTokenPair(user, isLongLived);
 
     res.json({
       success: true,
@@ -145,15 +152,38 @@ router.get('/profile', authenticate, (req, res) => {
  */
 router.put('/profile', authenticate, async (req, res) => {
   try {
-    const { firstName, lastName, profile, preferences } = req.body;
+    const {
+      firstName,
+      lastName,
+      profile,
+      preferences,
+      onboardingCompleted,
+      onboardingData,
+      unlockedFeatures
+    } = req.body;
     
     const updates = {};
+    
+    // Handle basic profile fields
     if (firstName !== undefined) updates.firstName = firstName;
     if (lastName !== undefined) updates.lastName = lastName;
     if (profile !== undefined) updates.profile = { ...req.user.profile, ...profile };
     if (preferences !== undefined) updates.preferences = { ...req.user.preferences, ...preferences };
+    
+    // Handle onboarding fields
+    if (onboardingCompleted !== undefined) updates.onboardingCompleted = onboardingCompleted;
+    if (onboardingData !== undefined) {
+      // Merge with existing onboarding data
+      updates.onboardingData = { ...req.user.onboardingData, ...onboardingData };
+    }
+    if (unlockedFeatures !== undefined) updates.unlockedFeatures = unlockedFeatures;
 
     const updatedUser = userRepository.update(req.user.id, updates);
+
+    // Log onboarding completion
+    if (onboardingCompleted) {
+      console.log(`Onboarding completed for user: ${updatedUser.email}`);
+    }
 
     res.json({
       success: true,
@@ -211,8 +241,8 @@ router.post('/demo', (req, res) => {
       });
     }
 
-    // Generate demo tokens
-    const tokens = jwtService.generateTokenPair(demoUser);
+    // Generate demo tokens (demo mode defaults to non-persistent)
+    const tokens = jwtService.generateTokenPair(demoUser, false);
 
     console.log('Demo mode activated');
 
@@ -412,8 +442,8 @@ router.post('/register', async (req, res) => {
       }
     });
 
-    // Generate tokens
-    const tokens = jwtService.generateTokenPair(newUser);
+    // Generate tokens (registration defaults to non-persistent)
+    const tokens = jwtService.generateTokenPair(newUser, false);
 
     console.log(`New user registered: ${newUser.email} (${subscriptionTier})`);
 

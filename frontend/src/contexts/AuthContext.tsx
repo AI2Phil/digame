@@ -45,7 +45,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isDemoMode: boolean;
   isLoading: boolean;
-  login: (credentials: { username?: string; email?: string; password: string }) => Promise<boolean>;
+  login: (credentials: { username?: string; email?: string; password: string; rememberMe?: boolean }) => Promise<boolean>;
   logout: () => void;
   enterDemoMode: () => void;
   refreshToken: () => Promise<boolean>;
@@ -68,9 +68,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Check for existing authentication on mount
   useEffect(() => {
     const checkAuth = async () => {
-      const accessToken = localStorage.getItem('accessToken');
-      const refreshToken = localStorage.getItem('refreshToken');
+      // Check both localStorage and sessionStorage for tokens
+      const accessToken = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken');
+      const refreshToken = localStorage.getItem('refreshToken') || sessionStorage.getItem('refreshToken');
       const demoMode = localStorage.getItem('demoMode');
+      const rememberMe = localStorage.getItem('rememberMe') === 'true';
       
       if (demoMode === 'true') {
         // Demo mode
@@ -102,6 +104,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setIsAuthenticated(true);
         setIsDemoMode(true);
       } else if (accessToken) {
+        // Set tokens first so apiService can use them
+        setTokens({
+          accessToken,
+          refreshToken: refreshToken || '',
+          expiresIn: rememberMe ? '30d' : '24h',
+          tokenType: 'Bearer'
+        });
+        
         // Try to validate token with backend
         try {
           const response = await apiService.get('/auth/profile');
@@ -109,28 +119,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (response.ok) {
             const data = await response.json();
             setUser(data.user);
-            setTokens({
-              accessToken,
-              refreshToken: refreshToken || '',
-              expiresIn: '15m',
-              tokenType: 'Bearer'
-            });
             setIsAuthenticated(true);
             setIsDemoMode(false);
-          } else {
-            // Invalid token, try to refresh
-            if (refreshToken) {
-              const refreshed = await refreshTokens();
-              if (!refreshed) {
-                clearAuthData();
-              }
-            } else {
+            console.log('Auth restored from stored tokens');
+          } else if (response.status === 401 && refreshToken) {
+            // Token expired, try to refresh
+            console.log('Access token expired, attempting refresh...');
+            const refreshed = await refreshTokens();
+            if (!refreshed) {
+              console.log('Token refresh failed, clearing auth data');
               clearAuthData();
             }
+          } else {
+            console.log('Auth validation failed, clearing auth data');
+            clearAuthData();
           }
         } catch (error) {
           console.error('Auth check failed:', error);
-          clearAuthData();
+          // Try refresh token before clearing if we have one
+          if (refreshToken) {
+            console.log('Auth check failed, attempting token refresh...');
+            const refreshed = await refreshTokens();
+            if (!refreshed) {
+              clearAuthData();
+            }
+          } else {
+            clearAuthData();
+          }
         }
       }
       
@@ -141,16 +156,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const clearAuthData = () => {
+    // Clear from both localStorage and sessionStorage
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
     localStorage.removeItem('demoMode');
+    localStorage.removeItem('rememberMe');
+    sessionStorage.removeItem('accessToken');
+    sessionStorage.removeItem('refreshToken');
     setUser(null);
     setTokens(null);
     setIsAuthenticated(false);
     setIsDemoMode(false);
   };
 
-  const login = async (credentials: { username?: string; email?: string; password: string }) => {
+  const login = async (credentials: { username?: string; email?: string; password: string; rememberMe?: boolean }) => {
     try {
       setIsLoading(true);
       const response = await apiService.post('/auth/login', credentials);
@@ -162,9 +181,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setIsAuthenticated(true);
         setIsDemoMode(data.user.isDemoMode || false);
         
-        // Store tokens
-        localStorage.setItem('accessToken', data.tokens.accessToken);
-        localStorage.setItem('refreshToken', data.tokens.refreshToken);
+        // Store tokens with persistence preference
+        if (credentials.rememberMe) {
+          // Use localStorage for persistent storage
+          localStorage.setItem('accessToken', data.tokens.accessToken);
+          localStorage.setItem('refreshToken', data.tokens.refreshToken);
+          localStorage.setItem('rememberMe', 'true');
+        } else {
+          // Use sessionStorage for session-only storage
+          sessionStorage.setItem('accessToken', data.tokens.accessToken);
+          sessionStorage.setItem('refreshToken', data.tokens.refreshToken);
+          localStorage.removeItem('rememberMe');
+        }
         localStorage.removeItem('demoMode');
         
         return true;
@@ -183,21 +211,43 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const refreshTokens = async (): Promise<boolean> => {
     try {
-      const refreshToken = localStorage.getItem('refreshToken');
+      const refreshToken = localStorage.getItem('refreshToken') || sessionStorage.getItem('refreshToken');
       if (!refreshToken) return false;
 
+      console.log('Attempting to refresh tokens...');
       const response = await apiService.post('/auth/refresh', { refreshToken });
 
       if (response.ok) {
         const data = await response.json();
         setTokens(data.tokens);
         
-        // Update stored tokens
-        localStorage.setItem('accessToken', data.tokens.accessToken);
-        localStorage.setItem('refreshToken', data.tokens.refreshToken);
+        // Update stored tokens in the same storage location
+        const rememberMe = localStorage.getItem('rememberMe') === 'true';
+        if (rememberMe) {
+          localStorage.setItem('accessToken', data.tokens.accessToken);
+          localStorage.setItem('refreshToken', data.tokens.refreshToken);
+        } else {
+          sessionStorage.setItem('accessToken', data.tokens.accessToken);
+          sessionStorage.setItem('refreshToken', data.tokens.refreshToken);
+        }
+        
+        // After successful token refresh, get updated user profile
+        try {
+          const profileResponse = await apiService.get('/auth/profile');
+          if (profileResponse.ok) {
+            const profileData = await profileResponse.json();
+            setUser(profileData.user);
+            setIsAuthenticated(true);
+            setIsDemoMode(false);
+            console.log('Token refresh successful, user profile updated');
+          }
+        } catch (profileError) {
+          console.error('Failed to fetch profile after token refresh:', profileError);
+        }
         
         return true;
       } else {
+        console.log('Token refresh failed with status:', response.status);
         clearAuthData();
         return false;
       }
@@ -210,7 +260,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const updateProfile = async (updates: Partial<User>): Promise<boolean> => {
     try {
-      const accessToken = localStorage.getItem('accessToken');
+      const accessToken = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken');
       if (!accessToken) return false;
 
       const response = await apiService.put('/auth/profile', updates);
@@ -270,7 +320,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = async () => {
     try {
-      const accessToken = localStorage.getItem('accessToken');
+      const accessToken = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken');
       
       // Call backend logout if not in demo mode
       if (!isDemoMode && accessToken) {

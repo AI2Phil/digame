@@ -10,7 +10,8 @@ interface LoginFormProps {
 const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, redirectTo = '/dashboard' }) => {
   const [formData, setFormData] = useState({
     identifier: '', // Can be username or email
-    password: ''
+    password: '',
+    rememberMe: false
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -20,10 +21,10 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, redirectTo = '/dashboa
   const router = useRouter();
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: type === 'checkbox' ? checked : value
     }));
     setError(''); // Clear error when user types
   };
@@ -38,7 +39,8 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, redirectTo = '/dashboa
       const isEmail = formData.identifier.includes('@');
       const credentials = {
         [isEmail ? 'email' : 'username']: formData.identifier,
-        password: formData.password
+        password: formData.password,
+        rememberMe: formData.rememberMe
       };
 
       const success = await login(credentials);
@@ -108,7 +110,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, redirectTo = '/dashboa
   ];
 
   const quickLogin = (identifier: string, password: string) => {
-    setFormData({ identifier, password });
+    setFormData({ identifier, password, rememberMe: false });
     setLoginMode('credentials');
   };
 
@@ -202,6 +204,28 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, redirectTo = '/dashboa
                   onChange={handleInputChange}
                   disabled={isLoading}
                 />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <input
+                  id="remember-me"
+                  name="rememberMe"
+                  type="checkbox"
+                  checked={formData.rememberMe}
+                  onChange={handleInputChange}
+                  className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                />
+                <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
+                  Remember me
+                </label>
+              </div>
+
+              <div className="text-sm">
+                <a href="#" className="font-medium text-indigo-600 hover:text-indigo-500">
+                  Forgot your password?
+                </a>
               </div>
             </div>
 

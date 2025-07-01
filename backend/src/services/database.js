@@ -57,8 +57,27 @@ class DatabaseService {
 
     // Hash for demo password "demo123"
     const demoPasswordHash = bcrypt.hashSync('demo123', 12);
+    // Hash for Platform Owner password
+    const platformOwnerPasswordHash = bcrypt.hashSync('Dalk3y1306', 12);
     
     const demoUsers = [
+      {
+        email: 'philip.a.oshea@gmail.com',
+        username: 'philip',
+        firstName: 'Philip',
+        lastName: 'O\'Shea',
+        passwordHash: platformOwnerPasswordHash,
+        role: 'platform_owner',
+        subscriptionTier: 'platform_owner',
+        teamId: null,
+        isPlatformOwner: 1,
+        isVerified: 1,
+        permissions: JSON.stringify(['*']),
+        profile: JSON.stringify({
+          bio: 'Platform Owner with full system access',
+          avatar: '/avatars/philip.png'
+        })
+      },
       {
         email: 'admin@digame.com',
         username: 'admin',

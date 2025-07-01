@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Navigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/router';
 import { useAuth } from '../contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -8,6 +8,7 @@ import { Eye, EyeOff, Mail, Lock, User } from 'lucide-react';
 
 const AuthPage: React.FC = () => {
   const { isAuthenticated, login, isLoading } = useAuth();
+  const router = useRouter();
   const [isLoginMode, setIsLoginMode] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
@@ -18,13 +19,16 @@ const AuthPage: React.FC = () => {
     firstName: '',
     lastName: '',
   });
+  const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Redirect if already authenticated
-  if (isAuthenticated) {
-    return <Navigate to="/teams" replace />;
-  }
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.push('/dashboard');
+    }
+  }, [isAuthenticated, router]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -71,7 +75,10 @@ const AuthPage: React.FC = () => {
 
     try {
       if (isLoginMode) {
-        await login({ username: formData.username, password: formData.password });
+        const success = await login({ username: formData.username, password: formData.password, rememberMe });
+        if (success) {
+          router.push('/dashboard');
+        }
       } else {
         // Register functionality would need to be implemented in AuthContext
         console.log('Register attempt:', {
@@ -265,6 +272,23 @@ const AuthPage: React.FC = () => {
                       disabled={isSubmitting}
                     />
                   </div>
+                </div>
+              )}
+
+              {/* Remember Me Checkbox (Login only) */}
+              {isLoginMode && (
+                <div className="flex items-center space-x-2">
+                  <input
+                    id="rememberMe"
+                    type="checkbox"
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    disabled={isSubmitting}
+                  />
+                  <label htmlFor="rememberMe" className="text-sm text-gray-700">
+                    Remember me for 30 days
+                  </label>
                 </div>
               )}
 

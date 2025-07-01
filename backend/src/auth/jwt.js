@@ -20,6 +20,17 @@ class JWTService {
   }
 
   /**
+   * Generate access token with custom expiry
+   */
+  generateAccessTokenWithExpiry(payload, expiresIn) {
+    return jwt.sign(payload, JWT_SECRET, {
+      expiresIn: expiresIn,
+      issuer: 'digame-platform',
+      audience: 'digame-users'
+    });
+  }
+
+  /**
    * Generate refresh token
    */
   generateRefreshToken(payload) {
@@ -31,9 +42,20 @@ class JWTService {
   }
 
   /**
+   * Generate refresh token with custom expiry
+   */
+  generateRefreshTokenWithExpiry(payload, expiresIn) {
+    return jwt.sign(payload, JWT_REFRESH_SECRET, {
+      expiresIn: expiresIn,
+      issuer: 'digame-platform',
+      audience: 'digame-users'
+    });
+  }
+
+  /**
    * Generate token pair (access + refresh)
    */
-  generateTokenPair(user) {
+  generateTokenPair(user, rememberMe = false) {
     const payload = {
       userId: user.id,
       email: user.email,
@@ -44,11 +66,16 @@ class JWTService {
       isPlatformOwner: user.isPlatformOwner || false
     };
 
+    // Use longer expiration times for "Remember Me"
+    const accessTokenExpiry = rememberMe ? '30d' : JWT_EXPIRES_IN;
+    const refreshTokenExpiry = rememberMe ? '90d' : JWT_REFRESH_EXPIRES_IN;
+
     return {
-      accessToken: this.generateAccessToken(payload),
-      refreshToken: this.generateRefreshToken({ userId: user.id }),
-      expiresIn: JWT_EXPIRES_IN,
-      tokenType: 'Bearer'
+      accessToken: this.generateAccessTokenWithExpiry(payload, accessTokenExpiry),
+      refreshToken: this.generateRefreshTokenWithExpiry({ userId: user.id }, refreshTokenExpiry),
+      expiresIn: accessTokenExpiry,
+      tokenType: 'Bearer',
+      rememberMe: rememberMe
     };
   }
 
