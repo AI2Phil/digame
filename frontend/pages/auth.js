@@ -4,6 +4,7 @@ import Button from '../src/components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '../src/components/ui/Card';
 import { Input } from '../src/components/ui/Input';
 import { Eye, EyeOff, Mail, Lock, User, AlertCircle } from 'lucide-react';
+import apiService from '../src/services/apiService';
 
 export default function AuthPage() {
   const router = useRouter();
@@ -98,7 +99,7 @@ export default function AuthPage() {
 
     try {
       const endpoint = isLoginMode ? '/auth/login' : '/auth/register';
-      const payload = isLoginMode 
+      const payload = isLoginMode
         ? {
             username: formData.username,
             password: formData.password
@@ -111,14 +112,8 @@ export default function AuthPage() {
             last_name: formData.lastName || undefined,
           };
 
-      const response = await fetch(`http://localhost:8000${endpoint}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-      });
-
+      // Use dynamic API service that auto-detects the correct port
+      const response = await apiService.post(endpoint, payload);
       const data = await response.json();
 
       if (response.ok) {

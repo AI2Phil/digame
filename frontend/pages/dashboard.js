@@ -3,6 +3,8 @@ import { useAuth } from '../src/contexts/AuthContext';
 import { useRouter } from 'next/router';
 import ProgressiveOnboarding from '../src/components/onboarding/ProgressiveOnboarding';
 import TeamManagement from '../src/components/team/TeamManagement';
+import demoDataService from '../src/services/demoDataService';
+import apiService from '../src/services/apiService';
 
 const Dashboard = () => {
   const { user, logout, hasFeatureAccess, isDemoMode, isLoading } = useAuth();
@@ -38,40 +40,17 @@ const Dashboard = () => {
 
   const loadUserStats = async () => {
     try {
-      // Use mock data in demo mode
+      // SECURITY: Use isolated demo data service in demo mode
       if (isDemoMode) {
-        setUserStats({
-          totalProjects: 3,
-          activeTeams: 2,
-          completedTasks: 47,
-          recentActivity: [
-            {
-              icon: '🚀',
-              title: 'Completed AI Analytics Dashboard',
-              timestamp: '2 hours ago'
-            },
-            {
-              icon: '👥',
-              title: 'Joined React Development Team',
-              timestamp: '1 day ago'
-            },
-            {
-              icon: '📊',
-              title: 'Generated Weekly Performance Report',
-              timestamp: '2 days ago'
-            }
-          ]
-        });
+        console.log('[DEMO MODE] Loading mock user stats - NO real data access');
+        const demoStats = demoDataService.getUserStats(isDemoMode);
+        setUserStats(demoStats);
         return;
       }
 
-      // Real API call for authenticated users
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001';
-      const response = await fetch(`${apiUrl}/auth/stats`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
-        }
-      });
+      // SECURITY: Real API call ONLY for authenticated users
+      console.log('[AUTHENTICATED MODE] Loading real user stats from backend');
+      const response = await apiService.get('/auth/stats');
 
       if (response.ok) {
         const data = await response.json();
@@ -238,7 +217,7 @@ const Dashboard = () => {
             )}
 
             {activeSection === 'projects' && (
-              <ProjectsSection hasFeatureAccess={hasFeatureAccess} />
+              <ProjectsSection hasFeatureAccess={hasFeatureAccess} isDemoMode={isDemoMode} />
             )}
 
             {activeSection === 'teams' && (
@@ -246,7 +225,7 @@ const Dashboard = () => {
             )}
 
             {activeSection === 'analytics' && (
-              <AnalyticsSection hasFeatureAccess={hasFeatureAccess} />
+              <AnalyticsSection hasFeatureAccess={hasFeatureAccess} isDemoMode={isDemoMode} />
             )}
 
             {activeSection === 'integrations' && (
@@ -414,44 +393,258 @@ const DashboardOverview = ({ user, stats, hasFeatureAccess, onNavigate }) => {
   );
 };
 
-// Placeholder sections for other features
-const ProjectsSection = ({ hasFeatureAccess }) => (
-  <div className="bg-white rounded-lg shadow-sm p-8 text-center">
-    <div className="text-6xl mb-4">🚀</div>
-    <h2 className="text-2xl font-bold text-gray-900 mb-4">Projects</h2>
-    <p className="text-gray-600 mb-6">
-      Create and manage your digital twin projects here.
-    </p>
-    {hasFeatureAccess('projects.create') ? (
-      <button className="bg-indigo-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-indigo-700">
-        Create Your First Project
-      </button>
-    ) : (
-      <div className="text-sm text-gray-500">
-        Upgrade your plan to access project features
+// Enhanced Projects section with secure demo data isolation
+const ProjectsSection = ({ hasFeatureAccess, isDemoMode }) => {
+  if (isDemoMode) {
+    // SECURITY: Use isolated demo data service - NO real data access
+    console.log('[DEMO MODE] Loading mock projects - NO real data access');
+    const demoProjects = demoDataService.getProjects(isDemoMode);
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <h2 className="text-2xl font-bold text-gray-900">Projects</h2>
+          <button className="bg-indigo-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-indigo-700">
+            + New Project
+          </button>
+        </div>
+        
+        <div className="grid gap-6">
+          {demoProjects.map((project) => (
+            <div key={project.id} className="bg-white rounded-lg shadow-sm border p-6">
+              <div className="flex justify-between items-start mb-4">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">{project.name}</h3>
+                  <p className="text-gray-600 mt-1">{project.description}</p>
+                </div>
+                <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                  project.status === 'Active' ? 'bg-green-100 text-green-800' :
+                  project.status === 'In Progress' ? 'bg-blue-100 text-blue-800' :
+                  'bg-gray-100 text-gray-800'
+                }`}>
+                  {project.status}
+                </span>
+              </div>
+              
+              <div className="mb-4">
+                <div className="flex justify-between text-sm text-gray-600 mb-1">
+                  <span>Progress</span>
+                  <span>{project.progress}%</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div
+                    className="bg-indigo-600 h-2 rounded-full"
+                    style={{ width: `${project.progress}%` }}
+                  ></div>
+                </div>
+              </div>
+              
+              <div className="flex justify-between items-center text-sm text-gray-500">
+                <span>Team: {project.team}</span>
+                <span>Updated {project.lastUpdated}</span>
+              </div>
+              
+              <div className="mt-3 flex flex-wrap gap-2">
+                {project.technologies.map((tech) => (
+                  <span key={tech} className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs">
+                    {tech}
+                  </span>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+        
+        {/* Demo CTA */}
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-6 border border-blue-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Ready to create your own projects?</h3>
+              <p className="text-gray-600">Start with our free plan and build unlimited personal projects.</p>
+            </div>
+            <button className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 whitespace-nowrap">
+              Start Free Plan
+            </button>
+          </div>
+        </div>
       </div>
-    )}
-  </div>
-);
+    );
+  }
 
-const AnalyticsSection = ({ hasFeatureAccess }) => (
-  <div className="bg-white rounded-lg shadow-sm p-8 text-center">
-    <div className="text-6xl mb-4">📈</div>
-    <h2 className="text-2xl font-bold text-gray-900 mb-4">Analytics</h2>
-    <p className="text-gray-600 mb-6">
-      Advanced analytics and insights for your digital twin projects.
-    </p>
-    {hasFeatureAccess('analytics.view') ? (
-      <div className="text-sm text-gray-500">
-        Analytics dashboard coming soon!
+  return (
+    <div className="bg-white rounded-lg shadow-sm p-8 text-center">
+      <div className="text-6xl mb-4">🚀</div>
+      <h2 className="text-2xl font-bold text-gray-900 mb-4">Projects</h2>
+      <p className="text-gray-600 mb-6">
+        Create and manage your digital twin projects here.
+      </p>
+      {hasFeatureAccess('projects.create') ? (
+        <button className="bg-indigo-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-indigo-700">
+          Create Your First Project
+        </button>
+      ) : (
+        <div className="text-sm text-gray-500">
+          Upgrade your plan to access project features
+        </div>
+      )}
+    </div>
+  );
+};
+
+const AnalyticsSection = ({ hasFeatureAccess, isDemoMode }) => {
+  if (isDemoMode) {
+    // SECURITY: Use isolated demo data service - NO real data access
+    console.log('[DEMO MODE] Loading mock analytics - NO real data access');
+    const demoAnalytics = demoDataService.getAnalytics(isDemoMode);
+    const weeklyData = demoAnalytics.weeklyData;
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <h2 className="text-2xl font-bold text-gray-900">Analytics Dashboard</h2>
+          <div className="flex space-x-2">
+            <button className="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50">
+              Export Report
+            </button>
+            <button className="px-4 py-2 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
+              Customize View
+            </button>
+          </div>
+        </div>
+
+        {/* Key Metrics */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div className="bg-white rounded-lg shadow-sm p-6 border">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Productivity Score</p>
+                <p className="text-2xl font-bold text-gray-900">{demoAnalytics.productivity.current}%</p>
+              </div>
+              <div className="text-green-600 text-sm font-medium">
+                +{demoAnalytics.productivity.change}%
+              </div>
+            </div>
+            <div className="mt-2 text-xs text-gray-500">vs last week</div>
+          </div>
+
+          <div className="bg-white rounded-lg shadow-sm p-6 border">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Focus Time</p>
+                <p className="text-2xl font-bold text-gray-900">{demoAnalytics.focusTime.current}h</p>
+              </div>
+              <div className="text-green-600 text-sm font-medium">
+                +{demoAnalytics.focusTime.change}h
+              </div>
+            </div>
+            <div className="mt-2 text-xs text-gray-500">Target: {demoAnalytics.focusTime.target}h</div>
+          </div>
+
+          <div className="bg-white rounded-lg shadow-sm p-6 border">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Collaboration</p>
+                <p className="text-2xl font-bold text-gray-900">{demoAnalytics.collaboration.current}/10</p>
+              </div>
+              <div className="text-green-600 text-sm font-medium">
+                +{demoAnalytics.collaboration.change}
+              </div>
+            </div>
+            <div className="mt-2 text-xs text-gray-500">Team engagement</div>
+          </div>
+
+          <div className="bg-white rounded-lg shadow-sm p-6 border">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Growth Rate</p>
+                <p className="text-2xl font-bold text-gray-900">{demoAnalytics.growthRate.current}%</p>
+              </div>
+              <div className="text-green-600 text-sm font-medium">
+                +{demoAnalytics.growthRate.change}%
+              </div>
+            </div>
+            <div className="mt-2 text-xs text-gray-500">Skill development</div>
+          </div>
+        </div>
+
+        {/* Weekly Trends */}
+        <div className="bg-white rounded-lg shadow-sm p-6 border">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Weekly Performance Trends</h3>
+          <div className="grid grid-cols-7 gap-4">
+            {weeklyData.map((day) => (
+              <div key={day.day} className="text-center">
+                <div className="text-sm font-medium text-gray-600 mb-2">{day.day}</div>
+                <div className="bg-indigo-100 rounded-lg p-3">
+                  <div className="text-lg font-bold text-indigo-800">{day.productivity}%</div>
+                  <div className="text-xs text-indigo-600">Productivity</div>
+                </div>
+                <div className="mt-2 text-xs text-gray-500">{day.focus}h focus</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* AI Insights */}
+        <div className="bg-white rounded-lg shadow-sm p-6 border">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">🤖 AI-Powered Insights</h3>
+          <div className="space-y-4">
+            <div className="flex items-start space-x-3 p-4 bg-blue-50 rounded-lg">
+              <div className="text-blue-600">💡</div>
+              <div>
+                <p className="font-medium text-gray-900">Peak Performance Pattern Detected</p>
+                <p className="text-sm text-gray-600">Your productivity is 23% higher between 9-11 AM. Consider scheduling important tasks during this window.</p>
+              </div>
+            </div>
+            <div className="flex items-start space-x-3 p-4 bg-green-50 rounded-lg">
+              <div className="text-green-600">📈</div>
+              <div>
+                <p className="font-medium text-gray-900">Collaboration Improvement</p>
+                <p className="text-sm text-gray-600">Your team engagement has increased 21% this month. Great job on active participation!</p>
+              </div>
+            </div>
+            <div className="flex items-start space-x-3 p-4 bg-purple-50 rounded-lg">
+              <div className="text-purple-600">🎯</div>
+              <div>
+                <p className="font-medium text-gray-900">Focus Time Recommendation</p>
+                <p className="text-sm text-gray-600">Try the Pomodoro technique to reach your 8-hour focus goal. You're 78% of the way there!</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Demo CTA */}
+        <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-6 border border-purple-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Unlock Advanced Analytics</h3>
+              <p className="text-gray-600">Get deeper insights, custom reports, and AI-powered recommendations with our free plan.</p>
+            </div>
+            <button className="bg-purple-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-purple-700 whitespace-nowrap">
+              Start Free Plan
+            </button>
+          </div>
+        </div>
       </div>
-    ) : (
-      <div className="text-sm text-gray-500">
-        Upgrade to Individual Pro or higher to access analytics
-      </div>
-    )}
-  </div>
-);
+    );
+  }
+
+  return (
+    <div className="bg-white rounded-lg shadow-sm p-8 text-center">
+      <div className="text-6xl mb-4">📈</div>
+      <h2 className="text-2xl font-bold text-gray-900 mb-4">Analytics</h2>
+      <p className="text-gray-600 mb-6">
+        Advanced analytics and insights for your digital twin projects.
+      </p>
+      {hasFeatureAccess('analytics.view') ? (
+        <div className="text-sm text-gray-500">
+          Analytics dashboard coming soon!
+        </div>
+      ) : (
+        <div className="text-sm text-gray-500">
+          Upgrade to Individual Pro or higher to access analytics
+        </div>
+      )}
+    </div>
+  );
+};
 
 const IntegrationsSection = ({ hasFeatureAccess }) => (
   <div className="bg-white rounded-lg shadow-sm p-8 text-center">
