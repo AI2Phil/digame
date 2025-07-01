@@ -93,12 +93,13 @@ def verify_token(
 
 @router.post("/refresh", response_model=Token)
 def refresh_access_token(
-    refresh_token: str
+    refresh_token: str,
+    db: Session = Depends(get_db)
 ):
     """
     Refresh access token using refresh token
     """
-    tokens = auth_service.refresh_token(refresh_token)
+    tokens = auth_service.refresh_token(db, refresh_token)
     return tokens
 
 @router.post("/logout")

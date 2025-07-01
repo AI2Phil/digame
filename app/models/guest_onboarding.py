@@ -42,7 +42,8 @@ class GuestOnboardingProgress(Base):
     skip_optional_steps = Column(Boolean(), default=False)
     
     # Relationship back to User
-    user = relationship("User", back_populates="onboarding_progress")
+    # Temporarily commented out due to circular import issues
+    # user = relationship("User", back_populates="onboarding_progress")
 
     def __repr__(self):
         return f"<GuestOnboardingProgress(user_id={self.user_id}, step={self.current_step}/{self.total_steps})>"
@@ -87,7 +88,8 @@ class DigitalTwinProfile(Base):
     recommended_improvements = Column(JSON, default=list)
     
     # Relationship back to User
-    user = relationship("User", back_populates="digital_twin_profile")
+    # Temporarily commented out due to circular import issues
+    # user = relationship("User", back_populates="digital_twin_profile")
 
     def __repr__(self):
         return f"<DigitalTwinProfile(user_id={self.user_id}, completeness={self.profile_completeness_score}%)>"

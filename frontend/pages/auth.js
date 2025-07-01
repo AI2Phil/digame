@@ -111,7 +111,7 @@ export default function AuthPage() {
             last_name: formData.lastName || undefined,
           };
 
-      const response = await fetch(`http://localhost:8001${endpoint}`, {
+      const response = await fetch(`http://localhost:8000${endpoint}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -169,7 +169,7 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen relative overflow-hidden flex items-center justify-center p-4">
+    <div className="min-h-screen relative overflow-hidden flex flex-col items-center justify-center p-4">
       {/* Animated Gradient Background */}
       <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
         <div className="absolute inset-0 opacity-20" style={{
@@ -183,6 +183,24 @@ export default function AuthPage() {
         <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-tr from-purple-400/20 to-pink-600/20 rounded-full blur-3xl animate-pulse delay-1000"></div>
         <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-gradient-to-r from-indigo-400/15 to-purple-600/15 rounded-full blur-2xl animate-pulse delay-500"></div>
         <div className="absolute bottom-1/4 right-1/4 w-48 h-48 bg-gradient-to-l from-teal-400/15 to-cyan-600/15 rounded-full blur-2xl animate-pulse delay-700"></div>
+      </div>
+
+      {/* Inspirational Quote Section */}
+      <div className="relative z-10 w-full max-w-2xl mb-8">
+        <div className="backdrop-blur-xl bg-gradient-to-r from-white/10 via-white/5 to-white/10 border border-white/20 rounded-3xl p-6 shadow-2xl">
+          <div className="text-center space-y-3">
+            <blockquote className="text-lg md:text-xl font-medium bg-gradient-to-r from-cyan-200 via-white to-purple-200 bg-clip-text text-transparent leading-relaxed">
+              "Your digital twin is not just a reflection of who you are—it's a catalyst for who you can become. Every data point is a stepping stone to your extraordinary future."
+            </blockquote>
+            <div className="flex items-center justify-center space-x-2 pt-2">
+              <div className="h-px bg-gradient-to-r from-transparent via-cyan-400/50 to-transparent flex-1"></div>
+              <cite className="text-cyan-300/80 text-sm font-medium px-3">
+                — Nex 🎸
+              </cite>
+              <div className="h-px bg-gradient-to-r from-transparent via-purple-400/50 to-transparent flex-1"></div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div className="relative z-10 w-full max-w-md space-y-8">

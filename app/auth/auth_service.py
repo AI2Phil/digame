@@ -91,12 +91,7 @@ class AuthService:
                     db.refresh(db_user)
             
             # Generate tokens
-            token_data = {
-                "sub": str(db_user.id),
-                "username": db_user.username,
-                "email": db_user.email
-            }
-            tokens = self.token_handler.create_token_pair(token_data)
+            tokens = self.token_handler.create_token_pair(db_user)
             
             logger.info(f"User registered successfully: {db_user.email}")
             
@@ -155,22 +150,18 @@ class AuthService:
             )
         
         # Generate tokens
-        token_data = {
-            "sub": str(user.id),
-            "username": user.username,
-            "email": user.email
-        }
-        tokens = self.token_handler.create_token_pair(token_data)
+        tokens = self.token_handler.create_token_pair(user)
         
         logger.info(f"User authenticated successfully: {user.email}")
         
         return UserSchema.from_orm(user), tokens
     
-    def refresh_token(self, refresh_token: str) -> Dict[str, str]:
+    def refresh_token(self, db: Session, refresh_token: str) -> Dict[str, str]:
         """
         Refresh access token using refresh token
         
         Args:
+            db: Database session
             refresh_token: Valid refresh token
             
         Returns:
@@ -186,17 +177,20 @@ class AuthService:
                 detail="Invalid refresh token"
             )
         
-        # Create new token pair
-        token_data = {
-            "sub": payload["sub"],
-            "username": payload["username"],
-            "email": payload["email"]
-        }
+        # Get user from database for token creation
+        user_id = int(payload["sub"])
+        from ..models.user import User
+        user = db.query(User).filter(User.id == user_id).first()
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="User not found"
+            )
         
         # Blacklist old refresh token
         self.token_handler.blacklist_token(refresh_token)
         
-        new_tokens = self.token_handler.create_token_pair(token_data)
+        new_tokens = self.token_handler.create_token_pair(user)
         
         logger.info(f"Token refreshed for user: {payload['email']}")
         

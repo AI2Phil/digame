@@ -155,20 +155,22 @@ class User(Base):
     )
 
     # Relationship to GuestOnboardingProgress (One-to-One)
-    onboarding_progress = relationship(
-        "GuestOnboardingProgress",
-        back_populates="user",
-        uselist=False,
-        cascade="all, delete-orphan"
-    )
+    # Temporarily commented out due to import issues
+    # onboarding_progress = relationship(
+    #     "GuestOnboardingProgress",
+    #     back_populates="user",
+    #     uselist=False,
+    #     cascade="all, delete-orphan"
+    # )
     
     # Relationship to DigitalTwinProfile (One-to-One)
-    digital_twin_profile = relationship(
-        "DigitalTwinProfile",
-        back_populates="user",
-        uselist=False,
-        cascade="all, delete-orphan"
-    )
+    # Temporarily commented out due to import issues
+    # digital_twin_profile = relationship(
+    #     "DigitalTwinProfile",
+    #     back_populates="user",
+    #     uselist=False,
+    #     cascade="all, delete-orphan"
+    # )
 
     # Digital Twin relationship (One-to-Many)
     digital_twins = relationship(
