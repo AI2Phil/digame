@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Menu, X } from 'lucide-react';
-import Sidebar from '../navigation/Sidebar';
+import NextJSComprehensiveNavigation from '../navigation/NextJSComprehensiveNavigation';
 import { Button } from '../ui/Button';
 
 interface DashboardLayoutProps {
@@ -24,13 +24,14 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
 
   return (
     <div className="flex h-screen bg-gray-100">
-      {/* Sidebar - Always visible on desktop, toggleable on mobile */}
-      <Sidebar
+      {/* Comprehensive Navigation - Always visible on desktop, toggleable on mobile */}
+      <NextJSComprehensiveNavigation
         isDemoMode={isDemoMode}
         onLogout={onLogout}
         currentUser={currentUser}
         isOpen={sidebarOpen}
         onToggle={toggleSidebar}
+        showAllFeatures={true}
       />
       
       {/* Main Content */}
@@ -46,7 +47,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
               >
                 <Menu className="w-5 h-5" />
               </button>
-              <h1 className="text-xl font-semibold text-gray-900">Digame Dashboard</h1>
+              <h1 className="text-xl font-semibold text-gray-900">Digame - Complete Platform Access</h1>
               {isDemoMode && (
                 <div className="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded">
                   Demo Mode
@@ -55,7 +56,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
             </div>
             <div className="flex items-center gap-2">
               <div className="text-sm text-gray-600">
-                Welcome, {currentUser?.name || 'User'}
+                All Backend Features Available
               </div>
             </div>
           </div>

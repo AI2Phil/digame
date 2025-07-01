@@ -41,6 +41,7 @@ import TwinDashboard from './components/digital-twin/TwinDashboard.tsx';
 import AuthPage from './pages/AuthPage.tsx';
 import LanguageSwitcher from './components/Layout/LanguageSwitcher'; // Import LanguageSwitcher
 import { useTranslation } from 'next-i18next'; // Import useTranslation
+import NavigationTestPage from './pages/NavigationTestPage.jsx'; // Import NavigationTestPage
 import './App.css';
 import './styles/theme.css';
 
@@ -650,6 +651,12 @@ function App() {
                 <Navigate to="/" replace />
               )
             }
+          />
+
+          {/* Navigation Test Route */}
+          <Route
+            path="/navigation-test"
+            element={<NavigationTestPage />}
           />
 
           {/* Catch all route */}

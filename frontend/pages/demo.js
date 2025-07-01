@@ -62,7 +62,7 @@ export default function DemoPage({ onDemoAccess }) {
           </p>
         </div>
 
-        <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-8">
+        <div className="max-w-6xl mx-auto grid md:grid-cols-3 gap-8">
           {/* Interactive Demo */}
           <Card className="rounded-2xl shadow-xl border border-gray-100 hover:shadow-2xl transition-shadow">
             <CardContent className="p-8">
@@ -176,6 +176,63 @@ export default function DemoPage({ onDemoAccess }) {
               </Button>
             </CardContent>
           </Card>
+
+          {/* Complete Feature Explorer */}
+          <Card className="rounded-2xl shadow-xl border border-gray-100 hover:shadow-2xl transition-shadow">
+            <CardContent className="p-8">
+              <div className="text-center mb-8">
+                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <span className="text-3xl">🎯</span>
+                </div>
+                <h3 className="text-2xl font-bold text-gray-900 mb-4">Complete Feature Explorer</h3>
+                <p className="text-gray-600 mb-6">
+                  Explore ALL backend features with comprehensive navigation and search capabilities
+                </p>
+              </div>
+
+              <div className="space-y-4 mb-8">
+                <div className="flex items-center space-x-3">
+                  <div className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center">
+                    <span className="text-green-600 text-xs">✓</span>
+                  </div>
+                  <span className="text-gray-700">Complete backend feature coverage</span>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <div className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center">
+                    <span className="text-green-600 text-xs">✓</span>
+                  </div>
+                  <span className="text-gray-700">Real-time search across 80+ features</span>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <div className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center">
+                    <span className="text-green-600 text-xs">✓</span>
+                  </div>
+                  <span className="text-gray-700">Role-based access control demo</span>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <div className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center">
+                    <span className="text-green-600 text-xs">✓</span>
+                  </div>
+                  <span className="text-gray-700">Platform Owner tools showcase</span>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <div className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center">
+                    <span className="text-green-600 text-xs">✓</span>
+                  </div>
+                  <span className="text-gray-700">Genuine navigation interface</span>
+                </div>
+              </div>
+
+              <Button
+                onClick={() => router.push('/navigation-test')}
+                variant="secondary"
+                size="lg"
+                className="w-full bg-green-600 text-white hover:bg-green-700"
+              >
+                🎯 Explore All Features
+              </Button>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Demo Features Preview */}
@@ -183,7 +240,7 @@ export default function DemoPage({ onDemoAccess }) {
           <h2 className="text-3xl font-bold text-gray-900 text-center mb-12">
             What You'll Experience in the Demo
           </h2>
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-4 gap-8">
             <div className="text-center">
               <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <span className="text-2xl">📊</span>
@@ -204,6 +261,13 @@ export default function DemoPage({ onDemoAccess }) {
               </div>
               <h4 className="font-semibold text-gray-900 mb-2">Goal Tracking</h4>
               <p className="text-sm text-gray-600">See how goal setting and progress tracking works</p>
+            </div>
+            <div className="text-center">
+              <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-2xl">🔍</span>
+              </div>
+              <h4 className="font-semibold text-gray-900 mb-2">Complete Feature Access</h4>
+              <p className="text-sm text-gray-600">Explore all 80+ backend features with comprehensive navigation</p>
             </div>
           </div>
         </div>
