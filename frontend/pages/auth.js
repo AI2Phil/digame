@@ -108,8 +108,8 @@ export default function AuthPage() {
             username: formData.username,
             email: formData.email,
             password: formData.password,
-            first_name: formData.firstName || undefined,
-            last_name: formData.lastName || undefined,
+            firstName: formData.firstName || undefined,
+            lastName: formData.lastName || undefined,
           };
 
       // Use dynamic API service that auto-detects the correct port

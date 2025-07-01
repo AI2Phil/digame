@@ -291,8 +291,19 @@ router.post('/register', async (req, res) => {
   try {
     const { email, username, password, firstName, lastName, subscriptionTier = 'free' } = req.body;
 
+    // Debug logging
+    console.log('Registration request body:', JSON.stringify(req.body, null, 2));
+    console.log('Extracted fields:', { email, username, password: password ? '[REDACTED]' : undefined, firstName, lastName, subscriptionTier });
+
     // Enhanced validation
     if (!email || !username || !password || !firstName || !lastName) {
+      console.log('Validation failed - missing fields:', {
+        email: !email,
+        username: !username,
+        password: !password,
+        firstName: !firstName,
+        lastName: !lastName
+      });
       return res.status(400).json({
         error: 'Validation error',
         message: 'All fields are required: email, username, password, firstName, lastName'
