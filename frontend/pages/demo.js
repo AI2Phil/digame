@@ -3,16 +3,19 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import Button from '../src/components/ui/Button';
 import { Card, CardContent } from '../src/components/ui/Card';
-import demoService from '../src/services/demoService';
+import { useAuth } from '../src/contexts/AuthContext';
 
 export default function DemoPage({ onDemoAccess }) {
   const [selectedDemo, setSelectedDemo] = useState(null);
   const router = useRouter();
+  const { enterDemoMode } = useAuth();
 
-  const handleDemoSelect = (demoType) => {
+  const handleDemoSelect = async (demoType) => {
     setSelectedDemo(demoType);
-    // Enable demo mode
-    demoService.setDemoMode(true);
+    
+    // Enable demo mode through AuthContext
+    await enterDemoMode();
+    
     if (onDemoAccess) {
       onDemoAccess();
     }

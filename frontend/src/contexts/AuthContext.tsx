@@ -234,23 +234,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const enterDemoMode = async () => {
     try {
-      const response = await fetch(`${apiUrl}/auth/demo`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setUser(data.user);
-        setTokens(data.tokens);
-        setIsAuthenticated(true);
-        setIsDemoMode(true);
-        
-        // Store demo tokens
-        localStorage.setItem('accessToken', data.tokens.accessToken);
-        localStorage.setItem('refreshToken', data.tokens.refreshToken);
-        localStorage.setItem('demoMode', 'true');
-      }
+      // Create demo user locally without backend call
+      const demoUser: User = {
+        id: 999,
+        firstName: 'Demo',
+        lastName: 'User',
+        fullName: 'Demo User',
+        email: 'demo@digame.com',
+        username: 'demo',
+        role: 'admin',
+        subscriptionTier: 'enterprise',
+        permissions: ['*'],
+        isPlatformOwner: false,
+        isActive: true,
+        isVerified: true,
+        isDemoMode: true,
+        accessibleFeatures: ['*']
+      };
+      
+      setUser(demoUser);
+      setIsAuthenticated(true);
+      setIsDemoMode(true);
+      
+      // Store demo mode flag
+      localStorage.setItem('demoMode', 'true');
     } catch (error) {
       console.error('Demo mode error:', error);
     }

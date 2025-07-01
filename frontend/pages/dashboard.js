@@ -5,7 +5,7 @@ import ProgressiveOnboarding from '../src/components/onboarding/ProgressiveOnboa
 import TeamManagement from '../src/components/team/TeamManagement';
 
 const Dashboard = () => {
-  const { user, logout, hasFeatureAccess } = useAuth();
+  const { user, logout, hasFeatureAccess, isDemoMode, isLoading } = useAuth();
   const router = useRouter();
   const [activeSection, setActiveSection] = useState('overview');
   const [showOnboarding, setShowOnboarding] = useState(false);
@@ -17,21 +17,55 @@ const Dashboard = () => {
   });
 
   useEffect(() => {
-    if (!user) {
+    // Don't redirect if still loading auth state
+    if (isLoading) {
+      return;
+    }
+
+    // If not authenticated and not in demo mode, redirect to auth
+    if (!user && !isDemoMode) {
       router.push('/auth');
       return;
     }
 
-    // Check if user needs onboarding
-    if (!user.onboardingCompleted) {
+    // If we have a user, check if they need onboarding
+    if (user && !user.onboardingCompleted && !isDemoMode) {
       setShowOnboarding(true);
     }
 
     loadUserStats();
-  }, [user, router]);
+  }, [user, isDemoMode, isLoading, router]);
 
   const loadUserStats = async () => {
     try {
+      // Use mock data in demo mode
+      if (isDemoMode) {
+        setUserStats({
+          totalProjects: 3,
+          activeTeams: 2,
+          completedTasks: 47,
+          recentActivity: [
+            {
+              icon: '🚀',
+              title: 'Completed AI Analytics Dashboard',
+              timestamp: '2 hours ago'
+            },
+            {
+              icon: '👥',
+              title: 'Joined React Development Team',
+              timestamp: '1 day ago'
+            },
+            {
+              icon: '📊',
+              title: 'Generated Weekly Performance Report',
+              timestamp: '2 days ago'
+            }
+          ]
+        });
+        return;
+      }
+
+      // Real API call for authenticated users
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001';
       const response = await fetch(`${apiUrl}/auth/stats`, {
         headers: {
@@ -67,7 +101,7 @@ const Dashboard = () => {
     router.push('/');
   };
 
-  if (!user) {
+  if (isLoading || (!user && !isDemoMode)) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-indigo-600"></div>

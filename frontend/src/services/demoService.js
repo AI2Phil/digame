@@ -14,15 +14,15 @@ class DemoService {
     this.isDemo = enabled;
     if (typeof window !== 'undefined') {
       if (enabled) {
-        localStorage.setItem('demo_mode', 'true');
+        localStorage.setItem('demoMode', 'true');
       } else {
-        localStorage.removeItem('demo_mode');
+        localStorage.removeItem('demoMode');
       }
     }
   }
 
   isDemoMode() {
-    return this.isDemo || (typeof window !== 'undefined' && localStorage.getItem('demo_mode') === 'true');
+    return this.isDemo || (typeof window !== 'undefined' && localStorage.getItem('demoMode') === 'true');
   }
 
   initializeDemoData() {
