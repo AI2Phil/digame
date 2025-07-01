@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import apiService from '../services/apiService';
 
 interface User {
   id: number;
@@ -20,6 +21,15 @@ interface User {
   preferences?: any;
   accessibleFeatures?: string[];
   isDemoMode?: boolean;
+  onboardingCompleted?: boolean;
+  onboardingData?: {
+    interests?: string[];
+    goals?: string[];
+    experienceLevel?: string;
+    teamChoice?: string;
+    [key: string]: any;
+  };
+  unlockedFeatures?: string[];
 }
 
 interface Tokens {
@@ -54,8 +64,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isDemoMode, setIsDemoMode] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  // API URL
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001';
 
   // Check for existing authentication on mount
   useEffect(() => {
@@ -80,7 +88,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           isActive: true,
           isVerified: true,
           isDemoMode: true,
-          accessibleFeatures: ['*']
+          accessibleFeatures: ['*'],
+          onboardingCompleted: true,
+          onboardingData: {
+            interests: ['analytics', 'ai', 'productivity'],
+            goals: ['productivity', 'data_insights'],
+            experienceLevel: 'advanced',
+            teamChoice: 'individual'
+          },
+          unlockedFeatures: ['basic_analytics', 'advanced_analytics', 'ai_coaching']
         };
         setUser(demoUser);
         setIsAuthenticated(true);
@@ -88,11 +104,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } else if (accessToken) {
         // Try to validate token with backend
         try {
-          const response = await fetch(`${apiUrl}/auth/profile`, {
-            headers: {
-              'Authorization': `Bearer ${accessToken}`
-            }
-          });
+          const response = await apiService.get('/auth/profile');
           
           if (response.ok) {
             const data = await response.json();
@@ -141,11 +153,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (credentials: { username?: string; email?: string; password: string }) => {
     try {
       setIsLoading(true);
-      const response = await fetch(`${apiUrl}/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(credentials)
-      });
+      const response = await apiService.post('/auth/login', credentials);
       
       if (response.ok) {
         const data = await response.json();
@@ -178,11 +186,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const refreshToken = localStorage.getItem('refreshToken');
       if (!refreshToken) return false;
 
-      const response = await fetch(`${apiUrl}/auth/refresh`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ refreshToken })
-      });
+      const response = await apiService.post('/auth/refresh', { refreshToken });
 
       if (response.ok) {
         const data = await response.json();
@@ -209,14 +213,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const accessToken = localStorage.getItem('accessToken');
       if (!accessToken) return false;
 
-      const response = await fetch(`${apiUrl}/auth/profile`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${accessToken}`
-        },
-        body: JSON.stringify(updates)
-      });
+      const response = await apiService.put('/auth/profile', updates);
 
       if (response.ok) {
         const data = await response.json();
@@ -249,7 +246,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isActive: true,
         isVerified: true,
         isDemoMode: true,
-        accessibleFeatures: ['*']
+        accessibleFeatures: ['*'],
+        onboardingCompleted: true,
+        onboardingData: {
+          interests: ['analytics', 'ai', 'productivity'],
+          goals: ['productivity', 'data_insights'],
+          experienceLevel: 'advanced',
+          teamChoice: 'individual'
+        },
+        unlockedFeatures: ['basic_analytics', 'advanced_analytics', 'ai_coaching']
       };
       
       setUser(demoUser);
@@ -269,12 +274,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       // Call backend logout if not in demo mode
       if (!isDemoMode && accessToken) {
-        await fetch(`${apiUrl}/auth/logout`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${accessToken}`
-          }
-        }).catch(console.error);
+        await apiService.post('/auth/logout', {}).catch(console.error);
       }
     } finally {
       clearAuthData();

@@ -56,6 +56,12 @@ export default function HomePage() {
               <p className="text-xl text-gray-600">
                 Explore Digame with our interactive demo or create your personal digital twin
               </p>
+              <p className="text-sm text-gray-500 mt-4">
+                Already have an account?
+                <Link href="/auth" className="text-blue-600 hover:text-blue-700 font-medium ml-1">
+                  Sign in here
+                </Link>
+              </p>
             </div>
 
             <div className="grid md:grid-cols-2 gap-8">
@@ -193,14 +199,22 @@ export default function HomePage() {
             <Link href="/how-it-works" className="text-gray-600 hover:text-gray-900 transition-colors">How it Works</Link>
             <Link href="/pricing" className="text-gray-600 hover:text-gray-900 transition-colors">Pricing</Link>
           </div>
-          <Button
-            onClick={handleGetStarted}
-            variant="primary"
-            size="md"
-            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-lg backdrop-blur-sm"
-          >
-            🚀 Get Started
-          </Button>
+          <div className="flex items-center space-x-2 sm:space-x-4">
+            <Link
+              href="/auth"
+              className="text-gray-600 hover:text-gray-900 transition-colors font-medium text-sm sm:text-base"
+            >
+              Sign In
+            </Link>
+            <Button
+              onClick={handleGetStarted}
+              variant="primary"
+              size="md"
+              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-lg backdrop-blur-sm text-sm sm:text-base"
+            >
+              🚀 Get Started
+            </Button>
+          </div>
         </div>
       </nav>
 

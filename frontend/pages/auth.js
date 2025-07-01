@@ -4,10 +4,12 @@ import Button from '../src/components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '../src/components/ui/Card';
 import { Input } from '../src/components/ui/Input';
 import { Eye, EyeOff, Mail, Lock, User, AlertCircle } from 'lucide-react';
+import { useAuth } from '../src/contexts/AuthContext';
 import apiService from '../src/services/apiService';
 
 export default function AuthPage() {
   const router = useRouter();
+  const { login, isAuthenticated, isLoading: authLoading } = useAuth();
   const [isLoginMode, setIsLoginMode] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -25,11 +27,10 @@ export default function AuthPage() {
 
   useEffect(() => {
     // Check if user is already authenticated
-    const token = localStorage.getItem('access_token');
-    if (token) {
+    if (isAuthenticated) {
       router.push('/dashboard');
     }
-  }, [router]);
+  }, [isAuthenticated, router]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -98,47 +99,59 @@ export default function AuthPage() {
     setApiError('');
 
     try {
-      const endpoint = isLoginMode ? '/auth/login' : '/auth/register';
-      const payload = isLoginMode
-        ? {
-            username: formData.username,
-            password: formData.password
-          }
-        : {
-            username: formData.username,
-            email: formData.email,
-            password: formData.password,
-            firstName: formData.firstName || undefined,
-            lastName: formData.lastName || undefined,
-          };
+      if (isLoginMode) {
+        // Use AuthContext login method
+        const success = await login({
+          email: formData.username.includes('@') ? formData.username : undefined,
+          username: !formData.username.includes('@') ? formData.username : undefined,
+          password: formData.password
+        });
 
-      // Use dynamic API service that auto-detects the correct port
-      const response = await apiService.post(endpoint, payload);
-      const data = await response.json();
-
-      if (response.ok) {
-        // Store tokens
-        if (data.access_token) {
-          localStorage.setItem('access_token', data.access_token);
-        }
-        if (data.refresh_token) {
-          localStorage.setItem('refresh_token', data.refresh_token);
-        }
-
-        // Redirect to dashboard or onboarding
-        if (data.needs_onboarding) {
-          router.push('/onboarding');
-        } else {
+        if (success) {
+          // AuthContext will handle token storage and state management
           router.push('/dashboard');
+        } else {
+          setApiError('Invalid credentials. Please try again.');
         }
       } else {
-        // Handle API errors
-        if (data.detail) {
-          setApiError(data.detail);
-        } else if (data.message) {
-          setApiError(data.message);
+        // Handle registration separately since AuthContext doesn't have register method
+        const payload = {
+          username: formData.username,
+          email: formData.email,
+          password: formData.password,
+          firstName: formData.firstName || undefined,
+          lastName: formData.lastName || undefined,
+        };
+
+        const response = await apiService.post('/auth/register', payload);
+        const data = await response.json();
+
+        if (response.ok) {
+          // After successful registration, use AuthContext login
+          const loginSuccess = await login({
+            email: formData.email,
+            password: formData.password
+          });
+
+          if (loginSuccess) {
+            // Check if onboarding is needed
+            if (data.user && !data.user.onboardingCompleted) {
+              router.push('/onboarding');
+            } else {
+              router.push('/dashboard');
+            }
+          } else {
+            setApiError('Registration successful, but login failed. Please try signing in.');
+          }
         } else {
-          setApiError(`${isLoginMode ? 'Login' : 'Registration'} failed. Please try again.`);
+          // Handle API errors
+          if (data.detail) {
+            setApiError(data.detail);
+          } else if (data.message) {
+            setApiError(data.message);
+          } else {
+            setApiError('Registration failed. Please try again.');
+          }
         }
       }
     } catch (error) {

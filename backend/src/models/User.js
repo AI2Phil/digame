@@ -1,6 +1,9 @@
 /**
- * User Model with RBAC and Team Management
+ * User Model with SQLite Database and RBAC
  */
+
+const DatabaseService = require('../services/database');
+const bcrypt = require('bcryptjs');
 
 class User {
   constructor(data = {}) {
@@ -9,27 +12,37 @@ class User {
     this.username = data.username || '';
     this.firstName = data.firstName || '';
     this.lastName = data.lastName || '';
+    this.passwordHash = data.passwordHash || '';
     this.role = data.role || 'user';
     this.subscriptionTier = data.subscriptionTier || 'free';
     this.teamId = data.teamId || null;
-    this.permissions = data.permissions || [];
-    this.isPlatformOwner = data.isPlatformOwner || false;
-    this.isActive = data.isActive !== undefined ? data.isActive : true;
-    this.isVerified = data.isVerified || false;
-    this.onboardingCompleted = data.onboardingCompleted || false;
-    this.onboardingData = data.onboardingData || {
-      interests: [],
-      goals: [],
-      experience: '',
-      teamPreference: '',
-      completedSteps: []
-    };
-    this.lastLogin = data.lastLogin || null;
-    this.createdAt = data.createdAt || new Date();
-    this.updatedAt = data.updatedAt || new Date();
-    this.profile = data.profile || {};
-    this.preferences = data.preferences || {};
-    this.metadata = data.metadata || {};
+    this.permissions = Array.isArray(data.permissions) ? data.permissions : 
+                      (typeof data.permissions === 'string' ? JSON.parse(data.permissions || '[]') : []);
+    this.isPlatformOwner = Boolean(data.isPlatformOwner);
+    this.isActive = data.isActive !== undefined ? Boolean(data.isActive) : true;
+    this.isVerified = Boolean(data.isVerified);
+    this.onboardingCompleted = Boolean(data.onboardingCompleted);
+    this.onboardingData = typeof data.onboardingData === 'string' ? 
+                         JSON.parse(data.onboardingData || '{}') : 
+                         (data.onboardingData || {
+                           interests: [],
+                           goals: [],
+                           experience: '',
+                           teamPreference: '',
+                           completedSteps: []
+                         });
+    this.lastLogin = data.lastLogin ? new Date(data.lastLogin) : null;
+    this.createdAt = data.createdAt ? new Date(data.createdAt) : new Date();
+    this.updatedAt = data.updatedAt ? new Date(data.updatedAt) : new Date();
+    this.profile = typeof data.profile === 'string' ? 
+                   JSON.parse(data.profile || '{}') : 
+                   (data.profile || {});
+    this.preferences = typeof data.preferences === 'string' ? 
+                       JSON.parse(data.preferences || '{}') : 
+                       (data.preferences || {});
+    this.metadata = typeof data.metadata === 'string' ? 
+                    JSON.parse(data.metadata || '{}') : 
+                    (data.metadata || {});
   }
 
   /**
@@ -221,144 +234,63 @@ class User {
 }
 
 /**
- * User Repository (In-memory for demo)
+ * User Repository with SQLite Database
  */
 class UserRepository {
   constructor() {
-    this.users = new Map();
-    this.nextId = 1;
-    this.initializeDemoUsers();
+    this.db = new DatabaseService();
   }
 
   /**
-   * Initialize demo users
+   * Convert database row to User instance
    */
-  initializeDemoUsers() {
-    const demoUsers = [
-      {
-        id: 1,
-        email: 'admin@digame.com',
-        username: 'admin',
-        firstName: 'Platform',
-        lastName: 'Administrator',
-        role: 'admin',
-        subscriptionTier: 'platform_owner',
-        isPlatformOwner: true,
-        isVerified: true,
-        permissions: ['*'],
-        profile: {
-          bio: 'Platform Administrator with full system access',
-          avatar: '/avatars/admin.png'
-        }
-      },
-      {
-        id: 2,
-        email: 'demo@digame.com',
-        username: 'demo',
-        firstName: 'Demo',
-        lastName: 'User',
-        role: 'user',
-        subscriptionTier: 'enterprise',
-        isVerified: true,
-        permissions: ['analytics.*', 'ai.*', 'social.*', 'team.*'],
-        profile: {
-          bio: 'Demo user with enterprise access',
-          avatar: '/avatars/demo.png'
-        }
-      },
-      {
-        id: 3,
-        email: 'team.lead@company.com',
-        username: 'teamlead',
-        firstName: 'Sarah',
-        lastName: 'Johnson',
-        role: 'team_lead',
-        subscriptionTier: 'team',
-        teamId: 'team_001',
-        isVerified: true,
-        permissions: ['analytics.advanced', 'ai.basic', 'social.*', 'team.manage'],
-        profile: {
-          bio: 'Team Lead focused on productivity and collaboration',
-          avatar: '/avatars/sarah.png'
-        }
-      },
-      {
-        id: 4,
-        email: 'pro.user@freelancer.com',
-        username: 'prouser',
-        firstName: 'Mike',
-        lastName: 'Chen',
-        role: 'user',
-        subscriptionTier: 'individual_pro',
-        isVerified: true,
-        permissions: ['analytics.advanced', 'ai.coaching', 'social.networking'],
-        profile: {
-          bio: 'Professional freelancer leveraging AI tools',
-          avatar: '/avatars/mike.png'
-        }
-      },
-      {
-        id: 5,
-        email: 'free.user@example.com',
-        username: 'freeuser',
-        firstName: 'Alex',
-        lastName: 'Smith',
-        role: 'user',
-        subscriptionTier: 'free',
-        isVerified: false,
-        permissions: ['analytics.basic', 'social.basic'],
-        profile: {
-          bio: 'New user exploring the platform',
-          avatar: '/avatars/alex.png'
-        }
-      }
-    ];
-
-    demoUsers.forEach(userData => {
-      const user = new User(userData);
-      this.users.set(user.id, user);
-      this.nextId = Math.max(this.nextId, user.id + 1);
-    });
+  _rowToUser(row) {
+    if (!row) return null;
+    return new User(row);
   }
 
   /**
    * Find user by ID
    */
   findById(id) {
-    return this.users.get(parseInt(id));
+    const stmt = this.db.db.prepare('SELECT * FROM users WHERE id = ?');
+    const row = stmt.get(id);
+    return this._rowToUser(row);
   }
 
   /**
    * Find user by email
    */
   findByEmail(email) {
-    for (const user of this.users.values()) {
-      if (user.email === email) return user;
-    }
-    return null;
+    const stmt = this.db.db.prepare('SELECT * FROM users WHERE email = ?');
+    const row = stmt.get(email);
+    return this._rowToUser(row);
   }
 
   /**
    * Find user by username
    */
   findByUsername(username) {
-    for (const user of this.users.values()) {
-      if (user.username === username) return user;
-    }
-    return null;
+    const stmt = this.db.db.prepare('SELECT * FROM users WHERE username = ?');
+    const row = stmt.get(username);
+    return this._rowToUser(row);
   }
 
   /**
    * Authenticate user
    */
   authenticate(identifier, password) {
-    // For demo purposes, accept any password
-    // In production, this would verify hashed passwords
     const user = this.findByEmail(identifier) || this.findByUsername(identifier);
     
     if (!user || !user.isActive) return null;
     
+    // Verify password against stored hash
+    if (!user.passwordHash || !bcrypt.compareSync(password, user.passwordHash)) {
+      return null;
+    }
+    
     user.updateLastLogin();
+    this.update(user.id, { lastLogin: user.lastLogin.toISOString() });
     return user;
   }
 
@@ -366,13 +298,42 @@ class UserRepository {
    * Create new user
    */
   create(userData) {
-    const user = new User({
-      ...userData,
-      id: this.nextId++
-    });
-    
-    this.users.set(user.id, user);
-    return user;
+    const stmt = this.db.db.prepare(`
+      INSERT INTO users (
+        email, username, firstName, lastName, passwordHash, role,
+        subscriptionTier, teamId, permissions, isPlatformOwner,
+        isActive, isVerified, onboardingCompleted, onboardingData,
+        profile, preferences, metadata
+      ) VALUES (
+        @email, @username, @firstName, @lastName, @passwordHash, @role,
+        @subscriptionTier, @teamId, @permissions, @isPlatformOwner,
+        @isActive, @isVerified, @onboardingCompleted, @onboardingData,
+        @profile, @preferences, @metadata
+      )
+    `);
+
+    const data = {
+      email: userData.email,
+      username: userData.username,
+      firstName: userData.firstName,
+      lastName: userData.lastName,
+      passwordHash: userData.passwordHash,
+      role: userData.role || 'user',
+      subscriptionTier: userData.subscriptionTier || 'free',
+      teamId: userData.teamId || null,
+      permissions: JSON.stringify(userData.permissions || []),
+      isPlatformOwner: userData.isPlatformOwner ? 1 : 0,
+      isActive: userData.isActive !== undefined ? (userData.isActive ? 1 : 0) : 1,
+      isVerified: userData.isVerified ? 1 : 0,
+      onboardingCompleted: userData.onboardingCompleted ? 1 : 0,
+      onboardingData: JSON.stringify(userData.onboardingData || {}),
+      profile: JSON.stringify(userData.profile || {}),
+      preferences: JSON.stringify(userData.preferences || {}),
+      metadata: JSON.stringify(userData.metadata || {})
+    };
+
+    const result = stmt.run(data);
+    return this.findById(result.lastInsertRowid);
   }
 
   /**
@@ -382,9 +343,28 @@ class UserRepository {
     const user = this.findById(id);
     if (!user) return null;
 
-    Object.assign(user, updates);
-    user.updatedAt = new Date();
-    return user;
+    const fields = [];
+    const values = { id };
+
+    Object.keys(updates).forEach(key => {
+      if (key === 'permissions' || key === 'onboardingData' || key === 'profile' || key === 'preferences' || key === 'metadata') {
+        fields.push(`${key} = @${key}`);
+        values[key] = typeof updates[key] === 'string' ? updates[key] : JSON.stringify(updates[key]);
+      } else if (key === 'isPlatformOwner' || key === 'isActive' || key === 'isVerified' || key === 'onboardingCompleted') {
+        fields.push(`${key} = @${key}`);
+        values[key] = updates[key] ? 1 : 0;
+      } else {
+        fields.push(`${key} = @${key}`);
+        values[key] = updates[key];
+      }
+    });
+
+    fields.push('updatedAt = CURRENT_TIMESTAMP');
+
+    const stmt = this.db.db.prepare(`UPDATE users SET ${fields.join(', ')} WHERE id = @id`);
+    stmt.run(values);
+
+    return this.findById(id);
   }
 
   /**
@@ -393,21 +373,44 @@ class UserRepository {
   findAll(options = {}) {
     const { page = 1, limit = 10, role, subscriptionTier, teamId } = options;
     
-    let users = Array.from(this.users.values());
+    let whereClause = '';
+    const params = {};
+    const conditions = [];
 
-    // Apply filters
-    if (role) users = users.filter(user => user.role === role);
-    if (subscriptionTier) users = users.filter(user => user.subscriptionTier === subscriptionTier);
-    if (teamId) users = users.filter(user => user.teamId === teamId);
+    if (role) {
+      conditions.push('role = @role');
+      params.role = role;
+    }
+    if (subscriptionTier) {
+      conditions.push('subscriptionTier = @subscriptionTier');
+      params.subscriptionTier = subscriptionTier;
+    }
+    if (teamId) {
+      conditions.push('teamId = @teamId');
+      params.teamId = teamId;
+    }
 
-    // Apply pagination
-    const total = users.length;
-    const startIndex = (page - 1) * limit;
-    const endIndex = startIndex + limit;
-    const paginatedUsers = users.slice(startIndex, endIndex);
+    if (conditions.length > 0) {
+      whereClause = 'WHERE ' + conditions.join(' AND ');
+    }
+
+    // Get total count
+    const countStmt = this.db.db.prepare(`SELECT COUNT(*) as count FROM users ${whereClause}`);
+    const total = countStmt.get(params).count;
+
+    // Get paginated results
+    const offset = (page - 1) * limit;
+    const stmt = this.db.db.prepare(`
+      SELECT * FROM users ${whereClause} 
+      ORDER BY createdAt DESC 
+      LIMIT @limit OFFSET @offset
+    `);
+    
+    const rows = stmt.all({ ...params, limit, offset });
+    const users = rows.map(row => this._rowToUser(row));
 
     return {
-      users: paginatedUsers,
+      users,
       pagination: {
         page,
         limit,
@@ -421,7 +424,9 @@ class UserRepository {
    * Delete user
    */
   delete(id) {
-    return this.users.delete(parseInt(id));
+    const stmt = this.db.db.prepare('DELETE FROM users WHERE id = ?');
+    const result = stmt.run(id);
+    return result.changes > 0;
   }
 }
 

@@ -251,42 +251,147 @@ const DashboardOverview = ({ user, stats, hasFeatureAccess, onNavigate }) => {
     return 'Good evening';
   };
 
-  const quickActions = [
-    {
-      id: 'create-project',
-      title: 'Create Project',
-      description: 'Start a new digital twin project',
-      icon: '🚀',
-      action: () => onNavigate('projects'),
-      available: hasFeatureAccess('projects.create')
-    },
-    {
-      id: 'invite-team',
-      title: 'Invite Team Members',
-      description: 'Collaborate with your team',
-      icon: '👥',
-      action: () => onNavigate('teams'),
-      available: hasFeatureAccess('team.invite')
-    },
-    {
-      id: 'view-analytics',
-      title: 'View Analytics',
-      description: 'Analyze your performance',
-      icon: '📊',
-      action: () => onNavigate('analytics'),
-      available: hasFeatureAccess('analytics.view')
-    },
-    {
-      id: 'setup-integrations',
-      title: 'Setup Integrations',
-      description: 'Connect external tools',
-      icon: '🔗',
-      action: () => onNavigate('integrations'),
-      available: hasFeatureAccess('integrations.setup')
+  // Get personalized welcome message based on user's goals
+  const getPersonalizedMessage = () => {
+    const goals = user.onboardingData?.goals || [];
+    if (goals.includes('productivity')) {
+      return "Let's boost your productivity and optimize your workflows today.";
+    } else if (goals.includes('team_performance')) {
+      return "Ready to enhance your team's collaboration and performance?";
+    } else if (goals.includes('data_insights')) {
+      return "Time to dive into your data and discover valuable insights.";
+    } else if (goals.includes('skill_development')) {
+      return "Continue your learning journey and develop new professional skills.";
     }
-  ];
+    return "Welcome to your Digital Twin Platform dashboard. Let's build something amazing today.";
+  };
 
-  const availableActions = quickActions.filter(action => action.available);
+  // Generate personalized quick actions based on user interests and goals
+  const getPersonalizedActions = () => {
+    const interests = user.onboardingData?.interests || [];
+    const goals = user.onboardingData?.goals || [];
+    const experienceLevel = user.onboardingData?.experienceLevel || 'intermediate';
+    
+    const allActions = [
+      {
+        id: 'create-project',
+        title: 'Create Project',
+        description: 'Start a new digital twin project',
+        icon: '🚀',
+        action: () => onNavigate('projects'),
+        available: hasFeatureAccess('projects.create'),
+        priority: goals.includes('productivity') ? 10 : 5
+      },
+      {
+        id: 'view-analytics',
+        title: 'View Analytics',
+        description: 'Analyze your performance data',
+        icon: '📊',
+        action: () => onNavigate('analytics'),
+        available: hasFeatureAccess('analytics.view'),
+        priority: interests.includes('analytics') || goals.includes('data_insights') ? 10 : 3
+      },
+      {
+        id: 'invite-team',
+        title: 'Invite Team Members',
+        description: 'Collaborate with your team',
+        icon: '👥',
+        action: () => onNavigate('teams'),
+        available: hasFeatureAccess('team.invite'),
+        priority: interests.includes('team') || goals.includes('team_performance') ? 10 : 4
+      },
+      {
+        id: 'setup-integrations',
+        title: 'Setup Integrations',
+        description: 'Connect external tools',
+        icon: '🔗',
+        action: () => onNavigate('integrations'),
+        available: hasFeatureAccess('integrations.setup'),
+        priority: experienceLevel === 'advanced' || experienceLevel === 'expert' ? 8 : 2
+      },
+      {
+        id: 'ai-coaching',
+        title: 'AI Coaching Session',
+        description: 'Get personalized AI recommendations',
+        icon: '🤖',
+        action: () => onNavigate('analytics'),
+        available: interests.includes('ai') && hasFeatureAccess('analytics.view'),
+        priority: interests.includes('ai') ? 9 : 0
+      },
+      {
+        id: 'skill-development',
+        title: 'Learning Path',
+        description: 'Continue your skill development',
+        icon: '📚',
+        action: () => onNavigate('analytics'),
+        available: interests.includes('learning') || goals.includes('skill_development'),
+        priority: goals.includes('skill_development') ? 9 : 0
+      },
+      {
+        id: 'networking',
+        title: 'Professional Network',
+        description: 'Connect with industry peers',
+        icon: '🌐',
+        action: () => onNavigate('teams'),
+        available: interests.includes('networking') || goals.includes('network_building'),
+        priority: goals.includes('network_building') ? 8 : 0
+      },
+      {
+        id: 'productivity-tools',
+        title: 'Productivity Tools',
+        description: 'Optimize your workflows',
+        icon: '⚡',
+        action: () => onNavigate('integrations'),
+        available: interests.includes('productivity') && hasFeatureAccess('integrations.view'),
+        priority: interests.includes('productivity') ? 8 : 0
+      }
+    ];
+
+    return allActions
+      .filter(action => action.available && action.priority > 0)
+      .sort((a, b) => b.priority - a.priority)
+      .slice(0, 4); // Show top 4 personalized actions
+  };
+
+  const availableActions = getPersonalizedActions();
+
+  // Get personalized insights based on user data
+  const getPersonalizedInsights = () => {
+    const interests = user.onboardingData?.interests || [];
+    const goals = user.onboardingData?.goals || [];
+    const insights = [];
+
+    if (interests.includes('analytics') && stats.totalProjects === 0) {
+      insights.push({
+        type: 'suggestion',
+        icon: '📊',
+        title: 'Start with Analytics',
+        message: 'Create your first project to begin tracking meaningful data and insights.'
+      });
+    }
+
+    if (goals.includes('team_performance') && stats.activeTeams === 0) {
+      insights.push({
+        type: 'action',
+        icon: '👥',
+        title: 'Build Your Team',
+        message: 'Invite team members to start collaborating and improving performance together.'
+      });
+    }
+
+    if (interests.includes('ai') && user.subscriptionTier === 'free') {
+      insights.push({
+        type: 'upgrade',
+        icon: '🤖',
+        title: 'Unlock AI Features',
+        message: 'Upgrade to access AI-powered coaching and advanced recommendations.'
+      });
+    }
+
+    return insights;
+  };
+
+  const personalizedInsights = getPersonalizedInsights();
 
   return (
     <div className="space-y-6">
@@ -296,7 +401,7 @@ const DashboardOverview = ({ user, stats, hasFeatureAccess, onNavigate }) => {
           {getGreeting()}, {user.firstName || user.username}!
         </h1>
         <p className="text-indigo-100 text-lg">
-          Welcome to your Digital Twin Platform dashboard. Let's build something amazing today.
+          {getPersonalizedMessage()}
         </p>
         <div className="mt-4 flex items-center space-x-4">
           <span className="bg-white/20 px-3 py-1 rounded-full text-sm">
@@ -307,8 +412,35 @@ const DashboardOverview = ({ user, stats, hasFeatureAccess, onNavigate }) => {
               ✓ Verified Account
             </span>
           )}
+          {user.onboardingData?.interests?.length > 0 && (
+            <span className="bg-white/20 px-3 py-1 rounded-full text-sm">
+              {user.onboardingData.interests.length} Interest{user.onboardingData.interests.length !== 1 ? 's' : ''}
+            </span>
+          )}
         </div>
       </div>
+
+      {/* Personalized Insights */}
+      {personalizedInsights.length > 0 && (
+        <div className="bg-white rounded-lg shadow-sm p-6">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">💡 Personalized Insights</h2>
+          <div className="space-y-3">
+            {personalizedInsights.map((insight, index) => (
+              <div key={index} className={`flex items-start space-x-3 p-4 rounded-lg ${
+                insight.type === 'upgrade' ? 'bg-purple-50 border border-purple-200' :
+                insight.type === 'action' ? 'bg-blue-50 border border-blue-200' :
+                'bg-green-50 border border-green-200'
+              }`}>
+                <div className="text-2xl">{insight.icon}</div>
+                <div>
+                  <h3 className="font-medium text-gray-900">{insight.title}</h3>
+                  <p className="text-sm text-gray-600">{insight.message}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -665,44 +797,223 @@ const IntegrationsSection = ({ hasFeatureAccess }) => (
   </div>
 );
 
-const SettingsSection = ({ user }) => (
-  <div className="bg-white rounded-lg shadow-sm p-8">
-    <h2 className="text-2xl font-bold text-gray-900 mb-6">Account Settings</h2>
+const SettingsSection = ({ user }) => {
+  const [preferences, setPreferences] = useState({
+    interests: user.onboardingData?.interests || [],
+    goals: user.onboardingData?.goals || [],
+    experienceLevel: user.onboardingData?.experienceLevel || 'intermediate',
+    teamChoice: user.onboardingData?.teamChoice || 'individual',
+    notifications: {
+      email: user.preferences?.email !== false,
+      push: user.preferences?.push !== false,
+      marketing: user.preferences?.marketing === true
+    }
+  });
+
+  const interestOptions = [
+    { id: 'analytics', label: 'Data Analytics', icon: '📊' },
+    { id: 'ai', label: 'Artificial Intelligence', icon: '🤖' },
+    { id: 'team', label: 'Team Management', icon: '👥' },
+    { id: 'productivity', label: 'Productivity', icon: '⚡' },
+    { id: 'networking', label: 'Professional Networking', icon: '🌐' },
+    { id: 'learning', label: 'Continuous Learning', icon: '📚' }
+  ];
+
+  const goalOptions = [
+    { id: 'productivity', label: 'Increase Productivity' },
+    { id: 'team_performance', label: 'Improve Team Performance' },
+    { id: 'skill_development', label: 'Develop New Skills' },
+    { id: 'data_insights', label: 'Gain Data Insights' },
+    { id: 'network_building', label: 'Build Professional Network' },
+    { id: 'career_advancement', label: 'Advance Career' }
+  ];
+
+  const toggleInterest = (interestId) => {
+    setPreferences(prev => ({
+      ...prev,
+      interests: prev.interests.includes(interestId)
+        ? prev.interests.filter(id => id !== interestId)
+        : [...prev.interests, interestId]
+    }));
+  };
+
+  const toggleGoal = (goalId) => {
+    setPreferences(prev => ({
+      ...prev,
+      goals: prev.goals.includes(goalId)
+        ? prev.goals.filter(id => id !== goalId)
+        : [...prev.goals, goalId]
+    }));
+  };
+
+  const updateNotification = (type, value) => {
+    setPreferences(prev => ({
+      ...prev,
+      notifications: {
+        ...prev.notifications,
+        [type]: value
+      }
+    }));
+  };
+
+  return (
     <div className="space-y-6">
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Username</label>
-        <input
-          type="text"
-          value={user.username}
-          disabled
-          className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50"
-        />
+      {/* Account Information */}
+      <div className="bg-white rounded-lg shadow-sm p-6">
+        <h2 className="text-xl font-bold text-gray-900 mb-4">Account Information</h2>
+        <div className="grid md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Username</label>
+            <input
+              type="text"
+              value={user.username}
+              disabled
+              className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+            <input
+              type="email"
+              value={user.email}
+              disabled
+              className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Subscription</label>
+            <input
+              type="text"
+              value={user.subscriptionTier.replace('_', ' ').toUpperCase()}
+              disabled
+              className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Experience Level</label>
+            <select
+              value={preferences.experienceLevel}
+              onChange={(e) => setPreferences(prev => ({ ...prev, experienceLevel: e.target.value }))}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+            >
+              <option value="beginner">Beginner</option>
+              <option value="intermediate">Intermediate</option>
+              <option value="advanced">Advanced</option>
+              <option value="expert">Expert</option>
+            </select>
+          </div>
+        </div>
       </div>
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
-        <input
-          type="email"
-          value={user.email}
-          disabled
-          className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50"
-        />
+
+      {/* Interests & Preferences */}
+      <div className="bg-white rounded-lg shadow-sm p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Your Interests</h3>
+        <p className="text-sm text-gray-600 mb-4">These help us personalize your dashboard and recommendations.</p>
+        <div className="grid md:grid-cols-2 gap-3">
+          {interestOptions.map((interest) => (
+            <label key={interest.id} className="flex items-center space-x-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={preferences.interests.includes(interest.id)}
+                onChange={() => toggleInterest(interest.id)}
+                className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+              />
+              <span className="text-lg">{interest.icon}</span>
+              <span className="text-sm font-medium text-gray-700">{interest.label}</span>
+            </label>
+          ))}
+        </div>
       </div>
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Subscription</label>
-        <input
-          type="text"
-          value={user.subscriptionTier.replace('_', ' ').toUpperCase()}
-          disabled
-          className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50"
-        />
+
+      {/* Goals */}
+      <div className="bg-white rounded-lg shadow-sm p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Your Goals</h3>
+        <p className="text-sm text-gray-600 mb-4">Select your current professional goals to get relevant features and insights.</p>
+        <div className="space-y-2">
+          {goalOptions.map((goal) => (
+            <label key={goal.id} className="flex items-center space-x-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={preferences.goals.includes(goal.id)}
+                onChange={() => toggleGoal(goal.id)}
+                className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+              />
+              <span className="text-sm font-medium text-gray-700">{goal.label}</span>
+            </label>
+          ))}
+        </div>
       </div>
-      <div className="pt-4">
-        <button className="bg-indigo-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-indigo-700">
-          Update Profile
-        </button>
+
+      {/* Notifications */}
+      <div className="bg-white rounded-lg shadow-sm p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Notification Preferences</h3>
+        <div className="space-y-4">
+          <label className="flex items-center justify-between">
+            <div>
+              <span className="text-sm font-medium text-gray-700">Email Notifications</span>
+              <p className="text-xs text-gray-500">Receive updates about your progress and new features</p>
+            </div>
+            <input
+              type="checkbox"
+              checked={preferences.notifications.email}
+              onChange={(e) => updateNotification('email', e.target.checked)}
+              className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+            />
+          </label>
+          <label className="flex items-center justify-between">
+            <div>
+              <span className="text-sm font-medium text-gray-700">Push Notifications</span>
+              <p className="text-xs text-gray-500">Get notified about important updates and reminders</p>
+            </div>
+            <input
+              type="checkbox"
+              checked={preferences.notifications.push}
+              onChange={(e) => updateNotification('push', e.target.checked)}
+              className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+            />
+          </label>
+          <label className="flex items-center justify-between">
+            <div>
+              <span className="text-sm font-medium text-gray-700">Marketing Communications</span>
+              <p className="text-xs text-gray-500">Receive tips, best practices, and product updates</p>
+            </div>
+            <input
+              type="checkbox"
+              checked={preferences.notifications.marketing}
+              onChange={(e) => updateNotification('marketing', e.target.checked)}
+              className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+            />
+          </label>
+        </div>
+      </div>
+
+      {/* Save Button */}
+      <div className="bg-white rounded-lg shadow-sm p-6">
+        <div className="flex justify-between items-center">
+          <div>
+            <h3 className="text-sm font-medium text-gray-900">Save Changes</h3>
+            <p className="text-xs text-gray-500">Update your preferences to personalize your experience</p>
+          </div>
+          <button className="bg-indigo-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-indigo-700">
+            Save Preferences
+          </button>
+        </div>
+      </div>
+
+      {/* Reset Onboarding */}
+      <div className="bg-white rounded-lg shadow-sm p-6 border border-orange-200">
+        <div className="flex justify-between items-center">
+          <div>
+            <h3 className="text-sm font-medium text-orange-900">Reset Onboarding</h3>
+            <p className="text-xs text-orange-700">Go through the setup process again to update your preferences</p>
+          </div>
+          <button className="bg-orange-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-orange-700 text-sm">
+            Restart Setup
+          </button>
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 export default Dashboard;
