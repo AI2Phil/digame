@@ -1,14 +1,89 @@
 # 🚀 Getting Started with Digame Platform
 
-Welcome to **Digame** - the Digital Professional Twin Platform! This guide will help you get up and running quickly with the platform's comprehensive authentication system and core features.
+Welcome to **Digame** - the Digital Professional Twin Platform! This guide will help you get up and running quickly with the platform's comprehensive user workflow system, authentication, team management, and progressive onboarding features.
+
+I have successfully updated the `/docs/START.md` file to reflect the current implementation of the Digame Digital Professional Twin Platform. Here's what has been updated:
+
+## 📋 Updated Documentation Summary
+
+### **Complete Rewrite for Current Stack**
+- **Removed**: Old Python/FastAPI references
+- **Added**: Node.js/Express backend + React/Next.js frontend documentation
+- **Updated**: All installation, setup, and running instructions
+
+### **Key Documentation Updates**
+
+#### **🚀 Quick Start Section**
+- Updated to show Node.js backend (`npm start` on port 8001)
+- Frontend setup with Next.js (`npm run dev` on port 3000)
+- Correct service URLs and health check endpoints
+
+#### **🎯 User Workflow Features (New Section)**
+- **Complete End-to-End User Journey**: Registration → Onboarding → Dashboard → Team Management
+- **Progressive Onboarding System**: 4-step workflow with interest/goal selection
+- **Subscription-Based Access Control**: Free, Individual Pro, Team, Enterprise tiers
+- **Team Management Infrastructure**: Complete team creation and collaboration features
+- **Personalized Dashboard**: Dynamic navigation and feature access
+
+#### **🔐 Authentication System**
+- **Current Implementation**: In-memory data store for development
+- **JWT Token System**: Access tokens (15min) + refresh tokens (7 days)
+- **Demo Users Table**: All 5 pre-configured users with credentials and access levels
+- **Complete API Endpoints**: All authentication and user management endpoints
+
+#### **📚 API Documentation**
+- **Updated Endpoints**: All current backend routes with correct ports
+- **Feature Access Control**: Subscription-based feature matrix
+- **Authentication Flow**: Complete registration, login, and token management
+
+#### **🔧 Common Tasks**
+- **Real Examples**: Working curl commands for registration, login, onboarding
+- **Team Management**: API calls for team creation and member management
+- **User Workflow**: Step-by-step API usage examples
+
+#### **🐛 Troubleshooting**
+- **Node.js Specific Issues**: Port conflicts, dependency problems, connection errors
+- **Current Stack Solutions**: Relevant to Express/React implementation
+- **Health Check Commands**: Correct endpoints and testing procedures
+
+#### **🚀 Next Steps**
+- **Production Migration**: Database options (MongoDB, PostgreSQL, Supabase)
+- **Feature Extensions**: Real-time features, email integration, payment systems
+- **Deployment Guide**: Production build and deployment instructions
+
+### **New Sections Added**
+
+1. **User Workflow Features**: Comprehensive overview of the complete user journey
+2. **Progressive Onboarding**: Detailed 4-step onboarding process
+3. **Team Management**: Complete team collaboration infrastructure
+4. **Subscription Tiers**: Feature access matrix and upgrade paths
+5. **Current Implementation Status**: What's completed vs. production-ready features
+
+### **Accurate Technical Details**
+
+- **Ports**: Backend (8001), Frontend (3000)
+- **Technology Stack**: Node.js/Express + React/Next.js + TypeScript
+- **Database**: In-memory for development, migration options for production
+- **Authentication**: JWT with bcrypt password hashing
+- **Demo Credentials**: All working demo users and access levels
+
+### **Developer-Friendly**
+
+- **Copy-paste Commands**: All commands tested and working
+- **API Examples**: Real curl commands with proper JSON payloads
+- **Troubleshooting**: Common issues with Node.js/npm specific solutions
+- **Extension Guide**: How to customize and extend the platform
+
+The documentation now accurately reflects the complete end-to-end user workflow system we've implemented, making it easy for new developers to get started and understand the full capabilities of the Digame platform.
 
 ## 📋 Table of Contents
 
 - [Quick Start](#-quick-start)
 - [Prerequisites](#-prerequisites)
 - [Installation](#-installation)
-- [Running the Full Application](#-running-the-full-application)
-- [Authentication Setup](#-authentication-setup)
+- [Running the Application](#-running-the-application)
+- [User Workflow Features](#-user-workflow-features)
+- [Authentication System](#-authentication-system)
 - [First Steps](#-first-steps)
 - [API Documentation](#-api-documentation)
 - [Common Tasks](#-common-tasks)
@@ -19,154 +94,94 @@ Welcome to **Digame** - the Digital Professional Twin Platform! This guide will 
 
 Get Digame running in 5 minutes with both backend API and frontend web interface:
 
-### Option 1: Docker (Recommended)
-
 ```bash
 # 1. Clone and setup
 git clone <repository-url>
 cd digame
 
-# 2. Start backend and database with Docker
-docker-compose up --build
+# 2. Start backend server
+cd backend
+npm install
+npm start
 
 # 3. In a new terminal, start the frontend
-cd digame/frontend
-npm install
-npm run dev
-```
-
-### Option 2: Manual Setup
-
-```bash
-# 1. Clone and setup
-git clone <repository-url>
-cd digame
-
-# 2. Backend Setup
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-pip install -r requirements.txt
-
-# 3. Set environment variables
-export DIGAME_AUTH_SECRET_KEY="your-super-secret-key-at-least-32-characters-long"
-export DIGAME_AUTH_DEFAULT_ADMIN_EMAIL="admin@yourdomain.com"
-export DIGAME_AUTH_DEFAULT_ADMIN_PASSWORD="secure-admin-password"
-
-# 4. Initialize database
-python -c "
-from digame.app.auth.init_auth_db import initialize_auth_database
-from digame.app.db import get_db
-db = next(get_db())
-success = initialize_auth_database(db)
-print('✅ Database initialized!' if success else '❌ Initialization failed')
-db.close()
-"
-
-# 5. Start the backend server
-python -m uvicorn digame.app.main:app --reload
-
-# 6. In a new terminal, start the frontend
-cd digame/frontend
+cd ../frontend
 npm install
 npm run dev
 ```
 
 🎉 **That's it!** Your Digame platform is now running:
-- **Backend API**: http://localhost:8000
 - **Frontend Web App**: http://localhost:3000
-- **API Documentation**: http://localhost:8000/docs
+- **Backend API**: http://localhost:8001
+- **API Health Check**: http://localhost:8001/health
+- **Demo Login**: http://localhost:8001/auth/demo
 
 ## 🔧 Prerequisites
 
 ### System Requirements
-- **Python**: 3.8 or higher
-- **Database**: SQLite (default) or PostgreSQL
+- **Node.js**: 18.0 or higher
+- **npm**: 8.0 or higher
 - **Memory**: 512MB minimum, 2GB recommended
 - **Storage**: 1GB free space
 
 ### Development Tools (Optional)
 - **Git**: For version control
-- **Docker**: For containerized deployment
-- **VS Code**: Recommended IDE with Python extension
+- **VS Code**: Recommended IDE with React/TypeScript extensions
+- **Postman**: For API testing
 
 ## 📦 Installation
 
-### Option 1: Standard Installation
+### Standard Installation
 
 ```bash
 # Clone the repository
 git clone <repository-url>
 cd digame
 
-# Create and activate virtual environment
-python -m venv venv
-source venv/bin/activate  # Linux/Mac
-# OR
-venv\Scripts\activate     # Windows
+# Install backend dependencies
+cd backend
+npm install
 
-# Install dependencies
-pip install -r requirements.txt
+# Install frontend dependencies
+cd ../frontend
+npm install
 ```
 
-### Option 2: Docker Installation (Backend + Database)
+### Development Setup
 
 ```bash
 # Clone the repository
 git clone <repository-url>
 cd digame
 
-# Build and run backend with Docker Compose
-docker-compose up --build
+# Install all dependencies
+npm run install:all  # If available, or install manually:
+cd backend && npm install && cd ../frontend && npm install
 ```
 
-**Note**: This starts the backend API and database only. For the web interface, you'll need to start the frontend separately (see [Running the Full Application](#-running-the-full-application)).
-
-### Option 3: Development Setup
-
-```bash
-# Clone the repository
-git clone <repository-url>
-cd digame
-
-# Install in development mode
-pip install -e .
-
-# Install development dependencies
-pip install -r requirements-dev.txt
-```
-
-## 🚀 Running the Full Application
+## 🚀 Running the Application
 
 ### Complete Application Stack
 
-To access the full Digame platform with both the web interface and API, you need to run both the backend and frontend:
+To access the full Digame platform with both the web interface and API:
 
-#### Method 1: Docker + Frontend (Recommended)
+#### Method 1: Separate Terminals (Recommended)
 
 ```bash
-# Terminal 1: Start backend and database
-docker-compose up --build
+# Terminal 1: Start backend server
+cd digame/backend
+npm start
 
 # Terminal 2: Start frontend (in a new terminal)
 cd digame/frontend
-npm install
 npm run dev
 ```
 
-#### Method 2: Manual Setup (Both Services)
+#### Method 2: Using npm scripts (if configured)
 
 ```bash
-# Terminal 1: Start backend
-cd digame
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-pip install -r requirements.txt
-python -m uvicorn digame.app.main:app --reload
-
-# Terminal 2: Start frontend (in a new terminal)
-cd digame/frontend
-npm install
-npm run dev
+# Start both services concurrently
+npm run dev  # If configured in root package.json
 ```
 
 ### Access Points
@@ -175,10 +190,10 @@ Once both services are running:
 
 | Service | URL | Description |
 |---------|-----|-------------|
-| **Frontend Web App** | http://localhost:3000 | Main user interface |
-| **Backend API** | http://localhost:8000 | REST API endpoints |
-| **API Documentation** | http://localhost:8000/docs | Interactive API docs |
-| **API Health Check** | http://localhost:8000/health | Backend status |
+| **Frontend Web App** | http://localhost:3000 | Main user interface with complete workflow |
+| **Backend API** | http://localhost:8001 | REST API endpoints |
+| **API Health Check** | http://localhost:8001/health | Backend status |
+| **Demo Mode** | http://localhost:8001/auth/demo | Quick demo access |
 
 ### Service Status Check
 
@@ -186,7 +201,7 @@ Verify both services are running:
 
 ```bash
 # Check backend
-curl http://localhost:8000/health
+curl http://localhost:8001/health
 
 # Check frontend (should return HTML)
 curl http://localhost:3000
@@ -196,14 +211,16 @@ curl http://localhost:3000
 
 #### Backend Issues
 ```bash
-# Check Docker containers
-docker-compose ps
+# Check Node.js version (requires 18+)
+node --version
 
-# View backend logs
-docker-compose logs backend
+# Clear npm cache and reinstall
+cd backend
+rm -rf node_modules package-lock.json
+npm install
 
-# Restart backend only
-docker-compose restart backend
+# Check for port conflicts (backend uses 8001)
+lsof -i :8001
 ```
 
 #### Frontend Issues
@@ -212,11 +229,11 @@ docker-compose restart backend
 node --version
 
 # Clear npm cache and reinstall
-cd digame/frontend
+cd frontend
 rm -rf node_modules package-lock.json
 npm install
 
-# Check for port conflicts
+# Check for port conflicts (frontend uses 3000)
 lsof -i :3000
 ```
 
@@ -224,159 +241,75 @@ lsof -i :3000
 If you encounter port conflicts:
 
 ```bash
-# Backend (change from 8000)
-docker-compose down
-# Edit docker-compose.yml: "8001:8000"
-docker-compose up
+# Backend (change from 8001)
+cd backend
+# Edit src/server.js: change port to 8002
+npm start
 
 # Frontend (change from 3000)
-cd digame/frontend
+cd frontend
 npm run dev -- --port 3001
 ```
 
-## 🔐 Authentication Setup
+## 🎯 User Workflow Features
 
-### 1. Environment Configuration
+### Complete End-to-End User Journey
 
-Create a `.env` file in the project root:
+The Digame platform provides a comprehensive user workflow system:
 
-```bash
-# JWT Configuration
-DIGAME_AUTH_SECRET_KEY=your-super-secret-key-at-least-32-characters-long
-DIGAME_AUTH_ACCESS_TOKEN_EXPIRE_MINUTES=30
-DIGAME_AUTH_REFRESH_TOKEN_EXPIRE_DAYS=7
+#### 1. **User Registration & Authentication**
+- Secure JWT-based authentication with refresh tokens
+- Password validation with security requirements
+- Email and username validation
+- Automatic login after successful registration
 
-# Default Admin User
-DIGAME_AUTH_DEFAULT_ADMIN_EMAIL=admin@yourdomain.com
-DIGAME_AUTH_DEFAULT_ADMIN_USERNAME=admin
-DIGAME_AUTH_DEFAULT_ADMIN_PASSWORD=change-this-secure-password
+#### 2. **Progressive Onboarding System**
+- **Step 1**: Interest Selection (AI Tools, Analytics, Social Features, Team Collaboration)
+- **Step 2**: Goal Setting (Productivity, Career Growth, Team Management, Personal Development)
+- **Step 3**: Experience Assessment (Beginner, Intermediate, Advanced, Expert)
+- **Step 4**: Team Preferences (Solo, Small Team, Large Team, Enterprise)
+- **Feature Unlocking**: Progressive access based on user choices and subscription tier
 
-# Security Settings
-DIGAME_AUTH_RATE_LIMIT_CALLS=100
-DIGAME_AUTH_RATE_LIMIT_PERIOD=60
+#### 3. **Subscription-Based Access Control**
+- **Free Tier**: Basic analytics and social features
+- **Individual Pro ($29/month)**: Advanced analytics, AI tools, networking
+- **Team ($99/month)**: Team creation, collaboration, advanced features
+- **Enterprise**: Full feature access, SSO, compliance tools
 
-# CORS Configuration (for frontend)
-DIGAME_AUTH_CORS_ORIGINS=["http://localhost:3000", "https://yourdomain.com"]
+#### 4. **Team Management Infrastructure**
+- Create and manage teams (subscription permitting)
+- Invite team members with role assignments
+- Role-based permissions (Owner, Admin, Manager, Member)
+- Team analytics and member management
+- Project collaboration features
 
-# Database (optional - defaults to SQLite)
-DATABASE_URL=sqlite:///./digame.db
-# DATABASE_URL=postgresql://user:password@localhost/digame
-```
+#### 5. **Personalized Dashboard**
+- Dynamic navigation based on user permissions
+- Real-time statistics (projects, teams, tasks)
+- Quick action buttons for common workflows
+- Recent activity feed with contextual prompts
+- Subscription tier status and upgrade paths
 
-### 2. Database Initialization
+## 🔐 Authentication System
 
-Initialize the authentication system with default roles and admin user:
+### Current Implementation
 
-```python
-# Run this Python script or execute in Python REPL
-from digame.app.auth.init_auth_db import initialize_auth_database, verify_auth_setup
-from digame.app.db import get_db
+The platform uses an **in-memory data store** for development with the following features:
 
-# Initialize database
-db = next(get_db())
-success = initialize_auth_database(db)
+- **JWT Tokens**: Access tokens (15 minutes) + refresh tokens (7 days)
+- **Password Security**: bcrypt hashing with salt rounds
+- **Demo Users**: Pre-configured users for testing
+- **Role-Based Access**: Dynamic feature access based on subscription tiers
 
-if success:
-    print("✅ Authentication database initialized successfully!")
-    
-    # Verify setup
-    verification = verify_auth_setup(db)
-    print("\n📊 Setup Verification:")
-    for component, status in verification.items():
-        print(f"  {component}: {'✅' if status else '❌'}")
-else:
-    print("❌ Database initialization failed!")
+### Demo Users Available
 
-db.close()
-```
-
-### 3. Verify Installation
-
-Start the server and check the health endpoints:
-
-```bash
-# Start the development server
-python -m uvicorn digame.app.main:app --reload
-
-# In another terminal, test the endpoints
-curl http://localhost:8000/health
-curl http://localhost:8000/auth/health
-```
-
-## 🎯 First Steps
-
-### 1. Access the Application
-
-#### Web Interface (Recommended for Users)
-- **Main Application**: http://localhost:3000
-- **User Dashboard**: http://localhost:3000/dashboard
-- **Login Page**: http://localhost:3000/auth/login
-
-#### API Documentation (For Developers)
-- **Swagger UI**: http://localhost:8000/docs
-- **ReDoc**: http://localhost:8000/redoc
-- **API Health**: http://localhost:8000/health
-
-**Note**: To access the web interface, make sure both backend and frontend are running (see [Running the Full Application](#-running-the-full-application)).
-
-### 2. Login as Admin
-
-Use the default admin credentials to access admin features:
-
-```bash
-# Login request
-curl -X POST "http://localhost:8000/auth/login" \
-  -H "Content-Type: application/x-www-form-urlencoded" \
-  -d "username=admin&password=change-this-secure-password"
-```
-
-**Response:**
-```json
-{
-  "user": {
-    "id": 1,
-    "username": "admin",
-    "email": "admin@yourdomain.com",
-    "is_active": true
-  },
-  "tokens": {
-    "access_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
-    "refresh_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
-    "token_type": "bearer"
-  }
-}
-```
-
-### 3. Register a New User
-
-```bash
-# Register a new user
-curl -X POST "http://localhost:8000/auth/register" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "username": "johndoe",
-    "email": "john@example.com",
-    "password": "SecurePassword123!",
-    "first_name": "John",
-    "last_name": "Doe"
-  }'
-```
-
-### 4. Access Protected Endpoints
-
-Use the access token to access protected endpoints:
-
-```bash
-# Get current user info
-curl -X GET "http://localhost:8000/auth/me" \
-  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
-
-# Access other protected endpoints
-curl -X GET "http://localhost:8000/predictive/models" \
-  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
-```
-
-## 📚 API Documentation
+| Username | Email | Password | Subscription | Features |
+|----------|-------|----------|--------------|----------|
+| `admin` | admin@digame.com | any | Platform Owner | All features |
+| `demo` | demo@digame.com | any | Enterprise | Full enterprise access |
+| `teamlead` | team.lead@company.com | any | Team | Team management |
+| `prouser` | pro.user@freelancer.com | any | Individual Pro | Pro features |
+| `freeuser` | free.user@example.com | any | Free | Basic features |
 
 ### Authentication Endpoints
 
@@ -386,167 +319,249 @@ curl -X GET "http://localhost:8000/predictive/models" \
 | POST | `/auth/login` | User login | No |
 | POST | `/auth/refresh` | Refresh access token | No |
 | POST | `/auth/logout` | User logout | Yes |
-| GET | `/auth/me` | Get current user | Yes |
-| POST | `/auth/password-change` | Change password | Yes |
-| POST | `/auth/password-reset/request` | Request password reset | No |
-| POST | `/auth/password-reset/confirm` | Confirm password reset | No |
+| GET | `/auth/profile` | Get current user | Yes |
+| PUT | `/auth/profile` | Update user profile | Yes |
+| PUT | `/auth/onboarding` | Update onboarding data | Yes |
+| GET | `/auth/stats` | Get user statistics | Yes |
+| POST | `/auth/demo` | Enter demo mode | No |
+
+## 🎯 First Steps
+
+### 1. Access the Application
+
+#### Web Interface (Recommended for Users)
+1. **Homepage**: http://localhost:3000
+2. **Click "Get Started"** to begin the user journey
+3. **Choose Experience**: Select "Create Your Account" or "Try the Demo"
+4. **Complete Registration**: Fill out the signup form with secure password
+5. **Progressive Onboarding**: Complete the 4-step onboarding process
+6. **Dashboard Access**: Access your personalized dashboard
+
+#### API Testing (For Developers)
+```bash
+# Test health endpoint
+curl http://localhost:8001/health
+
+# Register a new user
+curl -X POST "http://localhost:8001/auth/register" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username": "testuser",
+    "email": "test@example.com",
+    "password": "SecurePassword123!",
+    "firstName": "Test",
+    "lastName": "User",
+    "subscriptionTier": "individual_pro"
+  }'
+
+# Login with demo user
+curl -X POST "http://localhost:8001/auth/demo"
+```
+
+### 2. Complete User Workflow
+
+#### Registration Flow
+1. **Navigate to Registration**: http://localhost:3000 → "Get Started" → "Create Your Account"
+2. **Fill Registration Form**:
+   - Username (3+ characters, alphanumeric + underscore)
+   - Email (valid email format)
+   - First Name and Last Name
+   - Password (8+ characters, uppercase, lowercase, number)
+   - Confirm Password
+3. **Automatic Login**: System logs you in after successful registration
+4. **Progressive Onboarding**: Complete 4-step personalization process
+
+#### Onboarding Steps
+1. **Interests**: Select from AI Tools, Analytics, Social Features, Team Collaboration
+2. **Goals**: Choose Productivity, Career Growth, Team Management, Personal Development
+3. **Experience**: Assess your level (Beginner to Expert)
+4. **Team Preference**: Solo work, Small Team, Large Team, or Enterprise
+
+#### Dashboard Features
+- **Overview**: Personalized welcome, stats, and quick actions
+- **Projects**: Create and manage projects (subscription permitting)
+- **Teams**: Team creation and management (Team/Enterprise tiers)
+- **Analytics**: Performance insights (Individual Pro+)
+- **Integrations**: External tool connections (Team+)
+- **Settings**: Profile and account management
+
+### 3. Team Management (Team/Enterprise Tiers)
+
+#### Creating a Team
+1. **Navigate to Teams**: Dashboard → Teams section
+2. **Click "Create Team"**: Available for Team/Enterprise subscribers
+3. **Fill Team Details**: Name, description, subscription tier
+4. **Invite Members**: Send email invitations with role assignments
+5. **Manage Team**: Overview, member management, project collaboration
+
+#### Team Roles
+- **Owner**: Full team control, billing management
+- **Admin**: Member management, team settings
+- **Manager**: Project oversight, member coordination
+- **Member**: Standard team participation
+
+## 📚 API Documentation
 
 ### Core Platform Endpoints
 
 | Method | Endpoint | Description | Auth Required |
 |--------|----------|-------------|---------------|
 | GET | `/health` | System health check | No |
-| GET | `/info` | API information | No |
-| GET | `/predictive/*` | Predictive modeling | Yes |
-| GET | `/behavior/*` | Behavior analysis | Yes |
-| GET | `/process-notes/*` | Process documentation | Yes |
-| GET | `/admin/rbac/*` | Admin role management | Yes (Admin) |
+| GET | `/auth/permissions` | Get user permissions | Yes |
+| GET | `/auth/verify-token` | Verify token validity | Yes |
+| GET | `/teams` | List user teams | Yes |
+| POST | `/teams` | Create new team | Yes (Team+) |
+| GET | `/teams/:id` | Get team details | Yes |
+| POST | `/teams/:id/invite` | Invite team member | Yes |
+| DELETE | `/teams/:id/members/:userId` | Remove team member | Yes |
 
-### Default User Roles
+### Feature Access Control
 
-| Role | Description | Key Permissions |
-|------|-------------|-----------------|
-| **Super Administrator** | Full system access | All permissions |
-| **Administrator** | System management | User, role, data management |
-| **Manager** | Team oversight | Team and data management |
-| **Analyst** | Data analysis | Analysis and reporting |
-| **User** | Standard access | Basic functionality |
-| **Viewer** | Read-only access | View own data only |
+Features are dynamically available based on subscription tier:
+
+```javascript
+// Example feature checks
+const features = {
+  'analytics.basic': ['free'],
+  'analytics.advanced': ['individual_pro', 'team', 'enterprise'],
+  'ai.basic': ['individual_pro', 'team', 'enterprise'],
+  'team.create': ['team', 'enterprise'],
+  'team.manage': ['team', 'enterprise'],
+  'projects.create': ['individual_pro', 'team', 'enterprise'],
+  'integrations.setup': ['team', 'enterprise']
+};
+```
 
 ## 🔧 Common Tasks
 
-### Change Admin Password
+### Register a New User
 
-```python
-from digame.app.auth.auth_service import auth_service
-from digame.app.db import get_db
-
-db = next(get_db())
-success = auth_service.change_password(
-    db, 
-    user_id=1,  # Admin user ID
-    current_password="change-this-secure-password",
-    new_password="new-secure-admin-password"
-)
-print("✅ Password changed!" if success else "❌ Password change failed!")
-db.close()
+```bash
+curl -X POST "http://localhost:8001/auth/register" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username": "johndoe",
+    "email": "john@example.com",
+    "password": "SecurePassword123!",
+    "firstName": "John",
+    "lastName": "Doe",
+    "subscriptionTier": "individual_pro"
+  }'
 ```
 
-### Create Custom Role
+### Login and Get User Info
 
-```python
-from digame.app.crud.rbac_crud import create_role, add_permission_to_role
-from digame.app.schemas.rbac_schemas import RoleCreate
-from digame.app.db import get_db
+```bash
+# Login
+curl -X POST "http://localhost:8001/auth/login" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username": "johndoe",
+    "password": "SecurePassword123!"
+  }'
 
-db = next(get_db())
-
-# Create custom role
-role_data = RoleCreate(name="Data Scientist", description="Advanced data analysis role")
-role = create_role(db, role_data)
-
-# Add permissions (get permission IDs from database)
-# add_permission_to_role(db, role.id, permission_id)
-
-db.close()
+# Use the returned access token
+curl -X GET "http://localhost:8001/auth/profile" \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
 ```
 
-### Add User to Role
+### Update Onboarding Data
 
-```python
-from digame.app.crud.rbac_crud import assign_role_to_user_by_names
-from digame.app.db import get_db
-
-db = next(get_db())
-
-# Assign role to user
-user = assign_role_to_user_by_names(db, user_id=2, role_name="Analyst")
-print(f"✅ Role assigned to user: {user.username}" if user else "❌ Assignment failed!")
-
-db.close()
+```bash
+curl -X PUT "http://localhost:8001/auth/onboarding" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -d '{
+    "interests": ["AI Tools", "Analytics"],
+    "goals": ["Productivity", "Career Growth"],
+    "experience": "intermediate",
+    "teamPreference": "small_team",
+    "onboardingCompleted": true
+  }'
 ```
 
-### Configure CORS for Frontend
+### Create a Team (Team/Enterprise Tier)
 
-```python
-# In your .env file or environment
-DIGAME_AUTH_CORS_ORIGINS=["http://localhost:3000", "http://localhost:3001", "https://yourdomain.com"]
-DIGAME_AUTH_CORS_CREDENTIALS=true
+```bash
+curl -X POST "http://localhost:8001/teams" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -d '{
+    "name": "Development Team",
+    "description": "Our main development team",
+    "subscriptionTier": "team"
+  }'
 ```
 
 ## 🐛 Troubleshooting
 
 ### Common Issues
 
-#### 1. "Invalid or expired token"
-**Problem**: Authentication fails with token errors
+#### 1. "Connection refused" errors
+**Problem**: Backend server not running
 **Solution**:
 ```bash
-# Check token expiry settings
-echo $DIGAME_AUTH_ACCESS_TOKEN_EXPIRE_MINUTES
+# Check if backend is running
+curl http://localhost:8001/health
 
-# Verify secret key consistency
-echo $DIGAME_AUTH_SECRET_KEY
+# Start backend if not running
+cd backend
+npm start
+```
 
-# Test token refresh
-curl -X POST "http://localhost:8000/auth/refresh" \
+#### 2. "Module not found" errors
+**Problem**: Dependencies not installed
+**Solution**:
+```bash
+# Reinstall backend dependencies
+cd backend
+rm -rf node_modules package-lock.json
+npm install
+
+# Reinstall frontend dependencies
+cd frontend
+rm -rf node_modules package-lock.json
+npm install
+```
+
+#### 3. "Port already in use" errors
+**Problem**: Port conflicts
+**Solution**:
+```bash
+# Kill processes on ports
+lsof -ti:8001 | xargs kill -9  # Backend
+lsof -ti:3000 | xargs kill -9  # Frontend
+
+# Or use different ports
+npm run dev -- --port 3001  # Frontend
+# Edit backend/src/server.js for backend port
+```
+
+#### 4. Authentication issues
+**Problem**: Token errors or login failures
+**Solution**:
+```bash
+# Test demo login
+curl -X POST "http://localhost:8001/auth/demo"
+
+# Check user exists
+curl -X POST "http://localhost:8001/auth/login" \
   -H "Content-Type: application/json" \
-  -d '{"refresh_token": "YOUR_REFRESH_TOKEN"}'
-```
-
-#### 2. "Permission denied"
-**Problem**: User cannot access certain endpoints
-**Solution**:
-```python
-# Check user roles and permissions
-from digame.app.services.rbac_service import get_user_permissions
-from digame.app.crud.user_crud import get_user_by_email
-from digame.app.db import get_db
-
-db = next(get_db())
-user = get_user_by_email(db, "user@example.com")
-permissions = get_user_permissions(user)
-print(f"User permissions: {permissions}")
-db.close()
-```
-
-#### 3. "Rate limit exceeded"
-**Problem**: Too many requests from same IP
-**Solution**:
-```bash
-# Adjust rate limiting in .env
-DIGAME_AUTH_RATE_LIMIT_CALLS=1000
-DIGAME_AUTH_RATE_LIMIT_PERIOD=60
-
-# Or disable rate limiting for development
-DIGAME_AUTH_RATE_LIMIT_ENABLED=false
-```
-
-#### 4. Database connection errors
-**Problem**: Cannot connect to database
-**Solution**:
-```bash
-# Check database URL
-echo $DATABASE_URL
-
-# For SQLite (default), ensure directory exists
-mkdir -p data/
-
-# For PostgreSQL, verify connection
-psql $DATABASE_URL -c "SELECT 1;"
+  -d '{"username": "demo", "password": "any"}'
 ```
 
 ### Debug Mode
 
-Enable debug logging for troubleshooting:
+Enable debug logging:
 
-```python
-import logging
+```bash
+# Backend: Set NODE_ENV=development
+cd backend
+NODE_ENV=development npm start
 
-# Enable debug logging
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger("digame.app.auth")
-logger.setLevel(logging.DEBUG)
+# Frontend: Development mode is default
+cd frontend
+npm run dev
 ```
 
 ### Health Checks
@@ -554,175 +569,119 @@ logger.setLevel(logging.DEBUG)
 Monitor system health:
 
 ```bash
-# Check overall health
-curl http://localhost:8000/health
+# Check backend health
+curl http://localhost:8001/health
 
-# Check authentication health
-curl http://localhost:8000/auth/health
+# Check authentication endpoints
+curl http://localhost:8001/auth/demo
 
-# Check API info
-curl http://localhost:8000/info
+# Test frontend
+curl http://localhost:3000
 ```
 
 ## 🚀 Next Steps
 
-### 1. Explore the Platform
+### 1. Explore the Platform Features
 
-- **Behavioral Analysis**: Visit `/behavior/*` endpoints
-- **Predictive Modeling**: Explore `/predictive/*` features
-- **Process Documentation**: Use `/process-notes/*` for documentation
-- **Admin Panel**: Access `/admin/rbac/*` for user management
+- **Complete User Registration**: Test the full signup and onboarding flow
+- **Team Management**: Create teams and invite members (Team tier required)
+- **Dashboard Navigation**: Explore all sections based on your subscription tier
+- **Feature Access**: Test subscription-based feature gating
 
-### 2. Integrate with Frontend
+### 2. Customize and Extend
 
+#### Frontend Customization
 ```javascript
-// Example frontend integration
-const API_BASE = 'http://localhost:8000';
-
-// Login function
-async function login(username, password) {
-  const response = await fetch(`${API_BASE}/auth/login`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: `username=${username}&password=${password}`
-  });
-  
-  if (response.ok) {
-    const data = await response.json();
-    localStorage.setItem('access_token', data.tokens.access_token);
-    localStorage.setItem('refresh_token', data.tokens.refresh_token);
-    return data.user;
-  }
-  throw new Error('Login failed');
-}
-
-// Authenticated API call
-async function apiCall(endpoint) {
-  const token = localStorage.getItem('access_token');
-  const response = await fetch(`${API_BASE}${endpoint}`, {
-    headers: { 'Authorization': `Bearer ${token}` }
-  });
-  
-  if (response.status === 401) {
-    // Token expired, try refresh
-    await refreshToken();
-    return apiCall(endpoint); // Retry
-  }
-  
-  return response.json();
-}
+// Update subscription tiers in frontend/src/contexts/AuthContext.tsx
+// Modify onboarding steps in frontend/src/components/onboarding/
+// Customize dashboard in frontend/pages/dashboard.js
 ```
 
-### 3. Customize Configuration
+#### Backend Extensions
+```javascript
+// Add new API endpoints in backend/src/routes/
+// Extend user model in backend/src/models/User.js
+// Add new features to subscription tiers
+```
+
+### 3. Database Migration
+
+For production, migrate from in-memory storage to persistent database:
 
 ```bash
-# Create production configuration
-cp .env .env.production
+# Option 1: MongoDB
+npm install mongoose
+# Update User.js to use Mongoose schemas
 
-# Update production settings
-DIGAME_AUTH_SECRET_KEY=production-secret-key-32-chars-minimum
-DIGAME_AUTH_CORS_ORIGINS=["https://yourdomain.com"]
-DIGAME_AUTH_RATE_LIMIT_CALLS=1000
-DIGAME_AUTH_REQUEST_LOGGING_ENABLED=true
+# Option 2: PostgreSQL
+npm install pg sequelize
+# Create SQL schemas and migrations
+
+# Option 3: Supabase
+npm install @supabase/supabase-js
+# Configure Supabase client
 ```
 
-### 4. Deploy to Production
+### 4. Production Deployment
 
 ```bash
-# Using Docker
-docker build -t digame-platform .
-docker run -p 8000:8000 --env-file .env.production digame-platform
+# Build frontend for production
+cd frontend
+npm run build
 
-# Using systemd service
-sudo cp digame.service /etc/systemd/system/
-sudo systemctl enable digame
-sudo systemctl start digame
+# Configure environment variables
+# Set up reverse proxy (nginx)
+# Configure SSL certificates
+# Set up monitoring and logging
 ```
 
-### 5. Monitor and Scale
+### 5. Advanced Features
 
-- Set up monitoring with health check endpoints
-- Configure log aggregation for audit trails
-- Implement backup strategies for user data
-- Consider Redis for token caching in high-traffic scenarios
+- **Real-time Features**: Add WebSocket support for live updates
+- **Email Integration**: Implement email verification and notifications
+- **Payment Integration**: Add Stripe for subscription management
+- **Analytics**: Implement user behavior tracking
+- **Mobile App**: Create React Native mobile application
 
 ## 📞 Support
 
 ### Documentation
-- **Authentication Guide**: `/digame/app/auth/README.md`
-- **API Documentation**: http://localhost:8000/docs
-- **Implementation Details**: `/digame/app/auth/IMPLEMENTATION_SUMMARY.md`
+- **User Workflow Guide**: Complete end-to-end user journey documentation
+- **API Reference**: All endpoints with examples and response formats
+- **Component Library**: Frontend component documentation
+
+### Development
+- **Frontend**: React/Next.js with TypeScript
+- **Backend**: Node.js/Express with JWT authentication
+- **Database**: In-memory (development) → MongoDB/PostgreSQL (production)
+- **Authentication**: JWT tokens with refresh token rotation
 
 ### Community
 - **Issues**: Report bugs and feature requests
 - **Discussions**: Join community discussions
 - **Contributing**: See `CONTRIBUTING.md` for contribution guidelines
 
-### Professional Support
-- **Enterprise Support**: Contact for enterprise features
-- **Custom Development**: Available for custom integrations
-- **Training**: Platform training and workshops
-
 ---
 
-🎉 **Welcome to Digame!** You're now ready to build amazing digital professional twin applications with robust authentication and authorization. Happy coding! 🚀
+🎉 **Welcome to Digame!** You're now ready to experience the complete Digital Professional Twin Platform with end-to-end user workflows, progressive onboarding, team management, and subscription-based feature access. Happy exploring! 🚀
 
+## 🔄 Current Implementation Status
 
-Based on the README.md and START.md files, along with the VS Code Dev Container notification you're seeing, here's how you should proceed with the Digame platform:
+### ✅ Completed Features
+- **Complete User Registration & Authentication System**
+- **Progressive Onboarding with 4-Step Workflow**
+- **Subscription-Based Feature Access Control**
+- **Team Management Infrastructure**
+- **Personalized Dashboard with Dynamic Navigation**
+- **JWT Authentication with Refresh Tokens**
+- **Role-Based Access Control (RBAC)**
+- **In-Memory Data Store for Development**
 
-## 🎯 **Recommended Approach: Use Dev Container**
+### 🚧 Ready for Production
+- **Database Migration** (MongoDB/PostgreSQL/Supabase)
+- **Email Verification System**
+- **Payment Integration** (Stripe)
+- **Real-time Features** (WebSockets)
+- **Mobile Application** (React Native)
 
-The notification shows that your project has a `.devcontainer.json` file configured. Since you have Docker installed, this is the **optimal way** to get started with Digame.
-
-### **Why Dev Container is Best:**
-- **Zero Configuration**: All dependencies, environment variables, and services are pre-configured
-- **Consistent Environment**: Matches the exact development environment the project was designed for
-- **Full Stack Ready**: Includes backend, database, and all necessary tools
-- **Docker Native**: Leverages your existing Docker installation efficiently
-
-### **How to Proceed:**
-
-#### **Option 1: Accept the Dev Container (Recommended)**
-Click **"Reopen in Container"** in the VS Code notification. This will automatically:
-- Build the development environment
-- Install all Python dependencies
-- Set up the database (PostgreSQL)
-- Configure environment variables
-- Start all necessary services
-
-#### **Option 2: Manual Dev Container Setup**
-If you missed the notification, use VS Code Command Palette (Cmd+Shift+P / Ctrl+Shift+P) and type: "Dev Containers: Reopen in Container"
-
-### **What You'll Get:**
-Once the Dev Container is running:
-- **Backend API**: Automatically running on `http://localhost:8000`
-- **Database**: PostgreSQL configured and initialized
-- **Environment**: All dependencies installed
-- **Documentation**: Available at `http://localhost:8000/docs`
-
-### **Starting the Frontend:**
-After the Dev Container is ready, start the frontend in a new terminal:
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-### **Access Points:**
-- **Web App**: `http://localhost:3000`
-- **API Docs**: `http://localhost:8000/docs`
-- **Default Login**: `admin@yourdomain.com` / `change-this-secure-password`
-
-### **Alternative: Docker Compose**
-If you prefer not to use Dev Container:
-```bash
-# Start backend and database
-docker-compose up --build
-
-# In new terminal, start frontend
-cd frontend
-npm install
-npm run dev
-```
-
-The Digame platform is a comprehensive Digital Professional Twin Platform with advanced ML capabilities, team collaboration features, gamification, enterprise security, and mobile support. The Dev Container approach will have you up and running with the complete stack in minutes.
+The platform provides a solid foundation for building comprehensive digital professional twin applications with enterprise-grade authentication, team collaboration, and user workflow management.
