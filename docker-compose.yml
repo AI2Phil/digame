@@ -5,15 +5,17 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - app/app/digame
+      - .:/app/digame
     environment:
       - DATABASE_URL=postgresql://digame_user:digame_password@db:5432/digame_db
+      - REDIS_URL=redis://redis:6379/0
       # Add other backend-specific environment variables here if needed
       # For example, if predictive.py needs specific model paths configurable via env vars:
       # - MODEL_PATH_PRIMARY=models/predictive_model.pth
       # - MODEL_PATH_CUSTOM_EXAMPLE=digame/app/models/example_custom_model.pth
     depends_on:
       - db
+      - redis
     networks:
       - digame_network
     # Use development mode by default (includes automatic migrations)
@@ -33,8 +35,20 @@ services:
     networks:
       - digame_network
 
+  redis:
+    container_name: digame_redis
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    networks:
+      - digame_network
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+
 volumes:
   postgres_data:
+  redis_data:
 
 networks:
   digame_network:

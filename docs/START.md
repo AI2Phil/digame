@@ -666,3 +666,63 @@ sudo systemctl start digame
 ---
 
 🎉 **Welcome to Digame!** You're now ready to build amazing digital professional twin applications with robust authentication and authorization. Happy coding! 🚀
+
+
+Based on the README.md and START.md files, along with the VS Code Dev Container notification you're seeing, here's how you should proceed with the Digame platform:
+
+## 🎯 **Recommended Approach: Use Dev Container**
+
+The notification shows that your project has a `.devcontainer.json` file configured. Since you have Docker installed, this is the **optimal way** to get started with Digame.
+
+### **Why Dev Container is Best:**
+- **Zero Configuration**: All dependencies, environment variables, and services are pre-configured
+- **Consistent Environment**: Matches the exact development environment the project was designed for
+- **Full Stack Ready**: Includes backend, database, and all necessary tools
+- **Docker Native**: Leverages your existing Docker installation efficiently
+
+### **How to Proceed:**
+
+#### **Option 1: Accept the Dev Container (Recommended)**
+Click **"Reopen in Container"** in the VS Code notification. This will automatically:
+- Build the development environment
+- Install all Python dependencies
+- Set up the database (PostgreSQL)
+- Configure environment variables
+- Start all necessary services
+
+#### **Option 2: Manual Dev Container Setup**
+If you missed the notification, use VS Code Command Palette (Cmd+Shift+P / Ctrl+Shift+P) and type: "Dev Containers: Reopen in Container"
+
+### **What You'll Get:**
+Once the Dev Container is running:
+- **Backend API**: Automatically running on `http://localhost:8000`
+- **Database**: PostgreSQL configured and initialized
+- **Environment**: All dependencies installed
+- **Documentation**: Available at `http://localhost:8000/docs`
+
+### **Starting the Frontend:**
+After the Dev Container is ready, start the frontend in a new terminal:
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+### **Access Points:**
+- **Web App**: `http://localhost:3000`
+- **API Docs**: `http://localhost:8000/docs`
+- **Default Login**: `admin@yourdomain.com` / `change-this-secure-password`
+
+### **Alternative: Docker Compose**
+If you prefer not to use Dev Container:
+```bash
+# Start backend and database
+docker-compose up --build
+
+# In new terminal, start frontend
+cd frontend
+npm install
+npm run dev
+```
+
+The Digame platform is a comprehensive Digital Professional Twin Platform with advanced ML capabilities, team collaboration features, gamification, enterprise security, and mobile support. The Dev Container approach will have you up and running with the complete stack in minutes.

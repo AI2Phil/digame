@@ -1,65 +1,43 @@
 Metadata-Version: 2.4
 Name: digame
 Version: 0.1.0
-Summary: Digame Platform
+Summary: AI-powered productivity and collaboration platform
 Author: Digame Team
-Author-email: Digame Team <info@example.com>
-License: MIT License
-        
-        Copyright (c) 2025 AI2Phil
-        
-        Permission is hereby granted, free of charge, to any person obtaining a copy
-        of this software and associated documentation files (the "Software"), to deal
-        in the Software without restriction, including without limitation the rights
-        to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-        copies of the Software, and to permit persons to whom the Software is
-        furnished to do so, subject to the following conditions:
-        
-        The above copyright notice and this permission notice shall be included in all
-        copies or substantial portions of the Software.
-        
-        THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-        IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-        FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-        AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-        LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-        OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-        SOFTWARE.
-        
+Author-email: info@example.com
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
 Requires-Python: >=3.8
 Description-Content-Type: text/markdown
 License-File: LICENSE
-Requires-Dist: fastapi==0.95.2
-Requires-Dist: uvicorn[standard]==0.23.0
-Requires-Dist: pydantic==1.10.8
-Requires-Dist: SQLAlchemy==2.0.18
-Requires-Dist: asyncpg==0.27.0
+Requires-Dist: fastapi==0.115.0
+Requires-Dist: uvicorn[standard]==0.30.0
+Requires-Dist: pydantic==2.8.0
+Requires-Dist: SQLAlchemy==2.0.35
+Requires-Dist: asyncpg==0.29.0
 Requires-Dist: python-dotenv==1.0.0
-Requires-Dist: torch==2.7.0
-Requires-Dist: scikit-learn==1.3.0
-Requires-Dist: pandas==2.0.3
-Requires-Dist: numpy==1.25.0
-Requires-Dist: joblib==1.3.2
-Requires-Dist: alembic==1.11.1
-Requires-Dist: python-jose[cryptography]==3.3.0
-Requires-Dist: python-multipart==0.0.6
-Requires-Dist: passlib[bcrypt]==1.7.4
-Requires-Dist: email-validator==2.0.0
-Requires-Dist: matplotlib==3.7.1
-Requires-Dist: seaborn==0.12.2
-Requires-Dist: plotly==5.14.1
-Requires-Dist: scipy==1.10.1
-Requires-Dist: networkx==3.1.0
-Requires-Dist: pyarrow==12.0.0
-Requires-Dist: redis<5.0.0,>=4.0.0
+Requires-Dist: torch==2.3.0
+Requires-Dist: scikit-learn==1.5.0
+Requires-Dist: pytest>=7.0.0
+Requires-Dist: pytest-asyncio>=0.21.0
+Requires-Dist: httpx>=0.24.0
 Provides-Extra: dev
 Requires-Dist: pytest>=7.0.0; extra == "dev"
-Requires-Dist: pytest-cov>=4.0.0; extra == "dev"
+Requires-Dist: pytest-asyncio>=0.21.0; extra == "dev"
+Requires-Dist: httpx>=0.24.0; extra == "dev"
 Requires-Dist: black>=23.0.0; extra == "dev"
 Requires-Dist: isort>=5.12.0; extra == "dev"
-Requires-Dist: mypy>=1.0.0; extra == "dev"
 Requires-Dist: flake8>=6.0.0; extra == "dev"
+Requires-Dist: mypy>=1.0.0; extra == "dev"
 Dynamic: author
+Dynamic: author-email
 Dynamic: license-file
 Dynamic: requires-python
 
@@ -74,6 +52,7 @@ Digame delivers a powerful combination of established strengths in professional 
 - **Modern, engaging frontend experience** with comprehensive user interface
 - **Professional development focus** combined with productivity optimization
 - **Team collaboration features** enhanced with behavioral insights
+- **Digital twin simulation** capabilities for work process optimization and continuity
 
 ## ✨ **Core Features**
 
@@ -83,13 +62,16 @@ Digame delivers a powerful combination of established strengths in professional 
 - **Enterprise security middleware** including OWASP headers, rate limiting, and audit logging
 - **Privacy controls** with granular data collection settings and transparent usage policies
 - **Production-ready security** with comprehensive compliance features
+- **Multi-tenant architecture** with complete data isolation and tenant-specific encryption
 
-### 🧠 **Advanced Behavioral Analysis**
+### 🧠 **Advanced Behavioral Analysis & Digital Twin**
 - **Intelligent pattern recognition** using multiple clustering algorithms (K-means, DBSCAN, Hierarchical)
 - **Behavioral modeling** with persistent storage and version control
 - **Activity tracking** for both digital monitoring and analog data collection
 - **Anomaly detection** within behavioral patterns for insights and alerts
 - **Temporal analysis** identifying daily, weekly, and seasonal patterns
+- **Professional twin simulation** for work process optimization and absence continuity
+- **Communication style replication** and decision-making pattern modeling
 
 ### 🔮 **Predictive Modeling & AI**
 - **Custom ML pipeline** with advanced algorithms for professional development prediction
@@ -97,13 +79,15 @@ Digame delivers a powerful combination of established strengths in professional 
 - **Skill development prediction** based on behavioral patterns and learning velocity
 - **Performance optimization** through predictive insights and recommendations
 - **Continuous learning** from user feedback and behavioral data
+- **Local LLM processing** for edge inference and offline capabilities
 
 ### 📊 **Comprehensive Analytics & Visualization**
-- **Interactive dashboards** with real-time productivity metrics and insights, now featuring enhanced data connectivity for key visualizations like productivity charts and activity breakdowns.
+- **Interactive dashboards** with real-time productivity metrics and insights, featuring enhanced data connectivity for key visualizations like productivity charts and activity breakdowns
 - **Advanced visualizations** including heatmaps, Sankey diagrams, radar charts, and timelines
 - **Team performance analytics** with collaboration pattern analysis
 - **Professional development tracking** with skill progression and goal achievement
 - **Productivity insights** with energy flow analysis and focus time correlation
+- **Cross-functional correlation** and organization-wide pattern analysis
 
 ### 🎮 **Gamification & Engagement**
 - **Achievement system** with badges across multiple professional categories
@@ -118,6 +102,7 @@ Digame delivers a powerful combination of established strengths in professional 
 - **Communication pattern optimization** for enhanced team effectiveness
 - **Meeting effectiveness scoring** with actionable improvement recommendations
 - **Absence planning** with intelligent delegation and continuity management
+- **Workflow continuity features** through digital twin simulation
 
 ### 📝 **Process Documentation & Knowledge Management**
 - **Comprehensive process documentation** with step-by-step capture and analysis
@@ -125,6 +110,7 @@ Digame delivers a powerful combination of established strengths in professional 
 - **Process optimization** through efficiency analysis and improvement suggestions
 - **Best practice identification** and organizational knowledge preservation
 - **Workflow automation** recommendations based on documented processes
+- **Enterprise knowledge preservation** through behavioral pattern modeling
 
 ### 🎯 **Digital Twin Management**
 - **Professional twin simulation** capabilities for work process optimization
@@ -132,6 +118,7 @@ Digame delivers a powerful combination of established strengths in professional 
 - **Integration capabilities** with productivity tools and professional platforms
 - **Customization options** for twin behavior and response patterns
 - **Advanced simulation** for scenario planning and decision support
+- **Communication style replication** and task automation capabilities
 
 ## 🏗️ **Technology Stack**
 
@@ -151,12 +138,20 @@ Digame delivers a powerful combination of established strengths in professional 
 - **Interactive visualizations** using D3.js and Recharts for data presentation
 - **Modern build tools** including Vite and Tailwind CSS for optimal performance
 
+### **Mobile Platform**
+- **React Native** cross-platform mobile application with complete API integration
+- **Offline capabilities** with local data processing and synchronization
+- **Background data collection** and intelligent sync optimization
+- **Local LLM processing** for edge inference and immediate insights
+- **Context-aware field operations** with bandwidth-optimized synchronization
+
 ### **Integration & Security**
 - **Enterprise-grade security** with JWT authentication and RBAC authorization
 - **API security** with rate limiting, CORS management, and request validation
 - **Data encryption** at rest and in transit with comprehensive privacy controls
 - **Audit logging** for compliance and security monitoring
 - **Scalable architecture** supporting thousands of concurrent users
+- **Multi-tenant infrastructure** with dedicated tenant isolation
 
 ## 🌟 Current Development Stage
 
@@ -172,26 +167,18 @@ The platform is continuously evolving. For a detailed outline of completed featu
 git clone <repository-url>
 cd digame
 
-# 2. Set up environment
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+# 2. Set up environment (automated)
+python scripts/setup_dev_env.py
 
-# 3. Install dependencies
-pip install -r requirements.txt
+# 3. Activate environment
+source scripts/activate_digame.sh
 
 # 4. Configure environment
 export DIGAME_AUTH_SECRET_KEY="your-super-secret-key-at-least-32-characters-long"
 export DIGAME_AUTH_DEFAULT_ADMIN_EMAIL="admin@yourdomain.com"
 
 # 5. Initialize database
-python -c "
-from digame.app.auth.init_auth_db import initialize_auth_database
-from digame.app.db import get_db
-db = next(get_db())
-success = initialize_auth_database(db)
-print('✅ Database initialized!' if success else '❌ Initialization failed')
-db.close()
-"
+cd digame && python deploy_migrations.py
 
 # 6. Start the application
 python -m uvicorn digame.app.main:app --reload
@@ -225,6 +212,8 @@ open http://localhost:8000
 - **[Authentication System](digame/app/auth/README.md)** - Complete auth implementation guide
 - **[API Documentation](http://localhost:8000/docs)** - Interactive API explorer
 - **[Database Migrations](digame/migrations/README.md)** - Schema management and deployment
+- **[Scripts Documentation](scripts/README.md)** - Development and maintenance utilities
+- **[Backend Scripts](digame/scripts/README.md)** - Database and Git management tools
 
 ## 🎯 **Key Differentiators**
 
@@ -232,16 +221,19 @@ open http://localhost:8000
 - **Professional development focus** beyond simple productivity tracking
 - **Advanced ML capabilities** with custom algorithms and predictive modeling
 - **Enterprise-grade security** with comprehensive RBAC and compliance features
+- **Digital twin simulation** for work process continuity and optimization
 
 ### **vs. Enterprise Platforms**
 - **Modern, engaging UX** with gamification and interactive experiences
 - **Real-time insights** with advanced behavioral analysis and pattern recognition
 - **Comprehensive team features** with collaboration optimization
+- **Mobile-first approach** with cross-platform accessibility
 
 ### **vs. Consumer Apps**
 - **Enterprise security and scalability** for organizational deployment
 - **Professional development focus** with career planning and skill tracking
 - **Advanced analytics** with predictive modeling and business intelligence
+- **Multi-tenant architecture** with complete data isolation
 
 ## 🏆 **Platform Advantages**
 
@@ -250,25 +242,31 @@ open http://localhost:8000
 - **Advanced ML pipeline** with custom algorithms and model persistence
 - **Comprehensive testing** with 90%+ code coverage and automated quality gates
 - **Security-first design** with enterprise-grade authentication and authorization
+- **Multi-platform support** with web, mobile, and offline capabilities
 
 ### **User Experience**
 - **Modern, intuitive interface** with 47+ polished UI components
 - **Gamified engagement** with achievement systems and progress tracking
 - **Mobile-responsive design** with progressive web app capabilities
 - **Interactive onboarding** with guided tutorials and setup wizards
+- **Cross-platform consistency** with unified experience across devices
 
 ### **Business Value**
 - **Professional development ROI** with measurable skill improvement and career advancement
 - **Team productivity optimization** with collaboration insights and performance analytics
 - **Enterprise compliance** with audit trails, privacy controls, and security features
 - **Scalable deployment** supporting individual users to large organizations
+- **Business continuity** through digital twin simulation and knowledge preservation
 
 ## 📈 **Current Focus & Future Direction**
 
 Digame is continuously evolving. Having established a robust core platform, recently enhanced key dashboard visualizations with live data integration, and made significant advancements in UI/UX and mobile capabilities, current efforts are focused on:
-- **Enhancing the mobile experience** with advanced features like AI-driven notifications and background synchronization.
-- **Expanding social collaboration features** to foster peer matching and mentorship programs.
-- **Rolling out comprehensive enterprise functionalities** including multi-tenancy and SSO integration.
+
+- **Enhancing the mobile experience** with advanced features like AI-driven notifications and background synchronization
+- **Expanding social collaboration features** to foster peer matching and mentorship programs
+- **Rolling out comprehensive enterprise functionalities** including multi-tenancy and SSO integration
+- **Advanced digital twin capabilities** with communication style replication and workflow automation
+- **Field operations support** with offline capabilities and local LLM deployment
 
 For a detailed view of our development roadmap, upcoming features, and strategic priorities, please consult the **[Development Roadmap](docs/NEXT_STEPS.md)**.
 
@@ -281,6 +279,7 @@ This unification delivers a platform that combines:
 - **Professional development focus** with **productivity optimization**
 - **Enterprise security** with **consumer-grade engagement**
 - **Advanced analytics** with **intuitive visualizations**
+- **Digital twin simulation** with **real-world applicability**
 
 ## 🚀 **Deployment Options**
 
@@ -288,18 +287,21 @@ This unification delivers a platform that combines:
 - Local development with hot reload and debugging
 - Docker Compose for full-stack development
 - Comprehensive testing and quality assurance tools
+- Automated setup scripts for rapid environment configuration
 
 ### **Production Deployment**
 - Docker containerization with orchestration support
 - Database migration automation with rollback capabilities
 - Monitoring and logging with performance optimization
 - Scalable architecture supporting enterprise workloads
+- Multi-tenant deployment with complete data isolation
 
 ### **Enterprise Features**
 - Multi-tenant architecture for organizational deployment
 - SSO integration with enterprise identity providers
 - Advanced security controls and compliance reporting
 - Custom branding and white-labeling capabilities
+- Offline capabilities for field operations and disconnected environments
 
 ## 📈 **Success Metrics**
 

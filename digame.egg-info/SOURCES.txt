@@ -2,15 +2,10 @@ LICENSE
 README.md
 pyproject.toml
 setup.py
-digame/__init__.py
-digame/deploy_migrations.py
-digame/git-setup.py
-digame/git_remote.py
-digame/git_status_summary.py
-digame/simple_git.py
-digame/test_migrations.py
 digame.egg-info/PKG-INFO
 digame.egg-info/SOURCES.txt
 digame.egg-info/dependency_links.txt
 digame.egg-info/requires.txt
 digame.egg-info/top_level.txt
+tests/test_predictive_persistence.py
+tests/test_predictive_routing.py
