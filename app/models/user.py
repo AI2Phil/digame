@@ -83,8 +83,8 @@ class User(Base):
         """Backward compatibility property to access roles through user_roles"""
         return self.get_roles()
     
-    # Tenant relationship
-    tenant = relationship("Tenant", back_populates="users")
+    # Tenant relationship - specify foreign_keys to resolve ambiguity
+    tenant = relationship("Tenant", foreign_keys=[tenant_id], back_populates="users")
     # Temporarily commented out to resolve SQLAlchemy mapper issues
     # process_notes = relationship(
     #     "ProcessNote",
@@ -155,20 +155,20 @@ class User(Base):
     )
 
     # Relationship to GuestOnboardingProgress (One-to-One)
-    # onboarding_progress = relationship(
-    #     "GuestOnboardingProgress",
-    #     back_populates="user",
-    #     uselist=False,
-    #     cascade="all, delete-orphan"
-    # )
+    onboarding_progress = relationship(
+        "GuestOnboardingProgress",
+        back_populates="user",
+        uselist=False,
+        cascade="all, delete-orphan"
+    )
     
     # Relationship to DigitalTwinProfile (One-to-One)
-    # digital_twin_profile = relationship(
-    #     "DigitalTwinProfile",
-    #     back_populates="user",
-    #     uselist=False,
-    #     cascade="all, delete-orphan"
-    # )
+    digital_twin_profile = relationship(
+        "DigitalTwinProfile",
+        back_populates="user",
+        uselist=False,
+        cascade="all, delete-orphan"
+    )
 
     # Digital Twin relationship (One-to-Many)
     digital_twins = relationship(

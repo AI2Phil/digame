@@ -51,6 +51,7 @@ from .digital_twin import (
     DigitalTwin, ActivityPattern, BehavioralLearning, PredictionModel,
     SimulationResult, TwinInteraction, ActivityStream, TwinKnowledge, TwinStatus
 ) # Added Digital Twin models
+from .guest_onboarding import GuestOnboardingProgress, DigitalTwinProfile, EmailVerification # Added guest onboarding models
 
 # Optionally, define __all__ to specify what is exported when 'from .models import *' is used
 __all__ = [
@@ -145,4 +146,7 @@ __all__ = [
     "ActivityStream",
     "TwinKnowledge",
     "TwinStatus",
+    "GuestOnboardingProgress",  # Added guest onboarding models
+    "DigitalTwinProfile",
+    "EmailVerification",
 ]
