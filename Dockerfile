@@ -25,7 +25,7 @@ COPY . $APP_HOME/
 RUN mkdir -p $APP_HOME/models/
 
 # Copy entrypoint script
-COPY entrypoint.sh $APP_HOME/entrypoint.sh
+COPY scripts/entrypoint.sh $APP_HOME/entrypoint.sh
 
 # Create and switch to a non-root user
 RUN addgroup --system app && adduser --system --ingroup app --home /home/app --shell /bin/bash app

@@ -76,7 +76,7 @@ docker-compose down -v
 
 ```bash
 # Create database tables
-docker-compose exec backend python create_tables.py
+docker-compose exec backend python scripts/create_tables.py
 
 # Access PostgreSQL directly
 docker-compose exec db psql -U digame_user -d digame_db
@@ -158,7 +158,7 @@ docker-compose restart frontend
 **Solution:**
 ```bash
 # Create database tables
-docker-compose exec backend python create_tables.py
+docker-compose exec backend python scripts/create_tables.py
 
 # Restart backend to reinitialize
 docker-compose restart backend
