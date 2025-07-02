@@ -1,13 +1,44 @@
 /**
  * Dynamic API Service - Automatically detects correct backend port
- * Prevents hardcoded port issues and makes the application more robust
+ * Uses service discovery and port detection for robust backend connection
  */
 
 class ApiService {
   constructor() {
     this.baseUrl = null;
     this.isInitialized = false;
-    this.commonPorts = [8000, 8001, 3001, 5000, 4000]; // Common backend ports
+    this.commonPorts = [8001, 8000, 3001, 5000, 4000]; // Preferred port order matching backend
+  }
+
+  /**
+   * Try to read service discovery file
+   */
+  async tryServiceDiscovery() {
+    try {
+      // In browser environment, we can't directly read files from the filesystem
+      // Instead, we'll try to fetch service info from the backend's service-info endpoint
+      for (const port of this.commonPorts) {
+        try {
+          const response = await fetch(`http://localhost:${port}/service-info`, {
+            method: 'GET',
+            signal: AbortSignal.timeout(1000), // 1 second timeout
+          });
+          
+          if (response.ok) {
+            const serviceInfo = await response.json();
+            if (serviceInfo.port && serviceInfo.status === 'running') {
+              console.log(`[API Service] Found service via discovery: port ${serviceInfo.port}`);
+              return `http://localhost:${serviceInfo.port}`;
+            }
+          }
+        } catch (error) {
+          // Continue to next port
+        }
+      }
+    } catch (error) {
+      console.log('[API Service] Service discovery failed, falling back to port detection');
+    }
+    return null;
   }
 
   /**
@@ -29,6 +60,20 @@ class ApiService {
         return this.baseUrl;
       } catch (error) {
         console.warn(`[API Service] Environment URL ${envUrl} failed, trying auto-detection`);
+      }
+    }
+
+    // Try service discovery first
+    const discoveredUrl = await this.tryServiceDiscovery();
+    if (discoveredUrl) {
+      try {
+        await this.testConnection(discoveredUrl);
+        this.baseUrl = discoveredUrl;
+        this.isInitialized = true;
+        console.log(`[API Service] Using discovered backend: ${discoveredUrl}`);
+        return this.baseUrl;
+      } catch (error) {
+        console.warn(`[API Service] Discovered URL ${discoveredUrl} failed, trying port detection`);
       }
     }
 

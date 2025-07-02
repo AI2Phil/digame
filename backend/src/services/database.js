@@ -30,6 +30,7 @@ class DatabaseService {
         isVerified INTEGER DEFAULT 0,
         onboardingCompleted INTEGER DEFAULT 0,
         onboardingData TEXT DEFAULT '{}',
+        unlockedFeatures TEXT DEFAULT '[]',
         lastLogin TEXT,
         createdAt TEXT DEFAULT CURRENT_TIMESTAMP,
         updatedAt TEXT DEFAULT CURRENT_TIMESTAMP,
@@ -38,6 +39,16 @@ class DatabaseService {
         metadata TEXT DEFAULT '{}'
       )
     `);
+
+    // Add unlockedFeatures column if it doesn't exist (for existing databases)
+    try {
+      this.db.exec(`ALTER TABLE users ADD COLUMN unlockedFeatures TEXT DEFAULT '[]'`);
+    } catch (error) {
+      // Column already exists, ignore error
+      if (!error.message.includes('duplicate column name')) {
+        console.warn('Database migration warning:', error.message);
+      }
+    }
 
     // Create indexes for better performance
     this.db.exec(`

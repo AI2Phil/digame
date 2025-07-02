@@ -8,9 +8,10 @@ require('dotenv').config();
 const authRoutes = require('./routes/auth');
 const teamRoutes = require('./routes/teams');
 const { detectDemoMode } = require('./middleware/auth');
+const { getOptimalPort } = require('./utils/portDetection');
+const ServiceDiscovery = require('./utils/serviceDiscovery');
 
 const app = express();
-const PORT = process.env.PORT || 8001;
 
 // Middleware
 app.use(helmet());
@@ -32,13 +33,30 @@ app.get('/health', (req, res) => {
     message: 'Digame Backend Server is running',
     timestamp: new Date().toISOString(),
     version: '2.0.0',
+    port: process.env.RUNTIME_PORT || 'unknown',
     features: {
       authentication: true,
       rbac: true,
       teamCollaboration: true,
-      jwtTokens: true
+      jwtTokens: true,
+      dynamicPortDetection: true
     }
   });
+});
+
+// Service discovery endpoint
+app.get('/service-info', (req, res) => {
+  const serviceDiscovery = new ServiceDiscovery();
+  const serviceInfo = serviceDiscovery.getServiceInfo();
+  
+  if (serviceInfo) {
+    res.json(serviceInfo);
+  } else {
+    res.status(404).json({
+      error: 'Service information not available',
+      message: 'Backend service discovery data not found'
+    });
+  }
 });
 
 // API Routes
@@ -62,11 +80,40 @@ app.use((req, res) => {
   });
 });
 
-app.listen(PORT, () => {
-  console.log(`🚀 Digame Backend Server running on http://localhost:${PORT}`);
-  console.log(`📊 Health check: http://localhost:${PORT}/health`);
-  console.log(`🔐 Auth endpoint: http://localhost:${PORT}/auth/login`);
-  console.log(`🎮 Demo endpoint: http://localhost:${PORT}/auth/demo`);
-});
+// Start server with dynamic port detection
+const startServer = async () => {
+  try {
+    const PORT = await getOptimalPort();
+    const serviceDiscovery = new ServiceDiscovery();
+    
+    app.listen(PORT, () => {
+      console.log('');
+      console.log('🚀 Digame Backend Server Started Successfully!');
+      console.log('================================================');
+      console.log(`📍 Server URL: http://localhost:${PORT}`);
+      console.log(`📊 Health check: http://localhost:${PORT}/health`);
+      console.log(`🔐 Auth endpoint: http://localhost:${PORT}/auth/login`);
+      console.log(`🎮 Demo endpoint: http://localhost:${PORT}/auth/demo`);
+      console.log('================================================');
+      console.log('');
+      
+      // Store the port for potential use by other modules
+      process.env.RUNTIME_PORT = PORT;
+      
+      // Register service for discovery
+      serviceDiscovery.registerService(PORT);
+      
+      // Setup graceful shutdown
+      serviceDiscovery.setupGracefulShutdown();
+    });
+    
+  } catch (error) {
+    console.error('❌ Failed to start server:', error);
+    process.exit(1);
+  }
+};
+
+// Start the server
+startServer();
 
 module.exports = app;

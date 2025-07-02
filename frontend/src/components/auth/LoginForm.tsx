@@ -2,6 +2,20 @@ import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useRouter } from 'next/router';
 
+// Add CSS for the Digame logo
+const logoStyles = `
+  .digame-logo {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  }
+`;
+
 interface LoginFormProps {
   onSuccess?: () => void;
   redirectTo?: string;
@@ -42,6 +56,9 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, redirectTo = '/dashboa
         password: formData.password,
         rememberMe: formData.rememberMe
       };
+
+      console.log('LoginForm: Current formData state:', formData);
+      console.log('LoginForm: Sending credentials with rememberMe:', credentials.rememberMe);
 
       const success = await login(credentials);
       
@@ -110,34 +127,40 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, redirectTo = '/dashboa
   ];
 
   const quickLogin = (identifier: string, password: string) => {
-    setFormData({ identifier, password, rememberMe: false });
+    setFormData(prev => ({ ...prev, identifier, password })); // Preserve rememberMe state
     setLoginMode('credentials');
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <div className="mx-auto h-12 w-12 flex items-center justify-center rounded-full bg-indigo-600">
-            <span className="text-white font-bold text-xl">D</span>
+    <>
+      <style dangerouslySetInnerHTML={{ __html: logoStyles }} />
+      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center p-4">
+      <div className="w-full max-w-md space-y-6">
+        {/* Header */}
+        <div className="text-center space-y-2">
+          <div className="flex items-center justify-center space-x-3 mb-4">
+            <div className="digame-logo">
+              <span className="text-white font-bold text-sm">D</span>
+            </div>
+            <span className="text-xl font-bold text-white">Digame</span>
           </div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Sign in to Digame
+          <h2 className="text-2xl font-bold text-white">
+            Welcome Back
           </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Digital Professional Twin Platform
+          <p className="text-gray-300 mt-2">
+            Sign in to access your digital twin platform
           </p>
         </div>
 
         {/* Login Mode Selector */}
-        <div className="flex rounded-lg bg-gray-100 p-1">
+        <div className="flex rounded-lg bg-white/10 backdrop-blur-sm p-1">
           <button
             type="button"
             onClick={() => setLoginMode('credentials')}
             className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
               loginMode === 'credentials'
-                ? 'bg-white text-indigo-600 shadow-sm'
-                : 'text-gray-500 hover:text-gray-700'
+                ? 'bg-white text-purple-600 shadow-sm'
+                : 'text-gray-300 hover:text-white'
             }`}
           >
             Login with Credentials
@@ -147,93 +170,87 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, redirectTo = '/dashboa
             onClick={() => setLoginMode('demo')}
             className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
               loginMode === 'demo'
-                ? 'bg-white text-indigo-600 shadow-sm'
-                : 'text-gray-500 hover:text-gray-700'
+                ? 'bg-white text-purple-600 shadow-sm'
+                : 'text-gray-300 hover:text-white'
             }`}
           >
             Demo Mode
           </button>
         </div>
 
-        {error && (
-          <div className="rounded-md bg-red-50 p-4">
-            <div className="flex">
-              <div className="ml-3">
-                <h3 className="text-sm font-medium text-red-800">
-                  Authentication Error
-                </h3>
-                <div className="mt-2 text-sm text-red-700">
-                  {error}
+        {/* Main Card Container */}
+        <div className="bg-white/10 backdrop-blur-md rounded-xl p-6 shadow-2xl border border-white/20">
+          {error && (
+            <div className="mb-4 p-3 bg-red-500/20 border border-red-500/30 rounded-lg">
+              <div className="text-sm text-red-200">
+                {error}
+              </div>
+            </div>
+          )}
+
+          {loginMode === 'credentials' ? (
+            <form className="space-y-4" onSubmit={handleCredentialsLogin}>
+              <div className="space-y-4">
+                <div>
+                  <label htmlFor="identifier" className="block text-sm font-medium text-gray-200 mb-1">
+                    Username or Email
+                  </label>
+                  <input
+                    id="identifier"
+                    name="identifier"
+                    type="text"
+                    required
+                    className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Enter your username or email"
+                    value={formData.identifier}
+                    onChange={handleInputChange}
+                    disabled={isLoading}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="password" className="block text-sm font-medium text-gray-200 mb-1">
+                    Password
+                  </label>
+                  <input
+                    id="password"
+                    name="password"
+                    type="password"
+                    required
+                    className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Enter your password"
+                    value={formData.password}
+                    onChange={handleInputChange}
+                    disabled={isLoading}
+                  />
                 </div>
               </div>
-            </div>
-          </div>
-        )}
 
-        {loginMode === 'credentials' ? (
-          <form className="mt-8 space-y-6" onSubmit={handleCredentialsLogin}>
-            <div className="rounded-md shadow-sm -space-y-px">
-              <div>
-                <label htmlFor="identifier" className="sr-only">
-                  Username or Email
-                </label>
-                <input
-                  id="identifier"
-                  name="identifier"
-                  type="text"
-                  required
-                  className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                  placeholder="Username or Email"
-                  value={formData.identifier}
-                  onChange={handleInputChange}
-                  disabled={isLoading}
-                />
-              </div>
-              <div>
-                <label htmlFor="password" className="sr-only">
-                  Password
-                </label>
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  required
-                  className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                  placeholder="Password"
-                  value={formData.password}
-                  onChange={handleInputChange}
-                  disabled={isLoading}
-                />
-              </div>
-            </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <input
+                    id="remember-me"
+                    name="rememberMe"
+                    type="checkbox"
+                    checked={formData.rememberMe}
+                    onChange={handleInputChange}
+                    className="h-4 w-4 text-blue-600 bg-white/10 border-white/20 rounded focus:ring-blue-500 focus:ring-2"
+                  />
+                  <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-200">
+                    Remember me for 30 days
+                  </label>
+                </div>
 
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <input
-                  id="remember-me"
-                  name="rememberMe"
-                  type="checkbox"
-                  checked={formData.rememberMe}
-                  onChange={handleInputChange}
-                  className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                />
-                <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
-                  Remember me
-                </label>
+                <div className="text-sm">
+                  <a href="#" className="font-medium text-blue-300 hover:text-blue-200">
+                    Forgot your password?
+                  </a>
+                </div>
               </div>
 
-              <div className="text-sm">
-                <a href="#" className="font-medium text-indigo-600 hover:text-indigo-500">
-                  Forgot your password?
-                </a>
-              </div>
-            </div>
-
-            <div>
               <button
                 type="submit"
                 disabled={isLoading}
-                className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
               >
                 {isLoading ? (
                   <div className="flex items-center">
@@ -241,96 +258,98 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, redirectTo = '/dashboa
                     Signing in...
                   </div>
                 ) : (
-                  'Sign in'
+                  'Sign In'
                 )}
               </button>
-            </div>
 
-            {/* Quick Login Options */}
-            <div className="mt-6">
-              <div className="text-center text-sm text-gray-600 mb-3">
-                Quick login options:
+              {/* Quick Login Options */}
+              <div className="mt-6">
+                <div className="text-center text-sm text-gray-300 mb-3">
+                  Quick login options:
+                </div>
+                <div className="grid grid-cols-1 gap-2">
+                  {demoUsers.map((user, index) => (
+                    <button
+                      key={index}
+                      type="button"
+                      onClick={() => quickLogin(user.identifier, user.password)}
+                      className="text-left p-3 bg-white/5 border border-white/10 rounded-lg hover:bg-white/10 transition-colors"
+                      disabled={isLoading}
+                    >
+                      <div className="font-medium text-sm text-white">
+                        {user.identifier}
+                      </div>
+                      <div className="text-xs text-gray-300 mt-1">
+                        {user.description}
+                      </div>
+                    </button>
+                  ))}
+                </div>
               </div>
-              <div className="grid grid-cols-1 gap-2">
-                {demoUsers.map((user, index) => (
-                  <button
-                    key={index}
-                    type="button"
-                    onClick={() => quickLogin(user.identifier, user.password)}
-                    className="text-left p-3 border border-gray-200 rounded-md hover:bg-gray-50 transition-colors"
-                    disabled={isLoading}
-                  >
-                    <div className="font-medium text-sm text-gray-900">
-                      {user.identifier}
+            </form>
+          ) : (
+            <div className="space-y-6">
+              <div className="text-center">
+                <p className="text-sm text-gray-300 mb-4">
+                  Experience the full platform with demo data and all features enabled.
+                </p>
+                <button
+                  type="button"
+                  onClick={handleDemoLogin}
+                  disabled={isLoading}
+                  className="w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                >
+                  {isLoading ? (
+                    <div className="flex items-center">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Entering Demo Mode...
                     </div>
-                    <div className="text-xs text-gray-500 mt-1">
-                      {user.description}
-                    </div>
-                  </button>
-                ))}
+                  ) : (
+                    <>
+                      <span className="mr-2">🎮</span>
+                      Enter Demo Mode
+                    </>
+                  )}
+                </button>
+              </div>
+
+              <div className="bg-blue-500/20 border border-blue-400/30 rounded-lg p-4">
+                <h4 className="text-sm font-medium text-blue-200 mb-2">
+                  Demo Mode Features:
+                </h4>
+                <ul className="text-xs text-blue-300 space-y-1">
+                  <li>• Full access to all platform features</li>
+                  <li>• Pre-populated demo data and analytics</li>
+                  <li>• Team collaboration simulation</li>
+                  <li>• AI tools and advanced analytics</li>
+                  <li>• No registration required</li>
+                </ul>
               </div>
             </div>
-          </form>
-        ) : (
-          <div className="mt-8 space-y-6">
-            <div className="text-center">
-              <p className="text-sm text-gray-600 mb-4">
-                Experience the full platform with demo data and all features enabled.
-              </p>
-              <button
-                type="button"
-                onClick={handleDemoLogin}
-                disabled={isLoading}
-                className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isLoading ? (
-                  <div className="flex items-center">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    Entering Demo Mode...
-                  </div>
-                ) : (
-                  <>
-                    <span className="mr-2">🎮</span>
-                    Enter Demo Mode
-                  </>
-                )}
-              </button>
-            </div>
+          )}
+        </div>
 
-            <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
-              <h4 className="text-sm font-medium text-blue-800 mb-2">
-                Demo Mode Features:
-              </h4>
-              <ul className="text-xs text-blue-700 space-y-1">
-                <li>• Full access to all platform features</li>
-                <li>• Pre-populated demo data and analytics</li>
-                <li>• Team collaboration simulation</li>
-                <li>• AI tools and advanced analytics</li>
-                <li>• No registration required</li>
-              </ul>
-            </div>
-          </div>
-        )}
-
+        {/* Footer */}
         <div className="text-center space-y-3">
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-gray-300">
             Don't have an account?{' '}
             <button
               onClick={() => router.push('/signup')}
-              className="font-medium text-indigo-600 hover:text-indigo-500"
+              className="font-medium text-blue-300 hover:text-blue-200"
             >
               Sign up here
             </button>
           </p>
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-gray-400">
             By signing in, you agree to our{' '}
-            <a href="/terms" className="text-indigo-600 hover:text-indigo-500">Terms of Service</a>
+            <a href="/terms" className="text-blue-300 hover:text-blue-200">Terms of Service</a>
             {' '}and{' '}
-            <a href="/privacy" className="text-indigo-600 hover:text-indigo-500">Privacy Policy</a>
+            <a href="/privacy" className="text-blue-300 hover:text-blue-200">Privacy Policy</a>
           </p>
         </div>
       </div>
     </div>
+    </>
   );
 };
 

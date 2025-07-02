@@ -172,10 +172,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (credentials: { username?: string; email?: string; password: string; rememberMe?: boolean }) => {
     try {
       setIsLoading(true);
+      console.log('AuthContext: Login called with rememberMe:', credentials.rememberMe);
+      console.log('AuthContext: Full credentials object:', credentials);
+      
       const response = await apiService.post('/auth/login', credentials);
       
       if (response.ok) {
         const data = await response.json();
+        console.log('AuthContext: Login response received, rememberMe in tokens:', data.tokens?.rememberMe);
+        
         setUser(data.user);
         setTokens(data.tokens);
         setIsAuthenticated(true);
@@ -183,11 +188,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         // Store tokens with persistence preference
         if (credentials.rememberMe) {
+          console.log('AuthContext: Storing tokens in localStorage (persistent)');
           // Use localStorage for persistent storage
           localStorage.setItem('accessToken', data.tokens.accessToken);
           localStorage.setItem('refreshToken', data.tokens.refreshToken);
           localStorage.setItem('rememberMe', 'true');
         } else {
+          console.log('AuthContext: Storing tokens in sessionStorage (session-only)');
           // Use sessionStorage for session-only storage
           sessionStorage.setItem('accessToken', data.tokens.accessToken);
           sessionStorage.setItem('refreshToken', data.tokens.refreshToken);

@@ -22,8 +22,8 @@ class User {
     this.isActive = data.isActive !== undefined ? Boolean(data.isActive) : true;
     this.isVerified = Boolean(data.isVerified);
     this.onboardingCompleted = Boolean(data.onboardingCompleted);
-    this.onboardingData = typeof data.onboardingData === 'string' ? 
-                         JSON.parse(data.onboardingData || '{}') : 
+    this.onboardingData = typeof data.onboardingData === 'string' ?
+                         JSON.parse(data.onboardingData || '{}') :
                          (data.onboardingData || {
                            interests: [],
                            goals: [],
@@ -31,6 +31,8 @@ class User {
                            teamPreference: '',
                            completedSteps: []
                          });
+    this.unlockedFeatures = Array.isArray(data.unlockedFeatures) ? data.unlockedFeatures :
+                           (typeof data.unlockedFeatures === 'string' ? JSON.parse(data.unlockedFeatures || '[]') : []);
     this.lastLogin = data.lastLogin ? new Date(data.lastLogin) : null;
     this.createdAt = data.createdAt ? new Date(data.createdAt) : new Date();
     this.updatedAt = data.updatedAt ? new Date(data.updatedAt) : new Date();
@@ -207,6 +209,7 @@ class User {
       isVerified: this.isVerified,
       onboardingCompleted: this.onboardingCompleted,
       onboardingData: this.onboardingData,
+      unlockedFeatures: this.unlockedFeatures,
       lastLogin: this.lastLogin,
       createdAt: this.createdAt,
       profile: this.profile,
@@ -303,12 +306,12 @@ class UserRepository {
         email, username, firstName, lastName, passwordHash, role,
         subscriptionTier, teamId, permissions, isPlatformOwner,
         isActive, isVerified, onboardingCompleted, onboardingData,
-        profile, preferences, metadata
+        unlockedFeatures, profile, preferences, metadata
       ) VALUES (
         @email, @username, @firstName, @lastName, @passwordHash, @role,
         @subscriptionTier, @teamId, @permissions, @isPlatformOwner,
         @isActive, @isVerified, @onboardingCompleted, @onboardingData,
-        @profile, @preferences, @metadata
+        @unlockedFeatures, @profile, @preferences, @metadata
       )
     `);
 
@@ -327,6 +330,7 @@ class UserRepository {
       isVerified: userData.isVerified ? 1 : 0,
       onboardingCompleted: userData.onboardingCompleted ? 1 : 0,
       onboardingData: JSON.stringify(userData.onboardingData || {}),
+      unlockedFeatures: JSON.stringify(userData.unlockedFeatures || []),
       profile: JSON.stringify(userData.profile || {}),
       preferences: JSON.stringify(userData.preferences || {}),
       metadata: JSON.stringify(userData.metadata || {})
@@ -347,7 +351,7 @@ class UserRepository {
     const values = { id };
 
     Object.keys(updates).forEach(key => {
-      if (key === 'permissions' || key === 'onboardingData' || key === 'profile' || key === 'preferences' || key === 'metadata') {
+      if (key === 'permissions' || key === 'onboardingData' || key === 'unlockedFeatures' || key === 'profile' || key === 'preferences' || key === 'metadata') {
         fields.push(`${key} = @${key}`);
         values[key] = typeof updates[key] === 'string' ? updates[key] : JSON.stringify(updates[key]);
       } else if (key === 'isPlatformOwner' || key === 'isActive' || key === 'isVerified' || key === 'onboardingCompleted') {
