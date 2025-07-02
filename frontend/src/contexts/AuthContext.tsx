@@ -175,7 +175,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log('AuthContext: Login called with rememberMe:', credentials.rememberMe);
       console.log('AuthContext: Full credentials object:', credentials);
       
-      const response = await apiService.post('/auth/login', credentials);
+      // Only send username and password to backend (remove rememberMe)
+      const loginPayload = {
+        username: credentials.username || credentials.email,
+        password: credentials.password
+      };
+      console.log('AuthContext: Sending to backend:', loginPayload);
+      
+      const response = await apiService.post('/auth/login', loginPayload);
       
       if (response.ok) {
         const data = await response.json();

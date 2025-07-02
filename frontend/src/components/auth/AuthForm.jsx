@@ -85,8 +85,7 @@ const AuthForm = ({ onLogin, onClose }) => {
   const handleLogin = async (values) => {
     const loginData = {
       username: values.username,
-      password: values.password,
-      rememberMe: formData.rememberMe || false
+      password: values.password
     };
 
     const response = await apiService.post('/auth/login', loginData);
