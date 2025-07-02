@@ -33,6 +33,33 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
     permissions: currentUser.permissions || []
   } : null;
 
+  // CRITICAL DEBUG: Log user data and decision making
+  console.log('🔥 DashboardLayout DEBUG:', {
+    isDemoMode,
+    currentUser: currentUser ? {
+      id: currentUser.id,
+      username: currentUser.username,
+      role: currentUser.role,
+      isPlatformOwner: currentUser.isPlatformOwner,
+      subscriptionTier: currentUser.subscriptionTier
+    } : null,
+    adaptedUser: adaptedUser ? {
+      name: adaptedUser.name,
+      role: adaptedUser.role,
+      is_platform_owner: adaptedUser.is_platform_owner,
+      subscription_tier: adaptedUser.subscription_tier
+    } : null
+  });
+
+  // Platform Owners should always have access to all features
+  const shouldShowAllFeatures = isDemoMode || (adaptedUser?.is_platform_owner === true);
+  
+  console.log('🔥 DashboardLayout DECISION:', {
+    isDemoMode,
+    'adaptedUser?.is_platform_owner': adaptedUser?.is_platform_owner,
+    shouldShowAllFeatures
+  });
+
   return (
     <div className="flex h-screen bg-gray-100">
       {/* Comprehensive Navigation - Always visible on desktop, toggleable on mobile */}
@@ -42,7 +69,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         currentUser={adaptedUser}
         isOpen={sidebarOpen}
         onToggle={toggleSidebar}
-        showAllFeatures={true}
+        showAllFeatures={shouldShowAllFeatures}
       />
       
       {/* Main Content */}

@@ -49,8 +49,16 @@ app.get('/service-info', (req, res) => {
   const serviceDiscovery = new ServiceDiscovery();
   const serviceInfo = serviceDiscovery.getServiceInfo();
   
-  if (serviceInfo) {
-    res.json(serviceInfo);
+  if (serviceInfo && serviceInfo.backend) {
+    // Return format expected by frontend
+    res.json({
+      port: serviceInfo.backend.port,
+      url: serviceInfo.backend.url,
+      status: serviceInfo.backend.status,
+      startTime: serviceInfo.backend.startTime,
+      pid: serviceInfo.backend.pid,
+      lastUpdated: serviceInfo.lastUpdated
+    });
   } else {
     res.status(404).json({
       error: 'Service information not available',

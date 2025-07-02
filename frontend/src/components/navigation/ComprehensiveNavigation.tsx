@@ -1,8 +1,11 @@
+// CRITICAL DEBUG: Log at module level
+console.log('🔥 ComprehensiveNavigation MODULE LOADING!');
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  Shield, ChevronDown, ChevronRight, Menu, X, Crown, Building, Globe, 
-  Settings, Users, BarChart3, Brain, Zap, FileText, Calendar, 
+import {
+  Shield, ChevronDown, ChevronRight, Menu, X, Crown, Building, Globe,
+  Settings, Users, BarChart3, Brain, Zap, FileText, Calendar,
   MessageSquare, Target, Briefcase, GraduationCap, Bell, Lock,
   Smartphone, Cloud, Database, Activity, TrendingUp, Search,
   Workflow, Bot, Mic, Eye, Download, Upload, Share, Code,
@@ -65,14 +68,23 @@ interface ComprehensiveNavigationProps {
   showAllFeatures?: boolean;
 }
 
-const ComprehensiveNavigation: React.FC<ComprehensiveNavigationProps> = ({ 
-  isDemoMode = false, 
-  onLogout = () => {}, 
-  currentUser = null, 
-  isOpen = true, 
+const ComprehensiveNavigation: React.FC<ComprehensiveNavigationProps> = ({
+  isDemoMode = false,
+  onLogout = () => {},
+  currentUser = null,
+  isOpen = true,
   onToggle = () => {},
   showAllFeatures = true
 }) => {
+  // CRITICAL DEBUG: Log when ComprehensiveNavigation renders
+  console.log('🔥 ComprehensiveNavigation RENDERING!', {
+    isDemoMode,
+    currentUser,
+    isOpen,
+    showAllFeatures,
+    totalSections: 16
+  });
+
   const navigate = useNavigate();
   const [expandedSections, setExpandedSections] = useState<ExpandedSections>({});
   const [searchTerm, setSearchTerm] = useState('');
