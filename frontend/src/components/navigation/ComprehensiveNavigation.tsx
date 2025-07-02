@@ -1,8 +1,8 @@
 // CRITICAL DEBUG: Log at module level
-console.log('🔥 ComprehensiveNavigation MODULE LOADING!');
+console.log('🔥🔥🔥 ComprehensiveNavigation MODULE LOADING - THIS SHOULD ALWAYS SHOW! 🔥🔥🔥');
 
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useRouter } from 'next/router';
 import {
   Shield, ChevronDown, ChevronRight, Menu, X, Crown, Building, Globe,
   Settings, Users, BarChart3, Brain, Zap, FileText, Calendar,
@@ -77,7 +77,7 @@ const ComprehensiveNavigation: React.FC<ComprehensiveNavigationProps> = ({
   showAllFeatures = true
 }) => {
   // CRITICAL DEBUG: Log when ComprehensiveNavigation renders
-  console.log('🔥 ComprehensiveNavigation RENDERING!', {
+  console.log('🔥🔥🔥 ComprehensiveNavigation RENDERING - THIS SHOULD SHOW ON EVERY RENDER! 🔥🔥🔥', {
     isDemoMode,
     currentUser,
     isOpen,
@@ -85,7 +85,7 @@ const ComprehensiveNavigation: React.FC<ComprehensiveNavigationProps> = ({
     totalSections: 16
   });
 
-  const navigate = useNavigate();
+  const router = useRouter();
   const [expandedSections, setExpandedSections] = useState<ExpandedSections>({});
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -502,7 +502,7 @@ const ComprehensiveNavigation: React.FC<ComprehensiveNavigationProps> = ({
                         item.platformOwnerOnly ? 'text-yellow-600' : 'text-gray-600'
                       }`}
                       onClick={() => {
-                        navigate(item.path);
+                        router.push(item.path);
                         if (window.innerWidth < 1024) {
                           onToggle();
                         }

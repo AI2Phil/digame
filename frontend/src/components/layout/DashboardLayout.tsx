@@ -34,20 +34,23 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   } : null;
 
   // CRITICAL DEBUG: Log user data and decision making
-  console.log('🔥 DashboardLayout DEBUG:', {
+  console.log('🚨🚨🚨 DASHBOARDLAYOUT IS RENDERING!!! 🚨🚨🚨');
+  console.log('� DashboardLayout DEBUG:', {
     isDemoMode,
     currentUser: currentUser ? {
       id: currentUser.id,
       username: currentUser.username,
       role: currentUser.role,
       isPlatformOwner: currentUser.isPlatformOwner,
-      subscriptionTier: currentUser.subscriptionTier
+      subscriptionTier: currentUser.subscriptionTier,
+      fullUserObject: currentUser
     } : null,
     adaptedUser: adaptedUser ? {
       name: adaptedUser.name,
       role: adaptedUser.role,
       is_platform_owner: adaptedUser.is_platform_owner,
-      subscription_tier: adaptedUser.subscription_tier
+      subscription_tier: adaptedUser.subscription_tier,
+      fullAdaptedUser: adaptedUser
     } : null
   });
 
@@ -57,7 +60,16 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   console.log('🔥 DashboardLayout DECISION:', {
     isDemoMode,
     'adaptedUser?.is_platform_owner': adaptedUser?.is_platform_owner,
+    'typeof adaptedUser?.is_platform_owner': typeof adaptedUser?.is_platform_owner,
+    'currentUser?.isPlatformOwner': currentUser?.isPlatformOwner,
+    'typeof currentUser?.isPlatformOwner': typeof currentUser?.isPlatformOwner,
     shouldShowAllFeatures
+  });
+
+  console.log('🔥 DashboardLayout RENDERING ComprehensiveNavigation with props:', {
+    isDemoMode,
+    currentUser: adaptedUser,
+    showAllFeatures: shouldShowAllFeatures
   });
 
   return (

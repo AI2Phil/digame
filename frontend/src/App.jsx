@@ -9,7 +9,7 @@ import FeaturesPage from './pages/FeaturesPage';
 import HowItWorksPage from './pages/HowItWorksPage';
 import PricingPage from './pages/PricingPage';
 import DemoPage from './pages/DemoPage';
-import DashboardPage from './pages/dashboard/index.tsx';
+import ComprehensiveDashboardPage from './pages/ComprehensiveDashboardPage.jsx';
 import ComponentDemoPage from './pages/ComponentDemoPage';
 import OnboardingPage from './pages/OnboardingPage';
 import AdvancedWebAnalyticsDashboard from './pages/AdvancedWebAnalyticsDashboard';
@@ -40,13 +40,14 @@ import TwinDashboard from './components/digital-twin/TwinDashboard.tsx';
 // Authentication Page
 import AuthPage from './pages/AuthPage.tsx';
 import LanguageSwitcher from './components/Layout/LanguageSwitcher'; // Import LanguageSwitcher
-import { useTranslation } from 'next-i18next'; // Import useTranslation
+// Removed i18next dependency to simplify
 import NavigationTestPage from './pages/NavigationTestPage.jsx'; // Import NavigationTestPage
+import ComprehensiveNavigationDemo from './pages/ComprehensiveNavigationDemo.jsx'; // Import ComprehensiveNavigationDemo
 import './App.css';
 import './styles/theme.css';
 
 function App() {
-  const { t } = useTranslation('common'); // Initialize useTranslation hook, assuming 'common' namespace
+  // Removed i18next translation hook
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isDemoMode, setIsDemoMode] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -61,7 +62,7 @@ function App() {
       const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken');
       if (token) {
         // Verify token is still valid
-        const response = await fetch('http://localhost:8000/auth/verify-token', {
+        const response = await fetch('http://localhost:8001/auth/verify-token', {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -72,7 +73,7 @@ function App() {
           
           // Check if user needs onboarding
           try {
-            const onboardingResponse = await fetch('http://localhost:8000/auth/me/onboarding', {
+            const onboardingResponse = await fetch('http://localhost:8001/auth/me/onboarding', {
               headers: {
                 'Authorization': `Bearer ${token}`
               }
@@ -154,8 +155,8 @@ function App() {
         <div className="text-center space-y-4">
           <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
           <div className="space-y-2">
-              <h2 className="text-lg font-semibold text-gray-900">{t('loadingDigame', 'Loading Digame...')}</h2>
-              <p className="text-gray-600">{t('preparingPlatform', 'Preparing your digital twin platform')}</p>
+              <h2 className="text-lg font-semibold text-gray-900">Loading Digame...</h2>
+              <p className="text-gray-600">Preparing your digital twin platform</p>
           </div>
         </div>
       </div>
@@ -250,7 +251,7 @@ function App() {
             path="/dashboard"
             element={
               isAuthenticated || isDemoMode ? (
-                <DashboardPage
+                <ComprehensiveDashboardPage
                   isDemoMode={isDemoMode}
                   onLogout={handleLogout}
                   isNewUser={needsOnboarding}
@@ -662,6 +663,34 @@ function App() {
           <Route
             path="/navigation-test"
             element={<NavigationTestPage />}
+          />
+          
+          {/* Comprehensive Navigation Demo Route */}
+          <Route
+            path="/comprehensive-navigation-demo"
+            element={
+              isAuthenticated || isDemoMode ? (
+                <ComprehensiveNavigationDemo />
+              ) : (
+                <Navigate to="/" replace />
+              )
+            }
+          />
+          
+          {/* Comprehensive Dashboard Route */}
+          <Route
+            path="/comprehensive-dashboard"
+            element={
+              isAuthenticated || isDemoMode ? (
+                <ComprehensiveDashboardPage
+                  isDemoMode={isDemoMode}
+                  onLogout={handleLogout}
+                  isNewUser={needsOnboarding}
+                />
+              ) : (
+                <Navigate to="/" replace />
+              )
+            }
           />
 
           {/* Catch all route */}

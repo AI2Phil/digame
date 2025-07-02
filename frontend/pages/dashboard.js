@@ -3,6 +3,8 @@ import { useAuth } from '../src/contexts/AuthContext';
 import { useRouter } from 'next/router';
 import ProgressiveOnboarding from '../src/components/onboarding/ProgressiveOnboarding';
 import TeamManagement from '../src/components/team/TeamManagement';
+import ComprehensiveNavigation from '../src/components/navigation/ComprehensiveNavigation';
+import PersonalizedDashboard from '../src/components/dashboard/PersonalizedDashboard';
 import demoDataService from '../src/services/demoDataService';
 import apiService from '../src/services/apiService';
 
@@ -11,11 +13,37 @@ const Dashboard = () => {
   const router = useRouter();
   const [activeSection, setActiveSection] = useState('overview');
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userStats, setUserStats] = useState({
     totalProjects: 0,
     activeTeams: 0,
     completedTasks: 0,
     recentActivity: []
+  });
+
+  // CRITICAL DEBUG: Log user data and Platform Owner detection
+  console.log('🚨🚨🚨 NEXT.JS DASHBOARD IS RENDERING!!! 🚨🚨🚨');
+  console.log('🔥 Next.js Dashboard DEBUG:', {
+    isDemoMode,
+    user: user ? {
+      id: user.id,
+      username: user.username,
+      role: user.role,
+      isPlatformOwner: user.isPlatformOwner,
+      subscriptionTier: user.subscriptionTier,
+      fullUserObject: user
+    } : null
+  });
+
+  // Check if user is Platform Owner
+  const isPlatformOwner = user?.isPlatformOwner === true || user?.role === 'platform_owner';
+  
+  console.log('🔥 Platform Owner Detection:', {
+    'user?.isPlatformOwner': user?.isPlatformOwner,
+    'typeof user?.isPlatformOwner': typeof user?.isPlatformOwner,
+    'user?.role': user?.role,
+    isPlatformOwner,
+    'Will show comprehensive navigation': isPlatformOwner
   });
 
   useEffect(() => {
@@ -107,6 +135,105 @@ const Dashboard = () => {
 
   const availableNavItems = navigationItems.filter(item => item.available);
 
+  // Transform user data for ComprehensiveNavigation
+  const adaptedUser = user ? {
+    name: user.firstName || user.username,
+    role: user.role,
+    is_platform_owner: user.isPlatformOwner,
+    subscription_tier: user.subscriptionTier,
+    tenant_id: user.tenant_id || 1,
+    tenant_name: user.tenant_name || 'Digame Platform',
+    permissions: user.permissions || []
+  } : null;
+
+  const toggleSidebar = () => {
+    setSidebarOpen(!sidebarOpen);
+  };
+
+  // Platform Owners get the comprehensive navigation with all 16 sections and 80+ features
+  if (isPlatformOwner) {
+    console.log('🔥 RENDERING COMPREHENSIVE NAVIGATION FOR PLATFORM OWNER');
+    return (
+      <div className="flex h-screen bg-gray-100">
+        {/* Comprehensive Navigation - Always visible on desktop, toggleable on mobile */}
+        <ComprehensiveNavigation
+          isDemoMode={isDemoMode}
+          onLogout={handleLogout}
+          currentUser={adaptedUser}
+          isOpen={sidebarOpen}
+          onToggle={toggleSidebar}
+          showAllFeatures={true} // Platform Owners always see all features
+        />
+        
+        {/* Main Content */}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {/* Header */}
+          <header className="bg-white shadow-sm border-b border-gray-200">
+            <div className="flex items-center justify-between px-6 py-4">
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={toggleSidebar}
+                  className="lg:hidden p-2 hover:bg-gray-100 rounded-md"
+                  type="button"
+                >
+                  <span className="w-5 h-5">☰</span>
+                </button>
+                <h1 className="text-xl font-semibold text-gray-900">
+                  Digame - Platform Owner Dashboard
+                </h1>
+                {isDemoMode && (
+                  <div className="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded">
+                    Demo Mode
+                  </div>
+                )}
+                <div className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs font-medium rounded flex items-center gap-1">
+                  <span className="text-yellow-600">👑</span>
+                  PLATFORM OWNER
+                </div>
+              </div>
+              <div className="flex items-center gap-4">
+                <div className="text-sm text-gray-600">
+                  16 Sections • 80+ Features Available
+                </div>
+                <div className="text-sm text-gray-500">
+                  Complete Platform Access
+                </div>
+              </div>
+            </div>
+          </header>
+          
+          {/* Dashboard Content */}
+          <main className="flex-1 overflow-y-auto">
+            {/* Welcome Banner for Platform Owners */}
+            <div className="bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600 text-white p-6 m-6 rounded-lg shadow-lg">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-2xl font-bold mb-2 flex items-center gap-2">
+                    <span className="text-2xl">👑</span>
+                    Welcome, Platform Owner!
+                  </h2>
+                  <p className="text-yellow-100">
+                    You have complete access to all 16 sections and 80+ features across the entire platform.
+                  </p>
+                </div>
+                <div className="text-right">
+                  <div className="text-sm text-yellow-100">Full Access Level</div>
+                  <div className="text-lg font-semibold">Platform Owner</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Main Dashboard Content */}
+            <div className="p-6">
+              <PersonalizedDashboard />
+            </div>
+          </main>
+        </div>
+      </div>
+    );
+  }
+
+  // Regular users get the basic navigation
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
