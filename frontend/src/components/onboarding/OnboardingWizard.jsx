@@ -6,22 +6,26 @@ import { Label } from '../ui/label';
 import { Badge } from '../ui/badge';
 import { Progress } from '../ui/progress';
 import { Textarea } from '../ui/textarea';
-import { 
-  ChevronLeft, 
-  ChevronRight, 
-  User, 
-  Brain, 
-  Target, 
-  Users, 
+import {
+  ChevronLeft,
+  ChevronRight,
+  User,
+  Brain,
+  Target,
+  Users,
   Settings,
   Sparkles,
   CheckCircle,
   Star,
   Clock,
-  TrendingUp
+  TrendingUp,
+  Home,
+  AlertCircle
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const OnboardingWizard = ({ onComplete, user }) => {
+  const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
     // Step 1: Profile Setup
@@ -56,6 +60,7 @@ const OnboardingWizard = ({ onComplete, user }) => {
   const [loading, setLoading] = useState(false);
   const [stepData, setStepData] = useState({});
   const [onboardingOptions, setOnboardingOptions] = useState({});
+  const [error, setError] = useState(null);
 
   const steps = [
     { 
@@ -199,6 +204,8 @@ const OnboardingWizard = ({ onComplete, user }) => {
 
   const handleNext = async () => {
     try {
+      setError(null);
+      
       if (currentStep <= 5) {
         const stepData = getStepData(currentStep);
         await saveStepData(currentStep, stepData);
@@ -213,10 +220,29 @@ const OnboardingWizard = ({ onComplete, user }) => {
         setCurrentStep(currentStep + 1);
       } else {
         // Complete onboarding
-        onComplete && onComplete(formData);
+        console.log('Completing onboarding with data:', formData);
+        if (onComplete) {
+          try {
+            setLoading(true);
+            await onComplete(formData);
+            console.log('Onboarding completion successful');
+            // Don't set loading to false here as the parent will handle navigation
+          } catch (completionError) {
+            console.error('Onboarding completion failed:', completionError);
+            setError('Setup completion in progress. Please wait...');
+            setLoading(false);
+            // Don't throw the error, let the parent handle it
+          }
+        } else {
+          console.error('No onComplete function provided');
+          setError('Setup completion handler not found. Redirecting to dashboard...');
+          // Fallback navigation
+          setTimeout(() => navigate('/dashboard'), 2000);
+        }
       }
     } catch (error) {
-      alert('Failed to save progress. Please try again.');
+      console.error('Error in handleNext:', error);
+      setError(error.message || 'Failed to save progress. Please try again.');
     }
   };
 
@@ -601,7 +627,19 @@ const OnboardingWizard = ({ onComplete, user }) => {
         {/* Progress Header */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
-            <h1 className="text-2xl font-bold">Digital Twin Onboarding</h1>
+            <div className="flex items-center space-x-4">
+              <h1 className="text-2xl font-bold">Digital Twin Onboarding</h1>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigate('/')}
+                className="flex items-center space-x-1 text-gray-600 hover:text-gray-900"
+                title="Return to Home"
+              >
+                <Home className="h-4 w-4" />
+                <span className="hidden sm:inline">Home</span>
+              </Button>
+            </div>
             <Badge variant="outline">
               Step {currentStep} of {steps.length}
             </Badge>
@@ -664,6 +702,15 @@ const OnboardingWizard = ({ onComplete, user }) => {
             <p className="text-gray-600">{currentStepInfo.description}</p>
           </CardHeader>
           <CardContent>
+            {error && (
+              <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start space-x-2">
+                <AlertCircle className="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="text-red-800 font-medium">Setup Error</p>
+                  <p className="text-red-700 text-sm">{error}</p>
+                </div>
+              </div>
+            )}
             {renderStepContent()}
           </CardContent>
         </Card>

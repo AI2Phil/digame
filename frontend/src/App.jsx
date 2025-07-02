@@ -107,6 +107,7 @@ function App() {
   const handleDemoAccess = () => {
     setIsDemoMode(true);
     setIsAuthenticated(false);
+    setNeedsOnboarding(true); // Force demo users through onboarding
     enhancedApiService.enableDemoMode();
   };
 

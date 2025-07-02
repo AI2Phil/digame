@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../src/contexts/AuthContext';
 import { useRouter } from 'next/router';
+import { Home } from 'lucide-react';
 
 const OnboardingPage = () => {
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -84,24 +85,80 @@ const OnboardingPage = () => {
 
   const handleComplete = async () => {
     try {
-      // Save onboarding data to user profile
-      const success = await user?.updateProfile?.({
-        onboardingCompleted: true,
-        interests: onboardingData.interests,
-        goals: onboardingData.goals,
-        experienceLevel: onboardingData.experience,
-        preferences: {
-          ...user.preferences,
-          ...onboardingData.notifications
-        }
-      });
-
-      if (success) {
-        router.push('/dashboard?welcome=true');
+      console.log('Starting onboarding completion with data:', onboardingData);
+      
+      // Check if we're in demo mode
+      const isDemoMode = user?.isDemoMode ||
+                        (typeof window !== 'undefined' && localStorage.getItem('demoMode') === 'true') ||
+                        (typeof window !== 'undefined' && window.location.search.includes('demo=true'));
+      
+      if (isDemoMode) {
+        console.log('Demo mode detected, completing onboarding without profile save');
+        // For demo users, just navigate to dashboard
+        router.push('/dashboard?welcome=true&demo=true');
+        return;
       }
+
+      // Try to save onboarding data to user profile
+      let success = false;
+      
+      if (user?.updateProfile) {
+        try {
+          success = await user.updateProfile({
+            onboardingCompleted: true,
+            interests: onboardingData.interests,
+            goals: onboardingData.goals,
+            experienceLevel: onboardingData.experience,
+            preferences: {
+              ...user.preferences,
+              ...onboardingData.notifications
+            }
+          });
+          console.log('Profile update result:', success);
+        } catch (profileError) {
+          console.error('Profile update failed:', profileError);
+        }
+      }
+
+      // If profile update failed, try alternative API approach
+      if (!success) {
+        console.log('Attempting alternative onboarding completion...');
+        try {
+          const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken');
+          const response = await fetch('/api/auth/onboarding', {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+              onboardingCompleted: true,
+              interests: onboardingData.interests,
+              goals: onboardingData.goals,
+              experienceLevel: onboardingData.experience,
+              preferences: onboardingData.notifications
+            })
+          });
+
+          if (response.ok) {
+            success = true;
+            console.log('Alternative onboarding completion successful');
+          } else {
+            console.error('Alternative onboarding completion failed:', response.status);
+          }
+        } catch (altError) {
+          console.error('Alternative approach failed:', altError);
+        }
+      }
+
+      // Always navigate to dashboard, regardless of save success
+      console.log('Navigating to dashboard...');
+      router.push('/dashboard?welcome=true');
+      
     } catch (error) {
       console.error('Onboarding completion error:', error);
-      // Continue to dashboard even if profile update fails
+      // Always ensure navigation happens, even on error
+      console.log('Error occurred, but still navigating to dashboard...');
       router.push('/dashboard?welcome=true');
     }
   };
@@ -128,11 +185,23 @@ const OnboardingPage = () => {
       <div className="max-w-2xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="mx-auto h-16 w-16 flex items-center justify-center rounded-full bg-indigo-600 mb-4">
-            <span className="text-white font-bold text-2xl">D</span>
+          <div className="flex justify-between items-center mb-6">
+            <div className="flex items-center space-x-4">
+              <div className="mx-auto h-16 w-16 flex items-center justify-center rounded-full bg-indigo-600">
+                <span className="text-white font-bold text-2xl">D</span>
+              </div>
+            </div>
+            <button
+              onClick={() => router.push('/')}
+              className="flex items-center space-x-2 px-4 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+              title="Return to Home"
+            >
+              <Home className="h-4 w-4" />
+              <span className="hidden sm:inline">Home</span>
+            </button>
           </div>
           <h1 className="text-3xl font-extrabold text-gray-900">
-            Welcome to Digame, {user?.firstName}!
+            Welcome to Digame, Demo!
           </h1>
           <p className="mt-2 text-lg text-gray-600">
             Let's personalize your experience

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Button from '../components/ui/Button';
-import { Card, CardContent } from '../components/ui/Card';
+import { Card, CardContent } from '../components/ui/card';
 import { useAuth } from '../contexts/AuthContext';
 
 export default function DemoPage({ onDemoAccess }) {
@@ -21,8 +21,8 @@ export default function DemoPage({ onDemoAccess }) {
       // For guided tour, navigate to onboarding wizard
       navigate('/onboarding');
     } else {
-      // For interactive demo, go directly to dashboard
-      navigate('/dashboard');
+      // For interactive demo, also go through onboarding first to test the flow
+      navigate('/onboarding');
     }
   };
 

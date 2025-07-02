@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Menu, X } from 'lucide-react';
-import NextJSComprehensiveNavigation from '../navigation/NextJSComprehensiveNavigation';
+import ComprehensiveNavigation from '../navigation/ComprehensiveNavigation';
 import { Button } from '../ui/Button';
 
 interface DashboardLayoutProps {
@@ -25,7 +25,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   return (
     <div className="flex h-screen bg-gray-100">
       {/* Comprehensive Navigation - Always visible on desktop, toggleable on mobile */}
-      <NextJSComprehensiveNavigation
+      <ComprehensiveNavigation
         isDemoMode={isDemoMode}
         onLogout={onLogout}
         currentUser={currentUser}

@@ -366,6 +366,34 @@ const PersonalizedDashboard: React.FC<PersonalizedDashboardProps> = ({ className
           </button>
         </div>
       </div>
+
+      {/* Call-to-Action Section */}
+      <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg p-8 text-center">
+        <h3 className="text-2xl font-bold mb-2">Ready to unlock your full potential?</h3>
+        <p className="text-blue-100 mb-6">
+          Take your productivity to the next level with a personalized account and advanced features.
+        </p>
+        <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+          <button
+            onClick={() => window.location.href = '/'}
+            className="bg-white text-blue-600 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors min-w-[160px]"
+          >
+            🏠 Home
+          </button>
+          <button
+            onClick={() => window.location.href = '/register'}
+            className="bg-green-500 text-white px-6 py-3 rounded-lg font-semibold hover:bg-green-600 transition-colors min-w-[160px]"
+          >
+            🚀 Create a Free Account
+          </button>
+          <button
+            onClick={() => window.location.href = '/login'}
+            className="bg-transparent border-2 border-white text-white px-6 py-3 rounded-lg font-semibold hover:bg-white hover:text-blue-600 transition-colors min-w-[160px]"
+          >
+            🔑 Sign In
+          </button>
+        </div>
+      </div>
     </div>
   );
 };

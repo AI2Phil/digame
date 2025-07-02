@@ -2,7 +2,47 @@
 
 Welcome to **Digame** - the Digital Professional Twin Platform! This guide will help you get up and running quickly with the platform's comprehensive user workflow system, authentication, team management, and progressive onboarding features.
 
-I have successfully updated the `/docs/START.md` file to reflect the current implementation of the Digame Digital Professional Twin Platform. Here's what has been updated:
+## 📋 Table of Contents
+
+- [Quick Start](#-quick-start)
+- [Prerequisites](#-prerequisites)
+- [Installation](#-installation)
+- [Running the Application](#-running-the-application)
+- [User Workflow Features](#-user-workflow-features)
+- [Authentication System](#-authentication-system)
+- [First Steps](#-first-steps)
+- [API Documentation](#-api-documentation)
+- [Common Tasks](#-common-tasks)
+- [Troubleshooting](#-troubleshooting)
+- [Next Steps](#-next-steps)
+
+## ⚡ Quick Start
+
+# 1. Docker up and running** ```docker ps```    
+
+# 2. Start backend server
+cd ../backend
+npm install
+npm start
+
+- **start the backend** (Node.js/Express on port 8001): ```cd backend && npm start```
+
+# 3. In a new terminal, start the frontend
+cd ../frontend
+npm install
+npm run dev
+
+- **start the frontend** (React/Next.js on port 3000) in a new terminal: ```cd frontend && npm run dev```
+
+- **Both services are now running**
+- Backend: http://localhost:8001 ✅
+- Frontend: http://localhost:3000 ✅
+🎉 **That's it!** Your Digame platform is now running:
+- **Frontend Web App**: http://localhost:3000
+- **Backend API**: http://localhost:8001
+- **API Health Check**: http://localhost:8001/health
+- **Demo Login**: http://localhost:8001/auth/demo
+- Launch the browser to test the frontend dashboard and verify the sign-in functionality: http://localhost:3000 
 
 ## 📋 Updated Documentation Summary
 
@@ -75,46 +115,6 @@ I have successfully updated the `/docs/START.md` file to reflect the current imp
 - **Extension Guide**: How to customize and extend the platform
 
 The documentation now accurately reflects the complete end-to-end user workflow system we've implemented, making it easy for new developers to get started and understand the full capabilities of the Digame platform.
-
-## 📋 Table of Contents
-
-- [Quick Start](#-quick-start)
-- [Prerequisites](#-prerequisites)
-- [Installation](#-installation)
-- [Running the Application](#-running-the-application)
-- [User Workflow Features](#-user-workflow-features)
-- [Authentication System](#-authentication-system)
-- [First Steps](#-first-steps)
-- [API Documentation](#-api-documentation)
-- [Common Tasks](#-common-tasks)
-- [Troubleshooting](#-troubleshooting)
-- [Next Steps](#-next-steps)
-
-## ⚡ Quick Start
-
-Get Digame running in 5 minutes with both backend API and frontend web interface:
-
-```bash
-# 1. Clone and setup
-git clone <repository-url>
-cd digame
-
-# 2. Start backend server
-cd backend
-npm install
-npm start
-
-# 3. In a new terminal, start the frontend
-cd ../frontend
-npm install
-npm run dev
-```
-
-🎉 **That's it!** Your Digame platform is now running:
-- **Frontend Web App**: http://localhost:3000
-- **Backend API**: http://localhost:8001
-- **API Health Check**: http://localhost:8001/health
-- **Demo Login**: http://localhost:8001/auth/demo
 
 ## 🔧 Prerequisites
 

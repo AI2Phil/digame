@@ -91,7 +91,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           isVerified: true,
           isDemoMode: true,
           accessibleFeatures: ['*'],
-          onboardingCompleted: true,
+          onboardingCompleted: false,
           onboardingData: {
             interests: ['analytics', 'ai', 'productivity'],
             goals: ['productivity', 'data_insights'],
@@ -304,7 +304,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isVerified: true,
         isDemoMode: true,
         accessibleFeatures: ['*'],
-        onboardingCompleted: true,
+        onboardingCompleted: false,
         onboardingData: {
           interests: ['analytics', 'ai', 'productivity'],
           goals: ['productivity', 'data_insights'],
