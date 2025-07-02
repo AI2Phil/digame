@@ -342,22 +342,28 @@ const ComprehensiveNavigation: React.FC<ComprehensiveNavigationProps> = ({
   };
 
   const canAccessMenuItem = (item: MenuItem): boolean => {
-    if (!showAllFeatures) {
-      if (item.platformOwnerOnly && !isPlatformOwner()) return false;
-      if (!hasRole(item.requiredRoles)) return false;
-      if (!hasPermission(item.requiredPermissions)) return false;
-      if (!hasSubscriptionTier(item.minSubscriptionTier)) return false;
+    // If showAllFeatures is true, bypass all permission checks
+    if (showAllFeatures) {
+      return true;
     }
+    
+    if (item.platformOwnerOnly && !isPlatformOwner()) return false;
+    if (!hasRole(item.requiredRoles)) return false;
+    if (!hasPermission(item.requiredPermissions)) return false;
+    if (!hasSubscriptionTier(item.minSubscriptionTier)) return false;
     return true;
   };
 
   const canAccessMenuSection = (section: MenuSection): boolean => {
-    if (!showAllFeatures) {
-      if (section.platformOwnerOnly && !isPlatformOwner()) return false;
-      if (!hasRole(section.requiredRoles)) return false;
-      if (!hasPermission(section.requiredPermissions)) return false;
-      if (!hasSubscriptionTier(section.minSubscriptionTier)) return false;
+    // If showAllFeatures is true, bypass all permission checks
+    if (showAllFeatures) {
+      return true;
     }
+    
+    if (section.platformOwnerOnly && !isPlatformOwner()) return false;
+    if (!hasRole(section.requiredRoles)) return false;
+    if (!hasPermission(section.requiredPermissions)) return false;
+    if (!hasSubscriptionTier(section.minSubscriptionTier)) return false;
     
     // Check if at least one item in the section is accessible
     return section.items.some(item => canAccessMenuItem(item));

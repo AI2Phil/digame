@@ -58,7 +58,7 @@ function App() {
 
   const checkAuthStatus = async () => {
     try {
-      const token = localStorage.getItem('access_token');
+      const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken');
       if (token) {
         // Verify token is still valid
         const response = await fetch('http://localhost:8000/auth/verify-token', {
@@ -91,8 +91,10 @@ function App() {
           }
         } else {
           // Token is invalid, clear it
-          localStorage.removeItem('access_token');
-          localStorage.removeItem('refresh_token');
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('refreshToken');
+          sessionStorage.removeItem('accessToken');
+          sessionStorage.removeItem('refreshToken');
           setIsAuthenticated(false);
         }
       }
@@ -117,8 +119,8 @@ function App() {
     
     // Store tokens
     if (tokens) {
-      localStorage.setItem('access_token', tokens.access_token);
-      localStorage.setItem('refresh_token', tokens.refresh_token);
+      localStorage.setItem('accessToken', tokens.accessToken);
+      localStorage.setItem('refreshToken', tokens.refreshToken);
     }
     
     // Check if user needs onboarding
@@ -134,8 +136,10 @@ function App() {
     enhancedApiService.disableDemoMode();
     
     // Clear stored tokens
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
+    sessionStorage.removeItem('accessToken');
+    sessionStorage.removeItem('refreshToken');
     localStorage.removeItem('dashboard_config');
     localStorage.removeItem('initial_recommendations');
   };

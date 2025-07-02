@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/router';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -8,7 +8,7 @@ import { Eye, EyeOff, Mail, Lock, User } from 'lucide-react';
 
 const AuthPage: React.FC = () => {
   const { isAuthenticated, login, isLoading } = useAuth();
-  const router = useRouter();
+  const navigate = useNavigate();
   const [isLoginMode, setIsLoginMode] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
@@ -26,9 +26,9 @@ const AuthPage: React.FC = () => {
   // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated) {
-      router.push('/dashboard');
+      navigate('/dashboard');
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, navigate]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -77,7 +77,7 @@ const AuthPage: React.FC = () => {
       if (isLoginMode) {
         const success = await login({ username: formData.username, password: formData.password, rememberMe });
         if (success) {
-          router.push('/dashboard');
+          navigate('/dashboard');
         }
       } else {
         // Register functionality would need to be implemented in AuthContext

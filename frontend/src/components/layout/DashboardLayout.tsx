@@ -22,13 +22,24 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
     setSidebarOpen(!sidebarOpen);
   };
 
+  // Transform AuthContext user to match ComprehensiveNavigation expected format
+  const adaptedUser = currentUser ? {
+    name: currentUser.name || currentUser.fullName || currentUser.firstName || currentUser.username,
+    role: currentUser.role,
+    is_platform_owner: currentUser.isPlatformOwner, // Convert camelCase to snake_case
+    subscription_tier: currentUser.subscriptionTier, // Convert camelCase to snake_case
+    tenant_id: currentUser.tenant_id || 1, // Provide default if missing
+    tenant_name: currentUser.tenant_name || 'Default Tenant', // Provide default if missing
+    permissions: currentUser.permissions || []
+  } : null;
+
   return (
     <div className="flex h-screen bg-gray-100">
       {/* Comprehensive Navigation - Always visible on desktop, toggleable on mobile */}
       <ComprehensiveNavigation
         isDemoMode={isDemoMode}
         onLogout={onLogout}
-        currentUser={currentUser}
+        currentUser={adaptedUser}
         isOpen={sidebarOpen}
         onToggle={toggleSidebar}
         showAllFeatures={true}
