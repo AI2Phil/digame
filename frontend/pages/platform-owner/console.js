@@ -1,8 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Head from 'next/head';
-import { Crown, Server, Users, Building, TrendingUp, Activity, Settings, Code, AlertTriangle, CheckCircle } from 'lucide-react';
+import { Crown, Server, Users, Building, TrendingUp, Activity, Settings, Code, AlertTriangle, CheckCircle, Database, Cpu, HardDrive, Network } from 'lucide-react';
+import PageHeader from '../../src/components/navigation/PageHeader';
 
 export default function PlatformConsole() {
+  const [selectedTimeRange, setSelectedTimeRange] = useState('24h');
+
   return (
     <>
       <Head>
@@ -13,23 +16,30 @@ export default function PlatformConsole() {
       </Head>
 
       <div className="min-h-screen bg-gray-50">
+        <PageHeader
+          title="Platform Console"
+          subtitle="Comprehensive platform management and oversight"
+          icon={<Crown className="w-6 h-6 text-yellow-600" />}
+          badge="PLATFORM OWNER"
+        />
+
         <div className="container mx-auto px-4 py-8">
-          {/* Header */}
-          <div className="mb-8">
-            <div className="flex items-center space-x-3 mb-4">
-              <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
-                <Crown className="w-6 h-6 text-yellow-600" />
-              </div>
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900">Platform Console</h1>
-                <p className="text-gray-600">Comprehensive platform management and oversight</p>
-              </div>
-              <div className="ml-auto">
-                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                  <Crown className="w-3 h-3 mr-1" />
-                  PLATFORM OWNER EXCLUSIVE
-                </span>
-              </div>
+          {/* Time Range Selector */}
+          <div className="mb-6">
+            <div className="flex space-x-2">
+              {['1h', '24h', '7d', '30d'].map((range) => (
+                <button
+                  key={range}
+                  onClick={() => setSelectedTimeRange(range)}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    selectedTimeRange === range
+                      ? 'bg-yellow-600 text-white'
+                      : 'bg-white text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  {range}
+                </button>
+              ))}
             </div>
           </div>
 

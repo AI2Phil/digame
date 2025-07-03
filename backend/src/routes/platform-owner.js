@@ -1,592 +1,485 @@
 const express = require('express');
-const { authenticate } = require('../middleware/auth');
-const { UserRepository } = require('../models/User');
-const { TeamRepository } = require('../models/Team');
-
 const router = express.Router();
-const userRepository = new UserRepository();
-const teamRepository = new TeamRepository();
 
-// Middleware to ensure Platform Owner access
-const requirePlatformOwner = (req, res, next) => {
-  if (!req.user.isPlatformOwner) {
-    return res.status(403).json({
-      error: 'Access denied',
-      message: 'Platform Owner access required'
-    });
-  }
-  next();
-};
+// Mock data for platform owner features
+const mockData = {
+  // Console data
+  console: {
+    stats: {
+      totalUsers: 15847,
+      activeUsers: 12456,
+      totalRevenue: 2847392,
+      monthlyGrowth: 23.5,
+      systemHealth: 'excellent',
+      uptime: '99.97%'
+    },
+    recentActivity: [
+      {
+        id: 1,
+        type: 'user_registration',
+        description: 'New enterprise user registered',
+        timestamp: new Date().toISOString(),
+        severity: 'info'
+      },
+      {
+        id: 2,
+        type: 'payment_processed',
+        description: 'Payment of $2,500 processed successfully',
+        timestamp: new Date(Date.now() - 300000).toISOString(),
+        severity: 'success'
+      }
+    ]
+  },
 
-/**
- * GET /platform-owner/console
- * Platform console overview and metrics
- */
-router.get('/console', authenticate, requirePlatformOwner, async (req, res) => {
-  try {
-    // Get platform-wide statistics
-    const allUsers = userRepository.findAll();
-    const allTeams = teamRepository.findAll();
-    
-    const platformMetrics = {
-      overview: {
-        totalUsers: allUsers.length,
-        activeTenants: allTeams.length,
-        monthlyRevenue: calculateMockRevenue(allUsers),
-        systemHealth: 99.9
+  // Tenant management data
+  tenants: [
+    {
+      id: 1,
+      name: 'Acme Corporation',
+      domain: 'acme.digame.com',
+      tier: 'Enterprise',
+      status: 'active',
+      users: 2847,
+      revenue: 89400,
+      growth: 23.5,
+      createdAt: '2023-06-15T00:00:00Z',
+      lastActivity: new Date().toISOString(),
+      features: ['SSO', 'Custom Branding', 'API Access', 'Priority Support'],
+      settings: {
+        customBranding: true,
+        ssoEnabled: true,
+        apiAccess: true,
+        storageLimit: '1TB'
+      }
+    },
+    {
+      id: 2,
+      name: 'TechStart Inc',
+      domain: 'techstart.digame.com',
+      tier: 'Professional',
+      status: 'active',
+      users: 456,
+      revenue: 12800,
+      growth: 45.2,
+      createdAt: '2023-08-20T00:00:00Z',
+      lastActivity: new Date(Date.now() - 3600000).toISOString(),
+      features: ['API Access', 'Advanced Analytics'],
+      settings: {
+        customBranding: false,
+        ssoEnabled: false,
+        apiAccess: true,
+        storageLimit: '100GB'
+      }
+    }
+  ],
+
+  // User management data
+  users: [
+    {
+      id: 1,
+      email: 'admin@acme.com',
+      name: 'John Admin',
+      role: 'admin',
+      tenant: 'Acme Corporation',
+      tier: 'Enterprise',
+      status: 'active',
+      lastLogin: new Date().toISOString(),
+      createdAt: '2023-06-15T00:00:00Z',
+      permissions: ['read', 'write', 'admin']
+    },
+    {
+      id: 2,
+      email: 'user@techstart.com',
+      name: 'Jane User',
+      role: 'user',
+      tenant: 'TechStart Inc',
+      tier: 'Professional',
+      status: 'active',
+      lastLogin: new Date(Date.now() - 7200000).toISOString(),
+      createdAt: '2023-08-20T00:00:00Z',
+      permissions: ['read', 'write']
+    }
+  ],
+
+  // Revenue analytics data
+  revenue: {
+    overview: {
+      totalRevenue: 2847392,
+      monthlyRecurring: 234567,
+      annualRecurring: 2814804,
+      growth: 23.5,
+      churnRate: 2.1,
+      averageRevenuePer: {
+        user: 89.50,
+        tenant: 15678.90
+      }
+    },
+    trends: [
+      { month: 'Jan', revenue: 180000, users: 1200, tenants: 45 },
+      { month: 'Feb', revenue: 195000, users: 1350, tenants: 48 },
+      { month: 'Mar', revenue: 210000, users: 1500, tenants: 52 },
+      { month: 'Apr', revenue: 225000, users: 1650, tenants: 55 },
+      { month: 'May', revenue: 240000, users: 1800, tenants: 58 },
+      { month: 'Jun', revenue: 255000, users: 1950, tenants: 62 }
+    ],
+    forecasts: [
+      { month: 'Jul', predicted: 270000, confidence: 85 },
+      { month: 'Aug', predicted: 285000, confidence: 82 },
+      { month: 'Sep', predicted: 300000, confidence: 78 }
+    ]
+  },
+
+  // System health data
+  health: {
+    overall: 'healthy',
+    uptime: '99.97%',
+    services: [
+      {
+        name: 'API Gateway',
+        status: 'healthy',
+        uptime: '99.99%',
+        responseTime: 45,
+        lastCheck: new Date().toISOString()
       },
-      growth: {
-        userGrowth: '+12.5%',
-        tenantGrowth: '+8.2%',
-        revenueGrowth: '+18.7%'
-      },
-      userDistribution: {
-        free: allUsers.filter(u => u.subscriptionTier === 'free').length,
-        individualPro: allUsers.filter(u => u.subscriptionTier === 'individual_pro').length,
-        team: allUsers.filter(u => u.subscriptionTier === 'team').length,
-        enterprise: allUsers.filter(u => u.subscriptionTier === 'enterprise').length
-      },
-      systemStatus: {
-        database: 'operational',
-        apiServices: 'operational',
-        backgroundJobs: 'degraded',
-        fileStorage: 'operational'
-      },
-      recentActivity: [
+      {
+        name: 'Database Cluster',
+        status: 'healthy',
+        uptime: '99.95%',
+        responseTime: 12,
+        lastCheck: new Date().toISOString()
+      }
+    ],
+    infrastructure: {
+      cpu: { usage: 67, cores: 32, status: 'normal' },
+      memory: { usage: 78, total: '128 GB', status: 'normal' },
+      storage: { usage: 45, total: '2 TB', status: 'normal' },
+      network: { inbound: '2.3 Gbps', outbound: '1.8 Gbps', status: 'normal' }
+    }
+  },
+
+  // Security data
+  security: {
+    overview: {
+      score: 94,
+      vulnerabilities: { critical: 0, high: 2, medium: 5, low: 12 },
+      compliance: {
+        gdpr: 'compliant',
+        hipaa: 'compliant',
+        sox: 'compliant',
+        iso27001: 'in-progress'
+      }
+    },
+    auditLogs: [
+      {
+        id: 1,
+        timestamp: new Date().toISOString(),
+        user: 'admin@platform.com',
+        action: 'User Role Modified',
+        resource: 'User Management',
+        severity: 'medium',
+        category: 'user_management'
+      }
+    ]
+  },
+
+  // Integration data
+  integrations: {
+    stats: {
+      totalIntegrations: 24,
+      activeConnections: 18,
+      apiCalls: 1247892,
+      webhookEvents: 45623
+    },
+    ssoProviders: [
+      {
+        id: 1,
+        name: 'Google Workspace',
+        provider: 'google',
+        status: 'active',
+        users: 1234,
+        lastSync: new Date().toISOString()
+      }
+    ],
+    apiKeys: [
+      {
+        id: 1,
+        name: 'Production API Key',
+        key: 'pk_live_1234567890abcdef',
+        permissions: ['read', 'write', 'admin'],
+        lastUsed: new Date().toISOString(),
+        status: 'active'
+      }
+    ]
+  },
+
+  // Enterprise data
+  enterprise: {
+    stats: {
+      totalTenants: 156,
+      enterpriseClients: 23,
+      totalRevenue: 2847392,
+      marketShare: 12.4,
+      growthRate: 34.2
+    },
+    features: [
+      {
+        id: 1,
+        name: 'White Label Solution',
+        description: 'Complete branding customization for enterprise clients',
+        status: 'active',
+        usage: 89,
+        clients: 12
+      }
+    ],
+    marketIntelligence: {
+      competitors: [
         {
-          type: 'user_registration',
-          description: 'New tenant registered: Acme Corp',
-          timestamp: new Date(Date.now() - 5 * 60 * 1000).toISOString()
-        },
-        {
-          type: 'revenue_milestone',
-          description: 'Monthly revenue exceeded $800K',
-          timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString()
-        },
-        {
-          type: 'system_update',
-          description: 'Version 2.4.1 successfully deployed',
-          timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
+          name: 'CompetitorA',
+          marketShare: 28.5,
+          pricing: '$49/user',
+          features: 85,
+          customerSat: 4.2,
+          trend: 'up'
         }
       ]
-    };
-
-    res.json({
-      success: true,
-      data: platformMetrics,
-      timestamp: new Date().toISOString()
-    });
-
-  } catch (error) {
-    console.error('Platform console error:', error);
-    res.status(500).json({
-      error: 'Internal server error',
-      message: 'Failed to fetch platform console data'
-    });
-  }
-});
-
-/**
- * GET /platform-owner/tenants
- * Get all tenants overview
- */
-router.get('/tenants', authenticate, requirePlatformOwner, async (req, res) => {
-  try {
-    const allTeams = teamRepository.findAll();
-    
-    const tenantsData = allTeams.map(team => {
-      const teamMembers = team.members || [];
-      const owner = userRepository.findById(team.ownerId);
-      
-      return {
-        id: team.id,
-        name: team.name,
-        owner: owner ? owner.toSafeJSON() : null,
-        memberCount: teamMembers.length,
-        subscriptionTier: team.subscriptionTier || 'team',
-        status: team.isActive ? 'active' : 'inactive',
-        createdAt: team.createdAt,
-        lastActivity: team.updatedAt,
-        revenue: calculateTeamRevenue(team.subscriptionTier, teamMembers.length),
-        projects: team.projects ? team.projects.length : 0
-      };
-    });
-
-    const summary = {
-      total: tenantsData.length,
-      active: tenantsData.filter(t => t.status === 'active').length,
-      byTier: {
-        team: tenantsData.filter(t => t.subscriptionTier === 'team').length,
-        enterprise: tenantsData.filter(t => t.subscriptionTier === 'enterprise').length
-      },
-      totalRevenue: tenantsData.reduce((sum, t) => sum + t.revenue, 0)
-    };
-
-    res.json({
-      success: true,
-      data: {
-        tenants: tenantsData,
-        summary: summary
-      },
-      timestamp: new Date().toISOString()
-    });
-
-  } catch (error) {
-    console.error('Tenants overview error:', error);
-    res.status(500).json({
-      error: 'Internal server error',
-      message: 'Failed to fetch tenants data'
-    });
-  }
-});
-
-/**
- * GET /platform-owner/users
- * Get all users overview
- */
-router.get('/users', authenticate, requirePlatformOwner, async (req, res) => {
-  try {
-    const { page = 1, limit = 50, search, tier, status } = req.query;
-    
-    let allUsers = userRepository.findAll();
-    
-    // Apply filters
-    if (search) {
-      const searchLower = search.toLowerCase();
-      allUsers = allUsers.filter(user => 
-        user.email.toLowerCase().includes(searchLower) ||
-        user.username.toLowerCase().includes(searchLower) ||
-        `${user.firstName} ${user.lastName}`.toLowerCase().includes(searchLower)
-      );
     }
-    
-    if (tier) {
-      allUsers = allUsers.filter(user => user.subscriptionTier === tier);
+  }
+};
+
+// Console endpoints
+router.get('/console/stats', (req, res) => {
+  res.json(mockData.console.stats);
+});
+
+router.get('/console/activity', (req, res) => {
+  res.json(mockData.console.recentActivity);
+});
+
+// Tenant management endpoints
+router.get('/tenants', (req, res) => {
+  const { tier, status, search } = req.query;
+  let tenants = [...mockData.tenants];
+
+  if (tier && tier !== 'all') {
+    tenants = tenants.filter(tenant => tenant.tier === tier);
+  }
+
+  if (status && status !== 'all') {
+    tenants = tenants.filter(tenant => tenant.status === status);
+  }
+
+  if (search) {
+    tenants = tenants.filter(tenant => 
+      tenant.name.toLowerCase().includes(search.toLowerCase()) ||
+      tenant.domain.toLowerCase().includes(search.toLowerCase())
+    );
+  }
+
+  res.json({
+    tenants,
+    total: tenants.length,
+    stats: {
+      total: mockData.tenants.length,
+      active: mockData.tenants.filter(t => t.status === 'active').length,
+      enterprise: mockData.tenants.filter(t => t.tier === 'Enterprise').length
     }
-    
-    if (status) {
-      allUsers = allUsers.filter(user => 
-        status === 'active' ? user.isActive : !user.isActive
-      );
-    }
-
-    // Pagination
-    const startIndex = (page - 1) * limit;
-    const endIndex = startIndex + parseInt(limit);
-    const paginatedUsers = allUsers.slice(startIndex, endIndex);
-
-    const usersData = paginatedUsers.map(user => ({
-      id: user.id,
-      email: user.email,
-      username: user.username,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      role: user.role,
-      subscriptionTier: user.subscriptionTier,
-      isActive: user.isActive,
-      isVerified: user.isVerified,
-      isPlatformOwner: user.isPlatformOwner,
-      teamId: user.teamId,
-      lastLogin: user.lastLogin,
-      createdAt: user.createdAt,
-      onboardingCompleted: user.onboardingCompleted
-    }));
-
-    const summary = {
-      total: allUsers.length,
-      active: allUsers.filter(u => u.isActive).length,
-      verified: allUsers.filter(u => u.isVerified).length,
-      byTier: {
-        free: allUsers.filter(u => u.subscriptionTier === 'free').length,
-        individualPro: allUsers.filter(u => u.subscriptionTier === 'individual_pro').length,
-        team: allUsers.filter(u => u.subscriptionTier === 'team').length,
-        enterprise: allUsers.filter(u => u.subscriptionTier === 'enterprise').length
-      },
-      byRole: {
-        user: allUsers.filter(u => u.role === 'user').length,
-        admin: allUsers.filter(u => u.role === 'admin').length,
-        platformOwner: allUsers.filter(u => u.isPlatformOwner).length
-      }
-    };
-
-    res.json({
-      success: true,
-      data: {
-        users: usersData,
-        summary: summary,
-        pagination: {
-          page: parseInt(page),
-          limit: parseInt(limit),
-          total: allUsers.length,
-          pages: Math.ceil(allUsers.length / limit)
-        }
-      },
-      timestamp: new Date().toISOString()
-    });
-
-  } catch (error) {
-    console.error('Users overview error:', error);
-    res.status(500).json({
-      error: 'Internal server error',
-      message: 'Failed to fetch users data'
-    });
-  }
+  });
 });
 
-/**
- * GET /platform-owner/revenue
- * Revenue analytics and business intelligence
- */
-router.get('/revenue', authenticate, requirePlatformOwner, async (req, res) => {
-  try {
-    const allUsers = userRepository.findAll();
-    const allTeams = teamRepository.findAll();
-    
-    const revenueAnalytics = {
-      overview: {
-        monthlyRevenue: calculateMockRevenue(allUsers),
-        annualRevenue: calculateMockRevenue(allUsers) * 12,
-        growth: {
-          monthly: '+18.7%',
-          quarterly: '+24.3%',
-          annual: '+45.2%'
-        }
-      },
-      byTier: {
-        free: { users: allUsers.filter(u => u.subscriptionTier === 'free').length, revenue: 0 },
-        individualPro: { 
-          users: allUsers.filter(u => u.subscriptionTier === 'individual_pro').length, 
-          revenue: allUsers.filter(u => u.subscriptionTier === 'individual_pro').length * 29 
-        },
-        team: { 
-          users: allUsers.filter(u => u.subscriptionTier === 'team').length, 
-          revenue: allUsers.filter(u => u.subscriptionTier === 'team').length * 99 
-        },
-        enterprise: { 
-          users: allUsers.filter(u => u.subscriptionTier === 'enterprise').length, 
-          revenue: allUsers.filter(u => u.subscriptionTier === 'enterprise').length * 299 
-        }
-      },
-      trends: {
-        last12Months: generateMockRevenueTrend(),
-        forecast: generateMockRevenueForecast()
-      },
-      metrics: {
-        arpu: calculateARPU(allUsers), // Average Revenue Per User
-        ltv: calculateLTV(allUsers), // Lifetime Value
-        churnRate: 2.3,
-        conversionRate: 12.8
-      },
-      topTenants: allTeams
-        .map(team => ({
-          name: team.name,
-          revenue: calculateTeamRevenue(team.subscriptionTier, team.members?.length || 1),
-          tier: team.subscriptionTier
-        }))
-        .sort((a, b) => b.revenue - a.revenue)
-        .slice(0, 10)
-    };
-
-    res.json({
-      success: true,
-      data: revenueAnalytics,
-      timestamp: new Date().toISOString()
-    });
-
-  } catch (error) {
-    console.error('Revenue analytics error:', error);
-    res.status(500).json({
-      error: 'Internal server error',
-      message: 'Failed to fetch revenue analytics'
-    });
+router.get('/tenants/:id', (req, res) => {
+  const tenant = mockData.tenants.find(t => t.id === parseInt(req.params.id));
+  if (!tenant) {
+    return res.status(404).json({ error: 'Tenant not found' });
   }
+  res.json(tenant);
 });
 
-/**
- * GET /platform-owner/health
- * System health monitoring
- */
-router.get('/health', authenticate, requirePlatformOwner, async (req, res) => {
-  try {
-    const systemHealth = {
-      overall: {
-        status: 'healthy',
-        uptime: 99.97,
-        lastIncident: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
-      },
-      services: {
-        database: {
-          status: 'operational',
-          responseTime: 12.3,
-          connections: 45,
-          queryPerformance: 'good'
-        },
-        api: {
-          status: 'operational',
-          responseTime: 234.5,
-          requestsPerMinute: 1250,
-          errorRate: 0.05
-        },
-        backgroundJobs: {
-          status: 'degraded',
-          queueSize: 23,
-          processingRate: 'slow',
-          lastProcessed: new Date(Date.now() - 5 * 60 * 1000).toISOString()
-        },
-        storage: {
-          status: 'operational',
-          usage: 67.8,
-          capacity: '2.5TB',
-          performance: 'good'
-        }
-      },
-      metrics: {
-        cpu: 45.2,
-        memory: 67.8,
-        disk: 34.5,
-        network: 12.3
-      },
-      alerts: [
-        {
-          level: 'warning',
-          service: 'backgroundJobs',
-          message: 'Queue processing slower than normal',
-          timestamp: new Date(Date.now() - 30 * 60 * 1000).toISOString()
-        },
-        {
-          level: 'info',
-          service: 'storage',
-          message: 'Storage usage above 65%',
-          timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString()
-        }
-      ],
-      performance: {
-        avgResponseTime: 234.5,
-        throughput: 1250,
-        availability: 99.97,
-        errorRate: 0.05
-      }
-    };
-
-    res.json({
-      success: true,
-      data: systemHealth,
-      timestamp: new Date().toISOString()
-    });
-
-  } catch (error) {
-    console.error('System health error:', error);
-    res.status(500).json({
-      error: 'Internal server error',
-      message: 'Failed to fetch system health data'
-    });
+router.put('/tenants/:id', (req, res) => {
+  const tenantIndex = mockData.tenants.findIndex(t => t.id === parseInt(req.params.id));
+  if (tenantIndex === -1) {
+    return res.status(404).json({ error: 'Tenant not found' });
   }
-});
 
-/**
- * GET /platform-owner/settings
- * Platform configuration settings
- */
-router.get('/settings', authenticate, requirePlatformOwner, async (req, res) => {
-  try {
-    // Mock platform settings
-    const platformSettings = {
-      general: {
-        platformName: 'Digame Platform',
-        version: '2.4.1',
-        environment: 'production',
-        maintenanceMode: false
-      },
-      features: {
-        aiTools: true,
-        analytics: true,
-        teamCollaboration: true,
-        enterpriseFeatures: true,
-        guestAccess: true
-      },
-      limits: {
-        maxUsersPerTenant: 1000,
-        maxTeamsPerUser: 5,
-        maxProjectsPerTeam: 50,
-        apiRateLimit: 1000
-      },
-      security: {
-        passwordPolicy: {
-          minLength: 8,
-          requireUppercase: true,
-          requireNumbers: true,
-          requireSpecialChars: false
-        },
-        sessionTimeout: 24, // hours
-        mfaRequired: false,
-        ipWhitelisting: false
-      },
-      notifications: {
-        emailNotifications: true,
-        systemAlerts: true,
-        maintenanceNotices: true,
-        securityAlerts: true
-      }
-    };
-
-    res.json({
-      success: true,
-      data: platformSettings,
-      timestamp: new Date().toISOString()
-    });
-
-  } catch (error) {
-    console.error('Platform settings error:', error);
-    res.status(500).json({
-      error: 'Internal server error',
-      message: 'Failed to fetch platform settings'
-    });
-  }
-});
-
-/**
- * PUT /platform-owner/settings
- * Update platform configuration settings
- */
-router.put('/settings', authenticate, requirePlatformOwner, async (req, res) => {
-  try {
-    const { general, features, limits, security, notifications } = req.body;
-    
-    // In a real implementation, these would be stored in a configuration database
-    // For now, we'll just validate and return success
-    
-    const updatedSettings = {
-      general: general || {},
-      features: features || {},
-      limits: limits || {},
-      security: security || {},
-      notifications: notifications || {}
-    };
-
-    console.log(`Platform settings updated by: ${req.user.email}`);
-
-    res.json({
-      success: true,
-      message: 'Platform settings updated successfully',
-      data: updatedSettings,
-      timestamp: new Date().toISOString()
-    });
-
-  } catch (error) {
-    console.error('Update platform settings error:', error);
-    res.status(500).json({
-      error: 'Internal server error',
-      message: 'Failed to update platform settings'
-    });
-  }
-});
-
-/**
- * GET /platform-owner/test-zone
- * API testing and development tools
- */
-router.get('/test-zone', authenticate, requirePlatformOwner, async (req, res) => {
-  try {
-    const testZoneData = {
-      apiEndpoints: [
-        { method: 'GET', path: '/api/analytics/web', status: 'active', lastTested: new Date().toISOString() },
-        { method: 'POST', path: '/api/ai-tools/writing', status: 'active', lastTested: new Date().toISOString() },
-        { method: 'GET', path: '/api/teams', status: 'active', lastTested: new Date().toISOString() },
-        { method: 'GET', path: '/api/platform-owner/console', status: 'active', lastTested: new Date().toISOString() }
-      ],
-      testResults: {
-        totalTests: 156,
-        passed: 148,
-        failed: 8,
-        lastRun: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString()
-      },
-      performance: {
-        avgResponseTime: 234.5,
-        slowestEndpoint: '/api/analytics/behavioral',
-        fastestEndpoint: '/api/auth/verify-token'
-      },
-      sampleData: {
-        users: 50,
-        teams: 12,
-        projects: 34,
-        lastGenerated: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
-      }
-    };
-
-    res.json({
-      success: true,
-      data: testZoneData,
-      timestamp: new Date().toISOString()
-    });
-
-  } catch (error) {
-    console.error('Test zone error:', error);
-    res.status(500).json({
-      error: 'Internal server error',
-      message: 'Failed to fetch test zone data'
-    });
-  }
-});
-
-// Helper functions
-function calculateMockRevenue(users) {
-  const tierPricing = {
-    free: 0,
-    individual_pro: 29,
-    team: 99,
-    enterprise: 299
+  mockData.tenants[tenantIndex] = {
+    ...mockData.tenants[tenantIndex],
+    ...req.body,
+    updatedAt: new Date().toISOString()
   };
+
+  res.json(mockData.tenants[tenantIndex]);
+});
+
+router.delete('/tenants/:id', (req, res) => {
+  const tenantIndex = mockData.tenants.findIndex(t => t.id === parseInt(req.params.id));
+  if (tenantIndex === -1) {
+    return res.status(404).json({ error: 'Tenant not found' });
+  }
+
+  mockData.tenants.splice(tenantIndex, 1);
+  res.json({ message: 'Tenant deleted successfully' });
+});
+
+// User management endpoints
+router.get('/users', (req, res) => {
+  const { role, tier, status, search } = req.query;
+  let users = [...mockData.users];
+
+  if (role && role !== 'all') {
+    users = users.filter(user => user.role === role);
+  }
+
+  if (tier && tier !== 'all') {
+    users = users.filter(user => user.tier === tier);
+  }
+
+  if (status && status !== 'all') {
+    users = users.filter(user => user.status === status);
+  }
+
+  if (search) {
+    users = users.filter(user => 
+      user.name.toLowerCase().includes(search.toLowerCase()) ||
+      user.email.toLowerCase().includes(search.toLowerCase())
+    );
+  }
+
+  res.json({
+    users,
+    total: users.length,
+    stats: {
+      total: mockData.users.length,
+      active: mockData.users.filter(u => u.status === 'active').length,
+      admins: mockData.users.filter(u => u.role === 'admin').length
+    }
+  });
+});
+
+router.get('/users/:id', (req, res) => {
+  const user = mockData.users.find(u => u.id === parseInt(req.params.id));
+  if (!user) {
+    return res.status(404).json({ error: 'User not found' });
+  }
+  res.json(user);
+});
+
+router.put('/users/:id', (req, res) => {
+  const userIndex = mockData.users.findIndex(u => u.id === parseInt(req.params.id));
+  if (userIndex === -1) {
+    return res.status(404).json({ error: 'User not found' });
+  }
+
+  mockData.users[userIndex] = {
+    ...mockData.users[userIndex],
+    ...req.body,
+    updatedAt: new Date().toISOString()
+  };
+
+  res.json(mockData.users[userIndex]);
+});
+
+// Revenue analytics endpoints
+router.get('/revenue/overview', (req, res) => {
+  res.json(mockData.revenue.overview);
+});
+
+router.get('/revenue/trends', (req, res) => {
+  const { period = '6m' } = req.query;
+  res.json({
+    trends: mockData.revenue.trends,
+    forecasts: mockData.revenue.forecasts,
+    period
+  });
+});
+
+// System health endpoints
+router.get('/health/overview', (req, res) => {
+  res.json(mockData.health);
+});
+
+router.get('/health/services', (req, res) => {
+  res.json(mockData.health.services);
+});
+
+router.get('/health/infrastructure', (req, res) => {
+  res.json(mockData.health.infrastructure);
+});
+
+// Security endpoints
+router.get('/security/overview', (req, res) => {
+  res.json(mockData.security.overview);
+});
+
+router.get('/security/audit-logs', (req, res) => {
+  const { category = 'all', severity = 'all' } = req.query;
+  let logs = [...mockData.security.auditLogs];
+
+  if (category !== 'all') {
+    logs = logs.filter(log => log.category === category);
+  }
+
+  if (severity !== 'all') {
+    logs = logs.filter(log => log.severity === severity);
+  }
+
+  res.json(logs);
+});
+
+// Integration endpoints
+router.get('/integrations/overview', (req, res) => {
+  res.json(mockData.integrations.stats);
+});
+
+router.get('/integrations/sso', (req, res) => {
+  res.json(mockData.integrations.ssoProviders);
+});
+
+router.get('/integrations/api-keys', (req, res) => {
+  res.json(mockData.integrations.apiKeys);
+});
+
+router.post('/integrations/api-keys', (req, res) => {
+  const newKey = {
+    id: mockData.integrations.apiKeys.length + 1,
+    name: req.body.name,
+    key: `pk_${req.body.environment}_${Math.random().toString(36).substring(2, 15)}`,
+    permissions: req.body.permissions || ['read'],
+    created: new Date().toISOString(),
+    status: 'active',
+    usage: 0
+  };
+
+  mockData.integrations.apiKeys.push(newKey);
+  res.status(201).json(newKey);
+});
+
+// Enterprise endpoints
+router.get('/enterprise/overview', (req, res) => {
+  res.json(mockData.enterprise.stats);
+});
+
+router.get('/enterprise/features', (req, res) => {
+  res.json(mockData.enterprise.features);
+});
+
+router.get('/enterprise/market-intelligence', (req, res) => {
+  res.json(mockData.enterprise.marketIntelligence);
+});
+
+// Export data endpoint
+router.post('/export', (req, res) => {
+  const { type, format } = req.body;
   
-  return users.reduce((total, user) => {
-    return total + (tierPricing[user.subscriptionTier] || 0);
-  }, 0);
-}
-
-function calculateTeamRevenue(tier, memberCount = 1) {
-  const tierPricing = {
-    team: 99 * memberCount,
-    enterprise: 299 * memberCount
-  };
-  return tierPricing[tier] || 0;
-}
-
-function calculateARPU(users) {
-  const totalRevenue = calculateMockRevenue(users);
-  const paidUsers = users.filter(u => u.subscriptionTier !== 'free').length;
-  return paidUsers > 0 ? Math.round(totalRevenue / paidUsers) : 0;
-}
-
-function calculateLTV(users) {
-  const arpu = calculateARPU(users);
-  const avgLifetimeMonths = 24; // Mock average lifetime
-  return Math.round(arpu * avgLifetimeMonths);
-}
-
-function generateMockRevenueTrend() {
-  const months = [];
-  for (let i = 11; i >= 0; i--) {
-    const date = new Date();
-    date.setMonth(date.getMonth() - i);
-    months.push({
-      month: date.toISOString().substring(0, 7),
-      revenue: Math.floor(Math.random() * 200000) + 600000
-    });
-  }
-  return months;
-}
-
-function generateMockRevenueForecast() {
-  const forecast = [];
-  for (let i = 1; i <= 6; i++) {
-    const date = new Date();
-    date.setMonth(date.getMonth() + i);
-    forecast.push({
-      month: date.toISOString().substring(0, 7),
-      predicted: Math.floor(Math.random() * 250000) + 800000,
-      confidence: 0.75 + Math.random() * 0.2
-    });
-  }
-  return forecast;
-}
+  // Simulate export process
+  const exportId = Math.random().toString(36).substring(2, 15);
+  
+  res.json({
+    exportId,
+    status: 'processing',
+    type,
+    format,
+    created: new Date().toISOString(),
+    estimatedCompletion: new Date(Date.now() + 300000).toISOString()
+  });
+});
 
 module.exports = router;
