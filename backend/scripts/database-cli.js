@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-const DatabaseAdapter = require('../src/services/databaseAdapter');
+const { DatabaseAdapter } = require('../src/services/databaseAdapter');
 const DatabaseMigrator = require('../src/utils/databaseMigrator');
 const { cacheManager } = require('../src/services/cacheManager');
 const fs = require('fs');

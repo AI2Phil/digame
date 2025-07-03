@@ -14,10 +14,20 @@
     "db:backup": "node scripts/database-cli.js backup",
     "db:migrate": "node scripts/database-cli.js migrate",
     "db:test-migration": "node scripts/database-cli.js test-migration",
-    "cache:clear": "node scripts/database-cli.js clear-cache"
+    "cache:clear": "node scripts/database-cli.js clear-cache",
+    "icache": "node scripts/intelligent-cache-cli.js",
+    "icache:analytics": "node scripts/intelligent-cache-cli.js analytics",
+    "icache:health": "node scripts/intelligent-cache-cli.js health",
+    "icache:warm": "node scripts/intelligent-cache-cli.js warm",
+    "icache:predictive": "node scripts/intelligent-cache-cli.js predictive",
+    "icache:optimize": "node scripts/intelligent-cache-cli.js optimize",
+    "icache:patterns": "node scripts/intelligent-cache-cli.js patterns",
+    "icache:strategies": "node scripts/intelligent-cache-cli.js strategies",
+    "icache:clear": "node scripts/intelligent-cache-cli.js clear"
   },
   "bin": {
-    "digame-db": "./scripts/database-cli.js"
+    "digame-db": "./scripts/database-cli.js",
+    "digame-icache": "./scripts/intelligent-cache-cli.js"
   },
   "keywords": [
     "digame",

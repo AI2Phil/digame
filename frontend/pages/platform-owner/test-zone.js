@@ -257,6 +257,7 @@ export default function TestZone() {
                 { id: 'suites', name: 'Test Suites', icon: BeakerIcon },
                 { id: 'results', name: 'Test Results', icon: DocumentTextIcon },
                 { id: 'monitoring', name: 'System Monitoring', icon: ChartBarIcon },
+                { id: 'intelligent-cache', name: 'Intelligent Cache', icon: CogIcon },
                 { id: 'debugging', name: 'Debug Tools', icon: BugAntIcon }
               ].map((tab) => (
                 <button
@@ -819,6 +820,385 @@ export default function TestZone() {
                     >
                       View Detailed Database Health
                     </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'intelligent-cache' && (
+              <div>
+                <h3 className="text-lg font-medium text-gray-900 mb-6">Intelligent Cache Management & Analytics</h3>
+                
+                {/* Intelligent Cache Health */}
+                <div className="mb-8">
+                  <h4 className="text-md font-medium text-gray-900 mb-4">Intelligent Cache Health</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {[
+                      {
+                        name: 'Cache Analytics',
+                        endpoint: '/api/intelligent-cache/analytics',
+                        description: 'Comprehensive cache performance metrics and usage patterns',
+                        color: 'bg-blue-500',
+                        icon: ChartBarIcon
+                      },
+                      {
+                        name: 'Health Status',
+                        endpoint: '/api/intelligent-cache/health',
+                        description: 'Intelligent cache system health and component status',
+                        color: 'bg-green-500',
+                        icon: CheckCircleIcon
+                      },
+                      {
+                        name: 'Usage Patterns',
+                        endpoint: '/api/intelligent-cache/patterns',
+                        description: 'Access patterns and predictive analytics data',
+                        color: 'bg-purple-500',
+                        icon: DatabaseIcon
+                      },
+                      {
+                        name: 'Performance Metrics',
+                        endpoint: '/api/intelligent-cache/performance',
+                        description: 'Real-time performance metrics and optimization data',
+                        color: 'bg-orange-500',
+                        icon: RocketLaunchIcon
+                      },
+                      {
+                        name: 'Warming Strategies',
+                        endpoint: '/api/intelligent-cache/strategies',
+                        description: 'Cache warming strategies and execution status',
+                        color: 'bg-red-500',
+                        icon: ArrowPathIcon
+                      },
+                      {
+                        name: 'Cache Management',
+                        endpoint: '/api/intelligent-cache/clear',
+                        description: 'Clear caches and reset intelligent features',
+                        color: 'bg-gray-500',
+                        icon: XCircleIcon
+                      }
+                    ].map((endpoint, index) => (
+                      <div key={index} className="bg-white border border-gray-200 rounded-lg p-4">
+                        <div className="flex items-center mb-3">
+                          <div className={`p-2 rounded-lg ${endpoint.color}`}>
+                            <endpoint.icon className="h-5 w-5 text-white" />
+                          </div>
+                          <div className="ml-3">
+                            <h5 className="text-sm font-medium text-gray-900">{endpoint.name}</h5>
+                            <p className="text-xs text-gray-500">{endpoint.endpoint}</p>
+                          </div>
+                        </div>
+                        <p className="text-xs text-gray-600 mb-3">{endpoint.description}</p>
+                        <div className="flex space-x-2">
+                          <button
+                            onClick={() => window.open(endpoint.endpoint, '_blank')}
+                            className="flex-1 bg-gray-100 text-gray-700 px-3 py-2 rounded text-xs font-medium hover:bg-gray-200"
+                          >
+                            {endpoint.name.includes('Clear') ? 'Manage' : 'View Live'}
+                          </button>
+                          <button
+                            onClick={() => navigator.clipboard.writeText(window.location.origin + endpoint.endpoint)}
+                            className="px-3 py-2 text-gray-500 hover:text-gray-700"
+                            title="Copy URL"
+                          >
+                            <DocumentTextIcon className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Cache Warming Actions */}
+                <div className="mb-8">
+                  <h4 className="text-md font-medium text-gray-900 mb-4">Cache Warming Strategies</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {[
+                      {
+                        name: 'Critical Data',
+                        strategy: 'critical-data',
+                        description: 'Warm critical system data and active user sessions',
+                        priority: 1,
+                        frequency: '5 minutes',
+                        color: 'bg-red-500'
+                      },
+                      {
+                        name: 'User Behavior',
+                        strategy: 'user-behavior',
+                        description: 'Warm data based on predicted user behavior patterns',
+                        priority: 2,
+                        frequency: '10 minutes',
+                        color: 'bg-blue-500'
+                      },
+                      {
+                        name: 'Analytics Reports',
+                        strategy: 'analytics-reports',
+                        description: 'Warm frequently accessed analytics and reports',
+                        priority: 3,
+                        frequency: '15 minutes',
+                        color: 'bg-green-500'
+                      },
+                      {
+                        name: 'API Endpoints',
+                        strategy: 'api-endpoints',
+                        description: 'Warm popular API endpoint responses',
+                        priority: 4,
+                        frequency: '20 minutes',
+                        color: 'bg-purple-500'
+                      },
+                      {
+                        name: 'Predictive Content',
+                        strategy: 'predictive-content',
+                        description: 'Warm content based on ML predictions and trends',
+                        priority: 5,
+                        frequency: '30 minutes',
+                        color: 'bg-orange-500'
+                      },
+                      {
+                        name: 'Peak Hours',
+                        strategy: 'peak-hours',
+                        description: 'Prepare cache for peak usage hours',
+                        priority: 6,
+                        frequency: '1 hour',
+                        color: 'bg-indigo-500'
+                      }
+                    ].map((strategy, index) => (
+                      <div key={index} className="bg-white border border-gray-200 rounded-lg p-4">
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center">
+                            <div className={`w-3 h-3 rounded-full ${strategy.color} mr-2`}></div>
+                            <h5 className="text-sm font-medium text-gray-900">{strategy.name}</h5>
+                          </div>
+                          <span className="text-xs text-gray-500">P{strategy.priority}</span>
+                        </div>
+                        <p className="text-xs text-gray-600 mb-3">{strategy.description}</p>
+                        <div className="flex justify-between items-center mb-3">
+                          <span className="text-xs text-gray-500">Frequency: {strategy.frequency}</span>
+                        </div>
+                        <button
+                          onClick={async () => {
+                            try {
+                              const response = await fetch('/api/intelligent-cache/warm', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ strategy: strategy.strategy })
+                              });
+                              const result = await response.json();
+                              alert(`Strategy executed: ${result.status}\nWarmed ${result.data?.warmedCount || 0} items`);
+                            } catch (error) {
+                              alert('Strategy execution failed: ' + error.message);
+                            }
+                          }}
+                          className="w-full bg-gray-100 text-gray-700 px-3 py-2 rounded text-xs font-medium hover:bg-gray-200"
+                        >
+                          Execute Strategy
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Intelligent Cache Actions */}
+                <div className="mb-8">
+                  <h4 className="text-md font-medium text-gray-900 mb-4">Intelligent Cache Actions</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div className="bg-white border border-gray-200 rounded-lg p-4">
+                      <div className="flex items-center mb-3">
+                        <div className="p-2 rounded-lg bg-blue-500">
+                          <RocketLaunchIcon className="h-5 w-5 text-white" />
+                        </div>
+                        <div className="ml-3">
+                          <h5 className="text-sm font-medium text-gray-900">Predictive Warming</h5>
+                          <p className="text-xs text-gray-500">AI-powered cache warming</p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={async () => {
+                          try {
+                            const response = await fetch('/api/intelligent-cache/predictive-warm', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ maxItems: 50, minFrequency: 5 })
+                            });
+                            const result = await response.json();
+                            alert(`Predictive warming: ${result.status}\nWarmed ${result.data?.warmedCount || 0} items`);
+                          } catch (error) {
+                            alert('Predictive warming failed: ' + error.message);
+                          }
+                        }}
+                        className="w-full bg-blue-100 text-blue-700 px-3 py-2 rounded text-xs font-medium hover:bg-blue-200"
+                      >
+                        Execute Warming
+                      </button>
+                    </div>
+                    
+                    <div className="bg-white border border-gray-200 rounded-lg p-4">
+                      <div className="flex items-center mb-3">
+                        <div className="p-2 rounded-lg bg-green-500">
+                          <CogIcon className="h-5 w-5 text-white" />
+                        </div>
+                        <div className="ml-3">
+                          <h5 className="text-sm font-medium text-gray-900">Auto-Optimization</h5>
+                          <p className="text-xs text-gray-500">Optimize cache performance</p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={async () => {
+                          try {
+                            const response = await fetch('/api/intelligent-cache/optimize', {
+                              method: 'POST'
+                            });
+                            const result = await response.json();
+                            alert(`Auto-optimization: ${result.status}\nApplied ${result.data?.count || 0} optimizations`);
+                          } catch (error) {
+                            alert('Auto-optimization failed: ' + error.message);
+                          }
+                        }}
+                        className="w-full bg-green-100 text-green-700 px-3 py-2 rounded text-xs font-medium hover:bg-green-200"
+                      >
+                        Optimize Now
+                      </button>
+                    </div>
+                    
+                    <div className="bg-white border border-gray-200 rounded-lg p-4">
+                      <div className="flex items-center mb-3">
+                        <div className="p-2 rounded-lg bg-purple-500">
+                          <ChartBarIcon className="h-5 w-5 text-white" />
+                        </div>
+                        <div className="ml-3">
+                          <h5 className="text-sm font-medium text-gray-900">Usage Analytics</h5>
+                          <p className="text-xs text-gray-500">View access patterns</p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => window.open('/api/intelligent-cache/patterns?limit=100&sortBy=frequency', '_blank')}
+                        className="w-full bg-purple-100 text-purple-700 px-3 py-2 rounded text-xs font-medium hover:bg-purple-200"
+                      >
+                        View Patterns
+                      </button>
+                    </div>
+                    
+                    <div className="bg-white border border-gray-200 rounded-lg p-4">
+                      <div className="flex items-center mb-3">
+                        <div className="p-2 rounded-lg bg-red-500">
+                          <XCircleIcon className="h-5 w-5 text-white" />
+                        </div>
+                        <div className="ml-3">
+                          <h5 className="text-sm font-medium text-gray-900">Clear All</h5>
+                          <p className="text-xs text-gray-500">Reset intelligent cache</p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={async () => {
+                          if (confirm('Clear all intelligent cache data including patterns and metrics?')) {
+                            try {
+                              const response = await fetch('/api/intelligent-cache/clear', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ clearPatterns: true, clearMetrics: true })
+                              });
+                              const result = await response.json();
+                              alert(`Cache cleared: ${result.status}\n${JSON.stringify(result.data.results, null, 2)}`);
+                            } catch (error) {
+                              alert('Cache clear failed: ' + error.message);
+                            }
+                          }
+                        }}
+                        className="w-full bg-red-100 text-red-700 px-3 py-2 rounded text-xs font-medium hover:bg-red-200"
+                      >
+                        Clear All
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Intelligent Cache Features */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="bg-gray-50 rounded-lg p-6">
+                    <h4 className="text-md font-medium text-gray-900 mb-4">Intelligent Features</h4>
+                    <div className="space-y-3">
+                      {[
+                        { feature: 'Predictive Caching', status: 'active', description: 'AI-powered cache predictions' },
+                        { feature: 'Usage Pattern Learning', status: 'active', description: 'Automatic pattern recognition' },
+                        { feature: 'Smart Invalidation', status: 'active', description: 'Cascade invalidation with related data' },
+                        { feature: 'Auto-Optimization', status: 'active', description: 'Performance-based auto-tuning' },
+                        { feature: 'Warming Strategies', status: 'active', description: '6 intelligent warming strategies' },
+                        { feature: 'Performance Analytics', status: 'active', description: 'Real-time cache analytics' }
+                      ].map((item, index) => (
+                        <div key={index} className="flex items-center justify-between bg-white rounded-lg p-3">
+                          <div className="flex items-center">
+                            <CheckCircleIcon className="h-4 w-4 text-green-500 mr-2" />
+                            <div>
+                              <span className="text-sm font-medium text-gray-900">{item.feature}</span>
+                              <p className="text-xs text-gray-500">{item.description}</p>
+                            </div>
+                          </div>
+                          <span className="text-xs text-green-600 font-medium">{item.status}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="bg-gray-50 rounded-lg p-6">
+                    <h4 className="text-md font-medium text-gray-900 mb-4">Cache Manager Types</h4>
+                    <div className="space-y-3">
+                      {[
+                        { type: 'General Cache', description: 'Multi-layer memory + Redis caching', status: 'healthy' },
+                        { type: 'User Cache', description: 'User data and session management', status: 'healthy' },
+                        { type: 'Analytics Cache', description: 'Analytics data and reports', status: 'healthy' },
+                        { type: 'API Cache', description: 'API response caching', status: 'healthy' },
+                        { type: 'Intelligent Manager', description: 'AI-powered cache orchestration', status: 'healthy' },
+                        { type: 'Warming Strategies', description: 'Automated cache warming', status: 'healthy' }
+                      ].map((item, index) => (
+                        <div key={index} className="flex items-center justify-between bg-white rounded-lg p-3">
+                          <div className="flex items-center">
+                            <div className="w-3 h-3 rounded-full bg-green-500 mr-3"></div>
+                            <div>
+                              <span className="text-sm font-medium text-gray-900">{item.type}</span>
+                              <p className="text-xs text-gray-500">{item.description}</p>
+                            </div>
+                          </div>
+                          <span className="text-xs text-green-600 font-medium">{item.status}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Quick Test Actions */}
+                <div className="mt-6">
+                  <h4 className="text-md font-medium text-gray-900 mb-4">Quick Test Actions</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    {[
+                      {
+                        name: 'Test Analytics',
+                        action: () => window.open('/api/intelligent-cache/analytics', '_blank'),
+                        description: 'View comprehensive cache analytics'
+                      },
+                      {
+                        name: 'Test Health',
+                        action: () => window.open('/api/intelligent-cache/health', '_blank'),
+                        description: 'Check intelligent cache health'
+                      },
+                      {
+                        name: 'Test Patterns',
+                        action: () => window.open('/api/intelligent-cache/patterns', '_blank'),
+                        description: 'View usage patterns and predictions'
+                      },
+                      {
+                        name: 'Test Performance',
+                        action: () => window.open('/api/intelligent-cache/performance', '_blank'),
+                        description: 'View real-time performance metrics'
+                      }
+                    ].map((action, index) => (
+                      <button
+                        key={index}
+                        onClick={action.action}
+                        className="bg-white border border-gray-200 rounded-lg p-4 text-left hover:bg-gray-50 transition-colors"
+                      >
+                        <h5 className="text-sm font-medium text-gray-900 mb-2">{action.name}</h5>
+                        <p className="text-xs text-gray-600">{action.description}</p>
+                      </button>
+                    ))}
                   </div>
                 </div>
               </div>

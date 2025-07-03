@@ -12,6 +12,7 @@ Welcome to **Digame** - the Digital Professional Twin Platform! This guide will 
 - [Authentication System](#-authentication-system)
 - [First Steps](#-first-steps)
 - [API Documentation](#-api-documentation)
+- [CLI Commands](#️-cli-commands)
 - [Common Tasks](#-common-tasks)
 - [Troubleshooting](#-troubleshooting)
 - [Next Steps](#-next-steps)
@@ -431,6 +432,131 @@ const features = {
   'integrations.setup': ['team', 'enterprise']
 };
 ```
+
+## 🛠️ CLI Commands
+
+### Database Management CLI
+
+The platform includes comprehensive CLI tools for database management and intelligent cache operations.
+
+#### Database CLI Commands
+
+```bash
+# Navigate to backend directory
+cd backend
+
+# Database Status and Health
+npm run db:status              # Show database connection status
+npm run db:health              # Comprehensive health check with table status
+npm run db:schema              # Display database schema information
+
+# Data Management
+npm run db:export [filename]   # Export database data to JSON
+npm run db:import <filename>   # Import data from JSON file
+npm run db:backup              # Create complete database backup
+npm run db:migrate             # Migrate from SQLite to PostgreSQL
+
+# Migration and Testing
+npm run db:test-migration      # Test migration without executing (dry run)
+npm run cache:clear            # Clear all cache layers
+```
+
+#### Intelligent Cache CLI Commands
+
+```bash
+# Cache Analytics and Health
+npm run icache:analytics       # View comprehensive cache analytics
+npm run icache:health          # Check intelligent cache system health
+npm run icache:performance     # View real-time performance metrics
+npm run icache:patterns        # View usage patterns and access analytics
+
+# Cache Warming Strategies
+npm run icache:strategies      # List all available warming strategies
+npm run icache:warm <strategy> # Execute specific warming strategy
+npm run icache:predictive      # Execute AI-powered predictive warming
+
+# Cache Optimization
+npm run icache:optimize        # Run auto-optimization algorithms
+npm run icache:clear [options] # Clear cache data with options
+```
+
+#### Available Cache Warming Strategies
+
+| Strategy | Priority | Frequency | Description |
+|----------|----------|-----------|-------------|
+| `critical-data` | 1 | 5 minutes | Warm critical system data and active users |
+| `user-behavior` | 2 | 10 minutes | Warm data based on predicted user patterns |
+| `analytics-reports` | 3 | 15 minutes | Warm frequently accessed analytics |
+| `api-endpoints` | 4 | 20 minutes | Warm popular API endpoint responses |
+| `predictive-content` | 5 | 30 minutes | Warm content based on ML predictions |
+| `peak-hours` | 6 | 1 hour | Prepare cache for peak usage hours |
+
+#### CLI Examples
+
+```bash
+# Check database health
+npm run db:health
+
+# Export current database
+npm run db:export my-backup.json
+
+# Execute critical data warming
+npm run icache:warm critical-data
+
+# View cache analytics
+npm run icache:analytics
+
+# Check intelligent cache health
+npm run icache:health
+
+# Run predictive warming
+npm run icache:predictive
+
+# Clear all cache data
+npm run icache:clear --all
+```
+
+#### CLI Output Examples
+
+```bash
+# Database Health Check Output
+$ npm run db:health
+🔍 Comprehensive Health Check
+
+Overall Status: ✅ HEALTHY
+
+Table Status:
+  ✅ users (8 records)
+  ✅ notifications (4 records)
+  ✅ analytics_events (102 records)
+  [... 18 total tables]
+
+Database Size: 0.25 MB
+
+# Cache Warming Output
+$ npm run icache:warm critical-data
+🔥 CACHE WARMING RESULTS
+========================
+Strategy: critical-data
+Items Warmed: 7
+Timestamp: 2025-07-03T15:55:28.317Z
+
+📊 Detailed Results:
+   1. users: 1 items
+   2. user_preferences: 1 items
+   3. analytics: 5 items
+
+✅ Warming strategy executed successfully
+```
+
+#### Advanced CLI Features
+
+- **Real-time Health Monitoring**: Live database and cache status
+- **Intelligent Cache Analytics**: Usage patterns and performance metrics
+- **Automated Warming Strategies**: 6 priority-based warming algorithms
+- **Migration Tools**: SQLite to PostgreSQL migration support
+- **Performance Optimization**: Auto-tuning and optimization algorithms
+- **Comprehensive Logging**: Detailed operation logs and status reports
 
 ## 🔧 Common Tasks
 

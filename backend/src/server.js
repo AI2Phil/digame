@@ -8,6 +8,8 @@ require('dotenv').config();
 const redisService = require('./services/redis');
 const performanceMonitor = require('./services/performance');
 const { cacheManager } = require('./services/cacheManager');
+const { intelligentCacheManager } = require('./services/intelligentCacheManager');
+const { cacheWarmingStrategies } = require('./services/cacheWarmingStrategies');
 
 // Import routes and middleware
 const authRoutes = require('./routes/auth');
@@ -29,6 +31,7 @@ const enterpriseRoutes = require('./routes/enterprise');
 const notificationsRoutes = require('./routes/notifications');
 const settingsRoutes = require('./routes/settings');
 const healthRoutes = require('./routes/health');
+const intelligentCacheRoutes = require('./routes/intelligentCache');
 const { detectDemoMode } = require('./middleware/auth');
 const { getOptimalPort } = require('./utils/portDetection');
 const ServiceDiscovery = require('./utils/serviceDiscovery');
@@ -83,7 +86,11 @@ app.get('/health-legacy', async (req, res) => {
         redisIntegration: healthData.redis.status !== 'disabled',
         databaseAdapter: true,
         multiLayerCache: true,
-        migrationTools: true
+        migrationTools: true,
+        intelligentCaching: true,
+        predictiveCaching: true,
+        cacheWarmingStrategies: true,
+        autoOptimization: true
       }
     });
   } catch (error) {
@@ -138,6 +145,7 @@ app.use('/admin', adminRoutes);
 app.use('/enterprise', enterpriseRoutes);
 app.use('/notifications', notificationsRoutes);
 app.use('/settings', settingsRoutes);
+app.use('/api/intelligent-cache', intelligentCacheRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
@@ -172,6 +180,9 @@ const startServer = async () => {
       console.log(`🗃️  Database: http://localhost:${PORT}/health/database`);
       console.log(`🧠 Cache: http://localhost:${PORT}/health/cache`);
       console.log(`🔧 Migration: http://localhost:${PORT}/health/migration`);
+      console.log(`🤖 Intelligent Cache: http://localhost:${PORT}/api/intelligent-cache/health`);
+      console.log(`🔥 Cache Warming: http://localhost:${PORT}/api/intelligent-cache/strategies`);
+      console.log(`📈 Cache Analytics: http://localhost:${PORT}/api/intelligent-cache/analytics`);
       console.log(`🔐 Auth endpoint: http://localhost:${PORT}/auth/login`);
       console.log(`🎮 Demo endpoint: http://localhost:${PORT}/auth/demo`);
       console.log('================================================');

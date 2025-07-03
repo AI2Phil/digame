@@ -140,6 +140,11 @@ class DatabaseAdapter {
         return this.connection.importData(data);
     }
 
+    // Generic query method
+    async query(sql, params = []) {
+        return this.connection.query(sql, params);
+    }
+
     // Connection management
     async close() {
         if (this.connection && this.connection.close) {
@@ -513,6 +518,22 @@ class SQLiteAdapter {
         };
     }
 
+    // Generic query method for SQLite
+    query(sql, params = []) {
+        try {
+            if (sql.trim().toUpperCase().startsWith('SELECT')) {
+                const stmt = this.db.prepare(sql);
+                return stmt.all(...params);
+            } else {
+                const stmt = this.db.prepare(sql);
+                const result = stmt.run(...params);
+                return { changes: result.changes, lastInsertRowid: result.lastInsertRowid };
+            }
+        } catch (error) {
+            throw new Error(`SQLite query error: ${error.message}`);
+        }
+    }
+
     close() {
         if (this.db) {
             this.db.close();
@@ -679,8 +700,22 @@ class PostgreSQLAdapter {
     async deleteTask(taskId, userId) { return true; }
     async recordAnalyticsEvent(eventData) { return true; }
     async getAnalyticsData(type, userId, timeRange) { return []; }
+    // Generic query method for PostgreSQL
+    async query(sql, params = []) {
+        try {
+            const result = await this.client.query(sql, params);
+            return result.rows;
+        } catch (error) {
+            throw new Error(`PostgreSQL query error: ${error.message}`);
+        }
+    }
+
     async exportData() { return {}; }
     async importData(data) { return { success: true }; }
 }
 
-module.exports = DatabaseAdapter;
+// Export singleton instance
+const databaseAdapter = new DatabaseAdapter();
+
+module.exports = databaseAdapter;
+module.exports.DatabaseAdapter = DatabaseAdapter;
