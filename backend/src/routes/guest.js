@@ -446,4 +446,88 @@ router.get('/analytics', (req, res) => {
   });
 });
 
+// Guest authentication (temporary access)
+router.post('/auth', (req, res) => {
+  const { email, accessType = 'demo', sessionDuration = 60 } = req.body;
+
+  if (!email) {
+    return res.status(400).json({ error: 'Email is required' });
+  }
+
+  // Validate email format
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    return res.status(400).json({ error: 'Invalid email format' });
+  }
+
+  // Generate temporary session
+  const session = {
+    id: Math.random().toString(36).substring(2, 15),
+    email,
+    accessType, // 'demo', 'trial', 'preview'
+    createdAt: new Date().toISOString(),
+    expiresAt: new Date(Date.now() + sessionDuration * 60 * 1000).toISOString(),
+    permissions: {
+      canViewDemos: true,
+      canAccessFeatures: accessType === 'trial',
+      canCreateProjects: accessType === 'trial',
+      canInviteUsers: false,
+      maxProjects: accessType === 'trial' ? 3 : 1,
+      maxTasks: accessType === 'trial' ? 50 : 10
+    },
+    features: {
+      analytics: accessType !== 'demo',
+      digitalTwin: accessType === 'trial',
+      automation: accessType === 'trial',
+      integrations: false,
+      reporting: accessType !== 'demo'
+    }
+  };
+
+  // Simulate different access levels
+  const accessLevels = {
+    demo: {
+      message: 'Demo access granted! Explore our features with sample data.',
+      duration: '60 minutes',
+      limitations: ['Sample data only', 'Limited features', 'No data persistence']
+    },
+    trial: {
+      message: 'Trial access activated! Full feature access for limited time.',
+      duration: `${sessionDuration} minutes`,
+      limitations: ['Time-limited access', 'Limited projects', 'No team features']
+    },
+    preview: {
+      message: 'Preview access granted! Explore key features.',
+      duration: '30 minutes',
+      limitations: ['Read-only access', 'Limited navigation', 'No modifications']
+    }
+  };
+
+  const accessInfo = accessLevels[accessType] || accessLevels.demo;
+
+  res.status(201).json({
+    sessionId: session.id,
+    accessToken: `guest_${session.id}`,
+    email: session.email,
+    accessType: session.accessType,
+    expiresAt: session.expiresAt,
+    permissions: session.permissions,
+    features: session.features,
+    message: accessInfo.message,
+    duration: accessInfo.duration,
+    limitations: accessInfo.limitations,
+    nextSteps: [
+      'Explore the dashboard and key features',
+      'Try creating a sample project',
+      'View analytics and reports',
+      'Consider upgrading to a full account'
+    ],
+    upgradeOptions: [
+      { tier: 'Individual Pro', action: 'Start 14-day trial', url: '/signup?tier=pro' },
+      { tier: 'Team', action: 'Start 14-day trial', url: '/signup?tier=team' },
+      { tier: 'Enterprise', action: 'Contact sales', url: '/contact' }
+    ]
+  });
+});
+
 module.exports = router;
