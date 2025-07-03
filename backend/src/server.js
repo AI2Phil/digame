@@ -7,6 +7,10 @@ require('dotenv').config();
 // Import routes and middleware
 const authRoutes = require('./routes/auth');
 const teamRoutes = require('./routes/teams');
+const analyticsRoutes = require('./routes/analytics');
+const aiToolsRoutes = require('./routes/ai-tools');
+const platformOwnerRoutes = require('./routes/platform-owner');
+const digitalTwinRoutes = require('./routes/digital-twin');
 const { detectDemoMode } = require('./middleware/auth');
 const { getOptimalPort } = require('./utils/portDetection');
 const ServiceDiscovery = require('./utils/serviceDiscovery');
@@ -70,6 +74,10 @@ app.get('/service-info', (req, res) => {
 // API Routes
 app.use('/auth', authRoutes);
 app.use('/teams', teamRoutes);
+app.use('/analytics', analyticsRoutes);
+app.use('/ai-tools', aiToolsRoutes);
+app.use('/platform-owner', platformOwnerRoutes);
+app.use('/digital-twin', digitalTwinRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
