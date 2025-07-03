@@ -1,7 +1,7 @@
 // CRITICAL DEBUG: Log at module level
 console.log('🔥🔥🔥 ComprehensiveNavigation MODULE LOADING - THIS SHOULD ALWAYS SHOW! 🔥🔥🔥');
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useRouter } from 'next/router';
 import {
   Shield, ChevronDown, ChevronRight, Menu, X, Crown, Building, Globe,
@@ -20,27 +20,30 @@ import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
 import { Avatar, AvatarFallback } from '../ui/Avatar';
 import { Separator } from '../ui/Separator';
+import { AccessControlService, type SubscriptionTier, type MenuItemAccessControl } from '../../services/accessControl';
 
 interface User {
   name?: string;
   role?: string;
   is_platform_owner?: boolean;
-  subscription_tier?: string;
+  subscription_tier?: SubscriptionTier;
   tenant_id?: number;
   tenant_name?: string;
   permissions?: string[];
 }
 
-interface MenuItem {
+interface MenuItem extends Partial<MenuItemAccessControl> {
+  id?: string;
   label: string;
   icon: React.ReactNode;
   path: string;
   subtitle?: string;
   requiredRoles?: string[];
   requiredPermissions?: string[];
-  minSubscriptionTier?: string;
+  minSubscriptionTier?: SubscriptionTier;
   platformOwnerOnly?: boolean;
   description?: string;
+  badge?: string;
 }
 
 interface MenuSection {
@@ -50,9 +53,10 @@ interface MenuSection {
   items: MenuItem[];
   requiredRoles?: string[];
   requiredPermissions?: string[];
-  minSubscriptionTier?: string;
+  minSubscriptionTier?: SubscriptionTier;
   platformOwnerOnly?: boolean;
   description?: string;
+  badge?: string;
 }
 
 interface ExpandedSections {
@@ -89,6 +93,11 @@ const ComprehensiveNavigation: React.FC<ComprehensiveNavigationProps> = ({
   const [expandedSections, setExpandedSections] = useState<ExpandedSections>({});
   const [searchTerm, setSearchTerm] = useState('');
 
+  // Initialize access control service
+  const accessControl = useMemo(() => {
+    return new AccessControlService(currentUser);
+  }, [currentUser]);
+
   const toggleSection = (section: string): void => {
     setExpandedSections(prev => ({
       ...prev,
@@ -104,10 +113,10 @@ const ComprehensiveNavigation: React.FC<ComprehensiveNavigationProps> = ({
       icon: <Home className="w-5 h-5" />,
       description: 'Essential platform features and dashboard',
       items: [
-        { label: 'Dashboard', icon: <BarChart3 className="w-4 h-4" />, path: '/dashboard', description: 'Main dashboard overview' },
-        { label: 'User Profile', icon: <Users className="w-4 h-4" />, path: '/profile', description: 'User profile management' },
-        { label: 'Settings', icon: <Settings className="w-4 h-4" />, path: '/settings', description: 'User settings and preferences' },
-        { label: 'Notifications', icon: <Bell className="w-4 h-4" />, path: '/notifications', description: 'Notification center' }
+        { id: 'dashboard', label: 'Dashboard', icon: <BarChart3 className="w-4 h-4" />, path: '/dashboard', description: 'Main dashboard overview' },
+        { id: 'profile', label: 'User Profile', icon: <Users className="w-4 h-4" />, path: '/profile', description: 'User profile management' },
+        { id: 'settings', label: 'Settings', icon: <Settings className="w-4 h-4" />, path: '/settings', description: 'User settings and preferences' },
+        { id: 'notifications', label: 'Notifications', icon: <Bell className="w-4 h-4" />, path: '/notifications', description: 'Notification center' }
       ]
     },
     {
@@ -116,15 +125,57 @@ const ComprehensiveNavigation: React.FC<ComprehensiveNavigationProps> = ({
       icon: <BarChart3 className="w-5 h-5" />,
       description: 'Comprehensive analytics and AI-powered insights',
       items: [
-        { label: 'Web Analytics', icon: <Globe className="w-4 h-4" />, path: '/analytics/web', description: 'Web usage analytics' },
-        { label: 'Mobile Analytics', icon: <Smartphone className="w-4 h-4" />, path: '/analytics/mobile', description: 'Mobile app analytics' },
-        { label: 'Advanced Analytics', icon: <TrendingUp className="w-4 h-4" />, path: '/analytics/advanced', description: 'Advanced analytics dashboard' },
-        { label: 'Behavioral Analytics', icon: <Brain className="w-4 h-4" />, path: '/analytics/behavioral', subtitle: 'AI-POWERED' },
-        { label: 'Predictive Analytics', icon: <Eye className="w-4 h-4" />, path: '/analytics/predictive', subtitle: 'AI-POWERED' },
-        { label: 'Pattern Recognition', icon: <Target className="w-4 h-4" />, path: '/analytics/patterns', subtitle: 'AI-POWERED' },
-        { label: 'Anomaly Detection', icon: <AlertTriangle className="w-4 h-4" />, path: '/analytics/anomalies', subtitle: 'AI-POWERED' },
-        { label: 'Performance Monitoring', icon: <Monitor className="w-4 h-4" />, path: '/analytics/performance', description: 'System performance metrics' },
-        { label: 'Platform Analytics', icon: <Database className="w-4 h-4" />, path: '/analytics/platform', platformOwnerOnly: true }
+        { id: 'web-analytics', label: 'Web Analytics', icon: <Globe className="w-4 h-4" />, path: '/analytics/web', description: 'Web usage analytics' },
+        { id: 'mobile-analytics', label: 'Mobile Analytics', icon: <Smartphone className="w-4 h-4" />, path: '/analytics/mobile', description: 'Mobile app analytics' },
+        { id: 'advanced-analytics', label: 'Advanced Analytics', icon: <TrendingUp className="w-4 h-4" />, path: '/analytics/advanced', description: 'Advanced analytics dashboard' },
+        {
+          id: 'behavioral-analytics',
+          label: 'Behavioral Analytics',
+          icon: <Brain className="w-4 h-4" />,
+          path: '/analytics/behavioral',
+          subtitle: 'AI-POWERED',
+          requiredTier: 'individual_pro',
+          requiredFeatures: ['behavioral-analytics'],
+          badge: 'AI'
+        },
+        {
+          id: 'predictive-analytics',
+          label: 'Predictive Analytics',
+          icon: <Eye className="w-4 h-4" />,
+          path: '/analytics/predictive',
+          subtitle: 'AI-POWERED',
+          requiredTier: 'individual_pro',
+          requiredFeatures: ['predictive-analytics'],
+          badge: 'AI'
+        },
+        {
+          id: 'pattern-recognition',
+          label: 'Pattern Recognition',
+          icon: <Target className="w-4 h-4" />,
+          path: '/analytics/patterns',
+          subtitle: 'AI-POWERED',
+          requiredTier: 'individual_pro',
+          requiredFeatures: ['pattern-recognition'],
+          badge: 'AI'
+        },
+        {
+          id: 'anomaly-detection',
+          label: 'Anomaly Detection',
+          icon: <AlertTriangle className="w-4 h-4" />,
+          path: '/analytics/anomalies',
+          subtitle: 'AI-POWERED',
+          requiredTier: 'enterprise',
+          requiredFeatures: ['anomaly-detection'],
+          badge: 'AI'
+        },
+        { id: 'performance-monitoring', label: 'Performance Monitoring', icon: <Monitor className="w-4 h-4" />, path: '/analytics/performance', description: 'System performance metrics' },
+        {
+          id: 'platform-analytics',
+          label: 'Platform Analytics',
+          icon: <Database className="w-4 h-4" />,
+          path: '/analytics/platform',
+          platformOwnerOnly: true
+        }
       ]
     },
     {
@@ -133,13 +184,45 @@ const ComprehensiveNavigation: React.FC<ComprehensiveNavigationProps> = ({
       icon: <Brain className="w-5 h-5" />,
       description: 'Digital twin creation and AI-powered features',
       items: [
-        { label: 'My Digital Twin', icon: <Bot className="w-4 h-4" />, path: '/digital-twin/my-twin', subtitle: 'CORE PLATFORM' },
-        { label: 'Digital Twin Onboarding', icon: <Rocket className="w-4 h-4" />, path: '/digital-twin/onboarding', description: 'Setup your digital twin' },
-        { label: 'Intelligence API', icon: <Code className="w-4 h-4" />, path: '/digital-twin/intelligence', subtitle: 'API ACCESS' },
-        { label: 'AI Predictions', icon: <Eye className="w-4 h-4" />, path: '/digital-twin/predictions', subtitle: 'PREDICTIONS' },
-        { label: 'Twin Simulation', icon: <Layers className="w-4 h-4" />, path: '/digital-twin/simulation', subtitle: 'SIMULATION' },
-        { label: 'Behavior Modeling', icon: <Brain className="w-4 h-4" />, path: '/digital-twin/behavior', subtitle: 'MODELING' },
-        { label: 'Twin Analytics', icon: <BarChart3 className="w-4 h-4" />, path: '/digital-twin/analytics', subtitle: 'INSIGHTS' }
+        {
+          id: 'my-digital-twin',
+          label: 'My Digital Twin',
+          icon: <Bot className="w-4 h-4" />,
+          path: '/digital-twin/my-twin',
+          subtitle: 'CORE PLATFORM',
+          requiredTier: 'individual_pro',
+          requiredFeatures: ['digital-twin-basic']
+        },
+        { id: 'digital-twin-onboarding', label: 'Digital Twin Onboarding', icon: <Rocket className="w-4 h-4" />, path: '/digital-twin/onboarding', description: 'Setup your digital twin' },
+        {
+          id: 'intelligence-api',
+          label: 'Intelligence API',
+          icon: <Code className="w-4 h-4" />,
+          path: '/digital-twin/intelligence',
+          subtitle: 'API ACCESS',
+          requiredTier: 'team',
+          requiredFeatures: ['intelligence-api']
+        },
+        {
+          id: 'ai-predictions',
+          label: 'AI Predictions',
+          icon: <Eye className="w-4 h-4" />,
+          path: '/digital-twin/predictions',
+          subtitle: 'PREDICTIONS',
+          requiredTier: 'team',
+          requiredFeatures: ['ai-predictions']
+        },
+        {
+          id: 'twin-simulation',
+          label: 'Twin Simulation',
+          icon: <Layers className="w-4 h-4" />,
+          path: '/digital-twin/simulation',
+          subtitle: 'SIMULATION',
+          requiredTier: 'enterprise',
+          requiredFeatures: ['twin-simulation']
+        },
+        { id: 'behavior-modeling', label: 'Behavior Modeling', icon: <Brain className="w-4 h-4" />, path: '/digital-twin/behavior', subtitle: 'MODELING' },
+        { id: 'twin-analytics', label: 'Twin Analytics', icon: <BarChart3 className="w-4 h-4" />, path: '/digital-twin/analytics', subtitle: 'INSIGHTS' }
       ]
     },
     {
@@ -148,12 +231,65 @@ const ComprehensiveNavigation: React.FC<ComprehensiveNavigationProps> = ({
       icon: <Bot className="w-5 h-5" />,
       description: 'AI-powered tools and automation features',
       items: [
-        { label: 'AI Tools Hub', icon: <Wrench className="w-4 h-4" />, path: '/ai-tools', description: 'Central AI tools dashboard' },
-        { label: 'Writing Assistance', icon: <FileText className="w-4 h-4" />, path: '/ai-tools/writing', subtitle: 'CONTENT CREATION' },
-        { label: 'Voice Processing', icon: <Mic className="w-4 h-4" />, path: '/ai-tools/voice', subtitle: 'VOICE AI' },
-        { label: 'Document Processing', icon: <FileText className="w-4 h-4" />, path: '/ai-tools/documents', subtitle: 'DOCUMENT AI' },
-        { label: 'Email Analysis', icon: <Mail className="w-4 h-4" />, path: '/ai-tools/email', subtitle: 'EMAIL AI' },
-        { label: 'Meeting Insights', icon: <Video className="w-4 h-4" />, path: '/ai-tools/meetings', subtitle: 'MEETING AI' },
+        {
+          id: 'ai-tools-hub',
+          label: 'AI Tools Hub',
+          icon: <Wrench className="w-4 h-4" />,
+          path: '/ai-tools',
+          description: 'Central AI tools dashboard',
+          requiredTier: 'individual_pro',
+          requiredFeatures: ['ai-tools-hub']
+        },
+        {
+          id: 'writing-assistance',
+          label: 'Writing Assistance',
+          icon: <FileText className="w-4 h-4" />,
+          path: '/ai-tools/writing',
+          subtitle: 'CONTENT CREATION',
+          requiredTier: 'individual_pro',
+          requiredFeatures: ['writing-assistance'],
+          badge: 'AI'
+        },
+        {
+          id: 'voice-processing',
+          label: 'Voice Processing',
+          icon: <Mic className="w-4 h-4" />,
+          path: '/ai-tools/voice',
+          subtitle: 'VOICE AI',
+          requiredTier: 'team',
+          requiredFeatures: ['voice-processing'],
+          badge: 'AI'
+        },
+        {
+          id: 'document-processing',
+          label: 'Document Processing',
+          icon: <FileText className="w-4 h-4" />,
+          path: '/ai-tools/documents',
+          subtitle: 'DOCUMENT AI',
+          requiredTier: 'team',
+          requiredFeatures: ['document-processing'],
+          badge: 'AI'
+        },
+        {
+          id: 'email-analysis',
+          label: 'Email Analysis',
+          icon: <Mail className="w-4 h-4" />,
+          path: '/ai-tools/email',
+          subtitle: 'EMAIL AI',
+          requiredTier: 'enterprise',
+          requiredFeatures: ['email-analysis'],
+          badge: 'AI'
+        },
+        {
+          id: 'meeting-insights',
+          label: 'Meeting Insights',
+          icon: <Video className="w-4 h-4" />,
+          path: '/ai-tools/meetings',
+          subtitle: 'MEETING AI',
+          requiredTier: 'enterprise',
+          requiredFeatures: ['meeting-insights'],
+          badge: 'AI'
+        },
         { label: 'Communication Style', icon: <MessageSquare className="w-4 h-4" />, path: '/ai-tools/communication', subtitle: 'STYLE ANALYSIS' },
         { label: 'Mobile AI', icon: <Smartphone className="w-4 h-4" />, path: '/ai-tools/mobile', subtitle: 'MOBILE AI' },
         { label: 'Language Learning', icon: <GraduationCap className="w-4 h-4" />, path: '/ai-tools/language', subtitle: 'LEARNING AI' }
@@ -323,7 +459,7 @@ const ComprehensiveNavigation: React.FC<ComprehensiveNavigationProps> = ({
     }
   ];
 
-  // Role-based access control functions
+  // Enhanced access control functions using AccessControlService
   const hasRole = (requiredRoles?: string[]): boolean => {
     if (!requiredRoles || requiredRoles.length === 0) return true;
     if (!currentUser?.role) return showAllFeatures;
@@ -333,24 +469,13 @@ const ComprehensiveNavigation: React.FC<ComprehensiveNavigationProps> = ({
   const hasPermission = (requiredPermissions?: string[]): boolean => {
     if (!requiredPermissions || requiredPermissions.length === 0) return true;
     if (!currentUser?.permissions) return showAllFeatures;
-    return requiredPermissions.some(permission => 
+    return requiredPermissions.some(permission =>
       currentUser.permissions?.includes(permission)
     );
   };
 
-  const hasSubscriptionTier = (minTier?: string): boolean => {
-    if (!minTier) return true;
-    if (!currentUser?.subscription_tier) return showAllFeatures;
-    
-    const tierHierarchy = ['free', 'individual_pro', 'team', 'enterprise'];
-    const userTierIndex = tierHierarchy.indexOf(currentUser.subscription_tier);
-    const requiredTierIndex = tierHierarchy.indexOf(minTier);
-    
-    return userTierIndex >= requiredTierIndex;
-  };
-
   const isPlatformOwner = (): boolean => {
-    return currentUser?.is_platform_owner === true || isDemoMode || showAllFeatures;
+    return accessControl.isPlatformOwner() || isDemoMode || showAllFeatures;
   };
 
   const canAccessMenuItem = (item: MenuItem): boolean => {
@@ -359,10 +484,16 @@ const ComprehensiveNavigation: React.FC<ComprehensiveNavigationProps> = ({
       return true;
     }
     
+    // Use AccessControlService for enhanced access control
+    if (item.id && (item.requiredTier || item.requiredFeatures || item.platformOwnerOnly)) {
+      return accessControl.canAccessMenuItem(item as MenuItemAccessControl);
+    }
+    
+    // Fallback to legacy checks for items without enhanced access control
     if (item.platformOwnerOnly && !isPlatformOwner()) return false;
     if (!hasRole(item.requiredRoles)) return false;
     if (!hasPermission(item.requiredPermissions)) return false;
-    if (!hasSubscriptionTier(item.minSubscriptionTier)) return false;
+    
     return true;
   };
 
@@ -375,7 +506,6 @@ const ComprehensiveNavigation: React.FC<ComprehensiveNavigationProps> = ({
     if (section.platformOwnerOnly && !isPlatformOwner()) return false;
     if (!hasRole(section.requiredRoles)) return false;
     if (!hasPermission(section.requiredPermissions)) return false;
-    if (!hasSubscriptionTier(section.minSubscriptionTier)) return false;
     
     // Check if at least one item in the section is accessible
     return section.items.some(item => canAccessMenuItem(item));
@@ -419,6 +549,11 @@ const ComprehensiveNavigation: React.FC<ComprehensiveNavigationProps> = ({
             <Badge variant="outline" className="text-xs bg-yellow-50 text-yellow-700 border-yellow-200">
               <Crown className="w-3 h-3 mr-1" />
               Platform Owner
+            </Badge>
+          )}
+          {currentUser?.subscription_tier && (
+            <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
+              {currentUser.subscription_tier.replace('_', ' ').toUpperCase()}
             </Badge>
           )}
         </div>
@@ -518,6 +653,14 @@ const ComprehensiveNavigation: React.FC<ComprehensiveNavigationProps> = ({
                         </div>
                         {item.platformOwnerOnly && (
                           <Crown className="w-3 h-3 ml-auto text-yellow-500" />
+                        )}
+                        {item.badge && (
+                          <Badge variant="outline" className="text-xs ml-2">
+                            {item.badge}
+                          </Badge>
+                        )}
+                        {item.requiredTier && item.id && !accessControl.canAccessMenuItem(item as MenuItemAccessControl) && (
+                          <Lock className="w-3 h-3 ml-auto text-gray-400" />
                         )}
                       </div>
                     </Button>
