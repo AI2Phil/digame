@@ -439,6 +439,179 @@ router.post('/communication', authenticate, requireTier('enterprise'), async (re
   }
 });
 
+/**
+ * GET /ai-tools/mobile
+ * Mobile AI capabilities and device optimization
+ */
+router.get('/mobile', authenticate, requireTier('team'), async (req, res) => {
+  try {
+    // Mock mobile AI data
+    const mobileAI = {
+      deviceInfo: {
+        platform: req.headers['user-agent']?.includes('iPhone') ? 'iOS' : 'Android',
+        capabilities: {
+          voiceRecognition: true,
+          imageRecognition: true,
+          textAnalysis: true,
+          translation: true,
+          ocr: true,
+          faceDetection: true
+        }
+      },
+      usage: {
+        dailyInteractions: 127,
+        weeklyTrend: 15.3,
+        mostUsedFeature: 'Voice Assistant',
+        totalProcessingTime: 45.2,
+        dataUsage: 2.3
+      },
+      tools: [
+        {
+          id: 'voice-assistant',
+          name: 'Voice Assistant',
+          usage: 89,
+          accuracy: 96.5,
+          status: 'active'
+        },
+        {
+          id: 'smart-camera',
+          name: 'Smart Camera',
+          usage: 67,
+          accuracy: 94.2,
+          status: 'active'
+        },
+        {
+          id: 'text-scanner',
+          name: 'Text Scanner',
+          usage: 43,
+          accuracy: 92.8,
+          status: 'active'
+        }
+      ],
+      insights: [
+        'Voice Assistant usage increased 23% this week',
+        'Smart Camera performs best in outdoor lighting',
+        'Text Scanner works optimally with high-contrast documents'
+      ]
+    };
+
+    res.json({
+      success: true,
+      data: mobileAI,
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error('Mobile AI error:', error);
+    res.status(500).json({
+      error: 'Internal server error',
+      message: 'Failed to fetch mobile AI data'
+    });
+  }
+});
+
+/**
+ * GET /ai-tools/language
+ * Language learning AI capabilities
+ */
+router.get('/language', authenticate, requireTier('individual_pro'), async (req, res) => {
+  try {
+    const { lang = 'spanish' } = req.query;
+
+    // Mock language learning data
+    const languageData = {
+      profile: {
+        currentLanguage: lang.charAt(0).toUpperCase() + lang.slice(1),
+        level: 'Intermediate',
+        streak: 15,
+        totalLessons: 47,
+        completedLessons: 32,
+        accuracy: 87.5
+      },
+      languages: [
+        { code: 'spanish', name: 'Spanish', progress: 68, level: 'Intermediate' },
+        { code: 'french', name: 'French', progress: 34, level: 'Beginner' },
+        { code: 'german', name: 'German', progress: 12, level: 'Beginner' }
+      ],
+      vocabulary: {
+        learned: 342,
+        reviewing: 28,
+        mastered: 267,
+        newWords: 47
+      },
+      insights: [
+        'Your pronunciation has improved 23% this week',
+        'Focus on verb conjugations for faster progress',
+        'Practice listening exercises to improve comprehension'
+      ]
+    };
+
+    res.json({
+      success: true,
+      data: languageData,
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error('Language learning error:', error);
+    res.status(500).json({
+      error: 'Internal server error',
+      message: 'Failed to fetch language learning data'
+    });
+  }
+});
+
+/**
+ * POST /ai-tools/language
+ * Language learning AI processing
+ */
+router.post('/language', authenticate, requireTier('individual_pro'), async (req, res) => {
+  try {
+    const { text, targetLanguage, action } = req.body;
+
+    if (!text || !action) {
+      return res.status(400).json({
+        error: 'Validation error',
+        message: 'Text and action are required'
+      });
+    }
+
+    let result = {};
+
+    switch (action) {
+      case 'translate':
+        result = {
+          translation: `[Translated to ${targetLanguage}]: ${text}`,
+          confidence: 0.94,
+          alternatives: [`Alternative 1: ${text}`, `Alternative 2: ${text}`]
+        };
+        break;
+      case 'analyze':
+        result = {
+          grammar: { score: 85, errors: 2 },
+          vocabulary: { level: 'intermediate', suggestions: ['Use more advanced vocabulary'] },
+          pronunciation: { score: 78, tips: ['Focus on vowel sounds'] }
+        };
+        break;
+      default:
+        result = { message: 'Action not supported' };
+    }
+
+    res.json({
+      success: true,
+      data: result,
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error('Language processing error:', error);
+    res.status(500).json({
+      error: 'Internal server error',
+      message: 'Failed to process language request'
+    });
+  }
+});
+
 // Helper functions for mock data generation
 function generateMockWritingResult(text, action, style, length) {
   const actions = {

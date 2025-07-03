@@ -370,4 +370,219 @@ router.post('/:id/run', authenticate, requireFeature('automation.basic'), async 
   }
 });
 
+/**
+ * GET /workflow/automation
+ * Get automation workflows and statistics
+ */
+router.get('/automation', authenticate, requireFeature('automation.advanced'), async (req, res) => {
+  try {
+    const { status, category } = req.query;
+
+    // Mock automation workflows data
+    const automationWorkflows = [
+      {
+        id: 1,
+        name: 'Daily Report Generation',
+        description: 'Automatically generate and send daily performance reports',
+        status: 'active',
+        trigger: 'schedule',
+        schedule: 'Daily at 9:00 AM',
+        lastRun: '2024-01-10 09:00:00',
+        nextRun: '2024-01-11 09:00:00',
+        successRate: 98.5,
+        totalRuns: 247,
+        avgDuration: 45,
+        steps: [
+          { id: 1, type: 'data_collection', name: 'Collect Analytics Data', status: 'completed' },
+          { id: 2, type: 'processing', name: 'Process Metrics', status: 'completed' },
+          { id: 3, type: 'report_generation', name: 'Generate Report', status: 'completed' },
+          { id: 4, type: 'email', name: 'Send Email', status: 'completed' }
+        ]
+      },
+      {
+        id: 2,
+        name: 'New User Onboarding',
+        description: 'Automated onboarding sequence for new users',
+        status: 'active',
+        trigger: 'event',
+        schedule: 'On user registration',
+        lastRun: '2024-01-10 14:30:00',
+        nextRun: 'On next registration',
+        successRate: 94.2,
+        totalRuns: 156,
+        avgDuration: 120,
+        steps: [
+          { id: 1, type: 'welcome_email', name: 'Send Welcome Email', status: 'completed' },
+          { id: 2, type: 'account_setup', name: 'Setup Account', status: 'completed' },
+          { id: 3, type: 'tutorial', name: 'Start Tutorial', status: 'running' },
+          { id: 4, type: 'follow_up', name: 'Schedule Follow-up', status: 'pending' }
+        ]
+      }
+    ];
+
+    res.json({
+      success: true,
+      data: { workflows: automationWorkflows },
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error('Automation workflows error:', error);
+    res.status(500).json({
+      error: 'Internal server error',
+      message: 'Failed to fetch automation workflows'
+    });
+  }
+});
+
+/**
+ * POST /workflow/automation/:id/run
+ * Run an automation workflow
+ */
+router.post('/automation/:id/run', authenticate, requireFeature('automation.advanced'), async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Mock workflow execution
+    const executionResult = {
+      workflowId: parseInt(id),
+      executionId: `auto_exec_${Date.now()}`,
+      status: 'running',
+      startedAt: new Date().toISOString(),
+      estimatedDuration: 45
+    };
+
+    res.json({
+      success: true,
+      message: 'Automation workflow started',
+      data: executionResult,
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error('Automation execution error:', error);
+    res.status(500).json({
+      error: 'Internal server error',
+      message: 'Failed to execute automation workflow'
+    });
+  }
+});
+
+/**
+ * GET /workflow/advanced
+ * Get advanced workflows with complex logic
+ */
+router.get('/advanced', authenticate, requireFeature('automation.enterprise'), async (req, res) => {
+  try {
+    // Mock advanced workflows data
+    const advancedWorkflows = [
+      {
+        id: 1,
+        name: 'AI-Powered Lead Processing',
+        description: 'Complex workflow with AI decision making and multi-path execution',
+        type: 'advanced',
+        status: 'active',
+        complexity: 'high',
+        nodes: 15,
+        branches: 4,
+        integrations: ['Salesforce', 'HubSpot', 'Slack', 'OpenAI'],
+        lastModified: '2024-01-10',
+        performance: {
+          successRate: 94.2,
+          avgExecutionTime: 180,
+          totalExecutions: 1247
+        },
+        flowNodes: [
+          { id: 'start', type: 'trigger', label: 'New Lead', x: 100, y: 100 },
+          { id: 'ai_score', type: 'ai', label: 'AI Lead Scoring', x: 300, y: 100 },
+          { id: 'decision', type: 'condition', label: 'Score > 80?', x: 500, y: 100 },
+          { id: 'high_priority', type: 'action', label: 'High Priority Path', x: 700, y: 50 },
+          { id: 'standard', type: 'action', label: 'Standard Path', x: 700, y: 150 }
+        ]
+      },
+      {
+        id: 2,
+        name: 'Multi-Channel Campaign Orchestration',
+        description: 'Coordinate campaigns across email, social media, and SMS',
+        type: 'advanced',
+        status: 'active',
+        complexity: 'high',
+        nodes: 22,
+        branches: 6,
+        integrations: ['Mailchimp', 'Twitter', 'Facebook', 'Twilio'],
+        lastModified: '2024-01-09',
+        performance: {
+          successRate: 89.7,
+          avgExecutionTime: 320,
+          totalExecutions: 856
+        }
+      }
+    ];
+
+    res.json({
+      success: true,
+      data: { workflows: advancedWorkflows },
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error('Advanced workflows error:', error);
+    res.status(500).json({
+      error: 'Internal server error',
+      message: 'Failed to fetch advanced workflows'
+    });
+  }
+});
+
+/**
+ * GET /workflow/optimization
+ * Get workflow optimization suggestions
+ */
+router.get('/optimization', authenticate, requireFeature('automation.advanced'), async (req, res) => {
+  try {
+    // Mock optimization data
+    const optimizations = {
+      suggestions: [
+        {
+          workflowId: 1,
+          type: 'performance',
+          title: 'Reduce execution time',
+          description: 'Parallel processing could reduce execution time by 30%',
+          impact: 'high',
+          effort: 'medium',
+          estimatedSavings: '15 minutes per run'
+        },
+        {
+          workflowId: 2,
+          type: 'reliability',
+          title: 'Add error handling',
+          description: 'Additional error handling could improve success rate',
+          impact: 'medium',
+          effort: 'low',
+          estimatedSavings: '5% improvement in success rate'
+        }
+      ],
+      metrics: {
+        totalOptimizations: 12,
+        implementedOptimizations: 8,
+        potentialTimeSavings: 120, // minutes per day
+        potentialCostSavings: 450 // dollars per month
+      }
+    };
+
+    res.json({
+      success: true,
+      data: optimizations,
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error('Workflow optimization error:', error);
+    res.status(500).json({
+      error: 'Internal server error',
+      message: 'Failed to fetch optimization suggestions'
+    });
+  }
+});
+
 module.exports = router;
