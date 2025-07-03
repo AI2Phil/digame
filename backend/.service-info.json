@@ -1,10 +1,10 @@
 {
   "backend": {
-    "port": 8001,
-    "url": "http://localhost:8001",
+    "port": 8000,
+    "url": "http://localhost:8000",
     "status": "running",
-    "startTime": "2025-07-02T23:51:05.234Z",
-    "pid": 31776
+    "startTime": "2025-07-03T15:03:09.350Z",
+    "pid": 5649
   },
-  "lastUpdated": "2025-07-02T23:51:05.235Z"
+  "lastUpdated": "2025-07-03T15:03:09.350Z"
 }

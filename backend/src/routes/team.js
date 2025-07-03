@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const auth = require('../middleware/auth');
+const { authenticate } = require('../middleware/auth');
 
 // Team Dashboard endpoints
-router.get('/dashboard', auth, async (req, res) => {
+router.get('/dashboard', authenticate, async (req, res) => {
   try {
     const { range = '7d' } = req.query;
     
@@ -99,7 +99,7 @@ router.get('/dashboard', auth, async (req, res) => {
 });
 
 // Team Social endpoints
-router.get('/social', auth, async (req, res) => {
+router.get('/social', authenticate, async (req, res) => {
   try {
     const socialData = {
       feed: [
@@ -176,7 +176,7 @@ router.get('/social', auth, async (req, res) => {
   }
 });
 
-router.post('/social/posts', auth, async (req, res) => {
+router.post('/social/posts', authenticate, async (req, res) => {
   try {
     const { content, channel } = req.body;
     
@@ -207,7 +207,7 @@ router.post('/social/posts', auth, async (req, res) => {
   }
 });
 
-router.post('/social/posts/:postId/like', auth, async (req, res) => {
+router.post('/social/posts/:postId/like', authenticate, async (req, res) => {
   try {
     const { postId } = req.params;
     
@@ -220,7 +220,7 @@ router.post('/social/posts/:postId/like', auth, async (req, res) => {
 });
 
 // Team Mentorship endpoints
-router.get('/mentorship', auth, async (req, res) => {
+router.get('/mentorship', authenticate, async (req, res) => {
   try {
     const mentorshipData = {
       overview: {
@@ -321,7 +321,7 @@ router.get('/mentorship', auth, async (req, res) => {
   }
 });
 
-router.post('/mentorship/request', auth, async (req, res) => {
+router.post('/mentorship/request', authenticate, async (req, res) => {
   try {
     const { mentorId } = req.body;
     
@@ -343,7 +343,7 @@ router.post('/mentorship/request', auth, async (req, res) => {
 });
 
 // Team Skills endpoints
-router.get('/skills', auth, async (req, res) => {
+router.get('/skills', authenticate, async (req, res) => {
   try {
     const skillsData = {
       overview: {
@@ -441,7 +441,7 @@ router.get('/skills', auth, async (req, res) => {
 });
 
 // Team Workflows endpoints
-router.get('/workflows', auth, async (req, res) => {
+router.get('/workflows', authenticate, async (req, res) => {
   try {
     const workflowsData = {
       overview: {
@@ -521,7 +521,7 @@ router.get('/workflows', auth, async (req, res) => {
   }
 });
 
-router.post('/workflows/:workflowId/pause', auth, async (req, res) => {
+router.post('/workflows/:workflowId/pause', authenticate, async (req, res) => {
   try {
     const { workflowId } = req.params;
     
@@ -533,7 +533,7 @@ router.post('/workflows/:workflowId/pause', auth, async (req, res) => {
   }
 });
 
-router.post('/workflows/:workflowId/resume', auth, async (req, res) => {
+router.post('/workflows/:workflowId/resume', authenticate, async (req, res) => {
   try {
     const { workflowId } = req.params;
     
@@ -545,7 +545,7 @@ router.post('/workflows/:workflowId/resume', auth, async (req, res) => {
   }
 });
 
-router.post('/workflows/:workflowId/stop', auth, async (req, res) => {
+router.post('/workflows/:workflowId/stop', authenticate, async (req, res) => {
   try {
     const { workflowId } = req.params;
     
