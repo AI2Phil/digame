@@ -126,51 +126,59 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              {/* Key Metrics */}
+              {/* Key Metrics - Clickable Cards */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                <div className="bg-white rounded-lg shadow-sm p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                      <CheckCircle className="w-5 h-5 text-blue-600" />
+                <Link href="/tasks">
+                  <div className="bg-white rounded-lg shadow-sm p-6 hover:shadow-md hover:scale-105 transition-all duration-200 cursor-pointer border-2 border-transparent hover:border-blue-200">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <CheckCircle className="w-5 h-5 text-blue-600" />
+                      </div>
+                      <span className="text-sm text-green-600 font-medium">+12%</span>
                     </div>
-                    <span className="text-sm text-green-600 font-medium">+12%</span>
+                    <h3 className="text-2xl font-bold text-gray-900 mb-1">24</h3>
+                    <p className="text-gray-600 text-sm">Tasks Completed</p>
                   </div>
-                  <h3 className="text-2xl font-bold text-gray-900 mb-1">24</h3>
-                  <p className="text-gray-600 text-sm">Tasks Completed</p>
-                </div>
+                </Link>
 
-                <div className="bg-white rounded-lg shadow-sm p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                      <TrendingUp className="w-5 h-5 text-green-600" />
+                <Link href="/analytics/performance">
+                  <div className="bg-white rounded-lg shadow-sm p-6 hover:shadow-md hover:scale-105 transition-all duration-200 cursor-pointer border-2 border-transparent hover:border-green-200">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                        <TrendingUp className="w-5 h-5 text-green-600" />
+                      </div>
+                      <span className="text-sm text-green-600 font-medium">+8%</span>
                     </div>
-                    <span className="text-sm text-green-600 font-medium">+8%</span>
+                    <h3 className="text-2xl font-bold text-gray-900 mb-1">87%</h3>
+                    <p className="text-gray-600 text-sm">Productivity Score</p>
                   </div>
-                  <h3 className="text-2xl font-bold text-gray-900 mb-1">87%</h3>
-                  <p className="text-gray-600 text-sm">Productivity Score</p>
-                </div>
+                </Link>
 
-                <div className="bg-white rounded-lg shadow-sm p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                      <Bot className="w-5 h-5 text-purple-600" />
+                <Link href="/digital-twin/my-twin">
+                  <div className="bg-white rounded-lg shadow-sm p-6 hover:shadow-md hover:scale-105 transition-all duration-200 cursor-pointer border-2 border-transparent hover:border-purple-200">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                        <Bot className="w-5 h-5 text-purple-600" />
+                      </div>
+                      <span className="text-sm text-blue-600 font-medium">Active</span>
                     </div>
-                    <span className="text-sm text-blue-600 font-medium">Active</span>
+                    <h3 className="text-2xl font-bold text-gray-900 mb-1">94%</h3>
+                    <p className="text-gray-600 text-sm">AI Twin Accuracy</p>
                   </div>
-                  <h3 className="text-2xl font-bold text-gray-900 mb-1">94%</h3>
-                  <p className="text-gray-600 text-sm">AI Twin Accuracy</p>
-                </div>
+                </Link>
 
-                <div className="bg-white rounded-lg shadow-sm p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
-                      <Activity className="w-5 h-5 text-orange-600" />
+                <Link href="/analytics/behavioral">
+                  <div className="bg-white rounded-lg shadow-sm p-6 hover:shadow-md hover:scale-105 transition-all duration-200 cursor-pointer border-2 border-transparent hover:border-orange-200">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
+                        <Activity className="w-5 h-5 text-orange-600" />
+                      </div>
+                      <span className="text-sm text-green-600 font-medium">+15%</span>
                     </div>
-                    <span className="text-sm text-green-600 font-medium">+15%</span>
+                    <h3 className="text-2xl font-bold text-gray-900 mb-1">6.2h</h3>
+                    <p className="text-gray-600 text-sm">Focus Time Today</p>
                   </div>
-                  <h3 className="text-2xl font-bold text-gray-900 mb-1">6.2h</h3>
-                  <p className="text-gray-600 text-sm">Focus Time Today</p>
-                </div>
+                </Link>
               </div>
 
               {/* Platform Owner Quick Actions */}

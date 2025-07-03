@@ -9,7 +9,7 @@ import apiService from '../src/services/apiService';
 
 export default function AuthPage() {
   const router = useRouter();
-  const { login, isAuthenticated, isLoading: authLoading } = useAuth();
+  const { login, isAuthenticated, isLoading: authLoading, user } = useAuth();
   const [isLoginMode, setIsLoginMode] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -28,9 +28,14 @@ export default function AuthPage() {
   useEffect(() => {
     // Check if user is already authenticated
     if (isAuthenticated) {
-      router.push('/dashboard');
+      // Redirect to appropriate dashboard based on user role
+      if (user?.isPlatformOwner || user?.is_platform_owner) {
+        router.push('/platform-owner/console');
+      } else {
+        router.push('/dashboard');
+      }
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, user, router]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -109,7 +114,8 @@ export default function AuthPage() {
 
         if (success) {
           // AuthContext will handle token storage and state management
-          router.push('/dashboard');
+          // The useEffect will handle the redirect based on user role
+          // No need to redirect here as useEffect will handle it
         } else {
           setApiError('Invalid credentials. Please try again.');
         }
@@ -138,7 +144,8 @@ export default function AuthPage() {
             if (data.user && !data.user.onboardingCompleted) {
               router.push('/onboarding');
             } else {
-              router.push('/dashboard');
+              // The useEffect will handle the redirect based on user role
+              // No need to redirect here as useEffect will handle it
             }
           } else {
             setApiError('Registration successful, but login failed. Please try signing in.');

@@ -5,15 +5,19 @@ import { useEffect } from 'react';
 import LoginForm from '../src/components/auth/LoginForm';
 
 const LoginPage = () => {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
-      // Redirect to dashboard if already authenticated
-      router.push('/dashboard');
+      // Redirect to appropriate dashboard based on user role
+      if (user?.isPlatformOwner || user?.is_platform_owner) {
+        router.push('/platform-owner/console');
+      } else {
+        router.push('/dashboard');
+      }
     }
-  }, [isAuthenticated, isLoading, router]);
+  }, [isAuthenticated, isLoading, user, router]);
 
   if (isLoading) {
     return (
