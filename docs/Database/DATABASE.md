@@ -47,7 +47,10 @@ The platform currently runs on **SQLite** for development, providing excellent d
 - **Reliable**: Mature, battle-tested technology used by major applications
 
 ### Current Schema
+
+#### Core User Management
 ```sql
+-- Users table (Currently Implemented)
 CREATE TABLE users (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   email TEXT UNIQUE NOT NULL,
@@ -72,6 +75,286 @@ CREATE TABLE users (
   preferences TEXT DEFAULT '{}',
   metadata TEXT DEFAULT '{}'
 );
+
+-- Indexes for performance
+CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
+CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);
+CREATE INDEX IF NOT EXISTS idx_users_subscription ON users(subscriptionTier);
+```
+
+#### Extended Schema for Platform Features
+
+Based on the comprehensive platform implementation documented in [`PLAN.md`](docs/PLAN.md), the following additional tables are needed to support all implemented features:
+
+```sql
+-- Notifications System
+CREATE TABLE IF NOT EXISTS notifications (
+  id TEXT PRIMARY KEY,
+  userId INTEGER NOT NULL,
+  title TEXT NOT NULL,
+  message TEXT NOT NULL,
+  type TEXT DEFAULT 'info', -- info, success, warning, error
+  category TEXT DEFAULT 'system', -- system, team, task, security, billing, update
+  priority TEXT DEFAULT 'medium', -- urgent, high, medium, low
+  read INTEGER DEFAULT 0,
+  readAt TEXT,
+  timestamp TEXT DEFAULT CURRENT_TIMESTAMP,
+  actionUrl TEXT,
+  actionText TEXT,
+  createdAt TEXT DEFAULT CURRENT_TIMESTAMP,
+  updatedAt TEXT DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Notification Settings
+CREATE TABLE IF NOT EXISTS notification_settings (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  userId INTEGER NOT NULL UNIQUE,
+  emailNotifications INTEGER DEFAULT 1,
+  pushNotifications INTEGER DEFAULT 1,
+  inAppNotifications INTEGER DEFAULT 1,
+  weeklyDigest INTEGER DEFAULT 1,
+  instantAlerts INTEGER DEFAULT 0,
+  quietHoursEnabled INTEGER DEFAULT 0,
+  quietHoursStart TEXT DEFAULT '22:00',
+  quietHoursEnd TEXT DEFAULT '08:00',
+  categories TEXT DEFAULT '{}', -- JSON object with category preferences
+  priorities TEXT DEFAULT '{}', -- JSON object with priority preferences
+  createdAt TEXT DEFAULT CURRENT_TIMESTAMP,
+  updatedAt TEXT DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Tasks Management
+CREATE TABLE IF NOT EXISTS tasks (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  userId INTEGER NOT NULL,
+  title TEXT NOT NULL,
+  description TEXT,
+  status TEXT DEFAULT 'pending', -- pending, in_progress, completed, cancelled
+  priority TEXT DEFAULT 'medium', -- high, medium, low
+  category TEXT DEFAULT 'general',
+  dueDate TEXT,
+  estimatedTime INTEGER, -- minutes
+  completedTime INTEGER, -- minutes
+  tags TEXT DEFAULT '[]', -- JSON array
+  source TEXT DEFAULT 'manual', -- manual, ai_suggestion, template
+  suggestionId INTEGER,
+  createdAt TEXT DEFAULT CURRENT_TIMESTAMP,
+  updatedAt TEXT DEFAULT CURRENT_TIMESTAMP,
+  completedAt TEXT,
+  FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Projects Management
+CREATE TABLE IF NOT EXISTS projects (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
+  description TEXT,
+  status TEXT DEFAULT 'planning', -- planning, in_progress, completed, on_hold
+  progress INTEGER DEFAULT 0, -- percentage
+  startDate TEXT,
+  dueDate TEXT,
+  teamMembers TEXT DEFAULT '[]', -- JSON array of user IDs
+  priority TEXT DEFAULT 'medium',
+  budget REAL DEFAULT 0,
+  spent REAL DEFAULT 0,
+  createdBy INTEGER NOT NULL,
+  createdAt TEXT DEFAULT CURRENT_TIMESTAMP,
+  updatedAt TEXT DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (createdBy) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Workflows and Automation
+CREATE TABLE IF NOT EXISTS workflows (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  userId INTEGER NOT NULL,
+  name TEXT NOT NULL,
+  description TEXT,
+  category TEXT DEFAULT 'general',
+  status TEXT DEFAULT 'draft', -- draft, active, paused, stopped
+  triggers TEXT DEFAULT '[]', -- JSON array
+  actions TEXT DEFAULT '[]', -- JSON array
+  runs INTEGER DEFAULT 0,
+  successRate REAL DEFAULT 0,
+  lastRun TEXT,
+  complexity TEXT DEFAULT 'medium', -- low, medium, high
+  templateId INTEGER,
+  createdAt TEXT DEFAULT CURRENT_TIMESTAMP,
+  updatedAt TEXT DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Team Management
+CREATE TABLE IF NOT EXISTS teams (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  description TEXT,
+  ownerId INTEGER NOT NULL,
+  settings TEXT DEFAULT '{}', -- JSON object
+  createdAt TEXT DEFAULT CURRENT_TIMESTAMP,
+  updatedAt TEXT DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (ownerId) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Team Members
+CREATE TABLE IF NOT EXISTS team_members (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  teamId TEXT NOT NULL,
+  userId INTEGER NOT NULL,
+  role TEXT DEFAULT 'member', -- owner, admin, member
+  joinedAt TEXT DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (teamId) REFERENCES teams(id) ON DELETE CASCADE,
+  FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE,
+  UNIQUE(teamId, userId)
+);
+
+-- Skills Management
+CREATE TABLE IF NOT EXISTS skills (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL UNIQUE,
+  category TEXT NOT NULL,
+  description TEXT
+);
+
+-- User Skills
+CREATE TABLE IF NOT EXISTS user_skills (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  userId INTEGER NOT NULL,
+  skillId INTEGER NOT NULL,
+  level INTEGER DEFAULT 1, -- 1-5 scale
+  verified INTEGER DEFAULT 0,
+  lastUpdated TEXT DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (skillId) REFERENCES skills(id) ON DELETE CASCADE,
+  UNIQUE(userId, skillId)
+);
+
+-- Mentorship Program
+CREATE TABLE IF NOT EXISTS mentorship_relationships (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  mentorId INTEGER NOT NULL,
+  menteeId INTEGER NOT NULL,
+  status TEXT DEFAULT 'pending', -- pending, active, completed, cancelled
+  startDate TEXT,
+  endDate TEXT,
+  goals TEXT DEFAULT '[]', -- JSON array
+  progress INTEGER DEFAULT 0,
+  sessionsCompleted INTEGER DEFAULT 0,
+  nextSession TEXT,
+  satisfaction REAL,
+  createdAt TEXT DEFAULT CURRENT_TIMESTAMP,
+  updatedAt TEXT DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (mentorId) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (menteeId) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Analytics Data Storage
+CREATE TABLE IF NOT EXISTS analytics_events (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  userId INTEGER,
+  eventType TEXT NOT NULL,
+  eventData TEXT DEFAULT '{}', -- JSON object
+  timestamp TEXT DEFAULT CURRENT_TIMESTAMP,
+  sessionId TEXT,
+  userAgent TEXT,
+  ipAddress TEXT,
+  FOREIGN KEY (userId) REFERENCES users(id) ON DELETE SET NULL
+);
+
+-- Reports and Publishing
+CREATE TABLE IF NOT EXISTS reports (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  userId INTEGER NOT NULL,
+  name TEXT NOT NULL,
+  type TEXT NOT NULL, -- custom, scheduled, analytics
+  config TEXT DEFAULT '{}', -- JSON configuration
+  status TEXT DEFAULT 'draft', -- draft, published, archived
+  lastGenerated TEXT,
+  schedule TEXT, -- cron expression for scheduled reports
+  recipients TEXT DEFAULT '[]', -- JSON array of email addresses
+  createdAt TEXT DEFAULT CURRENT_TIMESTAMP,
+  updatedAt TEXT DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Security and Audit Logs
+CREATE TABLE IF NOT EXISTS audit_logs (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  userId INTEGER,
+  action TEXT NOT NULL,
+  resource TEXT,
+  resourceId TEXT,
+  details TEXT DEFAULT '{}', -- JSON object
+  ipAddress TEXT,
+  userAgent TEXT,
+  timestamp TEXT DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (userId) REFERENCES users(id) ON DELETE SET NULL
+);
+
+-- API Keys and Integrations
+CREATE TABLE IF NOT EXISTS api_keys (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  userId INTEGER NOT NULL,
+  name TEXT NOT NULL,
+  keyHash TEXT NOT NULL,
+  permissions TEXT DEFAULT '[]', -- JSON array
+  lastUsed TEXT,
+  expiresAt TEXT,
+  isActive INTEGER DEFAULT 1,
+  createdAt TEXT DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Webhooks
+CREATE TABLE IF NOT EXISTS webhooks (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  userId INTEGER NOT NULL,
+  name TEXT NOT NULL,
+  url TEXT NOT NULL,
+  events TEXT DEFAULT '[]', -- JSON array of event types
+  secret TEXT,
+  isActive INTEGER DEFAULT 1,
+  lastTriggered TEXT,
+  successCount INTEGER DEFAULT 0,
+  failureCount INTEGER DEFAULT 0,
+  createdAt TEXT DEFAULT CURRENT_TIMESTAMP,
+  updatedAt TEXT DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Platform Owner specific tables
+CREATE TABLE IF NOT EXISTS platform_metrics (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  metricType TEXT NOT NULL,
+  metricValue REAL NOT NULL,
+  metadata TEXT DEFAULT '{}', -- JSON object
+  timestamp TEXT DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Enterprise Features
+CREATE TABLE IF NOT EXISTS tenants (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  domain TEXT UNIQUE,
+  settings TEXT DEFAULT '{}', -- JSON object
+  subscriptionTier TEXT DEFAULT 'team',
+  isActive INTEGER DEFAULT 1,
+  createdAt TEXT DEFAULT CURRENT_TIMESTAMP,
+  updatedAt TEXT DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Performance Indexes
+CREATE INDEX IF NOT EXISTS idx_notifications_user_read ON notifications(userId, read);
+CREATE INDEX IF NOT EXISTS idx_notifications_timestamp ON notifications(timestamp);
+CREATE INDEX IF NOT EXISTS idx_tasks_user_status ON tasks(userId, status);
+CREATE INDEX IF NOT EXISTS idx_tasks_due_date ON tasks(dueDate);
+CREATE INDEX IF NOT EXISTS idx_workflows_user_status ON workflows(userId, status);
+CREATE INDEX IF NOT EXISTS idx_analytics_events_user_timestamp ON analytics_events(userId, timestamp);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_user_timestamp ON audit_logs(userId, timestamp);
+CREATE INDEX IF NOT EXISTS idx_team_members_team ON team_members(teamId);
+CREATE INDEX IF NOT EXISTS idx_team_members_user ON team_members(userId);
 ```
 
 ## Docker Infrastructure: PostgreSQL + Redis
