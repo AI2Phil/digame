@@ -4,6 +4,10 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 require('dotenv').config();
 
+// Import services
+const redisService = require('./services/redis');
+const performanceMonitor = require('./services/performance');
+
 // Import routes and middleware
 const authRoutes = require('./routes/auth');
 const teamRoutes = require('./routes/teams');
@@ -39,25 +43,72 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
+// Performance monitoring middleware
+app.use(performanceMonitor.requestMonitor());
+
 // Global middleware
 app.use(detectDemoMode);
 
 // Health check endpoint
-app.get('/health', (req, res) => {
-  res.json({
-    status: 'OK',
-    message: 'Digame Backend Server is running',
-    timestamp: new Date().toISOString(),
-    version: '2.0.0',
-    port: process.env.RUNTIME_PORT || 'unknown',
-    features: {
-      authentication: true,
-      rbac: true,
-      teamCollaboration: true,
-      jwtTokens: true,
-      dynamicPortDetection: true
-    }
-  });
+app.get('/health', async (req, res) => {
+  try {
+    const healthData = await performanceMonitor.getHealthCheck();
+    res.json({
+      status: healthData.status,
+      message: 'Digame Backend Server is running',
+      timestamp: healthData.timestamp,
+      version: '2.0.0',
+      port: process.env.RUNTIME_PORT || 'unknown',
+      uptime: healthData.uptime,
+      performance: healthData.performance,
+      database: healthData.database,
+      redis: healthData.redis,
+      alerts: healthData.alerts,
+      features: {
+        authentication: true,
+        rbac: true,
+        teamCollaboration: true,
+        jwtTokens: true,
+        dynamicPortDetection: true,
+        extendedSchema: true,
+        performanceMonitoring: true,
+        redisIntegration: healthData.redis.status !== 'disabled'
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: 'error',
+      message: 'Health check failed',
+      error: error.message,
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
+// Performance metrics endpoint
+app.get('/health/performance', async (req, res) => {
+  try {
+    const summary = performanceMonitor.getPerformanceSummary();
+    res.json(summary);
+  } catch (error) {
+    res.status(500).json({
+      error: 'Failed to get performance metrics',
+      message: error.message
+    });
+  }
+});
+
+// Redis health endpoint
+app.get('/health/redis', async (req, res) => {
+  try {
+    const redisHealth = await redisService.healthCheck();
+    res.json(redisHealth);
+  } catch (error) {
+    res.status(500).json({
+      status: 'error',
+      error: error.message
+    });
+  }
 });
 
 // Service discovery endpoint

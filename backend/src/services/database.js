@@ -1,6 +1,8 @@
 const Database = require('better-sqlite3');
 const path = require('path');
 const bcrypt = require('bcryptjs');
+const redisService = require('./redis');
+const performanceMonitor = require('./performance');
 
 class DatabaseService {
   constructor() {
@@ -1003,6 +1005,303 @@ class DatabaseService {
         event.userId, event.eventType, event.eventData, event.timestamp,
         event.sessionId, event.userAgent, event.ipAddress
       );
+    });
+  }
+
+  // Enhanced database operations with caching and monitoring
+  async findUserByEmail(email) {
+    return await performanceMonitor.monitorDatabaseQuery('findUserByEmail', async () => {
+      // Try cache first
+      const cacheKey = `user:email:${email}`;
+      const cachedUser = await redisService.get(cacheKey);
+      if (cachedUser) {
+        return cachedUser;
+      }
+
+      // Query database
+      const stmt = this.db.prepare('SELECT * FROM users WHERE email = ?');
+      const user = stmt.get(email);
+      
+      if (user) {
+        // Parse JSON fields
+        user.permissions = JSON.parse(user.permissions || '[]');
+        user.onboardingData = JSON.parse(user.onboardingData || '{}');
+        user.unlockedFeatures = JSON.parse(user.unlockedFeatures || '[]');
+        user.profile = JSON.parse(user.profile || '{}');
+        user.preferences = JSON.parse(user.preferences || '{}');
+        user.metadata = JSON.parse(user.metadata || '{}');
+        
+        // Cache for 1 hour
+        await redisService.cacheUser(user.id, user, 3600);
+        await redisService.set(cacheKey, user, 3600);
+      }
+      
+      return user;
+    });
+  }
+
+  async findUserById(id) {
+    return await performanceMonitor.monitorDatabaseQuery('findUserById', async () => {
+      // Try cache first
+      const cachedUser = await redisService.getCachedUser(id);
+      if (cachedUser) {
+        return cachedUser;
+      }
+
+      // Query database
+      const stmt = this.db.prepare('SELECT * FROM users WHERE id = ?');
+      const user = stmt.get(id);
+      
+      if (user) {
+        // Parse JSON fields
+        user.permissions = JSON.parse(user.permissions || '[]');
+        user.onboardingData = JSON.parse(user.onboardingData || '{}');
+        user.unlockedFeatures = JSON.parse(user.unlockedFeatures || '[]');
+        user.profile = JSON.parse(user.profile || '{}');
+        user.preferences = JSON.parse(user.preferences || '{}');
+        user.metadata = JSON.parse(user.metadata || '{}');
+        
+        // Cache for 1 hour
+        await redisService.cacheUser(id, user, 3600);
+      }
+      
+      return user;
+    });
+  }
+
+  async updateUser(id, userData) {
+    return await performanceMonitor.monitorDatabaseQuery('updateUser', async () => {
+      // Prepare update fields
+      const updateFields = [];
+      const values = [];
+      
+      Object.keys(userData).forEach(key => {
+        if (key !== 'id') {
+          updateFields.push(`${key} = ?`);
+          // Stringify JSON fields
+          if (['permissions', 'onboardingData', 'unlockedFeatures', 'profile', 'preferences', 'metadata'].includes(key)) {
+            values.push(JSON.stringify(userData[key]));
+          } else {
+            values.push(userData[key]);
+          }
+        }
+      });
+      
+      if (updateFields.length === 0) return null;
+      
+      updateFields.push('updatedAt = CURRENT_TIMESTAMP');
+      values.push(id);
+      
+      const stmt = this.db.prepare(`UPDATE users SET ${updateFields.join(', ')} WHERE id = ?`);
+      const result = stmt.run(...values);
+      
+      if (result.changes > 0) {
+        // Invalidate cache
+        await redisService.invalidateUserCache(id);
+        
+        // Return updated user
+        return await this.findUserById(id);
+      }
+      
+      return null;
+    });
+  }
+
+  async createUser(userData) {
+    return await performanceMonitor.monitorDatabaseQuery('createUser', async () => {
+      // Prepare insert data
+      const insertData = {
+        ...userData,
+        permissions: JSON.stringify(userData.permissions || []),
+        onboardingData: JSON.stringify(userData.onboardingData || {}),
+        unlockedFeatures: JSON.stringify(userData.unlockedFeatures || []),
+        profile: JSON.stringify(userData.profile || {}),
+        preferences: JSON.stringify(userData.preferences || {}),
+        metadata: JSON.stringify(userData.metadata || {})
+      };
+      
+      const stmt = this.db.prepare(`
+        INSERT INTO users (
+          email, username, firstName, lastName, passwordHash, role,
+          subscriptionTier, teamId, permissions, isPlatformOwner,
+          isActive, isVerified, onboardingCompleted, onboardingData,
+          unlockedFeatures, profile, preferences, metadata
+        ) VALUES (
+          @email, @username, @firstName, @lastName, @passwordHash, @role,
+          @subscriptionTier, @teamId, @permissions, @isPlatformOwner,
+          @isActive, @isVerified, @onboardingCompleted, @onboardingData,
+          @unlockedFeatures, @profile, @preferences, @metadata
+        )
+      `);
+      
+      const result = stmt.run(insertData);
+      
+      if (result.lastInsertRowid) {
+        return await this.findUserById(result.lastInsertRowid);
+      }
+      
+      return null;
+    });
+  }
+
+  // Notification operations with caching
+  async getUserNotifications(userId, limit = 50, offset = 0) {
+    return await performanceMonitor.monitorDatabaseQuery('getUserNotifications', async () => {
+      const cacheKey = `notifications:${userId}:${limit}:${offset}`;
+      const cached = await redisService.get(cacheKey);
+      if (cached) {
+        return cached;
+      }
+
+      const stmt = this.db.prepare(`
+        SELECT * FROM notifications
+        WHERE userId = ?
+        ORDER BY timestamp DESC
+        LIMIT ? OFFSET ?
+      `);
+      const notifications = stmt.all(userId, limit, offset);
+      
+      // Cache for 5 minutes
+      await redisService.set(cacheKey, notifications, 300);
+      return notifications;
+    });
+  }
+
+  async markNotificationAsRead(notificationId, userId) {
+    return await performanceMonitor.monitorDatabaseQuery('markNotificationAsRead', async () => {
+      const stmt = this.db.prepare(`
+        UPDATE notifications
+        SET read = 1, readAt = CURRENT_TIMESTAMP
+        WHERE id = ? AND userId = ?
+      `);
+      const result = stmt.run(notificationId, userId);
+      
+      if (result.changes > 0) {
+        // Invalidate notification cache
+        await redisService.invalidatePattern(`notifications:${userId}:*`);
+      }
+      
+      return result.changes > 0;
+    });
+  }
+
+  // Analytics operations with caching
+  async getAnalyticsData(type, userId = null, timeRange = '7d') {
+    return await performanceMonitor.monitorDatabaseQuery('getAnalyticsData', async () => {
+      const cacheKey = `analytics:${type}:${userId || 'all'}:${timeRange}`;
+      const cached = await redisService.getCachedAnalytics(cacheKey);
+      if (cached) {
+        return cached;
+      }
+
+      let query = 'SELECT * FROM analytics_events WHERE eventType = ?';
+      const params = [type];
+      
+      if (userId) {
+        query += ' AND userId = ?';
+        params.push(userId);
+      }
+      
+      // Add time range filter
+      const timeRangeHours = timeRange === '24h' ? 24 : timeRange === '7d' ? 168 : 720; // 30d
+      query += ' AND timestamp > datetime("now", "-' + timeRangeHours + ' hours")';
+      query += ' ORDER BY timestamp DESC';
+      
+      const stmt = this.db.prepare(query);
+      const events = stmt.all(...params);
+      
+      // Cache for 15 minutes
+      await redisService.cacheAnalytics(cacheKey, events, 900);
+      return events;
+    });
+  }
+
+  // Task operations with caching
+  async getUserTasks(userId, status = null) {
+    return await performanceMonitor.monitorDatabaseQuery('getUserTasks', async () => {
+      const cacheKey = `tasks:${userId}:${status || 'all'}`;
+      const cached = await redisService.get(cacheKey);
+      if (cached) {
+        return cached;
+      }
+
+      let query = 'SELECT * FROM tasks WHERE userId = ?';
+      const params = [userId];
+      
+      if (status) {
+        query += ' AND status = ?';
+        params.push(status);
+      }
+      
+      query += ' ORDER BY createdAt DESC';
+      
+      const stmt = this.db.prepare(query);
+      const tasks = stmt.all(...params);
+      
+      // Parse JSON fields
+      tasks.forEach(task => {
+        task.tags = JSON.parse(task.tags || '[]');
+      });
+      
+      // Cache for 10 minutes
+      await redisService.set(cacheKey, tasks, 600);
+      return tasks;
+    });
+  }
+
+  // Health check with extended schema validation
+  async getHealthStatus() {
+    return await performanceMonitor.monitorDatabaseQuery('healthCheck', async () => {
+      try {
+        // Test basic connectivity
+        const testQuery = this.db.prepare('SELECT 1 as test').get();
+        
+        // Check all tables exist
+        const tables = [
+          'users', 'notifications', 'notification_settings', 'tasks', 'projects',
+          'teams', 'team_members', 'skills', 'user_skills', 'mentorship_relationships',
+          'workflows', 'analytics_events', 'audit_logs', 'api_keys', 'webhooks',
+          'reports', 'platform_metrics', 'tenants'
+        ];
+        
+        const tableStatus = {};
+        for (const table of tables) {
+          try {
+            const count = this.db.prepare(`SELECT COUNT(*) as count FROM ${table}`).get();
+            tableStatus[table] = {
+              exists: true,
+              recordCount: count.count
+            };
+          } catch (error) {
+            tableStatus[table] = {
+              exists: false,
+              error: error.message
+            };
+          }
+        }
+        
+        // Get database file size
+        const dbPath = path.join(__dirname, '../../data/digame.db');
+        const fs = require('fs');
+        const stats = fs.statSync(dbPath);
+        
+        return {
+          status: 'healthy',
+          database: 'sqlite',
+          connectivity: 'ok',
+          tableStatus,
+          databaseSize: `${(stats.size / 1024 / 1024).toFixed(2)} MB`,
+          extendedSchema: true,
+          totalTables: Object.keys(tableStatus).length,
+          healthyTables: Object.values(tableStatus).filter(t => t.exists).length
+        };
+      } catch (error) {
+        return {
+          status: 'unhealthy',
+          error: error.message,
+          database: 'sqlite'
+        };
+      }
     });
   }
 
