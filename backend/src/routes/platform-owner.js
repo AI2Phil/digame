@@ -1,484 +1,641 @@
 const express = require('express');
 const router = express.Router();
 
-// Mock data for platform owner features
-const mockData = {
-  // Console data
-  console: {
-    stats: {
-      totalUsers: 15847,
-      activeUsers: 12456,
-      totalRevenue: 2847392,
-      monthlyGrowth: 23.5,
-      systemHealth: 'excellent',
-      uptime: '99.97%'
+// Mock data for platform owner endpoints
+const mockPlatformData = {
+  settings: {
+    platformName: "Digame Platform",
+    platformDescription: "Comprehensive business management platform",
+    supportEmail: "support@digame.com",
+    defaultTimezone: "UTC",
+    defaultLanguage: "en",
+    dateFormat: "MM/DD/YYYY",
+    sessionTimeout: 480,
+    passwordPolicy: "standard",
+    requireMFA: false,
+    defaultUserRole: "user",
+    auditLogging: true,
+    smtpServer: "smtp.digame.com",
+    fromEmail: "noreply@digame.com",
+    enableEmailNotifications: true,
+    apiBaseUrl: "https://api.digame.com/v1",
+    rateLimit: 10000,
+    enableApiDocs: true,
+    webhookTimeout: 30,
+    webhookMaxRetries: 3,
+    requireHttps: true,
+    cacheTTL: 3600,
+    maxConcurrentUsers: 10000,
+    enableCaching: true,
+    logLevel: "info",
+    logRetention: 90,
+    structuredLogging: true
+  },
+  systemHealth: {
+    overall: "healthy",
+    database: "healthy",
+    dbConnections: 45,
+    storageUsed: "2.4 GB",
+    activeUsers: 1247,
+    services: {
+      webServer: { status: "healthy", uptime: "99.9%" },
+      database: { status: "healthy", uptime: "99.8%" },
+      cache: { status: "warning", uptime: "98.5%" },
+      queue: { status: "healthy", uptime: "99.7%" }
     },
-    recentActivity: [
+    performance: {
+      cpuUsage: 45,
+      memoryUsage: 67,
+      diskUsage: 23,
+      networkIO: "12 MB/s"
+    },
+    alerts: [
       {
         id: 1,
-        type: 'user_registration',
-        description: 'New enterprise user registered',
-        timestamp: new Date().toISOString(),
-        severity: 'info'
+        alert: "High memory usage detected",
+        time: "5 minutes ago",
+        severity: "warning"
       },
       {
         id: 2,
-        type: 'payment_processed',
-        description: 'Payment of $2,500 processed successfully',
-        timestamp: new Date(Date.now() - 300000).toISOString(),
-        severity: 'success'
-      }
-    ]
-  },
-
-  // Tenant management data
-  tenants: [
-    {
-      id: 1,
-      name: 'Acme Corporation',
-      domain: 'acme.digame.com',
-      tier: 'Enterprise',
-      status: 'active',
-      users: 2847,
-      revenue: 89400,
-      growth: 23.5,
-      createdAt: '2023-06-15T00:00:00Z',
-      lastActivity: new Date().toISOString(),
-      features: ['SSO', 'Custom Branding', 'API Access', 'Priority Support'],
-      settings: {
-        customBranding: true,
-        ssoEnabled: true,
-        apiAccess: true,
-        storageLimit: '1TB'
-      }
-    },
-    {
-      id: 2,
-      name: 'TechStart Inc',
-      domain: 'techstart.digame.com',
-      tier: 'Professional',
-      status: 'active',
-      users: 456,
-      revenue: 12800,
-      growth: 45.2,
-      createdAt: '2023-08-20T00:00:00Z',
-      lastActivity: new Date(Date.now() - 3600000).toISOString(),
-      features: ['API Access', 'Advanced Analytics'],
-      settings: {
-        customBranding: false,
-        ssoEnabled: false,
-        apiAccess: true,
-        storageLimit: '100GB'
-      }
-    }
-  ],
-
-  // User management data
-  users: [
-    {
-      id: 1,
-      email: 'admin@acme.com',
-      name: 'John Admin',
-      role: 'admin',
-      tenant: 'Acme Corporation',
-      tier: 'Enterprise',
-      status: 'active',
-      lastLogin: new Date().toISOString(),
-      createdAt: '2023-06-15T00:00:00Z',
-      permissions: ['read', 'write', 'admin']
-    },
-    {
-      id: 2,
-      email: 'user@techstart.com',
-      name: 'Jane User',
-      role: 'user',
-      tenant: 'TechStart Inc',
-      tier: 'Professional',
-      status: 'active',
-      lastLogin: new Date(Date.now() - 7200000).toISOString(),
-      createdAt: '2023-08-20T00:00:00Z',
-      permissions: ['read', 'write']
-    }
-  ],
-
-  // Revenue analytics data
-  revenue: {
-    overview: {
-      totalRevenue: 2847392,
-      monthlyRecurring: 234567,
-      annualRecurring: 2814804,
-      growth: 23.5,
-      churnRate: 2.1,
-      averageRevenuePer: {
-        user: 89.50,
-        tenant: 15678.90
-      }
-    },
-    trends: [
-      { month: 'Jan', revenue: 180000, users: 1200, tenants: 45 },
-      { month: 'Feb', revenue: 195000, users: 1350, tenants: 48 },
-      { month: 'Mar', revenue: 210000, users: 1500, tenants: 52 },
-      { month: 'Apr', revenue: 225000, users: 1650, tenants: 55 },
-      { month: 'May', revenue: 240000, users: 1800, tenants: 58 },
-      { month: 'Jun', revenue: 255000, users: 1950, tenants: 62 }
-    ],
-    forecasts: [
-      { month: 'Jul', predicted: 270000, confidence: 85 },
-      { month: 'Aug', predicted: 285000, confidence: 82 },
-      { month: 'Sep', predicted: 300000, confidence: 78 }
-    ]
-  },
-
-  // System health data
-  health: {
-    overall: 'healthy',
-    uptime: '99.97%',
-    services: [
-      {
-        name: 'API Gateway',
-        status: 'healthy',
-        uptime: '99.99%',
-        responseTime: 45,
-        lastCheck: new Date().toISOString()
+        alert: "Database connection pool exhausted",
+        time: "1 hour ago",
+        severity: "critical"
       },
       {
-        name: 'Database Cluster',
-        status: 'healthy',
-        uptime: '99.95%',
-        responseTime: 12,
-        lastCheck: new Date().toISOString()
-      }
-    ],
-    infrastructure: {
-      cpu: { usage: 67, cores: 32, status: 'normal' },
-      memory: { usage: 78, total: '128 GB', status: 'normal' },
-      storage: { usage: 45, total: '2 TB', status: 'normal' },
-      network: { inbound: '2.3 Gbps', outbound: '1.8 Gbps', status: 'normal' }
-    }
-  },
-
-  // Security data
-  security: {
-    overview: {
-      score: 94,
-      vulnerabilities: { critical: 0, high: 2, medium: 5, low: 12 },
-      compliance: {
-        gdpr: 'compliant',
-        hipaa: 'compliant',
-        sox: 'compliant',
-        iso27001: 'in-progress'
-      }
-    },
-    auditLogs: [
-      {
-        id: 1,
-        timestamp: new Date().toISOString(),
-        user: 'admin@platform.com',
-        action: 'User Role Modified',
-        resource: 'User Management',
-        severity: 'medium',
-        category: 'user_management'
+        id: 3,
+        alert: "API response time increased",
+        time: "2 hours ago",
+        severity: "warning"
       }
     ]
   },
-
-  // Integration data
-  integrations: {
-    stats: {
-      totalIntegrations: 24,
-      activeConnections: 18,
-      apiCalls: 1247892,
-      webhookEvents: 45623
+  testSuites: [
+    {
+      id: 1,
+      name: "API Endpoints",
+      type: "api",
+      description: "Test all REST API endpoints for functionality and performance",
+      testCount: 45,
+      passedTests: 43,
+      status: "passed",
+      lastRun: "2 hours ago",
+      duration: "3.2 min",
+      successRate: 95.6
     },
-    ssoProviders: [
-      {
-        id: 1,
-        name: 'Google Workspace',
-        provider: 'google',
-        status: 'active',
-        users: 1234,
-        lastSync: new Date().toISOString()
-      }
-    ],
-    apiKeys: [
-      {
-        id: 1,
-        name: 'Production API Key',
-        key: 'pk_live_1234567890abcdef',
-        permissions: ['read', 'write', 'admin'],
-        lastUsed: new Date().toISOString(),
-        status: 'active'
-      }
-    ]
-  },
-
-  // Enterprise data
-  enterprise: {
-    stats: {
-      totalTenants: 156,
-      enterpriseClients: 23,
-      totalRevenue: 2847392,
-      marketShare: 12.4,
-      growthRate: 34.2
+    {
+      id: 2,
+      name: "Security Tests",
+      type: "security",
+      description: "Comprehensive security vulnerability scanning",
+      testCount: 28,
+      passedTests: 26,
+      status: "warning",
+      lastRun: "1 day ago",
+      duration: "8.7 min",
+      successRate: 92.9
     },
-    features: [
-      {
-        id: 1,
-        name: 'White Label Solution',
-        description: 'Complete branding customization for enterprise clients',
-        status: 'active',
-        usage: 89,
-        clients: 12
-      }
-    ],
-    marketIntelligence: {
-      competitors: [
-        {
-          name: 'CompetitorA',
-          marketShare: 28.5,
-          pricing: '$49/user',
-          features: 85,
-          customerSat: 4.2,
-          trend: 'up'
-        }
-      ]
+    {
+      id: 3,
+      name: "Database Tests",
+      type: "database",
+      description: "Database integrity and performance tests",
+      testCount: 32,
+      passedTests: 32,
+      status: "passed",
+      lastRun: "4 hours ago",
+      duration: "2.1 min",
+      successRate: 100
+    },
+    {
+      id: 4,
+      name: "Integration Tests",
+      type: "integration",
+      description: "Third-party service integration tests",
+      testCount: 18,
+      passedTests: 15,
+      status: "failed",
+      lastRun: "6 hours ago",
+      duration: "5.4 min",
+      successRate: 83.3
+    },
+    {
+      id: 5,
+      name: "Performance Tests",
+      type: "performance",
+      description: "Load testing and performance benchmarks",
+      testCount: 12,
+      passedTests: 11,
+      status: "passed",
+      lastRun: "12 hours ago",
+      duration: "15.2 min",
+      successRate: 91.7
+    },
+    {
+      id: 6,
+      name: "UI Tests",
+      type: "ui",
+      description: "User interface and user experience tests",
+      testCount: 24,
+      passedTests: 22,
+      status: "warning",
+      lastRun: "8 hours ago",
+      duration: "6.8 min",
+      successRate: 91.7
     }
+  ],
+  testResults: [
+    {
+      id: 1,
+      testName: "User Authentication",
+      description: "Test user login and authentication flow",
+      suiteName: "API Endpoints",
+      suiteType: "api",
+      status: "passed",
+      duration: "1.2s",
+      runTime: "2024-01-15 14:30:25"
+    },
+    {
+      id: 2,
+      testName: "SQL Injection Protection",
+      description: "Test protection against SQL injection attacks",
+      suiteName: "Security Tests",
+      suiteType: "security",
+      status: "passed",
+      duration: "0.8s",
+      runTime: "2024-01-15 14:28:15"
+    },
+    {
+      id: 3,
+      testName: "Database Connection Pool",
+      description: "Test database connection pooling",
+      suiteName: "Database Tests",
+      suiteType: "database",
+      status: "passed",
+      duration: "2.1s",
+      runTime: "2024-01-15 14:25:10"
+    },
+    {
+      id: 4,
+      testName: "External API Integration",
+      description: "Test integration with external payment API",
+      suiteName: "Integration Tests",
+      suiteType: "integration",
+      status: "failed",
+      duration: "5.0s",
+      runTime: "2024-01-15 14:20:05"
+    },
+    {
+      id: 5,
+      testName: "Load Test - 1000 Users",
+      description: "Simulate 1000 concurrent users",
+      suiteName: "Performance Tests",
+      suiteType: "performance",
+      status: "passed",
+      duration: "45.2s",
+      runTime: "2024-01-15 13:15:30"
+    }
+  ],
+  systemStatus: {
+    testsPassed: 149,
+    testsFailed: 10,
+    coverage: 87,
+    lastRun: "2 hours ago"
   }
 };
 
-// Console endpoints
-router.get('/console/stats', (req, res) => {
-  res.json(mockData.console.stats);
-});
-
-router.get('/console/activity', (req, res) => {
-  res.json(mockData.console.recentActivity);
-});
-
-// Tenant management endpoints
-router.get('/tenants', (req, res) => {
-  const { tier, status, search } = req.query;
-  let tenants = [...mockData.tenants];
-
-  if (tier && tier !== 'all') {
-    tenants = tenants.filter(tenant => tenant.tier === tier);
-  }
-
-  if (status && status !== 'all') {
-    tenants = tenants.filter(tenant => tenant.status === status);
-  }
-
-  if (search) {
-    tenants = tenants.filter(tenant => 
-      tenant.name.toLowerCase().includes(search.toLowerCase()) ||
-      tenant.domain.toLowerCase().includes(search.toLowerCase())
-    );
-  }
-
+// Platform Settings Routes
+router.get('/settings', (req, res) => {
   res.json({
-    tenants,
-    total: tenants.length,
-    stats: {
-      total: mockData.tenants.length,
-      active: mockData.tenants.filter(t => t.status === 'active').length,
-      enterprise: mockData.tenants.filter(t => t.tier === 'Enterprise').length
+    success: true,
+    data: mockPlatformData.settings
+  });
+});
+
+router.put('/settings/:section', (req, res) => {
+  const { section } = req.params;
+  const updates = req.body;
+  
+  // Simulate updating settings
+  Object.assign(mockPlatformData.settings, updates);
+  
+  res.json({
+    success: true,
+    message: `${section} settings updated successfully`,
+    data: {
+      section,
+      updates,
+      updatedAt: new Date().toISOString()
     }
   });
 });
 
-router.get('/tenants/:id', (req, res) => {
-  const tenant = mockData.tenants.find(t => t.id === parseInt(req.params.id));
-  if (!tenant) {
-    return res.status(404).json({ error: 'Tenant not found' });
-  }
-  res.json(tenant);
-});
-
-router.put('/tenants/:id', (req, res) => {
-  const tenantIndex = mockData.tenants.findIndex(t => t.id === parseInt(req.params.id));
-  if (tenantIndex === -1) {
-    return res.status(404).json({ error: 'Tenant not found' });
-  }
-
-  mockData.tenants[tenantIndex] = {
-    ...mockData.tenants[tenantIndex],
-    ...req.body,
-    updatedAt: new Date().toISOString()
-  };
-
-  res.json(mockData.tenants[tenantIndex]);
-});
-
-router.delete('/tenants/:id', (req, res) => {
-  const tenantIndex = mockData.tenants.findIndex(t => t.id === parseInt(req.params.id));
-  if (tenantIndex === -1) {
-    return res.status(404).json({ error: 'Tenant not found' });
-  }
-
-  mockData.tenants.splice(tenantIndex, 1);
-  res.json({ message: 'Tenant deleted successfully' });
-});
-
-// User management endpoints
-router.get('/users', (req, res) => {
-  const { role, tier, status, search } = req.query;
-  let users = [...mockData.users];
-
-  if (role && role !== 'all') {
-    users = users.filter(user => user.role === role);
-  }
-
-  if (tier && tier !== 'all') {
-    users = users.filter(user => user.tier === tier);
-  }
-
-  if (status && status !== 'all') {
-    users = users.filter(user => user.status === status);
-  }
-
-  if (search) {
-    users = users.filter(user => 
-      user.name.toLowerCase().includes(search.toLowerCase()) ||
-      user.email.toLowerCase().includes(search.toLowerCase())
-    );
-  }
-
+router.post('/settings/reset', (req, res) => {
+  const { section } = req.body;
+  
   res.json({
-    users,
-    total: users.length,
-    stats: {
-      total: mockData.users.length,
-      active: mockData.users.filter(u => u.status === 'active').length,
-      admins: mockData.users.filter(u => u.role === 'admin').length
+    success: true,
+    message: section ? `${section} settings reset to defaults` : 'All settings reset to defaults',
+    data: {
+      resetAt: new Date().toISOString(),
+      section: section || 'all'
     }
   });
 });
 
-router.get('/users/:id', (req, res) => {
-  const user = mockData.users.find(u => u.id === parseInt(req.params.id));
-  if (!user) {
-    return res.status(404).json({ error: 'User not found' });
-  }
-  res.json(user);
-});
-
-router.put('/users/:id', (req, res) => {
-  const userIndex = mockData.users.findIndex(u => u.id === parseInt(req.params.id));
-  if (userIndex === -1) {
-    return res.status(404).json({ error: 'User not found' });
-  }
-
-  mockData.users[userIndex] = {
-    ...mockData.users[userIndex],
-    ...req.body,
-    updatedAt: new Date().toISOString()
-  };
-
-  res.json(mockData.users[userIndex]);
-});
-
-// Revenue analytics endpoints
-router.get('/revenue/overview', (req, res) => {
-  res.json(mockData.revenue.overview);
-});
-
-router.get('/revenue/trends', (req, res) => {
-  const { period = '6m' } = req.query;
+// System Health Routes
+router.get('/system-health', (req, res) => {
   res.json({
-    trends: mockData.revenue.trends,
-    forecasts: mockData.revenue.forecasts,
-    period
+    success: true,
+    data: mockPlatformData.systemHealth
   });
 });
 
-// System health endpoints
-router.get('/health/overview', (req, res) => {
-  res.json(mockData.health);
-});
-
-router.get('/health/services', (req, res) => {
-  res.json(mockData.health.services);
-});
-
-router.get('/health/infrastructure', (req, res) => {
-  res.json(mockData.health.infrastructure);
-});
-
-// Security endpoints
-router.get('/security/overview', (req, res) => {
-  res.json(mockData.security.overview);
-});
-
-router.get('/security/audit-logs', (req, res) => {
-  const { category = 'all', severity = 'all' } = req.query;
-  let logs = [...mockData.security.auditLogs];
-
-  if (category !== 'all') {
-    logs = logs.filter(log => log.category === category);
-  }
-
-  if (severity !== 'all') {
-    logs = logs.filter(log => log.severity === severity);
-  }
-
-  res.json(logs);
-});
-
-// Integration endpoints
-router.get('/integrations/overview', (req, res) => {
-  res.json(mockData.integrations.stats);
-});
-
-router.get('/integrations/sso', (req, res) => {
-  res.json(mockData.integrations.ssoProviders);
-});
-
-router.get('/integrations/api-keys', (req, res) => {
-  res.json(mockData.integrations.apiKeys);
-});
-
-router.post('/integrations/api-keys', (req, res) => {
-  const newKey = {
-    id: mockData.integrations.apiKeys.length + 1,
-    name: req.body.name,
-    key: `pk_${req.body.environment}_${Math.random().toString(36).substring(2, 15)}`,
-    permissions: req.body.permissions || ['read'],
-    created: new Date().toISOString(),
-    status: 'active',
-    usage: 0
+router.get('/system-health/detailed', (req, res) => {
+  const detailedHealth = {
+    ...mockPlatformData.systemHealth,
+    timestamp: new Date().toISOString(),
+    checks: [
+      {
+        name: "Database Connectivity",
+        status: "healthy",
+        responseTime: "12ms",
+        details: "All database connections are healthy"
+      },
+      {
+        name: "External APIs",
+        status: "warning",
+        responseTime: "450ms",
+        details: "Payment API showing increased latency"
+      },
+      {
+        name: "File Storage",
+        status: "healthy",
+        responseTime: "8ms",
+        details: "File storage is operating normally"
+      },
+      {
+        name: "Cache Layer",
+        status: "healthy",
+        responseTime: "2ms",
+        details: "Redis cache is responding normally"
+      }
+    ]
   };
-
-  mockData.integrations.apiKeys.push(newKey);
-  res.status(201).json(newKey);
-});
-
-// Enterprise endpoints
-router.get('/enterprise/overview', (req, res) => {
-  res.json(mockData.enterprise.stats);
-});
-
-router.get('/enterprise/features', (req, res) => {
-  res.json(mockData.enterprise.features);
-});
-
-router.get('/enterprise/market-intelligence', (req, res) => {
-  res.json(mockData.enterprise.marketIntelligence);
-});
-
-// Export data endpoint
-router.post('/export', (req, res) => {
-  const { type, format } = req.body;
-  
-  // Simulate export process
-  const exportId = Math.random().toString(36).substring(2, 15);
   
   res.json({
-    exportId,
-    status: 'processing',
-    type,
-    format,
-    created: new Date().toISOString(),
-    estimatedCompletion: new Date(Date.now() + 300000).toISOString()
+    success: true,
+    data: detailedHealth
+  });
+});
+
+// Test Suite Routes
+router.get('/test-suites', (req, res) => {
+  const { type, status } = req.query;
+  
+  let suites = mockPlatformData.testSuites;
+  
+  if (type && type !== 'all') {
+    suites = suites.filter(suite => suite.type === type);
+  }
+  
+  if (status && status !== 'all') {
+    suites = suites.filter(suite => suite.status === status);
+  }
+  
+  res.json({
+    success: true,
+    data: suites,
+    total: suites.length
+  });
+});
+
+router.get('/test-suites/:suiteId', (req, res) => {
+  const { suiteId } = req.params;
+  
+  const suite = mockPlatformData.testSuites.find(s => s.id == suiteId);
+  
+  if (!suite) {
+    return res.status(404).json({
+      success: false,
+      message: 'Test suite not found'
+    });
+  }
+  
+  const detailedSuite = {
+    ...suite,
+    tests: [
+      {
+        id: 1,
+        name: "Authentication Test",
+        status: "passed",
+        duration: "1.2s",
+        description: "Test user authentication flow"
+      },
+      {
+        id: 2,
+        name: "Authorization Test",
+        status: "passed",
+        duration: "0.8s",
+        description: "Test user authorization and permissions"
+      },
+      {
+        id: 3,
+        name: "Rate Limiting Test",
+        status: "failed",
+        duration: "2.1s",
+        description: "Test API rate limiting functionality"
+      }
+    ]
+  };
+  
+  res.json({
+    success: true,
+    data: detailedSuite
+  });
+});
+
+router.post('/test-suites/:suiteId/run', (req, res) => {
+  const { suiteId } = req.params;
+  
+  const suite = mockPlatformData.testSuites.find(s => s.id == suiteId);
+  
+  if (!suite) {
+    return res.status(404).json({
+      success: false,
+      message: 'Test suite not found'
+    });
+  }
+  
+  res.json({
+    success: true,
+    message: 'Test suite execution started',
+    data: {
+      suiteId,
+      runId: `run_${Date.now()}`,
+      status: 'running',
+      startedAt: new Date().toISOString(),
+      estimatedDuration: suite.duration
+    }
+  });
+});
+
+router.post('/test-suites/run-all', (req, res) => {
+  res.json({
+    success: true,
+    message: 'All test suites execution started',
+    data: {
+      runId: `run_all_${Date.now()}`,
+      status: 'running',
+      startedAt: new Date().toISOString(),
+      totalSuites: mockPlatformData.testSuites.length,
+      estimatedDuration: "25-30 minutes"
+    }
+  });
+});
+
+// Test Results Routes
+router.get('/test-results', (req, res) => {
+  const { status, suite, search, page = 1, limit = 50 } = req.query;
+  
+  let results = mockPlatformData.testResults;
+  
+  if (status && status !== 'all') {
+    results = results.filter(result => result.status === status);
+  }
+  
+  if (suite) {
+    results = results.filter(result => result.suiteName === suite);
+  }
+  
+  if (search) {
+    results = results.filter(result => 
+      result.testName.toLowerCase().includes(search.toLowerCase()) ||
+      result.description.toLowerCase().includes(search.toLowerCase())
+    );
+  }
+  
+  // Pagination
+  const startIndex = (page - 1) * limit;
+  const endIndex = startIndex + parseInt(limit);
+  const paginatedResults = results.slice(startIndex, endIndex);
+  
+  res.json({
+    success: true,
+    data: paginatedResults,
+    pagination: {
+      page: parseInt(page),
+      limit: parseInt(limit),
+      total: results.length,
+      pages: Math.ceil(results.length / limit)
+    }
+  });
+});
+
+router.get('/test-results/:resultId', (req, res) => {
+  const { resultId } = req.params;
+  
+  const result = mockPlatformData.testResults.find(r => r.id == resultId);
+  
+  if (!result) {
+    return res.status(404).json({
+      success: false,
+      message: 'Test result not found'
+    });
+  }
+  
+  const detailedResult = {
+    ...result,
+    logs: [
+      {
+        timestamp: "2024-01-15 14:30:25.123",
+        level: "info",
+        message: "Starting test execution"
+      },
+      {
+        timestamp: "2024-01-15 14:30:25.456",
+        level: "debug",
+        message: "Connecting to test database"
+      },
+      {
+        timestamp: "2024-01-15 14:30:26.789",
+        level: "info",
+        message: "Test completed successfully"
+      }
+    ],
+    metrics: {
+      memoryUsage: "45 MB",
+      cpuUsage: "12%",
+      networkRequests: 15,
+      databaseQueries: 8
+    }
+  };
+  
+  res.json({
+    success: true,
+    data: detailedResult
+  });
+});
+
+// System Status Routes
+router.get('/system-status', (req, res) => {
+  res.json({
+    success: true,
+    data: mockPlatformData.systemStatus
+  });
+});
+
+// Debug and Maintenance Routes
+router.post('/debug/clear-cache', (req, res) => {
+  res.json({
+    success: true,
+    message: 'Cache cleared successfully',
+    data: {
+      clearedAt: new Date().toISOString(),
+      cacheSize: "245 MB",
+      itemsCleared: 15420
+    }
+  });
+});
+
+router.post('/debug/generate-test-data', (req, res) => {
+  const { dataType, count = 100 } = req.body;
+  
+  res.json({
+    success: true,
+    message: 'Test data generation started',
+    data: {
+      dataType,
+      count,
+      jobId: `testdata_${Date.now()}`,
+      estimatedCompletion: new Date(Date.now() + 2 * 60 * 1000).toISOString()
+    }
+  });
+});
+
+router.post('/debug/export-logs', (req, res) => {
+  const { startDate, endDate, logLevel } = req.body;
+  
+  res.json({
+    success: true,
+    message: 'Log export initiated',
+    data: {
+      exportId: `logs_${Date.now()}`,
+      startDate,
+      endDate,
+      logLevel,
+      estimatedSize: "125 MB",
+      downloadUrl: `/api/platform-owner/debug/download/logs_${Date.now()}.zip`
+    }
+  });
+});
+
+router.post('/debug/health-check', (req, res) => {
+  res.json({
+    success: true,
+    message: 'Health check completed',
+    data: {
+      checkId: `health_${Date.now()}`,
+      overallStatus: "healthy",
+      checkedAt: new Date().toISOString(),
+      checks: [
+        { component: "Database", status: "healthy", responseTime: "12ms" },
+        { component: "Cache", status: "healthy", responseTime: "2ms" },
+        { component: "External APIs", status: "warning", responseTime: "450ms" },
+        { component: "File Storage", status: "healthy", responseTime: "8ms" }
+      ]
+    }
+  });
+});
+
+// Analytics and Reporting Routes
+router.get('/analytics/test-trends', (req, res) => {
+  const { period = '7d' } = req.query;
+  
+  const trends = {
+    period,
+    data: [
+      { date: "2024-01-09", passed: 145, failed: 8, coverage: 85 },
+      { date: "2024-01-10", passed: 148, failed: 6, coverage: 87 },
+      { date: "2024-01-11", passed: 152, failed: 4, coverage: 89 },
+      { date: "2024-01-12", passed: 149, failed: 7, coverage: 86 },
+      { date: "2024-01-13", passed: 151, failed: 5, coverage: 88 },
+      { date: "2024-01-14", passed: 147, failed: 9, coverage: 84 },
+      { date: "2024-01-15", passed: 149, failed: 10, coverage: 87 }
+    ]
+  };
+  
+  res.json({
+    success: true,
+    data: trends
+  });
+});
+
+router.get('/analytics/performance-metrics', (req, res) => {
+  const { period = '24h' } = req.query;
+  
+  const metrics = {
+    period,
+    data: {
+      responseTime: [
+        { time: "00:00", value: 145 },
+        { time: "04:00", value: 132 },
+        { time: "08:00", value: 189 },
+        { time: "12:00", value: 234 },
+        { time: "16:00", value: 198 },
+        { time: "20:00", value: 167 }
+      ],
+      throughput: [
+        { time: "00:00", value: 1250 },
+        { time: "04:00", value: 890 },
+        { time: "08:00", value: 2340 },
+        { time: "12:00", value: 3450 },
+        { time: "16:00", value: 2890 },
+        { time: "20:00", value: 1980 }
+      ],
+      errorRate: [
+        { time: "00:00", value: 0.2 },
+        { time: "04:00", value: 0.1 },
+        { time: "08:00", value: 0.3 },
+        { time: "12:00", value: 0.5 },
+        { time: "16:00", value: 0.4 },
+        { time: "20:00", value: 0.2 }
+      ]
+    }
+  };
+  
+  res.json({
+    success: true,
+    data: metrics
+  });
+});
+
+// Configuration Management Routes
+router.get('/config/backup', (req, res) => {
+  res.json({
+    success: true,
+    message: 'Configuration backup created',
+    data: {
+      backupId: `config_backup_${Date.now()}`,
+      createdAt: new Date().toISOString(),
+      size: "2.4 MB",
+      downloadUrl: `/api/platform-owner/config/download/config_backup_${Date.now()}.json`
+    }
+  });
+});
+
+router.post('/config/restore', (req, res) => {
+  const { backupId } = req.body;
+  
+  res.json({
+    success: true,
+    message: 'Configuration restore initiated',
+    data: {
+      backupId,
+      restoreId: `restore_${Date.now()}`,
+      status: 'processing',
+      estimatedCompletion: new Date(Date.now() + 5 * 60 * 1000).toISOString()
+    }
   });
 });
 
