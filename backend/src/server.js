@@ -7,6 +7,7 @@ require('dotenv').config();
 // Import services
 const redisService = require('./services/redis');
 const performanceMonitor = require('./services/performance');
+const { cacheManager } = require('./services/cacheManager');
 
 // Import routes and middleware
 const authRoutes = require('./routes/auth');
@@ -27,6 +28,7 @@ const adminRoutes = require('./routes/admin');
 const enterpriseRoutes = require('./routes/enterprise');
 const notificationsRoutes = require('./routes/notifications');
 const settingsRoutes = require('./routes/settings');
+const healthRoutes = require('./routes/health');
 const { detectDemoMode } = require('./middleware/auth');
 const { getOptimalPort } = require('./utils/portDetection');
 const ServiceDiscovery = require('./utils/serviceDiscovery');
@@ -49,10 +51,15 @@ app.use(performanceMonitor.requestMonitor());
 // Global middleware
 app.use(detectDemoMode);
 
-// Health check endpoint
-app.get('/health', async (req, res) => {
+// Health check endpoints (comprehensive)
+app.use('/health', healthRoutes);
+
+// Legacy health endpoint for backward compatibility
+app.get('/health-legacy', async (req, res) => {
   try {
     const healthData = await performanceMonitor.getHealthCheck();
+    const cacheHealth = await cacheManager.healthCheck();
+    
     res.json({
       status: healthData.status,
       message: 'Digame Backend Server is running',
@@ -62,6 +69,7 @@ app.get('/health', async (req, res) => {
       uptime: healthData.uptime,
       performance: healthData.performance,
       database: healthData.database,
+      cache: cacheHealth,
       redis: healthData.redis,
       alerts: healthData.alerts,
       features: {
@@ -72,7 +80,10 @@ app.get('/health', async (req, res) => {
         dynamicPortDetection: true,
         extendedSchema: true,
         performanceMonitoring: true,
-        redisIntegration: healthData.redis.status !== 'disabled'
+        redisIntegration: healthData.redis.status !== 'disabled',
+        databaseAdapter: true,
+        multiLayerCache: true,
+        migrationTools: true
       }
     });
   } catch (error) {
@@ -81,32 +92,6 @@ app.get('/health', async (req, res) => {
       message: 'Health check failed',
       error: error.message,
       timestamp: new Date().toISOString()
-    });
-  }
-});
-
-// Performance metrics endpoint
-app.get('/health/performance', async (req, res) => {
-  try {
-    const summary = performanceMonitor.getPerformanceSummary();
-    res.json(summary);
-  } catch (error) {
-    res.status(500).json({
-      error: 'Failed to get performance metrics',
-      message: error.message
-    });
-  }
-});
-
-// Redis health endpoint
-app.get('/health/redis', async (req, res) => {
-  try {
-    const redisHealth = await redisService.healthCheck();
-    res.json(redisHealth);
-  } catch (error) {
-    res.status(500).json({
-      status: 'error',
-      error: error.message
     });
   }
 });
@@ -183,6 +168,10 @@ const startServer = async () => {
       console.log('================================================');
       console.log(`📍 Server URL: http://localhost:${PORT}`);
       console.log(`📊 Health check: http://localhost:${PORT}/health`);
+      console.log(`⚡ Performance: http://localhost:${PORT}/health/performance`);
+      console.log(`🗃️  Database: http://localhost:${PORT}/health/database`);
+      console.log(`🧠 Cache: http://localhost:${PORT}/health/cache`);
+      console.log(`🔧 Migration: http://localhost:${PORT}/health/migration`);
       console.log(`🔐 Auth endpoint: http://localhost:${PORT}/auth/login`);
       console.log(`🎮 Demo endpoint: http://localhost:${PORT}/auth/demo`);
       console.log('================================================');

@@ -456,22 +456,36 @@ export default function TestZone() {
                 
                 {/* Live Health Endpoints */}
                 <div className="mb-8">
-                  <h4 className="text-md font-medium text-gray-900 mb-4">Live Health Endpoints</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <h4 className="text-md font-medium text-gray-900 mb-4">Enhanced Health Monitoring</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {[
                       {
                         name: 'System Health',
                         endpoint: '/health',
-                        description: 'Complete system health with performance metrics',
+                        description: 'Complete system health with all services',
                         color: 'bg-blue-500',
                         icon: CheckCircleIcon
                       },
                       {
+                        name: 'Database Health',
+                        endpoint: '/health/database',
+                        description: 'Database adapter, schema, and migration status',
+                        color: 'bg-green-500',
+                        icon: DatabaseIcon
+                      },
+                      {
                         name: 'Performance Metrics',
                         endpoint: '/health/performance',
-                        description: 'Real-time performance analytics and monitoring',
-                        color: 'bg-green-500',
+                        description: 'Real-time performance and cache analytics',
+                        color: 'bg-purple-500',
                         icon: ChartBarIcon
+                      },
+                      {
+                        name: 'Cache Management',
+                        endpoint: '/health/cache',
+                        description: 'Multi-layer cache statistics and health',
+                        color: 'bg-orange-500',
+                        icon: CogIcon
                       },
                       {
                         name: 'Redis Status',
@@ -479,6 +493,34 @@ export default function TestZone() {
                         description: 'Redis connection and cache health status',
                         color: 'bg-red-500',
                         icon: DatabaseIcon
+                      },
+                      {
+                        name: 'Migration Tools',
+                        endpoint: '/health/migration',
+                        description: 'Database migration status and tools',
+                        color: 'bg-indigo-500',
+                        icon: ArrowPathIcon
+                      },
+                      {
+                        name: 'System Information',
+                        endpoint: '/health/system',
+                        description: 'System resources and environment details',
+                        color: 'bg-gray-500',
+                        icon: CogIcon
+                      },
+                      {
+                        name: 'Feature Status',
+                        endpoint: '/health/features',
+                        description: 'Platform feature availability and status',
+                        color: 'bg-teal-500',
+                        icon: CheckCircleIcon
+                      },
+                      {
+                        name: 'Export Metrics',
+                        endpoint: '/health/export/metrics',
+                        description: 'Download comprehensive performance metrics',
+                        color: 'bg-yellow-500',
+                        icon: DocumentTextIcon
                       }
                     ].map((endpoint, index) => (
                       <div key={index} className="bg-white border border-gray-200 rounded-lg p-4">
@@ -493,21 +535,100 @@ export default function TestZone() {
                         </div>
                         <p className="text-xs text-gray-600 mb-3">{endpoint.description}</p>
                         <div className="flex space-x-2">
-                          <button 
+                          <button
                             onClick={() => window.open(endpoint.endpoint, '_blank')}
                             className="flex-1 bg-gray-100 text-gray-700 px-3 py-2 rounded text-xs font-medium hover:bg-gray-200"
                           >
-                            Test Live
+                            {endpoint.name.includes('Export') ? 'Download' : 'Test Live'}
                           </button>
-                          <button 
+                          <button
                             onClick={() => navigator.clipboard.writeText(window.location.origin + endpoint.endpoint)}
                             className="px-3 py-2 text-gray-500 hover:text-gray-700"
+                            title="Copy URL"
                           >
                             <DocumentTextIcon className="h-4 w-4" />
                           </button>
                         </div>
                       </div>
                     ))}
+                  </div>
+                </div>
+
+                {/* Cache Management Actions */}
+                <div className="mb-8">
+                  <h4 className="text-md font-medium text-gray-900 mb-4">Cache Management</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="bg-white border border-gray-200 rounded-lg p-4">
+                      <div className="flex items-center mb-3">
+                        <div className="p-2 rounded-lg bg-blue-500">
+                          <ChartBarIcon className="h-5 w-5 text-white" />
+                        </div>
+                        <div className="ml-3">
+                          <h5 className="text-sm font-medium text-gray-900">Cache Statistics</h5>
+                          <p className="text-xs text-gray-500">View cache performance</p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => window.open('/health/cache', '_blank')}
+                        className="w-full bg-blue-100 text-blue-700 px-3 py-2 rounded text-xs font-medium hover:bg-blue-200"
+                      >
+                        View Stats
+                      </button>
+                    </div>
+                    
+                    <div className="bg-white border border-gray-200 rounded-lg p-4">
+                      <div className="flex items-center mb-3">
+                        <div className="p-2 rounded-lg bg-red-500">
+                          <ArrowPathIcon className="h-5 w-5 text-white" />
+                        </div>
+                        <div className="ml-3">
+                          <h5 className="text-sm font-medium text-gray-900">Clear All Caches</h5>
+                          <p className="text-xs text-gray-500">Reset cache layers</p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={async () => {
+                          if (confirm('Are you sure you want to clear all caches?')) {
+                            try {
+                              const response = await fetch('/health/cache/clear', { method: 'POST' });
+                              const result = await response.json();
+                              alert(result.message || 'Caches cleared successfully');
+                            } catch (error) {
+                              alert('Failed to clear caches: ' + error.message);
+                            }
+                          }
+                        }}
+                        className="w-full bg-red-100 text-red-700 px-3 py-2 rounded text-xs font-medium hover:bg-red-200"
+                      >
+                        Clear Caches
+                      </button>
+                    </div>
+                    
+                    <div className="bg-white border border-gray-200 rounded-lg p-4">
+                      <div className="flex items-center mb-3">
+                        <div className="p-2 rounded-lg bg-green-500">
+                          <DatabaseIcon className="h-5 w-5 text-white" />
+                        </div>
+                        <div className="ml-3">
+                          <h5 className="text-sm font-medium text-gray-900">Migration Test</h5>
+                          <p className="text-xs text-gray-500">Test database migration</p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={async () => {
+                          try {
+                            const response = await fetch('/health/migration/test', { method: 'POST' });
+                            const result = await response.json();
+                            alert(`Migration test: ${result.status}\n${result.message}`);
+                          } catch (error) {
+                            alert('Migration test failed: ' + error.message);
+                          }
+                        }}
+                        className="w-full bg-green-100 text-green-700 px-3 py-2 rounded text-xs font-medium hover:bg-green-200"
+                      >
+                        Test Migration
+                      </button>
+                    </div>
                   </div>
                 </div>
 
@@ -632,43 +753,72 @@ export default function TestZone() {
                   </div>
 
                   <div className="bg-gray-50 rounded-lg p-6">
-                    <h4 className="text-md font-medium text-gray-900 mb-4">Service Health Status</h4>
+                    <h4 className="text-md font-medium text-gray-900 mb-4">Enhanced Service Status</h4>
                     <div className="space-y-3">
                       {[
-                        { service: 'Backend Server', status: 'healthy', port: '3001' },
-                        { service: 'SQLite Database', status: 'healthy', info: 'Extended Schema' },
-                        { service: 'Redis Cache', status: 'disabled', info: 'Docker Only' },
-                        { service: 'Performance Monitor', status: 'healthy', info: 'Active' }
+                        { service: 'Backend Server', status: 'healthy', info: 'Port 3001' },
+                        { service: 'Database Adapter', status: 'healthy', info: 'SQLite + PostgreSQL Ready' },
+                        { service: 'Extended Schema', status: 'healthy', info: '15+ Tables Active' },
+                        { service: 'Multi-Layer Cache', status: 'healthy', info: 'Memory + Redis' },
+                        { service: 'Performance Monitor', status: 'healthy', info: 'Real-time Metrics' },
+                        { service: 'Migration Tools', status: 'healthy', info: 'Export/Import Ready' },
+                        { service: 'Redis Cache', status: 'disabled', info: 'Docker Environment Only' }
                       ].map((item, index) => (
                         <div key={index} className="flex items-center justify-between bg-white rounded-lg p-3">
                           <div className="flex items-center">
                             {getStatusIcon(item.status === 'healthy' ? 'passed' : item.status === 'disabled' ? 'warning' : 'failed')}
                             <span className="ml-2 text-sm font-medium text-gray-900">{item.service}</span>
                           </div>
-                          <span className="text-xs text-gray-600">{item.port || item.info}</span>
+                          <span className="text-xs text-gray-600">{item.info}</span>
                         </div>
                       ))}
                     </div>
                   </div>
                 </div>
 
-                {/* Database Schema Status */}
+                {/* Enhanced Database Schema Status */}
                 <div className="mt-6 bg-gray-50 rounded-lg p-6">
-                  <h4 className="text-md font-medium text-gray-900 mb-4">Database Schema Status</h4>
-                  <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                  <h4 className="text-md font-medium text-gray-900 mb-4">Extended Database Schema (18 Tables)</h4>
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                     {[
-                      'users', 'notifications', 'tasks', 'projects', 'teams', 'team_members',
-                      'skills', 'user_skills', 'workflows', 'analytics_events', 'audit_logs',
-                      'api_keys', 'webhooks', 'reports', 'platform_metrics', 'tenants'
+                      { name: 'users', category: 'Core', records: '6+' },
+                      { name: 'notifications', category: 'Core', records: '4+' },
+                      { name: 'notification_settings', category: 'Core', records: '6+' },
+                      { name: 'tasks', category: 'Productivity', records: '4+' },
+                      { name: 'projects', category: 'Productivity', records: '2+' },
+                      { name: 'teams', category: 'Collaboration', records: '2+' },
+                      { name: 'team_members', category: 'Collaboration', records: '5+' },
+                      { name: 'skills', category: 'Collaboration', records: '8+' },
+                      { name: 'user_skills', category: 'Collaboration', records: '8+' },
+                      { name: 'mentorship_relationships', category: 'Collaboration', records: '2+' },
+                      { name: 'workflows', category: 'Automation', records: '3+' },
+                      { name: 'analytics_events', category: 'Analytics', records: '100+' },
+                      { name: 'audit_logs', category: 'Security', records: '0' },
+                      { name: 'api_keys', category: 'Security', records: '0' },
+                      { name: 'webhooks', category: 'Integration', records: '0' },
+                      { name: 'reports', category: 'Reporting', records: '0' },
+                      { name: 'platform_metrics', category: 'Platform', records: '0' },
+                      { name: 'tenants', category: 'Platform', records: '0' }
                     ].map((table, index) => (
                       <div key={index} className="bg-white rounded-lg p-3 border border-gray-200">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-medium text-gray-900">{table}</span>
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-xs font-medium text-gray-900">{table.name}</span>
                           <CheckCircleIcon className="h-4 w-4 text-green-500" />
                         </div>
-                        <p className="text-xs text-gray-500 mt-1">Active</p>
+                        <div className="flex justify-between items-center">
+                          <span className="text-xs text-blue-600">{table.category}</span>
+                          <span className="text-xs text-gray-500">{table.records}</span>
+                        </div>
                       </div>
                     ))}
+                  </div>
+                  <div className="mt-4 text-center">
+                    <button
+                      onClick={() => window.open('/health/database', '_blank')}
+                      className="bg-blue-100 text-blue-700 px-4 py-2 rounded text-sm font-medium hover:bg-blue-200"
+                    >
+                      View Detailed Database Health
+                    </button>
                   </div>
                 </div>
               </div>

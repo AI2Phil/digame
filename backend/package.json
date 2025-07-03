@@ -6,7 +6,18 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
-    "test": "echo \"No tests yet\" && exit 0"
+    "test": "echo \"No tests yet\" && exit 0",
+    "db": "node scripts/database-cli.js",
+    "db:status": "node scripts/database-cli.js status",
+    "db:health": "node scripts/database-cli.js health",
+    "db:export": "node scripts/database-cli.js export",
+    "db:backup": "node scripts/database-cli.js backup",
+    "db:migrate": "node scripts/database-cli.js migrate",
+    "db:test-migration": "node scripts/database-cli.js test-migration",
+    "cache:clear": "node scripts/database-cli.js clear-cache"
+  },
+  "bin": {
+    "digame-db": "./scripts/database-cli.js"
   },
   "keywords": [
     "digame",
@@ -26,6 +37,7 @@
     "ioredis": "^5.6.1",
     "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.0",
+    "pg": "^8.16.3",
     "sqlite3": "^5.1.7"
   },
   "devDependencies": {
