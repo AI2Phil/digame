@@ -21,6 +21,8 @@ const securityRoutes = require('./routes/security');
 const integrationRoutes = require('./routes/integration');
 const adminRoutes = require('./routes/admin');
 const enterpriseRoutes = require('./routes/enterprise');
+const notificationsRoutes = require('./routes/notifications');
+const settingsRoutes = require('./routes/settings');
 const { detectDemoMode } = require('./middleware/auth');
 const { getOptimalPort } = require('./utils/portDetection');
 const ServiceDiscovery = require('./utils/serviceDiscovery');
@@ -98,6 +100,8 @@ app.use('/security', securityRoutes);
 app.use('/integration', integrationRoutes);
 app.use('/admin', adminRoutes);
 app.use('/enterprise', enterpriseRoutes);
+app.use('/notifications', notificationsRoutes);
+app.use('/settings', settingsRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
