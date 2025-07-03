@@ -1,13 +1,18 @@
 const express = require('express');
 const { authenticate, requireFeature } = require('../middleware/auth');
+const { requireTier, addTierHeaders, logAccessControl } = require('../middleware/accessControl');
 
 const router = express.Router();
+
+// Add tier headers and access logging to all routes
+router.use(addTierHeaders());
+router.use(logAccessControl({ verbose: true }));
 
 /**
  * GET /ai-tools
  * Get AI tools hub overview
  */
-router.get('/', authenticate, requireFeature('ai.basic'), async (req, res) => {
+router.get('/', authenticate, requireTier('individual_pro'), async (req, res) => {
   try {
     const aiToolsOverview = {
       availableTools: [
@@ -85,7 +90,7 @@ router.get('/', authenticate, requireFeature('ai.basic'), async (req, res) => {
  * POST /ai-tools/writing
  * AI writing assistance
  */
-router.post('/writing', authenticate, requireFeature('ai.basic'), async (req, res) => {
+router.post('/writing', authenticate, requireTier('individual_pro'), async (req, res) => {
   try {
     const { text, action, style, length } = req.body;
 
@@ -133,7 +138,7 @@ router.post('/writing', authenticate, requireFeature('ai.basic'), async (req, re
  * POST /ai-tools/voice
  * Voice processing and transcription
  */
-router.post('/voice', authenticate, requireFeature('ai.basic'), async (req, res) => {
+router.post('/voice', authenticate, requireTier('team'), async (req, res) => {
   try {
     const { audioData, language = 'en', action = 'transcribe' } = req.body;
 
@@ -182,7 +187,7 @@ router.post('/voice', authenticate, requireFeature('ai.basic'), async (req, res)
  * POST /ai-tools/documents
  * Document processing and analysis
  */
-router.post('/documents', authenticate, requireFeature('ai.basic'), async (req, res) => {
+router.post('/documents', authenticate, requireTier('team'), async (req, res) => {
   try {
     const { documentData, documentType, extractionType = 'full' } = req.body;
 
@@ -245,7 +250,7 @@ router.post('/documents', authenticate, requireFeature('ai.basic'), async (req, 
  * POST /ai-tools/email
  * Email analysis and categorization
  */
-router.post('/email', authenticate, requireFeature('ai.basic'), async (req, res) => {
+router.post('/email', authenticate, requireTier('enterprise'), async (req, res) => {
   try {
     const { emails, action = 'categorize' } = req.body;
 
@@ -310,7 +315,7 @@ router.post('/email', authenticate, requireFeature('ai.basic'), async (req, res)
  * POST /ai-tools/meetings
  * Meeting insights and transcription
  */
-router.post('/meetings', authenticate, requireFeature('ai.advanced'), async (req, res) => {
+router.post('/meetings', authenticate, requireTier('enterprise'), async (req, res) => {
   try {
     const { audioData, meetingType = 'general', participants = [] } = req.body;
 
@@ -376,7 +381,7 @@ router.post('/meetings', authenticate, requireFeature('ai.advanced'), async (req
  * POST /ai-tools/communication
  * Communication style analysis
  */
-router.post('/communication', authenticate, requireFeature('ai.advanced'), async (req, res) => {
+router.post('/communication', authenticate, requireTier('enterprise'), async (req, res) => {
   try {
     const { text, analysisType = 'style' } = req.body;
 

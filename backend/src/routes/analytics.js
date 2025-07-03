@@ -1,7 +1,12 @@
 const express = require('express');
 const { authenticate, requireFeature } = require('../middleware/auth');
+const { requireTier, addTierHeaders, logAccessControl } = require('../middleware/accessControl');
 
 const router = express.Router();
+
+// Add tier headers and access logging to all routes
+router.use(addTierHeaders());
+router.use(logAccessControl({ verbose: true }));
 
 /**
  * GET /analytics/web
@@ -118,7 +123,7 @@ router.get('/mobile', authenticate, requireFeature('analytics.basic'), async (re
  * GET /analytics/behavioral
  * AI-powered behavioral analytics
  */
-router.get('/behavioral', authenticate, requireFeature('analytics.advanced'), async (req, res) => {
+router.get('/behavioral', authenticate, requireTier('individual_pro'), async (req, res) => {
   try {
     // Mock behavioral analytics data
     const behavioralAnalytics = {
@@ -192,7 +197,7 @@ router.get('/behavioral', authenticate, requireFeature('analytics.advanced'), as
  * POST /analytics/predictive
  * Generate predictive analytics insights
  */
-router.post('/predictive', authenticate, requireFeature('analytics.advanced'), async (req, res) => {
+router.post('/predictive', authenticate, requireTier('individual_pro'), async (req, res) => {
   try {
     const { metrics, timeframe = '30d', confidence = 0.8 } = req.body;
 
@@ -252,7 +257,7 @@ router.post('/predictive', authenticate, requireFeature('analytics.advanced'), a
  * GET /analytics/patterns
  * Pattern recognition and analysis
  */
-router.get('/patterns', authenticate, requireFeature('analytics.advanced'), async (req, res) => {
+router.get('/patterns', authenticate, requireTier('individual_pro'), async (req, res) => {
   try {
     // Mock pattern recognition data
     const patterns = {
@@ -308,7 +313,7 @@ router.get('/patterns', authenticate, requireFeature('analytics.advanced'), asyn
  * GET /analytics/anomalies
  * Anomaly detection and alerts
  */
-router.get('/anomalies', authenticate, requireFeature('analytics.advanced'), async (req, res) => {
+router.get('/anomalies', authenticate, requireTier('enterprise'), async (req, res) => {
   try {
     // Mock anomaly detection data
     const anomalies = {

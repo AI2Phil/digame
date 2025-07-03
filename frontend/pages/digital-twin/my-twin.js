@@ -1,6 +1,7 @@
 import React from 'react';
 import Head from 'next/head';
 import { Bot, Brain, Activity, Target, Zap, Settings, Eye, TrendingUp } from 'lucide-react';
+import PageHeader from '../../src/components/navigation/PageHeader';
 
 export default function MyDigitalTwin() {
   return (
@@ -13,25 +14,13 @@ export default function MyDigitalTwin() {
       </Head>
 
       <div className="min-h-screen bg-gray-50">
+        <PageHeader
+          title="My Digital Twin"
+          subtitle="Your AI-powered professional development companion"
+          icon={<Bot className="w-6 h-6 text-blue-600" />}
+          badge="CORE PLATFORM"
+        />
         <div className="container mx-auto px-4 py-8">
-          {/* Header */}
-          <div className="mb-8">
-            <div className="flex items-center space-x-3 mb-4">
-              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                <Bot className="w-6 h-6 text-blue-600" />
-              </div>
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900">My Digital Twin</h1>
-                <p className="text-gray-600">Your AI-powered professional development companion</p>
-              </div>
-              <div className="ml-auto">
-                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                  <Zap className="w-3 h-3 mr-1" />
-                  ACTIVE
-                </span>
-              </div>
-            </div>
-          </div>
 
           {/* Twin Status Overview */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">

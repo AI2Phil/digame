@@ -11,6 +11,9 @@ const analyticsRoutes = require('./routes/analytics');
 const aiToolsRoutes = require('./routes/ai-tools');
 const platformOwnerRoutes = require('./routes/platform-owner');
 const digitalTwinRoutes = require('./routes/digital-twin');
+const workflowRoutes = require('./routes/workflow');
+const teamCollaborationRoutes = require('./routes/team');
+const careerRoutes = require('./routes/career');
 const { detectDemoMode } = require('./middleware/auth');
 const { getOptimalPort } = require('./utils/portDetection');
 const ServiceDiscovery = require('./utils/serviceDiscovery');
@@ -78,6 +81,9 @@ app.use('/analytics', analyticsRoutes);
 app.use('/ai-tools', aiToolsRoutes);
 app.use('/platform-owner', platformOwnerRoutes);
 app.use('/digital-twin', digitalTwinRoutes);
+app.use('/workflow', workflowRoutes);
+app.use('/team', teamCollaborationRoutes);
+app.use('/career', careerRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
