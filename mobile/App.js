@@ -18,6 +18,7 @@ import LoginScreen from './src/screens/LoginScreen';
 import RegisterScreen from './src/screens/RegisterScreen';
 import DashboardScreen from './src/screens/DashboardScreen';
 import AnalyticsScreen from './src/screens/AnalyticsScreen';
+import AdvancedAnalyticsScreen from './src/screens/AdvancedAnalyticsScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
 import OnboardingScreen from './src/screens/OnboardingScreen';
 
@@ -42,6 +43,8 @@ function MainTabNavigator() {
             iconName = focused ? 'home' : 'home-outline';
           } else if (route.name === 'Analytics') {
             iconName = focused ? 'analytics' : 'analytics-outline';
+          } else if (route.name === 'AdvancedAnalytics') {
+            iconName = focused ? 'stats-chart' : 'stats-chart-outline';
           } else if (route.name === 'Profile') {
             iconName = focused ? 'person' : 'person-outline';
           }
@@ -64,13 +67,18 @@ function MainTabNavigator() {
         component={DashboardScreen}
         options={{ title: 'Dashboard' }}
       />
-      <Tab.Screen 
-        name="Analytics" 
+      <Tab.Screen
+        name="Analytics"
         component={AnalyticsScreen}
         options={{ title: 'Analytics' }}
       />
-      <Tab.Screen 
-        name="Profile" 
+      <Tab.Screen
+        name="AdvancedAnalytics"
+        component={AdvancedAnalyticsScreen}
+        options={{ title: 'AI Analytics' }}
+      />
+      <Tab.Screen
+        name="Profile"
         component={ProfileScreen}
         options={{ title: 'Profile' }}
       />

@@ -278,6 +278,184 @@ class ApiService {
       throw error;
     }
   }
+
+  // Advanced Analytics Endpoints
+  static async getAdvancedUserBehavior(userId = null, days = 30) {
+    try {
+      const headers = await this.getAuthHeaders();
+      const params = new URLSearchParams({
+        days: days.toString(),
+        ...(userId && { user_id: userId.toString() })
+      });
+      
+      const response = await fetch(`${API_BASE_URL}/advanced-analytics/user-behavior?${params}`, {
+        method: 'GET',
+        headers,
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch advanced user behavior data');
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Advanced user behavior error:', error);
+      throw error;
+    }
+  }
+
+  static async getAdvancedAnomalies(metric = 'user_activity', days = 30) {
+    try {
+      const headers = await this.getAuthHeaders();
+      const params = new URLSearchParams({
+        metric,
+        days: days.toString()
+      });
+      
+      const response = await fetch(`${API_BASE_URL}/advanced-analytics/anomaly-detection?${params}`, {
+        method: 'GET',
+        headers,
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch advanced anomaly data');
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Advanced anomalies error:', error);
+      throw error;
+    }
+  }
+
+  static async getRevenuePrediction(daysAhead = 30) {
+    try {
+      const headers = await this.getAuthHeaders();
+      const params = new URLSearchParams({
+        days_ahead: daysAhead.toString()
+      });
+      
+      const response = await fetch(`${API_BASE_URL}/advanced-analytics/revenue-prediction?${params}`, {
+        method: 'GET',
+        headers,
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch revenue prediction');
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Revenue prediction error:', error);
+      throw error;
+    }
+  }
+
+  static async getChurnPrediction(userId = null) {
+    try {
+      const headers = await this.getAuthHeaders();
+      const params = new URLSearchParams({
+        ...(userId && { user_id: userId.toString() })
+      });
+      
+      const response = await fetch(`${API_BASE_URL}/advanced-analytics/churn-prediction?${params}`, {
+        method: 'GET',
+        headers,
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch churn prediction');
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Churn prediction error:', error);
+      throw error;
+    }
+  }
+
+  static async getInsightsReport(days = 30) {
+    try {
+      const headers = await this.getAuthHeaders();
+      const params = new URLSearchParams({
+        days: days.toString()
+      });
+      
+      const response = await fetch(`${API_BASE_URL}/advanced-analytics/insights-report?${params}`, {
+        method: 'GET',
+        headers,
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch insights report');
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Insights report error:', error);
+      throw error;
+    }
+  }
+
+  static async getPerformanceMetrics() {
+    try {
+      const headers = await this.getAuthHeaders();
+      
+      const response = await fetch(`${API_BASE_URL}/advanced-analytics/performance-metrics`, {
+        method: 'GET',
+        headers,
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch performance metrics');
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Performance metrics error:', error);
+      throw error;
+    }
+  }
+
+  static async getMLModelsStatus() {
+    try {
+      const headers = await this.getAuthHeaders();
+      
+      const response = await fetch(`${API_BASE_URL}/advanced-analytics/ml-models/status`, {
+        method: 'GET',
+        headers,
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch ML models status');
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('ML models status error:', error);
+      throw error;
+    }
+  }
+
+  static async getAnalyticsHealthCheck() {
+    try {
+      const headers = await this.getAuthHeaders();
+      
+      const response = await fetch(`${API_BASE_URL}/advanced-analytics/health`, {
+        method: 'GET',
+        headers,
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch analytics health check');
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Analytics health check error:', error);
+      throw error;
+    }
+  }
 }
 
 export { ApiService };

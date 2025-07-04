@@ -12,6 +12,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { LineChart, BarChart, PieChart } from 'react-native-chart-kit';
 import { ApiService } from '../services/ApiService';
+import MobileAnalyticsWidget from '../components/MobileAnalyticsWidget';
 
 const screenWidth = Dimensions.get('window').width;
 
@@ -198,6 +199,28 @@ export default function DashboardScreen() {
       {renderProductivityChart()}
       {renderActivityBreakdown()}
 
+      {/* Advanced Analytics Widgets */}
+      <View style={styles.analyticsSection}>
+        <Text style={styles.sectionTitle}>AI-Powered Insights</Text>
+        <MobileAnalyticsWidget
+          widgetType="summary"
+          timeRange="7d"
+          onPress={() => {
+            // Navigate to Advanced Analytics screen
+            // This would be handled by navigation prop in a real implementation
+            console.log('Navigate to Advanced Analytics');
+          }}
+        />
+        <MobileAnalyticsWidget
+          widgetType="anomalies"
+          timeRange="7d"
+          compact={true}
+          onPress={() => {
+            console.log('Navigate to Anomalies');
+          }}
+        />
+      </View>
+
       <View style={styles.quickActions}>
         <Text style={styles.sectionTitle}>Quick Actions</Text>
         <View style={styles.actionButtons}>
@@ -302,6 +325,10 @@ const styles = StyleSheet.create({
   },
   chart: {
     borderRadius: 16,
+  },
+  analyticsSection: {
+    paddingHorizontal: 20,
+    marginBottom: 20,
   },
   quickActions: {
     padding: 20,
