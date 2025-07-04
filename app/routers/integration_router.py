@@ -10,6 +10,8 @@ from datetime import datetime
 
 from ..database import get_db
 from ..services.integration_service import IntegrationService, IntegrationProviderService
+from ..services.integration_optimization_service import IntegrationOptimizationService
+from ..services.integration_health_service import IntegrationHealthService
 from ..models.integration import (
     IntegrationProvider, IntegrationConnection, IntegrationSyncLog,
     IntegrationWebhook, IntegrationDataMapping, IntegrationAnalytics
