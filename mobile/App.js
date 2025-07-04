@@ -25,6 +25,7 @@ import WorkflowDashboardScreen from './src/screens/WorkflowDashboardScreen';
 import WorkflowBuilderScreen from './src/screens/WorkflowBuilderScreen';
 import ExecutionMonitorScreen from './src/screens/ExecutionMonitorScreen';
 import AdvancedFeaturesScreen from './src/screens/AdvancedFeaturesScreen';
+import Phase1CIntegrationScreen from './src/screens/Phase1CIntegrationScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
 import OnboardingScreen from './src/screens/OnboardingScreen';
 
@@ -58,6 +59,8 @@ function MainTabNavigator() {
             iconName = focused ? 'git-branch' : 'git-branch-outline';
           } else if (route.name === 'Advanced') {
             iconName = focused ? 'rocket' : 'rocket-outline';
+          } else if (route.name === 'Phase1C') {
+            iconName = focused ? 'checkmark-circle' : 'checkmark-circle-outline';
           } else if (route.name === 'Profile') {
             iconName = focused ? 'person' : 'person-outline';
           }
@@ -104,6 +107,11 @@ function MainTabNavigator() {
         name="Advanced"
         component={AdvancedFeaturesScreen}
         options={{ title: 'Advanced' }}
+      />
+      <Tab.Screen
+        name="Phase1C"
+        component={Phase1CIntegrationScreen}
+        options={{ title: 'Phase 1C' }}
       />
       <Tab.Screen
         name="Profile"
