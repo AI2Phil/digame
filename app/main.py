@@ -69,6 +69,10 @@ from .routers import simulation_router # Import the simulation router
 from .routers import intelligence_router # Import the intelligence router
 from .routers import platform_owner_router # Import the platform owner router
 from .routers import advanced_behavioral_analysis_router # Import the advanced behavioral analysis router
+from .routers import advanced_nlp_router # Import the advanced NLP router
+from .api.v1 import advanced_tenant_management # Import the advanced tenant management router
+from .api.v1 import enterprise_security_enhancement # Import the enterprise security enhancement router
+from .api.v1 import enterprise_integration # Import the enterprise integration router
 
 # Configure JSON logging
 logger = logging.getLogger("digame_app") # Use a specific name for the main app logger
@@ -234,6 +238,22 @@ app = FastAPI(
         {
             "name": "Advanced Behavioral Analysis",
             "description": "Deep learning behavioral models, temporal pattern analysis, and predictive behavioral insights"
+        },
+        {
+            "name": "Advanced NLP",
+            "description": "Advanced natural language processing including conversation management, document analysis, sentiment analysis, content generation, and intelligent suggestions"
+        },
+        {
+            "name": "Advanced Tenant Management",
+            "description": "Enterprise multi-tenant management with resource allocation, analytics, billing, and customization features"
+        },
+        {
+            "name": "Enterprise Security Enhancement",
+            "description": "Advanced security features including threat detection, policy management, incident response, and compliance monitoring"
+        },
+        {
+            "name": "Enterprise Integration",
+            "description": "Advanced enterprise integration features including LDAP/AD, enhanced SSO, API gateway, and monitoring"
         }
     ]
 )
@@ -314,6 +334,10 @@ app.include_router(simulation_router.router, tags=["Simulation"]) # Add simulati
 app.include_router(intelligence_router.router, tags=["Intelligence"]) # Add intelligence router
 app.include_router(platform_owner_router.router, tags=["Platform Owner"]) # Add platform owner router
 app.include_router(advanced_behavioral_analysis_router.router, tags=["Advanced Behavioral Analysis"]) # Add advanced behavioral analysis router
+app.include_router(advanced_nlp_router.router, tags=["Advanced NLP"]) # Add advanced NLP router
+app.include_router(advanced_tenant_management.router, prefix="/api/v1", tags=["Advanced Tenant Management"]) # Add advanced tenant management router
+app.include_router(enterprise_security_enhancement.router, prefix="/api/v1", tags=["Enterprise Security Enhancement"]) # Add enterprise security enhancement router
+app.include_router(enterprise_integration.router, prefix="/api/v1", tags=["Enterprise Integration"]) # Add enterprise integration router
 
 
 # Startup and shutdown events
