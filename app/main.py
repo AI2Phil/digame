@@ -73,6 +73,8 @@ from .routers import advanced_nlp_router # Import the advanced NLP router
 from .api.v1 import advanced_tenant_management # Import the advanced tenant management router
 from .api.v1 import enterprise_security_enhancement # Import the enterprise security enhancement router
 from .api.v1 import enterprise_integration # Import the enterprise integration router
+from .api.v1 import performance_optimization # Import the performance optimization router
+from .api.v1 import testing_quality_assurance # Import the testing quality assurance router
 
 # Configure JSON logging
 logger = logging.getLogger("digame_app") # Use a specific name for the main app logger
@@ -254,6 +256,14 @@ app = FastAPI(
         {
             "name": "Enterprise Integration",
             "description": "Advanced enterprise integration features including LDAP/AD, enhanced SSO, API gateway, and monitoring"
+        },
+        {
+            "name": "Performance Optimization",
+            "description": "Comprehensive performance optimization including database optimization, caching strategies, API performance tuning, and frontend optimization"
+        },
+        {
+            "name": "Testing & Quality Assurance",
+            "description": "Comprehensive testing, quality assurance, monitoring, and documentation for production readiness"
         }
     ]
 )
@@ -338,6 +348,8 @@ app.include_router(advanced_nlp_router.router, tags=["Advanced NLP"]) # Add adva
 app.include_router(advanced_tenant_management.router, prefix="/api/v1", tags=["Advanced Tenant Management"]) # Add advanced tenant management router
 app.include_router(enterprise_security_enhancement.router, prefix="/api/v1", tags=["Enterprise Security Enhancement"]) # Add enterprise security enhancement router
 app.include_router(enterprise_integration.router, prefix="/api/v1", tags=["Enterprise Integration"]) # Add enterprise integration router
+app.include_router(performance_optimization.router, prefix="/api/v1", tags=["Performance Optimization"]) # Add performance optimization router
+app.include_router(testing_quality_assurance.router, prefix="/api/v1", tags=["Testing & Quality Assurance"]) # Add testing quality assurance router
 
 
 # Startup and shutdown events

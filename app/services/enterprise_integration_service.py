@@ -154,7 +154,8 @@ class EnterpriseIntegrationService:
             # Use existing SSO service as base
             base_sso_result = self.sso_service.create_sso_provider(
                 tenant_id=tenant_id,
-                provider_data=sso_config
+                provider_data=sso_config,
+                created_by=1  # Mock user ID - in production would use actual user
             )
             
             if not base_sso_result:
