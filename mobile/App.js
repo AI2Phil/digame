@@ -24,6 +24,7 @@ import MFASetupScreen from './src/screens/MFASetupScreen';
 import WorkflowDashboardScreen from './src/screens/WorkflowDashboardScreen';
 import WorkflowBuilderScreen from './src/screens/WorkflowBuilderScreen';
 import ExecutionMonitorScreen from './src/screens/ExecutionMonitorScreen';
+import AdvancedFeaturesScreen from './src/screens/AdvancedFeaturesScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
 import OnboardingScreen from './src/screens/OnboardingScreen';
 
@@ -55,6 +56,8 @@ function MainTabNavigator() {
             iconName = focused ? 'shield-checkmark' : 'shield-checkmark-outline';
           } else if (route.name === 'Workflows') {
             iconName = focused ? 'git-branch' : 'git-branch-outline';
+          } else if (route.name === 'Advanced') {
+            iconName = focused ? 'rocket' : 'rocket-outline';
           } else if (route.name === 'Profile') {
             iconName = focused ? 'person' : 'person-outline';
           }
@@ -96,6 +99,11 @@ function MainTabNavigator() {
         name="Workflows"
         component={WorkflowDashboardScreen}
         options={{ title: 'Workflows' }}
+      />
+      <Tab.Screen
+        name="Advanced"
+        component={AdvancedFeaturesScreen}
+        options={{ title: 'Advanced' }}
       />
       <Tab.Screen
         name="Profile"
