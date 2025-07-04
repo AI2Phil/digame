@@ -19,11 +19,17 @@ import RegisterScreen from './src/screens/RegisterScreen';
 import DashboardScreen from './src/screens/DashboardScreen';
 import AnalyticsScreen from './src/screens/AnalyticsScreen';
 import AdvancedAnalyticsScreen from './src/screens/AdvancedAnalyticsScreen';
+import SecurityDashboardScreen from './src/screens/SecurityDashboardScreen';
+import MFASetupScreen from './src/screens/MFASetupScreen';
+import WorkflowDashboardScreen from './src/screens/WorkflowDashboardScreen';
+import WorkflowBuilderScreen from './src/screens/WorkflowBuilderScreen';
+import ExecutionMonitorScreen from './src/screens/ExecutionMonitorScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
 import OnboardingScreen from './src/screens/OnboardingScreen';
 
 // Import services
 import { AuthService } from './src/services/AuthService';
+import MobileSecurityService from './src/services/MobileSecurityService';
 import notificationService from './src/services/notificationService';
 import biometricService from './src/services/biometricService';
 import offlineService from './src/services/offlineService';
@@ -45,6 +51,10 @@ function MainTabNavigator() {
             iconName = focused ? 'analytics' : 'analytics-outline';
           } else if (route.name === 'AdvancedAnalytics') {
             iconName = focused ? 'stats-chart' : 'stats-chart-outline';
+          } else if (route.name === 'Security') {
+            iconName = focused ? 'shield-checkmark' : 'shield-checkmark-outline';
+          } else if (route.name === 'Workflows') {
+            iconName = focused ? 'git-branch' : 'git-branch-outline';
           } else if (route.name === 'Profile') {
             iconName = focused ? 'person' : 'person-outline';
           }
@@ -78,6 +88,16 @@ function MainTabNavigator() {
         options={{ title: 'AI Analytics' }}
       />
       <Tab.Screen
+        name="Security"
+        component={SecurityDashboardScreen}
+        options={{ title: 'Security' }}
+      />
+      <Tab.Screen
+        name="Workflows"
+        component={WorkflowDashboardScreen}
+        options={{ title: 'Workflows' }}
+      />
+      <Tab.Screen
         name="Profile"
         component={ProfileScreen}
         options={{ title: 'Profile' }}
@@ -91,6 +111,12 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
   const [servicesInitialized, setServicesInitialized] = useState(false);
+  const [securityService] = useState(new MobileSecurityService());
+  const [securityChecks, setSecurityChecks] = useState({
+    sessionValid: true,
+    appLocked: false,
+    reauthRequired: false
+  });
 
   useEffect(() => {
     initializeApp();
@@ -284,9 +310,36 @@ export default function App() {
           </Stack.Screen>
         ) : (
           // Main App Stack
-          <Stack.Screen name="Main">
-            {props => <MainTabNavigator {...props} onLogout={handleLogout} />}
-          </Stack.Screen>
+          <>
+            <Stack.Screen name="Main">
+              {props => <MainTabNavigator {...props} onLogout={handleLogout} />}
+            </Stack.Screen>
+            <Stack.Screen
+              name="MFASetup"
+              component={MFASetupScreen}
+              options={{
+                headerShown: true,
+                title: 'Setup MFA',
+                presentation: 'modal'
+              }}
+            />
+            <Stack.Screen
+              name="WorkflowBuilder"
+              component={WorkflowBuilderScreen}
+              options={{
+                headerShown: false,
+                presentation: 'modal'
+              }}
+            />
+            <Stack.Screen
+              name="ExecutionMonitor"
+              component={ExecutionMonitorScreen}
+              options={{
+                headerShown: false,
+                presentation: 'modal'
+              }}
+            />
+          </>
         )}
       </Stack.Navigator>
     </NavigationContainer>
