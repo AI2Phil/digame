@@ -65,7 +65,6 @@
     "react-hook-form": "^7.48.2",
     "react-i18next": "^14.0.0",
     "react-plotly.js": "^2.6.0",
-    "react-router-dom": "^6.20.1",
     "recharts": "^2.8.0",
     "tailwind-merge": "^3.3.1",
     "tailwindcss": "^4.1.10",

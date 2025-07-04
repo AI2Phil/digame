@@ -82,7 +82,7 @@ class IntegrationOptimizationService:
         """
         logger.info(f"Starting integration optimization for tenant {tenant_id}")
         
-        optimization_results = {
+        optimization_results: Dict[str, Any] = {
             "tenant_id": tenant_id,
             "optimization_started": datetime.utcnow(),
             "providers_optimized": 0,
@@ -103,7 +103,7 @@ class IntegrationOptimizationService:
             # Optimize each connection
             for connection in connections:
                 try:
-                    connection_result = await self.optimize_connection(connection)
+                    connection_result = await self.optimize_connection(connection.id)
                     optimization_results["connections_optimized"] += 1
                     
                     if connection_result.get("improvements"):
@@ -139,11 +139,22 @@ class IntegrationOptimizationService:
         
         return optimization_results
     
-    async def optimize_connection(self, connection: IntegrationConnection) -> Dict[str, Any]:
+    async def optimize_connection(self, connection_id: int) -> Dict[str, Any]:
         """
         Optimize a specific integration connection
         """
-        optimization_result = {
+        # Get connection from database
+        connection = self.db.query(IntegrationConnection).filter(
+            IntegrationConnection.id == connection_id
+        ).first()
+        
+        if not connection:
+            return {
+                "connection_id": connection_id,
+                "error": "Connection not found"
+            }
+        
+        optimization_result: Dict[str, Any] = {
             "connection_id": connection.id,
             "provider_name": connection.provider.name if connection.provider else "unknown",
             "improvements": [],
@@ -356,7 +367,7 @@ class IntegrationOptimizationService:
                 return False
             
             # Get current sync settings
-            sync_settings = connection.sync_settings or {}
+            sync_settings: Dict[str, Any] = dict(connection.sync_settings or {})
             
             # Calculate optimal batch size based on rate limits
             rate_limits = provider.rate_limits
@@ -399,8 +410,8 @@ class IntegrationOptimizationService:
             failure_analysis = self.analyze_failure_patterns(recent_failures)
             
             # Update retry configuration
-            sync_settings = connection.sync_settings or {}
-            retry_config = sync_settings.get("retry_config", {})
+            sync_settings: Dict[str, Any] = dict(connection.sync_settings or {})
+            retry_config: Dict[str, Any] = dict(sync_settings.get("retry_config", {}))
             
             # Optimize based on failure patterns
             if failure_analysis["rate_limit_errors"] > 0.3:  # 30% rate limit errors
@@ -441,7 +452,7 @@ class IntegrationOptimizationService:
             # Analyze sync patterns
             sync_analysis = await self.analyze_sync_patterns(connection.id)
             
-            sync_settings = connection.sync_settings or {}
+            sync_settings: Dict[str, Any] = dict(connection.sync_settings or {})
             optimizations_made = False
             
             # Optimize sync frequency
@@ -740,10 +751,10 @@ class IntegrationOptimizationService:
         
         return improvements
     
-    async def update_connection_config(self, connection: IntegrationConnection, optimizations: List[str]):
+    async def update_connection_config(self, connection: IntegrationConnection, optimizations: Any):
         """Update connection configuration with optimization flags"""
         try:
-            sync_settings = connection.sync_settings or {}
+            sync_settings: Dict[str, Any] = dict(connection.sync_settings or {})
             sync_settings["optimizations_applied"] = optimizations
             sync_settings["last_optimization"] = datetime.utcnow().isoformat()
             sync_settings["optimization_version"] = "2.0"

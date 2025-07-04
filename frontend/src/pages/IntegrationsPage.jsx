@@ -211,9 +211,11 @@ const IntegrationsPage = () => {
   };
 
   const initiateOAuthFlow = (provider) => {
-    // Mock OAuth flow initiation
-    const authUrl = `https://oauth.${provider.name.toLowerCase()}.com/authorize?client_id=demo&redirect_uri=${encodeURIComponent(window.location.origin)}/integrations/oauth/callback&scope=read+write`;
-    window.open(authUrl, 'oauth', 'width=600,height=600');
+    // Mock OAuth flow initiation - using Next.js router for callback
+    const authUrl = `https://oauth.${provider.name.toLowerCase()}.com/authorize?client_id=demo&redirect_uri=${encodeURIComponent(typeof window !== 'undefined' ? window.location.origin : '')}/integrations/oauth/callback&scope=read+write`;
+    if (typeof window !== 'undefined') {
+      window.open(authUrl, 'oauth', 'width=600,height=600');
+    }
   };
 
   const testConnection = async (connectionId) => {

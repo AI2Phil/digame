@@ -68,6 +68,7 @@ from .routers import digital_twin_router # Import the digital twin router
 from .routers import simulation_router # Import the simulation router
 from .routers import intelligence_router # Import the intelligence router
 from .routers import platform_owner_router # Import the platform owner router
+from .routers import advanced_behavioral_analysis_router # Import the advanced behavioral analysis router
 
 # Configure JSON logging
 logger = logging.getLogger("digame_app") # Use a specific name for the main app logger
@@ -229,6 +230,10 @@ app = FastAPI(
         {
             "name": "Platform Owner",
             "description": "Platform owner management, settings, and testing capabilities"
+        },
+        {
+            "name": "Advanced Behavioral Analysis",
+            "description": "Deep learning behavioral models, temporal pattern analysis, and predictive behavioral insights"
         }
     ]
 )
@@ -308,6 +313,7 @@ app.include_router(digital_twin_router.router, tags=["Digital Twins"]) # Add dig
 app.include_router(simulation_router.router, tags=["Simulation"]) # Add simulation router
 app.include_router(intelligence_router.router, tags=["Intelligence"]) # Add intelligence router
 app.include_router(platform_owner_router.router, tags=["Platform Owner"]) # Add platform owner router
+app.include_router(advanced_behavioral_analysis_router.router, tags=["Advanced Behavioral Analysis"]) # Add advanced behavioral analysis router
 
 
 # Startup and shutdown events
