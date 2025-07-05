@@ -230,7 +230,7 @@ export DIGAME_AUTH_SECRET_KEY="your-super-secret-key-at-least-32-characters-long
 export DIGAME_AUTH_DEFAULT_ADMIN_EMAIL="admin@yourdomain.com"
 
 # 5. Initialize database
-cd digame && python deploy_migrations.py
+python scripts/deploy_migrations.py
 
 # 6. Start the application
 python -m uvicorn digame.app.main:app --reload

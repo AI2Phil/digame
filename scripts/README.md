@@ -14,6 +14,15 @@ This directory contains backend-specific utility scripts for database migrations
 | [`test_phase3_team_coordination.py`](#test_phase3_team_coordinationpy) | Team coordination demo | `python test_phase3_team_coordination.py` | ✅ Active |
 | [`test_team_endpoints.py`](#test_team_endpointspy) | API endpoint testing | `python test_team_endpoints.py` | ✅ Active |
 | [`update_admin_platform_owner.py`](#update_admin_platform_ownerpy) | Admin user management | `python update_admin_platform_owner.py` | ✅ Active |
+| [`check_backend_db.py`](#check_backend_dbpy) | Node.js backend database inspection | `python check_backend_db.py` | ✅ Active |
+| [`check_user_credentials.py`](#check_user_credentialspy) | User credential verification | `python check_user_credentials.py` | ✅ Active |
+| [`check_db_schema.py`](#check_db_schemapy) | Database schema inspection | `python check_db_schema.py` | ✅ Active |
+| [`create_platform_owner.py`](#create_platform_ownerpy) | Platform Owner user creation | `python create_platform_owner.py` | ✅ Active |
+| [`create_simple_platform_owner.py`](#create_simple_platform_ownerpy) | Simple Platform Owner creation | `python create_simple_platform_owner.py` | ✅ Active |
+| [`fix_platform_owner_onboarding.py`](#fix_platform_owner_onboardingpy) | Platform Owner onboarding fix | `python fix_platform_owner_onboarding.py` | ✅ Active |
+| [`fix_platform_owner_password.py`](#fix_platform_owner_passwordpy) | Platform Owner password fix | `python fix_platform_owner_password.py` | ✅ Active |
+| [`get_user_details.py`](#get_user_detailspy) | Individual user detail retrieval | `python get_user_details.py` | ✅ Active |
+| [`simple_user_check.py`](#simple_user_checkpy) | Simple user table inspection | `python simple_user_check.py` | ✅ Active |
 | [`git-setup.py`](#git-setuppy) | Git repository initialization | `python git-setup.py init` | ✅ Active |
 | [`simple_git.py`](#simple_gitpy) | Basic Git operations | `python simple_git.py status` | ✅ Active |
 | [`git_remote.py`](#git_remotepy) | Remote repository management | `python git_remote.py push` | ✅ Active |
@@ -303,6 +312,280 @@ python scripts/update_admin_platform_owner.py
 
 ---
 
+### `create_platform_owner.py`
+**Purpose**: Creates a new Platform Owner user with full SQLAlchemy integration
+
+**Description**:
+- Creates a comprehensive Platform Owner user account
+- Uses SQLAlchemy models and proper password hashing
+- Handles both new user creation and existing user updates
+- Integrates with the main application's authentication system
+
+**Usage**:
+```bash
+# Create new Platform Owner user
+python scripts/create_platform_owner.py
+```
+
+**Features**:
+- ✅ **SQLAlchemy Integration**: Uses app models and database configuration
+- ✅ **Secure Password Hashing**: Uses platform authentication service
+- ✅ **Duplicate Prevention**: Checks for existing users before creation
+- ✅ **Full User Profile**: Sets all necessary user attributes
+- ✅ **Subscription Management**: Configures platform owner subscription tier
+
+**Default Credentials**:
+- Email: `owner@digame.com`
+- Password: `PlatformOwner123!`
+- Username: `owner`
+- Platform Owner Level: 3 (highest)
+
+---
+
+### `create_simple_platform_owner.py`
+**Purpose**: Creates a Platform Owner user with direct SQLite operations
+
+**Description**:
+- Lightweight Platform Owner creation using direct SQLite commands
+- Bypasses SQLAlchemy for simple, fast user creation
+- Uses basic password hashing for development environments
+- Ideal for quick setup and testing scenarios
+
+**Usage**:
+```bash
+# Create Platform Owner with direct SQLite
+python scripts/create_simple_platform_owner.py
+```
+
+**Features**:
+- ✅ **Direct SQLite Access**: No ORM dependencies required
+- ✅ **Simple Password Hashing**: Uses SHA256 for basic security
+- ✅ **Minimal Dependencies**: Only requires sqlite3 and hashlib
+- ✅ **Quick Setup**: Fast user creation for development
+- ✅ **Update Capability**: Can update existing users to Platform Owner
+
+**Default Credentials**:
+- Email: `owner@digame.com`
+- Password: `PlatformOwner123!`
+- Username: `owner`
+- Platform Owner Level: 3 (highest)
+
+---
+
+### `check_user_credentials.py`
+**Purpose**: Comprehensive user credential verification and database inspection
+
+**Description**:
+- Searches for specific users by email address
+- Displays complete user profile information
+- Lists all users in the database for overview
+- Uses SQLAlchemy for safe database access
+
+**Usage**:
+```bash
+# Check specific user credentials (default: philip.a.oshea@gmail.com)
+python scripts/check_user_credentials.py
+```
+
+**Features**:
+- ✅ **User Search**: Finds users by email address
+- ✅ **Complete Profile Display**: Shows all user attributes safely
+- ✅ **Password Security**: Displays password hash status without exposing data
+- ✅ **User Listing**: Shows all users in database
+- ✅ **SQLAlchemy Integration**: Uses app models and database configuration
+
+**Information Displayed**:
+- User ID, username, email, names
+- Account status (active, verified, guest)
+- Platform owner status and level
+- Subscription tier and status
+- Login history and failed attempts
+- Onboarding completion status
+
+---
+
+### `check_backend_db.py`
+**Purpose**: Node.js backend database inspection and user verification
+
+**Description**:
+- Specifically checks the Node.js backend SQLite database
+- Searches for users in the backend system
+- Provides database file verification and user listing
+- Designed for hybrid Python/Node.js environments
+
+**Usage**:
+```bash
+# Check Node.js backend database for specific user
+python scripts/check_backend_db.py
+```
+
+**Features**:
+- ✅ **Backend Database Access**: Connects to `backend/data/digame.db`
+- ✅ **File Verification**: Checks database file existence
+- ✅ **User Search**: Searches for specific email addresses
+- ✅ **Security Conscious**: Truncates password hashes in output
+- ✅ **Fallback Listing**: Shows all users if target not found
+
+**Target User**: `philip.a.oshea@gmail.com` (configurable in script)
+
+**Database Path**: `backend/data/digame.db`
+
+---
+
+### `fix_platform_owner_onboarding.py`
+**Purpose**: Fixes onboarding status for Platform Owner users in Node.js backend
+
+**Description**:
+- Updates onboarding completion status in the Node.js backend database
+- Sets comprehensive onboarding data with realistic preferences
+- Specifically targets Platform Owner users
+- Provides verification of updates
+
+**Usage**:
+```bash
+# Fix Platform Owner onboarding status
+python scripts/fix_platform_owner_onboarding.py
+```
+
+**Features**:
+- ✅ **Backend Database Updates**: Modifies Node.js backend database directly
+- ✅ **Onboarding Completion**: Sets onboardingCompleted to true
+- ✅ **Realistic Data**: Includes comprehensive onboarding preferences
+- ✅ **Role-Specific**: Targets users with 'platform_owner' role
+- ✅ **Update Verification**: Confirms changes were applied successfully
+
+**Onboarding Data Set**:
+- Interests: Analytics, AI, Productivity, Team Management
+- Goals: Productivity, Data Insights, Team Optimization
+- Experience Level: Expert
+- Team Choice: Create Team
+
+**Target User**: `philip.a.oshea@gmail.com` with role 'platform_owner'
+
+---
+
+### `check_db_schema.py`
+**Purpose**: Comprehensive database schema inspection and analysis
+
+**Description**:
+- Examines the actual database structure and contents
+- Lists all tables with their column definitions and data types
+- Shows row counts and sample data for verification
+- Provides detailed schema information for troubleshooting
+
+**Usage**:
+```bash
+# Inspect complete database schema
+python scripts/check_db_schema.py
+```
+
+**Features**:
+- ✅ **Complete Schema Analysis**: Shows all tables and their structures
+- ✅ **Column Details**: Displays data types, constraints, and defaults
+- ✅ **Row Counting**: Shows record counts for each table
+- ✅ **Sample Data**: Displays sample records from users table
+- ✅ **Database Verification**: Confirms database file existence and accessibility
+
+**Information Displayed**:
+- Table names and structures
+- Column names, types, and constraints
+- Primary keys and NOT NULL constraints
+- Default values and row counts
+- Sample user data (with password hash truncation)
+
+---
+
+### `fix_platform_owner_password.py`
+**Purpose**: Updates Platform Owner password with proper bcrypt hashing
+
+**Description**:
+- Fixes password hashing issues for Platform Owner accounts
+- Uses proper bcrypt hashing compatible with the application
+- Updates existing Platform Owner accounts with secure password hashes
+- Ensures authentication compatibility with the main application
+
+**Usage**:
+```bash
+# Fix Platform Owner password hashing
+python scripts/fix_platform_owner_password.py
+```
+
+**Features**:
+- ✅ **Bcrypt Hashing**: Uses proper bcrypt algorithm for security
+- ✅ **Password Context**: Uses same hashing context as main application
+- ✅ **Secure Updates**: Updates password hash safely in database
+- ✅ **Verification**: Confirms successful password update
+- ✅ **Error Handling**: Provides rollback on failure
+
+**Target Account**:
+- Email: `owner@digame.com`
+- Password: `PlatformOwner123!`
+- Uses bcrypt hashing with proper salt rounds
+
+---
+
+### `get_user_details.py`
+**Purpose**: Retrieves detailed information for a specific user by ID
+
+**Description**:
+- Fetches complete user profile information by user ID
+- Displays all user attributes in a readable format
+- Provides secure handling of sensitive information
+- Useful for debugging and user account verification
+
+**Usage**:
+```bash
+# Get details for specific user (default: ID 2)
+python scripts/get_user_details.py
+```
+
+**Features**:
+- ✅ **User ID Lookup**: Finds users by their database ID
+- ✅ **Complete Profile**: Shows all user table columns
+- ✅ **Security Conscious**: Truncates password hashes for safety
+- ✅ **Column Mapping**: Uses proper column names for display
+- ✅ **Error Handling**: Graceful handling of missing users
+
+**Default Target**: User ID 2 (`poshea100@hotmail.com`)
+
+**Information Displayed**:
+- All user table columns and values
+- Truncated password hash for security
+- Account status and configuration details
+
+---
+
+### `simple_user_check.py`
+**Purpose**: Simple and direct users table inspection
+
+**Description**:
+- Provides straightforward access to users table information
+- Checks table existence and structure
+- Searches for specific users and lists all users
+- Designed for quick database verification and troubleshooting
+
+**Usage**:
+```bash
+# Check users table and search for specific user
+python scripts/simple_user_check.py
+```
+
+**Features**:
+- ✅ **Table Verification**: Confirms users table exists
+- ✅ **Schema Display**: Shows table structure and column types
+- ✅ **User Search**: Looks for specific email addresses
+- ✅ **User Listing**: Shows all users when target not found
+- ✅ **Fallback Information**: Lists available tables if users table missing
+
+**Target User**: `philip.a.oshea@gmail.com` (configurable in script)
+
+**Fallback Behavior**:
+- Lists all available tables if users table doesn't exist
+- Shows all users if target user not found
+- Provides comprehensive database overview
+
+---
+
 ## 🔧 Git Management Scripts
 
 ### `git-setup.py`
@@ -493,10 +776,61 @@ python scripts/test_migrations.py
 # 1. Create database tables
 python scripts/create_tables.py
 
-# 2. Update admin privileges
+# 2. Create Platform Owner (SQLAlchemy method)
+python scripts/create_platform_owner.py
+
+# 3. Or create Platform Owner (Simple SQLite method)
+python scripts/create_simple_platform_owner.py
+
+# 4. Update admin privileges
 python scripts/update_admin_platform_owner.py
 
-# 3. Verify API endpoints
+# 5. Verify user credentials
+python scripts/check_user_credentials.py
+
+# 6. Verify API endpoints
+python scripts/test_team_endpoints.py
+```
+
+### **Database Inspection and Troubleshooting**
+```bash
+# 1. Check complete database schema and structure
+python scripts/check_db_schema.py
+
+# 2. Check main application database users
+python scripts/check_user_credentials.py
+
+# 3. Simple users table inspection
+python scripts/simple_user_check.py
+
+# 4. Check Node.js backend database
+python scripts/check_backend_db.py
+
+# 5. Get specific user details by ID
+python scripts/get_user_details.py
+
+# 6. Fix Platform Owner password hashing
+python scripts/fix_platform_owner_password.py
+
+# 7. Fix Platform Owner onboarding issues
+python scripts/fix_platform_owner_onboarding.py
+
+# 8. Verify database tables and structure
+python scripts/create_tables.py
+```
+
+### **Platform Owner Setup Workflow**
+```bash
+# 1. Create Platform Owner account
+python scripts/create_platform_owner.py
+
+# 2. Verify account creation
+python scripts/check_user_credentials.py
+
+# 3. Fix onboarding if using Node.js backend
+python scripts/fix_platform_owner_onboarding.py
+
+# 4. Test API access
 python scripts/test_team_endpoints.py
 ```
 
@@ -658,6 +992,20 @@ python digame/scripts/git-setup.py config 'Your Name' 'your.email@example.com'
 ---
 
 ## 📝 Recent Updates
+
+**January 4, 2025**: Moved and documented root-level scripts for better organization:
+- Moved `check_backend_db.py` - Node.js backend database inspection
+- Moved `check_user_credentials.py` - User credential verification and database inspection
+- Moved `check_db_schema.py` - Complete database schema inspection and analysis
+- Moved `create_platform_owner.py` - Platform Owner user creation with SQLAlchemy
+- Moved `create_simple_platform_owner.py` - Simple Platform Owner creation with direct SQLite
+- Moved `fix_platform_owner_onboarding.py` - Platform Owner onboarding status fixes
+- Moved `fix_platform_owner_password.py` - Platform Owner password bcrypt hashing fixes
+- Moved `get_user_details.py` - Individual user detail retrieval by ID
+- Moved `simple_user_check.py` - Simple and direct users table inspection
+- Added comprehensive documentation for all moved scripts
+- Updated common use cases to include enhanced database inspection workflows
+- Added new workflow sections for database troubleshooting and Platform Owner setup
 
 **January 1, 2025**: Updated documentation to include newly organized scripts:
 - Added `create_tables.py` - Direct database table creation
