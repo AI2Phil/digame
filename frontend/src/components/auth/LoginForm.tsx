@@ -66,7 +66,46 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, redirectTo = '/dashboa
         if (onSuccess) {
           onSuccess();
         } else {
-          router.push(redirectTo);
+          // The login function updates the auth context, so we can access the user data
+          // We need to wait a moment for the auth context to update
+          setTimeout(async () => {
+            try {
+              // Get fresh user data from the auth context
+              const response = await fetch('/api/auth/profile', {
+                headers: {
+                  'Authorization': `Bearer ${localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken')}`
+                }
+              });
+              
+              if (response.ok) {
+                const data = await response.json();
+                const userData = data.user;
+                
+                // Determine redirect based on user role and platform owner status
+                let redirectPath = redirectTo;
+                
+                if (userData.isPlatformOwner || userData.is_platform_owner) {
+                  redirectPath = '/platform-owner/dashboard';
+                  console.log('LoginForm: Platform owner detected, redirecting to:', redirectPath);
+                } else if (userData.role === 'admin') {
+                  redirectPath = '/admin/dashboard';
+                  console.log('LoginForm: Admin user detected, redirecting to:', redirectPath);
+                } else {
+                  redirectPath = '/dashboard';
+                  console.log('LoginForm: Regular user, redirecting to:', redirectPath);
+                }
+                
+                router.push(redirectPath);
+              } else {
+                // Fallback to default redirect if profile fetch fails
+                console.log('LoginForm: Profile fetch failed, using default redirect');
+                router.push(redirectTo);
+              }
+            } catch (error) {
+              console.error('LoginForm: Error fetching user profile for redirect:', error);
+              router.push(redirectTo);
+            }
+          }, 200);
         }
       } else {
         setError('Invalid credentials. Please check your username/email and password.');
@@ -88,7 +127,9 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, redirectTo = '/dashboa
       if (onSuccess) {
         onSuccess();
       } else {
-        router.push(redirectTo);
+        // Demo mode creates an admin user, so redirect to regular dashboard
+        // Demo users are not platform owners by default
+        router.push('/dashboard');
       }
     } catch (error) {
       console.error('Demo login error:', error);

@@ -1,17 +1,17 @@
 import React, { useState, useMemo } from 'react';
 import { useRouter } from 'next/router';
-import { 
-  Search, 
-  ChevronDown, 
-  ChevronRight, 
-  Crown, 
-  Building, 
+import {
+  Search,
+  ChevronDown,
+  ChevronRight,
+  Crown,
+  Building,
   Shield,
   Menu,
   X,
   Globe,
   Settings as SettingsIcon,
-  Users, BarChart3, Brain, Zap, FileText, Calendar, 
+  Users, BarChart3, Brain, Zap, FileText, Calendar,
   MessageSquare, Target, Briefcase, GraduationCap, Bell, Lock,
   Smartphone, Cloud, Database, Activity, TrendingUp,
   Workflow, Bot, Mic, Eye, Download, Upload, Share, Code,
@@ -20,7 +20,8 @@ import {
   Camera, Video, Headphones, Map, Compass, Rocket, Lightbulb,
   Wrench, Cog, Filter, Archive, Bookmark, Flag, Hash, Link,
   Mail, Phone, MapPin, CreditCard, ShoppingCart, Package,
-  Truck, Home, Coffee, Heart, Smile, ThumbsUp, MessageCircle
+  Truck, Home, Coffee, Heart, Smile, ThumbsUp, MessageCircle,
+  Key, Palette
 } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
@@ -103,7 +104,11 @@ const NextJSComprehensiveNavigation: React.FC<NextJSComprehensiveNavigationProps
       items: [
         { label: 'Dashboard', icon: <BarChart3 className="w-4 h-4" />, path: '/dashboard', description: 'Main dashboard overview' },
         { label: 'User Profile', icon: <Users className="w-4 h-4" />, path: '/profile', description: 'User profile management' },
-        { label: 'Settings', icon: <SettingsIcon className="w-4 h-4" />, path: '/settings', description: 'User settings and preferences' },
+        { label: 'Settings', icon: <SettingsIcon className="w-4 h-4" />, path: '/settings', description: 'Comprehensive account settings and preferences' },
+        { label: 'API Key Management', icon: <Key className="w-4 h-4" />, path: '/settings?tab=api-keys', description: 'Manage AI service API keys', subtitle: 'SETTINGS' },
+        { label: 'Profile Settings', icon: <Users className="w-4 h-4" />, path: '/settings?tab=profile', description: 'Update profile information', subtitle: 'SETTINGS' },
+        { label: 'Security Settings', icon: <Shield className="w-4 h-4" />, path: '/settings?tab=security', description: 'Security and privacy configuration', subtitle: 'SETTINGS' },
+        { label: 'Appearance Settings', icon: <Palette className="w-4 h-4" />, path: '/settings?tab=appearance', description: 'Customize interface appearance', subtitle: 'SETTINGS' },
         { label: 'Notifications', icon: <Bell className="w-4 h-4" />, path: '/notifications', description: 'Notification center' }
       ]
     },

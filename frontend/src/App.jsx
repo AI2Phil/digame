@@ -52,6 +52,7 @@ function App() {
   const [isDemoMode, setIsDemoMode] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
 
   useEffect(() => {
     checkAuthStatus();
@@ -61,15 +62,18 @@ function App() {
     try {
       const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken');
       if (token) {
-        // Verify token is still valid
-        const response = await fetch('http://localhost:8001/auth/verify-token', {
+        // Verify token is still valid and get user data
+        const response = await fetch('http://localhost:8001/auth/profile', {
           headers: {
             'Authorization': `Bearer ${token}`
           }
         });
 
         if (response.ok) {
+          const userData = await response.json();
           setIsAuthenticated(true);
+          setCurrentUser(userData.user);
+          console.log('App.jsx: User data loaded:', userData.user);
           
           // Check if user needs onboarding
           try {
@@ -97,13 +101,31 @@ function App() {
           sessionStorage.removeItem('accessToken');
           sessionStorage.removeItem('refreshToken');
           setIsAuthenticated(false);
+          setCurrentUser(null);
         }
       }
     } catch (error) {
       console.error('Error checking auth status:', error);
       setIsAuthenticated(false);
+      setCurrentUser(null);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // Helper function to determine the correct dashboard based on user role
+  const getDashboardRoute = (user) => {
+    if (!user) return '/dashboard';
+    
+    if (user.isPlatformOwner || user.is_platform_owner) {
+      console.log('App.jsx: Platform owner detected, redirecting to platform owner dashboard');
+      return '/platform-owner/dashboard';
+    } else if (user.role === 'admin') {
+      console.log('App.jsx: Admin user detected, redirecting to admin dashboard');
+      return '/admin/dashboard';
+    } else {
+      console.log('App.jsx: Regular user, redirecting to standard dashboard');
+      return '/dashboard';
     }
   };
 
@@ -132,6 +154,7 @@ function App() {
     setIsAuthenticated(false);
     setIsDemoMode(false);
     setNeedsOnboarding(false);
+    setCurrentUser(null);
     
     // Disable demo mode
     enhancedApiService.disableDemoMode();
@@ -178,7 +201,7 @@ function App() {
                 needsOnboarding ? (
                   <Navigate to="/onboarding-wizard" replace />
                 ) : (
-                  <Navigate to="/dashboard" replace />
+                  <Navigate to={getDashboardRoute(currentUser)} replace />
                 )
               ) : (
                 <HomePage
@@ -653,6 +676,27 @@ function App() {
             element={
               isAuthenticated || isDemoMode ? ( // Or just isAuthenticated if demo mode shouldn't access admin
                 <AdminDashboardPage />
+              ) : (
+                <Navigate to="/" replace />
+              )
+            }
+          />
+
+          {/* Platform Owner Dashboard Route */}
+          <Route
+            path="/platform-owner/dashboard"
+            element={
+              isAuthenticated ? (
+                <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                  <div className="text-center">
+                    <div className="text-6xl mb-4">👑</div>
+                    <h1 className="text-2xl font-bold text-gray-900 mb-2">Platform Owner Dashboard</h1>
+                    <p className="text-gray-600">Platform management and administration</p>
+                    <div className="mt-4 text-sm text-gray-500">
+                      Welcome, Platform Owner! This is your dedicated dashboard.
+                    </div>
+                  </div>
+                </div>
               ) : (
                 <Navigate to="/" replace />
               )

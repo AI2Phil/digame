@@ -14,7 +14,8 @@ import {
   Camera, Video, Headphones, Map, Compass, Rocket, Lightbulb,
   Wrench, Cog, Filter, Archive, Bookmark, Flag, Hash, Link,
   Mail, Phone, MapPin, CreditCard, ShoppingCart, Package,
-  Truck, Home, Coffee, Heart, Smile, ThumbsUp, MessageCircle
+  Truck, Home, Coffee, Heart, Smile, ThumbsUp, MessageCircle,
+  Key, Palette
 } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
@@ -115,7 +116,11 @@ const ComprehensiveNavigation: React.FC<ComprehensiveNavigationProps> = ({
       items: [
         { id: 'dashboard', label: 'Dashboard', icon: <BarChart3 className="w-4 h-4" />, path: '/dashboard', description: 'Main dashboard overview' },
         { id: 'profile', label: 'User Profile', icon: <Users className="w-4 h-4" />, path: '/profile', description: 'User profile management' },
-        { id: 'settings', label: 'Settings', icon: <Settings className="w-4 h-4" />, path: '/settings', description: 'User settings and preferences' },
+        { id: 'settings', label: 'Settings', icon: <Settings className="w-4 h-4" />, path: '/settings', description: 'Comprehensive account settings and preferences' },
+        { id: 'settings-api-keys', label: 'API Key Management', icon: <Key className="w-4 h-4" />, path: '/settings?tab=api-keys', description: 'Manage AI service API keys', subtitle: 'SETTINGS' },
+        { id: 'settings-profile', label: 'Profile Settings', icon: <Users className="w-4 h-4" />, path: '/settings?tab=profile', description: 'Update profile information', subtitle: 'SETTINGS' },
+        { id: 'settings-security', label: 'Security Settings', icon: <Shield className="w-4 h-4" />, path: '/settings?tab=security', description: 'Security and privacy configuration', subtitle: 'SETTINGS' },
+        { id: 'settings-appearance', label: 'Appearance Settings', icon: <Palette className="w-4 h-4" />, path: '/settings?tab=appearance', description: 'Customize interface appearance', subtitle: 'SETTINGS' },
         { id: 'notifications', label: 'Notifications', icon: <Bell className="w-4 h-4" />, path: '/notifications', description: 'Notification center' }
       ]
     },

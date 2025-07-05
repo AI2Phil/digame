@@ -7,7 +7,7 @@ import { Input } from '../components/ui/Input';
 import { Eye, EyeOff, Mail, Lock, User } from 'lucide-react';
 
 const AuthPage: React.FC = () => {
-  const { isAuthenticated, login, isLoading } = useAuth();
+  const { isAuthenticated, login, isLoading, user } = useAuth();
   const navigate = useNavigate();
   const [isLoginMode, setIsLoginMode] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
@@ -25,10 +25,20 @@ const AuthPage: React.FC = () => {
 
   // Redirect if already authenticated
   useEffect(() => {
-    if (isAuthenticated) {
-      navigate('/dashboard');
+    if (isAuthenticated && user) {
+      // Determine redirect based on user role and platform owner status
+      let redirectPath = '/dashboard';
+      
+      if (user.isPlatformOwner) {
+        redirectPath = '/platform-owner/dashboard';
+      } else if (user.role === 'admin') {
+        redirectPath = '/admin/dashboard';
+      }
+      
+      console.log('AuthPage: User authenticated, redirecting to:', redirectPath);
+      navigate(redirectPath);
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, user, navigate]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -77,7 +87,9 @@ const AuthPage: React.FC = () => {
       if (isLoginMode) {
         const success = await login({ username: formData.username, password: formData.password, rememberMe });
         if (success) {
-          navigate('/dashboard');
+          // The useEffect will handle the redirect based on user role
+          // No need to manually navigate here since the user state will update
+          console.log('AuthPage: Login successful, useEffect will handle redirect');
         }
       } else {
         // Register functionality would need to be implemented in AuthContext
