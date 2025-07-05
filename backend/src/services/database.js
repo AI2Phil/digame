@@ -42,6 +42,9 @@ class DatabaseService {
     this.initializeReportTables();
     this.initializePlatformTables();
     
+    // Data management tables
+    this.initializeDataManagementTables();
+    
     console.log('✅ Extended schema initialization complete');
   }
 
@@ -394,6 +397,66 @@ class DatabaseService {
     `);
   }
 
+  initializeDataManagementTables() {
+    this.db.exec(`
+      CREATE TABLE IF NOT EXISTS data_management_operations (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        operation_uuid TEXT UNIQUE NOT NULL,
+        operation_type TEXT NOT NULL, -- 'seed', 'cleanup', 'reset', 'export', 'import'
+        entity_types TEXT, -- JSON array of affected entity types
+        status TEXT DEFAULT 'pending', -- 'pending', 'running', 'completed', 'failed'
+        started_at TEXT,
+        completed_at TEXT,
+        affected_records INTEGER DEFAULT 0,
+        error_message TEXT,
+        backup_path TEXT,
+        triggered_by_user_id INTEGER,
+        metadata TEXT DEFAULT '{}', -- JSON for additional operation details
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (triggered_by_user_id) REFERENCES users(id) ON DELETE SET NULL
+      );
+
+      CREATE TABLE IF NOT EXISTS data_backups (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        backup_uuid TEXT UNIQUE NOT NULL,
+        backup_type TEXT NOT NULL, -- 'full', 'partial', 'pre_operation'
+        file_path TEXT NOT NULL,
+        file_size_bytes INTEGER,
+        entity_counts TEXT DEFAULT '{}', -- JSON object with counts per entity type
+        created_by_user_id INTEGER,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        expires_at TEXT,
+        FOREIGN KEY (created_by_user_id) REFERENCES users(id) ON DELETE SET NULL
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_data_operations_status ON data_management_operations(status);
+      CREATE INDEX IF NOT EXISTS idx_data_operations_type ON data_management_operations(operation_type);
+      CREATE INDEX IF NOT EXISTS idx_data_backups_type ON data_backups(backup_type);
+    `);
+
+    // Add is_mock_data columns to existing tables
+    const tables = [
+      'users', 'notifications', 'notification_settings', 'tasks', 'projects',
+      'teams', 'team_members', 'skills', 'user_skills', 'mentorship_relationships',
+      'workflows', 'analytics_events', 'audit_logs', 'api_keys', 'webhooks',
+      'reports', 'platform_metrics', 'tenants'
+    ];
+
+    tables.forEach(table => {
+      try {
+        this.db.exec(`ALTER TABLE ${table} ADD COLUMN is_mock_data BOOLEAN DEFAULT FALSE`);
+        this.db.exec(`ALTER TABLE ${table} ADD COLUMN mock_data_category TEXT DEFAULT NULL`);
+        this.db.exec(`ALTER TABLE ${table} ADD COLUMN mock_data_created_at TEXT DEFAULT NULL`);
+        this.db.exec(`CREATE INDEX IF NOT EXISTS idx_${table}_mock_data ON ${table}(is_mock_data)`);
+      } catch (error) {
+        // Column already exists, ignore error
+        if (!error.message.includes('duplicate column name')) {
+          console.warn(`Database migration warning for ${table}:`, error.message);
+        }
+      }
+    });
+  }
+
   initializeDemoUsers() {
     // Check if demo users already exist
     const existingUsers = this.db.prepare('SELECT COUNT(*) as count FROM users').get();
@@ -537,7 +600,8 @@ class DatabaseService {
     try {
       const existingNotifications = this.db.prepare('SELECT COUNT(*) as count FROM notifications').get();
       if (existingNotifications.count > 0) {
-        console.log('Extended data already exists, skipping seeding');
+        console.log('Extended data already exists, updating mock data flags...');
+        this.updateMockDataFlags();
         return;
       }
     } catch (error) {
@@ -562,7 +626,41 @@ class DatabaseService {
     // Seed sample analytics events
     this.seedAnalyticsEvents();
     
+    // Mark all seeded data as mock data
+    this.updateMockDataFlags();
+    
     console.log('✅ Extended data seeding complete');
+  }
+
+  updateMockDataFlags() {
+    console.log('🏷️ Updating mock data flags...');
+    
+    const tables = [
+      'users', 'notifications', 'notification_settings', 'tasks', 'projects',
+      'teams', 'team_members', 'skills', 'user_skills', 'mentorship_relationships',
+      'workflows', 'analytics_events'
+    ];
+
+    const mockDataTimestamp = new Date().toISOString();
+
+    tables.forEach(table => {
+      try {
+        // Mark existing data as mock data (demo/development data)
+        const updateStmt = this.db.prepare(`
+          UPDATE ${table}
+          SET is_mock_data = TRUE,
+              mock_data_category = 'demo',
+              mock_data_created_at = ?
+          WHERE is_mock_data IS NULL OR is_mock_data = FALSE
+        `);
+        const result = updateStmt.run(mockDataTimestamp);
+        if (result.changes > 0) {
+          console.log(`✅ Marked ${result.changes} records as mock data in ${table}`);
+        }
+      } catch (error) {
+        console.warn(`Warning updating mock data flags for ${table}:`, error.message);
+      }
+    });
   }
 
   seedNotifications() {

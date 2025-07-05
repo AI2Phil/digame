@@ -40,18 +40,44 @@ const TeamDashboard = () => {
   const fetchTeamData = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/team/dashboard?range=${timeRange}`, {
+      
+      // Try to get backend service info first
+      let backendUrl = 'http://localhost:8001'; // Default fallback
+      try {
+        const serviceResponse = await fetch('http://localhost:8001/service-info');
+        if (serviceResponse.ok) {
+          const serviceInfo = await serviceResponse.json();
+          backendUrl = serviceInfo.url || `http://localhost:${serviceInfo.port}`;
+        }
+      } catch (serviceError) {
+        console.log('Using default backend URL');
+      }
+
+      const response = await fetch(`${backendUrl}/team/dashboard?range=${timeRange}`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
         }
       });
       
       if (response.ok) {
-        const data = await response.json();
-        setTeamData(data);
+        const result = await response.json();
+        if (result.success) {
+          setTeamData(result.data);
+        } else {
+          console.error('API returned error:', result.message);
+          // Fall back to mock data if API fails
+          setTeamData(null);
+        }
+      } else {
+        console.error('Failed to fetch team data:', response.status);
+        // Fall back to mock data if API fails
+        setTeamData(null);
       }
     } catch (error) {
       console.error('Error fetching team data:', error);
+      // Fall back to mock data if API fails
+      setTeamData(null);
     } finally {
       setLoading(false);
     }

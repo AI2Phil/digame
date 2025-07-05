@@ -689,6 +689,52 @@ export default function TestZone() {
                         color: 'bg-red-500'
                       },
                       {
+                        name: 'Data Management',
+                        endpoints: [
+                          { method: 'GET', path: '/api/data-management/overview', desc: 'Data overview & statistics' },
+                          { method: 'GET', path: '/api/data-management/statistics', desc: 'Detailed data statistics' },
+                          { method: 'POST', path: '/api/data-management/seed', desc: 'Generate mock data' },
+                          { method: 'POST', path: '/api/data-management/cleanup', desc: 'Clean up mock data' },
+                          { method: 'POST', path: '/api/data-management/reset', desc: 'Complete data reset' },
+                          { method: 'GET', path: '/api/data-management/operations', desc: 'Operation history' },
+                          { method: 'POST', path: '/api/data-management/export', desc: 'Export data' },
+                          { method: 'GET', path: '/api/data-management/health', desc: 'Data health metrics' }
+                        ],
+                        color: 'bg-teal-500'
+                      },
+                      {
+                        name: 'Advanced Data Management',
+                        endpoints: [
+                          { method: 'GET', path: '/api/data-management/health/comprehensive', desc: 'Comprehensive health check' },
+                          { method: 'GET', path: '/api/data-management/health/trends?days=7', desc: 'Health trends over time' },
+                          { method: 'GET', path: '/api/data-management/performance/metrics', desc: 'Performance metrics' },
+                          { method: 'POST', path: '/api/data-management/performance/optimize', desc: 'Optimize database performance' },
+                          { method: 'POST', path: '/api/data-management/performance/cache/clear', desc: 'Clear performance cache' },
+                          { method: 'GET', path: '/api/data-management/backup/schedule', desc: 'Backup schedule config' },
+                          { method: 'POST', path: '/api/data-management/backup/create', desc: 'Create comprehensive backup' },
+                          { method: 'POST', path: '/api/data-management/backup/schedule', desc: 'Configure backup schedule' }
+                        ],
+                        color: 'bg-emerald-500'
+                      },
+                      {
+                        name: 'Performance Operations',
+                        endpoints: [
+                          { method: 'GET', path: '/api/data-management/query/paginated?table=users&page=1&pageSize=10', desc: 'Paginated query test' },
+                          { method: 'POST', path: '/api/data-management/batch/insert', desc: 'Batch insert operation' },
+                          { method: 'POST', path: '/api/data-management/backup/restore', desc: 'Restore from backup' }
+                        ],
+                        color: 'bg-violet-500'
+                      },
+                      {
+                        name: 'Enhanced Team APIs',
+                        endpoints: [
+                          { method: 'GET', path: '/team/dashboard', desc: 'Real team dashboard data' },
+                          { method: 'GET', path: '/team/members', desc: 'Team members list' },
+                          { method: 'GET', path: '/team/projects', desc: 'Team projects' }
+                        ],
+                        color: 'bg-cyan-500'
+                      },
+                      {
                         name: 'Security',
                         endpoints: [
                           { method: 'GET', path: '/security/mfa', desc: 'MFA management' },

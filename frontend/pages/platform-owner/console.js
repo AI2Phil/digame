@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
-import { Crown, Server, Users, Building, TrendingUp, Activity, Settings, Code, AlertTriangle, CheckCircle, Database, Cpu, HardDrive, Network, Menu } from 'lucide-react';
+import { Crown, Server, Users, Building, TrendingUp, Activity, Settings, Code, AlertTriangle, CheckCircle, Database, Cpu, HardDrive, Network, Menu, RefreshCw } from 'lucide-react';
 import NextJSComprehensiveNavigation from '../../src/components/navigation/NextJSComprehensiveNavigation';
 import NavigationHubFooter from '../../src/components/layout/NavigationHubFooter';
 import { useAuth } from '../../src/contexts/AuthContext';
@@ -11,6 +11,8 @@ export default function PlatformConsole() {
   const { user, logout, isAuthenticated, isLoading } = useAuth();
   const [selectedTimeRange, setSelectedTimeRange] = useState('24h');
   const [isNavOpen, setIsNavOpen] = useState(true);
+  const [platformData, setPlatformData] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   // Redirect if not authenticated or not a platform owner
   React.useEffect(() => {
@@ -18,6 +20,64 @@ export default function PlatformConsole() {
       router.push('/auth');
     }
   }, [isAuthenticated, user, isLoading, router]);
+
+  useEffect(() => {
+    if (isAuthenticated && user?.isPlatformOwner) {
+      fetchPlatformData();
+    }
+  }, [isAuthenticated, user, selectedTimeRange]);
+
+  const fetchPlatformData = async () => {
+    try {
+      setLoading(true);
+      
+      // Try to get backend service info first
+      let backendUrl = 'http://localhost:8001'; // Default fallback
+      try {
+        const serviceResponse = await fetch('http://localhost:8001/service-info');
+        if (serviceResponse.ok) {
+          const serviceInfo = await serviceResponse.json();
+          backendUrl = serviceInfo.url || `http://localhost:${serviceInfo.port}`;
+        }
+      } catch (serviceError) {
+        console.log('Using default backend URL');
+      }
+
+      // Fetch platform analytics and data management overview
+      const [analyticsResponse, dataOverviewResponse] = await Promise.all([
+        fetch(`${backendUrl}/analytics/platform?timeRange=${selectedTimeRange}`, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            'Content-Type': 'application/json'
+          }
+        }),
+        fetch(`${backendUrl}/api/data-management/overview`, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            'Content-Type': 'application/json'
+          }
+        })
+      ]);
+
+      const analyticsData = analyticsResponse.ok ? await analyticsResponse.json() : null;
+      const dataOverview = dataOverviewResponse.ok ? await dataOverviewResponse.json() : null;
+
+      if (analyticsData?.success || dataOverview?.success) {
+        setPlatformData({
+          analytics: analyticsData?.data,
+          dataOverview: dataOverview?.data
+        });
+      } else {
+        // Fall back to mock data
+        setPlatformData(null);
+      }
+    } catch (error) {
+      console.error('Error fetching platform data:', error);
+      setPlatformData(null);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleLogout = async () => {
     await logout();
@@ -44,6 +104,37 @@ export default function PlatformConsole() {
   const toggleNav = () => {
     setIsNavOpen(!isNavOpen);
   };
+
+  // Mock data fallback
+  const mockData = {
+    analytics: {
+      overview: {
+        totalUsers: 24567,
+        activeTenants: 147,
+        monthlyRevenue: 847000,
+        systemHealth: 99.9
+      },
+      growth: {
+        userGrowth: '+12.5%',
+        tenantGrowth: '+8.2%',
+        revenueGrowth: '+18.7%'
+      }
+    },
+    dataOverview: {
+      summary: {
+        totalRecords: 15420,
+        mockRecords: 12336,
+        realRecords: 3084,
+        mockPercentage: 80.0
+      },
+      healthMetrics: {
+        dataIntegrity: 'healthy',
+        mockDataRatio: 80.0
+      }
+    }
+  };
+
+  const currentData = platformData || mockData;
 
   return (
     <>
@@ -104,24 +195,41 @@ export default function PlatformConsole() {
           <main className="flex-1 overflow-y-auto">
 
             <div className="container mx-auto px-4 py-8">
-              {/* Time Range Selector */}
+              {/* Time Range Selector and Controls */}
               <div className="mb-6">
-                <div className="flex space-x-2">
-                  {['1h', '24h', '7d', '30d'].map((range) => (
-                    <button
-                      key={range}
-                      onClick={() => setSelectedTimeRange(range)}
-                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                        selectedTimeRange === range
-                          ? 'bg-yellow-600 text-white'
-                          : 'bg-white text-gray-700 hover:bg-gray-50'
-                      }`}
-                    >
-                      {range}
-                    </button>
-                  ))}
+                <div className="flex items-center justify-between">
+                  <div className="flex space-x-2">
+                    {['1h', '24h', '7d', '30d'].map((range) => (
+                      <button
+                        key={range}
+                        onClick={() => setSelectedTimeRange(range)}
+                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                          selectedTimeRange === range
+                            ? 'bg-yellow-600 text-white'
+                            : 'bg-white text-gray-700 hover:bg-gray-50'
+                        }`}
+                      >
+                        {range}
+                      </button>
+                    ))}
+                  </div>
+                  <button
+                    onClick={fetchPlatformData}
+                    disabled={loading}
+                    className="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 disabled:opacity-50 flex items-center space-x-2"
+                  >
+                    <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+                    <span>Refresh</span>
+                  </button>
                 </div>
               </div>
+
+              {loading && (
+                <div className="flex items-center justify-center py-8 mb-6">
+                  <div className="w-8 h-8 border-2 border-yellow-600 border-t-transparent rounded-full animate-spin"></div>
+                  <span className="ml-2 text-gray-600">Loading platform data...</span>
+                </div>
+              )}
 
               {/* Platform Overview Metrics */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -130,9 +238,13 @@ export default function PlatformConsole() {
                     <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
                       <Users className="w-5 h-5 text-blue-600" />
                     </div>
-                    <span className="text-sm text-green-600 font-medium">+12.5%</span>
+                    <span className="text-sm text-green-600 font-medium">
+                      {currentData.analytics?.growth?.userGrowth || '+12.5%'}
+                    </span>
                   </div>
-                  <h3 className="text-2xl font-bold text-gray-900 mb-1">24,567</h3>
+                  <h3 className="text-2xl font-bold text-gray-900 mb-1">
+                    {currentData.analytics?.overview?.totalUsers?.toLocaleString() || '24,567'}
+                  </h3>
                   <p className="text-gray-600 text-sm">Total Users</p>
                 </div>
 
@@ -141,9 +253,13 @@ export default function PlatformConsole() {
                     <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
                       <Building className="w-5 h-5 text-green-600" />
                     </div>
-                    <span className="text-sm text-green-600 font-medium">+8.2%</span>
+                    <span className="text-sm text-green-600 font-medium">
+                      {currentData.analytics?.growth?.tenantGrowth || '+8.2%'}
+                    </span>
                   </div>
-                  <h3 className="text-2xl font-bold text-gray-900 mb-1">147</h3>
+                  <h3 className="text-2xl font-bold text-gray-900 mb-1">
+                    {currentData.analytics?.overview?.activeTenants?.toLocaleString() || '147'}
+                  </h3>
                   <p className="text-gray-600 text-sm">Active Tenants</p>
                 </div>
 
@@ -152,9 +268,13 @@ export default function PlatformConsole() {
                     <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
                       <TrendingUp className="w-5 h-5 text-purple-600" />
                     </div>
-                    <span className="text-sm text-green-600 font-medium">+18.7%</span>
+                    <span className="text-sm text-green-600 font-medium">
+                      {currentData.analytics?.growth?.revenueGrowth || '+18.7%'}
+                    </span>
                   </div>
-                  <h3 className="text-2xl font-bold text-gray-900 mb-1">$847K</h3>
+                  <h3 className="text-2xl font-bold text-gray-900 mb-1">
+                    ${Math.round((currentData.analytics?.overview?.monthlyRevenue || 847000) / 1000)}K
+                  </h3>
                   <p className="text-gray-600 text-sm">Monthly Revenue</p>
                 </div>
 
@@ -163,9 +283,13 @@ export default function PlatformConsole() {
                     <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
                       <Activity className="w-5 h-5 text-green-600" />
                     </div>
-                    <span className="text-sm text-green-600 font-medium">99.9%</span>
+                    <span className="text-sm text-green-600 font-medium">
+                      {currentData.analytics?.overview?.systemHealth?.toFixed(1) || '99.9'}%
+                    </span>
                   </div>
-                  <h3 className="text-2xl font-bold text-gray-900 mb-1">Healthy</h3>
+                  <h3 className="text-2xl font-bold text-gray-900 mb-1">
+                    {currentData.dataOverview?.healthMetrics?.dataIntegrity === 'healthy' ? 'Healthy' : 'Warning'}
+                  </h3>
                   <p className="text-gray-600 text-sm">System Status</p>
                 </div>
               </div>
@@ -268,21 +392,66 @@ export default function PlatformConsole() {
                 </div>
               </div>
 
+              {/* Data Management Overview */}
+              {currentData.dataOverview && (
+                <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Data Management Overview</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-blue-600">
+                        {currentData.dataOverview.summary?.totalRecords?.toLocaleString() || '15,420'}
+                      </div>
+                      <div className="text-sm text-gray-600">Total Records</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-orange-600">
+                        {currentData.dataOverview.summary?.mockRecords?.toLocaleString() || '12,336'}
+                      </div>
+                      <div className="text-sm text-gray-600">Mock Data</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-green-600">
+                        {currentData.dataOverview.summary?.realRecords?.toLocaleString() || '3,084'}
+                      </div>
+                      <div className="text-sm text-gray-600">Real Data</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-purple-600">
+                        {currentData.dataOverview.summary?.mockPercentage?.toFixed(1) || '80.0'}%
+                      </div>
+                      <div className="text-sm text-gray-600">Mock Ratio</div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Platform Analytics Summary */}
               <div className="bg-gradient-to-r from-yellow-600 to-orange-600 rounded-lg p-6 text-white">
-                <h3 className="text-xl font-semibold mb-4">🏆 Platform Performance Summary</h3>
+                <h3 className="text-xl font-semibold mb-4">
+                  {platformData ? '📊 Live Platform Data' : '🎭 Demo Platform Data'}
+                </h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div>
                     <h4 className="font-medium mb-2">Growth Metrics</h4>
-                    <p className="text-yellow-100">User base grew 12.5% this month with 147 active tenants generating $847K in revenue.</p>
+                    <p className="text-yellow-100">
+                      {platformData
+                        ? `User base grew ${currentData.analytics?.growth?.userGrowth || '12.5%'} with ${currentData.analytics?.overview?.activeTenants || 147} active tenants generating $${Math.round((currentData.analytics?.overview?.monthlyRevenue || 847000) / 1000)}K revenue.`
+                        : 'User base grew 12.5% this month with 147 active tenants generating $847K in revenue.'}
+                    </p>
                   </div>
                   <div>
                     <h4 className="font-medium mb-2">System Reliability</h4>
-                    <p className="text-yellow-100">99.9% uptime maintained with all critical services operational and responsive.</p>
+                    <p className="text-yellow-100">
+                      {currentData.analytics?.overview?.systemHealth?.toFixed(1) || '99.9'}% uptime maintained with all critical services operational and responsive.
+                    </p>
                   </div>
                   <div>
-                    <h4 className="font-medium mb-2">Strategic Insights</h4>
-                    <p className="text-yellow-100">Enterprise tier adoption increased 18.7%, indicating strong market demand for advanced features.</p>
+                    <h4 className="font-medium mb-2">Data Management</h4>
+                    <p className="text-yellow-100">
+                      {platformData
+                        ? `${currentData.dataOverview?.summary?.mockPercentage?.toFixed(1) || '80'}% mock data ratio with ${currentData.dataOverview?.healthMetrics?.dataIntegrity || 'healthy'} data integrity status.`
+                        : 'Data management system ready for production with comprehensive mock data controls.'}
+                    </p>
                   </div>
                 </div>
               </div>
