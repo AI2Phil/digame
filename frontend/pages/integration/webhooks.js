@@ -1,26 +1,26 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import { 
-  BoltIcon, 
-  GlobeAltIcon, 
-  CheckCircleIcon,
-  XCircleIcon,
-  ExclamationTriangleIcon,
-  ClockIcon,
-  PlusIcon,
-  Cog6ToothIcon,
-  EyeIcon,
-  PencilIcon,
-  TrashIcon,
-  ArrowPathIcon,
-  PlayIcon,
-  PauseIcon,
-  DocumentTextIcon,
-  ChartBarIcon,
-  ClipboardDocumentIcon,
-  ShieldCheckIcon,
-  CodeBracketIcon
-} from '@heroicons/react/24/outline';
+import {
+  Zap as BoltIcon,
+  Globe as GlobeAltIcon,
+  CheckCircle as CheckCircleIcon,
+  XCircle as XCircleIcon,
+  AlertTriangle as ExclamationTriangleIcon,
+  Clock as ClockIcon,
+  Plus as PlusIcon,
+  Settings as Cog6ToothIcon,
+  Eye as EyeIcon,
+  Edit as PencilIcon,
+  Trash2 as TrashIcon,
+  RotateCcw as ArrowPathIcon,
+  Play as PlayIcon,
+  Pause as PauseIcon,
+  FileText as DocumentTextIcon,
+  BarChart3 as ChartBarIcon,
+  Clipboard as ClipboardDocumentIcon,
+  ShieldCheck as ShieldCheckIcon,
+  Code as CodeBracketIcon
+} from 'lucide-react';
 
 export default function WebhooksManagement() {
   const router = useRouter();

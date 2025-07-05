@@ -1,19 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import PageHeader from '../../src/components/ui/PageHeader';
+import PageHeader from '../../components/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '../../src/components/ui/card';
 import { Button } from '../../src/components/ui/button';
 import { Badge } from '../../src/components/ui/badge';
 import { Textarea } from '../../src/components/ui/textarea';
 import { Input } from '../../src/components/ui/input';
 import { Progress } from '../../src/components/ui/progress';
-import { 
-  Globe, 
-  Mic, 
-  Volume2, 
-  BookOpen, 
-  Brain, 
-  Target, 
+import {
+  Globe,
+  Mic,
+  Volume2,
+  BookOpen,
+  Brain,
+  Target,
   Star,
   Play,
   Pause,
@@ -27,7 +27,8 @@ import {
   Award,
   Zap,
   MessageSquare,
-  FileText
+  FileText,
+  Clock
 } from 'lucide-react';
 
 const LanguageLearning = () => {

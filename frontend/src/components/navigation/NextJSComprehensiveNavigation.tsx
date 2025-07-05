@@ -188,12 +188,12 @@ const NextJSComprehensiveNavigation: React.FC<NextJSComprehensiveNavigationProps
       icon: <Users className="w-5 h-5" />,
       description: 'Team management and collaboration tools',
       items: [
-        { label: 'Team Management', icon: <Users className="w-4 h-4" />, path: '/teams', description: 'Team dashboard' },
-        { label: 'Team Dashboard', icon: <BarChart3 className="w-4 h-4" />, path: '/teams/dashboard', subtitle: 'TEAM INSIGHTS' },
-        { label: 'Social Collaboration', icon: <MessageCircle className="w-4 h-4" />, path: '/teams/social', subtitle: 'COLLABORATION' },
-        { label: 'Mentorship Programs', icon: <GraduationCap className="w-4 h-4" />, path: '/teams/mentorship', subtitle: 'MENTORSHIP' },
-        { label: 'Skill Gap Analysis', icon: <Target className="w-4 h-4" />, path: '/teams/skills', subtitle: 'SKILLS ANALYSIS' },
-        { label: 'Workflow Optimization', icon: <Workflow className="w-4 h-4" />, path: '/teams/workflows', subtitle: 'OPTIMIZATION' }
+        { label: 'Team Management', icon: <Users className="w-4 h-4" />, path: '/team', description: 'Team dashboard' },
+        { label: 'Team Dashboard', icon: <BarChart3 className="w-4 h-4" />, path: '/team/dashboard', subtitle: 'TEAM INSIGHTS' },
+        { label: 'Social Collaboration', icon: <MessageCircle className="w-4 h-4" />, path: '/team/social', subtitle: 'COLLABORATION' },
+        { label: 'Mentorship Programs', icon: <GraduationCap className="w-4 h-4" />, path: '/team/mentorship', subtitle: 'MENTORSHIP' },
+        { label: 'Skill Gap Analysis', icon: <Target className="w-4 h-4" />, path: '/team/skills', subtitle: 'SKILLS ANALYSIS' },
+        { label: 'Workflow Optimization', icon: <Workflow className="w-4 h-4" />, path: '/team/workflows', subtitle: 'OPTIMIZATION' }
       ]
     },
     {

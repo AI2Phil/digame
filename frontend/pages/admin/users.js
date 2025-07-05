@@ -1,26 +1,26 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import { 
-  UserGroupIcon, 
-  UserIcon, 
-  PlusIcon, 
-  PencilIcon,
-  TrashIcon,
-  EyeIcon,
-  ArrowPathIcon,
-  MagnifyingGlassIcon,
-  FunnelIcon,
-  CheckCircleIcon,
-  XCircleIcon,
-  ExclamationTriangleIcon,
-  ClockIcon,
-  KeyIcon,
-  ShieldCheckIcon,
-  EnvelopeIcon,
-  PhoneIcon,
-  CalendarIcon,
-  MapPinIcon
-} from '@heroicons/react/24/outline';
+import {
+  Users as UserGroupIcon,
+  User as UserIcon,
+  Plus as PlusIcon,
+  Edit as PencilIcon,
+  Trash2 as TrashIcon,
+  Eye as EyeIcon,
+  RotateCcw as ArrowPathIcon,
+  Search as MagnifyingGlassIcon,
+  Filter as FunnelIcon,
+  CheckCircle as CheckCircleIcon,
+  XCircle as XCircleIcon,
+  AlertTriangle as ExclamationTriangleIcon,
+  Clock as ClockIcon,
+  Key as KeyIcon,
+  ShieldCheck as ShieldCheckIcon,
+  Mail as EnvelopeIcon,
+  Phone as PhoneIcon,
+  Calendar as CalendarIcon,
+  MapPin as MapPinIcon
+} from 'lucide-react';
 
 export default function AdminUsers() {
   const router = useRouter();

@@ -1,23 +1,23 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import { 
-  KeyIcon, 
-  UserGroupIcon, 
-  ShieldCheckIcon, 
-  LockClosedIcon,
-  CheckCircleIcon,
-  XCircleIcon,
-  ExclamationTriangleIcon,
-  PlusIcon,
-  PencilIcon,
-  TrashIcon,
-  EyeIcon,
-  ArrowPathIcon,
-  Cog6ToothIcon,
-  UserIcon,
-  DocumentTextIcon,
-  ClipboardDocumentListIcon
-} from '@heroicons/react/24/outline';
+import {
+  Key as KeyIcon,
+  Users as UserGroupIcon,
+  ShieldCheck as ShieldCheckIcon,
+  Lock as LockClosedIcon,
+  CheckCircle as CheckCircleIcon,
+  XCircle as XCircleIcon,
+  AlertTriangle as ExclamationTriangleIcon,
+  Plus as PlusIcon,
+  Edit as PencilIcon,
+  Trash2 as TrashIcon,
+  Eye as EyeIcon,
+  RotateCcw as ArrowPathIcon,
+  Settings as Cog6ToothIcon,
+  User as UserIcon,
+  FileText as DocumentTextIcon,
+  ClipboardList as ClipboardDocumentListIcon
+} from 'lucide-react';
 
 export default function AdminRBAC() {
   const router = useRouter();

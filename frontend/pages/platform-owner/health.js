@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 import { Activity, Server, Database, Cpu, HardDrive, Network, AlertTriangle, CheckCircle, XCircle, Clock, Zap } from 'lucide-react';
-import PageHeader from '../../src/components/navigation/PageHeader';
+import PageHeader from '../../components/PageHeader';
 
 export default function SystemHealth() {
   const [refreshInterval, setRefreshInterval] = useState(30);

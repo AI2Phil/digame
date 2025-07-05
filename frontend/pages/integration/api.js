@@ -1,25 +1,25 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import { 
-  CodeBracketIcon, 
-  KeyIcon, 
-  DocumentTextIcon, 
-  ChartBarIcon,
-  CheckCircleIcon,
-  XCircleIcon,
-  ExclamationTriangleIcon,
-  ClockIcon,
-  PlusIcon,
-  Cog6ToothIcon,
-  EyeIcon,
-  PencilIcon,
-  TrashIcon,
-  ClipboardDocumentIcon,
-  ArrowPathIcon,
-  GlobeAltIcon,
-  ShieldCheckIcon,
-  BoltIcon
-} from '@heroicons/react/24/outline';
+import {
+  Code,
+  Key,
+  FileText,
+  BarChart3,
+  CheckCircle,
+  XCircle,
+  AlertTriangle,
+  Clock,
+  Plus,
+  Settings,
+  Eye,
+  Edit,
+  Trash2,
+  Copy,
+  RotateCcw,
+  Globe,
+  ShieldCheck,
+  Zap
+} from 'lucide-react';
 
 export default function APIManagement() {
   const router = useRouter();
@@ -61,15 +61,15 @@ export default function APIManagement() {
   const getStatusIcon = (status) => {
     switch (status) {
       case 'active':
-        return <CheckCircleIcon className="h-5 w-5 text-green-500" />;
+        return <CheckCircle className="h-5 w-5 text-green-500" />;
       case 'inactive':
-        return <XCircleIcon className="h-5 w-5 text-red-500" />;
+        return <XCircle className="h-5 w-5 text-red-500" />;
       case 'suspended':
-        return <ExclamationTriangleIcon className="h-5 w-5 text-yellow-500" />;
+        return <AlertTriangle className="h-5 w-5 text-yellow-500" />;
       case 'expired':
-        return <ClockIcon className="h-5 w-5 text-gray-500" />;
+        return <Clock className="h-5 w-5 text-gray-500" />;
       default:
-        return <ClockIcon className="h-5 w-5 text-gray-400" />;
+        return <Clock className="h-5 w-5 text-gray-400" />;
     }
   };
 
@@ -157,7 +157,7 @@ export default function APIManagement() {
           <div className="py-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center">
-                <CodeBracketIcon className="h-8 w-8 text-blue-600 mr-3" />
+                <Code className="h-8 w-8 text-blue-600 mr-3" />
                 <div>
                   <h1 className="text-2xl font-bold text-gray-900">API Management</h1>
                   <p className="text-sm text-gray-600">Manage API keys, endpoints, and documentation</p>
@@ -168,11 +168,11 @@ export default function APIManagement() {
                   onClick={() => setShowKeyModal(true)}
                   className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center"
                 >
-                  <PlusIcon className="h-4 w-4 mr-2" />
+                  <Plus className="h-4 w-4 mr-2" />
                   Generate Key
                 </button>
                 <button className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 flex items-center">
-                  <DocumentTextIcon className="h-4 w-4 mr-2" />
+                  <FileText className="h-4 w-4 mr-2" />
                   Documentation
                 </button>
               </div>
@@ -187,7 +187,7 @@ export default function APIManagement() {
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <KeyIcon className="h-8 w-8 text-blue-600" />
+                <Key className="h-8 w-8 text-blue-600" />
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">API Keys</p>
@@ -199,7 +199,7 @@ export default function APIManagement() {
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <GlobeAltIcon className="h-8 w-8 text-green-600" />
+                <Globe className="h-8 w-8 text-green-600" />
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Endpoints</p>
@@ -211,7 +211,7 @@ export default function APIManagement() {
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <ChartBarIcon className="h-8 w-8 text-purple-600" />
+                <BarChart3 className="h-8 w-8 text-purple-600" />
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Requests Today</p>
@@ -223,7 +223,7 @@ export default function APIManagement() {
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <BoltIcon className="h-8 w-8 text-orange-600" />
+                <Zap className="h-8 w-8 text-orange-600" />
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Success Rate</p>
@@ -238,10 +238,10 @@ export default function APIManagement() {
           <div className="border-b border-gray-200">
             <nav className="-mb-px flex space-x-8 px-6">
               {[
-                { id: 'keys', name: 'API Keys', icon: KeyIcon },
-                { id: 'endpoints', name: 'Endpoints', icon: GlobeAltIcon },
-                { id: 'documentation', name: 'Documentation', icon: DocumentTextIcon },
-                { id: 'analytics', name: 'Analytics', icon: ChartBarIcon }
+                { id: 'keys', name: 'API Keys', icon: Key },
+                { id: 'endpoints', name: 'Endpoints', icon: Globe },
+                { id: 'documentation', name: 'Documentation', icon: FileText },
+                { id: 'analytics', name: 'Analytics', icon: BarChart3 }
               ].map((tab) => (
                 <button
                   key={tab.id}
@@ -322,7 +322,7 @@ export default function APIManagement() {
                                 onClick={() => copyToClipboard(key.value)}
                                 className="ml-2 text-gray-400 hover:text-gray-600"
                               >
-                                <ClipboardDocumentIcon className="h-4 w-4" />
+                                <Copy className="h-4 w-4" />
                               </button>
                             </div>
                           </td>
@@ -353,19 +353,19 @@ export default function APIManagement() {
                           <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                             <div className="flex items-center justify-end space-x-2">
                               <button className="text-blue-600 hover:text-blue-900">
-                                <EyeIcon className="h-4 w-4" />
+                                <Eye className="h-4 w-4" />
                               </button>
                               <button className="text-gray-600 hover:text-gray-900">
-                                <PencilIcon className="h-4 w-4" />
+                                <Edit className="h-4 w-4" />
                               </button>
                               <button className="text-green-600 hover:text-green-900">
-                                <ArrowPathIcon className="h-4 w-4" />
+                                <RotateCcw className="h-4 w-4" />
                               </button>
                               <button 
                                 onClick={() => handleRevokeKey(key.id)}
                                 className="text-red-600 hover:text-red-900"
                               >
-                                <TrashIcon className="h-4 w-4" />
+                                <Trash2 className="h-4 w-4" />
                               </button>
                             </div>
                           </td>

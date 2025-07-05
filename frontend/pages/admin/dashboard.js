@@ -1,25 +1,25 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import { 
-  CogIcon, 
-  UserGroupIcon, 
-  ChartBarIcon, 
-  ShieldCheckIcon,
-  ExclamationTriangleIcon,
-  CheckCircleIcon,
-  XCircleIcon,
-  ClockIcon,
-  ArrowTrendingUpIcon,
-  ArrowTrendingDownIcon,
-  EyeIcon,
-  Cog6ToothIcon,
-  BellIcon,
-  DocumentTextIcon,
-  ServerIcon,
-  DatabaseIcon,
-  GlobeAltIcon,
-  KeyIcon
-} from '@heroicons/react/24/outline';
+import {
+  Settings as CogIcon,
+  Users as UserGroupIcon,
+  BarChart3 as ChartBarIcon,
+  ShieldCheck as ShieldCheckIcon,
+  AlertTriangle as ExclamationTriangleIcon,
+  CheckCircle as CheckCircleIcon,
+  XCircle as XCircleIcon,
+  Clock as ClockIcon,
+  TrendingUp as ArrowTrendingUpIcon,
+  TrendingDown as ArrowTrendingDownIcon,
+  Eye as EyeIcon,
+  Settings as Cog6ToothIcon,
+  Bell as BellIcon,
+  FileText as DocumentTextIcon,
+  Server as ServerIcon,
+  Database as DatabaseIcon,
+  Globe as GlobeAltIcon,
+  Key as KeyIcon
+} from 'lucide-react';
 
 export default function AdminDashboard() {
   const router = useRouter();

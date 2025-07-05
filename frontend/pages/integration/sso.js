@@ -1,26 +1,26 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import { 
-  KeyIcon, 
-  ShieldCheckIcon, 
-  GlobeAltIcon, 
-  UserGroupIcon,
-  CheckCircleIcon,
-  XCircleIcon,
-  ExclamationTriangleIcon,
-  ClockIcon,
-  PlusIcon,
-  Cog6ToothIcon,
-  EyeIcon,
-  PencilIcon,
-  TrashIcon,
-  ArrowPathIcon,
-  DocumentTextIcon,
-  ChartBarIcon,
-  LinkIcon,
-  LockClosedIcon,
-  IdentificationIcon
-} from '@heroicons/react/24/outline';
+import {
+  Key,
+  ShieldCheck,
+  Globe,
+  Users,
+  CheckCircle,
+  XCircle,
+  AlertTriangle,
+  Clock,
+  Plus,
+  Settings,
+  Eye,
+  Edit,
+  Trash2,
+  RotateCcw,
+  FileText,
+  BarChart3,
+  Link,
+  Lock,
+  CreditCard
+} from 'lucide-react';
 
 export default function SSOIntegration() {
   const router = useRouter();
@@ -62,15 +62,15 @@ export default function SSOIntegration() {
   const getStatusIcon = (status) => {
     switch (status) {
       case 'active':
-        return <CheckCircleIcon className="h-5 w-5 text-green-500" />;
+        return <CheckCircle className="h-5 w-5 text-green-500" />;
       case 'error':
-        return <XCircleIcon className="h-5 w-5 text-red-500" />;
+        return <XCircle className="h-5 w-5 text-red-500" />;
       case 'pending':
-        return <ClockIcon className="h-5 w-5 text-yellow-500" />;
+        return <Clock className="h-5 w-5 text-yellow-500" />;
       case 'disabled':
-        return <ExclamationTriangleIcon className="h-5 w-5 text-gray-500" />;
+        return <AlertTriangle className="h-5 w-5 text-gray-500" />;
       default:
-        return <ClockIcon className="h-5 w-5 text-gray-400" />;
+        return <Clock className="h-5 w-5 text-gray-400" />;
     }
   };
 
@@ -93,15 +93,15 @@ export default function SSOIntegration() {
     const iconClass = "h-8 w-8";
     switch (type) {
       case 'saml':
-        return <ShieldCheckIcon className={`${iconClass} text-blue-600`} />;
+        return <ShieldCheck className={`${iconClass} text-blue-600`} />;
       case 'oauth':
-        return <KeyIcon className={`${iconClass} text-green-600`} />;
+        return <Key className={`${iconClass} text-green-600`} />;
       case 'oidc':
-        return <IdentificationIcon className={`${iconClass} text-purple-600`} />;
+        return <CreditCard className={`${iconClass} text-purple-600`} />;
       case 'ldap':
-        return <UserGroupIcon className={`${iconClass} text-orange-600`} />;
+        return <Users className={`${iconClass} text-orange-600`} />;
       default:
-        return <GlobeAltIcon className={`${iconClass} text-gray-600`} />;
+        return <Globe className={`${iconClass} text-gray-600`} />;
     }
   };
 
@@ -152,7 +152,7 @@ export default function SSOIntegration() {
           <div className="py-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center">
-                <KeyIcon className="h-8 w-8 text-blue-600 mr-3" />
+                <Key className="h-8 w-8 text-blue-600 mr-3" />
                 <div>
                   <h1 className="text-2xl font-bold text-gray-900">Single Sign-On (SSO)</h1>
                   <p className="text-sm text-gray-600">Configure and manage SSO authentication providers</p>
@@ -163,11 +163,11 @@ export default function SSOIntegration() {
                   onClick={() => setShowProviderModal(true)}
                   className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center"
                 >
-                  <PlusIcon className="h-4 w-4 mr-2" />
+                  <Plus className="h-4 w-4 mr-2" />
                   Add Provider
                 </button>
                 <button className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 flex items-center">
-                  <Cog6ToothIcon className="h-4 w-4 mr-2" />
+                  <Settings className="h-4 w-4 mr-2" />
                   Settings
                 </button>
               </div>
@@ -182,7 +182,7 @@ export default function SSOIntegration() {
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <KeyIcon className="h-8 w-8 text-blue-600" />
+                <Key className="h-8 w-8 text-blue-600" />
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">SSO Providers</p>
@@ -194,7 +194,7 @@ export default function SSOIntegration() {
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <CheckCircleIcon className="h-8 w-8 text-green-600" />
+                <CheckCircle className="h-8 w-8 text-green-600" />
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Active</p>
@@ -206,7 +206,7 @@ export default function SSOIntegration() {
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <UserGroupIcon className="h-8 w-8 text-purple-600" />
+                <Users className="h-8 w-8 text-purple-600" />
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">SSO Users</p>
@@ -218,7 +218,7 @@ export default function SSOIntegration() {
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <ChartBarIcon className="h-8 w-8 text-orange-600" />
+                <BarChart3 className="h-8 w-8 text-orange-600" />
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Success Rate</p>
@@ -233,10 +233,10 @@ export default function SSOIntegration() {
           <div className="border-b border-gray-200">
             <nav className="-mb-px flex space-x-8 px-6">
               {[
-                { id: 'providers', name: 'Providers', icon: KeyIcon },
-                { id: 'configuration', name: 'Configuration', icon: Cog6ToothIcon },
-                { id: 'users', name: 'Users', icon: UserGroupIcon },
-                { id: 'analytics', name: 'Analytics', icon: ChartBarIcon }
+                { id: 'providers', name: 'Providers', icon: Key },
+                { id: 'configuration', name: 'Configuration', icon: Settings },
+                { id: 'users', name: 'Users', icon: Users },
+                { id: 'analytics', name: 'Analytics', icon: BarChart3 }
               ].map((tab) => (
                 <button
                   key={tab.id}
@@ -323,13 +323,13 @@ export default function SSOIntegration() {
                         </div>
                         <div className="flex items-center space-x-2">
                           <button className="text-gray-400 hover:text-gray-600">
-                            <EyeIcon className="h-4 w-4" />
+                            <Eye className="h-4 w-4" />
                           </button>
                           <button className="text-gray-400 hover:text-gray-600">
-                            <PencilIcon className="h-4 w-4" />
+                            <Edit className="h-4 w-4" />
                           </button>
                           <button className="text-red-400 hover:text-red-600">
-                            <TrashIcon className="h-4 w-4" />
+                            <Trash2 className="h-4 w-4" />
                           </button>
                         </div>
                       </div>
@@ -339,7 +339,7 @@ export default function SSOIntegration() {
 
                 {ssoProviders.length === 0 && (
                   <div className="text-center py-12">
-                    <KeyIcon className="mx-auto h-12 w-12 text-gray-400" />
+                    <Key className="mx-auto h-12 w-12 text-gray-400" />
                     <h3 className="mt-2 text-sm font-medium text-gray-900">No SSO providers configured</h3>
                     <p className="mt-1 text-sm text-gray-500">Get started by adding your first SSO provider.</p>
                     <div className="mt-6">
@@ -347,7 +347,7 @@ export default function SSOIntegration() {
                         onClick={() => setShowProviderModal(true)}
                         className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center mx-auto"
                       >
-                        <PlusIcon className="h-4 w-4 mr-2" />
+                        <Plus className="h-4 w-4 mr-2" />
                         Add Provider
                       </button>
                     </div>
@@ -427,7 +427,7 @@ export default function SSOIntegration() {
                         <div key={index} className="flex items-center justify-between bg-white rounded-lg p-3">
                           <div className="flex items-center">
                             <span className="font-medium text-gray-900 w-24">{mapping.platform}</span>
-                            <ArrowPathIcon className="h-4 w-4 text-gray-400 mx-3" />
+                            <RotateCcw className="h-4 w-4 text-gray-400 mx-3" />
                             <input
                               type="text"
                               className="border border-gray-300 rounded-md px-3 py-1 text-sm"
@@ -538,10 +538,10 @@ export default function SSOIntegration() {
                           <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                             <div className="flex items-center justify-end space-x-2">
                               <button className="text-blue-600 hover:text-blue-900">
-                                <EyeIcon className="h-4 w-4" />
+                                <Eye className="h-4 w-4" />
                               </button>
                               <button className="text-gray-600 hover:text-gray-900">
-                                <PencilIcon className="h-4 w-4" />
+                                <Edit className="h-4 w-4" />
                               </button>
                             </div>
                           </td>

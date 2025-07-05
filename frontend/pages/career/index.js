@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import Head from 'next/head';
 import { TrendingUp, Target, BookOpen, Award, Users, Calendar, Star, Crown, CheckCircle, ArrowRight } from 'lucide-react';
-import PageHeader from '../../src/components/navigation/PageHeader';
+import PageHeader from '../../components/PageHeader';
 
 export default function CareerDevelopment() {
   const [activeTab, setActiveTab] = useState('overview');

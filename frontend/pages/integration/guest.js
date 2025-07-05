@@ -1,24 +1,24 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import { 
-  UserGroupIcon, 
-  GlobeAltIcon, 
-  ShieldCheckIcon, 
-  ClockIcon,
-  CheckCircleIcon,
-  XCircleIcon,
-  ExclamationTriangleIcon,
-  PlusIcon,
-  Cog6ToothIcon,
-  EyeIcon,
-  PencilIcon,
-  TrashIcon,
-  ArrowPathIcon,
-  CalendarIcon,
-  UserIcon,
-  KeyIcon,
-  LockClosedIcon
-} from '@heroicons/react/24/outline';
+import {
+  Users as UserGroupIcon,
+  Globe as GlobeAltIcon,
+  ShieldCheck as ShieldCheckIcon,
+  Clock as ClockIcon,
+  CheckCircle as CheckCircleIcon,
+  XCircle as XCircleIcon,
+  AlertTriangle as ExclamationTriangleIcon,
+  Plus as PlusIcon,
+  Settings as Cog6ToothIcon,
+  Eye as EyeIcon,
+  Edit as PencilIcon,
+  Trash2 as TrashIcon,
+  RotateCcw as ArrowPathIcon,
+  Calendar as CalendarIcon,
+  User as UserIcon,
+  Key as KeyIcon,
+  Lock as LockClosedIcon
+} from 'lucide-react';
 
 export default function GuestAccess() {
   const router = useRouter();

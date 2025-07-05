@@ -1,22 +1,22 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
-import { 
-  PuzzleIcon, 
-  KeyIcon, 
-  GlobeAltIcon, 
-  CodeBracketIcon, 
-  BoltIcon, 
-  DatabaseIcon,
-  CheckCircleIcon,
-  ExclamationTriangleIcon,
-  ClockIcon,
-  ArrowTopRightOnSquareIcon,
-  PlusIcon,
-  Cog6ToothIcon,
-  ChartBarIcon,
-  DocumentTextIcon
-} from '@heroicons/react/24/outline';
+import {
+  Puzzle as PuzzleIcon,
+  Key as KeyIcon,
+  Globe as GlobeAltIcon,
+  Code as CodeBracketIcon,
+  Zap as BoltIcon,
+  Database as DatabaseIcon,
+  CheckCircle as CheckCircleIcon,
+  AlertTriangle as ExclamationTriangleIcon,
+  Clock as ClockIcon,
+  ExternalLink as ArrowTopRightOnSquareIcon,
+  Plus as PlusIcon,
+  Settings as Cog6ToothIcon,
+  BarChart3 as ChartBarIcon,
+  FileText as DocumentTextIcon
+} from 'lucide-react';
 
 export default function IntegrationIndex() {
   const router = useRouter();

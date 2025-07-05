@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import Head from 'next/head';
 import { TrendingUp, DollarSign, CreditCard, Users, Building, Calendar, Download, Filter } from 'lucide-react';
-import PageHeader from '../../src/components/navigation/PageHeader';
+import PageHeader from '../../components/PageHeader';
 
 export default function RevenueAnalytics() {
   const [timeRange, setTimeRange] = useState('30d');

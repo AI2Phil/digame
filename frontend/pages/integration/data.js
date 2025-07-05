@@ -1,27 +1,27 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import { 
-  DatabaseIcon, 
-  CloudIcon, 
-  ServerIcon, 
-  DocumentIcon,
-  CheckCircleIcon,
-  XCircleIcon,
-  ExclamationTriangleIcon,
-  ClockIcon,
-  PlusIcon,
-  Cog6ToothIcon,
-  EyeIcon,
-  PencilIcon,
-  TrashIcon,
-  ArrowPathIcon,
-  PlayIcon,
-  PauseIcon,
-  ChartBarIcon,
-  LinkIcon,
-  ShieldCheckIcon,
-  BoltIcon
-} from '@heroicons/react/24/outline';
+import {
+  Database,
+  Cloud,
+  Server,
+  FileText,
+  CheckCircle,
+  XCircle,
+  AlertTriangle,
+  Clock,
+  Plus,
+  Settings,
+  Eye,
+  Edit,
+  Trash2,
+  RotateCcw,
+  Play,
+  Pause,
+  BarChart3,
+  Link,
+  ShieldCheck,
+  Zap
+} from 'lucide-react';
 
 export default function DataIntegration() {
   const router = useRouter();
@@ -63,17 +63,17 @@ export default function DataIntegration() {
   const getStatusIcon = (status) => {
     switch (status) {
       case 'connected':
-        return <CheckCircleIcon className="h-5 w-5 text-green-500" />;
+        return <CheckCircle className="h-5 w-5 text-green-500" />;
       case 'disconnected':
-        return <XCircleIcon className="h-5 w-5 text-red-500" />;
+        return <XCircle className="h-5 w-5 text-red-500" />;
       case 'error':
-        return <ExclamationTriangleIcon className="h-5 w-5 text-red-500" />;
+        return <AlertTriangle className="h-5 w-5 text-red-500" />;
       case 'syncing':
-        return <ArrowPathIcon className="h-5 w-5 text-blue-500 animate-spin" />;
+        return <RotateCcw className="h-5 w-5 text-blue-500 animate-spin" />;
       case 'pending':
-        return <ClockIcon className="h-5 w-5 text-yellow-500" />;
+        return <Clock className="h-5 w-5 text-yellow-500" />;
       default:
-        return <ClockIcon className="h-5 w-5 text-gray-400" />;
+        return <Clock className="h-5 w-5 text-gray-400" />;
     }
   };
 
@@ -98,15 +98,15 @@ export default function DataIntegration() {
     const iconClass = "h-8 w-8";
     switch (type) {
       case 'database':
-        return <DatabaseIcon className={`${iconClass} text-blue-600`} />;
+        return <Database className={`${iconClass} text-blue-600`} />;
       case 'cloud':
-        return <CloudIcon className={`${iconClass} text-green-600`} />;
+        return <Cloud className={`${iconClass} text-green-600`} />;
       case 'api':
-        return <ServerIcon className={`${iconClass} text-purple-600`} />;
+        return <Server className={`${iconClass} text-purple-600`} />;
       case 'file':
-        return <DocumentIcon className={`${iconClass} text-orange-600`} />;
+        return <FileText className={`${iconClass} text-orange-600`} />;
       default:
-        return <DatabaseIcon className={`${iconClass} text-gray-600`} />;
+        return <Database className={`${iconClass} text-gray-600`} />;
     }
   };
 
@@ -170,7 +170,7 @@ export default function DataIntegration() {
           <div className="py-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center">
-                <DatabaseIcon className="h-8 w-8 text-blue-600 mr-3" />
+                <Database className="h-8 w-8 text-blue-600 mr-3" />
                 <div>
                   <h1 className="text-2xl font-bold text-gray-900">Data Integration</h1>
                   <p className="text-sm text-gray-600">Connect and sync external data sources</p>
@@ -181,11 +181,11 @@ export default function DataIntegration() {
                   onClick={() => setShowSourceModal(true)}
                   className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center"
                 >
-                  <PlusIcon className="h-4 w-4 mr-2" />
+                  <Plus className="h-4 w-4 mr-2" />
                   Add Source
                 </button>
                 <button className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 flex items-center">
-                  <Cog6ToothIcon className="h-4 w-4 mr-2" />
+                  <Settings className="h-4 w-4 mr-2" />
                   Settings
                 </button>
               </div>
@@ -200,7 +200,7 @@ export default function DataIntegration() {
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <DatabaseIcon className="h-8 w-8 text-blue-600" />
+                <Database className="h-8 w-8 text-blue-600" />
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Data Sources</p>
@@ -212,7 +212,7 @@ export default function DataIntegration() {
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <CheckCircleIcon className="h-8 w-8 text-green-600" />
+                <CheckCircle className="h-8 w-8 text-green-600" />
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Connected</p>
@@ -224,7 +224,7 @@ export default function DataIntegration() {
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <ArrowPathIcon className="h-8 w-8 text-purple-600" />
+                <RotateCcw className="h-8 w-8 text-purple-600" />
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Records Synced</p>
@@ -236,7 +236,7 @@ export default function DataIntegration() {
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <ClockIcon className="h-8 w-8 text-orange-600" />
+                <Clock className="h-8 w-8 text-orange-600" />
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Last Sync</p>
@@ -251,10 +251,10 @@ export default function DataIntegration() {
           <div className="border-b border-gray-200">
             <nav className="-mb-px flex space-x-8 px-6">
               {[
-                { id: 'sources', name: 'Data Sources', icon: DatabaseIcon },
-                { id: 'sync-jobs', name: 'Sync Jobs', icon: ArrowPathIcon },
-                { id: 'mapping', name: 'Field Mapping', icon: LinkIcon },
-                { id: 'monitoring', name: 'Monitoring', icon: ChartBarIcon }
+                { id: 'sources', name: 'Data Sources', icon: Database },
+                { id: 'sync-jobs', name: 'Sync Jobs', icon: RotateCcw },
+                { id: 'mapping', name: 'Field Mapping', icon: Link },
+                { id: 'monitoring', name: 'Monitoring', icon: BarChart3 }
               ].map((tab) => (
                 <button
                   key={tab.id}
@@ -346,13 +346,13 @@ export default function DataIntegration() {
                         </div>
                         <div className="flex items-center space-x-2">
                           <button className="text-gray-400 hover:text-gray-600">
-                            <EyeIcon className="h-4 w-4" />
+                            <Eye className="h-4 w-4" />
                           </button>
                           <button className="text-gray-400 hover:text-gray-600">
-                            <PencilIcon className="h-4 w-4" />
+                            <Edit className="h-4 w-4" />
                           </button>
                           <button className="text-red-400 hover:text-red-600">
-                            <TrashIcon className="h-4 w-4" />
+                            <Trash2 className="h-4 w-4" />
                           </button>
                         </div>
                       </div>
@@ -362,7 +362,7 @@ export default function DataIntegration() {
 
                 {dataSources.length === 0 && (
                   <div className="text-center py-12">
-                    <DatabaseIcon className="mx-auto h-12 w-12 text-gray-400" />
+                    <Database className="mx-auto h-12 w-12 text-gray-400" />
                     <h3 className="mt-2 text-sm font-medium text-gray-900">No data sources configured</h3>
                     <p className="mt-1 text-sm text-gray-500">Get started by connecting your first data source.</p>
                     <div className="mt-6">
@@ -370,7 +370,7 @@ export default function DataIntegration() {
                         onClick={() => setShowSourceModal(true)}
                         className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center mx-auto"
                       >
-                        <PlusIcon className="h-4 w-4 mr-2" />
+                        <Plus className="h-4 w-4 mr-2" />
                         Add Data Source
                       </button>
                     </div>
@@ -466,15 +466,15 @@ export default function DataIntegration() {
                           <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                             <div className="flex items-center justify-end space-x-2">
                               <button className="text-blue-600 hover:text-blue-900">
-                                <EyeIcon className="h-4 w-4" />
+                                <Eye className="h-4 w-4" />
                               </button>
                               {job.status === 'running' ? (
                                 <button className="text-red-600 hover:text-red-900">
-                                  <PauseIcon className="h-4 w-4" />
+                                  <Pause className="h-4 w-4" />
                                 </button>
                               ) : (
                                 <button className="text-green-600 hover:text-green-900">
-                                  <PlayIcon className="h-4 w-4" />
+                                  <Play className="h-4 w-4" />
                                 </button>
                               )}
                             </div>
@@ -507,7 +507,7 @@ export default function DataIntegration() {
                               <code className="text-sm font-mono text-blue-600">{mapping.source}</code>
                               <p className="text-xs text-gray-500">Source Field</p>
                             </div>
-                            <ArrowPathIcon className="h-5 w-5 text-gray-400" />
+                            <RotateCcw className="h-5 w-5 text-gray-400" />
                             <div className="flex-1">
                               <code className="text-sm font-mono text-green-600">{mapping.target}</code>
                               <p className="text-xs text-gray-500">Target Field</p>
@@ -521,7 +521,7 @@ export default function DataIntegration() {
                               {mapping.required ? 'Required' : 'Optional'}
                             </span>
                             <button className="text-gray-400 hover:text-gray-600">
-                              <PencilIcon className="h-4 w-4" />
+                              <Edit className="h-4 w-4" />
                             </button>
                           </div>
                         </div>
@@ -537,7 +537,7 @@ export default function DataIntegration() {
                         <p className="text-sm text-gray-600 mb-2">Convert MM/DD/YYYY to YYYY-MM-DD format</p>
                         <div className="flex items-center space-x-2">
                           <code className="text-xs bg-gray-100 px-2 py-1 rounded">12/25/2023</code>
-                          <ArrowPathIcon className="h-4 w-4 text-gray-400" />
+                          <RotateCcw className="h-4 w-4 text-gray-400" />
                           <code className="text-xs bg-gray-100 px-2 py-1 rounded">2023-12-25</code>
                         </div>
                       </div>
@@ -546,7 +546,7 @@ export default function DataIntegration() {
                         <p className="text-sm text-gray-600 mb-2">Convert to lowercase and trim whitespace</p>
                         <div className="flex items-center space-x-2">
                           <code className="text-xs bg-gray-100 px-2 py-1 rounded">" John Doe "</code>
-                          <ArrowPathIcon className="h-4 w-4 text-gray-400" />
+                          <RotateCcw className="h-4 w-4 text-gray-400" />
                           <code className="text-xs bg-gray-100 px-2 py-1 rounded">john doe</code>
                         </div>
                       </div>

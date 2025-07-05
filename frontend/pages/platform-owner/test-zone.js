@@ -1,25 +1,25 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import { 
-  BeakerIcon, 
-  PlayIcon, 
-  StopIcon, 
-  ArrowPathIcon,
-  CheckCircleIcon,
-  XCircleIcon,
-  ExclamationTriangleIcon,
-  ClockIcon,
-  CodeBracketIcon,
-  DocumentTextIcon,
-  ChartBarIcon,
-  CogIcon,
-  BugAntIcon,
-  RocketLaunchIcon,
-  ShieldCheckIcon,
-  DatabaseIcon,
-  GlobeAltIcon,
-  UserGroupIcon
-} from '@heroicons/react/24/outline';
+import {
+  Flask as BeakerIcon,
+  Play as PlayIcon,
+  Square as StopIcon,
+  RotateCcw as ArrowPathIcon,
+  CheckCircle as CheckCircleIcon,
+  XCircle as XCircleIcon,
+  AlertTriangle as ExclamationTriangleIcon,
+  Clock as ClockIcon,
+  Code as CodeBracketIcon,
+  FileText as DocumentTextIcon,
+  BarChart3 as ChartBarIcon,
+  Settings as CogIcon,
+  Bug as BugAntIcon,
+  Rocket as RocketLaunchIcon,
+  ShieldCheck as ShieldCheckIcon,
+  Database as DatabaseIcon,
+  Globe as GlobeAltIcon,
+  Users as UserGroupIcon
+} from 'lucide-react';
 
 export default function TestZone() {
   const router = useRouter();

@@ -1,24 +1,24 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import { 
-  ChartBarIcon, 
-  ServerIcon, 
-  DatabaseIcon, 
-  CpuChipIcon,
-  ClockIcon,
-  ExclamationTriangleIcon,
-  CheckCircleIcon,
-  XCircleIcon,
-  ArrowPathIcon,
-  EyeIcon,
-  Cog6ToothIcon,
-  BellIcon,
-  DocumentTextIcon,
-  CloudIcon,
-  GlobeAltIcon,
-  UserGroupIcon,
-  ShieldCheckIcon
-} from '@heroicons/react/24/outline';
+import {
+  BarChart3 as ChartBarIcon,
+  Server as ServerIcon,
+  Database as DatabaseIcon,
+  Cpu as CpuChipIcon,
+  Clock as ClockIcon,
+  AlertTriangle as ExclamationTriangleIcon,
+  CheckCircle as CheckCircleIcon,
+  XCircle as XCircleIcon,
+  RotateCcw as ArrowPathIcon,
+  Eye as EyeIcon,
+  Settings as Cog6ToothIcon,
+  Bell as BellIcon,
+  FileText as DocumentTextIcon,
+  Cloud as CloudIcon,
+  Globe as GlobeAltIcon,
+  Users as UserGroupIcon,
+  ShieldCheck as ShieldCheckIcon
+} from 'lucide-react';
 
 export default function AdminMonitoring() {
   const router = useRouter();
