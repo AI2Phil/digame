@@ -4,7 +4,7 @@ Core report management, execution, and data processing
 """
 
 from typing import Optional, List, Dict, Any, Tuple
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, or_, desc, asc
 from fastapi import Depends
@@ -174,7 +174,7 @@ class ReportingService:
                 changes[key] = {"old": getattr(report, key), "new": value}
                 setattr(report, key, value)
         
-        setattr(report, 'updated_at', datetime.utcnow())  # type: ignore
+        setattr(report, 'updated_at', datetime.now(timezone.utc))  # type: ignore
         self.db.commit()
         self.db.refresh(report)
         
@@ -258,7 +258,7 @@ class ReportingService:
             
             if cached_result:
                 setattr(execution, 'status', "completed")  # type: ignore
-                setattr(execution, 'completed_at', datetime.utcnow())  # type: ignore
+                setattr(execution, 'completed_at', datetime.now(timezone.utc))  # type: ignore
                 setattr(execution, 'execution_time_ms', 50)  # type: ignore
                 setattr(execution, 'row_count', cached_result.get("row_count", 0))  # type: ignore
                 self.db.commit()
@@ -270,15 +270,15 @@ class ReportingService:
                     )
                     setattr(execution, 'file_path', file_path)  # type: ignore
                     setattr(execution, 'download_url', self._generate_download_url(file_path))  # type: ignore
-                    setattr(execution, 'expires_at', datetime.utcnow() + timedelta(hours=24))  # type: ignore
+                    setattr(execution, 'expires_at', datetime.now(timezone.utc) + timedelta(hours=24))  # type: ignore
                     self.db.commit()
                 
                 return execution
             
             # Execute report query
-            start_time = datetime.utcnow()
+            start_time = datetime.now(timezone.utc)
             data = await self._execute_report_query(report, parameters, filters)
-            query_time = (datetime.utcnow() - start_time).total_seconds() * 1000
+            query_time = (datetime.now(timezone.utc) - start_time).total_seconds() * 1000
             
             # Process and format data
             processed_data = self._process_report_data(report, data)
@@ -287,13 +287,13 @@ class ReportingService:
             file_path = None
             render_time = 0
             if output_format in ["pdf", "excel", "csv"]:
-                render_start = datetime.utcnow()
+                render_start = datetime.now(timezone.utc)
                 file_path = await self._generate_output_file(execution, processed_data, output_format)
-                render_time = (datetime.utcnow() - render_start).total_seconds() * 1000
+                render_time = (datetime.now(timezone.utc) - render_start).total_seconds() * 1000
             
             # Update execution record
             setattr(execution, 'status', "completed")  # type: ignore
-            setattr(execution, 'completed_at', datetime.utcnow())  # type: ignore
+            setattr(execution, 'completed_at', datetime.now(timezone.utc))  # type: ignore
             setattr(execution, 'execution_time_ms', query_time + render_time)  # type: ignore
             setattr(execution, 'query_time_ms', query_time)  # type: ignore
             setattr(execution, 'render_time_ms', render_time)  # type: ignore
@@ -302,7 +302,7 @@ class ReportingService:
             
             if file_path:
                 setattr(execution, 'download_url', self._generate_download_url(file_path))  # type: ignore
-                setattr(execution, 'expires_at', datetime.utcnow() + timedelta(hours=24))  # type: ignore
+                setattr(execution, 'expires_at', datetime.now(timezone.utc) + timedelta(hours=24))  # type: ignore
                 setattr(execution, 'file_size_bytes', self._get_file_size(file_path))  # type: ignore
             
             self.db.commit()
@@ -311,7 +311,7 @@ class ReportingService:
             self._cache_result(cache_key, report_id, tenant_id, processed_data, getattr(execution, 'row_count', 0))  # type: ignore
             
             # Update report statistics
-            setattr(report, 'last_generated_at', datetime.utcnow())  # type: ignore
+            setattr(report, 'last_generated_at', datetime.now(timezone.utc))  # type: ignore
             current_count = getattr(report, 'generation_count', 0)  # type: ignore
             setattr(report, 'generation_count', current_count + 1)  # type: ignore
             avg_time = getattr(report, 'avg_generation_time_ms', None)  # type: ignore
@@ -343,7 +343,7 @@ class ReportingService:
         except Exception as e:
             # Update execution with error
             setattr(execution, 'status', "failed")  # type: ignore
-            setattr(execution, 'completed_at', datetime.utcnow())  # type: ignore
+            setattr(execution, 'completed_at', datetime.now(timezone.utc))  # type: ignore
             setattr(execution, 'error_message', str(e))  # type: ignore
             self.db.commit()
             
@@ -784,7 +784,7 @@ class ReportingService:
         """Cache report result"""
         
         # Calculate cache expiration (24 hours)
-        expires_at = datetime.utcnow() + timedelta(hours=24)
+        expires_at = datetime.now(timezone.utc) + timedelta(hours=24)
         
         # Create cache entry
         cache_entry = ReportCache()  # type: ignore
@@ -936,7 +936,7 @@ class ReportingServiceExtended(ReportingService):
                 setattr(db_report_def, key, value)
 
         if hasattr(db_report_def, 'updated_at'):
-            setattr(db_report_def, 'updated_at', datetime.utcnow())
+            setattr(db_report_def, 'updated_at', datetime.now(timezone.utc))
         self.db.commit()
         self.db.refresh(db_report_def)
         return db_report_def
@@ -985,7 +985,7 @@ class ReportingServiceExtended(ReportingService):
             "report_name": getattr(report_definition, 'name', 'Unknown Report'),
             "report_description": getattr(report_definition, 'description', ''),
             "report_type": getattr(report_definition, 'report_type', 'standard'),
-            "generated_at": datetime.utcnow(),
+            "generated_at": datetime.now(timezone.utc),
             "content": []
         }
 
@@ -1114,7 +1114,7 @@ class ReportingServiceExtended(ReportingService):
 
         file_path = None
         render_time_ms = 0
-        start_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc)
 
         try:
             # Use report_definition.export_config for file generation
@@ -1134,7 +1134,7 @@ class ReportingServiceExtended(ReportingService):
             # REVISED APPROACH:
             # Call the specific _generate_X_report methods directly from here.
 
-            render_start = datetime.utcnow()
+            render_start = datetime.now(timezone.utc)
             if output_format == "pdf":
                 file_path = await self._generate_pdf_report(execution, report_data, export_cfg)
             elif output_format == "csv":
@@ -1143,11 +1143,11 @@ class ReportingServiceExtended(ReportingService):
                 file_path = await self._generate_excel_report(execution, report_data, export_cfg)
             else:
                 raise ValueError(f"Unsupported output format: {output_format} for definition-based report.")
-            render_time_ms = (datetime.utcnow() - render_start).total_seconds() * 1000
+            render_time_ms = (datetime.now(timezone.utc) - render_start).total_seconds() * 1000
 
             setattr(execution, 'status', "completed")  # type: ignore
-            setattr(execution, 'completed_at', datetime.utcnow())  # type: ignore
-            setattr(execution, 'execution_time_ms', (datetime.utcnow() - start_time).total_seconds() * 1000)  # type: ignore
+            setattr(execution, 'completed_at', datetime.now(timezone.utc))  # type: ignore
+            setattr(execution, 'execution_time_ms', (datetime.now(timezone.utc) - start_time).total_seconds() * 1000)  # type: ignore
             setattr(execution, 'query_time_ms', 0)  # type: ignore
             setattr(execution, 'render_time_ms', render_time_ms)  # type: ignore
             setattr(execution, 'row_count', len(report_data) if isinstance(report_data, list) else 0)  # type: ignore
@@ -1155,7 +1155,7 @@ class ReportingServiceExtended(ReportingService):
 
             if file_path:
                 setattr(execution, 'download_url', self._generate_download_url(file_path))  # type: ignore
-                setattr(execution, 'expires_at', datetime.utcnow() + timedelta(hours=24))  # type: ignore
+                setattr(execution, 'expires_at', datetime.now(timezone.utc) + timedelta(hours=24))  # type: ignore
                 setattr(execution, 'file_size_bytes', self._get_file_size(file_path))  # type: ignore
 
             self.db.commit()
@@ -1179,7 +1179,7 @@ class ReportingServiceExtended(ReportingService):
 
         except Exception as e:
             setattr(execution, 'status', "failed")  # type: ignore
-            setattr(execution, 'completed_at', datetime.utcnow())  # type: ignore
+            setattr(execution, 'completed_at', datetime.now(timezone.utc))  # type: ignore
             setattr(execution, 'error_message', str(e))  # type: ignore
             self.db.commit()
             self.db.refresh(execution)
@@ -1215,7 +1215,7 @@ class ReportingServiceExtended(ReportingService):
             if hasattr(report_schedule, 'last_run_status'):
                 setattr(report_schedule, 'last_run_status', "failed")
             if hasattr(report_schedule, 'last_run_at'):
-                setattr(report_schedule, 'last_run_at', datetime.utcnow())
+                setattr(report_schedule, 'last_run_at', datetime.now(timezone.utc))
             # report_schedule.update_execution_stats(success=False) # This method might need adjustment for schedules
             self.db.commit()
             return
@@ -1351,7 +1351,7 @@ class ReportingServiceExtended(ReportingService):
 
         # 3. Update schedule statistics (basic update for now)
         if hasattr(report_schedule, 'last_run_at'):
-            setattr(report_schedule, 'last_run_at', datetime.utcnow())
+            setattr(report_schedule, 'last_run_at', datetime.now(timezone.utc))
         if execution_succeeded_overall:
             if hasattr(report_schedule, 'last_run_status'):
                 setattr(report_schedule, 'last_run_status', "success")
@@ -1556,7 +1556,7 @@ class ReportingServiceExtended(ReportingService):
         payload = {
             "report_name": getattr(report_definition, 'name', 'Unknown Report'),
             "report_definition_id": getattr(report_definition, 'id', None),
-            "generated_at": datetime.utcnow().isoformat(),
+            "generated_at": datetime.now(timezone.utc).isoformat(),
             "files": []
         }
 

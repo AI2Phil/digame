@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, func, desc, or_
 from typing import List, Optional, Dict, Any, Tuple
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import secrets
 import qrcode
 import io
@@ -133,7 +133,7 @@ class MFAService:
                 decrypted_secret = security_encryption.decrypt(secret_key)
                 totp = pyotp.TOTP(decrypted_secret)
                 if totp.verify(code, valid_window=1):
-                    setattr(mfa_config, 'last_used_at', datetime.utcnow())  # type: ignore
+                    setattr(mfa_config, 'last_used_at', datetime.now(timezone.utc))  # type: ignore
                     self.db.commit()
                     return True
             except Exception as e:
@@ -149,7 +149,7 @@ class MFAService:
                     used_code_encrypted = security_encryption.encrypt(code.upper())
                     backup_codes.remove(used_code_encrypted)
                     setattr(mfa_config, 'backup_codes', backup_codes)  # type: ignore
-                    setattr(mfa_config, 'last_used_at', datetime.utcnow())  # type: ignore
+                    setattr(mfa_config, 'last_used_at', datetime.now(timezone.utc))  # type: ignore
                     self.db.commit()
                     return True
             except Exception as e:
@@ -232,7 +232,7 @@ class ThreatDetectionService:
     def detect_brute_force(self, ip_address: str, user_id: Optional[int] = None) -> Optional[ThreatDetection]:
         """Detect brute force attacks"""
         rule = self.detection_rules["brute_force"]
-        time_threshold = datetime.utcnow() - timedelta(seconds=rule["time_window"])
+        time_threshold = datetime.now(timezone.utc) - timedelta(seconds=rule["time_window"])
         
         # Count failed login attempts from this IP
         failed_attempts = self.db.query(SecurityEvent).filter(
@@ -268,7 +268,7 @@ class ThreatDetectionService:
             and_(
                 SecurityEvent.user_id == user_id,
                 SecurityEvent.event_type == EventType.LOGIN.value,
-                SecurityEvent.created_at >= datetime.utcnow() - timedelta(days=30)
+                SecurityEvent.created_at >= datetime.now(timezone.utc) - timedelta(days=30)
             )
         ).distinct().all()
         
@@ -310,7 +310,7 @@ class ThreatDetectionService:
             return False
         
         setattr(threat, 'status', ThreatStatus.RESOLVED.value)  # type: ignore
-        setattr(threat, 'resolved_at', datetime.utcnow())  # type: ignore
+        setattr(threat, 'resolved_at', datetime.now(timezone.utc))  # type: ignore
         setattr(threat, 'resolved_by', resolved_by)  # type: ignore
         setattr(threat, 'mitigation_actions', mitigation_actions)  # type: ignore
         
@@ -356,7 +356,7 @@ class SecurityAuditService:
     
     def get_security_metrics(self, days: int = 30) -> Dict[str, Any]:
         """Get security metrics for dashboard"""
-        start_date = datetime.utcnow() - timedelta(days=days)
+        start_date = datetime.now(timezone.utc) - timedelta(days=days)
         
         # Total events
         total_events = self.db.query(AuditLog).filter(
@@ -473,7 +473,7 @@ class SecurityDashboardService:
         resolved_threats_today = self.db.query(func.count(ThreatDetection.id)).filter(
             and_(
                 ThreatDetection.status == ThreatStatus.RESOLVED.value,
-                ThreatDetection.resolved_at >= datetime.utcnow().date()
+                ThreatDetection.resolved_at >= datetime.now(timezone.utc).date()
             )
         ).scalar() or 0
         

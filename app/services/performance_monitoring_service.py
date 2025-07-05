@@ -5,7 +5,7 @@ Performance monitoring service for real-time dashboards and optimization tools
 import json
 import statistics
 from typing import Dict, List, Optional, Any, Tuple, Callable
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, or_, func, desc, asc
 from fastapi import Depends
@@ -161,7 +161,7 @@ class PerformanceMonitoringService:
     ) -> SystemHealthCheck:
         """Perform a system health check"""
         
-        start_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc)
         
         try:
             # Execute the health check function
@@ -185,7 +185,7 @@ class PerformanceMonitoringService:
             details = {"exception": str(e)}
         
         # Calculate response time
-        response_time_ms = (datetime.utcnow() - start_time).total_seconds() * 1000
+        response_time_ms = (datetime.now(timezone.utc) - start_time).total_seconds() * 1000
         
         health_check = SystemHealthCheck()
         setattr(health_check, 'tenant_id', tenant_id)  # type: ignore
@@ -212,7 +212,7 @@ class PerformanceMonitoringService:
         """Get overall system health status"""
         
         # Get recent health checks (last 15 minutes)
-        recent_time = datetime.utcnow() - timedelta(minutes=15)
+        recent_time = datetime.now(timezone.utc) - timedelta(minutes=15)
         
         recent_checks = self.db.query(SystemHealthCheck).filter(
             SystemHealthCheck.tenant_id == tenant_id
@@ -269,7 +269,7 @@ class PerformanceMonitoringService:
     ) -> Dict[str, Any]:
         """Get comprehensive performance dashboard data"""
         
-        start_time = datetime.utcnow() - timedelta(hours=time_range_hours)
+        start_time = datetime.now(timezone.utc) - timedelta(hours=time_range_hours)
         
         # System metrics
         system_metrics = self._get_system_metrics_summary(tenant_id, start_time)
@@ -297,7 +297,7 @@ class PerformanceMonitoringService:
             "active_alerts": active_alerts,
             "recent_incidents": recent_incidents,
             "trends": trends,
-            "last_updated": datetime.utcnow()
+            "last_updated": datetime.now(timezone.utc)
         }
     
     def get_query_optimization_recommendations(
@@ -308,7 +308,7 @@ class PerformanceMonitoringService:
         """Get query optimization recommendations"""
         
         # Get slow queries from last 7 days
-        start_time = datetime.utcnow() - timedelta(days=7)
+        start_time = datetime.now(timezone.utc) - timedelta(days=7)
         
         slow_queries = self.db.query(QueryPerformance).filter(
             QueryPerformance.tenant_id == tenant_id
@@ -364,7 +364,7 @@ class PerformanceMonitoringService:
     ) -> Dict[str, Any]:
         """Get user experience insights and recommendations"""
         
-        start_time = datetime.utcnow() - timedelta(hours=time_range_hours)
+        start_time = datetime.now(timezone.utc) - timedelta(hours=time_range_hours)
         
         ux_metrics = self.db.query(UserExperienceMetric).filter(
             UserExperienceMetric.tenant_id == tenant_id
@@ -471,7 +471,7 @@ class PerformanceMonitoringService:
             recent_metrics = self.db.query(PerformanceMetric).filter(
                 PerformanceMetric.tenant_id == tenant_id,
                 PerformanceMetric.metric_name == alert.metric_name,
-                PerformanceMetric.created_at >= datetime.utcnow() - timedelta(minutes=5)
+                PerformanceMetric.created_at >= datetime.now(timezone.utc) - timedelta(minutes=5)
             ).all()
             
             for metric in recent_metrics:

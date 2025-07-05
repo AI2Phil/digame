@@ -6,7 +6,7 @@ Provides tenant-scoped role and permission management
 from typing import List, Optional, Dict, Any
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, or_
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from ..models.user import User
 from ..models.rbac import Role, Permission, UserRole
@@ -74,7 +74,7 @@ class RBACService:
         setattr(user_role, 'role_id', role_id)  # type: ignore
         setattr(user_role, 'tenant_id', tenant_id)  # type: ignore
         setattr(user_role, 'assigned_by', assigned_by)  # type: ignore
-        setattr(user_role, 'assigned_at', datetime.utcnow())  # type: ignore
+        setattr(user_role, 'assigned_at', datetime.now(timezone.utc))  # type: ignore
         setattr(user_role, 'expires_at', expires_at)  # type: ignore
         setattr(user_role, 'is_active', True)  # type: ignore
         
@@ -153,7 +153,7 @@ class RBACService:
             query = query.filter(
                 or_(  # type: ignore
                     UserRole.expires_at == None,  # type: ignore
-                    UserRole.expires_at > datetime.utcnow()  # type: ignore
+                    UserRole.expires_at > datetime.now(timezone.utc)  # type: ignore
                 )
             )
         
@@ -240,7 +240,7 @@ class RBACService:
                 UserRole.is_active == True,  # type: ignore
                 or_(  # type: ignore
                     UserRole.expires_at == None,  # type: ignore
-                    UserRole.expires_at > datetime.utcnow()  # type: ignore
+                    UserRole.expires_at > datetime.now(timezone.utc)  # type: ignore
                 )
             )
         ).distinct().all()
@@ -314,7 +314,7 @@ class RBACService:
             and_(  # type: ignore
                 UserRole.is_active == True,  # type: ignore
                 UserRole.expires_at.isnot(None),  # type: ignore
-                UserRole.expires_at <= datetime.utcnow()  # type: ignore
+                UserRole.expires_at <= datetime.now(timezone.utc)  # type: ignore
             )
         ).all()
         

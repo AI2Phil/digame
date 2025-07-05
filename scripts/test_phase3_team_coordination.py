@@ -5,7 +5,7 @@ Demonstrates multi-twin orchestration and collaborative features
 
 import asyncio
 import json
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Any
 
 # Mock data for testing Phase 3 functionality
@@ -124,7 +124,7 @@ class Phase3TeamCoordinationDemo:
             "description": team_data["description"],
             "status": "active",
             "member_count": 0,
-            "created_at": datetime.utcnow().isoformat()
+            "created_at": datetime.now(timezone.utc).isoformat()
         }
         
         print(f"✅ Team created: {team_result['team_id']}")
@@ -141,7 +141,7 @@ class Phase3TeamCoordinationDemo:
                 "name": member["name"],
                 "role": member["role"],
                 "skills": member["skills"],
-                "joined_at": datetime.utcnow().isoformat()
+                "joined_at": datetime.now(timezone.utc).isoformat()
             }
             
             print(f"✅ Added member: {member_result['name']} ({member_result['role']})")
@@ -200,7 +200,7 @@ class Phase3TeamCoordinationDemo:
         
         # Show results
         coordination_result = {
-            "coordination_id": f"coord_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}",
+            "coordination_id": f"coord_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}",
             "coordination_type": "workload_balancing",
             "status": "completed",
             "confidence": 0.87,
@@ -289,7 +289,7 @@ class Phase3TeamCoordinationDemo:
                 })
         
         coordination_result = {
-            "coordination_id": f"coord_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}",
+            "coordination_id": f"coord_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}",
             "coordination_type": "skill_optimization",
             "status": "completed",
             "confidence": 0.82,
@@ -365,7 +365,7 @@ class Phase3TeamCoordinationDemo:
         ]
         
         coordination_result = {
-            "coordination_id": f"coord_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}",
+            "coordination_id": f"coord_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}",
             "coordination_type": "meeting_optimization",
             "status": "completed",
             "confidence": 0.78,
@@ -451,7 +451,7 @@ class Phase3TeamCoordinationDemo:
         }
         
         coordination_result = {
-            "coordination_id": f"coord_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}",
+            "coordination_id": f"coord_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}",
             "coordination_type": "absence_planning",
             "status": "completed",
             "confidence": 0.88,

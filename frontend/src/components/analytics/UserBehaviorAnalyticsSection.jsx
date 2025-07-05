@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { 
-  Users, Eye, Clock, MousePointer, 
+import {
+  Users, Eye, Clock, MousePointer,
   TrendingUp, Target, MapPin, Smartphone,
   Monitor, Globe, Calendar, Activity,
-  BarChart3, PieChart, LineChart
+  BarChart3, PieChart, LineChart, RefreshCw
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/Card';
 import { Button } from '../ui/Button';
@@ -11,36 +11,66 @@ import { Badge } from '../ui/Badge';
 import { Progress } from '../ui/Progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/Tabs';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../ui/Table';
+import {
+  useUserBehaviorAnalytics,
+  useUserSegmentation,
+  useUserJourneyAnalysis,
+  useContentAnalytics,
+  useConversionAnalytics
+} from '../../hooks/useAnalytics';
 
 const UserBehaviorAnalyticsSection = ({ data }) => {
   const [timeRange, setTimeRange] = useState('7d');
 
-  // Mock user behavior data with realistic analytics
+  // Backend data hooks
+  const { data: userBehaviorData, isLoading: userBehaviorLoading, refetch: refetchUserBehavior } = useUserBehaviorAnalytics({
+    days: parseInt(timeRange.replace('d', ''))
+  });
+  const { data: segmentationData, isLoading: segmentationLoading } = useUserSegmentation({
+    days: parseInt(timeRange.replace('d', ''))
+  });
+  const { data: journeyData, isLoading: journeyLoading } = useUserJourneyAnalysis({
+    days: parseInt(timeRange.replace('d', ''))
+  });
+  const { data: contentData, isLoading: contentLoading } = useContentAnalytics({
+    days: parseInt(timeRange.replace('d', ''))
+  });
+  const { data: conversionData, isLoading: conversionLoading } = useConversionAnalytics({
+    days: parseInt(timeRange.replace('d', ''))
+  });
+
+  const loading = userBehaviorLoading || segmentationLoading || journeyLoading || contentLoading || conversionLoading;
+
+  // Transform backend data to component format
   const userMetrics = {
-    totalUsers: data?.totalUsers || 12456,
-    activeUsers: data?.activeUsers || 3421,
-    newUsers: data?.newUsers || 234,
-    returningUsers: data?.returningUsers || 3187,
-    sessionDuration: data?.avgSessionDuration || 24.5,
-    bounceRate: data?.bounceRate || 15.2,
-    pageViews: data?.totalPageViews || 45678,
-    conversionRate: data?.conversionRate || 3.4
+    totalUsers: userBehaviorData?.data?.total_users || data?.totalUsers || 12456,
+    activeUsers: userBehaviorData?.data?.active_users_today || data?.activeUsers || 3421,
+    newUsers: userBehaviorData?.data?.new_users || data?.newUsers || 234,
+    returningUsers: userBehaviorData?.data?.returning_users || data?.returningUsers || 3187,
+    sessionDuration: userBehaviorData?.data?.session_duration_avg || data?.avgSessionDuration || 24.5,
+    bounceRate: userBehaviorData?.data?.bounce_rate || data?.bounceRate || 15.2,
+    pageViews: userBehaviorData?.data?.page_views_today || data?.totalPageViews || 45678,
+    conversionRate: conversionData?.data?.overall_conversion_rate || data?.conversionRate || 3.4
   };
 
-  const userSegments = [
+  const userSegments = segmentationData?.data?.segments || [
     { name: 'New Users', count: 234, percentage: 6.8, color: 'bg-blue-500' },
     { name: 'Returning Users', count: 3187, percentage: 93.2, color: 'bg-green-500' },
     { name: 'Power Users', count: 456, percentage: 13.3, color: 'bg-purple-500' },
     { name: 'Inactive Users', count: 789, percentage: 23.1, color: 'bg-gray-400' }
   ];
 
-  const deviceBreakdown = [
+  const deviceBreakdown = userBehaviorData?.data?.device_breakdown ? [
+    { device: 'Desktop', users: userBehaviorData.data.device_breakdown.desktop_users || 1825, percentage: userBehaviorData.data.device_breakdown.desktop || 53.4, icon: Monitor },
+    { device: 'Mobile', users: userBehaviorData.data.device_breakdown.mobile_users || 1368, percentage: userBehaviorData.data.device_breakdown.mobile || 40.0, icon: Smartphone },
+    { device: 'Tablet', users: userBehaviorData.data.device_breakdown.tablet_users || 228, percentage: userBehaviorData.data.device_breakdown.tablet || 6.6, icon: Monitor }
+  ] : [
     { device: 'Desktop', users: 1825, percentage: 53.4, icon: Monitor },
     { device: 'Mobile', users: 1368, percentage: 40.0, icon: Smartphone },
     { device: 'Tablet', users: 228, percentage: 6.6, icon: Monitor }
   ];
 
-  const topPages = [
+  const topPages = contentData?.data?.top_pages || [
     { page: '/dashboard', views: 12456, uniqueViews: 8234, avgTime: '3:45', bounceRate: 12.3 },
     { page: '/profile', views: 8765, uniqueViews: 6543, avgTime: '2:30', bounceRate: 18.7 },
     { page: '/analytics', views: 5432, uniqueViews: 4321, avgTime: '4:12', bounceRate: 8.9 },
@@ -48,7 +78,7 @@ const UserBehaviorAnalyticsSection = ({ data }) => {
     { page: '/goals', views: 2987, uniqueViews: 2543, avgTime: '3:20', bounceRate: 14.2 }
   ];
 
-  const userJourney = [
+  const userJourney = journeyData?.data?.journey_steps || [
     { step: 'Landing Page', users: 1000, dropOff: 0, conversionRate: 100 },
     { step: 'Sign Up', users: 850, dropOff: 150, conversionRate: 85 },
     { step: 'Onboarding', users: 765, dropOff: 85, conversionRate: 76.5 },
@@ -56,7 +86,7 @@ const UserBehaviorAnalyticsSection = ({ data }) => {
     { step: 'Active User', users: 534, dropOff: 78, conversionRate: 53.4 }
   ];
 
-  const geographicData = [
+  const geographicData = userBehaviorData?.data?.geography?.top_countries || [
     { country: 'United States', users: 1245, percentage: 36.4 },
     { country: 'United Kingdom', users: 567, percentage: 16.6 },
     { country: 'Canada', users: 432, percentage: 12.6 },
@@ -64,6 +94,13 @@ const UserBehaviorAnalyticsSection = ({ data }) => {
     { country: 'France', users: 234, percentage: 6.8 },
     { country: 'Others', users: 622, percentage: 18.2 }
   ];
+
+  const handleRefresh = async () => {
+    await Promise.all([
+      refetchUserBehavior(),
+      // Add other refetch calls as needed
+    ]);
+  };
 
   return (
     <div className="space-y-6">
@@ -73,6 +110,10 @@ const UserBehaviorAnalyticsSection = ({ data }) => {
           <CardTitle className="flex items-center gap-2">
             <Users className="w-5 h-5" />
             User Behavior Analytics
+            <Button variant="outline" size="sm" onClick={handleRefresh} disabled={loading} className="ml-auto">
+              <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+              Refresh
+            </Button>
           </CardTitle>
           <CardDescription>
             Comprehensive insights into user engagement, behavior patterns, and conversion metrics
@@ -155,7 +196,7 @@ const UserBehaviorAnalyticsSection = ({ data }) => {
 
         {/* Conversion Tab */}
         <TabsContent value="conversion" className="space-y-6">
-          <ConversionAnalyticsSection data={userMetrics} />
+          <ConversionAnalyticsSection data={userMetrics} conversionData={conversionData} />
         </TabsContent>
       </Tabs>
     </div>
@@ -434,7 +475,7 @@ const ContentAnalyticsSection = ({ pages }) => (
 );
 
 // Conversion Analytics Section Component
-const ConversionAnalyticsSection = ({ data }) => (
+const ConversionAnalyticsSection = ({ data, conversionData }) => (
   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
     <Card>
       <CardHeader>
@@ -447,19 +488,19 @@ const ConversionAnalyticsSection = ({ data }) => (
         <div className="space-y-3">
           <div className="flex justify-between">
             <span>Overall Conversion Rate</span>
-            <span className="font-bold text-green-600">{data.conversionRate}%</span>
+            <span className="font-bold text-green-600">{conversionData?.data?.overall_conversion_rate || data.conversionRate}%</span>
           </div>
           <div className="flex justify-between">
             <span>Goal Completion Rate</span>
-            <span className="font-bold">78.5%</span>
+            <span className="font-bold">{conversionData?.data?.goal_completion_rate || 78.5}%</span>
           </div>
           <div className="flex justify-between">
             <span>User Retention (7-day)</span>
-            <span className="font-bold">65.2%</span>
+            <span className="font-bold">{conversionData?.data?.retention_rate_7d || 65.2}%</span>
           </div>
           <div className="flex justify-between">
             <span>Feature Adoption Rate</span>
-            <span className="font-bold">42.8%</span>
+            <span className="font-bold">{conversionData?.data?.feature_adoption_rate || 42.8}%</span>
           </div>
         </div>
       </CardContent>
@@ -475,22 +516,24 @@ const ConversionAnalyticsSection = ({ data }) => (
       <CardContent>
         <div className="space-y-4">
           <div className="text-center">
-            <div className="text-2xl font-bold text-blue-600">+23%</div>
+            <div className="text-2xl font-bold text-blue-600">
+              {conversionData?.data?.trend_percentage || '+23'}%
+            </div>
             <p className="text-sm text-gray-600">Conversion improvement this month</p>
           </div>
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
               <span>This Month</span>
-              <span>3.4%</span>
+              <span>{conversionData?.data?.current_month_rate || 3.4}%</span>
             </div>
-            <Progress value={68} className="h-2" />
+            <Progress value={conversionData?.data?.current_month_progress || 68} className="h-2" />
           </div>
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
               <span>Last Month</span>
-              <span>2.8%</span>
+              <span>{conversionData?.data?.last_month_rate || 2.8}%</span>
             </div>
-            <Progress value={56} className="h-2" />
+            <Progress value={conversionData?.data?.last_month_progress || 56} className="h-2" />
           </div>
         </div>
       </CardContent>

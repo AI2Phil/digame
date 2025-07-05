@@ -5,7 +5,7 @@ Advanced Career Path Modeling service for salary progression forecasting and car
 import numpy as np
 import pandas as pd
 from typing import Dict, List, Optional, Any, Tuple
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, or_, desc, func
 from decimal import Decimal
@@ -132,7 +132,7 @@ class CareerPathModelingService:
                 skills=skills,
                 tenant_id=tenant_id
             ),
-            "generated_at": datetime.utcnow().isoformat()
+            "generated_at": datetime.now(timezone.utc).isoformat()
         }
     
     def _get_salary_benchmarks(
@@ -269,7 +269,7 @@ class CareerPathModelingService:
         trends = self.db.query(MarketTrend).filter(
             MarketTrend.industry == industry,
             MarketTrend.status == "active",
-            MarketTrend.period_end >= datetime.utcnow() - timedelta(days=365)
+            MarketTrend.period_end >= datetime.now(timezone.utc) - timedelta(days=365)
         ).order_by(desc(MarketTrend.confidence_score)).all()
         
         if not trends:
@@ -379,7 +379,7 @@ class CareerPathModelingService:
             if year == 0:
                 # Current year
                 progression.append({
-                    "year": datetime.utcnow().year,
+                    "year": datetime.now(timezone.utc).year,
                     "years_experience": years_experience,
                     "salary": current_salary,
                     "growth_rate": 0.0,
@@ -400,7 +400,7 @@ class CareerPathModelingService:
                 new_salary = prev_year["salary"] * (1 + total_growth_rate)
                 
                 progression.append({
-                    "year": datetime.utcnow().year + year,
+                    "year": datetime.now(timezone.utc).year + year,
                     "years_experience": new_experience,
                     "salary": round(new_salary, 2),
                     "growth_rate": total_growth_rate,
@@ -615,7 +615,7 @@ class CareerPathModelingService:
         recent_trends = self.db.query(MarketTrend).filter(
             MarketTrend.industry == industry,
             MarketTrend.status == "active",
-            MarketTrend.created_at >= datetime.utcnow() - timedelta(days=30)
+            MarketTrend.created_at >= datetime.now(timezone.utc) - timedelta(days=30)
         ).order_by(desc(MarketTrend.confidence_score)).all()
         
         # Analyze trend impact on careers
@@ -632,7 +632,7 @@ class CareerPathModelingService:
         
         return {
             "industry": industry,
-            "last_updated": datetime.utcnow().isoformat(),
+            "last_updated": datetime.now(timezone.utc).isoformat(),
             "trend_summary": {
                 "total_trends": len(recent_trends),
                 "emerging_trends": len([t for t in recent_trends if getattr(t, 'trend_type', 'stable') == "emerging"]),
@@ -1012,7 +1012,7 @@ class CareerPathModelingService:
                 salary = progression[year - 1]["salary"] * (1 + annual_growth)
             
             progression.append({
-                "year": datetime.utcnow().year + year,
+                "year": datetime.now(timezone.utc).year + year,
                 "salary": round(salary, 2),
                 "role": role,
                 "growth_rate": annual_growth if year > 0 else 0.0
@@ -1062,7 +1062,7 @@ class CareerPathModelingService:
                 role = target_role
             
             progression.append({
-                "year": datetime.utcnow().year + year,
+                "year": datetime.now(timezone.utc).year + year,
                 "salary": round(salary, 2),
                 "role": role,
                 "growth_rate": 0.04 if year < promotion_year else (promotion_increase if year == promotion_year else 0.06)
@@ -1099,7 +1099,7 @@ class CareerPathModelingService:
                 role = target_role if year >= transition_year else current_role
             
             progression.append({
-                "year": datetime.utcnow().year + year,
+                "year": datetime.now(timezone.utc).year + year,
                 "salary": round(salary, 2),
                 "role": role,
                 "growth_rate": 0.04 if year < transition_year else (transition_impact if year == transition_year else 0.08)

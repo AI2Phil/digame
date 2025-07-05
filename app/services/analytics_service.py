@@ -3,7 +3,7 @@ Advanced Analytics service for predictive performance modeling and ROI measureme
 """
 
 from typing import Optional, List, Dict, Any, Tuple
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, or_, desc, asc, func
 import uuid
@@ -151,7 +151,7 @@ class AnalyticsService:
         for key, value in update_data_dict.items():
             setattr(model, key, value)  # type: ignore
 
-        setattr(model, 'updated_at', datetime.utcnow())  # type: ignore
+        setattr(model, 'updated_at', datetime.now(timezone.utc))  # type: ignore
         # model.updated_by_user_id = updated_by_user_id # Assuming model has this field
 
         self.db.commit()
@@ -232,7 +232,7 @@ class AnalyticsService:
         
         try:
             setattr(training_job, 'status', "running")
-            setattr(training_job, 'started_at', datetime.utcnow())
+            setattr(training_job, 'started_at', datetime.now(timezone.utc))
             self.db.commit()
             
             # Get model
@@ -332,7 +332,7 @@ class AnalyticsService:
             except AttributeError:
                 # Handle case where method doesn't exist
                 setattr(training_job, 'status', 'completed')  # type: ignore
-                setattr(training_job, 'completed_at', datetime.utcnow())  # type: ignore
+                setattr(training_job, 'completed_at', datetime.now(timezone.utc))  # type: ignore
             
             # Update model
             setattr(model, 'accuracy_score', metrics.get("accuracy"))
@@ -342,7 +342,7 @@ class AnalyticsService:
             setattr(model, 'r2_score', metrics.get("r2"))
             setattr(model, 'mae_score', metrics.get("mae"))
             setattr(model, 'rmse_score', metrics.get("rmse"))
-            setattr(model, 'last_trained_at', datetime.utcnow())
+            setattr(model, 'last_trained_at', datetime.now(timezone.utc))
             setattr(model, 'status', "trained")
             
             # Save model to disk (mock implementation)
@@ -375,7 +375,7 @@ class AnalyticsService:
             except AttributeError:
                 # Handle case where method doesn't exist
                 setattr(training_job, 'status', 'failed')  # type: ignore
-                setattr(training_job, 'completed_at', datetime.utcnow())  # type: ignore
+                setattr(training_job, 'completed_at', datetime.now(timezone.utc))  # type: ignore
             self.db.commit()
 
     def _generate_training_data(self, model: AnalyticsModel):  # type: ignore
@@ -599,7 +599,7 @@ class AnalyticsService:
         setattr(prediction, 'prediction_interval_lower', predicted_value_single * 0.9 if predicted_value_single is not None else None)  # type: ignore
         setattr(prediction, 'prediction_interval_upper', predicted_value_single * 1.1 if predicted_value_single is not None else None)  # type: ignore
         setattr(prediction, 'prediction_horizon_days', prediction_horizon_days)  # type: ignore
-        setattr(prediction, 'expires_at', datetime.utcnow() + timedelta(days=7) if prediction_horizon_days else None)  # type: ignore
+        setattr(prediction, 'expires_at', datetime.now(timezone.utc) + timedelta(days=7) if prediction_horizon_days else None)  # type: ignore
         setattr(prediction, 'created_by_user_id', created_by_user_id)  # type: ignore
         setattr(prediction, 'raw_prediction_output', prediction_output)  # type: ignore
         
@@ -610,7 +610,7 @@ class AnalyticsService:
         # Update model usage statistics
         current_count = getattr(model, 'prediction_count', 0)
         setattr(model, 'prediction_count', current_count + 1)  # type: ignore
-        setattr(model, 'last_prediction_at', datetime.utcnow())  # type: ignore
+        setattr(model, 'last_prediction_at', datetime.now(timezone.utc))  # type: ignore
         self.db.commit()
         
         return prediction
@@ -873,7 +873,7 @@ class AnalyticsService:
             ]:
                 needs_recalculation = True
 
-        setattr(calculation, 'updated_at', datetime.utcnow())  # type: ignore
+        setattr(calculation, 'updated_at', datetime.now(timezone.utc))  # type: ignore
         # calculation.updated_by_user_id = updated_by_user_id # If model has this field
 
         if needs_recalculation:
@@ -1050,7 +1050,7 @@ class AnalyticsService:
         
         recent_predictions = self.db.query(AnalyticsPrediction).filter(
             AnalyticsPrediction.tenant_id == tenant_id,  # type: ignore
-            AnalyticsPrediction.prediction_date >= datetime.utcnow() - timedelta(days=7)  # type: ignore
+            AnalyticsPrediction.prediction_date >= datetime.now(timezone.utc) - timedelta(days=7)  # type: ignore
         ).count()
         
         # ROI statistics
@@ -1157,7 +1157,7 @@ class AnalyticsService:
         # Prediction insights
         predictions = self.get_predictions(tenant_id, limit=100)
         if predictions:
-            recent_predictions = [p for p in predictions if getattr(p, 'prediction_date', datetime.utcnow()) >= datetime.utcnow() - timedelta(days=7)]
+            recent_predictions = [p for p in predictions if getattr(p, 'prediction_date', datetime.now(timezone.utc)) >= datetime.now(timezone.utc) - timedelta(days=7)]
             if len(recent_predictions) > 20:
                 insights.append({
                     "type": "info",
@@ -1193,7 +1193,7 @@ class AnalyticsService:
         setattr(benchmark, 'unit', benchmark_data.get("unit"))
         setattr(benchmark, 'period_start_date', benchmark_data.get("period_start_date"))
         setattr(benchmark, 'period_end_date', benchmark_data.get("period_end_date"))
-        setattr(benchmark, 'data_freshness_date', benchmark_data.get("data_freshness_date", datetime.utcnow()))
+        setattr(benchmark, 'data_freshness_date', benchmark_data.get("data_freshness_date", datetime.now(timezone.utc)))
         setattr(benchmark, 'dimensions', benchmark_data.get("dimensions"))
         setattr(benchmark, 'created_by_user_id', created_by_user_id)
         self.db.add(benchmark)
@@ -1422,7 +1422,7 @@ class AnalyticsService:
         for key, value in update_data_dict.items():
             setattr(benchmark, key, value)
 
-        setattr(benchmark, 'updated_at', datetime.utcnow())  # type: ignore
+        setattr(benchmark, 'updated_at', datetime.now(timezone.utc))  # type: ignore
         # benchmark.updated_by_user_id = updated_by_user_id # If model has this field
 
         self.db.commit()
@@ -1744,7 +1744,7 @@ class AnalyticsService:
             else:
                 setattr(db_dashboard, key, value)
 
-        setattr(db_dashboard, 'updated_at', datetime.utcnow())  # type: ignore
+        setattr(db_dashboard, 'updated_at', datetime.now(timezone.utc))  # type: ignore
         self.db.commit()
         self.db.refresh(db_dashboard)
         return db_dashboard
@@ -1762,7 +1762,7 @@ class AnalyticsService:
                 raise ValueError(f"Widget with config_id {item.widget_config_id} not found in dashboard {dashboard_id}.")
 
         setattr(db_dashboard, 'layout', [item.model_dump() for item in layout_data])  # type: ignore
-        setattr(db_dashboard, 'updated_at', datetime.utcnow())  # type: ignore
+        setattr(db_dashboard, 'updated_at', datetime.now(timezone.utc))  # type: ignore
         self.db.commit()
         self.db.refresh(db_dashboard)
         return db_dashboard
@@ -1810,7 +1810,7 @@ class AnalyticsService:
         if getattr(db_dashboard, 'layout', None) is None:
             setattr(db_dashboard, 'layout', [])  # type: ignore # Ensure layout is a list
         db_dashboard.layout.append(new_layout_item_dict)
-        setattr(db_dashboard, 'updated_at', datetime.utcnow())  # type: ignore
+        setattr(db_dashboard, 'updated_at', datetime.now(timezone.utc))  # type: ignore
 
         self.db.commit()
         self.db.refresh(db_widget)
@@ -1843,7 +1843,7 @@ class AnalyticsService:
             else:
                 setattr(db_widget, key, value)
 
-        setattr(db_widget, 'updated_at', datetime.utcnow())  # type: ignore
+        setattr(db_widget, 'updated_at', datetime.now(timezone.utc))  # type: ignore
         self.db.commit()
         self.db.refresh(db_widget)
         return db_widget
@@ -1863,7 +1863,7 @@ class AnalyticsService:
         if getattr(db_dashboard, 'layout', None):
             current_layout = getattr(db_dashboard, 'layout', [])
             setattr(db_dashboard, 'layout', [item for item in current_layout if item.get("widget_config_id") != widget_id])  # type: ignore
-            setattr(db_dashboard, 'updated_at', datetime.utcnow())  # type: ignore
+            setattr(db_dashboard, 'updated_at', datetime.now(timezone.utc))  # type: ignore
 
         self.db.delete(db_widget)
         self.db.commit()

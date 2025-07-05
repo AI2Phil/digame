@@ -2,16 +2,41 @@
 
 ## ref /docs/DATABASE.md
 
-## Current Status: Production Ready with Multiple Infrastructure Options
+## Current Status: Production Ready with CRITICAL Migration Required
 
-The Digame platform's database implementation is **fully functional and production-ready** with multiple deployment options:
+The Digame platform's database implementation is **fully functional and production-ready** with multiple deployment options, but requires **immediate SQLAlchemy 2.0 migration**:
 
-✅ **Development Environment**: SQLite with zero configuration  
-✅ **Docker Development**: PostgreSQL + Redis infrastructure ready  
-✅ **Production Environment**: Full enterprise stack with monitoring  
-✅ **Authentication System**: Complete with JWT tokens and "Remember Me" functionality  
-✅ **User Management**: Full CRUD operations with proper validation  
-✅ **Onboarding Flow**: Personalized dashboard based on user selections  
+✅ **Development Environment**: SQLite with zero configuration
+✅ **Docker Development**: PostgreSQL + Redis infrastructure ready
+✅ **Production Environment**: Full enterprise stack with monitoring
+✅ **Authentication System**: Complete with JWT tokens and "Remember Me" functionality
+✅ **User Management**: Full CRUD operations with proper validation
+✅ **Onboarding Flow**: Personalized dashboard based on user selections
+🚨 **CRITICAL**: SQLAlchemy 2.0 migration required (300+ deprecation warnings)
+
+## 🚨 IMMEDIATE PRIORITY: SQLAlchemy 2.0 Migration
+
+### **CRITICAL INFRASTRUCTURE ISSUE**
+**Status**: ⚠️ **IMMEDIATE ACTION REQUIRED**
+**Priority**: **HIGHEST** - Must be completed before any other development
+**Timeline**: 3-5 days for complete migration
+**Impact**: Platform stability, future compatibility, production readiness
+
+**Issue Summary**:
+- **300+ deprecation warnings** across 50+ Python files using `datetime.utcnow()`
+- **9 model files** using deprecated `declarative_base()` pattern
+- **Multiple Base class conflicts** causing model definition issues
+- **Future breaking changes** in SQLAlchemy 2.x versions
+
+**Immediate Actions Required**:
+1. **Day 1-2**: Migrate all `datetime.utcnow()` to `datetime.now(timezone.utc)` (300+ instances)
+2. **Day 2-3**: Consolidate all `declarative_base()` to single `DeclarativeBase` pattern
+3. **Day 3-4**: Update model timestamp defaults and test all database operations
+4. **Day 4-5**: Comprehensive testing and production deployment
+
+**Detailed Migration Plan**: See [`IMPLEMENTATION_SUMMARY.md`](IMPLEMENTATION_SUMMARY.md#critical-sqlalchemy-20-migration-plan) for complete checklist and implementation guide.
+
+---
 
 ## Architecture Overview
 
@@ -92,6 +117,40 @@ docker-compose -f docker-compose.prod.yml up
 **Best For**: Production deployment, enterprise requirements
 
 ## Implementation Status Summary
+
+### 🚨 **CRITICAL PRIORITY (January 2025)**
+
+### 0. SQLAlchemy 2.0 Migration 🚨 **CRITICAL - IMMEDIATE**
+**Priority**: **CRITICAL** (Blocks all other development)
+**Status**: ⚠️ **IMMEDIATE ACTION REQUIRED**
+**Timeline**: 3-5 days for complete migration
+**Impact**: Platform stability, future compatibility, production readiness
+
+**Critical Issues Identified**:
+- **300+ deprecation warnings** from `datetime.utcnow()` usage across 50+ files
+- **9 model files** using deprecated `declarative_base()` pattern
+- **Multiple Base class conflicts** causing model definition inconsistencies
+- **Future breaking changes** in SQLAlchemy 2.x versions
+
+**Implementation Requirements**:
+- ✅ **Analysis Complete**: All 300+ instances identified and catalogued
+- 🔄 **Migration Plan**: Comprehensive 4-phase migration plan created
+- ⚠️ **Execution Pending**: Requires immediate implementation
+- ⚠️ **Testing Required**: Full regression testing needed post-migration
+
+**Files Requiring Immediate Attention**:
+- **Core Services**: `rbac_service.py`, `enhanced_jwt_service.py`, `security_service.py`
+- **Business Logic**: `analytics_service.py`, `workflow_automation_service.py`
+- **Model Definitions**: `database.py`, `reporting.py`, `analytics.py`, `twin_phase*.py`
+- **Scripts**: `create_platform_owner.py`, `main.py`
+
+**Success Criteria**:
+- Zero SQLAlchemy deprecation warnings in logs
+- All existing functionality preserved
+- Database operations working correctly
+- All tests passing
+
+---
 
 ### ✅ **COMPLETED IMPLEMENTATIONS (January 2025)**
 
@@ -1306,11 +1365,14 @@ The extended database schema supports all implemented platform features:
 - **Production Ready**: Full monitoring, backup, and disaster recovery prepared
 
 ### 🔄 **Next Steps**
-1. **Immediate**: Implement extended schema for full platform feature support
-2. **Short-term**: Add Redis caching and performance monitoring
-3. **Medium-term**: Database abstraction layer for seamless environment switching
-4. **Long-term**: Microservices preparation and multi-tenant architecture
+1. **CRITICAL (Week 1)**: Complete SQLAlchemy 2.0 migration to resolve 300+ deprecation warnings
+2. **Immediate (Week 2)**: Implement extended schema for full platform feature support
+3. **Short-term (Month 1)**: Add Redis caching and performance monitoring
+4. **Medium-term (Month 2-3)**: Database abstraction layer for seamless environment switching
+5. **Long-term (Month 4+)**: Microservices preparation and multi-tenant architecture
 
 The database implementation plan provides a **clear, structured path** from the current excellent SQLite foundation to enterprise-scale deployment, ensuring the platform can support all implemented features while maintaining reliability and performance at every stage of growth.
 
-**Recommendation**: Continue with SQLite for development while implementing the extended schema to support all platform features, with Docker infrastructure ready for immediate activation when team collaboration or production deployment is needed.
+**CRITICAL RECOMMENDATION**: **Immediately prioritize SQLAlchemy 2.0 migration** to resolve infrastructure stability issues before proceeding with any other development. The 300+ deprecation warnings represent a significant technical debt that must be addressed for production readiness and future compatibility.
+
+**Secondary Recommendation**: Continue with SQLite for development while implementing the extended schema to support all platform features, with Docker infrastructure ready for immediate activation when team collaboration or production deployment is needed.

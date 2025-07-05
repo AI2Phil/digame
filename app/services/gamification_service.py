@@ -5,7 +5,7 @@ Handles achievement tracking, streak management, and point calculations
 
 from typing import List, Dict, Optional, Any
 from sqlalchemy.orm import Session
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import logging
 
 from ..models.gamification import (
@@ -78,7 +78,7 @@ class GamificationService:
             
             # Mark as earned with safe attribute assignment
             setattr(user_achievement, 'earned', True)  # type: ignore
-            setattr(user_achievement, 'earned_at', datetime.utcnow())  # type: ignore
+            setattr(user_achievement, 'earned_at', datetime.now(timezone.utc))  # type: ignore
             setattr(user_achievement, 'current_progress', getattr(achievement, 'max_progress', 100))  # type: ignore
             setattr(user_achievement, 'context_data', context_data or {})  # type: ignore
             
@@ -150,8 +150,8 @@ class GamificationService:
             setattr(streak, 'streak_type', streak_type)  # type: ignore
             setattr(streak, 'current_count', 1)  # type: ignore
             setattr(streak, 'longest_count', 1)  # type: ignore
-            setattr(streak, 'start_date', datetime.utcnow())  # type: ignore
-            setattr(streak, 'last_activity_date', datetime.utcnow())  # type: ignore
+            setattr(streak, 'start_date', datetime.now(timezone.utc))  # type: ignore
+            setattr(streak, 'last_activity_date', datetime.now(timezone.utc))  # type: ignore
             self.db.add(streak)
         else:
             # Update existing streak
@@ -163,15 +163,15 @@ class GamificationService:
             else:
                 # Streak broken, create new one
                 setattr(streak, 'is_active', False)  # type: ignore
-                setattr(streak, 'end_date', datetime.utcnow())  # type: ignore
+                setattr(streak, 'end_date', datetime.now(timezone.utc))  # type: ignore
                 
                 new_streak = Streak()  # type: ignore
                 setattr(new_streak, 'user_id', user_id)  # type: ignore
                 setattr(new_streak, 'streak_type', streak_type)  # type: ignore
                 setattr(new_streak, 'current_count', 1)  # type: ignore
                 setattr(new_streak, 'longest_count', 1)  # type: ignore
-                setattr(new_streak, 'start_date', datetime.utcnow())  # type: ignore
-                setattr(new_streak, 'last_activity_date', datetime.utcnow())  # type: ignore
+                setattr(new_streak, 'start_date', datetime.now(timezone.utc))  # type: ignore
+                setattr(new_streak, 'last_activity_date', datetime.now(timezone.utc))  # type: ignore
                 self.db.add(new_streak)
                 streak = new_streak
         
@@ -187,7 +187,7 @@ class GamificationService:
         streak = self.get_active_streak(user_id, streak_type)
         if streak:
             setattr(streak, 'is_active', False)  # type: ignore
-            setattr(streak, 'end_date', datetime.utcnow())  # type: ignore
+            setattr(streak, 'end_date', datetime.now(timezone.utc))  # type: ignore
             self.db.commit()
             return True
         return False
@@ -434,7 +434,7 @@ class GamificationService:
                     {
                         "type": getattr(s, 'streak_type', 'unknown'),
                         "count": getattr(s, 'current_count', 0),
-                        "start_date": getattr(s, 'start_date', datetime.utcnow()).isoformat()
+                        "start_date": getattr(s, 'start_date', datetime.now(timezone.utc)).isoformat()
                     }
                     for s in active_streaks
                 ]

@@ -3,18 +3,12 @@ Single Sign-On (SSO) models for enterprise authentication
 """
 
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, JSON, ForeignKey
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
-from datetime import datetime
+from datetime import datetime, timezone
 import uuid
 
 # Use the existing Base from the project
-try:
-    from ..database import Base
-except ImportError:
-    # Fallback for development
-    from sqlalchemy.ext.declarative import declarative_base
-    Base = declarative_base()
+from ..database import Base
 
 class SSOProvider(Base):
     """
@@ -68,8 +62,8 @@ class SSOProvider(Base):
     default_user_role = Column(String(50), default="member")
     
     # Metadata
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     created_by_user_id = Column(Integer, nullable=True)
     
     # Relationships
@@ -124,7 +118,7 @@ class SSOSession(Base):
     name_id_format = Column(String(255), nullable=True)  # SAML NameID format
     
     # Session lifecycle
-    initiated_at = Column(DateTime, default=datetime.utcnow, index=True)
+    initiated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), index=True)
     authenticated_at = Column(DateTime, nullable=True)
     last_activity_at = Column(DateTime, nullable=True)
     expires_at = Column(DateTime, nullable=True)
@@ -160,12 +154,12 @@ class SSOSession(Base):
     @property
     def is_expired(self):
         """Check if session has expired"""
-        return self.expires_at and datetime.utcnow() > self.expires_at
+        return self.expires_at and datetime.now(timezone.utc) > self.expires_at
 
     def terminate(self, reason: str = None):
         """Terminate the SSO session"""
         self.status = "terminated"
-        self.terminated_at = datetime.utcnow()
+        self.terminated_at = datetime.now(timezone.utc)
         if reason:
             self.failure_reason = reason
 
@@ -187,7 +181,7 @@ class SSOUserMapping(Base):
     email = Column(String(255), nullable=True, index=True)
     
     # Mapping metadata
-    first_login_at = Column(DateTime, default=datetime.utcnow)
+    first_login_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     last_login_at = Column(DateTime, nullable=True)
     login_count = Column(Integer, default=0)
     
@@ -206,7 +200,7 @@ class SSOUserMapping(Base):
 
     def update_login_info(self):
         """Update login tracking information"""
-        self.last_login_at = datetime.utcnow()
+        self.last_login_at = datetime.now(timezone.utc)
         self.login_count += 1
 
 
@@ -237,7 +231,7 @@ class SSOAuditLog(Base):
     error_message = Column(Text, nullable=True)
     
     # Timing
-    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), index=True)
 
     def __repr__(self):
         return f"<SSOAuditLog(id={self.id}, event_type='{self.event_type}', tenant_id={self.tenant_id})>"
@@ -272,8 +266,8 @@ class SSOConfiguration(Base):
     auto_assign_groups = Column(Boolean, default=True)
     
     # Metadata
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     created_by_user_id = Column(Integer, nullable=True)
 
     def __repr__(self):

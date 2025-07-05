@@ -3,7 +3,7 @@ Market Intelligence service for industry trend analysis and competitive intellig
 """
 
 from typing import Optional, List, Dict, Any, Tuple
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, or_, desc, asc, func
 import uuid
@@ -88,7 +88,7 @@ class MarketIntelligenceService:
         for key, value in update_dict.items():
             setattr(db_source, key, value)  # type: ignore
 
-        setattr(db_source, 'updated_at', datetime.utcnow())  # type: ignore
+        setattr(db_source, 'updated_at', datetime.now(timezone.utc))  # type: ignore
         self.db.commit()
         self.db.refresh(db_source)
         return db_source
@@ -559,7 +559,7 @@ class MarketIntelligenceService:
         
         recent_reports = self.db.query(IntelligenceReport).filter(
             IntelligenceReport.tenant_id == tenant_id,
-            IntelligenceReport.report_date >= datetime.utcnow() - timedelta(days=30)
+            IntelligenceReport.report_date >= datetime.now(timezone.utc) - timedelta(days=30)
         ).count()
         
         return {
@@ -573,7 +573,7 @@ class MarketIntelligenceService:
                 "total": total_analyses,
                 "recent": self.db.query(CompetitiveAnalysis).filter(
                     CompetitiveAnalysis.tenant_id == tenant_id,
-                    CompetitiveAnalysis.analysis_date >= datetime.utcnow() - timedelta(days=30)
+                    CompetitiveAnalysis.analysis_date >= datetime.now(timezone.utc) - timedelta(days=30)
                 ).count()
             },
             "reports": {
@@ -660,7 +660,7 @@ class MarketIntelligenceService:
             sample_size=job_description_sample_size * len(job_data_sources)
         )
 
-        past_date_limit = datetime.utcnow() - timedelta(days=time_horizon_months * 30)
+        past_date_limit = datetime.now(timezone.utc) - timedelta(days=time_horizon_months * 30)
 
         for desc_data in simulated_job_descriptions:
             text_to_search = desc_data.get("description", "").lower() + " " + desc_data.get("title", "").lower()
@@ -926,11 +926,11 @@ class MarketIntelligenceService:
             try:
                 try:
                     days_back = int(np.random.randint(0, 365))
-                    sim_date = datetime.utcnow() - timedelta(days=days_back)
+                    sim_date = datetime.now(timezone.utc) - timedelta(days=days_back)
                 except Exception:
-                    sim_date = datetime.utcnow() - timedelta(days=30)
+                    sim_date = datetime.now(timezone.utc) - timedelta(days=30)
             except Exception:
-                sim_date = datetime.utcnow() - timedelta(days=30)
+                sim_date = datetime.now(timezone.utc) - timedelta(days=30)
 
             docs.append({"title": title, "description": full_description, "date": sim_date})
         return docs

@@ -5,7 +5,7 @@ Enterprise Dashboard service for unified enterprise feature management
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, or_, func, desc, asc
 from typing import List, Dict, Any, Optional, Tuple
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import json
 import hashlib
 from ..models.enterprise_dashboard import (
@@ -185,7 +185,7 @@ class EnterpriseDashboardService:
             if hasattr(dashboard, key):
                 setattr(dashboard, key, value)
         
-        dashboard.updated_at = datetime.utcnow()
+        dashboard.updated_at = datetime.now(timezone.utc)
         self.db.commit()
         self.db.refresh(dashboard)
         
@@ -252,7 +252,7 @@ class EnterpriseDashboardService:
             if hasattr(widget, key):
                 setattr(widget, key, value)
         
-        setattr(widget, 'updated_at', datetime.utcnow())  # type: ignore
+        setattr(widget, 'updated_at', datetime.now(timezone.utc))  # type: ignore
         self.db.commit()
         self.db.refresh(widget)
         
@@ -303,7 +303,7 @@ class EnterpriseDashboardService:
         # Get recent metrics
         metrics = self.db.query(EnterpriseMetric).filter(
             EnterpriseMetric.tenant_id == tenant_id,
-            EnterpriseMetric.period_start >= datetime.utcnow() - timedelta(days=30)
+            EnterpriseMetric.period_start >= datetime.now(timezone.utc) - timedelta(days=30)
         ).order_by(desc(EnterpriseMetric.period_start)).limit(100).all()
         
         # Aggregate by category
@@ -324,7 +324,7 @@ class EnterpriseDashboardService:
         return {
             "categories": categories,
             "total_metrics": len(metrics),
-            "last_updated": datetime.utcnow().isoformat()
+            "last_updated": datetime.now(timezone.utc).isoformat()
         }
 
     async def _get_security_data(
@@ -343,7 +343,7 @@ class EnterpriseDashboardService:
             "policy_compliance": 92,
             "recent_events": [],
             "risk_level": "medium",
-            "last_updated": datetime.utcnow().isoformat()
+            "last_updated": datetime.now(timezone.utc).isoformat()
         }
 
     async def _get_workflow_data(
@@ -360,7 +360,7 @@ class EnterpriseDashboardService:
             "success_rate": 94.5,
             "avg_execution_time": 120,
             "automation_savings": 8.5,
-            "last_updated": datetime.utcnow().isoformat()
+            "last_updated": datetime.now(timezone.utc).isoformat()
         }
 
     async def _get_integration_data(
@@ -376,7 +376,7 @@ class EnterpriseDashboardService:
             "sync_success_rate": 98.2,
             "data_transferred_mb": 1250,
             "api_calls_today": 15420,
-            "last_sync": datetime.utcnow().isoformat(),
+            "last_sync": datetime.now(timezone.utc).isoformat(),
             "health_status": "healthy"
         }
 
@@ -411,7 +411,7 @@ class EnterpriseDashboardService:
             "industry_score": 78.5,
             "growth_opportunities": 5,
             "threat_level": "low",
-            "last_analysis": datetime.utcnow().isoformat()
+            "last_analysis": datetime.now(timezone.utc).isoformat()
         }
 
     async def _get_reporting_data(
@@ -428,7 +428,7 @@ class EnterpriseDashboardService:
             "export_success_rate": 99.1,
             "storage_used_gb": 12.8,
             "active_subscriptions": 45,
-            "last_report": datetime.utcnow().isoformat()
+            "last_report": datetime.now(timezone.utc).isoformat()
         }
 
     # Metrics Management
@@ -620,7 +620,7 @@ class EnterpriseDashboardService:
     ) -> Dict[str, Any]:
         """Get dashboard usage analytics"""
         
-        start_date = datetime.utcnow() - timedelta(days=days)
+        start_date = datetime.now(timezone.utc) - timedelta(days=days)
         
         # Feature usage statistics
         usage_stats = self.db.query(
@@ -675,7 +675,7 @@ class EnterpriseDashboardService:
                 for stat in alert_stats
             ],
             "period_days": days,
-            "generated_at": datetime.utcnow().isoformat()
+            "generated_at": datetime.now(timezone.utc).isoformat()
         }
 
     # Export Management
@@ -728,7 +728,7 @@ class EnterpriseDashboardService:
         # Recent feature usage
         recent_usage = self.db.query(func.count(EnterpriseFeatureUsage.id)).filter(
             EnterpriseFeatureUsage.tenant_id == tenant_id,
-            EnterpriseFeatureUsage.timestamp >= datetime.utcnow() - timedelta(hours=24)
+            EnterpriseFeatureUsage.timestamp >= datetime.now(timezone.utc) - timedelta(hours=24)
         ).scalar()
         
         return {
@@ -737,5 +737,5 @@ class EnterpriseDashboardService:
             "active_alerts": active_alerts,
             "usage_24h": recent_usage or 0,
             "enterprise_health": "healthy" if active_alerts < 5 else "warning",
-            "last_updated": datetime.utcnow().isoformat()
+            "last_updated": datetime.now(timezone.utc).isoformat()
         }

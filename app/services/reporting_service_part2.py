@@ -4,7 +4,7 @@ Scheduling, templates, subscriptions, and advanced features
 """
 
 from typing import Optional, List, Dict, Any, Tuple, Union
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, or_, desc, asc
 import uuid
@@ -93,7 +93,7 @@ class ReportSchedulingService:
     def get_due_schedules(self) -> List[ReportSchedule]:
         """Get schedules that are due to run"""
         
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         return self.db.query(ReportSchedule).filter(
             and_(
                 ReportSchedule.is_active.is_(True),  # type: ignore
@@ -211,7 +211,7 @@ class ReportSchedulingService:
             generated_executions: List[ReportExecution] = []
 
             for output_format in schedule.output_formats:
-                start_time = datetime.utcnow()
+                start_time = datetime.now(timezone.utc)
                 # Create a ReportExecution object for this specific generation
                 # WARNING: execution.report_id is being assigned report_definition_id.
                 # This is semantically incorrect due to FK(reports.id) but done for code flow.
@@ -344,7 +344,7 @@ class ReportSchedulingService:
             elif hasattr(db_schedule, key):
                 setattr(db_schedule, key, value)  # type: ignore
 
-        setattr(db_schedule, 'updated_at', datetime.utcnow())  # type: ignore
+        setattr(db_schedule, 'updated_at', datetime.now(timezone.utc))  # type: ignore
         self.db.commit()
         self.db.refresh(db_schedule)
         return db_schedule
@@ -480,14 +480,14 @@ class ReportSchedulingService:
     def _calculate_next_run(self, cron_expr: str, timezone: str = "UTC") -> datetime:
         """Calculate next run time for cron expression"""
         if not CRONITER_AVAILABLE or croniter is None:
-            return datetime.utcnow() + timedelta(hours=1)
+            return datetime.now(timezone.utc) + timedelta(hours=1)
         try:
-            cron = croniter(cron_expr, datetime.utcnow())
+            cron = croniter(cron_expr, datetime.now(timezone.utc))
             next_time = cron.get_next(datetime)
-            return next_time if isinstance(next_time, datetime) else datetime.utcnow() + timedelta(hours=1)
+            return next_time if isinstance(next_time, datetime) else datetime.now(timezone.utc) + timedelta(hours=1)
         except Exception:
             # Fallback to 1 hour from now
-            return datetime.utcnow() + timedelta(hours=1)
+            return datetime.now(timezone.utc) + timedelta(hours=1)
 
     def _update_subscription_delivery_stats(self, report_id: int, recipients: List[str]):
         """Update delivery statistics for subscriptions"""
@@ -501,7 +501,7 @@ class ReportSchedulingService:
             ).first()
             
             if subscription:
-                setattr(subscription, 'last_delivered_at', datetime.utcnow())  # type: ignore
+                setattr(subscription, 'last_delivered_at', datetime.now(timezone.utc))  # type: ignore
                 current_count = getattr(subscription, 'delivery_count', 0)
                 setattr(subscription, 'delivery_count', current_count + 1)  # type: ignore
                 self.db.commit()
@@ -679,9 +679,9 @@ class ReportAnalyticsService:
         """Get comprehensive report usage statistics"""
         
         if not start_date:
-            start_date = datetime.utcnow() - timedelta(days=30)
+            start_date = datetime.now(timezone.utc) - timedelta(days=30)
         if not end_date:
-            end_date = datetime.utcnow()
+            end_date = datetime.now(timezone.utc)
         
         # Mock analytics data
         return {
@@ -787,7 +787,7 @@ class ReportCacheService:
         """Remove expired cache entries"""
         
         expired_entries = self.db.query(ReportCache).filter(
-            ReportCache.expires_at < datetime.utcnow()
+            ReportCache.expires_at < datetime.now(timezone.utc)
         ).all()
         
         for entry in expired_entries:
@@ -944,7 +944,7 @@ class ReportExportService:
         
         # Generate share token
         share_token = str(uuid.uuid4())
-        expires_at = datetime.utcnow() + timedelta(
+        expires_at = datetime.now(timezone.utc) + timedelta(
             days=share_config.get("expires_days", 7)
         )
         

@@ -3,8 +3,7 @@ Database configuration and base model for the Digame platform
 """
 
 from sqlalchemy import create_engine, MetaData
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, DeclarativeBase
 from sqlalchemy.pool import StaticPool
 import os
 
@@ -30,8 +29,9 @@ else:
 # Create SessionLocal class
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-# Create Base class for models
-Base = declarative_base()
+# Create Base class for models using SQLAlchemy 2.0 pattern
+class Base(DeclarativeBase):
+    pass
 
 # Metadata for migrations
 metadata = MetaData()

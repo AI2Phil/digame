@@ -5,7 +5,7 @@ Simple script to create a Platform Owner user with basic columns
 
 import sqlite3
 import hashlib
-from datetime import datetime
+from datetime import datetime, timezone
 
 def hash_password(password: str) -> str:
     """Simple password hashing"""
@@ -60,7 +60,7 @@ def create_platform_owner():
                 1, 3,  # is_platform_owner=True, level=3
                 'platform_owner', 'active',
                 1, 1,  # is_active=True, email_verified=True
-                datetime.utcnow().isoformat(),
+                datetime.now(timezone.utc).isoformat(),
                 1  # onboarding_completed=True
             ))
             print(f"✅ Created new Platform Owner: {email}")

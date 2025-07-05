@@ -4,7 +4,7 @@ JWT tokens with Platform Owner context and tenant information
 """
 
 from jose import jwt, JWTError
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional, Dict, Any
 from sqlalchemy.orm import Session
 
@@ -58,8 +58,8 @@ class EnhancedJWTService:
             "is_founding_member": user.is_founding_member,
             
             # Token Metadata
-            "iat": datetime.utcnow(),
-            "exp": datetime.utcnow() + timedelta(minutes=auth_settings.access_token_expire_minutes),
+            "iat": datetime.now(timezone.utc),
+            "exp": datetime.now(timezone.utc) + timedelta(minutes=auth_settings.access_token_expire_minutes),
             "token_type": "access"
         }
         
@@ -71,8 +71,8 @@ class EnhancedJWTService:
             "sub": str(user.id),
             "email": user.email,
             "token_type": "refresh",
-            "iat": datetime.utcnow(),
-            "exp": datetime.utcnow() + timedelta(days=auth_settings.refresh_token_expire_days)
+            "iat": datetime.now(timezone.utc),
+            "exp": datetime.now(timezone.utc) + timedelta(days=auth_settings.refresh_token_expire_days)
         }
         
         return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)

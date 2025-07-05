@@ -5,7 +5,7 @@ Workflow Automation service layer for business process automation and workflow m
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, or_, desc, func
 from typing import List, Optional, Dict, Any, Tuple
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import json
 import uuid
 import asyncio
@@ -155,7 +155,7 @@ class WorkflowAutomationService:
         try:
             # Start execution
             setattr(instance, 'status', "active")  # type: ignore
-            setattr(instance, 'execution_start_time', datetime.utcnow())  # type: ignore
+            setattr(instance, 'execution_start_time', datetime.now(timezone.utc))  # type: ignore
             
             # Execute workflow steps
             success = self._execute_workflow_steps(instance)
@@ -166,7 +166,7 @@ class WorkflowAutomationService:
             else:
                 setattr(instance, 'status', "failed")  # type: ignore
             
-            setattr(instance, 'execution_end_time', datetime.utcnow())  # type: ignore
+            setattr(instance, 'execution_end_time', datetime.now(timezone.utc))  # type: ignore
             execution_start = getattr(instance, 'execution_start_time', None)
             execution_end = getattr(instance, 'execution_end_time', None)
             if execution_start and execution_end:
@@ -184,7 +184,7 @@ class WorkflowAutomationService:
             setattr(instance, 'last_error', str(e))  # type: ignore
             current_error_count = getattr(instance, 'error_count', 0)
             setattr(instance, 'error_count', current_error_count + 1)  # type: ignore
-            setattr(instance, 'execution_end_time', datetime.utcnow())  # type: ignore
+            setattr(instance, 'execution_end_time', datetime.now(timezone.utc))  # type: ignore
             # Also attempt to trigger failure reports
             self._try_trigger_workflow_reports(instance, "on_workflow_failure")
             self.db.commit()
@@ -417,7 +417,7 @@ class WorkflowAutomationService:
             if hasattr(db_config, key) and value is not None: # Ensure value is not None before setting
                 setattr(db_config, key, value)
 
-        setattr(db_config, 'updated_at', datetime.utcnow())  # type: ignore # Manually update timestamp
+        setattr(db_config, 'updated_at', datetime.now(timezone.utc))  # type: ignore # Manually update timestamp
         self.db.commit()
         self.db.refresh(db_config)
         return db_config
@@ -525,7 +525,7 @@ class WorkflowAutomationService:
         try:
             # Create workflow instance
             instance_data = {
-                "name": f"Auto: {getattr(rule, 'name', 'Unknown')} - {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')}",
+                "name": f"Auto: {getattr(rule, 'name', 'Unknown')} - {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')}",
                 "description": f"Automatically triggered by rule: {getattr(rule, 'name', 'Unknown')}",
                 "input_data": {**getattr(rule, 'action_config', {}), **trigger_data},
                 "priority": getattr(rule, 'priority', 5)
@@ -541,7 +541,7 @@ class WorkflowAutomationService:
             # Update rule statistics
             current_total = getattr(rule, 'total_executions', 0)
             setattr(rule, 'total_executions', current_total + 1)  # type: ignore
-            setattr(rule, 'last_execution', datetime.utcnow())  # type: ignore
+            setattr(rule, 'last_execution', datetime.now(timezone.utc))  # type: ignore
             
             # Execute workflow instance
             success = self.execute_workflow_instance(getattr(instance, 'id', 0))  # type: ignore
@@ -633,21 +633,21 @@ class WorkflowAutomationService:
             result = self._execute_action_test(action, test_config)
             
             # Update action test results
-            setattr(action, 'last_tested', datetime.utcnow())  # type: ignore
+            setattr(action, 'last_tested', datetime.now(timezone.utc))  # type: ignore
             setattr(action, 'test_success', result["success"])  # type: ignore
             
             self.db.commit()
             return result
             
         except Exception as e:
-            setattr(action, 'last_tested', datetime.utcnow())  # type: ignore
+            setattr(action, 'last_tested', datetime.now(timezone.utc))  # type: ignore
             setattr(action, 'test_success', False)  # type: ignore
             self.db.commit()
             
             return {
                 "success": False,
                 "error": str(e),
-                "timestamp": datetime.utcnow().isoformat()
+                "timestamp": datetime.now(timezone.utc).isoformat()
             }
     
     def get_workflow_analytics(
@@ -660,9 +660,9 @@ class WorkflowAutomationService:
         Get workflow analytics for a tenant
         """
         if not start_date:
-            start_date = datetime.utcnow() - timedelta(days=30)
+            start_date = datetime.now(timezone.utc) - timedelta(days=30)
         if not end_date:
-            end_date = datetime.utcnow()
+            end_date = datetime.now(timezone.utc)
         
         # Workflow instances analytics
         instances_query = self.db.query(WorkflowInstance).filter(
@@ -829,11 +829,11 @@ class WorkflowAutomationService:
             try:
                 # Execute step
                 setattr(step_execution, 'status', "running")  # type: ignore
-                setattr(step_execution, 'start_time', datetime.utcnow())  # type: ignore
+                setattr(step_execution, 'start_time', datetime.now(timezone.utc))  # type: ignore
                 
                 success = self._execute_single_step(step_execution, instance)
                 
-                setattr(step_execution, 'end_time', datetime.utcnow())  # type: ignore
+                setattr(step_execution, 'end_time', datetime.now(timezone.utc))  # type: ignore
                 start_time = getattr(step_execution, 'start_time', None)
                 end_time = getattr(step_execution, 'end_time', None)
                 if start_time and end_time:
@@ -856,7 +856,7 @@ class WorkflowAutomationService:
             except Exception as e:
                 setattr(step_execution, 'status', "failed")  # type: ignore
                 setattr(step_execution, 'error_message', str(e))  # type: ignore
-                setattr(step_execution, 'end_time', datetime.utcnow())  # type: ignore
+                setattr(step_execution, 'end_time', datetime.now(timezone.utc))  # type: ignore
                 return False
         
         return True
@@ -1026,7 +1026,7 @@ class WorkflowAutomationService:
         Check if automation rule is within rate limits
         """
         # Check executions in the last hour
-        one_hour_ago = datetime.utcnow() - timedelta(hours=1)
+        one_hour_ago = datetime.now(timezone.utc) - timedelta(hours=1)
         recent_executions = self.db.query(WorkflowInstance).filter(
             WorkflowInstance.triggered_by == f"automation_rule_{getattr(rule, 'id', 0)}",
             WorkflowInstance.created_at >= one_hour_ago
@@ -1074,26 +1074,26 @@ class WorkflowAutomationService:
             return {
                 "success": True,
                 "message": "Email test successful",
-                "timestamp": datetime.utcnow().isoformat()
+                "timestamp": datetime.now(timezone.utc).isoformat()
             }
         elif action_type == "api_call":
             return {
                 "success": True,
                 "message": "API call test successful",
                 "response_time": 150,
-                "timestamp": datetime.utcnow().isoformat()
+                "timestamp": datetime.now(timezone.utc).isoformat()
             }
         elif action_type == "database":
             return {
                 "success": True,
                 "message": "Database operation test successful",
-                "timestamp": datetime.utcnow().isoformat()
+                "timestamp": datetime.now(timezone.utc).isoformat()
             }
         else:
             return {
                 "success": True,
                 "message": f"Test successful for action type: {action_type}",
-                "timestamp": datetime.utcnow().isoformat()
+                "timestamp": datetime.now(timezone.utc).isoformat()
             }
 
 

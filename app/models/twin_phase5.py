@@ -5,12 +5,12 @@ Production Deployment with Kubernetes orchestration, comprehensive monitoring, a
 
 from sqlalchemy import Column, String, Integer, Float, DateTime, Boolean, Text, JSON, ForeignKey, Index
 from sqlalchemy.dialects.postgresql import UUID, JSONB
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 import uuid
 
-Base = declarative_base()
+# Use the existing Base from the project
+from ..database import Base
 
 class KubernetesDeployment(Base):  # type: ignore
     """Kubernetes deployment tracking and status"""

@@ -6,7 +6,7 @@ Handles creation, delivery, and management of notifications
 from typing import List, Optional, Dict, Any, Union
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, or_, desc
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import logging
 import json
 
@@ -108,7 +108,7 @@ class NotificationService:
         expires_at = None
         auto_dismiss_hours = getattr(template, 'auto_dismiss_hours', None)
         if auto_dismiss_hours:
-            expires_at = datetime.utcnow() + timedelta(hours=auto_dismiss_hours)
+            expires_at = datetime.now(timezone.utc) + timedelta(hours=auto_dismiss_hours)
         
         return self.create_notification(
             recipient_id=recipient_id,
@@ -155,7 +155,7 @@ class NotificationService:
             query = query.filter(
                 or_(  # type: ignore
                     Notification.expires_at == None,  # type: ignore
-                    Notification.expires_at > datetime.utcnow()  # type: ignore
+                    Notification.expires_at > datetime.now(timezone.utc)  # type: ignore
                 )
             )
         
@@ -173,7 +173,7 @@ class NotificationService:
             return False
         
         setattr(notification, 'status', NotificationStatus.READ)  # type: ignore
-        setattr(notification, 'read_at', datetime.utcnow())  # type: ignore
+        setattr(notification, 'read_at', datetime.now(timezone.utc))  # type: ignore
         self.db.commit()
         
         logger.info(f"Marked notification {notification_id} as read")
@@ -191,7 +191,7 @@ class NotificationService:
             return False
         
         setattr(notification, 'status', NotificationStatus.DISMISSED)  # type: ignore
-        setattr(notification, 'dismissed_at', datetime.utcnow())  # type: ignore
+        setattr(notification, 'dismissed_at', datetime.now(timezone.utc))  # type: ignore
         self.db.commit()
         
         logger.info(f"Dismissed notification {notification_id}")
@@ -205,7 +205,7 @@ class NotificationService:
             Notification.status.in_([NotificationStatus.PENDING, NotificationStatus.SENT]),
             or_(  # type: ignore
                 Notification.expires_at == None,  # type: ignore
-                Notification.expires_at > datetime.utcnow()  # type: ignore
+                Notification.expires_at > datetime.now(timezone.utc)  # type: ignore
             )
         ).count()
     
@@ -234,7 +234,7 @@ class NotificationService:
         
         # Update notification status
         setattr(notification, 'status', NotificationStatus.SENT)  # type: ignore
-        setattr(notification, 'sent_at', datetime.utcnow())  # type: ignore
+        setattr(notification, 'sent_at', datetime.now(timezone.utc))  # type: ignore
         self.db.commit()
     
     def _is_notification_type_enabled(self, preferences: NotificationPreference, notification_type: NotificationType) -> bool:
@@ -288,13 +288,13 @@ class NotificationService:
         setattr(log_entry, 'notification_id', getattr(notification, 'id', None))  # type: ignore
         setattr(log_entry, 'channel', channel)  # type: ignore
         setattr(log_entry, 'status', "pending")  # type: ignore
-        setattr(log_entry, 'attempted_at', datetime.utcnow())  # type: ignore
+        setattr(log_entry, 'attempted_at', datetime.now(timezone.utc))  # type: ignore
         
         try:
             if channel == "in_app":
                 # In-app notifications are stored in database (already done)
                 setattr(log_entry, 'status', "success")  # type: ignore
-                setattr(log_entry, 'delivered_at', datetime.utcnow())  # type: ignore
+                setattr(log_entry, 'delivered_at', datetime.now(timezone.utc))  # type: ignore
                 
             elif channel == "email":
                 self._send_email_notification(notification, preferences, log_entry)
@@ -323,7 +323,7 @@ class NotificationService:
         # TODO: Implement actual email sending
         # For now, just mark as success
         setattr(log_entry, 'status', "success")  # type: ignore
-        setattr(log_entry, 'delivered_at', datetime.utcnow())  # type: ignore
+        setattr(log_entry, 'delivered_at', datetime.now(timezone.utc))  # type: ignore
         setattr(log_entry, 'provider', "placeholder")  # type: ignore
         
         logger.info(f"Email notification sent to {email} (placeholder)")
@@ -339,7 +339,7 @@ class NotificationService:
         # TODO: Implement actual SMS sending
         # For now, just mark as success
         setattr(log_entry, 'status', "success")  # type: ignore
-        setattr(log_entry, 'delivered_at', datetime.utcnow())  # type: ignore
+        setattr(log_entry, 'delivered_at', datetime.now(timezone.utc))  # type: ignore
         setattr(log_entry, 'provider', "placeholder")  # type: ignore
         
         logger.info(f"SMS notification sent to {getattr(preferences, 'phone_number', 'unknown')} (placeholder)")
@@ -355,7 +355,7 @@ class NotificationService:
         # TODO: Implement actual webhook sending
         # For now, just mark as success
         setattr(log_entry, 'status', "success")  # type: ignore
-        setattr(log_entry, 'delivered_at', datetime.utcnow())  # type: ignore
+        setattr(log_entry, 'delivered_at', datetime.now(timezone.utc))  # type: ignore
         setattr(log_entry, 'provider', "webhook")  # type: ignore
         
         logger.info(f"Webhook notification sent to {getattr(preferences, 'webhook_url', 'unknown')} (placeholder)")
@@ -365,7 +365,7 @@ class NotificationService:
         
         scheduled_notifications = self.db.query(Notification).filter(
             Notification.status == NotificationStatus.PENDING,
-            Notification.scheduled_for <= datetime.utcnow()
+            Notification.scheduled_for <= datetime.now(timezone.utc)
         ).all()
         
         count = 0
@@ -380,14 +380,14 @@ class NotificationService:
         """Clean up expired notifications"""
         
         expired_notifications = self.db.query(Notification).filter(
-            Notification.expires_at <= datetime.utcnow(),
+            Notification.expires_at <= datetime.now(timezone.utc),
             Notification.status != NotificationStatus.DISMISSED
         ).all()
         
         count = 0
         for notification in expired_notifications:
             setattr(notification, 'status', NotificationStatus.DISMISSED)  # type: ignore
-            setattr(notification, 'dismissed_at', datetime.utcnow())  # type: ignore
+            setattr(notification, 'dismissed_at', datetime.now(timezone.utc))  # type: ignore
             count += 1
         
         self.db.commit()

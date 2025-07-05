@@ -3,17 +3,12 @@ Advanced Reporting models for enterprise features
 """
 
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, JSON, ForeignKey, Float
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
-from datetime import datetime
+from datetime import datetime, timezone
 import uuid
 
 # Use the existing Base from the project
-try:
-    from ..database import Base
-except ImportError:
-    # Fallback for development
-    Base = declarative_base()
+from ..database import Base
 
 from .dashboard_custom import ReportDefinition # Import ReportDefinition
 
@@ -55,8 +50,8 @@ class Report(Base):  # type: ignore
     
     # Status and metadata
     is_active = Column(Boolean, default=True)  # type: ignore
-    created_at = Column(DateTime, default=datetime.utcnow)  # type: ignore
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)  # type: ignore
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))  # type: ignore
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))  # type: ignore
     created_by_user_id = Column(Integer, ForeignKey("users.id"), nullable=False)  # type: ignore
     last_generated_at = Column(DateTime, nullable=True)  # type: ignore
     generation_count = Column(Integer, default=0)  # type: ignore
@@ -120,7 +115,7 @@ class ReportExecution(Base):  # type: ignore
     date_range = Column(JSON, default={})  # type: ignore  # start_date, end_date
     
     # Execution details
-    started_at = Column(DateTime, default=datetime.utcnow, index=True)  # type: ignore
+    started_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), index=True)  # type: ignore
     completed_at = Column(DateTime, nullable=True)  # type: ignore
     execution_time_ms = Column(Float, nullable=True)  # type: ignore
     
@@ -205,8 +200,8 @@ class ReportSchedule(Base):  # type: ignore
     failed_executions = Column(Integer, default=0)  # type: ignore
     
     # Metadata
-    created_at = Column(DateTime, default=datetime.utcnow)  # type: ignore
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)  # type: ignore
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))  # type: ignore
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))  # type: ignore
     created_by_user_id = Column(Integer, ForeignKey("users.id"), nullable=False)  # type: ignore
     
     # Relationships
@@ -232,7 +227,7 @@ class ReportSchedule(Base):  # type: ignore
             self.successful_executions += 1  # type: ignore
         else:
             self.failed_executions += 1  # type: ignore
-        setattr(self, 'last_run_at', datetime.utcnow())  # type: ignore
+        setattr(self, 'last_run_at', datetime.now(timezone.utc))  # type: ignore
         setattr(self, 'last_run_status', "success" if success else "failed")  # type: ignore
 
 
@@ -266,8 +261,8 @@ class ReportSubscription(Base):  # type: ignore
     delivery_count = Column(Integer, default=0)  # type: ignore
     
     # Metadata
-    created_at = Column(DateTime, default=datetime.utcnow)  # type: ignore
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)  # type: ignore
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))  # type: ignore
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))  # type: ignore
     
     # Relationships
     report = relationship("Report", back_populates="subscriptions")
@@ -304,8 +299,8 @@ class ReportTemplate(Base):  # type: ignore
     last_used_at = Column(DateTime, nullable=True)  # type: ignore
     
     # Metadata
-    created_at = Column(DateTime, default=datetime.utcnow)  # type: ignore
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)  # type: ignore
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))  # type: ignore
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))  # type: ignore
     created_by_user_id = Column(Integer, ForeignKey("users.id"), nullable=True)  # type: ignore
     
     # Version control
@@ -318,7 +313,7 @@ class ReportTemplate(Base):  # type: ignore
     def increment_usage(self):
         """Increment usage statistics"""
         self.usage_count += 1  # type: ignore
-        setattr(self, 'last_used_at', datetime.utcnow())  # type: ignore
+        setattr(self, 'last_used_at', datetime.now(timezone.utc))  # type: ignore
 
 
 class ReportAuditLog(Base):  # type: ignore
@@ -350,7 +345,7 @@ class ReportAuditLog(Base):  # type: ignore
     user_agent = Column(Text, nullable=True)  # type: ignore
     
     # Timing
-    created_at = Column(DateTime, default=datetime.utcnow, index=True)  # type: ignore
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), index=True)  # type: ignore
 
     def __repr__(self):
         return f"<ReportAuditLog(id={self.id}, event_type='{self.event_type}', tenant_id={self.tenant_id})>"
@@ -376,19 +371,19 @@ class ReportCache(Base):  # type: ignore
     cache_metadata = Column(JSON, default={})  # type: ignore  # Row count, generation time, etc.
     
     # Cache control
-    created_at = Column(DateTime, default=datetime.utcnow, index=True)  # type: ignore
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), index=True)  # type: ignore
     expires_at = Column(DateTime, nullable=False, index=True)  # type: ignore
     hit_count = Column(Integer, default=0)  # type: ignore
-    last_accessed_at = Column(DateTime, default=datetime.utcnow)  # type: ignore
+    last_accessed_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))  # type: ignore
 
     def __repr__(self):
         return f"<ReportCache(id={self.id}, cache_key='{self.cache_key}', report_id={self.report_id})>"
 
     @property
     def is_expired(self):
-        return datetime.utcnow() > self.expires_at
+        return datetime.now(timezone.utc) > self.expires_at
 
     def increment_hit_count(self):
         """Increment cache hit statistics"""
         self.hit_count += 1  # type: ignore
-        setattr(self, 'last_accessed_at', datetime.utcnow())  # type: ignore
+        setattr(self, 'last_accessed_at', datetime.now(timezone.utc))  # type: ignore

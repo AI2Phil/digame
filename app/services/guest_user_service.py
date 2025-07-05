@@ -5,7 +5,7 @@ Phase 1: Guest Registration Flow Implementation
 
 import secrets
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional, Dict, Any, List
 from sqlalchemy.orm import Session
 from sqlalchemy import and_
@@ -66,7 +66,7 @@ class GuestUserService:
         hashed_password = pwd_context.hash(password)
         
         # Create guest user
-        guest_expires_at = datetime.utcnow() + timedelta(days=30)  # 30-day guest period
+        guest_expires_at = datetime.now(timezone.utc) + timedelta(days=30)  # 30-day guest period
         
         new_user = User()
         setattr(new_user, 'username', username)  # type: ignore
@@ -80,8 +80,8 @@ class GuestUserService:
         setattr(new_user, 'email_verified', skip_email_verification)  # type: ignore
         setattr(new_user, 'onboarding_completed', False)  # type: ignore
         setattr(new_user, 'onboarding_step', 1)  # type: ignore
-        setattr(new_user, 'created_at', datetime.utcnow())  # type: ignore
-        setattr(new_user, 'updated_at', datetime.utcnow())  # type: ignore
+        setattr(new_user, 'created_at', datetime.now(timezone.utc))  # type: ignore
+        setattr(new_user, 'updated_at', datetime.now(timezone.utc))  # type: ignore
         
         self.db.add(new_user)
         self.db.flush()  # Get the user ID
@@ -93,8 +93,8 @@ class GuestUserService:
         setattr(onboarding_progress, 'current_step', 1)  # type: ignore
         setattr(onboarding_progress, 'total_steps', 6)  # type: ignore
         setattr(onboarding_progress, 'completed_steps', [])  # type: ignore
-        setattr(onboarding_progress, 'started_at', datetime.utcnow())  # type: ignore
-        setattr(onboarding_progress, 'last_activity_at', datetime.utcnow())  # type: ignore
+        setattr(onboarding_progress, 'started_at', datetime.now(timezone.utc))  # type: ignore
+        setattr(onboarding_progress, 'last_activity_at', datetime.now(timezone.utc))  # type: ignore
         
         self.db.add(onboarding_progress)
         
@@ -103,7 +103,7 @@ class GuestUserService:
         setattr(twin_profile, 'user_id', getattr(new_user, 'id', 0))  # type: ignore
         setattr(twin_profile, 'profile_completeness_score', 0.0)  # type: ignore
         setattr(twin_profile, 'twin_accuracy_score', 0.0)  # type: ignore
-        setattr(twin_profile, 'last_updated', datetime.utcnow())  # type: ignore
+        setattr(twin_profile, 'last_updated', datetime.now(timezone.utc))  # type: ignore
         
         self.db.add(twin_profile)
         
@@ -138,14 +138,14 @@ class GuestUserService:
     def _create_email_verification(self, user_id: int, email: str) -> str:
         """Create email verification record"""
         verification_token = secrets.token_urlsafe(32)
-        expires_at = datetime.utcnow() + timedelta(hours=24)
+        expires_at = datetime.now(timezone.utc) + timedelta(hours=24)
         
         email_verification = EmailVerification()
         setattr(email_verification, 'user_id', user_id)  # type: ignore
         setattr(email_verification, 'email', email)  # type: ignore
         setattr(email_verification, 'verification_token', verification_token)  # type: ignore
         setattr(email_verification, 'token_expires_at', expires_at)  # type: ignore
-        setattr(email_verification, 'sent_at', datetime.utcnow())  # type: ignore
+        setattr(email_verification, 'sent_at', datetime.now(timezone.utc))  # type: ignore
         
         self.db.add(email_verification)
         return verification_token
@@ -162,20 +162,20 @@ class GuestUserService:
         if getattr(verification, 'is_verified', False):
             raise ValueError("Email already verified")
         
-        token_expires_at = getattr(verification, 'token_expires_at', datetime.utcnow())
-        if datetime.utcnow() > token_expires_at:
+        token_expires_at = getattr(verification, 'token_expires_at', datetime.now(timezone.utc))
+        if datetime.now(timezone.utc) > token_expires_at:
             raise ValueError("Verification token expired")
         
         # Mark as verified
         setattr(verification, 'is_verified', True)  # type: ignore
-        setattr(verification, 'verified_at', datetime.utcnow())  # type: ignore
+        setattr(verification, 'verified_at', datetime.now(timezone.utc))  # type: ignore
         
         # Update user
         verification_user_id = getattr(verification, 'user_id', 0)
         user = self.db.query(User).filter(User.id == verification_user_id).first()
         if user:
             setattr(user, 'email_verified', True)  # type: ignore
-            setattr(user, 'updated_at', datetime.utcnow())  # type: ignore
+            setattr(user, 'updated_at', datetime.now(timezone.utc))  # type: ignore
         
         self.db.commit()
         
@@ -207,10 +207,10 @@ class GuestUserService:
             # Update existing verification
             new_token = secrets.token_urlsafe(32)
             setattr(existing_verification, 'verification_token', new_token)  # type: ignore
-            setattr(existing_verification, 'token_expires_at', datetime.utcnow() + timedelta(hours=24))  # type: ignore
+            setattr(existing_verification, 'token_expires_at', datetime.now(timezone.utc) + timedelta(hours=24))  # type: ignore
             current_resent_count = getattr(existing_verification, 'resent_count', 0)
             setattr(existing_verification, 'resent_count', current_resent_count + 1)  # type: ignore
-            setattr(existing_verification, 'last_resent_at', datetime.utcnow())  # type: ignore
+            setattr(existing_verification, 'last_resent_at', datetime.now(timezone.utc))  # type: ignore
             verification_token = new_token
         else:
             # Create new verification
@@ -238,8 +238,8 @@ class GuestUserService:
         setattr(user, 'is_guest', False)  # type: ignore
         setattr(user, 'guest_expires_at', None)  # type: ignore
         setattr(user, 'upgraded_from_guest', True)  # type: ignore
-        setattr(user, 'upgrade_date', datetime.utcnow())  # type: ignore
-        setattr(user, 'updated_at', datetime.utcnow())  # type: ignore
+        setattr(user, 'upgrade_date', datetime.now(timezone.utc))  # type: ignore
+        setattr(user, 'updated_at', datetime.now(timezone.utc))  # type: ignore
         
         self.db.commit()
         
@@ -252,7 +252,7 @@ class GuestUserService:
                 "email": getattr(user, 'email', ''),
                 "is_guest": False,
                 "upgraded_from_guest": True,
-                "upgrade_date": getattr(user, 'upgrade_date', datetime.utcnow()).isoformat()
+                "upgrade_date": getattr(user, 'upgrade_date', datetime.now(timezone.utc)).isoformat()
             }
         }
     

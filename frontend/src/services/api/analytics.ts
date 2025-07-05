@@ -1,17 +1,64 @@
-import { apiClient } from '../apiClient';
+/**
+ * Analytics API Service
+ * Connects frontend analytics components to backend advanced analytics endpoints
+ */
 
-export interface Dashboard {
-  id: number;
-  dashboard_uuid: string;
-  tenant_id: number;
-  user_id: number;
+import { apiClient } from './client';
+
+export interface AnalyticsRequest {
+  analytics_type: string;
+  user_id?: number;
+  days?: number;
+  parameters?: Record<string, any>;
+}
+
+export interface AnalyticsResponse {
+  analytics_type: string;
+  timestamp: string;
+  data: Record<string, any>;
+  confidence: number;
+  insights: string[];
+  recommendations: string[];
+}
+
+export interface AnomalyResponse {
+  timestamp: string;
+  metric_name: string;
+  value: number;
+  expected_range: [number, number];
+  anomaly_score: number;
+  severity: string;
+  description: string;
+}
+
+export interface PredictionResponse {
+  metric: string;
+  predicted_value: number;
+  confidence_interval: [number, number];
+  prediction_date: string;
+  model_accuracy: number;
+  factors: Array<Record<string, any>>;
+}
+
+export interface InsightsReportResponse {
+  report_date: string;
+  period_days: number;
+  user_behavior: Record<string, any>;
+  anomalies: Array<Record<string, any>>;
+  churn_analysis: Record<string, any>;
+  revenue_prediction?: Record<string, any>;
+  key_insights: string[];
+  recommendations: string[];
+  ml_enabled: boolean;
+}
+
+export interface DashboardData {
+  id?: number;
   name: string;
   description?: string;
-  tags: string[];
+  tags?: string[];
   layout: LayoutItem[];
-  widgets: Widget[];
-  created_at: string;
-  updated_at: string;
+  widgets: WidgetConfig[];
 }
 
 export interface LayoutItem {
@@ -23,347 +70,505 @@ export interface LayoutItem {
   static?: boolean;
 }
 
-export interface Widget {
-  id: number;
-  widget_uuid: string;
-  dashboard_id: number;
-  tenant_id: number;
+export interface WidgetConfig {
+  id?: number;
   widget_type: string;
   title: string;
-  data_source_config: {
-    type: string;
-    params: Record<string, any>;
-  };
+  data_source_config: DataSourceConfig;
   display_options: Record<string, any>;
-  created_at: string;
-  updated_at: string;
 }
 
-export interface WidgetData {
-  widget_id: number;
-  widget_title: string;
-  widget_type: string;
-  widget_uuid: string;
-  data_source_config: any;
-  display_options: any;
-  data: any;
-  metadata: {
-    widget_created: string;
-    widget_updated: string;
-    data_source_type: string;
-    data_count?: number;
-    data_type: string;
-    has_error?: boolean;
-    error_message?: string;
-    personalized?: boolean;
-    user_context_keys?: string[];
-  };
-  last_updated: string;
-  cache_info: {
-    from_cache: boolean;
-    refresh_requested: boolean;
-  };
+export interface DataSourceConfig {
+  type: string;
+  params: Record<string, any>;
 }
 
-export interface DashboardFilters {
-  filters?: Record<string, any>;
-  timeRange?: {
-    start_date?: string;
-    end_date?: string;
-    period?: string;
-  };
-  refresh_cache?: boolean;
-}
-
-export interface ReportSchedule {
-  id: number;
-  schedule_uuid: string;
-  tenant_id: number;
-  report_definition_id: number;
-  cron_schedule: string;
-  recipients: string[];
-  is_active: boolean;
-  next_run_time?: string;
-  last_run_time?: string;
-  last_run_status?: string;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface ReportDefinition {
-  id: number;
-  definition_uuid: string;
-  tenant_id: number;
-  user_id: number;
-  name: string;
-  description?: string;
-  report_type: string;
-  content_blocks: ReportContentBlock[];
-  global_filters: ReportFilter[];
-  output_format: string;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface ReportContentBlock {
-  title?: string;
-  block_type: string;
-  data_source?: {
-    type: string;
-    query_params: Record<string, any>;
-  };
-  display_options: Record<string, any>;
-  text_content?: string;
-}
-
-export interface ReportFilter {
-  field: string;
-  operator: string;
-  value: any;
-}
-
-class AnalyticsApi {
-  // Dashboard Management
-  async getDashboards(): Promise<Dashboard[]> {
-    return await apiClient.get<Dashboard[]>('/analytics/dashboards');
-  }
-
-  async getDashboard(id: number): Promise<Dashboard> {
-    return await apiClient.get<Dashboard>(`/analytics/dashboards/${id}`);
-  }
-
-  async createDashboard(dashboard: Partial<Dashboard>): Promise<Dashboard> {
-    return await apiClient.post<Dashboard>('/analytics/dashboards', dashboard);
-  }
-
-  async updateDashboard(id: number, dashboard: Partial<Dashboard>): Promise<Dashboard> {
-    return await apiClient.put<Dashboard>(`/analytics/dashboards/${id}`, dashboard);
-  }
-
-  async deleteDashboard(id: number): Promise<void> {
-    await apiClient.delete<void>(`/analytics/dashboards/${id}`);
-  }
-
-  async updateDashboardLayout(id: number, layout: LayoutItem[]): Promise<Dashboard> {
-    return await apiClient.put<Dashboard>(`/analytics/dashboards/${id}/layout`, layout);
-  }
-
-  // Widget Management
-  async createWidget(widget: Partial<Widget>): Promise<Widget> {
-    return await apiClient.post<Widget>('/analytics/dashboards/widgets', widget);
-  }
-
-  async updateWidget(id: number, widget: Partial<Widget>): Promise<Widget> {
-    return await apiClient.put<Widget>(`/analytics/widgets/${id}`, widget);
-  }
-
-  async deleteWidget(id: number): Promise<void> {
-    await apiClient.delete<void>(`/analytics/widgets/${id}`);
-  }
-
-  async getWidgetData(widgetId: number, options: DashboardFilters = {}): Promise<WidgetData> {
-    // Note: apiClient.get doesn't support params option, so we'll build query string manually
-    const queryParams = new URLSearchParams();
-    if (options.filters) {
-      Object.entries(options.filters).forEach(([key, value]) => {
-        queryParams.append(`filters.${key}`, String(value));
-      });
-    }
-    if (options.timeRange) {
-      Object.entries(options.timeRange).forEach(([key, value]) => {
-        queryParams.append(`timeRange.${key}`, String(value));
-      });
-    }
-    if (options.refresh_cache) {
-      queryParams.append('refresh_cache', String(options.refresh_cache));
-    }
-    
-    const queryString = queryParams.toString();
-    const endpoint = `/analytics/widgets/${widgetId}/data${queryString ? `?${queryString}` : ''}`;
-    return await apiClient.get<WidgetData>(endpoint);
-  }
-
-  async getWidgetDataBatch(widgetIds: number[], options: DashboardFilters = {}): Promise<Record<number, WidgetData>> {
-    return await apiClient.post<Record<number, WidgetData>>('/analytics/widgets/batch-data', {
-      widget_ids: widgetIds,
-      ...options
+class AnalyticsAPI {
+  // Advanced Analytics Endpoints
+  
+  /**
+   * Analyze user behavior patterns with ML clustering
+   */
+  async analyzeUserBehavior(params: {
+    user_id?: number;
+    days?: number;
+  } = {}): Promise<AnalyticsResponse> {
+    const response = await apiClient.get('/advanced-analytics/user-behavior', {
+      params
     });
+    return response.data;
   }
 
-  // Report Management
-  async getReportDefinitions(): Promise<ReportDefinition[]> {
-    return await apiClient.get<ReportDefinition[]>('/analytics/reports/definitions');
-  }
-
-  async createReportDefinition(report: Partial<ReportDefinition>): Promise<ReportDefinition> {
-    return await apiClient.post<ReportDefinition>('/analytics/reports/definitions', report);
-  }
-
-  async updateReportDefinition(id: number, report: Partial<ReportDefinition>): Promise<ReportDefinition> {
-    return await apiClient.put<ReportDefinition>(`/analytics/reports/definitions/${id}`, report);
-  }
-
-  async deleteReportDefinition(id: number): Promise<void> {
-    await apiClient.delete<void>(`/analytics/reports/definitions/${id}`);
-  }
-
-  // Report Scheduling
-  async getReportSchedules(): Promise<ReportSchedule[]> {
-    return await apiClient.get<ReportSchedule[]>('/analytics/reports/schedules');
-  }
-
-  async createReportSchedule(schedule: Partial<ReportSchedule>): Promise<ReportSchedule> {
-    return await apiClient.post<ReportSchedule>('/analytics/reports/schedules', schedule);
-  }
-
-  async updateReportSchedule(id: number, schedule: Partial<ReportSchedule>): Promise<ReportSchedule> {
-    return await apiClient.put<ReportSchedule>(`/analytics/reports/schedules/${id}`, schedule);
-  }
-
-  async deleteReportSchedule(id: number): Promise<void> {
-    await apiClient.delete<void>(`/analytics/reports/schedules/${id}`);
-  }
-
-  // Report Generation
-  async generateReport(reportId: number, options: {
-    output_format?: string;
-    filters?: Record<string, any>;
-    time_range?: any;
-  } = {}): Promise<{ report_id: string; download_url: string }> {
-    return await apiClient.post<{ report_id: string; download_url: string }>(`/analytics/reports/generate/${reportId}`, options);
-  }
-
-  async generateAdHocReport(definition: Partial<ReportDefinition>, options: {
-    output_format?: string;
-    filters?: Record<string, any>;
-  } = {}): Promise<{ report_id: string; download_url: string }> {
-    return await apiClient.post<{ report_id: string; download_url: string }>('/analytics/reports/generate-adhoc', {
-      ad_hoc_definition: definition,
-      ...options
+  /**
+   * Detect anomalies in platform metrics using ML models
+   */
+  async detectAnomalies(params: {
+    metric?: string;
+    days?: number;
+  } = {}): Promise<AnomalyResponse[]> {
+    const response = await apiClient.get('/advanced-analytics/anomaly-detection', {
+      params: {
+        metric: params.metric || 'user_activity',
+        days: params.days || 30
+      }
     });
+    return response.data;
   }
 
-  // Dashboard Export
-  async exportDashboard(dashboardId: number, options: {
-    format: 'pdf' | 'png' | 'json';
-    include_data?: boolean;
-    time_range?: any;
-    filters?: Record<string, any>;
-  }): Promise<{ download_url: string }> {
-    return await apiClient.post<{ download_url: string }>(`/analytics/dashboards/${dashboardId}/export`, options);
-  }
-
-  // Dashboard Templates
-  async getDashboardTemplates(): Promise<Dashboard[]> {
-    return await apiClient.get<Dashboard[]>('/analytics/dashboard-templates');
-  }
-
-  async createDashboardFromTemplate(templateId: number, name: string): Promise<Dashboard> {
-    return await apiClient.post<Dashboard>('/analytics/dashboards/from-template', {
-      template_id: templateId,
-      name
+  /**
+   * Predict future revenue using ML models
+   */
+  async predictRevenue(params: {
+    days_ahead?: number;
+  } = {}): Promise<PredictionResponse> {
+    const response = await apiClient.get('/advanced-analytics/revenue-prediction', {
+      params: {
+        days_ahead: params.days_ahead || 30
+      }
     });
+    return response.data;
   }
 
-  // Dashboard Sharing
-  async shareDashboard(dashboardId: number, options: {
-    share_type: 'public' | 'private';
-    recipients?: string[];
-    permissions?: string[];
-    expires_at?: string;
-  }): Promise<{ share_url: string; share_token: string }> {
-    return await apiClient.post<{ share_url: string; share_token: string }>(`/analytics/dashboards/${dashboardId}/share`, options);
+  /**
+   * Predict user churn probability with risk assessment
+   */
+  async predictChurn(params: {
+    user_id?: number;
+  } = {}): Promise<any> {
+    const response = await apiClient.get('/advanced-analytics/churn-prediction', {
+      params
+    });
+    return response.data;
   }
 
-  async revokeDashboardShare(dashboardId: number, shareToken: string): Promise<void> {
-    await apiClient.delete<void>(`/analytics/dashboards/${dashboardId}/share/${shareToken}`);
+  /**
+   * Generate comprehensive analytics insights report
+   */
+  async generateInsightsReport(params: {
+    days?: number;
+  } = {}): Promise<InsightsReportResponse> {
+    const response = await apiClient.get('/advanced-analytics/insights-report', {
+      params: {
+        days: params.days || 30
+      }
+    });
+    return response.data;
+  }
+
+  /**
+   * Get platform performance metrics and optimization suggestions
+   */
+  async getPlatformPerformanceMetrics(): Promise<any> {
+    const response = await apiClient.get('/advanced-analytics/performance-metrics');
+    return response.data;
+  }
+
+  /**
+   * Get status of ML models and capabilities
+   */
+  async getMLModelsStatus(): Promise<any> {
+    const response = await apiClient.get('/advanced-analytics/ml-models/status');
+    return response.data;
+  }
+
+  /**
+   * Configure advanced analytics settings
+   */
+  async configureAnalytics(config: Record<string, any>): Promise<any> {
+    const response = await apiClient.post('/advanced-analytics/configure', config);
+    return response.data;
+  }
+
+  /**
+   * Health check for analytics services and dependencies
+   */
+  async healthCheck(): Promise<any> {
+    const response = await apiClient.get('/advanced-analytics/health');
+    return response.data;
+  }
+
+  // Dashboard Management Endpoints
+
+  /**
+   * Get all dashboards for the current user
+   */
+  async getDashboards(params: {
+    skip?: number;
+    limit?: number;
+  } = {}): Promise<DashboardData[]> {
+    const response = await apiClient.get('/analytics/dashboards', {
+      params: {
+        skip: params.skip || 0,
+        limit: params.limit || 100
+      }
+    });
+    return response.data;
+  }
+
+  /**
+   * Get a specific dashboard by ID
+   */
+  async getDashboard(dashboardId: number): Promise<DashboardData> {
+    const response = await apiClient.get(`/analytics/dashboards/${dashboardId}`);
+    return response.data;
+  }
+
+  /**
+   * Create a new dashboard
+   */
+  async createDashboard(dashboard: Omit<DashboardData, 'id'>): Promise<DashboardData> {
+    const response = await apiClient.post('/analytics/dashboards', dashboard);
+    return response.data;
+  }
+
+  /**
+   * Update an existing dashboard
+   */
+  async updateDashboard(dashboardId: number, dashboard: Partial<DashboardData>): Promise<DashboardData> {
+    const response = await apiClient.put(`/analytics/dashboards/${dashboardId}`, dashboard);
+    return response.data;
+  }
+
+  /**
+   * Delete a dashboard
+   */
+  async deleteDashboard(dashboardId: number): Promise<void> {
+    await apiClient.delete(`/analytics/dashboards/${dashboardId}`);
+  }
+
+  /**
+   * Update dashboard layout
+   */
+  async updateDashboardLayout(dashboardId: number, layout: LayoutItem[]): Promise<DashboardData> {
+    const response = await apiClient.put(`/analytics/dashboards/${dashboardId}/layout`, {
+      layout
+    });
+    return response.data;
+  }
+
+  // Widget Management Endpoints
+
+  /**
+   * Create a new widget
+   */
+  async createWidget(widget: WidgetConfig & { dashboard_id: number }): Promise<WidgetConfig> {
+    const response = await apiClient.post('/analytics/widgets', widget);
+    return response.data;
+  }
+
+  /**
+   * Update an existing widget
+   */
+  async updateWidget(widgetId: number, widget: Partial<WidgetConfig>): Promise<WidgetConfig> {
+    const response = await apiClient.put(`/analytics/widgets/${widgetId}`, widget);
+    return response.data;
+  }
+
+  /**
+   * Delete a widget
+   */
+  async deleteWidget(widgetId: number): Promise<void> {
+    await apiClient.delete(`/analytics/widgets/${widgetId}`);
+  }
+
+  /**
+   * Get widget data based on its configuration
+   */
+  async getWidgetData(widgetId: number, filters?: Record<string, any>): Promise<any> {
+    const response = await apiClient.get(`/analytics/widgets/${widgetId}/data`, {
+      params: filters
+    });
+    return response.data;
+  }
+
+  // Analytics Models Management
+
+  /**
+   * Get analytics models for the tenant
+   */
+  async getAnalyticsModels(params: {
+    model_type?: string;
+    category?: string;
+    active_only?: boolean;
+  } = {}): Promise<any[]> {
+    const response = await apiClient.get('/analytics/models', {
+      params
+    });
+    return response.data;
+  }
+
+  /**
+   * Create a new analytics model
+   */
+  async createAnalyticsModel(modelData: Record<string, any>): Promise<any> {
+    const response = await apiClient.post('/analytics/models', modelData);
+    return response.data;
+  }
+
+  /**
+   * Train an analytics model
+   */
+  async trainModel(modelId: number, params: {
+    triggered_by?: string;
+  } = {}): Promise<any> {
+    const response = await apiClient.post(`/analytics/models/${modelId}/train`, params);
+    return response.data;
+  }
+
+  /**
+   * Make a prediction using a trained model
+   */
+  async makePrediction(modelId: number, params: {
+    entity_type: string;
+    entity_id: number;
+    input_features: Record<string, any>;
+    prediction_horizon_days?: number;
+  }): Promise<any> {
+    const response = await apiClient.post(`/analytics/models/${modelId}/predict`, params);
+    return response.data;
   }
 
   // Performance Metrics
-  async getPerformanceMetrics(filters: {
+
+  /**
+   * Record a performance metric
+   */
+  async recordPerformanceMetric(metricData: Record<string, any>): Promise<any> {
+    const response = await apiClient.post('/analytics/performance-metrics', metricData);
+    return response.data;
+  }
+
+  /**
+   * Get performance metrics with filtering
+   */
+  async getPerformanceMetrics(params: {
     metric_type?: string;
     category?: string;
     entity_type?: string;
     entity_id?: number;
     limit?: number;
-    [key: string]: any; // For dimension filters
+    dimension_filters?: Record<string, any>;
   } = {}): Promise<any[]> {
-    // Build query string manually since apiClient.get doesn't support params
-    const queryParams = new URLSearchParams();
-    Object.entries(filters).forEach(([key, value]) => {
-      if (value !== undefined) {
-        queryParams.append(key, String(value));
-      }
+    const response = await apiClient.get('/analytics/performance-metrics', {
+      params
     });
-    const queryString = queryParams.toString();
-    const endpoint = `/analytics/metrics${queryString ? `?${queryString}` : ''}`;
-    
-    const response = await apiClient.get<{ metrics: any[] }>(endpoint);
-    return response.metrics;
-  }
-
-  async createPerformanceMetric(metric: any): Promise<any> {
-    const response = await apiClient.post<{ metric: any }>('/analytics/metrics', metric);
-    return response.metric;
-  }
-
-  // Analytics Models
-  async getAnalyticsModels(filters: {
-    model_type?: string;
-    category?: string;
-    active_only?: boolean;
-  } = {}): Promise<any[]> {
-    const queryParams = new URLSearchParams();
-    Object.entries(filters).forEach(([key, value]) => {
-      if (value !== undefined) {
-        queryParams.append(key, String(value));
-      }
-    });
-    const queryString = queryParams.toString();
-    const endpoint = `/analytics/models${queryString ? `?${queryString}` : ''}`;
-    
-    const response = await apiClient.get<{ models: any[] }>(endpoint);
-    return response.models;
-  }
-
-  // Predictions
-  async getPredictions(filters: {
-    model_id?: number;
-    entity_type?: string;
-    entity_id?: number;
-    limit?: number;
-  } = {}): Promise<any[]> {
-    const queryParams = new URLSearchParams();
-    Object.entries(filters).forEach(([key, value]) => {
-      if (value !== undefined) {
-        queryParams.append(key, String(value));
-      }
-    });
-    const queryString = queryParams.toString();
-    const endpoint = `/analytics/predictions${queryString ? `?${queryString}` : ''}`;
-    
-    const response = await apiClient.get<{ predictions: any[] }>(endpoint);
-    return response.predictions;
+    return response.data;
   }
 
   // ROI Calculations
-  async getROICalculations(filters: {
+
+  /**
+   * Create a new ROI calculation
+   */
+  async createROICalculation(roiData: Record<string, any>): Promise<any> {
+    const response = await apiClient.post('/analytics/roi-calculations', roiData);
+    return response.data;
+  }
+
+  /**
+   * Get ROI calculations
+   */
+  async getROICalculations(params: {
     entity_type?: string;
     entity_id?: number;
     limit?: number;
   } = {}): Promise<any[]> {
-    const queryParams = new URLSearchParams();
-    Object.entries(filters).forEach(([key, value]) => {
-      if (value !== undefined) {
-        queryParams.append(key, String(value));
+    const response = await apiClient.get('/analytics/roi-calculations', {
+      params
+    });
+    return response.data;
+  }
+
+  /**
+   * Calculate portfolio ROI across multiple entities
+   */
+  async calculatePortfolioROI(entityIds: number[]): Promise<any> {
+    const response = await apiClient.post('/analytics/roi-calculations/portfolio', {
+      entity_ids: entityIds
+    });
+    return response.data;
+  }
+
+  // Comparative Benchmarking
+
+  /**
+   * Add new benchmark data
+   */
+  async addBenchmarkData(benchmarkData: Record<string, any>): Promise<any> {
+    const response = await apiClient.post('/analytics/benchmarks', benchmarkData);
+    return response.data;
+  }
+
+  /**
+   * Get relevant benchmarks
+   */
+  async getBenchmarks(params: {
+    metric_name: string;
+    category?: string;
+    industry_segment?: string;
+    region?: string;
+    company_size?: string;
+  }): Promise<any[]> {
+    const response = await apiClient.get('/analytics/benchmarks', {
+      params
+    });
+    return response.data;
+  }
+
+  /**
+   * Compare performance metric with benchmarks
+   */
+  async compareWithBenchmarks(metricId: number, benchmarkParams?: Record<string, any>): Promise<any[]> {
+    const response = await apiClient.post(`/analytics/performance-metrics/${metricId}/compare`, {
+      benchmark_params: benchmarkParams
+    });
+    return response.data;
+  }
+
+  // Analytics Dashboard Data
+
+  /**
+   * Get comprehensive analytics dashboard data
+   */
+  async getAnalyticsDashboard(): Promise<any> {
+    const response = await apiClient.get('/analytics/dashboard');
+    return response.data;
+  }
+
+  /**
+   * Generate AI-powered insights from analytics data
+   */
+  async generateInsights(): Promise<any[]> {
+    const response = await apiClient.get('/analytics/insights');
+    return response.data;
+  }
+
+  // Multi-dimensional Metrics
+
+  /**
+   * Calculate multi-dimensional metrics based on model configuration
+   */
+  async calculateMultiDimensionalMetrics(modelId: number, dataRecords: Record<string, any>[]): Promise<any[]> {
+    const response = await apiClient.post(`/analytics/models/${modelId}/multi-dimensional`, {
+      data_records: dataRecords
+    });
+    return response.data;
+  }
+
+  // Additional Analytics Endpoints for Component Integration
+
+  /**
+   * Get user segmentation analytics
+   */
+  async getUserSegmentation(params: { days?: number } = {}): Promise<any> {
+    const response = await apiClient.get('/advanced-analytics/user-segmentation', {
+      params: {
+        days: params.days || 30
       }
     });
-    const queryString = queryParams.toString();
-    const endpoint = `/analytics/roi${queryString ? `?${queryString}` : ''}`;
-    
-    const response = await apiClient.get<{ roi_calculations: any[] }>(endpoint);
-    return response.roi_calculations;
+    return response.data;
+  }
+
+  /**
+   * Get user journey analysis
+   */
+  async getUserJourneyAnalysis(params: { days?: number } = {}): Promise<any> {
+    const response = await apiClient.get('/advanced-analytics/user-journey', {
+      params: {
+        days: params.days || 30
+      }
+    });
+    return response.data;
+  }
+
+  /**
+   * Get content analytics
+   */
+  async getContentAnalytics(params: { days?: number } = {}): Promise<any> {
+    const response = await apiClient.get('/advanced-analytics/content-analytics', {
+      params: {
+        days: params.days || 30
+      }
+    });
+    return response.data;
+  }
+
+  /**
+   * Get conversion analytics
+   */
+  async getConversionAnalytics(params: { days?: number } = {}): Promise<any> {
+    const response = await apiClient.get('/advanced-analytics/conversion-analytics', {
+      params: {
+        days: params.days || 30
+      }
+    });
+    return response.data;
+  }
+
+  /**
+   * Get system resource metrics
+   */
+  async getSystemResourceMetrics(): Promise<any> {
+    const response = await apiClient.get('/advanced-analytics/system-resources');
+    return response.data;
+  }
+
+  /**
+   * Get database performance metrics
+   */
+  async getDatabasePerformanceMetrics(): Promise<any> {
+    const response = await apiClient.get('/advanced-analytics/database-performance');
+    return response.data;
+  }
+
+  /**
+   * Get network metrics
+   */
+  async getNetworkMetrics(): Promise<any> {
+    const response = await apiClient.get('/advanced-analytics/network-metrics');
+    return response.data;
+  }
+
+  /**
+   * Get performance alerts
+   */
+  async getPerformanceAlerts(): Promise<any> {
+    const response = await apiClient.get('/advanced-analytics/performance-alerts');
+    return response.data;
+  }
+
+  // Dashboard Export and Sharing
+
+  /**
+   * Export dashboard data in various formats
+   */
+  async exportDashboard(dashboardId: number, format: string = 'json'): Promise<any> {
+    const response = await apiClient.get(`/analytics/dashboards/${dashboardId}/export`, {
+      params: { format },
+      responseType: format === 'pdf' ? 'blob' : 'json'
+    });
+    return response.data;
+  }
+
+  /**
+   * Share dashboard with other users
+   */
+  async shareDashboard(dashboardId: number, shareData: {
+    user_emails?: string[];
+    permissions: string;
+    expires_at?: string;
+  }): Promise<any> {
+    const response = await apiClient.post(`/analytics/dashboards/${dashboardId}/share`, shareData);
+    return response.data;
+  }
+
+  /**
+   * Revoke dashboard share access
+   */
+  async revokeDashboardShare(dashboardId: number, shareId: number): Promise<void> {
+    await apiClient.delete(`/analytics/dashboards/${dashboardId}/share/${shareId}`);
   }
 }
 
-export const analyticsApi = new AnalyticsApi();
+export const analyticsApi = new AnalyticsAPI();
+export default analyticsApi;

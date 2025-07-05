@@ -5,7 +5,7 @@ Simple script to create a Platform Owner user
 
 import os
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
@@ -63,7 +63,7 @@ def create_platform_owner():
             subscription_status="active",
             is_active=True,
             email_verified=True,
-            created_at=datetime.utcnow()
+            created_at=datetime.now(timezone.utc)
         )
         
         db.add(platform_owner)

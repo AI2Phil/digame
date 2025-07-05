@@ -5,12 +5,12 @@ WebSocket connections, PWA data, and real-time event storage
 
 from sqlalchemy import Column, String, Integer, DateTime, Boolean, Text, JSON, Float, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 import uuid
 
-Base = declarative_base()
+# Use the existing Base from the project
+from ..database import Base
 
 class WebSocketConnection(Base):
     """Track active WebSocket connections"""
@@ -21,7 +21,7 @@ class WebSocketConnection(Base):
     user_id = Column(UUID(as_uuid=True), nullable=False, index=True)
     connection_type = Column(String(50), nullable=False)  # twin_owner, team_member, platform_admin, guest
     endpoint = Column(String(255), nullable=False)  # /ws/twin/{id}, /ws/team/{id}, /ws/platform
-    metadata = Column(JSON, nullable=True)  # Additional connection data
+    connection_metadata = Column(JSON, nullable=True)  # Additional connection data
     
     # Connection lifecycle
     connected_at = Column(DateTime(timezone=True), server_default=func.now())

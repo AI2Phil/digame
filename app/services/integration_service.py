@@ -5,7 +5,7 @@ Integration service layer for third-party productivity tools and services
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, or_, desc, func
 from typing import List, Optional, Dict, Any, Tuple
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import asyncio
 import aiohttp
 import json
@@ -146,7 +146,7 @@ class IntegrationService:
         else:
             setattr(connection, 'last_error', None)  # type: ignore
         
-        setattr(connection, 'updated_at', datetime.utcnow())  # type: ignore
+        setattr(connection, 'updated_at', datetime.now(timezone.utc))  # type: ignore
         self.db.commit()
         return True
     
@@ -189,7 +189,7 @@ class IntegrationService:
             setattr(sync_log, 'records_failed', sync_result.get("records_failed", 0))  # type: ignore
             setattr(sync_log, 'duration_seconds', sync_result.get("duration_seconds", 0))  # type: ignore
             setattr(sync_log, 'api_calls_made', sync_result.get("api_calls_made", 0))  # type: ignore
-            setattr(sync_log, 'completed_at', datetime.utcnow())  # type: ignore
+            setattr(sync_log, 'completed_at', datetime.now(timezone.utc))  # type: ignore
             
             if not sync_result["success"]:
                 setattr(sync_log, 'error_message', sync_result.get("error_message"))  # type: ignore
@@ -201,7 +201,7 @@ class IntegrationService:
             if sync_result["success"]:
                 current_successful = getattr(connection, 'successful_syncs', 0)
                 setattr(connection, 'successful_syncs', current_successful + 1)  # type: ignore
-            setattr(connection, 'last_sync_at', datetime.utcnow())  # type: ignore
+            setattr(connection, 'last_sync_at', datetime.now(timezone.utc))  # type: ignore
             
             # Update average sync duration
             total_syncs = getattr(connection, 'total_syncs', 0)
@@ -214,7 +214,7 @@ class IntegrationService:
         except Exception as e:
             setattr(sync_log, 'status', "failed")  # type: ignore
             setattr(sync_log, 'error_message', str(e))  # type: ignore
-            setattr(sync_log, 'completed_at', datetime.utcnow())  # type: ignore
+            setattr(sync_log, 'completed_at', datetime.now(timezone.utc))  # type: ignore
             
             current_error_count = getattr(connection, 'error_count', 0)
             setattr(connection, 'error_count', current_error_count + 1)  # type: ignore
@@ -276,7 +276,7 @@ class IntegrationService:
             setattr(webhook, 'total_triggers', current_total + 1)  # type: ignore
             current_successful = getattr(webhook, 'successful_triggers', 0)
             setattr(webhook, 'successful_triggers', current_successful + 1)  # type: ignore
-            setattr(webhook, 'last_triggered_at', datetime.utcnow())  # type: ignore
+            setattr(webhook, 'last_triggered_at', datetime.now(timezone.utc))  # type: ignore
             
             self.db.commit()
             return True
@@ -441,7 +441,7 @@ class IntegrationService:
         """
         Perform actual data synchronization
         """
-        start_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc)
         
         try:
             # This would implement actual sync logic based on the provider
@@ -451,7 +451,7 @@ class IntegrationService:
             import time
             time.sleep(0.1)
             
-            end_time = datetime.utcnow()
+            end_time = datetime.now(timezone.utc)
             duration = (end_time - start_time).total_seconds()
             
             return {
@@ -465,7 +465,7 @@ class IntegrationService:
             }
             
         except Exception as e:
-            end_time = datetime.utcnow()
+            end_time = datetime.now(timezone.utc)
             duration = (end_time - start_time).total_seconds()
             
             return {

@@ -15,7 +15,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.user import User
 from app.crud.user_crud import pwd_context
-from datetime import datetime
+from datetime import datetime, timezone
 import json
 
 def create_demo_users(db: Session):
@@ -99,8 +99,8 @@ def create_demo_users(db: Session):
             detailed_bio=user_data["detailed_bio"],
             skills=user_data["skills"],
             kudos_count=user_data["kudos_count"],
-            created_at=datetime.utcnow(),
-            updated_at=datetime.utcnow()
+            created_at=datetime.now(timezone.utc),
+            updated_at=datetime.now(timezone.utc)
         )
         
         db.add(new_user)

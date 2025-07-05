@@ -3,13 +3,12 @@ Market Intelligence models for industry trend analysis and competitive intellige
 """
 
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, JSON, ForeignKey, Float, Numeric
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
-from datetime import datetime
+from datetime import datetime, timezone
 import uuid
 
-# Import Base from user module which should have the correct Base
-from .user import Base
+# Use the existing Base from the project
+from ..database import Base
 
 
 class MarketTrend(Base):
@@ -62,8 +61,8 @@ class MarketTrend(Base):
     validation_notes = Column(Text, nullable=True)
     
     # Metadata
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     created_by_user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     
     # Relationships
@@ -147,7 +146,7 @@ class CompetitiveAnalysis(Base):
     innovation_metrics = Column(JSON, default={})  # R&D, patents, etc.
     
     # Time period
-    analysis_date = Column(DateTime, default=datetime.utcnow, index=True)
+    analysis_date = Column(DateTime, default=lambda: datetime.now(timezone.utc), index=True)
     period_start = Column(DateTime, nullable=False)
     period_end = Column(DateTime, nullable=False)
     
@@ -162,8 +161,8 @@ class CompetitiveAnalysis(Base):
     validation_date = Column(DateTime, nullable=True)
     
     # Metadata
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     created_by_user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     
     # Relationships
@@ -261,7 +260,7 @@ class IntelligenceReport(Base):
     urgency_score = Column(Float, default=0.0)  # Urgency of action required
     
     # Time period and validity
-    report_date = Column(DateTime, default=datetime.utcnow, index=True)
+    report_date = Column(DateTime, default=lambda: datetime.now(timezone.utc), index=True)
     period_covered_start = Column(DateTime, nullable=False)
     period_covered_end = Column(DateTime, nullable=False)
     validity_period_days = Column(Integer, default=90)  # How long report remains valid
@@ -289,8 +288,8 @@ class IntelligenceReport(Base):
     last_accessed_at = Column(DateTime, nullable=True)
     
     # Metadata
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     created_by_user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     
     # Relationships
@@ -307,7 +306,7 @@ class IntelligenceReport(Base):
         
         from datetime import timedelta
         expiry_date = self.report_date + timedelta(days=int(self.validity_period_days))  # type: ignore
-        return datetime.utcnow() > expiry_date
+        return datetime.now(timezone.utc) > expiry_date
 
     @property
     def overall_priority_score(self):
@@ -332,7 +331,7 @@ class IntelligenceReport(Base):
     def mark_accessed(self):
         """Mark report as accessed"""
         self.view_count += 1
-        setattr(self, 'last_accessed_at', datetime.utcnow())  # type: ignore
+        setattr(self, 'last_accessed_at', datetime.now(timezone.utc))  # type: ignore
 
 
 class MarketDataSource(Base):
@@ -387,8 +386,8 @@ class MarketDataSource(Base):
     requests_used_this_month = Column(Integer, default=0)
     
     # Metadata
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     created_by_user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
 
     def __repr__(self):
@@ -412,10 +411,10 @@ class MarketDataSource(Base):
 
     def record_fetch_attempt(self, success: bool, error_message: str | None = None):
         """Record a fetch attempt"""
-        self.last_fetch_attempt = datetime.utcnow()  # type: ignore
+        self.last_fetch_attempt = datetime.now(timezone.utc)  # type: ignore
         
         if success:
-            self.last_successful_fetch = datetime.utcnow()  # type: ignore
+            self.last_successful_fetch = datetime.now(timezone.utc)  # type: ignore
             self.consecutive_failures = 0  # type: ignore
             self.requests_used_this_month += 1  # type: ignore
         else:
@@ -465,7 +464,7 @@ class IndustryBenchmark(Base):  # type: ignore
     # Time period
     period_start = Column(DateTime, nullable=False)  # type: ignore
     period_end = Column(DateTime, nullable=False)  # type: ignore
-    data_collection_date = Column(DateTime, default=datetime.utcnow)  # type: ignore
+    data_collection_date = Column(DateTime, default=lambda: datetime.now(timezone.utc))  # type: ignore
     
     # Data quality
     confidence_level = Column(Float, default=0.0)  # type: ignore  # 0-1 confidence in benchmark
@@ -479,8 +478,8 @@ class IndustryBenchmark(Base):  # type: ignore
     validation_date = Column(DateTime, nullable=True)  # type: ignore
     
     # Metadata
-    created_at = Column(DateTime, default=datetime.utcnow)  # type: ignore
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)  # type: ignore
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))  # type: ignore
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))  # type: ignore
     created_by_user_id = Column(Integer, ForeignKey("users.id"), nullable=False)  # type: ignore
 
     def __repr__(self):
@@ -527,5 +526,5 @@ class IndustryBenchmark(Base):  # type: ignore
     def is_current(self):
         """Check if benchmark is current (less than 1 year old)"""
         from datetime import timedelta
-        one_year_ago = datetime.utcnow() - timedelta(days=365)
+        one_year_ago = datetime.now(timezone.utc) - timedelta(days=365)
         return self.data_collection_date >= one_year_ago

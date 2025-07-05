@@ -5,7 +5,7 @@ Initialize Platform Owner infrastructure and create first Platform Owner account
 
 import os
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy.orm import Session
 
 # Add the app directory to the Python path
@@ -99,7 +99,7 @@ def create_initial_platform_owner(db: Session):
         subscription_status="active",
         is_active=True,
         email_verified=True,
-        created_at=datetime.utcnow()
+        created_at=datetime.now(timezone.utc)
     )
     
     db.add(platform_owner)

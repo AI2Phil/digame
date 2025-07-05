@@ -6,7 +6,7 @@ Provides multi-dimensional analysis and insights
 import asyncio
 import logging
 from typing import Dict, List, Any, Optional, Tuple
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import numpy as np
 import json
 from dataclasses import dataclass
@@ -107,7 +107,7 @@ class AdvancedAnalyticsEngine:
             ]
         
         if time_range is None:
-            end_time = datetime.utcnow()
+            end_time = datetime.now(timezone.utc)
             start_time = end_time - timedelta(days=30)
             time_range = (start_time, end_time)
         
@@ -136,7 +136,7 @@ class AdvancedAnalyticsEngine:
         cache_key = f"{twin_id}_{hash(str(analysis_types))}"
         self.analysis_cache[cache_key] = {
             "results": results,
-            "timestamp": datetime.utcnow(),
+            "timestamp": datetime.now(timezone.utc),
             "ttl": 3600  # 1 hour cache
         }
         
@@ -181,13 +181,13 @@ class AdvancedAnalyticsEngine:
         return AnalysisResult(
             analysis_type=AnalysisType.PRODUCTIVITY_ANALYSIS,  # Placeholder
             twin_id="cross_analysis",
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             insights=insights,
             metrics=metrics,
             confidence=0.8,
             recommendations=recommendations,
             data_points=sum(r.data_points for r in results.values()),
-            time_range=(datetime.utcnow() - timedelta(days=30), datetime.utcnow())
+            time_range=(datetime.now(timezone.utc) - timedelta(days=30), datetime.now(timezone.utc))
         )
     
     async def _perform_single_analysis(self, twin_id: str, data: Dict[str, Any],
@@ -355,7 +355,7 @@ class AdvancedAnalyticsEngine:
         return AnalysisResult(
             analysis_type=AnalysisType.PRODUCTIVITY_ANALYSIS,
             twin_id=twin_id,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             insights=insights,
             metrics=metrics,
             confidence=0.85,
@@ -401,7 +401,7 @@ class AdvancedAnalyticsEngine:
         return AnalysisResult(
             analysis_type=AnalysisType.PATTERN_DISCOVERY,
             twin_id=twin_id,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             insights=insights,
             metrics=metrics,
             confidence=0.8,
@@ -442,7 +442,7 @@ class AdvancedAnalyticsEngine:
         return AnalysisResult(
             analysis_type=AnalysisType.TREND_ANALYSIS,
             twin_id=twin_id,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             insights=insights,
             metrics=metrics,
             confidence=0.8,
@@ -491,7 +491,7 @@ class AdvancedAnalyticsEngine:
         return AnalysisResult(
             analysis_type=AnalysisType.CORRELATION_ANALYSIS,
             twin_id=twin_id,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             insights=insights,
             metrics=metrics,
             confidence=0.8,
@@ -539,7 +539,7 @@ class AdvancedAnalyticsEngine:
         return AnalysisResult(
             analysis_type=AnalysisType.ANOMALY_DETECTION,
             twin_id=twin_id,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             insights=insights,
             metrics=metrics,
             confidence=0.85,
@@ -590,7 +590,7 @@ class AdvancedAnalyticsEngine:
         return AnalysisResult(
             analysis_type=AnalysisType.PREDICTIVE_INSIGHTS,
             twin_id=twin_id,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             insights=insights,
             metrics=metrics,
             confidence=0.7,
@@ -642,7 +642,7 @@ class AdvancedAnalyticsEngine:
         return AnalysisResult(
             analysis_type=AnalysisType.BEHAVIORAL_ANALYSIS,
             twin_id=twin_id,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             insights=insights,
             metrics=metrics,
             confidence=0.8,
@@ -686,7 +686,7 @@ class AdvancedAnalyticsEngine:
         return AnalysisResult(
             analysis_type=AnalysisType.PERFORMANCE_OPTIMIZATION,
             twin_id=twin_id,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             insights=insights,
             metrics=metrics,
             confidence=0.8,

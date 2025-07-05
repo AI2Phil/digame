@@ -6,7 +6,7 @@ Implements the main digital twin logic, coordination, and intelligence integrati
 import asyncio
 import numpy as np
 from typing import Dict, List, Optional, Any, Union
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, desc
 from decimal import Decimal
@@ -126,7 +126,7 @@ class DigitalTwinEngine:
                 "high_confidence_patterns": len([p for p in patterns if p.get('confidence', 0) >= 0.8]),
                 "learning_progress": learning_update.get("progress", 0),
                 "should_retrain": should_retrain,
-                "processed_at": datetime.utcnow().isoformat()
+                "processed_at": datetime.now(timezone.utc).isoformat()
             }
             
         except Exception as e:
@@ -183,7 +183,7 @@ class DigitalTwinEngine:
                 "prediction_type": prediction_type,
                 "time_horizon": time_horizon,
                 "predictions": predictions,
-                "generated_at": datetime.utcnow().isoformat()
+                "generated_at": datetime.now(timezone.utc).isoformat()
             }
             
         except Exception as e:
@@ -238,7 +238,7 @@ class DigitalTwinEngine:
                 "discovered_patterns": patterns,
                 "recent_predictions": predictions,
                 "recommendations": recommendations,
-                "insights_generated_at": datetime.utcnow().isoformat()
+                "insights_generated_at": datetime.now(timezone.utc).isoformat()
             }
             
             return insights
@@ -278,7 +278,7 @@ class DigitalTwinEngine:
                 "query": query,
                 "response": response,
                 "interaction_id": response.get("interaction_id"),
-                "timestamp": datetime.utcnow().isoformat()
+                "timestamp": datetime.now(timezone.utc).isoformat()
             }
             
         except Exception as e:
@@ -310,7 +310,7 @@ class DigitalTwinEngine:
             update_data = {
                 "status": "learning",
                 "learning_progress": 5.0,
-                "last_training_at": datetime.utcnow()
+                "last_training_at": datetime.now(timezone.utc)
             }
             update_digital_twin(self.db, twin_id, update_data)
             
@@ -348,7 +348,7 @@ class DigitalTwinEngine:
             return True
         
         # Retrain if it's been more than the retrain interval
-        time_since_training = datetime.utcnow() - twin.last_training_at
+        time_since_training = datetime.now(timezone.utc) - twin.last_training_at
         return time_since_training.total_seconds() > self.retrain_interval.total_seconds()
     
     async def _retrain_twin_models(self, twin_id: str):
@@ -356,8 +356,8 @@ class DigitalTwinEngine:
         try:
             # Update last training time
             update_data = {
-                "last_training_at": datetime.utcnow(),
-                "model_version": f"1.{int(datetime.utcnow().timestamp())}"
+                "last_training_at": datetime.now(timezone.utc),
+                "model_version": f"1.{int(datetime.now(timezone.utc).timestamp())}"
             }
             update_digital_twin(self.db, twin_id, update_data)
             
@@ -445,7 +445,7 @@ class DigitalTwinEngine:
         
         # Check if twin has been active recently
         if twin.last_training_at:
-            days_since_training = (datetime.utcnow() - twin.last_training_at).days
+            days_since_training = (datetime.now(timezone.utc) - twin.last_training_at).days
             recency_score = max(0.0, 1.0 - (days_since_training / 30.0))
         else:
             recency_score = 0.0
@@ -482,7 +482,7 @@ class DigitalTwinEngine:
         return {
             "text": response_text,
             "confidence": 0.8,
-            "interaction_id": f"int_{int(datetime.utcnow().timestamp())}",
+            "interaction_id": f"int_{int(datetime.now(timezone.utc).timestamp())}",
             "response_type": "simple_query"
         }
     

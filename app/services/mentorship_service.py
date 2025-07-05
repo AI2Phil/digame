@@ -7,7 +7,7 @@ import json
 from sqlalchemy.orm import Session
 from typing import List, Optional, Dict, Any, Set
 from sqlalchemy import or_, and_, func
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from enum import Enum
 
 from ..models.user import User, UserProfile
@@ -276,7 +276,7 @@ class MentorshipService:
         template = program_templates.get(program_data.program_type, program_templates["career_development"])
         
         program_response = MentorshipProgramResponse()  # type: ignore
-        setattr(program_response, 'id', f"prog_{program_data.program_type}_{datetime.now().strftime('%Y%m%d')}")  # type: ignore
+        setattr(program_response, 'id', f"prog_{program_data.program_type}_{datetime.now(timezone.utc).strftime('%Y%m%d')}")  # type: ignore
         setattr(program_response, 'name', program_data.name)  # type: ignore
         setattr(program_response, 'description', program_data.description)  # type: ignore
         setattr(program_response, 'program_type', program_data.program_type)  # type: ignore
@@ -285,7 +285,7 @@ class MentorshipService:
         setattr(program_response, 'milestones', template["milestones"])  # type: ignore
         setattr(program_response, 'recommended_activities', template["recommended_activities"])  # type: ignore
         setattr(program_response, 'max_participants', program_data.max_participants)  # type: ignore
-        setattr(program_response, 'created_at', datetime.utcnow())  # type: ignore
+        setattr(program_response, 'created_at', datetime.now(timezone.utc))  # type: ignore
         return program_response
 
     def apply_as_mentor(self, user_id: int, application_data: MentorApplicationCreate) -> MentorApplicationResponse:
@@ -308,14 +308,14 @@ class MentorshipService:
         status = "approved" if is_approved else "pending_review"
 
         application_response = MentorApplicationResponse()  # type: ignore
-        setattr(application_response, 'application_id', f"app_{user_id}_{datetime.now().strftime('%Y%m%d%H%M')}")  # type: ignore
+        setattr(application_response, 'application_id', f"app_{user_id}_{datetime.now(timezone.utc).strftime('%Y%m%d%H%M')}")  # type: ignore
         setattr(application_response, 'user_id', user_id)  # type: ignore
         setattr(application_response, 'program_types', application_data.program_types)  # type: ignore
         setattr(application_response, 'experience_description', application_data.experience_description)  # type: ignore
         setattr(application_response, 'qualification_score', qualification_score)  # type: ignore
         setattr(application_response, 'status', status)  # type: ignore
-        setattr(application_response, 'submitted_at', datetime.utcnow())  # type: ignore
-        setattr(application_response, 'reviewed_at', datetime.utcnow() if is_approved else None)  # type: ignore
+        setattr(application_response, 'submitted_at', datetime.now(timezone.utc))  # type: ignore
+        setattr(application_response, 'reviewed_at', datetime.now(timezone.utc) if is_approved else None)  # type: ignore
         return application_response
 
     def _calculate_mentor_qualification_score(self, user_id: int, application_data: MentorApplicationCreate) -> int:
@@ -391,7 +391,7 @@ class MentorshipService:
         setattr(connection, 'duration_months', 3)  # type: ignore
         setattr(connection, 'meeting_frequency', "bi-weekly")  # type: ignore
         setattr(connection, 'status', "active")  # type: ignore
-        setattr(connection, 'started_at', datetime.utcnow())  # type: ignore
+        setattr(connection, 'started_at', datetime.now(timezone.utc))  # type: ignore
 
         self.db.add(connection)
         self.db.commit()
@@ -417,7 +417,7 @@ class MentorshipService:
             "progress_percentage": progress_data.progress_percentage,
             "notes": progress_data.notes,
             "next_meeting_date": progress_data.next_meeting_date,
-            "updated_at": datetime.utcnow(),
+            "updated_at": datetime.now(timezone.utc),
             "goals_status": progress_data.goals_status or "on_track"
         }
 
@@ -456,7 +456,7 @@ class MentorshipService:
         avg_duration_days = 0
         if completed_mentorships:
             total_days = sum([
-                (getattr(conn, 'ended_at', datetime.utcnow()) - getattr(conn, 'started_at', datetime.utcnow())).days  # type: ignore
+                (getattr(conn, 'ended_at', datetime.now(timezone.utc)) - getattr(conn, 'started_at', datetime.now(timezone.utc))).days  # type: ignore
                 for conn in completed_mentorships
                 if getattr(conn, 'ended_at', None) and getattr(conn, 'started_at', None)  # type: ignore
             ])
@@ -480,14 +480,14 @@ class MentorshipService:
         setattr(analytics, 'program_type_distribution', program_distribution)  # type: ignore
         setattr(analytics, 'monthly_new_connections', self._get_monthly_new_connections())  # type: ignore
         setattr(analytics, 'satisfaction_score', 4.2)  # type: ignore
-        setattr(analytics, 'generated_at', datetime.utcnow())  # type: ignore
+        setattr(analytics, 'generated_at', datetime.now(timezone.utc))  # type: ignore
         return analytics
 
     def _get_monthly_new_connections(self) -> List[Dict[str, Any]]:
         """Get monthly new connections for the last 6 months"""
         monthly_data = []
         for i in range(6):
-            month_start = datetime.now().replace(day=1) - timedelta(days=30*i)
+            month_start = datetime.now(timezone.utc).replace(day=1) - timedelta(days=30*i)
             month_end = month_start + timedelta(days=30)
             
             count = self.db.query(MentorshipConnection).filter(
@@ -534,7 +534,7 @@ class MentorshipService:
         setattr(qualification_response, 'is_qualified', qualification_score >= 70)  # type: ignore
         setattr(qualification_response, 'recommendations', recommendations)  # type: ignore
         setattr(qualification_response, 'strengths', self._identify_mentor_strengths(user_id))  # type: ignore
-        setattr(qualification_response, 'evaluated_at', datetime.utcnow())  # type: ignore
+        setattr(qualification_response, 'evaluated_at', datetime.now(timezone.utc))  # type: ignore
         return qualification_response
 
     def _identify_mentor_strengths(self, user_id: int) -> List[str]:

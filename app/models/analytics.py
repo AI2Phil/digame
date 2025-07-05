@@ -3,23 +3,14 @@ Advanced Analytics models for predictive performance modeling and ROI measuremen
 """
 
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, JSON, ForeignKey, Float, Numeric
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
-from datetime import datetime
+from datetime import datetime, timezone
 import uuid
 
 # Use the existing Base from the project
-try:
-    from ..database import Base
-    from ..models.user import User as UserModel # Import User model with alias
-    User = UserModel  # type: ignore  # Assign to avoid type conflicts
-except ImportError:
-    # Fallback for development
-    Base = declarative_base()
-    # Mock User if not found, for standalone model definition
-    class User(Base):
-        __tablename__ = "users"
-        id = Column(Integer, primary_key=True)
+from ..database import Base
+from ..models.user import User as UserModel # Import User model with alias
+User = UserModel  # type: ignore  # Assign to avoid type conflicts
 
 
 class AnalyticsModel(Base):  # type: ignore
@@ -83,8 +74,8 @@ class AnalyticsModel(Base):  # type: ignore
     training_metadata = Column(JSON, nullable=True)  # type: ignore # Stores training details like feature columns, encodings, etc.
 
     # Metadata
-    created_at = Column(DateTime, default=datetime.utcnow)  # type: ignore
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)  # type: ignore
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))  # type: ignore
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))  # type: ignore
     created_by_user_id = Column(Integer, ForeignKey("users.id"), nullable=False)  # type: ignore
     
     # Relationships
@@ -106,7 +97,7 @@ class AnalyticsModel(Base):  # type: ignore
         if not getattr(self, 'last_trained_at', None):
             return True
         
-        days_since_training = (datetime.utcnow() - self.last_trained_at).days
+        days_since_training = (datetime.now(timezone.utc) - self.last_trained_at).days
         return days_since_training >= self.retrain_frequency_days
 
     @property
@@ -153,7 +144,7 @@ class AnalyticsPrediction(Base):  # type: ignore
     
     # Prediction metadata
     prediction_horizon_days = Column(Integer, nullable=True)  # type: ignore  # How far into future
-    prediction_date = Column(DateTime, default=datetime.utcnow, index=True)  # type: ignore
+    prediction_date = Column(DateTime, default=lambda: datetime.now(timezone.utc), index=True)  # type: ignore
     expires_at = Column(DateTime, nullable=True)  # type: ignore  # When prediction becomes stale
     
     # Validation and feedback
@@ -168,7 +159,7 @@ class AnalyticsPrediction(Base):  # type: ignore
     last_viewed_at = Column(DateTime, nullable=True)  # type: ignore
     
     # Metadata
-    created_at = Column(DateTime, default=datetime.utcnow)  # type: ignore
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))  # type: ignore
     created_by_user_id = Column(Integer, ForeignKey("users.id"), nullable=True)  # type: ignore
     
     # Relationships
@@ -191,14 +182,14 @@ class AnalyticsPrediction(Base):  # type: ignore
         """Check if prediction has expired"""
         if not getattr(self, 'expires_at', None):
             return False
-        return datetime.utcnow() > self.expires_at
+        return datetime.now(timezone.utc) > self.expires_at
 
     def validate_prediction(self, actual_value: float):
         """Validate prediction against actual outcome"""
         setattr(self, 'actual_value', actual_value)
         setattr(self, 'prediction_error', actual_value - getattr(self, 'predicted_value', 0))
         setattr(self, 'is_validated', True)
-        setattr(self, 'validation_date', datetime.utcnow())
+        setattr(self, 'validation_date', datetime.now(timezone.utc))
 
 
 class AnalyticsTrainingJob(Base):  # type: ignore
@@ -246,7 +237,7 @@ class AnalyticsTrainingJob(Base):  # type: ignore
     max_retries = Column(Integer, default=3)
     
     # Metadata
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     triggered_by = Column(String(100), nullable=False)  # user, schedule, auto_retrain
     triggered_by_user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     
@@ -276,9 +267,9 @@ class AnalyticsTrainingJob(Base):  # type: ignore
 
     def mark_completed(self, success: bool = True, metrics: dict = None):  # type: ignore
         """Mark training job as completed"""
-        setattr(self, 'completed_at', datetime.utcnow())
+        setattr(self, 'completed_at', datetime.now(timezone.utc))
         if getattr(self, 'started_at', None):
-            setattr(self, 'duration_seconds', int((getattr(self, 'completed_at', datetime.utcnow()) - getattr(self, 'started_at', datetime.utcnow())).total_seconds()))
+            setattr(self, 'duration_seconds', int((getattr(self, 'completed_at', datetime.now(timezone.utc)) - getattr(self, 'started_at', datetime.now(timezone.utc))).total_seconds()))
         setattr(self, 'status', "completed" if success else "failed")
         if metrics:
             setattr(self, 'final_metrics', metrics)
@@ -350,8 +341,8 @@ class ROICalculation(Base):  # type: ignore
     prediction_accuracy = Column(Float, nullable=True)  # If based on predictions
     
     # Metadata
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     calculated_by_user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     approved_by_user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     approved_at = Column(DateTime, nullable=True)
@@ -458,7 +449,7 @@ class PerformanceMetric(Base):  # type: ignore
     trend_significance = Column(String(20), nullable=True)  # significant, minor, none
     
     # Time period
-    measurement_date = Column(DateTime, default=datetime.utcnow, index=True)
+    measurement_date = Column(DateTime, default=lambda: datetime.now(timezone.utc), index=True)
     period_start = Column(DateTime, nullable=False)
     period_end = Column(DateTime, nullable=False)
     period_type = Column(String(50), nullable=False)  # daily, weekly, monthly, quarterly
@@ -474,8 +465,8 @@ class PerformanceMetric(Base):  # type: ignore
     confidence_score = Column(Float, default=1.0)  # Confidence in measurement
     
     # Metadata
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     measured_by_user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     predicted_by_model_id = Column(Integer, ForeignKey("analytics_models.id"), nullable=True) # If this metric value is a forecast
 
@@ -574,8 +565,8 @@ class AnalyticsDashboard(Base):  # type: ignore
 
     tags = Column(JSON, nullable=True, default=[]) # List of strings
 
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
     # Relationship: A dashboard has multiple widget configurations
     # If DashboardWidgetConfig has a dashboard_id FK
@@ -615,8 +606,8 @@ class DashboardWidgetConfig(Base):  # type: ignore
     # For more flexible layouts (like react-grid-layout), storing x,y,w,h on the dashboard.layout referring to widget_id is better.
     # Let's assume dashboard.layout handles placement. This model defines the widget's content and type.
 
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
     dashboard = relationship("AnalyticsDashboard", back_populates="widgets")
 
