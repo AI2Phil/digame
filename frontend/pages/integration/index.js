@@ -15,8 +15,11 @@ import {
   Plus as PlusIcon,
   Settings as Cog6ToothIcon,
   BarChart3 as ChartBarIcon,
-  FileText as DocumentTextIcon
+  FileText as DocumentTextIcon,
+  ArrowLeft
 } from 'lucide-react';
+import PageHeader from '../../components/PageHeader';
+import NavigationHubFooter from '../../src/components/layout/NavigationHubFooter';
 
 export default function IntegrationIndex() {
   const router = useRouter();
@@ -133,32 +136,22 @@ export default function IntegrationIndex() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="py-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <PuzzleIcon className="h-8 w-8 text-blue-600 mr-3" />
-                <div>
-                  <h1 className="text-2xl font-bold text-gray-900">Integration & APIs</h1>
-                  <p className="text-sm text-gray-600">Manage external integrations and API connections</p>
-                </div>
-              </div>
-              <div className="flex space-x-3">
-                <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center">
-                  <PlusIcon className="h-4 w-4 mr-2" />
-                  Add Integration
-                </button>
-                <button className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 flex items-center">
-                  <Cog6ToothIcon className="h-4 w-4 mr-2" />
-                  Settings
-                </button>
-              </div>
-            </div>
-          </div>
+      {/* Return to Dashboard Navigation */}
+      <div className="bg-white border-b border-gray-200">
+        <div className="container mx-auto px-4 py-3">
+          <Link href="/dashboard" className="inline-flex items-center text-blue-600 hover:text-blue-700 transition-colors">
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            <span className="text-sm font-medium">Return to Dashboard</span>
+          </Link>
         </div>
       </div>
+
+      <PageHeader
+        title="Integration & APIs"
+        subtitle="Manage external integrations and API connections"
+        icon={<PuzzleIcon className="w-6 h-6 text-blue-600" />}
+        badge="INTEGRATION"
+      />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Stats Overview */}
@@ -363,6 +356,9 @@ export default function IntegrationIndex() {
             </div>
           </div>
         </div>
+
+        {/* Navigation Hub Footer */}
+        <NavigationHubFooter />
       </div>
     </div>
   );

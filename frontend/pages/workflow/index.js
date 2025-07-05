@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import Head from 'next/head';
-import { Workflow, Plus, Play, Pause, Settings, Zap, Clock, CheckCircle, AlertCircle, TrendingUp } from 'lucide-react';
+import Link from 'next/link';
+import { Workflow, Plus, Play, Pause, Settings, Zap, Clock, CheckCircle, AlertCircle, TrendingUp, ArrowLeft } from 'lucide-react';
 import PageHeader from '../../components/PageHeader';
+import NavigationHubFooter from '../../src/components/layout/NavigationHubFooter';
 
 export default function WorkflowAutomation() {
   const [activeTab, setActiveTab] = useState('workflows');
@@ -166,7 +168,17 @@ export default function WorkflowAutomation() {
       </Head>
 
       <div className="min-h-screen bg-gray-50">
-        <PageHeader 
+        {/* Return to Dashboard Navigation */}
+        <div className="bg-white border-b border-gray-200">
+          <div className="container mx-auto px-4 py-3">
+            <Link href="/dashboard" className="inline-flex items-center text-blue-600 hover:text-blue-700 transition-colors">
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              <span className="text-sm font-medium">Return to Dashboard</span>
+            </Link>
+          </div>
+        </div>
+
+        <PageHeader
           title="Workflow & Automation"
           subtitle="Streamline processes and boost productivity with intelligent automation"
           icon={<Workflow className="w-6 h-6 text-purple-600" />}
@@ -448,6 +460,9 @@ export default function WorkflowAutomation() {
             </div>
           </div>
         </div>
+
+        {/* Navigation Hub Footer */}
+        <NavigationHubFooter />
       </div>
     </>
   );

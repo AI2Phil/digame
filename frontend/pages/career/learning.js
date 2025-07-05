@@ -746,3 +746,5 @@ const CareerLearning = () => {
     </div>
   );
 };
+
+export default CareerLearning;

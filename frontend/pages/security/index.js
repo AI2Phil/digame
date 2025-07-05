@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import { 
-  Shield, 
-  Lock, 
-  Key, 
-  Eye, 
-  AlertTriangle, 
-  CheckCircle, 
-  Users, 
-  FileText, 
+import Link from 'next/link';
+import {
+  Shield,
+  Lock,
+  Key,
+  Eye,
+  AlertTriangle,
+  CheckCircle,
+  Users,
+  FileText,
   Settings,
   Activity,
   Globe,
@@ -22,8 +23,11 @@ import {
   TrendingUp,
   BarChart3,
   Zap,
-  RefreshCw
+  RefreshCw,
+  ArrowLeft
 } from 'lucide-react';
+import PageHeader from '../../components/PageHeader';
+import NavigationHubFooter from '../../src/components/layout/NavigationHubFooter';
 
 // UI Components
 const Card = ({ children, className = "" }) => (
@@ -335,25 +339,27 @@ const SecurityDashboard = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Security & Compliance</h1>
-            <p className="text-gray-600 mt-2">Monitor and manage your organization's security posture</p>
-          </div>
-          <div className="flex items-center gap-4">
-            <Button variant="outline">
-              <Bell className="h-4 w-4 mr-2" />
-              Alert Settings
-            </Button>
-            <Button>
-              <Shield className="h-4 w-4 mr-2" />
-              Security Scan
-            </Button>
-          </div>
+    <div className="min-h-screen bg-gray-50">
+      {/* Return to Dashboard Navigation */}
+      <div className="bg-white border-b border-gray-200">
+        <div className="container mx-auto px-4 py-3">
+          <Link href="/dashboard" className="inline-flex items-center text-blue-600 hover:text-blue-700 transition-colors">
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            <span className="text-sm font-medium">Return to Dashboard</span>
+          </Link>
         </div>
+      </div>
+
+      <PageHeader
+        title="Security & Compliance"
+        subtitle="Monitor and manage your organization's security posture"
+        icon={<Shield className="w-6 h-6 text-red-600" />}
+        badge="SECURITY"
+      />
+
+      <div className="container mx-auto px-4 py-8">
+        {/* Security Score Section */}
+        <div className="mb-8">
 
         {/* Security Score */}
         <div className="mt-6">
@@ -578,6 +584,10 @@ const SecurityDashboard = () => {
           </div>
         </CardContent>
       </Card>
+      </div>
+
+      {/* Navigation Hub Footer */}
+      <NavigationHubFooter />
     </div>
   );
 };

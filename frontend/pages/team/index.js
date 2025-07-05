@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import Head from 'next/head';
-import { Users, MessageSquare, Calendar, FileText, Video, Bell, Settings, Plus, Crown } from 'lucide-react';
+import Link from 'next/link';
+import { Users, MessageSquare, Calendar, FileText, Video, Bell, Settings, Plus, Crown, ArrowLeft } from 'lucide-react';
 import PageHeader from '../../components/PageHeader';
+import NavigationHubFooter from '../../src/components/layout/NavigationHubFooter';
 
 export default function TeamCollaboration() {
   const [activeTab, setActiveTab] = useState('overview');
@@ -254,7 +256,17 @@ export default function TeamCollaboration() {
       </Head>
 
       <div className="min-h-screen bg-gray-50">
-        <PageHeader 
+        {/* Return to Dashboard Navigation */}
+        <div className="bg-white border-b border-gray-200">
+          <div className="container mx-auto px-4 py-3">
+            <Link href="/dashboard" className="inline-flex items-center text-blue-600 hover:text-blue-700 transition-colors">
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              <span className="text-sm font-medium">Return to Dashboard</span>
+            </Link>
+          </div>
+        </div>
+
+        <PageHeader
           title="Team Collaboration"
           subtitle="Connect, communicate, and collaborate with your team"
           icon={<Users className="w-6 h-6 text-blue-600" />}
@@ -571,6 +583,9 @@ export default function TeamCollaboration() {
             </div>
           </div>
         </div>
+
+        {/* Navigation Hub Footer */}
+        <NavigationHubFooter />
       </div>
     </>
   );

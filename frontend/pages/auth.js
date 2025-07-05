@@ -9,7 +9,7 @@ import apiService from '../src/services/apiService';
 
 export default function AuthPage() {
   const router = useRouter();
-  const { login, isAuthenticated, isLoading: authLoading, user } = useAuth();
+  const { login, logout, isAuthenticated, isLoading: authLoading, user } = useAuth();
   const [isLoginMode, setIsLoginMode] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -27,12 +27,17 @@ export default function AuthPage() {
   const [apiError, setApiError] = useState('');
 
   useEffect(() => {
-    // Check if user is already authenticated
-    if (isAuthenticated) {
-      // Redirect all users to dashboard (Platform Owners will see their enhanced dashboard)
-      router.push('/dashboard');
+    // Only redirect if user is authenticated AND not loading
+    // This prevents immediate redirect when tokens are being validated
+    if (isAuthenticated && !authLoading) {
+      // Small delay to allow user to see they're already signed in
+      const timer = setTimeout(() => {
+        router.push('/dashboard');
+      }, 1500);
+      
+      return () => clearTimeout(timer);
     }
-  }, [isAuthenticated, user, router]);
+  }, [isAuthenticated, authLoading, router]);
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -181,6 +186,82 @@ export default function AuthPage() {
       rememberMe: false,
     });
   };
+
+  // Show already signed in message if user is authenticated
+  if (isAuthenticated && !authLoading) {
+    return (
+      <div className="min-h-screen relative overflow-hidden flex flex-col items-center justify-center p-4">
+        {/* Animated Gradient Background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+          <div className="absolute inset-0 opacity-20" style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%239C92AC' fill-opacity='0.05'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
+          }}></div>
+        </div>
+
+        {/* Floating Glassmorphic Elements */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-cyan-400/20 to-blue-600/20 rounded-full blur-3xl animate-pulse"></div>
+          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-tr from-purple-400/20 to-pink-600/20 rounded-full blur-3xl animate-pulse delay-1000"></div>
+        </div>
+
+        <div className="relative z-10 w-full max-w-md space-y-8">
+          <div className="text-center space-y-4">
+            <div className="flex items-center justify-center space-x-4 mb-6">
+              <div className="relative">
+                <div className="w-16 h-16 bg-gradient-to-r from-cyan-500 via-purple-500 to-pink-500 rounded-2xl flex items-center justify-center backdrop-blur-sm shadow-2xl border border-white/20">
+                  <span className="text-white font-bold text-2xl">D</span>
+                </div>
+                <div className="absolute -inset-1 bg-gradient-to-r from-cyan-500 via-purple-500 to-pink-500 rounded-2xl blur opacity-30 animate-pulse"></div>
+              </div>
+              <span className="text-3xl font-bold bg-gradient-to-r from-white to-gray-200 bg-clip-text text-transparent">Digame</span>
+            </div>
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-white via-gray-100 to-gray-300 bg-clip-text text-transparent">
+              Welcome Back!
+            </h1>
+            <p className="text-gray-300 text-lg">
+              You're already signed in as <span className="text-cyan-400 font-medium">{user?.fullName || user?.username}</span>
+            </p>
+          </div>
+
+          <Card className="shadow-2xl backdrop-blur-xl bg-white/10 border border-white/20 rounded-3xl overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-white/5 to-transparent"></div>
+            <CardContent className="space-y-6 relative z-10 p-8">
+              <div className="text-center space-y-4">
+                <p className="text-gray-200">
+                  Redirecting you to your dashboard in a moment...
+                </p>
+                <div className="flex items-center justify-center space-x-2">
+                  <div className="w-2 h-2 bg-cyan-400 rounded-full animate-bounce"></div>
+                  <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce delay-100"></div>
+                  <div className="w-2 h-2 bg-pink-400 rounded-full animate-bounce delay-200"></div>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <Button
+                  onClick={() => router.push('/dashboard')}
+                  className="w-full h-14 bg-gradient-to-r from-cyan-500 via-purple-500 to-pink-500 hover:from-cyan-600 hover:via-purple-600 hover:to-pink-600 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02]"
+                >
+                  Continue to Dashboard
+                </Button>
+                
+                <Button
+                  onClick={async () => {
+                    await logout();
+                    setIsLoginMode(true);
+                  }}
+                  variant="outline"
+                  className="w-full h-14 border-2 border-white/20 text-white hover:bg-white/10 rounded-xl backdrop-blur-sm transition-all duration-300"
+                >
+                  Sign Out & Use Different Account
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen relative overflow-hidden flex flex-col items-center justify-center p-4">

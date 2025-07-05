@@ -4,11 +4,13 @@ import enhancedApiService from '../../services/enhancedApiService';
 interface Activity {
   id: string | number;
   title?: string;
-  description: string;
-  type: string;
-  timestamp: string;
+  description?: string;
+  type?: string;
+  timestamp?: string;
   category?: string;
-  impact?: 'high' | 'medium' | 'low';
+  impact?: string;
+  // Additional properties that might come from API
+  [key: string]: any;
 }
 
 interface RecentActivityProps {
@@ -36,7 +38,7 @@ const RecentActivity: React.FC<RecentActivityProps> = ({ userId = 1 }) => {
     'default': '⚡'
   };
 
-  const getActivityIcon = (activityType: string): string => {
+  const getActivityIcon = (activityType?: string): string => {
     if (typeof activityType === 'string') {
       return activityIcons[activityType.toLowerCase()] || activityIcons['default'];
     }
@@ -44,18 +46,24 @@ const RecentActivity: React.FC<RecentActivityProps> = ({ userId = 1 }) => {
   };
 
   // Simplified timestamp formatter
-  const formatTimestamp = (isoTimestamp: string): string => {
-    const date = new Date(isoTimestamp);
-    const today = new Date();
-    const yesterday = new Date(today);
-    yesterday.setDate(today.getDate() - 1);
+  const formatTimestamp = (isoTimestamp?: string): string => {
+    if (!isoTimestamp) return 'Unknown time';
+    
+    try {
+      const date = new Date(isoTimestamp);
+      const today = new Date();
+      const yesterday = new Date(today);
+      yesterday.setDate(today.getDate() - 1);
 
-    if (date.toDateString() === today.toDateString()) {
-      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    } else if (date.toDateString() === yesterday.toDateString()) {
-      return 'Yesterday';
-    } else {
-      return date.toLocaleDateString();
+      if (date.toDateString() === today.toDateString()) {
+        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      } else if (date.toDateString() === yesterday.toDateString()) {
+        return 'Yesterday';
+      } else {
+        return date.toLocaleDateString();
+      }
+    } catch (error) {
+      return 'Invalid date';
     }
   };
 
@@ -132,9 +140,9 @@ const RecentActivity: React.FC<RecentActivityProps> = ({ userId = 1 }) => {
               <div className="flex items-start justify-between">
                 <div className="flex-grow">
                   <p className="text-sm font-medium text-gray-900 group-hover:text-blue-900 transition-colors">
-                    {activity.title || activity.description}
+                    {activity.title || activity.description || activity.name || 'Activity'}
                   </p>
-                  {activity.title && activity.description !== activity.title && (
+                  {activity.title && activity.description && activity.description !== activity.title && (
                     <p className="text-xs text-gray-600 mt-1">{activity.description}</p>
                   )}
                   <div className="flex items-center space-x-3 mt-2">

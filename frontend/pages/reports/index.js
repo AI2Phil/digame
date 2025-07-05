@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import Head from 'next/head';
-import { BarChart3, FileText, Calendar, Download, Plus, Filter, Eye, Share2, Settings, TrendingUp } from 'lucide-react';
+import Link from 'next/link';
+import { BarChart3, FileText, Calendar, Download, Plus, Filter, Eye, Share2, Settings, TrendingUp, ArrowLeft } from 'lucide-react';
 import PageHeader from '../../components/PageHeader';
+import NavigationHubFooter from '../../src/components/layout/NavigationHubFooter';
 
 export default function ReportsHub() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -213,10 +215,21 @@ export default function ReportsHub() {
       </Head>
 
       <div className="min-h-screen bg-gray-50">
-        <PageHeader 
+        {/* Return to Dashboard Navigation */}
+        <div className="bg-white border-b border-gray-200">
+          <div className="container mx-auto px-4 py-3">
+            <Link href="/dashboard" className="inline-flex items-center text-blue-600 hover:text-blue-700 transition-colors">
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              <span className="text-sm font-medium">Return to Dashboard</span>
+            </Link>
+          </div>
+        </div>
+
+        <PageHeader
           title="Reports & Analytics"
           subtitle="Comprehensive reporting and analytics dashboard"
           icon={<BarChart3 className="w-6 h-6 text-blue-600" />}
+          badge="REPORTS"
         />
 
         <div className="container mx-auto px-4 py-8">
@@ -488,6 +501,9 @@ export default function ReportsHub() {
             </div>
           )}
         </div>
+
+        {/* Navigation Hub Footer */}
+        <NavigationHubFooter />
       </div>
     </>
   );
