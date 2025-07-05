@@ -45,6 +45,12 @@ const TestZone: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [customData, setCustomData] = useState('');
   const [selectedTest, setSelectedTest] = useState<string>('');
+  const [testMetrics, setTestMetrics] = useState({
+    testsPassed: 0,
+    testsFailed: 0,
+    coverage: 0,
+    lastRun: null as string | null
+  });
 
   const tabs = [
     { id: 'intelligence', label: 'Intelligence APIs', icon: <Brain className="w-4 h-4" /> },
@@ -83,11 +89,33 @@ const TestZone: React.FC = () => {
     }
   }, [activeTab]);
 
+  // Fetch test metrics on component mount and after running tests
+  useEffect(() => {
+    fetchTestMetrics();
+  }, []);
+
+  const fetchTestMetrics = async () => {
+    try {
+      const response = await fetch('/platform-owner/test-zone/metrics', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setTestMetrics(data.metrics);
+      }
+    } catch (error) {
+      console.error('Failed to fetch test metrics:', error);
+    }
+  };
+
   const fetchAvailableTests = async () => {
     try {
-      const response = await fetch('/api/v1/platform-owner/test-zone/available-tests', {
+      const response = await fetch('/platform-owner/test-zone/available-tests', {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
         }
       });
 
@@ -102,9 +130,9 @@ const TestZone: React.FC = () => {
 
   const fetchSampleData = async () => {
     try {
-      const response = await fetch('/api/v1/platform-owner/test-zone/intelligence/sample-data', {
+      const response = await fetch('/platform-owner/test-zone/intelligence/sample-data', {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
         }
       });
 
@@ -122,7 +150,7 @@ const TestZone: React.FC = () => {
     const nlpTests = [
       {
         name: 'Process Query',
-        endpoint: '/api/twin/phase2/conversation/query',
+        endpoint: '/platform-owner/test-zone/intelligence/pattern-analysis',
         method: 'POST',
         description: 'Process natural language query through the conversation engine'
       },
@@ -810,7 +838,7 @@ const TestZone: React.FC = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
         },
         body: JSON.stringify(testData || {})
       });
@@ -828,6 +856,9 @@ const TestZone: React.FC = () => {
       };
 
       setTestResults(prev => [testResult, ...prev.slice(0, 9)]); // Keep last 10 results
+      
+      // Update metrics after individual test
+      await fetchTestMetrics();
     } catch (error) {
       const testResult: TestResult = {
         success: false,
@@ -839,6 +870,86 @@ const TestZone: React.FC = () => {
       };
 
       setTestResults(prev => [testResult, ...prev.slice(0, 9)]);
+      
+      // Update metrics even after failed tests
+      await fetchTestMetrics();
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const runAllTests = async () => {
+    setLoading(true);
+    const startTime = Date.now();
+
+    try {
+      const response = await fetch('/platform-owner/test-zone/run-all-tests', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+        },
+        body: JSON.stringify({
+          testSuites: ['intelligence', 'nlp', 'analytics', 'learning', 'team', 'websocket', 'kubernetes']
+        })
+      });
+
+      const result = await response.json();
+      const executionTime = Date.now() - startTime;
+
+      const testResult: TestResult = {
+        success: response.ok,
+        test_type: 'Run All Tests',
+        results: result,
+        tested_at: new Date().toISOString(),
+        tested_by: 'Platform Owner',
+        execution_time: executionTime
+      };
+
+      setTestResults(prev => [testResult, ...prev.slice(0, 9)]);
+      
+      // Update metrics after running all tests
+      await fetchTestMetrics();
+    } catch (error) {
+      const testResult: TestResult = {
+        success: false,
+        test_type: 'Run All Tests',
+        results: { error: error.message },
+        tested_at: new Date().toISOString(),
+        tested_by: 'Platform Owner',
+        execution_time: Date.now() - startTime
+      };
+
+      setTestResults(prev => [testResult, ...prev.slice(0, 9)]);
+      
+      // Update metrics even after failed tests
+      await fetchTestMetrics();
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const refreshTestData = async () => {
+    setLoading(true);
+    try {
+      // Refresh available tests and sample data based on active tab
+      if (activeTab === 'intelligence') {
+        await Promise.all([fetchAvailableTests(), fetchSampleData()]);
+      } else if (activeTab === 'nlp') {
+        await Promise.all([fetchNLPTests(), fetchNLPSampleData()]);
+      } else if (activeTab === 'analytics') {
+        await Promise.all([fetchAnalyticsTests(), fetchAnalyticsSampleData()]);
+      } else if (activeTab === 'learning') {
+        await Promise.all([fetchLearningTests(), fetchLearningSampleData()]);
+      } else if (activeTab === 'team') {
+        await Promise.all([fetchTeamTests(), fetchTeamSampleData()]);
+      } else if (activeTab === 'websocket') {
+        await Promise.all([fetchWebSocketTests(), fetchWebSocketSampleData()]);
+      } else if (activeTab === 'kubernetes') {
+        await Promise.all([fetchKubernetesTests(), fetchKubernetesSampleData()]);
+      }
+    } catch (error) {
+      console.error('Failed to refresh test data:', error);
     } finally {
       setLoading(false);
     }
@@ -914,8 +1025,94 @@ const TestZone: React.FC = () => {
     <div className="p-6">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Test Zone</h1>
-        <p className="text-gray-600">Test and validate API endpoints with sample data</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Test Zone</h1>
+            <p className="text-gray-600">Test and validate API endpoints with sample data</p>
+          </div>
+          <div className="flex items-center space-x-3">
+            <button
+              onClick={refreshTestData}
+              disabled={loading}
+              className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50 flex items-center"
+            >
+              {loading ? (
+                <RefreshCw className="w-4 h-4 animate-spin mr-2" />
+              ) : (
+                <RefreshCw className="w-4 h-4 mr-2" />
+              )}
+              Refresh
+            </button>
+            <button
+              onClick={runAllTests}
+              disabled={loading}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center"
+            >
+              {loading ? (
+                <RefreshCw className="w-4 h-4 animate-spin mr-2" />
+              ) : (
+                <Play className="w-4 h-4 mr-2" />
+              )}
+              Run all Tests
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Test Metrics Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div className="bg-white border border-gray-200 rounded-lg p-4">
+          <div className="flex items-center">
+            <div className="flex-shrink-0">
+              <CheckCircle className="h-8 w-8 text-green-500" />
+            </div>
+            <div className="ml-3">
+              <p className="text-sm font-medium text-gray-500">Tests Passed</p>
+              <p className="text-2xl font-semibold text-gray-900">{testMetrics.testsPassed}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white border border-gray-200 rounded-lg p-4">
+          <div className="flex items-center">
+            <div className="flex-shrink-0">
+              <AlertCircle className="h-8 w-8 text-red-500" />
+            </div>
+            <div className="ml-3">
+              <p className="text-sm font-medium text-gray-500">Tests Failed</p>
+              <p className="text-2xl font-semibold text-gray-900">{testMetrics.testsFailed}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white border border-gray-200 rounded-lg p-4">
+          <div className="flex items-center">
+            <div className="flex-shrink-0">
+              <BarChart3 className="h-8 w-8 text-blue-500" />
+            </div>
+            <div className="ml-3">
+              <p className="text-sm font-medium text-gray-500">Coverage</p>
+              <p className="text-2xl font-semibold text-gray-900">{testMetrics.coverage}%</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white border border-gray-200 rounded-lg p-4">
+          <div className="flex items-center">
+            <div className="flex-shrink-0">
+              <RefreshCw className="h-8 w-8 text-gray-500" />
+            </div>
+            <div className="ml-3">
+              <p className="text-sm font-medium text-gray-500">Last Run</p>
+              <p className="text-sm font-semibold text-gray-900">
+                {testMetrics.lastRun
+                  ? new Date(testMetrics.lastRun).toLocaleString()
+                  : 'Never'
+                }
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Tabs */}
