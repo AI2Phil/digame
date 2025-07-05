@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const DatabaseService = require('../services/database');
+const databaseService = require('../services/database');
 const databaseAdapter = require('../services/databaseAdapter');
 const DatabaseMigrator = require('../utils/databaseMigrator');
 const redisService = require('../services/redis');
@@ -10,7 +10,7 @@ const fs = require('fs');
 const path = require('path');
 
 // Initialize services
-const dbService = new DatabaseService();
+const dbService = databaseService;
 // Use the singleton instance
 const dbAdapter = databaseAdapter;
 const migrator = new DatabaseMigrator();

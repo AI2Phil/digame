@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import Head from 'next/head';
 import { Code, Brain, Zap, Database, Activity, CheckCircle, Copy, Play, Eye } from 'lucide-react';
-import PageHeader from '../../src/components/navigation/PageHeader';
+import PageHeader from '../../components/PageHeader';
 
 export default function DigitalTwinIntelligence() {
   const [selectedEndpoint, setSelectedEndpoint] = useState('chat');

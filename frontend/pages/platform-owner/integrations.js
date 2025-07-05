@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import Head from 'next/head';
 import { Plug, Key, Webhook, Download, Upload, Settings, Plus, Eye, EyeOff, Copy, RefreshCw, Trash2, ExternalLink } from 'lucide-react';
-import PageHeader from '../../src/components/navigation/PageHeader';
+import PageHeader from '../../components/PageHeader';
 
 export default function IntegrationsAPI() {
   const [activeTab, setActiveTab] = useState('overview');

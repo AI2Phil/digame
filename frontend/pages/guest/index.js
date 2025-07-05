@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import Head from 'next/head';
 import { UserPlus, Eye, TrendingUp, Zap, ArrowRight, Play, CheckCircle, Star, Users, BarChart3 } from 'lucide-react';
-import PageHeader from '../../src/components/navigation/PageHeader';
+import PageHeader from '../../components/PageHeader';
 
 export default function GuestDashboard() {
   const [activeDemo, setActiveDemo] = useState(null);

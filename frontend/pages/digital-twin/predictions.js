@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import Head from 'next/head';
 import { Eye, TrendingUp, Target, Brain, Calendar, Star, AlertTriangle, CheckCircle } from 'lucide-react';
-import PageHeader from '../../src/components/navigation/PageHeader';
+import PageHeader from '../../components/PageHeader';
 
 export default function DigitalTwinPredictions() {
   const [selectedTimeframe, setSelectedTimeframe] = useState('30d');

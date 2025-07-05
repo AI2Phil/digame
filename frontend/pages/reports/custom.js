@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import Head from 'next/head';
 import { Plus, Trash2, Settings, Eye, Save, Download, BarChart3, PieChart, LineChart, Table, Calendar, Users, DollarSign, Activity } from 'lucide-react';
-import PageHeader from '../../src/components/navigation/PageHeader';
+import PageHeader from '../../components/PageHeader';
 
 export default function CustomReports() {
   const [reportName, setReportName] = useState('');

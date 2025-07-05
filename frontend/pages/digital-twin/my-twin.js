@@ -1,7 +1,7 @@
 import React from 'react';
 import Head from 'next/head';
 import { Bot, Brain, Activity, Target, Zap, Settings, Eye, TrendingUp } from 'lucide-react';
-import PageHeader from '../../src/components/navigation/PageHeader';
+import PageHeader from '../../components/PageHeader';
 
 export default function MyDigitalTwin() {
   return (

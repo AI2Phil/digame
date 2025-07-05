@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import Head from 'next/head';
 import { Users, MessageSquare, Calendar, FileText, Video, Bell, Settings, Plus, Crown } from 'lucide-react';
-import PageHeader from '../../src/components/navigation/PageHeader';
+import PageHeader from '../../components/PageHeader';
 
 export default function TeamCollaboration() {
   const [activeTab, setActiveTab] = useState('overview');

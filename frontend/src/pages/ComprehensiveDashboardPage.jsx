@@ -19,7 +19,8 @@ import {
   ChevronRight,
   Star,
   Menu,
-  X
+  X,
+  Home
 } from 'lucide-react';
 
 const ComprehensiveDashboardPage = ({ 
@@ -41,7 +42,7 @@ const ComprehensiveDashboardPage = ({
       propOnLogout();
     } else {
       logout();
-      navigate('/login');
+      navigate('/');
     }
   };
 
@@ -171,6 +172,15 @@ const ComprehensiveDashboardPage = ({
               )}
             </div>
             <div className="flex items-center gap-4">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate('/')}
+                className="flex items-center gap-2 text-sm"
+              >
+                <Home className="w-4 h-4" />
+                Home
+              </Button>
               <div className="text-sm text-gray-600">
                 16 Sections • 80+ Features Available
               </div>

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import Head from 'next/head';
 import { Share2, Globe, Lock, Users, Mail, Link, Download, Eye, Calendar, Settings, Plus, Trash2 } from 'lucide-react';
-import PageHeader from '../../src/components/navigation/PageHeader';
+import PageHeader from '../../components/PageHeader';
 
 export default function PublishingCenter() {
   const [activeTab, setActiveTab] = useState('published');

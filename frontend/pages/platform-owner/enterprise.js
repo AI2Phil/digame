@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import Head from 'next/head';
 import { Building2, TrendingUp, Globe, Users, DollarSign, BarChart3, Target, Zap, Crown, Shield, Settings, Plus } from 'lucide-react';
-import PageHeader from '../../src/components/navigation/PageHeader';
+import PageHeader from '../../components/PageHeader';
 
 export default function EnterpriseFeatures() {
   const [activeTab, setActiveTab] = useState('console');

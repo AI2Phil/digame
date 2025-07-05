@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import Head from 'next/head';
 import { Building, Users, TrendingUp, Settings, Crown, Plus, Search, Filter, MoreVertical, CheckCircle, AlertTriangle, XCircle } from 'lucide-react';
-import PageHeader from '../../src/components/navigation/PageHeader';
+import PageHeader from '../../components/PageHeader';
 
 export default function TenantManagement() {
   const [searchTerm, setSearchTerm] = useState('');

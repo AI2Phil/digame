@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import Head from 'next/head';
 import { FileText, Upload, Eye, Brain, Search, Download, AlertCircle, CheckCircle, TrendingUp } from 'lucide-react';
-import PageHeader from '../../src/components/navigation/PageHeader';
+import PageHeader from '../../components/PageHeader';
 
 export default function DocumentAnalysis() {
   const [uploadedFile, setUploadedFile] = useState(null);

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import Head from 'next/head';
-import PageHeader from '../../src/components/navigation/PageHeader';
+import PageHeader from '../../components/PageHeader';
 import { FileText, Zap, Send, Copy, Download, RefreshCw, CheckCircle, AlertCircle } from 'lucide-react';
 
 export default function WritingAssistance() {

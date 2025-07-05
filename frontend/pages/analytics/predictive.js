@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 import { Eye, TrendingUp, Brain, Zap, AlertTriangle, CheckCircle, Clock, Target } from 'lucide-react';
-import PageHeader from '../../src/components/navigation/PageHeader';
+import PageHeader from '../../components/PageHeader';
 
 export default function PredictiveAnalytics() {
   const [predictions, setPredictions] = useState(null);

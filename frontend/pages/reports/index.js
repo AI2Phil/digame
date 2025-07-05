@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import Head from 'next/head';
 import { BarChart3, FileText, Calendar, Download, Plus, Filter, Eye, Share2, Settings, TrendingUp } from 'lucide-react';
-import PageHeader from '../../src/components/navigation/PageHeader';
+import PageHeader from '../../components/PageHeader';
 
 export default function ReportsHub() {
   const [activeTab, setActiveTab] = useState('dashboard');

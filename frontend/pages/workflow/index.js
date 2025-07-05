@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import Head from 'next/head';
 import { Workflow, Plus, Play, Pause, Settings, Zap, Clock, CheckCircle, AlertCircle, TrendingUp } from 'lucide-react';
-import PageHeader from '../../src/components/navigation/PageHeader';
+import PageHeader from '../../components/PageHeader';
 
 export default function WorkflowAutomation() {
   const [activeTab, setActiveTab] = useState('workflows');

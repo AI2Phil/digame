@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import Head from 'next/head';
 import { ChevronRight, ChevronLeft, CheckCircle, Users, BarChart3, Zap, Target, Settings, Sparkles, ArrowRight } from 'lucide-react';
-import PageHeader from '../../src/components/navigation/PageHeader';
+import PageHeader from '../../components/PageHeader';
 
 export default function EnhancedOnboarding() {
   const [currentStep, setCurrentStep] = useState(0);
