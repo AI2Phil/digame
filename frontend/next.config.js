@@ -21,8 +21,6 @@ const nextConfig = {
   experimental: {
     optimizeCss: true,
     scrollRestoration: true,
-    legacyBrowsers: false,
-    browsersListForSwc: true,
   },
   
   // Headers for better caching and security

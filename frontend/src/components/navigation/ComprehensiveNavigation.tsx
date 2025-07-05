@@ -451,7 +451,7 @@ const ComprehensiveNavigation: React.FC<ComprehensiveNavigationProps> = ({
       icon: <Rocket className="w-5 h-5" />,
       description: 'User onboarding and initial setup',
       items: [
-        { label: 'Onboarding Flow', icon: <Rocket className="w-4 h-4" />, path: '/onboarding', description: 'User onboarding' },
+        { label: 'Onboarding Flow', icon: <Rocket className="w-4 h-4" />, path: '/onboarding-wizard', description: 'User onboarding' },
         { label: 'Enhanced Onboarding', icon: <Star className="w-4 h-4" />, path: '/onboarding/enhanced', subtitle: 'ADVANCED SETUP' },
         { label: 'Setup Wizard', icon: <Wrench className="w-4 h-4" />, path: '/onboarding/wizard', description: 'Guided setup' },
         { label: 'Getting Started', icon: <BookOpen className="w-4 h-4" />, path: '/onboarding/getting-started', description: 'Quick start guide' }

@@ -710,7 +710,7 @@ const GettingStartedGuide = () => {
         title="Getting Started Guide"
         subtitle="Complete walkthrough of platform features and best practices"
         breadcrumbs={[
-          { label: 'Onboarding', href: '/onboarding' },
+          { label: 'Onboarding', href: '/onboarding-wizard' },
           { label: 'Getting Started', href: '/onboarding/getting-started' }
         ]}
       />
@@ -772,7 +772,7 @@ const GettingStartedGuide = () => {
 
               <div className="mt-6 pt-4 border-t border-gray-200">
                 <button
-                  onClick={() => router.push('/onboarding')}
+                  onClick={() => router.push('/onboarding-wizard')}
                   className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
                 >
                   Back to Onboarding

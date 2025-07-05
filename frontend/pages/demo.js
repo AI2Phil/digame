@@ -22,7 +22,7 @@ export default function DemoPage({ onDemoAccess }) {
     
     if (demoType === 'guided') {
       // For guided tour, navigate to onboarding wizard
-      router.push('/onboarding');
+      router.push('/onboarding-wizard');
     } else {
       // For interactive demo, go directly to dashboard
       router.push('/dashboard');

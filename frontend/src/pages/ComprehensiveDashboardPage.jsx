@@ -126,7 +126,7 @@ const ComprehensiveDashboardPage = ({
 
   // Check if user has completed onboarding
   if (currentUser && !currentUser.onboardingCompleted && !isDemoMode) {
-    navigate('/onboarding');
+    navigate('/onboarding-wizard');
     return null;
   }
 

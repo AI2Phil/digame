@@ -142,7 +142,7 @@ export default function AuthPage() {
           if (loginSuccess) {
             // Check if onboarding is needed
             if (data.user && !data.user.onboardingCompleted) {
-              router.push('/onboarding');
+              router.push('/onboarding-wizard');
             } else {
               // The useEffect will handle the redirect based on user role
               // No need to redirect here as useEffect will handle it

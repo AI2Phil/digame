@@ -73,7 +73,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ isDemoMode: propIsDemoMod
 
   // Check if user has completed onboarding
   if (currentUser && !currentUser.onboardingCompleted && !isDemoMode) {
-    navigate('/onboarding');
+    navigate('/onboarding-wizard');
     return null;
   }
 

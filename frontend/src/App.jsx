@@ -176,7 +176,7 @@ function App() {
             element={
               isAuthenticated ? (
                 needsOnboarding ? (
-                  <Navigate to="/onboarding" replace />
+                  <Navigate to="/onboarding-wizard" replace />
                 ) : (
                   <Navigate to="/dashboard" replace />
                 )
@@ -221,7 +221,7 @@ function App() {
           />
 
           <Route
-            path="/onboarding"
+            path="/onboarding-wizard"
             element={
               isAuthenticated || isDemoMode ? (
                 needsOnboarding || isDemoMode ? (

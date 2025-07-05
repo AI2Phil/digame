@@ -184,7 +184,7 @@ const OnboardingDashboard = () => {
         title="Onboarding Dashboard"
         subtitle="Complete your setup and get started with the platform"
         breadcrumbs={[
-          { label: 'Onboarding', href: '/onboarding' }
+          { label: 'Onboarding', href: '/onboarding-wizard' }
         ]}
       />
 

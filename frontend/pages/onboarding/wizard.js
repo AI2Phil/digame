@@ -240,7 +240,7 @@ const OnboardingWizard = () => {
       });
 
       if (response.ok) {
-        router.push('/onboarding?completed=true');
+        router.push('/onboarding-wizard?completed=true');
       } else {
         throw new Error('Failed to complete onboarding');
       }
@@ -776,7 +776,7 @@ const OnboardingWizard = () => {
         title="Setup Wizard"
         subtitle={`Step ${currentStep} of ${totalSteps}: Complete your platform setup`}
         breadcrumbs={[
-          { label: 'Onboarding', href: '/onboarding' },
+          { label: 'Onboarding', href: '/onboarding-wizard' },
           { label: 'Setup Wizard', href: '/onboarding/wizard' }
         ]}
       />

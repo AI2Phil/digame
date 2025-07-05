@@ -6,12 +6,24 @@ const performanceMonitor = require('./performance');
 
 class DatabaseService {
   constructor() {
+    if (DatabaseService.instance) {
+      return DatabaseService.instance;
+    }
+    
     // Create database file in backend directory
     const dbPath = path.join(__dirname, '../../data/digame.db');
     this.db = new Database(dbPath);
-    this.initializeExtendedSchema();
-    this.initializeDemoUsers();
-    this.seedExtendedData();
+    this.initialized = false;
+    
+    // Only initialize once
+    if (!DatabaseService.initialized) {
+      this.initializeExtendedSchema();
+      this.initializeDemoUsers();
+      this.seedExtendedData();
+      DatabaseService.initialized = true;
+    }
+    
+    DatabaseService.instance = this;
   }
 
   initializeExtendedSchema() {
@@ -1310,4 +1322,10 @@ class DatabaseService {
   }
 }
 
-module.exports = DatabaseService;
+// Static properties for singleton pattern
+DatabaseService.instance = null;
+DatabaseService.initialized = false;
+
+// Export singleton instance
+module.exports = new DatabaseService();
+module.exports.DatabaseService = DatabaseService;

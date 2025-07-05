@@ -7,7 +7,7 @@ interface SignupFormProps {
   redirectTo?: string;
 }
 
-const SignupForm: React.FC<SignupFormProps> = ({ onSuccess, redirectTo = '/onboarding' }) => {
+const SignupForm: React.FC<SignupFormProps> = ({ onSuccess, redirectTo = '/onboarding-wizard' }) => {
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',

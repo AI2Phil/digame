@@ -19,10 +19,10 @@ export default function DemoPage({ onDemoAccess }) {
     
     if (demoType === 'guided') {
       // For guided tour, navigate to onboarding wizard
-      navigate('/onboarding');
+      navigate('/onboarding-wizard');
     } else {
       // For interactive demo, also go through onboarding first to test the flow
-      navigate('/onboarding');
+      navigate('/onboarding-wizard');
     }
   };
 

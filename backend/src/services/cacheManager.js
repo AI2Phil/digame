@@ -6,6 +6,10 @@ const redisService = require('./redis');
  */
 class CacheManager {
     constructor() {
+        if (CacheManager.instance) {
+            return CacheManager.instance;
+        }
+        
         this.memoryCache = new Map();
         this.maxMemoryItems = 1000;
         this.defaultTTL = 3600; // 1 hour
@@ -24,7 +28,13 @@ class CacheManager {
         // Start cleanup interval
         this.startCleanupInterval();
         
-        console.log('🧠 Multi-layer cache manager initialized');
+        // Only log once
+        if (!CacheManager.initialized) {
+            console.log('🧠 Multi-layer cache manager initialized');
+            CacheManager.initialized = true;
+        }
+        
+        CacheManager.instance = this;
     }
 
     /**
@@ -432,6 +442,10 @@ class ApiCacheManager extends CacheManager {
         return Buffer.from(JSON.stringify(params || {})).toString('base64');
     }
 }
+
+// Static properties for singleton pattern
+CacheManager.instance = null;
+CacheManager.initialized = false;
 
 // Export singleton instances
 const cacheManager = new CacheManager();
