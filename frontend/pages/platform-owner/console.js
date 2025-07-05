@@ -3,6 +3,7 @@ import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { Crown, Server, Users, Building, TrendingUp, Activity, Settings, Code, AlertTriangle, CheckCircle, Database, Cpu, HardDrive, Network, Menu } from 'lucide-react';
 import NextJSComprehensiveNavigation from '../../src/components/navigation/NextJSComprehensiveNavigation';
+import NavigationHubFooter from '../../src/components/layout/NavigationHubFooter';
 import { useAuth } from '../../src/contexts/AuthContext';
 
 export default function PlatformConsole() {
@@ -287,6 +288,9 @@ export default function PlatformConsole() {
               </div>
             </div>
           </main>
+
+          {/* Navigation Hub Footer */}
+          <NavigationHubFooter />
         </div>
       </div>
     </>

@@ -21,6 +21,7 @@ export default function AuthPage() {
     confirmPassword: '',
     firstName: '',
     lastName: '',
+    rememberMe: false,
   });
   const [errors, setErrors] = useState({});
   const [apiError, setApiError] = useState('');
@@ -28,20 +29,16 @@ export default function AuthPage() {
   useEffect(() => {
     // Check if user is already authenticated
     if (isAuthenticated) {
-      // Redirect to appropriate dashboard based on user role
-      if (user?.isPlatformOwner || user?.is_platform_owner) {
-        router.push('/platform-owner/console');
-      } else {
-        router.push('/dashboard');
-      }
+      // Redirect all users to dashboard (Platform Owners will see their enhanced dashboard)
+      router.push('/dashboard');
     }
   }, [isAuthenticated, user, router]);
 
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: value,
+      [name]: type === 'checkbox' ? checked : value,
     }));
     
     // Clear field-specific error when user starts typing
@@ -109,7 +106,8 @@ export default function AuthPage() {
         const success = await login({
           email: formData.username.includes('@') ? formData.username : undefined,
           username: !formData.username.includes('@') ? formData.username : undefined,
-          password: formData.password
+          password: formData.password,
+          rememberMe: formData.rememberMe
         });
 
         if (success) {
@@ -180,6 +178,7 @@ export default function AuthPage() {
       confirmPassword: '',
       firstName: '',
       lastName: '',
+      rememberMe: false,
     });
   };
 
@@ -392,6 +391,24 @@ export default function AuthPage() {
                   {errors.confirmPassword && (
                     <p className="text-sm text-red-400">{errors.confirmPassword}</p>
                   )}
+                </div>
+              )}
+
+              {/* Remember Me Checkbox (Login only) */}
+              {isLoginMode && (
+                <div className="flex items-center space-x-3">
+                  <input
+                    type="checkbox"
+                    id="rememberMe"
+                    name="rememberMe"
+                    checked={formData.rememberMe}
+                    onChange={handleInputChange}
+                    className="w-4 h-4 text-cyan-500 bg-white/10 border-white/20 rounded focus:ring-cyan-500 focus:ring-2 backdrop-blur-sm"
+                    disabled={isLoading}
+                  />
+                  <label htmlFor="rememberMe" className="text-sm text-gray-200 cursor-pointer">
+                    Remember me for 30 days
+                  </label>
                 </div>
               )}
 
