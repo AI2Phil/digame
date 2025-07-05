@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import Head from 'next/head';
-import { Mic, MicOff, Play, Pause, Download, Upload, Volume2, FileAudio, Activity } from 'lucide-react';
+import { Mic, MicOff, Play, Pause, Download, Upload, Volume2, FileAudio, BarChart3 } from 'lucide-react';
 import PageHeader from '../../components/PageHeader';
 
 export default function VoiceProcessing() {
@@ -15,7 +15,7 @@ export default function VoiceProcessing() {
 
   const processingOptions = [
     { id: 'transcribe', label: 'Speech to Text', icon: <FileAudio className="w-4 h-4" /> },
-    { id: 'analyze', label: 'Voice Analysis', icon: <Activity className="w-4 h-4" /> },
+    { id: 'analyze', label: 'Voice Analysis', icon: <BarChart3 className="w-4 h-4" /> },
     { id: 'enhance', label: 'Audio Enhancement', icon: <Volume2 className="w-4 h-4" /> },
     { id: 'translate', label: 'Voice Translation', icon: <Volume2 className="w-4 h-4" /> }
   ];
@@ -259,7 +259,7 @@ export default function VoiceProcessing() {
                 
                 {!transcription && !analysis ? (
                   <div className="text-center py-12">
-                    <Activity className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                    <BarChart3 className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                     <p className="text-gray-500">Upload or record audio and select processing type to see results</p>
                   </div>
                 ) : (

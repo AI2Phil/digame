@@ -1,6 +1,7 @@
 import React from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
+import NavigationHubFooter from '../src/components/layout/NavigationHubFooter';
 
 export default function Features() {
   return (
@@ -158,20 +159,8 @@ export default function Features() {
           </div>
         </div>
 
-        {/* Footer */}
-        <footer className="bg-gray-900 text-white py-8">
-          <div className="container mx-auto px-4 text-center">
-            <div className="flex items-center justify-center space-x-2 mb-4">
-              <div className="w-6 h-6 bg-blue-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-xs">D</span>
-              </div>
-              <span className="text-lg font-bold">Digame</span>
-            </div>
-            <p className="text-gray-400">
-              © 2025 Digame. Your Digital Professional Twin Platform.
-            </p>
-          </div>
-        </footer>
+        {/* Navigation Hub Footer */}
+        <NavigationHubFooter />
       </div>
     </>
   );

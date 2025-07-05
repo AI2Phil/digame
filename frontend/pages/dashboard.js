@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { BarChart3, Users, TrendingUp, Activity, Bot, CheckCircle, Calendar, Bell, Crown, Menu, Home, LogOut } from 'lucide-react';
 import NextJSComprehensiveNavigation from '../src/components/navigation/NextJSComprehensiveNavigation';
+import NavigationHubFooter from '../src/components/layout/NavigationHubFooter';
 import { useAuth } from '../src/contexts/AuthContext';
 
 export default function Dashboard() {
@@ -31,21 +32,24 @@ export default function Dashboard() {
       title: 'Task completed',
       description: 'Q1 Performance Review finalized',
       time: '2 hours ago',
-      icon: <CheckCircle className="w-4 h-4 text-green-600" />
+      icon: <CheckCircle className="w-4 h-4 text-green-600" />,
+      path: '/tasks'
     },
     {
       type: 'ai',
       title: 'AI insight generated',
       description: 'New productivity optimization suggestion',
       time: '4 hours ago',
-      icon: <Bot className="w-4 h-4 text-blue-600" />
+      icon: <Bot className="w-4 h-4 text-blue-600" />,
+      path: '/ai-tools'
     },
     {
       type: 'analytics',
       title: 'Weekly report ready',
       description: 'Performance analytics summary available',
       time: '1 day ago',
-      icon: <BarChart3 className="w-4 h-4 text-purple-600" />
+      icon: <BarChart3 className="w-4 h-4 text-purple-600" />,
+      path: '/analytics/web'
     }
   ];
 
@@ -57,6 +61,16 @@ export default function Dashboard() {
   const toggleNavigation = () => {
     setIsNavigationOpen(!isNavigationOpen);
   };
+
+  // Debug: Log user object to console
+  React.useEffect(() => {
+    if (user) {
+      console.log('Dashboard - Current user object:', user);
+      console.log('Dashboard - isPlatformOwner:', user.isPlatformOwner);
+      console.log('Dashboard - role:', user.role);
+      console.log('Dashboard - subscriptionTier:', user.subscriptionTier);
+    }
+  }, [user]);
 
   // Show loading state while checking authentication
   if (isLoading) {
@@ -84,7 +98,7 @@ export default function Dashboard() {
         <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
       </Head>
 
-      <div className="flex h-screen bg-gray-50">
+      <div className="flex min-h-screen bg-gray-50">
         {/* Comprehensive Navigation Sidebar */}
         <NextJSComprehensiveNavigation
           isDemoMode={user?.isDemoMode || false}
@@ -104,7 +118,7 @@ export default function Dashboard() {
         />
 
         {/* Main Content Area */}
-        <div className={`flex-1 flex flex-col overflow-hidden transition-all duration-300 ease-in-out ${
+        <div className={`flex-1 flex flex-col transition-all duration-300 ease-in-out ${
           isNavigationOpen ? 'ml-0' : 'ml-0'
         }`}>
           {/* Top Header */}
@@ -124,7 +138,7 @@ export default function Dashboard() {
                   </h1>
                   <p className="text-sm text-gray-600">
                     {user?.isPlatformOwner
-                      ? 'Complete access to all 16 sections with 92 features'
+                      ? 'Complete access to all 14 sections with 95+ features'
                       : 'Your personal productivity dashboard'
                     }
                   </p>
@@ -157,8 +171,22 @@ export default function Dashboard() {
           </header>
 
           {/* Scrollable Main Content */}
-          <main className="flex-1 overflow-y-auto">
+          <main className="flex-1">
             <div className="container mx-auto px-6 py-8">
+              {/* Debug Section - Temporary */}
+              <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <h3 className="text-sm font-semibold text-yellow-800 mb-2">Debug Info (Temporary)</h3>
+                <div className="text-xs text-yellow-700 space-y-1">
+                  <div>User ID: {user?.id}</div>
+                  <div>Username: {user?.username}</div>
+                  <div>Role: {user?.role}</div>
+                  <div>Subscription Tier: {user?.subscriptionTier}</div>
+                  <div>Is Platform Owner: {user?.isPlatformOwner ? 'YES' : 'NO'}</div>
+                  <div>Is Demo Mode: {user?.isDemoMode ? 'YES' : 'NO'}</div>
+                  <div>Permissions: {user?.permissions?.join(', ')}</div>
+                </div>
+              </div>
+
               {/* Welcome Section */}
               <div className="mb-8">
                 <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg p-6">
@@ -176,7 +204,7 @@ export default function Dashboard() {
                     </div>
                     <div className="text-right">
                       <div className="text-3xl font-bold">
-                        {user?.isPlatformOwner ? '16' : '12'}
+                        {user?.isPlatformOwner ? '14' : '12'}
                       </div>
                       <div className="text-sm text-blue-200">Feature Sections</div>
                     </div>
@@ -311,16 +339,18 @@ export default function Dashboard() {
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Activity</h3>
                   <div className="space-y-4">
                     {recentActivity.map((activity, index) => (
-                      <div key={index} className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
-                        <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center">
-                          {activity.icon}
+                      <Link key={index} href={activity.path}>
+                        <div className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 hover:shadow-md transition-all duration-200 cursor-pointer border-2 border-transparent hover:border-blue-200">
+                          <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center">
+                            {activity.icon}
+                          </div>
+                          <div className="flex-1">
+                            <div className="font-medium text-gray-900">{activity.title}</div>
+                            <div className="text-sm text-gray-600">{activity.description}</div>
+                            <div className="text-xs text-gray-500 mt-1">{activity.time}</div>
+                          </div>
                         </div>
-                        <div className="flex-1">
-                          <div className="font-medium text-gray-900">{activity.title}</div>
-                          <div className="text-sm text-gray-600">{activity.description}</div>
-                          <div className="text-xs text-gray-500 mt-1">{activity.time}</div>
-                        </div>
-                      </div>
+                      </Link>
                     ))}
                   </div>
                 </div>
@@ -343,82 +373,55 @@ export default function Dashboard() {
                   <div className="space-y-4">
                     {user?.isPlatformOwner ? (
                       <>
-                        <div className="p-4 bg-yellow-50 rounded-lg border border-yellow-200">
-                          <div className="font-medium text-yellow-900 mb-2">Platform Performance</div>
-                          <p className="text-sm text-yellow-800">All systems operational. 99.9% uptime maintained this month.</p>
-                        </div>
-                        <div className="p-4 bg-blue-50 rounded-lg">
-                          <div className="font-medium text-blue-900 mb-2">User Growth</div>
-                          <p className="text-sm text-blue-800">Platform user base grew by 15% this quarter. Enterprise adoption increasing.</p>
-                        </div>
-                        <div className="p-4 bg-green-50 rounded-lg">
-                          <div className="font-medium text-green-900 mb-2">Revenue Trends</div>
-                          <p className="text-sm text-green-800">Monthly recurring revenue up 23%. Team tier showing strong conversion.</p>
-                        </div>
+                        <Link href="/platform-owner/health">
+                          <div className="p-4 bg-yellow-50 rounded-lg border border-yellow-200 hover:bg-yellow-100 hover:shadow-md transition-all duration-200 cursor-pointer hover:border-yellow-300">
+                            <div className="font-medium text-yellow-900 mb-2">Platform Performance</div>
+                            <p className="text-sm text-yellow-800">All systems operational. 99.9% uptime maintained this month.</p>
+                          </div>
+                        </Link>
+                        <Link href="/platform-owner/users">
+                          <div className="p-4 bg-blue-50 rounded-lg hover:bg-blue-100 hover:shadow-md transition-all duration-200 cursor-pointer border-2 border-transparent hover:border-blue-200">
+                            <div className="font-medium text-blue-900 mb-2">User Growth</div>
+                            <p className="text-sm text-blue-800">Platform user base grew by 15% this quarter. Enterprise adoption increasing.</p>
+                          </div>
+                        </Link>
+                        <Link href="/platform-owner/revenue">
+                          <div className="p-4 bg-green-50 rounded-lg hover:bg-green-100 hover:shadow-md transition-all duration-200 cursor-pointer border-2 border-transparent hover:border-green-200">
+                            <div className="font-medium text-green-900 mb-2">Revenue Trends</div>
+                            <p className="text-sm text-green-800">Monthly recurring revenue up 23%. Team tier showing strong conversion.</p>
+                          </div>
+                        </Link>
                       </>
                     ) : (
                       <>
-                        <div className="p-4 bg-blue-50 rounded-lg">
-                          <div className="font-medium text-blue-900 mb-2">Productivity Trends</div>
-                          <p className="text-sm text-blue-800">Your productivity has increased by 15% this week. Great progress!</p>
-                        </div>
-                        <div className="p-4 bg-green-50 rounded-lg">
-                          <div className="font-medium text-green-900 mb-2">Goal Progress</div>
-                          <p className="text-sm text-green-800">You're 80% towards your monthly goals. Keep up the excellent work!</p>
-                        </div>
-                        <div className="p-4 bg-purple-50 rounded-lg">
-                          <div className="font-medium text-purple-900 mb-2">AI Recommendations</div>
-                          <p className="text-sm text-purple-800">Based on your patterns, consider scheduling focused work blocks in the morning.</p>
-                        </div>
+                        <Link href="/analytics/performance">
+                          <div className="p-4 bg-blue-50 rounded-lg hover:bg-blue-100 hover:shadow-md transition-all duration-200 cursor-pointer border-2 border-transparent hover:border-blue-200">
+                            <div className="font-medium text-blue-900 mb-2">Productivity Trends</div>
+                            <p className="text-sm text-blue-800">Your productivity has increased by 15% this week. Great progress!</p>
+                          </div>
+                        </Link>
+                        <Link href="/tasks">
+                          <div className="p-4 bg-green-50 rounded-lg hover:bg-green-100 hover:shadow-md transition-all duration-200 cursor-pointer border-2 border-transparent hover:border-green-200">
+                            <div className="font-medium text-green-900 mb-2">Goal Progress</div>
+                            <p className="text-sm text-green-800">You're 80% towards your monthly goals. Keep up the excellent work!</p>
+                          </div>
+                        </Link>
+                        <Link href="/ai-tools">
+                          <div className="p-4 bg-purple-50 rounded-lg hover:bg-purple-100 hover:shadow-md transition-all duration-200 cursor-pointer border-2 border-transparent hover:border-purple-200">
+                            <div className="font-medium text-purple-900 mb-2">AI Recommendations</div>
+                            <p className="text-sm text-purple-800">Based on your patterns, consider scheduling focused work blocks in the morning.</p>
+                          </div>
+                        </Link>
                       </>
                     )}
                   </div>
                 </div>
               </div>
-
-              {/* Feature Access Summary */}
-              <div className="bg-white rounded-lg shadow-sm p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-gray-900">Complete Feature Access</h3>
-                  <span className="text-sm text-gray-600">16 sections • 92 features</span>
-                </div>
-                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4 text-center">
-                  <div className="p-3 bg-blue-50 rounded-lg">
-                    <div className="text-lg font-bold text-blue-600">4</div>
-                    <div className="text-xs text-blue-800">Core Platform</div>
-                  </div>
-                  <div className="p-3 bg-purple-50 rounded-lg">
-                    <div className="text-lg font-bold text-purple-600">9</div>
-                    <div className="text-xs text-purple-800">Analytics & AI</div>
-                  </div>
-                  <div className="p-3 bg-green-50 rounded-lg">
-                    <div className="text-lg font-bold text-green-600">7</div>
-                    <div className="text-xs text-green-800">Digital Twin</div>
-                  </div>
-                  <div className="p-3 bg-orange-50 rounded-lg">
-                    <div className="text-lg font-bold text-orange-600">9</div>
-                    <div className="text-xs text-orange-800">AI Tools</div>
-                  </div>
-                  <div className="p-3 bg-indigo-50 rounded-lg">
-                    <div className="text-lg font-bold text-indigo-600">6</div>
-                    <div className="text-xs text-indigo-800">Workflow</div>
-                  </div>
-                  <div className="p-3 bg-pink-50 rounded-lg">
-                    <div className="text-lg font-bold text-pink-600">6</div>
-                    <div className="text-xs text-pink-800">Team & Career</div>
-                  </div>
-                  <div className="p-3 bg-red-50 rounded-lg">
-                    <div className="text-lg font-bold text-red-600">12</div>
-                    <div className="text-xs text-red-800">Enterprise</div>
-                  </div>
-                  <div className="p-3 bg-yellow-50 rounded-lg border border-yellow-200">
-                    <div className="text-lg font-bold text-yellow-600">7</div>
-                    <div className="text-xs text-yellow-800">Platform Owner</div>
-                  </div>
-                </div>
-              </div>
             </div>
           </main>
+
+          {/* Navigation Hub Footer */}
+          <NavigationHubFooter />
         </div>
       </div>
     </>
