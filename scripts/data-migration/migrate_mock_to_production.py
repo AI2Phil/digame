@@ -351,7 +351,7 @@ class DataMigrationTool:
         
         try:
             if not dry_run:
-                # Create production indexes
+                # Create production indexes for Hub pages optimization
                 production_indexes = [
                     "CREATE INDEX IF NOT EXISTS idx_users_email_active ON users(email) WHERE is_mock_data = FALSE",
                     "CREATE INDEX IF NOT EXISTS idx_analytics_events_timestamp ON analytics_events(timestamp) WHERE is_mock_data = FALSE",
@@ -362,7 +362,10 @@ class DataMigrationTool:
                     "CREATE INDEX IF NOT EXISTS idx_team_members_user ON team_members(userId) WHERE is_mock_data = FALSE",
                     "CREATE INDEX IF NOT EXISTS idx_user_skills_user ON user_skills(userId) WHERE is_mock_data = FALSE",
                     "CREATE INDEX IF NOT EXISTS idx_skills_category ON skills(category) WHERE is_mock_data = FALSE",
-                    "CREATE INDEX IF NOT EXISTS idx_notifications_user_read ON notifications(userId, isRead) WHERE is_mock_data = FALSE"
+                    "CREATE INDEX IF NOT EXISTS idx_notifications_user_read ON notifications(userId, isRead) WHERE is_mock_data = FALSE",
+                    "CREATE INDEX IF NOT EXISTS idx_workflows_user_status ON workflows(user_id, status) WHERE is_mock_data = FALSE",
+                    "CREATE INDEX IF NOT EXISTS idx_api_keys_user ON api_keys(user_id) WHERE is_mock_data = FALSE",
+                    "CREATE INDEX IF NOT EXISTS idx_webhooks_user ON webhooks(user_id) WHERE is_mock_data = FALSE"
                 ]
                 
                 for index_sql in production_indexes:

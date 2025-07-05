@@ -399,15 +399,57 @@ class DataIntegrityValidator:
                 WHERE is_mock_data = FALSE
             """).fetchone()[0]
             
+            # Check Workflow Automation related data
+            workflow_count = conn.execute("""
+                SELECT COUNT(*) FROM workflows
+                WHERE is_mock_data = FALSE
+            """).fetchone()[0]
+            
+            workflow_events = conn.execute("""
+                SELECT COUNT(*) FROM analytics_events
+                WHERE event_type LIKE '%workflow%'
+                AND is_mock_data = FALSE
+            """).fetchone()[0]
+            
+            # Check Integration Hub related data
+            api_keys_count = conn.execute("""
+                SELECT COUNT(*) FROM api_keys
+                WHERE is_mock_data = FALSE
+            """).fetchone()[0]
+            
+            webhooks_count = conn.execute("""
+                SELECT COUNT(*) FROM webhooks
+                WHERE is_mock_data = FALSE
+            """).fetchone()[0]
+            
+            integration_events = conn.execute("""
+                SELECT COUNT(*) FROM analytics_events
+                WHERE (event_type LIKE '%api%' OR event_type LIKE '%webhook%' OR event_type LIKE '%integration%')
+                AND is_mock_data = FALSE
+            """).fetchone()[0]
+            
+            # Check Digital Twin related data
+            twin_events = conn.execute("""
+                SELECT COUNT(*) FROM analytics_events
+                WHERE event_type LIKE '%twin%'
+                AND is_mock_data = FALSE
+            """).fetchone()[0]
+            
             result['details'] = {
                 'ai_analytics_events': ai_analytics_count,
                 'skills_available': skills_count,
                 'user_skills_assignments': user_skills_count,
                 'team_memberships': team_memberships_count,
-                'users_with_skills': users_with_skills
+                'users_with_skills': users_with_skills,
+                'workflow_definitions': workflow_count,
+                'workflow_events': workflow_events,
+                'api_keys': api_keys_count,
+                'webhooks': webhooks_count,
+                'integration_events': integration_events,
+                'digital_twin_events': twin_events
             }
             
-            # Validate data sufficiency for Hub pages
+            # Validate data sufficiency for all Hub pages
             if ai_analytics_count == 0:
                 result['issues'].append("No AI-related analytics events found for AI Tools Hub")
                 result['status'] = 'warning'
@@ -420,6 +462,22 @@ class DataIntegrityValidator:
                 result['issues'].append("No user skills assignments found for Career Development Hub")
                 result['status'] = 'warning'
             
+            if workflow_count == 0 and workflow_events == 0:
+                result['issues'].append("No workflow data found for Workflow Automation Hub")
+                result['status'] = 'warning'
+            
+            if api_keys_count == 0 and webhooks_count == 0:
+                result['issues'].append("No integration configurations found for Integration Hub")
+                result['status'] = 'warning'
+            
+            if integration_events == 0:
+                result['issues'].append("No integration activity events found for Integration Hub")
+                result['status'] = 'warning'
+            
+            if twin_events == 0:
+                result['issues'].append("No digital twin interaction events found for Digital Twin Hub")
+                result['status'] = 'warning'
+            
             # Check for realistic data ratios
             if users_with_skills > 0:
                 avg_skills_per_user = user_skills_count / users_with_skills
@@ -428,7 +486,9 @@ class DataIntegrityValidator:
                     result['status'] = 'warning'
             
             self.logger.info(f"Hub pages data check: AI events={ai_analytics_count}, "
-                           f"Skills={skills_count}, User skills={user_skills_count}")
+                           f"Skills={skills_count}, User skills={user_skills_count}, "
+                           f"Workflows={workflow_count}, Integrations={api_keys_count + webhooks_count}, "
+                           f"Twin events={twin_events}")
             
         except Exception as e:
             result['status'] = 'error'

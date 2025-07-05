@@ -1,131 +1,171 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
-import { Workflow, Plus, Play, Pause, Settings, Zap, Clock, CheckCircle, AlertCircle, TrendingUp, ArrowLeft } from 'lucide-react';
+import { Workflow, Plus, Play, Pause, Settings, Zap, Clock, CheckCircle, AlertCircle, TrendingUp, ArrowLeft, Loader } from 'lucide-react';
 import PageHeader from '../../components/PageHeader';
 import NavigationHubFooter from '../../src/components/layout/NavigationHubFooter';
 
 export default function WorkflowAutomation() {
   const [activeTab, setActiveTab] = useState('workflows');
   const [selectedWorkflow, setSelectedWorkflow] = useState(null);
+  const [workflowData, setWorkflowData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const workflows = [
-    {
-      id: 1,
-      name: 'Daily Standup Automation',
-      description: 'Automatically collect team updates and generate standup reports',
-      status: 'active',
-      triggers: 2,
-      actions: 5,
-      runs: 847,
-      success_rate: 0.98,
-      last_run: '2 hours ago',
-      category: 'team',
-      complexity: 'medium'
-    },
-    {
-      id: 2,
-      name: 'Lead Qualification Pipeline',
-      description: 'Score and route leads based on engagement and profile data',
-      status: 'active',
-      triggers: 3,
-      actions: 8,
-      runs: 1234,
-      success_rate: 0.94,
-      last_run: '15 minutes ago',
-      category: 'sales',
-      complexity: 'high'
-    },
-    {
-      id: 3,
-      name: 'Content Publishing Schedule',
-      description: 'Automatically publish and promote content across platforms',
-      status: 'paused',
-      triggers: 1,
-      actions: 6,
-      runs: 456,
-      success_rate: 0.96,
-      last_run: '1 day ago',
-      category: 'marketing',
-      complexity: 'medium'
-    },
-    {
-      id: 4,
-      name: 'Expense Report Processing',
-      description: 'Extract data from receipts and create expense reports',
-      status: 'active',
-      triggers: 2,
-      actions: 4,
-      runs: 289,
-      success_rate: 0.92,
-      last_run: '30 minutes ago',
-      category: 'finance',
-      complexity: 'low'
-    },
-    {
-      id: 5,
-      name: 'Customer Onboarding Flow',
-      description: 'Guide new customers through setup and initial configuration',
-      status: 'draft',
-      triggers: 4,
-      actions: 12,
-      runs: 0,
-      success_rate: 0,
-      last_run: 'Never',
-      category: 'customer',
-      complexity: 'high'
+  // Fetch workflow data from backend
+  useEffect(() => {
+    fetchWorkflowData();
+  }, []);
+
+  const fetchWorkflowData = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('/api/workflow-automation', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token') || 'demo-token'}`
+        }
+      });
+      
+      if (response.ok) {
+        const result = await response.json();
+        setWorkflowData(result.data);
+        setError(null);
+      } else {
+        // Fallback to mock data if backend is unavailable
+        setWorkflowData(getMockData());
+        setError('Using demo data - backend unavailable');
+      }
+    } catch (error) {
+      console.error('Error fetching workflow data:', error);
+      setWorkflowData(getMockData());
+      setError('Using demo data - backend unavailable');
+    } finally {
+      setLoading(false);
     }
-  ];
-
-  const templates = [
-    {
-      id: 1,
-      name: 'Email Marketing Sequence',
-      description: 'Automated email campaigns with personalization',
-      category: 'marketing',
-      complexity: 'medium',
-      estimated_setup: '15 minutes'
-    },
-    {
-      id: 2,
-      name: 'Invoice Generation & Tracking',
-      description: 'Create and track invoices with payment reminders',
-      category: 'finance',
-      complexity: 'low',
-      estimated_setup: '10 minutes'
-    },
-    {
-      id: 3,
-      name: 'Social Media Scheduler',
-      description: 'Schedule and cross-post content across platforms',
-      category: 'marketing',
-      complexity: 'medium',
-      estimated_setup: '20 minutes'
-    },
-    {
-      id: 4,
-      name: 'Task Assignment & Tracking',
-      description: 'Automatically assign and track project tasks',
-      category: 'project',
-      complexity: 'high',
-      estimated_setup: '30 minutes'
-    }
-  ];
-
-  const analytics = {
-    total_workflows: 5,
-    active_workflows: 3,
-    total_runs: 2826,
-    success_rate: 0.95,
-    time_saved: '47 hours this month',
-    cost_savings: '$2,340',
-    top_categories: [
-      { category: 'Marketing', count: 2, runs: 1200 },
-      { category: 'Sales', count: 1, runs: 1234 },
-      { category: 'Finance', count: 1, runs: 289 },
-      { category: 'Team', count: 1, runs: 847 }
-    ]
   };
+
+  const getMockData = () => ({
+    workflows: [
+      {
+        id: 1,
+        name: 'Daily Standup Automation',
+        description: 'Automatically collect team updates and generate standup reports',
+        status: 'active',
+        triggers: 2,
+        actions: 5,
+        runs: 847,
+        success_rate: 0.98,
+        last_run: '2 hours ago',
+        category: 'team',
+        complexity: 'medium'
+      },
+      {
+        id: 2,
+        name: 'Lead Qualification Pipeline',
+        description: 'Score and route leads based on engagement and profile data',
+        status: 'active',
+        triggers: 3,
+        actions: 8,
+        runs: 1234,
+        success_rate: 0.94,
+        last_run: '15 minutes ago',
+        category: 'sales',
+        complexity: 'high'
+      },
+      {
+        id: 3,
+        name: 'Content Publishing Schedule',
+        description: 'Automatically publish and promote content across platforms',
+        status: 'paused',
+        triggers: 1,
+        actions: 6,
+        runs: 456,
+        success_rate: 0.96,
+        last_run: '1 day ago',
+        category: 'marketing',
+        complexity: 'medium'
+      },
+      {
+        id: 4,
+        name: 'Expense Report Processing',
+        description: 'Extract data from receipts and create expense reports',
+        status: 'active',
+        triggers: 2,
+        actions: 4,
+        runs: 289,
+        success_rate: 0.92,
+        last_run: '30 minutes ago',
+        category: 'finance',
+        complexity: 'low'
+      },
+      {
+        id: 5,
+        name: 'Customer Onboarding Flow',
+        description: 'Guide new customers through setup and initial configuration',
+        status: 'draft',
+        triggers: 4,
+        actions: 12,
+        runs: 0,
+        success_rate: 0,
+        last_run: 'Never',
+        category: 'customer',
+        complexity: 'high'
+      }
+    ],
+    templates: [
+      {
+        id: 1,
+        name: 'Email Marketing Sequence',
+        description: 'Automated email campaigns with personalization',
+        category: 'marketing',
+        complexity: 'medium',
+        estimated_setup: '15 minutes'
+      },
+      {
+        id: 2,
+        name: 'Invoice Generation & Tracking',
+        description: 'Create and track invoices with payment reminders',
+        category: 'finance',
+        complexity: 'low',
+        estimated_setup: '10 minutes'
+      },
+      {
+        id: 3,
+        name: 'Social Media Scheduler',
+        description: 'Schedule and cross-post content across platforms',
+        category: 'marketing',
+        complexity: 'medium',
+        estimated_setup: '20 minutes'
+      },
+      {
+        id: 4,
+        name: 'Task Assignment & Tracking',
+        description: 'Automatically assign and track project tasks',
+        category: 'project',
+        complexity: 'high',
+        estimated_setup: '30 minutes'
+      }
+    ],
+    analytics: {
+      total_workflows: 5,
+      active_workflows: 3,
+      total_runs: 2826,
+      success_rate: 0.95,
+      time_saved: '47 hours this month',
+      cost_savings: '$2,340',
+      top_categories: [
+        { category: 'Marketing', count: 2, runs: 1200 },
+        { category: 'Sales', count: 1, runs: 1234 },
+        { category: 'Finance', count: 1, runs: 289 },
+        { category: 'Team', count: 1, runs: 847 }
+      ]
+    }
+  });
+
+  // Get data from state or fallback to mock
+  const workflows = workflowData?.workflows || [];
+  const templates = workflowData?.templates || [];
+  const analytics = workflowData?.analytics || {};
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -186,8 +226,26 @@ export default function WorkflowAutomation() {
         />
 
         <div className="container mx-auto px-4 py-8">
-          {/* Analytics Overview */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          {/* Error Banner */}
+          {error && (
+            <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <div className="flex items-center">
+                <AlertCircle className="w-5 h-5 text-yellow-600 mr-2" />
+                <span className="text-yellow-800 text-sm">{error}</span>
+              </div>
+            </div>
+          )}
+
+          {/* Loading State */}
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader className="w-8 h-8 animate-spin text-blue-600 mr-3" />
+              <span className="text-gray-600">Loading workflow data...</span>
+            </div>
+          ) : (
+            <>
+              {/* Analytics Overview */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <div className="bg-white rounded-lg shadow-sm p-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -458,7 +516,9 @@ export default function WorkflowAutomation() {
                 </div>
               )}
             </div>
-          </div>
+              </div>
+            </>
+          )}
         </div>
 
         {/* Navigation Hub Footer */}
