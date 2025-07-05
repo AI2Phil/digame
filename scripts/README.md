@@ -27,6 +27,8 @@ This directory contains backend-specific utility scripts for database migrations
 | [`simple_git.py`](#simple_gitpy) | Basic Git operations | `python simple_git.py status` | ✅ Active |
 | [`git_remote.py`](#git_remotepy) | Remote repository management | `python git_remote.py push` | ✅ Active |
 | [`git_status_summary.py`](#git_status_summarypy) | Repository status and guidance | `python git_status_summary.py` | ✅ Active |
+| [`data-migration/migrate_mock_to_production.py`](#data-migrationmigrate_mock_to_productionpy) | Production migration tool | `python data-migration/migrate_mock_to_production.py` | ✅ Active |
+| [`data-migration/validate_data_integrity.py`](#data-migrationvalidate_data_integritypy) | Data integrity validation | `python data-migration/validate_data_integrity.py` | ✅ Active |
 
 ---
 
@@ -723,6 +725,153 @@ python digame/scripts/git_status_summary.py
 2. **Manual Upload**: Download/copy files and web interface upload
 3. **Container SSH/Git**: Rebuild with proper Git tools and authentication
 4. **VSCode Integration**: Use built-in Git extension and authentication
+
+---
+
+## 📊 Data Management & Migration Scripts
+
+### `data-migration/migrate_mock_to_production.py`
+**Purpose**: Comprehensive production migration tool for transitioning from development to production
+
+**Description**:
+- Migrates from development environment with mock data to clean production environment
+- Provides comprehensive pre-migration analysis and safety validation
+- Performs selective mock data cleanup while preserving real user data
+- Optimizes database for production use with indexing and statistics updates
+- Generates detailed migration reports with metrics and recommendations
+
+**Usage**:
+```bash
+# Dry run to see what would be done (recommended first step)
+python scripts/data-migration/migrate_mock_to_production.py --dry-run
+
+# Full migration with backup (production deployment)
+python scripts/data-migration/migrate_mock_to_production.py --backup-first
+
+# Migration preserving all users
+python scripts/data-migration/migrate_mock_to_production.py --preserve-users
+
+# Migration with custom database path
+python scripts/data-migration/migrate_mock_to_production.py --db-path /path/to/database.db
+
+# Verbose logging for debugging
+python scripts/data-migration/migrate_mock_to_production.py --verbose
+```
+
+**Features**:
+- ✅ **Pre-Migration Analysis**: Comprehensive database state analysis with statistics
+- ✅ **Safety Validation**: Critical data identification and protection mechanisms
+- ✅ **Mock Data Cleanup**: Selective removal of mock data with user preservation options
+- ✅ **Database Optimization**: Production-ready index creation and statistics updates
+- ✅ **Comprehensive Reporting**: Detailed migration reports with before/after metrics
+- ✅ **Dry-Run Mode**: Safe testing without data modification for validation
+- ✅ **Backup Integration**: Automatic pre-migration backups with compression
+- ✅ **Error Handling**: Comprehensive error handling with rollback capabilities
+
+**Migration Process**:
+1. **Database Analysis**: Analyzes current data distribution (mock vs real)
+2. **Critical Data Identification**: Identifies platform owners and essential users
+3. **Safety Validation**: Validates migration can be performed safely
+4. **Backup Creation**: Creates compressed backup before any changes
+5. **Mock Data Cleanup**: Removes mock data while preserving real data
+6. **Database Optimization**: Applies production indexes and optimizations
+7. **Report Generation**: Creates comprehensive migration report
+
+**Safety Features**:
+- Platform owner validation (ensures at least one exists)
+- Mock data ratio analysis with warnings
+- Real user data protection
+- Automatic backup creation
+- Confirmation prompts for destructive operations
+- Comprehensive audit logging
+
+**Output Files**:
+- Compressed backup: `backups/migration/pre_migration_backup_YYYYMMDD_HHMMSS.db.gz`
+- Migration report: `backups/migration/migration_report_YYYYMMDD_HHMMSS.txt`
+- Migration log: `migration_YYYYMMDD_HHMMSS.log`
+
+---
+
+### `data-migration/validate_data_integrity.py`
+**Purpose**: Comprehensive data integrity validation and automated repair tool
+
+**Description**:
+- Validates data integrity after migration or cleanup operations
+- Performs 8 different categories of integrity checks
+- Identifies and optionally fixes common data integrity issues
+- Generates detailed JSON reports with findings and recommendations
+- Ensures database is in consistent and healthy state for production
+
+**Usage**:
+```bash
+# Basic integrity validation
+python scripts/data-migration/validate_data_integrity.py
+
+# Validation with automatic issue fixing
+python scripts/data-migration/validate_data_integrity.py --fix-issues
+
+# Report-only mode (no fixes applied)
+python scripts/data-migration/validate_data_integrity.py --report-only
+
+# Custom database path
+python scripts/data-migration/validate_data_integrity.py --db-path /path/to/database.db
+
+# Verbose logging for detailed analysis
+python scripts/data-migration/validate_data_integrity.py --verbose
+
+# Custom output file for report
+python scripts/data-migration/validate_data_integrity.py --output-file custom_report.json
+```
+
+**Features**:
+- ✅ **Table Existence Validation**: Ensures all expected tables are present
+- ✅ **Foreign Key Constraint Checking**: Validates referential integrity across tables
+- ✅ **Data Consistency Analysis**: Identifies orphaned and inconsistent records
+- ✅ **Mock Data Flagging Validation**: Ensures proper data categorization and flagging
+- ✅ **Database Integrity Checks**: SQLite integrity validation and corruption detection
+- ✅ **Automated Fixes**: Optional automatic repair of detected issues
+- ✅ **Comprehensive Reporting**: JSON reports with detailed findings and recommendations
+- ✅ **Exit Code Handling**: Proper exit codes for CI/CD integration
+
+**Validation Categories**:
+1. **Table Existence**: Verifies all 20+ expected tables are present
+2. **Foreign Key Constraints**: Checks for constraint violations
+3. **Data Consistency**: Identifies orphaned records across related tables
+4. **Mock Data Flagging**: Validates proper `is_mock_data` flag usage
+5. **Database Integrity**: SQLite PRAGMA integrity_check validation
+6. **Orphaned Records**: Detects records without valid parent relationships
+7. **NULL Flag Issues**: Identifies missing or incorrect mock data flags
+8. **Schema Validation**: Confirms expected database structure
+
+**Automated Fixes Available**:
+- **Orphaned Record Cleanup**: Removes records without valid parent relationships
+- **NULL Flag Correction**: Sets missing `is_mock_data` flags to FALSE
+- **Constraint Violation Resolution**: Fixes foreign key constraint issues
+
+**Expected Tables Validated**:
+- Core: `users`, `notifications`, `notification_settings`
+- Productivity: `tasks`, `projects`, `workflows`
+- Collaboration: `teams`, `team_members`, `skills`, `user_skills`, `mentorship_relationships`
+- Analytics: `analytics_events`, `reports`, `platform_metrics`
+- Security: `audit_logs`, `api_keys`, `webhooks`
+- Platform: `tenants`, `data_management_operations`, `data_backups`
+
+**Report Format**:
+```json
+{
+  "timestamp": "2025-01-05T11:18:00Z",
+  "overall_status": "passed|warning|failed|error",
+  "checks_performed": [...],
+  "issues_found": [...],
+  "fixes_applied": [...],
+  "recommendations": [...]
+}
+```
+
+**Exit Codes**:
+- `0`: All checks passed
+- `1`: Critical failures detected
+- `2`: Warnings found (non-critical issues)
 
 ---
 
