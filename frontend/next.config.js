@@ -182,12 +182,44 @@ const nextConfig = {
     ];
   },
   
-  // Rewrites for API routes
+  // Rewrites for API routes with dynamic backend discovery
   async rewrites() {
+    // Try to discover backend service dynamically
+    let backendUrl = process.env.NEXT_PUBLIC_API_URL;
+    
+    if (!backendUrl) {
+      // Dynamic port detection for backend service
+      const defaultPorts = [4000, 8001, 8000, 3001, 5000];
+      
+      for (const port of defaultPorts) {
+        try {
+          const response = await fetch(`http://localhost:${port}/service-info`, {
+            method: 'GET',
+            timeout: 1000,
+            signal: AbortSignal.timeout(1000)
+          });
+          
+          if (response.ok) {
+            backendUrl = `http://localhost:${port}`;
+            console.log(`🔍 Dynamic backend discovery: Found backend on port ${port}`);
+            break;
+          }
+        } catch (error) {
+          // Port not available, continue to next
+        }
+      }
+      
+      // Fallback to default
+      if (!backendUrl) {
+        backendUrl = 'http://localhost:4000';
+        console.log('⚠️  Using fallback backend URL: http://localhost:4000');
+      }
+    }
+
     return [
       {
         source: '/api/:path*',
-        destination: `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001'}/:path*`,
+        destination: `${backendUrl}/:path*`,
       },
     ];
   },

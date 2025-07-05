@@ -1,7 +1,11 @@
 import React from 'react';
+import { useRouter } from 'next/router';
+import { Home } from 'lucide-react';
 import NextJSComprehensiveNavigation from '../src/components/navigation/NextJSComprehensiveNavigation';
 
 const NavigationTestPage = () => {
+  const router = useRouter();
+  
   const mockUser = {
     name: 'Demo User',
     role: 'admin',
@@ -14,6 +18,10 @@ const NavigationTestPage = () => {
 
   const handleLogout = () => {
     console.log('Logout clicked');
+  };
+
+  const handleGoHome = () => {
+    router.push('/');
   };
 
   return (
@@ -30,9 +38,19 @@ const NavigationTestPage = () => {
       <div className="flex-1 flex flex-col overflow-hidden">
         <header className="bg-white shadow-sm border-b border-gray-200">
           <div className="flex items-center justify-between px-6 py-4">
-            <h1 className="text-xl font-semibold text-gray-900">
-              Comprehensive Navigation - Complete Backend Access
-            </h1>
+            <div className="flex items-center space-x-4">
+              <button
+                onClick={handleGoHome}
+                className="flex items-center space-x-2 px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors duration-200"
+                title="Return to Guest Home"
+              >
+                <Home className="w-4 h-4" />
+                <span>Home</span>
+              </button>
+              <h1 className="text-xl font-semibold text-gray-900">
+                Comprehensive Navigation - Complete Backend Access
+              </h1>
+            </div>
             <div className="text-sm text-gray-600">
               All Features Available
             </div>

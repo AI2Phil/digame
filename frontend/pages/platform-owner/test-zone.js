@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import {
-  Flask as BeakerIcon,
+  TestTube as BeakerIcon,
   Play as PlayIcon,
-  Square as StopIcon,
+  Stop as StopIcon,
   RotateCcw as ArrowPathIcon,
   CheckCircle as CheckCircleIcon,
   XCircle as XCircleIcon,

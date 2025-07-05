@@ -74,11 +74,11 @@ interface NextJSComprehensiveNavigationProps {
   showAllFeatures?: boolean;
 }
 
-const NextJSComprehensiveNavigation: React.FC<NextJSComprehensiveNavigationProps> = ({ 
-  isDemoMode = false, 
-  onLogout = () => {}, 
-  currentUser = null, 
-  isOpen = true, 
+const NextJSComprehensiveNavigation: React.FC<NextJSComprehensiveNavigationProps> = ({
+  isDemoMode = false,
+  onLogout = () => {},
+  currentUser = null,
+  isOpen = true,
   onToggle = () => {},
   showAllFeatures = true
 }) => {
@@ -224,7 +224,8 @@ const NextJSComprehensiveNavigation: React.FC<NextJSComprehensiveNavigationProps
         { label: 'Revenue Analytics', icon: <TrendingUp className="w-4 h-4" />, path: '/platform-owner/revenue', subtitle: 'BUSINESS INTELLIGENCE' },
         { label: 'System Health', icon: <Activity className="w-4 h-4" />, path: '/platform-owner/health', subtitle: 'MONITORING' },
         { label: 'Platform Settings', icon: <SettingsIcon className="w-4 h-4" />, path: '/platform-owner/settings', subtitle: 'CONFIGURATION' },
-        { label: 'API Test Zone', icon: <Code className="w-4 h-4" />, path: '/platform-owner/test-zone', subtitle: 'DEVELOPMENT' }
+        { label: 'API Test Zone', icon: <Code className="w-4 h-4" />, path: '/platform-owner/test-zone', subtitle: 'DEVELOPMENT' },
+        { label: 'Service Discovery Test', icon: <Network className="w-4 h-4" />, path: '/service-test', subtitle: 'DEVELOPMENT' }
       ]
     }
   ];
@@ -308,167 +309,230 @@ const NextJSComprehensiveNavigation: React.FC<NextJSComprehensiveNavigationProps
 
   return (
     <div className={`
-      bg-white border-r border-gray-200 flex flex-col h-full w-96
-      ${isOpen ? 'block' : 'hidden lg:block'}
-      lg:block
+      bg-white border-r border-gray-200 flex flex-col h-full transition-all duration-300 ease-in-out
+      ${isOpen ? 'w-96' : 'w-16'}
+      overflow-hidden relative
     `}>
       {/* Header */}
       <div className="flex items-center justify-between p-6 border-b border-gray-200">
-        <div className="flex items-center space-x-3">
-          <div className="digame-logo">
-            <span className="text-white font-bold text-sm">D</span>
-          </div>
-          <div>
-            <span className="text-xl font-bold text-gray-900">Digame</span>
-            <div className="text-xs text-gray-500">Complete Feature Access</div>
-          </div>
-          {isPlatformOwner() && (
-            <Badge variant="outline" className="text-xs bg-yellow-50 text-yellow-700 border-yellow-200">
-              <Crown className="w-3 h-3 mr-1" />
-              Platform Owner
-            </Badge>
-          )}
-        </div>
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          onClick={onToggle}
-          className="lg:hidden"
-        >
-          <X className="w-5 h-5" />
-        </Button>
-      </div>
-
-      {/* Search */}
-      <div className="p-4 border-b border-gray-200">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-          <input
-            type="text"
-            placeholder="Search features..."
-            className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-        <div className="mt-2 text-xs text-gray-500 text-center">
-          {totalFeatures} features available
-        </div>
-      </div>
-
-      {/* Navigation Content */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-2">
-        {filteredMenuSections.map((section) => (
-          <div key={section.id} className="space-y-1">
-            <Button
-              variant="ghost"
-              className={`w-full justify-between hover:text-gray-900 hover:bg-gray-100 font-medium text-sm ${
-                section.platformOwnerOnly 
-                  ? 'text-yellow-700 bg-yellow-50 hover:bg-yellow-100' 
-                  : 'text-gray-700'
-              }`}
-              onClick={() => toggleSection(section.id)}
-            >
-              <div className="flex items-center">
-                {section.icon}
-                <div className="ml-3 text-left">
-                  <div className="font-medium">{section.title}</div>
-                  {section.description && (
-                    <div className="text-xs text-gray-500">{section.description}</div>
-                  )}
-                </div>
-                {section.platformOwnerOnly && (
-                  <Crown className="w-3 h-3 ml-2 text-yellow-600" />
-                )}
+        {isOpen ? (
+          <>
+            <div className="flex items-center space-x-3">
+              <div className="digame-logo">
+                <span className="text-white font-bold text-sm">D</span>
               </div>
-              <div className="flex items-center space-x-2">
-                <Badge variant="outline" className="text-xs">
-                  {section.items.length}
-                </Badge>
-                {expandedSections[section.id] ? (
-                  <ChevronDown className="w-4 h-4" />
-                ) : (
-                  <ChevronRight className="w-4 h-4" />
-                )}
+              <div>
+                <span className="text-xl font-bold text-gray-900">Digame</span>
+                <div className="text-xs text-gray-500">Complete Feature Access</div>
               </div>
-            </Button>
-
-            {/* Collapsible Section Items */}
-            {expandedSections[section.id] && (
-              <div className="ml-6 space-y-1 border-l border-gray-200 pl-4">
-                {section.items.map((item, index) => (
-                  <div key={index}>
-                    {item.subtitle && (
-                      <div className="px-2 py-1 text-xs font-medium text-gray-400 uppercase tracking-wide">
-                        {item.subtitle}
-                      </div>
-                    )}
-                    <Button
-                      variant="ghost"
-                      className={`w-full justify-start text-sm hover:text-gray-900 hover:bg-gray-50 ${
-                        item.platformOwnerOnly ? 'text-yellow-600' : 'text-gray-600'
-                      }`}
-                      onClick={() => handleNavigation(item.path)}
-                    >
-                      <div className="flex items-center w-full">
-                        {item.icon}
-                        <div className="ml-2 flex-1 text-left">
-                          <div className="font-medium">{item.label}</div>
-                          {item.description && (
-                            <div className="text-xs text-gray-500">{item.description}</div>
-                          )}
-                        </div>
-                        {item.platformOwnerOnly && (
-                          <Crown className="w-3 h-3 ml-auto text-yellow-500" />
-                        )}
-                      </div>
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
-
-      {/* Footer */}
-      <div className="p-4 border-t border-gray-200">
-        <div className="flex items-center mb-4">
-          <Avatar
-            className="w-10 h-10 mr-3"
-            fallback={<span className="text-base">👤</span>}
-            src=""
-            alt=""
-            name=""
-            status=""
-          />
-          <div className="flex-1">
-            <p className="text-sm font-medium text-gray-900">
-              {isDemoMode ? "Demo User" : currentUser?.name || "User"}
-            </p>
-            <div className="flex items-center space-x-2">
-              {isDemoMode && <Badge variant="outline" className="text-xs">Demo Account</Badge>}
-              {currentUser?.subscription_tier && (
-                <Badge variant="outline" className="text-xs capitalize">
-                  {currentUser.subscription_tier.replace('_', ' ')}
+              {isPlatformOwner() && (
+                <Badge variant="outline" className="text-xs bg-yellow-50 text-yellow-700 border-yellow-200">
+                  <Crown className="w-3 h-3 mr-1" />
+                  Platform Owner
                 </Badge>
               )}
             </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onToggle}
+              className="lg:hidden"
+            >
+              <X className="w-5 h-5" />
+            </Button>
+          </>
+        ) : (
+          <div className="flex items-center justify-center w-full">
+            <div className="digame-logo">
+              <span className="text-white font-bold text-sm">D</span>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Search */}
+      {isOpen && (
+        <div className="p-4 border-b border-gray-200">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <input
+              type="text"
+              placeholder="Search features..."
+              className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          <div className="mt-2 text-xs text-gray-500 text-center">
+            {totalFeatures} features available
           </div>
         </div>
-        <Button
-          variant="outline"
-          className="w-full"
-          onClick={() => {
-            onLogout();
-            if (window.innerWidth < 1024) {
-              onToggle();
-            }
-          }}
-        >
-          {isDemoMode ? 'Exit Demo' : 'Logout'}
-        </Button>
+      )}
+
+      {/* Navigation Content */}
+      <div className={`flex-1 overflow-y-auto ${isOpen ? 'p-4 space-y-2' : 'p-2 space-y-1'}`}>
+        {isOpen ? (
+          // Full expanded menu
+          filteredMenuSections.map((section) => (
+            <div key={section.id} className="space-y-1">
+              <Button
+                variant="ghost"
+                className={`w-full justify-between hover:text-gray-900 hover:bg-gray-100 font-medium text-sm ${
+                  section.platformOwnerOnly
+                    ? 'text-yellow-700 bg-yellow-50 hover:bg-yellow-100'
+                    : 'text-gray-700'
+                }`}
+                onClick={() => toggleSection(section.id)}
+              >
+                <div className="flex items-center">
+                  {section.icon}
+                  <div className="ml-3 text-left">
+                    <div className="font-medium">{section.title}</div>
+                    {section.description && (
+                      <div className="text-xs text-gray-500">{section.description}</div>
+                    )}
+                  </div>
+                  {section.platformOwnerOnly && (
+                    <Crown className="w-3 h-3 ml-2 text-yellow-600" />
+                  )}
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Badge variant="outline" className="text-xs">
+                    {section.items.length}
+                  </Badge>
+                  {expandedSections[section.id] ? (
+                    <ChevronDown className="w-4 h-4" />
+                  ) : (
+                    <ChevronRight className="w-4 h-4" />
+                  )}
+                </div>
+              </Button>
+
+              {/* Collapsible Section Items */}
+              {expandedSections[section.id] && (
+                <div className="ml-6 space-y-1 border-l border-gray-200 pl-4">
+                  {section.items.map((item, index) => (
+                    <div key={index}>
+                      {item.subtitle && (
+                        <div className="px-2 py-1 text-xs font-medium text-gray-400 uppercase tracking-wide">
+                          {item.subtitle}
+                        </div>
+                      )}
+                      <Button
+                        variant="ghost"
+                        className={`w-full justify-start text-sm hover:text-gray-900 hover:bg-gray-50 ${
+                          item.platformOwnerOnly ? 'text-yellow-600' : 'text-gray-600'
+                        }`}
+                        onClick={() => handleNavigation(item.path)}
+                      >
+                        <div className="flex items-center w-full">
+                          {item.icon}
+                          <div className="ml-2 flex-1 text-left">
+                            <div className="font-medium">{item.label}</div>
+                            {item.description && (
+                              <div className="text-xs text-gray-500">{item.description}</div>
+                            )}
+                          </div>
+                          {item.platformOwnerOnly && (
+                            <Crown className="w-3 h-3 ml-auto text-yellow-500" />
+                          )}
+                        </div>
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))
+        ) : (
+          // Collapsed menu - show only section icons
+          filteredMenuSections.map((section) => (
+            <div key={section.id} className="mb-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                className={`w-12 h-12 hover:text-gray-900 hover:bg-gray-100 ${
+                  section.platformOwnerOnly
+                    ? 'text-yellow-700 bg-yellow-50 hover:bg-yellow-100'
+                    : 'text-gray-700'
+                }`}
+                onClick={() => {
+                  onToggle(); // Expand menu when clicking on collapsed icon
+                  setTimeout(() => toggleSection(section.id), 100); // Small delay for smooth animation
+                }}
+                title={section.title}
+              >
+                {section.icon}
+              </Button>
+            </div>
+          ))
+        )}
       </div>
+
+      {/* Footer */}
+      {isOpen ? (
+        <div className="p-4 border-t border-gray-200">
+          <div className="flex items-center mb-4">
+            <Avatar
+              className="w-10 h-10 mr-3"
+              fallback={<span className="text-base">👤</span>}
+              src=""
+              alt=""
+              name=""
+              status=""
+            />
+            <div className="flex-1">
+              <p className="text-sm font-medium text-gray-900">
+                {isDemoMode ? "Demo User" : currentUser?.name || "User"}
+              </p>
+              <div className="flex items-center space-x-2">
+                {isDemoMode && <Badge variant="outline" className="text-xs">Demo Account</Badge>}
+                {currentUser?.subscription_tier && (
+                  <Badge variant="outline" className="text-xs capitalize">
+                    {currentUser.subscription_tier.replace('_', ' ')}
+                  </Badge>
+                )}
+              </div>
+            </div>
+          </div>
+          <Button
+            variant="outline"
+            className="w-full"
+            onClick={() => {
+              onLogout();
+              if (window.innerWidth < 1024) {
+                onToggle();
+              }
+            }}
+          >
+            {isDemoMode ? 'Exit Demo' : 'Logout'}
+          </Button>
+        </div>
+      ) : (
+        <div className="p-2 border-t border-gray-200">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="w-12 h-12 mx-auto"
+            onClick={() => {
+              onLogout();
+              if (window.innerWidth < 1024) {
+                onToggle();
+              }
+            }}
+            title={isDemoMode ? 'Exit Demo' : 'Logout'}
+          >
+            <Avatar
+              className="w-8 h-8"
+              fallback={<span className="text-sm">👤</span>}
+              src=""
+              alt=""
+              name=""
+              status=""
+            />
+          </Button>
+        </div>
+      )}
     </div>
   );
 };

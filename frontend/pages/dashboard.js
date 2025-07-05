@@ -1,22 +1,22 @@
 import React, { useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
-import { BarChart3, Users, TrendingUp, Activity, Bot, CheckCircle, Calendar, Bell, Crown, Menu } from 'lucide-react';
-import ComprehensiveNavigation from '../src/components/navigation/ComprehensiveNavigation';
+import { useRouter } from 'next/router';
+import { BarChart3, Users, TrendingUp, Activity, Bot, CheckCircle, Calendar, Bell, Crown, Menu, Home, LogOut } from 'lucide-react';
+import NextJSComprehensiveNavigation from '../src/components/navigation/NextJSComprehensiveNavigation';
+import { useAuth } from '../src/contexts/AuthContext';
 
 export default function Dashboard() {
+  const router = useRouter();
+  const { user, logout, isAuthenticated, isLoading } = useAuth();
   const [isNavigationOpen, setIsNavigationOpen] = useState(true);
 
-  // Mock Platform Owner user for demonstration
-  const mockPlatformOwner = {
-    name: 'Platform Owner',
-    role: 'platform_owner',
-    is_platform_owner: true,
-    subscription_tier: 'enterprise',
-    tenant_id: 1,
-    tenant_name: 'Digame Platform',
-    permissions: ['read', 'write', 'admin', 'platform_owner']
-  };
+  // Redirect if not authenticated
+  React.useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      router.push('/auth');
+    }
+  }, [isAuthenticated, isLoading, router]);
 
   const quickActions = [
     { title: 'My Digital Twin', icon: <Bot className="w-5 h-5" />, path: '/digital-twin/my-twin', color: 'blue' },
@@ -49,14 +49,31 @@ export default function Dashboard() {
     }
   ];
 
-  const handleLogout = () => {
-    console.log('Logout clicked');
-    // Add logout logic here
+  const handleLogout = async () => {
+    await logout();
+    router.push('/');
   };
 
   const toggleNavigation = () => {
     setIsNavigationOpen(!isNavigationOpen);
   };
+
+  // Show loading state while checking authentication
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Don't render if not authenticated
+  if (!isAuthenticated) {
+    return null;
+  }
 
   return (
     <>
@@ -69,40 +86,72 @@ export default function Dashboard() {
 
       <div className="flex h-screen bg-gray-50">
         {/* Comprehensive Navigation Sidebar */}
-        <ComprehensiveNavigation
-          isDemoMode={false}
+        <NextJSComprehensiveNavigation
+          isDemoMode={user?.isDemoMode || false}
           onLogout={handleLogout}
-          currentUser={mockPlatformOwner}
+          currentUser={{
+            name: user?.fullName || user?.name || `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || user?.username,
+            role: user?.role,
+            is_platform_owner: user?.isPlatformOwner,
+            subscription_tier: user?.subscriptionTier,
+            tenant_id: user?.teamId,
+            tenant_name: user?.teamId ? `Team ${user?.teamId}` : 'Individual',
+            permissions: user?.permissions || []
+          }}
           isOpen={isNavigationOpen}
           onToggle={toggleNavigation}
           showAllFeatures={true}
         />
 
         {/* Main Content Area */}
-        <div className="flex-1 flex flex-col overflow-hidden">
+        <div className={`flex-1 flex flex-col overflow-hidden transition-all duration-300 ease-in-out ${
+          isNavigationOpen ? 'ml-0' : 'ml-0'
+        }`}>
           {/* Top Header */}
           <header className="bg-white shadow-sm border-b border-gray-200">
             <div className="flex items-center justify-between px-6 py-4">
               <div className="flex items-center space-x-4">
                 <button
                   onClick={toggleNavigation}
-                  className="lg:hidden p-2 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                  className="p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 transition-colors"
+                  title={isNavigationOpen ? 'Collapse Menu' : 'Expand Menu'}
                 >
-                  <Menu className="w-5 h-5" />
+                  <Menu className="w-6 h-6" />
                 </button>
                 <div>
-                  <h1 className="text-2xl font-bold text-gray-900">Platform Owner Dashboard</h1>
-                  <p className="text-sm text-gray-600">Complete access to all 16 sections with 92 features</p>
+                  <h1 className="text-2xl font-bold text-gray-900">
+                    {user?.isPlatformOwner ? 'Platform Owner Dashboard' : 'Dashboard'}
+                  </h1>
+                  <p className="text-sm text-gray-600">
+                    {user?.isPlatformOwner
+                      ? 'Complete access to all 16 sections with 92 features'
+                      : 'Your personal productivity dashboard'
+                    }
+                  </p>
                 </div>
               </div>
               <div className="flex items-center space-x-3">
+                <Link href="/">
+                  <button className="p-2 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow" title="Return to Home">
+                    <Home className="w-5 h-5 text-gray-600" />
+                  </button>
+                </Link>
                 <button className="p-2 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">
                   <Bell className="w-5 h-5 text-gray-600" />
                 </button>
-                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 border border-yellow-200">
-                  <Crown className="w-3 h-3 mr-1" />
-                  Platform Owner
-                </span>
+                {user?.subscriptionTier && (
+                  <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200 capitalize">
+                    {user.subscriptionTier.replace('_', ' ')}
+                  </span>
+                )}
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center space-x-2 px-3 py-2 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg transition-colors"
+                  title="Logout"
+                >
+                  <LogOut className="w-4 h-4" />
+                  <span className="text-sm font-medium">Logout</span>
+                </button>
               </div>
             </div>
           </header>
@@ -115,11 +164,20 @@ export default function Dashboard() {
                 <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h2 className="text-2xl font-bold mb-2">Welcome back, Platform Owner!</h2>
-                      <p className="text-blue-100">You have complete access to all platform features and management tools.</p>
+                      <h2 className="text-2xl font-bold mb-2">
+                        Welcome back, {user?.firstName || user?.name || user?.username || 'User'}!
+                      </h2>
+                      <p className="text-blue-100">
+                        {user?.isPlatformOwner
+                          ? 'You have complete access to all platform features and management tools.'
+                          : 'Access your personalized dashboard and productivity tools.'
+                        }
+                      </p>
                     </div>
                     <div className="text-right">
-                      <div className="text-3xl font-bold">16</div>
+                      <div className="text-3xl font-bold">
+                        {user?.isPlatformOwner ? '16' : '12'}
+                      </div>
                       <div className="text-sm text-blue-200">Feature Sections</div>
                     </div>
                   </div>
@@ -181,51 +239,53 @@ export default function Dashboard() {
                 </Link>
               </div>
 
-              {/* Platform Owner Quick Actions */}
-              <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                  <Crown className="w-5 h-5 inline mr-2 text-yellow-600" />
-                  Platform Owner Quick Actions
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  <Link href="/platform-owner/console">
-                    <div className="p-4 rounded-lg border-2 border-transparent hover:border-yellow-200 hover:bg-yellow-50 transition-all cursor-pointer">
-                      <div className="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center mb-3">
-                        <Crown className="w-5 h-5 text-yellow-600" />
+              {/* Platform Owner Quick Actions - Only show for platform owners */}
+              {user?.isPlatformOwner && (
+                <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                    <Crown className="w-5 h-5 inline mr-2 text-yellow-600" />
+                    Platform Owner Quick Actions
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <Link href="/platform-owner/console">
+                      <div className="p-4 rounded-lg border-2 border-transparent hover:border-yellow-200 hover:bg-yellow-50 transition-all cursor-pointer">
+                        <div className="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center mb-3">
+                          <Crown className="w-5 h-5 text-yellow-600" />
+                        </div>
+                        <h4 className="font-medium text-gray-900">Platform Console</h4>
+                        <p className="text-xs text-gray-600 mt-1">Manage entire platform</p>
                       </div>
-                      <h4 className="font-medium text-gray-900">Platform Console</h4>
-                      <p className="text-xs text-gray-600 mt-1">Manage entire platform</p>
-                    </div>
-                  </Link>
-                  <Link href="/platform-owner/users">
-                    <div className="p-4 rounded-lg border-2 border-transparent hover:border-blue-200 hover:bg-blue-50 transition-all cursor-pointer">
-                      <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mb-3">
-                        <Users className="w-5 h-5 text-blue-600" />
+                    </Link>
+                    <Link href="/platform-owner/users">
+                      <div className="p-4 rounded-lg border-2 border-transparent hover:border-blue-200 hover:bg-blue-50 transition-all cursor-pointer">
+                        <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mb-3">
+                          <Users className="w-5 h-5 text-blue-600" />
+                        </div>
+                        <h4 className="font-medium text-gray-900">User Management</h4>
+                        <p className="text-xs text-gray-600 mt-1">All platform users</p>
                       </div>
-                      <h4 className="font-medium text-gray-900">User Management</h4>
-                      <p className="text-xs text-gray-600 mt-1">All platform users</p>
-                    </div>
-                  </Link>
-                  <Link href="/platform-owner/revenue">
-                    <div className="p-4 rounded-lg border-2 border-transparent hover:border-green-200 hover:bg-green-50 transition-all cursor-pointer">
-                      <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mb-3">
-                        <TrendingUp className="w-5 h-5 text-green-600" />
+                    </Link>
+                    <Link href="/platform-owner/revenue">
+                      <div className="p-4 rounded-lg border-2 border-transparent hover:border-green-200 hover:bg-green-50 transition-all cursor-pointer">
+                        <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mb-3">
+                          <TrendingUp className="w-5 h-5 text-green-600" />
+                        </div>
+                        <h4 className="font-medium text-gray-900">Revenue Analytics</h4>
+                        <p className="text-xs text-gray-600 mt-1">Business intelligence</p>
                       </div>
-                      <h4 className="font-medium text-gray-900">Revenue Analytics</h4>
-                      <p className="text-xs text-gray-600 mt-1">Business intelligence</p>
-                    </div>
-                  </Link>
-                  <Link href="/platform-owner/health">
-                    <div className="p-4 rounded-lg border-2 border-transparent hover:border-purple-200 hover:bg-purple-50 transition-all cursor-pointer">
-                      <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mb-3">
-                        <Activity className="w-5 h-5 text-purple-600" />
+                    </Link>
+                    <Link href="/platform-owner/health">
+                      <div className="p-4 rounded-lg border-2 border-transparent hover:border-purple-200 hover:bg-purple-50 transition-all cursor-pointer">
+                        <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mb-3">
+                          <Activity className="w-5 h-5 text-purple-600" />
+                        </div>
+                        <h4 className="font-medium text-gray-900">System Health</h4>
+                        <p className="text-xs text-gray-600 mt-1">Platform monitoring</p>
                       </div>
-                      <h4 className="font-medium text-gray-900">System Health</h4>
-                      <p className="text-xs text-gray-600 mt-1">Platform monitoring</p>
-                    </div>
-                  </Link>
+                    </Link>
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Regular Quick Actions */}
               <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
@@ -265,25 +325,53 @@ export default function Dashboard() {
                   </div>
                 </div>
 
-                {/* Platform Owner Insights */}
+                {/* Platform Owner Insights or Personal Insights */}
                 <div className="bg-white rounded-lg shadow-sm p-6">
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                    <Crown className="w-5 h-5 inline mr-2 text-yellow-600" />
-                    Platform Insights
+                    {user?.isPlatformOwner ? (
+                      <>
+                        <Crown className="w-5 h-5 inline mr-2 text-yellow-600" />
+                        Platform Insights
+                      </>
+                    ) : (
+                      <>
+                        <Activity className="w-5 h-5 inline mr-2 text-blue-600" />
+                        Personal Insights
+                      </>
+                    )}
                   </h3>
                   <div className="space-y-4">
-                    <div className="p-4 bg-yellow-50 rounded-lg border border-yellow-200">
-                      <div className="font-medium text-yellow-900 mb-2">Platform Performance</div>
-                      <p className="text-sm text-yellow-800">All systems operational. 99.9% uptime maintained this month.</p>
-                    </div>
-                    <div className="p-4 bg-blue-50 rounded-lg">
-                      <div className="font-medium text-blue-900 mb-2">User Growth</div>
-                      <p className="text-sm text-blue-800">Platform user base grew by 15% this quarter. Enterprise adoption increasing.</p>
-                    </div>
-                    <div className="p-4 bg-green-50 rounded-lg">
-                      <div className="font-medium text-green-900 mb-2">Revenue Trends</div>
-                      <p className="text-sm text-green-800">Monthly recurring revenue up 23%. Team tier showing strong conversion.</p>
-                    </div>
+                    {user?.isPlatformOwner ? (
+                      <>
+                        <div className="p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+                          <div className="font-medium text-yellow-900 mb-2">Platform Performance</div>
+                          <p className="text-sm text-yellow-800">All systems operational. 99.9% uptime maintained this month.</p>
+                        </div>
+                        <div className="p-4 bg-blue-50 rounded-lg">
+                          <div className="font-medium text-blue-900 mb-2">User Growth</div>
+                          <p className="text-sm text-blue-800">Platform user base grew by 15% this quarter. Enterprise adoption increasing.</p>
+                        </div>
+                        <div className="p-4 bg-green-50 rounded-lg">
+                          <div className="font-medium text-green-900 mb-2">Revenue Trends</div>
+                          <p className="text-sm text-green-800">Monthly recurring revenue up 23%. Team tier showing strong conversion.</p>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="p-4 bg-blue-50 rounded-lg">
+                          <div className="font-medium text-blue-900 mb-2">Productivity Trends</div>
+                          <p className="text-sm text-blue-800">Your productivity has increased by 15% this week. Great progress!</p>
+                        </div>
+                        <div className="p-4 bg-green-50 rounded-lg">
+                          <div className="font-medium text-green-900 mb-2">Goal Progress</div>
+                          <p className="text-sm text-green-800">You're 80% towards your monthly goals. Keep up the excellent work!</p>
+                        </div>
+                        <div className="p-4 bg-purple-50 rounded-lg">
+                          <div className="font-medium text-purple-900 mb-2">AI Recommendations</div>
+                          <p className="text-sm text-purple-800">Based on your patterns, consider scheduling focused work blocks in the morning.</p>
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
