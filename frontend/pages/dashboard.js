@@ -1,10 +1,31 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { BarChart3, Users, TrendingUp, Activity, Bot, CheckCircle, Calendar, Bell, Crown, Menu, Home, LogOut } from 'lucide-react';
+import { 
+  TrendingUp, 
+  Users, 
+  Target, 
+  BookOpen, 
+  Award, 
+  Clock, 
+  Lightbulb, 
+  ChevronRight, 
+  Star,
+  Menu,
+  X,
+  Home,
+  Bell,
+  Crown,
+  LogOut,
+  BarChart3,
+  Bot,
+  CheckCircle,
+  Activity
+} from 'lucide-react';
 import NextJSComprehensiveNavigation from '../src/components/navigation/NextJSComprehensiveNavigation';
 import NavigationHubFooter from '../src/components/layout/NavigationHubFooter';
+import PersonalizedDashboard from '../src/components/dashboard/PersonalizedDashboard';
 import { useAuth } from '../src/contexts/AuthContext';
 
 export default function Dashboard() {
@@ -13,45 +34,11 @@ export default function Dashboard() {
   const [isNavigationOpen, setIsNavigationOpen] = useState(true);
 
   // Redirect if not authenticated
-  React.useEffect(() => {
+  useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       router.push('/auth');
     }
   }, [isAuthenticated, isLoading, router]);
-
-  const quickActions = [
-    { title: 'My Digital Twin', icon: <Bot className="w-5 h-5" />, path: '/digital-twin/my-twin', color: 'blue' },
-    { title: 'Task Management', icon: <CheckCircle className="w-5 h-5" />, path: '/tasks', color: 'green' },
-    { title: 'Analytics', icon: <BarChart3 className="w-5 h-5" />, path: '/analytics/web', color: 'purple' },
-    { title: 'AI Tools', icon: <Bot className="w-5 h-5" />, path: '/ai-tools', color: 'orange' }
-  ];
-
-  const recentActivity = [
-    {
-      type: 'task',
-      title: 'Task completed',
-      description: 'Q1 Performance Review finalized',
-      time: '2 hours ago',
-      icon: <CheckCircle className="w-4 h-4 text-green-600" />,
-      path: '/tasks'
-    },
-    {
-      type: 'ai',
-      title: 'AI insight generated',
-      description: 'New productivity optimization suggestion',
-      time: '4 hours ago',
-      icon: <Bot className="w-4 h-4 text-blue-600" />,
-      path: '/ai-tools'
-    },
-    {
-      type: 'analytics',
-      title: 'Weekly report ready',
-      description: 'Performance analytics summary available',
-      time: '1 day ago',
-      icon: <BarChart3 className="w-4 h-4 text-purple-600" />,
-      path: '/analytics/web'
-    }
-  ];
 
   const handleLogout = async () => {
     await logout();
@@ -62,15 +49,30 @@ export default function Dashboard() {
     setIsNavigationOpen(!isNavigationOpen);
   };
 
-  // Debug: Log user object to console
-  React.useEffect(() => {
+  // Transform user data to match navigation component expectations
+  const adaptedUser = user ? {
+    name: user.fullName || user.name || `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.username,
+    role: user.role,
+    is_platform_owner: user.isPlatformOwner,
+    subscription_tier: user.subscriptionTier,
+    tenant_id: user.teamId || 1,
+    tenant_name: user.teamId ? `Team ${user.teamId}` : 'Individual',
+    permissions: user.permissions || []
+  } : null;
+
+  // Platform Owners and Demo Mode should always have access to all features
+  const shouldShowAllFeatures = user?.isDemoMode || user?.isPlatformOwner;
+
+  // Debug logging
+  useEffect(() => {
     if (user) {
       console.log('Dashboard - Current user object:', user);
       console.log('Dashboard - isPlatformOwner:', user.isPlatformOwner);
       console.log('Dashboard - role:', user.role);
       console.log('Dashboard - subscriptionTier:', user.subscriptionTier);
+      console.log('Dashboard - shouldShowAllFeatures:', shouldShowAllFeatures);
     }
-  }, [user]);
+  }, [user, shouldShowAllFeatures]);
 
   // Show loading state while checking authentication
   if (isLoading) {
@@ -89,11 +91,25 @@ export default function Dashboard() {
     return null;
   }
 
+  // Check if user has completed onboarding
+  if (user && !user.onboardingCompleted && !user.isDemoMode) {
+    router.push('/onboarding-wizard');
+    return null;
+  }
+
   return (
     <>
       <Head>
-        <title>Platform Owner Dashboard - Digame</title>
-        <meta name="description" content="Platform Owner comprehensive dashboard with full feature access" />
+        <title>
+          {user?.isPlatformOwner ? 'Platform Owner Dashboard - Digame' : 'Dashboard - Digame'}
+        </title>
+        <meta 
+          name="description" 
+          content={user?.isPlatformOwner 
+            ? "Platform Owner comprehensive dashboard with full feature access" 
+            : "Your personal productivity dashboard"
+          } 
+        />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
       </Head>
@@ -103,18 +119,10 @@ export default function Dashboard() {
         <NextJSComprehensiveNavigation
           isDemoMode={user?.isDemoMode || false}
           onLogout={handleLogout}
-          currentUser={{
-            name: user?.fullName || user?.name || `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || user?.username,
-            role: user?.role,
-            is_platform_owner: user?.isPlatformOwner,
-            subscription_tier: user?.subscriptionTier,
-            tenant_id: user?.teamId,
-            tenant_name: user?.teamId ? `Team ${user?.teamId}` : 'Individual',
-            permissions: user?.permissions || []
-          }}
+          currentUser={adaptedUser}
           isOpen={isNavigationOpen}
           onToggle={toggleNavigation}
-          showAllFeatures={true}
+          showAllFeatures={shouldShowAllFeatures}
         />
 
         {/* Main Content Area */}
@@ -158,6 +166,12 @@ export default function Dashboard() {
                     {user.subscriptionTier.replace('_', ' ')}
                   </span>
                 )}
+                {user?.isPlatformOwner && (
+                  <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 border border-yellow-200">
+                    <Crown className="w-3 h-3 mr-1" />
+                    Platform Owner
+                  </span>
+                )}
                 <button
                   onClick={handleLogout}
                   className="flex items-center space-x-2 px-3 py-2 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg transition-colors"
@@ -173,44 +187,108 @@ export default function Dashboard() {
           {/* Scrollable Main Content */}
           <main className="flex-1">
             <div className="container mx-auto px-6 py-8">
-              {/* Debug Section - Temporary */}
-              <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                <h3 className="text-sm font-semibold text-yellow-800 mb-2">Debug Info (Temporary)</h3>
-                <div className="text-xs text-yellow-700 space-y-1">
-                  <div>User ID: {user?.id}</div>
-                  <div>Username: {user?.username}</div>
-                  <div>Role: {user?.role}</div>
-                  <div>Subscription Tier: {user?.subscriptionTier}</div>
-                  <div>Is Platform Owner: {user?.isPlatformOwner ? 'YES' : 'NO'}</div>
-                  <div>Is Demo Mode: {user?.isDemoMode ? 'YES' : 'NO'}</div>
-                  <div>Permissions: {user?.permissions?.join(', ')}</div>
-                </div>
-              </div>
-
-              {/* Welcome Section */}
-              <div className="mb-8">
-                <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg p-6">
+              {/* Platform Owner Welcome Banner */}
+              {user?.isPlatformOwner && (
+                <div className="bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600 text-white p-6 rounded-lg shadow-lg mb-8">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h2 className="text-2xl font-bold mb-2">
-                        Welcome back, {user?.firstName || user?.name || user?.username || 'User'}!
+                      <h2 className="text-2xl font-bold mb-2 flex items-center gap-2">
+                        <Crown className="w-6 h-6" />
+                        Welcome, Platform Owner!
                       </h2>
-                      <p className="text-blue-100">
-                        {user?.isPlatformOwner
-                          ? 'You have complete access to all platform features and management tools.'
-                          : 'Access your personalized dashboard and productivity tools.'
-                        }
+                      <p className="text-yellow-100">
+                        You have complete access to all platform features and management tools.
                       </p>
                     </div>
                     <div className="text-right">
-                      <div className="text-3xl font-bold">
-                        {user?.isPlatformOwner ? '14' : '12'}
-                      </div>
-                      <div className="text-sm text-blue-200">Feature Sections</div>
+                      <div className="text-3xl font-bold">14</div>
+                      <div className="text-sm text-yellow-200">Feature Sections</div>
                     </div>
                   </div>
                 </div>
+              )}
+
+              {/* Personalized Welcome Banner - Show for all users */}
+              <div className="bg-gradient-to-r from-purple-600 to-blue-600 text-white p-6 rounded-lg mb-8">
+                <h2 className="text-2xl font-bold mb-2">
+                  Welcome back, {user?.firstName || user?.name || user?.username || 'User'}! 👋
+                </h2>
+                <p className="text-purple-100">
+                  Your personalized dashboard is ready with widgets tailored to your interests in{' '}
+                  {user?.onboardingData?.interests?.join(', ') || 'analytics, ai, productivity, team_management'} and goals for{' '}
+                  {user?.onboardingData?.goals?.join(', ') || 'productivity, data_insights, team_optimization'}.
+                </p>
               </div>
+
+              {/* Regular Welcome Section for non-Platform Owners */}
+              {!user?.isPlatformOwner && (
+                <div className="mb-8">
+                  <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h2 className="text-2xl font-bold mb-2">
+                          Welcome back, {user?.firstName || user?.name || user?.username || 'User'}!
+                        </h2>
+                        <p className="text-blue-100">
+                          Access your personalized dashboard and productivity tools.
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-3xl font-bold">12</div>
+                        <div className="text-sm text-blue-200">Feature Sections</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Platform Owner Feature Overview */}
+              {user?.isPlatformOwner && (
+                <div className="mb-8">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Platform Overview</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="text-2xl font-bold text-blue-600">14</div>
+                          <div className="text-sm text-blue-800">Major Sections</div>
+                        </div>
+                        <Target className="w-8 h-8 text-blue-500" />
+                      </div>
+                    </div>
+
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="text-2xl font-bold text-green-600">95+</div>
+                          <div className="text-sm text-green-800">Features</div>
+                        </div>
+                        <Star className="w-8 h-8 text-green-500" />
+                      </div>
+                    </div>
+
+                    <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="text-2xl font-bold text-purple-600">100%</div>
+                          <div className="text-sm text-purple-800">Backend Coverage</div>
+                        </div>
+                        <Award className="w-8 h-8 text-purple-500" />
+                      </div>
+                    </div>
+
+                    <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="text-2xl font-bold text-orange-600">∞</div>
+                          <div className="text-sm text-orange-800">Access Level</div>
+                        </div>
+                        <Lightbulb className="w-8 h-8 text-orange-500" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Key Metrics - Clickable Cards */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -315,107 +393,9 @@ export default function Dashboard() {
                 </div>
               )}
 
-              {/* Regular Quick Actions */}
-              <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  {quickActions.map((action, index) => (
-                    <Link key={index} href={action.path}>
-                      <div className={`p-4 rounded-lg border-2 border-transparent hover:border-${action.color}-200 hover:bg-${action.color}-50 transition-all cursor-pointer`}>
-                        <div className={`w-10 h-10 bg-${action.color}-100 rounded-lg flex items-center justify-center mb-3`}>
-                          {action.icon}
-                        </div>
-                        <h4 className="font-medium text-gray-900">{action.title}</h4>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-
-              {/* Main Content Grid */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-                {/* Recent Activity */}
-                <div className="bg-white rounded-lg shadow-sm p-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Activity</h3>
-                  <div className="space-y-4">
-                    {recentActivity.map((activity, index) => (
-                      <Link key={index} href={activity.path}>
-                        <div className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 hover:shadow-md transition-all duration-200 cursor-pointer border-2 border-transparent hover:border-blue-200">
-                          <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center">
-                            {activity.icon}
-                          </div>
-                          <div className="flex-1">
-                            <div className="font-medium text-gray-900">{activity.title}</div>
-                            <div className="text-sm text-gray-600">{activity.description}</div>
-                            <div className="text-xs text-gray-500 mt-1">{activity.time}</div>
-                          </div>
-                        </div>
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Platform Owner Insights or Personal Insights */}
-                <div className="bg-white rounded-lg shadow-sm p-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                    {user?.isPlatformOwner ? (
-                      <>
-                        <Crown className="w-5 h-5 inline mr-2 text-yellow-600" />
-                        Platform Insights
-                      </>
-                    ) : (
-                      <>
-                        <Activity className="w-5 h-5 inline mr-2 text-blue-600" />
-                        Personal Insights
-                      </>
-                    )}
-                  </h3>
-                  <div className="space-y-4">
-                    {user?.isPlatformOwner ? (
-                      <>
-                        <Link href="/platform-owner/health">
-                          <div className="p-4 bg-yellow-50 rounded-lg border border-yellow-200 hover:bg-yellow-100 hover:shadow-md transition-all duration-200 cursor-pointer hover:border-yellow-300">
-                            <div className="font-medium text-yellow-900 mb-2">Platform Performance</div>
-                            <p className="text-sm text-yellow-800">All systems operational. 99.9% uptime maintained this month.</p>
-                          </div>
-                        </Link>
-                        <Link href="/platform-owner/users">
-                          <div className="p-4 bg-blue-50 rounded-lg hover:bg-blue-100 hover:shadow-md transition-all duration-200 cursor-pointer border-2 border-transparent hover:border-blue-200">
-                            <div className="font-medium text-blue-900 mb-2">User Growth</div>
-                            <p className="text-sm text-blue-800">Platform user base grew by 15% this quarter. Enterprise adoption increasing.</p>
-                          </div>
-                        </Link>
-                        <Link href="/platform-owner/revenue">
-                          <div className="p-4 bg-green-50 rounded-lg hover:bg-green-100 hover:shadow-md transition-all duration-200 cursor-pointer border-2 border-transparent hover:border-green-200">
-                            <div className="font-medium text-green-900 mb-2">Revenue Trends</div>
-                            <p className="text-sm text-green-800">Monthly recurring revenue up 23%. Team tier showing strong conversion.</p>
-                          </div>
-                        </Link>
-                      </>
-                    ) : (
-                      <>
-                        <Link href="/analytics/performance">
-                          <div className="p-4 bg-blue-50 rounded-lg hover:bg-blue-100 hover:shadow-md transition-all duration-200 cursor-pointer border-2 border-transparent hover:border-blue-200">
-                            <div className="font-medium text-blue-900 mb-2">Productivity Trends</div>
-                            <p className="text-sm text-blue-800">Your productivity has increased by 15% this week. Great progress!</p>
-                          </div>
-                        </Link>
-                        <Link href="/tasks">
-                          <div className="p-4 bg-green-50 rounded-lg hover:bg-green-100 hover:shadow-md transition-all duration-200 cursor-pointer border-2 border-transparent hover:border-green-200">
-                            <div className="font-medium text-green-900 mb-2">Goal Progress</div>
-                            <p className="text-sm text-green-800">You're 80% towards your monthly goals. Keep up the excellent work!</p>
-                          </div>
-                        </Link>
-                        <Link href="/ai-tools">
-                          <div className="p-4 bg-purple-50 rounded-lg hover:bg-purple-100 hover:shadow-md transition-all duration-200 cursor-pointer border-2 border-transparent hover:border-purple-200">
-                            <div className="font-medium text-purple-900 mb-2">AI Recommendations</div>
-                            <p className="text-sm text-purple-800">Based on your patterns, consider scheduling focused work blocks in the morning.</p>
-                          </div>
-                        </Link>
-                      </>
-                    )}
-                  </div>
-                </div>
+              {/* Main Dashboard Content */}
+              <div className="mb-8">
+                <PersonalizedDashboard />
               </div>
             </div>
           </main>
