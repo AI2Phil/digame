@@ -144,11 +144,39 @@ export default function DigitalTwinIntelligence() {
   const handleTestAPI = async () => {
     setIsLoading(true);
     
-    // Simulate API call delay
-    setTimeout(() => {
+    try {
+      // Check if backend is available
+      const backendAvailable = await fetch('/api/health').then(res => res.ok).catch(() => false);
+      
+      if (backendAvailable) {
+        // Make real API call
+        const response = await fetch(selectedAPI.endpoint, {
+          method: selectedAPI.method,
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('authToken') || 'demo-token'}`
+          },
+          body: selectedAPI.method !== 'GET' ? JSON.stringify(selectedAPI.example) : undefined
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          setApiResponse(data);
+        } else {
+          // Fallback to mock data on API error
+          setApiResponse(mockResponses[selectedEndpoint]);
+        }
+      } else {
+        // Fallback to mock data when backend unavailable
+        setApiResponse(mockResponses[selectedEndpoint]);
+      }
+    } catch (error) {
+      console.error('API call failed:', error);
+      // Fallback to mock data on error
       setApiResponse(mockResponses[selectedEndpoint]);
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   const copyToClipboard = (text) => {

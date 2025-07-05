@@ -735,6 +735,54 @@ export default function TestZone() {
                         color: 'bg-cyan-500'
                       },
                       {
+                        name: 'Digital Twin Hub',
+                        endpoints: [
+                          { method: 'GET', path: '/api/digital-twin/profile', desc: 'Digital twin profile data' },
+                          { method: 'GET', path: '/api/digital-twin/insights', desc: 'AI-powered behavioral insights' },
+                          { method: 'POST', path: '/api/digital-twin/chat', desc: 'Interactive AI chat' },
+                          { method: 'GET', path: '/api/digital-twin/analytics', desc: 'Digital twin analytics data' },
+                          { method: 'GET', path: '/api/digital-twin/behavior', desc: 'Behavioral analysis data' },
+                          { method: 'GET', path: '/api/digital-twin/intelligence', desc: 'Intelligence testing and analysis' },
+                          { method: 'GET', path: '/api/digital-twin/predictions', desc: 'Predictive analytics data' },
+                          { method: 'POST', path: '/api/digital-twin/simulation', desc: 'Run digital twin simulations' },
+                          { method: 'POST', path: '/api/digital-twin/onboarding', desc: 'Save onboarding configuration' }
+                        ],
+                        color: 'bg-pink-500'
+                      },
+                      {
+                        name: 'Integration Hub',
+                        endpoints: [
+                          { method: 'GET', path: '/api/integration-hub/status', desc: 'Integration status overview' },
+                          { method: 'GET', path: '/api/integration-hub/connections', desc: 'Active connections list' },
+                          { method: 'GET', path: '/api/integration-hub/webhooks', desc: 'Webhook configurations' },
+                          { method: 'POST', path: '/api/integration-hub/test', desc: 'Test integration connection' },
+                          { method: 'GET', path: '/api/integration/api/keys', desc: 'API key management' },
+                          { method: 'GET', path: '/api/integration/api/endpoints', desc: 'API endpoint management' },
+                          { method: 'GET', path: '/api/integration/api/stats', desc: 'API usage statistics' },
+                          { method: 'GET', path: '/api/integration/data/sources', desc: 'Data source management' },
+                          { method: 'GET', path: '/api/integration/data/sync-jobs', desc: 'Data sync job monitoring' },
+                          { method: 'GET', path: '/api/integration/sso/providers', desc: 'SSO provider management' },
+                          { method: 'GET', path: '/api/integration/webhooks/list', desc: 'Webhook management' },
+                          { method: 'GET', path: '/api/integration/guest/users', desc: 'Guest access management' }
+                        ],
+                        color: 'bg-amber-500'
+                      },
+                      {
+                        name: 'Workflow Automation',
+                        endpoints: [
+                          { method: 'GET', path: '/api/workflow-automation/workflows', desc: 'Active workflows list' },
+                          { method: 'GET', path: '/api/workflow-automation/templates', desc: 'Workflow templates' },
+                          { method: 'POST', path: '/api/workflow-automation/execute', desc: 'Execute workflow' },
+                          { method: 'GET', path: '/api/workflow/automation', desc: 'Automation rules and triggers' },
+                          { method: 'GET', path: '/api/workflow/advanced', desc: 'Advanced workflow configurations' },
+                          { method: 'GET', path: '/api/workflow/optimization', desc: 'Workflow optimization analytics' },
+                          { method: 'POST', path: '/api/workflow/automation/create', desc: 'Create new automation rule' },
+                          { method: 'POST', path: '/api/workflow/advanced/configure', desc: 'Configure advanced workflow' },
+                          { method: 'GET', path: '/api/workflow/optimization/suggestions', desc: 'Get optimization suggestions' }
+                        ],
+                        color: 'bg-lime-500'
+                      },
+                      {
                         name: 'Security',
                         endpoints: [
                           { method: 'GET', path: '/security/mfa', desc: 'MFA management' },

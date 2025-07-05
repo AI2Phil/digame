@@ -11,6 +11,8 @@ export default function DigitalTwinOnboarding() {
     preferences: {},
     interests: []
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState(null);
 
   const steps = [
     {
@@ -76,9 +78,50 @@ export default function DigitalTwinOnboarding() {
     }
   };
 
-  const handleComplete = () => {
-    // In a real app, this would save the configuration
-    alert('Digital Twin configured successfully! Redirecting to your twin dashboard...');
+  const handleComplete = async () => {
+    setIsSubmitting(true);
+    setError(null);
+    
+    try {
+      // Check if backend is available
+      const backendAvailable = await fetch('/api/health').then(res => res.ok).catch(() => false);
+      
+      if (backendAvailable) {
+        // Make real API call to save configuration
+        const response = await fetch('/api/digital-twin/onboarding', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('authToken') || 'demo-token'}`
+          },
+          body: JSON.stringify({
+            goals: formData.goals,
+            workStyle: formData.workStyle,
+            preferences: formData.preferences,
+            interests: formData.interests,
+            completedAt: new Date().toISOString()
+          })
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          alert('Digital Twin configured successfully! Redirecting to your twin dashboard...');
+          // In a real app, this would redirect to the dashboard
+          window.location.href = '/digital-twin/my-twin';
+        } else {
+          setError('Failed to save configuration. Please try again.');
+        }
+      } else {
+        // Fallback behavior when backend unavailable
+        alert('Digital Twin configured successfully! (Demo mode - configuration saved locally)');
+        localStorage.setItem('digitalTwinConfig', JSON.stringify(formData));
+      }
+    } catch (error) {
+      console.error('Failed to complete onboarding:', error);
+      setError('Failed to save configuration. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const renderStepContent = () => {
@@ -301,10 +344,20 @@ export default function DigitalTwinOnboarding() {
               ) : (
                 <button
                   onClick={handleComplete}
-                  className="flex items-center space-x-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                  disabled={isSubmitting}
+                  className="flex items-center space-x-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <CheckCircle className="w-4 h-4" />
-                  <span>Activate Digital Twin</span>
+                  {isSubmitting ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      <span>Activating...</span>
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle className="w-4 h-4" />
+                      <span>Activate Digital Twin</span>
+                    </>
+                  )}
                 </button>
               )}
             </div>

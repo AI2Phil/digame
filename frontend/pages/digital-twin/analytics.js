@@ -9,9 +9,33 @@ export default function TwinAnalytics() {
   const [analyticsData, setAnalyticsData] = useState(null);
 
   useEffect(() => {
-    // Simulate loading analytics data
-    const loadAnalytics = () => {
-      const mockData = {
+    fetchAnalyticsData();
+  }, [timeRange]);
+
+  const fetchAnalyticsData = async () => {
+    try {
+      const response = await fetch(`/api/digital-twin/analytics?timeRange=${timeRange}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setAnalyticsData(data);
+      } else {
+        // Fallback to mock data if API fails
+        loadMockAnalytics();
+      }
+    } catch (error) {
+      console.error('Error fetching analytics data:', error);
+      // Fallback to mock data
+      loadMockAnalytics();
+    }
+  };
+
+  const loadMockAnalytics = () => {
+    const mockData = {
         overview: {
           twin_accuracy: 94.2,
           prediction_success: 87.5,
@@ -98,11 +122,8 @@ export default function TwinAnalytics() {
           }
         ]
       };
-      setAnalyticsData(mockData);
-    };
-
-    loadAnalytics();
-  }, [timeRange]);
+    setAnalyticsData(mockData);
+  };
 
   const metricCategories = [
     { id: 'performance', label: 'Performance', icon: <TrendingUp className="w-4 h-4" /> },

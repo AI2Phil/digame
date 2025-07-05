@@ -39,7 +39,7 @@ class DataIntegrityValidator:
         )
         self.logger = logging.getLogger(__name__)
         
-        self.validation_results = {
+        self.validation_results: Dict[str, Any] = {
             'timestamp': datetime.now().isoformat(),
             'database_path': db_path,
             'checks_performed': [],
@@ -64,11 +64,18 @@ class DataIntegrityValidator:
             'teams', 'team_members', 'skills', 'user_skills', 'mentorship_relationships',
             'workflows', 'analytics_events', 'audit_logs', 'api_keys', 'webhooks',
             'reports', 'platform_metrics', 'tenants', 'data_management_operations',
-            'data_backups'
+            'data_backups',
+            # Digital Twin Hub tables
+            'digital_twin_analytics', 'digital_twin_behavior', 'digital_twin_predictions',
+            'digital_twin_simulations', 'digital_twin_intelligence', 'digital_twin_onboarding',
+            # Integration Hub tables
+            'integrations', 'sso_configs', 'data_sources',
+            # Workflow Automation Hub tables
+            'automation_rules', 'workflow_executions'
         ]
         
         conn = self.connect_db()
-        result = {
+        result: Dict[str, Any] = {
             'check_name': 'table_existence',
             'status': 'passed',
             'details': {},
@@ -120,7 +127,7 @@ class DataIntegrityValidator:
         self.logger.info("Checking foreign key constraints...")
         
         conn = self.connect_db()
-        result = {
+        result: Dict[str, Any] = {
             'check_name': 'foreign_key_constraints',
             'status': 'passed',
             'details': {},
@@ -167,7 +174,7 @@ class DataIntegrityValidator:
         self.logger.info("Checking data consistency...")
         
         conn = self.connect_db()
-        result = {
+        result: Dict[str, Any] = {
             'check_name': 'data_consistency',
             'status': 'passed',
             'details': {},
@@ -277,7 +284,7 @@ class DataIntegrityValidator:
         self.logger.info("Checking mock data flagging...")
         
         conn = self.connect_db()
-        result = {
+        result: Dict[str, Any] = {
             'check_name': 'mock_data_flagging',
             'status': 'passed',
             'details': {},
@@ -362,7 +369,7 @@ class DataIntegrityValidator:
         self.logger.info("Checking Hub pages data integrity...")
         
         conn = self.connect_db()
-        result = {
+        result: Dict[str, Any] = {
             'check_name': 'hub_pages_data_integrity',
             'status': 'passed',
             'details': {},
@@ -506,7 +513,7 @@ class DataIntegrityValidator:
         self.logger.info("Checking database integrity...")
         
         conn = self.connect_db()
-        result = {
+        result: Dict[str, Any] = {
             'check_name': 'database_integrity',
             'status': 'passed',
             'details': {},
@@ -555,7 +562,7 @@ class DataIntegrityValidator:
         self.logger.info(f"{'[DRY RUN] ' if dry_run else ''}Fixing orphaned records...")
         
         conn = self.connect_db()
-        result = {
+        result: Dict[str, Any] = {
             'fix_name': 'orphaned_records',
             'status': 'completed',
             'records_fixed': 0,
@@ -624,7 +631,7 @@ class DataIntegrityValidator:
         self.logger.info(f"{'[DRY RUN] ' if dry_run else ''}Fixing NULL mock data flags...")
         
         conn = self.connect_db()
-        result = {
+        result: Dict[str, Any] = {
             'fix_name': 'null_mock_flags',
             'status': 'completed',
             'records_fixed': 0,

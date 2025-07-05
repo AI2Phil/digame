@@ -25,7 +25,7 @@ import argparse
 import logging
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, List, Tuple, Optional, Any, Union
 import shutil
 import gzip
 
@@ -86,12 +86,12 @@ class DataMigrationTool:
             self.logger.error(f"Failed to create backup: {e}")
             raise
     
-    def analyze_current_data(self) -> Dict:
+    def analyze_current_data(self) -> Dict[str, Any]:
         """Analyze current database state"""
         self.logger.info("Analyzing current database state...")
         
         conn = self.connect_db()
-        analysis = {
+        analysis: Dict[str, Any] = {
             'tables': {},
             'mock_data_summary': {},
             'real_data_summary': {},
@@ -103,8 +103,8 @@ class DataMigrationTool:
         try:
             # Get all tables with is_mock_data column
             tables_query = """
-                SELECT name FROM sqlite_master 
-                WHERE type='table' 
+                SELECT name FROM sqlite_master
+                WHERE type='table'
                 AND name NOT LIKE 'sqlite_%'
                 AND sql LIKE '%is_mock_data%'
             """
@@ -147,17 +147,17 @@ class DataMigrationTool:
                            f"{analysis['mock_records']} mock ({analysis.get('mock_percentage', 0):.1f}%), "
                            f"{analysis['real_records']} real ({analysis.get('real_percentage', 0):.1f}%)")
             
-            return analysis
-            
         finally:
             conn.close()
+        
+        return analysis
     
-    def identify_critical_data(self) -> Dict:
+    def identify_critical_data(self) -> Dict[str, Any]:
         """Identify critical data that should never be deleted"""
         self.logger.info("Identifying critical data...")
         
         conn = self.connect_db()
-        critical_data = {
+        critical_data: Dict[str, Any] = {
             'platform_owners': [],
             'essential_users': [],
             'system_configurations': [],
@@ -167,9 +167,9 @@ class DataMigrationTool:
         try:
             # Find platform owners
             platform_owners = conn.execute("""
-                SELECT id, email, firstName, lastName 
-                FROM users 
-                WHERE isPlatformOwner = TRUE 
+                SELECT id, email, firstName, lastName
+                FROM users
+                WHERE isPlatformOwner = TRUE
                 AND is_mock_data = FALSE
             """).fetchall()
             
@@ -199,10 +199,10 @@ class DataMigrationTool:
             self.logger.info(f"Critical data identified: {len(critical_data['platform_owners'])} platform owners, "
                            f"{len(critical_data['essential_users'])} essential users")
             
-            return critical_data
-            
         finally:
             conn.close()
+        
+        return critical_data
     
     def validate_migration_safety(self, analysis: Dict, critical_data: Dict) -> List[str]:
         """Validate that migration can be performed safely"""
@@ -250,12 +250,12 @@ class DataMigrationTool:
         
         return warnings
     
-    def perform_mock_data_cleanup(self, dry_run: bool = False, preserve_users: bool = True) -> Dict:
+    def perform_mock_data_cleanup(self, dry_run: bool = False, preserve_users: bool = True) -> Dict[str, Any]:
         """Remove mock data from the database"""
         self.logger.info(f"{'[DRY RUN] ' if dry_run else ''}Starting mock data cleanup...")
         
         conn = self.connect_db()
-        cleanup_results = {
+        cleanup_results: Dict[str, Any] = {
             'tables_processed': [],
             'records_deleted': 0,
             'errors': []
@@ -264,8 +264,8 @@ class DataMigrationTool:
         try:
             # Get tables with mock data
             tables_query = """
-                SELECT name FROM sqlite_master 
-                WHERE type='table' 
+                SELECT name FROM sqlite_master
+                WHERE type='table'
                 AND name NOT LIKE 'sqlite_%'
                 AND sql LIKE '%is_mock_data%'
             """
@@ -332,17 +332,17 @@ class DataMigrationTool:
             self.logger.info(f"{'[DRY RUN] ' if dry_run else ''}Mock data cleanup complete. "
                            f"{'Would delete' if dry_run else 'Deleted'} {cleanup_results['records_deleted']} records.")
             
-            return cleanup_results
-            
         finally:
             conn.close()
+        
+        return cleanup_results
     
-    def optimize_for_production(self, dry_run: bool = False) -> Dict:
+    def optimize_for_production(self, dry_run: bool = False) -> Dict[str, Any]:
         """Optimize database for production use"""
         self.logger.info(f"{'[DRY RUN] ' if dry_run else ''}Optimizing database for production...")
         
         conn = self.connect_db()
-        optimization_results = {
+        optimization_results: Dict[str, Any] = {
             'indexes_created': [],
             'statistics_updated': False,
             'constraints_validated': True,
@@ -365,7 +365,21 @@ class DataMigrationTool:
                     "CREATE INDEX IF NOT EXISTS idx_notifications_user_read ON notifications(userId, isRead) WHERE is_mock_data = FALSE",
                     "CREATE INDEX IF NOT EXISTS idx_workflows_user_status ON workflows(user_id, status) WHERE is_mock_data = FALSE",
                     "CREATE INDEX IF NOT EXISTS idx_api_keys_user ON api_keys(user_id) WHERE is_mock_data = FALSE",
-                    "CREATE INDEX IF NOT EXISTS idx_webhooks_user ON webhooks(user_id) WHERE is_mock_data = FALSE"
+                    "CREATE INDEX IF NOT EXISTS idx_webhooks_user ON webhooks(user_id) WHERE is_mock_data = FALSE",
+                    # Digital Twin Hub optimization indexes
+                    "CREATE INDEX IF NOT EXISTS idx_digital_twin_analytics_user ON digital_twin_analytics(user_id) WHERE is_mock_data = FALSE",
+                    "CREATE INDEX IF NOT EXISTS idx_digital_twin_behavior_user ON digital_twin_behavior(user_id) WHERE is_mock_data = FALSE",
+                    "CREATE INDEX IF NOT EXISTS idx_digital_twin_predictions_user ON digital_twin_predictions(user_id) WHERE is_mock_data = FALSE",
+                    "CREATE INDEX IF NOT EXISTS idx_digital_twin_simulations_user ON digital_twin_simulations(user_id) WHERE is_mock_data = FALSE",
+                    "CREATE INDEX IF NOT EXISTS idx_digital_twin_intelligence_user ON digital_twin_intelligence(user_id) WHERE is_mock_data = FALSE",
+                    "CREATE INDEX IF NOT EXISTS idx_digital_twin_onboarding_user ON digital_twin_onboarding(user_id) WHERE is_mock_data = FALSE",
+                    # Integration Hub optimization indexes
+                    "CREATE INDEX IF NOT EXISTS idx_integrations_user_status ON integrations(user_id, status) WHERE is_mock_data = FALSE",
+                    "CREATE INDEX IF NOT EXISTS idx_sso_configs_user ON sso_configs(user_id) WHERE is_mock_data = FALSE",
+                    "CREATE INDEX IF NOT EXISTS idx_data_sources_user ON data_sources(user_id) WHERE is_mock_data = FALSE",
+                    # Workflow Automation Hub optimization indexes
+                    "CREATE INDEX IF NOT EXISTS idx_automation_rules_user ON automation_rules(user_id) WHERE is_mock_data = FALSE",
+                    "CREATE INDEX IF NOT EXISTS idx_workflow_executions_user_date ON workflow_executions(user_id, created_at) WHERE is_mock_data = FALSE"
                 ]
                 
                 for index_sql in production_indexes:
@@ -386,13 +400,14 @@ class DataMigrationTool:
                 conn.commit()
             
             self.logger.info(f"{'[DRY RUN] ' if dry_run else ''}Database optimization complete.")
-            return optimization_results
             
         finally:
             conn.close()
+        
+        return optimization_results
     
-    def generate_migration_report(self, analysis: Dict, cleanup_results: Dict, 
-                                optimization_results: Dict, backup_path: str) -> str:
+    def generate_migration_report(self, analysis: Dict[str, Any], cleanup_results: Dict[str, Any],
+                                optimization_results: Dict[str, Any], backup_path: str) -> str:
         """Generate comprehensive migration report"""
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         
@@ -495,7 +510,7 @@ For support, refer to the platform documentation or contact the development team
         self.logger.info(f"Migration report saved: {report_path}")
         return str(report_path)
 
-def load_config(config_file: str) -> Dict:
+def load_config(config_file: str) -> Dict[str, Any]:
     """Load migration configuration from file"""
     if not os.path.exists(config_file):
         return {}

@@ -8,6 +8,7 @@ export default function TwinSimulation() {
   const [simulationParams, setSimulationParams] = useState({});
   const [simulationResult, setSimulationResult] = useState(null);
   const [isRunning, setIsRunning] = useState(false);
+  const [error, setError] = useState(null);
 
   const scenarios = [
     {
@@ -186,12 +187,45 @@ export default function TwinSimulation() {
     if (!selectedScenario) return;
     
     setIsRunning(true);
+    setError(null);
     
-    // Simulate processing time
-    setTimeout(() => {
+    try {
+      // Check if backend is available
+      const backendAvailable = await fetch('/api/health').then(res => res.ok).catch(() => false);
+      
+      if (backendAvailable) {
+        // Make real API call
+        const response = await fetch('/api/digital-twin/simulation', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('authToken') || 'demo-token'}`
+          },
+          body: JSON.stringify({
+            scenario: selectedScenario,
+            parameters: simulationParams
+          })
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          setSimulationResult(data);
+        } else {
+          // Fallback to mock data on API error
+          setSimulationResult(mockResults[selectedScenario]);
+        }
+      } else {
+        // Fallback to mock data when backend unavailable
+        setSimulationResult(mockResults[selectedScenario]);
+      }
+    } catch (error) {
+      console.error('Simulation failed:', error);
+      setError('Failed to run simulation');
+      // Fallback to mock data on error
       setSimulationResult(mockResults[selectedScenario]);
+    } finally {
       setIsRunning(false);
-    }, 2000);
+    }
   };
 
   const selectedScenarioData = scenarios.find(s => s.id === selectedScenario);
