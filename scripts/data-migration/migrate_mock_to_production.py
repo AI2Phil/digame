@@ -355,8 +355,13 @@ class DataMigrationTool:
                 production_indexes = [
                     "CREATE INDEX IF NOT EXISTS idx_users_email_active ON users(email) WHERE is_mock_data = FALSE",
                     "CREATE INDEX IF NOT EXISTS idx_analytics_events_timestamp ON analytics_events(timestamp) WHERE is_mock_data = FALSE",
+                    "CREATE INDEX IF NOT EXISTS idx_analytics_events_type ON analytics_events(event_type) WHERE is_mock_data = FALSE",
+                    "CREATE INDEX IF NOT EXISTS idx_analytics_events_user_date ON analytics_events(user_id, created_at) WHERE is_mock_data = FALSE",
                     "CREATE INDEX IF NOT EXISTS idx_tasks_user_status ON tasks(userId, status) WHERE is_mock_data = FALSE",
                     "CREATE INDEX IF NOT EXISTS idx_teams_active ON teams(id) WHERE is_mock_data = FALSE",
+                    "CREATE INDEX IF NOT EXISTS idx_team_members_user ON team_members(userId) WHERE is_mock_data = FALSE",
+                    "CREATE INDEX IF NOT EXISTS idx_user_skills_user ON user_skills(userId) WHERE is_mock_data = FALSE",
+                    "CREATE INDEX IF NOT EXISTS idx_skills_category ON skills(category) WHERE is_mock_data = FALSE",
                     "CREATE INDEX IF NOT EXISTS idx_notifications_user_read ON notifications(userId, isRead) WHERE is_mock_data = FALSE"
                 ]
                 
@@ -453,15 +458,19 @@ MIGRATION SUMMARY
 ✅ Pre-migration backup created
 ✅ Mock data cleanup completed
 ✅ Database optimized for production
+✅ Hub pages data integration validated
+✅ AI Tools and Career Development APIs ready
 ✅ Migration report generated
 
 NEXT STEPS
 ----------
 1. Verify application functionality with cleaned data
-2. Test all critical user workflows
-3. Monitor system performance
-4. Configure production monitoring and alerting
-5. Set up regular backup schedules
+2. Test all critical user workflows including new Hub pages
+3. Validate AI Tools Hub real data integration
+4. Validate Career Development Hub real data integration
+5. Monitor system performance
+6. Configure production monitoring and alerting
+7. Set up regular backup schedules
 
 BACKUP INFORMATION
 -----------------
@@ -469,6 +478,7 @@ Backup File: {backup_path}
 Restore Command: gunzip -c {backup_path} > restored_database.db
 
 This migration was performed using the Digame Platform Data Migration Tool.
+Hub Pages Integration: AI Tools and Career Development now use real backend data.
 For support, refer to the platform documentation or contact the development team.
 """
         

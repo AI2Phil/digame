@@ -178,10 +178,10 @@ class DataIntegrityValidator:
             {
                 'name': 'orphaned_team_members',
                 'query': """
-                    SELECT tm.id, tm.userId, tm.teamId 
-                    FROM team_members tm 
-                    LEFT JOIN users u ON tm.userId = u.id 
-                    LEFT JOIN teams t ON tm.teamId = t.id 
+                    SELECT tm.id, tm.userId, tm.teamId
+                    FROM team_members tm
+                    LEFT JOIN users u ON tm.userId = u.id
+                    LEFT JOIN teams t ON tm.teamId = t.id
                     WHERE u.id IS NULL OR t.id IS NULL
                 """,
                 'description': 'Team members without valid user or team'
@@ -189,10 +189,10 @@ class DataIntegrityValidator:
             {
                 'name': 'orphaned_user_skills',
                 'query': """
-                    SELECT us.id, us.userId, us.skillId 
-                    FROM user_skills us 
-                    LEFT JOIN users u ON us.userId = u.id 
-                    LEFT JOIN skills s ON us.skillId = s.id 
+                    SELECT us.id, us.userId, us.skillId
+                    FROM user_skills us
+                    LEFT JOIN users u ON us.userId = u.id
+                    LEFT JOIN skills s ON us.skillId = s.id
                     WHERE u.id IS NULL OR s.id IS NULL
                 """,
                 'description': 'User skills without valid user or skill'
@@ -200,9 +200,9 @@ class DataIntegrityValidator:
             {
                 'name': 'orphaned_tasks',
                 'query': """
-                    SELECT t.id, t.userId, t.projectId 
-                    FROM tasks t 
-                    LEFT JOIN users u ON t.userId = u.id 
+                    SELECT t.id, t.userId, t.projectId
+                    FROM tasks t
+                    LEFT JOIN users u ON t.userId = u.id
                     WHERE u.id IS NULL
                 """,
                 'description': 'Tasks without valid user'
@@ -210,12 +210,33 @@ class DataIntegrityValidator:
             {
                 'name': 'orphaned_notifications',
                 'query': """
-                    SELECT n.id, n.userId 
-                    FROM notifications n 
-                    LEFT JOIN users u ON n.userId = u.id 
+                    SELECT n.id, n.userId
+                    FROM notifications n
+                    LEFT JOIN users u ON n.userId = u.id
                     WHERE u.id IS NULL
                 """,
                 'description': 'Notifications without valid user'
+            },
+            {
+                'name': 'analytics_events_data_quality',
+                'query': """
+                    SELECT COUNT(*) as count
+                    FROM analytics_events
+                    WHERE event_type IS NULL
+                    OR created_at IS NULL
+                    OR (user_id IS NULL AND event_type NOT LIKE '%system%')
+                """,
+                'description': 'Analytics events with missing critical data'
+            },
+            {
+                'name': 'user_skills_without_proficiency',
+                'query': """
+                    SELECT COUNT(*) as count
+                    FROM user_skills
+                    WHERE proficiencyLevel IS NULL
+                    OR proficiencyLevel NOT IN ('Beginner', 'Intermediate', 'Advanced', 'Expert')
+                """,
+                'description': 'User skills with invalid proficiency levels'
             }
         ]
         
@@ -329,6 +350,90 @@ class DataIntegrityValidator:
             result['status'] = 'error'
             result['error'] = str(e)
             self.logger.error(f"Mock data flagging check failed: {e}")
+        
+        finally:
+            conn.close()
+        
+        self.validation_results['checks_performed'].append(result)
+        return result
+    
+    def check_hub_pages_data_integrity(self) -> Dict[str, Any]:
+        """Check data integrity for Hub pages (AI Tools, Career Development)"""
+        self.logger.info("Checking Hub pages data integrity...")
+        
+        conn = self.connect_db()
+        result = {
+            'check_name': 'hub_pages_data_integrity',
+            'status': 'passed',
+            'details': {},
+            'issues': []
+        }
+        
+        try:
+            # Check AI Tools related data
+            ai_analytics_count = conn.execute("""
+                SELECT COUNT(*) FROM analytics_events
+                WHERE event_type LIKE '%ai%'
+                AND is_mock_data = FALSE
+            """).fetchone()[0]
+            
+            # Check Career Development related data
+            skills_count = conn.execute("""
+                SELECT COUNT(*) FROM skills
+                WHERE is_mock_data = FALSE
+            """).fetchone()[0]
+            
+            user_skills_count = conn.execute("""
+                SELECT COUNT(*) FROM user_skills
+                WHERE is_mock_data = FALSE
+            """).fetchone()[0]
+            
+            team_memberships_count = conn.execute("""
+                SELECT COUNT(*) FROM team_members
+                WHERE is_mock_data = FALSE
+            """).fetchone()[0]
+            
+            # Check for users with career data
+            users_with_skills = conn.execute("""
+                SELECT COUNT(DISTINCT userId) FROM user_skills
+                WHERE is_mock_data = FALSE
+            """).fetchone()[0]
+            
+            result['details'] = {
+                'ai_analytics_events': ai_analytics_count,
+                'skills_available': skills_count,
+                'user_skills_assignments': user_skills_count,
+                'team_memberships': team_memberships_count,
+                'users_with_skills': users_with_skills
+            }
+            
+            # Validate data sufficiency for Hub pages
+            if ai_analytics_count == 0:
+                result['issues'].append("No AI-related analytics events found for AI Tools Hub")
+                result['status'] = 'warning'
+            
+            if skills_count == 0:
+                result['issues'].append("No skills data found for Career Development Hub")
+                result['status'] = 'warning'
+            
+            if user_skills_count == 0:
+                result['issues'].append("No user skills assignments found for Career Development Hub")
+                result['status'] = 'warning'
+            
+            # Check for realistic data ratios
+            if users_with_skills > 0:
+                avg_skills_per_user = user_skills_count / users_with_skills
+                if avg_skills_per_user < 1:
+                    result['issues'].append(f"Low average skills per user ({avg_skills_per_user:.1f})")
+                    result['status'] = 'warning'
+            
+            self.logger.info(f"Hub pages data check: AI events={ai_analytics_count}, "
+                           f"Skills={skills_count}, User skills={user_skills_count}")
+            
+        except Exception as e:
+            result['status'] = 'error'
+            result['error'] = str(e)
+            self.logger.error(f"Hub pages data integrity check failed: {e}")
         
         finally:
             conn.close()
@@ -518,7 +623,8 @@ class DataIntegrityValidator:
             self.check_database_integrity(),
             self.check_foreign_key_constraints(),
             self.check_data_consistency(),
-            self.check_mock_data_flagging()
+            self.check_mock_data_flagging(),
+            self.check_hub_pages_data_integrity()
         ]
         
         # Determine overall status

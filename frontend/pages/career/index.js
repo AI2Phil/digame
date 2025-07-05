@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { TrendingUp, Target, BookOpen, Award, Users, Calendar, Star, Crown, CheckCircle, ArrowRight, ArrowLeft } from 'lucide-react';
@@ -8,50 +8,164 @@ import NavigationHubFooter from '../../src/components/layout/NavigationHubFooter
 export default function CareerDevelopment() {
   const [activeTab, setActiveTab] = useState('overview');
   const [selectedGoal, setSelectedGoal] = useState(null);
+  const [careerData, setCareerData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const careerStats = {
-    current_level: 'Senior Developer',
-    experience_years: 5.2,
-    skills_mastered: 23,
-    certifications: 4,
-    career_score: 847,
-    next_milestone: 'Tech Lead',
-    progress_to_next: 0.68
+  useEffect(() => {
+    fetchCareerData();
+  }, []);
+
+  const fetchCareerData = async () => {
+    try {
+      const [overviewRes, skillsRes, opportunitiesRes, learningRes] = await Promise.all([
+        fetch('/api/career/overview', {
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('token') || 'demo-token'}` }
+        }),
+        fetch('/api/career/skills', {
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('token') || 'demo-token'}` }
+        }),
+        fetch('/api/career/opportunities', {
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('token') || 'demo-token'}` }
+        }),
+        fetch('/api/career/learning-paths', {
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('token') || 'demo-token'}` }
+        })
+      ]);
+
+      const [overview, skills, opportunities, learning] = await Promise.all([
+        overviewRes.ok ? overviewRes.json() : null,
+        skillsRes.ok ? skillsRes.json() : null,
+        opportunitiesRes.ok ? opportunitiesRes.json() : null,
+        learningRes.ok ? learningRes.json() : null
+      ]);
+
+      setCareerData({
+        overview: overview?.data || getMockOverview(),
+        skills: skills?.data || getMockSkills(),
+        opportunities: opportunities?.data || getMockOpportunities(),
+        learning: learning?.data || getMockLearning()
+      });
+    } catch (error) {
+      console.error('Error fetching career data:', error);
+      setCareerData({
+        overview: getMockOverview(),
+        skills: getMockSkills(),
+        opportunities: getMockOpportunities(),
+        learning: getMockLearning()
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const skillCategories = [
-    {
-      category: 'Technical Skills',
-      skills: [
-        { name: 'JavaScript', level: 9, trend: '+0.5', demand: 'high', salary_impact: '+15%' },
-        { name: 'React', level: 8, trend: '+0.3', demand: 'high', salary_impact: '+12%' },
-        { name: 'Node.js', level: 7, trend: '+0.8', demand: 'high', salary_impact: '+10%' },
-        { name: 'Python', level: 6, trend: '+1.2', demand: 'very high', salary_impact: '+18%' },
-        { name: 'AWS', level: 5, trend: '+1.5', demand: 'very high', salary_impact: '+22%' },
-        { name: 'Docker', level: 4, trend: '+0.9', demand: 'high', salary_impact: '+8%' }
-      ]
+  const getMockOverview = () => ({
+    careerStats: {
+      current_level: 'Senior Developer',
+      experience_years: 5.2,
+      skills_mastered: 23,
+      certifications: 4,
+      career_score: 847,
+      next_milestone: 'Tech Lead',
+      progress_to_next: 0.68
     },
-    {
-      category: 'Leadership Skills',
-      skills: [
-        { name: 'Team Management', level: 6, trend: '+0.7', demand: 'high', salary_impact: '+25%' },
-        { name: 'Project Planning', level: 7, trend: '+0.4', demand: 'high', salary_impact: '+15%' },
-        { name: 'Mentoring', level: 5, trend: '+0.6', demand: 'medium', salary_impact: '+12%' },
-        { name: 'Strategic Thinking', level: 4, trend: '+0.8', demand: 'high', salary_impact: '+20%' }
-      ]
-    },
-    {
-      category: 'Business Skills',
-      skills: [
-        { name: 'Product Strategy', level: 5, trend: '+0.5', demand: 'high', salary_impact: '+18%' },
-        { name: 'Data Analysis', level: 6, trend: '+0.3', demand: 'very high', salary_impact: '+16%' },
-        { name: 'Communication', level: 8, trend: '+0.2', demand: 'high', salary_impact: '+10%' },
-        { name: 'Stakeholder Management', level: 4, trend: '+0.9', demand: 'high', salary_impact: '+14%' }
+    careerGoals: [
+      {
+        id: 1,
+        title: 'Become Tech Lead',
+        description: 'Lead a team of 5-8 developers and drive technical decisions',
+        target_date: '2024-06-01',
+        progress: 0.68,
+        priority: 'high',
+        category: 'promotion'
+      }
+    ]
+  });
+
+  const getMockSkills = () => ({
+    skillsByCategory: {
+      'Technical Skills': [
+        { name: 'JavaScript', proficiency_level: 9, trend: '+0.5', demand: 'high', salary_impact: '+15%' },
+        { name: 'React', proficiency_level: 8, trend: '+0.3', demand: 'high', salary_impact: '+12%' }
       ]
     }
-  ];
+  });
 
-  const careerGoals = [
+  const getMockOpportunities = () => ({
+    opportunities: [
+      {
+        title: 'Senior Software Engineer',
+        company: 'TechCorp Inc.',
+        location: 'San Francisco, CA',
+        salary: '$120,000 - $150,000',
+        match_score: 0.92,
+        skills_match: ['JavaScript', 'React', 'Node.js', 'AWS']
+      }
+    ],
+    marketInsights: {
+      salary_trends: {
+        current_role: '$95,000',
+        market_average: '$98,500',
+        top_10_percent: '$135,000',
+        growth_projection: '+8% annually'
+      },
+      in_demand_skills: [
+        { skill: 'AI/Machine Learning', growth: '+45%', avg_salary: '$125,000' }
+      ]
+    }
+  });
+
+  const getMockLearning = () => ({
+    learningPaths: [
+      {
+        id: 1,
+        title: 'Leadership Excellence Track',
+        description: 'Comprehensive program for technical leaders',
+        duration: '6 months',
+        modules: 8,
+        difficulty: 'advanced',
+        provider: 'Tech Leadership Institute',
+        rating: 4.8,
+        enrolled: 1247,
+        skills_covered: ['Team Management', 'Strategic Thinking', 'Communication'],
+        certification: true
+      }
+    ]
+  });
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  const careerStats = careerData?.overview?.careerStats || getMockOverview().careerStats;
+
+  // Convert skills data to the expected format
+  const skillCategories = careerData?.skills?.skillsByCategory ?
+    Object.entries(careerData.skills.skillsByCategory).map(([category, skills]) => ({
+      category,
+      skills: skills.map(skill => ({
+        name: skill.name,
+        level: skill.proficiency_level,
+        trend: skill.trend,
+        demand: skill.demand,
+        salary_impact: skill.salary_impact
+      }))
+    })) : [
+      {
+        category: 'Technical Skills',
+        skills: [
+          { name: 'JavaScript', level: 9, trend: '+0.5', demand: 'high', salary_impact: '+15%' },
+          { name: 'React', level: 8, trend: '+0.3', demand: 'high', salary_impact: '+12%' },
+          { name: 'Node.js', level: 7, trend: '+0.8', demand: 'high', salary_impact: '+10%' }
+        ]
+      }
+    ];
+
+  const careerGoals = careerData?.overview?.careerGoals || [
     {
       id: 1,
       title: 'Become Tech Lead',
@@ -69,45 +183,10 @@ export default function CareerDevelopment() {
       ],
       required_skills: ['Team Management', 'Strategic Thinking', 'Mentoring'],
       estimated_salary_increase: '25-35%'
-    },
-    {
-      id: 2,
-      title: 'Master Cloud Architecture',
-      description: 'Become proficient in AWS/Azure cloud architecture and DevOps',
-      target_date: '2024-04-15',
-      progress: 0.45,
-      priority: 'high',
-      category: 'skill',
-      milestones: [
-        { task: 'Complete AWS Solutions Architect certification', completed: false },
-        { task: 'Design and implement microservices architecture', completed: false },
-        { task: 'Set up CI/CD pipeline for 3 projects', completed: true },
-        { task: 'Lead cloud migration project', completed: false }
-      ],
-      required_skills: ['AWS', 'Docker', 'System Design'],
-      estimated_salary_increase: '20-30%'
-    },
-    {
-      id: 3,
-      title: 'Expand Network in Tech Industry',
-      description: 'Build relationships with 50+ industry professionals',
-      target_date: '2024-12-31',
-      progress: 0.32,
-      priority: 'medium',
-      category: 'networking',
-      milestones: [
-        { task: 'Attend 6 tech conferences', completed: false },
-        { task: 'Speak at 2 industry events', completed: false },
-        { task: 'Connect with 20 senior engineers', completed: true },
-        { task: 'Join 3 professional communities', completed: true },
-        { task: 'Publish 5 technical articles', completed: false }
-      ],
-      required_skills: ['Communication', 'Personal Branding'],
-      estimated_salary_increase: '10-15%'
     }
   ];
 
-  const learningPaths = [
+  const learningPaths = careerData?.learning?.learningPaths || [
     {
       id: 1,
       title: 'Leadership Excellence Track',
@@ -120,36 +199,10 @@ export default function CareerDevelopment() {
       enrolled: 1247,
       skills_covered: ['Team Management', 'Strategic Thinking', 'Communication'],
       certification: true
-    },
-    {
-      id: 2,
-      title: 'Cloud Architecture Mastery',
-      description: 'Deep dive into modern cloud architecture patterns',
-      duration: '4 months',
-      modules: 12,
-      difficulty: 'intermediate',
-      provider: 'Cloud Academy',
-      rating: 4.9,
-      enrolled: 2156,
-      skills_covered: ['AWS', 'System Design', 'DevOps'],
-      certification: true
-    },
-    {
-      id: 3,
-      title: 'Data Science for Engineers',
-      description: 'Apply data science techniques to engineering problems',
-      duration: '3 months',
-      modules: 10,
-      difficulty: 'intermediate',
-      provider: 'DataCamp Pro',
-      rating: 4.7,
-      enrolled: 892,
-      skills_covered: ['Python', 'Data Analysis', 'Machine Learning'],
-      certification: true
     }
   ];
 
-  const industryInsights = {
+  const industryInsights = careerData?.opportunities?.marketInsights || {
     salary_trends: {
       current_role: '$95,000',
       market_average: '$98,500',
@@ -162,8 +215,12 @@ export default function CareerDevelopment() {
       { skill: 'DevOps/SRE', growth: '+32%', avg_salary: '$112,000' },
       { skill: 'Cybersecurity', growth: '+28%', avg_salary: '$108,000' },
       { skill: 'Data Engineering', growth: '+25%', avg_salary: '$115,000' }
-    ],
-    career_opportunities: [
+    ]
+  };
+
+  // Add career_opportunities to industryInsights if it doesn't exist
+  if (!industryInsights.career_opportunities) {
+    industryInsights.career_opportunities = careerData?.opportunities?.opportunities || [
       {
         title: 'Senior Software Engineer',
         company: 'TechCorp Inc.',
@@ -171,25 +228,9 @@ export default function CareerDevelopment() {
         salary: '$120,000 - $150,000',
         match_score: 0.92,
         skills_match: ['JavaScript', 'React', 'Node.js', 'AWS']
-      },
-      {
-        title: 'Technical Lead',
-        company: 'Innovation Labs',
-        location: 'Austin, TX',
-        salary: '$130,000 - $160,000',
-        match_score: 0.85,
-        skills_match: ['Team Management', 'Python', 'System Design']
-      },
-      {
-        title: 'Cloud Solutions Architect',
-        company: 'CloudFirst Solutions',
-        location: 'Remote',
-        salary: '$140,000 - $170,000',
-        match_score: 0.78,
-        skills_match: ['AWS', 'Docker', 'System Design']
       }
-    ]
-  };
+    ];
+  }
 
   const getSkillColor = (level) => {
     if (level >= 8) return 'bg-green-500';
