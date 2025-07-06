@@ -5,11 +5,11 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from '../ui/card';
-import { Button } from '../ui/button';
-import { Badge } from '../ui/badge';
-import { Progress } from '../ui/progress';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
+} from '../ui/Card';
+import { Button } from '../ui/Button';
+import { Badge } from '../ui/Badge';
+import { Progress } from '../ui/Progress';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/Tabs';
 import {
   Users,
   TrendingUp,
@@ -829,4 +829,3 @@ const SocialFeaturesEnhancement = () => {
   );
 };
 
-export default SocialFeaturesEnhancement;

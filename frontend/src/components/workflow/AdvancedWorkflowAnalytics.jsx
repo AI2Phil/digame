@@ -9,14 +9,14 @@ import {
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
 import { Progress } from '../ui/Progress';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/Tabs';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '../ui/select';
+} from '../ui/Select';
 import { Input } from '../ui/Input';
 import { Label } from '../ui/Label';
 import {
@@ -824,4 +824,3 @@ const AdvancedWorkflowAnalytics = () => {
   );
 };
 
-export default AdvancedWorkflowAnalytics;

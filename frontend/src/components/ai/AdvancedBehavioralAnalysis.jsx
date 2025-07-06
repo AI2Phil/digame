@@ -5,22 +5,22 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from '../ui/card';
-import { Button } from '../ui/button';
-import { Badge } from '../ui/badge';
-import { Progress } from '../ui/progress';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
+} from '../ui/Card';
+import { Button } from '../ui/Button';
+import { Badge } from '../ui/Badge';
+import { Progress } from '../ui/Progress';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/Tabs';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '../ui/select';
-import { Input } from '../ui/input';
-import { Label } from '../ui/label';
-import { Textarea } from '../ui/textarea';
-import { Switch } from '../ui/switch';
+} from '../ui/Select';
+import { Input } from '../ui/Input';
+import { Label } from '../ui/Label';
+import { Textarea } from '../ui/Textarea';
+import { Switch } from '../ui/Switch';
 import {
   AlertTriangle,
   CheckCircle,
@@ -1105,4 +1105,3 @@ const AdvancedBehavioralAnalysis = () => {
   );
 };
 
-export default AdvancedBehavioralAnalysis;
