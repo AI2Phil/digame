@@ -17,7 +17,7 @@ export default function PlatformConsole() {
   // Redirect if not authenticated or not a platform owner
   React.useEffect(() => {
     if (!isLoading && (!isAuthenticated || !user?.isPlatformOwner)) {
-      router.push('/auth');
+      router.push('/login');
     }
   }, [isAuthenticated, user, isLoading, router]);
 
@@ -452,16 +452,16 @@ export default function PlatformConsole() {
                         ? `${currentData.dataOverview?.summary?.mockPercentage?.toFixed(1) || '80'}% mock data ratio with ${currentData.dataOverview?.healthMetrics?.dataIntegrity || 'healthy'} data integrity status.`
                         : 'Data management system ready for production with comprehensive mock data controls.'}
                     </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </main>
+                 </div>
+               </div>
+             </div>
+           </div>
+         </main>
 
-          {/* Navigation Hub Footer */}
-          <NavigationHubFooter />
-        </div>
-      </div>
-    </>
-  );
+         {/* Navigation Hub Footer */}
+         <NavigationHubFooter />
+       </div>
+     </div>
+   </>
+ );
 }

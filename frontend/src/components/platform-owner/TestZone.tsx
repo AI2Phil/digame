@@ -96,14 +96,31 @@ const TestZone: React.FC = () => {
 
   const fetchTestMetrics = async () => {
     try {
+      // Try multiple possible token keys
+      const token = sessionStorage.getItem('accessToken') ||
+                   sessionStorage.getItem('token') ||
+                   localStorage.getItem('accessToken') ||
+                   localStorage.getItem('token');
+      
+      if (!token) {
+        console.error('No authentication token found');
+        return;
+      }
+
       const response = await fetch('/platform-owner/test-zone/metrics', {
+        method: 'GET',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         }
       });
 
-      if (response.ok) {
-        const data = await response.json();
+      if (!response.ok) {
+        throw new Error(`Failed to fetch test metrics: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      if (data.success) {
         setTestMetrics(data.metrics);
       }
     } catch (error) {
@@ -113,15 +130,55 @@ const TestZone: React.FC = () => {
 
   const fetchAvailableTests = async () => {
     try {
+      // Try multiple possible token keys
+      const token = sessionStorage.getItem('accessToken') ||
+                   sessionStorage.getItem('token') ||
+                   localStorage.getItem('accessToken') ||
+                   localStorage.getItem('token');
+      
+      if (!token) {
+        console.error('No authentication token found');
+        return;
+      }
+
       const response = await fetch('/platform-owner/test-zone/available-tests', {
+        method: 'GET',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         }
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        setAvailableTests(data.available_tests.intelligence_tests || []);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch available tests: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      if (data.success) {
+        // Convert the backend response to the format expected by the UI
+        const allTests = [];
+        
+        // Add intelligence tests
+        if (data.available_tests.intelligence_tests) {
+          allTests.push(...data.available_tests.intelligence_tests);
+        }
+        
+        // Add digital twin tests
+        if (data.available_tests.digital_twin_tests) {
+          allTests.push(...data.available_tests.digital_twin_tests);
+        }
+        
+        // Add NLP tests
+        if (data.available_tests.nlp_tests) {
+          allTests.push(...data.available_tests.nlp_tests);
+        }
+        
+        // Add analytics tests
+        if (data.available_tests.analytics_tests) {
+          allTests.push(...data.available_tests.analytics_tests);
+        }
+        
+        setAvailableTests(allTests);
       }
     } catch (error) {
       console.error('Failed to fetch available tests:', error);
@@ -130,14 +187,31 @@ const TestZone: React.FC = () => {
 
   const fetchSampleData = async () => {
     try {
+      // Try multiple possible token keys
+      const token = sessionStorage.getItem('accessToken') ||
+                   sessionStorage.getItem('token') ||
+                   localStorage.getItem('accessToken') ||
+                   localStorage.getItem('token');
+      
+      if (!token) {
+        console.error('No authentication token found');
+        return;
+      }
+
       const response = await fetch('/platform-owner/test-zone/intelligence/sample-data', {
+        method: 'GET',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         }
       });
 
-      if (response.ok) {
-        const data = await response.json();
+      if (!response.ok) {
+        throw new Error(`Failed to fetch sample data: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      if (data.success) {
         setSampleData(data.sample_data);
       }
     } catch (error) {
@@ -834,14 +908,28 @@ const TestZone: React.FC = () => {
     const startTime = Date.now();
 
     try {
+      // Try multiple possible token keys
+      const token = sessionStorage.getItem('accessToken') ||
+                   sessionStorage.getItem('token') ||
+                   localStorage.getItem('accessToken') ||
+                   localStorage.getItem('token');
+      
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify(testData || {})
       });
+
+      if (!response.ok) {
+        throw new Error(`Test failed: ${response.status} ${response.statusText}`);
+      }
 
       const result = await response.json();
       const executionTime = Date.now() - startTime;
@@ -883,16 +971,29 @@ const TestZone: React.FC = () => {
     const startTime = Date.now();
 
     try {
+      // Try multiple possible token keys
+      const token = sessionStorage.getItem('accessToken') ||
+                   sessionStorage.getItem('token') ||
+                   localStorage.getItem('accessToken') ||
+                   localStorage.getItem('token');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
       const response = await fetch('/platform-owner/test-zone/run-all-tests', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          testSuites: ['intelligence', 'nlp', 'analytics', 'learning', 'team', 'websocket', 'kubernetes']
+          testSuites: ['intelligence', 'digital_twin', 'nlp', 'analytics', 'learning', 'team', 'websocket', 'kubernetes', 'custom']
         })
       });
+
+      if (!response.ok) {
+        throw new Error(`Failed to run all tests: ${response.status} ${response.statusText}`);
+      }
 
       const result = await response.json();
       const executionTime = Date.now() - startTime;

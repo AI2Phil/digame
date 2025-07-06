@@ -10,37 +10,53 @@ export default function TestZonePage() {
   useEffect(() => {
     // Check authentication
     const checkAuth = async () => {
+      console.log('🔍 Test Zone Debug - Starting authentication check');
       try {
-        const token = localStorage.getItem('accessToken');
+        const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken');
+        console.log('🔍 Test Zone Debug - Token found:', !!token);
+        console.log('🔍 Test Zone Debug - Token source:', token ? (localStorage.getItem('accessToken') ? 'localStorage' : 'sessionStorage') : 'none');
         if (!token) {
-          router.push('/auth');
+          console.log('🔍 Test Zone Debug - No token, redirecting to login');
+          router.push('/login');
           return;
         }
 
         // Verify token with backend
+        console.log('🔍 Test Zone Debug - Verifying token with backend');
         const response = await fetch('http://localhost:8001/auth/profile', {
           headers: {
             'Authorization': `Bearer ${token}`
           }
         });
 
+        console.log('🔍 Test Zone Debug - Backend response status:', response.status);
         if (response.ok) {
           const userData = await response.json();
+          console.log('🔍 Test Zone Debug - User data received:', userData);
           // Check if user is platform owner
-          if (userData.user && (userData.user.isPlatformOwner || userData.user.is_platform_owner)) {
+          const isPlatformOwner = userData.user && (userData.user.isPlatformOwner || userData.user.is_platform_owner);
+          console.log('🔍 Test Zone Debug - Is platform owner:', isPlatformOwner);
+          
+          if (isPlatformOwner) {
+            console.log('🔍 Test Zone Debug - Authentication successful, setting authenticated');
             setIsAuthenticated(true);
           } else {
+            console.log('🔍 Test Zone Debug - Not platform owner, redirecting to dashboard');
             router.push('/dashboard');
           }
         } else {
+          console.log('🔍 Test Zone Debug - Backend response not ok, clearing tokens and redirecting to login');
           localStorage.removeItem('accessToken');
           localStorage.removeItem('refreshToken');
-          router.push('/auth');
+          sessionStorage.removeItem('accessToken');
+          sessionStorage.removeItem('refreshToken');
+          router.push('/login');
         }
       } catch (error) {
-        console.error('Auth check failed:', error);
-        router.push('/auth');
+        console.error('🔍 Test Zone Debug - Auth check failed:', error);
+        router.push('/login');
       } finally {
+        console.log('🔍 Test Zone Debug - Setting loading to false');
         setIsLoading(false);
       }
     };

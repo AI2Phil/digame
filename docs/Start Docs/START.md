@@ -3,6 +3,9 @@
 Welcome to **Digame** - the Digital Professional Twin Platform! 
 This guide will help you get up and running quickly with the platform's comprehensive user workflow system, authentication, team management, and progressive onboarding features.
 
+pkill -f "next dev" && npm run dev
+
+
 ## 📋 Table of Contents
 
 - [Quick Start](#-quick-start)

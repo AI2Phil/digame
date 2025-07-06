@@ -60,9 +60,9 @@ const PlatformDashboard: React.FC = () => {
 
   const fetchDashboardData = async () => {
     try {
-      const response = await fetch('/platform-owner/dashboard', {
+      const response = await fetch('http://localhost:8001/platform-owner/dashboard', {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken')}`
         }
       });
 

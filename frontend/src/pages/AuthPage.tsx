@@ -30,7 +30,7 @@ const AuthPage: React.FC = () => {
       let redirectPath = '/dashboard';
       
       if (user.isPlatformOwner) {
-        redirectPath = '/platform-owner/dashboard';
+        redirectPath = '/platform-owner/console';
       } else if (user.role === 'admin') {
         redirectPath = '/admin/dashboard';
       }

@@ -298,8 +298,8 @@ const NextJSComprehensiveNavigation: React.FC<NextJSComprehensiveNavigationProps
         { label: 'Revenue Analytics', icon: <TrendingUp className="w-4 h-4" />, path: '/platform-owner/revenue', subtitle: 'BUSINESS INTELLIGENCE' },
         { label: 'System Health', icon: <Activity className="w-4 h-4" />, path: '/platform-owner/health', subtitle: 'MONITORING' },
         { label: 'Platform Settings', icon: <SettingsIcon className="w-4 h-4" />, path: '/platform-owner/settings', subtitle: 'CONFIGURATION' },
-        { label: 'API Test Zone', icon: <Code className="w-4 h-4" />, path: '/platform-owner/test-zone', subtitle: 'DEVELOPMENT' },
-        { label: 'Service Discovery Test', icon: <Network className="w-4 h-4" />, path: '/service-test', subtitle: 'DEVELOPMENT' }
+        { label: 'API Test Zone', icon: <Code className="w-4 h-4" />, path: '/platform-owner/test-zone', subtitle: 'DEVELOPMENT', description: 'API testing and validation tools' },
+        { label: 'Service Discovery Test', icon: <Network className="w-4 h-4" />, path: '/service-test', subtitle: 'DEVELOPMENT', description: 'Dynamic service discovery testing' }
       ]
     }
   ];
@@ -375,6 +375,11 @@ const NextJSComprehensiveNavigation: React.FC<NextJSComprehensiveNavigationProps
   const totalFeatures = filteredMenuSections.reduce((total, section) => total + section.items.length, 0);
 
   const handleNavigation = (path: string) => {
+    console.log('🔍 Navigation Debug - Attempting to navigate to:', path);
+    console.log('🔍 Navigation Debug - Current user:', currentUser);
+    console.log('🔍 Navigation Debug - Is platform owner:', isPlatformOwner());
+    console.log('🔍 Navigation Debug - Current router path:', router.asPath);
+    
     router.push(path);
     if (window.innerWidth < 1024) {
       onToggle();

@@ -23,7 +23,7 @@ export default function DataManagement() {
   // Redirect if not authenticated or not a platform owner
   React.useEffect(() => {
     if (!isLoading && (!isAuthenticated || !user?.isPlatformOwner)) {
-      router.push('/auth');
+      router.push('/login');
     }
   }, [isAuthenticated, user, isLoading, router]);
 

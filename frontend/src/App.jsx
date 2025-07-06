@@ -134,8 +134,8 @@ function App() {
     if (!user) return '/dashboard';
     
     if (user.isPlatformOwner || user.is_platform_owner) {
-      console.log('App.jsx: Platform owner detected, redirecting to platform owner dashboard');
-      return '/platform-owner/dashboard';
+      console.log('App.jsx: Platform owner detected, redirecting to platform owner console');
+      return '/platform-owner/console';
     } else if (user.role === 'admin') {
       console.log('App.jsx: Admin user detected, redirecting to admin dashboard');
       return '/admin/dashboard';
@@ -704,19 +704,16 @@ function App() {
             }
           />
 
-          {/* Platform Owner Dashboard Route */}
+          {/* Platform Owner Routes */}
           <Route
-            path="/platform-owner/dashboard"
+            path="/platform-owner/console"
             element={
               isAuthenticated ? (
                 <div className="min-h-screen bg-gray-50 flex items-center justify-center">
                   <div className="text-center">
                     <div className="text-6xl mb-4">👑</div>
-                    <h1 className="text-2xl font-bold text-gray-900 mb-2">Platform Owner Dashboard</h1>
-                    <p className="text-gray-600">Platform management and administration</p>
-                    <div className="mt-4 text-sm text-gray-500">
-                      Welcome, Platform Owner! This is your dedicated dashboard.
-                    </div>
+                    <h1 className="text-2xl font-bold text-gray-900 mb-2">Platform Console</h1>
+                    <p className="text-gray-600">Platform management console coming soon...</p>
                   </div>
                 </div>
               ) : (
@@ -724,18 +721,7 @@ function App() {
               )
             }
           />
-
-          {/* Platform Owner Test Zone Route */}
-          <Route
-            path="/platform-owner/test-zone"
-            element={
-              isAuthenticated ? (
-                <TestZone />
-              ) : (
-                <Navigate to="/" replace />
-              )
-            }
-          />
+          
 
 
           {/* Navigation Test Route */}

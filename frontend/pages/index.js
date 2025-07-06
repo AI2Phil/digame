@@ -20,7 +20,7 @@ export default function HomePage() {
   };
 
   const handleSignUp = () => {
-    router.push('/auth');
+    router.push('/login');
   };
 
   if (showOnboarding) {

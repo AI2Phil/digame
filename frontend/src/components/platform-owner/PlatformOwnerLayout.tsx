@@ -26,10 +26,10 @@ const PlatformOwnerLayout: React.FC = () => {
 
   const menuItems: MenuItem[] = [
     {
-      id: 'dashboard',
-      label: 'Dashboard',
+      id: 'console',
+      label: 'Console',
       icon: <BarChart3 className="w-5 h-5" />,
-      path: '/platform-owner/dashboard',
+      path: '/platform-owner/console',
       description: 'Platform overview and metrics'
     },
     {
