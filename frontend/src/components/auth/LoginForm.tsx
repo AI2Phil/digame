@@ -85,7 +85,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, redirectTo = '/dashboa
                 let redirectPath = redirectTo;
                 
                 if (userData.isPlatformOwner || userData.is_platform_owner) {
-                  redirectPath = '/platform-owner/console';
+                  redirectPath = '/dashboard';
                   console.log('LoginForm: Platform owner detected, redirecting to:', redirectPath);
                 } else if (userData.role === 'admin') {
                   redirectPath = '/admin/dashboard';
