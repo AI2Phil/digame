@@ -1,8 +1,8 @@
 import React from 'react';
 
 // Main Breadcrumb component
-export const Breadcrumb = ({ 
-  children, 
+export const Breadcrumb = (/** @type {any} */ {
+  children,
   separator = '/',
   className = '',
   maxItems = null,
@@ -39,8 +39,8 @@ export const Breadcrumb = ({
 };
 
 // Breadcrumb Item
-export const BreadcrumbItem = ({ 
-  children, 
+export const BreadcrumbItem = (/** @type {any} */ {
+  children,
   href,
   current = false,
   disabled = false,
@@ -103,12 +103,12 @@ export const BreadcrumbItem = ({
 };
 
 // Breadcrumb Link (alias for BreadcrumbItem with href)
-export const BreadcrumbLink = ({ children, ...props }) => {
+export const BreadcrumbLink = (/** @type {any} */ { children, ...props }) => {
   return <BreadcrumbItem {...props}>{children}</BreadcrumbItem>;
 };
 
 // Breadcrumb Page (current page item)
-export const BreadcrumbPage = ({ children, className = '', ...props }) => {
+export const BreadcrumbPage = (/** @type {any} */ { children, className = '', ...props }) => {
   return (
     <BreadcrumbItem 
       current={true} 
@@ -121,9 +121,9 @@ export const BreadcrumbPage = ({ children, className = '', ...props }) => {
 };
 
 // Breadcrumb Separator
-export const BreadcrumbSeparator = ({ 
+export const BreadcrumbSeparator = (/** @type {any} */ {
   separator = '/',
-  className = '' 
+  className = ''
 }) => {
   const isIcon = typeof separator !== 'string';
   
@@ -137,9 +137,9 @@ export const BreadcrumbSeparator = ({
 };
 
 // Breadcrumb Ellipsis
-export const BreadcrumbEllipsis = ({ 
+export const BreadcrumbEllipsis = (/** @type {any} */ {
   className = '',
-  onClick 
+  onClick
 }) => {
   return (
     <span 
@@ -159,7 +159,7 @@ export const BreadcrumbEllipsis = ({
 };
 
 // Auto Breadcrumb (generates from URL path)
-export const AutoBreadcrumb = ({ 
+export const AutoBreadcrumb = (/** @type {any} */ {
   path = window.location.pathname,
   homeLabel = 'Home',
   homeHref = '/',
@@ -195,7 +195,7 @@ export const AutoBreadcrumb = ({
 };
 
 // Breadcrumb with Dropdown
-export const BreadcrumbDropdown = ({ 
+export const BreadcrumbDropdown = (/** @type {any} */ {
   label,
   items = [],
   className = '',
@@ -263,7 +263,7 @@ export const BreadcrumbDropdown = ({
 };
 
 // Responsive Breadcrumb
-export const ResponsiveBreadcrumb = ({ 
+export const ResponsiveBreadcrumb = (/** @type {any} */ {
   children,
   mobileMaxItems = 2,
   desktopMaxItems = null,
@@ -289,7 +289,7 @@ export const ResponsiveBreadcrumb = ({
 };
 
 // Breadcrumb with Actions
-export const ActionBreadcrumb = ({ 
+export const ActionBreadcrumb = (/** @type {any} */ {
   children,
   actions = [],
   className = ''

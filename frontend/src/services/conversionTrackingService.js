@@ -81,7 +81,7 @@ class ConversionTrackingService {
   // Get conversion metrics
   getConversionMetrics() {
     const totalEvents = this.events.length;
-    const uniqueEventTypes = [...new Set(this.events.map(e => e.eventType))];
+    const uniqueEventTypes = Array.from(new Set(this.events.map(e => e.eventType)));
     const sessionDuration = Date.now() - this.startTime.getTime();
     
     // Calculate engagement score
@@ -174,7 +174,7 @@ class ConversionTrackingService {
 
     let totalTime = 0;
     for (let i = 1; i < featureEvents.length; i++) {
-      const timeDiff = new Date(featureEvents[i].timestamp) - new Date(featureEvents[i-1].timestamp);
+      const timeDiff = new Date(featureEvents[i].timestamp).getTime() - new Date(featureEvents[i-1].timestamp).getTime();
       totalTime += timeDiff;
     }
 
@@ -208,7 +208,7 @@ class ConversionTrackingService {
         // Only load if session is recent (within 24 hours)
         const lastUpdated = new Date(data.lastUpdated);
         const now = new Date();
-        const hoursDiff = (now - lastUpdated) / (1000 * 60 * 60);
+        const hoursDiff = (now.getTime() - lastUpdated.getTime()) / (1000 * 60 * 60);
         
         if (hoursDiff < 24) {
           this.sessionId = data.sessionId;

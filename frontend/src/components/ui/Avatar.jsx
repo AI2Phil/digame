@@ -1,7 +1,22 @@
 import React, { useState } from 'react';
 
+/**
+ * @typedef {Object} AvatarProps
+ * @property {string} [src] - Image source URL
+ * @property {string} [alt] - Alt text for image
+ * @property {string} [name] - Name for initials fallback
+ * @property {'xs'|'sm'|'md'|'lg'|'xl'|'2xl'} [size] - Avatar size
+ * @property {'circular'|'rounded'|'square'} [variant] - Avatar shape
+ * @property {React.ReactNode} [fallback] - Custom fallback content
+ * @property {string} [className] - Additional CSS classes
+ * @property {'online'|'offline'|'away'|'busy'} [status] - Status indicator
+ * @property {'top-left'|'top-right'|'bottom-left'|'bottom-right'} [statusPosition] - Status position
+ * @property {boolean} [border] - Whether to show border
+ * @property {string} [borderColor] - Border color
+ */
+
 // Main Avatar component
-export const Avatar = ({ 
+export const Avatar = (/** @type {AvatarProps} */ {
   src,
   alt = '',
   name = '',
@@ -111,7 +126,7 @@ export const Avatar = ({
 };
 
 // Avatar Group
-export const AvatarGroup = ({ 
+export const AvatarGroup = (/** @type {any} */ {
   children,
   max = 3,
   size = 'md',
@@ -133,18 +148,18 @@ export const AvatarGroup = ({
     <div className={`flex items-center ${spacingClasses[spacing]} ${className}`}>
       {visibleAvatars.map((avatar, index) => (
         <div key={index} className="relative">
-          {React.cloneElement(avatar, { 
+          {React.isValidElement(avatar) ? React.cloneElement(avatar, {
             size,
             border: true,
             className: 'ring-2 ring-white'
-          })}
+          }) : avatar}
         </div>
       ))}
       
       {remainingCount > 0 && showMore && (
         <Avatar
           size={size}
-          fallback={`+${remainingCount}`}
+          fallback={<span>{`+${remainingCount}`}</span>}
           className="ring-2 ring-white bg-gray-100 text-gray-600"
         />
       )}
@@ -153,7 +168,7 @@ export const AvatarGroup = ({
 };
 
 // Avatar with Name
-export const AvatarWithName = ({ 
+export const AvatarWithName = (/** @type {any} */ {
   src,
   name,
   subtitle,
@@ -186,7 +201,7 @@ export const AvatarWithName = ({
 };
 
 // Clickable Avatar
-export const ClickableAvatar = ({ 
+export const ClickableAvatar = (/** @type {any} */ {
   onClick,
   href,
   className = '',
@@ -215,7 +230,7 @@ export const ClickableAvatar = ({
 };
 
 // Avatar with Badge
-export const AvatarWithBadge = ({ 
+export const AvatarWithBadge = (/** @type {any} */ {
   badge,
   badgePosition = 'bottom-right',
   className = '',
@@ -241,7 +256,7 @@ export const AvatarWithBadge = ({
 };
 
 // Avatar Stack (overlapping avatars)
-export const AvatarStack = ({ 
+export const AvatarStack = (/** @type {any} */ {
   children,
   max = 4,
   size = 'md',
@@ -255,18 +270,18 @@ export const AvatarStack = ({
   return (
     <div className={`flex ${reverse ? 'flex-row-reverse' : ''} ${className}`}>
       {visibleAvatars.map((avatar, index) => (
-        <div 
-          key={index} 
+        <div
+          key={index}
           className={`
             ${index > 0 ? (reverse ? 'mr-2' : '-ml-2') : ''}
             relative z-${10 + index}
           `}
         >
-          {React.cloneElement(avatar, { 
+          {React.isValidElement(avatar) ? React.cloneElement(avatar, {
             size,
             border: true,
             className: 'ring-2 ring-white'
-          })}
+          }) : avatar}
         </div>
       ))}
       
@@ -274,7 +289,7 @@ export const AvatarStack = ({
         <div className={`${reverse ? 'mr-2' : '-ml-2'} relative z-${10 + visibleAvatars.length}`}>
           <Avatar
             size={size}
-            fallback={`+${remainingCount}`}
+            fallback={<span>{`+${remainingCount}`}</span>}
             className="ring-2 ring-white bg-gray-100 text-gray-600"
           />
         </div>
@@ -284,7 +299,7 @@ export const AvatarStack = ({
 };
 
 // Animated Avatar
-export const AnimatedAvatar = ({ 
+export const AnimatedAvatar = (/** @type {any} */ {
   animation = 'pulse', // pulse, bounce, spin, ping
   className = '',
   ...avatarProps
@@ -305,7 +320,7 @@ export const AnimatedAvatar = ({
 };
 
 // Avatar Placeholder
-export const AvatarPlaceholder = ({ 
+export const AvatarPlaceholder = (/** @type {any} */ {
   size = 'md',
   variant = 'circular',
   className = ''
@@ -336,7 +351,7 @@ export const AvatarPlaceholder = ({
 };
 
 // Avatar Upload
-export const AvatarUpload = ({ 
+export const AvatarUpload = (/** @type {any} */ {
   src,
   onUpload,
   size = 'xl',
@@ -403,11 +418,11 @@ export const AvatarUpload = ({
 };
 
 // Named exports for compatibility
-export const AvatarImage = ({ src, alt, className, ...props }) => (
+export const AvatarImage = (/** @type {any} */ { src, alt, className, ...props }) => (
   <img src={src} alt={alt} className={`w-full h-full object-cover ${className}`} {...props} />
 );
 
-export const AvatarFallback = ({ children, className, ...props }) => (
+export const AvatarFallback = (/** @type {any} */ { children, className, ...props }) => (
   <div className={`flex items-center justify-center w-full h-full bg-gray-300 text-gray-600 font-medium ${className}`} {...props}>
     {children}
   </div>

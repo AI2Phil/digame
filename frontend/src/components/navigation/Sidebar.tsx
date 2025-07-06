@@ -540,7 +540,6 @@ const Sidebar: React.FC<SidebarProps> = ({
               src=""
               alt=""
               name=""
-              status=""
             />
             <div className="flex-1">
               <p className="text-sm font-medium text-gray-900">

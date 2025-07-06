@@ -1,13 +1,13 @@
 import React, { forwardRef } from 'react';
 import { cn } from '../../lib/utils';
 
-const ScrollArea = forwardRef(({ 
+const ScrollArea = forwardRef(/** @param {{className?: string, children?: React.ReactNode, type?: 'auto'|'always'|'scroll'|'hover'|'never', scrollHideDelay?: number, dir?: 'ltr'|'rtl'} & React.HTMLAttributes<HTMLDivElement>} props */ ({
   className,
   children,
   type = 'auto',
   scrollHideDelay = 600,
   dir = 'ltr',
-  ...props 
+  ...props
 }, ref) => {
   const [scrollbarVisible, setScrollbarVisible] = React.useState(false);
   const [isScrolling, setIsScrolling] = React.useState(false);
@@ -106,10 +106,10 @@ const ScrollArea = forwardRef(({
 ScrollArea.displayName = "ScrollArea";
 
 // Scrollbar component for custom styling
-export const Scrollbar = forwardRef(({ 
+export const Scrollbar = forwardRef(/** @param {{className?: string, orientation?: 'vertical'|'horizontal'} & React.HTMLAttributes<HTMLDivElement>} props */ ({
   className,
   orientation = 'vertical',
-  ...props 
+  ...props
 }, ref) => (
   <div
     ref={ref}
@@ -126,9 +126,9 @@ export const Scrollbar = forwardRef(({
 Scrollbar.displayName = "Scrollbar";
 
 // Scroll thumb component
-export const ScrollThumb = forwardRef(({ 
+export const ScrollThumb = forwardRef(/** @param {{className?: string} & React.HTMLAttributes<HTMLDivElement>} props */ ({
   className,
-  ...props 
+  ...props
 }, ref) => (
   <div
     ref={ref}
@@ -145,7 +145,7 @@ ScrollThumb.displayName = "ScrollThumb";
 // Predefined scroll area variants
 export const ScrollAreaVariants = {
   // Thin scrollbar
-  Thin: forwardRef(({ className, ...props }, ref) => (
+  Thin: forwardRef(/** @param {{className?: string} & React.ComponentProps<typeof ScrollArea>} props */ ({ className, ...props }, ref) => (
     <ScrollArea
       ref={ref}
       className={cn("scrollbar-thin", className)}
@@ -154,7 +154,7 @@ export const ScrollAreaVariants = {
   )),
 
   // Thick scrollbar
-  Thick: forwardRef(({ className, ...props }, ref) => (
+  Thick: forwardRef(/** @param {{className?: string} & React.ComponentProps<typeof ScrollArea>} props */ ({ className, ...props }, ref) => (
     <ScrollArea
       ref={ref}
       className={cn("scrollbar-thick", className)}
@@ -163,7 +163,7 @@ export const ScrollAreaVariants = {
   )),
 
   // Rounded scrollbar
-  Rounded: forwardRef(({ className, ...props }, ref) => (
+  Rounded: forwardRef(/** @param {{className?: string} & React.ComponentProps<typeof ScrollArea>} props */ ({ className, ...props }, ref) => (
     <ScrollArea
       ref={ref}
       className={cn("scrollbar-thumb-rounded-full", className)}
@@ -172,7 +172,7 @@ export const ScrollAreaVariants = {
   )),
 
   // Colored scrollbar
-  Colored: forwardRef(({ className, color = 'primary', ...props }, ref) => (
+  Colored: forwardRef(/** @param {{className?: string, color?: 'primary'|'secondary'|'accent'} & React.ComponentProps<typeof ScrollArea>} props */ ({ className, color = 'primary', ...props }, ref) => (
     <ScrollArea
       ref={ref}
       className={cn(
@@ -271,6 +271,11 @@ export const useScrollArea = () => {
 };
 
 // Hook for infinite scroll
+/**
+ * @param {() => void} callback - Function to call when threshold is reached
+ * @param {{threshold?: number, enabled?: boolean}} [options={}] - Hook options
+ * @returns {React.RefObject<HTMLElement>} - Ref to attach to scroll element
+ */
 export const useInfiniteScroll = (callback, options = {}) => {
   const { threshold = 100, enabled = true } = options;
   const elementRef = React.useRef(null);
@@ -296,11 +301,18 @@ export const useInfiniteScroll = (callback, options = {}) => {
 };
 
 // Simple scroll area for quick use
-export const SimpleScrollArea = ({ 
+/**
+ * @param {{
+ *   height?: string,
+ *   children?: React.ReactNode,
+ *   className?: string
+ * } & React.ComponentProps<typeof ScrollArea>} props
+ */
+export const SimpleScrollArea = ({
   height = '200px',
   children,
   className,
-  ...props 
+  ...props
 }) => {
   return (
     <ScrollArea

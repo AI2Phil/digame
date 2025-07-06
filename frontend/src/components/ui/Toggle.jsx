@@ -1,7 +1,18 @@
 import React, { forwardRef } from 'react';
 import { cn } from '../../lib/utils';
 
-const Toggle = forwardRef(({ 
+/**
+ * @typedef {Object} ToggleProps
+ * @property {string} [className] - CSS classes
+ * @property {boolean} [pressed] - Whether toggle is pressed
+ * @property {function(boolean): void} [onPressedChange] - Callback when pressed state changes
+ * @property {boolean} [disabled] - Whether toggle is disabled
+ * @property {'sm'|'default'|'lg'} [size] - Toggle size
+ * @property {'default'|'outline'} [variant] - Toggle variant
+ * @property {React.ReactNode} [children] - Toggle content
+ */
+
+const Toggle = forwardRef((/** @type {ToggleProps} */ {
   className,
   pressed = false,
   onPressedChange,
@@ -9,7 +20,7 @@ const Toggle = forwardRef(({
   size = 'default',
   variant = 'default',
   children,
-  ...props 
+  ...props
 }, ref) => {
   const handleClick = () => {
     if (!disabled) {
@@ -68,10 +79,16 @@ const Toggle = forwardRef(({
 
 Toggle.displayName = "Toggle";
 
+/**
+ * @typedef {Object} ToggleVariantProps
+ * @property {string} [className] - CSS classes
+ * @property {React.ReactNode} [children] - Toggle content
+ */
+
 // Predefined toggle variants
 export const ToggleVariants = {
   // Icon toggle
-  Icon: forwardRef(({ className, children, ...props }, ref) => (
+  Icon: forwardRef((/** @type {ToggleVariantProps} */ { className, children, ...props }, ref) => (
     <Toggle
       ref={ref}
       size="sm"
@@ -83,7 +100,7 @@ export const ToggleVariants = {
   )),
 
   // Text toggle
-  Text: forwardRef(({ className, ...props }, ref) => (
+  Text: forwardRef((/** @type {ToggleVariantProps} */ { className, ...props }, ref) => (
     <Toggle
       ref={ref}
       variant="outline"
@@ -93,7 +110,7 @@ export const ToggleVariants = {
   )),
 
   // Pill toggle
-  Pill: forwardRef(({ className, ...props }, ref) => (
+  Pill: forwardRef((/** @type {ToggleVariantProps} */ { className, ...props }, ref) => (
     <Toggle
       ref={ref}
       className={cn("rounded-full", className)}

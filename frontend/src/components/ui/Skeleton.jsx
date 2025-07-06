@@ -1,13 +1,26 @@
 import React from 'react';
 
 // Main Skeleton component
-export const Skeleton = ({ 
+/**
+ * @param {{
+ *   className?: string,
+ *   width?: any,
+ *   height?: any,
+ *   variant?: 'rectangular'|'circular'|'text',
+ *   animation?: 'pulse'|'wave'|'none',
+ *   lines?: number,
+ *   style?: React.CSSProperties
+ * }} props
+ */
+export const Skeleton = ({
   className = '',
-  width,
-  height,
+  width = '100%',
+  height = '1rem',
   variant = 'rectangular', // rectangular, circular, text
   animation = 'pulse', // pulse, wave, none
-  lines = 1
+  lines = 1,
+  style,
+  ...props
 }) => {
   const baseClasses = 'bg-gray-200';
   
@@ -23,9 +36,10 @@ export const Skeleton = ({
     none: ''
   };
 
-  const style = {
+  const internalStyle = {
     width: width || (variant === 'circular' ? height : undefined),
-    height: height || (variant === 'text' ? '1em' : undefined)
+    height: height || (variant === 'text' ? '1em' : undefined),
+    ...style
   };
 
   if (variant === 'text' && lines > 1) {
@@ -55,13 +69,20 @@ export const Skeleton = ({
         ${animationClasses[animation]}
         ${className}
       `}
-      style={style}
+      style={internalStyle}
+      {...props}
     />
   );
 };
 
 // Avatar Skeleton
-export const SkeletonAvatar = ({ 
+/**
+ * @param {{
+ *   size?: 'xs'|'sm'|'md'|'lg'|'xl'|'2xl',
+ *   className?: string
+ * }} props
+ */
+export const SkeletonAvatar = ({
   size = 'md',
   className = ''
 }) => {
@@ -83,7 +104,13 @@ export const SkeletonAvatar = ({
 };
 
 // Text Skeleton
-export const SkeletonText = ({ 
+/**
+ * @param {{
+ *   lines?: number,
+ *   className?: string
+ * }} props
+ */
+export const SkeletonText = ({
   lines = 3,
   className = ''
 }) => {
@@ -97,7 +124,13 @@ export const SkeletonText = ({
 };
 
 // Button Skeleton
-export const SkeletonButton = ({ 
+/**
+ * @param {{
+ *   size?: 'sm'|'md'|'lg',
+ *   className?: string
+ * }} props
+ */
+export const SkeletonButton = ({
   size = 'md',
   className = ''
 }) => {
@@ -116,7 +149,15 @@ export const SkeletonButton = ({
 };
 
 // Card Skeleton
-export const SkeletonCard = ({ 
+/**
+ * @param {{
+ *   className?: string,
+ *   showAvatar?: boolean,
+ *   showImage?: boolean,
+ *   lines?: number
+ * }} props
+ */
+export const SkeletonCard = ({
   className = '',
   showAvatar = true,
   showImage = true,
@@ -152,7 +193,14 @@ export const SkeletonCard = ({
 };
 
 // Table Skeleton
-export const SkeletonTable = ({ 
+/**
+ * @param {{
+ *   rows?: number,
+ *   columns?: number,
+ *   className?: string
+ * }} props
+ */
+export const SkeletonTable = ({
   rows = 5,
   columns = 4,
   className = ''
@@ -179,7 +227,14 @@ export const SkeletonTable = ({
 };
 
 // List Skeleton
-export const SkeletonList = ({ 
+/**
+ * @param {{
+ *   items?: number,
+ *   showAvatar?: boolean,
+ *   className?: string
+ * }} props
+ */
+export const SkeletonList = ({
   items = 5,
   showAvatar = true,
   className = ''
@@ -200,7 +255,13 @@ export const SkeletonList = ({
 };
 
 // Form Skeleton
-export const SkeletonForm = ({ 
+/**
+ * @param {{
+ *   fields?: number,
+ *   className?: string
+ * }} props
+ */
+export const SkeletonForm = ({
   fields = 4,
   className = ''
 }) => {
@@ -222,7 +283,13 @@ export const SkeletonForm = ({
 };
 
 // Chart Skeleton
-export const SkeletonChart = ({ 
+/**
+ * @param {{
+ *   type?: 'bar'|'line'|'pie',
+ *   className?: string
+ * }} props
+ */
+export const SkeletonChart = ({
   type = 'bar', // bar, line, pie
   className = ''
 }) => {
@@ -262,7 +329,12 @@ export const SkeletonChart = ({
 };
 
 // Page Skeleton
-export const SkeletonPage = ({ 
+/**
+ * @param {{
+ *   className?: string
+ * }} props
+ */
+export const SkeletonPage = ({
   className = ''
 }) => {
   return (
@@ -300,7 +372,15 @@ export const SkeletonPage = ({
 };
 
 // Loading Skeleton with custom content
-export const LoadingSkeleton = ({ 
+/**
+ * @param {{
+ *   loading?: boolean,
+ *   children?: React.ReactNode,
+ *   skeleton?: React.ReactNode,
+ *   className?: string
+ * }} props
+ */
+export const LoadingSkeleton = ({
   loading = true,
   children,
   skeleton,
@@ -318,7 +398,14 @@ export const LoadingSkeleton = ({
 };
 
 // Skeleton Group
-export const SkeletonGroup = ({ 
+/**
+ * @param {{
+ *   children?: React.ReactNode,
+ *   loading?: boolean,
+ *   className?: string
+ * }} props
+ */
+export const SkeletonGroup = ({
   children,
   loading = true,
   className = ''
@@ -333,7 +420,14 @@ export const SkeletonGroup = ({
 };
 
 // Image Skeleton
-export const SkeletonImage = ({ 
+/**
+ * @param {{
+ *   width?: any,
+ *   height?: any,
+ *   className?: string
+ * }} props
+ */
+export const SkeletonImage = ({
   width = '100%',
   height = '200px',
   className = ''
@@ -349,7 +443,13 @@ export const SkeletonImage = ({
 };
 
 // Pulse Skeleton (alternative animation)
-export const PulseSkeleton = ({ 
+/**
+ * @param {{
+ *   className?: string,
+ *   children?: React.ReactNode
+ * } & React.ComponentProps<typeof Skeleton>} props
+ */
+export const PulseSkeleton = ({
   className = '',
   children,
   ...props
@@ -362,7 +462,12 @@ export const PulseSkeleton = ({
 };
 
 // Wave Skeleton (alternative animation)
-export const WaveSkeleton = ({ 
+/**
+ * @param {{
+ *   className?: string
+ * } & React.ComponentProps<typeof Skeleton>} props
+ */
+export const WaveSkeleton = ({
   className = '',
   ...props
 }) => {

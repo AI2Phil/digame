@@ -3,8 +3,24 @@ import { X, CheckCircle, AlertCircle, Info, AlertTriangle } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
 // Toast context and provider
-const ToastContext = React.createContext();
+const ToastContext = React.createContext({
+  toasts: [],
+  addToast: (toast) => Math.random().toString(36).substr(2, 9),
+  removeToast: (id) => {},
+  removeAllToasts: () => {},
+  updateToast: (id, updates) => {}
+});
 
+/**
+ * @typedef {Object} ToastProviderProps
+ * @property {React.ReactNode} children - Child components
+ * @property {number} [limit=5] - Maximum number of toasts to show
+ * @property {number} [duration=4000] - Default duration for toasts
+ */
+
+/**
+ * @param {ToastProviderProps} props
+ */
 export const ToastProvider = ({ children, limit = 5, duration = 4000 }) => {
   const [toasts, setToasts] = React.useState([]);
 
@@ -67,13 +83,12 @@ export const useToast = () => {
   return context;
 };
 
-// Toast component
-const Toast = forwardRef(({ 
+const Toast = forwardRef(/** @param {{className?: string, variant?: 'default'|'destructive'|'success'|'warning'|'info', children?: React.ReactNode, onClose?: () => void} & React.HTMLAttributes<HTMLDivElement>} props */ ({
   className,
   variant = 'default',
   children,
   onClose,
-  ...props 
+  ...props
 }, ref) => {
   const variantClasses = {
     default: 'bg-background text-foreground border',
@@ -109,10 +124,10 @@ const Toast = forwardRef(({
 
 Toast.displayName = "Toast";
 
-const ToastAction = forwardRef(({ 
+const ToastAction = forwardRef(/** @param {{className?: string, children?: React.ReactNode} & React.ButtonHTMLAttributes<HTMLButtonElement>} props */ ({
   className,
   children,
-  ...props 
+  ...props
 }, ref) => (
   <button
     ref={ref}
@@ -128,9 +143,9 @@ const ToastAction = forwardRef(({
 
 ToastAction.displayName = "ToastAction";
 
-const ToastClose = forwardRef(({ 
+const ToastClose = forwardRef(/** @param {{className?: string} & React.ButtonHTMLAttributes<HTMLButtonElement>} props */ ({
   className,
-  ...props 
+  ...props
 }, ref) => (
   <button
     ref={ref}
@@ -146,9 +161,9 @@ const ToastClose = forwardRef(({
 
 ToastClose.displayName = "ToastClose";
 
-const ToastTitle = forwardRef(({ 
+const ToastTitle = forwardRef(/** @param {{className?: string} & React.HTMLAttributes<HTMLDivElement>} props */ ({
   className,
-  ...props 
+  ...props
 }, ref) => (
   <div
     ref={ref}
@@ -159,9 +174,9 @@ const ToastTitle = forwardRef(({
 
 ToastTitle.displayName = "ToastTitle";
 
-const ToastDescription = forwardRef(({ 
+const ToastDescription = forwardRef(/** @param {{className?: string} & React.HTMLAttributes<HTMLDivElement>} props */ ({
   className,
-  ...props 
+  ...props
 }, ref) => (
   <div
     ref={ref}
@@ -172,11 +187,10 @@ const ToastDescription = forwardRef(({
 
 ToastDescription.displayName = "ToastDescription";
 
-// Main Toaster component
-const Toaster = forwardRef(({ 
+const Toaster = forwardRef(/** @param {{className?: string, position?: 'top-left'|'top-center'|'top-right'|'bottom-left'|'bottom-center'|'bottom-right'} & React.HTMLAttributes<HTMLDivElement>} props */ ({
   className,
   position = 'bottom-right',
-  ...props 
+  ...props
 }, ref) => {
   const { toasts, removeToast } = useToast();
 
@@ -203,7 +217,7 @@ const Toaster = forwardRef(({
         <ToastItem
           key={toast.id}
           toast={toast}
-          onClose={() => removeToast(toast.id)}
+          onClose={() => removeToast && removeToast(toast.id)}
         />
       ))}
     </div>
@@ -212,7 +226,21 @@ const Toaster = forwardRef(({
 
 Toaster.displayName = "Toaster";
 
-// Individual toast item
+/**
+ * @param {{
+ *   toast: {
+ *     id: string,
+ *     variant?: 'default'|'destructive'|'success'|'warning'|'info',
+ *     title?: string,
+ *     description?: string,
+ *     action?: {
+ *       label: string,
+ *       onClick: () => void
+ *     }
+ *   },
+ *   onClose: () => void
+ * }} props
+ */
 const ToastItem = ({ toast, onClose }) => {
   const getIcon = (variant) => {
     const iconProps = { className: "h-4 w-4 shrink-0" };
@@ -292,86 +320,110 @@ export const ToastVariants = {
   }),
 
   promise: (promise, messages, options = {}) => {
-    const { addToast, updateToast } = useToast();
-    
-    const toastId = addToast({
-      variant: 'default',
-      title: 'Loading...',
-      description: messages.loading || 'Please wait...',
-      duration: 0,
-      ...options
-    });
-
-    promise
-      .then((result) => {
-        updateToast(toastId, {
-          variant: 'success',
-          title: 'Success',
-          description: messages.success || 'Operation completed successfully',
-          duration: 4000
-        });
-        return result;
-      })
-      .catch((error) => {
-        updateToast(toastId, {
-          variant: 'destructive',
-          title: 'Error',
-          description: messages.error || 'Something went wrong',
-          duration: 4000
-        });
-        throw error;
-      });
-
+    // This function should be called within a component that has access to the toast context
+    console.warn('ToastVariants.promise should be used within useToastHelpers hook');
     return promise;
   }
 };
 
-// Hook for easy toast usage
+/**
+ * Hook for easy toast usage
+ * @returns {{
+ *   success: (message: string, options?: Object) => string,
+ *   error: (message: string, options?: Object) => string,
+ *   warning: (message: string, options?: Object) => string,
+ *   info: (message: string, options?: Object) => string,
+ *   loading: (message: string, options?: Object) => string,
+ *   promise: (promise: Promise<any>, messages: Object, options?: Object) => Promise<any>,
+ *   custom: (toast: Object) => string
+ * }}
+ */
 export const useToastHelpers = () => {
-  const { addToast } = useToast();
+  const { addToast, updateToast } = useToast();
 
   return {
-    success: (message, options) => addToast(ToastVariants.success(message, options)),
-    error: (message, options) => addToast(ToastVariants.error(message, options)),
-    warning: (message, options) => addToast(ToastVariants.warning(message, options)),
-    info: (message, options) => addToast(ToastVariants.info(message, options)),
-    loading: (message, options) => addToast(ToastVariants.loading(message, options)),
-    promise: (promise, messages, options) => ToastVariants.promise(promise, messages, options),
+    success: (message, options = {}) => addToast(ToastVariants.success(message, options)),
+    error: (message, options = {}) => addToast(ToastVariants.error(message, options)),
+    warning: (message, options = {}) => addToast(ToastVariants.warning(message, options)),
+    info: (message, options = {}) => addToast(ToastVariants.info(message, options)),
+    loading: (message, options = {}) => addToast(ToastVariants.loading(message, options)),
+    promise: (promise, messages, options = {}) => {
+      const toastId = addToast({
+        variant: 'default',
+        title: 'Loading...',
+        description: messages.loading || 'Please wait...',
+        duration: 0,
+        ...options
+      });
+
+      promise
+        .then((result) => {
+          if (updateToast) {
+            updateToast(toastId, {
+              variant: 'success',
+              title: 'Success',
+              description: messages.success || 'Operation completed successfully',
+              duration: 4000
+            });
+          }
+          return result;
+        })
+        .catch((error) => {
+          if (updateToast) {
+            updateToast(toastId, {
+              variant: 'destructive',
+              title: 'Error',
+              description: messages.error || 'Something went wrong',
+              duration: 4000
+            });
+          }
+          throw error;
+        });
+
+      return promise;
+    },
     custom: (toast) => addToast(toast)
   };
 };
 
-// Simple toast function for quick use
+/**
+ * Simple toast function for quick use
+ * Note: These functions should be used within a ToastProvider context
+ * @type {{
+ *   success: (message: string, options?: Object) => string,
+ *   error: (message: string, options?: Object) => string,
+ *   warning: (message: string, options?: Object) => string,
+ *   info: (message: string, options?: Object) => string,
+ *   loading: (message: string, options?: Object) => string,
+ *   custom: (toast: Object) => string
+ * }}
+ */
 export const toast = {
-  success: (message, options) => {
-    // This would need to be called within a component that has access to the context
-    console.warn('toast.success called outside of ToastProvider context');
+  success: (message, options = {}) => {
+    console.warn('toast.success called outside of ToastProvider context. Use useToastHelpers hook instead.');
+    return '';
   },
-  error: (message, options) => {
-    console.warn('toast.error called outside of ToastProvider context');
+  error: (message, options = {}) => {
+    console.warn('toast.error called outside of ToastProvider context. Use useToastHelpers hook instead.');
+    return '';
   },
-  // ... other methods
+  warning: (message, options = {}) => {
+    console.warn('toast.warning called outside of ToastProvider context. Use useToastHelpers hook instead.');
+    return '';
+  },
+  info: (message, options = {}) => {
+    console.warn('toast.info called outside of ToastProvider context. Use useToastHelpers hook instead.');
+    return '';
+  },
+  loading: (message, options = {}) => {
+    console.warn('toast.loading called outside of ToastProvider context. Use useToastHelpers hook instead.');
+    return '';
+  },
+  custom: (toastData) => {
+    console.warn('toast.custom called outside of ToastProvider context. Use useToastHelpers hook instead.');
+    return '';
+  }
 };
-
-// Update toast object when provider is available
-if (typeof window !== 'undefined') {
-  const updateToastMethods = () => {
-    try {
-      const context = React.useContext(ToastContext);
-      if (context) {
-        const { addToast } = context;
-        toast.success = (message, options) => addToast(ToastVariants.success(message, options));
-        toast.error = (message, options) => addToast(ToastVariants.error(message, options));
-        toast.warning = (message, options) => addToast(ToastVariants.warning(message, options));
-        toast.info = (message, options) => addToast(ToastVariants.info(message, options));
-        toast.loading = (message, options) => addToast(ToastVariants.loading(message, options));
-        toast.custom = (toastData) => addToast(toastData);
-      }
-    } catch (e) {
-      // Context not available
-    }
-  };
-}
 
 export {
   Toast,

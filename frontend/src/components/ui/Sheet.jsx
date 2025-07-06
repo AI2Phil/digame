@@ -2,12 +2,30 @@ import React, { forwardRef } from 'react';
 import { X } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
+/**
+ * @param {{
+ *   children?: React.ReactNode
+ * }} props
+ */
 const Sheet = ({ children, ...props }) => {
   return <SheetProvider {...props}>{children}</SheetProvider>;
 };
 
-const SheetContext = React.createContext();
+const SheetContext = React.createContext({
+  open: false,
+  setOpen: (value) => {},
+  close: () => {},
+  modal: true
+});
 
+/**
+ * @param {{
+ *   children?: React.ReactNode,
+ *   open?: boolean,
+ *   onOpenChange?: (open: boolean) => void,
+ *   modal?: boolean
+ * }} props
+ */
 const SheetProvider = ({ children, open, onOpenChange, modal = true }) => {
   const [internalOpen, setInternalOpen] = React.useState(false);
   const isControlled = open !== undefined;
@@ -62,11 +80,15 @@ const useSheet = () => {
   return context;
 };
 
-const SheetTrigger = forwardRef(({ 
+const SheetTrigger = forwardRef(/** @param {{
+  className?: string,
+  children?: React.ReactNode,
+  asChild?: boolean
+} & React.HTMLAttributes<HTMLButtonElement>} props */ ({
   className,
   children,
   asChild = false,
-  ...props 
+  ...props
 }, ref) => {
   const { setOpen } = useSheet();
 
@@ -97,14 +119,21 @@ const SheetTrigger = forwardRef(({
 
 SheetTrigger.displayName = "SheetTrigger";
 
-const SheetContent = forwardRef(({ 
+const SheetContent = forwardRef(/** @param {{
+  className?: string,
+  side?: 'top'|'bottom'|'left'|'right',
+  size?: 'sm'|'default'|'lg'|'xl'|'full',
+  children?: React.ReactNode,
+  onEscapeKeyDown?: (e: KeyboardEvent) => void,
+  onPointerDownOutside?: (e: PointerEvent) => void
+} & React.HTMLAttributes<HTMLDivElement>} props */ ({
   className,
   side = 'right',
   size = 'default',
   children,
   onEscapeKeyDown,
   onPointerDownOutside,
-  ...props 
+  ...props
 }, ref) => {
   const { open, close, modal } = useSheet();
   const contentRef = React.useRef(null);
@@ -165,9 +194,12 @@ const SheetContent = forwardRef(({
 
 SheetContent.displayName = "SheetContent";
 
-const SheetHeader = forwardRef(({ 
+const SheetHeader = forwardRef(/** @param {{
+  className?: string,
+  children?: React.ReactNode
+} & React.HTMLAttributes<HTMLDivElement>} props */ ({
   className,
-  ...props 
+  ...props
 }, ref) => (
   <div
     ref={ref}
@@ -178,9 +210,12 @@ const SheetHeader = forwardRef(({
 
 SheetHeader.displayName = "SheetHeader";
 
-const SheetFooter = forwardRef(({ 
+const SheetFooter = forwardRef(/** @param {{
+  className?: string,
+  children?: React.ReactNode
+} & React.HTMLAttributes<HTMLDivElement>} props */ ({
   className,
-  ...props 
+  ...props
 }, ref) => (
   <div
     ref={ref}
@@ -191,9 +226,12 @@ const SheetFooter = forwardRef(({
 
 SheetFooter.displayName = "SheetFooter";
 
-const SheetTitle = forwardRef(({ 
+const SheetTitle = forwardRef(/** @param {{
+  className?: string,
+  children?: React.ReactNode
+} & React.HTMLAttributes<HTMLHeadingElement>} props */ ({
   className,
-  ...props 
+  ...props
 }, ref) => (
   <h2
     ref={ref}
@@ -204,9 +242,12 @@ const SheetTitle = forwardRef(({
 
 SheetTitle.displayName = "SheetTitle";
 
-const SheetDescription = forwardRef(({ 
+const SheetDescription = forwardRef(/** @param {{
+  className?: string,
+  children?: React.ReactNode
+} & React.HTMLAttributes<HTMLParagraphElement>} props */ ({
   className,
-  ...props 
+  ...props
 }, ref) => (
   <p
     ref={ref}
@@ -217,11 +258,15 @@ const SheetDescription = forwardRef(({
 
 SheetDescription.displayName = "SheetDescription";
 
-const SheetClose = forwardRef(({ 
+const SheetClose = forwardRef(/** @param {{
+  className?: string,
+  children?: React.ReactNode,
+  asChild?: boolean
+} & React.HTMLAttributes<HTMLButtonElement>} props */ ({
   className,
   children,
   asChild = false,
-  ...props 
+  ...props
 }, ref) => {
   const { close } = useSheet();
 

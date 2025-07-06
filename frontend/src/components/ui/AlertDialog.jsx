@@ -3,6 +3,11 @@ import { X } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { Button } from './Button';
 
+/**
+ * @param {{
+ *   children?: React.ReactNode
+ * }} props
+ */
 const AlertDialog = ({ children, ...props }) => {
   return (
     <AlertDialogProvider>
@@ -11,8 +16,16 @@ const AlertDialog = ({ children, ...props }) => {
   );
 };
 
-const AlertDialogContext = React.createContext();
+const AlertDialogContext = React.createContext({
+  isOpen: false,
+  setIsOpen: (value) => {}
+});
 
+/**
+ * @param {{
+ *   children?: React.ReactNode
+ * }} props
+ */
 const AlertDialogProvider = ({ children }) => {
   const [isOpen, setIsOpen] = React.useState(false);
   
@@ -31,11 +44,15 @@ const useAlertDialog = () => {
   return context;
 };
 
-const AlertDialogTrigger = forwardRef(({ 
+const AlertDialogTrigger = forwardRef(/** @param {{
+  className?: string,
+  children?: React.ReactNode,
+  asChild?: boolean
+} & React.HTMLAttributes<HTMLButtonElement>} props */ ({
   className,
   children,
   asChild = false,
-  ...props 
+  ...props
 }, ref) => {
   const { setIsOpen } = useAlertDialog();
 
@@ -66,10 +83,13 @@ const AlertDialogTrigger = forwardRef(({
 
 AlertDialogTrigger.displayName = "AlertDialogTrigger";
 
-const AlertDialogContent = forwardRef(({ 
+const AlertDialogContent = forwardRef(/** @param {{
+  className?: string,
+  children?: React.ReactNode
+} & React.HTMLAttributes<HTMLDivElement>} props */ ({
   className,
   children,
-  ...props 
+  ...props
 }, ref) => {
   const { isOpen, setIsOpen } = useAlertDialog();
 
@@ -123,7 +143,9 @@ const AlertDialogContent = forwardRef(({
 
 AlertDialogContent.displayName = "AlertDialogContent";
 
-const AlertDialogHeader = forwardRef(({ className, ...props }, ref) => (
+const AlertDialogHeader = forwardRef(/** @param {{
+  className?: string
+} & React.HTMLAttributes<HTMLDivElement>} props */ ({ className, ...props }, ref) => (
   <div
     ref={ref}
     className={cn("flex flex-col space-y-2 text-center sm:text-left", className)}
@@ -133,7 +155,9 @@ const AlertDialogHeader = forwardRef(({ className, ...props }, ref) => (
 
 AlertDialogHeader.displayName = "AlertDialogHeader";
 
-const AlertDialogFooter = forwardRef(({ className, ...props }, ref) => (
+const AlertDialogFooter = forwardRef(/** @param {{
+  className?: string
+} & React.HTMLAttributes<HTMLDivElement>} props */ ({ className, ...props }, ref) => (
   <div
     ref={ref}
     className={cn("flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2", className)}
@@ -143,7 +167,9 @@ const AlertDialogFooter = forwardRef(({ className, ...props }, ref) => (
 
 AlertDialogFooter.displayName = "AlertDialogFooter";
 
-const AlertDialogTitle = forwardRef(({ className, ...props }, ref) => (
+const AlertDialogTitle = forwardRef(/** @param {{
+  className?: string
+} & React.HTMLAttributes<HTMLHeadingElement>} props */ ({ className, ...props }, ref) => (
   <h2
     ref={ref}
     className={cn("text-lg font-semibold", className)}
@@ -153,7 +179,9 @@ const AlertDialogTitle = forwardRef(({ className, ...props }, ref) => (
 
 AlertDialogTitle.displayName = "AlertDialogTitle";
 
-const AlertDialogDescription = forwardRef(({ className, ...props }, ref) => (
+const AlertDialogDescription = forwardRef(/** @param {{
+  className?: string
+} & React.HTMLAttributes<HTMLParagraphElement>} props */ ({ className, ...props }, ref) => (
   <p
     ref={ref}
     className={cn("text-sm text-muted-foreground", className)}
@@ -163,11 +191,15 @@ const AlertDialogDescription = forwardRef(({ className, ...props }, ref) => (
 
 AlertDialogDescription.displayName = "AlertDialogDescription";
 
-const AlertDialogAction = forwardRef(({ 
+const AlertDialogAction = forwardRef(/** @param {{
+  className?: string,
+  children?: React.ReactNode,
+  onClick?: (e: React.MouseEvent) => void
+} & React.ComponentProps<typeof Button>} props */ ({
   className,
   children,
   onClick,
-  ...props 
+  ...props
 }, ref) => {
   const { setIsOpen } = useAlertDialog();
 
@@ -190,11 +222,15 @@ const AlertDialogAction = forwardRef(({
 
 AlertDialogAction.displayName = "AlertDialogAction";
 
-const AlertDialogCancel = forwardRef(({ 
+const AlertDialogCancel = forwardRef(/** @param {{
+  className?: string,
+  children?: React.ReactNode,
+  onClick?: (e: React.MouseEvent) => void
+} & React.ComponentProps<typeof Button>} props */ ({
   className,
   children,
   onClick,
-  ...props 
+  ...props
 }, ref) => {
   const { setIsOpen } = useAlertDialog();
 
@@ -221,7 +257,16 @@ AlertDialogCancel.displayName = "AlertDialogCancel";
 // Predefined alert dialog variants
 export const AlertDialogVariants = {
   // Confirmation dialog
-  Confirm: ({ 
+  Confirm: /** @param {{
+    title?: string,
+    description?: string,
+    confirmText?: string,
+    cancelText?: string,
+    onConfirm?: () => void,
+    onCancel?: () => void,
+    destructive?: boolean,
+    children?: React.ReactNode
+  }} props */ ({
     title = "Are you sure?",
     description,
     confirmText = "Continue",
@@ -230,7 +275,7 @@ export const AlertDialogVariants = {
     onCancel,
     destructive = false,
     children,
-    ...props 
+    ...props
   }) => (
     <AlertDialog {...props}>
       <AlertDialogTrigger asChild>
@@ -247,8 +292,8 @@ export const AlertDialogVariants = {
           <AlertDialogCancel onClick={onCancel}>
             {cancelText}
           </AlertDialogCancel>
-          <AlertDialogAction 
-            variant={destructive ? "destructive" : "default"}
+          <AlertDialogAction
+            variant={destructive ? "danger" : "primary"}
             onClick={onConfirm}
           >
             {confirmText}
@@ -259,7 +304,15 @@ export const AlertDialogVariants = {
   ),
 
   // Delete confirmation
-  Delete: ({ 
+  Delete: /** @param {{
+    title?: string,
+    description?: string,
+    confirmText?: string,
+    cancelText?: string,
+    onConfirm?: () => void,
+    onCancel?: () => void,
+    children?: React.ReactNode
+  }} props */ ({
     title = "Delete item?",
     description = "This action cannot be undone. This will permanently delete the item.",
     confirmText = "Delete",
@@ -267,7 +320,7 @@ export const AlertDialogVariants = {
     onConfirm,
     onCancel,
     children,
-    ...props 
+    ...props
   }) => (
     <AlertDialogVariants.Confirm
       title={title}
@@ -284,7 +337,15 @@ export const AlertDialogVariants = {
   ),
 
   // Save changes confirmation
-  SaveChanges: ({ 
+  SaveChanges: /** @param {{
+    title?: string,
+    description?: string,
+    confirmText?: string,
+    cancelText?: string,
+    onConfirm?: () => void,
+    onCancel?: () => void,
+    children?: React.ReactNode
+  }} props */ ({
     title = "Save changes?",
     description = "You have unsaved changes. Do you want to save them before leaving?",
     confirmText = "Save",
@@ -292,7 +353,7 @@ export const AlertDialogVariants = {
     onConfirm,
     onCancel,
     children,
-    ...props 
+    ...props
   }) => (
     <AlertDialogVariants.Confirm
       title={title}
@@ -349,6 +410,21 @@ export const useAlertDialogState = () => {
 };
 
 // Programmatic alert dialog component
+/**
+ * @param {{
+ *   isOpen?: boolean,
+ *   config?: {
+ *     title?: string,
+ *     description?: string,
+ *     confirmText?: string,
+ *     cancelText?: string,
+ *     destructive?: boolean,
+ *     onConfirm?: () => void,
+ *     onCancel?: () => void
+ *   },
+ *   onClose?: () => void
+ * }} props
+ */
 export const ProgrammaticAlertDialog = ({ isOpen, config, onClose }) => {
   if (!isOpen) return null;
 
@@ -387,7 +463,7 @@ export const ProgrammaticAlertDialog = ({ isOpen, config, onClose }) => {
             {config.cancelText || "Cancel"}
           </Button>
           <Button
-            variant={config.destructive ? "destructive" : "default"}
+            variant={config.destructive ? "danger" : "primary"}
             onClick={() => {
               config.onConfirm?.();
               onClose();

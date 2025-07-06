@@ -647,7 +647,7 @@ class FeatureHubService {
     const exploredFeatures = allFeatures.filter(f => exploredFeatureIds.includes(f.id));
     
     // Get features in similar categories
-    const exploredCategories = [...new Set(exploredFeatures.map(f => f.category))];
+    const exploredCategories = Array.from(new Set(exploredFeatures.map(f => f.category)));
     const similarFeatures = allFeatures.filter(f => 
       !exploredFeatureIds.includes(f.id) && 
       exploredCategories.includes(f.category)

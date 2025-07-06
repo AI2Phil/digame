@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Input } from '../components/ui/Input';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '../components/ui/Sheet';
 import { Progress } from '../components/ui/Progress';
-import { Alert, AlertDescription } from '../components/ui/Alert';
+import Alert, { AlertDescription } from '../components/ui/Alert';
 import { 
   Settings, 
   Plus, 
@@ -29,12 +29,25 @@ import {
   Download
 } from 'lucide-react';
 
+/**
+ * @returns {React.ReactElement} IntegrationsPage component
+ */
 const IntegrationsPage = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [connections, setConnections] = useState([]);
   const [providers, setProviders] = useState([]);
   const [webhooks, setWebhooks] = useState([]);
-  const [analytics, setAnalytics] = useState({});
+  const [analytics, setAnalytics] = useState(/** @type {{
+    total_connections: number,
+    active_connections: number,
+    total_syncs: number,
+    successful_syncs: number,
+    failed_syncs: number,
+    webhook_triggers: number,
+    avg_response_time_ms: number,
+    success_rate: number,
+    uptime_percentage: number
+  }} */ ({}));
   const [loading, setLoading] = useState(true);
   const [selectedConnection, setSelectedConnection] = useState(null);
 
@@ -187,6 +200,10 @@ const IntegrationsPage = () => {
     setLoading(false);
   }, []);
 
+  /**
+   * @param {string} status - Connection status
+   * @returns {string} CSS classes for status color
+   */
   const getStatusColor = (status) => {
     switch (status) {
       case 'active': return 'bg-green-100 text-green-800';
@@ -197,6 +214,10 @@ const IntegrationsPage = () => {
     }
   };
 
+  /**
+   * @param {string} health - Health status
+   * @returns {React.ReactElement} Health icon component
+   */
   const getHealthIcon = (health) => {
     switch (health) {
       case 'healthy': return <CheckCircle className="h-4 w-4 text-green-500" />;
@@ -206,10 +227,18 @@ const IntegrationsPage = () => {
     }
   };
 
+  /**
+   * @param {string} dateString - ISO date string
+   * @returns {string} Formatted date string
+   */
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleString();
   };
 
+  /**
+   * @param {Object} provider - Provider configuration object
+   * @param {string} provider.name - Provider name
+   */
   const initiateOAuthFlow = (provider) => {
     // Mock OAuth flow initiation - using Next.js router for callback
     const authUrl = `https://oauth.${provider.name.toLowerCase()}.com/authorize?client_id=demo&redirect_uri=${encodeURIComponent(typeof window !== 'undefined' ? window.location.origin : '')}/integrations/oauth/callback&scope=read+write`;
@@ -218,12 +247,20 @@ const IntegrationsPage = () => {
     }
   };
 
+  /**
+   * @param {number} connectionId - Connection ID to test
+   * @returns {Promise<void>}
+   */
   const testConnection = async (connectionId) => {
     // Mock connection test
     console.log(`Testing connection ${connectionId}`);
     // Show success/failure feedback
   };
 
+  /**
+   * @param {number} connectionId - Connection ID to sync
+   * @returns {Promise<void>}
+   */
   const syncConnection = async (connectionId) => {
     // Mock manual sync
     console.log(`Syncing connection ${connectionId}`);
@@ -520,7 +557,7 @@ const IntegrationsPage = () => {
                                 <Edit className="h-4 w-4 mr-2" />
                                 Edit Settings
                               </Button>
-                              <Button variant="destructive" className="w-full">
+                              <Button variant="danger" className="w-full">
                                 <Trash2 className="h-4 w-4 mr-2" />
                                 Disconnect
                               </Button>

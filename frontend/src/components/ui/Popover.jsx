@@ -2,19 +2,39 @@ import React, { forwardRef } from 'react';
 import { X } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
-const Popover = ({ children, ...props }) => {
+/**
+ * @typedef {Object} PopoverProps
+ * @property {React.ReactNode} children - Child elements
+ */
+
+const Popover = (
+  /** @param {PopoverProps} props */
+  { children, ...props }
+) => {
   return <PopoverProvider {...props}>{children}</PopoverProvider>;
 };
 
-const PopoverContext = React.createContext();
+const PopoverContext = React.createContext({});
 
-const PopoverProvider = ({ 
-  children, 
-  open, 
-  onOpenChange, 
-  modal = false,
-  defaultOpen = false 
-}) => {
+/**
+ * @typedef {Object} PopoverProviderProps
+ * @property {React.ReactNode} children - Child elements
+ * @property {boolean} [open] - Controlled open state
+ * @property {Function} [onOpenChange] - Open state change callback
+ * @property {boolean} [modal] - Whether popover is modal
+ * @property {boolean} [defaultOpen] - Default open state
+ */
+
+const PopoverProvider = (
+  /** @param {PopoverProviderProps} props */
+  {
+    children,
+    open,
+    onOpenChange,
+    modal = false,
+    defaultOpen = false
+  }
+) => {
   const [internalOpen, setInternalOpen] = React.useState(defaultOpen);
   const [position, setPosition] = React.useState({ x: 0, y: 0 });
   
@@ -90,12 +110,21 @@ const usePopover = () => {
   return context;
 };
 
-const PopoverTrigger = forwardRef(({ 
-  className,
-  children,
-  asChild = false,
-  ...props 
-}, ref) => {
+/**
+ * @typedef {Object} PopoverTriggerProps
+ * @property {string} [className] - Additional CSS classes
+ * @property {React.ReactNode} [children] - Child elements
+ * @property {boolean} [asChild] - Render as child element
+ */
+
+const PopoverTrigger = forwardRef(
+  /** @param {PopoverTriggerProps} props */
+  ({
+    className,
+    children,
+    asChild = false,
+    ...props
+  }, ref) => {
   const { open, setOpen, setPosition } = usePopover();
 
   const handleClick = (e) => {
@@ -136,14 +165,25 @@ const PopoverTrigger = forwardRef(({
 
 PopoverTrigger.displayName = "PopoverTrigger";
 
-const PopoverContent = forwardRef(({ 
-  className,
-  align = 'center',
-  side = 'bottom',
-  sideOffset = 4,
-  children,
-  ...props 
-}, ref) => {
+/**
+ * @typedef {Object} PopoverContentProps
+ * @property {string} [className] - Additional CSS classes
+ * @property {'start'|'center'|'end'} [align] - Content alignment
+ * @property {'top'|'bottom'|'left'|'right'} [side] - Content side
+ * @property {number} [sideOffset] - Offset from trigger
+ * @property {React.ReactNode} [children] - Child elements
+ */
+
+const PopoverContent = forwardRef(
+  /** @param {PopoverContentProps} props */
+  ({
+    className,
+    align = 'center',
+    side = 'bottom',
+    sideOffset = 4,
+    children,
+    ...props
+  }, ref) => {
   const { open, close, position, modal } = usePopover();
   const contentRef = React.useRef(null);
   const [adjustedPosition, setAdjustedPosition] = React.useState(position);
@@ -218,12 +258,21 @@ const PopoverContent = forwardRef(({
 
 PopoverContent.displayName = "PopoverContent";
 
-const PopoverClose = forwardRef(({ 
-  className,
-  children,
-  asChild = false,
-  ...props 
-}, ref) => {
+/**
+ * @typedef {Object} PopoverCloseProps
+ * @property {string} [className] - Additional CSS classes
+ * @property {React.ReactNode} [children] - Child elements
+ * @property {boolean} [asChild] - Render as child element
+ */
+
+const PopoverClose = forwardRef(
+  /** @param {PopoverCloseProps} props */
+  ({
+    className,
+    children,
+    asChild = false,
+    ...props
+  }, ref) => {
   const { close } = usePopover();
 
   const handleClick = () => {
@@ -257,10 +306,17 @@ const PopoverClose = forwardRef(({
 
 PopoverClose.displayName = "PopoverClose";
 
-const PopoverHeader = forwardRef(({ 
-  className,
-  ...props 
-}, ref) => (
+/**
+ * @typedef {Object} PopoverHeaderProps
+ * @property {string} [className] - Additional CSS classes
+ */
+
+const PopoverHeader = forwardRef(
+  /** @param {PopoverHeaderProps} props */
+  ({
+    className,
+    ...props
+  }, ref) => (
   <div
     ref={ref}
     className={cn("flex flex-col space-y-2 text-center sm:text-left", className)}
@@ -270,10 +326,17 @@ const PopoverHeader = forwardRef(({
 
 PopoverHeader.displayName = "PopoverHeader";
 
-const PopoverTitle = forwardRef(({ 
-  className,
-  ...props 
-}, ref) => (
+/**
+ * @typedef {Object} PopoverTitleProps
+ * @property {string} [className] - Additional CSS classes
+ */
+
+const PopoverTitle = forwardRef(
+  /** @param {PopoverTitleProps} props */
+  ({
+    className,
+    ...props
+  }, ref) => (
   <h4
     ref={ref}
     className={cn("text-lg font-semibold leading-none tracking-tight", className)}
@@ -283,10 +346,17 @@ const PopoverTitle = forwardRef(({
 
 PopoverTitle.displayName = "PopoverTitle";
 
-const PopoverDescription = forwardRef(({ 
-  className,
-  ...props 
-}, ref) => (
+/**
+ * @typedef {Object} PopoverDescriptionProps
+ * @property {string} [className] - Additional CSS classes
+ */
+
+const PopoverDescription = forwardRef(
+  /** @param {PopoverDescriptionProps} props */
+  ({
+    className,
+    ...props
+  }, ref) => (
   <p
     ref={ref}
     className={cn("text-sm text-muted-foreground", className)}
@@ -296,10 +366,17 @@ const PopoverDescription = forwardRef(({
 
 PopoverDescription.displayName = "PopoverDescription";
 
-const PopoverFooter = forwardRef(({ 
-  className,
-  ...props 
-}, ref) => (
+/**
+ * @typedef {Object} PopoverFooterProps
+ * @property {string} [className] - Additional CSS classes
+ */
+
+const PopoverFooter = forwardRef(
+  /** @param {PopoverFooterProps} props */
+  ({
+    className,
+    ...props
+  }, ref) => (
   <div
     ref={ref}
     className={cn("flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2", className)}
@@ -474,14 +551,25 @@ export const usePopoverPosition = (triggerRef, contentRef, options = {}) => {
   return { position, updatePosition };
 };
 
+/**
+ * @typedef {Object} SimplePopoverProps
+ * @property {React.ReactNode} trigger - Trigger element
+ * @property {React.ReactNode} content - Popover content
+ * @property {string} [title] - Popover title
+ * @property {string} [description] - Popover description
+ */
+
 // Simple popover for quick use
-export const SimplePopover = ({ 
-  trigger, 
-  content, 
-  title,
-  description,
-  ...props 
-}) => {
+export const SimplePopover = (
+  /** @param {SimplePopoverProps} props */
+  {
+    trigger,
+    content,
+    title,
+    description,
+    ...props
+  }
+) => {
   return (
     <Popover {...props}>
       <PopoverTrigger asChild>

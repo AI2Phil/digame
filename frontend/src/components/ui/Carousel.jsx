@@ -2,11 +2,15 @@ import React, { forwardRef } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
-const Carousel = forwardRef(({ 
+const Carousel = forwardRef(/** @param {{
+  className?: string,
+  children?: React.ReactNode,
+  orientation?: 'horizontal'|'vertical'
+} & React.HTMLAttributes<HTMLDivElement>} props */ ({
   className,
   children,
   orientation = 'horizontal',
-  ...props 
+  ...props
 }, ref) => {
   return (
     <CarouselProvider orientation={orientation}>
@@ -28,8 +32,24 @@ const Carousel = forwardRef(({
 
 Carousel.displayName = "Carousel";
 
-const CarouselContext = React.createContext();
+const CarouselContext = React.createContext({
+  currentIndex: 0,
+  itemsCount: 0,
+  canScrollPrev: false,
+  canScrollNext: false,
+  scrollToPrevious: () => {},
+  scrollToNext: () => {},
+  scrollToIndex: (index) => {},
+  setItemsCount: (count) => {},
+  orientation: 'horizontal'
+});
 
+/**
+ * @param {{
+ *   children?: React.ReactNode,
+ *   orientation?: 'horizontal'|'vertical'
+ * }} props
+ */
 const CarouselProvider = ({ children, orientation }) => {
   const [currentIndex, setCurrentIndex] = React.useState(0);
   const [itemsCount, setItemsCount] = React.useState(0);
@@ -78,10 +98,13 @@ const useCarousel = () => {
   return context;
 };
 
-const CarouselContent = forwardRef(({ 
+const CarouselContent = forwardRef(/** @param {{
+  className?: string,
+  children?: React.ReactNode
+} & React.HTMLAttributes<HTMLDivElement>} props */ ({
   className,
   children,
-  ...props 
+  ...props
 }, ref) => {
   const { currentIndex, setItemsCount, orientation } = useCarousel();
   const contentRef = React.useRef(null);
@@ -132,10 +155,13 @@ const CarouselContent = forwardRef(({
 
 CarouselContent.displayName = "CarouselContent";
 
-const CarouselItem = forwardRef(({ 
+const CarouselItem = forwardRef(/** @param {{
+  className?: string,
+  children?: React.ReactNode
+} & React.HTMLAttributes<HTMLDivElement>} props */ ({
   className,
   children,
-  ...props 
+  ...props
 }, ref) => {
   return (
     <div
@@ -150,11 +176,15 @@ const CarouselItem = forwardRef(({
 
 CarouselItem.displayName = "CarouselItem";
 
-const CarouselPrevious = forwardRef(({ 
+const CarouselPrevious = forwardRef(/** @param {{
+  className?: string,
+  variant?: string,
+  size?: string
+} & React.ButtonHTMLAttributes<HTMLButtonElement>} props */ ({
   className,
   variant = 'outline',
   size = 'icon',
-  ...props 
+  ...props
 }, ref) => {
   const { scrollToPrevious, canScrollPrev, orientation } = useCarousel();
 
@@ -184,11 +214,15 @@ const CarouselPrevious = forwardRef(({
 
 CarouselPrevious.displayName = "CarouselPrevious";
 
-const CarouselNext = forwardRef(({ 
+const CarouselNext = forwardRef(/** @param {{
+  className?: string,
+  variant?: string,
+  size?: string
+} & React.ButtonHTMLAttributes<HTMLButtonElement>} props */ ({
   className,
   variant = 'outline',
   size = 'icon',
-  ...props 
+  ...props
 }, ref) => {
   const { scrollToNext, canScrollNext, orientation } = useCarousel();
 
@@ -218,9 +252,11 @@ const CarouselNext = forwardRef(({
 
 CarouselNext.displayName = "CarouselNext";
 
-const CarouselIndicators = forwardRef(({ 
+const CarouselIndicators = forwardRef(/** @param {{
+  className?: string
+} & React.HTMLAttributes<HTMLDivElement>} props */ ({
   className,
-  ...props 
+  ...props
 }, ref) => {
   const { currentIndex, itemsCount, scrollToIndex } = useCarousel();
 
@@ -257,7 +293,11 @@ CarouselIndicators.displayName = "CarouselIndicators";
 // Predefined carousel variants
 export const CarouselVariants = {
   // Auto-playing carousel
-  Auto: forwardRef(({ autoplayDelay = 3000, pauseOnHover = true, children, ...props }, ref) => {
+  Auto: forwardRef(/** @param {{
+    autoplayDelay?: number,
+    pauseOnHover?: boolean,
+    children?: React.ReactNode
+  } & React.ComponentProps<typeof Carousel>} props */ ({ autoplayDelay = 3000, pauseOnHover = true, children, ...props }, ref) => {
     const { scrollToNext, currentIndex, itemsCount } = useCarousel();
     const [isPlaying, setIsPlaying] = React.useState(true);
     const intervalRef = React.useRef(null);
@@ -304,7 +344,10 @@ export const CarouselVariants = {
   }),
 
   // Thumbnail carousel
-  Thumbnails: forwardRef(({ thumbnails = [], children, ...props }, ref) => {
+  Thumbnails: forwardRef(/** @param {{
+    thumbnails?: string[],
+    children?: React.ReactNode
+  } & React.ComponentProps<typeof Carousel>} props */ ({ thumbnails = [], children, ...props }, ref) => {
     const { currentIndex, scrollToIndex } = useCarousel();
 
     return (
@@ -339,7 +382,10 @@ export const CarouselVariants = {
   }),
 
   // Fade transition carousel
-  Fade: forwardRef(({ className, children, ...props }, ref) => {
+  Fade: forwardRef(/** @param {{
+    className?: string,
+    children?: React.ReactNode
+  } & React.ComponentProps<typeof Carousel>} props */ ({ className, children, ...props }, ref) => {
     const { currentIndex } = useCarousel();
 
     return (
@@ -363,6 +409,19 @@ export const CarouselVariants = {
 };
 
 // Hook for carousel state management
+/**
+ * @param {number} [initialIndex=0] - Initial carousel index
+ * @returns {{
+ *   currentIndex: number,
+ *   itemsCount: number,
+ *   canScrollPrev: boolean,
+ *   canScrollNext: boolean,
+ *   scrollToPrevious: () => void,
+ *   scrollToNext: () => void,
+ *   scrollToIndex: (index: number) => void,
+ *   setItemsCount: (count: number) => void
+ * }}
+ */
 export const useCarouselState = (initialIndex = 0) => {
   const [currentIndex, setCurrentIndex] = React.useState(initialIndex);
   const [itemsCount, setItemsCount] = React.useState(0);
@@ -395,6 +454,12 @@ export const useCarouselState = (initialIndex = 0) => {
 };
 
 // Simple carousel component for quick use
+/**
+ * @param {{
+ *   items?: any[],
+ *   renderItem?: (item: any, index: number) => React.ReactNode
+ * } & React.ComponentProps<typeof Carousel>} props
+ */
 export const SimpleCarousel = ({ items = [], renderItem, ...props }) => {
   return (
     <Carousel {...props}>

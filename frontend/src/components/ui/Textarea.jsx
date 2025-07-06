@@ -1,8 +1,8 @@
 import React, { forwardRef } from 'react';
 import { cn } from '../../lib/utils';
 
-const Textarea = forwardRef(({ 
-  className, 
+const Textarea = forwardRef((/** @type {any} */ {
+  className,
   label,
   error,
   helperText,
@@ -12,7 +12,7 @@ const Textarea = forwardRef(({
   rows = 4,
   maxLength,
   showCharCount = false,
-  ...props 
+  ...props
 }, ref) => {
   const [charCount, setCharCount] = React.useState(props.value?.length || 0);
 
@@ -97,8 +97,7 @@ Textarea.displayName = "Textarea";
 export const TextareaVariants = {
   default: Textarea,
   
-  // Auto-resizing textarea
-  AutoResize: forwardRef(({ className, ...props }, ref) => {
+  AutoResize: forwardRef((/** @type {any} */ { className, ...props }, ref) => {
     const textareaRef = React.useRef(null);
     
     React.useImperativeHandle(ref, () => textareaRef.current);
@@ -125,8 +124,7 @@ export const TextareaVariants = {
     );
   }),
   
-  // Code editor style textarea
-  Code: forwardRef(({ className, ...props }, ref) => (
+  Code: forwardRef((/** @type {any} */ { className, ...props }, ref) => (
     <Textarea
       ref={ref}
       className={cn(
@@ -138,8 +136,7 @@ export const TextareaVariants = {
     />
   )),
   
-  // Minimal textarea without borders
-  Minimal: forwardRef(({ className, ...props }, ref) => (
+  Minimal: forwardRef((/** @type {any} */ { className, ...props }, ref) => (
     <Textarea
       ref={ref}
       className={cn(

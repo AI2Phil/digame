@@ -2,7 +2,15 @@ import React, { forwardRef } from 'react';
 import { cn } from '../../lib/utils';
 import Toggle from './Toggle';
 
-const ToggleGroup = forwardRef(({ 
+const ToggleGroup = forwardRef(/** @param {{
+  className?: string,
+  type?: 'single'|'multiple',
+  value?: any,
+  onValueChange?: (value: any) => void,
+  disabled?: boolean,
+  orientation?: 'horizontal'|'vertical',
+  children?: React.ReactNode
+} & React.HTMLAttributes<HTMLDivElement>} props */ ({
   className,
   type = 'single',
   value,
@@ -10,7 +18,7 @@ const ToggleGroup = forwardRef(({
   disabled = false,
   orientation = 'horizontal',
   children,
-  ...props 
+  ...props
 }, ref) => {
   return (
     <ToggleGroupProvider type={type} value={value} onValueChange={onValueChange} disabled={disabled}>
@@ -32,8 +40,22 @@ const ToggleGroup = forwardRef(({
 
 ToggleGroup.displayName = "ToggleGroup";
 
-const ToggleGroupContext = React.createContext();
+const ToggleGroupContext = React.createContext({
+  type: 'single',
+  disabled: false,
+  handleItemToggle: (itemValue) => {},
+  isPressed: (itemValue) => Boolean(false)
+});
 
+/**
+ * @param {{
+ *   children?: React.ReactNode,
+ *   type?: 'single'|'multiple',
+ *   value?: any,
+ *   onValueChange?: (value: any) => void,
+ *   disabled?: boolean
+ * }} props
+ */
 const ToggleGroupProvider = ({ children, type, value, onValueChange, disabled }) => {
   const handleItemToggle = React.useCallback((itemValue) => {
     if (disabled) return;
@@ -80,12 +102,17 @@ const useToggleGroup = () => {
   return context;
 };
 
-const ToggleGroupItem = forwardRef(({ 
+const ToggleGroupItem = forwardRef(/** @param {{
+  className?: string,
+  value?: any,
+  disabled?: boolean,
+  children?: React.ReactNode
+} & React.ComponentProps<typeof Toggle>} props */ ({
   className,
   value,
   disabled: itemDisabled = false,
   children,
-  ...props 
+  ...props
 }, ref) => {
   const { disabled: groupDisabled, handleItemToggle, isPressed } = useToggleGroup();
   const disabled = groupDisabled || itemDisabled;
@@ -119,7 +146,7 @@ ToggleGroupItem.displayName = "ToggleGroupItem";
 // Predefined toggle group variants
 export const ToggleGroupVariants = {
   // Segmented control style
-  Segmented: forwardRef(({ className, children, ...props }, ref) => (
+  Segmented: forwardRef(/** @param {{className?: string, children?: React.ReactNode} & React.ComponentProps<typeof ToggleGroup>} props */ ({ className, children, ...props }, ref) => (
     <ToggleGroup
       ref={ref}
       className={cn(
@@ -146,7 +173,7 @@ export const ToggleGroupVariants = {
   )),
 
   // Outline style
-  Outline: forwardRef(({ className, children, ...props }, ref) => (
+  Outline: forwardRef(/** @param {{className?: string, children?: React.ReactNode} & React.ComponentProps<typeof ToggleGroup>} props */ ({ className, children, ...props }, ref) => (
     <ToggleGroup
       ref={ref}
       className={cn("inline-flex rounded-md shadow-sm", className)}
@@ -176,7 +203,7 @@ export const ToggleGroupVariants = {
   )),
 
   // Pills style
-  Pills: forwardRef(({ className, ...props }, ref) => (
+  Pills: forwardRef(/** @param {{className?: string} & React.ComponentProps<typeof ToggleGroup>} props */ ({ className, ...props }, ref) => (
     <ToggleGroup
       ref={ref}
       className={cn("flex flex-wrap gap-2", className)}
@@ -186,6 +213,19 @@ export const ToggleGroupVariants = {
 };
 
 // Hook for toggle group state
+/**
+ * @param {'single'|'multiple'} [type='single'] - Toggle group type
+ * @param {any} [initialValue] - Initial value
+ * @returns {{
+ *   value: any,
+ *   onValueChange: (value: any) => void,
+ *   selectItem: (itemValue: any) => void,
+ *   deselectItem: (itemValue: any) => void,
+ *   toggleItem: (itemValue: any) => void,
+ *   clear: () => void,
+ *   isSelected: (itemValue: any) => boolean
+ * }}
+ */
 export const useToggleGroupState = (type = 'single', initialValue) => {
   const [value, setValue] = React.useState(initialValue);
 
@@ -254,10 +294,16 @@ export const useToggleGroupState = (type = 'single', initialValue) => {
 };
 
 // Simple toggle group for quick use
-export const SimpleToggleGroup = ({ 
-  items = [], 
+/**
+ * @param {{
+ *   items?: Array<{value: any, label: string, icon?: React.ReactNode}>,
+ *   type?: 'single'|'multiple'
+ * } & React.ComponentProps<typeof ToggleGroup>} props
+ */
+export const SimpleToggleGroup = ({
+  items = [],
   type = 'single',
-  ...props 
+  ...props
 }) => {
   return (
     <ToggleGroup type={type} {...props}>

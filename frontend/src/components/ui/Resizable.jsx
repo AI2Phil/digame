@@ -2,12 +2,21 @@ import React, { forwardRef } from 'react';
 import { GripVertical } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
-const ResizablePanelGroup = forwardRef(({ 
-  className,
-  direction = 'horizontal',
-  children,
-  ...props 
-}, ref) => {
+/**
+ * @typedef {Object} ResizablePanelGroupProps
+ * @property {string} [className] - Additional CSS classes
+ * @property {'horizontal'|'vertical'} [direction] - Panel group direction
+ * @property {React.ReactNode} [children] - Child elements
+ */
+
+const ResizablePanelGroup = forwardRef(
+  /** @param {ResizablePanelGroupProps} props */
+  ({
+    className,
+    direction = 'horizontal',
+    children,
+    ...props
+  }, ref) => {
   return (
     <ResizableProvider direction={direction}>
       <div
@@ -29,9 +38,18 @@ const ResizablePanelGroup = forwardRef(({
 
 ResizablePanelGroup.displayName = "ResizablePanelGroup";
 
-const ResizableContext = React.createContext();
+const ResizableContext = React.createContext({});
 
-const ResizableProvider = ({ children, direction }) => {
+/**
+ * @typedef {Object} ResizableProviderProps
+ * @property {React.ReactNode} children - Child elements
+ * @property {'horizontal'|'vertical'} direction - Panel group direction
+ */
+
+const ResizableProvider = (
+  /** @param {ResizableProviderProps} props */
+  { children, direction }
+) => {
   const [panels, setPanels] = React.useState(new Map());
   const [isResizing, setIsResizing] = React.useState(false);
 
@@ -84,15 +102,27 @@ const useResizable = () => {
   return context;
 };
 
-const ResizablePanel = forwardRef(({ 
-  className,
-  defaultSize = 50,
-  minSize = 0,
-  maxSize = 100,
-  id,
-  children,
-  ...props 
-}, ref) => {
+/**
+ * @typedef {Object} ResizablePanelProps
+ * @property {string} [className] - Additional CSS classes
+ * @property {number} [defaultSize] - Default panel size percentage
+ * @property {number} [minSize] - Minimum panel size percentage
+ * @property {number} [maxSize] - Maximum panel size percentage
+ * @property {string} [id] - Panel identifier
+ * @property {React.ReactNode} [children] - Child elements
+ */
+
+const ResizablePanel = forwardRef(
+  /** @param {ResizablePanelProps} props */
+  ({
+    className,
+    defaultSize = 50,
+    minSize = 0,
+    maxSize = 100,
+    id,
+    children,
+    ...props
+  }, ref) => {
   const { direction, panels, registerPanel, updatePanelConstraints } = useResizable();
   const panelId = id || React.useId();
 
@@ -126,11 +156,19 @@ const ResizablePanel = forwardRef(({
 
 ResizablePanel.displayName = "ResizablePanel";
 
-const ResizableHandle = forwardRef(({ 
-  className,
-  withHandle = true,
-  ...props 
-}, ref) => {
+/**
+ * @typedef {Object} ResizableHandleProps
+ * @property {string} [className] - Additional CSS classes
+ * @property {boolean} [withHandle] - Whether to show the grip handle
+ */
+
+const ResizableHandle = forwardRef(
+  /** @param {ResizableHandleProps} props */
+  ({
+    className,
+    withHandle = true,
+    ...props
+  }, ref) => {
   const { direction, isResizing, setIsResizing, panels, updatePanelSize } = useResizable();
   const [isDragging, setIsDragging] = React.useState(false);
   const handleRef = React.useRef(null);
@@ -382,12 +420,21 @@ export const usePanelConstraints = (minSize = 0, maxSize = 100) => {
   };
 };
 
+/**
+ * @typedef {Object} SimpleResizableProps
+ * @property {Array} [panels] - Array of panel configurations
+ * @property {'horizontal'|'vertical'} [direction] - Panel group direction
+ */
+
 // Simple resizable component for quick use
-export const SimpleResizable = ({ 
-  panels = [], 
-  direction = 'horizontal',
-  ...props 
-}) => {
+export const SimpleResizable = (
+  /** @param {SimpleResizableProps} props */
+  {
+    panels = [],
+    direction = 'horizontal',
+    ...props
+  }
+) => {
   return (
     <ResizablePanelGroup direction={direction} {...props}>
       {panels.map((panel, index) => (

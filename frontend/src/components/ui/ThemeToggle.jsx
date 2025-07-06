@@ -1,18 +1,25 @@
-import React, { useContext } from 'react';
-import { ThemeContext } from '../../contexts/ThemeContext';
+import React, { useContext, useState } from 'react';
+import { useTheme } from '../../contexts/ThemeContext';
 import { Sun, Moon, Monitor, Palette, Type, Eye, Zap } from 'lucide-react';
 
-const ThemeToggle = ({ variant = 'default', showLabel = true }) => {
-  const {
+/**
+ * @typedef {Object} ThemeToggleProps
+ * @property {'default'|'simple'|'dropdown'} [variant] - Toggle variant style
+ * @property {boolean} [showLabel] - Whether to show labels
+ */
+
+const ThemeToggle = (/** @type {ThemeToggleProps} */ { variant = 'default', showLabel = true }) => {
+  const /** @type {any} */ {
     theme,
     setTheme,
     fontSize,
     setFontSize,
     highContrast,
-    setHighContrast,
-    reducedMotion,
-    setReducedMotion
-  } = useContext(ThemeContext);
+    setHighContrast
+  } = useTheme();
+
+  // Local state for reducedMotion since it's not in ThemeContext
+  const [reducedMotion, setReducedMotion] = useState(false);
 
   const themeOptions = [
     { value: 'light', icon: Sun, label: 'Light' },

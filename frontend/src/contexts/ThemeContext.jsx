@@ -1,6 +1,39 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 
-const ThemeContext = createContext();
+/**
+ * @typedef {Object} ThemeContextType
+ * @property {string} theme - Current theme name
+ * @property {function(string): void} setTheme - Set theme function
+ * @property {Object|null} customTheme - Custom theme object
+ * @property {function(Object): void} setCustomThemeColors - Set custom theme colors
+ * @property {boolean} animations - Animations enabled
+ * @property {function(boolean): void} setAnimations - Set animations function
+ * @property {boolean} highContrast - High contrast mode
+ * @property {function(boolean): void} setHighContrast - Set high contrast function
+ * @property {string} fontSize - Font size setting
+ * @property {function(string): void} setFontSize - Set font size function
+ * @property {function(): void} toggleTheme - Toggle theme function
+ * @property {function(): void} resetTheme - Reset theme function
+ * @property {boolean} isDark - Is dark theme
+ * @property {boolean} isCustom - Is custom theme
+ */
+
+const ThemeContext = createContext(/** @type {ThemeContextType} */ ({
+  theme: 'light',
+  setTheme: () => {},
+  customTheme: null,
+  setCustomThemeColors: () => {},
+  animations: true,
+  setAnimations: () => {},
+  highContrast: false,
+  setHighContrast: () => {},
+  fontSize: 'medium',
+  setFontSize: () => {},
+  toggleTheme: () => {},
+  resetTheme: () => {},
+  isDark: false,
+  isCustom: false
+}));
 
 export const useTheme = () => {
   const context = useContext(ThemeContext);

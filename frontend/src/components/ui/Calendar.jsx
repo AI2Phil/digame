@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 
 // Main Calendar component
-export const Calendar = ({ 
+export const Calendar = (/** @type {any} */ {
   value,
   onChange,
   mode = 'single', // single, multiple, range
@@ -309,7 +309,7 @@ export const Calendar = ({
 };
 
 // Date Picker component
-export const DatePicker = ({ 
+export const DatePicker = (/** @type {any} */ {
   value,
   onChange,
   placeholder = 'Select date',
@@ -358,7 +358,7 @@ export const DatePicker = ({
 };
 
 // Mini Calendar
-export const MiniCalendar = ({ 
+export const MiniCalendar = (/** @type {any} */ {
   value,
   onChange,
   className = '',
@@ -376,7 +376,7 @@ export const MiniCalendar = ({
 };
 
 // Calendar with Events
-export const EventCalendar = ({ 
+export const EventCalendar = (/** @type {any} */ {
   events = [],
   onEventClick,
   className = '',

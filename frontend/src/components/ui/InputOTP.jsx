@@ -2,7 +2,18 @@ import React, { forwardRef } from 'react';
 import { Dot } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
-const InputOTP = forwardRef(({ 
+const InputOTP = forwardRef(/** @param {{
+  className?: string,
+  maxLength?: number,
+  value?: string,
+  onChange?: (value: string) => void,
+  onComplete?: (value: string) => void,
+  disabled?: boolean,
+  autoFocus?: boolean,
+  pattern?: RegExp,
+  placeholder?: string,
+  render?: (props: {value: string, onChange: (value: string) => void}) => React.ReactElement
+} & React.HTMLAttributes<HTMLDivElement>} props */ ({
   className,
   maxLength = 6,
   value = '',
@@ -13,7 +24,7 @@ const InputOTP = forwardRef(({
   pattern = /^[0-9]*$/,
   placeholder = '',
   render,
-  ...props 
+  ...props
 }, ref) => {
   const [internalValue, setInternalValue] = React.useState(value);
   const [focusedIndex, setFocusedIndex] = React.useState(autoFocus ? 0 : -1);
@@ -111,7 +122,8 @@ const InputOTP = forwardRef(({
     inputRefs.current[nextIndex]?.focus();
   };
 
-  const handleFocus = (index) => {
+  const handleFocus = (e) => {
+    const index = parseInt(e.target.dataset.index || '0');
     setFocusedIndex(index);
   };
 
@@ -151,7 +163,23 @@ const InputOTP = forwardRef(({
 
 InputOTP.displayName = "InputOTP";
 
-const OTPInput = ({ 
+/**
+ * @param {{
+ *   className?: string,
+ *   maxLength?: number,
+ *   value?: string,
+ *   disabled?: boolean,
+ *   placeholder?: string,
+ *   inputRefs?: React.MutableRefObject<HTMLInputElement[]>,
+ *   focusedIndex?: number,
+ *   onInputChange?: (index: number, value: string) => void,
+ *   onKeyDown?: (index: number, e: React.KeyboardEvent) => void,
+ *   onPaste?: (e: React.ClipboardEvent) => void,
+ *   onFocus?: React.FocusEventHandler<HTMLInputElement>,
+ *   onBlur?: React.FocusEventHandler<HTMLInputElement>
+ * }} props
+ */
+const OTPInput = ({
   className,
   maxLength,
   value,
@@ -164,7 +192,7 @@ const OTPInput = ({
   onPaste,
   onFocus,
   onBlur,
-  ...props 
+  ...props
 }) => {
   return (
     <div
@@ -178,13 +206,18 @@ const OTPInput = ({
       {Array.from({ length: maxLength }, (_, index) => (
         <input
           key={index}
-          ref={(el) => (inputRefs.current[index] = el)}
+          ref={(el) => {
+            if (inputRefs.current) {
+              inputRefs.current[index] = el;
+            }
+          }}
           type="text"
           inputMode="numeric"
           autoComplete="one-time-code"
           value={value[index] || ''}
           placeholder={placeholder[index] || ''}
           disabled={disabled}
+          data-index={index}
           className={cn(
             "relative flex h-10 w-10 items-center justify-center border-y border-r border-input text-sm transition-all",
             "first:rounded-l-md first:border-l last:rounded-r-md",
@@ -196,7 +229,7 @@ const OTPInput = ({
           onChange={(e) => onInputChange(index, e.target.value)}
           onKeyDown={(e) => onKeyDown(index, e)}
           onPaste={index === 0 ? onPaste : undefined}
-          onFocus={() => onFocus(index)}
+          onFocus={onFocus}
           onBlur={onBlur}
           maxLength={1}
         />
@@ -206,9 +239,11 @@ const OTPInput = ({
 };
 
 // Separator component for grouped OTP inputs
-export const InputOTPSeparator = forwardRef(({ 
+export const InputOTPSeparator = forwardRef(/** @param {{
+  className?: string
+} & React.HTMLAttributes<HTMLDivElement>} props */ ({
   className,
-  ...props 
+  ...props
 }, ref) => (
   <div
     ref={ref}
@@ -223,10 +258,13 @@ export const InputOTPSeparator = forwardRef(({
 InputOTPSeparator.displayName = "InputOTPSeparator";
 
 // Group component for organizing OTP inputs
-export const InputOTPGroup = forwardRef(({ 
+export const InputOTPGroup = forwardRef(/** @param {{
+  className?: string,
+  children?: React.ReactNode
+} & React.HTMLAttributes<HTMLDivElement>} props */ ({
   className,
   children,
-  ...props 
+  ...props
 }, ref) => (
   <div
     ref={ref}
@@ -240,13 +278,19 @@ export const InputOTPGroup = forwardRef(({
 InputOTPGroup.displayName = "InputOTPGroup";
 
 // Slot component for individual OTP input slots
-export const InputOTPSlot = forwardRef(({ 
+export const InputOTPSlot = forwardRef(/** @param {{
+  className?: string,
+  index?: number,
+  char?: string,
+  hasFakeCaret?: boolean,
+  isActive?: boolean
+} & React.HTMLAttributes<HTMLDivElement>} props */ ({
   className,
   index,
   char,
   hasFakeCaret,
   isActive,
-  ...props 
+  ...props
 }, ref) => (
   <div
     ref={ref}
@@ -272,17 +316,19 @@ InputOTPSlot.displayName = "InputOTPSlot";
 // Predefined OTP variants
 export const InputOTPVariants = {
   // Standard 6-digit OTP
-  Standard: forwardRef((props, ref) => (
+  Standard: forwardRef(/** @param {React.ComponentProps<typeof InputOTP>} props */ (props, ref) => (
     <InputOTP ref={ref} maxLength={6} {...props} />
   )),
 
   // 4-digit PIN
-  PIN: forwardRef((props, ref) => (
+  PIN: forwardRef(/** @param {React.ComponentProps<typeof InputOTP>} props */ (props, ref) => (
     <InputOTP ref={ref} maxLength={4} {...props} />
   )),
 
   // Grouped OTP (e.g., 3-3 format)
-  Grouped: forwardRef(({ separator = true, ...props }, ref) => (
+  Grouped: forwardRef(/** @param {{
+    separator?: boolean
+  } & React.ComponentProps<typeof InputOTP>} props */ ({ separator = true, ...props }, ref) => (
     <div className="flex items-center gap-2">
       <InputOTP ref={ref} maxLength={3} {...props} />
       {separator && <InputOTPSeparator />}
@@ -291,7 +337,9 @@ export const InputOTPVariants = {
   )),
 
   // Large OTP for better visibility
-  Large: forwardRef(({ className, ...props }, ref) => (
+  Large: forwardRef(/** @param {{
+    className?: string
+  } & React.ComponentProps<typeof InputOTP>} props */ ({ className, ...props }, ref) => (
     <InputOTP
       ref={ref}
       className={cn("gap-3", className)}
@@ -321,6 +369,22 @@ export const InputOTPVariants = {
 };
 
 // Hook for OTP state management
+/**
+ * @param {number} [maxLength=6] - Maximum length of OTP
+ * @param {{
+ *   onComplete?: (value: string) => void
+ * }} [options={}] - Options object
+ * @returns {{
+ *   value: string,
+ *   setValue: (value: string) => void,
+ *   isComplete: boolean,
+ *   error: string,
+ *   setError: (error: string) => void,
+ *   clear: () => void,
+ *   validate: (validationFn?: (value: string) => boolean | string) => boolean,
+ *   handleComplete: (value: string) => void
+ * }}
+ */
 export const useInputOTP = (maxLength = 6, options = {}) => {
   const [value, setValue] = React.useState('');
   const [isComplete, setIsComplete] = React.useState(false);
@@ -369,6 +433,17 @@ export const useInputOTP = (maxLength = 6, options = {}) => {
 };
 
 // Hook for OTP timer
+/**
+ * @param {number} [initialTime=60] - Initial timer value in seconds
+ * @returns {{
+ *   timeLeft: number,
+ *   isActive: boolean,
+ *   start: () => void,
+ *   stop: () => void,
+ *   reset: () => void,
+ *   canResend: boolean
+ * }}
+ */
 export const useOTPTimer = (initialTime = 60) => {
   const [timeLeft, setTimeLeft] = React.useState(initialTime);
   const [isActive, setIsActive] = React.useState(false);

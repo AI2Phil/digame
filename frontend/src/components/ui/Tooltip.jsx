@@ -1,7 +1,20 @@
 import React, { forwardRef } from 'react';
 import { cn } from '../../lib/utils';
 
-const Tooltip = ({ children, ...props }) => {
+/**
+ * @typedef {Object} TooltipProps
+ * @property {React.ReactNode} children - Tooltip children
+ */
+
+/**
+ * @typedef {Object} TooltipContextType
+ * @property {boolean} isOpen - Whether tooltip is open
+ * @property {Object} position - Tooltip position {x, y}
+ * @property {function(number, number): void} showTooltip - Show tooltip function
+ * @property {function(): void} hideTooltip - Hide tooltip function
+ */
+
+const Tooltip = (/** @type {TooltipProps} */ { children, ...props }) => {
   return (
     <TooltipProvider>
       {children}
@@ -9,9 +22,20 @@ const Tooltip = ({ children, ...props }) => {
   );
 };
 
-const TooltipContext = React.createContext();
+const TooltipContext = React.createContext(/** @type {TooltipContextType} */ ({
+  isOpen: false,
+  position: { x: 0, y: 0 },
+  showTooltip: () => {},
+  hideTooltip: () => {}
+}));
 
-const TooltipProvider = ({ children, delayDuration = 700 }) => {
+/**
+ * @typedef {Object} TooltipProviderProps
+ * @property {React.ReactNode} children - Provider children
+ * @property {number} [delayDuration] - Delay before showing tooltip
+ */
+
+const TooltipProvider = (/** @type {TooltipProviderProps} */ { children, delayDuration = 700 }) => {
   const [isOpen, setIsOpen] = React.useState(false);
   const [position, setPosition] = React.useState({ x: 0, y: 0 });
   const timeoutRef = React.useRef(null);
@@ -62,11 +86,18 @@ const useTooltip = () => {
   return context;
 };
 
-const TooltipTrigger = forwardRef(({ 
+/**
+ * @typedef {Object} TooltipTriggerProps
+ * @property {string} [className] - CSS classes
+ * @property {React.ReactNode} children - Trigger children
+ * @property {boolean} [asChild] - Render as child element
+ */
+
+const TooltipTrigger = forwardRef((/** @type {TooltipTriggerProps} */ {
   className,
   children,
   asChild = false,
-  ...props 
+  ...props
 }, ref) => {
   const { showTooltip, hideTooltip } = useTooltip();
   const triggerRef = React.useRef(null);
@@ -124,13 +155,22 @@ const TooltipTrigger = forwardRef(({
 
 TooltipTrigger.displayName = "TooltipTrigger";
 
-const TooltipContent = forwardRef(({ 
+/**
+ * @typedef {Object} TooltipContentProps
+ * @property {string} [className] - CSS classes
+ * @property {React.ReactNode} children - Content children
+ * @property {'top'|'bottom'|'left'|'right'} [side] - Tooltip side
+ * @property {'start'|'center'|'end'} [align] - Tooltip alignment
+ * @property {number} [sideOffset] - Offset from trigger
+ */
+
+const TooltipContent = forwardRef((/** @type {TooltipContentProps} */ {
   className,
   children,
   side = 'top',
   align = 'center',
   sideOffset = 4,
-  ...props 
+  ...props
 }, ref) => {
   const { isOpen, position } = useTooltip();
   const contentRef = React.useRef(null);
@@ -201,13 +241,22 @@ const TooltipContent = forwardRef(({
 
 TooltipContent.displayName = "TooltipContent";
 
+/**
+ * @typedef {Object} SimpleTooltipProps
+ * @property {React.ReactNode} content - Tooltip content
+ * @property {React.ReactNode} children - Trigger children
+ * @property {'top'|'bottom'|'left'|'right'} [side] - Tooltip side
+ * @property {number} [delayDuration] - Delay before showing
+ * @property {string} [className] - CSS classes
+ */
+
 // Simple tooltip component for quick use
-export const SimpleTooltip = ({ 
-  content, 
-  children, 
+export const SimpleTooltip = (/** @type {SimpleTooltipProps} */ {
+  content,
+  children,
   side = 'top',
   delayDuration = 700,
-  ...props 
+  ...props
 }) => {
   return (
     <TooltipProvider delayDuration={delayDuration}>
@@ -223,10 +272,18 @@ export const SimpleTooltip = ({
   );
 };
 
+/**
+ * @typedef {Object} TooltipVariantProps
+ * @property {React.ReactNode} content - Tooltip content
+ * @property {React.ReactNode} children - Trigger children
+ * @property {string} [title] - Tooltip title (for Rich variant)
+ * @property {string} [description] - Tooltip description (for Rich variant)
+ */
+
 // Predefined tooltip variants
 export const TooltipVariants = {
   // Info tooltip with icon
-  Info: ({ content, children, ...props }) => (
+  Info: (/** @type {TooltipVariantProps} */ { content, children, ...props }) => (
     <SimpleTooltip
       content={
         <div className="flex items-center space-x-2">
@@ -243,7 +300,7 @@ export const TooltipVariants = {
   ),
 
   // Warning tooltip
-  Warning: ({ content, children, ...props }) => (
+  Warning: (/** @type {TooltipVariantProps} */ { content, children, ...props }) => (
     <SimpleTooltip
       content={content}
       className="bg-yellow-500 text-yellow-50 border-yellow-600"
@@ -254,7 +311,7 @@ export const TooltipVariants = {
   ),
 
   // Error tooltip
-  Error: ({ content, children, ...props }) => (
+  Error: (/** @type {TooltipVariantProps} */ { content, children, ...props }) => (
     <SimpleTooltip
       content={content}
       className="bg-red-500 text-red-50 border-red-600"
@@ -265,7 +322,7 @@ export const TooltipVariants = {
   ),
 
   // Success tooltip
-  Success: ({ content, children, ...props }) => (
+  Success: (/** @type {TooltipVariantProps} */ { content, children, ...props }) => (
     <SimpleTooltip
       content={content}
       className="bg-green-500 text-green-50 border-green-600"
@@ -276,7 +333,7 @@ export const TooltipVariants = {
   ),
 
   // Rich tooltip with title and description
-  Rich: ({ title, description, children, ...props }) => (
+  Rich: (/** @type {TooltipVariantProps} */ { title, description, children, ...props }) => (
     <SimpleTooltip
       content={
         <div className="space-y-1">
@@ -322,13 +379,21 @@ export const useTooltipState = () => {
   };
 };
 
+/**
+ * @typedef {Object} ProgrammaticTooltipProps
+ * @property {boolean} isVisible - Whether tooltip is visible
+ * @property {React.ReactNode} content - Tooltip content
+ * @property {Object} position - Tooltip position {x, y}
+ * @property {string} [className] - CSS classes
+ */
+
 // Programmatic tooltip component
-export const ProgrammaticTooltip = ({ 
-  isVisible, 
-  content, 
-  position, 
+export const ProgrammaticTooltip = (/** @type {ProgrammaticTooltipProps} */ {
+  isVisible,
+  content,
+  position,
   className,
-  ...props 
+  ...props
 }) => {
   if (!isVisible) return null;
 
@@ -352,7 +417,7 @@ export const ProgrammaticTooltip = ({
 
 // Utility function for adding tooltips to elements
 export const withTooltip = (Component, tooltipContent, tooltipProps = {}) => {
-  return forwardRef((props, ref) => (
+  return forwardRef((/** @type {any} */ props, ref) => (
     <SimpleTooltip content={tooltipContent} {...tooltipProps}>
       <Component ref={ref} {...props} />
     </SimpleTooltip>

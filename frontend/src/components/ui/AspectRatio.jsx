@@ -1,12 +1,20 @@
 import React, { forwardRef } from 'react';
 import { cn } from '../../lib/utils';
 
-const AspectRatio = forwardRef(({ 
-  className,
-  ratio = 16 / 9,
-  children,
-  ...props 
-}, ref) => {
+/**
+ * @typedef {Object} AspectRatioProps
+ * @property {string} [className] - Additional CSS classes
+ * @property {number} [ratio] - Aspect ratio (width/height)
+ * @property {React.ReactNode} [children] - Child elements
+ */
+
+const AspectRatio = forwardRef(/** @param {AspectRatioProps & React.HTMLAttributes<HTMLDivElement>} props */ (props, ref) => {
+  const {
+    className,
+    ratio = 16 / 9,
+    children,
+    ...restProps
+  } = props;
   return (
     <div
       ref={ref}
@@ -14,7 +22,7 @@ const AspectRatio = forwardRef(({
       style={{
         paddingBottom: `${(1 / ratio) * 100}%`
       }}
-      {...props}
+      {...restProps}
     >
       <div className="absolute inset-0">
         {children}
@@ -25,62 +33,101 @@ const AspectRatio = forwardRef(({
 
 AspectRatio.displayName = "AspectRatio";
 
+/**
+ * @typedef {Object} AspectRatioVariantProps
+ * @property {string} [className] - Additional CSS classes
+ * @property {React.ReactNode} [children] - Child elements
+ */
+
 // Predefined aspect ratio variants
 export const AspectRatioVariants = {
   // Common video ratios
-  Video: forwardRef(({ className, ...props }, ref) => (
-    <AspectRatio ref={ref} ratio={16 / 9} className={className} {...props} />
-  )),
+  Video: forwardRef(
+    /** @param {AspectRatioVariantProps} props */
+    ({ className, ...props }, ref) => (
+      <AspectRatio ref={ref} ratio={16 / 9} className={className} {...props} />
+    )
+  ),
 
   // Square ratio
-  Square: forwardRef(({ className, ...props }, ref) => (
-    <AspectRatio ref={ref} ratio={1} className={className} {...props} />
-  )),
+  Square: forwardRef(
+    /** @param {AspectRatioVariantProps} props */
+    ({ className, ...props }, ref) => (
+      <AspectRatio ref={ref} ratio={1} className={className} {...props} />
+    )
+  ),
 
   // Portrait ratios
-  Portrait: forwardRef(({ className, ...props }, ref) => (
-    <AspectRatio ref={ref} ratio={3 / 4} className={className} {...props} />
-  )),
+  Portrait: forwardRef(
+    /** @param {AspectRatioVariantProps} props */
+    ({ className, ...props }, ref) => (
+      <AspectRatio ref={ref} ratio={3 / 4} className={className} {...props} />
+    )
+  ),
 
   // Landscape ratios
-  Landscape: forwardRef(({ className, ...props }, ref) => (
-    <AspectRatio ref={ref} ratio={4 / 3} className={className} {...props} />
-  )),
+  Landscape: forwardRef(
+    /** @param {AspectRatioVariantProps} props */
+    ({ className, ...props }, ref) => (
+      <AspectRatio ref={ref} ratio={4 / 3} className={className} {...props} />
+    )
+  ),
 
   // Ultrawide ratio
-  Ultrawide: forwardRef(({ className, ...props }, ref) => (
-    <AspectRatio ref={ref} ratio={21 / 9} className={className} {...props} />
-  )),
+  Ultrawide: forwardRef(
+    /** @param {AspectRatioVariantProps} props */
+    ({ className, ...props }, ref) => (
+      <AspectRatio ref={ref} ratio={21 / 9} className={className} {...props} />
+    )
+  ),
 
   // Golden ratio
-  Golden: forwardRef(({ className, ...props }, ref) => (
-    <AspectRatio ref={ref} ratio={1.618} className={className} {...props} />
-  )),
+  Golden: forwardRef(
+    /** @param {AspectRatioVariantProps} props */
+    ({ className, ...props }, ref) => (
+      <AspectRatio ref={ref} ratio={1.618} className={className} {...props} />
+    )
+  ),
 
   // A4 paper ratio
-  A4: forwardRef(({ className, ...props }, ref) => (
-    <AspectRatio ref={ref} ratio={210 / 297} className={className} {...props} />
-  )),
+  A4: forwardRef(
+    /** @param {AspectRatioVariantProps} props */
+    ({ className, ...props }, ref) => (
+      <AspectRatio ref={ref} ratio={210 / 297} className={className} {...props} />
+    )
+  ),
 
   // Instagram post ratio
-  Instagram: forwardRef(({ className, ...props }, ref) => (
-    <AspectRatio ref={ref} ratio={1} className={className} {...props} />
-  )),
+  Instagram: forwardRef(
+    /** @param {AspectRatioVariantProps} props */
+    ({ className, ...props }, ref) => (
+      <AspectRatio ref={ref} ratio={1} className={className} {...props} />
+    )
+  ),
 
   // Instagram story ratio
-  Story: forwardRef(({ className, ...props }, ref) => (
-    <AspectRatio ref={ref} ratio={9 / 16} className={className} {...props} />
-  )),
+  Story: forwardRef(
+    /** @param {AspectRatioVariantProps} props */
+    ({ className, ...props }, ref) => (
+      <AspectRatio ref={ref} ratio={9 / 16} className={className} {...props} />
+    )
+  ),
 
   // Twitter header ratio
-  TwitterHeader: forwardRef(({ className, ...props }, ref) => (
-    <AspectRatio ref={ref} ratio={3} className={className} {...props} />
-  )),
+  TwitterHeader: forwardRef(
+    /** @param {AspectRatioVariantProps} props */
+    ({ className, ...props }, ref) => (
+      <AspectRatio ref={ref} ratio={3} className={className} {...props} />
+    )
+  ),
 
   // YouTube thumbnail ratio
-  YouTubeThumbnail: forwardRef(({ className, ...props }, ref) => (
-    <AspectRatio ref={ref} ratio={16 / 9} className={className} {...props} />
-  ))
+  YouTubeThumbnail: forwardRef(
+    /** @param {AspectRatioVariantProps} props */
+    ({ className, ...props }, ref) => (
+      <AspectRatio ref={ref} ratio={16 / 9} className={className} {...props} />
+    )
+  )
 };
 
 // Common aspect ratios as constants
@@ -101,13 +148,26 @@ export const ASPECT_RATIOS = {
   IMAX: 1.43
 };
 
+/**
+ * @typedef {Object} ResponsiveAspectRatioProps
+ * @property {string} [className] - Additional CSS classes
+ * @property {Object} [ratios] - Responsive ratios object
+ * @property {number} ratios.default - Default ratio
+ * @property {number} [ratios.sm] - Small screen ratio
+ * @property {number} [ratios.md] - Medium screen ratio
+ * @property {number} [ratios.lg] - Large screen ratio
+ * @property {React.ReactNode} [children] - Child elements
+ */
+
 // Responsive aspect ratio component
-export const ResponsiveAspectRatio = forwardRef(({ 
-  className,
-  ratios = { default: 16 / 9 },
-  children,
-  ...props 
-}, ref) => {
+export const ResponsiveAspectRatio = forwardRef(
+  /** @param {ResponsiveAspectRatioProps} props */
+  ({
+    className,
+    ratios = { default: 16 / 9 },
+    children,
+    ...props
+  }, ref) => {
   const [currentRatio, setCurrentRatio] = React.useState(ratios.default);
 
   React.useEffect(() => {
@@ -144,16 +204,28 @@ export const ResponsiveAspectRatio = forwardRef(({
 
 ResponsiveAspectRatio.displayName = "ResponsiveAspectRatio";
 
+/**
+ * @typedef {Object} AspectRatioImageProps
+ * @property {string} [className] - Additional CSS classes
+ * @property {number} [ratio] - Aspect ratio (width/height)
+ * @property {string} src - Image source URL
+ * @property {string} alt - Image alt text
+ * @property {'cover'|'contain'|'fill'|'none'|'scale-down'} [objectFit] - Object fit property
+ * @property {'lazy'|'eager'} [loading] - Loading strategy
+ */
+
 // Image with aspect ratio component
-export const AspectRatioImage = forwardRef(({ 
-  className,
-  ratio = 16 / 9,
-  src,
-  alt,
-  objectFit = 'cover',
-  loading = 'lazy',
-  ...props 
-}, ref) => {
+export const AspectRatioImage = forwardRef(
+  /** @param {AspectRatioImageProps} props */
+  ({
+    className,
+    ratio = 16 / 9,
+    src,
+    alt,
+    objectFit = 'cover',
+    loading = 'lazy',
+    ...props
+  }, ref) => {
   return (
     <AspectRatio ratio={ratio} className={className} {...props}>
       <img
@@ -178,18 +250,32 @@ export const AspectRatioImage = forwardRef(({
 
 AspectRatioImage.displayName = "AspectRatioImage";
 
+/**
+ * @typedef {Object} AspectRatioVideoProps
+ * @property {string} [className] - Additional CSS classes
+ * @property {number} [ratio] - Aspect ratio (width/height)
+ * @property {string} src - Video source URL
+ * @property {string} [poster] - Video poster image URL
+ * @property {boolean} [controls] - Show video controls
+ * @property {boolean} [autoPlay] - Auto play video
+ * @property {boolean} [muted] - Mute video
+ * @property {boolean} [loop] - Loop video
+ */
+
 // Video with aspect ratio component
-export const AspectRatioVideo = forwardRef(({ 
-  className,
-  ratio = 16 / 9,
-  src,
-  poster,
-  controls = true,
-  autoPlay = false,
-  muted = false,
-  loop = false,
-  ...props 
-}, ref) => {
+export const AspectRatioVideo = forwardRef(
+  /** @param {AspectRatioVideoProps} props */
+  ({
+    className,
+    ratio = 16 / 9,
+    src,
+    poster,
+    controls = true,
+    autoPlay = false,
+    muted = false,
+    loop = false,
+    ...props
+  }, ref) => {
   return (
     <AspectRatio ratio={ratio} className={className} {...props}>
       <video
@@ -208,15 +294,26 @@ export const AspectRatioVideo = forwardRef(({
 
 AspectRatioVideo.displayName = "AspectRatioVideo";
 
+/**
+ * @typedef {Object} AspectRatioIframeProps
+ * @property {string} [className] - Additional CSS classes
+ * @property {number} [ratio] - Aspect ratio (width/height)
+ * @property {string} src - Iframe source URL
+ * @property {string} title - Iframe title
+ * @property {boolean} [allowFullScreen] - Allow fullscreen
+ */
+
 // Iframe with aspect ratio component
-export const AspectRatioIframe = forwardRef(({ 
-  className,
-  ratio = 16 / 9,
-  src,
-  title,
-  allowFullScreen = true,
-  ...props 
-}, ref) => {
+export const AspectRatioIframe = forwardRef(
+  /** @param {AspectRatioIframeProps} props */
+  ({
+    className,
+    ratio = 16 / 9,
+    src,
+    title,
+    allowFullScreen = true,
+    ...props
+  }, ref) => {
   return (
     <AspectRatio ratio={ratio} className={className} {...props}>
       <iframe
@@ -233,6 +330,16 @@ export const AspectRatioIframe = forwardRef(({
 AspectRatioIframe.displayName = "AspectRatioIframe";
 
 // Hook for calculating aspect ratios
+/**
+ * @param {number} width - Width value
+ * @param {number} height - Height value
+ * @returns {{
+ *   ratio: number,
+ *   getClosestStandardRatio: () => {name: string, ratio: number},
+ *   formatRatio: (precision?: number) => string,
+ *   getDimensions: (targetWidth: number) => {width: number, height: number}
+ * }}
+ */
 export const useAspectRatio = (width, height) => {
   const ratio = React.useMemo(() => {
     if (!width || !height) return 1;
@@ -277,6 +384,15 @@ export const useAspectRatio = (width, height) => {
 };
 
 // Hook for responsive aspect ratios
+/**
+ * @param {Object} breakpoints - Responsive breakpoints object
+ * @param {number} breakpoints.default - Default ratio
+ * @param {number} [breakpoints.sm] - Small screen ratio
+ * @param {number} [breakpoints.md] - Medium screen ratio
+ * @param {number} [breakpoints.lg] - Large screen ratio
+ * @param {number} [breakpoints.xl] - Extra large screen ratio
+ * @returns {number} Current aspect ratio
+ */
 export const useResponsiveAspectRatio = (breakpoints) => {
   const [currentRatio, setCurrentRatio] = React.useState(breakpoints.default);
 
@@ -306,12 +422,22 @@ export const useResponsiveAspectRatio = (breakpoints) => {
 };
 
 // Utility function to calculate ratio from dimensions
+/**
+ * @param {number} width - Width value
+ * @param {number} height - Height value
+ * @returns {number} Calculated aspect ratio
+ */
 export const calculateAspectRatio = (width, height) => {
   if (!width || !height) return 1;
   return width / height;
 };
 
 // Utility function to get dimensions from ratio and width
+/**
+ * @param {number} ratio - Aspect ratio
+ * @param {number} width - Target width
+ * @returns {{width: number, height: number}} Calculated dimensions
+ */
 export const getDimensionsFromRatio = (ratio, width) => {
   return {
     width,
@@ -320,6 +446,11 @@ export const getDimensionsFromRatio = (ratio, width) => {
 };
 
 // Utility function to get dimensions from ratio and height
+/**
+ * @param {number} ratio - Aspect ratio
+ * @param {number} height - Target height
+ * @returns {{width: number, height: number}} Calculated dimensions
+ */
 export const getDimensionsFromRatioAndHeight = (ratio, height) => {
   return {
     width: height * ratio,
@@ -327,12 +458,21 @@ export const getDimensionsFromRatioAndHeight = (ratio, height) => {
   };
 };
 
+/**
+ * @typedef {Object} SimpleAspectRatioProps
+ * @property {string|number} [ratio] - Aspect ratio as string (e.g., '16:9') or number
+ * @property {React.ReactNode} [children] - Child elements
+ */
+
 // Simple aspect ratio component for quick use
-export const SimpleAspectRatio = ({ 
-  ratio = '16:9', 
-  children, 
-  ...props 
-}) => {
+export const SimpleAspectRatio = (
+  /** @param {SimpleAspectRatioProps} props */
+  {
+    ratio = '16:9',
+    children,
+    ...props
+  }
+) => {
   const numericRatio = React.useMemo(() => {
     if (typeof ratio === 'number') return ratio;
     

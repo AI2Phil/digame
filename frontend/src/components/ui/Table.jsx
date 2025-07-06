@@ -1,8 +1,8 @@
 import React, { useState, useMemo } from 'react';
 
 // Main Table component
-export const Table = ({ 
-  children, 
+export const Table = (/** @type {any} */ {
+  children,
   className = '',
   striped = false,
   bordered = false,
@@ -34,7 +34,7 @@ export const Table = ({
 };
 
 // Table Header
-export const TableHeader = ({ children, className = '' }) => {
+export const TableHeader = (/** @type {any} */ { children, className = '' }) => {
   return (
     <thead className={`bg-gray-50 ${className}`}>
       {children}
@@ -43,7 +43,7 @@ export const TableHeader = ({ children, className = '' }) => {
 };
 
 // Table Body
-export const TableBody = ({ children, className = '' }) => {
+export const TableBody = (/** @type {any} */ { children, className = '' }) => {
   return (
     <tbody className={`bg-white divide-y divide-gray-200 ${className}`}>
       {children}
@@ -52,8 +52,8 @@ export const TableBody = ({ children, className = '' }) => {
 };
 
 // Table Row
-export const TableRow = ({ 
-  children, 
+export const TableRow = (/** @type {any} */ {
+  children,
   className = '',
   onClick,
   selected = false,
@@ -75,8 +75,8 @@ export const TableRow = ({
 };
 
 // Table Header Cell
-export const TableHeaderCell = ({ 
-  children, 
+export const TableHeaderCell = (/** @type {any} */ {
+  children,
   className = '',
   sortable = false,
   sortDirection = null,
@@ -132,8 +132,8 @@ export const TableHeaderCell = ({
 };
 
 // Table Cell
-export const TableCell = ({ 
-  children, 
+export const TableCell = (/** @type {any} */ {
+  children,
   className = '',
   align = 'left'
 }) => {
@@ -151,7 +151,7 @@ export const TableCell = ({
 };
 
 // Data Table with built-in sorting and filtering
-export const DataTable = ({ 
+export const DataTable = (/** @type {any} */ {
   data = [],
   columns = [],
   sortable = true,

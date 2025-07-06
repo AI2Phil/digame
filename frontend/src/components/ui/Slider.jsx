@@ -1,19 +1,37 @@
 import React, { forwardRef } from 'react';
 import { cn } from '../../lib/utils';
 
-const Slider = forwardRef(({ 
+const Slider = forwardRef(/** @param {{
+  className?: string,
+  value?: number[],
+  onValueChange?: (value: number[]) => void,
+  min?: number,
+  max?: number,
+  step?: number,
+  disabled?: boolean,
+  orientation?: 'horizontal'|'vertical',
+  inverted?: boolean
+} & React.HTMLAttributes<HTMLDivElement>} props */ ({
   className,
-  value = [0],
+  value,
   onValueChange,
-  min = 0,
-  max = 100,
-  step = 1,
-  disabled = false,
-  orientation = 'horizontal',
-  inverted = false,
-  ...props 
+  min,
+  max,
+  step,
+  disabled,
+  orientation,
+  inverted,
+  ...props
 }, ref) => {
-  const [internalValue, setInternalValue] = React.useState(value);
+  // Set default values
+  const finalValue = value ?? [0];
+  const finalMin = min ?? 0;
+  const finalMax = max ?? 100;
+  const finalStep = step ?? 1;
+  const finalDisabled = disabled ?? false;
+  const finalOrientation = orientation ?? 'horizontal';
+  const finalInverted = inverted ?? false;
+  const [internalValue, setInternalValue] = React.useState(finalValue);
   const [isDragging, setIsDragging] = React.useState(false);
   const [activeThumb, setActiveThumb] = React.useState(-1);
   const trackRef = React.useRef(null);
@@ -39,14 +57,14 @@ const Slider = forwardRef(({
     if (!rect) return currentValue[0];
 
     const { clientX, clientY } = event.touches?.[0] || event;
-    const isHorizontal = orientation === 'horizontal';
+    const isHorizontal = finalOrientation === 'horizontal';
     const trackLength = isHorizontal ? rect.width : rect.height;
     const trackStart = isHorizontal ? rect.left : rect.top;
     const pointerPosition = isHorizontal ? clientX : clientY;
     
     let percentage = (pointerPosition - trackStart) / trackLength;
     
-    if (inverted) {
+    if (finalInverted) {
       percentage = 1 - percentage;
     }
     
@@ -54,15 +72,15 @@ const Slider = forwardRef(({
       percentage = 1 - percentage;
     }
 
-    const range = max - min;
-    const rawValue = min + percentage * range;
-    const steppedValue = Math.round(rawValue / step) * step;
+    const range = finalMax - finalMin;
+    const rawValue = finalMin + percentage * range;
+    const steppedValue = Math.round(rawValue / finalStep) * finalStep;
     
-    return Math.max(min, Math.min(max, steppedValue));
+    return Math.max(finalMin, Math.min(finalMax, steppedValue));
   };
 
   const handlePointerDown = (event, thumbIndex) => {
-    if (disabled) return;
+    if (finalDisabled) return;
     
     event.preventDefault();
     setIsDragging(true);
@@ -101,19 +119,19 @@ const Slider = forwardRef(({
   };
 
   const handleKeyDown = (event, thumbIndex) => {
-    if (disabled) return;
+    if (finalDisabled) return;
 
     let delta = 0;
-    const largeStep = step * 10;
+    const largeStep = finalStep * 10;
 
     switch (event.key) {
       case 'ArrowRight':
       case 'ArrowUp':
-        delta = step;
+        delta = finalStep;
         break;
       case 'ArrowLeft':
       case 'ArrowDown':
-        delta = -step;
+        delta = -finalStep;
         break;
       case 'PageUp':
         delta = largeStep;
@@ -122,32 +140,32 @@ const Slider = forwardRef(({
         delta = -largeStep;
         break;
       case 'Home':
-        delta = min - currentValue[thumbIndex];
+        delta = finalMin - currentValue[thumbIndex];
         break;
       case 'End':
-        delta = max - currentValue[thumbIndex];
+        delta = finalMax - currentValue[thumbIndex];
         break;
       default:
         return;
     }
 
     event.preventDefault();
-    const newValue = Math.max(min, Math.min(max, currentValue[thumbIndex] + delta));
+    const newValue = Math.max(finalMin, Math.min(finalMax, currentValue[thumbIndex] + delta));
     const newValues = [...currentValue];
     newValues[thumbIndex] = newValue;
     handleValueChange(newValues);
   };
 
   const getThumbPosition = (value) => {
-    const percentage = ((value - min) / (max - min)) * 100;
-    return inverted ? 100 - percentage : percentage;
+    const percentage = ((value - finalMin) / (finalMax - finalMin)) * 100;
+    return finalInverted ? 100 - percentage : percentage;
   };
 
   const getRangePosition = () => {
     if (currentValue.length === 1) {
       return {
-        start: inverted ? getThumbPosition(currentValue[0]) : 0,
-        end: inverted ? 100 : getThumbPosition(currentValue[0])
+        start: finalInverted ? getThumbPosition(currentValue[0]) : 0,
+        end: finalInverted ? 100 : getThumbPosition(currentValue[0])
       };
     } else {
       const start = Math.min(getThumbPosition(currentValue[0]), getThumbPosition(currentValue[1]));
@@ -163,8 +181,8 @@ const Slider = forwardRef(({
       ref={trackRef}
       className={cn(
         "relative flex touch-none select-none items-center",
-        orientation === 'horizontal' ? "w-full h-5" : "h-full w-5 flex-col",
-        disabled && "opacity-50 cursor-not-allowed",
+        finalOrientation === 'horizontal' ? "w-full h-5" : "h-full w-5 flex-col",
+        finalDisabled && "opacity-50 cursor-not-allowed",
         className
       )}
       {...props}
@@ -173,18 +191,18 @@ const Slider = forwardRef(({
       <div
         className={cn(
           "relative bg-secondary rounded-full grow",
-          orientation === 'horizontal' ? "h-1.5 w-full" : "w-1.5 h-full"
+          finalOrientation === 'horizontal' ? "h-1.5 w-full" : "w-1.5 h-full"
         )}
       >
         {/* Range */}
         <div
           className={cn(
             "absolute bg-primary rounded-full",
-            orientation === 'horizontal' ? "h-full" : "w-full"
+            finalOrientation === 'horizontal' ? "h-full" : "w-full"
           )}
           style={{
-            [orientation === 'horizontal' ? 'left' : 'bottom']: `${range.start}%`,
-            [orientation === 'horizontal' ? 'width' : 'height']: `${range.end - range.start}%`
+            [finalOrientation === 'horizontal' ? 'left' : 'bottom']: `${range.start}%`,
+            [finalOrientation === 'horizontal' ? 'width' : 'height']: `${range.end - range.start}%`
           }}
         />
       </div>
@@ -194,21 +212,21 @@ const Slider = forwardRef(({
         <div
           key={index}
           role="slider"
-          tabIndex={disabled ? -1 : 0}
-          aria-valuemin={min}
-          aria-valuemax={max}
+          tabIndex={finalDisabled ? -1 : 0}
+          aria-valuemin={finalMin}
+          aria-valuemax={finalMax}
           aria-valuenow={value}
-          aria-orientation={orientation}
+          aria-orientation={finalOrientation}
           className={cn(
             "absolute block h-4 w-4 rounded-full border border-primary/50 bg-background shadow transition-colors",
             "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
             "disabled:pointer-events-none disabled:opacity-50",
             activeThumb === index && "scale-110",
-            !disabled && "hover:bg-accent cursor-grab",
+            !finalDisabled && "hover:bg-accent cursor-grab",
             isDragging && activeThumb === index && "cursor-grabbing"
           )}
           style={{
-            [orientation === 'horizontal' ? 'left' : 'bottom']: `calc(${getThumbPosition(value)}% - 8px)`
+            [finalOrientation === 'horizontal' ? 'left' : 'bottom']: `calc(${getThumbPosition(value)}% - 8px)`
           }}
           onMouseDown={(e) => handlePointerDown(e, index)}
           onTouchStart={(e) => handlePointerDown(e, index)}
@@ -224,12 +242,12 @@ Slider.displayName = "Slider";
 // Predefined slider variants
 export const SliderVariants = {
   // Range slider
-  Range: forwardRef(({ value = [20, 80], ...props }, ref) => (
+  Range: forwardRef(/** @param {{value?: number[]} & React.ComponentProps<typeof Slider>} props */ ({ value = [20, 80], ...props }, ref) => (
     <Slider ref={ref} value={value} {...props} />
   )),
 
   // Vertical slider
-  Vertical: forwardRef(({ className, ...props }, ref) => (
+  Vertical: forwardRef(/** @param {{className?: string} & React.ComponentProps<typeof Slider>} props */ ({ className, ...props }, ref) => (
     <Slider
       ref={ref}
       orientation="vertical"
@@ -239,7 +257,7 @@ export const SliderVariants = {
   )),
 
   // Large slider
-  Large: forwardRef(({ className, ...props }, ref) => (
+  Large: forwardRef(/** @param {{className?: string} & React.ComponentProps<typeof Slider>} props */ ({ className, ...props }, ref) => (
     <div className={cn("space-y-3", className)}>
       <Slider ref={ref} {...props} />
       <div className="flex justify-between text-sm text-muted-foreground">
@@ -250,7 +268,7 @@ export const SliderVariants = {
   )),
 
   // Stepped slider with marks
-  Stepped: forwardRef(({ className, min = 0, max = 100, step = 10, ...props }, ref) => {
+  Stepped: forwardRef(/** @param {{className?: string, min?: number, max?: number, step?: number} & React.ComponentProps<typeof Slider>} props */ ({ className, min = 0, max = 100, step = 10, ...props }, ref) => {
     const marks = [];
     for (let i = min; i <= max; i += step) {
       marks.push(i);
@@ -273,6 +291,19 @@ export const SliderVariants = {
 };
 
 // Hook for slider state
+/**
+ * @param {number[]} [initialValue=[0]] - Initial slider value
+ * @param {{min?: number, max?: number, step?: number}} [options={}] - Slider options
+ * @returns {{
+ *   value: number[],
+ *   onValueChange: (value: number[]) => void,
+ *   increment: (index?: number) => void,
+ *   decrement: (index?: number) => void,
+ *   reset: () => void,
+ *   setToMin: () => void,
+ *   setToMax: () => void
+ * }}
+ */
 export const useSliderState = (initialValue = [0], options = {}) => {
   const [value, setValue] = React.useState(initialValue);
   const { min = 0, max = 100, step = 1 } = options;
@@ -321,12 +352,20 @@ export const useSliderState = (initialValue = [0], options = {}) => {
 };
 
 // Simple slider for quick use
-export const SimpleSlider = ({ 
+/**
+ * @param {{
+ *   label?: string,
+ *   value?: number | number[],
+ *   onChange?: (value: number[]) => void,
+ *   showValue?: boolean
+ * } & React.ComponentProps<typeof Slider>} props
+ */
+export const SimpleSlider = ({
   label,
   value,
   onChange,
   showValue = true,
-  ...props 
+  ...props
 }) => {
   return (
     <div className="space-y-2">

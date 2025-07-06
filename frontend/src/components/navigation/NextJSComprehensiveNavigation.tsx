@@ -558,7 +558,6 @@ const NextJSComprehensiveNavigation: React.FC<NextJSComprehensiveNavigationProps
               src=""
               alt=""
               name=""
-              status=""
             />
             <div className="flex-1">
               <p className="text-sm font-medium text-gray-900">
@@ -607,7 +606,6 @@ const NextJSComprehensiveNavigation: React.FC<NextJSComprehensiveNavigationProps
               src=""
               alt=""
               name=""
-              status=""
             />
           </Button>
         </div>

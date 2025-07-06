@@ -2,11 +2,19 @@ import React, { forwardRef } from 'react';
 import { Search, Check } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
-const Command = forwardRef(({ 
-  className,
-  children,
-  ...props 
-}, ref) => {
+/**
+ * @typedef {Object} CommandProps
+ * @property {string} [className] - Additional CSS classes
+ * @property {React.ReactNode} [children] - Child elements
+ */
+
+const Command = forwardRef(
+  /** @param {CommandProps} props */
+  ({
+    className,
+    children,
+    ...props
+  }, ref) => {
   return (
     <CommandProvider>
       <div
@@ -26,9 +34,24 @@ const Command = forwardRef(({
 
 Command.displayName = "Command";
 
-const CommandContext = React.createContext();
+const CommandContext = React.createContext({
+  search: '',
+  setSearch: (/** @type {string} */ value) => {},
+  value: '',
+  setValue: (/** @type {string} */ value) => {},
+  open: false,
+  setOpen: (/** @type {boolean} */ value) => {}
+});
 
-const CommandProvider = ({ children }) => {
+/**
+ * @typedef {Object} CommandProviderProps
+ * @property {React.ReactNode} children - Child elements
+ */
+
+const CommandProvider = (
+  /** @param {CommandProviderProps} props */
+  { children }
+) => {
   const [search, setSearch] = React.useState('');
   const [value, setValue] = React.useState('');
   const [open, setOpen] = React.useState(false);
@@ -55,12 +78,34 @@ const useCommand = () => {
   return context;
 };
 
-const CommandInput = forwardRef(({ 
-  className,
-  placeholder = "Type a command or search...",
-  ...props 
-}, ref) => {
+/**
+ * @typedef {Object} CommandInputProps
+ * @property {string} [className] - Additional CSS classes
+ * @property {string} [placeholder] - Input placeholder text
+ * @property {string} [value] - Input value
+ * @property {function} [onChange] - Change handler
+ */
+
+const CommandInput = forwardRef(
+  /** @param {CommandInputProps} props */
+  ({
+    className,
+    placeholder = "Type a command or search...",
+    value: externalValue,
+    onChange: externalOnChange,
+    ...props
+  }, ref) => {
   const { search, setSearch } = useCommand();
+
+  const handleChange = (e) => {
+    if (externalOnChange) {
+      externalOnChange(e);
+    } else {
+      setSearch(e.target.value);
+    }
+  };
+
+  const inputValue = externalValue !== undefined ? externalValue : search;
 
   return (
     <div className="flex items-center border-b px-3" cmdk-input-wrapper="">
@@ -74,8 +119,8 @@ const CommandInput = forwardRef(({
           className
         )}
         placeholder={placeholder}
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
+        value={inputValue}
+        onChange={handleChange}
         {...props}
       />
     </div>
@@ -84,11 +129,19 @@ const CommandInput = forwardRef(({
 
 CommandInput.displayName = "CommandInput";
 
-const CommandList = forwardRef(({ 
-  className,
-  children,
-  ...props 
-}, ref) => {
+/**
+ * @typedef {Object} CommandListProps
+ * @property {string} [className] - Additional CSS classes
+ * @property {React.ReactNode} [children] - Child elements
+ */
+
+const CommandList = forwardRef(
+  /** @param {CommandListProps} props */
+  ({
+    className,
+    children,
+    ...props
+  }, ref) => {
   return (
     <div
       ref={ref}
@@ -106,11 +159,19 @@ const CommandList = forwardRef(({
 
 CommandList.displayName = "CommandList";
 
-const CommandEmpty = forwardRef(({ 
-  className,
-  children = "No results found.",
-  ...props 
-}, ref) => {
+/**
+ * @typedef {Object} CommandEmptyProps
+ * @property {string} [className] - Additional CSS classes
+ * @property {React.ReactNode} [children] - Child elements
+ */
+
+const CommandEmpty = forwardRef(
+  /** @param {CommandEmptyProps} props */
+  ({
+    className,
+    children = "No results found.",
+    ...props
+  }, ref) => {
   const { search } = useCommand();
 
   if (!search) return null;
@@ -132,12 +193,21 @@ const CommandEmpty = forwardRef(({
 
 CommandEmpty.displayName = "CommandEmpty";
 
-const CommandGroup = forwardRef(({ 
-  className,
-  heading,
-  children,
-  ...props 
-}, ref) => {
+/**
+ * @typedef {Object} CommandGroupProps
+ * @property {string} [className] - Additional CSS classes
+ * @property {string} [heading] - Group heading text
+ * @property {React.ReactNode} [children] - Child elements
+ */
+
+const CommandGroup = forwardRef(
+  /** @param {CommandGroupProps} props */
+  ({
+    className,
+    heading,
+    children,
+    ...props
+  }, ref) => {
   return (
     <div
       ref={ref}
@@ -162,10 +232,17 @@ const CommandGroup = forwardRef(({
 
 CommandGroup.displayName = "CommandGroup";
 
-const CommandSeparator = forwardRef(({ 
-  className,
-  ...props 
-}, ref) => (
+/**
+ * @typedef {Object} CommandSeparatorProps
+ * @property {string} [className] - Additional CSS classes
+ */
+
+const CommandSeparator = forwardRef(
+  /** @param {CommandSeparatorProps} props */
+  ({
+    className,
+    ...props
+  }, ref) => (
   <div
     ref={ref}
     className={cn("-mx-1 h-px bg-border", className)}
@@ -176,15 +253,27 @@ const CommandSeparator = forwardRef(({
 
 CommandSeparator.displayName = "CommandSeparator";
 
-const CommandItem = forwardRef(({ 
-  className,
-  children,
-  onSelect,
-  disabled = false,
-  value,
-  keywords = [],
-  ...props 
-}, ref) => {
+/**
+ * @typedef {Object} CommandItemProps
+ * @property {string} [className] - Additional CSS classes
+ * @property {React.ReactNode} [children] - Child elements
+ * @property {Function} [onSelect] - Selection callback function
+ * @property {boolean} [disabled] - Whether the item is disabled
+ * @property {string} [value] - Item value
+ * @property {string[]} [keywords] - Search keywords
+ */
+
+const CommandItem = forwardRef(
+  /** @param {CommandItemProps} props */
+  ({
+    className,
+    children,
+    onSelect,
+    disabled = false,
+    value,
+    keywords = [],
+    ...props
+  }, ref) => {
   const { search, setValue, setOpen } = useCommand();
 
   const handleSelect = () => {
@@ -234,11 +323,19 @@ const CommandItem = forwardRef(({
 
 CommandItem.displayName = "CommandItem";
 
-const CommandShortcut = forwardRef(({ 
-  className,
-  children,
-  ...props 
-}, ref) => (
+/**
+ * @typedef {Object} CommandShortcutProps
+ * @property {string} [className] - Additional CSS classes
+ * @property {React.ReactNode} [children] - Child elements
+ */
+
+const CommandShortcut = forwardRef(
+  /** @param {CommandShortcutProps} props */
+  ({
+    className,
+    children,
+    ...props
+  }, ref) => (
   <span
     ref={ref}
     className={cn(
@@ -253,13 +350,23 @@ const CommandShortcut = forwardRef(({
 
 CommandShortcut.displayName = "CommandShortcut";
 
+/**
+ * @typedef {Object} CommandDialogProps
+ * @property {boolean} open - Whether the dialog is open
+ * @property {Function} [onOpenChange] - Open state change callback
+ * @property {React.ReactNode} [children] - Child elements
+ */
+
 // Command Dialog for modal usage
-export const CommandDialog = ({ 
-  open, 
-  onOpenChange, 
-  children,
-  ...props 
-}) => {
+export const CommandDialog = (
+  /** @param {CommandDialogProps} props */
+  {
+    open,
+    onOpenChange,
+    children,
+    ...props
+  }
+) => {
   React.useEffect(() => {
     const down = (e) => {
       if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
@@ -451,13 +558,23 @@ export const useCommandHistory = (maxItems = 10) => {
   };
 };
 
+/**
+ * @typedef {Object} SimpleCommandProps
+ * @property {Array} [items] - Array of command items
+ * @property {Function} [onSelect] - Selection callback function
+ * @property {string} [placeholder] - Input placeholder text
+ */
+
 // Simple command palette for quick use
-export const SimpleCommand = ({ 
-  items = [], 
-  onSelect, 
-  placeholder = "Type a command...",
-  ...props 
-}) => {
+export const SimpleCommand = (
+  /** @param {SimpleCommandProps} props */
+  {
+    items = [],
+    onSelect,
+    placeholder = "Type a command...",
+    ...props
+  }
+) => {
   return (
     <Command {...props}>
       <CommandInput placeholder={placeholder} />

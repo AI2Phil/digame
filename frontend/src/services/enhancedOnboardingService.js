@@ -352,8 +352,8 @@ class EnhancedOnboardingService {
   trackOnboardingStep(step, data = {}) {
     console.log(`Onboarding step: ${step}`, data);
     
-    if (window.gtag) {
-      window.gtag('event', 'onboarding_step', {
+    if (typeof window !== 'undefined' && /** @type {any} */ (window).gtag) {
+      /** @type {any} */ (window).gtag('event', 'onboarding_step', {
         step_name: step,
         ...data
       });
@@ -363,8 +363,8 @@ class EnhancedOnboardingService {
   trackOnboardingCompletion(data) {
     console.log('Onboarding completed', data);
     
-    if (window.gtag) {
-      window.gtag('event', 'onboarding_complete', {
+    if (typeof window !== 'undefined' && /** @type {any} */ (window).gtag) {
+      /** @type {any} */ (window).gtag('event', 'onboarding_complete', {
         goals_count: data.goals?.primaryGoals?.length || 0,
         features_enabled: data.features?.enabledFeatures?.length || 0,
         notification_frequency: data.preferences?.notifications?.frequency || 'moderate'

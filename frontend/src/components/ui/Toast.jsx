@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { X, CheckCircle, AlertCircle, Info, AlertTriangle } from 'lucide-react';
 
-const ToastContext = createContext();
+const ToastContext = createContext({});
 
 export const useToast = () => {
   const context = useContext(ToastContext);
@@ -12,16 +12,31 @@ export const useToast = () => {
   return context;
 };
 
-const Toast = ({ 
-  id, 
-  type = 'info', 
-  title, 
-  message, 
-  duration = 5000, 
-  onClose,
-  action,
-  persistent = false 
-}) => {
+/**
+ * @typedef {Object} ToastProps
+ * @property {string|number} id - Toast identifier
+ * @property {'success'|'error'|'warning'|'info'} [type] - Toast type
+ * @property {string} [title] - Toast title
+ * @property {string} [message] - Toast message
+ * @property {number} [duration] - Auto-close duration in ms
+ * @property {Function} onClose - Close callback function
+ * @property {React.ReactNode} [action] - Action element
+ * @property {boolean} [persistent] - Whether toast persists
+ */
+
+const Toast = (
+  /** @param {ToastProps} props */
+  {
+    id,
+    type = 'info',
+    title,
+    message,
+    duration = 5000,
+    onClose,
+    action,
+    persistent = false
+  }
+) => {
   const [isVisible, setIsVisible] = useState(false);
   const [isExiting, setIsExiting] = useState(false);
 
@@ -129,7 +144,17 @@ const Toast = ({
   );
 };
 
-export const ToastProvider = ({ children, position = 'top-right', maxToasts = 5 }) => {
+/**
+ * @typedef {Object} ToastProviderProps
+ * @property {React.ReactNode} children - Child elements
+ * @property {'top-right'|'top-left'|'top-center'|'bottom-right'|'bottom-left'|'bottom-center'} [position] - Toast position
+ * @property {number} [maxToasts] - Maximum number of toasts
+ */
+
+export const ToastProvider = (
+  /** @param {ToastProviderProps} props */
+  { children, position = 'top-right', maxToasts = 5 }
+) => {
   const [toasts, setToasts] = useState([]);
 
   const addToast = (toast) => {

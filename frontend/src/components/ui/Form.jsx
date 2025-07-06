@@ -1,12 +1,41 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
+/**
+ * @typedef {Object} FormContextType
+ * @property {Object} values - Form values
+ * @property {Object} errors - Form errors
+ * @property {Object} touched - Touched fields
+ * @property {boolean} isSubmitting - Whether form is submitting
+ * @property {function(string, any): void} handleFieldChange - Handle field change
+ * @property {function(string): void} handleFieldBlur - Handle field blur
+ * @property {function(string, any): string|null} validateField - Validate field
+ */
+
+/**
+ * @typedef {Object} FormProps
+ * @property {React.ReactNode} children - Form children
+ * @property {function(Object): void} [onSubmit] - Submit handler
+ * @property {string} [className] - CSS classes
+ * @property {Object} [validation] - Validation rules
+ * @property {Object} [defaultValues] - Default form values
+ * @property {'onChange'|'onBlur'|'onSubmit'} [mode] - Validation mode
+ */
+
 // Form Context
-const FormContext = createContext();
+const FormContext = createContext(/** @type {FormContextType} */ ({
+  values: {},
+  errors: {},
+  touched: {},
+  isSubmitting: false,
+  handleFieldChange: () => {},
+  handleFieldBlur: () => {},
+  validateField: () => null
+}));
 
 // Main Form component
-export const Form = ({ 
-  children, 
-  onSubmit, 
+export const Form = (/** @type {FormProps} */ {
+  children,
+  onSubmit,
   className = '',
   validation = {},
   defaultValues = {},
@@ -128,11 +157,18 @@ export const Form = ({
   );
 };
 
+/**
+ * @typedef {Object} FormFieldProps
+ * @property {string} name - Field name
+ * @property {React.ReactElement} children - Field children
+ * @property {string} [className] - CSS classes
+ */
+
 // Form Field component
-export const FormField = ({ 
-  name, 
-  children, 
-  className = '' 
+export const FormField = (/** @type {FormFieldProps} */ {
+  name,
+  children,
+  className = ''
 }) => {
   const context = useContext(FormContext);
   
@@ -154,12 +190,20 @@ export const FormField = ({
   );
 };
 
+/**
+ * @typedef {Object} FormLabelProps
+ * @property {React.ReactNode} children - Label content
+ * @property {string} [htmlFor] - Associated input ID
+ * @property {boolean} [required] - Whether field is required
+ * @property {string} [className] - CSS classes
+ */
+
 // Form Label component
-export const FormLabel = ({ 
-  children, 
-  htmlFor, 
+export const FormLabel = (/** @type {FormLabelProps} */ {
+  children,
+  htmlFor,
   required = false,
-  className = '' 
+  className = ''
 }) => {
   return (
     <label 
@@ -172,8 +216,19 @@ export const FormLabel = ({
   );
 };
 
+/**
+ * @typedef {Object} FormInputProps
+ * @property {string} name - Input name
+ * @property {string} [type] - Input type
+ * @property {string} [placeholder] - Placeholder text
+ * @property {boolean} [disabled] - Whether input is disabled
+ * @property {boolean} [error] - Whether input has error
+ * @property {string} [errorMessage] - Error message
+ * @property {string} [className] - CSS classes
+ */
+
 // Form Input component
-export const FormInput = ({ 
+export const FormInput = (/** @type {FormInputProps} */ {
   name,
   type = 'text',
   placeholder = '',
@@ -181,7 +236,7 @@ export const FormInput = ({
   error = false,
   errorMessage = '',
   className = '',
-  ...props 
+  ...props
 }) => {
   const context = useContext(FormContext);
   
@@ -223,8 +278,19 @@ export const FormInput = ({
   );
 };
 
+/**
+ * @typedef {Object} FormTextareaProps
+ * @property {string} name - Textarea name
+ * @property {string} [placeholder] - Placeholder text
+ * @property {number} [rows] - Number of rows
+ * @property {boolean} [disabled] - Whether textarea is disabled
+ * @property {boolean} [error] - Whether textarea has error
+ * @property {string} [errorMessage] - Error message
+ * @property {string} [className] - CSS classes
+ */
+
 // Form Textarea component
-export const FormTextarea = ({ 
+export const FormTextarea = (/** @type {FormTextareaProps} */ {
   name,
   placeholder = '',
   rows = 3,
@@ -232,7 +298,7 @@ export const FormTextarea = ({
   error = false,
   errorMessage = '',
   className = '',
-  ...props 
+  ...props
 }) => {
   const context = useContext(FormContext);
   
@@ -274,8 +340,19 @@ export const FormTextarea = ({
   );
 };
 
+/**
+ * @typedef {Object} FormSelectProps
+ * @property {string} name - Select name
+ * @property {Array<{value: string, label: string}>} [options] - Select options
+ * @property {string} [placeholder] - Placeholder text
+ * @property {boolean} [disabled] - Whether select is disabled
+ * @property {boolean} [error] - Whether select has error
+ * @property {string} [errorMessage] - Error message
+ * @property {string} [className] - CSS classes
+ */
+
 // Form Select component
-export const FormSelect = ({ 
+export const FormSelect = (/** @type {FormSelectProps} */ {
   name,
   options = [],
   placeholder = 'Select an option',
@@ -283,7 +360,7 @@ export const FormSelect = ({
   error = false,
   errorMessage = '',
   className = '',
-  ...props 
+  ...props
 }) => {
   const context = useContext(FormContext);
   
@@ -330,15 +407,25 @@ export const FormSelect = ({
   );
 };
 
+/**
+ * @typedef {Object} FormCheckboxProps
+ * @property {string} name - Checkbox name
+ * @property {string} label - Checkbox label
+ * @property {boolean} [disabled] - Whether checkbox is disabled
+ * @property {boolean} [error] - Whether checkbox has error
+ * @property {string} [errorMessage] - Error message
+ * @property {string} [className] - CSS classes
+ */
+
 // Form Checkbox component
-export const FormCheckbox = ({ 
+export const FormCheckbox = (/** @type {FormCheckboxProps} */ {
   name,
   label,
   disabled = false,
   error = false,
   errorMessage = '',
   className = '',
-  ...props 
+  ...props
 }) => {
   const context = useContext(FormContext);
   
@@ -370,11 +457,17 @@ export const FormCheckbox = ({
   );
 };
 
+/**
+ * @typedef {Object} FormSubmitButtonProps
+ * @property {React.ReactNode} children - Button content
+ * @property {string} [className] - CSS classes
+ */
+
 // Form Submit Button
-export const FormSubmitButton = ({ 
-  children, 
+export const FormSubmitButton = (/** @type {FormSubmitButtonProps} */ {
+  children,
   className = '',
-  ...props 
+  ...props
 }) => {
   const context = useContext(FormContext);
   

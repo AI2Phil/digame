@@ -427,7 +427,7 @@ const FeatureHubShowcase = ({
         {categories.map((category) => (
           <Button
             key={category.id}
-            variant={activeCategory === category.id ? "default" : "outline"}
+            variant={activeCategory === category.id ? "primary" : "outline"}
             size="sm"
             onClick={() => setActiveCategory(category.id)}
             className="flex items-center space-x-2"
@@ -519,7 +519,7 @@ const FeatureHubShowcase = ({
                   <div className="flex items-center justify-between">
                     <Button 
                       size="sm" 
-                      variant={isExplored ? "outline" : "default"}
+                      variant={isExplored ? "outline" : "primary"}
                       className="flex items-center space-x-1"
                     >
                       {isExplored ? (

@@ -1,7 +1,24 @@
 import React, { forwardRef } from 'react';
 import { cn } from '../../lib/utils';
 
-const Switch = forwardRef(({ 
+/**
+ * @typedef {Object} SwitchProps
+ * @property {string} [className] - Additional CSS classes
+ * @property {string} [label] - Switch label text
+ * @property {string} [description] - Switch description text
+ * @property {string} [error] - Error message
+ * @property {boolean} [checked] - Whether the switch is checked
+ * @property {function} [onCheckedChange] - Callback when checked state changes
+ * @property {boolean} [disabled] - Whether the switch is disabled
+ * @property {'sm'|'default'|'lg'} [size] - Switch size variant
+ * @property {'default'|'destructive'|'success'|'warning'} [variant] - Switch variant
+ * @property {boolean} [required] - Whether the switch is required
+ */
+
+/**
+ * @type {React.ForwardRefExoticComponent<SwitchProps & React.RefAttributes<HTMLButtonElement>>}
+ */
+const Switch = forwardRef(({
   className,
   label,
   description,
@@ -12,7 +29,7 @@ const Switch = forwardRef(({
   size = 'default',
   variant = 'default',
   required = false,
-  ...props 
+  ...props
 }, ref) => {
   const handleChange = () => {
     if (!disabled) {
@@ -158,16 +175,29 @@ const Switch = forwardRef(({
 
 Switch.displayName = "Switch";
 
-// Switch Group Component for multiple switches
-export const SwitchGroup = ({ 
-  children, 
+/**
+ * @typedef {Object} SwitchGroupProps
+ * @property {React.ReactNode} children - Child components
+ * @property {boolean} [disabled] - Whether all switches are disabled
+ * @property {string} [className] - Additional CSS classes
+ * @property {string} [label] - Group label text
+ * @property {string} [description] - Group description text
+ * @property {string} [error] - Error message
+ * @property {'vertical'|'horizontal'} [orientation] - Layout orientation
+ */
+
+/**
+ * @type {React.FC<SwitchGroupProps>}
+ */
+export const SwitchGroup = ({
+  children,
   disabled = false,
   className,
   label,
   description,
   error,
   orientation = 'vertical',
-  ...props 
+  ...props
 }) => {
   return (
     <div className={cn("space-y-3", className)} {...props}>
@@ -217,9 +247,17 @@ export const SwitchGroup = ({
   );
 };
 
+/**
+ * @typedef {Object} SwitchVariantProps
+ * @property {string} [className] - Additional CSS classes
+ * @property {React.ReactNode} [children] - Child components
+ */
+
 // Predefined switch variants
 export const SwitchVariants = {
-  // Card-style switch
+  /**
+   * @type {React.ForwardRefExoticComponent<SwitchVariantProps & SwitchProps & React.RefAttributes<HTMLButtonElement>>}
+   */
   Card: forwardRef(({ className, children, ...props }, ref) => (
     <div className={cn(
       "flex items-center justify-between rounded-lg border p-4",
@@ -231,7 +269,9 @@ export const SwitchVariants = {
     </div>
   )),
 
-  // Compact switch without spacing
+  /**
+   * @type {React.ForwardRefExoticComponent<SwitchProps & React.RefAttributes<HTMLButtonElement>>}
+   */
   Compact: forwardRef(({ className, ...props }, ref) => (
     <Switch
       ref={ref}
@@ -241,7 +281,9 @@ export const SwitchVariants = {
     />
   )),
 
-  // iOS-style switch
+  /**
+   * @type {React.ForwardRefExoticComponent<SwitchProps & React.RefAttributes<HTMLButtonElement>>}
+   */
   iOS: forwardRef(({ className, ...props }, ref) => (
     <Switch
       ref={ref}
@@ -254,7 +296,9 @@ export const SwitchVariants = {
     />
   )),
 
-  // Material Design style switch
+  /**
+   * @type {React.ForwardRefExoticComponent<SwitchProps & React.RefAttributes<HTMLButtonElement>>}
+   */
   Material: forwardRef(({ className, ...props }, ref) => (
     <Switch
       ref={ref}

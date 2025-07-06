@@ -5,7 +5,7 @@ import { CheckIcon } from 'lucide-react';
 const StepperContext = createContext({
   currentStep: 0,
   steps: [],
-  setCurrentStep: () => {},
+  setCurrentStep: (/** @type {number} */ index) => {},
   isVertical: false,
   isClickable: false,
 });

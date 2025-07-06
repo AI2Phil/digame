@@ -2,22 +2,29 @@ import React, { forwardRef } from 'react';
 import { Check, Minus } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
-const Checkbox = forwardRef(({ 
+const Checkbox = forwardRef(/** @param {{className?: string, label?: string, description?: string, error?: string, disabled?: boolean, checked?: boolean, indeterminate?: boolean, onCheckedChange?: (checked: boolean) => void, size?: string, variant?: string, required?: boolean} & React.InputHTMLAttributes<HTMLInputElement>} props */ ({
   className,
   label,
   description,
   error,
-  disabled = false,
-  checked = false,
-  indeterminate = false,
+  disabled,
+  checked,
+  indeterminate,
   onCheckedChange,
-  size = 'default',
-  variant = 'default',
-  required = false,
-  ...props 
+  size,
+  variant,
+  required,
+  ...props
 }, ref) => {
+  // Set default values
+  const finalDisabled = disabled ?? false;
+  const finalChecked = checked ?? false;
+  const finalIndeterminate = indeterminate ?? false;
+  const finalSize = size ?? 'default';
+  const finalVariant = variant ?? 'default';
+  const finalRequired = required ?? false;
   const handleChange = (e) => {
-    if (!disabled) {
+    if (!finalDisabled) {
       onCheckedChange?.(e.target.checked);
     }
   };
@@ -43,13 +50,13 @@ const Checkbox = forwardRef(({
     "transition-colors duration-200",
     
     // Size variants
-    sizeClasses[size],
+    sizeClasses[finalSize],
     
     // Variant styles
-    variantClasses[variant],
+    variantClasses[finalVariant],
     
     // Checked state
-    (checked || indeterminate) && "bg-primary border-primary text-primary-foreground",
+    (finalChecked || finalIndeterminate) && "bg-primary border-primary text-primary-foreground",
     
     // Error state
     error && "border-destructive focus-visible:ring-destructive",
@@ -63,11 +70,11 @@ const Checkbox = forwardRef(({
         ref={ref}
         type="checkbox"
         className={checkboxClasses}
-        checked={checked}
+        checked={finalChecked}
         onChange={handleChange}
-        disabled={disabled}
-        required={required}
-        data-state={indeterminate ? "indeterminate" : checked ? "checked" : "unchecked"}
+        disabled={finalDisabled}
+        required={finalRequired}
+        data-state={finalIndeterminate ? "indeterminate" : finalChecked ? "checked" : "unchecked"}
         {...props}
       />
       
@@ -75,12 +82,12 @@ const Checkbox = forwardRef(({
       <div className={cn(
         "absolute inset-0 flex items-center justify-center pointer-events-none",
         "text-current transition-opacity duration-200",
-        (checked || indeterminate) ? "opacity-100" : "opacity-0"
+        (finalChecked || finalIndeterminate) ? "opacity-100" : "opacity-0"
       )}>
-        {indeterminate ? (
-          <Minus className={cn("stroke-[3]", sizeClasses[size])} />
+        {finalIndeterminate ? (
+          <Minus className={cn("stroke-[3]", sizeClasses[finalSize])} />
         ) : (
-          <Check className={cn("stroke-[3]", sizeClasses[size])} />
+          <Check className={cn("stroke-[3]", sizeClasses[finalSize])} />
         )}
       </div>
     </div>
@@ -107,7 +114,7 @@ const Checkbox = forwardRef(({
             )}
           >
             {label}
-            {required && <span className="text-destructive ml-1">*</span>}
+            {finalRequired && <span className="text-destructive ml-1">*</span>}
           </label>
         )}
         
@@ -133,17 +140,30 @@ const Checkbox = forwardRef(({
 Checkbox.displayName = "Checkbox";
 
 // Checkbox Group Component
-export const CheckboxGroup = ({ 
-  children, 
-  value = [], 
-  onValueChange, 
+/**
+ * @param {{
+ *   children?: React.ReactNode,
+ *   value?: any[],
+ *   onValueChange?: (value: any[]) => void,
+ *   disabled?: boolean,
+ *   className?: string,
+ *   label?: string,
+ *   description?: string,
+ *   error?: string,
+ *   required?: boolean
+ * } & React.HTMLAttributes<HTMLDivElement>} props
+ */
+export const CheckboxGroup = ({
+  children,
+  value = [],
+  onValueChange,
   disabled = false,
   className,
   label,
   description,
   error,
   required = false,
-  ...props 
+  ...props
 }) => {
   const handleCheckboxChange = (checkboxValue, checked) => {
     if (disabled) return;
@@ -205,10 +225,13 @@ export const CheckboxGroup = ({
 };
 
 // Checkbox Group Item
-export const CheckboxGroupItem = forwardRef(({ 
-  value, 
-  children, 
-  ...props 
+export const CheckboxGroupItem = forwardRef(/** @param {{
+  value?: any,
+  children?: React.ReactNode
+} & React.ComponentProps<typeof Checkbox>} props */ ({
+  value,
+  children,
+  ...props
 }, ref) => (
   <Checkbox ref={ref} {...props}>
     {children}
@@ -220,7 +243,7 @@ CheckboxGroupItem.displayName = "CheckboxGroupItem";
 // Predefined checkbox variants
 export const CheckboxVariants = {
   // Card-style checkbox
-  Card: forwardRef(({ className, children, ...props }, ref) => (
+  Card: forwardRef(/** @param {{className?: string, children?: React.ReactNode} & React.ComponentProps<typeof Checkbox>} props */ ({ className, children, ...props }, ref) => (
     <div className={cn(
       "flex items-center space-x-2 rounded-lg border p-4 cursor-pointer",
       "hover:bg-accent hover:text-accent-foreground",
@@ -233,7 +256,7 @@ export const CheckboxVariants = {
   )),
 
   // Switch-style checkbox
-  Switch: forwardRef(({ className, ...props }, ref) => (
+  Switch: forwardRef(/** @param {{className?: string} & React.ComponentProps<typeof Checkbox>} props */ ({ className, ...props }, ref) => (
     <Checkbox
       ref={ref}
       className={cn(
@@ -247,7 +270,7 @@ export const CheckboxVariants = {
   )),
 
   // Minimal checkbox without border
-  Minimal: forwardRef(({ className, ...props }, ref) => (
+  Minimal: forwardRef(/** @param {{className?: string} & React.ComponentProps<typeof Checkbox>} props */ ({ className, ...props }, ref) => (
     <Checkbox
       ref={ref}
       className={cn(
@@ -261,6 +284,18 @@ export const CheckboxVariants = {
 };
 
 // Hook for checkbox group state
+/**
+ * @param {any[]} [initialValue=[]] - Initial checkbox group value
+ * @returns {{
+ *   value: any[],
+ *   setValue: (value: any[]) => void,
+ *   toggle: (item: any) => void,
+ *   add: (item: any) => void,
+ *   remove: (item: any) => void,
+ *   clear: () => void,
+ *   isChecked: (item: any) => boolean
+ * }}
+ */
 export const useCheckboxGroup = (initialValue = []) => {
   const [value, setValue] = React.useState(initialValue);
 

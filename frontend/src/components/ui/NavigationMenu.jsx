@@ -1,7 +1,14 @@
 import React, { useState, createContext, useContext, useRef, useEffect } from 'react';
 
 // Navigation Menu Context
-const NavigationMenuContext = createContext();
+const NavigationMenuContext = createContext({
+  activeItem: null,
+  setActiveItem: (/** @type {any} */ value) => {},
+  openItems: new Set(),
+  setOpenItems: (/** @type {any} */ value) => {},
+  orientation: 'horizontal',
+  trigger: 'hover'
+});
 
 // Main Navigation Menu component
 export const NavigationMenu = ({ 
@@ -76,7 +83,7 @@ export const NavigationMenuItem = ({
 
   const isActive = activeItem === value;
   const hasSubmenu = React.Children.toArray(children).some(
-    child => child.type === NavigationMenuContent
+    child => React.isValidElement(child) && child.type === NavigationMenuContent
   );
 
   const handleMouseEnter = () => {
@@ -156,15 +163,16 @@ export const NavigationMenuItem = ({
         aria-expanded={hasSubmenu ? isOpen : undefined}
         aria-haspopup={hasSubmenu ? 'menu' : undefined}
       >
-        {React.Children.map(children, child => 
-          child.type !== NavigationMenuContent ? child : null
+        {React.Children.map(children, child =>
+          React.isValidElement(child) && child.type !== NavigationMenuContent ? child :
+          !React.isValidElement(child) ? child : null
         )}
       </div>
       
       {hasSubmenu && (
         <div className={`navigation-menu-content ${isOpen ? 'open' : 'closed'}`}>
-          {React.Children.map(children, child => 
-            child.type === NavigationMenuContent ? child : null
+          {React.Children.map(children, child =>
+            React.isValidElement(child) && child.type === NavigationMenuContent ? child : null
           )}
         </div>
       )}

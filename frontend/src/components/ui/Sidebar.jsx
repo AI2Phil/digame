@@ -1,19 +1,39 @@
 import React, { useState, createContext, useContext } from 'react';
 
 // Sidebar Context
-const SidebarContext = createContext();
+const SidebarContext = createContext({
+  isCollapsed: false,
+  setIsCollapsed: (/** @type {boolean} */ value) => {},
+  handleToggle: () => {},
+  position: 'left'
+});
+
+/**
+ * @typedef {Object} SidebarProps
+ * @property {React.ReactNode} children - Child elements
+ * @property {string} [className] - Additional CSS classes
+ * @property {boolean} [collapsed] - Whether sidebar is collapsed
+ * @property {Function} [onCollapsedChange] - Callback when collapse state changes
+ * @property {'left'|'right'} [position] - Sidebar position
+ * @property {string} [width] - Sidebar width class
+ * @property {string} [collapsedWidth] - Collapsed width class
+ * @property {boolean} [overlay] - Whether to show overlay
+ */
 
 // Main Sidebar component
-export const Sidebar = ({ 
-  children, 
-  className = '',
-  collapsed = false,
-  onCollapsedChange,
-  position = 'left', // left, right
-  width = 'w-64',
-  collapsedWidth = 'w-16',
-  overlay = false
-}) => {
+export const Sidebar = (
+  /** @param {SidebarProps} props */
+  {
+    children,
+    className = '',
+    collapsed = false,
+    onCollapsedChange,
+    position = 'left', // left, right
+    width = 'w-64',
+    collapsedWidth = 'w-16',
+    overlay = false
+  }
+) => {
   const [isCollapsed, setIsCollapsed] = useState(collapsed);
 
   const handleToggle = () => {
@@ -59,12 +79,22 @@ export const Sidebar = ({
   );
 };
 
+/**
+ * @typedef {Object} SidebarHeaderProps
+ * @property {React.ReactNode} children - Child elements
+ * @property {string} [className] - Additional CSS classes
+ * @property {boolean} [showToggle] - Whether to show toggle button
+ */
+
 // Sidebar Header
-export const SidebarHeader = ({ 
-  children, 
-  className = '',
-  showToggle = true
-}) => {
+export const SidebarHeader = (
+  /** @param {SidebarHeaderProps} props */
+  {
+    children,
+    className = '',
+    showToggle = true
+  }
+) => {
   const context = useContext(SidebarContext);
   if (!context) {
     throw new Error('SidebarHeader must be used within Sidebar');
@@ -99,11 +129,20 @@ export const SidebarHeader = ({
   );
 };
 
+/**
+ * @typedef {Object} SidebarContentProps
+ * @property {React.ReactNode} children - Child elements
+ * @property {string} [className] - Additional CSS classes
+ */
+
 // Sidebar Content
-export const SidebarContent = ({ 
-  children, 
-  className = '' 
-}) => {
+export const SidebarContent = (
+  /** @param {SidebarContentProps} props */
+  {
+    children,
+    className = ''
+  }
+) => {
   return (
     <div className={`sidebar-content flex-1 overflow-y-auto py-4 ${className}`}>
       {children}
@@ -111,11 +150,20 @@ export const SidebarContent = ({
   );
 };
 
+/**
+ * @typedef {Object} SidebarFooterProps
+ * @property {React.ReactNode} children - Child elements
+ * @property {string} [className] - Additional CSS classes
+ */
+
 // Sidebar Footer
-export const SidebarFooter = ({ 
-  children, 
-  className = '' 
-}) => {
+export const SidebarFooter = (
+  /** @param {SidebarFooterProps} props */
+  {
+    children,
+    className = ''
+  }
+) => {
   return (
     <div className={`sidebar-footer p-4 border-t border-gray-200 ${className}`}>
       {children}
@@ -123,11 +171,20 @@ export const SidebarFooter = ({
   );
 };
 
+/**
+ * @typedef {Object} SidebarNavProps
+ * @property {React.ReactNode} children - Child elements
+ * @property {string} [className] - Additional CSS classes
+ */
+
 // Sidebar Navigation
-export const SidebarNav = ({ 
-  children, 
-  className = '' 
-}) => {
+export const SidebarNav = (
+  /** @param {SidebarNavProps} props */
+  {
+    children,
+    className = ''
+  }
+) => {
   return (
     <nav className={`sidebar-nav space-y-1 px-3 ${className}`}>
       {children}
@@ -135,14 +192,26 @@ export const SidebarNav = ({
   );
 };
 
+/**
+ * @typedef {Object} SidebarGroupProps
+ * @property {string} [title] - Group title
+ * @property {React.ReactNode} children - Child elements
+ * @property {string} [className] - Additional CSS classes
+ * @property {boolean} [collapsible] - Whether group is collapsible
+ * @property {boolean} [defaultOpen] - Default open state
+ */
+
 // Sidebar Group
-export const SidebarGroup = ({ 
-  title, 
-  children, 
-  className = '',
-  collapsible = false,
-  defaultOpen = true
-}) => {
+export const SidebarGroup = (
+  /** @param {SidebarGroupProps} props */
+  {
+    title,
+    children,
+    className = '',
+    collapsible = false,
+    defaultOpen = true
+  }
+) => {
   const context = useContext(SidebarContext);
   const [isOpen, setIsOpen] = useState(defaultOpen);
   
@@ -190,17 +259,32 @@ export const SidebarGroup = ({
   );
 };
 
+/**
+ * @typedef {Object} SidebarItemProps
+ * @property {React.ReactNode} children - Child elements
+ * @property {React.ReactNode} [icon] - Item icon
+ * @property {string|number} [badge] - Badge content
+ * @property {boolean} [active] - Whether item is active
+ * @property {boolean} [disabled] - Whether item is disabled
+ * @property {Function} [onClick] - Click handler
+ * @property {string} [href] - Link href
+ * @property {string} [className] - Additional CSS classes
+ */
+
 // Sidebar Item
-export const SidebarItem = ({ 
-  children, 
-  icon,
-  badge,
-  active = false,
-  disabled = false,
-  onClick,
-  href,
-  className = ''
-}) => {
+export const SidebarItem = (
+  /** @param {SidebarItemProps} props */
+  {
+    children,
+    icon,
+    badge,
+    active = false,
+    disabled = false,
+    onClick,
+    href,
+    className = ''
+  }
+) => {
   const context = useContext(SidebarContext);
   if (!context) {
     throw new Error('SidebarItem must be used within Sidebar');
@@ -273,14 +357,26 @@ export const SidebarItem = ({
   );
 };
 
+/**
+ * @typedef {Object} SidebarSubmenuProps
+ * @property {string} title - Submenu title
+ * @property {React.ReactNode} [icon] - Submenu icon
+ * @property {React.ReactNode} children - Child elements
+ * @property {string} [className] - Additional CSS classes
+ * @property {boolean} [defaultOpen] - Default open state
+ */
+
 // Sidebar Submenu
-export const SidebarSubmenu = ({ 
-  title, 
-  icon,
-  children, 
-  className = '',
-  defaultOpen = false
-}) => {
+export const SidebarSubmenu = (
+  /** @param {SidebarSubmenuProps} props */
+  {
+    title,
+    icon,
+    children,
+    className = '',
+    defaultOpen = false
+  }
+) => {
   const context = useContext(SidebarContext);
   const [isOpen, setIsOpen] = useState(defaultOpen);
   
@@ -337,15 +433,28 @@ export const SidebarSubmenu = ({
   );
 };
 
+/**
+ * @typedef {Object} SidebarUserProps
+ * @property {string} name - User name
+ * @property {string} [email] - User email
+ * @property {string} [avatar] - Avatar URL
+ * @property {'online'|'away'|'busy'|'offline'} [status] - User status
+ * @property {string} [className] - Additional CSS classes
+ * @property {Function} [onClick] - Click handler
+ */
+
 // Sidebar User Profile
-export const SidebarUser = ({ 
-  name,
-  email,
-  avatar,
-  status,
-  className = '',
-  onClick
-}) => {
+export const SidebarUser = (
+  /** @param {SidebarUserProps} props */
+  {
+    name,
+    email,
+    avatar,
+    status,
+    className = '',
+    onClick
+  }
+) => {
   const context = useContext(SidebarContext);
   if (!context) {
     throw new Error('SidebarUser must be used within Sidebar');
@@ -403,11 +512,20 @@ export const SidebarUser = ({
   );
 };
 
+/**
+ * @typedef {Object} SidebarToggleProps
+ * @property {string} [className] - Additional CSS classes
+ * @property {React.ReactNode} [children] - Child elements
+ */
+
 // Sidebar Toggle Button (for external use)
-export const SidebarToggle = ({ 
-  className = '',
-  children 
-}) => {
+export const SidebarToggle = (
+  /** @param {SidebarToggleProps} props */
+  {
+    className = '',
+    children
+  }
+) => {
   const context = useContext(SidebarContext);
   if (!context) {
     throw new Error('SidebarToggle must be used within Sidebar');

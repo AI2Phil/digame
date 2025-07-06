@@ -1,11 +1,17 @@
 import React, { useState, useRef, useEffect, createContext, useContext } from 'react';
 
 // Menubar Context
-const MenubarContext = createContext();
+const MenubarContext = createContext({
+  activeMenu: null,
+  setActiveMenu: (/** @type {any} */ value) => {},
+  openMenus: new Set(),
+  setOpenMenus: (/** @type {any} */ value) => {},
+  variant: 'default'
+});
 
 // Main Menubar component
-export const Menubar = ({ 
-  children, 
+export const Menubar = (/** @type {any} */ {
+  children,
   className = '',
   variant = 'default' // default, minimal, compact
 }) => {
@@ -40,8 +46,8 @@ export const Menubar = ({
 };
 
 // Menubar Menu
-export const MenubarMenu = ({ 
-  children, 
+export const MenubarMenu = (/** @type {any} */ {
+  children,
   value,
   className = ''
 }) => {
@@ -111,8 +117,8 @@ export const MenubarMenu = ({
 };
 
 // Menubar Trigger
-export const MenubarTrigger = ({ 
-  children, 
+export const MenubarTrigger = (/** @type {any} */ {
+  children,
   className = '',
   disabled = false
 }) => {
@@ -146,8 +152,8 @@ export const MenubarTrigger = ({
 };
 
 // Menubar Content
-export const MenubarContent = ({ 
-  children, 
+export const MenubarContent = (/** @type {any} */ {
+  children,
   className = '',
   align = 'start', // start, center, end
   sideOffset = 4
@@ -175,8 +181,8 @@ export const MenubarContent = ({
 };
 
 // Menubar Item
-export const MenubarItem = ({ 
-  children, 
+export const MenubarItem = (/** @type {any} */ {
+  children,
   onClick,
   disabled = false,
   className = '',
@@ -230,14 +236,14 @@ export const MenubarItem = ({
 };
 
 // Menubar Separator
-export const MenubarSeparator = ({ className = '' }) => {
+export const MenubarSeparator = (/** @type {any} */ { className = '' }) => {
   return <div className={`border-t border-gray-200 my-1 ${className}`} />;
 };
 
 // Menubar Label
-export const MenubarLabel = ({ 
-  children, 
-  className = '' 
+export const MenubarLabel = (/** @type {any} */ {
+  children,
+  className = ''
 }) => {
   return (
     <div className={`px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider ${className}`}>
@@ -247,8 +253,8 @@ export const MenubarLabel = ({
 };
 
 // Menubar Submenu
-export const MenubarSubmenu = ({ 
-  children, 
+export const MenubarSubmenu = (/** @type {any} */ {
+  children,
   trigger,
   className = ''
 }) => {
@@ -298,8 +304,8 @@ export const MenubarSubmenu = ({
 };
 
 // Menubar Checkbox Item
-export const MenubarCheckboxItem = ({ 
-  children, 
+export const MenubarCheckboxItem = (/** @type {any} */ {
+  children,
   checked = false,
   onCheckedChange,
   disabled = false,
@@ -338,8 +344,8 @@ export const MenubarCheckboxItem = ({
 };
 
 // Menubar Radio Group
-export const MenubarRadioGroup = ({ 
-  children, 
+export const MenubarRadioGroup = (/** @type {any} */ {
+  children,
   value,
   onValueChange,
   className = ''
@@ -357,8 +363,8 @@ export const MenubarRadioGroup = ({
 };
 
 // Menubar Radio Item
-export const MenubarRadioItem = ({ 
-  children, 
+export const MenubarRadioItem = (/** @type {any} */ {
+  children,
   value,
   checked = false,
   onCheckedChange,
