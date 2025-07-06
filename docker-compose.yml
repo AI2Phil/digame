@@ -1,73 +1,96 @@
+version: '3.8'
+
 services:
-  backend:
-    container_name: digame_backend
-    build: .
-    ports:
-      - "8000:8000"
-    volumes:
-      - .:/app/digame
-    environment:
-      - DATABASE_URL=postgresql://digame_user:digame_password@db:5432/digame_db
-      - REDIS_URL=redis://redis:6379/0
-      # Add other backend-specific environment variables here if needed
-      # For example, if predictive.py needs specific model paths configurable via env vars:
-      # - MODEL_PATH_PRIMARY=models/predictive_model.pth
-      # - MODEL_PATH_CUSTOM_EXAMPLE=digame/app/models/example_custom_model.pth
-    depends_on:
-      - db
-      - redis
-    networks:
-      - digame_network
-    # Use development mode by default (includes automatic migrations)
-    command: ["dev"]
-
+  # Frontend Service
   frontend:
-    container_name: digame_frontend
-    build: ./frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
     ports:
-      - "3000:3000"
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
+      - "3001:3000"
     environment:
-      - NEXT_PUBLIC_API_URL=http://localhost:8000
-      - API_URL=http://backend:8000
-      - NEXT_PUBLIC_DEMO_MODE=true
-      - NEXT_PUBLIC_APP_NAME=Digame Platform
-      - NEXT_PUBLIC_APP_VERSION=1.0.0
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=http://localhost:8001
     depends_on:
-      - backend
+      - backend-node
     networks:
-      - digame_network
+      - digame-network
 
-  db:
-    container_name: digame_db
-    image: postgres:13-alpine
-    environment:
-      - POSTGRES_USER=digame_user
-      - POSTGRES_PASSWORD=digame_password
-      - POSTGRES_DB=digame_db
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
+  # Node.js Backend Service (Primary - Complete Test Zone)
+  backend-node:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
     ports:
-      - "5433:5432" # Map to host 5433 to avoid conflict
+      - "8001:8001"
+    environment:
+      - NODE_ENV=production
+      - PORT=8001
+      - CORS_ORIGIN=http://localhost:3001
+    volumes:
+      - ./backend/data:/app/data
     networks:
-      - digame_network
+      - digame-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
+  # Python FastAPI Backend Service (Optional - For Data Science)
+  backend-python:
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+    ports:
+      - "8002:8002"
+    environment:
+      - PYTHONPATH=/app
+      - DATABASE_URL=sqlite:///./digame.db
+    volumes:
+      - ./app/data:/app/data
+    networks:
+      - digame-network
+    profiles:
+      - dual-backend
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Redis Cache (Optional)
   redis:
-    container_name: digame_redis
     image: redis:7-alpine
     ports:
       - "6379:6379"
-    networks:
-      - digame_network
-    command: redis-server --appendonly yes
     volumes:
-      - redis_data:/data
+      - redis-data:/data
+    networks:
+      - digame-network
+    profiles:
+      - cache
 
-volumes:
-  postgres_data:
-  redis_data:
+  # PostgreSQL Database (Optional - for production)
+  postgres:
+    image: postgres:15-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=digame
+      - POSTGRES_USER=digame_user
+      - POSTGRES_PASSWORD=digame_password
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - digame-network
+    profiles:
+      - database
 
 networks:
-  digame_network:
+  digame-network:
+    driver: bridge
+
+volumes:
+  redis-data:
+  postgres-data:

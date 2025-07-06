@@ -404,6 +404,21 @@ async def health_check():
         "timestamp": datetime.now(timezone.utc).isoformat() # Use current time
     }
 
+@app.get("/service-info", tags=["Health"])
+async def service_info():
+    return {
+        "service": "digame-api",
+        "version": app.version,
+        "status": "running",
+        "endpoints": {
+            "health": "/health",
+            "auth": "/auth",
+            "docs": "/docs",
+            "platform_owner": "/platform-owner"
+        },
+        "timestamp": datetime.now(timezone.utc).isoformat()
+    }
+
 # Request context middleware for debugging
 @app.middleware("http")
 async def add_request_context(request: Request, call_next):

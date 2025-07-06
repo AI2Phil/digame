@@ -38,6 +38,7 @@ import WorkflowAutomationPage from './pages/WorkflowAutomationPage.tsx';
 // Digital Twin Page
 import TwinDashboard from './components/digital-twin/TwinDashboard.tsx';
 // Platform Owner Components
+import TestZone from './components/platform-owner/TestZone.tsx';
 // Authentication Page
 import AuthPage from './pages/AuthPage.tsx';
 import LanguageSwitcher from './components/Layout/LanguageSwitcher'; // Import LanguageSwitcher
@@ -698,6 +699,18 @@ function App() {
                     </div>
                   </div>
                 </div>
+              ) : (
+                <Navigate to="/" replace />
+              )
+            }
+          />
+
+          {/* Platform Owner Test Zone Route */}
+          <Route
+            path="/platform-owner/test-zone"
+            element={
+              isAuthenticated ? (
+                <TestZone />
               ) : (
                 <Navigate to="/" replace />
               )
