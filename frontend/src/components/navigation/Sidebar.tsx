@@ -55,6 +55,8 @@ interface ExpandedSections {
   enterprise: boolean;
   platformOwner: boolean;
   advancedEnterprise: boolean;
+  integrations: boolean;
+  mobile: boolean;
 }
 
 interface SidebarProps {
@@ -86,7 +88,9 @@ const Sidebar: React.FC<SidebarProps> = ({
     tasks: false,
     enterprise: false,
     platformOwner: false,
-    advancedEnterprise: false
+    advancedEnterprise: false,
+    integrations: false,
+    mobile: false
   });
   const [showTenantSelector, setShowTenantSelector] = useState(false);
 
@@ -161,7 +165,11 @@ const Sidebar: React.FC<SidebarProps> = ({
         { label: 'Web Analytics', icon: '🌐', path: '/analytics/web' },
         { label: 'Mobile Analytics', icon: '📱', path: '/analytics/mobile' },
         { label: 'Behavioral Analytics', icon: '🧠', path: '/analytics/behavioral', subtitle: 'AI-POWERED', minSubscriptionTier: 'individual_pro' },
-        { label: 'Predictive Analytics', icon: '🔮', path: '/analytics/predictive', subtitle: 'AI-POWERED', minSubscriptionTier: 'team' }
+        { label: 'Predictive Analytics', icon: '🔮', path: '/analytics/predictive', subtitle: 'AI-POWERED', minSubscriptionTier: 'team' },
+        { label: 'Business Intelligence', icon: '📈', path: '/analytics/business-intelligence', subtitle: 'BUSINESS INTELLIGENCE' },
+        { label: 'Data Visualization Engine', icon: '📊', path: '/analytics/data-visualization', subtitle: 'VISUALIZATION' },
+        { label: 'Custom Report Builder', icon: '📋', path: '/analytics/custom-reports', subtitle: 'REPORTING' },
+        { label: 'Predictive Analytics Engine', icon: '🤖', path: '/analytics/predictive-engine', subtitle: 'AI PREDICTIONS' }
       ]
     },
     {
@@ -170,6 +178,10 @@ const Sidebar: React.FC<SidebarProps> = ({
       icon: '🤖',
       items: [
         { label: 'AI Tools Hub', icon: '🛠️', path: '/ai-tools' },
+        { label: 'Advanced Behavioral Analysis', icon: '🧠', path: '/ai/behavioral-analysis', subtitle: 'AI ENHANCEMENT' },
+        { label: 'Predictive Modeling', icon: '🔮', path: '/ai/predictive-modeling', subtitle: 'AI ENHANCEMENT' },
+        { label: 'AI-Powered Automation', icon: '⚡', path: '/ai/automation', subtitle: 'AI ENHANCEMENT' },
+        { label: 'NLP Enhancement', icon: '💬', path: '/ai/nlp-enhancement', subtitle: 'AI ENHANCEMENT' },
         { label: 'Writing Assistance', icon: '✍️', path: '/ai-tools?tab=writing', subtitle: 'WRITING & CONTENT', minSubscriptionTier: 'individual_pro' },
         { label: 'AI Task Suggestions', icon: '📋', path: '/tasks', subtitle: 'TASK MANAGEMENT', minSubscriptionTier: 'individual_pro' },
         { label: 'AI Insights', icon: '🧠', path: '/ai-tools?tab=insights', subtitle: 'INSIGHTS & ANALYTICS', minSubscriptionTier: 'team' },
@@ -201,7 +213,11 @@ const Sidebar: React.FC<SidebarProps> = ({
         { label: 'Team Management', icon: '⚙️', path: '/teams', subtitle: 'TEAM COLLABORATION' },
         { label: 'Team Dashboard', icon: '📊', path: '/teams/dashboard', subtitle: 'TEAM COLLABORATION' },
         { label: 'Skill Gap Analysis', icon: '🎯', path: '/teams/skills', subtitle: 'TEAM COLLABORATION' },
-        { label: 'Workflow Optimization', icon: '🔄', path: '/teams/workflows', subtitle: 'TEAM COLLABORATION' }
+        { label: 'Workflow Optimization', icon: '🔄', path: '/teams/workflows', subtitle: 'TEAM COLLABORATION' },
+        { label: 'Advanced Team Analytics', icon: '📈', path: '/teams/advanced-analytics', subtitle: 'TEAM COLLABORATION ENHANCEMENT' },
+        { label: 'Collaboration Optimization', icon: '⚡', path: '/teams/collaboration-optimization', subtitle: 'TEAM COLLABORATION ENHANCEMENT' },
+        { label: 'Team Performance Insights', icon: '📊', path: '/teams/performance-insights', subtitle: 'TEAM COLLABORATION ENHANCEMENT' },
+        { label: 'Social Features Enhancement', icon: '🤝', path: '/teams/social-features', subtitle: 'TEAM COLLABORATION ENHANCEMENT' }
       ]
     },
     {
@@ -268,6 +284,33 @@ const Sidebar: React.FC<SidebarProps> = ({
         { label: 'Custom Integrations', icon: '🔗', path: '/enterprise/integrations', subtitle: 'INTEGRATIONS' },
         { label: 'Advanced Analytics', icon: '📊', path: '/enterprise/advanced-analytics', subtitle: 'ANALYTICS' },
         { label: 'Compliance Center', icon: '🛡️', path: '/enterprise/compliance', subtitle: 'GOVERNANCE' }
+      ]
+    },
+    {
+      id: 'integrations',
+      title: 'Integrations',
+      icon: '🔗',
+      items: [
+        { label: 'Integration Hub', icon: '🔗', path: '/integrations' },
+        { label: 'Integration Testing Suite', icon: '✅', path: '/integrations/testing-suite', subtitle: 'INTEGRATION ECOSYSTEM' },
+        { label: 'API Management Hub', icon: '🔧', path: '/integrations/api-management', subtitle: 'INTEGRATION ECOSYSTEM' },
+        { label: 'Custom Integration Builder', icon: '🛠️', path: '/integrations/custom-builder', subtitle: 'INTEGRATION ECOSYSTEM' },
+        { label: 'Integration Analytics', icon: '📊', path: '/integrations/analytics', subtitle: 'INTEGRATION ECOSYSTEM' }
+      ]
+    },
+    {
+      id: 'mobile',
+      title: 'Mobile App',
+      icon: '📱',
+      items: [
+        { label: 'Mobile Dashboard', icon: '📱', path: '/mobile/dashboard' },
+        { label: 'Enhanced Mobile Features', icon: '⭐', path: '/mobile/enhanced-features', subtitle: 'MOBILE COMPLETION' },
+        { label: 'Enhanced Offline Service', icon: '☁️', path: '/mobile/offline-service', subtitle: 'MOBILE COMPLETION' },
+        { label: 'Comprehensive Mobile Analytics', icon: '📊', path: '/mobile/analytics', subtitle: 'MOBILE COMPLETION' },
+        { label: 'Mobile AI Insights', icon: '🧠', path: '/mobile/ai-insights', subtitle: 'AI MOBILE' },
+        { label: 'Voice Commands', icon: '🎤', path: '/mobile/voice-commands', subtitle: 'VOICE AI' },
+        { label: 'Biometric Security', icon: '🔒', path: '/mobile/biometric-security', subtitle: 'SECURITY' },
+        { label: 'Smart Notifications', icon: '🔔', path: '/mobile/smart-notifications', subtitle: 'SMART FEATURES' }
       ]
     }
   ];

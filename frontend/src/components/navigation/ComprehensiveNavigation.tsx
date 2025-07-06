@@ -174,6 +174,10 @@ const ComprehensiveNavigation: React.FC<ComprehensiveNavigationProps> = ({
           badge: 'AI'
         },
         { id: 'performance-monitoring', label: 'Performance Monitoring', icon: <Monitor className="w-4 h-4" />, path: '/analytics/performance', description: 'System performance metrics' },
+        { id: 'business-intelligence', label: 'Business Intelligence', icon: <TrendingUp className="w-4 h-4" />, path: '/analytics/business-intelligence', description: 'Complete BI dashboard with 6-tab interface', subtitle: 'BUSINESS INTELLIGENCE', badge: 'NEW' },
+        { id: 'data-visualization', label: 'Data Visualization Engine', icon: <BarChart3 className="w-4 h-4" />, path: '/analytics/data-visualization', description: 'Advanced visualization engine with 9 chart types', subtitle: 'VISUALIZATION', badge: 'NEW' },
+        { id: 'custom-reports', label: 'Custom Report Builder', icon: <FileText className="w-4 h-4" />, path: '/analytics/custom-reports', description: 'Comprehensive report builder with 4-tab interface', subtitle: 'REPORTING', badge: 'NEW' },
+        { id: 'predictive-engine', label: 'Predictive Analytics Engine', icon: <Brain className="w-4 h-4" />, path: '/analytics/predictive-engine', description: 'AI-powered analytics platform with 5-tab interface', subtitle: 'AI PREDICTIONS', badge: 'AI' },
         {
           id: 'platform-analytics',
           label: 'Platform Analytics',
@@ -245,6 +249,10 @@ const ComprehensiveNavigation: React.FC<ComprehensiveNavigationProps> = ({
           requiredTier: 'individual_pro',
           requiredFeatures: ['ai-tools-hub']
         },
+        { id: 'advanced-behavioral-analysis', label: 'Advanced Behavioral Analysis', icon: <Brain className="w-4 h-4" />, path: '/ai/behavioral-analysis', description: 'AI-powered user behavior pattern recognition with 4-tab interface', subtitle: 'AI ENHANCEMENT', badge: 'NEW' },
+        { id: 'predictive-modeling', label: 'Predictive Modeling', icon: <Eye className="w-4 h-4" />, path: '/ai/predictive-modeling', description: 'Advanced forecasting capabilities and recommendation engines', subtitle: 'AI ENHANCEMENT', badge: 'NEW' },
+        { id: 'ai-powered-automation', label: 'AI-Powered Automation', icon: <Zap className="w-4 h-4" />, path: '/ai/automation', description: 'Intelligent automation features with AI decision making', subtitle: 'AI ENHANCEMENT', badge: 'NEW' },
+        { id: 'nlp-enhancement', label: 'NLP Enhancement', icon: <MessageSquare className="w-4 h-4" />, path: '/ai/nlp-enhancement', description: 'Natural language processing and conversation management', subtitle: 'AI ENHANCEMENT', badge: 'NEW' },
         {
           id: 'writing-assistance',
           label: 'Writing Assistance',
@@ -337,7 +345,11 @@ const ComprehensiveNavigation: React.FC<ComprehensiveNavigationProps> = ({
         { label: 'Social Collaboration', icon: <MessageCircle className="w-4 h-4" />, path: '/teams/social', subtitle: 'COLLABORATION' },
         { label: 'Mentorship Programs', icon: <GraduationCap className="w-4 h-4" />, path: '/teams/mentorship', subtitle: 'MENTORSHIP' },
         { label: 'Skill Gap Analysis', icon: <Target className="w-4 h-4" />, path: '/teams/skills', subtitle: 'SKILLS ANALYSIS' },
-        { label: 'Workflow Optimization', icon: <Workflow className="w-4 h-4" />, path: '/teams/workflows', subtitle: 'OPTIMIZATION' }
+        { label: 'Workflow Optimization', icon: <Workflow className="w-4 h-4" />, path: '/teams/workflows', subtitle: 'OPTIMIZATION' },
+        { label: 'Advanced Team Analytics', icon: <BarChart3 className="w-4 h-4" />, path: '/teams/advanced-analytics', description: 'Enhanced team performance insights and collaboration metrics with 4-tab interface', subtitle: 'TEAM COLLABORATION ENHANCEMENT', badge: 'NEW' },
+        { label: 'Collaboration Optimization', icon: <Zap className="w-4 h-4" />, path: '/teams/collaboration-optimization', description: 'AI-powered team workflow optimization and recommendations with 4-tab interface', subtitle: 'TEAM COLLABORATION ENHANCEMENT', badge: 'NEW' },
+        { label: 'Team Performance Insights', icon: <TrendingUp className="w-4 h-4" />, path: '/teams/performance-insights', description: 'Comprehensive team analytics with predictive capabilities with 4-tab interface', subtitle: 'TEAM COLLABORATION ENHANCEMENT', badge: 'NEW' },
+        { label: 'Social Features Enhancement', icon: <Network className="w-4 h-4" />, path: '/teams/social-features', description: 'Advanced peer matching algorithms and networking tools with 4-tab interface', subtitle: 'TEAM COLLABORATION ENHANCEMENT', badge: 'NEW' }
       ]
     },
     {
@@ -360,6 +372,10 @@ const ComprehensiveNavigation: React.FC<ComprehensiveNavigationProps> = ({
       description: 'Third-party integrations and API management',
       items: [
         { label: 'Integration Hub', icon: <Puzzle className="w-4 h-4" />, path: '/integrations', description: 'Integration dashboard' },
+        { label: 'Integration Testing Suite', icon: <CheckCircle className="w-4 h-4" />, path: '/integrations/testing-suite', description: 'Complete testing and optimization for 40+ integration providers', subtitle: 'INTEGRATION ECOSYSTEM', badge: 'NEW' },
+        { label: 'API Management Hub', icon: <Code className="w-4 h-4" />, path: '/integrations/api-management', description: 'Complete API and webhook management system', subtitle: 'INTEGRATION ECOSYSTEM', badge: 'NEW' },
+        { label: 'Custom Integration Builder', icon: <Wrench className="w-4 h-4" />, path: '/integrations/custom-builder', description: 'Visual workflow automation and custom integration creation', subtitle: 'INTEGRATION ECOSYSTEM', badge: 'NEW' },
+        { label: 'Integration Analytics', icon: <BarChart3 className="w-4 h-4" />, path: '/integrations/analytics', description: 'Comprehensive performance monitoring and usage analytics', subtitle: 'INTEGRATION ECOSYSTEM', badge: 'NEW' },
         { label: 'Guest Integrations', icon: <Globe className="w-4 h-4" />, path: '/integrations/guest', description: 'Guest user integrations' },
         { label: 'SSO Configuration', icon: <Lock className="w-4 h-4" />, path: '/integrations/sso', subtitle: 'SINGLE SIGN-ON' },
         { label: 'API Management', icon: <Code className="w-4 h-4" />, path: '/integrations/api', subtitle: 'API ACCESS' },
@@ -460,6 +476,24 @@ const ComprehensiveNavigation: React.FC<ComprehensiveNavigationProps> = ({
         { label: 'Enhanced Onboarding', icon: <Star className="w-4 h-4" />, path: '/onboarding/enhanced', subtitle: 'ADVANCED SETUP' },
         { label: 'Setup Wizard', icon: <Wrench className="w-4 h-4" />, path: '/onboarding/wizard', description: 'Guided setup' },
         { label: 'Getting Started', icon: <BookOpen className="w-4 h-4" />, path: '/onboarding/getting-started', description: 'Quick start guide' }
+      ]
+    },
+    {
+      id: 'mobile',
+      title: 'Mobile Application',
+      icon: <Smartphone className="w-5 h-5" />,
+      description: 'Enhanced mobile features and cross-platform capabilities',
+      items: [
+        { id: 'mobile-dashboard', label: 'Mobile Dashboard', icon: <Smartphone className="w-4 h-4" />, path: '/mobile/dashboard', description: 'Mobile app overview and controls' },
+        { id: 'enhanced-mobile-features', label: 'Enhanced Mobile Features', icon: <Star className="w-4 h-4" />, path: '/mobile/enhanced-features', description: 'Advanced mobile capabilities including AI insights and offline sync', subtitle: 'MOBILE COMPLETION', badge: 'NEW' },
+        { id: 'mobile-offline-service', label: 'Enhanced Offline Service', icon: <Cloud className="w-4 h-4" />, path: '/mobile/offline-service', description: 'Sophisticated offline service with SQLite database and sync management', subtitle: 'MOBILE COMPLETION', badge: 'NEW' },
+        { id: 'mobile-analytics', label: 'Comprehensive Mobile Analytics', icon: <BarChart3 className="w-4 h-4" />, path: '/mobile/analytics', description: 'Feature-complete mobile analytics with 4-tab interface', subtitle: 'MOBILE COMPLETION', badge: 'NEW' },
+        { id: 'mobile-ai-insights', label: 'Mobile AI Insights', icon: <Brain className="w-4 h-4" />, path: '/mobile/ai-insights', description: 'Mobile-optimized AI-powered analytics and recommendations', subtitle: 'AI MOBILE', badge: 'AI' },
+        { id: 'mobile-voice-commands', label: 'Voice Commands', icon: <Mic className="w-4 h-4" />, path: '/mobile/voice-commands', description: 'Voice-activated navigation and task execution', subtitle: 'VOICE AI' },
+        { id: 'mobile-biometric-security', label: 'Biometric Security', icon: <Lock className="w-4 h-4" />, path: '/mobile/biometric-security', description: 'Fingerprint and face recognition authentication', subtitle: 'SECURITY' },
+        { id: 'mobile-smart-notifications', label: 'Smart Notifications', icon: <Bell className="w-4 h-4" />, path: '/mobile/smart-notifications', description: 'Intelligent notification system with priority management', subtitle: 'SMART FEATURES' },
+        { id: 'mobile-gesture-navigation', label: 'Gesture Navigation', icon: <Smartphone className="w-4 h-4" />, path: '/mobile/gesture-navigation', description: 'Advanced gesture controls and navigation patterns', subtitle: 'UX ENHANCEMENT' },
+        { id: 'mobile-performance-optimization', label: 'Performance Optimization', icon: <Zap className="w-4 h-4" />, path: '/mobile/performance', description: 'Mobile-specific performance enhancements and monitoring', subtitle: 'OPTIMIZATION' }
       ]
     }
   ];
