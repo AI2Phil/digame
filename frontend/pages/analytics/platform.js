@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import PageHeader from '../../components/PageHeader';
-import { Card, CardContent, CardHeader, CardTitle } from '../../src/components/ui/card';
-import { Button } from '../../src/components/ui/button';
-import { Badge } from '../../src/components/ui/badge';
-import { Progress } from '../../src/components/ui/progress';
+import { Card, CardContent, CardHeader, CardTitle } from '../../src/components/ui/Card';
+import { Button } from '../../src/components/ui/Button';
+import { Badge } from '../../src/components/ui/Badge';
+import { Progress } from '../../src/components/ui/Progress';
 import { 
   BarChart3, 
   Users, 

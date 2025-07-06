@@ -3,7 +3,7 @@
 Welcome to **Digame** - the Digital Professional Twin Platform! 
 This guide will help you get up and running quickly with the platform's comprehensive user workflow system, authentication, team management, and progressive onboarding features.
 
-pkill -f "next dev" && npm run dev
+cd digame/frontend && npm run build
 
 
 ## 📋 Table of Contents
@@ -123,6 +123,9 @@ This will showcase the complete intelligent cache system with Redis and PostgreS
 
 
 ## ⚡ Quick Start
+
+# Quickest start: 
+pkill -f "next dev" && npm run dev
 
 # 1. Docker up and running** ```docker ps```    
 
