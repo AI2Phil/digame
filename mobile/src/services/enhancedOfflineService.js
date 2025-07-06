@@ -1,601 +1,657 @@
-import NetInfo from '@react-native-community/netinfo';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { MMKV } from 'react-native-mmkv';
+import NetInfo from '@react-native-community/netinfo';
 import * as SQLite from 'expo-sqlite';
 import * as FileSystem from 'expo-file-system';
-import DeviceInfo from 'react-native-device-info';
+import { Alert } from 'react-native';
 
-// High-performance storage for frequently accessed data
-const storage = new MMKV({
-  id: 'digame-cache',
-  encryptionKey: 'digame-encryption-key-2024'
-});
-
-// Offline-first storage with intelligent caching and sync
 class EnhancedOfflineService {
   constructor() {
-    this.isOnline = true;
     this.db = null;
+    this.isOnline = true;
     this.syncQueue = [];
-    this.listeners = [];
+    this.conflictResolutionStrategy = 'client-wins'; // 'client-wins', 'server-wins', 'merge'
+    this.maxRetries = 3;
+    this.retryDelay = 1000;
+    this.listeners = new Set();
     this.syncInProgress = false;
-    this.deviceInfo = {};
-    this.cacheStrategy = 'adaptive'; // adaptive, aggressive, conservative
-    this.compressionEnabled = true;
-    this.encryptionEnabled = true;
+    this.lastSyncTime = null;
+    this.offlineCapabilities = {
+      analytics: true,
+      userProfile: true,
+      settings: true,
+      workflows: true,
+      notifications: true,
+      cache: true
+    };
   }
 
   async initialize() {
     try {
-      // Get device information for optimization
-      this.deviceInfo = {
-        totalMemory: await DeviceInfo.getTotalMemory(),
-        usedMemory: await DeviceInfo.getUsedMemory(),
-        batteryLevel: await DeviceInfo.getBatteryLevel(),
-        isLowPowerMode: await DeviceInfo.isPowerSaveMode(),
-        deviceType: await DeviceInfo.getDeviceType(),
-        systemVersion: await DeviceInfo.getSystemVersion(),
-      };
-
-      // Adjust cache strategy based on device capabilities
-      this.adjustCacheStrategy();
-
-      // Initialize SQLite database with optimizations
-      this.db = SQLite.openDatabase('digame_enhanced.db');
-      await this.createOptimizedTables();
+      console.log('Initializing Enhanced Offline Service...');
       
-      // Set up intelligent sync queue
-      await this.loadSyncQueue();
+      // Initialize SQLite database
+      await this.initializeDatabase();
       
-      // Initialize network monitoring
-      this.setupIntelligentNetworkListener();
+      // Setup network monitoring
+      await this.setupNetworkMonitoring();
       
-      // Check initial network state
-      const netInfo = await NetInfo.fetch();
-      this.isOnline = netInfo.isConnected;
+      // Load offline data
+      await this.loadOfflineData();
       
-      // Preload critical data
-      await this.preloadCriticalData();
+      // Setup periodic sync
+      this.setupPeriodicSync();
       
-      // Start background optimization
-      this.startBackgroundOptimization();
-      
-      return true;
+      console.log('Enhanced Offline Service initialized successfully');
+      return { success: true };
     } catch (error) {
-      console.error('Failed to initialize enhanced offline service:', error);
-      return false;
+      console.error('Failed to initialize Enhanced Offline Service:', error);
+      return { success: false, error: error.message };
     }
   }
 
-  adjustCacheStrategy() {
-    const { totalMemory, batteryLevel, isLowPowerMode } = this.deviceInfo;
-    
-    if (isLowPowerMode || batteryLevel < 0.2) {
-      this.cacheStrategy = 'conservative';
-      this.compressionEnabled = true;
-    } else if (totalMemory > 4000000000) { // 4GB+
-      this.cacheStrategy = 'aggressive';
-      this.compressionEnabled = false;
-    } else {
-      this.cacheStrategy = 'adaptive';
-      this.compressionEnabled = true;
+  async initializeDatabase() {
+    try {
+      this.db = SQLite.openDatabase('digame_offline.db');
+      
+      // Create tables for offline data
+      await this.createTables();
+      
+      console.log('Offline database initialized');
+    } catch (error) {
+      console.error('Failed to initialize database:', error);
+      throw error;
     }
-    
-    console.log(`Cache strategy set to: ${this.cacheStrategy}`);
   }
 
-  async createOptimizedTables() {
+  async createTables() {
+    const tables = [
+      // User data table
+      `CREATE TABLE IF NOT EXISTS user_data (
+        id TEXT PRIMARY KEY,
+        data TEXT NOT NULL,
+        last_modified INTEGER NOT NULL,
+        sync_status TEXT DEFAULT 'pending'
+      )`,
+      
+      // Analytics data table
+      `CREATE TABLE IF NOT EXISTS analytics_data (
+        id TEXT PRIMARY KEY,
+        type TEXT NOT NULL,
+        data TEXT NOT NULL,
+        timestamp INTEGER NOT NULL,
+        sync_status TEXT DEFAULT 'pending'
+      )`,
+      
+      // Workflow data table
+      `CREATE TABLE IF NOT EXISTS workflow_data (
+        id TEXT PRIMARY KEY,
+        workflow_id TEXT NOT NULL,
+        data TEXT NOT NULL,
+        last_modified INTEGER NOT NULL,
+        sync_status TEXT DEFAULT 'pending'
+      )`,
+      
+      // Settings table
+      `CREATE TABLE IF NOT EXISTS settings_data (
+        key TEXT PRIMARY KEY,
+        value TEXT NOT NULL,
+        last_modified INTEGER NOT NULL,
+        sync_status TEXT DEFAULT 'pending'
+      )`,
+      
+      // Sync queue table
+      `CREATE TABLE IF NOT EXISTS sync_queue (
+        id TEXT PRIMARY KEY,
+        operation TEXT NOT NULL,
+        table_name TEXT NOT NULL,
+        record_id TEXT NOT NULL,
+        data TEXT NOT NULL,
+        timestamp INTEGER NOT NULL,
+        retry_count INTEGER DEFAULT 0
+      )`,
+      
+      // Cache table
+      `CREATE TABLE IF NOT EXISTS cache_data (
+        key TEXT PRIMARY KEY,
+        data TEXT NOT NULL,
+        expires_at INTEGER NOT NULL,
+        created_at INTEGER NOT NULL
+      )`
+    ];
+
+    for (const tableSQL of tables) {
+      await this.executeSQL(tableSQL);
+    }
+  }
+
+  async executeSQL(sql, params = []) {
     return new Promise((resolve, reject) => {
-      this.db.transaction(
-        (tx) => {
-          // Enhanced activities table with indexing
-          tx.executeSql(`
-            CREATE TABLE IF NOT EXISTS activities_v2 (
-              id INTEGER PRIMARY KEY AUTOINCREMENT,
-              user_id INTEGER,
-              activity_type TEXT,
-              timestamp TEXT,
-              details TEXT,
-              synced INTEGER DEFAULT 0,
-              priority INTEGER DEFAULT 1,
-              retry_count INTEGER DEFAULT 0,
-              created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-              updated_at TEXT DEFAULT CURRENT_TIMESTAMP
-            );
-          `);
-
-          // Create indexes for performance
-          tx.executeSql(`
-            CREATE INDEX IF NOT EXISTS idx_activities_user_timestamp 
-            ON activities_v2(user_id, timestamp);
-          `);
-          
-          tx.executeSql(`
-            CREATE INDEX IF NOT EXISTS idx_activities_synced 
-            ON activities_v2(synced);
-          `);
-
-          // Enhanced analytics cache with compression support
-          tx.executeSql(`
-            CREATE TABLE IF NOT EXISTS analytics_cache_v2 (
-              id INTEGER PRIMARY KEY AUTOINCREMENT,
-              endpoint TEXT,
-              data BLOB,
-              compressed INTEGER DEFAULT 0,
-              timestamp TEXT,
-              expires_at TEXT,
-              access_count INTEGER DEFAULT 0,
-              last_accessed TEXT DEFAULT CURRENT_TIMESTAMP
-            );
-          `);
-
-          // Smart sync queue with priority and batching
-          tx.executeSql(`
-            CREATE TABLE IF NOT EXISTS sync_queue_v2 (
-              id INTEGER PRIMARY KEY AUTOINCREMENT,
-              action TEXT,
-              endpoint TEXT,
-              method TEXT,
-              data BLOB,
-              priority INTEGER DEFAULT 1,
-              batch_id TEXT,
-              created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-              retry_count INTEGER DEFAULT 0,
-              max_retries INTEGER DEFAULT 3,
-              next_retry_at TEXT
-            );
-          `);
-
-          // User preferences with encryption support
-          tx.executeSql(`
-            CREATE TABLE IF NOT EXISTS user_preferences_v2 (
-              key TEXT PRIMARY KEY,
-              value BLOB,
-              encrypted INTEGER DEFAULT 0,
-              synced INTEGER DEFAULT 0,
-              updated_at TEXT DEFAULT CURRENT_TIMESTAMP
-            );
-          `);
-
-          // Enhanced AI models table
-          tx.executeSql(`
-            CREATE TABLE IF NOT EXISTS ai_models_v2 (
-              model_name TEXT,
-              version TEXT,
-              language TEXT DEFAULT 'en',
-              file_path TEXT,
-              file_size INTEGER,
-              checksum TEXT,
-              downloaded_at TEXT,
-              last_used TEXT,
-              usage_count INTEGER DEFAULT 0,
-              metadata TEXT,
-              PRIMARY KEY (model_name, version, language)
-            );
-          `);
-
-          // Performance metrics table
-          tx.executeSql(`
-            CREATE TABLE IF NOT EXISTS performance_metrics (
-              id INTEGER PRIMARY KEY AUTOINCREMENT,
-              metric_type TEXT,
-              value REAL,
-              timestamp TEXT DEFAULT CURRENT_TIMESTAMP,
-              device_info TEXT
-            );
-          `);
-        },
-        (error) => reject(error),
-        () => resolve()
-      );
+      this.db.transaction(tx => {
+        tx.executeSql(
+          sql,
+          params,
+          (_, result) => resolve(result),
+          (_, error) => reject(error)
+        );
+      });
     });
   }
 
-  setupIntelligentNetworkListener() {
-    NetInfo.addEventListener((state) => {
+  async setupNetworkMonitoring() {
+    // Monitor network connectivity
+    NetInfo.addEventListener(state => {
       const wasOnline = this.isOnline;
-      this.isOnline = state.isConnected;
+      this.isOnline = state.isConnected && state.isInternetReachable;
       
-      const networkInfo = {
+      console.log('Network status changed:', {
         isOnline: this.isOnline,
         wasOnline,
-        connectionType: state.type,
-        isWiFi: state.type === 'wifi',
-        isMetered: state.details?.isConnectionExpensive || false,
-        strength: state.details?.strength || 0,
-      };
+        type: state.type
+      });
       
       // Notify listeners
-      this.notifyListeners(networkInfo);
+      this.notifyListeners('networkChange', {
+        isOnline: this.isOnline,
+        wasOnline,
+        connectionType: state.type
+      });
       
-      // Intelligent sync based on connection quality
+      // Auto-sync when coming back online
       if (!wasOnline && this.isOnline) {
-        this.scheduleIntelligentSync(networkInfo);
+        this.syncData();
       }
     });
-  }
-
-  async scheduleIntelligentSync(networkInfo) {
-    const { isWiFi, isMetered, strength } = networkInfo;
     
-    // Delay sync based on connection quality
-    let syncDelay = 0;
-    if (!isWiFi && isMetered) {
-      syncDelay = 5000; // Wait 5 seconds on metered connections
-    } else if (strength < 3) {
-      syncDelay = 2000; // Wait 2 seconds on weak connections
-    }
-    
-    setTimeout(() => {
-      this.intelligentSync(networkInfo);
-    }, syncDelay);
+    // Get initial network state
+    const state = await NetInfo.fetch();
+    this.isOnline = state.isConnected && state.isInternetReachable;
   }
 
-  // High-performance caching with MMKV
-  async cacheDataFast(key, data, expirationMinutes = 60) {
+  async loadOfflineData() {
     try {
-      const cacheItem = {
-        data,
-        timestamp: Date.now(),
-        expiresAt: Date.now() + (expirationMinutes * 60 * 1000),
-        accessCount: 0,
-      };
+      // Load last sync time
+      const lastSync = await AsyncStorage.getItem('lastSyncTime');
+      this.lastSyncTime = lastSync ? new Date(lastSync) : null;
       
-      const serialized = this.compressionEnabled 
-        ? this.compressData(JSON.stringify(cacheItem))
-        : JSON.stringify(cacheItem);
-      
-      storage.set(key, serialized);
-      return true;
-    } catch (error) {
-      console.error('Failed to cache data fast:', error);
-      return false;
-    }
-  }
-
-  async getCachedDataFast(key) {
-    try {
-      const cached = storage.getString(key);
-      if (!cached) return null;
-      
-      const cacheItem = JSON.parse(
-        this.compressionEnabled ? this.decompressData(cached) : cached
+      // Load pending sync queue
+      const queueResult = await this.executeSQL(
+        'SELECT * FROM sync_queue ORDER BY timestamp ASC'
       );
       
-      // Check expiration
-      if (Date.now() > cacheItem.expiresAt) {
-        storage.delete(key);
-        return null;
+      this.syncQueue = queueResult.rows._array || [];
+      
+      console.log(`Loaded ${this.syncQueue.length} pending sync operations`);
+    } catch (error) {
+      console.error('Failed to load offline data:', error);
+    }
+  }
+
+  setupPeriodicSync() {
+    // Sync every 5 minutes when online
+    setInterval(() => {
+      if (this.isOnline && !this.syncInProgress) {
+        this.syncData();
+      }
+    }, 5 * 60 * 1000);
+  }
+
+  // Data storage methods
+  async storeUserData(userId, data) {
+    try {
+      const timestamp = Date.now();
+      const serializedData = JSON.stringify(data);
+      
+      await this.executeSQL(
+        `INSERT OR REPLACE INTO user_data (id, data, last_modified, sync_status) 
+         VALUES (?, ?, ?, ?)`,
+        [userId, serializedData, timestamp, 'pending']
+      );
+      
+      // Add to sync queue if offline
+      if (!this.isOnline) {
+        await this.addToSyncQueue('update', 'user_data', userId, data);
       }
       
-      // Update access count
-      cacheItem.accessCount++;
-      const serialized = this.compressionEnabled 
-        ? this.compressData(JSON.stringify(cacheItem))
-        : JSON.stringify(cacheItem);
-      storage.set(key, serialized);
-      
-      return cacheItem.data;
+      return { success: true };
     } catch (error) {
-      console.error('Failed to get cached data fast:', error);
+      console.error('Failed to store user data:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  async getUserData(userId) {
+    try {
+      const result = await this.executeSQL(
+        'SELECT data FROM user_data WHERE id = ?',
+        [userId]
+      );
+      
+      if (result.rows.length > 0) {
+        return JSON.parse(result.rows.item(0).data);
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('Failed to get user data:', error);
       return null;
     }
   }
 
-  // Intelligent sync with batching and prioritization
-  async intelligentSync(networkInfo = {}) {
-    if (this.syncInProgress || !this.isOnline) return;
-    
-    this.syncInProgress = true;
-    console.log('Starting intelligent sync...');
-    
+  async storeAnalyticsData(type, data) {
     try {
-      // Prioritize sync items based on network conditions
-      const prioritizedQueue = this.prioritizeSyncQueue(networkInfo);
+      const id = `${type}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const timestamp = Date.now();
+      const serializedData = JSON.stringify(data);
       
-      // Batch sync items for efficiency
-      const batches = this.createSyncBatches(prioritizedQueue);
+      await this.executeSQL(
+        `INSERT INTO analytics_data (id, type, data, timestamp, sync_status) 
+         VALUES (?, ?, ?, ?, ?)`,
+        [id, type, serializedData, timestamp, 'pending']
+      );
       
-      for (const batch of batches) {
-        await this.processSyncBatch(batch, networkInfo);
-        
-        // Pause between batches on slow connections
-        if (networkInfo.strength < 3) {
-          await this.delay(1000);
-        }
+      // Add to sync queue if offline
+      if (!this.isOnline) {
+        await this.addToSyncQueue('create', 'analytics_data', id, { type, data, timestamp });
       }
       
-      // Clean up old cache entries
-      await this.cleanupCache();
+      return { success: true, id };
+    } catch (error) {
+      console.error('Failed to store analytics data:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  async getAnalyticsData(type, limit = 100) {
+    try {
+      const result = await this.executeSQL(
+        'SELECT * FROM analytics_data WHERE type = ? ORDER BY timestamp DESC LIMIT ?',
+        [type, limit]
+      );
+      
+      return result.rows._array.map(row => ({
+        id: row.id,
+        type: row.type,
+        data: JSON.parse(row.data),
+        timestamp: row.timestamp,
+        syncStatus: row.sync_status
+      }));
+    } catch (error) {
+      console.error('Failed to get analytics data:', error);
+      return [];
+    }
+  }
+
+  async storeWorkflowData(workflowId, data) {
+    try {
+      const timestamp = Date.now();
+      const serializedData = JSON.stringify(data);
+      
+      await this.executeSQL(
+        `INSERT OR REPLACE INTO workflow_data (id, workflow_id, data, last_modified, sync_status) 
+         VALUES (?, ?, ?, ?, ?)`,
+        [workflowId, workflowId, serializedData, timestamp, 'pending']
+      );
+      
+      // Add to sync queue if offline
+      if (!this.isOnline) {
+        await this.addToSyncQueue('update', 'workflow_data', workflowId, data);
+      }
+      
+      return { success: true };
+    } catch (error) {
+      console.error('Failed to store workflow data:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  async getWorkflowData(workflowId) {
+    try {
+      const result = await this.executeSQL(
+        'SELECT data FROM workflow_data WHERE workflow_id = ?',
+        [workflowId]
+      );
+      
+      if (result.rows.length > 0) {
+        return JSON.parse(result.rows.item(0).data);
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('Failed to get workflow data:', error);
+      return null;
+    }
+  }
+
+  async storeSetting(key, value) {
+    try {
+      const timestamp = Date.now();
+      const serializedValue = JSON.stringify(value);
+      
+      await this.executeSQL(
+        `INSERT OR REPLACE INTO settings_data (key, value, last_modified, sync_status) 
+         VALUES (?, ?, ?, ?)`,
+        [key, serializedValue, timestamp, 'pending']
+      );
+      
+      // Add to sync queue if offline
+      if (!this.isOnline) {
+        await this.addToSyncQueue('update', 'settings_data', key, value);
+      }
+      
+      return { success: true };
+    } catch (error) {
+      console.error('Failed to store setting:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  async getSetting(key, defaultValue = null) {
+    try {
+      const result = await this.executeSQL(
+        'SELECT value FROM settings_data WHERE key = ?',
+        [key]
+      );
+      
+      if (result.rows.length > 0) {
+        return JSON.parse(result.rows.item(0).value);
+      }
+      
+      return defaultValue;
+    } catch (error) {
+      console.error('Failed to get setting:', error);
+      return defaultValue;
+    }
+  }
+
+  // Cache methods
+  async setCache(key, data, ttl = 3600000) { // Default 1 hour TTL
+    try {
+      const now = Date.now();
+      const expiresAt = now + ttl;
+      const serializedData = JSON.stringify(data);
+      
+      await this.executeSQL(
+        `INSERT OR REPLACE INTO cache_data (key, data, expires_at, created_at) 
+         VALUES (?, ?, ?, ?)`,
+        [key, serializedData, expiresAt, now]
+      );
+      
+      return { success: true };
+    } catch (error) {
+      console.error('Failed to set cache:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  async getCache(key) {
+    try {
+      const now = Date.now();
+      const result = await this.executeSQL(
+        'SELECT data, expires_at FROM cache_data WHERE key = ? AND expires_at > ?',
+        [key, now]
+      );
+      
+      if (result.rows.length > 0) {
+        return JSON.parse(result.rows.item(0).data);
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('Failed to get cache:', error);
+      return null;
+    }
+  }
+
+  async clearExpiredCache() {
+    try {
+      const now = Date.now();
+      await this.executeSQL(
+        'DELETE FROM cache_data WHERE expires_at <= ?',
+        [now]
+      );
+      
+      console.log('Expired cache cleared');
+    } catch (error) {
+      console.error('Failed to clear expired cache:', error);
+    }
+  }
+
+  // Sync queue methods
+  async addToSyncQueue(operation, tableName, recordId, data) {
+    try {
+      const id = `${operation}_${tableName}_${recordId}_${Date.now()}`;
+      const timestamp = Date.now();
+      const serializedData = JSON.stringify(data);
+      
+      await this.executeSQL(
+        `INSERT INTO sync_queue (id, operation, table_name, record_id, data, timestamp, retry_count) 
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [id, operation, tableName, recordId, serializedData, timestamp, 0]
+      );
+      
+      this.syncQueue.push({
+        id,
+        operation,
+        table_name: tableName,
+        record_id: recordId,
+        data: serializedData,
+        timestamp,
+        retry_count: 0
+      });
+      
+      console.log(`Added to sync queue: ${operation} ${tableName} ${recordId}`);
+    } catch (error) {
+      console.error('Failed to add to sync queue:', error);
+    }
+  }
+
+  async syncData() {
+    if (this.syncInProgress || !this.isOnline) {
+      return { success: false, reason: 'Sync already in progress or offline' };
+    }
+    
+    try {
+      this.syncInProgress = true;
+      console.log('Starting data synchronization...');
+      
+      // Clear expired cache first
+      await this.clearExpiredCache();
+      
+      // Process sync queue
+      const results = await this.processSyncQueue();
+      
+      // Update last sync time
+      this.lastSyncTime = new Date();
+      await AsyncStorage.setItem('lastSyncTime', this.lastSyncTime.toISOString());
+      
+      // Notify listeners
+      this.notifyListeners('syncComplete', {
+        success: true,
+        processed: results.processed,
+        failed: results.failed,
+        timestamp: this.lastSyncTime
+      });
+      
+      console.log('Data synchronization completed:', results);
+      return { success: true, results };
       
     } catch (error) {
-      console.error('Intelligent sync failed:', error);
+      console.error('Data synchronization failed:', error);
+      
+      this.notifyListeners('syncError', {
+        error: error.message,
+        timestamp: new Date()
+      });
+      
+      return { success: false, error: error.message };
     } finally {
       this.syncInProgress = false;
     }
   }
 
-  prioritizeSyncQueue(networkInfo) {
-    return this.syncQueue.sort((a, b) => {
-      // Higher priority first
-      if (a.priority !== b.priority) {
-        return b.priority - a.priority;
-      }
-      
-      // On slow connections, prioritize smaller payloads
-      if (networkInfo.strength < 3) {
-        const sizeA = JSON.stringify(a.data).length;
-        const sizeB = JSON.stringify(b.data).length;
-        return sizeA - sizeB;
-      }
-      
-      // Default to creation time
-      return new Date(a.created_at) - new Date(b.created_at);
-    });
-  }
-
-  createSyncBatches(items, maxBatchSize = 10) {
-    const batches = [];
-    for (let i = 0; i < items.length; i += maxBatchSize) {
-      batches.push(items.slice(i, i + maxBatchSize));
-    }
-    return batches;
-  }
-
-  async processSyncBatch(batch, networkInfo) {
-    const promises = batch.map(item => this.syncItemWithRetry(item));
+  async processSyncQueue() {
+    let processed = 0;
+    let failed = 0;
     
-    // Use different concurrency based on network quality
-    const concurrency = networkInfo.isWiFi ? 5 : 2;
-    
-    for (let i = 0; i < promises.length; i += concurrency) {
-      const chunk = promises.slice(i, i + concurrency);
-      await Promise.allSettled(chunk);
-    }
-  }
-
-  async syncItemWithRetry(item, maxRetries = 3) {
-    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    for (const item of this.syncQueue) {
       try {
-        await this.syncItem(item);
-        await this.removeFromSyncQueue(item.id);
-        return;
-      } catch (error) {
-        console.error(`Sync attempt ${attempt} failed for item ${item.id}:`, error);
-        
-        if (attempt === maxRetries) {
-          await this.handleSyncFailure(item, error);
+        const success = await this.syncItem(item);
+        if (success) {
+          processed++;
+          await this.removeFromSyncQueue(item.id);
         } else {
-          // Exponential backoff
-          await this.delay(Math.pow(2, attempt) * 1000);
+          failed++;
+          await this.incrementRetryCount(item.id);
         }
+      } catch (error) {
+        console.error(`Failed to sync item ${item.id}:`, error);
+        failed++;
+        await this.incrementRetryCount(item.id);
       }
+    }
+    
+    // Reload sync queue
+    await this.loadOfflineData();
+    
+    return { processed, failed };
+  }
+
+  async syncItem(item) {
+    try {
+      // This would make actual API calls to sync data
+      // For now, we'll simulate the sync process
+      
+      console.log(`Syncing ${item.operation} ${item.table_name} ${item.record_id}`);
+      
+      // Simulate API call delay
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Mark as synced in local database
+      await this.markAsSynced(item.table_name, item.record_id);
+      
+      return true;
+    } catch (error) {
+      console.error(`Failed to sync item:`, error);
+      return false;
     }
   }
 
-  async handleSyncFailure(item, error) {
-    // Update retry count and schedule next retry
-    const nextRetryAt = new Date(Date.now() + (60000 * Math.pow(2, item.retry_count)));
-    
-    await new Promise((resolve, reject) => {
-      this.db.transaction(
-        (tx) => {
-          tx.executeSql(
-            'UPDATE sync_queue_v2 SET retry_count = retry_count + 1, next_retry_at = ? WHERE id = ?',
-            [nextRetryAt.toISOString(), item.id],
-            () => resolve(),
-            (_, error) => reject(error)
-          );
-        }
+  async markAsSynced(tableName, recordId) {
+    try {
+      const updateSQL = `UPDATE ${tableName} SET sync_status = 'synced' WHERE id = ?`;
+      await this.executeSQL(updateSQL, [recordId]);
+    } catch (error) {
+      console.error('Failed to mark as synced:', error);
+    }
+  }
+
+  async removeFromSyncQueue(id) {
+    try {
+      await this.executeSQL('DELETE FROM sync_queue WHERE id = ?', [id]);
+    } catch (error) {
+      console.error('Failed to remove from sync queue:', error);
+    }
+  }
+
+  async incrementRetryCount(id) {
+    try {
+      await this.executeSQL(
+        'UPDATE sync_queue SET retry_count = retry_count + 1 WHERE id = ?',
+        [id]
       );
-    });
-  }
-
-  // Performance monitoring
-  async recordPerformanceMetric(metricType, value) {
-    try {
-      await new Promise((resolve, reject) => {
-        this.db.transaction(
-          (tx) => {
-            tx.executeSql(
-              'INSERT INTO performance_metrics (metric_type, value, device_info) VALUES (?, ?, ?)',
-              [metricType, value, JSON.stringify(this.deviceInfo)],
-              () => resolve(),
-              (_, error) => reject(error)
-            );
-          }
-        );
-      });
+      
+      // Remove items that have exceeded max retries
+      await this.executeSQL(
+        'DELETE FROM sync_queue WHERE retry_count > ?',
+        [this.maxRetries]
+      );
     } catch (error) {
-      console.error('Failed to record performance metric:', error);
-    }
-  }
-
-  // Background optimization
-  startBackgroundOptimization() {
-    // Clean up old data every hour
-    setInterval(() => {
-      this.cleanupCache();
-      this.optimizeDatabase();
-    }, 3600000);
-    
-    // Monitor performance every 5 minutes
-    setInterval(() => {
-      this.monitorPerformance();
-    }, 300000);
-  }
-
-  async cleanupCache() {
-    try {
-      // Clean up expired MMKV cache
-      const allKeys = storage.getAllKeys();
-      for (const key of allKeys) {
-        const cached = storage.getString(key);
-        if (cached) {
-          try {
-            const cacheItem = JSON.parse(
-              this.compressionEnabled ? this.decompressData(cached) : cached
-            );
-            if (Date.now() > cacheItem.expiresAt) {
-              storage.delete(key);
-            }
-          } catch (error) {
-            // Invalid cache item, remove it
-            storage.delete(key);
-          }
-        }
-      }
-      
-      // Clean up old SQLite cache entries
-      await new Promise((resolve, reject) => {
-        this.db.transaction(
-          (tx) => {
-            tx.executeSql(
-              'DELETE FROM analytics_cache_v2 WHERE expires_at < datetime("now")',
-              [],
-              () => resolve(),
-              (_, error) => reject(error)
-            );
-          }
-        );
-      });
-      
-    } catch (error) {
-      console.error('Cache cleanup failed:', error);
-    }
-  }
-
-  async optimizeDatabase() {
-    try {
-      await new Promise((resolve, reject) => {
-        this.db.transaction(
-          (tx) => {
-            // Vacuum database to reclaim space
-            tx.executeSql('VACUUM', [], () => resolve(), (_, error) => reject(error));
-          }
-        );
-      });
-    } catch (error) {
-      console.error('Database optimization failed:', error);
-    }
-  }
-
-  async monitorPerformance() {
-    try {
-      const memoryUsage = await DeviceInfo.getUsedMemory();
-      const batteryLevel = await DeviceInfo.getBatteryLevel();
-      
-      await this.recordPerformanceMetric('memory_usage', memoryUsage);
-      await this.recordPerformanceMetric('battery_level', batteryLevel);
-      
-      // Adjust cache strategy if needed
-      if (batteryLevel < 0.15 && this.cacheStrategy !== 'conservative') {
-        this.cacheStrategy = 'conservative';
-        this.compressionEnabled = true;
-        console.log('Switched to conservative cache strategy due to low battery');
-      }
-      
-    } catch (error) {
-      console.error('Performance monitoring failed:', error);
+      console.error('Failed to increment retry count:', error);
     }
   }
 
   // Utility methods
-  compressData(data) {
-    // Simple compression simulation - in real app, use a proper compression library
-    return data;
-  }
-
-  decompressData(data) {
-    // Simple decompression simulation
-    return data;
-  }
-
-  delay(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-  }
-
-  // Preload critical data for offline use
-  async preloadCriticalData() {
-    try {
-      if (this.isOnline) {
-        // Preload user preferences
-        await this.preloadUserPreferences();
-        
-        // Preload recent analytics data
-        await this.preloadAnalyticsData();
-        
-        // Preload AI models if needed
-        await this.preloadAIModels();
-      }
-    } catch (error) {
-      console.error('Failed to preload critical data:', error);
-    }
-  }
-
-  async preloadUserPreferences() {
-    // Implementation for preloading user preferences
-    console.log('Preloading user preferences...');
-  }
-
-  async preloadAnalyticsData() {
-    // Implementation for preloading analytics data
-    console.log('Preloading analytics data...');
-  }
-
-  async preloadAIModels() {
-    // Implementation for preloading AI models
-    console.log('Preloading AI models...');
-  }
-
-  // Public API methods
-  addNetworkListener(listener) {
-    this.listeners.push(listener);
-    return () => {
-      this.listeners = this.listeners.filter(l => l !== listener);
+  async getOfflineStatus() {
+    return {
+      isOnline: this.isOnline,
+      lastSyncTime: this.lastSyncTime,
+      pendingSync: this.syncQueue.length,
+      syncInProgress: this.syncInProgress,
+      capabilities: this.offlineCapabilities
     };
   }
 
-  notifyListeners(networkState) {
-    this.listeners.forEach(listener => {
+  async clearOfflineData() {
+    try {
+      const tables = ['user_data', 'analytics_data', 'workflow_data', 'settings_data', 'sync_queue', 'cache_data'];
+      
+      for (const table of tables) {
+        await this.executeSQL(`DELETE FROM ${table}`);
+      }
+      
+      this.syncQueue = [];
+      this.lastSyncTime = null;
+      await AsyncStorage.removeItem('lastSyncTime');
+      
+      console.log('Offline data cleared');
+      return { success: true };
+    } catch (error) {
+      console.error('Failed to clear offline data:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  async exportOfflineData() {
+    try {
+      const data = {
+        userData: await this.executeSQL('SELECT * FROM user_data'),
+        analyticsData: await this.executeSQL('SELECT * FROM analytics_data'),
+        workflowData: await this.executeSQL('SELECT * FROM workflow_data'),
+        settingsData: await this.executeSQL('SELECT * FROM settings_data'),
+        syncQueue: await this.executeSQL('SELECT * FROM sync_queue'),
+        cacheData: await this.executeSQL('SELECT * FROM cache_data'),
+        exportTime: new Date().toISOString()
+      };
+      
+      const exportPath = `${FileSystem.documentDirectory}offline_data_export.json`;
+      await FileSystem.writeAsStringAsync(exportPath, JSON.stringify(data, null, 2));
+      
+      return { success: true, path: exportPath };
+    } catch (error) {
+      console.error('Failed to export offline data:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  // Event listeners
+  addListener(callback) {
+    this.listeners.add(callback);
+    return () => this.listeners.delete(callback);
+  }
+
+  notifyListeners(event, data) {
+    this.listeners.forEach(callback => {
       try {
-        listener(networkState);
+        callback(event, data);
       } catch (error) {
-        console.error('Error in network listener:', error);
+        console.error('Listener callback error:', error);
       }
     });
   }
 
-  getNetworkStatus() {
+  async toggle() {
+    // This would toggle offline mode capabilities
     return {
-      isOnline: this.isOnline,
-      syncQueueLength: this.syncQueue.length,
-      syncInProgress: this.syncInProgress,
-      cacheStrategy: this.cacheStrategy,
-      deviceInfo: this.deviceInfo,
+      enabled: !this.isOnline,
+      status: this.isOnline ? 'Online' : 'Offline'
     };
   }
 
-  // Legacy compatibility methods
-  async cacheData(endpoint, data, expirationMinutes = 60) {
-    return this.cacheDataFast(`cache_${endpoint}`, data, expirationMinutes);
-  }
-
-  async getCachedData(endpoint) {
-    return this.getCachedDataFast(`cache_${endpoint}`);
-  }
-
-  async syncData() {
-    return this.intelligentSync();
-  }
-
-  async clearCache() {
+  async hasValidSession() {
     try {
-      storage.clearAll();
-      await this.cleanupCache();
-      return true;
+      const sessionData = await this.getSetting('userSession');
+      return sessionData && sessionData.token && sessionData.expiresAt > Date.now();
     } catch (error) {
-      console.error('Failed to clear cache:', error);
       return false;
     }
   }
