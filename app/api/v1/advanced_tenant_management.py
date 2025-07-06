@@ -22,7 +22,8 @@ router = APIRouter(prefix="/advanced-tenant", tags=["Advanced Tenant Management"
 async def get_tenant_resource_allocation(
     tenant_id: int,
     current_user: User = Depends(get_current_user),
-    service: AdvancedTenantManagementService = Depends(get_advanced_tenant_management_service)
+    service: AdvancedTenantManagementService = Depends(get_advanced_tenant_management_service),
+    db: Session = Depends(get_db)
 ) -> Dict[str, Any]:
     """
     Get comprehensive tenant resource allocation and usage metrics
@@ -58,7 +59,8 @@ async def get_tenant_analytics(
     tenant_id: int,
     days: int = Query(30, ge=1, le=365, description="Number of days for analytics period"),
     current_user: User = Depends(get_current_user),
-    service: AdvancedTenantManagementService = Depends(get_advanced_tenant_management_service)
+    service: AdvancedTenantManagementService = Depends(get_advanced_tenant_management_service),
+    db: Session = Depends(get_db)
 ) -> Dict[str, Any]:
     """
     Get comprehensive tenant analytics and reporting
@@ -96,7 +98,8 @@ async def get_tenant_analytics(
 async def get_tenant_billing_info(
     tenant_id: int,
     current_user: User = Depends(get_current_user),
-    service: AdvancedTenantManagementService = Depends(get_advanced_tenant_management_service)
+    service: AdvancedTenantManagementService = Depends(get_advanced_tenant_management_service),
+    db: Session = Depends(get_db)
 ) -> Dict[str, Any]:
     """
     Get comprehensive tenant billing information
@@ -132,7 +135,8 @@ async def get_tenant_billing_info(
 async def get_tenant_health_check(
     tenant_id: int,
     current_user: User = Depends(get_current_user),
-    service: AdvancedTenantManagementService = Depends(get_advanced_tenant_management_service)
+    service: AdvancedTenantManagementService = Depends(get_advanced_tenant_management_service),
+    db: Session = Depends(get_db)
 ) -> Dict[str, Any]:
     """
     Get tenant health check summary
@@ -194,7 +198,8 @@ async def get_tenant_health_check(
 async def get_tenant_dashboard_summary(
     tenant_id: int,
     current_user: User = Depends(get_current_user),
-    service: AdvancedTenantManagementService = Depends(get_advanced_tenant_management_service)
+    service: AdvancedTenantManagementService = Depends(get_advanced_tenant_management_service),
+    db: Session = Depends(get_db)
 ) -> Dict[str, Any]:
     """
     Get tenant dashboard summary with key metrics

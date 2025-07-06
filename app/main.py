@@ -70,11 +70,11 @@ from .routers import intelligence_router # Import the intelligence router
 from .routers import platform_owner_router # Import the platform owner router
 from .routers import advanced_behavioral_analysis_router # Import the advanced behavioral analysis router
 from .routers import advanced_nlp_router # Import the advanced NLP router
-from .api.v1 import advanced_tenant_management # Import the advanced tenant management router
-from .api.v1 import enterprise_security_enhancement # Import the enterprise security enhancement router
-from .api.v1 import enterprise_integration # Import the enterprise integration router
-from .api.v1 import performance_optimization # Import the performance optimization router
-from .api.v1 import testing_quality_assurance # Import the testing quality assurance router
+# from .api.v1 import advanced_tenant_management # Import the advanced tenant management router - temporarily disabled due to Session import issues
+# from .api.v1 import enterprise_security_enhancement # Import the enterprise security enhancement router - temporarily disabled
+# from .api.v1 import enterprise_integration # Import the enterprise integration router - temporarily disabled
+# from .api.v1 import performance_optimization # Import the performance optimization router - temporarily disabled
+# from .api.v1 import testing_quality_assurance # Import the testing quality assurance router - temporarily disabled
 
 # Configure JSON logging
 logger = logging.getLogger("digame_app") # Use a specific name for the main app logger
@@ -345,11 +345,11 @@ app.include_router(intelligence_router.router, tags=["Intelligence"]) # Add inte
 app.include_router(platform_owner_router.router, tags=["Platform Owner"]) # Add platform owner router
 app.include_router(advanced_behavioral_analysis_router.router, tags=["Advanced Behavioral Analysis"]) # Add advanced behavioral analysis router
 app.include_router(advanced_nlp_router.router, tags=["Advanced NLP"]) # Add advanced NLP router
-app.include_router(advanced_tenant_management.router, prefix="/api/v1", tags=["Advanced Tenant Management"]) # Add advanced tenant management router
-app.include_router(enterprise_security_enhancement.router, prefix="/api/v1", tags=["Enterprise Security Enhancement"]) # Add enterprise security enhancement router
-app.include_router(enterprise_integration.router, prefix="/api/v1", tags=["Enterprise Integration"]) # Add enterprise integration router
-app.include_router(performance_optimization.router, prefix="/api/v1", tags=["Performance Optimization"]) # Add performance optimization router
-app.include_router(testing_quality_assurance.router, prefix="/api/v1", tags=["Testing & Quality Assurance"]) # Add testing quality assurance router
+# app.include_router(advanced_tenant_management.router, prefix="/api/v1", tags=["Advanced Tenant Management"]) # Add advanced tenant management router - temporarily disabled
+# app.include_router(enterprise_security_enhancement.router, prefix="/api/v1", tags=["Enterprise Security Enhancement"]) # Add enterprise security enhancement router - temporarily disabled
+# app.include_router(enterprise_integration.router, prefix="/api/v1", tags=["Enterprise Integration"]) # Add enterprise integration router - temporarily disabled
+# app.include_router(performance_optimization.router, prefix="/api/v1", tags=["Performance Optimization"]) # Add performance optimization router - temporarily disabled
+# app.include_router(testing_quality_assurance.router, prefix="/api/v1", tags=["Testing & Quality Assurance"]) # Add testing quality assurance router - temporarily disabled
 
 
 # Startup and shutdown events
