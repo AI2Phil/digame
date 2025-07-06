@@ -33,7 +33,10 @@ interface SettingsTab {
   id: string;
   label: string;
   icon: React.ReactNode;
-  component: React.ComponentType;
+  component: React.ComponentType<{
+    onMessage: (message: { type: 'success' | 'error' | 'info'; text: string }) => void;
+    onLoading: (loading: boolean) => void;
+  }>;
   description: string;
 }
 

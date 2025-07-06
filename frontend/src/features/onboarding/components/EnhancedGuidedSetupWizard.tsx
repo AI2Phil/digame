@@ -4,7 +4,12 @@ import StepProfileInfo from './StepProfileInfo';
 import StepGoalSetting from './StepGoalSetting';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
+import { Badge } from '../../../components/ui/Badge';
 import { useEnhancedOnboarding } from '../hooks/useEnhancedOnboarding';
+import FeatureHubShowcase from '../../../components/onboarding/FeatureHubShowcase';
+import { conversionTrackingService } from '../../../services/conversionTrackingService';
+import { featureHubService } from '../../../services/featureHubService';
+import { ExternalLink, Star, Sparkles } from 'lucide-react';
 
 // Enhanced step component for preferences
 const StepPreferences: React.FC<{
@@ -451,12 +456,54 @@ const EnhancedGuidedSetupWizard: React.FC = () => {
         const recommendedFeatures = userRole ? getRecommendedFeatures(userRole) : [];
         
         return (
-          <StepFeatures
-            onNext={handleFeaturesSubmit}
-            onPrevious={() => handlePrevious('preferences')}
-            recommendedFeatures={recommendedFeatures}
-            initialData={collectedData.features}
-          />
+          <div className="space-y-8">
+            <div className="text-center space-y-4">
+              <h2 className="text-3xl font-bold text-gray-900">Discover Platform Features</h2>
+              <p className="text-lg text-gray-600">
+                Explore our complete feature set and see what's possible with Digame
+              </p>
+              <div className="flex justify-center space-x-4">
+                <Badge variant="outline" className="bg-blue-50">
+                  <Star className="w-3 h-3 mr-1" />
+                  100% Complete Platform
+                </Badge>
+                <Badge variant="outline" className="bg-purple-50">
+                  <Sparkles className="w-3 h-3 mr-1" />
+                  AI-Powered Features
+                </Badge>
+              </div>
+            </div>
+
+            <FeatureHubShowcase
+              selectedRole={userRole || 'developer'}
+              onFeatureExplored={(feature) => {
+                conversionTrackingService.trackEvent('ONBOARDING_FEATURE_EXPLORED', {
+                  featureId: feature.id,
+                  featureName: feature.title,
+                  step: 'features',
+                  userRole
+                });
+              }}
+              onHubPageNavigation={(path, featureName) => {
+                conversionTrackingService.trackEvent('ONBOARDING_HUB_PAGE_VISITED', {
+                  path,
+                  featureName,
+                  step: 'features',
+                  userRole
+                });
+                // Open in new tab to keep onboarding active
+                window.open(path, '_blank');
+              }}
+              exploredFeatures={collectedData.features?.exploredFeatures || []}
+            />
+
+            <StepFeatures
+              onNext={handleFeaturesSubmit}
+              onPrevious={() => handlePrevious('preferences')}
+              recommendedFeatures={recommendedFeatures}
+              initialData={collectedData.features}
+            />
+          </div>
         );
       
       case 'final_summary':

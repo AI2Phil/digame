@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import OnboardingWizard from '../components/onboarding/OnboardingWizard';
 import { useAuth } from '../contexts/AuthContext';
 import { Toast } from '../components/ui/Toast';
-import { Button } from '../components/ui/button';
+import { Button } from '../components/ui/Button';
 import { Alert, AlertDescription } from '../components/ui/Alert';
 
 const OnboardingPage = () => {

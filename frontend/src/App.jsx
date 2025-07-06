@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { ToastProvider } from './components/ui/Toast';
 import { AuthProvider } from './contexts/AuthContext.tsx';
@@ -45,8 +45,22 @@ import LanguageSwitcher from './components/Layout/LanguageSwitcher'; // Import L
 // Removed i18next dependency to simplify
 import NavigationTestPage from './pages/NavigationTestPage.jsx'; // Import NavigationTestPage
 import ComprehensiveNavigationDemo from './pages/ComprehensiveNavigationDemo.jsx'; // Import ComprehensiveNavigationDemo
+// Guest User Journey Components
+import GuestUserJourney from './components/onboarding/GuestUserJourney.jsx';
 import './App.css';
 import './styles/theme.css';
+
+// Guest Journey Wrapper Component
+const GuestJourneyWrapper = () => {
+  const navigate = useNavigate();
+  
+  return (
+    <GuestUserJourney
+      onSignUp={() => navigate('/auth?mode=signup')}
+      onLogin={() => navigate('/auth?mode=login')}
+    />
+  );
+};
 
 function App() {
   // Removed i18next translation hook
@@ -212,6 +226,12 @@ function App() {
                 />
               )
             }
+          />
+          
+          {/* Guest User Journey Routes */}
+          <Route
+            path="/guest-journey"
+            element={<GuestJourneyWrapper />}
           />
           
           {/* Authentication Page */}

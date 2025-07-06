@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Button from '../components/ui/Button';
-import { Card, CardContent } from '../components/ui/card';
+import { Card, CardContent } from '../components/ui/Card';
 import { useAuth } from '../contexts/AuthContext';
 
 export default function DemoPage({ onDemoAccess }) {

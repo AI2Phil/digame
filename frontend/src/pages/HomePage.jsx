@@ -64,7 +64,58 @@ export default function HomePage({ onDemoAccess, onLogin }) {
               </p>
             </div>
 
-            <div className="grid md:grid-cols-2 gap-8">
+            <div className="grid md:grid-cols-3 gap-6">
+              {/* Explore Features Option */}
+              <Card className="rounded-2xl shadow-xl border border-gray-100 hover:shadow-2xl transition-shadow">
+                <CardContent className="p-6">
+                  <div className="text-center mb-4">
+                    <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                      <span className="text-xl">✨</span>
+                    </div>
+                    <h3 className="text-xl font-bold text-gray-900 mb-2">Explore Features</h3>
+                    <p className="text-gray-600 text-sm">
+                      Interactive journey through our complete platform capabilities
+                    </p>
+                  </div>
+
+                  <div className="space-y-2 mb-6 text-sm">
+                    <div className="flex items-center space-x-2">
+                      <div className="w-4 h-4 bg-green-100 rounded-full flex items-center justify-center">
+                        <span className="text-green-600 text-xs">✓</span>
+                      </div>
+                      <span className="text-gray-700">100% complete platform tour</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <div className="w-4 h-4 bg-green-100 rounded-full flex items-center justify-center">
+                        <span className="text-green-600 text-xs">✓</span>
+                      </div>
+                      <span className="text-gray-700">Role-based recommendations</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <div className="w-4 h-4 bg-green-100 rounded-full flex items-center justify-center">
+                        <span className="text-green-600 text-xs">✓</span>
+                      </div>
+                      <span className="text-gray-700">Live feature previews</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <div className="w-4 h-4 bg-green-100 rounded-full flex items-center justify-center">
+                        <span className="text-green-600 text-xs">✓</span>
+                      </div>
+                      <span className="text-gray-700">No registration needed</span>
+                    </div>
+                  </div>
+
+                  <Button
+                    onClick={() => navigate('/guest-journey')}
+                    variant="outline"
+                    size="md"
+                    className="w-full border-purple-200 text-purple-700 hover:bg-purple-50"
+                  >
+                    ✨ Explore Platform
+                  </Button>
+                </CardContent>
+              </Card>
+
               {/* Demo Option */}
             <Card className="rounded-2xl shadow-xl border border-gray-100 hover:shadow-2xl transition-shadow">
               <CardContent className="p-8">
@@ -221,6 +272,14 @@ export default function HomePage({ onDemoAccess, onLogin }) {
               className="text-lg"
             >
               🎯 Start Your Journey
+            </Button>
+            <Button
+              onClick={() => navigate('/guest-journey')}
+              variant="outline"
+              size="xl"
+              className="text-lg border-purple-200 text-purple-700 hover:bg-purple-50"
+            >
+              ✨ Explore Features
             </Button>
             <Button
               onClick={handleDemoClick}
