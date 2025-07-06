@@ -15,7 +15,7 @@ import {
   Wrench, Cog, Filter, Archive, Bookmark, Flag, Hash, Link,
   Mail, Phone, MapPin, CreditCard, ShoppingCart, Package,
   Truck, Home, Coffee, Heart, Smile, ThumbsUp, MessageCircle,
-  Key, Palette
+  Key, Palette, Store
 } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
@@ -312,14 +312,18 @@ const ComprehensiveNavigation: React.FC<ComprehensiveNavigationProps> = ({
       id: 'workflow',
       title: 'Workflow & Automation',
       icon: <Workflow className="w-5 h-5" />,
-      description: 'Workflow automation and process optimization',
+      description: 'Advanced workflow automation and process optimization with AI-powered insights',
       items: [
         { label: 'Workflow Automation', icon: <Zap className="w-4 h-4" />, path: '/workflow/automation', subtitle: 'AUTOMATION' },
         { label: 'Advanced Workflows', icon: <Network className="w-4 h-4" />, path: '/workflow/advanced', subtitle: 'ADVANCED' },
         { label: 'Process Optimization', icon: <TrendingUp className="w-4 h-4" />, path: '/workflow/optimization', subtitle: 'OPTIMIZATION' },
         { label: 'Process Notes', icon: <FileText className="w-4 h-4" />, path: '/workflow/notes', description: 'Process documentation' },
         { label: 'Task Prioritization', icon: <Flag className="w-4 h-4" />, path: '/workflow/prioritization', subtitle: 'TASK MANAGEMENT' },
-        { label: 'Calendar Integration', icon: <Calendar className="w-4 h-4" />, path: '/workflow/calendar', description: 'Calendar management' }
+        { label: 'Calendar Integration', icon: <Calendar className="w-4 h-4" />, path: '/workflow/calendar', description: 'Calendar management' },
+        { label: 'Advanced Workflow Analytics', icon: <BarChart3 className="w-4 h-4" />, path: '/workflow/advanced-analytics', description: 'Real-time workflow performance metrics, bottleneck analysis, and AI-powered optimization insights', subtitle: 'ADVANCED WORKFLOW ENGINE', badge: 'NEW' },
+        { label: 'Enhanced Workflow Triggers', icon: <Zap className="w-4 h-4" />, path: '/workflow/enhanced-triggers', description: 'Comprehensive trigger management for webhook, schedule, event, and condition-based workflow automation', subtitle: 'ADVANCED WORKFLOW ENGINE', badge: 'NEW' },
+        { label: 'Workflow Marketplace', icon: <Store className="w-4 h-4" />, path: '/workflow/marketplace', description: 'Template library and community features with searchable marketplace and collaboration', subtitle: 'ADVANCED WORKFLOW ENGINE', badge: 'NEW' },
+        { label: 'Advanced Workflow Features', icon: <Settings className="w-4 h-4" />, path: '/workflow/advanced-features', description: 'Enterprise workflow capabilities including parallel execution, error handling, versioning, and A/B testing', subtitle: 'ADVANCED WORKFLOW ENGINE', badge: 'NEW' }
       ]
     },
     {

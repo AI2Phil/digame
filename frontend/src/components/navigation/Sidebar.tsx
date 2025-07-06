@@ -57,6 +57,7 @@ interface ExpandedSections {
   advancedEnterprise: boolean;
   integrations: boolean;
   mobile: boolean;
+  workflow: boolean;
 }
 
 interface SidebarProps {
@@ -90,7 +91,8 @@ const Sidebar: React.FC<SidebarProps> = ({
     platformOwner: false,
     advancedEnterprise: false,
     integrations: false,
-    mobile: false
+    mobile: false,
+    workflow: false
   });
   const [showTenantSelector, setShowTenantSelector] = useState(false);
 
@@ -311,6 +313,20 @@ const Sidebar: React.FC<SidebarProps> = ({
         { label: 'Voice Commands', icon: '🎤', path: '/mobile/voice-commands', subtitle: 'VOICE AI' },
         { label: 'Biometric Security', icon: '🔒', path: '/mobile/biometric-security', subtitle: 'SECURITY' },
         { label: 'Smart Notifications', icon: '🔔', path: '/mobile/smart-notifications', subtitle: 'SMART FEATURES' }
+      ]
+    },
+    {
+      id: 'workflow',
+      title: 'Workflow & Automation',
+      icon: '⚡',
+      items: [
+        { label: 'Workflow Automation', icon: '⚡', path: '/workflow/automation', subtitle: 'AUTOMATION' },
+        { label: 'Advanced Workflows', icon: '🔗', path: '/workflow/advanced', subtitle: 'ADVANCED' },
+        { label: 'Process Optimization', icon: '📈', path: '/workflow/optimization', subtitle: 'OPTIMIZATION' },
+        { label: 'Advanced Workflow Analytics', icon: '📊', path: '/workflow/advanced-analytics', subtitle: 'ADVANCED WORKFLOW ENGINE' },
+        { label: 'Enhanced Workflow Triggers', icon: '⚡', path: '/workflow/enhanced-triggers', subtitle: 'ADVANCED WORKFLOW ENGINE' },
+        { label: 'Workflow Marketplace', icon: '🏪', path: '/workflow/marketplace', subtitle: 'ADVANCED WORKFLOW ENGINE' },
+        { label: 'Advanced Workflow Features', icon: '⚙️', path: '/workflow/advanced-features', subtitle: 'ADVANCED WORKFLOW ENGINE' }
       ]
     }
   ];
