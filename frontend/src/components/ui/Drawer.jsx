@@ -2,22 +2,62 @@ import React, { forwardRef } from 'react';
 import { X } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
+/**
+ * @param {{
+ *   children?: React.ReactNode,
+ *   open?: boolean,
+ *   onOpenChange?: (open: boolean) => void,
+ *   direction?: 'top'|'bottom'|'left'|'right',
+ *   snapPoints?: number[],
+ *   activeSnapPoint?: number,
+ *   setActiveSnapPoint?: (point: number) => void,
+ *   dismissible?: boolean,
+ *   modal?: boolean
+ * }} props
+ */
 const Drawer = ({ children, ...props }) => {
   return <DrawerProvider {...props}>{children}</DrawerProvider>;
 };
 
-const DrawerContext = React.createContext();
+const DrawerContext = React.createContext({
+  open: false,
+  setOpen: (open) => {},
+  close: () => {},
+  direction: 'bottom',
+  snapPoints: [],
+  activeSnapPoint: 0,
+  setActiveSnapPoint: (point) => {},
+  dismissible: true,
+  modal: true,
+  isDragging: false,
+  setIsDragging: (dragging) => {},
+  dragOffset: 0,
+  setDragOffset: (offset) => {}
+});
 
-const DrawerProvider = ({ 
-  children, 
-  open, 
-  onOpenChange, 
+/**
+ * @param {{
+ *   children?: React.ReactNode,
+ *   open?: boolean,
+ *   onOpenChange?: (open: boolean) => void,
+ *   direction?: 'top'|'bottom'|'left'|'right',
+ *   snapPoints?: number[],
+ *   activeSnapPoint?: number,
+ *   setActiveSnapPoint?: (point: number) => void,
+ *   dismissible?: boolean,
+ *   modal?: boolean
+ * }} props
+ */
+const DrawerProvider = ({
+  children,
+  open,
+  onOpenChange,
   direction = 'bottom',
-  snapPoints,
-  activeSnapPoint,
-  setActiveSnapPoint,
+  snapPoints = [],
+  activeSnapPoint = 0,
+  setActiveSnapPoint = () => {},
   dismissible = true,
-  modal = true 
+  modal = true
 }) => {
   const [internalOpen, setInternalOpen] = React.useState(false);
   const [isDragging, setIsDragging] = React.useState(false);
@@ -90,11 +130,15 @@ const useDrawer = () => {
   return context;
 };
 
-const DrawerTrigger = forwardRef(({ 
+const DrawerTrigger = forwardRef(/** @param {{
+  className?: string,
+  children?: React.ReactNode,
+  asChild?: boolean
+} & React.HTMLAttributes<HTMLButtonElement>} props */ ({
   className,
   children,
   asChild = false,
-  ...props 
+  ...props
 }, ref) => {
   const { setOpen } = useDrawer();
 
@@ -125,10 +169,13 @@ const DrawerTrigger = forwardRef(({
 
 DrawerTrigger.displayName = "DrawerTrigger";
 
-const DrawerContent = forwardRef(({ 
+const DrawerContent = forwardRef(/** @param {{
+  className?: string,
+  children?: React.ReactNode
+} & React.HTMLAttributes<HTMLDivElement>} props */ ({
   className,
   children,
-  ...props 
+  ...props
 }, ref) => {
   const { 
     open, 
@@ -277,9 +324,12 @@ const DrawerContent = forwardRef(({
 
 DrawerContent.displayName = "DrawerContent";
 
-const DrawerHeader = forwardRef(({ 
+const DrawerHeader = forwardRef(/** @param {{
+  className?: string,
+  children?: React.ReactNode
+} & React.HTMLAttributes<HTMLDivElement>} props */ ({
   className,
-  ...props 
+  ...props
 }, ref) => (
   <div
     ref={ref}
@@ -290,9 +340,12 @@ const DrawerHeader = forwardRef(({
 
 DrawerHeader.displayName = "DrawerHeader";
 
-const DrawerFooter = forwardRef(({ 
+const DrawerFooter = forwardRef(/** @param {{
+  className?: string,
+  children?: React.ReactNode
+} & React.HTMLAttributes<HTMLDivElement>} props */ ({
   className,
-  ...props 
+  ...props
 }, ref) => (
   <div
     ref={ref}
@@ -303,9 +356,12 @@ const DrawerFooter = forwardRef(({
 
 DrawerFooter.displayName = "DrawerFooter";
 
-const DrawerTitle = forwardRef(({ 
+const DrawerTitle = forwardRef(/** @param {{
+  className?: string,
+  children?: React.ReactNode
+} & React.HTMLAttributes<HTMLHeadingElement>} props */ ({
   className,
-  ...props 
+  ...props
 }, ref) => (
   <h2
     ref={ref}
@@ -316,9 +372,12 @@ const DrawerTitle = forwardRef(({
 
 DrawerTitle.displayName = "DrawerTitle";
 
-const DrawerDescription = forwardRef(({ 
+const DrawerDescription = forwardRef(/** @param {{
+  className?: string,
+  children?: React.ReactNode
+} & React.HTMLAttributes<HTMLParagraphElement>} props */ ({
   className,
-  ...props 
+  ...props
 }, ref) => (
   <p
     ref={ref}
@@ -329,11 +388,15 @@ const DrawerDescription = forwardRef(({
 
 DrawerDescription.displayName = "DrawerDescription";
 
-const DrawerClose = forwardRef(({ 
+const DrawerClose = forwardRef(/** @param {{
+  className?: string,
+  children?: React.ReactNode,
+  asChild?: boolean
+} & React.HTMLAttributes<HTMLButtonElement>} props */ ({
   className,
   children,
   asChild = false,
-  ...props 
+  ...props
 }, ref) => {
   const { close } = useDrawer();
 
@@ -371,7 +434,10 @@ DrawerClose.displayName = "DrawerClose";
 // Predefined drawer variants
 export const DrawerVariants = {
   // Bottom sheet drawer (mobile-friendly)
-  BottomSheet: forwardRef(({ className, children, ...props }, ref) => (
+  BottomSheet: forwardRef(/** @param {{
+    className?: string,
+    children?: React.ReactNode
+  } & React.ComponentProps<typeof Drawer>} props */ ({ className, children, ...props }, ref) => (
     <Drawer direction="bottom" {...props}>
       <DrawerContent ref={ref} className={className}>
         {children}
@@ -380,7 +446,10 @@ export const DrawerVariants = {
   )),
 
   // Navigation drawer
-  Navigation: forwardRef(({ className, children, ...props }, ref) => (
+  Navigation: forwardRef(/** @param {{
+    className?: string,
+    children?: React.ReactNode
+  } & React.ComponentProps<typeof Drawer>} props */ ({ className, children, ...props }, ref) => (
     <Drawer direction="left" {...props}>
       <DrawerContent ref={ref} className={cn("w-80", className)}>
         <DrawerClose />
@@ -390,7 +459,11 @@ export const DrawerVariants = {
   )),
 
   // Settings drawer
-  Settings: forwardRef(({ className, title = "Settings", children, ...props }, ref) => (
+  Settings: forwardRef(/** @param {{
+    className?: string,
+    title?: React.ReactNode,
+    children?: React.ReactNode
+  } & React.ComponentProps<typeof Drawer>} props */ ({ className, title = "Settings", children, ...props }, ref) => (
     <Drawer direction="right" {...props}>
       <DrawerContent ref={ref} className={className}>
         <DrawerHeader>
@@ -431,13 +504,22 @@ export const useDrawerState = (initialOpen = false) => {
 };
 
 // Simple drawer for quick use
-export const SimpleDrawer = ({ 
-  trigger, 
-  title, 
+/**
+ * @param {{
+ *   trigger?: React.ReactNode,
+ *   title?: React.ReactNode,
+ *   description?: React.ReactNode,
+ *   children?: React.ReactNode,
+ *   direction?: 'top'|'bottom'|'left'|'right'
+ * } & React.ComponentProps<typeof Drawer>} props
+ */
+export const SimpleDrawer = ({
+  trigger,
+  title,
   description,
-  children, 
+  children,
   direction = 'bottom',
-  ...props 
+  ...props
 }) => {
   return (
     <Drawer direction={direction} {...props}>

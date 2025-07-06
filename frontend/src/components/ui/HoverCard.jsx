@@ -1,17 +1,41 @@
 import React, { forwardRef } from 'react';
 import { cn } from '../../lib/utils';
 
+/**
+ * @param {{
+ *   children?: React.ReactNode,
+ *   openDelay?: number,
+ *   closeDelay?: number,
+ *   onOpenChange?: (open: boolean) => void
+ * }} props
+ */
 const HoverCard = ({ children, ...props }) => {
   return <HoverCardProvider {...props}>{children}</HoverCardProvider>;
 };
 
-const HoverCardContext = React.createContext();
+const HoverCardContext = React.createContext({
+  open: false,
+  position: { x: 0, y: 0 },
+  setPosition: (position) => {},
+  scheduleOpen: () => {},
+  scheduleClose: () => {},
+  cancelScheduled: () => {},
+  handleOpenChange: (open) => {}
+});
 
-const HoverCardProvider = ({ 
-  children, 
-  openDelay = 700, 
+/**
+ * @param {{
+ *   children?: React.ReactNode,
+ *   openDelay?: number,
+ *   closeDelay?: number,
+ *   onOpenChange?: (open: boolean) => void
+ * }} props
+ */
+const HoverCardProvider = ({
+  children,
+  openDelay = 700,
   closeDelay = 300,
-  onOpenChange 
+  onOpenChange
 }) => {
   const [open, setOpen] = React.useState(false);
   const [position, setPosition] = React.useState({ x: 0, y: 0 });
@@ -89,11 +113,15 @@ const useHoverCard = () => {
   return context;
 };
 
-const HoverCardTrigger = forwardRef(({ 
+const HoverCardTrigger = forwardRef(/** @param {{
+  className?: string,
+  children?: React.ReactNode,
+  asChild?: boolean
+} & React.HTMLAttributes<HTMLDivElement>} props */ ({
   className,
   children,
   asChild = false,
-  ...props 
+  ...props
 }, ref) => {
   const { scheduleOpen, scheduleClose, setPosition } = useHoverCard();
 
@@ -151,13 +179,19 @@ const HoverCardTrigger = forwardRef(({
 
 HoverCardTrigger.displayName = "HoverCardTrigger";
 
-const HoverCardContent = forwardRef(({ 
+const HoverCardContent = forwardRef(/** @param {{
+  className?: string,
+  align?: 'start'|'center'|'end',
+  side?: 'top'|'bottom'|'left'|'right',
+  sideOffset?: number,
+  children?: React.ReactNode
+} & React.HTMLAttributes<HTMLDivElement>} props */ ({
   className,
   align = 'center',
   side = 'bottom',
   sideOffset = 4,
   children,
-  ...props 
+  ...props
 }, ref) => {
   const { open, position, scheduleOpen, scheduleClose, cancelScheduled } = useHoverCard();
   const contentRef = React.useRef(null);
@@ -240,15 +274,23 @@ HoverCardContent.displayName = "HoverCardContent";
 // Predefined hover card variants
 export const HoverCardVariants = {
   // Profile hover card
-  Profile: forwardRef(({ 
-    className, 
-    avatar, 
-    name, 
-    username, 
-    bio, 
+  Profile: forwardRef(/** @param {{
+    className?: string,
+    avatar?: React.ReactNode | string,
+    name?: string,
+    username?: string,
+    bio?: string,
+    stats?: Record<string, string | number>,
+    children?: React.ReactNode
+  } & React.ComponentProps<typeof HoverCardContent>} props */ ({
+    className,
+    avatar,
+    name,
+    username,
+    bio,
     stats,
     children,
-    ...props 
+    ...props
   }, ref) => (
     <HoverCardContent ref={ref} className={cn("w-80", className)} {...props}>
       <div className="flex justify-between space-x-4">
@@ -287,12 +329,17 @@ export const HoverCardVariants = {
   )),
 
   // Info hover card
-  Info: forwardRef(({ 
-    className, 
-    title, 
-    description, 
+  Info: forwardRef(/** @param {{
+    className?: string,
+    title?: React.ReactNode,
+    description?: React.ReactNode,
+    children?: React.ReactNode
+  } & React.ComponentProps<typeof HoverCardContent>} props */ ({
+    className,
+    title,
+    description,
     children,
-    ...props 
+    ...props
   }, ref) => (
     <HoverCardContent ref={ref} className={className} {...props}>
       <div className="space-y-2">
@@ -308,14 +355,21 @@ export const HoverCardVariants = {
   )),
 
   // Rich hover card with image
-  Rich: forwardRef(({ 
-    className, 
-    image, 
-    title, 
-    description, 
+  Rich: forwardRef(/** @param {{
+    className?: string,
+    image?: React.ReactNode | string,
+    title?: React.ReactNode,
+    description?: React.ReactNode,
+    metadata?: Record<string, string | number>,
+    children?: React.ReactNode
+  } & React.ComponentProps<typeof HoverCardContent>} props */ ({
+    className,
+    image,
+    title,
+    description,
     metadata,
     children,
-    ...props 
+    ...props
   }, ref) => (
     <HoverCardContent ref={ref} className={cn("w-96", className)} {...props}>
       <div className="space-y-3">
@@ -418,12 +472,20 @@ export const useHoverCardState = (openDelay = 700, closeDelay = 300) => {
 };
 
 // Simple hover card for quick use
-export const SimpleHoverCard = ({ 
-  trigger, 
-  content, 
+/**
+ * @param {{
+ *   trigger?: React.ReactNode,
+ *   content?: React.ReactNode,
+ *   title?: React.ReactNode,
+ *   description?: React.ReactNode
+ * } & React.ComponentProps<typeof HoverCard>} props
+ */
+export const SimpleHoverCard = ({
+  trigger,
+  content,
   title,
   description,
-  ...props 
+  ...props
 }) => {
   return (
     <HoverCard {...props}>

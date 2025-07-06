@@ -38,7 +38,15 @@ const ResizablePanelGroup = forwardRef(
 
 ResizablePanelGroup.displayName = "ResizablePanelGroup";
 
-const ResizableContext = React.createContext({});
+const ResizableContext = React.createContext({
+  direction: 'horizontal',
+  panels: new Map(),
+  isResizing: false,
+  setIsResizing: (/** @type {boolean} */ value) => {},
+  registerPanel: (/** @type {string} */ id, /** @type {number} */ initialSize) => {},
+  updatePanelSize: (/** @type {string} */ id, /** @type {number} */ size) => {},
+  updatePanelConstraints: (/** @type {string} */ id, /** @type {number} */ minSize, /** @type {number} */ maxSize) => {}
+});
 
 /**
  * @typedef {Object} ResizableProviderProps
@@ -274,13 +282,13 @@ ResizableHandle.displayName = "ResizableHandle";
 // Predefined resizable layouts
 export const ResizableVariants = {
   // Two-panel layout
-  TwoPanel: forwardRef(({ 
+  TwoPanel: forwardRef((/** @type {{direction?: 'horizontal'|'vertical', defaultSizes?: Array<number>, leftPanel?: any, rightPanel?: any, className?: string}} */ {
     direction = 'horizontal',
     defaultSizes = [50, 50],
     leftPanel,
     rightPanel,
     className,
-    ...props 
+    ...props
   }, ref) => (
     <ResizablePanelGroup
       ref={ref}
@@ -299,14 +307,14 @@ export const ResizableVariants = {
   )),
 
   // Three-panel layout
-  ThreePanel: forwardRef(({ 
+  ThreePanel: forwardRef((/** @type {{direction?: 'horizontal'|'vertical', defaultSizes?: Array<number>, leftPanel?: any, centerPanel?: any, rightPanel?: any, className?: string}} */ {
     direction = 'horizontal',
     defaultSizes = [25, 50, 25],
     leftPanel,
     centerPanel,
     rightPanel,
     className,
-    ...props 
+    ...props
   }, ref) => (
     <ResizablePanelGroup
       ref={ref}
@@ -329,7 +337,7 @@ export const ResizableVariants = {
   )),
 
   // Sidebar layout
-  Sidebar: forwardRef(({ 
+  Sidebar: forwardRef((/** @type {{sidebarContent?: any, mainContent?: any, sidebarDefaultSize?: number, sidebarMinSize?: number, sidebarMaxSize?: number, side?: 'left'|'right', className?: string}} */ {
     sidebarContent,
     mainContent,
     sidebarDefaultSize = 20,
@@ -337,7 +345,7 @@ export const ResizableVariants = {
     sidebarMaxSize = 40,
     side = 'left',
     className,
-    ...props 
+    ...props
   }, ref) => (
     <ResizablePanelGroup
       ref={ref}
@@ -436,7 +444,7 @@ export const SimpleResizable = (
   }
 ) => {
   return (
-    <ResizablePanelGroup direction={direction} {...props}>
+    <ResizablePanelGroup direction={/** @type {'horizontal'|'vertical'} */ (direction)} {...props}>
       {panels.map((panel, index) => (
         <React.Fragment key={index}>
           <ResizablePanel

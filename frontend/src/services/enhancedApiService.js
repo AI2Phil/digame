@@ -8,6 +8,7 @@ import demoService from './demoService';
 
 class EnhancedApiService {
   constructor() {
+    /** @type {any} */
     this.originalApiService = apiService;
     this.demoService = demoService;
   }

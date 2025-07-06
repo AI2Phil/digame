@@ -304,7 +304,7 @@ SheetClose.displayName = "SheetClose";
 // Predefined sheet variants
 export const SheetVariants = {
   // Navigation sheet
-  Navigation: forwardRef(({ className, children, ...props }, ref) => (
+  Navigation: forwardRef((/** @type {{className?: string, children?: any}} */ { className, children, ...props }, ref) => (
     <Sheet {...props}>
       <SheetContent ref={ref} side="left" className={cn("w-80", className)}>
         <SheetClose />
@@ -314,7 +314,7 @@ export const SheetVariants = {
   )),
 
   // Settings sheet
-  Settings: forwardRef(({ className, title = "Settings", children, ...props }, ref) => (
+  Settings: forwardRef((/** @type {{className?: string, title?: string, children?: any}} */ { className, title = "Settings", children, ...props }, ref) => (
     <Sheet {...props}>
       <SheetContent ref={ref} side="right" className={className}>
         <SheetHeader>
@@ -329,7 +329,7 @@ export const SheetVariants = {
   )),
 
   // Bottom sheet (mobile-friendly)
-  Bottom: forwardRef(({ className, children, ...props }, ref) => (
+  Bottom: forwardRef((/** @type {{className?: string, children?: any}} */ { className, children, ...props }, ref) => (
     <Sheet {...props}>
       <SheetContent ref={ref} side="bottom" className={cn("rounded-t-lg", className)}>
         <div className="mx-auto w-12 h-1.5 bg-muted rounded-full mb-4" />
@@ -339,7 +339,7 @@ export const SheetVariants = {
   )),
 
   // Full screen sheet
-  FullScreen: forwardRef(({ className, children, ...props }, ref) => (
+  FullScreen: forwardRef((/** @type {{className?: string, children?: any}} */ { className, children, ...props }, ref) => (
     <Sheet {...props}>
       <SheetContent ref={ref} size="full" className={cn("max-w-none", className)}>
         <SheetClose />
@@ -375,13 +375,16 @@ export const useSheetState = (initialOpen = false) => {
 };
 
 // Simple sheet for quick use
-export const SimpleSheet = ({ 
-  trigger, 
-  title, 
+/**
+ * @param {{trigger: any, title?: string, description?: string, children?: any, side?: 'top'|'bottom'|'left'|'right'}} props
+ */
+export const SimpleSheet = ({
+  trigger,
+  title,
   description,
-  children, 
+  children,
   side = 'right',
-  ...props 
+  ...props
 }) => {
   return (
     <Sheet {...props}>

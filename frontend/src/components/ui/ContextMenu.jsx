@@ -2,12 +2,25 @@ import React, { forwardRef } from 'react';
 import { Check, ChevronRight, Circle } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
+/**
+ * @param {{children: any, onOpenChange: function, modal?: boolean}} props
+ */
 const ContextMenu = ({ children, ...props }) => {
   return <ContextMenuProvider {...props}>{children}</ContextMenuProvider>;
 };
 
-const ContextMenuContext = React.createContext();
+const ContextMenuContext = React.createContext({
+  open: false,
+  position: { x: 0, y: 0 },
+  activeSubmenu: null,
+  setActiveSubmenu: (/** @type {any} */ value) => {},
+  handleContextMenu: (/** @type {Event} */ event) => {},
+  handleOpenChange: (/** @type {boolean} */ newOpen) => {}
+});
 
+/**
+ * @param {{children: any, onOpenChange: function, modal?: boolean}} props
+ */
 const ContextMenuProvider = ({ children, onOpenChange, modal = true }) => {
   const [open, setOpen] = React.useState(false);
   const [position, setPosition] = React.useState({ x: 0, y: 0 });
@@ -68,12 +81,12 @@ const useContextMenu = () => {
   return context;
 };
 
-const ContextMenuTrigger = forwardRef(({ 
+const ContextMenuTrigger = forwardRef((/** @type {{className?: string, children: any, asChild?: boolean, disabled?: boolean}} */ {
   className,
   children,
   asChild = false,
   disabled = false,
-  ...props 
+  ...props
 }, ref) => {
   const { handleContextMenu } = useContextMenu();
 
@@ -105,10 +118,10 @@ const ContextMenuTrigger = forwardRef(({
 
 ContextMenuTrigger.displayName = "ContextMenuTrigger";
 
-const ContextMenuContent = forwardRef(({ 
+const ContextMenuContent = forwardRef((/** @type {{className?: string, children: any}} */ {
   className,
   children,
-  ...props 
+  ...props
 }, ref) => {
   const { open, position } = useContextMenu();
   const contentRef = React.useRef(null);
@@ -165,13 +178,13 @@ const ContextMenuContent = forwardRef(({
 
 ContextMenuContent.displayName = "ContextMenuContent";
 
-const ContextMenuItem = forwardRef(({ 
+const ContextMenuItem = forwardRef((/** @type {{className?: string, inset?: boolean, disabled?: boolean, children: any, onSelect?: function}} */ {
   className,
   inset = false,
   disabled = false,
   children,
   onSelect,
-  ...props 
+  ...props
 }, ref) => {
   const { handleOpenChange } = useContextMenu();
 
@@ -204,13 +217,13 @@ const ContextMenuItem = forwardRef(({
 
 ContextMenuItem.displayName = "ContextMenuItem";
 
-const ContextMenuCheckboxItem = forwardRef(({ 
+const ContextMenuCheckboxItem = forwardRef((/** @type {{className?: string, children: any, checked?: boolean, onCheckedChange?: function, disabled?: boolean}} */ {
   className,
   children,
   checked = false,
   onCheckedChange,
   disabled = false,
-  ...props 
+  ...props
 }, ref) => {
   const { handleOpenChange } = useContextMenu();
 
@@ -245,6 +258,9 @@ const ContextMenuCheckboxItem = forwardRef(({
 
 ContextMenuCheckboxItem.displayName = "ContextMenuCheckboxItem";
 
+/**
+ * @param {{children: any, value?: any, onValueChange?: function}} props
+ */
 const ContextMenuRadioGroup = ({ children, value, onValueChange, ...props }) => {
   return (
     <div role="group" {...props}>
@@ -261,14 +277,14 @@ const ContextMenuRadioGroup = ({ children, value, onValueChange, ...props }) => 
   );
 };
 
-const ContextMenuRadioItem = forwardRef(({ 
+const ContextMenuRadioItem = forwardRef((/** @type {{className?: string, children: any, checked?: boolean, onCheckedChange?: function, disabled?: boolean, value?: any}} */ {
   className,
   children,
   checked = false,
   onCheckedChange,
   disabled = false,
   value,
-  ...props 
+  ...props
 }, ref) => {
   const handleClick = () => {
     if (!disabled) {
@@ -300,10 +316,10 @@ const ContextMenuRadioItem = forwardRef(({
 
 ContextMenuRadioItem.displayName = "ContextMenuRadioItem";
 
-const ContextMenuLabel = forwardRef(({ 
+const ContextMenuLabel = forwardRef((/** @type {{className?: string, inset?: boolean, children?: any}} */ {
   className,
   inset = false,
-  ...props 
+  ...props
 }, ref) => (
   <div
     ref={ref}
@@ -318,9 +334,9 @@ const ContextMenuLabel = forwardRef(({
 
 ContextMenuLabel.displayName = "ContextMenuLabel";
 
-const ContextMenuSeparator = forwardRef(({ 
+const ContextMenuSeparator = forwardRef((/** @type {{className?: string}} */ {
   className,
-  ...props 
+  ...props
 }, ref) => (
   <div
     ref={ref}
@@ -331,9 +347,9 @@ const ContextMenuSeparator = forwardRef(({
 
 ContextMenuSeparator.displayName = "ContextMenuSeparator";
 
-const ContextMenuShortcut = forwardRef(({ 
+const ContextMenuShortcut = forwardRef((/** @type {{className?: string, children?: any}} */ {
   className,
-  ...props 
+  ...props
 }, ref) => (
   <span
     ref={ref}
@@ -344,10 +360,16 @@ const ContextMenuShortcut = forwardRef(({
 
 ContextMenuShortcut.displayName = "ContextMenuShortcut";
 
+/**
+ * @param {{children: any, onOpenChange?: function}} props
+ */
 const ContextMenuSub = ({ children, ...props }) => {
   return <ContextMenuSubProvider {...props}>{children}</ContextMenuSubProvider>;
 };
 
+/**
+ * @param {{children: any, onOpenChange?: function}} props
+ */
 const ContextMenuSubProvider = ({ children, onOpenChange }) => {
   const [open, setOpen] = React.useState(false);
   const { activeSubmenu, setActiveSubmenu } = useContextMenu();
@@ -364,13 +386,16 @@ const ContextMenuSubProvider = ({ children, onOpenChange }) => {
   );
 };
 
-const ContextMenuSubContext = React.createContext();
+const ContextMenuSubContext = React.createContext({
+  open: false,
+  handleOpenChange: (/** @type {boolean} */ newOpen) => {}
+});
 
-const ContextMenuSubTrigger = forwardRef(({ 
+const ContextMenuSubTrigger = forwardRef((/** @type {{className?: string, inset?: boolean, children: any}} */ {
   className,
   inset = false,
   children,
-  ...props 
+  ...props
 }, ref) => {
   const { open, handleOpenChange } = React.useContext(ContextMenuSubContext);
 
@@ -405,10 +430,10 @@ const ContextMenuSubTrigger = forwardRef(({
 
 ContextMenuSubTrigger.displayName = "ContextMenuSubTrigger";
 
-const ContextMenuSubContent = forwardRef(({ 
+const ContextMenuSubContent = forwardRef((/** @type {{className?: string, children: any}} */ {
   className,
   children,
-  ...props 
+  ...props
 }, ref) => {
   const { open } = React.useContext(ContextMenuSubContext);
 
@@ -454,13 +479,16 @@ export const useContextMenuState = () => {
 };
 
 // Simple context menu for quick use
-export const SimpleContextMenu = ({ 
-  trigger, 
-  items = [], 
-  ...props 
+/**
+ * @param {{trigger: any, items?: Array, onOpenChange?: function}} props
+ */
+export const SimpleContextMenu = ({
+  trigger,
+  items = [],
+  ...props
 }) => {
   return (
-    <ContextMenu {...props}>
+    <ContextMenu onOpenChange={(/** @type {boolean} */ open) => {}} {...props}>
       <ContextMenuTrigger asChild>
         {trigger}
       </ContextMenuTrigger>
@@ -471,7 +499,7 @@ export const SimpleContextMenu = ({
           }
           
           if (item.type === 'label') {
-            return <ContextMenuLabel key={index}>{item.label}</ContextMenuLabel>;
+            return <ContextMenuLabel key={index} children={item.label} />;
           }
 
           return (
@@ -479,13 +507,14 @@ export const SimpleContextMenu = ({
               key={index}
               onSelect={item.onSelect}
               disabled={item.disabled}
-            >
-              {item.icon && <span className="mr-2">{item.icon}</span>}
-              {item.label}
-              {item.shortcut && (
-                <ContextMenuShortcut>{item.shortcut}</ContextMenuShortcut>
-              )}
-            </ContextMenuItem>
+              children={[
+                item.icon && <span key="icon" className="mr-2">{item.icon}</span>,
+                item.label,
+                item.shortcut && (
+                  <ContextMenuShortcut key="shortcut" children={item.shortcut} />
+                )
+              ].filter(Boolean)}
+            />
           );
         })}
       </ContextMenuContent>

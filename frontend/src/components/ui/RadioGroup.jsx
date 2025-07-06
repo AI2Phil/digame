@@ -1,14 +1,14 @@
 import React, { forwardRef } from 'react';
 import { cn } from '../../lib/utils';
 
-const RadioGroup = forwardRef(({ 
+const RadioGroup = forwardRef((/** @type {{className?: string, value?: any, onValueChange?: function, disabled?: boolean, orientation?: 'horizontal'|'vertical', children?: any}} */ {
   className,
   value,
   onValueChange,
   disabled = false,
   orientation = 'vertical',
   children,
-  ...props 
+  ...props
 }, ref) => {
   return (
     <RadioGroupProvider value={{ value, onValueChange, disabled }}>
@@ -30,8 +30,15 @@ const RadioGroup = forwardRef(({
 
 RadioGroup.displayName = "RadioGroup";
 
-const RadioGroupContext = React.createContext();
+const RadioGroupContext = React.createContext({
+  value: undefined,
+  onValueChange: (/** @type {any} */ value) => {},
+  disabled: false
+});
 
+/**
+ * @param {{children: any, value: any}} props
+ */
 const RadioGroupProvider = ({ children, value }) => (
   <RadioGroupContext.Provider value={value}>
     {children}
@@ -46,12 +53,12 @@ const useRadioGroup = () => {
   return context;
 };
 
-const RadioGroupItem = forwardRef(({ 
+const RadioGroupItem = forwardRef((/** @type {{className?: string, value?: any, disabled?: boolean, size?: 'sm'|'default'|'lg'}} */ {
   className,
   value,
   disabled: itemDisabled = false,
   size = 'default',
-  ...props 
+  ...props
 }, ref) => {
   const { value: groupValue, onValueChange, disabled: groupDisabled } = useRadioGroup();
   const disabled = groupDisabled || itemDisabled;
@@ -112,7 +119,7 @@ const RadioGroupItem = forwardRef(({
 RadioGroupItem.displayName = "RadioGroupItem";
 
 // Radio with label component
-export const Radio = forwardRef(({ 
+export const Radio = forwardRef((/** @type {{className?: string, label?: string, description?: string, error?: string, value?: any, disabled?: boolean, size?: 'sm'|'default'|'lg'}} */ {
   className,
   label,
   description,
@@ -120,7 +127,7 @@ export const Radio = forwardRef(({
   value,
   disabled = false,
   size = 'default',
-  ...props 
+  ...props
 }, ref) => {
   const RadioComponent = (
     <RadioGroupItem
@@ -186,14 +193,14 @@ export const Radio = forwardRef(({
 Radio.displayName = "Radio";
 
 // Enhanced RadioGroup with label and error handling
-export const LabeledRadioGroup = forwardRef(({ 
+export const LabeledRadioGroup = forwardRef((/** @type {{className?: string, label?: string, description?: string, error?: string, required?: boolean, children?: any, disabled?: boolean}} */ {
   className,
   label,
   description,
   error,
   required = false,
   children,
-  ...props 
+  ...props
 }, ref) => {
   return (
     <div className={cn("space-y-3", className)}>
@@ -240,7 +247,7 @@ LabeledRadioGroup.displayName = "LabeledRadioGroup";
 // Predefined radio group variants
 export const RadioGroupVariants = {
   // Card-style radio group
-  Cards: forwardRef(({ className, children, ...props }, ref) => (
+  Cards: forwardRef((/** @type {{className?: string, children?: any}} */ { className, children, ...props }, ref) => (
     <RadioGroup
       ref={ref}
       className={cn("space-y-2", className)}
@@ -265,7 +272,7 @@ export const RadioGroupVariants = {
   )),
 
   // Inline horizontal radio group
-  Inline: forwardRef(({ className, ...props }, ref) => (
+  Inline: forwardRef((/** @type {{className?: string}} */ { className, ...props }, ref) => (
     <RadioGroup
       ref={ref}
       orientation="horizontal"
@@ -275,7 +282,7 @@ export const RadioGroupVariants = {
   )),
 
   // Button-style radio group
-  Buttons: forwardRef(({ className, children, options = [], ...props }, ref) => {
+  Buttons: forwardRef((/** @type {{className?: string, children?: any, options?: Array}} */ { className, children, options = [], ...props }, ref) => {
     const { value, onValueChange, disabled } = useRadioGroup() || {};
     
     return (

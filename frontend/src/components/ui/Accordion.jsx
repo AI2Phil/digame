@@ -2,12 +2,17 @@ import React, { forwardRef } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
-const Accordion = forwardRef(({ 
+const Accordion = forwardRef(/** @param {{
+  className?: string,
+  type?: 'single'|'multiple',
+  collapsible?: boolean,
+  children?: React.ReactNode
+} & React.HTMLAttributes<HTMLDivElement>} props */ ({
   className,
   type = 'single',
   collapsible = false,
   children,
-  ...props 
+  ...props
 }, ref) => {
   return (
     <AccordionProvider type={type} collapsible={collapsible}>
@@ -24,8 +29,19 @@ const Accordion = forwardRef(({
 
 Accordion.displayName = "Accordion";
 
-const AccordionContext = React.createContext();
+const AccordionContext = React.createContext({
+  toggleItem: (value) => {},
+  isOpen: (value) => Boolean(false),
+  type: 'single'
+});
 
+/**
+ * @param {{
+ *   children?: React.ReactNode,
+ *   type?: 'single'|'multiple',
+ *   collapsible?: boolean
+ * }} props
+ */
 const AccordionProvider = ({ children, type, collapsible }) => {
   const [openItems, setOpenItems] = React.useState(new Set());
 
@@ -75,12 +91,17 @@ const useAccordion = () => {
   return context;
 };
 
-const AccordionItem = forwardRef(({ 
+const AccordionItem = forwardRef(/** @param {{
+  className?: string,
+  value?: string,
+  disabled?: boolean,
+  children?: React.ReactNode
+} & React.HTMLAttributes<HTMLDivElement>} props */ ({
   className,
   value,
   disabled = false,
   children,
-  ...props 
+  ...props
 }, ref) => {
   const { isOpen } = useAccordion();
   const open = isOpen(value);
@@ -103,10 +124,13 @@ const AccordionItem = forwardRef(({
 
 AccordionItem.displayName = "AccordionItem";
 
-const AccordionTrigger = forwardRef(({ 
+const AccordionTrigger = forwardRef(/** @param {{
+  className?: string,
+  children?: React.ReactNode
+} & React.HTMLAttributes<HTMLButtonElement>} props */ ({
   className,
   children,
-  ...props 
+  ...props
 }, ref) => {
   const { toggleItem, isOpen } = useAccordion();
   const accordionItem = React.useContext(AccordionItemContext);
@@ -157,10 +181,13 @@ const AccordionTrigger = forwardRef(({
 
 AccordionTrigger.displayName = "AccordionTrigger";
 
-const AccordionContent = forwardRef(({ 
+const AccordionContent = forwardRef(/** @param {{
+  className?: string,
+  children?: React.ReactNode
+} & React.HTMLAttributes<HTMLDivElement>} props */ ({
   className,
   children,
-  ...props 
+  ...props
 }, ref) => {
   const { isOpen } = useAccordion();
   const accordionItem = React.useContext(AccordionItemContext);
@@ -187,14 +214,22 @@ const AccordionContent = forwardRef(({
 AccordionContent.displayName = "AccordionContent";
 
 // Context for accordion item
-const AccordionItemContext = React.createContext();
+const AccordionItemContext = React.createContext({
+  value: '',
+  disabled: false
+});
 
 // Enhanced AccordionItem with context
-const EnhancedAccordionItem = forwardRef(({ 
+const EnhancedAccordionItem = forwardRef(/** @param {{
+  value?: string,
+  disabled?: boolean,
+  children?: React.ReactNode,
+  className?: string
+} & React.HTMLAttributes<HTMLDivElement>} props */ ({
   value,
   disabled = false,
   children,
-  ...props 
+  ...props
 }, ref) => {
   return (
     <AccordionItemContext.Provider value={{ value, disabled }}>
@@ -210,7 +245,10 @@ EnhancedAccordionItem.displayName = "AccordionItem";
 // Predefined accordion variants
 export const AccordionVariants = {
   // Card-style accordion
-  Cards: forwardRef(({ className, children, ...props }, ref) => (
+  Cards: forwardRef(/** @param {{
+    className?: string,
+    children?: React.ReactNode
+  } & React.ComponentProps<typeof Accordion>} props */ ({ className, children, ...props }, ref) => (
     <Accordion ref={ref} className={cn("space-y-4", className)} {...props}>
       {React.Children.map(children, (child) => {
         if (React.isValidElement(child)) {
@@ -227,7 +265,10 @@ export const AccordionVariants = {
   )),
 
   // Minimal accordion without borders
-  Minimal: forwardRef(({ className, children, ...props }, ref) => (
+  Minimal: forwardRef(/** @param {{
+    className?: string,
+    children?: React.ReactNode
+  } & React.ComponentProps<typeof Accordion>} props */ ({ className, children, ...props }, ref) => (
     <Accordion ref={ref} className={cn("space-y-1", className)} {...props}>
       {React.Children.map(children, (child) => {
         if (React.isValidElement(child)) {
@@ -241,7 +282,9 @@ export const AccordionVariants = {
   )),
 
   // Flush accordion (no spacing)
-  Flush: forwardRef(({ className, ...props }, ref) => (
+  Flush: forwardRef(/** @param {{
+    className?: string
+  } & React.ComponentProps<typeof Accordion>} props */ ({ className, ...props }, ref) => (
     <Accordion
       ref={ref}
       className={cn("space-y-0 border rounded-lg overflow-hidden", className)}
@@ -332,6 +375,11 @@ export const createAccordionItems = (items) => {
 };
 
 // Simple accordion component for quick use
+/**
+ * @param {{
+ *   items?: Array<{value?: string, title?: React.ReactNode, content?: React.ReactNode, disabled?: boolean}>
+ * } & React.ComponentProps<typeof Accordion>} props
+ */
 export const SimpleAccordion = ({ items = [], ...props }) => {
   return (
     <Accordion {...props}>

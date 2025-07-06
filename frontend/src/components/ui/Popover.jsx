@@ -5,22 +5,33 @@ import { cn } from '../../lib/utils';
 /**
  * @typedef {Object} PopoverProps
  * @property {React.ReactNode} children - Child elements
+ * @property {boolean} [open] - Controlled open state
+ * @property {Function} onOpenChange - Open state change callback
+ * @property {boolean} [modal] - Whether popover is modal
+ * @property {boolean} [defaultOpen] - Default open state
  */
 
 const Popover = (
   /** @param {PopoverProps} props */
   { children, ...props }
 ) => {
-  return <PopoverProvider {...props}>{children}</PopoverProvider>;
+  return <PopoverProvider onOpenChange={() => {}} {...props}>{children}</PopoverProvider>;
 };
 
-const PopoverContext = React.createContext({});
+const PopoverContext = React.createContext({
+  open: false,
+  setOpen: (/** @type {boolean} */ newOpen) => {},
+  close: () => {},
+  position: { x: 0, y: 0 },
+  setPosition: (/** @type {{x: number, y: number}} */ pos) => {},
+  modal: false
+});
 
 /**
  * @typedef {Object} PopoverProviderProps
  * @property {React.ReactNode} children - Child elements
  * @property {boolean} [open] - Controlled open state
- * @property {Function} [onOpenChange] - Open state change callback
+ * @property {Function} onOpenChange - Open state change callback
  * @property {boolean} [modal] - Whether popover is modal
  * @property {boolean} [defaultOpen] - Default open state
  */
@@ -29,7 +40,7 @@ const PopoverProvider = (
   /** @param {PopoverProviderProps} props */
   {
     children,
-    open,
+    open = undefined,
     onOpenChange,
     modal = false,
     defaultOpen = false
@@ -309,6 +320,7 @@ PopoverClose.displayName = "PopoverClose";
 /**
  * @typedef {Object} PopoverHeaderProps
  * @property {string} [className] - Additional CSS classes
+ * @property {React.ReactNode} [children] - Child elements
  */
 
 const PopoverHeader = forwardRef(
@@ -329,6 +341,7 @@ PopoverHeader.displayName = "PopoverHeader";
 /**
  * @typedef {Object} PopoverTitleProps
  * @property {string} [className] - Additional CSS classes
+ * @property {React.ReactNode} [children] - Child elements
  */
 
 const PopoverTitle = forwardRef(
@@ -349,6 +362,7 @@ PopoverTitle.displayName = "PopoverTitle";
 /**
  * @typedef {Object} PopoverDescriptionProps
  * @property {string} [className] - Additional CSS classes
+ * @property {React.ReactNode} [children] - Child elements
  */
 
 const PopoverDescription = forwardRef(
@@ -369,6 +383,7 @@ PopoverDescription.displayName = "PopoverDescription";
 /**
  * @typedef {Object} PopoverFooterProps
  * @property {string} [className] - Additional CSS classes
+ * @property {React.ReactNode} [children] - Child elements
  */
 
 const PopoverFooter = forwardRef(
@@ -389,16 +404,16 @@ PopoverFooter.displayName = "PopoverFooter";
 // Predefined popover variants
 export const PopoverVariants = {
   // Confirmation popover
-  Confirmation: forwardRef(({ 
-    className, 
-    title = "Are you sure?", 
+  Confirmation: forwardRef((/** @type {{className?: string, title?: string, description?: string, onConfirm?: () => void, onCancel?: () => void, confirmText?: string, cancelText?: string, children?: any}} */ {
+    className,
+    title = "Are you sure?",
     description,
     onConfirm,
     onCancel,
     confirmText = "Confirm",
     cancelText = "Cancel",
     children,
-    ...props 
+    ...props
   }, ref) => (
     <PopoverContent ref={ref} className={className} {...props}>
       <PopoverHeader>
@@ -410,14 +425,14 @@ export const PopoverVariants = {
         <PopoverClose asChild>
           <button
             className="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground"
-            onClick={onCancel}
+            onClick={() => onCancel?.()}
           >
             {cancelText}
           </button>
         </PopoverClose>
         <button
           className="px-4 py-2 text-sm font-medium bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
-          onClick={onConfirm}
+          onClick={() => onConfirm?.()}
         >
           {confirmText}
         </button>
@@ -426,12 +441,12 @@ export const PopoverVariants = {
   )),
 
   // Form popover
-  Form: forwardRef(({ 
-    className, 
-    title, 
+  Form: forwardRef((/** @type {{className?: string, title?: string, description?: string, children?: any}} */ {
+    className,
+    title,
     description,
     children,
-    ...props 
+    ...props
   }, ref) => (
     <PopoverContent ref={ref} className={cn("w-80", className)} {...props}>
       <PopoverHeader>
@@ -446,11 +461,11 @@ export const PopoverVariants = {
   )),
 
   // Menu popover
-  Menu: forwardRef(({ 
-    className, 
+  Menu: forwardRef((/** @type {{className?: string, items?: Array, children?: any}} */ {
+    className,
     items = [],
     children,
-    ...props 
+    ...props
   }, ref) => (
     <PopoverContent ref={ref} className={cn("w-56 p-1", className)} {...props}>
       {items.map((item, index) => (
@@ -469,12 +484,12 @@ export const PopoverVariants = {
   )),
 
   // Info popover
-  Info: forwardRef(({ 
-    className, 
-    title, 
+  Info: forwardRef((/** @type {{className?: string, title?: string, description?: string, children?: any}} */ {
+    className,
+    title,
     description,
     children,
-    ...props 
+    ...props
   }, ref) => (
     <PopoverContent ref={ref} className={cn("w-64", className)} {...props}>
       <div className="space-y-2">
@@ -571,7 +586,7 @@ export const SimplePopover = (
   }
 ) => {
   return (
-    <Popover {...props}>
+    <Popover onOpenChange={() => {}} {...props}>
       <PopoverTrigger asChild>
         {trigger}
       </PopoverTrigger>

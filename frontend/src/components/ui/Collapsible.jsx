@@ -2,13 +2,19 @@ import React, { forwardRef } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
-const Collapsible = forwardRef(({ 
+const Collapsible = forwardRef(/** @param {{
+  className?: string,
+  open?: boolean,
+  onOpenChange?: (open: boolean) => void,
+  disabled?: boolean,
+  children?: React.ReactNode
+} & React.HTMLAttributes<HTMLDivElement>} props */ ({
   className,
   open = false,
   onOpenChange,
   disabled = false,
   children,
-  ...props 
+  ...props
 }, ref) => {
   return (
     <CollapsibleProvider open={open} onOpenChange={onOpenChange} disabled={disabled}>
@@ -26,8 +32,21 @@ const Collapsible = forwardRef(({
 
 Collapsible.displayName = "Collapsible";
 
-const CollapsibleContext = React.createContext();
+const CollapsibleContext = React.createContext({
+  open: false,
+  disabled: false,
+  toggle: () => {},
+  setOpen: (open) => {}
+});
 
+/**
+ * @param {{
+ *   children?: React.ReactNode,
+ *   open?: boolean,
+ *   onOpenChange?: (open: boolean) => void,
+ *   disabled?: boolean
+ * }} props
+ */
 const CollapsibleProvider = ({ children, open, onOpenChange, disabled }) => {
   const [internalOpen, setInternalOpen] = React.useState(open);
   const isControlled = open !== undefined;
@@ -72,11 +91,15 @@ const useCollapsible = () => {
   return context;
 };
 
-const CollapsibleTrigger = forwardRef(({ 
+const CollapsibleTrigger = forwardRef(/** @param {{
+  className?: string,
+  children?: React.ReactNode,
+  asChild?: boolean
+} & React.HTMLAttributes<HTMLButtonElement>} props */ ({
   className,
   children,
   asChild = false,
-  ...props 
+  ...props
 }, ref) => {
   const { open, disabled, toggle } = useCollapsible();
 
@@ -131,10 +154,13 @@ const CollapsibleTrigger = forwardRef(({
 
 CollapsibleTrigger.displayName = "CollapsibleTrigger";
 
-const CollapsibleContent = forwardRef(({ 
+const CollapsibleContent = forwardRef(/** @param {{
+  className?: string,
+  children?: React.ReactNode
+} & React.HTMLAttributes<HTMLDivElement>} props */ ({
   className,
   children,
-  ...props 
+  ...props
 }, ref) => {
   const { open } = useCollapsible();
   const contentRef = React.useRef(null);
@@ -179,7 +205,11 @@ CollapsibleContent.displayName = "CollapsibleContent";
 // Predefined collapsible variants
 export const CollapsibleVariants = {
   // Card-style collapsible
-  Card: forwardRef(({ className, title, children, ...props }, ref) => (
+  Card: forwardRef(/** @param {{
+    className?: string,
+    title?: React.ReactNode,
+    children?: React.ReactNode
+  } & React.ComponentProps<typeof Collapsible>} props */ ({ className, title, children, ...props }, ref) => (
     <Collapsible ref={ref} {...props}>
       <div className={cn("rounded-lg border bg-card text-card-foreground shadow-sm", className)}>
         <CollapsibleTrigger className="px-4 py-3 hover:bg-accent hover:text-accent-foreground">
@@ -193,7 +223,11 @@ export const CollapsibleVariants = {
   )),
 
   // Simple collapsible without styling
-  Simple: forwardRef(({ className, title, children, ...props }, ref) => (
+  Simple: forwardRef(/** @param {{
+    className?: string,
+    title?: React.ReactNode,
+    children?: React.ReactNode
+  } & React.ComponentProps<typeof Collapsible>} props */ ({ className, title, children, ...props }, ref) => (
     <Collapsible ref={ref} className={className} {...props}>
       <CollapsibleTrigger className="text-left">
         {title}
@@ -205,7 +239,11 @@ export const CollapsibleVariants = {
   )),
 
   // FAQ-style collapsible
-  FAQ: forwardRef(({ className, question, answer, ...props }, ref) => (
+  FAQ: forwardRef(/** @param {{
+    className?: string,
+    question?: React.ReactNode,
+    answer?: React.ReactNode
+  } & React.ComponentProps<typeof Collapsible>} props */ ({ className, question, answer, ...props }, ref) => (
     <Collapsible ref={ref} {...props}>
       <div className={cn("border-b border-border", className)}>
         <CollapsibleTrigger className="py-4 text-left">
@@ -244,7 +282,7 @@ export const useCollapsibleState = (initialOpen = false) => {
     setOpen,
     toggle,
     close,
-    open: openCollapsible,
+    openCollapsible,
     reset
   };
 };
@@ -310,11 +348,18 @@ export const useCollapsibleGroup = (initialStates = {}) => {
 };
 
 // Simple collapsible for quick use
-export const SimpleCollapsible = ({ 
-  title, 
-  children, 
+/**
+ * @param {{
+ *   title?: React.ReactNode,
+ *   children?: React.ReactNode,
+ *   defaultOpen?: boolean
+ * } & React.ComponentProps<typeof Collapsible>} props
+ */
+export const SimpleCollapsible = ({
+  title,
+  children,
   defaultOpen = false,
-  ...props 
+  ...props
 }) => {
   return (
     <Collapsible open={defaultOpen} {...props}>
