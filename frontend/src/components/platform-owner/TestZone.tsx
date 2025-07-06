@@ -1033,6 +1033,35 @@ const TestZone: React.FC = () => {
   const refreshTestData = async () => {
     setLoading(true);
     try {
+      // Reset test metrics and results first
+      setTestResults([]);
+      setTestMetrics({
+        testsPassed: 0,
+        testsFailed: 0,
+        coverage: 0,
+        lastRun: null
+      });
+
+      // Call backend to reset metrics
+      const token = sessionStorage.getItem('accessToken') ||
+                   sessionStorage.getItem('token') ||
+                   localStorage.getItem('accessToken') ||
+                   localStorage.getItem('token');
+      
+      if (token) {
+        try {
+          await fetch('http://localhost:8001/platform-owner/test-zone/reset-metrics', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
+        } catch (resetError) {
+          console.warn('Failed to reset backend metrics:', resetError);
+        }
+      }
+
       // Refresh available tests and sample data based on active tab
       if (activeTab === 'intelligence') {
         await Promise.all([fetchAvailableTests(), fetchSampleData()]);
@@ -1049,6 +1078,9 @@ const TestZone: React.FC = () => {
       } else if (activeTab === 'kubernetes') {
         await Promise.all([fetchKubernetesTests(), fetchKubernetesSampleData()]);
       }
+
+      // Fetch fresh metrics after reset
+      await fetchTestMetrics();
     } catch (error) {
       console.error('Failed to refresh test data:', error);
     } finally {
