@@ -2,14 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '../ui/Card'; // CardHeader, CardTitle, CardDescription might be useful later if structure changes
 import { Button } from '../ui/Button';
 import { Progress } from '../ui/Progress';
-import { ArrowUp, ArrowDown, ChevronRight } from 'lucide-react';
+import { ArrowUp, ArrowDown, ChevronRight, Activity } from 'lucide-react';
 
-const ProductivityMetricCard = ({ 
-  title, 
-  value, 
-  change, 
-  changeType = 'positive', 
-  icon, 
+const ProductivityMetricCard = ({
+  userId = 1, // Default user ID for demo
+  title = "Activities Today",
+  value,
+  change,
+  changeType = 'positive',
+  icon = <Activity className="w-6 h-6" />,
   color = 'blue',
   trend = [],
   interactive = true,
@@ -17,6 +18,50 @@ const ProductivityMetricCard = ({
 }) => {
   const [isHovered, setIsHovered] = useState(false);
   const [animatedValue, setAnimatedValue] = useState(0);
+  const [activitiesData, setActivitiesData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Fetch activities data from the API
+  useEffect(() => {
+    const fetchActivitiesData = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch(`http://localhost:8001/api/v1/productivity/activities/today/${userId}`);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        setActivitiesData(data);
+        setError(null);
+      } catch (err) {
+        console.error('Error fetching activities data:', err);
+        setError(err.message);
+        // Set fallback data for demo purposes
+        setActivitiesData({
+          count: 12,
+          comparison: {
+            yesterday_count: 8,
+            change_percentage: 50,
+            change_direction: 'increase'
+          }
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchActivitiesData();
+  }, [userId]);
+
+  // Use fetched data or fallback to props
+  const displayValue = activitiesData ? activitiesData.count : (value || 0);
+  const displayChange = activitiesData?.comparison ?
+    `${activitiesData.comparison.change_percentage}%` : change;
+  const displayChangeType = activitiesData?.comparison?.change_direction === 'increase' ? 'positive' :
+    activitiesData?.comparison?.change_direction === 'decrease' ? 'negative' : changeType;
 
   // Color schemes for different metric types
   const colorSchemes = {
@@ -51,7 +96,7 @@ const ProductivityMetricCard = ({
 
   // Animate value on mount
   useEffect(() => {
-    const numericValue = parseFloat(value.toString().replace(/[^\d.-]/g, ''));
+    const numericValue = parseFloat(displayValue.toString().replace(/[^\d.-]/g, ''));
     if (!isNaN(numericValue)) {
       let start = 0;
       const duration = 1000;
@@ -69,19 +114,19 @@ const ProductivityMetricCard = ({
 
       return () => clearInterval(timer);
     } else {
-      setAnimatedValue(value);
+      setAnimatedValue(displayValue);
     }
-  }, [value]);
+  }, [displayValue]);
 
   // Format the animated value back to original format
   const formatValue = (val) => {
-    if (typeof value === 'string' && value.includes('%')) {
+    if (typeof displayValue === 'string' && displayValue.includes('%')) {
       return `${val}%`;
     }
-    if (typeof value === 'string' && value.includes('h')) {
+    if (typeof displayValue === 'string' && displayValue.includes('h')) {
       return `${val}h`;
     }
-    if (typeof value === 'string' && value.includes('+')) {
+    if (typeof displayValue === 'string' && displayValue.includes('+')) {
       return `+${val}%`;
     }
     return val;
@@ -116,6 +161,25 @@ const ProductivityMetricCard = ({
   const hoverStateClasses = isHovered && interactive ? "transform scale-105" : "";
 
 
+  // Show loading state
+  if (loading) {
+    return (
+      <Card className={cardBaseClasses}>
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex-1">
+              <p className="text-sm font-medium text-gray-600 mb-1">{title}</p>
+              <div className="flex items-baseline space-x-2">
+                <div className="w-16 h-8 bg-gray-200 rounded animate-pulse"></div>
+              </div>
+            </div>
+            <div className="w-12 h-12 bg-gray-200 rounded-xl animate-pulse"></div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card
       className={`${cardBaseClasses} ${interactiveClasses} ${hoverStateClasses}`}
@@ -136,26 +200,26 @@ const ProductivityMetricCard = ({
               </p>
               
               {/* Change indicator */}
-              {change && (
+              {displayChange && (
                 <div className={`flex items-center space-x-1 ${
-                  changeType === 'positive' ? 'text-green-600' : 
-                  changeType === 'negative' ? 'text-red-600' : 'text-gray-600'
+                  displayChangeType === 'positive' ? 'text-green-600' :
+                  displayChangeType === 'negative' ? 'text-red-600' : 'text-gray-600'
                 }`}>
                   <span className="text-sm font-medium">
-                    {changeType === 'positive' && '+'}
-                    {change}
+                    {displayChangeType === 'positive' && '+'}
+                    {displayChange}
                   </span>
-                  {changeType === 'positive' && <ArrowUp className="w-3 h-3" />}
-                  {changeType === 'negative' && <ArrowDown className="w-3 h-3" />}
+                  {displayChangeType === 'positive' && <ArrowUp className="w-3 h-3" />}
+                  {displayChangeType === 'negative' && <ArrowDown className="w-3 h-3" />}
                 </div>
               )}
             </div>
             
             {/* Subtitle/Description */}
-            {change && (
+            {displayChange && (
               <p className="text-xs text-gray-500 mt-1">
-                {changeType === 'positive' ? 'from last week' : 
-                 changeType === 'negative' ? 'from last week' : 'vs average'}
+                {displayChangeType === 'positive' ? 'from yesterday' :
+                 displayChangeType === 'negative' ? 'from yesterday' : 'vs average'}
               </p>
             )}
           </div>

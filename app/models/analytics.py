@@ -417,7 +417,7 @@ class PerformanceMetric(Base):  # type: ignore
     """
     Performance metrics and KPIs for analytics tracking
     """
-    __tablename__ = "performance_metrics"
+    __tablename__ = "analytics_performance_metrics"
 
     id = Column(Integer, primary_key=True, index=True)
     metric_uuid = Column(String(36), unique=True, index=True, default=lambda: str(uuid.uuid4()))

@@ -48,6 +48,8 @@ from .routers import language_learning_router # Import the new language learning
 from .routers import task_prioritization_router # Import the new task prioritization router
 from .routers import user_profile_router # Import the new user profile router
 from .routers import dashboard_router # Import the dashboard router
+from .routers import productivity_router # Import the productivity router
+from .routers import performance_monitoring_router # Import the performance monitoring router
 from .routers import team_router # Import the new team router
 from .routers import advanced_analytics_router # Import the new advanced analytics router
 from .routers import document_processing_router # Import the new document processing router
@@ -301,6 +303,8 @@ app.include_router(aco_router.router, tags=["ACO Integration"])
 
 # Include dashboard and onboarding routers
 app.include_router(dashboard_router.router, tags=["Dashboard"])
+app.include_router(productivity_router.router, tags=["Productivity"])
+app.include_router(performance_monitoring_router.router, tags=["Performance Monitoring"])
 app.include_router(onboarding_router.router, tags=["Onboarding"])
 app.include_router(enhanced_onboarding_router.router, prefix="/api/v1", tags=["Enhanced Onboarding"])
 

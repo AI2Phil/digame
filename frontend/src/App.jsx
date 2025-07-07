@@ -15,6 +15,7 @@ import OnboardingPage from './pages/OnboardingPage';
 import AdvancedWebAnalyticsDashboard from './pages/AdvancedWebAnalyticsDashboard';
 import AdvancedMobileAnalyticsDashboard from './pages/AdvancedMobileAnalyticsDashboard';
 import AnalyticsDashboardPage from './pages/AnalyticsDashboardPage';
+import PlatformAnalyticsDashboard from './components/analytics/PlatformAnalyticsDashboard';
 import EnhancedSocialCollaborationDashboard from './pages/EnhancedSocialCollaborationDashboard';
 import AiToolsPage from './pages/AiToolsPage';
 import TaskManagementPage from './pages/TaskManagementPage';
@@ -480,6 +481,17 @@ function App() {
           />
           
           {/* Analytics Routes */}
+          <Route
+            path="/analytics/platform"
+            element={
+              isAuthenticated || isDemoMode ? (
+                <PlatformAnalyticsDashboard />
+              ) : (
+                <Navigate to="/" replace />
+              )
+            }
+          />
+          
           <Route
             path="/analytics/behavioral"
             element={
