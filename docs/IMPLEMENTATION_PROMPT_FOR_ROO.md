@@ -2,6 +2,9 @@
 
 update /docs/AUDIT.md for stage of completion while preserving the structure and contents
 
+1. can each page that is loaded have a message if Fallback Data is loading instead of actual API calls. 
+2. can the API endpoint paths in the frontend be dynamic to match all potential port options (set up in dynamic porting)
+
 ## Task Overview
 
 You are tasked with systematically replacing mock data across the Digame platform with database-driven content to achieve production readiness. This is a critical blocker for go-live deployment.
@@ -14,14 +17,16 @@ You are tasked with systematically replacing mock data across the Digame platfor
 - **Critical Priority**: PRODUCTION BLOCKER - Required for go-live
 - **Remember**:-  Correction - we need to always create a Next.js page for our component since this is a Next.js application, not a React Router application, and so the navigation component needs to use the Next.js router (useRouter from next/router).
 **Priority:** confirm the comprehensive menu includes page to this URL as a menu item NextJSComprehensiveNavigation.tsx
-**Priority:** Enhanced Sample Data from the database, not hardcoded for Historical Graphs and Predictive Features
-Now let me enhance the API endpoints with much more comprehensive sample data for better historical graphs and predictive features. I'll update the analytics router with richer datasets:
- enhance the revenue predictions endpoint to use actual database data with richer historical and predictive datasets.
-Modify the endpoint to fetch actual historical revenue data from the database
-Use that historical data to generate more realistic predictions
-Create richer sample data that includes historical trends and seasonal variations
-Implement proper database queries through the ACO service
-replace it with a database-driven version that uses historical data:
+**Priority:** Enhance Sample Data for Historical Graphs and Predictive Features Using a Fully Database-Driven Approach
+
+I will enhance the API endpoints by eliminating all hardcoded sample data and instead using comprehensive datasets that are properly seeded into the SQLAlchemy 2.0 database. This will ensure that historical graphs and predictive features are powered by actual database-driven data, not static mock data. Specifically:
+
+Update the revenue predictions endpoint to retrieve historical revenue data directly from the SQLAlchemy 2.0 database.
+Seed realistic historical data into the database to support meaningful and accurate predictions.
+Incorporate historical trends, seasonality, and other business-relevant patterns into the seeded data.
+Implement robust database queries through the ACO service to dynamically fetch the required data for analytics endpoints.
+Fully replace the current hardcoded implementation with a production-ready, database-driven solution for both historical visualization and predictive modeling.
+This approach ensures that all analytics features operate on consistent, queryable, and maintainable data rather than temporary in-memory mock samples.
 
 ## Current Implementation Progress
 

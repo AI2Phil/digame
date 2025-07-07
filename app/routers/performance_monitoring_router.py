@@ -433,8 +433,8 @@ async def update_optimization_recommendation(
 @router.post("/reports", response_model=PerformanceReportResponse)
 async def generate_performance_report(
     report_request: PerformanceReportRequest,
-    tenant_id: int = Query(..., description="Tenant ID"),
-    background_tasks: BackgroundTasks = Depends()
+    background_tasks: BackgroundTasks,
+    tenant_id: int = Query(..., description="Tenant ID")
 ):
     """Generate a performance report"""
     try:

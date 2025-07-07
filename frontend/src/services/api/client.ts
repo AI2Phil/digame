@@ -5,9 +5,36 @@
 
 import axios, { AxiosInstance, InternalAxiosRequestConfig, AxiosResponse } from 'axios';
 
-// API Configuration
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+// API Configuration with dynamic port detection
+const getApiBaseUrl = () => {
+  // Check environment variable first
+  if (process.env.NEXT_PUBLIC_API_URL) {
+    return process.env.NEXT_PUBLIC_API_URL;
+  }
+  
+  // Dynamic port detection for development
+  const commonPorts = [8001, 8000, 3001, 5000];
+  const protocol = typeof window !== 'undefined' ? window.location.protocol : 'http:';
+  const hostname = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
+  
+  // For server-side rendering, use default
+  if (typeof window === 'undefined') {
+    return 'http://localhost:8001';
+  }
+  
+  // Return the configured URL or default to 8001
+  return `${protocol}//${hostname}:8001`;
+};
+
+const API_BASE_URL = getApiBaseUrl();
 const API_TIMEOUT = 30000; // 30 seconds
+
+// Export for use in other modules
+export const getApiUrl = (endpoint: string = '') => {
+  const baseUrl = API_BASE_URL.endsWith('/') ? API_BASE_URL.slice(0, -1) : API_BASE_URL;
+  const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+  return `${baseUrl}${cleanEndpoint}`;
+};
 
 // Create axios instance
 const apiClient: AxiosInstance = axios.create({

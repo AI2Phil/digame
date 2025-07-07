@@ -3,7 +3,8 @@ import {
   Users, Eye, Clock, MousePointer,
   TrendingUp, Target, MapPin, Smartphone,
   Monitor, Globe, Calendar, Activity,
-  BarChart3, PieChart, LineChart, RefreshCw
+  BarChart3, PieChart, LineChart, RefreshCw,
+  AlertTriangle, Database
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/Card';
 import { Button } from '../ui/Button';
@@ -23,23 +24,49 @@ const UserBehaviorAnalyticsSection = ({ data }) => {
   const [timeRange, setTimeRange] = useState('7d');
 
   // Backend data hooks
-  const { data: userBehaviorData, isLoading: userBehaviorLoading, refetch: refetchUserBehavior } = useUserBehaviorAnalytics({
+  const {
+    data: userBehaviorData,
+    isLoading: userBehaviorLoading,
+    error: userBehaviorError,
+    refetch: refetchUserBehavior
+  } = useUserBehaviorAnalytics({
     days: parseInt(timeRange.replace('d', ''))
   });
-  const { data: segmentationData, isLoading: segmentationLoading } = useUserSegmentation({
+  const {
+    data: segmentationData,
+    isLoading: segmentationLoading,
+    error: segmentationError
+  } = useUserSegmentation({
     days: parseInt(timeRange.replace('d', ''))
   });
-  const { data: journeyData, isLoading: journeyLoading } = useUserJourneyAnalysis({
+  const {
+    data: journeyData,
+    isLoading: journeyLoading,
+    error: journeyError
+  } = useUserJourneyAnalysis({
     days: parseInt(timeRange.replace('d', ''))
   });
-  const { data: contentData, isLoading: contentLoading } = useContentAnalytics({
+  const {
+    data: contentData,
+    isLoading: contentLoading,
+    error: contentError
+  } = useContentAnalytics({
     days: parseInt(timeRange.replace('d', ''))
   });
-  const { data: conversionData, isLoading: conversionLoading } = useConversionAnalytics({
+  const {
+    data: conversionData,
+    isLoading: conversionLoading,
+    error: conversionError
+  } = useConversionAnalytics({
     days: parseInt(timeRange.replace('d', ''))
   });
 
   const loading = userBehaviorLoading || segmentationLoading || journeyLoading || contentLoading || conversionLoading;
+  
+  // Check if we're using fallback data (when API calls fail and we fall back to mock data)
+  const hasApiErrors = userBehaviorError || segmentationError || journeyError || contentError || conversionError;
+  const hasApiData = userBehaviorData || segmentationData || journeyData || contentData || conversionData;
+  const isUsingFallbackData = hasApiErrors && !hasApiData;
 
   // Transform backend data to component format
   const userMetrics = {
@@ -104,6 +131,53 @@ const UserBehaviorAnalyticsSection = ({ data }) => {
 
   return (
     <div className="space-y-6">
+      {/* Fallback Data Indicator */}
+      {isUsingFallbackData && (
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+          <div className="flex items-center gap-3">
+            <AlertTriangle className="w-5 h-5 text-amber-600" />
+            <div className="flex-1">
+              <h4 className="text-sm font-medium text-amber-800">Using Fallback Data</h4>
+              <p className="text-sm text-amber-700">
+                Unable to connect to analytics API. Displaying sample data for demonstration purposes.
+                <span className="ml-2 text-xs">
+                  (API endpoints: {process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001'})
+                </span>
+              </p>
+              {hasApiErrors && (
+                <details className="mt-2">
+                  <summary className="text-xs text-amber-600 cursor-pointer hover:text-amber-800">
+                    View API Error Details
+                  </summary>
+                  <div className="mt-1 text-xs text-amber-600 bg-amber-100 p-2 rounded">
+                    {userBehaviorError && <div>User Behavior: {userBehaviorError.message}</div>}
+                    {segmentationError && <div>Segmentation: {segmentationError.message}</div>}
+                    {journeyError && <div>Journey: {journeyError.message}</div>}
+                    {contentError && <div>Content: {contentError.message}</div>}
+                    {conversionError && <div>Conversion: {conversionError.message}</div>}
+                  </div>
+                </details>
+              )}
+            </div>
+            <Database className="w-5 h-5 text-amber-600" />
+          </div>
+        </div>
+      )}
+      
+      {/* API Connection Success Indicator */}
+      {hasApiData && !loading && (
+        <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+            <span className="text-sm text-green-700 font-medium">
+              Connected to Analytics API
+            </span>
+            <span className="text-xs text-green-600">
+              ({process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001'})
+            </span>
+          </div>
+        </div>
+      )}
       {/* User Behavior Overview */}
       <Card>
         <CardHeader>

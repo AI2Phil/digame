@@ -196,7 +196,7 @@ class AnalyticsAPI {
     skip?: number;
     limit?: number;
   } = {}): Promise<DashboardData[]> {
-    const response = await apiClient.get('/analytics/dashboards', {
+    const response = await apiClient.get('/api/analytics/dashboards', {
       params: {
         skip: params.skip || 0,
         limit: params.limit || 100
@@ -209,7 +209,7 @@ class AnalyticsAPI {
    * Get a specific dashboard by ID
    */
   async getDashboard(dashboardId: number): Promise<DashboardData> {
-    const response = await apiClient.get(`/analytics/dashboards/${dashboardId}`);
+    const response = await apiClient.get(`/api/analytics/dashboards/${dashboardId}`);
     return response.data;
   }
 
@@ -217,7 +217,7 @@ class AnalyticsAPI {
    * Create a new dashboard
    */
   async createDashboard(dashboard: Omit<DashboardData, 'id'>): Promise<DashboardData> {
-    const response = await apiClient.post('/analytics/dashboards', dashboard);
+    const response = await apiClient.post('/api/analytics/dashboards', dashboard);
     return response.data;
   }
 
@@ -225,7 +225,7 @@ class AnalyticsAPI {
    * Update an existing dashboard
    */
   async updateDashboard(dashboardId: number, dashboard: Partial<DashboardData>): Promise<DashboardData> {
-    const response = await apiClient.put(`/analytics/dashboards/${dashboardId}`, dashboard);
+    const response = await apiClient.put(`/api/analytics/dashboards/${dashboardId}`, dashboard);
     return response.data;
   }
 
@@ -233,14 +233,14 @@ class AnalyticsAPI {
    * Delete a dashboard
    */
   async deleteDashboard(dashboardId: number): Promise<void> {
-    await apiClient.delete(`/analytics/dashboards/${dashboardId}`);
+    await apiClient.delete(`/api/analytics/dashboards/${dashboardId}`);
   }
 
   /**
    * Update dashboard layout
    */
   async updateDashboardLayout(dashboardId: number, layout: LayoutItem[]): Promise<DashboardData> {
-    const response = await apiClient.put(`/analytics/dashboards/${dashboardId}/layout`, {
+    const response = await apiClient.put(`/api/analytics/dashboards/${dashboardId}/layout`, {
       layout
     });
     return response.data;
@@ -252,7 +252,7 @@ class AnalyticsAPI {
    * Create a new widget
    */
   async createWidget(widget: WidgetConfig & { dashboard_id: number }): Promise<WidgetConfig> {
-    const response = await apiClient.post('/analytics/widgets', widget);
+    const response = await apiClient.post('/api/analytics/widgets', widget);
     return response.data;
   }
 
@@ -260,7 +260,7 @@ class AnalyticsAPI {
    * Update an existing widget
    */
   async updateWidget(widgetId: number, widget: Partial<WidgetConfig>): Promise<WidgetConfig> {
-    const response = await apiClient.put(`/analytics/widgets/${widgetId}`, widget);
+    const response = await apiClient.put(`/api/analytics/widgets/${widgetId}`, widget);
     return response.data;
   }
 
@@ -268,14 +268,14 @@ class AnalyticsAPI {
    * Delete a widget
    */
   async deleteWidget(widgetId: number): Promise<void> {
-    await apiClient.delete(`/analytics/widgets/${widgetId}`);
+    await apiClient.delete(`/api/analytics/widgets/${widgetId}`);
   }
 
   /**
    * Get widget data based on its configuration
    */
   async getWidgetData(widgetId: number, filters?: Record<string, any>): Promise<any> {
-    const response = await apiClient.get(`/analytics/widgets/${widgetId}/data`, {
+    const response = await apiClient.get(`/api/analytics/widgets/${widgetId}/data`, {
       params: filters
     });
     return response.data;
@@ -291,7 +291,7 @@ class AnalyticsAPI {
     category?: string;
     active_only?: boolean;
   } = {}): Promise<any[]> {
-    const response = await apiClient.get('/analytics/models', {
+    const response = await apiClient.get('/api/analytics/models', {
       params
     });
     return response.data;
@@ -301,7 +301,7 @@ class AnalyticsAPI {
    * Create a new analytics model
    */
   async createAnalyticsModel(modelData: Record<string, any>): Promise<any> {
-    const response = await apiClient.post('/analytics/models', modelData);
+    const response = await apiClient.post('/api/analytics/models', modelData);
     return response.data;
   }
 
@@ -311,7 +311,7 @@ class AnalyticsAPI {
   async trainModel(modelId: number, params: {
     triggered_by?: string;
   } = {}): Promise<any> {
-    const response = await apiClient.post(`/analytics/models/${modelId}/train`, params);
+    const response = await apiClient.post(`/api/analytics/models/${modelId}/train`, params);
     return response.data;
   }
 
@@ -324,7 +324,7 @@ class AnalyticsAPI {
     input_features: Record<string, any>;
     prediction_horizon_days?: number;
   }): Promise<any> {
-    const response = await apiClient.post(`/analytics/models/${modelId}/predict`, params);
+    const response = await apiClient.post(`/api/analytics/models/${modelId}/predict`, params);
     return response.data;
   }
 
@@ -334,7 +334,7 @@ class AnalyticsAPI {
    * Record a performance metric
    */
   async recordPerformanceMetric(metricData: Record<string, any>): Promise<any> {
-    const response = await apiClient.post('/analytics/performance-metrics', metricData);
+    const response = await apiClient.post('/api/analytics/performance-metrics', metricData);
     return response.data;
   }
 
@@ -349,7 +349,7 @@ class AnalyticsAPI {
     limit?: number;
     dimension_filters?: Record<string, any>;
   } = {}): Promise<any[]> {
-    const response = await apiClient.get('/analytics/performance-metrics', {
+    const response = await apiClient.get('/api/analytics/performance-metrics', {
       params
     });
     return response.data;
@@ -361,7 +361,7 @@ class AnalyticsAPI {
    * Create a new ROI calculation
    */
   async createROICalculation(roiData: Record<string, any>): Promise<any> {
-    const response = await apiClient.post('/analytics/roi-calculations', roiData);
+    const response = await apiClient.post('/api/analytics/roi-calculations', roiData);
     return response.data;
   }
 
@@ -373,7 +373,7 @@ class AnalyticsAPI {
     entity_id?: number;
     limit?: number;
   } = {}): Promise<any[]> {
-    const response = await apiClient.get('/analytics/roi-calculations', {
+    const response = await apiClient.get('/api/analytics/roi-calculations', {
       params
     });
     return response.data;
@@ -383,7 +383,7 @@ class AnalyticsAPI {
    * Calculate portfolio ROI across multiple entities
    */
   async calculatePortfolioROI(entityIds: number[]): Promise<any> {
-    const response = await apiClient.post('/analytics/roi-calculations/portfolio', {
+    const response = await apiClient.post('/api/analytics/roi-calculations/portfolio', {
       entity_ids: entityIds
     });
     return response.data;
@@ -395,7 +395,7 @@ class AnalyticsAPI {
    * Add new benchmark data
    */
   async addBenchmarkData(benchmarkData: Record<string, any>): Promise<any> {
-    const response = await apiClient.post('/analytics/benchmarks', benchmarkData);
+    const response = await apiClient.post('/api/analytics/benchmarks', benchmarkData);
     return response.data;
   }
 
@@ -409,7 +409,7 @@ class AnalyticsAPI {
     region?: string;
     company_size?: string;
   }): Promise<any[]> {
-    const response = await apiClient.get('/analytics/benchmarks', {
+    const response = await apiClient.get('/api/analytics/benchmarks', {
       params
     });
     return response.data;
@@ -419,7 +419,7 @@ class AnalyticsAPI {
    * Compare performance metric with benchmarks
    */
   async compareWithBenchmarks(metricId: number, benchmarkParams?: Record<string, any>): Promise<any[]> {
-    const response = await apiClient.post(`/analytics/performance-metrics/${metricId}/compare`, {
+    const response = await apiClient.post(`/api/analytics/performance-metrics/${metricId}/compare`, {
       benchmark_params: benchmarkParams
     });
     return response.data;
@@ -431,7 +431,7 @@ class AnalyticsAPI {
    * Get comprehensive analytics dashboard data
    */
   async getAnalyticsDashboard(): Promise<any> {
-    const response = await apiClient.get('/analytics/dashboard');
+    const response = await apiClient.get('/api/analytics/dashboard');
     return response.data;
   }
 
@@ -439,7 +439,7 @@ class AnalyticsAPI {
    * Generate AI-powered insights from analytics data
    */
   async generateInsights(): Promise<any[]> {
-    const response = await apiClient.get('/analytics/insights');
+    const response = await apiClient.get('/api/analytics/insights');
     return response.data;
   }
 
@@ -449,7 +449,7 @@ class AnalyticsAPI {
    * Calculate multi-dimensional metrics based on model configuration
    */
   async calculateMultiDimensionalMetrics(modelId: number, dataRecords: Record<string, any>[]): Promise<any[]> {
-    const response = await apiClient.post(`/analytics/models/${modelId}/multi-dimensional`, {
+    const response = await apiClient.post(`/api/analytics/models/${modelId}/multi-dimensional`, {
       data_records: dataRecords
     });
     return response.data;
@@ -461,7 +461,7 @@ class AnalyticsAPI {
    * Get user segmentation analytics
    */
   async getUserSegmentation(params: { days?: number } = {}): Promise<any> {
-    const response = await apiClient.get('/advanced-analytics/user-segmentation', {
+    const response = await apiClient.get('/api/analytics/advanced-analytics/user-segmentation', {
       params: {
         days: params.days || 30
       }
@@ -473,7 +473,7 @@ class AnalyticsAPI {
    * Get user journey analysis
    */
   async getUserJourneyAnalysis(params: { days?: number } = {}): Promise<any> {
-    const response = await apiClient.get('/advanced-analytics/user-journey', {
+    const response = await apiClient.get('/api/analytics/advanced-analytics/user-journey', {
       params: {
         days: params.days || 30
       }
@@ -485,7 +485,7 @@ class AnalyticsAPI {
    * Get content analytics
    */
   async getContentAnalytics(params: { days?: number } = {}): Promise<any> {
-    const response = await apiClient.get('/advanced-analytics/content-analytics', {
+    const response = await apiClient.get('/api/analytics/advanced-analytics/content-analytics', {
       params: {
         days: params.days || 30
       }
@@ -497,7 +497,7 @@ class AnalyticsAPI {
    * Get conversion analytics
    */
   async getConversionAnalytics(params: { days?: number } = {}): Promise<any> {
-    const response = await apiClient.get('/advanced-analytics/conversion-analytics', {
+    const response = await apiClient.get('/api/analytics/advanced-analytics/conversion-analytics', {
       params: {
         days: params.days || 30
       }
@@ -509,7 +509,7 @@ class AnalyticsAPI {
    * Get system resource metrics
    */
   async getSystemResourceMetrics(): Promise<any> {
-    const response = await apiClient.get('/advanced-analytics/system-resources');
+    const response = await apiClient.get('/api/analytics/advanced-analytics/system-resources');
     return response.data;
   }
 
@@ -517,7 +517,7 @@ class AnalyticsAPI {
    * Get database performance metrics
    */
   async getDatabasePerformanceMetrics(): Promise<any> {
-    const response = await apiClient.get('/advanced-analytics/database-performance');
+    const response = await apiClient.get('/api/analytics/advanced-analytics/database-performance');
     return response.data;
   }
 
@@ -525,7 +525,7 @@ class AnalyticsAPI {
    * Get network metrics
    */
   async getNetworkMetrics(): Promise<any> {
-    const response = await apiClient.get('/advanced-analytics/network-metrics');
+    const response = await apiClient.get('/api/analytics/advanced-analytics/network-metrics');
     return response.data;
   }
 
@@ -533,7 +533,7 @@ class AnalyticsAPI {
    * Get performance alerts
    */
   async getPerformanceAlerts(): Promise<any> {
-    const response = await apiClient.get('/advanced-analytics/performance-alerts');
+    const response = await apiClient.get('/api/analytics/advanced-analytics/performance-alerts');
     return response.data;
   }
 
@@ -543,7 +543,7 @@ class AnalyticsAPI {
    * Export dashboard data in various formats
    */
   async exportDashboard(dashboardId: number, format: string = 'json'): Promise<any> {
-    const response = await apiClient.get(`/analytics/dashboards/${dashboardId}/export`, {
+    const response = await apiClient.get(`/api/analytics/dashboards/${dashboardId}/export`, {
       params: { format },
       responseType: format === 'pdf' ? 'blob' : 'json'
     });
@@ -558,7 +558,7 @@ class AnalyticsAPI {
     permissions: string;
     expires_at?: string;
   }): Promise<any> {
-    const response = await apiClient.post(`/analytics/dashboards/${dashboardId}/share`, shareData);
+    const response = await apiClient.post(`/api/analytics/dashboards/${dashboardId}/share`, shareData);
     return response.data;
   }
 
@@ -566,7 +566,7 @@ class AnalyticsAPI {
    * Revoke dashboard share access
    */
   async revokeDashboardShare(dashboardId: number, shareId: number): Promise<void> {
-    await apiClient.delete(`/analytics/dashboards/${dashboardId}/share/${shareId}`);
+    await apiClient.delete(`/api/analytics/dashboards/${dashboardId}/share/${shareId}`);
   }
 }
 
