@@ -65,6 +65,7 @@ from .routers import platform_analytics_router # Import the platform analytics r
 from .routers import notifications_router # Import the notifications router
 from .routers import mfa_router # Import the MFA router
 from .routers import advanced_analytics_router # Import the advanced analytics router
+from .routers import dashboard_router as analytics_dashboard_router # Import the analytics dashboard router
 from .routers import aco_router # Import the ACO integration router
 from .routers import digital_twin_router # Import the digital twin router
 from .routers import simulation_router # Import the simulation router
@@ -299,6 +300,7 @@ app.include_router(platform_analytics_router.router, tags=["Platform Analytics"]
 app.include_router(notifications_router.router, tags=["Notifications"])
 app.include_router(mfa_router.router, tags=["Multi-Factor Authentication"])
 app.include_router(advanced_analytics_router.router, tags=["Advanced Analytics"])
+app.include_router(analytics_dashboard_router.router, tags=["Dashboard Management"])
 app.include_router(aco_router.router, tags=["ACO Integration"])
 
 # Include dashboard and onboarding routers
