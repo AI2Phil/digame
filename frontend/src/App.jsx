@@ -36,6 +36,9 @@ import TeamDashboardPage from './pages/TeamDashboardPage.jsx';
 import SkillGapAnalysisPage from './pages/SkillGapAnalysisPage.jsx';
 import WorkflowOptimizationPage from './pages/WorkflowOptimizationPage.jsx';
 import WorkflowAutomationPage from './pages/WorkflowAutomationPage.tsx';
+import AIMLDashboardPage from './pages/AIMLDashboardPage.jsx';
+import PredictiveModeling from './components/ai/PredictiveModeling.jsx';
+import AIPoweredAutomation from './components/ai/AIPoweredAutomation.jsx';
 // Digital Twin Page
 import TwinDashboard from './components/digital-twin/TwinDashboard.tsx';
 // Platform Owner Components
@@ -474,6 +477,42 @@ function App() {
             element={
               isAuthenticated || isDemoMode ? (
                 <WorkflowAutomationPage />
+              ) : (
+                <Navigate to="/" replace />
+              )
+            }
+          />
+          
+          <Route
+            path="/ai/ml-dashboard"
+            element={
+              isAuthenticated || isDemoMode ? (
+                <AIMLDashboardPage
+                  isDemoMode={isDemoMode}
+                  onLogout={handleLogout}
+                />
+              ) : (
+                <Navigate to="/" replace />
+              )
+            }
+          />
+          
+          <Route
+            path="/ai/predictive-modeling"
+            element={
+              isAuthenticated || isDemoMode ? (
+                <PredictiveModeling />
+              ) : (
+                <Navigate to="/" replace />
+              )
+            }
+          />
+          
+          <Route
+            path="/ai/ai-automation"
+            element={
+              isAuthenticated || isDemoMode ? (
+                <AIPoweredAutomation />
               ) : (
                 <Navigate to="/" replace />
               )

@@ -1,5 +1,7 @@
 # Mock Data Replacement Implementation Prompt for Roo
 
+update /docs/AUDIT.md for stage of completion while preserving the structure and contents
+
 ## Task Overview
 
 You are tasked with systematically replacing mock data across the Digame platform with database-driven content to achieve production readiness. This is a critical blocker for go-live deployment.
@@ -10,6 +12,16 @@ You are tasked with systematically replacing mock data across the Digame platfor
 - **Remaining Work**: Mock data replacement and database integration
 - **Components Requiring Updates**: 100+ components across 14 major platform sections
 - **Critical Priority**: PRODUCTION BLOCKER - Required for go-live
+- **Remember**:-  Correction - we need to always create a Next.js page for our component since this is a Next.js application, not a React Router application, and so the navigation component needs to use the Next.js router (useRouter from next/router).
+**Priority:** confirm the comprehensive menu includes page to this URL as a menu item NextJSComprehensiveNavigation.tsx
+**Priority:** Enhanced Sample Data from the database, not hardcoded for Historical Graphs and Predictive Features
+Now let me enhance the API endpoints with much more comprehensive sample data for better historical graphs and predictive features. I'll update the analytics router with richer datasets:
+ enhance the revenue predictions endpoint to use actual database data with richer historical and predictive datasets.
+Modify the endpoint to fetch actual historical revenue data from the database
+Use that historical data to generate more realistic predictions
+Create richer sample data that includes historical trends and seasonal variations
+Implement proper database queries through the ACO service
+replace it with a database-driven version that uses historical data:
 
 ## Current Implementation Progress
 

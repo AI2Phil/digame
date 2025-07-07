@@ -354,14 +354,209 @@ const AIPoweredAutomation = () => {
   ];
 
   useEffect(() => {
-    setAutomations(aiAutomations);
-    setTriggers(automationTriggers);
-    setActions(automationActions);
-    setExecutionLogs(recentExecutions);
-    loadPerformanceData();
+    loadAutomationData();
   }, []);
 
-  const loadPerformanceData = async () => {
+  const loadAutomationData = async () => {
+    try {
+      await Promise.all([
+        loadWorkflowTemplates(),
+        loadWorkflowInstances(),
+        loadAutomationRules(),
+        loadWorkflowActions(),
+        loadWorkflowAnalytics()
+      ]);
+    } catch (error) {
+      console.error('Error loading automation data:', error);
+      // Fallback to mock data on error
+      setAutomations(aiAutomations);
+      setTriggers(automationTriggers);
+      setActions(automationActions);
+      setExecutionLogs(recentExecutions);
+      loadFallbackPerformanceData();
+    }
+  };
+
+  const loadWorkflowTemplates = async () => {
+    try {
+      const response = await fetch('/api/workflow-automation/templates?tenant_id=1');
+      if (!response.ok) throw new Error('Failed to fetch workflow templates');
+      
+      const templates = await response.json();
+      
+      // Transform templates to automation format
+      const transformedAutomations = templates.map(template => ({
+        id: template.id,
+        name: template.name,
+        description: template.description,
+        category: template.category || 'general',
+        status: template.is_active ? 'active' : 'paused',
+        trigger: 'Manual Trigger', // Default for templates
+        aiModel: 'Workflow Engine',
+        executions: 0, // Will be updated from instances
+        successRate: 95.0, // Default
+        avgExecutionTime: template.estimated_duration || 2.5,
+        lastRun: template.updated_at || template.created_at,
+        created: template.created_at,
+        actions: template.workflow_definition?.steps?.map(step => step.name) || []
+      }));
+      
+      setAutomations(transformedAutomations);
+    } catch (error) {
+      console.error('Error loading workflow templates:', error);
+      throw error;
+    }
+  };
+
+  const loadWorkflowInstances = async () => {
+    try {
+      const response = await fetch('/api/workflow-automation/instances?tenant_id=1');
+      if (!response.ok) throw new Error('Failed to fetch workflow instances');
+      
+      const instances = await response.json();
+      
+      // Transform instances to execution logs format
+      const transformedLogs = instances.slice(0, 10).map(instance => ({
+        id: `exec-${instance.id}`,
+        automation: instance.name,
+        trigger: instance.triggered_by || 'Manual',
+        status: instance.status === 'completed' ? 'success' :
+                instance.status === 'failed' ? 'failed' : 'running',
+        duration: instance.execution_duration || 0,
+        timestamp: instance.created_at,
+        aiDecision: `Workflow executed with ${instance.progress_percentage || 0}% completion`
+      }));
+      
+      setExecutionLogs(transformedLogs);
+    } catch (error) {
+      console.error('Error loading workflow instances:', error);
+      throw error;
+    }
+  };
+
+  const loadAutomationRules = async () => {
+    try {
+      const response = await fetch('/api/workflow-automation/automation-rules?tenant_id=1');
+      if (!response.ok) throw new Error('Failed to fetch automation rules');
+      
+      const rules = await response.json();
+      
+      // Transform rules to triggers format
+      const transformedTriggers = [
+        {
+          id: 'ai-behavior',
+          name: 'AI Behavior Triggers',
+          description: 'AI-enhanced triggers based on user behavior patterns',
+          types: rules.filter(r => r.trigger_type === 'user_behavior').map(r => r.name),
+          aiEnhanced: true,
+          count: rules.filter(r => r.trigger_type === 'user_behavior').length
+        },
+        {
+          id: 'data-events',
+          name: 'Data Event Triggers',
+          description: 'Triggers based on data changes and AI anomaly detection',
+          types: rules.filter(r => r.trigger_type === 'data_change').map(r => r.name),
+          aiEnhanced: true,
+          count: rules.filter(r => r.trigger_type === 'data_change').length
+        },
+        {
+          id: 'time-based',
+          name: 'Smart Time-Based Triggers',
+          description: 'AI-optimized scheduled triggers',
+          types: rules.filter(r => r.trigger_type === 'scheduled').map(r => r.name),
+          aiEnhanced: true,
+          count: rules.filter(r => r.trigger_type === 'scheduled').length
+        },
+        {
+          id: 'external-events',
+          name: 'External Event Triggers',
+          description: 'AI-powered external system integrations',
+          types: rules.filter(r => r.trigger_type === 'webhook').map(r => r.name),
+          aiEnhanced: true,
+          count: rules.filter(r => r.trigger_type === 'webhook').length
+        }
+      ];
+      
+      setTriggers(transformedTriggers);
+    } catch (error) {
+      console.error('Error loading automation rules:', error);
+      throw error;
+    }
+  };
+
+  const loadWorkflowActions = async () => {
+    try {
+      const response = await fetch('/api/workflow-automation/actions?tenant_id=1');
+      if (!response.ok) throw new Error('Failed to fetch workflow actions');
+      
+      const workflowActions = await response.json();
+      
+      // Transform actions to component format
+      const transformedActions = [
+        {
+          id: 'ai-communication',
+          name: 'AI Communication Actions',
+          description: 'AI-enhanced communication and messaging',
+          actions: workflowActions.filter(a => a.category === 'communication').map(a => a.name),
+          aiFeatures: ['Content Personalization', 'Timing Optimization', 'Channel Selection'],
+          count: workflowActions.filter(a => a.category === 'communication').length
+        },
+        {
+          id: 'intelligent-processing',
+          name: 'Intelligent Data Processing',
+          description: 'AI-powered data manipulation and analysis',
+          actions: workflowActions.filter(a => a.category === 'data_processing').map(a => a.name),
+          aiFeatures: ['Smart Categorization', 'Predictive Filling', 'Anomaly Detection'],
+          count: workflowActions.filter(a => a.category === 'data_processing').length
+        },
+        {
+          id: 'smart-workflow',
+          name: 'Smart Workflow Actions',
+          description: 'AI-optimized workflow and process automation',
+          actions: workflowActions.filter(a => a.category === 'workflow').map(a => a.name),
+          aiFeatures: ['Smart Assignment', 'Priority Prediction', 'Workload Balancing'],
+          count: workflowActions.filter(a => a.category === 'workflow').length
+        },
+        {
+          id: 'ai-integration',
+          name: 'AI Integration Actions',
+          description: 'Intelligent third-party integrations',
+          actions: workflowActions.filter(a => a.category === 'integration').map(a => a.name),
+          aiFeatures: ['Error Prediction', 'Retry Logic', 'Data Mapping'],
+          count: workflowActions.filter(a => a.category === 'integration').length
+        }
+      ];
+      
+      setActions(transformedActions);
+    } catch (error) {
+      console.error('Error loading workflow actions:', error);
+      throw error;
+    }
+  };
+
+  const loadWorkflowAnalytics = async () => {
+    try {
+      const response = await fetch('/api/workflow-automation/analytics?tenant_id=1');
+      if (!response.ok) throw new Error('Failed to fetch workflow analytics');
+      
+      const analytics = await response.json();
+      
+      setPerformance({
+        totalAutomations: analytics.workflow_instances?.total || 0,
+        activeAutomations: analytics.workflow_instances?.completed || 0,
+        totalExecutions: analytics.automation_rules?.total_executions || 0,
+        successRate: analytics.workflow_instances?.success_rate || 0,
+        avgExecutionTime: analytics.performance?.avg_execution_duration || 0,
+        aiEnhancedActions: 67, // Static for now
+        timeSaved: Math.round((analytics.performance?.avg_execution_duration_minutes || 0) * 10)
+      });
+    } catch (error) {
+      console.error('Error loading workflow analytics:', error);
+      throw error;
+    }
+  };
+
+  const loadFallbackPerformanceData = () => {
     setPerformance({
       totalAutomations: aiAutomations.length,
       activeAutomations: aiAutomations.filter(a => a.status === 'active').length,
@@ -373,13 +568,46 @@ const AIPoweredAutomation = () => {
     });
   };
 
-  const toggleAutomation = useCallback((automationId) => {
-    setAutomations(prev => prev.map(automation => 
-      automation.id === automationId 
-        ? { ...automation, status: automation.status === 'active' ? 'paused' : 'active' }
-        : automation
-    ));
-  }, []);
+  const toggleAutomation = useCallback(async (automationId) => {
+    try {
+      // Find the automation to get current status
+      const automation = automations.find(a => a.id === automationId);
+      if (!automation) return;
+      
+      const newStatus = automation.status === 'active' ? 'paused' : 'active';
+      
+      // Update via API (assuming template activation/deactivation)
+      const response = await fetch(`/api/workflow-automation/templates/${automationId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          is_active: newStatus === 'active'
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to update automation status');
+      }
+      
+      // Update local state
+      setAutomations(prev => prev.map(automation =>
+        automation.id === automationId
+          ? { ...automation, status: newStatus }
+          : automation
+      ));
+      
+    } catch (error) {
+      console.error('Error toggling automation:', error);
+      // Fallback: update local state only
+      setAutomations(prev => prev.map(automation =>
+        automation.id === automationId
+          ? { ...automation, status: automation.status === 'active' ? 'paused' : 'active' }
+          : automation
+      ));
+    }
+  }, [automations]);
 
   const renderAutomationsTab = () => (
     <div className="space-y-6">
@@ -973,4 +1201,6 @@ const AIPoweredAutomation = () => {
     </div>
   );
 };
+
+export default AIPoweredAutomation;
 

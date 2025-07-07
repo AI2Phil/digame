@@ -121,6 +121,8 @@ const NextJSComprehensiveNavigation: React.FC<NextJSComprehensiveNavigationProps
         { label: 'Web Analytics', icon: <Globe className="w-4 h-4" />, path: '/analytics/web', description: 'Web usage analytics' },
         { label: 'Mobile Analytics', icon: <Smartphone className="w-4 h-4" />, path: '/analytics/mobile', description: 'Mobile app analytics' },
         { label: 'Advanced Analytics', icon: <TrendingUp className="w-4 h-4" />, path: '/analytics/advanced', description: 'Advanced analytics dashboard' },
+        { label: 'Revenue Analytics', icon: <CreditCard className="w-4 h-4" />, path: '/analytics/revenue', subtitle: 'BUSINESS INTELLIGENCE', description: 'Revenue insights, predictions, and churn analysis' },
+        { label: 'KPI Cards Test', icon: <BarChart3 className="w-4 h-4" />, path: '/analytics/kpi-test', subtitle: 'WIDGET TESTING', description: 'KPI card components testing and validation' },
         { label: 'Behavioral Analytics', icon: <Brain className="w-4 h-4" />, path: '/analytics/behavioral', subtitle: 'AI-POWERED' },
         { label: 'Predictive Analytics', icon: <Eye className="w-4 h-4" />, path: '/analytics/predictive', subtitle: 'AI-POWERED' },
         { label: 'Pattern Recognition', icon: <Target className="w-4 h-4" />, path: '/analytics/patterns', subtitle: 'AI-POWERED' },
@@ -151,6 +153,8 @@ const NextJSComprehensiveNavigation: React.FC<NextJSComprehensiveNavigationProps
       description: 'AI-powered tools and automation features',
       items: [
         { label: 'AI Tools Hub', icon: <Wrench className="w-4 h-4" />, path: '/ai-tools', description: 'Central AI tools dashboard' },
+        { label: 'Predictive Modeling', icon: <Eye className="w-4 h-4" />, path: '/ai/predictive-modeling', subtitle: 'PREDICTIVE AI', description: 'Advanced forecasting and recommendation engines' },
+        { label: 'AI-Powered Automation', icon: <Bot className="w-4 h-4" />, path: '/ai/ai-automation', subtitle: 'AI AUTOMATION', description: 'Intelligent workflow automation with AI insights' },
         { label: 'Writing Assistance', icon: <FileText className="w-4 h-4" />, path: '/ai-tools/writing', subtitle: 'CONTENT CREATION' },
         { label: 'Voice Processing', icon: <Mic className="w-4 h-4" />, path: '/ai-tools/voice', subtitle: 'VOICE AI' },
         { label: 'Document Processing', icon: <FileText className="w-4 h-4" />, path: '/ai-tools/documents', subtitle: 'DOCUMENT AI' },
