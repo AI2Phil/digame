@@ -1,11 +1,15 @@
-# Digame Platform Scripts (Backend/Infrastructure)
+# Digame Platform Scripts
 
-This directory contains backend-specific utility scripts for database migrations, Git operations, and infrastructure management within the Digame platform. These scripts are focused on deployment, database management, and version control operations.
+This directory contains utility scripts for the Digame platform, including development tools, database management, Git operations, and infrastructure management. These scripts support both frontend development and backend operations.
 
 ## 📋 Script Overview
 
 | Script | Purpose | Usage | Status |
 |--------|---------|-------|--------|
+| [`start-dev.sh`](#start-devsh) | Development environment startup | `./start-dev.sh` | ✅ Active |
+| [`fix-all-imports.sh`](#fix-all-importssh) | Comprehensive UI import casing fix | `./fix-all-imports.sh` | ✅ Active |
+| [`fix-imports.sh`](#fix-importssh) | Basic UI import casing fix | `./fix-imports.sh` | ✅ Active |
+| [`fix-ui-imports.sh`](#fix-ui-importssh) | Advanced UI import casing fix | `./fix-ui-imports.sh` | ✅ Active |
 | [`create_tables.py`](#create_tablespy) | Database table creation | `python create_tables.py` | ✅ Active |
 | [`entrypoint.sh`](#entrypointsh) | Docker container entrypoint | Used by Docker | ✅ Active |
 | [`deploy_migrations.py`](#deploy_migrationspy) | Database migration deployment | `python deploy_migrations.py` | ✅ Active |
@@ -29,6 +33,147 @@ This directory contains backend-specific utility scripts for database migrations
 | [`git_status_summary.py`](#git_status_summarypy) | Repository status and guidance | `python git_status_summary.py` | ✅ Active |
 | [`data-migration/migrate_mock_to_production.py`](#data-migrationmigrate_mock_to_productionpy) | Production migration tool | `python data-migration/migrate_mock_to_production.py` | ✅ Active |
 | [`data-migration/validate_data_integrity.py`](#data-migrationvalidate_data_integritypy) | Data integrity validation | `python data-migration/validate_data_integrity.py` | ✅ Active |
+
+---
+
+## 🚀 Development & Build Scripts
+
+### `start-dev.sh`
+**Purpose**: Interactive development environment startup script with multiple backend options
+
+**Description**:
+- Provides interactive menu for choosing development environment configuration
+- Supports Node.js backend (recommended), Python FastAPI backend, or both
+- Handles dependency installation and service orchestration
+- Includes proper cleanup and signal handling for graceful shutdown
+
+**Usage**:
+```bash
+# Interactive startup (recommended)
+./scripts/start-dev.sh
+
+# Direct execution from root
+./start-dev.sh
+```
+
+**Features**:
+- ✅ **Dependency Management**: Automatically runs `npm run install:all`
+- ✅ **Multiple Backend Options**: Node.js (port 8001), Python FastAPI (port 8002), or both
+- ✅ **Frontend Integration**: Starts frontend on port 3001 when needed
+- ✅ **Interactive Menu**: User-friendly selection of startup modes
+- ✅ **Signal Handling**: Proper cleanup on SIGINT/SIGTERM
+- ✅ **Environment Validation**: Checks for Node.js and Python installation
+
+**Startup Options**:
+1. **Node.js Backend Only** (Recommended) - Complete Test Zone functionality
+2. **Python FastAPI Backend Only** - Basic backend with limited Test Zone
+3. **Both Backends** (Dual Mode) - Node.js on 8001, Python on 8002
+4. **Frontend Only** - Limited functionality without backend
+
+**Environment Requirements**:
+- Node.js installed and accessible via `node` command
+- Python installed and accessible via `python` or `python3` command
+- All project dependencies installed via `npm run install:all`
+
+---
+
+## 🎨 Frontend Development Scripts
+
+### `fix-all-imports.sh`
+**Purpose**: Comprehensive UI component import casing fix for Next.js webpack compatibility
+
+**Description**:
+- Fixes all UI component import casing issues across the entire frontend codebase
+- Handles both `../ui/` and `./ui/` relative import paths
+- Supports comprehensive list of UI components from shadcn/ui and custom components
+- Provides verification and statistics on fixes applied
+
+**Usage**:
+```bash
+# Fix all UI component import casing issues
+./scripts/fix-all-imports.sh
+
+# Run from project root
+./fix-all-imports.sh
+```
+
+**Features**:
+- ✅ **Comprehensive Coverage**: Fixes 40+ UI component import paths
+- ✅ **Multiple Path Formats**: Handles `../ui/` and `./ui/` relative paths
+- ✅ **File Type Support**: Processes `.jsx`, `.tsx`, and `.js` files
+- ✅ **Statistics Tracking**: Reports files processed and fixes applied
+- ✅ **Verification**: Checks for remaining lowercase imports after fixes
+- ✅ **Backup Safety**: Creates backup files during processing (automatically cleaned)
+
+**Components Fixed**:
+- Basic: Card, Button, Badge, Progress, Input, Label, Textarea, Tabs, Select, Switch
+- Advanced: Accordion, AlertDialog, AspectRatio, Avatar, Breadcrumb, Calendar, Carousel
+- Forms: Checkbox, Form, RadioGroup, InputOTP
+- Navigation: NavigationMenu, Menubar, ContextMenu, DropdownMenu
+- Layout: Sheet, Sidebar, Separator, ScrollArea, Resizable
+- Feedback: Toast, Toaster, Tooltip, HoverCard, Popover
+- Interactive: Slider, Toggle, ToggleGroup, Command, Collapsible
+
+**Webpack Compatibility**:
+- Resolves case-sensitive import issues on Linux/production environments
+- Ensures consistent PascalCase naming for all UI components
+- Prevents webpack warnings about multiple modules with similar names
+
+---
+
+### `fix-imports.sh`
+**Purpose**: Basic UI component import casing fix for common components
+
+**Description**:
+- Lightweight script for fixing the most common UI component import casing issues
+- Focuses on essential components used throughout the application
+- Simpler implementation for quick fixes during development
+
+**Usage**:
+```bash
+# Fix basic UI component import casing
+./scripts/fix-imports.sh
+```
+
+**Features**:
+- ✅ **Essential Components**: Fixes 10 most common UI components
+- ✅ **Fast Execution**: Lightweight processing for quick fixes
+- ✅ **JSX Focus**: Specifically targets `.jsx` files
+- ✅ **Backup Creation**: Creates backup files for safety
+
+**Components Fixed**:
+- Card, Button, Badge, Progress, Input, Label, Textarea, Tabs, Select, Switch
+
+**Use Case**: Quick fixes during development when only basic components need correction
+
+---
+
+### `fix-ui-imports.sh`
+**Purpose**: Advanced UI component import casing fix with detailed verification
+
+**Description**:
+- Advanced import fixing with line-by-line processing and detailed verification
+- Provides comprehensive reporting and remaining issue identification
+- Uses temporary file processing for safer operations
+
+**Usage**:
+```bash
+# Fix UI imports with advanced verification
+./scripts/fix-ui-imports.sh
+```
+
+**Features**:
+- ✅ **Line-by-Line Processing**: Safer file modification approach
+- ✅ **Detailed Verification**: Shows specific lines that need fixing
+- ✅ **Comprehensive Reporting**: Detailed statistics and remaining issues
+- ✅ **Multiple File Types**: Processes `.jsx`, `.tsx`, and `.js` files
+- ✅ **Temporary File Safety**: Uses temporary files to prevent corruption
+
+**Advanced Features**:
+- Regex pattern matching for import detection
+- Temporary file processing for safety
+- Detailed remaining issue reporting with line numbers
+- Support for both single and double quote imports
 
 ---
 
@@ -877,6 +1022,36 @@ python scripts/data-migration/validate_data_integrity.py --output-file custom_re
 
 ## 🚀 Common Use Cases
 
+### **Development Environment Setup**
+```bash
+# 1. Start interactive development environment
+./scripts/start-dev.sh
+
+# 2. Fix any UI import casing issues
+./scripts/fix-all-imports.sh
+
+# 3. Run frontend tests
+./scripts/run_frontend_tests.sh
+
+# 4. Test API endpoints
+python scripts/test_team_endpoints.py
+```
+
+### **Frontend Development Workflow**
+```bash
+# 1. Fix UI component import casing (comprehensive)
+./scripts/fix-all-imports.sh
+
+# 2. Quick fix for basic components only
+./scripts/fix-imports.sh
+
+# 3. Advanced fix with detailed verification
+./scripts/fix-ui-imports.sh
+
+# 4. Run frontend tests to verify fixes
+./scripts/run_frontend_tests.sh
+```
+
 ### **Database Setup and Deployment Workflow**
 ```bash
 # 1. Create initial database tables (development)
@@ -1141,6 +1316,15 @@ python digame/scripts/git-setup.py config 'Your Name' 'your.email@example.com'
 ---
 
 ## 📝 Recent Updates
+
+**January 6, 2025**: Moved development and frontend scripts from root to `/scripts/` directory:
+- Moved `start-dev.sh` - Interactive development environment startup script
+- Moved `fix-all-imports.sh` - Comprehensive UI component import casing fix
+- Moved `fix-imports.sh` - Basic UI component import casing fix
+- Moved `fix-ui-imports.sh` - Advanced UI component import casing fix with verification
+- Added comprehensive documentation for all development and frontend scripts
+- Updated common use cases to include development environment and frontend workflows
+- Enhanced script organization for better project structure and maintainability
 
 **January 4, 2025**: Moved and documented root-level scripts for better organization:
 - Moved `check_backend_db.py` - Node.js backend database inspection

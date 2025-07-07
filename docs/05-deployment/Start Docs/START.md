@@ -299,11 +299,11 @@ npm run start:dual-backend     # Production dual backend
 
 ### **2. Interactive Shell Script (✅ CREATED)**
 
-Created [`start-dev.sh`](start-dev.sh) with user-friendly menu:
+Created [`start-dev.sh`](../../../scripts/start-dev.sh) with user-friendly menu:
 
 ```bash
-chmod +x start-dev.sh
-./start-dev.sh
+chmod +x scripts/start-dev.sh
+./scripts/start-dev.sh
 
 # Interactive menu offers:
 # 1) Node.js Backend Only (Recommended - Complete Test Zone)
@@ -348,8 +348,8 @@ npm run dev:backend-python
 
 ```bash
 # Make executable and run
-chmod +x start-dev.sh
-./start-dev.sh
+chmod +x scripts/start-dev.sh
+./scripts/start-dev.sh
 
 # Follow the interactive menu to choose your preferred setup
 ```

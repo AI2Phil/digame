@@ -114,8 +114,8 @@ open http://localhost:3001
 ### **🎯 Option 2: Interactive Setup**
 ```bash
 # Make executable and run interactive setup
-chmod +x start-dev.sh
-./start-dev.sh
+chmod +x scripts/start-dev.sh
+./scripts/start-dev.sh
 ```
 
 ### **🎯 Option 3: Docker Compose**
