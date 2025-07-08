@@ -498,7 +498,7 @@ const PredictiveModeling = () => {
       }, 500);
       
       // Call the real training API
-      const response = await fetch(`/api/analytics/models/${modelId}/train`, {
+      const response = await fetch(`http://localhost:8001/api/analytics/models/${modelId}/train`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

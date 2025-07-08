@@ -69,7 +69,7 @@ const UserManagementSection = () => {
         status_filter: currentFilterStatus
       });
 
-      const response = await fetch(`/api/admin/users/comprehensive?${params}`, {
+      const response = await fetch(`http://localhost:8001/api/admin/users/comprehensive?${params}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
           'Content-Type': 'application/json'
@@ -102,7 +102,7 @@ const UserManagementSection = () => {
   // Fetch user statistics
   const fetchUserStats = async () => {
     try {
-      const response = await fetch('/api/admin/users/stats', {
+      const response = await fetch('http://localhost:8001/api/admin/users/stats', {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
           'Content-Type': 'application/json'
@@ -206,10 +206,10 @@ const UserManagementSection = () => {
       switch (action) {
         case 'activate':
         case 'deactivate':
-          endpoint = `/api/admin/users/${userId}/toggle-status`;
+          endpoint = `http://localhost:8001/api/admin/users/${userId}/toggle-status`;
           break;
         case 'delete':
-          endpoint = `/api/admin/users/${userId}`;
+          endpoint = `http://localhost:8001/api/admin/users/${userId}`;
           method = 'DELETE';
           break;
         default:
@@ -248,7 +248,7 @@ const UserManagementSection = () => {
     }
 
     try {
-      const response = await fetch('/api/admin/users/bulk-action', {
+      const response = await fetch('http://localhost:8001/api/admin/users/bulk-action', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,

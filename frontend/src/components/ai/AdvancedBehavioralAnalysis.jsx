@@ -98,7 +98,7 @@ import {
 // API service for behavioral analysis
 const behavioralAnalysisAPI = {
   async fetchAnalysis(analysisDepth = 'comprehensive') {
-    const response = await fetch(`/api/v1/advanced-behavioral-analysis/analyze?analysis_depth=${analysisDepth}`, {
+    const response = await fetch(`http://localhost:8001/api/v1/advanced-behavioral-analysis/analyze?analysis_depth=${analysisDepth}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

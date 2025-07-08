@@ -577,7 +577,7 @@ const AIPoweredAutomation = () => {
       const newStatus = automation.status === 'active' ? 'paused' : 'active';
       
       // Update via API (assuming template activation/deactivation)
-      const response = await fetch(`/api/workflow-automation/templates/${automationId}`, {
+      const response = await fetch(`http://localhost:8001/api/workflow-automation/templates/${automationId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

@@ -57,7 +57,7 @@ const SystemAnalyticsSection = () => {
       setLoading(true);
       setError(null);
 
-      const response = await fetch(`/api/admin/system/analytics/detailed?time_range=${timeRange}`, {
+      const response = await fetch(`http://localhost:8001/api/admin/system/analytics/detailed?time_range=${timeRange}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
           'Content-Type': 'application/json'

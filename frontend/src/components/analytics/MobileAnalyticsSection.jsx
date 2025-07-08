@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
-import { 
-  Smartphone, Monitor, Tablet, Users, 
+import React, { useState, useEffect } from 'react';
+import {
+  Smartphone, Monitor, Tablet, Users,
   TrendingUp, Clock, Download, Star,
   Battery, Wifi, MapPin, Activity,
-  AlertTriangle, CheckCircle, BarChart3
+  AlertTriangle, CheckCircle, BarChart3, RefreshCw
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/Card';
 import { Button } from '../ui/Button';
@@ -11,85 +11,237 @@ import { Badge } from '../ui/Badge';
 import { Progress } from '../ui/Progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/Tabs';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../ui/Table';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../ui/Select';
+import { useToast } from '../ui/Toast';
 
-const MobileAnalyticsSection = ({ data }) => {
-  const [selectedPlatform, setSelectedPlatform] = useState('all');
+const MobileAnalyticsSection = () => {
+  // Toast hook for notifications
+  const { toast } = useToast();
+  
+  // State management for database-driven data
+  const [mobileMetrics, setMobileMetrics] = useState({});
+  const [platformBreakdown, setPlatformBreakdown] = useState([]);
+  const [deviceMetrics, setDeviceMetrics] = useState([]);
+  const [appVersions, setAppVersions] = useState([]);
+  const [performanceMetrics, setPerformanceMetrics] = useState({});
+  const [userEngagement, setUserEngagement] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [timeRange, setTimeRange] = useState('24h');
+  const [refreshing, setRefreshing] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(false);
 
-  // Mock mobile analytics data with realistic metrics
-  const mobileMetrics = {
-    totalMobileUsers: data?.totalMobileUsers || 8456,
-    dailyActiveUsers: data?.dailyActiveUsers || 2134,
-    sessionDuration: data?.avgSessionDuration || 18.5,
-    crashRate: data?.crashRate || 0.12,
-    appStoreRating: data?.appStoreRating || 4.7,
-    retentionRate: data?.retentionRate || 68.5,
-    loadTime: data?.avgLoadTime || 2.3,
-    offlineUsage: data?.offlineUsage || 15.2
-  };
+  // Detect dark mode
+  useEffect(() => {
+    const checkDarkMode = () => {
+      setIsDarkMode(document.documentElement.classList.contains('dark'));
+    };
+    
+    checkDarkMode();
+    
+    const observer = new MutationObserver(checkDarkMode);
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class']
+    });
+    
+    return () => observer.disconnect();
+  }, []);
 
-  const platformBreakdown = [
-    { 
-      platform: 'iOS', 
-      users: 4823, 
-      percentage: 57.0, 
-      version: '17.2', 
-      crashRate: 0.08,
-      rating: 4.8,
-      icon: Smartphone 
-    },
-    { 
-      platform: 'Android', 
-      users: 3633, 
-      percentage: 43.0, 
-      version: '14.0', 
-      crashRate: 0.15,
-      rating: 4.6,
-      icon: Smartphone 
-    }
-  ];
+  // Fetch mobile analytics data from API
+  const fetchMobileAnalytics = async () => {
+    try {
+      setLoading(true);
+      setError(null);
 
-  const deviceMetrics = [
-    { device: 'iPhone 15 Pro', users: 1245, percentage: 14.7, performance: 95 },
-    { device: 'iPhone 14', users: 987, percentage: 11.7, performance: 92 },
-    { device: 'Samsung Galaxy S24', users: 876, percentage: 10.4, performance: 89 },
-    { device: 'iPhone 13', users: 765, percentage: 9.0, performance: 88 },
-    { device: 'Google Pixel 8', users: 543, percentage: 6.4, performance: 91 },
-    { device: 'Others', users: 4040, percentage: 47.8, performance: 85 }
-  ];
+      const response = await fetch(`http://localhost:8001/api/admin/mobile/analytics/detailed?time_range=${timeRange}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        }
+      });
 
-  const appVersions = [
-    { version: '2.1.0', users: 3456, percentage: 40.9, crashRate: 0.08, adoption: 'current' },
-    { version: '2.0.5', users: 2134, percentage: 25.2, crashRate: 0.12, adoption: 'previous' },
-    { version: '2.0.4', users: 1567, percentage: 18.5, crashRate: 0.15, adoption: 'legacy' },
-    { version: '1.9.8', users: 876, percentage: 10.4, crashRate: 0.22, adoption: 'legacy' },
-    { version: 'Others', users: 423, percentage: 5.0, crashRate: 0.35, adoption: 'legacy' }
-  ];
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
 
-  const performanceMetrics = {
-    appLaunchTime: { avg: 2.3, p95: 4.1, target: 3.0 },
-    screenLoadTime: { avg: 1.8, p95: 3.2, target: 2.5 },
-    apiResponseTime: { avg: 156, p95: 289, target: 200 },
-    memoryUsage: { avg: 145, peak: 234, limit: 300 },
-    batteryImpact: { score: 8.2, rating: 'Good' },
-    networkUsage: { avg: 2.4, peak: 5.1, unit: 'MB/session' }
-  };
-
-  const userEngagement = {
-    sessionFrequency: { daily: 2.3, weekly: 8.7, monthly: 24.5 },
-    featureUsage: [
-      { feature: 'Dashboard', usage: 89.5, sessions: 7234 },
-      { feature: 'Goals', usage: 76.2, sessions: 6123 },
-      { feature: 'Profile', usage: 68.9, sessions: 5543 },
-      { feature: 'Analytics', usage: 45.3, sessions: 3654 },
-      { feature: 'Settings', usage: 34.7, sessions: 2789 }
-    ],
-    pushNotifications: {
-      delivered: 12456,
-      opened: 3567,
-      openRate: 28.6,
-      optInRate: 72.3
+      const result = await response.json();
+      const data = result.data || result;
+      
+      setMobileMetrics(data.mobileMetrics || {});
+      setPlatformBreakdown(data.platformBreakdown || []);
+      setDeviceMetrics(data.deviceMetrics || []);
+      setAppVersions(data.appVersions || []);
+      setPerformanceMetrics(data.performanceMetrics || {});
+      setUserEngagement(data.userEngagement || {});
+      
+    } catch (err) {
+      console.error('Error fetching mobile analytics:', err);
+      setError(err.message);
+      // Fallback to enhanced sample data
+      generateEnhancedSampleData();
+      // Show notification that fallback data is being used
+      toast.warning('API Unavailable', 'Using sample data - API endpoints not accessible');
+    } finally {
+      setLoading(false);
     }
   };
+
+  // Generate enhanced sample data as fallback
+  const generateEnhancedSampleData = () => {
+    // Generate realistic mobile metrics
+    const enhancedMobileMetrics = {
+      totalMobileUsers: Math.round(Math.random() * 2000 + 7500), // 7.5k-9.5k
+      dailyActiveUsers: Math.round(Math.random() * 500 + 1900), // 1.9k-2.4k
+      avgSessionDuration: Math.round((Math.random() * 7 + 15) * 10) / 10, // 15-22 minutes
+      crashRate: Math.round((Math.random() * 0.1 + 0.08) * 100) / 100, // 0.08-0.18%
+      appStoreRating: Math.round((Math.random() * 0.4 + 4.5) * 10) / 10, // 4.5-4.9
+      retentionRate: Math.round((Math.random() * 10 + 65) * 10) / 10, // 65-75%
+      avgLoadTime: Math.round((Math.random() * 1 + 2) * 10) / 10, // 2-3 seconds
+      offlineUsage: Math.round((Math.random() * 6 + 12) * 10) / 10 // 12-18%
+    };
+    
+    setMobileMetrics(enhancedMobileMetrics);
+    
+    // Generate enhanced platform breakdown
+    const enhancedPlatforms = [
+      {
+        platform: 'iOS',
+        users: Math.round(enhancedMobileMetrics.totalMobileUsers * 0.57),
+        percentage: 57.0,
+        version: '17.2',
+        crashRate: Math.round((Math.random() * 0.04 + 0.06) * 100) / 100,
+        rating: Math.round((Math.random() * 0.2 + 4.7) * 10) / 10,
+        icon: Smartphone
+      },
+      {
+        platform: 'Android',
+        users: Math.round(enhancedMobileMetrics.totalMobileUsers * 0.43),
+        percentage: 43.0,
+        version: '14.0',
+        crashRate: Math.round((Math.random() * 0.06 + 0.12) * 100) / 100,
+        rating: Math.round((Math.random() * 0.2 + 4.5) * 10) / 10,
+        icon: Smartphone
+      }
+    ];
+    
+    setPlatformBreakdown(enhancedPlatforms);
+    
+    // Generate enhanced device metrics
+    const enhancedDevices = [
+      { device: 'iPhone 15 Pro', users: Math.round(enhancedMobileMetrics.totalMobileUsers * 0.147), percentage: 14.7, performance: Math.round(Math.random() * 4 + 93) },
+      { device: 'iPhone 14', users: Math.round(enhancedMobileMetrics.totalMobileUsers * 0.117), percentage: 11.7, performance: Math.round(Math.random() * 4 + 90) },
+      { device: 'Samsung Galaxy S24', users: Math.round(enhancedMobileMetrics.totalMobileUsers * 0.104), percentage: 10.4, performance: Math.round(Math.random() * 4 + 87) },
+      { device: 'iPhone 13', users: Math.round(enhancedMobileMetrics.totalMobileUsers * 0.090), percentage: 9.0, performance: Math.round(Math.random() * 4 + 86) },
+      { device: 'Google Pixel 8', users: Math.round(enhancedMobileMetrics.totalMobileUsers * 0.064), percentage: 6.4, performance: Math.round(Math.random() * 4 + 89) },
+      { device: 'Others', users: Math.round(enhancedMobileMetrics.totalMobileUsers * 0.478), percentage: 47.8, performance: Math.round(Math.random() * 4 + 83) }
+    ];
+    
+    setDeviceMetrics(enhancedDevices);
+    
+    // Generate enhanced app versions
+    const enhancedVersions = [
+      { version: '2.1.0', users: Math.round(enhancedMobileMetrics.totalMobileUsers * 0.409), percentage: 40.9, crashRate: Math.round((Math.random() * 0.04 + 0.06) * 100) / 100, adoption: 'current' },
+      { version: '2.0.5', users: Math.round(enhancedMobileMetrics.totalMobileUsers * 0.252), percentage: 25.2, crashRate: Math.round((Math.random() * 0.04 + 0.10) * 100) / 100, adoption: 'previous' },
+      { version: '2.0.4', users: Math.round(enhancedMobileMetrics.totalMobileUsers * 0.185), percentage: 18.5, crashRate: Math.round((Math.random() * 0.04 + 0.13) * 100) / 100, adoption: 'legacy' },
+      { version: '1.9.8', users: Math.round(enhancedMobileMetrics.totalMobileUsers * 0.104), percentage: 10.4, crashRate: Math.round((Math.random() * 0.05 + 0.20) * 100) / 100, adoption: 'legacy' },
+      { version: 'Others', users: Math.round(enhancedMobileMetrics.totalMobileUsers * 0.050), percentage: 5.0, crashRate: Math.round((Math.random() * 0.10 + 0.30) * 100) / 100, adoption: 'legacy' }
+    ];
+    
+    setAppVersions(enhancedVersions);
+    
+    // Generate enhanced performance metrics
+    const enhancedPerformance = {
+      appLaunchTime: { avg: Math.round((Math.random() * 0.8 + 2.0) * 10) / 10, p95: Math.round((Math.random() * 0.7 + 3.8) * 10) / 10, target: 3.0 },
+      screenLoadTime: { avg: Math.round((Math.random() * 0.7 + 1.5) * 10) / 10, p95: Math.round((Math.random() * 0.7 + 2.8) * 10) / 10, target: 2.5 },
+      apiResponseTime: { avg: Math.round(Math.random() * 40 + 140), p95: Math.round(Math.random() * 70 + 250), target: 200 },
+      memoryUsage: { avg: Math.round(Math.random() * 30 + 130), peak: Math.round(Math.random() * 30 + 220), limit: 300 },
+      batteryImpact: { score: Math.round((Math.random() * 0.7 + 7.8) * 10) / 10, rating: 'Good' },
+      networkUsage: { avg: Math.round((Math.random() * 0.8 + 2.0) * 10) / 10, peak: Math.round((Math.random() * 1.0 + 4.5) * 10) / 10, unit: 'MB/session' }
+    };
+    
+    setPerformanceMetrics(enhancedPerformance);
+    
+    // Generate enhanced user engagement
+    const enhancedEngagement = {
+      sessionFrequency: {
+        daily: Math.round((Math.random() * 0.6 + 2.0) * 10) / 10,
+        weekly: Math.round((Math.random() * 1.5 + 8.0) * 10) / 10,
+        monthly: Math.round((Math.random() * 3.0 + 23.0) * 10) / 10
+      },
+      featureUsage: [
+        { feature: 'Dashboard', usage: Math.round((Math.random() * 7 + 85) * 10) / 10, sessions: Math.round(Math.random() * 700 + 6800) },
+        { feature: 'Goals', usage: Math.round((Math.random() * 8 + 72) * 10) / 10, sessions: Math.round(Math.random() * 600 + 5800) },
+        { feature: 'Profile', usage: Math.round((Math.random() * 7 + 65) * 10) / 10, sessions: Math.round(Math.random() * 600 + 5200) },
+        { feature: 'Analytics', usage: Math.round((Math.random() * 6 + 42) * 10) / 10, sessions: Math.round(Math.random() * 500 + 3400) },
+        { feature: 'Settings', usage: Math.round((Math.random() * 6 + 32) * 10) / 10, sessions: Math.round(Math.random() * 400 + 2600) }
+      ],
+      pushNotifications: {
+        delivered: Math.round(Math.random() * 2000 + 11500),
+        opened: Math.round(Math.random() * 700 + 3200),
+        openRate: Math.round((Math.random() * 5 + 26) * 10) / 10,
+        optInRate: Math.round((Math.random() * 5 + 70) * 10) / 10
+      }
+    };
+    
+    setUserEngagement(enhancedEngagement);
+  };
+
+  // Load data on component mount and when time range changes
+  useEffect(() => {
+    fetchMobileAnalytics();
+  }, [timeRange]);
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await fetchMobileAnalytics();
+    setRefreshing(false);
+  };
+
+  // Use safe defaults to prevent errors
+  const safeMobileMetrics = mobileMetrics || {};
+  const safePlatformBreakdown = platformBreakdown || [];
+  const safeDeviceMetrics = deviceMetrics || [];
+  const safeAppVersions = appVersions || [];
+  const safePerformanceMetrics = performanceMetrics || {};
+  const safeUserEngagement = userEngagement || {};
+
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <Card className={`transition-all duration-300 ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+          <CardContent className="p-8">
+            <div className="flex items-center justify-center">
+              <RefreshCw className="w-8 h-8 animate-spin text-blue-500" />
+              <span className="ml-3 text-lg">Loading mobile analytics...</span>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error && Object.keys(safeMobileMetrics).length === 0) {
+    return (
+      <div className="space-y-6">
+        <Card className={`transition-all duration-300 ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+          <CardContent className="p-8">
+            <div className="text-center">
+              <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Error Loading Mobile Analytics</h3>
+              <p className="text-gray-600 dark:text-gray-400 mb-4">{error}</p>
+              <Button onClick={handleRefresh} className="bg-blue-600 hover:bg-blue-700 text-white">
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Try Again
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   const getPerformanceColor = (value, target, isLower = false) => {
     const ratio = value / target;
@@ -106,22 +258,49 @@ const MobileAnalyticsSection = ({ data }) => {
 
   return (
     <div className="space-y-6">
-      {/* Mobile Overview */}
+      {/* Header */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Smartphone className="w-5 h-5" />
-            Mobile Application Analytics
-          </CardTitle>
-          <CardDescription>
-            Comprehensive mobile app performance, user engagement, and platform analytics
-          </CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <Smartphone className="w-5 h-5" />
+                Mobile Application Analytics
+              </CardTitle>
+              <CardDescription className="dark:text-gray-400">
+                Comprehensive mobile app performance, user engagement, and platform analytics
+              </CardDescription>
+            </div>
+            <div className="flex items-center gap-2">
+              <Select value={timeRange} onValueChange={setTimeRange}>
+                <SelectTrigger className="px-3 py-2 border border-gray-300 rounded-md text-sm w-[180px]">
+                  <SelectValue placeholder="Select time range" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1h">Last Hour</SelectItem>
+                  <SelectItem value="24h">Last 24 Hours</SelectItem>
+                  <SelectItem value="7d">Last 7 Days</SelectItem>
+                  <SelectItem value="30d">Last 30 Days</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full sm:w-auto dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700"
+                onClick={handleRefresh}
+                disabled={refreshing}
+              >
+                <RefreshCw className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+                Refresh
+              </Button>
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <MobileMetricCard
               title="Mobile Users"
-              value={mobileMetrics.totalMobileUsers.toLocaleString()}
+              value={safeMobileMetrics.totalMobileUsers?.toLocaleString() || 'N/A'}
               change="+18%"
               trend="up"
               icon={Users}
@@ -129,7 +308,7 @@ const MobileAnalyticsSection = ({ data }) => {
             />
             <MobileMetricCard
               title="Daily Active"
-              value={mobileMetrics.dailyActiveUsers.toLocaleString()}
+              value={safeMobileMetrics.dailyActiveUsers?.toLocaleString() || 'N/A'}
               change="+12%"
               trend="up"
               icon={Activity}
@@ -137,7 +316,7 @@ const MobileAnalyticsSection = ({ data }) => {
             />
             <MobileMetricCard
               title="Session Duration"
-              value={`${mobileMetrics.sessionDuration}m`}
+              value={safeMobileMetrics.avgSessionDuration ? `${safeMobileMetrics.avgSessionDuration}m` : 'N/A'}
               change="+8%"
               trend="up"
               icon={Clock}
@@ -145,7 +324,7 @@ const MobileAnalyticsSection = ({ data }) => {
             />
             <MobileMetricCard
               title="App Rating"
-              value={mobileMetrics.appStoreRating}
+              value={safeMobileMetrics.appStoreRating || 'N/A'}
               change="+0.2"
               trend="up"
               icon={Star}
@@ -156,38 +335,38 @@ const MobileAnalyticsSection = ({ data }) => {
       </Card>
 
       {/* Mobile Analytics Tabs */}
-      <Tabs defaultValue="platforms" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="platforms">Platforms</TabsTrigger>
-          <TabsTrigger value="performance">Performance</TabsTrigger>
-          <TabsTrigger value="engagement">Engagement</TabsTrigger>
-          <TabsTrigger value="devices">Devices</TabsTrigger>
-          <TabsTrigger value="versions">App Versions</TabsTrigger>
+      <Tabs defaultValue="platforms" className="space-y-6 dark:text-gray-300">
+        <TabsList className="grid w-full grid-cols-5 dark:bg-gray-800">
+          <TabsTrigger value="platforms" className="dark:data-[state=active]:bg-gray-700 dark:data-[state=active]:text-white">Platforms</TabsTrigger>
+          <TabsTrigger value="performance" className="dark:data-[state=active]:bg-gray-700 dark:data-[state=active]:text-white">Performance</TabsTrigger>
+          <TabsTrigger value="engagement" className="dark:data-[state=active]:bg-gray-700 dark:data-[state=active]:text-white">Engagement</TabsTrigger>
+          <TabsTrigger value="devices" className="dark:data-[state=active]:bg-gray-700 dark:data-[state=active]:text-white">Devices</TabsTrigger>
+          <TabsTrigger value="versions" className="dark:data-[state=active]:bg-gray-700 dark:data-[state=active]:text-white">App Versions</TabsTrigger>
         </TabsList>
 
         {/* Platforms Tab */}
         <TabsContent value="platforms" className="space-y-6">
-          <PlatformAnalyticsSection platforms={platformBreakdown} />
+          <PlatformAnalyticsSection platforms={safePlatformBreakdown} />
         </TabsContent>
 
         {/* Performance Tab */}
         <TabsContent value="performance" className="space-y-6">
-          <MobilePerformanceSection metrics={performanceMetrics} />
+          <MobilePerformanceSection metrics={safePerformanceMetrics} />
         </TabsContent>
 
         {/* Engagement Tab */}
         <TabsContent value="engagement" className="space-y-6">
-          <UserEngagementSection engagement={userEngagement} />
+          <UserEngagementSection engagement={safeUserEngagement} />
         </TabsContent>
 
         {/* Devices Tab */}
         <TabsContent value="devices" className="space-y-6">
-          <DeviceAnalyticsSection devices={deviceMetrics} />
+          <DeviceAnalyticsSection devices={safeDeviceMetrics} />
         </TabsContent>
 
         {/* App Versions Tab */}
         <TabsContent value="versions" className="space-y-6">
-          <AppVersionAnalyticsSection versions={appVersions} />
+          <AppVersionAnalyticsSection versions={safeAppVersions} />
         </TabsContent>
       </Tabs>
     </div>
