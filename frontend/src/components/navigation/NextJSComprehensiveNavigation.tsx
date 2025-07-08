@@ -261,6 +261,7 @@ const NextJSComprehensiveNavigation: React.FC<NextJSComprehensiveNavigationProps
       description: 'System integrations and API management',
       items: [
         { label: 'Integration Hub', icon: <Puzzle className="w-4 h-4" />, path: '/integration', description: 'Integration overview' },
+        { label: 'Integration Dashboard', icon: <BarChart3 className="w-4 h-4" />, path: '/integration/dashboard', subtitle: 'INTEGRATION MANAGEMENT', description: 'Monitor and manage integration connections, sync analytics, and third-party service management' },
         { label: 'API Management', icon: <Code className="w-4 h-4" />, path: '/integration/api', subtitle: 'API TOOLS' },
         { label: 'Data Integration', icon: <Database className="w-4 h-4" />, path: '/integration/data', subtitle: 'DATA SYNC' },
         { label: 'SSO Integration', icon: <Shield className="w-4 h-4" />, path: '/integration/sso', subtitle: 'SINGLE SIGN-ON' },

@@ -1,5 +1,36 @@
 import React, { useState, useEffect } from 'react';
 
+// Simple toast function for user feedback
+const toast = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
+  // Create toast element
+  const toastEl = document.createElement('div');
+  toastEl.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 12px 20px;
+    border-radius: 6px;
+    color: white;
+    font-weight: 500;
+    z-index: 10000;
+    max-width: 400px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    ${type === 'success' ? 'background-color: #059669;' : ''}
+    ${type === 'error' ? 'background-color: #dc2626;' : ''}
+    ${type === 'info' ? 'background-color: #3b82f6;' : ''}
+  `;
+  toastEl.textContent = message;
+  
+  document.body.appendChild(toastEl);
+  
+  // Remove after 4 seconds
+  setTimeout(() => {
+    if (document.body.contains(toastEl)) {
+      document.body.removeChild(toastEl);
+    }
+  }, 4000);
+};
+
 interface IntegrationConnection {
   id: number;
   provider_id: number;
@@ -64,27 +95,37 @@ export const IntegrationDashboard: React.FC = () => {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
+      setError(null);
       
       // Fetch connections
-      const connectionsResponse = await fetch('/api/integrations/connections');
-      if (!connectionsResponse.ok) throw new Error('Failed to fetch connections');
+      const connectionsResponse = await fetch('http://localhost:8001/api/integrations/connections');
+      if (!connectionsResponse.ok) {
+        if (connectionsResponse.status === 401) {
+          throw new Error('Authentication required. Please log in.');
+        }
+        throw new Error('Failed to fetch connections');
+      }
       const connectionsData = await connectionsResponse.json();
       setConnections(connectionsData);
 
       // Fetch recent sync logs
-      const logsResponse = await fetch('/api/integrations/sync-logs?limit=50');
+      const logsResponse = await fetch('http://localhost:8001/api/integrations/sync-logs?limit=50');
       if (!logsResponse.ok) throw new Error('Failed to fetch sync logs');
       const logsData = await logsResponse.json();
       setSyncLogs(logsData);
 
       // Fetch analytics
-      const analyticsResponse = await fetch('/api/integrations/analytics');
+      const analyticsResponse = await fetch('http://localhost:8001/api/integrations/analytics');
       if (!analyticsResponse.ok) throw new Error('Failed to fetch analytics');
       const analyticsData = await analyticsResponse.json();
       setAnalytics(analyticsData);
 
+      toast('Integration dashboard loaded successfully', 'success');
+
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load dashboard');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to load dashboard';
+      setError(errorMessage);
+      toast(`API unavailable: ${errorMessage}. Using demo data.`, 'info');
     } finally {
       setLoading(false);
     }
@@ -92,30 +133,46 @@ export const IntegrationDashboard: React.FC = () => {
 
   const handleSync = async (connectionId: number) => {
     try {
-      const response = await fetch(`/api/integrations/connections/${connectionId}/sync`, {
+      const response = await fetch(`http://localhost:8001/api/integrations/connections/${connectionId}/sync`, {
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
       });
 
       if (!response.ok) throw new Error('Failed to start sync');
       
+      const result = await response.json();
+      toast(`Sync initiated successfully for connection ${connectionId}`, 'success');
+      
       // Refresh data after sync
       await fetchDashboardData();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to sync');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to sync';
+      setError(errorMessage);
+      toast(`Sync failed: ${errorMessage}`, 'error');
     }
   };
 
   const handleTestConnection = async (connectionId: number) => {
     try {
-      const response = await fetch(`/api/integrations/connections/${connectionId}/test`, {
+      const response = await fetch(`http://localhost:8001/api/integrations/connections/${connectionId}/test`, {
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
       });
 
       if (!response.ok) throw new Error('Connection test failed');
       
+      const result = await response.json();
+      toast(`Connection test successful for connection ${connectionId}`, 'success');
+      
       await fetchDashboardData();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Connection test failed');
+      const errorMessage = err instanceof Error ? err.message : 'Connection test failed';
+      setError(errorMessage);
+      toast(`Connection test failed: ${errorMessage}`, 'error');
     }
   };
 
@@ -175,9 +232,23 @@ export const IntegrationDashboard: React.FC = () => {
   return (
     <div style={{ padding: '24px', maxWidth: '1200px', margin: '0 auto' }}>
       <div style={{ marginBottom: '32px' }}>
-        <h1 style={{ fontSize: '28px', fontWeight: 'bold', marginBottom: '8px' }}>
-          📊 Integration Dashboard
-        </h1>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+          <h1 style={{ fontSize: '28px', fontWeight: 'bold' }}>
+            📊 Integration Dashboard
+          </h1>
+          {error && (
+            <span style={{
+              padding: '4px 8px',
+              backgroundColor: '#fbbf24',
+              color: '#92400e',
+              borderRadius: '4px',
+              fontSize: '12px',
+              fontWeight: '500',
+            }}>
+              Demo Data
+            </span>
+          )}
+        </div>
         <p style={{ color: '#6b7280', fontSize: '16px' }}>
           Monitor and manage your integration connections and data synchronization
         </p>

@@ -78,6 +78,7 @@ from .routers import data_management_router # Import the data management router
 from .routers import multi_tenancy_router # Import the multi-tenancy router
 from .routers import real_time_collaboration_router # Import the real-time collaboration router
 from .routers import advanced_monitoring_router # Import the advanced monitoring router
+from .routers import integration_dashboard_router # Import the integration dashboard router
 # from .api.v1 import advanced_tenant_management # Import the advanced tenant management router - temporarily disabled due to Session import issues
 # from .api.v1 import enterprise_security_enhancement # Import the enterprise security enhancement router - temporarily disabled
 # from .api.v1 import enterprise_integration # Import the enterprise integration router - temporarily disabled
@@ -288,6 +289,10 @@ app = FastAPI(
         {
             "name": "Advanced Monitoring",
             "description": "Advanced system monitoring, alerting, metrics tracking, service health monitoring, and monitoring rules management"
+        },
+        {
+            "name": "Integration Dashboard",
+            "description": "Integration management dashboard with connection monitoring, sync analytics, and third-party service management"
         }
     ]
 )
@@ -377,6 +382,7 @@ app.include_router(data_management_router.router, tags=["Data Management"]) # Ad
 app.include_router(multi_tenancy_router.router, prefix="/api/multi-tenancy", tags=["Multi-Tenancy Management"]) # Add multi-tenancy router
 app.include_router(real_time_collaboration_router.router, prefix="/api/collaboration", tags=["Real-Time Collaboration"]) # Add real-time collaboration router
 app.include_router(advanced_monitoring_router.router, prefix="/api/monitoring", tags=["Advanced Monitoring"]) # Add advanced monitoring router
+app.include_router(integration_dashboard_router.router, tags=["Integration Dashboard"]) # Add integration dashboard router
 # app.include_router(advanced_tenant_management.router, prefix="/api/v1", tags=["Advanced Tenant Management"]) # Add advanced tenant management router - temporarily disabled
 # app.include_router(enterprise_security_enhancement.router, prefix="/api/v1", tags=["Enterprise Security Enhancement"]) # Add enterprise security enhancement router - temporarily disabled
 # app.include_router(enterprise_integration.router, prefix="/api/v1", tags=["Enterprise Integration"]) # Add enterprise integration router - temporarily disabled
