@@ -1,6 +1,6 @@
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey
-from sqlalchemy.orm import relationship
-from sqlalchemy.sql import func
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey  # type: ignore
+from sqlalchemy.orm import relationship  # type: ignore
+from sqlalchemy.sql import func  # type: ignore
 from ..database import Base
 
 class Notification(Base):

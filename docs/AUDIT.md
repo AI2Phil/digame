@@ -3,6 +3,8 @@
 ## Overview
 This document provides a comprehensive audit of all pages, components, and sub-pages that currently contain mock data requiring replacement with database-driven content. This checklist enables tracking progress for production readiness completion.
 
+**Post-completion: move onto the /docs/API_KEY.md to complete the remaining phases of its implementation, once this Data Audit is complete.**
+
 **Priority:** CRITICAL - Required for Go-Live
 **Priority:** Confirm that the platform is indeed using SQLAlchemy 2.0.23. Update the seeding script to use proper SQLAlchemy 2.0 ORM patterns instead of raw SQL.
 **Priority:** confirm the comprehensive menu includes page to this URL as a menu item NextJSComprehensiveNavigation.tsx

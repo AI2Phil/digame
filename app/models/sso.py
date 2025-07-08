@@ -5,6 +5,7 @@ Single Sign-On (SSO) models for enterprise authentication
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, JSON, ForeignKey
 from sqlalchemy.orm import relationship
 from datetime import datetime, timezone
+from typing import Optional
 import uuid
 
 # Use the existing Base from the project
@@ -85,7 +86,7 @@ class SSOProvider(Base):
     def is_ldap(self):
         return self.provider_type == "ldap"
 
-    def get_attribute_mapping(self, attribute: str, default: str = None):
+    def get_attribute_mapping(self, attribute: str, default: Optional[str] = None):
         """Get mapped attribute name for IdP attribute"""
         return self.attribute_mapping.get(attribute, default or attribute)
 
@@ -156,12 +157,12 @@ class SSOSession(Base):
         """Check if session has expired"""
         return self.expires_at and datetime.now(timezone.utc) > self.expires_at
 
-    def terminate(self, reason: str = None):
+    def terminate(self, reason: Optional[str] = None):
         """Terminate the SSO session"""
-        self.status = "terminated"
-        self.terminated_at = datetime.now(timezone.utc)
+        self.status = "terminated"  # type: ignore
+        self.terminated_at = datetime.now(timezone.utc)  # type: ignore
         if reason:
-            self.failure_reason = reason
+            self.failure_reason = reason  # type: ignore
 
 
 class SSOUserMapping(Base):
@@ -200,8 +201,8 @@ class SSOUserMapping(Base):
 
     def update_login_info(self):
         """Update login tracking information"""
-        self.last_login_at = datetime.now(timezone.utc)
-        self.login_count += 1
+        self.last_login_at = datetime.now(timezone.utc)  # type: ignore
+        self.login_count += 1  # type: ignore
 
 
 class SSOAuditLog(Base):
