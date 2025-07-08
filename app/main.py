@@ -74,6 +74,10 @@ from .routers import intelligence_router # Import the intelligence router
 from .routers import platform_owner_router # Import the platform owner router
 from .routers import advanced_behavioral_analysis_router # Import the advanced behavioral analysis router
 from .routers import advanced_nlp_router # Import the advanced NLP router
+from .routers import data_management_router # Import the data management router
+from .routers import multi_tenancy_router # Import the multi-tenancy router
+from .routers import real_time_collaboration_router # Import the real-time collaboration router
+from .routers import advanced_monitoring_router # Import the advanced monitoring router
 # from .api.v1 import advanced_tenant_management # Import the advanced tenant management router - temporarily disabled due to Session import issues
 # from .api.v1 import enterprise_security_enhancement # Import the enterprise security enhancement router - temporarily disabled
 # from .api.v1 import enterprise_integration # Import the enterprise integration router - temporarily disabled
@@ -170,8 +174,8 @@ app = FastAPI(
             "description": "Third-party service integrations and APIs"
         },
         {
-            "name": "Tenant Management",
-            "description": "Multi-tenant organization management"
+            "name": "Multi-Tenancy Management",
+            "description": "Enterprise multi-tenant organization management and administration"
         },
         {
             "name": "Advanced Mobile AI Features",
@@ -272,6 +276,18 @@ app = FastAPI(
         {
             "name": "API Keys",
             "description": "User API key management for AI providers including OpenAI, Anthropic, DeepSeek, Google AI, Cohere, and Mistral"
+        },
+        {
+            "name": "Data Management",
+            "description": "Data management, backup systems, performance metrics, and go-live readiness checks"
+        },
+        {
+            "name": "Real-Time Collaboration",
+            "description": "Real-time communication, workspace management, messaging, and team collaboration features"
+        },
+        {
+            "name": "Advanced Monitoring",
+            "description": "Advanced system monitoring, alerting, metrics tracking, service health monitoring, and monitoring rules management"
         }
     ]
 )
@@ -357,6 +373,10 @@ app.include_router(intelligence_router.router, tags=["Intelligence"]) # Add inte
 app.include_router(platform_owner_router.router, tags=["Platform Owner"]) # Add platform owner router
 app.include_router(advanced_behavioral_analysis_router.router, tags=["Advanced Behavioral Analysis"]) # Add advanced behavioral analysis router
 app.include_router(advanced_nlp_router.router, tags=["Advanced NLP"]) # Add advanced NLP router
+app.include_router(data_management_router.router, tags=["Data Management"]) # Add data management router
+app.include_router(multi_tenancy_router.router, prefix="/api/multi-tenancy", tags=["Multi-Tenancy Management"]) # Add multi-tenancy router
+app.include_router(real_time_collaboration_router.router, prefix="/api/collaboration", tags=["Real-Time Collaboration"]) # Add real-time collaboration router
+app.include_router(advanced_monitoring_router.router, prefix="/api/monitoring", tags=["Advanced Monitoring"]) # Add advanced monitoring router
 # app.include_router(advanced_tenant_management.router, prefix="/api/v1", tags=["Advanced Tenant Management"]) # Add advanced tenant management router - temporarily disabled
 # app.include_router(enterprise_security_enhancement.router, prefix="/api/v1", tags=["Enterprise Security Enhancement"]) # Add enterprise security enhancement router - temporarily disabled
 # app.include_router(enterprise_integration.router, prefix="/api/v1", tags=["Enterprise Integration"]) # Add enterprise integration router - temporarily disabled

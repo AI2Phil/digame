@@ -207,6 +207,7 @@ const NextJSComprehensiveNavigation: React.FC<NextJSComprehensiveNavigationProps
       items: [
         { label: 'Team Management', icon: <Users className="w-4 h-4" />, path: '/team', description: 'Team dashboard' },
         { label: 'Team Dashboard', icon: <BarChart3 className="w-4 h-4" />, path: '/team/dashboard', subtitle: 'TEAM INSIGHTS' },
+        { label: 'Real-Time Collaboration', icon: <MessageSquare className="w-4 h-4" />, path: '/collaboration/real-time', subtitle: 'REAL-TIME COMMUNICATION', description: 'Real-time messaging, video calls, and workspace collaboration' },
         { label: 'Social Collaboration', icon: <MessageCircle className="w-4 h-4" />, path: '/team/social', subtitle: 'COLLABORATION' },
         { label: 'Mentorship Programs', icon: <GraduationCap className="w-4 h-4" />, path: '/team/mentorship', subtitle: 'MENTORSHIP' },
         { label: 'Skill Gap Analysis', icon: <Target className="w-4 h-4" />, path: '/team/skills', subtitle: 'SKILLS ANALYSIS' },
@@ -278,6 +279,7 @@ const NextJSComprehensiveNavigation: React.FC<NextJSComprehensiveNavigationProps
         { label: 'User Management', icon: <Users className="w-4 h-4" />, path: '/admin/users', subtitle: 'USER ADMIN' },
         { label: 'System Analytics', icon: <BarChart3 className="w-4 h-4" />, path: '/admin/system-analytics', subtitle: 'SYSTEM ANALYTICS', description: 'System performance monitoring and analytics' },
         { label: 'System Monitoring', icon: <Monitor className="w-4 h-4" />, path: '/admin/monitoring', subtitle: 'MONITORING' },
+        { label: 'Advanced Monitoring', icon: <Activity className="w-4 h-4" />, path: '/monitoring/advanced', subtitle: 'ADVANCED MONITORING', description: 'Advanced system monitoring, alerting, metrics tracking, and service health monitoring' },
         { label: 'RBAC Management', icon: <Shield className="w-4 h-4" />, path: '/admin/rbac', subtitle: 'ROLE MANAGEMENT' },
         { label: 'System Config', icon: <Cog className="w-4 h-4" />, path: '/admin/config', subtitle: 'CONFIGURATION' }
       ]
@@ -290,6 +292,7 @@ const NextJSComprehensiveNavigation: React.FC<NextJSComprehensiveNavigationProps
       minSubscriptionTier: 'enterprise',
       items: [
         { label: 'Enterprise Dashboard', icon: <Building className="w-4 h-4" />, path: '/enterprise', description: 'Enterprise overview' },
+        { label: 'Multi-Tenancy Management', icon: <Globe className="w-4 h-4" />, path: '/enterprise/multi-tenancy', subtitle: 'MULTI-TENANCY', description: 'Comprehensive tenant administration, user management, and enterprise oversight' },
         { label: 'Multi-Tenant Console', icon: <Globe className="w-4 h-4" />, path: '/enterprise/multi-tenant', subtitle: 'MULTI-TENANT' },
         { label: 'Tenant Management', icon: <Building className="w-4 h-4" />, path: '/enterprise/tenants', subtitle: 'TENANT ADMIN' },
         { label: 'Market Intelligence', icon: <TrendingUp className="w-4 h-4" />, path: '/enterprise/market-intel', subtitle: 'MARKET INSIGHTS' },
@@ -305,6 +308,7 @@ const NextJSComprehensiveNavigation: React.FC<NextJSComprehensiveNavigationProps
       platformOwnerOnly: true,
       items: [
         { label: 'Platform Console', icon: <Server className="w-4 h-4" />, path: '/platform-owner/console', subtitle: 'PLATFORM MANAGEMENT' },
+        { label: 'Go-Live Checklist', icon: <CheckCircle className="w-4 h-4" />, path: '/platform-owner/go-live-checklist', subtitle: 'PRODUCTION READINESS', description: 'Comprehensive go-live validation and production readiness assessment' },
         { label: 'Data Management', icon: <Database className="w-4 h-4" />, path: '/platform-owner/data-management', subtitle: 'DATA LIFECYCLE' },
         { label: 'Tenant Management', icon: <Building className="w-4 h-4" />, path: '/platform-owner/tenants', subtitle: 'ALL TENANTS' },
         { label: 'User Management', icon: <Users className="w-4 h-4" />, path: '/platform-owner/users', subtitle: 'ALL USERS' },

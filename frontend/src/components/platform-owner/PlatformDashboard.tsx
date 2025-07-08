@@ -10,7 +10,10 @@ import {
   BarChart3,
   Cpu,
   HardDrive,
-  Zap
+  Zap,
+  Database,
+  Wifi,
+  WifiOff
 } from 'lucide-react';
 
 interface DashboardData {
@@ -51,6 +54,8 @@ const PlatformDashboard: React.FC = () => {
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [dataSource, setDataSource] = useState<'database' | 'enhanced_fallback' | 'error'>('database');
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchDashboardData();
@@ -60,7 +65,21 @@ const PlatformDashboard: React.FC = () => {
 
   const fetchDashboardData = async () => {
     try {
-      const response = await fetch('http://localhost:8001/platform-owner/dashboard', {
+      setError(null);
+      
+      // Try to get backend service info first
+      let backendUrl = 'http://localhost:8000';
+      try {
+        const serviceResponse = await fetch('http://localhost:8000/service-info');
+        if (serviceResponse.ok) {
+          const serviceInfo = await serviceResponse.json();
+          backendUrl = serviceInfo.url || `http://localhost:${serviceInfo.port}`;
+        }
+      } catch (serviceError) {
+        console.log('Using default backend URL');
+      }
+
+      const response = await fetch(`${backendUrl}/platform-owner/dashboard`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken')}`
         }
@@ -68,14 +87,89 @@ const PlatformDashboard: React.FC = () => {
 
       if (response.ok) {
         const data = await response.json();
-        setDashboardData(data.dashboard_data);
-        setLastUpdated(new Date());
+        if (data.success && data.dashboard_data) {
+          setDashboardData(data.dashboard_data);
+          setDataSource(data.data_source || 'database');
+          setLastUpdated(new Date());
+        } else {
+          throw new Error('Invalid response format');
+        }
+      } else {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
     } catch (error) {
       console.error('Failed to fetch dashboard data:', error);
+      setError(error instanceof Error ? error.message : 'Unknown error');
+      
+      // Use enhanced fallback data when API fails
+      const fallbackData = generateEnhancedFallbackData();
+      setDashboardData(fallbackData);
+      setDataSource('enhanced_fallback');
+      setLastUpdated(new Date());
     } finally {
       setLoading(false);
     }
+  };
+
+  const generateEnhancedFallbackData = (): DashboardData => {
+    const now = new Date();
+    const variance = (base: number, range: number) => base + (Math.random() - 0.5) * range;
+    
+    return {
+      overview: {
+        total_users: Math.floor(variance(1250, 200)),
+        active_users_today: Math.floor(variance(89, 30)),
+        new_users_this_week: Math.floor(variance(23, 10)),
+        total_digital_twins: Math.floor(variance(456, 80)),
+        active_digital_twins: Math.floor(variance(234, 50)),
+        api_requests_today: Math.floor(variance(12847, 3000)),
+        system_health: Math.random() > 0.8 ? 'warning' : 'healthy'
+      },
+      intelligence_metrics: {
+        patterns_analyzed_today: Math.floor(variance(156, 40)),
+        predictions_generated_today: Math.floor(variance(89, 25)),
+        model_accuracy: {
+          productivity: Number(variance(0.85, 0.1).toFixed(2)),
+          task_completion: Number(variance(0.78, 0.1).toFixed(2)),
+          energy_prediction: Number(variance(0.82, 0.1).toFixed(2))
+        },
+        average_confidence_score: Number(variance(0.79, 0.1).toFixed(2))
+      },
+      system_metrics: {
+        cpu_usage: Number(variance(45.2, 20).toFixed(1)),
+        memory_usage: Number(variance(67.8, 20).toFixed(1)),
+        disk_usage: Number(variance(34.1, 15).toFixed(1)),
+        response_time_avg: Math.floor(variance(245, 100)),
+        error_rate: Number(Math.max(0, variance(0.02, 0.03)).toFixed(3))
+      },
+      recent_activities: [
+        {
+          timestamp: new Date(now.getTime() - 5 * 60000).toISOString(),
+          type: 'user_registration',
+          description: `New user registered: user_${Math.floor(Math.random() * 9000) + 1000}`
+        },
+        {
+          timestamp: new Date(now.getTime() - 12 * 60000).toISOString(),
+          type: 'pattern_analysis',
+          description: `Pattern analysis completed for ${Math.floor(variance(25, 20))} digital twins`
+        },
+        {
+          timestamp: new Date(now.getTime() - 18 * 60000).toISOString(),
+          type: 'prediction_generated',
+          description: `Generated ${Math.floor(variance(40, 30))} productivity predictions`
+        },
+        {
+          timestamp: new Date(now.getTime() - 25 * 60000).toISOString(),
+          type: 'system_optimization',
+          description: 'System performance optimization completed'
+        },
+        {
+          timestamp: new Date(now.getTime() - 32 * 60000).toISOString(),
+          type: 'digital_twin_created',
+          description: `Digital twin created for user_${Math.floor(Math.random() * 9000) + 1000}`
+        }
+      ]
+    };
   };
 
   const formatNumber = (num: number) => {
@@ -106,7 +200,7 @@ const PlatformDashboard: React.FC = () => {
       <div className="p-6">
         <div className="flex items-center justify-center h-64">
           <RefreshCw className="w-8 h-8 animate-spin text-blue-600" />
-          <span className="ml-2 text-gray-600">Loading dashboard...</span>
+          <span className="ml-2 text-gray-600">Loading platform dashboard...</span>
         </div>
       </div>
     );
@@ -115,13 +209,54 @@ const PlatformDashboard: React.FC = () => {
   if (!dashboardData) {
     return (
       <div className="p-6">
-        <div className="text-center text-red-600">
-          <AlertTriangle className="w-12 h-12 mx-auto mb-4" />
-          <p>Failed to load dashboard data</p>
+        <div className="text-center">
+          <AlertTriangle className="w-12 h-12 mx-auto mb-4 text-red-500" />
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">Dashboard Unavailable</h3>
+          <p className="text-gray-600 mb-4">Unable to load dashboard data</p>
+          <button
+            onClick={fetchDashboardData}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center mx-auto"
+          >
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Retry
+          </button>
         </div>
       </div>
     );
   }
+
+  const getDataSourceIcon = () => {
+    switch (dataSource) {
+      case 'database':
+        return <Database className="w-4 h-4 text-green-600" />;
+      case 'enhanced_fallback':
+        return <Wifi className="w-4 h-4 text-yellow-600" />;
+      default:
+        return <WifiOff className="w-4 h-4 text-red-600" />;
+    }
+  };
+
+  const getDataSourceText = () => {
+    switch (dataSource) {
+      case 'database':
+        return 'Live Data';
+      case 'enhanced_fallback':
+        return 'Enhanced Demo Data';
+      default:
+        return 'Offline Mode';
+    }
+  };
+
+  const getDataSourceColor = () => {
+    switch (dataSource) {
+      case 'database':
+        return 'bg-green-100 text-green-800';
+      case 'enhanced_fallback':
+        return 'bg-yellow-100 text-yellow-800';
+      default:
+        return 'bg-red-100 text-red-800';
+    }
+  };
 
   return (
     <div className="p-6 space-y-6">
@@ -132,6 +267,12 @@ const PlatformDashboard: React.FC = () => {
           <p className="text-gray-600">Real-time platform metrics and insights</p>
         </div>
         <div className="flex items-center space-x-4">
+          {/* Data Source Indicator */}
+          <div className={`px-3 py-1 rounded-full text-sm font-medium flex items-center space-x-2 ${getDataSourceColor()}`}>
+            {getDataSourceIcon()}
+            <span>{getDataSourceText()}</span>
+          </div>
+          
           {lastUpdated && (
             <span className="text-sm text-gray-500">
               Last updated: {lastUpdated.toLocaleTimeString()}
@@ -139,13 +280,43 @@ const PlatformDashboard: React.FC = () => {
           )}
           <button
             onClick={fetchDashboardData}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center"
+            disabled={loading}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center"
           >
-            <RefreshCw className="w-4 h-4 mr-2" />
+            <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
             Refresh
           </button>
         </div>
       </div>
+
+      {/* Status Messages */}
+      {error && dataSource === 'enhanced_fallback' && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+          <div className="flex items-center">
+            <AlertTriangle className="w-5 h-5 text-yellow-600 mr-2" />
+            <div>
+              <h3 className="text-sm font-medium text-yellow-800">Using Enhanced Demo Data</h3>
+              <p className="text-sm text-yellow-700 mt-1">
+                API connection failed: {error}. Displaying realistic demo data with live variations.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {dataSource === 'database' && (
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+          <div className="flex items-center">
+            <CheckCircle className="w-5 h-5 text-green-600 mr-2" />
+            <div>
+              <h3 className="text-sm font-medium text-green-800">Live Database Connection</h3>
+              <p className="text-sm text-green-700 mt-1">
+                Dashboard is displaying real-time data from the platform database.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Overview Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

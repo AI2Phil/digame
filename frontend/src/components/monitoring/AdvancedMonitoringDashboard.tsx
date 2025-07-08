@@ -11,6 +11,16 @@ import {
   AlertCircle, Info, AlertTriangle as Warning, Minus, Plus, Search
 } from 'lucide-react';
 
+// Simple toast function for user feedback
+const showToast = (message: string, type: 'success' | 'warning' | 'error' = 'success') => {
+  // Try to use window.toast if available, otherwise use console
+  if (typeof window !== 'undefined' && (window as any).toast) {
+    (window as any).toast(message, type);
+  } else {
+    console.log(`[${type.toUpperCase()}] ${message}`);
+  }
+};
+
 interface Alert {
   id: string;
   title: string;
@@ -86,247 +96,150 @@ export const AdvancedMonitoringDashboard: React.FC = () => {
   const [services, setServices] = useState<ServiceHealth[]>([]);
   const [rules, setRules] = useState<MonitoringRule[]>([]);
 
-  // Mock data - replace with actual API calls
+  // Database-driven monitoring data with enhanced fallback
   useEffect(() => {
     const fetchMonitoringData = async () => {
       try {
         setLoading(true);
         
-        // Simulate API calls
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        // Fetch from database API
+        const response = await fetch('http://localhost:8001/api/monitoring/dashboard', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
+          }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          
+          // Set data from API response
+          setAlerts(data.alerts || []);
+          setMetrics(data.metrics || []);
+          setServices(data.services || []);
+          setRules(data.rules || []);
+          
+          // Show toast notification for successful data load
+          const dataSource = data.data_source || 'database';
+          showToast(`Monitoring data loaded from ${dataSource}`, 'success');
+          
+          setError(null);
+        } else {
+          throw new Error(`API request failed: ${response.status}`);
+        }
+      } catch (err) {
+        console.error('Error fetching monitoring data:', err);
         
-        setAlerts([
+        // Enhanced fallback data with realistic monitoring scenarios
+        const fallbackAlerts = [
           {
-            id: '1',
-            title: 'High CPU Usage',
-            description: 'CPU usage has exceeded 85% for the past 5 minutes',
-            severity: 'high',
-            category: 'system',
+            id: 'fallback-1',
+            title: 'Demo Alert - High CPU Usage',
+            description: 'This is a demo alert showing high CPU usage (API unavailable)',
+            severity: 'high' as const,
+            category: 'system' as const,
             timestamp: new Date(Date.now() - 300000).toISOString(),
-            status: 'active',
-            source: 'web-server-01',
-            affected_services: ['web-api', 'user-service'],
+            status: 'active' as const,
+            source: 'demo-server',
+            affected_services: ['demo-api'],
             metrics: { current_value: 87.5, threshold: 85, unit: '%' }
           },
           {
-            id: '2',
-            title: 'Database Connection Pool Exhausted',
-            description: 'All database connections are in use',
-            severity: 'critical',
-            category: 'application',
-            timestamp: new Date(Date.now() - 120000).toISOString(),
-            status: 'acknowledged',
-            source: 'database-cluster',
-            affected_services: ['user-service', 'order-service', 'payment-service']
-          },
-          {
-            id: '3',
-            title: 'SSL Certificate Expiring Soon',
-            description: 'SSL certificate for api.digame.com expires in 7 days',
-            severity: 'medium',
-            category: 'security',
-            timestamp: new Date(Date.now() - 3600000).toISOString(),
-            status: 'active',
-            source: 'certificate-monitor',
-            affected_services: ['web-api']
-          },
-          {
-            id: '4',
-            title: 'Disk Space Low',
-            description: 'Available disk space is below 15%',
-            severity: 'high',
-            category: 'system',
-            timestamp: new Date(Date.now() - 1800000).toISOString(),
-            status: 'active',
-            source: 'storage-server-02',
-            affected_services: ['file-service', 'backup-service'],
-            metrics: { current_value: 12.3, threshold: 15, unit: '%' }
+            id: 'fallback-2',
+            title: 'Demo Alert - Memory Warning',
+            description: 'Memory usage approaching threshold (fallback data)',
+            severity: 'medium' as const,
+            category: 'system' as const,
+            timestamp: new Date(Date.now() - 600000).toISOString(),
+            status: 'active' as const,
+            source: 'demo-server',
+            affected_services: ['demo-api']
           }
-        ]);
+        ];
 
-        setMetrics([
+        const fallbackMetrics = [
           {
-            id: '1',
+            id: 'fallback-1',
             name: 'CPU Usage',
-            category: 'infrastructure',
+            category: 'infrastructure' as const,
             current_value: 67.5,
             previous_value: 62.1,
             threshold_warning: 75,
             threshold_critical: 90,
             unit: '%',
-            trend: 'up',
-            status: 'healthy',
+            trend: 'up' as const,
+            status: 'healthy' as const,
             last_updated: new Date().toISOString()
           },
           {
-            id: '2',
+            id: 'fallback-2',
             name: 'Memory Usage',
-            category: 'infrastructure',
+            category: 'infrastructure' as const,
             current_value: 78.2,
             previous_value: 75.8,
             threshold_warning: 80,
             threshold_critical: 95,
             unit: '%',
-            trend: 'up',
-            status: 'warning',
+            trend: 'up' as const,
+            status: 'warning' as const,
             last_updated: new Date().toISOString()
           },
           {
-            id: '3',
+            id: 'fallback-3',
             name: 'Response Time',
-            category: 'application',
+            category: 'application' as const,
             current_value: 245,
             previous_value: 198,
             threshold_warning: 500,
             threshold_critical: 1000,
             unit: 'ms',
-            trend: 'up',
-            status: 'healthy',
-            last_updated: new Date().toISOString()
-          },
-          {
-            id: '4',
-            name: 'Error Rate',
-            category: 'application',
-            current_value: 0.8,
-            previous_value: 1.2,
-            threshold_warning: 2,
-            threshold_critical: 5,
-            unit: '%',
-            trend: 'down',
-            status: 'healthy',
-            last_updated: new Date().toISOString()
-          },
-          {
-            id: '5',
-            name: 'Active Users',
-            category: 'business',
-            current_value: 1247,
-            previous_value: 1189,
-            threshold_warning: 2000,
-            threshold_critical: 2500,
-            unit: 'users',
-            trend: 'up',
-            status: 'healthy',
-            last_updated: new Date().toISOString()
-          },
-          {
-            id: '6',
-            name: 'Database Connections',
-            category: 'infrastructure',
-            current_value: 45,
-            previous_value: 38,
-            threshold_warning: 80,
-            threshold_critical: 95,
-            unit: 'connections',
-            trend: 'up',
-            status: 'healthy',
+            trend: 'up' as const,
+            status: 'healthy' as const,
             last_updated: new Date().toISOString()
           }
-        ]);
+        ];
 
-        setServices([
+        const fallbackServices = [
           {
-            id: '1',
-            name: 'Web API',
-            status: 'healthy',
+            id: 'fallback-1',
+            name: 'Demo API',
+            status: 'healthy' as const,
             uptime: 99.97,
             response_time: 245,
             error_rate: 0.8,
             last_check: new Date().toISOString(),
-            dependencies: ['database', 'redis', 'auth-service'],
+            dependencies: ['database'],
             endpoints: [
-              { url: '/api/health', status: 200, response_time: 45 },
-              { url: '/api/users', status: 200, response_time: 123 },
-              { url: '/api/orders', status: 200, response_time: 189 }
-            ]
-          },
-          {
-            id: '2',
-            name: 'User Service',
-            status: 'degraded',
-            uptime: 98.5,
-            response_time: 567,
-            error_rate: 2.1,
-            last_check: new Date().toISOString(),
-            dependencies: ['database', 'auth-service'],
-            endpoints: [
-              { url: '/users/health', status: 200, response_time: 234 },
-              { url: '/users/profile', status: 500, response_time: 1200 }
-            ]
-          },
-          {
-            id: '3',
-            name: 'Payment Service',
-            status: 'healthy',
-            uptime: 99.99,
-            response_time: 156,
-            error_rate: 0.1,
-            last_check: new Date().toISOString(),
-            dependencies: ['database', 'external-payment-gateway'],
-            endpoints: [
-              { url: '/payments/health', status: 200, response_time: 67 },
-              { url: '/payments/process', status: 200, response_time: 234 }
-            ]
-          },
-          {
-            id: '4',
-            name: 'Notification Service',
-            status: 'down',
-            uptime: 95.2,
-            response_time: 0,
-            error_rate: 100,
-            last_check: new Date().toISOString(),
-            dependencies: ['redis', 'email-service', 'sms-service'],
-            endpoints: [
-              { url: '/notifications/health', status: 503, response_time: 0 }
+              { url: '/api/health', status: 200, response_time: 45 }
             ]
           }
-        ]);
+        ];
 
-        setRules([
+        const fallbackRules = [
           {
-            id: '1',
-            name: 'High CPU Usage',
-            description: 'Alert when CPU usage exceeds threshold',
+            id: 'fallback-1',
+            name: 'Demo Rule - High CPU',
+            description: 'Demo monitoring rule for CPU usage',
             metric: 'cpu_usage',
-            condition: 'greater_than',
+            condition: 'greater_than' as const,
             threshold: 85,
-            severity: 'high',
+            severity: 'high' as const,
             enabled: true,
-            notification_channels: ['email', 'slack', 'pagerduty'],
+            notification_channels: ['email'],
             cooldown_period: 300
-          },
-          {
-            id: '2',
-            name: 'Low Disk Space',
-            description: 'Alert when disk space falls below threshold',
-            metric: 'disk_usage',
-            condition: 'less_than',
-            threshold: 15,
-            severity: 'critical',
-            enabled: true,
-            notification_channels: ['email', 'slack', 'pagerduty'],
-            cooldown_period: 600
-          },
-          {
-            id: '3',
-            name: 'High Error Rate',
-            description: 'Alert when application error rate is too high',
-            metric: 'error_rate',
-            condition: 'greater_than',
-            threshold: 5,
-            severity: 'high',
-            enabled: true,
-            notification_channels: ['email', 'slack'],
-            cooldown_period: 180
           }
-        ]);
+        ];
 
-        setError(null);
-      } catch (err) {
-        setError('Failed to load monitoring data');
-        console.error('Error fetching monitoring data:', err);
+        setAlerts(fallbackAlerts);
+        setMetrics(fallbackMetrics);
+        setServices(fallbackServices);
+        setRules(fallbackRules);
+        
+        // Show toast notification for fallback data
+        showToast('Using demo monitoring data (API unavailable)', 'warning');
+        
+        setError('Using demo data - API unavailable');
       } finally {
         setLoading(false);
       }
@@ -401,16 +314,41 @@ export const AdvancedMonitoringDashboard: React.FC = () => {
 
   const handleAlertAction = async (alertId: string, action: 'acknowledge' | 'resolve') => {
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Call database API for alert action
+      const response = await fetch(`http://localhost:8001/api/monitoring/alerts/${alertId}/action`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
+        },
+        body: JSON.stringify({ action })
+      });
+
+      if (response.ok) {
+        // Update local state
+        setAlerts(prev => prev.map(alert =>
+          alert.id === alertId
+            ? { ...alert, status: action === 'acknowledge' ? 'acknowledged' : 'resolved' }
+            : alert
+        ));
+        
+        // Show success toast
+        showToast(`Alert ${action}d successfully`, 'success');
+      } else {
+        throw new Error(`Failed to ${action} alert`);
+      }
+    } catch (err) {
+      console.error(`Error ${action}ing alert:`, err);
       
-      setAlerts(prev => prev.map(alert => 
-        alert.id === alertId 
+      // Fallback: update local state anyway
+      setAlerts(prev => prev.map(alert =>
+        alert.id === alertId
           ? { ...alert, status: action === 'acknowledge' ? 'acknowledged' : 'resolved' }
           : alert
       ));
-    } catch (err) {
-      console.error('Error updating alert:', err);
+      
+      // Show warning toast
+      showToast(`Alert ${action}d locally (API unavailable)`, 'warning');
     }
   };
 

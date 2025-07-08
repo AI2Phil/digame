@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { 
+import {
   Building, Users, Settings, Shield, Crown, Calendar,
   UserPlus, Mail, Key, BarChart3, Activity, AlertTriangle,
   CheckCircle, Clock, Globe, Database, Zap, Eye
@@ -11,84 +11,147 @@ import { Progress } from '../ui/Progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/Tabs';
 import { Input } from '../ui/Input';
 import { Select } from '../ui/Select';
-import { Label } from '../ui/Label'; // Added import
+import { Label } from '../ui/Label';
+import { useToastHelpers } from '../ui/Toaster';
 
 const MultiTenancyDashboard = ({ currentTenant, userRole, onTenantSwitch }) => {
   const [activeTab, setActiveTab] = useState('overview');
-  const [tenantData, setTenantData] = useState({ // This is mostly for display/overview
-    id: 1,
-    name: "Demo Organization",
-    slug: "demo-org",
-    subscription_tier: "professional",
-    is_trial: true,
-    trial_ends_at: "2025-06-23T00:00:00Z",
-    users_count: 12,
-    max_users: 50,
-    storage_used: 15.7,
-    storage_limit: 100,
-    api_requests_today: 1247,
-    api_daily_limit: 5000
-  });
+  const [tenantData, setTenantData] = useState(null);
+  const [users, setUsers] = useState([]);
+  const [invitations, setInvitations] = useState([]);
+  const [auditLogs, setAuditLogs] = useState([]);
+  const [resourceAllocation, setResourceAllocation] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [dataSource, setDataSource] = useState('loading');
+  const { success, error, warning, info } = useToastHelpers();
 
-  const [users, setUsers] = useState([
-    {
-      id: 1,
-      email: "admin@demo-org.com",
-      full_name: "Admin User",
-      role: "admin",
-      joined_at: "2025-05-01T00:00:00Z",
-      last_active: "2025-05-23T10:30:00Z",
-      is_active: true
-    },
-    {
-      id: 2,
-      email: "manager@demo-org.com",
-      full_name: "Team Manager",
-      role: "manager",
-      joined_at: "2025-05-05T00:00:00Z",
-      last_active: "2025-05-23T09:15:00Z",
-      is_active: true
-    },
-    {
-      id: 3,
-      email: "member@demo-org.com",
-      full_name: "Team Member",
-      role: "member",
-      joined_at: "2025-05-10T00:00:00Z",
-      last_active: "2025-05-22T16:45:00Z",
-      is_active: true
-    }
-  ]);
+  // Load dashboard data on component mount
+  useEffect(() => {
+    loadDashboardData();
+  }, []);
 
-  const [invitations, setInvitations] = useState([
-    {
-      id: 1,
-      email: "newuser@example.com",
-      role: "member",
-      invited_by: "admin@demo-org.com",
-      expires_at: "2025-05-30T00:00:00Z",
-      status: "pending"
-    }
-  ]);
+  const loadDashboardData = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('http://localhost:8001/api/multi-tenancy/dashboard', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          // Add authentication header if available
+          // 'Authorization': `Bearer ${token}`
+        },
+      });
 
-  const [auditLogs, setAuditLogs] = useState([
-    {
-      id: 1,
-      action: "user_added_to_tenant",
-      user_email: "admin@demo-org.com",
-      details: "Added newuser@example.com as member",
-      timestamp: "2025-05-23T10:30:00Z"
-    },
-    {
-      id: 2,
-      action: "settings_updated",
-      user_email: "admin@demo-org.com",
-      details: "Updated security settings",
-      timestamp: "2025-05-23T09:15:00Z"
+      if (response.ok) {
+        const data = await response.json();
+        setTenantData(data.tenant_data);
+        setUsers(data.users || []);
+        setInvitations(data.invitations || []);
+        setAuditLogs(data.audit_logs || []);
+        setResourceAllocation(data.resource_allocation);
+        setDataSource(data.data_source);
+        
+        if (data.data_source === 'enhanced_fallback') {
+          info('Using demo data - API unavailable');
+        } else if (data.data_source === 'database') {
+          success('Multi-tenancy data loaded successfully');
+        }
+      } else {
+        throw new Error('Failed to load dashboard data');
+      }
+    } catch (err) {
+      console.error('Error loading dashboard data:', err);
+      error('Failed to load multi-tenancy dashboard');
+      
+      // Enhanced fallback data
+      const fallbackData = {
+        tenant_data: {
+          id: 1,
+          name: "Demo Organization",
+          slug: "demo-org",
+          subscription_tier: "professional",
+          is_trial: true,
+          trial_ends_at: new Date(Date.now() + 23 * 24 * 60 * 60 * 1000).toISOString(),
+          users_count: 12,
+          max_users: 50,
+          storage_used: 15.7,
+          storage_limit: 100,
+          api_requests_today: 1247,
+          api_daily_limit: 5000,
+          is_active: true,
+          admin_email: "admin@demo-org.com",
+          admin_name: "Admin User"
+        },
+        users: [
+          {
+            id: 1,
+            email: "admin@demo-org.com",
+            full_name: "Admin User",
+            role: "admin",
+            joined_at: new Date(Date.now() - 45 * 24 * 60 * 60 * 1000).toISOString(),
+            last_active: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+            is_active: true
+          },
+          {
+            id: 2,
+            email: "manager@demo-org.com",
+            full_name: "Team Manager",
+            role: "manager",
+            joined_at: new Date(Date.now() - 40 * 24 * 60 * 60 * 1000).toISOString(),
+            last_active: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
+            is_active: true
+          },
+          {
+            id: 3,
+            email: "member@demo-org.com",
+            full_name: "Team Member",
+            role: "member",
+            joined_at: new Date(Date.now() - 35 * 24 * 60 * 60 * 1000).toISOString(),
+            last_active: new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString(),
+            is_active: true
+          }
+        ],
+        invitations: [
+          {
+            id: 1,
+            email: "newuser@example.com",
+            role: "member",
+            invited_by: "admin@demo-org.com",
+            expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+            status: "pending"
+          }
+        ],
+        audit_logs: [
+          {
+            id: 1,
+            action: "user_added_to_tenant",
+            user_email: "admin@demo-org.com",
+            details: "Added newuser@example.com as member",
+            timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString()
+          },
+          {
+            id: 2,
+            action: "settings_updated",
+            user_email: "admin@demo-org.com",
+            details: "Updated security settings",
+            timestamp: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString()
+          }
+        ]
+      };
+      
+      setTenantData(fallbackData.tenant_data);
+      setUsers(fallbackData.users);
+      setInvitations(fallbackData.invitations);
+      setAuditLogs(fallbackData.audit_logs);
+      setDataSource('enhanced_fallback');
+      warning('Using enhanced demo data - API unavailable');
+    } finally {
+      setLoading(false);
     }
-  ]);
+  };
 
   const calculateDaysRemaining = (endDate) => {
+    if (!endDate) return 0;
     const end = new Date(endDate);
     const now = new Date();
     const diffTime = end - now;
@@ -96,26 +159,115 @@ const MultiTenancyDashboard = ({ currentTenant, userRole, onTenantSwitch }) => {
   };
 
   const handleInviteUser = async (email, role) => {
-    // Mock invitation
-    const newInvitation = {
-      id: invitations.length + 1,
-      email,
-      role,
-      invited_by: "admin@demo-org.com",
-      expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-      status: "pending"
-    };
-    setInvitations([...invitations, newInvitation]);
+    try {
+      const response = await fetch('http://localhost:8001/api/multi-tenancy/invite-user', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          // Add authentication header if available
+          // 'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ email, role }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          const newInvitation = {
+            id: data.invitation.id,
+            email: data.invitation.email,
+            role: data.invitation.role,
+            invited_by: "admin@demo-org.com", // Would come from current user
+            expires_at: data.invitation.expires_at,
+            status: data.invitation.status
+          };
+          setInvitations([...invitations, newInvitation]);
+          success(`Invitation sent to ${email}`);
+        }
+      } else {
+        throw new Error('Failed to send invitation');
+      }
+    } catch (err) {
+      console.error('Error inviting user:', err);
+      error('Failed to send invitation');
+      
+      // Fallback: Add invitation locally
+      const newInvitation = {
+        id: invitations.length + 1,
+        email,
+        role,
+        invited_by: "admin@demo-org.com",
+        expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+        status: "pending"
+      };
+      setInvitations([...invitations, newInvitation]);
+      warning(`Invitation added locally for ${email} - API unavailable`);
+    }
   };
 
   const handleUpdateUserRole = async (userId, newRole) => {
-    setUsers(users.map(user => 
-      user.id === userId ? { ...user, role: newRole } : user
-    ));
+    try {
+      const response = await fetch(`http://localhost:8001/api/multi-tenancy/users/${userId}/role`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          // Add authentication header if available
+          // 'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ new_role: newRole }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          setUsers(users.map(user =>
+            user.id === userId ? { ...user, role: newRole } : user
+          ));
+          success(`User role updated to ${newRole}`);
+        }
+      } else {
+        throw new Error('Failed to update user role');
+      }
+    } catch (err) {
+      console.error('Error updating user role:', err);
+      error('Failed to update user role');
+      
+      // Fallback: Update role locally
+      setUsers(users.map(user =>
+        user.id === userId ? { ...user, role: newRole } : user
+      ));
+      warning(`User role updated locally - API unavailable`);
+    }
   };
 
   const handleRemoveUser = async (userId) => {
-    setUsers(users.filter(user => user.id !== userId));
+    try {
+      const response = await fetch(`http://localhost:8001/api/multi-tenancy/users/${userId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          // Add authentication header if available
+          // 'Authorization': `Bearer ${token}`
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          setUsers(users.filter(user => user.id !== userId));
+          success('User removed from tenant');
+        }
+      } else {
+        throw new Error('Failed to remove user');
+      }
+    } catch (err) {
+      console.error('Error removing user:', err);
+      error('Failed to remove user');
+      
+      // Fallback: Remove user locally
+      setUsers(users.filter(user => user.id !== userId));
+      warning('User removed locally - API unavailable');
+    }
   };
 
   // State for configurable settings in TenantSettingsSection
@@ -129,6 +281,39 @@ const MultiTenancyDashboard = ({ currentTenant, userRole, onTenantSwitch }) => {
     setTenantConfigurableSettings(prev => ({ ...prev, [key]: value }));
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex items-center justify-center h-64">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+              <p className="text-gray-600">Loading multi-tenancy dashboard...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!tenantData) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex items-center justify-center h-64">
+            <div className="text-center">
+              <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+              <p className="text-gray-600">Failed to load tenant data</p>
+              <Button onClick={loadDashboardData} className="mt-4">
+                Retry
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-7xl mx-auto">
@@ -138,10 +323,20 @@ const MultiTenancyDashboard = ({ currentTenant, userRole, onTenantSwitch }) => {
             <div className="p-3 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full">
               <Building className="w-8 h-8 text-white" />
             </div>
-            <div>
+            <div className="flex-1">
               <h1 className="text-3xl font-bold text-gray-900">Multi-Tenancy Management</h1>
               <p className="text-gray-600">Enterprise tenant and user management</p>
             </div>
+            {dataSource === 'enhanced_fallback' && (
+              <Badge variant="warning" className="ml-auto">
+                Demo Data
+              </Badge>
+            )}
+            {dataSource === 'database' && (
+              <Badge variant="success" className="ml-auto">
+                Live Database
+              </Badge>
+            )}
           </div>
 
           {/* Tenant Overview Cards */}

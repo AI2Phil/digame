@@ -10,8 +10,10 @@ import {
   MicOff, Camera, CameraOff, Monitor, Volume2,
   VolumeX, Maximize, Minimize, Copy, Download,
   Star, Pin, Archive, Trash2, Search, Filter,
-  Bell, BellOff, Hash, Lock, Globe, Calendar
+  Bell, BellOff, Hash, Lock, Globe, Calendar,
+  Database, Wifi, WifiOff
 } from 'lucide-react';
+// import { useToastHelpers } from '../ui/ToastHelpers';
 
 interface User {
   id: string;
@@ -88,6 +90,7 @@ export const RealTimeCollaborationDashboard: React.FC = () => {
   const [onlineUsers, setOnlineUsers] = useState<User[]>([]);
   const [activeSessions, setActiveSessions] = useState<ActiveSession[]>([]);
   const [typingUsers, setTypingUsers] = useState<string[]>([]);
+  const [dataSource, setDataSource] = useState<'database' | 'enhanced_fallback' | 'loading'>('loading');
   
   const [isCallActive, setIsCallActive] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
@@ -96,25 +99,73 @@ export const RealTimeCollaborationDashboard: React.FC = () => {
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Simple toast function since useToastHelpers is not available
+  const showToast = (type: 'success' | 'error' | 'warning', title: string, message: string) => {
+    console.log(`${type.toUpperCase()}: ${title} - ${message}`);
+  };
 
-  // Mock data - replace with actual API calls and WebSocket connections
+  // Database-driven collaboration data loading
   useEffect(() => {
     const initializeCollaboration = async () => {
       try {
         setLoading(true);
+        setDataSource('loading');
         
-        // Simulate API calls
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        // Fetch workspace data from API
+        const workspaceResponse = await fetch('http://localhost:8001/api/collaboration/workspace', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token') || 'demo-token'}`
+          }
+        });
+
+        if (workspaceResponse.ok) {
+          const workspaceData = await workspaceResponse.json();
+          
+          setWorkspace(workspaceData.workspace);
+          setOnlineUsers(workspaceData.online_users || []);
+          setActiveSessions(workspaceData.active_sessions || []);
+          setDataSource(workspaceData.data_source || 'database');
+          
+          // Set first channel as selected
+          if (workspaceData.workspace?.channels?.length > 0) {
+            const firstChannel = workspaceData.workspace.channels[0];
+            setSelectedChannel(firstChannel);
+            
+            // Load messages for the first channel
+            await loadChannelMessages(firstChannel.id);
+          }
+          
+          // Show success toast for database connection
+          if (workspaceData.data_source === 'database') {
+            showToast('success', 'Connected to collaboration workspace', 'Real-time collaboration features are active');
+          } else {
+            showToast('warning', 'Using demo data', 'Connect to database for full functionality');
+          }
+          
+          setError(null);
+        } else {
+          throw new Error(`API request failed: ${workspaceResponse.status}`);
+        }
         
-        const mockWorkspace: Workspace = {
+      } catch (err) {
+        console.error('Error loading collaboration workspace:', err);
+        setError('Failed to load collaboration workspace');
+        setDataSource('enhanced_fallback');
+        showToast('error', 'Connection failed', 'Using offline demo data');
+        
+        // Enhanced fallback data
+        const fallbackWorkspace: Workspace = {
           id: '1',
-          name: 'Digame Team',
-          description: 'Main collaboration workspace for the Digame platform team',
+          name: 'Demo Team Workspace',
+          description: 'Real-time collaboration workspace for team communication and coordination',
           channels: [
             {
               id: '1',
               name: 'general',
-              description: 'General team discussions',
+              description: 'General team discussions and announcements',
               type: 'public',
               members: ['1', '2', '3', '4', '5'],
               created_at: new Date(Date.now() - 86400000 * 30).toISOString(),
@@ -125,7 +176,7 @@ export const RealTimeCollaborationDashboard: React.FC = () => {
             {
               id: '2',
               name: 'development',
-              description: 'Development team coordination',
+              description: 'Development team coordination and code reviews',
               type: 'public',
               members: ['1', '2', '3'],
               created_at: new Date(Date.now() - 86400000 * 20).toISOString(),
@@ -136,23 +187,12 @@ export const RealTimeCollaborationDashboard: React.FC = () => {
             {
               id: '3',
               name: 'design',
-              description: 'Design discussions and reviews',
+              description: 'Design discussions, reviews, and creative collaboration',
               type: 'public',
               members: ['1', '4', '5'],
               created_at: new Date(Date.now() - 86400000 * 15).toISOString(),
               unread_count: 0,
               is_muted: true,
-              is_archived: false
-            },
-            {
-              id: '4',
-              name: 'alerts',
-              description: 'System alerts and notifications',
-              type: 'public',
-              members: ['1', '2', '3', '4', '5'],
-              created_at: new Date(Date.now() - 86400000 * 10).toISOString(),
-              unread_count: 12,
-              is_muted: false,
               is_archived: false
             }
           ],
@@ -160,7 +200,7 @@ export const RealTimeCollaborationDashboard: React.FC = () => {
             {
               id: '1',
               name: 'John Doe',
-              email: 'john@digame.com',
+              email: 'john@demo.com',
               status: 'online',
               role: 'admin',
               last_seen: new Date().toISOString()
@@ -168,7 +208,7 @@ export const RealTimeCollaborationDashboard: React.FC = () => {
             {
               id: '2',
               name: 'Jane Smith',
-              email: 'jane@digame.com',
+              email: 'jane@demo.com',
               status: 'online',
               role: 'moderator',
               last_seen: new Date(Date.now() - 300000).toISOString()
@@ -176,26 +216,10 @@ export const RealTimeCollaborationDashboard: React.FC = () => {
             {
               id: '3',
               name: 'Mike Johnson',
-              email: 'mike@digame.com',
+              email: 'mike@demo.com',
               status: 'away',
               role: 'member',
               last_seen: new Date(Date.now() - 1800000).toISOString()
-            },
-            {
-              id: '4',
-              name: 'Sarah Wilson',
-              email: 'sarah@digame.com',
-              status: 'busy',
-              role: 'member',
-              last_seen: new Date(Date.now() - 600000).toISOString()
-            },
-            {
-              id: '5',
-              name: 'Alex Brown',
-              email: 'alex@digame.com',
-              status: 'offline',
-              role: 'member',
-              last_seen: new Date(Date.now() - 7200000).toISOString()
             }
           ],
           created_at: new Date(Date.now() - 86400000 * 60).toISOString(),
@@ -207,17 +231,17 @@ export const RealTimeCollaborationDashboard: React.FC = () => {
           }
         };
 
-        setWorkspace(mockWorkspace);
-        setSelectedChannel(mockWorkspace.channels[0]);
-        setOnlineUsers(mockWorkspace.members.filter(u => u.status === 'online'));
-
-        // Mock messages for selected channel
-        const mockMessages: Message[] = [
+        setWorkspace(fallbackWorkspace);
+        setSelectedChannel(fallbackWorkspace.channels[0]);
+        setOnlineUsers(fallbackWorkspace.members.filter(u => u.status === 'online'));
+        
+        // Fallback messages
+        const fallbackMessages: Message[] = [
           {
             id: '1',
             user_id: '2',
             user_name: 'Jane Smith',
-            content: 'Good morning team! Ready for the sprint planning?',
+            content: 'Good morning team! Ready for today\'s collaboration session?',
             type: 'text',
             timestamp: new Date(Date.now() - 3600000).toISOString(),
             reactions: [
@@ -229,70 +253,15 @@ export const RealTimeCollaborationDashboard: React.FC = () => {
             id: '2',
             user_id: '1',
             user_name: 'John Doe',
-            content: 'Absolutely! I\'ve prepared the backlog items. Let me share the dashboard.',
-            type: 'text',
-            timestamp: new Date(Date.now() - 3300000).toISOString(),
-            reactions: []
-          },
-          {
-            id: '3',
-            user_id: '3',
-            user_name: 'Mike Johnson',
-            content: 'The new monitoring dashboard looks great! 🚀',
-            type: 'text',
-            timestamp: new Date(Date.now() - 2700000).toISOString(),
-            reactions: [
-              { emoji: '🚀', users: ['1', '2', '4'], count: 3 }
-            ],
-            is_pinned: true
-          },
-          {
-            id: '4',
-            user_id: '4',
-            user_name: 'Sarah Wilson',
-            content: 'I\'ve uploaded the latest design mockups for review.',
-            type: 'file',
-            timestamp: new Date(Date.now() - 1800000).toISOString(),
-            reactions: [],
-            attachments: [
-              {
-                id: '1',
-                name: 'dashboard-mockups-v2.figma',
-                size: 2456789,
-                type: 'application/figma',
-                url: '/files/dashboard-mockups-v2.figma'
-              }
-            ]
-          },
-          {
-            id: '5',
-            user_id: '1',
-            user_name: 'John Doe',
-            content: 'System alert: New deployment completed successfully ✅',
+            content: 'This is demo data. Connect to the database for real-time collaboration.',
             type: 'system',
-            timestamp: new Date(Date.now() - 900000).toISOString(),
+            timestamp: new Date(Date.now() - 1800000).toISOString(),
             reactions: []
           }
         ];
-
-        setMessages(mockMessages);
-
-        // Mock active sessions
-        setActiveSessions([
-          {
-            id: '1',
-            type: 'video',
-            channel_id: '2',
-            participants: mockWorkspace.members.slice(0, 3),
-            started_at: new Date(Date.now() - 1800000).toISOString(),
-            is_recording: false
-          }
-        ]);
-
-        setError(null);
-      } catch (err) {
-        setError('Failed to load collaboration data');
-        console.error('Error loading collaboration:', err);
+        
+        setMessages(fallbackMessages);
+        setActiveSessions([]);
       } finally {
         setLoading(false);
       }
@@ -300,9 +269,8 @@ export const RealTimeCollaborationDashboard: React.FC = () => {
 
     initializeCollaboration();
 
-    // Simulate real-time updates
+    // Simulate real-time updates for demo
     const interval = setInterval(() => {
-      // Simulate typing indicators
       if (Math.random() > 0.8) {
         setTypingUsers(['2']);
         setTimeout(() => setTypingUsers([]), 3000);
@@ -312,6 +280,28 @@ export const RealTimeCollaborationDashboard: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
+  // Load messages for a specific channel
+  const loadChannelMessages = async (channelId: string) => {
+    try {
+      const response = await fetch(`http://localhost:8001/api/collaboration/channels/${channelId}/messages`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token') || 'demo-token'}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setMessages(data.messages || []);
+      } else {
+        console.error('Failed to load channel messages');
+      }
+    } catch (err) {
+      console.error('Error loading channel messages:', err);
+    }
+  };
+
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -320,24 +310,51 @@ export const RealTimeCollaborationDashboard: React.FC = () => {
   const sendMessage = async () => {
     if (!newMessage.trim() || !selectedChannel) return;
 
-    const message: Message = {
-      id: Date.now().toString(),
+    const tempMessage: Message = {
+      id: `temp_${Date.now()}`,
       user_id: '1',
-      user_name: 'John Doe',
+      user_name: 'You',
       content: newMessage,
       type: 'text',
       timestamp: new Date().toISOString(),
       reactions: []
     };
 
-    setMessages(prev => [...prev, message]);
+    // Optimistically add message to UI
+    setMessages(prev => [...prev, tempMessage]);
+    const messageContent = newMessage;
     setNewMessage('');
 
-    // Simulate API call
     try {
-      await new Promise(resolve => setTimeout(resolve, 500));
+      const response = await fetch(`http://localhost:8001/api/collaboration/channels/${selectedChannel.id}/messages`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token') || 'demo-token'}`
+        },
+        body: JSON.stringify({
+          content: messageContent,
+          type: 'text'
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        // Replace temp message with real message
+        setMessages(prev => prev.map(msg =>
+          msg.id === tempMessage.id ? data.message : msg
+        ));
+        showToast('success', 'Message sent', 'Your message has been delivered');
+      } else {
+        // Remove temp message on failure
+        setMessages(prev => prev.filter(msg => msg.id !== tempMessage.id));
+        showToast('error', 'Failed to send message', 'Please try again');
+      }
     } catch (err) {
       console.error('Failed to send message:', err);
+      // Remove temp message on error
+      setMessages(prev => prev.filter(msg => msg.id !== tempMessage.id));
+      showToast('error', 'Connection error', 'Unable to send message');
     }
   };
 
@@ -428,7 +445,10 @@ export const RealTimeCollaborationDashboard: React.FC = () => {
           {workspace?.channels.map((channel) => (
             <button
               key={channel.id}
-              onClick={() => setSelectedChannel(channel)}
+              onClick={() => {
+                setSelectedChannel(channel);
+                loadChannelMessages(channel.id);
+              }}
               className={`w-full flex items-center gap-3 p-3 hover:bg-gray-50 ${
                 selectedChannel?.id === channel.id ? 'bg-blue-50 border-r-2 border-blue-500' : ''
               }`}
@@ -1016,8 +1036,29 @@ export const RealTimeCollaborationDashboard: React.FC = () => {
         <div className="max-w-7xl mx-auto">
           {/* Header */}
           <div className="mb-8">
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">Team Collaboration</h1>
-            <p className="text-gray-600">Real-time communication and collaboration workspace</p>
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900 mb-2">Team Collaboration</h1>
+                <p className="text-gray-600">Real-time communication and collaboration workspace</p>
+              </div>
+              <div className="flex items-center gap-2">
+                {dataSource === 'database' && (
+                  <Badge variant="success" size="sm" icon={<Database className="h-3 w-3" />} onRemove={() => {}}>
+                    Database Connected
+                  </Badge>
+                )}
+                {dataSource === 'enhanced_fallback' && (
+                  <Badge variant="warning" size="sm" icon={<WifiOff className="h-3 w-3" />} onRemove={() => {}}>
+                    Demo Mode
+                  </Badge>
+                )}
+                {dataSource === 'loading' && (
+                  <Badge variant="secondary" size="sm" icon={<Wifi className="h-3 w-3" />} onRemove={() => {}}>
+                    Connecting...
+                  </Badge>
+                )}
+              </div>
+            </div>
           </div>
 
           {/* Tab Navigation */}

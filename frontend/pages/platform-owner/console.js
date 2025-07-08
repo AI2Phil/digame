@@ -425,36 +425,32 @@ export default function PlatformConsole() {
                 </div>
               )}
 
-              {/* Platform Analytics Summary */}
-              <div className="bg-gradient-to-r from-yellow-600 to-orange-600 rounded-lg p-6 text-white">
-                <h3 className="text-xl font-semibold mb-4">
-                  {platformData ? '📊 Live Platform Data' : '🎭 Demo Platform Data'}
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div>
-                    <h4 className="font-medium mb-2">Growth Metrics</h4>
-                    <p className="text-yellow-100">
-                      {platformData
-                        ? `User base grew ${currentData.analytics?.growth?.userGrowth || '12.5%'} with ${currentData.analytics?.overview?.activeTenants || 147} active tenants generating $${Math.round((currentData.analytics?.overview?.monthlyRevenue || 847000) / 1000)}K revenue.`
-                        : 'User base grew 12.5% this month with 147 active tenants generating $847K in revenue.'}
-                    </p>
+              {/* Platform Analytics Summary - Only show for authenticated platform owners with live data */}
+              {platformData && (
+                <div className="bg-gradient-to-r from-yellow-600 to-orange-600 rounded-lg p-6 text-white">
+                  <h3 className="text-xl font-semibold mb-4">📊 Live Platform Analytics</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div>
+                      <h4 className="font-medium mb-2">Growth Metrics</h4>
+                      <p className="text-yellow-100">
+                        User base grew {currentData.analytics?.growth?.userGrowth || '12.5%'} with {currentData.analytics?.overview?.activeTenants || 147} active tenants generating ${Math.round((currentData.analytics?.overview?.monthlyRevenue || 847000) / 1000)}K revenue.
+                      </p>
+                    </div>
+                    <div>
+                      <h4 className="font-medium mb-2">System Reliability</h4>
+                      <p className="text-yellow-100">
+                        {currentData.analytics?.overview?.systemHealth?.toFixed(1) || '99.9'}% uptime maintained with all critical services operational and responsive.
+                      </p>
+                    </div>
+                    <div>
+                      <h4 className="font-medium mb-2">Data Management</h4>
+                      <p className="text-yellow-100">
+                        {currentData.dataOverview?.summary?.mockPercentage?.toFixed(1) || '80'}% mock data ratio with {currentData.dataOverview?.healthMetrics?.dataIntegrity || 'healthy'} data integrity status.
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="font-medium mb-2">System Reliability</h4>
-                    <p className="text-yellow-100">
-                      {currentData.analytics?.overview?.systemHealth?.toFixed(1) || '99.9'}% uptime maintained with all critical services operational and responsive.
-                    </p>
-                  </div>
-                  <div>
-                    <h4 className="font-medium mb-2">Data Management</h4>
-                    <p className="text-yellow-100">
-                      {platformData
-                        ? `${currentData.dataOverview?.summary?.mockPercentage?.toFixed(1) || '80'}% mock data ratio with ${currentData.dataOverview?.healthMetrics?.dataIntegrity || 'healthy'} data integrity status.`
-                        : 'Data management system ready for production with comprehensive mock data controls.'}
-                    </p>
-                 </div>
-               </div>
-             </div>
+                </div>
+              )}
            </div>
          </main>
 
