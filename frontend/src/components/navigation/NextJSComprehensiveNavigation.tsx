@@ -140,6 +140,7 @@ const NextJSComprehensiveNavigation: React.FC<NextJSComprehensiveNavigationProps
       description: 'Digital twin creation and AI-powered features',
       items: [
         { label: 'Digital Twin Dashboard', icon: <Brain className="w-4 h-4" />, path: '/digital-twin/dashboard', subtitle: 'DASHBOARD', description: 'Comprehensive digital twin management and analytics' },
+        { label: 'Twin Overview', icon: <Eye className="w-4 h-4" />, path: '/digital-twin/overview', subtitle: 'OVERVIEW', description: 'Comprehensive overview of your digital twin learning and insights' },
         { label: 'Real-Time Twin Dashboard', icon: <Activity className="w-4 h-4" />, path: '/digital-twin/real-time', subtitle: 'REAL-TIME', description: 'Live twin status, learning progress, and real-time analytics' },
         { label: 'My Digital Twin', icon: <Bot className="w-4 h-4" />, path: '/digital-twin/my-twin', subtitle: 'CORE PLATFORM' },
         { label: 'Digital Twin Onboarding', icon: <Rocket className="w-4 h-4" />, path: '/digital-twin/onboarding', description: 'Setup your digital twin' },
@@ -150,6 +151,7 @@ const NextJSComprehensiveNavigation: React.FC<NextJSComprehensiveNavigationProps
         { label: 'Twin Interaction', icon: <MessageSquare className="w-4 h-4" />, path: '/digital-twin/interaction', subtitle: 'CHAT', description: 'Interactive conversation with your digital twin' },
         { label: 'Twin Workspace', icon: <Brain className="w-4 h-4" />, path: '/digital-twin/workspace', subtitle: 'WORKSPACE', description: 'Advanced workspace with intent recognition and analytics' },
         { label: 'Twin Simulation', icon: <Layers className="w-4 h-4" />, path: '/digital-twin/simulation', subtitle: 'SIMULATION' },
+        { label: 'Twin Settings', icon: <SettingsIcon className="w-4 h-4" />, path: '/digital-twin/settings', subtitle: 'SETTINGS', description: 'Configure your digital twin preferences and advanced options' },
         { label: 'Behavior Modeling', icon: <Brain className="w-4 h-4" />, path: '/digital-twin/behavior', subtitle: 'MODELING' },
         { label: 'Twin Analytics', icon: <BarChart3 className="w-4 h-4" />, path: '/digital-twin/analytics', subtitle: 'INSIGHTS' }
       ]
