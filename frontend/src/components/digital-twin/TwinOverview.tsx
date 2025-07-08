@@ -36,6 +36,8 @@ interface DigitalTwin {
 
 interface TwinOverviewProps {
   twinId?: string;
+  twin?: DigitalTwin;
+  onRefresh?: () => Promise<void>;
 }
 
 interface Pattern {
@@ -53,7 +55,11 @@ interface Recommendation {
   priority: string;
 }
 
-export const TwinOverview: React.FC<TwinOverviewProps> = ({ twinId = 'default' }) => {
+export const TwinOverview: React.FC<TwinOverviewProps> = ({
+  twinId = 'default',
+  twin: propTwin,
+  onRefresh
+}) => {
   const [twin, setTwin] = useState<DigitalTwin | null>(null);
   const [patterns, setPatterns] = useState<Pattern[]>([]);
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
@@ -68,6 +74,45 @@ export const TwinOverview: React.FC<TwinOverviewProps> = ({ twinId = 'default' }
 
   const fetchTwinOverview = async () => {
     setLoading(true);
+    
+    // If twin data is passed as prop, use it directly
+    if (propTwin) {
+      setTwin(propTwin);
+      try {
+        // Still try to fetch insights from database
+        const insightsResponse = await digitalTwinApi.getTwinInsights();
+        if (insightsResponse.success) {
+          setInsights(insightsResponse.data);
+          setPatterns(insightsResponse.data.discovered_patterns || []);
+          setRecommendations(insightsResponse.data.recommendations || []);
+          setUsingFallbackData(false);
+          toast.success('Twin overview loaded with live insights');
+        } else {
+          throw new Error('Failed to load insights');
+        }
+      } catch (error) {
+        console.warn('Failed to load insights from database:', error);
+        // Use fallback insights but keep the passed twin data
+        const fallbackData = generateFallbackOverview();
+        setInsights(fallbackData.insights);
+        setPatterns(fallbackData.patterns);
+        setRecommendations(fallbackData.recommendations);
+        setUsingFallbackData(true);
+        toast.info('Using demonstration insights - database unavailable');
+      }
+      setLoading(false);
+      
+      // Call onRefresh if provided
+      if (onRefresh) {
+        try {
+          await onRefresh();
+        } catch (error) {
+          console.warn('onRefresh callback failed:', error);
+        }
+      }
+      return;
+    }
+
     try {
       // Try to fetch twin status and insights from database first
       const [statusResponse, insightsResponse] = await Promise.all([
@@ -95,6 +140,7 @@ export const TwinOverview: React.FC<TwinOverviewProps> = ({ twinId = 'default' }
         setRecommendations(insightsResponse.data.recommendations || []);
         setUsingFallbackData(false);
         toast.success('Twin overview loaded from database');
+        setLoading(false);
         return;
       }
     } catch (error) {

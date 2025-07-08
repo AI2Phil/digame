@@ -3,7 +3,7 @@ import Head from 'next/head';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import ApiKeyManagementSection from '../../src/components/admin/ApiKeyManagementSection';
-import { ToastProvider } from '../../src/components/ui/Toast';
+import { ToastProvider } from '../../src/components/ui/Toaster';
 
 export default function AdminApiKeys() {
   return (

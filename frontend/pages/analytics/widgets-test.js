@@ -1,6 +1,17 @@
 import React from 'react';
 import { Box, Typography, Grid, Container } from '@mui/material';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import DashboardWidget from '../../src/components/analytics/widgets/DashboardWidget';
+
+// Create a client
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 const WidgetsTestPage = () => {
   // Sample widget configurations for testing
@@ -91,7 +102,8 @@ const WidgetsTestPage = () => {
   ];
 
   return (
-    <Container maxWidth="xl" sx={{ py: 4 }}>
+    <QueryClientProvider client={queryClient}>
+      <Container maxWidth="xl" sx={{ py: 4 }}>
       <Box sx={{ mb: 4 }}>
         <Typography variant="h4" component="h1" gutterBottom>
           Analytics Widgets Test
@@ -131,6 +143,7 @@ const WidgetsTestPage = () => {
         </Typography>
       </Box>
     </Container>
+    </QueryClientProvider>
   );
 };
 
