@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
-import { 
-  BarChart3, 
-  TrendingUp, 
-  Clock, 
+import { Toast } from '../ui/Toast';
+import {
+  BarChart3,
+  TrendingUp,
+  Clock,
   Target,
   Activity,
   Brain,
@@ -13,6 +14,7 @@ import {
   Calendar,
   Zap
 } from 'lucide-react';
+import { digitalTwinApi } from '../../services/digitalTwinApi';
 
 interface DigitalTwin {
   id: string;
@@ -37,43 +39,96 @@ export const TwinAnalytics: React.FC<TwinAnalyticsProps> = ({ twinId, twin }) =>
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [timeRange, setTimeRange] = useState('7'); // days
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchAnalytics();
   }, [twinId, timeRange]);
 
+  const generateFallbackData = () => {
+    const timeRangeNum = parseInt(timeRange);
+    const basePatterns = Math.max(3, Math.floor(timeRangeNum / 2));
+    const baseInteractions = Math.max(10, timeRangeNum * 2);
+    
+    return {
+      patterns: [
+        {
+          id: 'pattern_1',
+          pattern_type: 'morning_productivity',
+          confidence_score: 85 + Math.random() * 10,
+          frequency_score: 75 + Math.random() * 15,
+          impact_score: 80 + Math.random() * 15,
+          discovered_at: new Date(Date.now() - Math.random() * timeRangeNum * 24 * 60 * 60 * 1000).toISOString(),
+          validated_at: Math.random() > 0.3 ? new Date(Date.now() - Math.random() * timeRangeNum * 12 * 60 * 60 * 1000).toISOString() : null
+        },
+        {
+          id: 'pattern_2',
+          pattern_type: 'afternoon_focus',
+          confidence_score: 70 + Math.random() * 20,
+          frequency_score: 65 + Math.random() * 20,
+          impact_score: 75 + Math.random() * 20,
+          discovered_at: new Date(Date.now() - Math.random() * timeRangeNum * 24 * 60 * 60 * 1000).toISOString(),
+          validated_at: Math.random() > 0.4 ? new Date(Date.now() - Math.random() * timeRangeNum * 12 * 60 * 60 * 1000).toISOString() : null
+        },
+        {
+          id: 'pattern_3',
+          pattern_type: 'task_completion',
+          confidence_score: 90 + Math.random() * 8,
+          frequency_score: 85 + Math.random() * 10,
+          impact_score: 88 + Math.random() * 10,
+          discovered_at: new Date(Date.now() - Math.random() * timeRangeNum * 24 * 60 * 60 * 1000).toISOString(),
+          validated_at: new Date(Date.now() - Math.random() * timeRangeNum * 6 * 60 * 60 * 1000).toISOString()
+        }
+      ].slice(0, basePatterns),
+      statistics: {
+        patterns_discovered: basePatterns,
+        total_interactions: baseInteractions,
+        processing_rate: 85 + Math.random() * 12,
+        learning_efficiency: twin.learning_progress || 65 + Math.random() * 25,
+        accuracy_improvement: twin.accuracy_score || 75 + Math.random() * 20,
+        data_points_processed: baseInteractions + Math.floor(Math.random() * 50),
+        model_confidence: 80 + Math.random() * 15
+      },
+      recent_activity: {
+        new_patterns: Math.floor(Math.random() * 3) + 1,
+        interactions: Math.floor(baseInteractions * 0.3) + Math.floor(Math.random() * 10),
+        learning_sessions: Math.floor(Math.random() * 8) + 2,
+        insights_generated: Math.floor(Math.random() * 5) + 3
+      }
+    };
+  };
+
   const fetchAnalytics = async () => {
     try {
       setLoading(true);
+      setError(null);
       
-      // Fetch statistics
-      const statsResponse = await fetch(`/api/v1/digital-twins/${twinId}/statistics`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json',
-        },
-      });
+      const timeRangeNum = parseInt(timeRange);
+      
+      // Fetch analytics statistics and patterns in parallel
+      const [statsResponse, patternsResponse] = await Promise.all([
+        digitalTwinApi.getTwinAnalyticsStatistics(timeRangeNum),
+        digitalTwinApi.getTwinAnalyticsPatterns(undefined, timeRangeNum, 20)
+      ]);
 
-      // Fetch patterns
-      const patternsResponse = await fetch(`/api/v1/digital-twins/${twinId}/patterns`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (statsResponse.ok && patternsResponse.ok) {
-        const statsData = await statsResponse.json();
-        const patternsData = await patternsResponse.json();
-        
+      if (statsResponse.success && patternsResponse.success) {
         setAnalytics({
-          patterns: patternsData.patterns || [],
-          statistics: statsData.statistics || {},
-          recent_activity: statsData.recent_activity || {}
+          patterns: patternsResponse.data?.patterns || [],
+          statistics: statsResponse.data?.statistics || {},
+          recent_activity: statsResponse.data?.recent_activity || {}
         });
+      } else {
+        // Use fallback data if API calls fail
+        const fallbackData = generateFallbackData();
+        setAnalytics(fallbackData);
+        setError('Using sample data - API connection unavailable');
       }
     } catch (error) {
       console.error('Error fetching analytics:', error);
+      // Use fallback data on error
+      const fallbackData = generateFallbackData();
+      setAnalytics(fallbackData);
+      setError('Using sample data - API connection failed');
     } finally {
       setLoading(false);
     }
@@ -108,6 +163,18 @@ export const TwinAnalytics: React.FC<TwinAnalyticsProps> = ({ twinId, twin }) =>
 
   return (
     <div className="space-y-6">
+      {/* Error Toast */}
+      {error && (
+        <Toast
+          id="analytics-error"
+          type="warning"
+          title="Analytics Notice"
+          message={error}
+          onClose={() => setError(null)}
+          action={null}
+        />
+      )}
+
       {/* Analytics Header */}
       <div className="flex items-center justify-between">
         <div>

@@ -238,6 +238,27 @@ class DigitalTwinApi {
   async getRealTimeHealthMetrics(): Promise<TwinResponse> {
     return await apiClient.get<TwinResponse>(`${this.baseUrl}/real-time/health-metrics`);
   }
+
+  // Analytics methods for TwinAnalytics component
+  async getTwinAnalyticsStatistics(timeRange?: number): Promise<TwinResponse> {
+    const params = new URLSearchParams();
+    if (timeRange) params.append('time_range', timeRange.toString());
+    
+    return await apiClient.get<TwinResponse>(`${this.baseUrl}/analytics/statistics?${params}`);
+  }
+
+  async getTwinAnalyticsPatterns(
+    patternType?: string,
+    timeRange?: number,
+    limit?: number
+  ): Promise<TwinResponse> {
+    const params = new URLSearchParams();
+    if (patternType) params.append('pattern_type', patternType);
+    if (timeRange) params.append('time_range', timeRange.toString());
+    if (limit) params.append('limit', limit.toString());
+    
+    return await apiClient.get<TwinResponse>(`${this.baseUrl}/analytics/patterns?${params}`);
+  }
 }
 
 export const digitalTwinApi = new DigitalTwinApi();
