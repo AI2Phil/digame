@@ -5,7 +5,7 @@ Workflow Automation models for business process automation and workflow manageme
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, JSON, ForeignKey, Float, Enum
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
-from ..database import Base
+from database import Base
 from typing import Optional, Dict, Any, List
 from datetime import datetime
 import enum
@@ -58,6 +58,7 @@ class WorkflowTemplate(Base):  # type: ignore
     Reusable workflow templates for business process automation
     """
     __tablename__ = "workflow_templates"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True)  # type: ignore
     tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=False, index=True)  # type: ignore
@@ -107,6 +108,7 @@ class WorkflowInstance(Base):  # type: ignore
     Individual workflow execution instances
     """
     __tablename__ = "workflow_instances"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True)  # type: ignore
     tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=False, index=True)  # type: ignore
@@ -161,6 +163,7 @@ class WorkflowStepExecution(Base):  # type: ignore
     Individual step execution within a workflow instance
     """
     __tablename__ = "workflow_step_executions"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True)  # type: ignore
     workflow_instance_id = Column(Integer, ForeignKey("workflow_instances.id"), nullable=False, index=True)  # type: ignore
@@ -210,6 +213,7 @@ class AutomationRule(Base):  # type: ignore
     Automation rules for triggering workflows based on events or conditions
     """
     __tablename__ = "automation_rules"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True)  # type: ignore
     tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=False, index=True)  # type: ignore
@@ -261,6 +265,7 @@ class WorkflowAction(Base):  # type: ignore
     Predefined actions that can be used in workflows
     """
     __tablename__ = "workflow_actions"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True)  # type: ignore
     tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=False, index=True)  # type: ignore
@@ -308,6 +313,7 @@ class WorkflowIntegration(Base):  # type: ignore
     External system integrations for workflow automation
     """
     __tablename__ = "workflow_integrations"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True)  # type: ignore
     tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=False, index=True)  # type: ignore
@@ -356,6 +362,7 @@ class WorkflowReportConfig(Base):  # type: ignore
     Links a WorkflowTemplate to a ReportDefinition.
     """
     __tablename__ = "workflow_report_configs"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True)  # type: ignore
     tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=False, index=True)  # type: ignore
@@ -405,6 +412,7 @@ class OptimizationRecommendation(Base):  # type: ignore
     Stores recommendations for process optimization based on workflow analytics.
     """
     __tablename__ = "optimization_recommendations"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True)  # type: ignore
     tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=False, index=True)  # type: ignore

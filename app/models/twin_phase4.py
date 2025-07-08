@@ -10,7 +10,7 @@ from sqlalchemy.sql import func
 import uuid
 
 # Use the existing Base from the project
-from ..database import Base
+from database import Base
 
 class WebSocketConnection(Base):
     """Track active WebSocket connections"""

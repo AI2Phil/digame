@@ -3,7 +3,7 @@
  * Provides real-time communication with the backend
  */
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 
 const WEBSOCKET_BASE_URL = process.env.REACT_APP_WS_URL || 'ws://localhost:8000/ws';
 

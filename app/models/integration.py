@@ -5,7 +5,7 @@ Integration API models for third-party productivity tools and services
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, JSON, ForeignKey, Float
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
-from ..database import Base
+from database import Base
 from typing import Optional, Dict, Any
 from datetime import datetime
 import enum

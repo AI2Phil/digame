@@ -139,6 +139,8 @@ const NextJSComprehensiveNavigation: React.FC<NextJSComprehensiveNavigationProps
       icon: <Brain className="w-5 h-5" />,
       description: 'Digital twin creation and AI-powered features',
       items: [
+        { label: 'Digital Twin Dashboard', icon: <Brain className="w-4 h-4" />, path: '/digital-twin/dashboard', subtitle: 'DASHBOARD', description: 'Comprehensive digital twin management and analytics' },
+        { label: 'Real-Time Twin Dashboard', icon: <Activity className="w-4 h-4" />, path: '/digital-twin/real-time', subtitle: 'REAL-TIME', description: 'Live twin status, learning progress, and real-time analytics' },
         { label: 'My Digital Twin', icon: <Bot className="w-4 h-4" />, path: '/digital-twin/my-twin', subtitle: 'CORE PLATFORM' },
         { label: 'Digital Twin Onboarding', icon: <Rocket className="w-4 h-4" />, path: '/digital-twin/onboarding', description: 'Setup your digital twin' },
         { label: 'Intelligence API', icon: <Code className="w-4 h-4" />, path: '/digital-twin/intelligence', subtitle: 'API ACCESS' },

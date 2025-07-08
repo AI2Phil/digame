@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 import uuid
 
 # Use the existing Base from the project
-from ..database import Base
+from database import Base
 
 from .dashboard_custom import ReportDefinition # Import ReportDefinition
 
@@ -17,6 +17,7 @@ class Report(Base):  # type: ignore
     Report definition and configuration
     """
     __tablename__ = "reports"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True)  # type: ignore
     tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=False, index=True)  # type: ignore
@@ -99,6 +100,7 @@ class ReportExecution(Base):  # type: ignore
     Report execution history and results
     """
     __tablename__ = "report_executions"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True)  # type: ignore
     report_id = Column(Integer, ForeignKey("reports.id"), nullable=False, index=True)  # type: ignore
@@ -166,6 +168,7 @@ class ReportSchedule(Base):  # type: ignore
     Report scheduling configuration
     """
     __tablename__ = "report_schedules"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True)  # type: ignore
     report_id = Column(Integer, ForeignKey("reports.id"), nullable=True, index=True)  # type: ignore  # Nullable for new schedules
@@ -236,6 +239,7 @@ class ReportSubscription(Base):  # type: ignore
     User subscriptions to scheduled reports
     """
     __tablename__ = "report_subscriptions"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True)  # type: ignore
     report_id = Column(Integer, ForeignKey("reports.id"), nullable=False, index=True)  # type: ignore
@@ -276,6 +280,7 @@ class ReportTemplate(Base):  # type: ignore
     Reusable report templates
     """
     __tablename__ = "report_templates"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True)  # type: ignore
     template_uuid = Column(String(36), unique=True, index=True, default=lambda: str(uuid.uuid4()))  # type: ignore
@@ -321,6 +326,7 @@ class ReportAuditLog(Base):  # type: ignore
     Audit log for report activities
     """
     __tablename__ = "report_audit_logs"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True)  # type: ignore
     tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=False, index=True)  # type: ignore
@@ -356,6 +362,7 @@ class ReportCache(Base):  # type: ignore
     Cache for report results to improve performance
     """
     __tablename__ = "report_cache"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True)  # type: ignore
     cache_key = Column(String(255), unique=True, nullable=False, index=True)  # type: ignore

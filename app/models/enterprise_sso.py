@@ -5,7 +5,7 @@ Enterprise SSO models for SAML, OIDC, and LDAP integration
 from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime, JSON, ForeignKey
 from sqlalchemy.orm import relationship
 from datetime import datetime
-from ..database import Base
+from database import Base
 
 
 class SSOProvider(Base):

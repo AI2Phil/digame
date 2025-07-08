@@ -98,7 +98,7 @@ export interface TwinInteraction {
 }
 
 class DigitalTwinApi {
-  private baseUrl = '/api/digital-twin';
+  private baseUrl = 'http://localhost:8001/api/digital-twin';
 
   async initializeTwin(request: TwinInitRequest): Promise<TwinResponse> {
     return await apiClient.post<TwinResponse>(`${this.baseUrl}/initialize`, request);
@@ -221,6 +221,22 @@ class DigitalTwinApi {
     return this.generatePredictions({
       prediction_type: 'comprehensive'
     });
+  }
+
+  // Real-time dashboard methods
+  async getRealTimeAnalytics(): Promise<TwinResponse> {
+    return await apiClient.get<TwinResponse>(`${this.baseUrl}/real-time/analytics`);
+  }
+
+  async getRealTimeNotifications(limit?: number): Promise<TwinResponse> {
+    const params = new URLSearchParams();
+    if (limit) params.append('limit', limit.toString());
+    
+    return await apiClient.get<TwinResponse>(`${this.baseUrl}/real-time/notifications?${params}`);
+  }
+
+  async getRealTimeHealthMetrics(): Promise<TwinResponse> {
+    return await apiClient.get<TwinResponse>(`${this.baseUrl}/real-time/health-metrics`);
   }
 }
 

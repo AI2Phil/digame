@@ -8,8 +8,8 @@ from datetime import datetime, timezone
 import uuid
 
 # Use the existing Base from the project
-from ..database import Base
-from ..models.user import User as UserModel # Import User model with alias
+from database import Base
+from models.user import User as UserModel # Import User model with alias
 User = UserModel  # type: ignore  # Assign to avoid type conflicts
 
 
@@ -18,6 +18,7 @@ class AnalyticsModel(Base):  # type: ignore
     Predictive analytics models and their configurations
     """
     __tablename__ = "analytics_models"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True)  # type: ignore
     model_uuid = Column(String(36), unique=True, index=True, default=lambda: str(uuid.uuid4()))  # type: ignore
@@ -119,6 +120,7 @@ class AnalyticsPrediction(Base):  # type: ignore
     Individual predictions made by analytics models
     """
     __tablename__ = "analytics_predictions"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True)  # type: ignore
     prediction_uuid = Column(String(36), unique=True, index=True, default=lambda: str(uuid.uuid4()))  # type: ignore
@@ -197,6 +199,7 @@ class AnalyticsTrainingJob(Base):  # type: ignore
     Training jobs for analytics models
     """
     __tablename__ = "analytics_training_jobs"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True)
     job_uuid = Column(String(36), unique=True, index=True, default=lambda: str(uuid.uuid4()))
@@ -284,6 +287,7 @@ class ROICalculation(Base):  # type: ignore
     ROI (Return on Investment) calculations and measurements
     """
     __tablename__ = "roi_calculations"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True)
     calculation_uuid = Column(String(36), unique=True, index=True, default=lambda: str(uuid.uuid4()))
@@ -418,6 +422,7 @@ class PerformanceMetric(Base):  # type: ignore
     Performance metrics and KPIs for analytics tracking
     """
     __tablename__ = "analytics_performance_metrics"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True)
     metric_uuid = Column(String(36), unique=True, index=True, default=lambda: str(uuid.uuid4()))
@@ -540,6 +545,7 @@ class AnalyticsDashboard(Base):  # type: ignore
     A dashboard consists of a name, description, tags, and a layout of widgets.
     """
     __tablename__ = "analytics_dashboards"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True)
     dashboard_uuid = Column(String(36), unique=True, index=True, default=lambda: str(uuid.uuid4()))
@@ -583,6 +589,7 @@ class DashboardWidgetConfig(Base):  # type: ignore
     Each widget is associated with a parent dashboard.
     """
     __tablename__ = "dashboard_widget_configs"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True)
     widget_uuid = Column(String(36), unique=True, index=True, default=lambda: str(uuid.uuid4()))
