@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 import uuid
 
 # Use the existing Base from the project
-from database import Base
+from ..database import Base
 
 from .dashboard_custom import ReportDefinition # Import ReportDefinition
 

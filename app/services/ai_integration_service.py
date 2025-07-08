@@ -47,10 +47,13 @@ class AIIntegrationService:
         full_url = f"{base_url.rstrip('/')}/{endpoint.lstrip('/')}"
 
         headers = {
-            "Authorization": f"{auth_scheme} {api_key}",
             "Content-Type": "application/json",
             "Accept": "application/json"
         }
+        
+        # Only add Authorization header if auth_scheme and api_key are provided
+        if auth_scheme and api_key:
+            headers["Authorization"] = f"{auth_scheme} {api_key}"
 
         if custom_headers:
             headers.update(custom_headers)

@@ -5,7 +5,7 @@ Performance monitoring models for real-time dashboards and optimization tools
 from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime, JSON, Float, ForeignKey, Index
 from sqlalchemy.orm import relationship
 from datetime import datetime
-from database import Base
+from ..database import Base
 
 
 class PerformanceMetric(Base):  # type: ignore

@@ -55,6 +55,7 @@ from .routers import advanced_analytics_router # Import the new advanced analyti
 from .routers import document_processing_router # Import the new document processing router
 # from .routers import security_router # Import the security router - temporarily disabled
 from .api import gamification # Import the gamification API
+from .api import api_keys # Import the API keys router
 from .routers import guest_auth_router # Import the guest authentication router
 from .routers import digital_twin_onboarding_router # Import the digital twin onboarding router
 from .routers import guest_experience_router # Import the guest experience router
@@ -267,6 +268,10 @@ app = FastAPI(
         {
             "name": "Testing & Quality Assurance",
             "description": "Comprehensive testing, quality assurance, monitoring, and documentation for production readiness"
+        },
+        {
+            "name": "API Keys",
+            "description": "User API key management for AI providers including OpenAI, Anthropic, DeepSeek, Google AI, Cohere, and Mistral"
         }
     ]
 )
@@ -341,6 +346,7 @@ app.include_router(social_collaboration_router.router) # Add the social collabor
 app.include_router(mobile_ai_router.router) # Add the new mobile_ai_router, already tagged in its file
 app.include_router(user_profile_router.router) # Add user profile router, prefix and tags are in the router itself
 app.include_router(gamification.router, tags=["Gamification"]) # Add gamification router
+app.include_router(api_keys.router, tags=["API Keys"]) # Add API keys router
 app.include_router(team_router.router, prefix="/api", tags=["Teams"]) # Add team router with API prefix
 app.include_router(advanced_analytics_router.router) # Add advanced analytics router, prefix and tags are in the router itself
 app.include_router(document_processing_router.router) # Add document processing router, prefix and tags are in router

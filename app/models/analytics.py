@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 import uuid
 
 # Use the existing Base from the project
-from database import Base
+from ..database import Base
 from models.user import User as UserModel # Import User model with alias
 User = UserModel  # type: ignore  # Assign to avoid type conflicts
 

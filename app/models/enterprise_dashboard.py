@@ -5,7 +5,7 @@ Enterprise Dashboard models for unified enterprise feature management
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, JSON, ForeignKey, Float, Enum
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
-from database import Base
+from ..database import Base
 from typing import Optional, Dict, Any, List
 from datetime import datetime
 import enum
