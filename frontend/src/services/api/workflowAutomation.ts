@@ -245,7 +245,7 @@ export interface CreateWorkflowActionRequest {
 // ===== API CLIENT =====
 
 class WorkflowAutomationApi {
-  private baseUrl = '/api/workflow-automation';
+  private baseUrl = 'http://localhost:8001/api/workflow-automation';
 
   // ===== WORKFLOW TEMPLATES =====
   

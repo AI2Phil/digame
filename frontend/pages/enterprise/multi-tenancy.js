@@ -1,6 +1,6 @@
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ToastProvider } from '../../src/contexts/ToastContext';
+import { ToastProvider } from '../../src/components/ui/Toaster';
 import MultiTenancyDashboard from '../../src/components/enterprise/MultiTenancyDashboard';
 
 // Create a client

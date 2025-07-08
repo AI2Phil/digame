@@ -30,6 +30,16 @@ const MultiTenancyDashboard = ({ currentTenant, userRole, onTenantSwitch }) => {
     loadDashboardData();
   }, []);
 
+  // Update configurable settings when tenantData changes
+  useEffect(() => {
+    if (tenantData?.name) {
+      setTenantConfigurableSettings(prev => ({
+        ...prev,
+        orgName: tenantData.name
+      }));
+    }
+  }, [tenantData]);
+
   const loadDashboardData = async () => {
     try {
       setLoading(true);
@@ -272,7 +282,7 @@ const MultiTenancyDashboard = ({ currentTenant, userRole, onTenantSwitch }) => {
 
   // State for configurable settings in TenantSettingsSection
   const [tenantConfigurableSettings, setTenantConfigurableSettings] = useState({
-    orgName: tenantData.name, // Initialize with tenantData, but keep it separate
+    orgName: tenantData?.name || 'Default Organization', // Safe initialization with fallback
     timezone: 'America/Los_Angeles', // Default
     dateFormat: 'YYYY-MM-DD',   // Default
   });
