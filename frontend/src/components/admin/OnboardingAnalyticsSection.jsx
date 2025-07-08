@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   UserCheck, TrendingUp, Clock, Target,
   BarChart3, Users, CheckCircle, XCircle,
@@ -13,112 +13,236 @@ import { Badge } from '../ui/Badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/Tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/Select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/Table';
+import { useToast } from '../ui/Toast';
 
-
-const OnboardingAnalyticsSection = ({ onboardingStats }) => {
+const OnboardingAnalyticsSection = () => {
+  // Toast hook for notifications
+  const { toast } = useToast();
+  
+  // State management for database-driven data
+  const [onboardingMetrics, setOnboardingMetrics] = useState({});
+  const [onboardingSteps, setOnboardingSteps] = useState([]);
+  const [recentCompletions, setRecentCompletions] = useState([]);
+  const [userSegments, setUserSegments] = useState({});
+  const [satisfactionDistribution, setSatisfactionDistribution] = useState([]);
+  const [avgSatisfaction, setAvgSatisfaction] = useState(0);
+  const [insights, setInsights] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [timeRange, setTimeRange] = useState('30d');
   const [refreshing, setRefreshing] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(false);
 
-  // Use a default object for onboardingStats if it's undefined to prevent errors
-  const safeOnboardingStats = onboardingStats || {
-    totalUsers: 0, completedOnboarding: 0, inProgress: 0, abandoned: 0,
-    completionRate: 0, avgCompletionTime: 'N/A', dropOffRate: {}
+  // Detect dark mode
+  useEffect(() => {
+    const checkDarkMode = () => {
+      setIsDarkMode(document.documentElement.classList.contains('dark'));
+    };
+    
+    checkDarkMode();
+    
+    const observer = new MutationObserver(checkDarkMode);
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class']
+    });
+    
+    return () => observer.disconnect();
+  }, []);
+
+  // Fetch onboarding analytics data from backend
+  const fetchOnboardingAnalytics = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const response = await fetch(`http://localhost:8001/api/admin/onboarding/analytics/detailed?time_range=${timeRange}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      const data = result.data || result;
+      
+      setOnboardingMetrics(data.onboardingMetrics || {});
+      setOnboardingSteps(data.onboardingSteps || []);
+      setRecentCompletions(data.recentCompletions || []);
+      setUserSegments(data.userSegments || {});
+      setSatisfactionDistribution(data.satisfactionDistribution || []);
+      setAvgSatisfaction(data.avgSatisfaction || 0);
+      setInsights(data.insights || []);
+      
+    } catch (err) {
+      console.error('Error fetching onboarding analytics:', err);
+      setError(err.message);
+      // Fallback to enhanced sample data
+      generateEnhancedSampleData();
+      // Show notification that fallback data is being used
+      toast.warning('API Unavailable', 'Using sample data - onboarding analytics endpoints not accessible');
+    } finally {
+      setLoading(false);
+    }
   };
 
+  // Generate enhanced sample data as fallback
+  const generateEnhancedSampleData = () => {
+    // Generate realistic onboarding metrics
+    const totalUsers = Math.round(Math.random() * 1000 + 2000); // 2k-3k
+    const completionRate = Math.round((Math.random() * 10 + 78) * 10) / 10; // 78-88%
+    const completedOnboarding = Math.round(totalUsers * (completionRate / 100));
+    const inProgress = Math.round(totalUsers * (Math.random() * 0.07 + 0.08)); // 8-15%
+    const abandoned = totalUsers - completedOnboarding - inProgress;
+    const avgCompletionMinutes = Math.round(Math.random() * 10 + 8); // 8-18 min
+    
+    const enhancedOnboardingMetrics = {
+      totalUsers,
+      completedOnboarding,
+      inProgress,
+      abandoned,
+      completionRate,
+      avgCompletionTime: `${avgCompletionMinutes}m ${Math.round(Math.random() * 50 + 10)}s`,
+      dropOffRate: Math.round((100 - completionRate) * 10) / 10
+    };
+    
+    setOnboardingMetrics(enhancedOnboardingMetrics);
+
+    // Generate realistic onboarding steps with funnel pattern
+    const stepNames = ['Welcome', 'Profile Setup', 'Preferences', 'Goals Setting', 'Feature Tour', 'Completion'];
+    const enhancedSteps = stepNames.map((stepName, index) => {
+      const baseCompletion = totalUsers - (index * Math.round(Math.random() * 50 + 30));
+      const dropOff = Math.round(Math.random() * 30 + 10);
+      const completed = Math.max(baseCompletion - dropOff, completedOnboarding);
+      const completionRate = Math.round((completed / totalUsers) * 1000) / 10;
+      
+      return {
+        step: stepName,
+        completed,
+        dropOff,
+        completionRate,
+        avgTime: index === 0 ? `${Math.round(Math.random() * 30 + 30)}s` :
+                 index === stepNames.length - 1 ? `${Math.round(Math.random() * 25 + 20)}s` :
+                 `${Math.round(Math.random() * 3 + 1)}m ${Math.round(Math.random() * 50 + 10)}s`
+      };
+    });
+    
+    setOnboardingSteps(enhancedSteps);
+
+    // Generate recent completions
+    const domains = ['example.com', 'company.com', 'startup.io', 'tech.com', 'business.net'];
+    const enhancedRecentCompletions = Array.from({ length: 8 }, (_, i) => {
+      const completionTime = new Date(Date.now() - Math.random() * 2 * 60 * 60 * 1000); // Last 2 hours
+      const durationMinutes = Math.round(Math.random() * 15 + 6);
+      const durationSeconds = Math.round(Math.random() * 50 + 10);
+      
+      return {
+        user: `user${Math.round(Math.random() * 900 + 100)}@${domains[Math.floor(Math.random() * domains.length)]}`,
+        completedAt: completionTime.toISOString(),
+        duration: `${durationMinutes}m ${durationSeconds}s`,
+        stepsCompleted: Math.random() > 0.2 ? 6 : 5, // 80% complete all steps
+        satisfaction: Math.random() > 0.7 ? 5 : Math.random() > 0.4 ? 4 : 3 // Weighted toward higher satisfaction
+      };
+    });
+    
+    setRecentCompletions(enhancedRecentCompletions);
+
+    // Generate user segments
+    const enhancedUserSegments = {
+      fastCompleters: Math.round(Math.random() * 10 + 30), // 30-40%
+      averageCompleters: Math.round(Math.random() * 10 + 45), // 45-55%
+      slowCompleters: Math.round(Math.random() * 10 + 10) // 10-20%
+    };
+    
+    setUserSegments(enhancedUserSegments);
+
+    // Generate satisfaction distribution
+    const enhancedSatisfactionDistribution = [
+      { rating: 5, percentage: Math.round(Math.random() * 10 + 40), color: "green" },
+      { rating: 4, percentage: Math.round(Math.random() * 10 + 30), color: "lime" },
+      { rating: 3, percentage: Math.round(Math.random() * 10 + 10), color: "yellow" },
+      { rating: 2, percentage: Math.round(Math.random() * 3 + 2), color: "orange" },
+      { rating: 1, percentage: Math.round(Math.random() * 2 + 1), color: "red" }
+    ];
+    
+    setSatisfactionDistribution(enhancedSatisfactionDistribution);
+
+    // Calculate average satisfaction
+    const avgSat = enhancedSatisfactionDistribution.reduce((sum, item) =>
+      sum + (item.rating * item.percentage), 0) / 100;
+    setAvgSatisfaction(Math.round(avgSat * 10) / 10);
+
+    // Generate insights
+    const enhancedInsights = [
+      {
+        type: "success",
+        title: "Strong Performance",
+        message: `${completionRate}% completion rate is above industry average. Users who complete the welcome step have a ${enhancedSteps[0]?.completionRate || 99}% chance of finishing the entire onboarding.`
+      },
+      {
+        type: "warning",
+        title: "Improvement Opportunity",
+        message: `Profile Setup step has the highest drop-off rate (${100 - (enhancedSteps[1]?.completionRate || 94)}%). Consider simplifying this step or making some fields optional.`
+      },
+      {
+        type: "info",
+        title: "Optimization Suggestion",
+        message: "Users taking longer than 15 minutes show lower satisfaction scores. Consider adding progress indicators and time estimates for each step."
+      }
+    ];
+    
+    setInsights(enhancedInsights);
+  };
+
+  // Initial data fetch
+  useEffect(() => {
+    fetchOnboardingAnalytics();
+  }, [timeRange]);
+
+  // Refresh data function
   const handleRefresh = async () => {
     setRefreshing(true);
-    setTimeout(() => setRefreshing(false), 1000);
+    await fetchOnboardingAnalytics();
+    setRefreshing(false);
+    toast.success('Data Refreshed', 'Onboarding analytics data has been updated');
   };
 
-  // Mock data for demonstration
-  const stats = { // Use safeOnboardingStats for reliable data access
-    totalUsers: safeOnboardingStats.totalUsers,
-    completedOnboarding: safeOnboardingStats.completedOnboarding,
-    inProgress: safeOnboardingStats.inProgress,
-    abandoned: safeOnboardingStats.abandoned,
-    completionRate: safeOnboardingStats.completionRate,
-    avgCompletionTime: safeOnboardingStats.avgCompletionTime,
-    // dropOffRate specific to overall is not directly in mock, but step-wise is
-    // For overall drop-off, it might be (totalUsers - completedOnboarding) / totalUsers if not directly provided
-    dropOffOverall: safeOnboardingStats.totalUsers > 0 ?
-      (((safeOnboardingStats.totalUsers - safeOnboardingStats.completedOnboarding) / safeOnboardingStats.totalUsers) * 100).toFixed(1) : 0,
+  // Loading state
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-bold">Onboarding Analytics</h2>
+          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {[...Array(4)].map((_, i) => (
+            <Card key={i} className="animate-pulse">
+              <CardContent className="p-6">
+                <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                <div className="h-8 bg-gray-200 rounded w-1/2"></div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // Use the fetched data or fallback to safe defaults
+  const stats = {
+    totalUsers: onboardingMetrics.totalUsers || 0,
+    completedOnboarding: onboardingMetrics.completedOnboarding || 0,
+    inProgress: onboardingMetrics.inProgress || 0,
+    abandoned: onboardingMetrics.abandoned || 0,
+    completionRate: onboardingMetrics.completionRate || 0,
+    avgCompletionTime: onboardingMetrics.avgCompletionTime || 'N/A',
+    dropOffRate: onboardingMetrics.dropOffRate || 0
   };
-
-  const onboardingSteps = [ // This mock data can be enhanced or passed as prop
-    { 
-      step: 'Welcome', 
-      completed: 1234, 
-      dropOff: 12, 
-      completionRate: 99.0,
-      avgTime: '45s'
-    },
-    { 
-      step: 'Profile Setup', 
-      completed: 1156, 
-      dropOff: 66, 
-      completionRate: 94.3,
-      avgTime: '2m 15s'
-    },
-    { 
-      step: 'Preferences', 
-      completed: 1089, 
-      dropOff: 67, 
-      completionRate: 94.2,
-      avgTime: '1m 45s'
-    },
-    { 
-      step: 'Goals Setting', 
-      completed: 1034, 
-      dropOff: 55, 
-      completionRate: 94.9,
-      avgTime: '3m 20s'
-    },
-    { 
-      step: 'Feature Tour', 
-      completed: 998, 
-      dropOff: 36, 
-      completionRate: 96.5,
-      avgTime: '4m 10s'
-    },
-    { 
-      step: 'Completion', 
-      completed: 987, 
-      dropOff: 11, 
-      completionRate: 98.9,
-      avgTime: '30s'
-    }
-  ];
-
-  const recentCompletions = [
-    {
-      user: 'john.doe@example.com',
-      completedAt: '2025-05-23 19:15:32',
-      duration: '8m 45s',
-      stepsCompleted: 6,
-      satisfaction: 5
-    },
-    {
-      user: 'jane.smith@company.com',
-      completedAt: '2025-05-23 19:10:15',
-      duration: '12m 20s',
-      stepsCompleted: 6,
-      satisfaction: 4
-    },
-    {
-      user: 'mike.wilson@startup.io',
-      completedAt: '2025-05-23 19:05:42',
-      duration: '15m 10s',
-      stepsCompleted: 5,
-      satisfaction: 3
-    },
-    {
-      user: 'sarah.johnson@tech.com',
-      completedAt: '2025-05-23 19:00:18',
-      duration: '9m 30s',
-      stepsCompleted: 6,
-      satisfaction: 5
-    }
-  ];
 
   const getTrendIcon = (trend) => {
     if (trend > 0) return <ArrowUp className="w-4 h-4 text-green-500" />;
@@ -236,12 +360,12 @@ const OnboardingAnalyticsSection = ({ onboardingStats }) => {
 
         {/* User Journey Tab */}
         <TabsContent value="users" className="space-y-6">
-          <UserJourneyAnalysis />
+          <UserJourneyAnalysis userSegments={userSegments} satisfactionDistribution={satisfactionDistribution} avgSatisfaction={avgSatisfaction} />
         </TabsContent>
 
         {/* Insights Tab */}
         <TabsContent value="insights" className="space-y-6">
-          <OnboardingInsights />
+          <OnboardingInsights insights={insights} />
         </TabsContent>
       </Tabs>
     </div>
@@ -469,102 +593,186 @@ const StepPerformanceCard = ({ steps }) => (
 );
 
 // User Journey Analysis Component
-const UserJourneyAnalysis = () => (
-  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
-    <Card className="dark:bg-gray-800 dark:border-gray-700">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 dark:text-gray-100">
-          <Users2 className="w-5 h-5 text-blue-500 dark:text-blue-400" />
-           User Segments by Completion Time
-        </CardTitle>
-        <CardDescription className="dark:text-gray-400">How quickly different user groups complete onboarding.</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        {[
-          { label: "Fast Completers (<10min)", value: 34, color: "green" },
-          { label: "Average Completers (10-20min)", value: 52, color: "blue" },
-          { label: "Slow Completers (>20min)", value: 14, color: "yellow" },
-        ].map(segment => (
-          <div key={segment.label} className="space-y-1.5">
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-700 dark:text-gray-300">{segment.label}</span>
-              <span className="font-semibold dark:text-white">{segment.value}%</span>
-            </div>
-            <Progress value={segment.value} className={`h-2 bg-${segment.color}-500`} />
-          </div>
-        ))}
-      </CardContent>
-    </Card>
+const UserJourneyAnalysis = ({ userSegments, satisfactionDistribution, avgSatisfaction }) => {
+  // Use fetched data or fallback to defaults
+  const segments = [
+    {
+      label: "Fast Completers (<10min)",
+      value: userSegments?.fastCompleters || 34,
+      color: "green"
+    },
+    {
+      label: "Average Completers (10-20min)",
+      value: userSegments?.averageCompleters || 52,
+      color: "blue"
+    },
+    {
+      label: "Slow Completers (>20min)",
+      value: userSegments?.slowCompleters || 14,
+      color: "yellow"
+    },
+  ];
 
-    <Card className="dark:bg-gray-800 dark:border-gray-700">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 dark:text-gray-100">
-         <BarChartHorizontalBig className="w-5 h-5 text-purple-500 dark:text-purple-400" />
-          Post-Onboarding Satisfaction
-        </CardTitle>
-        <CardDescription className="dark:text-gray-400">User satisfaction scores after completing onboarding.</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        <div className="text-center mb-3">
-          <div className="text-3xl font-bold text-green-600 dark:text-green-400">4.2 <span className="text-2xl">/ 5</span></div>
-          <p className="text-sm text-gray-500 dark:text-gray-400">Average satisfaction score</p>
-        </div>
-        <div className="space-y-1.5">
-          {[
-            { rating: 5, percentage: 45, color: "green" },
-            { rating: 4, percentage: 35, color: "lime" },
-            { rating: 3, percentage: 15, color: "yellow" },
-            { rating: 2, percentage: 3, color: "orange" },
-            { rating: 1, percentage: 2, color: "red" },
-          ].map(item => (
-            <div key={item.rating} className="flex items-center gap-2 text-sm">
-              <span className="w-6 text-gray-600 dark:text-gray-400">{item.rating}★</span>
-              <Progress value={item.percentage} className={`h-2 bg-${item.color}-500`} />
-              <span className="w-8 text-gray-500 dark:text-gray-400">{item.percentage}%</span>
+  // Use fetched satisfaction data or fallback
+  const satisfactionData = satisfactionDistribution && satisfactionDistribution.length > 0
+    ? satisfactionDistribution
+    : [
+        { rating: 5, percentage: 45, color: "green" },
+        { rating: 4, percentage: 35, color: "lime" },
+        { rating: 3, percentage: 15, color: "yellow" },
+        { rating: 2, percentage: 3, color: "orange" },
+        { rating: 1, percentage: 2, color: "red" },
+      ];
+
+  const displayAvgSatisfaction = avgSatisfaction || 4.2;
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+      <Card className="dark:bg-gray-800 dark:border-gray-700">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 dark:text-gray-100">
+            <Users2 className="w-5 h-5 text-blue-500 dark:text-blue-400" />
+            User Segments by Completion Time
+          </CardTitle>
+          <CardDescription className="dark:text-gray-400">How quickly different user groups complete onboarding.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {segments.map(segment => (
+            <div key={segment.label} className="space-y-1.5">
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-700 dark:text-gray-300">{segment.label}</span>
+                <span className="font-semibold dark:text-white">{segment.value}%</span>
+              </div>
+              <Progress value={segment.value} className={`h-2 bg-${segment.color}-500`} />
             </div>
           ))}
-        </div>
-      </CardContent>
-    </Card>
-  </div>
-);
+        </CardContent>
+      </Card>
+
+      <Card className="dark:bg-gray-800 dark:border-gray-700">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 dark:text-gray-100">
+            <BarChartHorizontalBig className="w-5 h-5 text-purple-500 dark:text-purple-400" />
+            Post-Onboarding Satisfaction
+          </CardTitle>
+          <CardDescription className="dark:text-gray-400">User satisfaction scores after completing onboarding.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="text-center mb-3">
+            <div className="text-3xl font-bold text-green-600 dark:text-green-400">
+              {displayAvgSatisfaction} <span className="text-2xl">/ 5</span>
+            </div>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Average satisfaction score</p>
+          </div>
+          <div className="space-y-1.5">
+            {satisfactionData.map(item => (
+              <div key={item.rating} className="flex items-center gap-2 text-sm">
+                <span className="w-6 text-gray-600 dark:text-gray-400">{item.rating}★</span>
+                <Progress value={item.percentage} className={`h-2 bg-${item.color}-500`} />
+                <span className="w-8 text-gray-500 dark:text-gray-400">{item.percentage}%</span>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
 
 // Onboarding Insights Component
-const OnboardingInsights = () => (
-  <div className="space-y-4 md:space-y-6">
-    <Card className="dark:bg-gray-800 dark:border-gray-700">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 dark:text-gray-100">
-          <Lightbulb className="w-5 h-5 text-yellow-500 dark:text-yellow-400" />
-          Key Insights & Recommendations
-        </CardTitle>
-        <CardDescription className="dark:text-gray-400">Actionable suggestions based on onboarding data.</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="p-3 sm:p-4 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-700 rounded-lg">
-          <h4 className="font-medium text-green-800 dark:text-green-300 mb-1 text-sm">✅ Strong Performance</h4>
-          <p className="text-xs sm:text-sm text-green-700 dark:text-green-400">
-            85% completion rate is above industry average. Users who complete the welcome step
-            have a 99% chance of finishing the entire onboarding.
-          </p>
-        </div>
-        <div className="p-3 sm:p-4 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-700 rounded-lg">
-          <h4 className="font-medium text-yellow-800 dark:text-yellow-300 mb-1 text-sm">⚠️ Improvement Opportunity</h4>
-          <p className="text-xs sm:text-sm text-yellow-700 dark:text-yellow-400">
-            Profile Setup step has the highest drop-off rate (5.7%). Consider simplifying 
-            this step or making some fields optional.
-          </p>
-        </div>
-        <div className="p-3 sm:p-4 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded-lg">
-          <h4 className="font-medium text-blue-800 dark:text-blue-300 mb-1 text-sm">💡 Optimization Suggestion</h4>
-          <p className="text-xs sm:text-sm text-blue-700 dark:text-blue-400">
-            Users taking longer than 15 minutes show lower satisfaction scores. Consider 
-            adding progress indicators and time estimates for each step.
-          </p>
-        </div>
-      </CardContent>
-    </Card>
-  </div>
-);
+const OnboardingInsights = ({ insights }) => {
+  const getInsightStyles = (type) => {
+    switch (type) {
+      case 'success':
+        return {
+          bg: 'bg-green-50 dark:bg-green-900/30',
+          border: 'border-green-200 dark:border-green-700',
+          title: 'text-green-800 dark:text-green-300',
+          text: 'text-green-700 dark:text-green-400',
+          icon: '✅'
+        };
+      case 'warning':
+        return {
+          bg: 'bg-yellow-50 dark:bg-yellow-900/30',
+          border: 'border-yellow-200 dark:border-yellow-700',
+          title: 'text-yellow-800 dark:text-yellow-300',
+          text: 'text-yellow-700 dark:text-yellow-400',
+          icon: '⚠️'
+        };
+      case 'info':
+        return {
+          bg: 'bg-blue-50 dark:bg-blue-900/30',
+          border: 'border-blue-200 dark:border-blue-700',
+          title: 'text-blue-800 dark:text-blue-300',
+          text: 'text-blue-700 dark:text-blue-400',
+          icon: '💡'
+        };
+      default:
+        return {
+          bg: 'bg-gray-50 dark:bg-gray-900/30',
+          border: 'border-gray-200 dark:border-gray-700',
+          title: 'text-gray-800 dark:text-gray-300',
+          text: 'text-gray-700 dark:text-gray-400',
+          icon: 'ℹ️'
+        };
+    }
+  };
+
+  return (
+    <div className="space-y-4 md:space-y-6">
+      <Card className="dark:bg-gray-800 dark:border-gray-700">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 dark:text-gray-100">
+            <Lightbulb className="w-5 h-5 text-yellow-500 dark:text-yellow-400" />
+            Key Insights & Recommendations
+          </CardTitle>
+          <CardDescription className="dark:text-gray-400">Actionable suggestions based on onboarding data.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {insights && insights.length > 0 ? (
+            insights.map((insight, index) => {
+              const styles = getInsightStyles(insight.type);
+              return (
+                <div key={index} className={`p-3 sm:p-4 ${styles.bg} border ${styles.border} rounded-lg`}>
+                  <h4 className={`font-medium ${styles.title} mb-1 text-sm`}>
+                    {styles.icon} {insight.title}
+                  </h4>
+                  <p className={`text-xs sm:text-sm ${styles.text}`}>
+                    {insight.message}
+                  </p>
+                </div>
+              );
+            })
+          ) : (
+            // Fallback insights if no data available
+            <>
+              <div className="p-3 sm:p-4 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-700 rounded-lg">
+                <h4 className="font-medium text-green-800 dark:text-green-300 mb-1 text-sm">✅ Strong Performance</h4>
+                <p className="text-xs sm:text-sm text-green-700 dark:text-green-400">
+                  Onboarding completion rate is performing well. Users who complete the welcome step
+                  have a high chance of finishing the entire onboarding process.
+                </p>
+              </div>
+              <div className="p-3 sm:p-4 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-700 rounded-lg">
+                <h4 className="font-medium text-yellow-800 dark:text-yellow-300 mb-1 text-sm">⚠️ Improvement Opportunity</h4>
+                <p className="text-xs sm:text-sm text-yellow-700 dark:text-yellow-400">
+                  Monitor step-by-step completion rates to identify potential bottlenecks
+                  in the onboarding process.
+                </p>
+              </div>
+              <div className="p-3 sm:p-4 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded-lg">
+                <h4 className="font-medium text-blue-800 dark:text-blue-300 mb-1 text-sm">💡 Optimization Suggestion</h4>
+                <p className="text-xs sm:text-sm text-blue-700 dark:text-blue-400">
+                  Consider adding progress indicators and time estimates to improve
+                  user experience during onboarding.
+                </p>
+              </div>
+            </>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
 
 export default OnboardingAnalyticsSection;

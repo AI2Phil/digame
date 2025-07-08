@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { 
-  BarChart3, Zap, Clock, AlertTriangle, 
+import React, { useState, useEffect } from 'react';
+import {
+  BarChart3, Zap, Clock, AlertTriangle,
   CheckCircle, TrendingUp, Activity, Database,
   Globe, Key, Shield, RefreshCw, Download
 } from 'lucide-react';
@@ -10,94 +10,219 @@ import { Badge } from '../ui/Badge';
 import { Progress } from '../ui/Progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/Tabs';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../ui/Table';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../ui/Select';
+import { useToast } from '../ui/Toast';
 
-const ApiAnalyticsSection = ({ data }) => {
+const ApiAnalyticsSection = () => {
+  // Toast hook for notifications
+  const { toast } = useToast();
+  
+  // State management for database-driven data
+  const [apiMetrics, setApiMetrics] = useState({});
+  const [endpointMetrics, setEndpointMetrics] = useState([]);
+  const [statusCodeBreakdown, setStatusCodeBreakdown] = useState([]);
+  const [apiKeyUsage, setApiKeyUsage] = useState([]);
+  const [geographicApiUsage, setGeographicApiUsage] = useState([]);
+  const [responseTimeDistribution, setResponseTimeDistribution] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [timeRange, setTimeRange] = useState('24h');
+  const [refreshing, setRefreshing] = useState(false);
   const [selectedEndpoint, setSelectedEndpoint] = useState('all');
+  const [isDarkMode, setIsDarkMode] = useState(false);
 
-  // Mock API analytics data with realistic metrics
-  const apiMetrics = {
-    totalRequests: data?.totalRequests || 45678,
-    requestsPerMinute: data?.requestsPerMinute || 156,
-    avgResponseTime: data?.avgResponseTime || 120,
-    errorRate: data?.errorRate || 0.8,
-    successRate: data?.successRate || 99.2,
-    uniqueApiKeys: data?.uniqueApiKeys || 234,
-    rateLimitHits: data?.rateLimitHits || 12,
-    bandwidth: data?.bandwidth || 2.4
+  // Detect dark mode
+  useEffect(() => {
+    const checkDarkMode = () => {
+      setIsDarkMode(document.documentElement.classList.contains('dark'));
+    };
+    
+    checkDarkMode();
+    
+    const observer = new MutationObserver(checkDarkMode);
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class']
+    });
+    
+    return () => observer.disconnect();
+  }, []);
+
+  // Fetch API analytics data from backend
+  const fetchApiAnalytics = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const response = await fetch(`http://localhost:8001/api/admin/api/analytics/detailed?time_range=${timeRange}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      const data = result.data || result;
+      
+      setApiMetrics(data.apiMetrics || {});
+      setEndpointMetrics(data.endpointMetrics || []);
+      setStatusCodeBreakdown(data.statusCodeBreakdown || []);
+      setApiKeyUsage(data.apiKeyUsage || []);
+      setGeographicApiUsage(data.geographicApiUsage || []);
+      setResponseTimeDistribution(data.responseTimeDistribution || {});
+      
+    } catch (err) {
+      console.error('Error fetching API analytics:', err);
+      setError(err.message);
+      // Fallback to enhanced sample data
+      generateEnhancedSampleData();
+      // Show notification that fallback data is being used
+      toast.warning('API Unavailable', 'Using sample data - API endpoints not accessible');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const endpointMetrics = [
-    {
-      endpoint: '/api/auth/login',
-      requests: 12456,
-      avgResponseTime: 89,
-      errorRate: 0.2,
-      successRate: 99.8,
-      p95ResponseTime: 145,
-      status: 'healthy'
-    },
-    {
-      endpoint: '/api/users/profile',
-      requests: 8765,
-      avgResponseTime: 156,
-      errorRate: 0.5,
-      successRate: 99.5,
-      p95ResponseTime: 234,
-      status: 'healthy'
-    },
-    {
-      endpoint: '/api/analytics/data',
-      requests: 5432,
-      avgResponseTime: 234,
-      errorRate: 1.2,
-      successRate: 98.8,
-      p95ResponseTime: 456,
-      status: 'warning'
-    },
-    {
-      endpoint: '/api/goals/create',
-      requests: 3210,
-      avgResponseTime: 178,
-      errorRate: 0.8,
-      successRate: 99.2,
-      p95ResponseTime: 289,
-      status: 'healthy'
-    },
-    {
-      endpoint: '/api/admin/users',
-      requests: 1987,
-      avgResponseTime: 345,
-      errorRate: 2.1,
-      successRate: 97.9,
-      p95ResponseTime: 567,
-      status: 'critical'
-    }
-  ];
+  // Generate enhanced sample data as fallback
+  const generateEnhancedSampleData = () => {
+    // Generate realistic API metrics
+    const enhancedApiMetrics = {
+      totalRequests: Math.round(Math.random() * 10000 + 40000), // 40k-50k
+      requestsPerMinute: Math.round(Math.random() * 50 + 130), // 130-180
+      avgResponseTime: Math.round(Math.random() * 50 + 100), // 100-150ms
+      errorRate: Math.round((Math.random() * 0.7 + 0.5) * 10) / 10, // 0.5-1.2%
+      successRate: Math.round((Math.random() * 1.0 + 98.5) * 10) / 10, // 98.5-99.5%
+      uniqueApiKeys: Math.round(Math.random() * 50 + 200), // 200-250
+      rateLimitHits: Math.round(Math.random() * 7 + 8), // 8-15
+      bandwidth: Math.round((Math.random() * 1.0 + 2.0) * 10) / 10 // 2.0-3.0 GB
+    };
+    
+    setApiMetrics(enhancedApiMetrics);
 
-  const statusCodeBreakdown = [
-    { code: '200', count: 42345, percentage: 92.7, color: 'bg-green-500' },
-    { code: '201', count: 2134, percentage: 4.7, color: 'bg-blue-500' },
-    { code: '400', count: 567, percentage: 1.2, color: 'bg-yellow-500' },
-    { code: '401', count: 234, percentage: 0.5, color: 'bg-orange-500' },
-    { code: '404', count: 189, percentage: 0.4, color: 'bg-red-400' },
-    { code: '500', count: 209, percentage: 0.5, color: 'bg-red-600' }
-  ];
+    // Generate realistic endpoint metrics
+    const endpoints = [
+      '/api/v1/users', '/api/v1/auth/login', '/api/v1/data/analytics',
+      '/api/v1/reports', '/api/v1/settings', '/api/v1/notifications',
+      '/api/v1/files/upload', '/api/v1/search', '/api/v1/dashboard'
+    ];
+    
+    const enhancedEndpointMetrics = endpoints.map(endpoint => ({
+      endpoint,
+      requests: Math.round(Math.random() * 5000 + 1000),
+      avgResponseTime: Math.round(Math.random() * 100 + 50),
+      errorRate: Math.round((Math.random() * 1.5) * 10) / 10,
+      successRate: Math.round((Math.random() * 2.0 + 97.5) * 10) / 10,
+      bandwidth: Math.round((Math.random() * 0.5 + 0.1) * 100) / 100
+    }));
+    
+    setEndpointMetrics(enhancedEndpointMetrics);
 
-  const apiKeyUsage = [
-    { keyName: 'Production API', requests: 15678, quota: 20000, usage: 78.4, status: 'active' },
-    { keyName: 'Development API', requests: 8765, quota: 10000, usage: 87.7, status: 'warning' },
-    { keyName: 'Mobile App API', requests: 12345, quota: 15000, usage: 82.3, status: 'active' },
-    { keyName: 'Analytics API', requests: 5432, quota: 8000, usage: 67.9, status: 'active' },
-    { keyName: 'Test API', requests: 2109, quota: 5000, usage: 42.2, status: 'active' }
-  ];
+    // Generate status code breakdown
+    const enhancedStatusCodes = [
+      { code: '200', count: Math.round(Math.random() * 5000 + 35000), percentage: 85.2 },
+      { code: '201', count: Math.round(Math.random() * 1000 + 3000), percentage: 8.1 },
+      { code: '400', count: Math.round(Math.random() * 200 + 800), percentage: 2.4 },
+      { code: '401', count: Math.round(Math.random() * 150 + 600), percentage: 1.8 },
+      { code: '404', count: Math.round(Math.random() * 100 + 400), percentage: 1.2 },
+      { code: '500', count: Math.round(Math.random() * 50 + 200), percentage: 0.6 },
+      { code: '503', count: Math.round(Math.random() * 30 + 100), percentage: 0.3 }
+    ];
+    
+    setStatusCodeBreakdown(enhancedStatusCodes);
 
-  const geographicApiUsage = [
-    { region: 'North America', requests: 18234, percentage: 39.9, latency: 89 },
-    { region: 'Europe', requests: 12456, percentage: 27.3, latency: 145 },
-    { region: 'Asia Pacific', requests: 8765, percentage: 19.2, latency: 234 },
-    { region: 'South America', requests: 4321, percentage: 9.5, latency: 178 },
-    { region: 'Africa', requests: 1902, percentage: 4.1, latency: 267 }
-  ];
+    // Generate API key usage data
+    const enhancedApiKeyUsage = Array.from({ length: 8 }, (_, i) => ({
+      keyId: `key_${String(i + 1).padStart(3, '0')}`,
+      name: `API Key ${i + 1}`,
+      requests: Math.round(Math.random() * 3000 + 1000),
+      lastUsed: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString(),
+      status: Math.random() > 0.1 ? 'active' : 'inactive',
+      rateLimitHits: Math.round(Math.random() * 5)
+    }));
+    
+    setApiKeyUsage(enhancedApiKeyUsage);
+
+    // Generate geographic usage data
+    const countries = ['United States', 'United Kingdom', 'Germany', 'France', 'Canada', 'Australia', 'Japan', 'Brazil'];
+    const enhancedGeographicUsage = countries.map(country => ({
+      country,
+      requests: Math.round(Math.random() * 3000 + 500),
+      percentage: Math.round((Math.random() * 15 + 5) * 10) / 10,
+      avgResponseTime: Math.round(Math.random() * 100 + 80)
+    }));
+    
+    setGeographicApiUsage(enhancedGeographicUsage);
+
+    // Generate response time distribution
+    const enhancedResponseTimeDistribution = {
+      '0-50ms': Math.round(Math.random() * 10 + 25),
+      '50-100ms': Math.round(Math.random() * 15 + 35),
+      '100-200ms': Math.round(Math.random() * 10 + 20),
+      '200-500ms': Math.round(Math.random() * 5 + 10),
+      '500ms+': Math.round(Math.random() * 3 + 2)
+    };
+    
+    setResponseTimeDistribution(enhancedResponseTimeDistribution);
+  };
+
+  // Initial data fetch
+  useEffect(() => {
+    fetchApiAnalytics();
+  }, [timeRange]);
+
+  // Refresh data function
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await fetchApiAnalytics();
+    setRefreshing(false);
+    toast.success('Data Refreshed', 'API analytics data has been updated');
+  };
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-bold">API Analytics</h2>
+          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {[...Array(8)].map((_, i) => (
+            <Card key={i} className="animate-pulse">
+              <CardContent className="p-6">
+                <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                <div className="h-8 bg-gray-200 rounded w-1/2"></div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // Calculate derived metrics from state data
+  const topEndpoints = endpointMetrics
+    .sort((a, b) => b.requests - a.requests)
+    .slice(0, 5);
+
+  const slowestEndpoints = endpointMetrics
+    .sort((a, b) => b.avgResponseTime - a.avgResponseTime)
+    .slice(0, 5);
+
+  const errorProneEndpoints = endpointMetrics
+    .filter(endpoint => endpoint.errorRate > 0.5)
+    .sort((a, b) => b.errorRate - a.errorRate)
+    .slice(0, 5);
+
+  const filteredEndpoints = selectedEndpoint === 'all'
+    ? endpointMetrics
+    : endpointMetrics.filter(endpoint => endpoint.endpoint.includes(selectedEndpoint));
+
+  const totalBandwidth = endpointMetrics.reduce((sum, endpoint) => sum + endpoint.bandwidth, 0);
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -119,6 +244,40 @@ const ApiAnalyticsSection = ({ data }) => {
 
   return (
     <div className="space-y-6">
+      {/* Header with Controls */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold">API Analytics</h2>
+          <p className="text-gray-600">Monitor API performance, usage patterns, and endpoint health metrics</p>
+        </div>
+        <div className="flex items-center gap-4">
+          <Select value={timeRange} onValueChange={setTimeRange}>
+            <SelectTrigger className="w-32">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="1h">Last Hour</SelectItem>
+              <SelectItem value="24h">Last 24h</SelectItem>
+              <SelectItem value="7d">Last 7 days</SelectItem>
+              <SelectItem value="30d">Last 30 days</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button
+            onClick={handleRefresh}
+            disabled={refreshing}
+            variant="outline"
+            size="sm"
+          >
+            <RefreshCw className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+          <Button variant="outline" size="sm">
+            <Download className="w-4 h-4 mr-2" />
+            Export
+          </Button>
+        </div>
+      </div>
+
       {/* API Overview */}
       <Card>
         <CardHeader>
@@ -134,7 +293,7 @@ const ApiAnalyticsSection = ({ data }) => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <ApiMetricCard
               title="Total Requests"
-              value={apiMetrics.totalRequests.toLocaleString()}
+              value={apiMetrics.totalRequests ? apiMetrics.totalRequests.toLocaleString() : '0'}
               change="+23%"
               trend="up"
               icon={BarChart3}
@@ -142,7 +301,7 @@ const ApiAnalyticsSection = ({ data }) => {
             />
             <ApiMetricCard
               title="Requests/Min"
-              value={apiMetrics.requestsPerMinute}
+              value={apiMetrics.requestsPerMinute || '0'}
               change="+15%"
               trend="up"
               icon={Zap}
@@ -150,7 +309,7 @@ const ApiAnalyticsSection = ({ data }) => {
             />
             <ApiMetricCard
               title="Avg Response"
-              value={`${apiMetrics.avgResponseTime}ms`}
+              value={`${apiMetrics.avgResponseTime || '0'}ms`}
               change="-12ms"
               trend="down"
               icon={Clock}
@@ -158,7 +317,7 @@ const ApiAnalyticsSection = ({ data }) => {
             />
             <ApiMetricCard
               title="Success Rate"
-              value={`${apiMetrics.successRate}%`}
+              value={`${apiMetrics.successRate || '0'}%`}
               change="+0.3%"
               trend="up"
               icon={CheckCircle}
@@ -492,14 +651,19 @@ const GeographicApiUsageSection = ({ regions }) => (
         <TableBody>
           {regions.map((region, index) => (
             <TableRow key={index}>
-              <TableCell className="font-medium">{region.region}</TableCell>
-              <TableCell align="right">{region.requests.toLocaleString()}</TableCell>
+              <TableCell className="font-medium">
+                {region.region || region.country || 'Unknown'}
+              </TableCell>
+              <TableCell align="right">{region.requests?.toLocaleString() || '0'}</TableCell>
               <TableCell align="right">
-                <Badge variant="secondary">{region.percentage}%</Badge>
+                <Badge variant="secondary">{region.percentage || '0'}%</Badge>
               </TableCell>
               <TableCell align="right">
-                <Badge variant={region.latency < 150 ? 'success' : region.latency < 250 ? 'warning' : 'destructive'}>
-                  {region.latency}ms
+                <Badge variant={
+                  (region.latency || region.avgResponseTime || 0) < 150 ? 'success' :
+                  (region.latency || region.avgResponseTime || 0) < 250 ? 'warning' : 'destructive'
+                }>
+                  {region.latency || region.avgResponseTime || '0'}ms
                 </Badge>
               </TableCell>
             </TableRow>

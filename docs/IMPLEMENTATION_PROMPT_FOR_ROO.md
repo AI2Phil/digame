@@ -15,8 +15,17 @@ You are tasked with systematically replacing mock data across the Digame platfor
 - **Remaining Work**: Mock data replacement and database integration
 - **Components Requiring Updates**: 100+ components across 14 major platform sections
 - **Critical Priority**: PRODUCTION BLOCKER - Required for go-live
-- **Remember**:-  Correction - we need to always create a Next.js page for our component since this is a Next.js application, not a React Router application, and so the navigation component needs to use the Next.js router (useRouter from next/router).
-**Priority:** confirm the comprehensive menu includes page to this URL as a menu item NextJSComprehensiveNavigation.tsx
+- **Remember**:-  
+We need to always create a Next.js page for our component since this is a Next.js application, not a React Router application, and so the navigation component needs to use the Next.js router (useRouter from next/router).
+**Priority:** 
+Confirm the comprehensive menu includes the following pages to their to the URLs as menu items in  NextJSComprehensiveNavigation.tsx;
+1. OnboardingAnalyticsSection.jsx 
+2. ApiKeyManagementSection.jsx
+3. UserDetailsDialog.jsx 
+4. ApiAnalyticsSection.jsx 
+5. SystemAnalyticsSection.jsx 
+6. MobileAnalyticsSection.jsx
+
 **Priority Approach:** 
 This following approach ensures that all analytics features operate on consistent, queryable, and maintainable data rather than temporary in-memory mock samples.
 1. Enhance Sample Data for Historical Graphs and Predictive Features Using a Fully Database-Driven Approach. 
