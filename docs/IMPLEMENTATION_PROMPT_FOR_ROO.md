@@ -2,8 +2,8 @@
 
 ## update /docs/AUDIT.md for stage of completion while preserving the structure and contents
 
-1. can each page that is loaded have a message if Fallback Data is loading instead of actual API calls. 
-2. can the API endpoint paths in the frontend be dynamic to match all potential port options (set up in dynamic porting)
+1. For each page that is loaded have a message if Fallback Data is loading instead of actual API calls. 
+2. The API endpoint paths in the frontend should be dynamic to match all potential port options (set up in dynamic porting)
 
 ## Task Overview
 

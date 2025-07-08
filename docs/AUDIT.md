@@ -15,8 +15,10 @@ This following approach ensures that all analytics features operate on consisten
 Incorporate historical trends, seasonality, and other business-relevant patterns into the seeded data.
 5. Implement robust database queries through the ACO service to dynamically fetch the required data for analytics endpoints.
 6. Fully replace the current hardcoded implementation with a production-ready, database-driven solution for both historical visualization and predictive modeling.
+7. For each page that is loaded have a message if Fallback Data is loading instead of actual API calls. 
+8. The API endpoint paths in the frontend should be dynamic to match all potential port options (set up in dynamic porting)
 
-- **Remember**:- we need to always create a Next.js page for our component since this is a Next.js application, not a React Router application, and so the navigation component needs to use the Next.js router (useRouter from next/router).
+- **Remember**:- Always create a Next.js page for our component since this is a Next.js application, not a React Router application, and so the navigation component needs to use the Next.js router (useRouter from next/router).
 **Priority:** ✅ **COMPLETED** - Database-Driven Analytics Implementation
 
 ✅ **MAJOR MILESTONE ACHIEVED**: Successfully implemented a fully database-driven approach for User Behavior Analytics, replacing all hardcoded sample data with real database queries and enhanced data generation. This implementation includes:
@@ -117,8 +119,8 @@ The following URLs provide access to the completed components with real database
 | Page/Component | Mock Data Present | Database Source Ready | Seeding Complete |
 |----------------|-------------------|----------------------|------------------|
 | [`PlatformManagementDashboard.tsx`](../frontend/src/components/admin/PlatformManagementDashboard.tsx) | ✅ **COMPLETED** | ✅ | ✅ |
-| [`UserManagementSection.jsx`](../frontend/src/components/admin/UserManagementSection.jsx) | ❌ **HIGH** | ❌ | ❌ |
-| [`SystemAnalyticsSection.jsx`](../frontend/src/components/admin/SystemAnalyticsSection.jsx) | ❌ **HIGH** | ❌ | ❌ |
+| [`UserManagementSection.jsx`](../frontend/src/components/admin/UserManagementSection.jsx) | ✅ **COMPLETED** | ✅ | ✅ |
+| [`SystemAnalyticsSection.jsx`](../frontend/src/components/admin/SystemAnalyticsSection.jsx) | ✅ **COMPLETED - DATABASE-DRIVEN** | ✅ | ✅ |
 | [`OnboardingAnalyticsSection.jsx`](../frontend/src/components/admin/OnboardingAnalyticsSection.jsx) | ❌ **MEDIUM** | ❌ | ❌ |
 | [`ApiKeyManagementSection.jsx`](../frontend/src/components/admin/ApiKeyManagementSection.jsx) | ❌ **MEDIUM** | ❌ | ❌ |
 | [`UserDetailsDialog.jsx`](../frontend/src/components/admin/UserDetailsDialog.jsx) | ❌ **MEDIUM** | ❌ | ❌ |

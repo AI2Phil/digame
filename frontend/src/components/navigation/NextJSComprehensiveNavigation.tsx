@@ -270,6 +270,7 @@ const NextJSComprehensiveNavigation: React.FC<NextJSComprehensiveNavigationProps
       items: [
         { label: 'Admin Dashboard', icon: <SettingsIcon className="w-4 h-4" />, path: '/admin/dashboard', description: 'Admin overview' },
         { label: 'User Management', icon: <Users className="w-4 h-4" />, path: '/admin/users', subtitle: 'USER ADMIN' },
+        { label: 'System Analytics', icon: <BarChart3 className="w-4 h-4" />, path: '/admin/system-analytics', subtitle: 'SYSTEM ANALYTICS', description: 'System performance monitoring and analytics' },
         { label: 'System Monitoring', icon: <Monitor className="w-4 h-4" />, path: '/admin/monitoring', subtitle: 'MONITORING' },
         { label: 'RBAC Management', icon: <Shield className="w-4 h-4" />, path: '/admin/rbac', subtitle: 'ROLE MANAGEMENT' },
         { label: 'System Config', icon: <Cog className="w-4 h-4" />, path: '/admin/config', subtitle: 'CONFIGURATION' }
