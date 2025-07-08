@@ -105,10 +105,7 @@ const NextJSComprehensiveNavigation: React.FC<NextJSComprehensiveNavigationProps
         { label: 'Dashboard', icon: <BarChart3 className="w-4 h-4" />, path: '/dashboard', description: 'Main dashboard overview' },
         { label: 'User Profile', icon: <Users className="w-4 h-4" />, path: '/profile', description: 'User profile management' },
         { label: 'Settings', icon: <SettingsIcon className="w-4 h-4" />, path: '/settings', description: 'Comprehensive account settings and preferences' },
-        { label: 'API Key Management', icon: <Key className="w-4 h-4" />, path: '/settings?tab=api-keys', description: 'Manage AI service API keys', subtitle: 'SETTINGS' },
-        { label: 'Profile Settings', icon: <Users className="w-4 h-4" />, path: '/settings?tab=profile', description: 'Update profile information', subtitle: 'SETTINGS' },
-        { label: 'Security Settings', icon: <Shield className="w-4 h-4" />, path: '/settings?tab=security', description: 'Security and privacy configuration', subtitle: 'SETTINGS' },
-        { label: 'Appearance Settings', icon: <Palette className="w-4 h-4" />, path: '/settings?tab=appearance', description: 'Customize interface appearance', subtitle: 'SETTINGS' },
+        { label: 'API Keys', icon: <Key className="w-4 h-4" />, path: '/settings/api-keys', subtitle: 'AI SERVICES', description: 'Manage your third-party AI service API keys (OpenAI, Anthropic, etc.)' },
         { label: 'Notifications', icon: <Bell className="w-4 h-4" />, path: '/notifications', description: 'Notification center' }
       ]
     },
