@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
-import { 
-  Settings, Save, RotateCcw, Download, Upload, 
+import { useToastHelpers } from '../ui/Toaster';
+import {
+  Settings, Save, RotateCcw, Download, Upload,
   Shield, Database, Globe, Mail, Bell, Key,
   Users, Building2, Zap, Activity, Clock,
   CheckCircle, XCircle, AlertTriangle, Eye,
@@ -64,6 +65,7 @@ interface SystemStatus {
 }
 
 export const SystemConfigurationDashboard: React.FC = () => {
+  const toast = useToastHelpers();
   const [configs, setConfigs] = useState<SystemConfig[]>([]);
   const [categories, setCategories] = useState<ConfigCategory[]>([]);
   const [backups, setBackups] = useState<ConfigBackup[]>([]);
@@ -76,6 +78,7 @@ export const SystemConfigurationDashboard: React.FC = () => {
   const [showSensitive, setShowSensitive] = useState<Record<string, boolean>>({});
   const [pendingChanges, setPendingChanges] = useState<Record<string, any>>({});
   const [editingConfig, setEditingConfig] = useState<string | null>(null);
+  const [usingFallbackData, setUsingFallbackData] = useState(false);
 
   useEffect(() => {
     fetchConfigurationData();
@@ -86,51 +89,261 @@ export const SystemConfigurationDashboard: React.FC = () => {
       setLoading(true);
       
       const [configsRes, categoriesRes, backupsRes, statusRes] = await Promise.all([
-        fetch('/api/system/configuration', {
+        fetch('http://localhost:8001/api/admin/system/configuration', {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
         }),
-        fetch('/api/system/configuration/categories', {
+        fetch('http://localhost:8001/api/admin/system/configuration/categories', {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
         }),
-        fetch('/api/system/configuration/backups', {
+        fetch('http://localhost:8001/api/admin/system/configuration/backups', {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
         }),
-        fetch('/api/system/status', {
+        fetch('http://localhost:8001/api/admin/system/status', {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
         })
       ]);
 
+      let hasRealData = false;
+
       if (configsRes.ok) {
         const data = await configsRes.json();
         setConfigs(data.configurations || []);
+        hasRealData = true;
       }
 
       if (categoriesRes.ok) {
         const data = await categoriesRes.json();
         setCategories(data.categories || []);
+        hasRealData = true;
       }
 
       if (backupsRes.ok) {
         const data = await backupsRes.json();
         setBackups(data.backups || []);
+        hasRealData = true;
       }
 
       if (statusRes.ok) {
         const data = await statusRes.json();
         setSystemStatus(data);
+        hasRealData = true;
+      }
+
+      if (!hasRealData) {
+        // Use enhanced fallback data when APIs are unavailable
+        loadFallbackData();
+        setUsingFallbackData(true);
+        toast.info('Using sample configuration data - API endpoints unavailable');
+      } else {
+        setUsingFallbackData(false);
       }
 
       setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load configuration data');
+      console.error('Failed to load configuration data:', err);
+      loadFallbackData();
+      setUsingFallbackData(true);
+      toast.error('Failed to load configuration data - using sample data');
+      setError(null); // Clear error since we have fallback data
     } finally {
       setLoading(false);
     }
   };
 
+  const loadFallbackData = () => {
+    // Enhanced sample system configurations
+    const sampleConfigs: SystemConfig[] = [
+      {
+        id: 'db_connection_pool_size',
+        category: 'database',
+        name: 'Database Connection Pool Size',
+        description: 'Maximum number of concurrent database connections',
+        value: 50,
+        type: 'number',
+        required: true,
+        sensitive: false,
+        validation: { min: 10, max: 200 },
+        last_modified: new Date(Date.now() - 86400000).toISOString(),
+        modified_by: 'admin@digame.ai',
+        restart_required: true
+      },
+      {
+        id: 'jwt_secret_key',
+        category: 'security',
+        name: 'JWT Secret Key',
+        description: 'Secret key used for JWT token signing',
+        value: 'super-secret-jwt-key-2024',
+        type: 'password',
+        required: true,
+        sensitive: true,
+        last_modified: new Date(Date.now() - 172800000).toISOString(),
+        modified_by: 'security@digame.ai',
+        restart_required: true
+      },
+      {
+        id: 'email_notifications_enabled',
+        category: 'notifications',
+        name: 'Email Notifications',
+        description: 'Enable or disable email notifications system-wide',
+        value: true,
+        type: 'boolean',
+        required: false,
+        sensitive: false,
+        last_modified: new Date(Date.now() - 259200000).toISOString(),
+        modified_by: 'admin@digame.ai',
+        restart_required: false
+      },
+      {
+        id: 'api_rate_limit',
+        category: 'performance',
+        name: 'API Rate Limit',
+        description: 'Maximum API requests per minute per user',
+        value: 1000,
+        type: 'number',
+        required: true,
+        sensitive: false,
+        validation: { min: 100, max: 10000 },
+        last_modified: new Date(Date.now() - 345600000).toISOString(),
+        modified_by: 'performance@digame.ai',
+        restart_required: false
+      },
+      {
+        id: 'log_level',
+        category: 'monitoring',
+        name: 'System Log Level',
+        description: 'Minimum log level for system logging',
+        value: 'INFO',
+        type: 'string',
+        required: true,
+        sensitive: false,
+        validation: { options: ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'] },
+        last_modified: new Date(Date.now() - 432000000).toISOString(),
+        modified_by: 'devops@digame.ai',
+        restart_required: true
+      },
+      {
+        id: 'session_timeout',
+        category: 'security',
+        name: 'Session Timeout',
+        description: 'User session timeout in minutes',
+        value: 30,
+        type: 'number',
+        required: true,
+        sensitive: false,
+        validation: { min: 5, max: 480 },
+        last_modified: new Date(Date.now() - 518400000).toISOString(),
+        modified_by: 'security@digame.ai',
+        restart_required: false
+      }
+    ];
+
+    // Enhanced sample categories
+    const sampleCategories: ConfigCategory[] = [
+      {
+        id: 'security',
+        name: 'Security',
+        description: 'Authentication, authorization, and security settings',
+        icon: Shield,
+        config_count: 3,
+        last_updated: new Date(Date.now() - 172800000).toISOString()
+      },
+      {
+        id: 'database',
+        name: 'Database',
+        description: 'Database connection and performance settings',
+        icon: Database,
+        config_count: 2,
+        last_updated: new Date(Date.now() - 86400000).toISOString()
+      },
+      {
+        id: 'performance',
+        name: 'Performance',
+        description: 'System performance and optimization settings',
+        icon: Zap,
+        config_count: 4,
+        last_updated: new Date(Date.now() - 345600000).toISOString()
+      },
+      {
+        id: 'notifications',
+        name: 'Notifications',
+        description: 'Email, SMS, and push notification settings',
+        icon: Bell,
+        config_count: 2,
+        last_updated: new Date(Date.now() - 259200000).toISOString()
+      },
+      {
+        id: 'monitoring',
+        name: 'Monitoring',
+        description: 'System monitoring and logging configuration',
+        icon: Activity,
+        config_count: 3,
+        last_updated: new Date(Date.now() - 432000000).toISOString()
+      },
+      {
+        id: 'network',
+        name: 'Network',
+        description: 'Network and connectivity settings',
+        icon: Globe,
+        config_count: 2,
+        last_updated: new Date(Date.now() - 604800000).toISOString()
+      }
+    ];
+
+    // Enhanced sample backups
+    const sampleBackups: ConfigBackup[] = [
+      {
+        id: 'backup_001',
+        name: 'Production Backup - 2025-01-07',
+        description: 'Automated daily backup before system update',
+        created_at: new Date(Date.now() - 86400000).toISOString(),
+        created_by: 'system@digame.ai',
+        config_count: 24,
+        file_size: 15360,
+        status: 'active'
+      },
+      {
+        id: 'backup_002',
+        name: 'Pre-Security-Update Backup',
+        description: 'Manual backup before security configuration changes',
+        created_at: new Date(Date.now() - 172800000).toISOString(),
+        created_by: 'security@digame.ai',
+        config_count: 22,
+        file_size: 14720,
+        status: 'active'
+      },
+      {
+        id: 'backup_003',
+        name: 'Weekly Backup - 2025-01-01',
+        description: 'Weekly automated configuration backup',
+        created_at: new Date(Date.now() - 518400000).toISOString(),
+        created_by: 'system@digame.ai',
+        config_count: 20,
+        file_size: 13440,
+        status: 'archived'
+      }
+    ];
+
+    // Enhanced sample system status
+    const sampleSystemStatus: SystemStatus = {
+      uptime: 2592000, // 30 days in seconds
+      cpu_usage: 45,
+      memory_usage: 62,
+      disk_usage: 34,
+      active_connections: 127,
+      pending_restarts: ['authentication-service', 'notification-service'],
+      last_backup: new Date(Date.now() - 86400000).toISOString(),
+      configuration_health: 'warning'
+    };
+
+    setConfigs(sampleConfigs);
+    setCategories(sampleCategories);
+    setBackups(sampleBackups);
+    setSystemStatus(sampleSystemStatus);
+  };
+
   const handleConfigUpdate = async (configId: string, value: any) => {
     try {
-      const response = await fetch(`/api/system/configuration/${configId}`, {
+      const response = await fetch(`http://localhost:8001/api/admin/system/configuration/${configId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -147,15 +360,35 @@ export const SystemConfigurationDashboard: React.FC = () => {
           return updated;
         });
         setEditingConfig(null);
+        toast.success('Configuration updated successfully');
+      } else {
+        throw new Error('Failed to update configuration');
       }
     } catch (err) {
       console.error('Failed to update configuration:', err);
+      if (usingFallbackData) {
+        // Simulate update in fallback mode
+        setConfigs(prev => prev.map(config =>
+          config.id === configId
+            ? { ...config, value, last_modified: new Date().toISOString(), modified_by: 'admin@digame.ai' }
+            : config
+        ));
+        setPendingChanges(prev => {
+          const updated = { ...prev };
+          delete updated[configId];
+          return updated;
+        });
+        setEditingConfig(null);
+        toast.info('Configuration updated in demo mode');
+      } else {
+        toast.error('Failed to update configuration');
+      }
     }
   };
 
   const handleCreateBackup = async (name: string, description: string) => {
     try {
-      const response = await fetch('/api/system/configuration/backups', {
+      const response = await fetch('http://localhost:8001/api/admin/system/configuration/backups', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -166,9 +399,29 @@ export const SystemConfigurationDashboard: React.FC = () => {
 
       if (response.ok) {
         await fetchConfigurationData();
+        toast.success('Backup created successfully');
+      } else {
+        throw new Error('Failed to create backup');
       }
     } catch (err) {
       console.error('Failed to create backup:', err);
+      if (usingFallbackData) {
+        // Simulate backup creation in fallback mode
+        const newBackup: ConfigBackup = {
+          id: `backup_${Date.now()}`,
+          name,
+          description,
+          created_at: new Date().toISOString(),
+          created_by: 'admin@digame.ai',
+          config_count: configs.length,
+          file_size: configs.length * 640, // Approximate size
+          status: 'active'
+        };
+        setBackups(prev => [newBackup, ...prev]);
+        toast.info('Backup created in demo mode');
+      } else {
+        toast.error('Failed to create backup');
+      }
     }
   };
 
@@ -178,17 +431,26 @@ export const SystemConfigurationDashboard: React.FC = () => {
     }
 
     try {
-      const response = await fetch(`/api/system/configuration/backups/${backupId}/restore`, {
+      const response = await fetch(`http://localhost:8001/api/admin/system/configuration/backups/${backupId}/restore`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
       });
 
       if (response.ok) {
         await fetchConfigurationData();
-        alert('Configuration restored successfully. System restart may be required.');
+        toast.success('Configuration restored successfully. System restart may be required.');
+      } else {
+        throw new Error('Failed to restore backup');
       }
     } catch (err) {
       console.error('Failed to restore backup:', err);
+      if (usingFallbackData) {
+        // Simulate restore in fallback mode
+        await fetchConfigurationData();
+        toast.info('Configuration restored in demo mode. System restart may be required.');
+      } else {
+        toast.error('Failed to restore backup');
+      }
     }
   };
 

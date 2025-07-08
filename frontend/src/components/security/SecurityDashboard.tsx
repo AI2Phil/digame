@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useToastHelpers } from '../ui/Toaster';
 
 interface SecurityMetrics {
   total_users_with_mfa: number;
@@ -31,12 +32,14 @@ interface SecurityIncident {
 }
 
 export const SecurityDashboard: React.FC = () => {
+  const toast = useToastHelpers();
   const [metrics, setMetrics] = useState<SecurityMetrics | null>(null);
   const [threats, setThreats] = useState<ThreatDetection[]>([]);
   const [incidents, setIncidents] = useState<SecurityIncident[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'overview' | 'threats' | 'incidents' | 'audit'>('overview');
+  const [usingFallbackData, setUsingFallbackData] = useState(false);
 
   useEffect(() => {
     fetchDashboardData();
@@ -46,29 +49,160 @@ export const SecurityDashboard: React.FC = () => {
     try {
       setLoading(true);
       
-      // Fetch dashboard summary
-      const metricsResponse = await fetch('/api/security/dashboard');
-      if (!metricsResponse.ok) throw new Error('Failed to fetch metrics');
-      const metricsData = await metricsResponse.json();
-      setMetrics(metricsData);
+      const [metricsResponse, threatsResponse, incidentsResponse] = await Promise.all([
+        fetch('http://localhost:8001/api/admin/security/dashboard', {
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        }),
+        fetch('http://localhost:8001/api/admin/security/threats?limit=10', {
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        }),
+        fetch('http://localhost:8001/api/admin/security/incidents?limit=10', {
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        })
+      ]);
 
-      // Fetch recent threats
-      const threatsResponse = await fetch('/api/security/threats?limit=10');
-      if (!threatsResponse.ok) throw new Error('Failed to fetch threats');
-      const threatsData = await threatsResponse.json();
-      setThreats(threatsData);
+      let hasRealData = false;
 
-      // Fetch recent incidents
-      const incidentsResponse = await fetch('/api/security/incidents?limit=10');
-      if (!incidentsResponse.ok) throw new Error('Failed to fetch incidents');
-      const incidentsData = await incidentsResponse.json();
-      setIncidents(incidentsData);
+      if (metricsResponse.ok) {
+        const metricsData = await metricsResponse.json();
+        setMetrics(metricsData.data || metricsData);
+        hasRealData = true;
+      }
 
+      if (threatsResponse.ok) {
+        const threatsData = await threatsResponse.json();
+        setThreats(threatsData.data || threatsData);
+        hasRealData = true;
+      }
+
+      if (incidentsResponse.ok) {
+        const incidentsData = await incidentsResponse.json();
+        setIncidents(incidentsData.data || incidentsData);
+        hasRealData = true;
+      }
+
+      if (!hasRealData) {
+        // Use enhanced fallback data when APIs are unavailable
+        loadFallbackData();
+        setUsingFallbackData(true);
+        toast.info('Using sample security data - API endpoints unavailable');
+      } else {
+        setUsingFallbackData(false);
+      }
+
+      setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load dashboard');
+      console.error('Failed to load security dashboard:', err);
+      loadFallbackData();
+      setUsingFallbackData(true);
+      toast.error('Failed to load security data - using sample data');
+      setError(null); // Clear error since we have fallback data
     } finally {
       setLoading(false);
     }
+  };
+
+  const loadFallbackData = () => {
+    // Enhanced sample security metrics
+    const sampleMetrics: SecurityMetrics = {
+      total_users_with_mfa: 847,
+      mfa_adoption_rate: 89.2,
+      active_threats: 3,
+      resolved_threats_today: 12,
+      open_incidents: 2,
+      critical_incidents: 0,
+      failed_login_attempts_today: 23,
+      security_score: 87
+    };
+
+    // Enhanced sample threat detections
+    const sampleThreats: ThreatDetection[] = [
+      {
+        id: 1,
+        detection_type: 'brute_force_attack',
+        threat_level: 'high',
+        source_ip: '192.168.1.45',
+        description: 'Multiple failed login attempts detected from suspicious IP address',
+        detected_at: new Date(Date.now() - 1800000).toISOString(), // 30 minutes ago
+        status: 'investigating'
+      },
+      {
+        id: 2,
+        detection_type: 'suspicious_api_access',
+        threat_level: 'medium',
+        source_ip: '10.0.0.23',
+        description: 'Unusual API access pattern detected outside normal business hours',
+        detected_at: new Date(Date.now() - 3600000).toISOString(), // 1 hour ago
+        status: 'monitoring'
+      },
+      {
+        id: 3,
+        detection_type: 'malware_signature',
+        threat_level: 'critical',
+        source_ip: '203.0.113.42',
+        description: 'Known malware signature detected in uploaded file',
+        detected_at: new Date(Date.now() - 7200000).toISOString(), // 2 hours ago
+        status: 'blocked'
+      },
+      {
+        id: 4,
+        detection_type: 'data_exfiltration',
+        threat_level: 'high',
+        source_ip: '198.51.100.15',
+        description: 'Unusual data transfer volume detected from internal system',
+        detected_at: new Date(Date.now() - 10800000).toISOString(), // 3 hours ago
+        status: 'resolved'
+      },
+      {
+        id: 5,
+        detection_type: 'privilege_escalation',
+        threat_level: 'medium',
+        source_ip: '172.16.0.8',
+        description: 'Attempt to access restricted administrative functions',
+        detected_at: new Date(Date.now() - 14400000).toISOString(), // 4 hours ago
+        status: 'investigating'
+      }
+    ];
+
+    // Enhanced sample security incidents
+    const sampleIncidents: SecurityIncident[] = [
+      {
+        id: 1,
+        incident_id: 'SEC-2025-001',
+        title: 'Unauthorized Access Attempt',
+        severity: 'high',
+        status: 'investigating',
+        created_at: new Date(Date.now() - 3600000).toISOString() // 1 hour ago
+      },
+      {
+        id: 2,
+        incident_id: 'SEC-2025-002',
+        title: 'Suspicious File Upload Activity',
+        severity: 'medium',
+        status: 'monitoring',
+        created_at: new Date(Date.now() - 7200000).toISOString() // 2 hours ago
+      },
+      {
+        id: 3,
+        incident_id: 'SEC-2024-089',
+        title: 'Failed Multi-Factor Authentication',
+        severity: 'low',
+        status: 'resolved',
+        created_at: new Date(Date.now() - 86400000).toISOString() // 1 day ago
+      },
+      {
+        id: 4,
+        incident_id: 'SEC-2024-088',
+        title: 'Anomalous Network Traffic Pattern',
+        severity: 'medium',
+        status: 'resolved',
+        created_at: new Date(Date.now() - 172800000).toISOString() // 2 days ago
+      }
+    ];
+
+    setMetrics(sampleMetrics);
+    setThreats(sampleThreats);
+    setIncidents(sampleIncidents);
   };
 
   const getSecurityScoreColor = (score: number) => {

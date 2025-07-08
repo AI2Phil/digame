@@ -19,19 +19,54 @@ import { Avatar, AvatarFallback, AvatarImage } from '../ui/Avatar';
 import { Label } from '../ui/Label';
 
 
-// Mock API service - replace with actual API calls
+// Database-driven API service using real backend endpoints
 const apiService = {
   createAdminApiKey: async (data) => {
-    console.log('Creating API Key:', data);
-    return { id: `new_${Date.now()}`, ...data, key: `sk_live_mock_${Math.random().toString(36).substr(2, 9)}`, created_at: new Date().toISOString(), last_used: null, requestCount: 0, usage: 0, user: { email: 'temp@example.com'} };
+    const response = await fetch('http://localhost:8001/api/admin/api-keys', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(data)
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    return await response.json();
   },
   updateAdminApiKey: async (keyId, data) => {
-    console.log('Updating API Key:', keyId, data);
-    return { id: keyId, ...data };
+    const response = await fetch(`http://localhost:8001/api/admin/api-keys/${keyId}`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(data)
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    return await response.json();
   },
   deleteAdminApiKey: async (keyId) => {
-    console.log('Deleting API Key:', keyId);
-    return {};
+    const response = await fetch(`http://localhost:8001/api/admin/api-keys/${keyId}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    return await response.json();
   },
 };
 

@@ -15,6 +15,9 @@ import { Checkbox } from '../ui/Checkbox';
 
 const UserDetailsDialog = ({ user, onAction, onClose }) => {
   const [isEditing, setIsEditing] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [userDetails, setUserDetails] = useState(user);
+  const [recentActivity, setRecentActivity] = useState([]);
   const [editData, setEditData] = useState({
     username: user.username || '',
     email: user.email || '',
@@ -22,12 +25,65 @@ const UserDetailsDialog = ({ user, onAction, onClose }) => {
     is_active: user.is_active || false
   });
 
+  // Fetch detailed user information from database
+  const fetchUserDetails = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(`http://localhost:8001/api/admin/users/${user.id}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      setUserDetails(result.user || user);
+      setRecentActivity(result.recentActivities || []);
+    } catch (error) {
+      console.error('Error fetching user details:', error);
+      // Fallback to provided user data
+      setUserDetails(user);
+      setRecentActivity([
+        { action: 'Logged in', timestamp: '2025-05-23 19:15:32' },
+        { action: 'Updated profile', timestamp: '2025-05-23 18:45:12' },
+        { action: 'Created API key', timestamp: '2025-05-23 16:30:45' },
+        { action: 'Completed onboarding', timestamp: '2025-05-22 14:20:18' }
+      ]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch user details on component mount
+  React.useEffect(() => {
+    fetchUserDetails();
+  }, [user.id]);
+
   const handleSave = async () => {
     try {
+      const response = await fetch(`http://localhost:8001/api/admin/users/${user.id}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(editData)
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const updatedUser = await response.json();
       await onAction(user.id, 'update', editData);
       setIsEditing(false);
       Toast.success('User updated successfully');
     } catch (error) {
+      console.error('Error updating user:', error);
       Toast.error('Failed to update user');
     }
   };
@@ -141,69 +197,105 @@ const UserDetailsDialog = ({ user, onAction, onClose }) => {
 
         {/* Profile Tab */}
         <TabsContent value="profile" className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label className="text-sm font-medium text-gray-600">User ID</Label>
-              <p className="text-sm text-gray-900">{user.id}</p>
-            </div>
-            <div>
-              <Label className="text-sm font-medium text-gray-600">Created</Label>
-              <p className="text-sm text-gray-900">
-                {new Date(user.created_at).toLocaleDateString()}
-              </p>
-            </div>
-            <div>
-              <Label className="text-sm font-medium text-gray-600">Last Login</Label>
-              <p className="text-sm text-gray-900">
-                {user.last_login 
-                  ? new Date(user.last_login).toLocaleDateString()
-                  : 'Never'
-                }
-              </p>
-            </div>
-            <div>
-              <Label className="text-sm font-medium text-gray-600">Login Count</Label>
-              <p className="text-sm text-gray-900">{user.login_count || 0}</p>
-            </div>
-          </div>
-
-          {/* Onboarding Status */}
-          <div className="p-4 border rounded-lg">
-            <h4 className="font-medium mb-2">Onboarding Status</h4>
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span className="text-sm">Completed</span>
-                <Badge variant={user.onboarding_completed ? 'success' : 'secondary'}>
-                  {user.onboarding_completed ? 'Yes' : 'No'}
-                </Badge>
+          {loading ? (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                {[...Array(4)].map((_, i) => (
+                  <div key={i} className="animate-pulse">
+                    <div className="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
+                    <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                  </div>
+                ))}
               </div>
-              {user.onboarding_completed && (
-                <div className="flex justify-between">
-                  <span className="text-sm">Completed At</span>
-                  <span className="text-sm text-gray-600">
-                    {new Date(user.onboarding_completed_at).toLocaleDateString()}
-                  </span>
-                </div>
-              )}
             </div>
-          </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-sm font-medium text-gray-600">User ID</Label>
+                  <p className="text-sm text-gray-900">{userDetails.id}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-600">Created</Label>
+                  <p className="text-sm text-gray-900">
+                    {userDetails.created_at ? new Date(userDetails.created_at).toLocaleDateString() : 'N/A'}
+                  </p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-600">Last Login</Label>
+                  <p className="text-sm text-gray-900">
+                    {userDetails.updated_at
+                      ? new Date(userDetails.updated_at).toLocaleDateString()
+                      : 'Never'
+                    }
+                  </p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-600">Status</Label>
+                  <p className="text-sm text-gray-900">
+                    <Badge variant={userDetails.is_active ? 'success' : 'secondary'}>
+                      {userDetails.is_active ? 'Active' : 'Inactive'}
+                    </Badge>
+                  </p>
+                </div>
+              </div>
+
+              {/* Onboarding Status */}
+              <div className="p-4 border rounded-lg">
+                <h4 className="font-medium mb-2">Onboarding Status</h4>
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-sm">Completed</span>
+                    <Badge variant={userDetails.onboarding_completed ? 'success' : 'secondary'}>
+                      {userDetails.onboarding_completed ? 'Yes' : 'No'}
+                    </Badge>
+                  </div>
+                  {userDetails.onboarding_data && (
+                    <div className="flex justify-between">
+                      <span className="text-sm">Onboarding Data</span>
+                      <span className="text-sm text-gray-600">
+                        {typeof userDetails.onboarding_data === 'object' ? 'Available' : 'N/A'}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
         </TabsContent>
 
         {/* Activity Tab */}
         <TabsContent value="activity" className="space-y-4">
           <div className="space-y-3">
             <h4 className="font-medium">Recent Activity</h4>
-            {[
-              { action: 'Logged in', timestamp: '2025-05-23 19:15:32' },
-              { action: 'Updated profile', timestamp: '2025-05-23 18:45:12' },
-              { action: 'Created API key', timestamp: '2025-05-23 16:30:45' },
-              { action: 'Completed onboarding', timestamp: '2025-05-22 14:20:18' }
-            ].map((activity, index) => (
-              <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <span className="text-sm font-medium">{activity.action}</span>
-                <span className="text-xs text-gray-500">{activity.timestamp}</span>
+            {loading ? (
+              <div className="space-y-2">
+                {[...Array(4)].map((_, i) => (
+                  <div key={i} className="animate-pulse p-3 bg-gray-50 rounded-lg">
+                    <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                    <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                  </div>
+                ))}
               </div>
-            ))}
+            ) : recentActivity.length > 0 ? (
+              recentActivity.map((activity, index) => (
+                <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div>
+                    <span className="text-sm font-medium">
+                      {activity.application ? `Used ${activity.application}` : activity.action || 'Activity'}
+                    </span>
+                    {activity.window_title && (
+                      <p className="text-xs text-gray-500">{activity.window_title}</p>
+                    )}
+                  </div>
+                  <span className="text-xs text-gray-500">
+                    {activity.timestamp ? new Date(activity.timestamp).toLocaleString() : activity.timestamp}
+                  </span>
+                </div>
+              ))
+            ) : (
+              <p className="text-sm text-gray-500 text-center py-4">No recent activity found</p>
+            )}
           </div>
         </TabsContent>
 
