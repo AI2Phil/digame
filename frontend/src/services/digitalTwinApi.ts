@@ -64,8 +64,20 @@ export interface TwinInsights {
     last_training: string | null;
     health_score: number;
   };
-  discovered_patterns: Array<Record<string, any>>;
-  recent_predictions: Array<Record<string, any>>;
+  discovered_patterns: Array<{
+    id: string;
+    type: string;
+    description: string;
+    confidence: number;
+    discovered_at: string;
+  }>;
+  recent_predictions: Array<{
+    id: string;
+    type: string;
+    prediction: string;
+    confidence: number;
+    generated_at: string;
+  }>;
   recommendations: Array<{
     type: string;
     title: string;

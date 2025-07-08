@@ -1,37 +1,37 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card';
 import { Button } from '../ui/Button';
-import { 
-  Brain, 
-  TrendingUp, 
-  Lightbulb, 
+import { Badge } from '../ui/Badge';
+import {
+  Brain,
+  TrendingUp,
+  Lightbulb,
   Target,
   Clock,
   BarChart3,
   RefreshCw,
   AlertCircle,
   CheckCircle,
-  Zap
+  Zap,
+  Activity,
+  Users,
+  Database,
+  Cpu
 } from 'lucide-react';
+import { useToastHelpers } from '../ui/Toaster';
 import { digitalTwinApi, TwinInsights } from '../../services/digitalTwinApi';
 
 interface TwinInsightsPanelProps {
   twinId: string;
 }
 
-// Note: useToast hook would need to be implemented or use a simple alert for now
-const useToast = () => ({
-  toast: ({ title, description, variant }: any) => {
-    console.log(`${variant === 'destructive' ? 'Error' : 'Info'}: ${title} - ${description}`);
-    alert(`${title}: ${description}`);
-  }
-});
-
 export const TwinInsightsPanel: React.FC<TwinInsightsPanelProps> = ({ twinId }) => {
   const [insights, setInsights] = useState<TwinInsights | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const { toast } = useToast();
+  const [error, setError] = useState<string | null>(null);
+  const [usingFallbackData, setUsingFallbackData] = useState(false);
+  const toast = useToastHelpers();
 
   useEffect(() => {
     loadInsights();
@@ -40,19 +40,107 @@ export const TwinInsightsPanel: React.FC<TwinInsightsPanelProps> = ({ twinId }) 
   const loadInsights = async () => {
     try {
       setLoading(true);
+      setError(null);
       const response = await digitalTwinApi.getTwinInsights();
       
       if (response.success && response.data) {
         setInsights(response.data);
+        setUsingFallbackData(false);
+        if (refreshing) {
+          toast.success("Insights refreshed successfully");
+        }
       } else {
         throw new Error(response.message || 'Failed to load insights');
       }
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to load twin insights",
-        variant: "destructive",
-      });
+      console.error('Failed to load insights:', error);
+      setError(error.message || "Failed to load twin insights");
+      
+      // Use fallback data for development/demo purposes
+      const fallbackInsights: TwinInsights = {
+        twin_status: {
+          id: twinId || "demo-twin",
+          name: "Demo Digital Twin",
+          status: "active",
+          learning_progress: 78.5,
+          accuracy_score: 85.2,
+          model_version: "1.0.0",
+          last_training: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
+          health_score: 0.82
+        },
+        discovered_patterns: [
+          {
+            id: "pattern_1",
+            type: "productivity_peak",
+            description: "Peak productivity between 9-11 AM",
+            confidence: 0.89,
+            discovered_at: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
+          },
+          {
+            id: "pattern_2",
+            type: "focus_duration",
+            description: "Optimal focus sessions last 45-60 minutes",
+            confidence: 0.76,
+            discovered_at: new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString()
+          },
+          {
+            id: "pattern_3",
+            type: "energy_cycle",
+            description: "Energy dips typically occur after lunch",
+            confidence: 0.82,
+            discovered_at: new Date(Date.now() - 72 * 60 * 60 * 1000).toISOString()
+          }
+        ],
+        recent_predictions: [
+          {
+            id: "pred_1",
+            type: "productivity_forecast",
+            prediction: "High productivity expected tomorrow morning",
+            confidence: 0.87,
+            generated_at: new Date(Date.now() - 30 * 60 * 1000).toISOString()
+          },
+          {
+            id: "pred_2",
+            type: "task_completion",
+            prediction: "Likely to complete 6-8 tasks based on current patterns",
+            confidence: 0.74,
+            generated_at: new Date(Date.now() - 60 * 60 * 1000).toISOString()
+          }
+        ],
+        recommendations: [
+          {
+            type: "productivity_optimization",
+            title: "Optimize Morning Routine",
+            description: "Your productivity peaks between 9-11 AM. Consider scheduling important tasks during this time.",
+            priority: "high",
+            confidence: 0.85
+          },
+          {
+            type: "focus_improvement",
+            title: "Reduce Interruptions",
+            description: "You have an average of 4 interruptions per hour. Try using focus blocks to improve concentration.",
+            priority: "medium",
+            confidence: 0.75
+          },
+          {
+            type: "energy_management",
+            title: "Post-Lunch Energy Management",
+            description: "Consider a short walk or light exercise after lunch to maintain energy levels.",
+            priority: "medium",
+            confidence: 0.68
+          }
+        ],
+        insights_generated_at: new Date().toISOString()
+      };
+      
+      setInsights(fallbackInsights);
+      setUsingFallbackData(true);
+      
+      if (refreshing) {
+        toast.warning("Using demo data - Digital Twin API currently unavailable");
+      } else {
+        toast.info("Using demo data - Digital Twin API currently unavailable");
+      }
     } finally {
       setLoading(false);
     }
@@ -62,10 +150,6 @@ export const TwinInsightsPanel: React.FC<TwinInsightsPanelProps> = ({ twinId }) 
     try {
       setRefreshing(true);
       await loadInsights();
-      toast({
-        title: "Success",
-        description: "Insights refreshed successfully",
-      });
     } catch (error) {
       // Error already handled in loadInsights
     } finally {
@@ -130,13 +214,18 @@ export const TwinInsightsPanel: React.FC<TwinInsightsPanelProps> = ({ twinId }) 
           <h2 className="text-2xl font-bold flex items-center">
             <Brain className="h-6 w-6 mr-2 text-blue-500" />
             Twin Insights
+            {usingFallbackData && (
+              <Badge variant="secondary" className="ml-2">
+                Demo Data
+              </Badge>
+            )}
           </h2>
           <p className="text-gray-600 mt-1">
             Generated on {new Date(insights.insights_generated_at).toLocaleString()}
           </p>
         </div>
-        <Button 
-          onClick={refreshInsights} 
+        <Button
+          onClick={refreshInsights}
           disabled={refreshing}
           variant="outline"
           size="sm"
@@ -257,15 +346,28 @@ export const TwinInsightsPanel: React.FC<TwinInsightsPanelProps> = ({ twinId }) 
           ) : (
             <div className="space-y-3">
               {insights.discovered_patterns.slice(0, 5).map((pattern, index) => (
-                <div key={index} className="p-3 border rounded-lg bg-gray-50">
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium">Pattern #{index + 1}</span>
-                    <span className="text-xs text-gray-500">
-                      Discovered recently
-                    </span>
+                <div key={pattern.id || index} className="p-4 border rounded-lg bg-gray-50">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center space-x-2">
+                      <Activity className="h-4 w-4 text-blue-500" />
+                      <span className="font-medium capitalize">
+                        {pattern.type?.replace('_', ' ') || `Pattern #${index + 1}`}
+                      </span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Badge variant="outline" className="text-xs">
+                        {Math.round((pattern.confidence || 0) * 100)}% confident
+                      </Badge>
+                      <span className="text-xs text-gray-500">
+                        {pattern.discovered_at ?
+                          new Date(pattern.discovered_at).toLocaleDateString() :
+                          'Recently'
+                        }
+                      </span>
+                    </div>
                   </div>
-                  <p className="text-sm text-gray-600 mt-1">
-                    Pattern analysis data available
+                  <p className="text-sm text-gray-600">
+                    {pattern.description || 'Pattern analysis data available'}
                   </p>
                 </div>
               ))}
@@ -299,13 +401,28 @@ export const TwinInsightsPanel: React.FC<TwinInsightsPanelProps> = ({ twinId }) 
           ) : (
             <div className="space-y-3">
               {insights.recent_predictions.slice(0, 3).map((prediction, index) => (
-                <div key={index} className="p-3 border rounded-lg bg-blue-50">
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium">Prediction #{index + 1}</span>
-                    <CheckCircle className="h-4 w-4 text-green-500" />
+                <div key={prediction.id || index} className="p-4 border rounded-lg bg-blue-50">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center space-x-2">
+                      <Cpu className="h-4 w-4 text-blue-500" />
+                      <span className="font-medium capitalize">
+                        {prediction.type?.replace('_', ' ') || `Prediction #${index + 1}`}
+                      </span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Badge variant="outline" className="text-xs">
+                        {Math.round((prediction.confidence || 0) * 100)}% confident
+                      </Badge>
+                      <span className="text-xs text-gray-500">
+                        {prediction.generated_at ?
+                          new Date(prediction.generated_at).toLocaleDateString() :
+                          'Recently'
+                        }
+                      </span>
+                    </div>
                   </div>
-                  <p className="text-sm text-gray-600 mt-1">
-                    Prediction data available
+                  <p className="text-sm text-gray-600">
+                    {prediction.prediction || 'Prediction data available'}
                   </p>
                 </div>
               ))}
@@ -320,34 +437,71 @@ export const TwinInsightsPanel: React.FC<TwinInsightsPanelProps> = ({ twinId }) 
           <CardTitle>Quick Actions</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Button 
-              variant="outline" 
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Button
+              variant="outline"
               className="h-auto p-4 flex flex-col items-center space-y-2"
-              onClick={() => {
-                // This would trigger a new prediction generation
-                toast({
-                  title: "Info",
-                  description: "Prediction generation would be triggered here",
-                });
+              onClick={async () => {
+                try {
+                  toast.info("Generating new predictions...");
+                  const response = await digitalTwinApi.generatePredictions({
+                    prediction_type: 'comprehensive',
+                    time_horizon: 7
+                  });
+                  if (response.success) {
+                    toast.success("New predictions generated successfully");
+                    await loadInsights(); // Refresh insights to show new predictions
+                  } else {
+                    toast.warning("Prediction generation completed with demo data");
+                  }
+                } catch (error) {
+                  toast.warning("Using demo prediction generation");
+                }
               }}
             >
               <TrendingUp className="h-6 w-6" />
-              <span>Generate New Predictions</span>
+              <span>Generate Predictions</span>
             </Button>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               className="h-auto p-4 flex flex-col items-center space-y-2"
-              onClick={() => {
-                // This would trigger pattern analysis
-                toast({
-                  title: "Info",
-                  description: "Pattern analysis would be triggered here",
-                });
+              onClick={async () => {
+                try {
+                  toast.info("Analyzing patterns...");
+                  const response = await digitalTwinApi.getTwinPatterns();
+                  if (response.success) {
+                    toast.success("Pattern analysis completed");
+                    await loadInsights(); // Refresh insights
+                  } else {
+                    toast.warning("Pattern analysis completed with demo data");
+                  }
+                } catch (error) {
+                  toast.warning("Using demo pattern analysis");
+                }
               }}
             >
               <Target className="h-6 w-6" />
               <span>Analyze Patterns</span>
+            </Button>
+            <Button
+              variant="outline"
+              className="h-auto p-4 flex flex-col items-center space-y-2"
+              onClick={async () => {
+                try {
+                  toast.info("Checking twin health...");
+                  const response = await digitalTwinApi.getTwinHealth();
+                  if (response.success) {
+                    toast.success(`Twin health: ${response.data?.health_status || 'Good'}`);
+                  } else {
+                    toast.warning("Health check completed with demo data");
+                  }
+                } catch (error) {
+                  toast.warning("Using demo health check");
+                }
+              }}
+            >
+              <Database className="h-6 w-6" />
+              <span>Health Check</span>
             </Button>
           </div>
         </CardContent>
