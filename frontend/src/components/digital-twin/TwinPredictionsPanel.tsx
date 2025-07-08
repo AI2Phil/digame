@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card';
 import { Button } from '../ui/Button';
-import { 
-  TrendingUp, 
-  Calendar, 
+import { Badge } from '../ui/Badge';
+import {
+  TrendingUp,
+  Calendar,
   Target,
   Zap,
   BarChart3,
@@ -11,8 +12,11 @@ import {
   AlertCircle,
   CheckCircle,
   Clock,
-  Activity
+  Activity,
+  Brain,
+  Database
 } from 'lucide-react';
+import { useToastHelpers } from '../ui/Toaster';
 import { digitalTwinApi } from '../../services/digitalTwinApi';
 
 interface TwinPredictionsPanelProps {
@@ -26,37 +30,119 @@ interface Prediction {
   confidence: number;
   timeHorizon: number;
   generatedAt: string;
+  summary?: string;
+  details?: {
+    trend?: string;
+    peakHours?: string;
+    recommendations?: string[];
+    metrics?: Record<string, any>;
+  };
 }
-
-// Note: useToast hook would need to be implemented or use a simple alert for now
-const useToast = () => ({
-  toast: ({ title, description, variant }: any) => {
-    console.log(`${variant === 'destructive' ? 'Error' : 'Info'}: ${title} - ${description}`);
-    alert(`${title}: ${description}`);
-  }
-});
 
 export const TwinPredictionsPanel: React.FC<TwinPredictionsPanelProps> = ({ twinId }) => {
   const [predictions, setPredictions] = useState<Prediction[]>([]);
   const [loading, setLoading] = useState(false);
   const [generating, setGenerating] = useState<string | null>(null);
-  const { toast } = useToast();
+  const [error, setError] = useState<string | null>(null);
+  const [usingFallbackData, setUsingFallbackData] = useState(false);
+  const toast = useToastHelpers();
 
   useEffect(() => {
-    // Load any existing predictions from localStorage or API
-    loadStoredPredictions();
+    loadPredictions();
   }, [twinId]);
 
-  const loadStoredPredictions = () => {
-    // In a real implementation, this would load from the backend
-    const stored = localStorage.getItem(`predictions_${twinId}`);
-    if (stored) {
-      try {
-        setPredictions(JSON.parse(stored));
-      } catch (error) {
-        console.error('Failed to parse stored predictions:', error);
+  const loadPredictions = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // Try to load existing predictions from API or localStorage
+      const stored = localStorage.getItem(`predictions_${twinId}`);
+      if (stored) {
+        try {
+          const storedPredictions = JSON.parse(stored);
+          setPredictions(storedPredictions);
+          setUsingFallbackData(false);
+        } catch (error) {
+          console.error('Failed to parse stored predictions:', error);
+          loadFallbackPredictions();
+        }
+      } else {
+        loadFallbackPredictions();
       }
+    } catch (error: any) {
+      console.error('Failed to load predictions:', error);
+      setError(error.message || "Failed to load predictions");
+      loadFallbackPredictions();
+    } finally {
+      setLoading(false);
     }
+  };
+
+  const loadFallbackPredictions = () => {
+    // Enhanced fallback predictions with realistic data
+    const fallbackPredictions: Prediction[] = [
+      {
+        id: `pred_${Date.now()}_1`,
+        type: 'productivity',
+        data: {
+          trend: 'increasing',
+          forecast: [0.78, 0.82, 0.85, 0.88, 0.84, 0.87, 0.89]
+        },
+        confidence: 0.87,
+        timeHorizon: 7,
+        generatedAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+        summary: 'Productivity expected to increase by 12% over the next week',
+        details: {
+          trend: 'Stable with slight improvement',
+          peakHours: '9:00 AM - 11:00 AM',
+          recommendations: ['Schedule important tasks during morning hours', 'Use 90-minute focus blocks'],
+          metrics: { averageScore: 0.84, peakScore: 0.89, improvement: 0.12 }
+        }
+      },
+      {
+        id: `pred_${Date.now()}_2`,
+        type: 'energy',
+        data: {
+          energyPeaks: ['10:00 AM', '3:00 PM'],
+          energyDips: ['2:00 PM - 3:00 PM'],
+          recommendations: ['Take 15-minute breaks', 'Hydrate regularly']
+        },
+        confidence: 0.82,
+        timeHorizon: 7,
+        generatedAt: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
+        summary: 'Energy levels will peak on Tuesday and Thursday mornings',
+        details: {
+          trend: 'Cyclical with predictable patterns',
+          peakHours: '10:00 AM and 3:00 PM',
+          recommendations: ['Schedule breaks during energy dips', 'Plan demanding tasks during peaks'],
+          metrics: { averageEnergy: 0.76, peakEnergy: 0.92, lowEnergy: 0.58 }
+        }
+      },
+      {
+        id: `pred_${Date.now()}_3`,
+        type: 'tasks',
+        data: {
+          completionRate: 0.85,
+          optimalScheduling: 'Morning hours',
+          bottlenecks: ['Afternoon meetings', 'Email processing']
+        },
+        confidence: 0.74,
+        timeHorizon: 7,
+        generatedAt: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
+        summary: 'Expected to complete 6-8 tasks daily with 85% success rate',
+        details: {
+          trend: 'Consistent performance',
+          peakHours: 'Morning hours (9-11 AM)',
+          recommendations: ['Batch similar tasks', 'Minimize afternoon interruptions'],
+          metrics: { dailyAverage: 7.2, successRate: 0.85, efficiency: 0.78 }
+        }
+      }
+    ];
+    
+    setPredictions(fallbackPredictions);
+    setUsingFallbackData(true);
+    toast.info("Using demo predictions - Digital Twin API currently unavailable");
   };
 
   const storePredictions = (newPredictions: Prediction[]) => {
@@ -67,6 +153,8 @@ export const TwinPredictionsPanel: React.FC<TwinPredictionsPanelProps> = ({ twin
   const generatePrediction = async (type: 'productivity' | 'tasks' | 'energy' | 'comprehensive', timeHorizon: number = 7) => {
     try {
       setGenerating(type);
+      toast.info(`Generating ${type} prediction...`);
+      
       const response = await digitalTwinApi.generatePredictions({
         prediction_type: type,
         time_horizon: timeHorizon
@@ -76,31 +164,103 @@ export const TwinPredictionsPanel: React.FC<TwinPredictionsPanelProps> = ({ twin
         const newPrediction: Prediction = {
           id: `pred_${Date.now()}`,
           type,
-          data: response.data.predictions,
-          confidence: 0.85, // This would come from the API response
+          data: response.data.predictions || response.data,
+          confidence: response.data.confidence || 0.85,
           timeHorizon,
-          generatedAt: new Date().toISOString()
+          generatedAt: new Date().toISOString(),
+          summary: generatePredictionSummary(type, response.data),
+          details: generatePredictionDetails(type, response.data)
         };
 
         const updatedPredictions = [newPrediction, ...predictions.slice(0, 9)]; // Keep last 10
         storePredictions(updatedPredictions);
+        setUsingFallbackData(false);
 
-        toast({
-          title: "Success",
-          description: `${type.charAt(0).toUpperCase() + type.slice(1)} prediction generated successfully`,
-        });
+        toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} prediction generated successfully`);
       } else {
         throw new Error(response.message || 'Failed to generate prediction');
       }
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to generate prediction",
-        variant: "destructive",
-      });
+      console.error('Failed to generate prediction:', error);
+      
+      // Generate enhanced fallback prediction
+      const fallbackPrediction = generateFallbackPrediction(type, timeHorizon);
+      const updatedPredictions = [fallbackPrediction, ...predictions.slice(0, 9)];
+      storePredictions(updatedPredictions);
+      setUsingFallbackData(true);
+      
+      toast.warning(`Using demo ${type} prediction - API currently unavailable`);
     } finally {
       setGenerating(null);
     }
+  };
+
+  const generatePredictionSummary = (type: string, data: any): string => {
+    switch (type) {
+      case 'productivity':
+        return 'Productivity expected to increase by 12% over the next week';
+      case 'tasks':
+        return 'Expected to complete 6-8 tasks daily with 85% success rate';
+      case 'energy':
+        return 'Energy levels will peak on Tuesday and Thursday mornings';
+      case 'comprehensive':
+        return 'Overall positive trend with 3 actionable insights identified';
+      default:
+        return 'Prediction generated successfully';
+    }
+  };
+
+  const generatePredictionDetails = (type: string, data: any) => {
+    switch (type) {
+      case 'productivity':
+        return {
+          trend: 'Stable with slight improvement',
+          peakHours: '9:00 AM - 11:00 AM',
+          recommendations: ['Schedule important tasks during morning hours', 'Use 90-minute focus blocks'],
+          metrics: { averageScore: 0.84, peakScore: 0.89, improvement: 0.12 }
+        };
+      case 'tasks':
+        return {
+          trend: 'Consistent performance',
+          peakHours: 'Morning hours (9-11 AM)',
+          recommendations: ['Batch similar tasks', 'Minimize afternoon interruptions'],
+          metrics: { dailyAverage: 7.2, successRate: 0.85, efficiency: 0.78 }
+        };
+      case 'energy':
+        return {
+          trend: 'Cyclical with predictable patterns',
+          peakHours: '10:00 AM and 3:00 PM',
+          recommendations: ['Schedule breaks during energy dips', 'Plan demanding tasks during peaks'],
+          metrics: { averageEnergy: 0.76, peakEnergy: 0.92, lowEnergy: 0.58 }
+        };
+      case 'comprehensive':
+        return {
+          trend: 'Positive overall outlook',
+          peakHours: 'Variable based on analysis',
+          recommendations: ['Focus on time management', 'Optimize workflow patterns', 'Maintain current momentum'],
+          metrics: { overallScore: 0.82, confidence: 0.87, areas: 3 }
+        };
+      default:
+        return {
+          trend: 'Analysis complete',
+          peakHours: 'To be determined',
+          recommendations: ['Review prediction details'],
+          metrics: {}
+        };
+    }
+  };
+
+  const generateFallbackPrediction = (type: string, timeHorizon: number): Prediction => {
+    return {
+      id: `pred_${Date.now()}_fallback`,
+      type,
+      data: { fallback: true, type, timeHorizon },
+      confidence: 0.75 + Math.random() * 0.15, // Random confidence between 0.75-0.90
+      timeHorizon,
+      generatedAt: new Date().toISOString(),
+      summary: generatePredictionSummary(type, {}),
+      details: generatePredictionDetails(type, {})
+    };
   };
 
   const getPredictionIcon = (type: string) => {
@@ -171,6 +331,11 @@ export const TwinPredictionsPanel: React.FC<TwinPredictionsPanelProps> = ({ twin
         <h2 className="text-2xl font-bold flex items-center">
           <TrendingUp className="h-6 w-6 mr-2 text-blue-500" />
           Predictions & Forecasts
+          {usingFallbackData && (
+            <Badge variant="secondary" className="ml-2">
+              Demo Data
+            </Badge>
+          )}
         </h2>
         <p className="text-gray-600 mt-1">
           Generate and view predictions based on your behavioral patterns
@@ -277,33 +442,26 @@ export const TwinPredictionsPanel: React.FC<TwinPredictionsPanelProps> = ({ twin
                         {/* Prediction Summary */}
                         <div className="bg-white bg-opacity-50 p-3 rounded mb-3">
                           <h4 className="font-medium text-sm mb-2">Prediction Summary:</h4>
+                          {prediction.summary && (
+                            <p className="text-sm font-medium text-gray-800 mb-2">
+                              {prediction.summary}
+                            </p>
+                          )}
                           <div className="text-sm">
-                            {prediction.type === 'productivity' && (
+                            {prediction.details && (
                               <div className="space-y-1">
-                                <p>• Expected productivity trend: <span className="font-medium">Stable with slight improvement</span></p>
-                                <p>• Peak performance hours: <span className="font-medium">9:00 AM - 11:00 AM</span></p>
-                                <p>• Recommended focus time: <span className="font-medium">90-minute blocks</span></p>
-                              </div>
-                            )}
-                            {prediction.type === 'tasks' && (
-                              <div className="space-y-1">
-                                <p>• Expected completion rate: <span className="font-medium">85%</span></p>
-                                <p>• Optimal task scheduling: <span className="font-medium">Morning hours</span></p>
-                                <p>• Potential bottlenecks: <span className="font-medium">Afternoon meetings</span></p>
-                              </div>
-                            )}
-                            {prediction.type === 'energy' && (
-                              <div className="space-y-1">
-                                <p>• Energy peak: <span className="font-medium">10:00 AM</span></p>
-                                <p>• Energy dip: <span className="font-medium">2:00 PM - 3:00 PM</span></p>
-                                <p>• Recovery time: <span className="font-medium">15-minute breaks recommended</span></p>
-                              </div>
-                            )}
-                            {prediction.type === 'comprehensive' && (
-                              <div className="space-y-1">
-                                <p>• Overall outlook: <span className="font-medium">Positive trend</span></p>
-                                <p>• Key recommendations: <span className="font-medium">3 actionable insights</span></p>
-                                <p>• Areas for improvement: <span className="font-medium">Time management</span></p>
+                                <p>• Expected trend: <span className="font-medium">{prediction.details.trend}</span></p>
+                                <p>• Peak performance hours: <span className="font-medium">{prediction.details.peakHours}</span></p>
+                                {prediction.details.recommendations && prediction.details.recommendations.length > 0 && (
+                                  <div>
+                                    <p className="font-medium">Recommendations:</p>
+                                    <ul className="ml-4 mt-1">
+                                      {prediction.details.recommendations.slice(0, 2).map((rec, idx) => (
+                                        <li key={idx} className="text-xs">• {rec}</li>
+                                      ))}
+                                    </ul>
+                                  </div>
+                                )}
                               </div>
                             )}
                           </div>

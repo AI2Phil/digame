@@ -1,30 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card';
 import { Button } from '../ui/Button';
-import { 
-  Target, 
-  BarChart3, 
+import { Badge } from '../ui/Badge';
+import {
+  Target,
+  BarChart3,
   Clock,
   TrendingUp,
   Filter,
   RefreshCw,
   AlertCircle,
   Eye,
-  Calendar
+  Calendar,
+  Database,
+  Brain
 } from 'lucide-react';
+import { useToastHelpers } from '../ui/Toaster';
 import { digitalTwinApi, TwinPattern } from '../../services/digitalTwinApi';
 
 interface TwinPatternsPanelProps {
   twinId: string;
 }
-
-// Note: useToast hook would need to be implemented or use a simple alert for now
-const useToast = () => ({
-  toast: ({ title, description, variant }: any) => {
-    console.log(`${variant === 'destructive' ? 'Error' : 'Info'}: ${title} - ${description}`);
-    alert(`${title}: ${description}`);
-  }
-});
 
 export const TwinPatternsPanel: React.FC<TwinPatternsPanelProps> = ({ twinId }) => {
   const [patterns, setPatterns] = useState<TwinPattern[]>([]);
@@ -32,7 +28,9 @@ export const TwinPatternsPanel: React.FC<TwinPatternsPanelProps> = ({ twinId }) 
   const [refreshing, setRefreshing] = useState(false);
   const [selectedType, setSelectedType] = useState<string>('all');
   const [limit, setLimit] = useState(20);
-  const { toast } = useToast();
+  const [error, setError] = useState<string | null>(null);
+  const [usingFallbackData, setUsingFallbackData] = useState(false);
+  const toast = useToastHelpers();
 
   useEffect(() => {
     loadPatterns();
@@ -41,6 +39,8 @@ export const TwinPatternsPanel: React.FC<TwinPatternsPanelProps> = ({ twinId }) 
   const loadPatterns = async () => {
     try {
       setLoading(true);
+      setError(null);
+      
       const response = await digitalTwinApi.getTwinPatterns(
         selectedType === 'all' ? undefined : selectedType,
         limit
@@ -48,28 +48,120 @@ export const TwinPatternsPanel: React.FC<TwinPatternsPanelProps> = ({ twinId }) 
       
       if (response.success && response.data) {
         setPatterns(response.data.patterns);
+        setUsingFallbackData(false);
+        toast.success("Patterns loaded successfully");
       } else {
         throw new Error(response.message || 'Failed to load patterns');
       }
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to load twin patterns",
-        variant: "destructive",
-      });
+      console.error('Failed to load patterns:', error);
+      setError(error.message || "Failed to load twin patterns");
+      
+      // Load enhanced fallback patterns
+      loadFallbackPatterns();
+      toast.warning("Using demo patterns - Digital Twin API currently unavailable");
     } finally {
       setLoading(false);
     }
   };
 
+  const loadFallbackPatterns = () => {
+    // Enhanced fallback patterns with realistic data
+    const fallbackPatterns: TwinPattern[] = [
+      {
+        id: `pattern_${Date.now()}_1`,
+        pattern_type: 'productivity',
+        pattern_data: {
+          peak_hours: ['9:00-11:00', '14:00-16:00'],
+          average_score: 0.85,
+          trend: 'increasing',
+          factors: ['focus_time', 'task_complexity', 'energy_level']
+        },
+        confidence_score: 87.5,
+        frequency_score: 92.3,
+        impact_score: 78.9,
+        discovered_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+        validated_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString()
+      },
+      {
+        id: `pattern_${Date.now()}_2`,
+        pattern_type: 'time_management',
+        pattern_data: {
+          optimal_block_size: 90,
+          break_frequency: 'every_90_minutes',
+          context_switch_cost: 0.23,
+          efficiency_score: 0.76
+        },
+        confidence_score: 82.1,
+        frequency_score: 88.7,
+        impact_score: 85.4,
+        discovered_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+        validated_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString()
+      },
+      {
+        id: `pattern_${Date.now()}_3`,
+        pattern_type: 'focus',
+        pattern_data: {
+          deep_work_duration: 120,
+          distraction_triggers: ['notifications', 'meetings', 'email'],
+          focus_score: 0.81,
+          improvement_potential: 0.15
+        },
+        confidence_score: 79.6,
+        frequency_score: 85.2,
+        impact_score: 91.3,
+        discovered_at: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(),
+        validated_at: null
+      },
+      {
+        id: `pattern_${Date.now()}_4`,
+        pattern_type: 'energy',
+        pattern_data: {
+          energy_peaks: ['10:00', '15:00'],
+          energy_dips: ['13:00', '17:00'],
+          recovery_time: 15,
+          sustainability_score: 0.73
+        },
+        confidence_score: 84.7,
+        frequency_score: 90.1,
+        impact_score: 77.8,
+        discovered_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+        validated_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString()
+      },
+      {
+        id: `pattern_${Date.now()}_5`,
+        pattern_type: 'activity',
+        pattern_data: {
+          most_productive_activities: ['coding', 'writing', 'analysis'],
+          least_productive_activities: ['email', 'meetings', 'admin'],
+          activity_transitions: 12,
+          efficiency_rating: 0.68
+        },
+        confidence_score: 76.3,
+        frequency_score: 83.9,
+        impact_score: 82.5,
+        discovered_at: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString(),
+        validated_at: null
+      }
+    ];
+
+    // Filter patterns based on selected type
+    const filteredPatterns = selectedType === 'all'
+      ? fallbackPatterns
+      : fallbackPatterns.filter(p => p.pattern_type === selectedType);
+
+    // Apply limit
+    const limitedPatterns = filteredPatterns.slice(0, limit);
+    
+    setPatterns(limitedPatterns);
+    setUsingFallbackData(true);
+  };
+
   const refreshPatterns = async () => {
     try {
       setRefreshing(true);
+      toast.info("Refreshing patterns...");
       await loadPatterns();
-      toast({
-        title: "Success",
-        description: "Patterns refreshed successfully",
-      });
     } catch (error) {
       // Error already handled in loadPatterns
     } finally {
@@ -133,14 +225,19 @@ export const TwinPatternsPanel: React.FC<TwinPatternsPanelProps> = ({ twinId }) 
           <h2 className="text-2xl font-bold flex items-center">
             <Target className="h-6 w-6 mr-2 text-blue-500" />
             Discovered Patterns
+            {usingFallbackData && (
+              <Badge variant="secondary" className="ml-2">
+                Demo Data
+              </Badge>
+            )}
           </h2>
           <p className="text-gray-600 mt-1">
             Behavioral patterns identified by your digital twin
           </p>
         </div>
         <div className="flex items-center space-x-2">
-          <Button 
-            onClick={refreshPatterns} 
+          <Button
+            onClick={refreshPatterns}
             disabled={refreshing}
             variant="outline"
             size="sm"

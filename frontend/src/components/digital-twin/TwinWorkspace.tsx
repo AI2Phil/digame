@@ -2,11 +2,12 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
-import { 
-  MessageSquare, 
-  Send, 
-  Bot, 
-  User, 
+import { Badge } from '../ui/Badge';
+import {
+  MessageSquare,
+  Send,
+  Bot,
+  User,
   Clock,
   Brain,
   Target,
@@ -17,8 +18,10 @@ import {
   Mic,
   MicOff,
   FileText,
-  BarChart3
+  BarChart3,
+  Database
 } from 'lucide-react';
+import { useToastHelpers } from '../ui/Toaster';
 import { digitalTwinApi } from '../../services/digitalTwinApi';
 
 interface TwinWorkspaceProps {
@@ -42,22 +45,16 @@ interface IntentClassification {
   suggestions: string[];
 }
 
-// Note: useToast hook would need to be implemented or use a simple alert for now
-const useToast = () => ({
-  toast: ({ title, description, variant }: any) => {
-    console.log(`${variant === 'destructive' ? 'Error' : 'Info'}: ${title} - ${description}`);
-    alert(`${title}: ${description}`);
-  }
-});
-
 export const TwinWorkspace: React.FC<TwinWorkspaceProps> = ({ twinId }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [currentIntent, setCurrentIntent] = useState<IntentClassification | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [usingFallbackData, setUsingFallbackData] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const { toast } = useToast();
+  const toast = useToastHelpers();
 
   useEffect(() => {
     scrollToBottom();
@@ -74,6 +71,7 @@ export const TwinWorkspace: React.FC<TwinWorkspaceProps> = ({ twinId }) => {
 
   const loadConversationHistory = async () => {
     try {
+      setError(null);
       const response = await digitalTwinApi.getTwinInteractions(undefined, 20);
       if (response.success && response.data) {
         const historyMessages: Message[] = response.data.interactions.map(interaction => [
@@ -93,10 +91,82 @@ export const TwinWorkspace: React.FC<TwinWorkspaceProps> = ({ twinId }) => {
         ]).flat().sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
 
         setMessages(historyMessages);
+        setUsingFallbackData(false);
+        toast.success("Workspace conversation history loaded successfully");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to load conversation history:', error);
+      setError(error.message || "Failed to load conversation history");
+      
+      // Load enhanced fallback workspace conversation
+      loadFallbackWorkspaceConversation();
+      toast.warning("Using demo workspace conversation - Digital Twin API currently unavailable");
     }
+  };
+
+  const loadFallbackWorkspaceConversation = () => {
+    // Enhanced fallback workspace conversation with intent classification
+    const fallbackMessages: Message[] = [
+      {
+        id: `workspace_${Date.now()}_1`,
+        type: 'user',
+        content: 'Show me my recent productivity patterns',
+        timestamp: new Date(Date.now() - 3 * 60 * 60 * 1000), // 3 hours ago
+        intent: 'pattern_analysis',
+      },
+      {
+        id: `workspace_${Date.now()}_2`,
+        type: 'twin',
+        content: 'I\'ve analyzed your productivity patterns over the last two weeks. You show consistent peak performance between 9-11 AM with 87% efficiency. Your focus sessions average 85 minutes, and you\'re most productive on Tuesdays and Wednesdays.',
+        timestamp: new Date(Date.now() - 3 * 60 * 60 * 1000 + 45000), // 3 hours ago + 45 seconds
+        confidence: 0.89,
+        intent: 'pattern_analysis',
+        suggestions: ['Analyze focus time patterns', 'Show weekly productivity trends', 'Display energy level patterns']
+      },
+      {
+        id: `workspace_${Date.now()}_3`,
+        type: 'user',
+        content: 'Generate productivity predictions for next week',
+        timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
+        intent: 'prediction_request',
+      },
+      {
+        id: `workspace_${Date.now()}_4`,
+        type: 'twin',
+        content: 'Based on your historical patterns, next week I predict: Monday 78% productivity, Tuesday 92% (peak day), Wednesday 88%, Thursday 82%, Friday 75%. I recommend scheduling your most important tasks on Tuesday and Wednesday mornings.',
+        timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000 + 60000), // 2 hours ago + 1 minute
+        confidence: 0.84,
+        intent: 'prediction_request',
+        suggestions: ['Get task completion forecast', 'Predict energy levels', 'Show optimization opportunities']
+      },
+      {
+        id: `workspace_${Date.now()}_5`,
+        type: 'user',
+        content: 'What recommendations do you have for improving my productivity?',
+        timestamp: new Date(Date.now() - 1 * 60 * 60 * 1000), // 1 hour ago
+        intent: 'recommendation_request',
+      },
+      {
+        id: `workspace_${Date.now()}_6`,
+        type: 'twin',
+        content: 'Here are my top recommendations: 1) Extend your morning focus blocks to 90 minutes, 2) Schedule breaks every 90 minutes to maintain energy, 3) Batch similar tasks together, 4) Avoid meetings before 11 AM when possible, 5) Use your Tuesday/Wednesday peak days for complex work.',
+        timestamp: new Date(Date.now() - 1 * 60 * 60 * 1000 + 75000), // 1 hour ago + 75 seconds
+        confidence: 0.91,
+        intent: 'recommendation_request',
+        suggestions: ['Get schedule optimization tips', 'Show focus strategies', 'Analyze workflow efficiency']
+      }
+    ];
+
+    setMessages(fallbackMessages);
+    setUsingFallbackData(true);
+    
+    // Set current intent based on last message
+    setCurrentIntent({
+      intent: 'recommendation_request',
+      confidence: 0.91,
+      entities: { category: 'productivity', urgency: 'normal' },
+      suggestions: ['Get schedule optimization tips', 'Show focus strategies', 'Analyze workflow efficiency']
+    });
   };
 
   const _classify_intent = (query: string): IntentClassification => {
@@ -247,19 +317,23 @@ export const TwinWorkspace: React.FC<TwinWorkspaceProps> = ({ twinId }) => {
         });
       }
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to send message to twin",
-        variant: "destructive",
-      });
+      console.error('Failed to send message:', error);
+      toast.error(error.message || "Failed to send message to twin");
 
-      const errorMessage: Message = {
-        id: `error-${Date.now()}`,
+      // Generate enhanced fallback response with intent classification
+      const fallbackResponse = generateFallbackWorkspaceResponse(userMessage.content, intentClassification);
+      const twinMessage: Message = {
+        id: `twin-${Date.now()}`,
         type: 'twin',
-        content: 'Sorry, I encountered an error processing your message. Please try again.',
+        content: fallbackResponse.content,
         timestamp: new Date(),
+        confidence: fallbackResponse.confidence,
+        suggestions: fallbackResponse.suggestions,
+        intent: intentClassification.intent,
       };
-      setMessages(prev => [...prev, errorMessage]);
+      setMessages(prev => [...prev, twinMessage]);
+      setUsingFallbackData(true);
+      toast.warning("Using demo workspace response - Digital Twin API currently unavailable");
     } finally {
       setIsLoading(false);
     }
@@ -329,6 +403,52 @@ export const TwinWorkspace: React.FC<TwinWorkspaceProps> = ({ twinId }) => {
     setInputValue(action.query);
   };
 
+  const generateFallbackWorkspaceResponse = (userInput: string, intent: IntentClassification): { content: string; confidence: number; suggestions: string[] } => {
+    switch (intent.intent) {
+      case 'prediction_request':
+        return {
+          content: 'Based on your workspace patterns, I predict high productivity (85-90%) for the next 3 days, with peak performance on Tuesday morning. Your optimal work blocks will be 90 minutes with 15-minute breaks.',
+          confidence: 0.87,
+          suggestions: ['Get detailed weekly forecast', 'Predict task completion rates', 'Show energy level predictions']
+        };
+      
+      case 'pattern_analysis':
+        return {
+          content: 'Your workspace analysis shows consistent patterns: 87% efficiency during morning hours, average focus sessions of 85 minutes, and highest productivity on Tuesdays/Wednesdays. You work best with minimal interruptions.',
+          confidence: 0.89,
+          suggestions: ['Analyze focus time patterns', 'Show weekly productivity trends', 'Display energy level patterns']
+        };
+      
+      case 'recommendation_request':
+        return {
+          content: 'Workspace recommendations: 1) Optimize your environment for 90-minute focus blocks, 2) Use noise-canceling during peak hours, 3) Schedule complex tasks for Tuesday/Wednesday mornings, 4) Implement the 90/15 work/break cycle.',
+          confidence: 0.91,
+          suggestions: ['Get workspace optimization tips', 'Show focus strategies', 'Analyze environment factors']
+        };
+      
+      case 'status_inquiry':
+        return {
+          content: 'Current workspace status: 82% productivity this week, 15 completed focus sessions, 7.2 hours of deep work. You\'re performing 12% above your baseline with consistent improvement trends.',
+          confidence: 0.85,
+          suggestions: ['Show detailed progress', 'Display productivity metrics', 'Check learning progress']
+        };
+      
+      case 'schedule_optimization':
+        return {
+          content: 'Schedule optimization analysis: Your ideal daily structure is 9-11 AM for complex work, 11 AM-1 PM for collaboration, 2-4 PM for focused tasks, and 4-5 PM for administrative work. This maximizes your natural energy cycles.',
+          confidence: 0.83,
+          suggestions: ['Optimize daily schedule', 'Suggest better time blocks', 'Analyze calendar efficiency']
+        };
+      
+      default:
+        return {
+          content: 'I\'m here to help optimize your workspace productivity. I can analyze your patterns, make predictions, provide recommendations, and help you understand your work habits better. What would you like to explore?',
+          confidence: 0.75,
+          suggestions: ['Ask about productivity patterns', 'Request predictions', 'Get workspace recommendations']
+        };
+    }
+  };
+
   return (
     <div className="max-w-6xl mx-auto p-6 space-y-6">
       {/* Header */}
@@ -337,6 +457,11 @@ export const TwinWorkspace: React.FC<TwinWorkspaceProps> = ({ twinId }) => {
           <h1 className="text-3xl font-bold flex items-center">
             <Brain className="h-8 w-8 mr-3 text-blue-500" />
             Twin Workspace
+            {usingFallbackData && (
+              <Badge variant="secondary" className="ml-3">
+                Demo Data
+              </Badge>
+            )}
           </h1>
           <p className="text-gray-600 mt-1">
             Advanced conversation interface with intent recognition

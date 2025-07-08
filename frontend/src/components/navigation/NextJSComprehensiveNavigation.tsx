@@ -146,6 +146,9 @@ const NextJSComprehensiveNavigation: React.FC<NextJSComprehensiveNavigationProps
         { label: 'Intelligence API', icon: <Code className="w-4 h-4" />, path: '/digital-twin/intelligence', subtitle: 'API ACCESS' },
         { label: 'AI Predictions', icon: <Eye className="w-4 h-4" />, path: '/digital-twin/predictions', subtitle: 'PREDICTIONS' },
         { label: 'Twin Insights', icon: <Lightbulb className="w-4 h-4" />, path: '/digital-twin/insights', subtitle: 'INSIGHTS', description: 'Comprehensive insights from your digital twin with recommendations and patterns' },
+        { label: 'Twin Patterns', icon: <Target className="w-4 h-4" />, path: '/digital-twin/patterns', subtitle: 'PATTERNS', description: 'Behavioral patterns discovered by your digital twin' },
+        { label: 'Twin Interaction', icon: <MessageSquare className="w-4 h-4" />, path: '/digital-twin/interaction', subtitle: 'CHAT', description: 'Interactive conversation with your digital twin' },
+        { label: 'Twin Workspace', icon: <Brain className="w-4 h-4" />, path: '/digital-twin/workspace', subtitle: 'WORKSPACE', description: 'Advanced workspace with intent recognition and analytics' },
         { label: 'Twin Simulation', icon: <Layers className="w-4 h-4" />, path: '/digital-twin/simulation', subtitle: 'SIMULATION' },
         { label: 'Behavior Modeling', icon: <Brain className="w-4 h-4" />, path: '/digital-twin/behavior', subtitle: 'MODELING' },
         { label: 'Twin Analytics', icon: <BarChart3 className="w-4 h-4" />, path: '/digital-twin/analytics', subtitle: 'INSIGHTS' }
