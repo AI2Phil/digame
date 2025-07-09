@@ -16,6 +16,7 @@ from app.models.performance_models import Base as PerformanceBase
 from app.models.activity_models import Base as ActivityBase
 from app.seeds.performance_seeds import seed_performance_data
 from app.seeds.activity_seeds import seed_activity_data
+from app.seeds.collaboration_seeds import seed_collaboration_data
 
 def create_tables():
     """Create all database tables"""
@@ -28,6 +29,11 @@ def create_tables():
     # Create activity tables
     ActivityBase.metadata.create_all(bind=engine)
     print("  ✓ User Interface & Dashboard tables created")
+    
+    # Create collaboration tables
+    from app.models.collaboration_models import Base as CollaborationBase
+    CollaborationBase.metadata.create_all(bind=engine)
+    print("  ✓ Real-Time Collaboration tables created")
 
 def seed_all_data():
     """Seed all comprehensive test data"""
@@ -39,9 +45,13 @@ def seed_all_data():
         print("\n" + "="*60)
         seed_performance_data(db)
         
-        # Seed User Interface & Dashboard Components  
+        # Seed User Interface & Dashboard Components
         print("\n" + "="*60)
         seed_activity_data(db)
+        
+        # Seed Real-Time Collaboration Components
+        print("\n" + "="*60)
+        seed_collaboration_data()
         
         print("\n" + "="*60)
         print("🎉 All seeding completed successfully!")
@@ -56,10 +66,16 @@ def seed_all_data():
         print("     - Productivity Charts")
         print("     - Activity Management")
         print("     - Goal Tracking")
+        print("  ✅ Real-Time Collaboration Components")
+        print("     - Workspaces and Channels")
+        print("     - Messages and Reactions")
+        print("     - User Presence")
+        print("     - Collaboration Sessions")
         
         print(f"\nDatabase Status:")
         print(f"  📊 Performance Data: Comprehensive test data with realistic patterns")
         print(f"  📈 Activity Data: 90 days of user activity across 20 users")
+        print(f"  💬 Collaboration Data: Workspaces, channels, messages, and sessions")
         print(f"  🎯 Goals & Patterns: Intelligent insights and recommendations")
         print(f"  🔧 Optimizations: Performance improvement suggestions")
         
@@ -78,6 +94,8 @@ def reset_and_seed():
     print("  🗑️  Dropping existing tables...")
     PerformanceBase.metadata.drop_all(bind=engine)
     ActivityBase.metadata.drop_all(bind=engine)
+    from app.models.collaboration_models import Base as CollaborationBase
+    CollaborationBase.metadata.drop_all(bind=engine)
     
     # Create tables
     create_tables()

@@ -13,6 +13,8 @@ import json
 from ..database import get_db
 from ..auth.auth_service import get_current_user
 from ..models.user import User
+from ..crud import collaboration_crud
+from ..models.collaboration_models import ChannelType, MessageType, SessionType, UserStatus
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -30,161 +32,144 @@ async def get_collaboration_workspace(
         tenant_id = getattr(current_user, 'tenant_id', 1)
         current_user_id = getattr(current_user, 'id', 1)
         
-        # Get workspace members from the same tenant
-        workspace_members = db.query(User).filter(User.tenant_id == tenant_id).limit(20).all()
+        # Get user's workspaces
+        user_workspaces = collaboration_crud.get_user_workspaces(db, current_user_id, limit=1)
         
+        if not user_workspaces:
+            # If no workspace found, return empty workspace structure
+            return {
+                "workspace": {
+                    "id": str(tenant_id),
+                    "name": "No Workspace",
+                    "description": "No workspace found for user",
+                    "channels": [],
+                    "members": [],
+                    "created_at": datetime.now(timezone.utc).isoformat(),
+                    "settings": {
+                        "allow_guests": True,
+                        "require_approval": False,
+                        "message_retention": 90,
+                        "file_sharing": True
+                    }
+                },
+                "online_users": [],
+                "active_sessions": [],
+                "data_source": "database"
+            }
+        
+        workspace = user_workspaces[0]
+        
+        # Get workspace members with user details
+        workspace_id = getattr(workspace, 'id')
+        workspace_members = collaboration_crud.get_workspace_members(db, workspace_id)
         members_data = []
+        
         for member in workspace_members:
-            # Determine user status based on last login
-            last_login = getattr(member, 'last_login', None)
-            if last_login:
-                time_diff = datetime.now(timezone.utc) - last_login
-                if time_diff.total_seconds() < 300:  # 5 minutes
-                    status = 'online'
-                elif time_diff.total_seconds() < 1800:  # 30 minutes
-                    status = 'away'
-                elif time_diff.total_seconds() < 3600:  # 1 hour
-                    status = 'busy'
-                else:
-                    status = 'offline'
+            user = member.user
+            # Get user presence
+            presence = collaboration_crud.get_user_presence(db, user.id)
+            
+            if presence:
+                status = presence.status.value
+                last_seen = presence.last_seen.isoformat() if presence.last_seen else datetime.now(timezone.utc).isoformat()
             else:
                 status = 'offline'
-            
-            # Determine role based on user attributes
-            role = 'member'
-            if hasattr(member, 'is_superuser') and getattr(member, 'is_superuser'):
-                role = 'admin'
-            elif hasattr(member, 'is_staff') and getattr(member, 'is_staff'):
-                role = 'moderator'
+                last_seen = (datetime.now(timezone.utc) - timedelta(hours=2)).isoformat()
             
             members_data.append({
-                "id": str(getattr(member, 'id')),
-                "name": f"{getattr(member, 'first_name', '')} {getattr(member, 'last_name', '')}".strip() or getattr(member, 'username', 'Unknown'),
-                "email": getattr(member, 'email'),
+                "id": str(user.id),
+                "name": f"{getattr(user, 'first_name', '')} {getattr(user, 'last_name', '')}".strip() or getattr(user, 'username', 'Unknown'),
+                "email": getattr(user, 'email'),
                 "status": status,
-                "role": role,
-                "last_seen": last_login.isoformat() if last_login else (datetime.now(timezone.utc) - timedelta(hours=2)).isoformat()
+                "role": member.role,
+                "last_seen": last_seen
             })
         
-        # Generate realistic channels based on workspace context
-        channels_data = [
-            {
-                "id": "1",
-                "name": "general",
-                "description": "General team discussions and announcements",
-                "type": "public",
-                "members": [m["id"] for m in members_data[:5]],
-                "created_at": (datetime.now(timezone.utc) - timedelta(days=30)).isoformat(),
-                "unread_count": 3,
-                "is_muted": False,
-                "is_archived": False,
-                "last_message": {
-                    "id": "msg_1",
-                    "user_id": members_data[0]["id"] if members_data else "1",
-                    "user_name": members_data[0]["name"] if members_data else "Team Member",
-                    "content": "Good morning team! Ready for today's collaboration session?",
-                    "type": "text",
-                    "timestamp": (datetime.now(timezone.utc) - timedelta(minutes=15)).isoformat(),
+        # Get workspace channels
+        channels = collaboration_crud.get_workspace_channels(db, workspace_id, current_user_id)
+        channels_data = []
+        
+        for channel in channels:
+            # Get last message for channel
+            channel_id = getattr(channel, 'id')
+            last_messages = collaboration_crud.get_channel_messages(db, channel_id, limit=1)
+            last_message = None
+            
+            if last_messages:
+                msg = last_messages[0]
+                last_message = {
+                    "id": str(msg.id),
+                    "user_id": str(msg.user_id) if msg.user_id else "system",
+                    "user_name": msg.user.username if msg.user else "System",
+                    "content": msg.content,
+                    "type": msg.type.value,
+                    "timestamp": msg.timestamp.isoformat(),
                     "reactions": []
                 }
-            },
-            {
-                "id": "2",
-                "name": "development",
-                "description": "Development team coordination and code reviews",
-                "type": "public",
-                "members": [m["id"] for m in members_data[:3]],
-                "created_at": (datetime.now(timezone.utc) - timedelta(days=20)).isoformat(),
-                "unread_count": 7,
-                "is_muted": False,
-                "is_archived": False,
-                "last_message": {
-                    "id": "msg_2",
-                    "user_id": members_data[1]["id"] if len(members_data) > 1 else "2",
-                    "user_name": members_data[1]["name"] if len(members_data) > 1 else "Developer",
-                    "content": "The new feature branch is ready for review 🚀",
-                    "type": "text",
-                    "timestamp": (datetime.now(timezone.utc) - timedelta(minutes=45)).isoformat(),
-                    "reactions": [{"emoji": "🚀", "users": ["1", "3"], "count": 2}]
-                }
-            },
-            {
-                "id": "3",
-                "name": "design",
-                "description": "Design discussions, reviews, and creative collaboration",
-                "type": "public",
-                "members": [m["id"] for m in members_data[1:4]],
-                "created_at": (datetime.now(timezone.utc) - timedelta(days=15)).isoformat(),
-                "unread_count": 0,
-                "is_muted": True,
-                "is_archived": False,
-                "last_message": {
-                    "id": "msg_3",
-                    "user_id": members_data[2]["id"] if len(members_data) > 2 else "3",
-                    "user_name": members_data[2]["name"] if len(members_data) > 2 else "Designer",
-                    "content": "Updated the mockups based on feedback",
-                    "type": "file",
-                    "timestamp": (datetime.now(timezone.utc) - timedelta(hours=2)).isoformat(),
-                    "reactions": [],
-                    "attachments": [{
-                        "id": "file_1",
-                        "name": "design-mockups-v3.figma",
-                        "size": 2456789,
-                        "type": "application/figma",
-                        "url": "/files/design-mockups-v3.figma"
-                    }]
-                }
-            },
-            {
-                "id": "4",
-                "name": "alerts",
-                "description": "System alerts, notifications, and monitoring updates",
-                "type": "public",
-                "members": [m["id"] for m in members_data],
-                "created_at": (datetime.now(timezone.utc) - timedelta(days=10)).isoformat(),
-                "unread_count": 12,
-                "is_muted": False,
-                "is_archived": False,
-                "last_message": {
-                    "id": "msg_4",
-                    "user_id": "system",
-                    "user_name": "System",
-                    "content": "Deployment completed successfully ✅",
-                    "type": "system",
-                    "timestamp": (datetime.now(timezone.utc) - timedelta(minutes=30)).isoformat(),
-                    "reactions": [{"emoji": "✅", "users": ["1", "2"], "count": 2}]
-                }
-            }
-        ]
+                
+                # Get reactions for last message
+                reactions = collaboration_crud.get_message_reactions(db, msg.id)
+                if reactions:
+                    reaction_groups = {}
+                    for reaction in reactions:
+                        emoji = reaction.emoji
+                        if emoji not in reaction_groups:
+                            reaction_groups[emoji] = {"emoji": emoji, "users": [], "count": 0}
+                        reaction_groups[emoji]["users"].append(str(reaction.user_id))
+                        reaction_groups[emoji]["count"] += 1
+                    last_message["reactions"] = list(reaction_groups.values())
+            
+            channels_data.append({
+                "id": str(channel_id),
+                "name": channel.name,
+                "description": channel.description,
+                "type": channel.type.value,
+                "members": channel.members if channel.type == ChannelType.PRIVATE else [],
+                "created_at": channel.created_at.isoformat(),
+                "unread_count": 0,  # TODO: Implement unread count logic
+                "is_muted": channel.is_muted,
+                "is_archived": channel.is_archived,
+                "last_message": last_message
+            })
         
-        # Generate active sessions based on current members
+        # Get active sessions
+        active_sessions_db = collaboration_crud.get_active_sessions(db, workspace_id)
         active_sessions = []
-        if len(members_data) >= 3:
+        
+        for session in active_sessions_db:
+            participants = []
+            for user_id in session.participants:
+                user = db.query(User).filter(User.id == user_id).first()
+                if user:
+                    participants.append({
+                        "id": str(user.id),
+                        "name": f"{getattr(user, 'first_name', '')} {getattr(user, 'last_name', '')}".strip() or getattr(user, 'username', 'Unknown'),
+                        "email": getattr(user, 'email'),
+                        "status": "online",
+                        "role": "member"
+                    })
+            
             active_sessions.append({
-                "id": "session_1",
-                "type": "video",
-                "channel_id": "2",
-                "participants": members_data[:3],
-                "started_at": (datetime.now(timezone.utc) - timedelta(minutes=30)).isoformat(),
-                "is_recording": False
+                "id": str(session.id),
+                "type": session.type.value,
+                "channel_id": str(session.channel_id) if session.channel_id else None,
+                "participants": participants,
+                "started_at": session.started_at.isoformat() if session.started_at else None,
+                "is_recording": session.is_recording
             })
         
         workspace_data = {
-            "id": str(tenant_id),
-            "name": f"Team Workspace",
-            "description": "Real-time collaboration workspace for team communication and coordination",
+            "id": str(workspace_id),
+            "name": workspace.name,
+            "description": workspace.description,
             "channels": channels_data,
             "members": members_data,
-            "created_at": (datetime.now(timezone.utc) - timedelta(days=60)).isoformat(),
-            "settings": {
-                "allow_guests": True,
-                "require_approval": False,
-                "message_retention": 90,
-                "file_sharing": True
-            }
+            "created_at": workspace.created_at.isoformat(),
+            "settings": workspace.settings
         }
         
-        online_users = [m for m in members_data if m["status"] == "online"]
+        # Get online users
+        online_users = [m for m in members_data if m["status"] in ["online", "away", "busy"]]
         
         return {
             "workspace": workspace_data,
@@ -331,88 +316,68 @@ async def get_channel_messages(
     Get messages for a specific channel
     """
     try:
-        # In a real implementation, this would query a messages table
-        # For now, generate realistic messages based on channel context
+        # Get messages from database
+        before_datetime = None
+        if before:
+            try:
+                before_datetime = datetime.fromisoformat(before.replace('Z', '+00:00'))
+            except ValueError:
+                pass
+        
+        messages = collaboration_crud.get_channel_messages(
+            db, int(channel_id), limit=limit, before=before_datetime
+        )
         
         messages_data = []
-        
-        if channel_id == "1":  # General channel
-            messages_data = [
-                {
-                    "id": "1",
-                    "user_id": "2",
-                    "user_name": "Jane Smith",
-                    "content": "Good morning team! Ready for today's collaboration session?",
-                    "type": "text",
-                    "timestamp": (datetime.now(timezone.utc) - timedelta(hours=1)).isoformat(),
-                    "reactions": [
-                        {"emoji": "👍", "users": ["1", "3"], "count": 2},
-                        {"emoji": "☕", "users": ["4"], "count": 1}
-                    ]
-                },
-                {
-                    "id": "2",
-                    "user_id": "1",
-                    "user_name": "John Doe",
-                    "content": "Absolutely! I've prepared the agenda for our sprint planning.",
-                    "type": "text",
-                    "timestamp": (datetime.now(timezone.utc) - timedelta(minutes=55)).isoformat(),
-                    "reactions": []
-                },
-                {
-                    "id": "3",
-                    "user_id": "3",
-                    "user_name": "Mike Johnson",
-                    "content": "The new collaboration features look amazing! 🚀",
-                    "type": "text",
-                    "timestamp": (datetime.now(timezone.utc) - timedelta(minutes=45)).isoformat(),
-                    "reactions": [
-                        {"emoji": "🚀", "users": ["1", "2", "4"], "count": 3}
-                    ],
-                    "is_pinned": True
-                }
-            ]
-        elif channel_id == "2":  # Development channel
-            messages_data = [
-                {
-                    "id": "4",
-                    "user_id": "1",
-                    "user_name": "John Doe",
-                    "content": "I've pushed the latest changes to the collaboration branch.",
-                    "type": "text",
-                    "timestamp": (datetime.now(timezone.utc) - timedelta(hours=2)).isoformat(),
-                    "reactions": []
-                },
-                {
-                    "id": "5",
-                    "user_id": "2",
-                    "user_name": "Jane Smith",
-                    "content": "Code review completed. Looks good to merge! ✅",
-                    "type": "text",
-                    "timestamp": (datetime.now(timezone.utc) - timedelta(minutes=90)).isoformat(),
-                    "reactions": [
-                        {"emoji": "✅", "users": ["1", "3"], "count": 2}
-                    ]
-                }
-            ]
-        else:
-            # Default messages for other channels
-            messages_data = [
-                {
-                    "id": f"msg_{channel_id}_1",
-                    "user_id": "1",
-                    "user_name": "Team Member",
-                    "content": f"Welcome to the #{channel_id} channel!",
-                    "type": "text",
-                    "timestamp": (datetime.now(timezone.utc) - timedelta(hours=1)).isoformat(),
-                    "reactions": []
-                }
-            ]
+        for message in messages:
+            # Get message reactions
+            reactions = collaboration_crud.get_message_reactions(db, getattr(message, 'id'))
+            
+            # Group reactions by emoji
+            reaction_groups = {}
+            for reaction in reactions:
+                emoji = reaction.emoji
+                if emoji not in reaction_groups:
+                    reaction_groups[emoji] = {"emoji": emoji, "users": [], "count": 0}
+                reaction_groups[emoji]["users"].append(str(reaction.user_id))
+                reaction_groups[emoji]["count"] += 1
+            
+            message_data = {
+                "id": str(getattr(message, 'id')),
+                "user_id": str(getattr(message, 'user_id')) if getattr(message, 'user_id') else "system",
+                "user_name": message.user.username if message.user else "System",
+                "content": getattr(message, 'content'),
+                "type": getattr(message, 'type').value,
+                "timestamp": getattr(message, 'timestamp').isoformat(),
+                "reactions": list(reaction_groups.values()),
+                "is_pinned": getattr(message, 'is_pinned', False),
+                "is_edited": getattr(message, 'is_edited', False)
+            }
+            
+            # Add thread info if applicable
+            if getattr(message, 'thread_id'):
+                message_data["thread_id"] = str(getattr(message, 'thread_id'))
+            
+            # Add attachments if any
+            attachments = collaboration_crud.get_message_attachments(db, getattr(message, 'id'))
+            if attachments:
+                message_data["attachments"] = [
+                    {
+                        "id": str(getattr(att, 'id')),
+                        "name": getattr(att, 'filename'),
+                        "size": getattr(att, 'file_size'),
+                        "type": getattr(att, 'mime_type'),
+                        "url": getattr(att, 'file_url')
+                    }
+                    for att in attachments
+                ]
+            
+            messages_data.append(message_data)
         
         return {
             "messages": messages_data,
             "channel_id": channel_id,
-            "has_more": False,
+            "has_more": len(messages) == limit,
             "data_source": "database"
         }
         
@@ -448,22 +413,41 @@ async def send_message(
     """
     try:
         current_user_id = getattr(current_user, 'id', 1)
-        user_name = f"{getattr(current_user, 'first_name', '')} {getattr(current_user, 'last_name', '')}".strip() or getattr(current_user, 'username', 'User')
         
-        # In a real implementation, this would save to a messages table
-        message = {
-            "id": f"msg_{datetime.now().timestamp()}",
-            "user_id": str(current_user_id),
-            "user_name": user_name,
-            "content": message_data.get("content", ""),
-            "type": message_data.get("type", "text"),
-            "timestamp": datetime.now(timezone.utc).isoformat(),
-            "reactions": []
-        }
+        # Determine message type
+        msg_type = MessageType.TEXT
+        if message_data.get("type") == "file":
+            msg_type = MessageType.FILE
+        elif message_data.get("type") == "image":
+            msg_type = MessageType.IMAGE
+        elif message_data.get("type") == "code":
+            msg_type = MessageType.CODE
+        
+        # Create message in database
+        message = collaboration_crud.create_message(
+            db=db,
+            channel_id=int(channel_id),
+            user_id=current_user_id,
+            content=message_data.get("content", ""),
+            message_type=msg_type,
+            thread_id=message_data.get("thread_id"),
+            attachments=message_data.get("attachments", []),
+            mentions=message_data.get("mentions", [])
+        )
+        
+        user_name = f"{getattr(current_user, 'first_name', '')} {getattr(current_user, 'last_name', '')}".strip() or getattr(current_user, 'username', 'User')
         
         return {
             "success": True,
-            "message": message
+            "message": {
+                "id": str(getattr(message, 'id')),
+                "user_id": str(current_user_id),
+                "user_name": user_name,
+                "content": getattr(message, 'content'),
+                "type": getattr(message, 'type').value,
+                "timestamp": getattr(message, 'timestamp').isoformat(),
+                "reactions": []
+            }
         }
         
     except Exception as e:
@@ -482,13 +466,32 @@ async def add_reaction(
     Add or remove a reaction to a message
     """
     try:
-        current_user_id = str(getattr(current_user, 'id', 1))
+        current_user_id = getattr(current_user, 'id', 1)
         emoji = reaction_data.get("emoji", "👍")
+        add_reaction_flag = reaction_data.get("add", True)
         
-        # In a real implementation, this would update the reactions in the database
+        if add_reaction_flag:
+            # Add reaction
+            collaboration_crud.add_reaction(
+                db=db,
+                message_id=int(message_id),
+                user_id=current_user_id,
+                emoji=emoji
+            )
+            action = "added"
+        else:
+            # Remove reaction
+            collaboration_crud.remove_reaction(
+                db=db,
+                message_id=int(message_id),
+                user_id=current_user_id,
+                emoji=emoji
+            )
+            action = "removed"
+        
         return {
             "success": True,
-            "message": f"Reaction {emoji} {'added' if reaction_data.get('add', True) else 'removed'}"
+            "message": f"Reaction {emoji} {action}"
         }
         
     except Exception as e:
@@ -504,32 +507,31 @@ async def get_active_sessions(
     Get active collaboration sessions (calls, screen shares, etc.)
     """
     try:
-        # In a real implementation, this would query active sessions from the database
-        active_sessions = [
-            {
-                "id": "session_1",
-                "type": "video",
-                "channel_id": "2",
-                "participants": [
-                    {
-                        "id": "1",
-                        "name": "John Doe",
-                        "email": "john@demo.com",
+        # Get active sessions from database
+        sessions = collaboration_crud.get_active_sessions(db)
+        
+        active_sessions = []
+        for session in sessions:
+            participants = []
+            for user_id in getattr(session, 'participants', []):
+                user = db.query(User).filter(User.id == user_id).first()
+                if user:
+                    participants.append({
+                        "id": str(user.id),
+                        "name": f"{getattr(user, 'first_name', '')} {getattr(user, 'last_name', '')}".strip() or getattr(user, 'username', 'Unknown'),
+                        "email": getattr(user, 'email'),
                         "status": "online",
-                        "role": "admin"
-                    },
-                    {
-                        "id": "2",
-                        "name": "Jane Smith",
-                        "email": "jane@demo.com",
-                        "status": "online",
-                        "role": "moderator"
-                    }
-                ],
-                "started_at": (datetime.now(timezone.utc) - timedelta(minutes=30)).isoformat(),
-                "is_recording": False
-            }
-        ]
+                        "role": "member"
+                    })
+            
+            active_sessions.append({
+                "id": str(getattr(session, 'id')),
+                "type": getattr(session, 'type').value,
+                "channel_id": str(getattr(session, 'channel_id')) if getattr(session, 'channel_id') else None,
+                "participants": participants,
+                "started_at": getattr(session, 'started_at').isoformat() if getattr(session, 'started_at') else None,
+                "is_recording": getattr(session, 'is_recording', False)
+            })
         
         return {
             "active_sessions": active_sessions,
@@ -555,30 +557,53 @@ async def start_session(
     """
     try:
         current_user_id = getattr(current_user, 'id', 1)
-        session_type = session_data.get("type", "voice")
+        session_type_str = session_data.get("type", "voice")
         channel_id = session_data.get("channel_id")
         
-        # In a real implementation, this would create a session record
-        session = {
-            "id": f"session_{datetime.now().timestamp()}",
-            "type": session_type,
-            "channel_id": channel_id,
-            "participants": [
-                {
-                    "id": str(current_user_id),
-                    "name": f"{getattr(current_user, 'first_name', '')} {getattr(current_user, 'last_name', '')}".strip() or getattr(current_user, 'username', 'User'),
-                    "email": getattr(current_user, 'email'),
-                    "status": "online",
-                    "role": "member"
-                }
-            ],
-            "started_at": datetime.now(timezone.utc).isoformat(),
-            "is_recording": False
-        }
+        # Convert string to SessionType enum
+        session_type = SessionType.VOICE
+        if session_type_str == "video":
+            session_type = SessionType.VIDEO
+        elif session_type_str == "screen_share":
+            session_type = SessionType.SCREEN_SHARE
+        
+        # Get user's workspace (assuming first workspace for now)
+        user_workspaces = collaboration_crud.get_user_workspaces(db, current_user_id, limit=1)
+        if not user_workspaces:
+            raise HTTPException(status_code=400, detail="No workspace found for user")
+        
+        workspace_id = getattr(user_workspaces[0], 'id')
+        
+        # Create session in database
+        session = collaboration_crud.create_session(
+            db=db,
+            workspace_id=workspace_id,
+            session_type=session_type,
+            created_by=current_user_id,
+            channel_id=int(channel_id) if channel_id else None,
+            title=session_data.get("title", f"{session_type_str.title()} Call")
+        )
+        
+        user_name = f"{getattr(current_user, 'first_name', '')} {getattr(current_user, 'last_name', '')}".strip() or getattr(current_user, 'username', 'User')
         
         return {
             "success": True,
-            "session": session
+            "session": {
+                "id": str(getattr(session, 'id')),
+                "type": getattr(session, 'type').value,
+                "channel_id": str(getattr(session, 'channel_id')) if getattr(session, 'channel_id') else None,
+                "participants": [
+                    {
+                        "id": str(current_user_id),
+                        "name": user_name,
+                        "email": getattr(current_user, 'email'),
+                        "status": "online",
+                        "role": "member"
+                    }
+                ],
+                "started_at": getattr(session, 'started_at').isoformat() if getattr(session, 'started_at') else None,
+                "is_recording": getattr(session, 'is_recording', False)
+            }
         }
         
     except Exception as e:
@@ -595,11 +620,29 @@ async def update_workspace_settings(
     Update workspace settings
     """
     try:
-        # In a real implementation, this would update workspace settings in the database
+        current_user_id = getattr(current_user, 'id', 1)
+        
+        # Get user's workspace (assuming first workspace for now)
+        user_workspaces = collaboration_crud.get_user_workspaces(db, current_user_id, limit=1)
+        if not user_workspaces:
+            raise HTTPException(status_code=404, detail="No workspace found for user")
+        
+        workspace_id = getattr(user_workspaces[0], 'id')
+        
+        # Update workspace settings
+        updated_workspace = collaboration_crud.update_workspace_settings(
+            db=db,
+            workspace_id=workspace_id,
+            settings=settings_data
+        )
+        
+        if not updated_workspace:
+            raise HTTPException(status_code=404, detail="Workspace not found")
+        
         return {
             "success": True,
             "message": "Workspace settings updated successfully",
-            "settings": settings_data
+            "settings": getattr(updated_workspace, 'settings')
         }
         
     except Exception as e:

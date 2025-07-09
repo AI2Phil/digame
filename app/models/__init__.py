@@ -52,6 +52,11 @@ from .digital_twin import (
     SimulationResult, TwinInteraction, ActivityStream, TwinKnowledge, TwinStatus
 ) # Added Digital Twin models
 from .guest_onboarding import GuestOnboardingProgress, DigitalTwinProfile, EmailVerification # Added guest onboarding models
+from .collaboration_models import (
+    Workspace, WorkspaceMember, Channel, Message, MessageReaction,
+    UserPresence, CollaborationSession, MessageAttachment,
+    ChannelType, MessageType, SessionType, UserStatus
+) # Added real-time collaboration models
 
 # Optionally, define __all__ to specify what is exported when 'from .models import *' is used
 __all__ = [
@@ -149,4 +154,16 @@ __all__ = [
     "GuestOnboardingProgress",  # Added guest onboarding models
     "DigitalTwinProfile",
     "EmailVerification",
+    "Workspace",              # Added real-time collaboration models
+    "WorkspaceMember",
+    "Channel",
+    "Message",
+    "MessageReaction",
+    "UserPresence",
+    "CollaborationSession",
+    "MessageAttachment",
+    "ChannelType",
+    "MessageType",
+    "SessionType",
+    "UserStatus",
 ]
