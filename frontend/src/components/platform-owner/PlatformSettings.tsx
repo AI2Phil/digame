@@ -10,6 +10,7 @@ import {
   Bell,
   Globe
 } from 'lucide-react';
+import { useToastHelpers } from '../ui/Toaster';
 
 interface PlatformSettings {
   platform_info: {
@@ -57,6 +58,7 @@ const PlatformSettings: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [activeTab, setActiveTab] = useState('intelligence');
+  const { success, error, warning, info } = useToastHelpers();
 
   const tabs = [
     { id: 'intelligence', label: 'Intelligence', icon: <Settings className="w-4 h-4" /> },
@@ -94,11 +96,56 @@ const PlatformSettings: React.FC = () => {
       if (response.ok) {
         const data = await response.json();
         setSettings(data.settings);
+        success('Platform settings loaded successfully');
       } else {
         throw new Error(`Failed to fetch settings: ${response.status} ${response.statusText}`);
       }
     } catch (error) {
       console.error('Failed to fetch platform settings:', error);
+      
+      // Enhanced fallback data with realistic patterns
+      const fallbackSettings: PlatformSettings = {
+        platform_info: {
+          name: "Digame Platform",
+          version: "2.1.4",
+          environment: "Production",
+          total_users: 15847,
+          active_users_today: 3421,
+          total_digital_twins: 8932,
+          api_requests_today: 127543
+        },
+        intelligence_settings: {
+          pattern_recognition_enabled: true,
+          prediction_engine_enabled: true,
+          confidence_threshold: 0.8,
+          max_prediction_horizon: 30,
+          auto_model_training: false
+        },
+        api_settings: {
+          rate_limit_enabled: true,
+          max_requests_per_minute: 100,
+          authentication_required: true,
+          cors_enabled: true
+        },
+        data_settings: {
+          data_retention_days: 365,
+          backup_enabled: true,
+          encryption_enabled: true,
+          anonymization_enabled: true
+        },
+        notification_settings: {
+          email_notifications: true,
+          slack_integration: false,
+          alert_thresholds: {
+            high_error_rate: 5.0,
+            low_performance: 2.0,
+            high_usage: 85.0
+          }
+        }
+      };
+      
+      setSettings(fallbackSettings);
+      warning(`Using sample data: ${error.message}`);
       setMessage({ type: 'error', text: `Failed to load platform settings: ${error.message}` });
     } finally {
       setLoading(false);
@@ -132,6 +179,7 @@ const PlatformSettings: React.FC = () => {
 
       if (response.ok) {
         const data = await response.json();
+        success('Settings saved successfully');
         setMessage({ type: 'success', text: 'Settings saved successfully' });
         setTimeout(() => setMessage(null), 3000);
       } else {
@@ -139,6 +187,7 @@ const PlatformSettings: React.FC = () => {
       }
     } catch (error) {
       console.error('Failed to save platform settings:', error);
+      error(`Failed to save settings: ${error.message}`);
       setMessage({ type: 'error', text: `Failed to save settings: ${error.message}` });
     } finally {
       setSaving(false);

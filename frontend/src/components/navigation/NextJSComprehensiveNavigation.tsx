@@ -126,8 +126,11 @@ const NextJSComprehensiveNavigation: React.FC<NextJSComprehensiveNavigationProps
         { label: 'Pattern Recognition', icon: <Target className="w-4 h-4" />, path: '/analytics/patterns', subtitle: 'AI-POWERED' },
         { label: 'Anomaly Detection', icon: <AlertTriangle className="w-4 h-4" />, path: '/analytics/anomalies', subtitle: 'AI-POWERED' },
         { label: 'Performance Monitoring', icon: <Monitor className="w-4 h-4" />, path: '/analytics/performance', description: 'System performance metrics' },
-        { label: 'Performance Dashboard', icon: <Activity className="w-4 h-4" />, path: '/performance/dashboard', subtitle: 'COMPREHENSIVE', description: 'Comprehensive performance monitoring with UX tracking, query optimization, and bundle analysis' },
+        { label: 'Performance Dashboard', icon: <Activity className="w-4 h-4" />, path: '/performance/monitoring-dashboard', subtitle: 'COMPREHENSIVE', description: 'Comprehensive performance monitoring with UX tracking, query optimization, and bundle analysis' },
         { label: 'Real-Time Monitor', icon: <Activity className="w-4 h-4" />, path: '/performance/real-time-monitor', subtitle: 'REAL-TIME', description: 'Live performance monitoring with automated optimizations' },
+        { label: 'User Experience Tracking', icon: <Eye className="w-4 h-4" />, path: '/performance/user-experience', subtitle: 'UX MONITORING', description: 'Real-time user experience tracking and Core Web Vitals monitoring' },
+        { label: 'Query Optimization', icon: <Database className="w-4 h-4" />, path: '/performance/query-optimization', subtitle: 'DATABASE OPTIMIZATION', description: 'Database query performance analysis and optimization recommendations' },
+        { label: 'Bundle Analyzer', icon: <Package className="w-4 h-4" />, path: '/performance/bundle-analyzer', subtitle: 'BUNDLE OPTIMIZATION', description: 'Application bundle analysis and optimization recommendations' },
         { label: 'Dashboard Builder', icon: <Wrench className="w-4 h-4" />, path: '/analytics/dashboard-builder', subtitle: 'DASHBOARD TOOLS', description: 'Create and customize analytics dashboards' },
         { label: 'Platform Analytics', icon: <Database className="w-4 h-4" />, path: '/analytics/platform', platformOwnerOnly: true }
       ]
@@ -166,13 +169,13 @@ const NextJSComprehensiveNavigation: React.FC<NextJSComprehensiveNavigationProps
         { label: 'Predictive Modeling', icon: <Eye className="w-4 h-4" />, path: '/ai/predictive-modeling', subtitle: 'PREDICTIVE AI', description: 'Advanced forecasting and recommendation engines' },
         { label: 'AI-Powered Automation', icon: <Bot className="w-4 h-4" />, path: '/ai/ai-automation', subtitle: 'AI AUTOMATION', description: 'Intelligent workflow automation with AI insights' },
         { label: 'Writing Assistance', icon: <FileText className="w-4 h-4" />, path: '/ai-tools/writing', subtitle: 'CONTENT CREATION' },
+        { label: 'Communication Style', icon: <MessageSquare className="w-4 h-4" />, path: '/ai-tools/communication', subtitle: 'STYLE ANALYSIS' },
+        { label: 'Language Learning', icon: <GraduationCap className="w-4 h-4" />, path: '/ai-tools/language', subtitle: 'LEARNING AI' },
+        { label: 'NLP Enhancement', icon: <Bot className="w-4 h-4" />, path: '/ai-tools/nlp', subtitle: 'TEXT ANALYSIS' },
         { label: 'Voice Processing', icon: <Mic className="w-4 h-4" />, path: '/ai-tools/voice', subtitle: 'VOICE AI' },
         { label: 'Document Processing', icon: <FileText className="w-4 h-4" />, path: '/ai-tools/documents', subtitle: 'DOCUMENT AI' },
         { label: 'Email Analysis', icon: <Mail className="w-4 h-4" />, path: '/ai-tools/email', subtitle: 'EMAIL AI' },
-        { label: 'Meeting Insights', icon: <Video className="w-4 h-4" />, path: '/ai-tools/meetings', subtitle: 'MEETING AI' },
-        { label: 'Communication Style', icon: <MessageSquare className="w-4 h-4" />, path: '/ai-tools/communication', subtitle: 'STYLE ANALYSIS' },
-        { label: 'Mobile AI', icon: <Smartphone className="w-4 h-4" />, path: '/ai-tools/mobile', subtitle: 'MOBILE AI' },
-        { label: 'Language Learning', icon: <GraduationCap className="w-4 h-4" />, path: '/ai-tools/language', subtitle: 'LEARNING AI' }
+        { label: 'Meeting Insights', icon: <Video className="w-4 h-4" />, path: '/ai-tools/meetings', subtitle: 'MEETING AI' }
       ]
     },
     {
@@ -319,7 +322,7 @@ const NextJSComprehensiveNavigation: React.FC<NextJSComprehensiveNavigationProps
       platformOwnerOnly: true,
       items: [
         { label: 'Platform Console', icon: <Server className="w-4 h-4" />, path: '/platform-owner/console', subtitle: 'PLATFORM MANAGEMENT' },
-        { label: 'Intelligence Insights', icon: <Brain className="w-4 h-4" />, path: '/platform-owner/intelligence-insights', subtitle: 'AI ANALYTICS', description: 'Real-time intelligence metrics, model accuracy, and AI performance analytics' },
+        { label: 'Intelligence Insights', icon: <Brain className="w-4 h-4" />, path: '/intelligence/insights', subtitle: 'AI ANALYTICS', description: 'Real-time intelligence metrics, model accuracy, and AI performance analytics' },
         { label: 'Go-Live Checklist', icon: <CheckCircle className="w-4 h-4" />, path: '/platform-owner/go-live-checklist', subtitle: 'PRODUCTION READINESS', description: 'Comprehensive go-live validation and production readiness assessment' },
         { label: 'Data Management', icon: <Database className="w-4 h-4" />, path: '/platform-owner/data-management', subtitle: 'DATA LIFECYCLE' },
         { label: 'Tenant Management', icon: <Building className="w-4 h-4" />, path: '/platform-owner/tenants', subtitle: 'ALL TENANTS' },

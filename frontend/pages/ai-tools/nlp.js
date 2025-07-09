@@ -2,7 +2,7 @@ import React from 'react';
 import Head from 'next/head';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ToastProvider } from '../../src/components/ui/Toast';
-import LanguageTool from '../../src/components/ai/LanguageTool';
+import NLPEnhancement from '../../src/components/ai/NLPEnhancement';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -13,12 +13,12 @@ const queryClient = new QueryClient({
   },
 });
 
-const LanguageLearningPage = () => {
+const NLPEnhancementPage = () => {
   return (
     <>
       <Head>
-        <title>Language Learning AI - Digame AI Tools</title>
-        <meta name="description" content="AI-powered language learning with personalized lessons and practice" />
+        <title>NLP Enhancement - Digame AI Tools</title>
+        <meta name="description" content="Advanced natural language processing and text analysis tools" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
       </Head>
@@ -26,7 +26,7 @@ const LanguageLearningPage = () => {
       <QueryClientProvider client={queryClient}>
         <ToastProvider>
           <div className="min-h-screen bg-gray-50">
-            <LanguageTool />
+            <NLPEnhancement />
           </div>
         </ToastProvider>
       </QueryClientProvider>
@@ -34,4 +34,4 @@ const LanguageLearningPage = () => {
   );
 };
 
-export default LanguageLearningPage;
+export default NLPEnhancementPage;

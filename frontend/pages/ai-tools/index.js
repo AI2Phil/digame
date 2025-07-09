@@ -85,6 +85,30 @@ export default function AIToolsHub() {
       features: ['Content Generation', 'Grammar Check', 'Style Enhancement']
     },
     {
+      title: 'Communication Style',
+      description: 'Communication style analysis and optimization',
+      icon: <MessageSquare className="w-6 h-6" />,
+      path: '/ai-tools/communication',
+      color: 'indigo',
+      features: ['Style Analysis', 'Tone Detection', 'Communication Tips']
+    },
+    {
+      title: 'Language Learning',
+      description: 'AI-powered language learning and translation',
+      icon: <GraduationCap className="w-6 h-6" />,
+      path: '/ai-tools/language',
+      color: 'yellow',
+      features: ['Language Translation', 'Learning Paths', 'Practice Sessions']
+    },
+    {
+      title: 'NLP Enhancement',
+      description: 'Advanced natural language processing and text analysis',
+      icon: <Bot className="w-6 h-6" />,
+      path: '/ai-tools/nlp',
+      color: 'purple',
+      features: ['Text Analysis', 'Entity Recognition', 'Sentiment Analysis']
+    },
+    {
       title: 'Voice Processing',
       description: 'Speech-to-text and voice command processing',
       icon: <Mic className="w-6 h-6" />,
@@ -97,7 +121,7 @@ export default function AIToolsHub() {
       description: 'Automated document analysis and extraction',
       icon: <FileText className="w-6 h-6" />,
       path: '/ai-tools/documents',
-      color: 'purple',
+      color: 'orange',
       features: ['OCR Processing', 'Data Extraction', 'Document Classification']
     },
     {
@@ -105,7 +129,7 @@ export default function AIToolsHub() {
       description: 'Smart email categorization and response suggestions',
       icon: <Mail className="w-6 h-6" />,
       path: '/ai-tools/email',
-      color: 'orange',
+      color: 'red',
       features: ['Smart Categorization', 'Response Suggestions', 'Priority Detection']
     },
     {
@@ -113,32 +137,8 @@ export default function AIToolsHub() {
       description: 'Automated meeting transcription and action items',
       icon: <Video className="w-6 h-6" />,
       path: '/ai-tools/meetings',
-      color: 'red',
-      features: ['Auto Transcription', 'Action Items', 'Meeting Summary']
-    },
-    {
-      title: 'Communication Style',
-      description: 'Communication style analysis and optimization',
-      icon: <MessageSquare className="w-6 h-6" />,
-      path: '/ai-tools/communication',
-      color: 'indigo',
-      features: ['Style Analysis', 'Tone Detection', 'Communication Tips']
-    },
-    {
-      title: 'Mobile AI',
-      description: 'AI features optimized for mobile devices',
-      icon: <Smartphone className="w-6 h-6" />,
-      path: '/ai-tools/mobile',
       color: 'pink',
-      features: ['Mobile Optimization', 'Offline AI', 'Quick Actions']
-    },
-    {
-      title: 'Language Learning',
-      description: 'AI-powered language learning and translation',
-      icon: <GraduationCap className="w-6 h-6" />,
-      path: '/ai-tools/language',
-      color: 'yellow',
-      features: ['Language Translation', 'Learning Paths', 'Practice Sessions']
+      features: ['Auto Transcription', 'Action Items', 'Meeting Summary']
     }
   ];
 

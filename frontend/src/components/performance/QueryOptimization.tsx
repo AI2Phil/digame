@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { 
-  Database, 
-  Zap, 
-  Clock, 
-  TrendingUp, 
-  TrendingDown, 
-  AlertTriangle, 
-  CheckCircle, 
+import {
+  Database,
+  Zap,
+  Clock,
+  TrendingUp,
+  TrendingDown,
+  AlertTriangle,
+  CheckCircle,
   Search,
   Filter,
   RefreshCw,
@@ -17,6 +17,7 @@ import {
   Eye,
   Code
 } from 'lucide-react';
+import { useToastHelpers } from '../ui/Toaster';
 
 interface QueryMetric {
   id: string;
@@ -78,205 +79,269 @@ const QueryOptimization: React.FC<QueryOptimizationProps> = ({
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [showOptimizations, setShowOptimizations] = useState(false);
+  const [usingFallbackData, setUsingFallbackData] = useState(false);
+  const { success, error: showError, warning, info } = useToastHelpers();
 
-  // Fetch query performance data
+  // Fetch query performance data from database-driven API
   const fetchQueryData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
+      setUsingFallbackData(false);
 
-      // Simulate API call for query metrics
-      const mockQueries: QueryMetric[] = [
+      // Try multiple possible token keys for better compatibility
+      const token = sessionStorage.getItem('accessToken') ||
+                   sessionStorage.getItem('token') ||
+                   localStorage.getItem('accessToken') ||
+                   localStorage.getItem('token');
+
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      // Fetch query optimization data from database-driven API
+      const response = await fetch(`http://localhost:8001/api/performance/query-optimization?database=${selectedDatabase}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setQueries(data.queries || []);
+        setDatabases(data.databases || []);
+        setRecommendations(data.recommendations || []);
+        success('Query optimization data loaded successfully');
+      } else {
+        throw new Error(`Failed to fetch query optimization data: ${response.status} ${response.statusText}`);
+      }
+    } catch (err) {
+      console.error('Failed to fetch query optimization data:', err);
+      setUsingFallbackData(true);
+      warning(`Using sample data: ${err.message}`);
+      
+      // Enhanced fallback data with realistic database patterns
+      const fallbackQueries: QueryMetric[] = [
         {
-          id: '1',
-          query: 'SELECT u.*, p.name FROM users u JOIN profiles p ON u.id = p.user_id WHERE u.created_at > ?',
-          executionTime: 2340,
-          frequency: 1247,
-          lastExecuted: new Date(Date.now() - 300000),
+          id: 'query_001',
+          query: 'SELECT dt.*, u.name FROM digital_twins dt JOIN users u ON dt.user_id = u.id WHERE dt.created_at > ? AND dt.status = ?',
+          executionTime: 2847,
+          frequency: 1456,
+          lastExecuted: new Date(Date.now() - 180000),
           status: 'critical',
-          database: 'main_db',
-          table: 'users',
+          database: 'digame_main',
+          table: 'digital_twins',
           indexUsage: false,
-          rowsExamined: 50000,
-          rowsReturned: 1200,
-          cacheHitRate: 0.23,
+          rowsExamined: 75000,
+          rowsReturned: 1847,
+          cacheHitRate: 0.18,
           optimizationSuggestions: [
-            'Add composite index on (created_at, id)',
+            'Add composite index on (created_at, status, user_id)',
             'Consider query rewrite to use EXISTS instead of JOIN',
-            'Implement result caching for this frequent query'
+            'Implement Redis caching for frequent twin queries',
+            'Add covering index for commonly selected columns'
           ]
         },
         {
-          id: '2',
-          query: 'SELECT * FROM analytics_events WHERE event_date BETWEEN ? AND ? ORDER BY timestamp DESC',
-          executionTime: 890,
-          frequency: 2341,
-          lastExecuted: new Date(Date.now() - 120000),
+          id: 'query_002',
+          query: 'SELECT * FROM analytics_metrics WHERE metric_date BETWEEN ? AND ? AND metric_type IN (?, ?, ?) ORDER BY timestamp DESC',
+          executionTime: 1234,
+          frequency: 3421,
+          lastExecuted: new Date(Date.now() - 90000),
           status: 'slow',
-          database: 'analytics_db',
-          table: 'analytics_events',
+          database: 'digame_analytics',
+          table: 'analytics_metrics',
           indexUsage: true,
-          rowsExamined: 15000,
-          rowsReturned: 500,
-          cacheHitRate: 0.67,
+          rowsExamined: 28000,
+          rowsReturned: 892,
+          cacheHitRate: 0.72,
           optimizationSuggestions: [
-            'Consider partitioning by event_date',
-            'Add covering index for common SELECT columns'
+            'Consider partitioning by metric_date for better range queries',
+            'Add covering index for metric_type and timestamp columns',
+            'Implement query result caching with 5-minute TTL'
           ]
         },
         {
-          id: '3',
-          query: 'SELECT COUNT(*) FROM tasks WHERE status = ? AND assigned_to = ?',
-          executionTime: 45,
-          frequency: 5678,
-          lastExecuted: new Date(Date.now() - 30000),
-          status: 'optimal',
-          database: 'main_db',
-          table: 'tasks',
-          indexUsage: true,
-          rowsExamined: 100,
-          rowsReturned: 1,
-          cacheHitRate: 0.89,
-          optimizationSuggestions: []
-        },
-        {
-          id: '4',
-          query: 'UPDATE user_sessions SET last_activity = NOW() WHERE session_id = ?',
-          executionTime: 156,
+          id: 'query_003',
+          query: 'SELECT COUNT(*) FROM user_activities WHERE activity_type = ? AND user_id = ? AND created_at > ?',
+          executionTime: 67,
           frequency: 8934,
           lastExecuted: new Date(Date.now() - 15000),
           status: 'optimal',
-          database: 'session_db',
+          database: 'digame_main',
+          table: 'user_activities',
+          indexUsage: true,
+          rowsExamined: 234,
+          rowsReturned: 1,
+          cacheHitRate: 0.94,
+          optimizationSuggestions: []
+        },
+        {
+          id: 'query_004',
+          query: 'UPDATE user_sessions SET last_activity = NOW(), activity_count = activity_count + 1 WHERE session_token = ?',
+          executionTime: 89,
+          frequency: 12456,
+          lastExecuted: new Date(Date.now() - 8000),
+          status: 'optimal',
+          database: 'digame_sessions',
           table: 'user_sessions',
           indexUsage: true,
           rowsExamined: 1,
           rowsReturned: 1,
-          cacheHitRate: 0.95,
+          cacheHitRate: 0.98,
           optimizationSuggestions: []
         },
         {
-          id: '5',
-          query: 'SELECT r.*, u.name FROM reports r LEFT JOIN users u ON r.created_by = u.id WHERE r.status IN (?, ?, ?)',
-          executionTime: 1567,
-          frequency: 456,
-          lastExecuted: new Date(Date.now() - 600000),
+          id: 'query_005',
+          query: 'SELECT w.*, u.name, u.email FROM workflows w LEFT JOIN users u ON w.created_by = u.id WHERE w.status IN (?, ?, ?) AND w.tenant_id = ?',
+          executionTime: 1789,
+          frequency: 678,
+          lastExecuted: new Date(Date.now() - 420000),
           status: 'slow',
-          database: 'main_db',
-          table: 'reports',
+          database: 'digame_main',
+          table: 'workflows',
           indexUsage: false,
-          rowsExamined: 25000,
-          rowsReturned: 150,
-          cacheHitRate: 0.34,
+          rowsExamined: 34000,
+          rowsReturned: 267,
+          cacheHitRate: 0.41,
           optimizationSuggestions: [
-            'Add index on status column',
-            'Consider denormalizing user name into reports table',
-            'Implement query result caching'
+            'Add composite index on (status, tenant_id)',
+            'Consider denormalizing user name/email into workflows table',
+            'Implement query result caching with tenant-specific keys',
+            'Add partial index for active workflow statuses'
+          ]
+        },
+        {
+          id: 'query_006',
+          query: 'SELECT bp.*, dt.name FROM behavioral_patterns bp JOIN digital_twins dt ON bp.twin_id = dt.id WHERE bp.confidence_score > ? ORDER BY bp.discovered_at DESC',
+          executionTime: 2156,
+          frequency: 234,
+          lastExecuted: new Date(Date.now() - 720000),
+          status: 'critical',
+          database: 'digame_main',
+          table: 'behavioral_patterns',
+          indexUsage: false,
+          rowsExamined: 45000,
+          rowsReturned: 89,
+          cacheHitRate: 0.12,
+          optimizationSuggestions: [
+            'Add index on confidence_score for filtering',
+            'Create composite index on (confidence_score, discovered_at)',
+            'Implement materialized view for high-confidence patterns',
+            'Add Redis caching for pattern discovery queries'
           ]
         }
       ];
 
-      // Simulate API call for database connections
-      const mockDatabases: DatabaseConnection[] = [
+      const fallbackDatabases: DatabaseConnection[] = [
         {
-          id: 'main_db',
-          name: 'Main Database',
+          id: 'digame_main',
+          name: 'Digame Main Database',
           type: 'postgresql',
           status: 'connected',
-          activeConnections: 45,
-          maxConnections: 100,
-          avgResponseTime: 234,
-          queriesPerSecond: 156,
-          cacheHitRate: 0.78
+          activeConnections: 67,
+          maxConnections: 150,
+          avgResponseTime: 189,
+          queriesPerSecond: 234,
+          cacheHitRate: 0.82
         },
         {
-          id: 'analytics_db',
+          id: 'digame_analytics',
           name: 'Analytics Database',
           type: 'postgresql',
           status: 'connected',
-          activeConnections: 23,
-          maxConnections: 50,
-          avgResponseTime: 567,
-          queriesPerSecond: 89,
-          cacheHitRate: 0.65
+          activeConnections: 34,
+          maxConnections: 75,
+          avgResponseTime: 456,
+          queriesPerSecond: 123,
+          cacheHitRate: 0.71
         },
         {
-          id: 'session_db',
+          id: 'digame_sessions',
           name: 'Session Store',
           type: 'redis',
           status: 'connected',
-          activeConnections: 12,
-          maxConnections: 25,
-          avgResponseTime: 12,
-          queriesPerSecond: 234,
-          cacheHitRate: 0.95
+          activeConnections: 18,
+          maxConnections: 40,
+          avgResponseTime: 8,
+          queriesPerSecond: 567,
+          cacheHitRate: 0.97
         },
         {
-          id: 'cache_db',
-          name: 'Cache Database',
+          id: 'digame_cache',
+          name: 'Application Cache',
           type: 'redis',
-          status: 'error',
-          activeConnections: 0,
-          maxConnections: 20,
-          avgResponseTime: 0,
-          queriesPerSecond: 0,
-          cacheHitRate: 0
+          status: 'connected',
+          activeConnections: 12,
+          maxConnections: 30,
+          avgResponseTime: 5,
+          queriesPerSecond: 789,
+          cacheHitRate: 0.93
         }
       ];
 
-      // Simulate API call for optimization recommendations
-      const mockRecommendations: OptimizationRecommendation[] = [
+      const fallbackRecommendations: OptimizationRecommendation[] = [
         {
-          id: '1',
+          id: 'rec_001',
           type: 'index',
           priority: 'high',
-          description: 'Add composite index on users table for frequent JOIN queries',
-          estimatedImprovement: '60-80% faster execution',
+          description: 'Add composite index on digital_twins table for frequent JOIN and filtering operations',
+          estimatedImprovement: '70-85% faster execution for twin queries',
           effort: 'low',
-          affectedQueries: ['1'],
-          implementation: 'CREATE INDEX idx_users_created_id ON users(created_at, id);'
+          affectedQueries: ['query_001'],
+          implementation: 'CREATE INDEX idx_digital_twins_composite ON digital_twins(created_at, status, user_id);'
         },
         {
-          id: '2',
+          id: 'rec_002',
           type: 'caching',
           priority: 'high',
-          description: 'Implement Redis caching for frequently accessed user profile data',
-          estimatedImprovement: '90% reduction in database load',
+          description: 'Implement Redis caching layer for frequently accessed digital twin and user profile data',
+          estimatedImprovement: '90% reduction in database load for read operations',
           effort: 'medium',
-          affectedQueries: ['1', '5'],
-          implementation: 'Add Redis cache layer with 1-hour TTL for user profile queries'
+          affectedQueries: ['query_001', 'query_005'],
+          implementation: 'Add Redis cache with 30-minute TTL for twin profiles and 1-hour TTL for user data'
         },
         {
-          id: '3',
+          id: 'rec_003',
           type: 'partitioning',
           priority: 'medium',
-          description: 'Partition analytics_events table by date for better query performance',
-          estimatedImprovement: '40-50% faster range queries',
+          description: 'Partition analytics_metrics table by metric_date for improved time-range query performance',
+          estimatedImprovement: '50-60% faster analytics queries with date filtering',
           effort: 'high',
-          affectedQueries: ['2'],
-          implementation: 'Implement monthly partitioning on event_date column'
+          affectedQueries: ['query_002'],
+          implementation: 'Implement monthly partitioning on metric_date column with automatic partition management'
         },
         {
-          id: '4',
+          id: 'rec_004',
           type: 'query_rewrite',
           priority: 'medium',
-          description: 'Rewrite complex JOIN queries to use more efficient EXISTS clauses',
-          estimatedImprovement: '25-35% performance improvement',
+          description: 'Optimize behavioral pattern queries using materialized views and selective indexing',
+          estimatedImprovement: '60-75% performance improvement for pattern discovery',
           effort: 'medium',
-          affectedQueries: ['1', '5'],
-          implementation: 'Replace LEFT JOIN with EXISTS subqueries where appropriate'
+          affectedQueries: ['query_006'],
+          implementation: 'Create materialized view for high-confidence patterns with refresh strategy'
+        },
+        {
+          id: 'rec_005',
+          type: 'index',
+          priority: 'medium',
+          description: 'Add covering indexes for workflow queries to eliminate table lookups',
+          estimatedImprovement: '40-55% faster workflow listing and filtering',
+          effort: 'low',
+          affectedQueries: ['query_005'],
+          implementation: 'CREATE INDEX idx_workflows_covering ON workflows(status, tenant_id) INCLUDE (created_by, name, updated_at);'
         }
       ];
 
-      setQueries(mockQueries);
-      setDatabases(mockDatabases);
-      setRecommendations(mockRecommendations);
-    } catch (err) {
-      setError('Failed to fetch query optimization data');
-      console.error('Query optimization error:', err);
+      setQueries(fallbackQueries);
+      setDatabases(fallbackDatabases);
+      setRecommendations(fallbackRecommendations);
+      setError(`Failed to load query optimization data: ${err.message}`);
     } finally {
       setLoading(false);
     }
-  }, [selectedDatabase]);
+  }, [selectedDatabase, success, warning]);
 
   useEffect(() => {
     fetchQueryData();
@@ -425,6 +490,11 @@ const QueryOptimization: React.FC<QueryOptimizationProps> = ({
             <div>
               <h2 className="text-lg font-semibold text-gray-900">Query Optimization</h2>
               <p className="text-sm text-gray-600">Monitor and optimize database query performance</p>
+              {usingFallbackData && (
+                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 mt-1">
+                  Demo Data
+                </span>
+              )}
             </div>
           </div>
           <div className="flex items-center space-x-3">

@@ -4,9 +4,12 @@ import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
 import { useToastHelpers } from '../ui/Toaster';
 import {
-  AlertTriangle, Shield, TrendingUp, TrendingDown, Eye, 
-  Settings, Download, RefreshCw, BarChart3, Target,
-  Users, Database, Lock, Globe, Zap, CheckCircle
+  Shield, AlertTriangle, TrendingUp, TrendingDown, Eye,
+  Target, Zap, Lock, Unlock, Users, Server, Database,
+  Globe, Smartphone, Monitor, FileText, Settings,
+  RefreshCw, Download, Filter, Search, BarChart3,
+  PieChart, Activity, Clock, CheckCircle, XCircle,
+  AlertCircle, Info, ArrowUp, ArrowDown, Minus
 } from 'lucide-react';
 
 const RiskAssessmentEngine = () => {
@@ -14,15 +17,16 @@ const RiskAssessmentEngine = () => {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
   const [usingFallbackData, setUsingFallbackData] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterSeverity, setFilterSeverity] = useState('all');
+  const [filterCategory, setFilterCategory] = useState('all');
 
-  // State for risk assessment data
+  // State for risk data
   const [riskOverview, setRiskOverview] = useState(null);
-  const [riskFactors, setRiskFactors] = useState([]);
   const [vulnerabilities, setVulnerabilities] = useState([]);
-  const [threatAnalysis, setThreatAnalysis] = useState([]);
-  const [riskScenarios, setRiskScenarios] = useState([]);
+  const [threats, setThreats] = useState([]);
+  const [riskMatrix, setRiskMatrix] = useState([]);
   const [mitigationPlans, setMitigationPlans] = useState([]);
-  const [riskTrends, setRiskTrends] = useState(null);
 
   useEffect(() => {
     fetchRiskData();
@@ -31,24 +35,21 @@ const RiskAssessmentEngine = () => {
   const fetchRiskData = async () => {
     try {
       setLoading(true);
-      
-      const [overviewResponse, factorsResponse, vulnerabilitiesResponse, threatsResponse, scenariosResponse, mitigationResponse] = await Promise.all([
-        fetch('http://localhost:8001/api/security/risk/overview', {
+
+      const [overviewResponse, vulnResponse, threatsResponse, matrixResponse, mitigationResponse] = await Promise.all([
+        fetch('http://localhost:8001/api/security/risk-assessment/overview', {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
         }),
-        fetch('http://localhost:8001/api/security/risk/factors', {
+        fetch('http://localhost:8001/api/security/risk-assessment/vulnerabilities', {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
         }),
-        fetch('http://localhost:8001/api/security/risk/vulnerabilities', {
+        fetch('http://localhost:8001/api/security/risk-assessment/threats', {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
         }),
-        fetch('http://localhost:8001/api/security/risk/threats', {
+        fetch('http://localhost:8001/api/security/risk-assessment/matrix', {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
         }),
-        fetch('http://localhost:8001/api/security/risk/scenarios', {
-          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-        }),
-        fetch('http://localhost:8001/api/security/risk/mitigation', {
+        fetch('http://localhost:8001/api/security/risk-assessment/mitigation', {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
         })
       ]);
@@ -61,27 +62,21 @@ const RiskAssessmentEngine = () => {
         hasRealData = true;
       }
 
-      if (factorsResponse.ok) {
-        const data = await factorsResponse.json();
-        setRiskFactors(data.data || data);
-        hasRealData = true;
-      }
-
-      if (vulnerabilitiesResponse.ok) {
-        const data = await vulnerabilitiesResponse.json();
+      if (vulnResponse.ok) {
+        const data = await vulnResponse.json();
         setVulnerabilities(data.data || data);
         hasRealData = true;
       }
 
       if (threatsResponse.ok) {
         const data = await threatsResponse.json();
-        setThreatAnalysis(data.data || data);
+        setThreats(data.data || data);
         hasRealData = true;
       }
 
-      if (scenariosResponse.ok) {
-        const data = await scenariosResponse.json();
-        setRiskScenarios(data.data || data);
+      if (matrixResponse.ok) {
+        const data = await matrixResponse.json();
+        setRiskMatrix(data.data || data);
         hasRealData = true;
       }
 
@@ -103,7 +98,7 @@ const RiskAssessmentEngine = () => {
       console.error('Failed to load risk assessment data:', error);
       loadFallbackData();
       setUsingFallbackData(true);
-      toast.error('Failed to load risk assessment data - using sample data');
+      toast.error('Failed to load risk data - using sample data');
     } finally {
       setLoading(false);
     }
@@ -112,356 +107,213 @@ const RiskAssessmentEngine = () => {
   const loadFallbackData = () => {
     // Enhanced sample risk overview
     const sampleOverview = {
-      overall_risk_score: 67,
-      risk_level: 'medium',
-      critical_risks: 8,
-      high_risks: 23,
-      medium_risks: 45,
-      low_risks: 78,
-      risk_trend: -5.2,
-      last_assessment: new Date().toISOString(),
-      next_assessment: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-      total_vulnerabilities: 154,
-      patched_vulnerabilities: 89,
-      active_threats: 12,
-      mitigated_threats: 34
-    };
-
-    // Enhanced sample risk factors
-    const sampleFactors = [
-      {
-        id: 1,
-        category: 'Technical',
-        factor: 'Unpatched Systems',
-        risk_score: 85,
-        impact: 'high',
-        likelihood: 'high',
-        description: 'Multiple systems running outdated software with known vulnerabilities',
-        affected_assets: 45,
-        last_updated: '2024-03-01T00:00:00Z',
-        trend: 'increasing'
+      overall_risk_score: 7.2,
+      risk_trend: 'increasing',
+      total_vulnerabilities: 47,
+      critical_vulnerabilities: 3,
+      high_vulnerabilities: 12,
+      medium_vulnerabilities: 18,
+      low_vulnerabilities: 14,
+      active_threats: 8,
+      mitigated_risks: 23,
+      pending_mitigations: 15,
+      risk_categories: {
+        'Infrastructure': { score: 8.1, trend: 'increasing' },
+        'Application': { score: 6.8, trend: 'stable' },
+        'Data': { score: 7.5, trend: 'decreasing' },
+        'Network': { score: 6.2, trend: 'stable' },
+        'Human': { score: 8.9, trend: 'increasing' }
       },
-      {
-        id: 2,
-        category: 'Human',
-        factor: 'Phishing Susceptibility',
-        risk_score: 72,
-        impact: 'high',
-        likelihood: 'medium',
-        description: 'Users showing high susceptibility to phishing attacks in recent simulations',
-        affected_assets: 234,
-        last_updated: '2024-02-28T00:00:00Z',
-        trend: 'stable'
-      },
-      {
-        id: 3,
-        category: 'Process',
-        factor: 'Inadequate Access Controls',
-        risk_score: 68,
-        impact: 'medium',
-        likelihood: 'high',
-        description: 'Excessive user privileges and inadequate access review processes',
-        affected_assets: 89,
-        last_updated: '2024-02-25T00:00:00Z',
-        trend: 'decreasing'
-      },
-      {
-        id: 4,
-        category: 'Environmental',
-        factor: 'Third-Party Dependencies',
-        risk_score: 59,
-        impact: 'medium',
-        likelihood: 'medium',
-        description: 'High dependency on third-party services with varying security postures',
-        affected_assets: 67,
-        last_updated: '2024-02-20T00:00:00Z',
-        trend: 'stable'
-      },
-      {
-        id: 5,
-        category: 'Technical',
-        factor: 'Weak Encryption',
-        risk_score: 78,
-        impact: 'high',
-        likelihood: 'low',
-        description: 'Legacy systems using deprecated encryption algorithms',
-        affected_assets: 12,
-        last_updated: '2024-02-15T00:00:00Z',
-        trend: 'decreasing'
+      compliance_status: {
+        'SOC 2': { score: 85, status: 'compliant' },
+        'ISO 27001': { score: 78, status: 'partial' },
+        'GDPR': { score: 92, status: 'compliant' },
+        'HIPAA': { score: 88, status: 'compliant' },
+        'PCI DSS': { score: 82, status: 'partial' }
       }
-    ];
+    };
 
     // Enhanced sample vulnerabilities
     const sampleVulnerabilities = [
       {
         id: 1,
-        cve_id: 'CVE-2024-1234',
-        title: 'Remote Code Execution in Web Framework',
+        title: 'Unpatched SQL Injection Vulnerability',
         severity: 'critical',
+        category: 'Application',
         cvss_score: 9.8,
-        affected_systems: ['web-server-01', 'web-server-02', 'api-gateway'],
-        description: 'Critical vulnerability allowing remote code execution through malformed requests',
-        discovery_date: '2024-02-28T00:00:00Z',
-        patch_available: true,
-        patch_date: '2024-03-01T00:00:00Z',
+        description: 'Critical SQL injection vulnerability in user authentication module',
+        affected_systems: ['Web Application', 'User Database'],
+        discovery_date: '2024-03-08T10:30:00Z',
         status: 'open',
-        exploitability: 'high',
-        business_impact: 'critical'
+        assigned_to: 'Security Team',
+        remediation_effort: 'high',
+        business_impact: 'critical',
+        exploit_probability: 'high',
+        mitigation_status: 'in_progress'
       },
       {
         id: 2,
-        cve_id: 'CVE-2024-5678',
-        title: 'SQL Injection in User Management',
+        title: 'Outdated SSL/TLS Configuration',
         severity: 'high',
-        cvss_score: 8.1,
-        affected_systems: ['user-db', 'admin-panel'],
-        description: 'SQL injection vulnerability in user authentication module',
-        discovery_date: '2024-02-25T00:00:00Z',
-        patch_available: true,
-        patch_date: '2024-02-26T00:00:00Z',
-        status: 'patched',
-        exploitability: 'medium',
-        business_impact: 'high'
+        category: 'Infrastructure',
+        cvss_score: 7.5,
+        description: 'Web servers using deprecated TLS 1.0 and weak cipher suites',
+        affected_systems: ['Web Servers', 'Load Balancers'],
+        discovery_date: '2024-03-07T14:20:00Z',
+        status: 'open',
+        assigned_to: 'Infrastructure Team',
+        remediation_effort: 'medium',
+        business_impact: 'high',
+        exploit_probability: 'medium',
+        mitigation_status: 'planned'
       },
       {
         id: 3,
-        cve_id: 'CVE-2024-9012',
-        title: 'Cross-Site Scripting in Dashboard',
+        title: 'Weak Password Policy Implementation',
         severity: 'medium',
-        cvss_score: 6.1,
-        affected_systems: ['dashboard-app'],
-        description: 'Stored XSS vulnerability in dashboard comment system',
-        discovery_date: '2024-02-20T00:00:00Z',
-        patch_available: false,
-        patch_date: null,
-        status: 'investigating',
-        exploitability: 'low',
-        business_impact: 'medium'
+        category: 'Human',
+        cvss_score: 5.4,
+        description: 'Current password policy allows weak passwords and lacks MFA enforcement',
+        affected_systems: ['Authentication System', 'User Accounts'],
+        discovery_date: '2024-03-06T09:15:00Z',
+        status: 'open',
+        assigned_to: 'IT Security',
+        remediation_effort: 'low',
+        business_impact: 'medium',
+        exploit_probability: 'medium',
+        mitigation_status: 'not_started'
       }
     ];
 
-    // Enhanced sample threat analysis
+    // Enhanced sample threats
     const sampleThreats = [
       {
         id: 1,
-        threat_type: 'Advanced Persistent Threat',
-        threat_actor: 'Nation State',
+        name: 'Advanced Persistent Threat (APT)',
+        category: 'External',
+        severity: 'critical',
         probability: 'medium',
         impact: 'critical',
-        risk_score: 89,
-        description: 'Sophisticated long-term attack targeting intellectual property',
-        attack_vectors: ['spear_phishing', 'zero_day_exploits', 'supply_chain'],
-        target_assets: ['research_data', 'customer_database', 'financial_systems'],
-        indicators: ['unusual_network_traffic', 'privilege_escalation_attempts'],
-        last_detected: '2024-02-28T00:00:00Z',
+        description: 'Sophisticated nation-state actors targeting intellectual property',
+        indicators: ['Unusual network traffic', 'Suspicious login patterns', 'Data exfiltration attempts'],
+        affected_assets: ['Customer Database', 'Source Code Repository', 'Financial Systems'],
+        mitigation_strategies: ['Enhanced monitoring', 'Network segmentation', 'Employee training'],
+        last_updated: '2024-03-08T12:00:00Z',
         status: 'active'
       },
       {
         id: 2,
-        threat_type: 'Ransomware',
-        threat_actor: 'Cybercriminal Group',
+        name: 'Ransomware Attack',
+        category: 'Malware',
+        severity: 'high',
         probability: 'high',
         impact: 'high',
-        risk_score: 82,
-        description: 'Ransomware campaign targeting healthcare and financial sectors',
-        attack_vectors: ['email_attachments', 'rdp_brute_force', 'software_vulnerabilities'],
-        target_assets: ['file_servers', 'databases', 'backup_systems'],
-        indicators: ['suspicious_file_encryption', 'lateral_movement'],
-        last_detected: '2024-02-26T00:00:00Z',
+        description: 'Targeted ransomware campaigns against similar organizations',
+        indicators: ['Phishing emails', 'Suspicious file downloads', 'Encryption activities'],
+        affected_assets: ['File Servers', 'Backup Systems', 'Workstations'],
+        mitigation_strategies: ['Backup verification', 'Email filtering', 'Endpoint protection'],
+        last_updated: '2024-03-07T15:30:00Z',
         status: 'monitoring'
-      },
-      {
-        id: 3,
-        threat_type: 'Insider Threat',
-        threat_actor: 'Malicious Insider',
-        probability: 'low',
-        impact: 'high',
-        risk_score: 65,
-        description: 'Potential data exfiltration by privileged users',
-        attack_vectors: ['data_exfiltration', 'privilege_abuse', 'sabotage'],
-        target_assets: ['sensitive_documents', 'customer_data', 'trade_secrets'],
-        indicators: ['unusual_data_access', 'after_hours_activity'],
-        last_detected: '2024-02-24T00:00:00Z',
-        status: 'investigating'
-      }
-    ];
-
-    // Enhanced sample risk scenarios
-    const sampleScenarios = [
-      {
-        id: 1,
-        scenario_name: 'Data Breach via Web Application',
-        probability: 'medium',
-        impact: 'critical',
-        risk_score: 85,
-        description: 'Exploitation of web application vulnerabilities leading to customer data exposure',
-        attack_path: [
-          'Initial compromise via SQL injection',
-          'Privilege escalation through unpatched system',
-          'Lateral movement to database servers',
-          'Data exfiltration of customer records'
-        ],
-        potential_losses: {
-          financial: '$2.5M - $5M',
-          reputation: 'Severe brand damage',
-          regulatory: 'GDPR fines up to $10M',
-          operational: '2-4 weeks downtime'
-        },
-        affected_stakeholders: ['customers', 'shareholders', 'employees', 'regulators'],
-        mitigation_status: 'partial'
-      },
-      {
-        id: 2,
-        scenario_name: 'Ransomware Attack on Critical Systems',
-        probability: 'high',
-        impact: 'high',
-        risk_score: 78,
-        description: 'Ransomware deployment across critical business systems',
-        attack_path: [
-          'Phishing email with malicious attachment',
-          'Initial system compromise',
-          'Network reconnaissance and mapping',
-          'Ransomware deployment across network'
-        ],
-        potential_losses: {
-          financial: '$1M - $3M',
-          reputation: 'Moderate brand impact',
-          regulatory: 'Breach notification requirements',
-          operational: '1-2 weeks recovery time'
-        },
-        affected_stakeholders: ['customers', 'employees', 'partners'],
-        mitigation_status: 'implemented'
       }
     ];
 
     // Enhanced sample mitigation plans
-    const sampleMitigation = [
+    const sampleMitigationPlans = [
       {
         id: 1,
-        risk_id: 1,
-        risk_name: 'Unpatched Systems',
-        mitigation_type: 'preventive',
+        title: 'Critical Vulnerability Remediation',
         priority: 'critical',
         status: 'in_progress',
-        description: 'Implement automated patch management system',
-        actions: [
-          'Deploy patch management solution',
-          'Establish patch testing procedures',
-          'Create emergency patching process',
-          'Implement vulnerability scanning'
-        ],
-        assigned_to: 'IT Security Team',
-        due_date: '2024-03-15T00:00:00Z',
         progress: 65,
-        estimated_cost: '$50,000',
-        expected_risk_reduction: 70
+        assigned_to: 'Security Team',
+        due_date: '2024-03-15T00:00:00Z',
+        estimated_effort: '40 hours',
+        budget_allocated: '$15000',
+        description: 'Immediate patching of critical SQL injection vulnerabilities',
+        tasks: [
+          { task: 'Vulnerability assessment', status: 'completed', due: '2024-03-10' },
+          { task: 'Patch development', status: 'in_progress', due: '2024-03-12' },
+          { task: 'Testing and validation', status: 'pending', due: '2024-03-14' },
+          { task: 'Production deployment', status: 'pending', due: '2024-03-15' }
+        ],
+        risk_reduction: 85
       },
       {
         id: 2,
-        risk_id: 2,
-        risk_name: 'Phishing Susceptibility',
-        mitigation_type: 'detective',
+        title: 'Infrastructure Security Hardening',
         priority: 'high',
         status: 'planned',
-        description: 'Enhanced security awareness training program',
-        actions: [
-          'Conduct phishing simulation campaigns',
-          'Implement security awareness training',
-          'Deploy email security solutions',
-          'Establish incident response procedures'
+        progress: 20,
+        assigned_to: 'Infrastructure Team',
+        due_date: '2024-03-25T00:00:00Z',
+        estimated_effort: '80 hours',
+        budget_allocated: '$25000',
+        description: 'Comprehensive security hardening of server infrastructure',
+        tasks: [
+          { task: 'Security baseline assessment', status: 'completed', due: '2024-03-08' },
+          { task: 'Configuration updates', status: 'in_progress', due: '2024-03-18' },
+          { task: 'Security testing', status: 'pending', due: '2024-03-22' },
+          { task: 'Documentation update', status: 'pending', due: '2024-03-25' }
         ],
-        assigned_to: 'HR & Security Team',
-        due_date: '2024-04-01T00:00:00Z',
-        progress: 25,
-        estimated_cost: '$25,000',
-        expected_risk_reduction: 50
+        risk_reduction: 70
       }
     ];
 
-    // Enhanced sample risk trends
-    const sampleTrends = {
-      monthly_scores: [
-        { month: '2023-10', score: 72 },
-        { month: '2023-11', score: 69 },
-        { month: '2023-12', score: 71 },
-        { month: '2024-01', score: 68 },
-        { month: '2024-02', score: 67 },
-        { month: '2024-03', score: 67 }
-      ],
-      category_trends: {
-        technical: { current: 68, previous: 72, trend: 'improving' },
-        human: { current: 65, previous: 63, trend: 'worsening' },
-        process: { current: 70, previous: 68, trend: 'worsening' },
-        environmental: { current: 64, previous: 66, trend: 'improving' }
-      }
-    };
-
     setRiskOverview(sampleOverview);
-    setRiskFactors(sampleFactors);
     setVulnerabilities(sampleVulnerabilities);
-    setThreatAnalysis(sampleThreats);
-    setRiskScenarios(sampleScenarios);
-    setMitigationPlans(sampleMitigation);
-    setRiskTrends(sampleTrends);
+    setThreats(sampleThreats);
+    setMitigationPlans(sampleMitigationPlans);
   };
 
-  const getRiskLevelColor = (level) => {
-    switch (level) {
-      case 'critical': return 'text-red-600 bg-red-100';
-      case 'high': return 'text-orange-600 bg-orange-100';
+  const getSeverityColor = (severity) => {
+    switch (severity) {
+      case 'critical': return 'text-red-800 bg-red-200';
+      case 'high': return 'text-red-600 bg-red-100';
       case 'medium': return 'text-yellow-600 bg-yellow-100';
       case 'low': return 'text-green-600 bg-green-100';
       default: return 'text-gray-600 bg-gray-100';
     }
   };
 
-  const getRiskScoreColor = (score) => {
-    if (score >= 80) return 'text-red-600';
-    if (score >= 60) return 'text-orange-600';
-    if (score >= 40) return 'text-yellow-600';
-    return 'text-green-600';
-  };
-
   const getTrendIcon = (trend) => {
     switch (trend) {
-      case 'increasing':
-      case 'worsening':
-        return <TrendingUp className="h-4 w-4 text-red-500" />;
-      case 'decreasing':
-      case 'improving':
-        return <TrendingDown className="h-4 w-4 text-green-500" />;
-      default:
-        return <div className="h-4 w-4" />;
+      case 'increasing': return <ArrowUp className="h-4 w-4 text-red-500" />;
+      case 'decreasing': return <ArrowDown className="h-4 w-4 text-green-500" />;
+      case 'stable': return <Minus className="h-4 w-4 text-gray-500" />;
+      default: return <Minus className="h-4 w-4 text-gray-500" />;
     }
   };
 
+  const filteredVulnerabilities = vulnerabilities.filter(vuln => {
+    const matchesSearch = searchTerm === '' || 
+      vuln.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      vuln.description.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesSeverity = filterSeverity === 'all' || vuln.severity === filterSeverity;
+    const matchesCategory = filterCategory === 'all' || vuln.category === filterCategory;
+    
+    return matchesSearch && matchesSeverity && matchesCategory;
+  });
+
   const renderOverview = () => (
     <div className="space-y-6">
-      {/* Risk Score Dashboard */}
+      {/* Risk Score and Trend */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="col-span-1 md:col-span-2 lg:col-span-1">
-          <CardContent className="p-6 text-center">
-            <div className="mb-4">
-              <div className={`text-4xl font-bold ${getRiskScoreColor(riskOverview?.overall_risk_score)}`}>
-                {riskOverview?.overall_risk_score}
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Overall Risk Score</p>
+                <p className="text-2xl font-bold text-red-600">{riskOverview?.overall_risk_score}/10</p>
               </div>
-              <div className="text-sm text-gray-600 mt-1">Overall Risk Score</div>
+              <div className="p-3 rounded-full bg-red-100">
+                <Target className="h-6 w-6 text-red-600" />
+              </div>
             </div>
-            <div className="flex items-center justify-center gap-2">
-              {getTrendIcon(riskOverview?.risk_trend > 0 ? 'worsening' : 'improving')}
-              <span className={`text-sm ${riskOverview?.risk_trend > 0 ? 'text-red-600' : 'text-green-600'}`}>
-                {Math.abs(riskOverview?.risk_trend)}% from last month
-              </span>
+            <div className="flex items-center mt-2">
+              {getTrendIcon(riskOverview?.risk_trend)}
+              <span className="text-sm text-gray-600 ml-1">{riskOverview?.risk_trend}</span>
             </div>
-            <Badge 
-              variant={riskOverview?.risk_level === 'high' ? 'error' : riskOverview?.risk_level === 'medium' ? 'warning' : 'success'}
-              size="sm"
-              icon={null}
-              onRemove={() => {}}
-              className="mt-2"
-            >
-              {riskOverview?.risk_level} risk
-            </Badge>
           </CardContent>
         </Card>
 
@@ -469,8 +321,8 @@ const RiskAssessmentEngine = () => {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Critical Risks</p>
-                <p className="text-2xl font-bold text-red-600">{riskOverview?.critical_risks}</p>
+                <p className="text-sm font-medium text-gray-600">Critical Vulnerabilities</p>
+                <p className="text-2xl font-bold text-red-600">{riskOverview?.critical_vulnerabilities}</p>
               </div>
               <div className="p-3 rounded-full bg-red-100">
                 <AlertTriangle className="h-6 w-6 text-red-600" />
@@ -487,7 +339,7 @@ const RiskAssessmentEngine = () => {
                 <p className="text-2xl font-bold text-orange-600">{riskOverview?.active_threats}</p>
               </div>
               <div className="p-3 rounded-full bg-orange-100">
-                <Shield className="h-6 w-6 text-orange-600" />
+                <Zap className="h-6 w-6 text-orange-600" />
               </div>
             </div>
           </CardContent>
@@ -497,52 +349,44 @@ const RiskAssessmentEngine = () => {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Vulnerabilities</p>
-                <p className="text-2xl font-bold text-blue-600">{riskOverview?.total_vulnerabilities}</p>
+                <p className="text-sm font-medium text-gray-600">Mitigated Risks</p>
+                <p className="text-2xl font-bold text-green-600">{riskOverview?.mitigated_risks}</p>
               </div>
-              <div className="p-3 rounded-full bg-blue-100">
-                <Database className="h-6 w-6 text-blue-600" />
+              <div className="p-3 rounded-full bg-green-100">
+                <Shield className="h-6 w-6 text-green-600" />
               </div>
-            </div>
-            <div className="mt-2 text-sm text-gray-600">
-              {riskOverview?.patched_vulnerabilities} patched
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Risk Distribution */}
+      {/* Risk Categories and Compliance Status */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <BarChart3 className="h-5 w-5 text-blue-600" />
-              Risk Distribution
+              Risk by Category
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {[
-                { level: 'Critical', count: riskOverview?.critical_risks, color: 'bg-red-500' },
-                { level: 'High', count: riskOverview?.high_risks, color: 'bg-orange-500' },
-                { level: 'Medium', count: riskOverview?.medium_risks, color: 'bg-yellow-500' },
-                { level: 'Low', count: riskOverview?.low_risks, color: 'bg-green-500' }
-              ].map((risk) => (
-                <div key={risk.level} className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className={`w-3 h-3 rounded-full ${risk.color}`} />
-                    <span className="font-medium">{risk.level}</span>
+              {Object.entries(riskOverview?.risk_categories || {}).map(([category, data]) => (
+                <div key={category} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <span className="font-medium text-gray-900">{category}</span>
+                    {getTrendIcon(data.trend)}
                   </div>
                   <div className="flex items-center gap-2">
-                    <div className="w-32 bg-gray-200 rounded-full h-2">
-                      <div
-                        className={`h-2 rounded-full ${risk.color}`}
-                        style={{
-                          width: `${(risk.count / (riskOverview?.critical_risks + riskOverview?.high_risks + riskOverview?.medium_risks + riskOverview?.low_risks)) * 100}%`
-                        }}
-                      />
-                    </div>
-                    <span className="text-sm font-medium w-8 text-right">{risk.count}</span>
+                    <span className="text-lg font-semibold">{data.score}/10</span>
+                    <Badge
+                      variant={data.score >= 8 ? 'error' : data.score >= 6 ? 'warning' : 'success'}
+                      size="sm"
+                      icon={null}
+                      onRemove={() => {}}
+                    >
+                      {data.score >= 8 ? 'High' : data.score >= 6 ? 'Medium' : 'Low'}
+                    </Badge>
                   </div>
                 </div>
               ))}
@@ -553,23 +397,33 @@ const RiskAssessmentEngine = () => {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-purple-600" />
-              Risk Trends by Category
+              <CheckCircle className="h-5 w-5 text-green-600" />
+              Compliance Status
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {riskTrends?.category_trends && Object.entries(riskTrends.category_trends).map(([category, data]) => (
-                <div key={category} className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium capitalize">{category}</span>
-                    {getTrendIcon(data.trend)}
+              {Object.entries(riskOverview?.compliance_status || {}).map(([framework, data]) => (
+                <div key={framework} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div>
+                    <span className="font-medium text-gray-900">{framework}</span>
+                    <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
+                      <div 
+                        className="bg-blue-600 h-2 rounded-full" 
+                        style={{ width: `${data.score}%` }}
+                      ></div>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-gray-600">{data.previous} → </span>
-                    <span className={`text-sm font-medium ${getRiskScoreColor(data.current)}`}>
-                      {data.current}
-                    </span>
+                  <div className="flex items-center gap-2 ml-4">
+                    <span className="text-sm font-medium">{data.score}%</span>
+                    <Badge
+                      variant={data.status === 'compliant' ? 'success' : 'warning'}
+                      size="sm"
+                      icon={null}
+                      onRemove={() => {}}
+                    >
+                      {data.status}
+                    </Badge>
                   </div>
                 </div>
               ))}
@@ -577,68 +431,64 @@ const RiskAssessmentEngine = () => {
           </CardContent>
         </Card>
       </div>
-
-      {/* Top Risk Factors */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Target className="h-5 w-5 text-red-600" />
-            Top Risk Factors
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {riskFactors.slice(0, 5).map((factor) => (
-              <div key={factor.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <h4 className="font-semibold text-gray-900">{factor.factor}</h4>
-                    <Badge variant="default" size="sm" icon={null} onRemove={() => {}}>
-                      {factor.category}
-                    </Badge>
-                    {getTrendIcon(factor.trend)}
-                  </div>
-                  <p className="text-sm text-gray-600 mb-2">{factor.description}</p>
-                  <div className="flex items-center gap-4 text-xs text-gray-500">
-                    <span>Impact: {factor.impact}</span>
-                    <span>Likelihood: {factor.likelihood}</span>
-                    <span>Assets: {factor.affected_assets}</span>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <div className={`text-2xl font-bold ${getRiskScoreColor(factor.risk_score)}`}>
-                    {factor.risk_score}
-                  </div>
-                  <div className="text-xs text-gray-600">Risk Score</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 
   const renderVulnerabilities = () => (
     <div className="space-y-6">
+      {/* Filters */}
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold">Vulnerability Assessment</h2>
+        <div className="flex items-center gap-4">
+          <div className="relative">
+            <Search className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search vulnerabilities..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+          <select
+            value={filterSeverity}
+            onChange={(e) => setFilterSeverity(e.target.value)}
+            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          >
+            <option value="all">All Severities</option>
+            <option value="critical">Critical</option>
+            <option value="high">High</option>
+            <option value="medium">Medium</option>
+            <option value="low">Low</option>
+          </select>
+          <select
+            value={filterCategory}
+            onChange={(e) => setFilterCategory(e.target.value)}
+            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          >
+            <option value="all">All Categories</option>
+            <option value="Infrastructure">Infrastructure</option>
+            <option value="Application">Application</option>
+            <option value="Data">Data</option>
+            <option value="Network">Network</option>
+            <option value="Human">Human</option>
+          </select>
+        </div>
         <Button>
-          <Zap className="h-4 w-4 mr-2" />
-          Run Scan
+          <Download className="h-4 w-4 mr-2" />
+          Export Report
         </Button>
       </div>
 
+      {/* Vulnerabilities List */}
       <div className="grid grid-cols-1 gap-4">
-        {vulnerabilities.map((vuln) => (
+        {filteredVulnerabilities.map((vuln) => (
           <Card key={vuln.id}>
-            <CardContent className="p-4">
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <h3 className="font-semibold text-gray-900">{vuln.title}</h3>
-                    <Badge 
-                      variant={vuln.severity === 'critical' ? 'error' : vuln.severity === 'high' ? 'warning' : 'default'}
+            <CardContent className="p-6">
+              <div className="flex items-start justify-between mb-4">
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Badge
+                      variant={vuln.severity === 'critical' ? 'error' : vuln.severity === 'high' ? 'error' : vuln.severity === 'medium' ? 'warning' : 'success'}
                       size="sm"
                       icon={null}
                       onRemove={() => {}}
@@ -646,65 +496,74 @@ const RiskAssessmentEngine = () => {
                       {vuln.severity}
                     </Badge>
                     <Badge variant="default" size="sm" icon={null} onRemove={() => {}}>
-                      {vuln.cve_id}
+                      {vuln.category}
+                    </Badge>
+                    <Badge
+                      variant={vuln.mitigation_status === 'in_progress' ? 'warning' : vuln.mitigation_status === 'planned' ? 'default' : 'error'}
+                      size="sm"
+                      icon={null}
+                      onRemove={() => {}}
+                    >
+                      {vuln.mitigation_status.replace('_', ' ')}
                     </Badge>
                   </div>
-                  <p className="text-sm text-gray-600 mb-2">{vuln.description}</p>
-                  <div className="flex items-center gap-4 text-xs text-gray-500">
-                    <span>CVSS: {vuln.cvss_score}</span>
-                    <span>Discovered: {new Date(vuln.discovery_date).toLocaleDateString()}</span>
-                    <span>Systems: {vuln.affected_systems.length}</span>
-                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900">{vuln.title}</h3>
+                  <p className="text-gray-600">{vuln.description}</p>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Badge 
-                    variant={vuln.status === 'patched' ? 'success' : vuln.status === 'open' ? 'error' : 'warning'}
-                    size="sm"
-                    icon={null}
-                    onRemove={() => {}}
-                  >
-                    {vuln.status}
-                  </Badge>
-                  {vuln.patch_available && (
-                    <Badge variant="success" size="sm" icon={null} onRemove={() => {}}>
-                      Patch Available
-                    </Badge>
-                  )}
+                <div className="text-right">
+                  <div className="text-2xl font-bold text-red-600">{vuln.cvss_score}</div>
+                  <div className="text-sm text-gray-500">CVSS Score</div>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
                 <div>
-                  <span className="text-sm text-gray-600">Affected Systems</span>
-                  <div className="mt-1">
-                    {vuln.affected_systems.map((system, index) => (
-                      <Badge key={index} variant="default" size="sm" icon={null} onRemove={() => {}} className="mr-1 mb-1">
-                        {system}
-                      </Badge>
+                  <h4 className="font-medium text-gray-900 mb-2">Affected Systems</h4>
+                  <div className="space-y-1">
+                    {vuln.affected_systems.map((system, idx) => (
+                      <div key={idx} className="flex items-center gap-2 text-sm">
+                        <Server className="h-3 w-3 text-gray-400" />
+                        <span>{system}</span>
+                      </div>
                     ))}
                   </div>
                 </div>
+
                 <div>
-                  <span className="text-sm text-gray-600">Exploitability</span>
-                  <p className="text-sm font-medium mt-1 capitalize">{vuln.exploitability}</p>
-                </div>
-                <div>
-                  <span className="text-sm text-gray-600">Business Impact</span>
-                  <p className="text-sm font-medium mt-1 capitalize">{vuln.business_impact}</p>
+                  <h4 className="font-medium text-gray-900 mb-2">Assignment & Status</h4>
+                  <div className="space-y-1 text-sm">
+                    <div className="flex justify-between">
+                      <span>Assigned To:</span>
+                      <span className="font-medium">{vuln.assigned_to}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Discovered:</span>
+                      <span className="font-medium">{new Date(vuln.discovery_date).toLocaleDateString()}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Status:</span>
+                      <Badge
+                        variant={vuln.status === 'open' ? 'error' : 'success'}
+                        size="sm"
+                        icon={null}
+                        onRemove={() => {}}
+                      >
+                        {vuln.status}
+                      </Badge>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              <div className="flex items-center justify-end gap-2">
+              <div className="flex items-center justify-end gap-2 pt-4 border-t">
                 <Button variant="outline" size="sm">
                   <Eye className="h-4 w-4 mr-1" />
-                  Details
+                  View Details
                 </Button>
-                {vuln.status === 'open' && vuln.patch_available && (
-                  <Button size="sm">
-                    <CheckCircle className="h-4 w-4 mr-1" />
-                    Apply Patch
-                  </Button>
-                )}
+                <Button variant="outline" size="sm">
+                  <Settings className="h-4 w-4 mr-1" />
+                  Manage
+                </Button>
               </div>
             </CardContent>
           </Card>
@@ -715,207 +574,77 @@ const RiskAssessmentEngine = () => {
 
   const renderThreats = () => (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold">Threat Analysis</h2>
-        <Button variant="outline" size="sm">
-          <Download className="h-4 w-4 mr-2" />
-          Export Report
-        </Button>
-      </div>
-
-      <div className="grid grid-cols-1 gap-6">
-        {threatAnalysis.map((threat) => (
+      <div className="grid grid-cols-1 gap-4">
+        {threats.map((threat) => (
           <Card key={threat.id}>
             <CardContent className="p-6">
               <div className="flex items-start justify-between mb-4">
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900">{threat.threat_type}</h3>
-                  <p className="text-sm text-gray-600 mt-1">Actor: {threat.threat_actor}</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Badge
-                    variant={threat.status === 'active' ? 'error' : threat.status === 'monitoring' ? 'warning' : 'default'}
-                    size="sm"
-                    icon={null}
-                    onRemove={() => {}}
-                  >
-                    {threat.status}
-                  </Badge>
-                  <div className={`text-2xl font-bold ${getRiskScoreColor(threat.risk_score)}`}>
-                    {threat.risk_score}
-                  </div>
-                </div>
-              </div>
-
-              <p className="text-gray-700 mb-4">{threat.description}</p>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div>
-                  <h4 className="font-medium text-gray-900 mb-2">Attack Vectors</h4>
-                  <div className="space-y-1">
-                    {threat.attack_vectors.map((vector, index) => (
-                      <Badge key={index} variant="default" size="sm" icon={null} onRemove={() => {}} className="mr-1 mb-1">
-                        {vector.replace('_', ' ')}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-                <div>
-                  <h4 className="font-medium text-gray-900 mb-2">Target Assets</h4>
-                  <div className="space-y-1">
-                    {threat.target_assets.map((asset, index) => (
-                      <Badge key={index} variant="outline" size="sm" icon={null} onRemove={() => {}} className="mr-1 mb-1">
-                        {asset.replace('_', ' ')}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                <div>
-                  <span className="text-sm text-gray-600">Probability</span>
-                  <p className="text-sm font-medium mt-1 capitalize">{threat.probability}</p>
-                </div>
-                <div>
-                  <span className="text-sm text-gray-600">Impact</span>
-                  <p className="text-sm font-medium mt-1 capitalize">{threat.impact}</p>
-                </div>
-                <div>
-                  <span className="text-sm text-gray-600">Last Detected</span>
-                  <p className="text-sm font-medium mt-1">{new Date(threat.last_detected).toLocaleDateString()}</p>
-                </div>
-              </div>
-
-              <div className="mb-4">
-                <h4 className="font-medium text-gray-900 mb-2">Indicators of Compromise</h4>
-                <div className="flex flex-wrap gap-1">
-                  {threat.indicators.map((indicator, index) => (
-                    <Badge key={index} variant="warning" size="sm" icon={null} onRemove={() => {}}>
-                      {indicator.replace('_', ' ')}
+                  <div className="flex items-center gap-2 mb-2">
+                    <Badge
+                      variant={threat.severity === 'critical' ? 'error' : threat.severity === 'high' ? 'error' : 'warning'}
+                      size="sm"
+                      icon={null}
+                      onRemove={() => {}}
+                    >
+                      {threat.severity}
                     </Badge>
-                  ))}
+                    <Badge variant="default" size="sm" icon={null} onRemove={() => {}}>
+                      {threat.category}
+                    </Badge>
+                    <Badge
+                      variant={threat.status === 'active' ? 'error' : 'warning'}
+                      size="sm"
+                      icon={null}
+                      onRemove={() => {}}
+                    >
+                      {threat.status}
+                    </Badge>
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900">{threat.name}</h3>
+                  <p className="text-gray-600">{threat.description}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm text-gray-500">Last Updated</p>
+                  <p className="text-sm font-medium">{new Date(threat.last_updated).toLocaleDateString()}</p>
                 </div>
               </div>
 
-              <div className="flex items-center justify-end gap-2">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
+                <div>
+                  <h4 className="font-medium text-gray-900 mb-2">Threat Indicators</h4>
+                  <div className="space-y-1">
+                    {threat.indicators.map((indicator, idx) => (
+                      <div key={idx} className="flex items-center gap-2 text-sm">
+                        <AlertCircle className="h-3 w-3 text-orange-500" />
+                        <span>{indicator}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="font-medium text-gray-900 mb-2">Mitigation Strategies</h4>
+                  <div className="space-y-1">
+                    {threat.mitigation_strategies.map((strategy, idx) => (
+                      <div key={idx} className="flex items-center gap-2 text-sm">
+                        <Shield className="h-3 w-3 text-green-500" />
+                        <span>{strategy}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-4 border-t">
                 <Button variant="outline" size="sm">
                   <Eye className="h-4 w-4 mr-1" />
                   View Details
                 </Button>
                 <Button variant="outline" size="sm">
-                  <Shield className="h-4 w-4 mr-1" />
-                  Create Mitigation
+                  <Settings className="h-4 w-4 mr-1" />
+                  Manage
                 </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    </div>
-  );
-
-  const renderScenarios = () => (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold">Risk Scenarios</h2>
-        <Button>
-          <Target className="h-4 w-4 mr-2" />
-          New Scenario
-        </Button>
-      </div>
-
-      <div className="grid grid-cols-1 gap-6">
-        {riskScenarios.map((scenario) => (
-          <Card key={scenario.id}>
-            <CardContent className="p-6">
-              <div className="flex items-start justify-between mb-4">
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900">{scenario.scenario_name}</h3>
-                  <div className="flex items-center gap-2 mt-1">
-                    <Badge
-                      variant={scenario.probability === 'high' ? 'error' : scenario.probability === 'medium' ? 'warning' : 'default'}
-                      size="sm"
-                      icon={null}
-                      onRemove={() => {}}
-                    >
-                      {scenario.probability} probability
-                    </Badge>
-                    <Badge
-                      variant={scenario.impact === 'critical' ? 'error' : scenario.impact === 'high' ? 'warning' : 'default'}
-                      size="sm"
-                      icon={null}
-                      onRemove={() => {}}
-                    >
-                      {scenario.impact} impact
-                    </Badge>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <div className={`text-2xl font-bold ${getRiskScoreColor(scenario.risk_score)}`}>
-                    {scenario.risk_score}
-                  </div>
-                  <div className="text-xs text-gray-600">Risk Score</div>
-                </div>
-              </div>
-
-              <p className="text-gray-700 mb-4">{scenario.description}</p>
-
-              <div className="mb-4">
-                <h4 className="font-medium text-gray-900 mb-2">Attack Path</h4>
-                <div className="space-y-2">
-                  {scenario.attack_path.map((step, index) => (
-                    <div key={index} className="flex items-center gap-2">
-                      <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-xs font-medium">
-                        {index + 1}
-                      </div>
-                      <span className="text-sm">{step}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div>
-                  <h4 className="font-medium text-gray-900 mb-2">Potential Losses</h4>
-                  <div className="space-y-1 text-sm">
-                    <div><span className="font-medium">Financial:</span> {scenario.potential_losses.financial}</div>
-                    <div><span className="font-medium">Reputation:</span> {scenario.potential_losses.reputation}</div>
-                    <div><span className="font-medium">Regulatory:</span> {scenario.potential_losses.regulatory}</div>
-                    <div><span className="font-medium">Operational:</span> {scenario.potential_losses.operational}</div>
-                  </div>
-                </div>
-                <div>
-                  <h4 className="font-medium text-gray-900 mb-2">Affected Stakeholders</h4>
-                  <div className="flex flex-wrap gap-1">
-                    {scenario.affected_stakeholders.map((stakeholder, index) => (
-                      <Badge key={index} variant="outline" size="sm" icon={null} onRemove={() => {}}>
-                        {stakeholder}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <Badge
-                  variant={scenario.mitigation_status === 'implemented' ? 'success' : scenario.mitigation_status === 'partial' ? 'warning' : 'error'}
-                  size="sm"
-                  icon={null}
-                  onRemove={() => {}}
-                >
-                  Mitigation: {scenario.mitigation_status}
-                </Badge>
-                <div className="flex items-center gap-2">
-                  <Button variant="outline" size="sm">
-                    <Eye className="h-4 w-4 mr-1" />
-                    View Details
-                  </Button>
-                  <Button size="sm">
-                    <Shield className="h-4 w-4 mr-1" />
-                    Update Mitigation
-                  </Button>
-                </div>
               </div>
             </CardContent>
           </Card>
@@ -926,94 +655,114 @@ const RiskAssessmentEngine = () => {
 
   const renderMitigation = () => (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold">Mitigation Plans</h2>
-        <Button>
-          <CheckCircle className="h-4 w-4 mr-2" />
-          New Plan
-        </Button>
-      </div>
-
       <div className="grid grid-cols-1 gap-4">
         {mitigationPlans.map((plan) => (
           <Card key={plan.id}>
-            <CardContent className="p-4">
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <h3 className="font-semibold text-gray-900">{plan.description}</h3>
+            <CardContent className="p-6">
+              <div className="flex items-start justify-between mb-4">
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
                     <Badge
                       variant={plan.priority === 'critical' ? 'error' : plan.priority === 'high' ? 'warning' : 'default'}
                       size="sm"
                       icon={null}
                       onRemove={() => {}}
                     >
-                      {plan.priority}
+                      {plan.priority} priority
+                    </Badge>
+                    <Badge
+                      variant={plan.status === 'in_progress' ? 'warning' : plan.status === 'planned' ? 'default' : 'success'}
+                      size="sm"
+                      icon={null}
+                      onRemove={() => {}}
+                    >
+                      {plan.status.replace('_', ' ')}
                     </Badge>
                   </div>
-                  <p className="text-sm text-gray-600 mb-2">Risk: {plan.risk_name}</p>
-                  <div className="flex items-center gap-4 text-xs text-gray-500">
-                    <span>Type: {plan.mitigation_type}</span>
-                    <span>Assigned: {plan.assigned_to}</span>
-                    <span>Due: {new Date(plan.due_date).toLocaleDateString()}</span>
-                    <span>Cost: {plan.estimated_cost}</span>
-                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900">{plan.title}</h3>
+                  <p className="text-gray-600">{plan.description}</p>
                 </div>
-                <Badge
-                  variant={plan.status === 'completed' ? 'success' : plan.status === 'in_progress' ? 'warning' : 'default'}
-                  size="sm"
-                  icon={null}
-                  onRemove={() => {}}
-                >
-                  {plan.status}
-                </Badge>
+                <div className="text-right">
+                  <div className="text-2xl font-bold text-blue-600">{plan.progress}%</div>
+                  <div className="text-sm text-gray-500">Complete</div>
+                </div>
               </div>
 
               <div className="mb-4">
-                <h4 className="font-medium text-gray-900 mb-2">Action Items</h4>
-                <div className="space-y-1">
-                  {plan.actions.map((action, index) => (
-                    <div key={index} className="flex items-center gap-2 text-sm">
-                      <CheckCircle className="h-4 w-4 text-gray-400" />
-                      <span>{action}</span>
+                <div className="flex justify-between text-sm mb-1">
+                  <span>Progress</span>
+                  <span>{plan.progress}%</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div 
+                    className="bg-blue-600 h-2 rounded-full" 
+                    style={{ width: `${plan.progress}%` }}
+                  ></div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
+                <div>
+                  <h4 className="font-medium text-gray-900 mb-2">Project Details</h4>
+                  <div className="space-y-1 text-sm">
+                    <div className="flex justify-between">
+                      <span>Assigned To:</span>
+                      <span className="font-medium">{plan.assigned_to}</span>
                     </div>
-                  ))}
+                    <div className="flex justify-between">
+                      <span>Due Date:</span>
+                      <span className="font-medium">{new Date(plan.due_date).toLocaleDateString()}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Effort:</span>
+                      <span className="font-medium">{plan.estimated_effort}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="font-medium text-gray-900 mb-2">Budget & Impact</h4>
+                  <div className="space-y-1 text-sm">
+                    <div className="flex justify-between">
+                      <span>Budget:</span>
+                      <span className="font-medium">{plan.budget_allocated}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Risk Reduction:</span>
+                      <span className="font-medium">{plan.risk_reduction}%</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="font-medium text-gray-900 mb-2">Task Progress</h4>
+                  <div className="space-y-2">
+                    {plan.tasks.map((task, idx) => (
+                      <div key={idx} className="flex items-center justify-between text-sm">
+                        <span className="flex-1">{task.task}</span>
+                        <Badge
+                          variant={task.status === 'completed' ? 'success' : task.status === 'in_progress' ? 'warning' : 'default'}
+                          size="sm"
+                          icon={null}
+                          onRemove={() => {}}
+                        >
+                          {task.status.replace('_', ' ')}
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
 
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex-1 mr-4">
-                  <div className="flex items-center justify-between text-sm mb-1">
-                    <span>Progress</span>
-                    <span>{plan.progress}%</span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div
-                      className={`h-2 rounded-full ${
-                        plan.progress === 100 ? 'bg-green-500' :
-                        plan.progress >= 50 ? 'bg-blue-500' : 'bg-yellow-500'
-                      }`}
-                      style={{ width: `${plan.progress}%` }}
-                    />
-                  </div>
-                </div>
-                <div className="text-right">
-                  <div className="text-sm font-medium text-green-600">-{plan.expected_risk_reduction}%</div>
-                  <div className="text-xs text-gray-600">Risk Reduction</div>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-end gap-2">
+              <div className="flex items-center justify-end gap-2 pt-4 border-t">
                 <Button variant="outline" size="sm">
                   <Eye className="h-4 w-4 mr-1" />
-                  View Plan
+                  View Details
                 </Button>
-                {plan.status !== 'completed' && (
-                  <Button size="sm">
-                    <CheckCircle className="h-4 w-4 mr-1" />
-                    Update Progress
-                  </Button>
-                )}
+                <Button variant="outline" size="sm">
+                  <Settings className="h-4 w-4 mr-1" />
+                  Manage Plan
+                </Button>
               </div>
             </CardContent>
           </Card>
@@ -1025,7 +774,7 @@ const RiskAssessmentEngine = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
       </div>
     );
   }
@@ -1035,59 +784,44 @@ const RiskAssessmentEngine = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-            <Target className="h-6 w-6 text-red-600" />
-            Risk Assessment Engine
-          </h1>
-          <p className="text-gray-600 mt-1">Comprehensive risk analysis and threat assessment platform</p>
-          {usingFallbackData && (
-            <div className="mt-2 text-sm text-amber-600 bg-amber-50 px-3 py-1 rounded-md">
-              ⚠️ Using sample data - API endpoints unavailable
-            </div>
-          )}
+          <h1 className="text-2xl font-bold text-gray-900">Risk Assessment Engine</h1>
+          <p className="text-gray-600">Comprehensive risk analysis and vulnerability management</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={fetchRiskData}>
+          {usingFallbackData && (
+            <Badge variant="warning" size="sm" icon={null} onRemove={() => {}}>
+              Sample Data
+            </Badge>
+          )}
+          <Button onClick={fetchRiskData}>
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh
-          </Button>
-          <Button variant="outline" size="sm">
-            <Download className="h-4 w-4 mr-2" />
-            Export Report
-          </Button>
-          <Button size="sm">
-            <Zap className="h-4 w-4 mr-2" />
-            Run Assessment
           </Button>
         </div>
       </div>
 
-      {/* Navigation Tabs */}
+      {/* Tab Navigation */}
       <div className="border-b border-gray-200">
-        <nav className="flex space-x-8">
+        <nav className="-mb-px flex space-x-8">
           {[
-            { id: 'overview', label: 'Overview', icon: BarChart3 },
-            { id: 'vulnerabilities', label: 'Vulnerabilities', icon: Database },
-            { id: 'threats', label: 'Threats', icon: Shield },
-            { id: 'scenarios', label: 'Scenarios', icon: Target },
-            { id: 'mitigation', label: 'Mitigation', icon: CheckCircle }
-          ].map((tab) => {
-            const Icon = tab.icon;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 py-2 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === tab.id
-                    ? 'border-red-500 text-red-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                <Icon className="h-4 w-4" />
-                {tab.label}
-              </button>
-            );
-          })}
+            { id: 'overview', label: 'Risk Overview', icon: Target },
+            { id: 'vulnerabilities', label: 'Vulnerabilities', icon: AlertTriangle },
+            { id: 'threats', label: 'Threat Analysis', icon: Zap },
+            { id: 'mitigation', label: 'Mitigation Plans', icon: Shield }
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex items-center gap-2 py-2 px-1 border-b-2 font-medium text-sm ${
+                activeTab === tab.id
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              <tab.icon className="h-4 w-4" />
+              {tab.label}
+            </button>
+          ))}
         </nav>
       </div>
 
@@ -1096,7 +830,6 @@ const RiskAssessmentEngine = () => {
         {activeTab === 'overview' && renderOverview()}
         {activeTab === 'vulnerabilities' && renderVulnerabilities()}
         {activeTab === 'threats' && renderThreats()}
-        {activeTab === 'scenarios' && renderScenarios()}
         {activeTab === 'mitigation' && renderMitigation()}
       </div>
     </div>

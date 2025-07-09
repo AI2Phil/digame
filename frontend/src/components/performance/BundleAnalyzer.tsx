@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { 
-  Package, 
-  FileText, 
-  Zap, 
-  TrendingUp, 
-  TrendingDown, 
-  AlertTriangle, 
-  CheckCircle, 
+import {
+  Package,
+  FileText,
+  Zap,
+  TrendingUp,
+  TrendingDown,
+  AlertTriangle,
+  CheckCircle,
   Search,
   Filter,
   RefreshCw,
@@ -21,6 +21,7 @@ import {
   FileCode,
   Layers
 } from 'lucide-react';
+import { useToastHelpers } from '../ui/Toaster';
 
 interface BundleAsset {
   name: string;
@@ -107,126 +108,194 @@ const BundleAnalyzer: React.FC<BundleAnalyzerProps> = ({
   const [filterType, setFilterType] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [showDetails, setShowDetails] = useState<string | null>(null);
+  const [usingFallbackData, setUsingFallbackData] = useState(false);
+  const { success, error: showError, warning, info } = useToastHelpers();
 
-  // Fetch bundle analysis data
+  // Fetch bundle analysis data from database-driven API
   const fetchBundleData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
+      setUsingFallbackData(false);
 
-      // Simulate webpack bundle analysis
-      const mockAssets: BundleAsset[] = [
+      // Try multiple possible token keys for better compatibility
+      const token = sessionStorage.getItem('accessToken') ||
+                   sessionStorage.getItem('token') ||
+                   localStorage.getItem('accessToken') ||
+                   localStorage.getItem('token');
+
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      // Fetch bundle analysis data from database-driven API
+      const response = await fetch('http://localhost:8001/api/performance/bundle-analysis', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setAssets(data.assets || []);
+        setChunks(data.chunks || []);
+        setStats(data.stats || null);
+        setRecommendations(data.recommendations || []);
+        success('Bundle analysis data loaded successfully');
+      } else {
+        throw new Error(`Failed to fetch bundle analysis data: ${response.status} ${response.statusText}`);
+      }
+    } catch (err) {
+      console.error('Failed to fetch bundle analysis data:', err);
+      setUsingFallbackData(true);
+      warning(`Using sample data: ${err.message}`);
+      
+      // Enhanced fallback data with realistic Digame platform bundle patterns
+      const fallbackAssets: BundleAsset[] = [
         {
-          name: 'main.js',
-          size: 245760,
-          gzipSize: 67890,
+          name: 'digame-main.js',
+          size: 387650,
+          gzipSize: 98234,
           type: 'js',
           chunks: ['main'],
-          modules: ['./src/index.tsx', './src/App.tsx', 'react', 'react-dom'],
+          modules: ['./src/index.tsx', './src/App.tsx', 'react', 'react-dom', '@tanstack/react-query'],
           isEntry: true,
           isInitial: true,
-          optimizationScore: 7.2,
+          optimizationScore: 6.8,
           suggestions: [
-            'Consider code splitting for vendor libraries',
-            'Remove unused exports from utility modules'
+            'Consider code splitting for digital twin components',
+            'Remove unused exports from utility modules',
+            'Implement lazy loading for heavy dashboard components'
           ]
         },
         {
-          name: 'vendor.js',
-          size: 512340,
-          gzipSize: 156780,
+          name: 'vendor-core.js',
+          size: 678920,
+          gzipSize: 189456,
           type: 'js',
-          chunks: ['vendor'],
-          modules: ['react', 'react-dom', 'lodash', 'moment'],
+          chunks: ['vendor-core'],
+          modules: ['react', 'react-dom', 'react-router-dom', '@tanstack/react-query', 'lucide-react'],
           isEntry: false,
           isInitial: true,
-          optimizationScore: 5.8,
+          optimizationScore: 5.2,
           suggestions: [
-            'Replace moment.js with date-fns for smaller bundle',
-            'Use lodash-es for better tree shaking',
-            'Consider splitting vendor chunk further'
+            'Split vendor chunk into framework and utilities',
+            'Use tree shaking for lucide-react icons',
+            'Consider replacing heavy dependencies with lighter alternatives',
+            'Implement selective imports for large libraries'
           ]
         },
         {
-          name: 'styles.css',
-          size: 89340,
-          gzipSize: 23450,
-          type: 'css',
-          chunks: ['main'],
-          modules: ['./src/styles/main.css', './src/components/**/*.css'],
-          isEntry: false,
-          isInitial: true,
-          optimizationScore: 8.5,
-          suggestions: [
-            'Consider CSS-in-JS for better tree shaking',
-            'Optimize unused CSS rules'
-          ]
-        },
-        {
-          name: 'dashboard.chunk.js',
-          size: 178920,
-          gzipSize: 45670,
+          name: 'digital-twin.chunk.js',
+          size: 298760,
+          gzipSize: 76543,
           type: 'js',
-          chunks: ['dashboard'],
-          modules: ['./src/pages/dashboard/**/*', 'chart.js'],
+          chunks: ['digital-twin'],
+          modules: ['./src/components/digital-twin/**/*', 'd3', 'recharts', 'tensorflow'],
           isEntry: false,
           isInitial: false,
-          optimizationScore: 6.9,
+          optimizationScore: 4.9,
           suggestions: [
-            'Lazy load chart.js only when needed',
-            'Split dashboard components into smaller chunks'
+            'Lazy load TensorFlow.js only when AI features are used',
+            'Split chart libraries into separate chunks',
+            'Implement dynamic imports for complex visualizations',
+            'Consider lighter alternatives to D3.js for simple charts'
           ]
         },
         {
-          name: 'analytics.chunk.js',
-          size: 234560,
-          gzipSize: 67890,
+          name: 'analytics-dashboard.chunk.js',
+          size: 234890,
+          gzipSize: 67234,
           type: 'js',
           chunks: ['analytics'],
-          modules: ['./src/pages/analytics/**/*', 'd3', 'recharts'],
+          modules: ['./src/components/analytics/**/*', 'chart.js', 'date-fns', 'lodash'],
           isEntry: false,
           isInitial: false,
-          optimizationScore: 5.4,
+          optimizationScore: 6.3,
           suggestions: [
-            'Consider lighter charting library alternatives',
-            'Implement dynamic imports for visualization components'
+            'Use lodash-es for better tree shaking',
+            'Lazy load chart.js components on demand',
+            'Split analytics components by feature area'
           ]
         },
         {
-          name: 'images/hero.jpg',
-          size: 456780,
-          gzipSize: 456780,
+          name: 'platform-styles.css',
+          size: 145670,
+          gzipSize: 34567,
+          type: 'css',
+          chunks: ['main'],
+          modules: ['./src/styles/globals.css', './src/components/**/*.css', 'tailwindcss'],
+          isEntry: false,
+          isInitial: true,
+          optimizationScore: 7.8,
+          suggestions: [
+            'Purge unused Tailwind CSS classes',
+            'Consider CSS-in-JS for component-specific styles',
+            'Optimize critical CSS for above-the-fold content'
+          ]
+        },
+        {
+          name: 'performance-monitoring.chunk.js',
+          size: 167890,
+          gzipSize: 45123,
+          type: 'js',
+          chunks: ['performance'],
+          modules: ['./src/components/performance/**/*', 'web-vitals', 'performance-observer'],
+          isEntry: false,
+          isInitial: false,
+          optimizationScore: 7.1,
+          suggestions: [
+            'Lazy load performance monitoring tools',
+            'Split monitoring components by functionality'
+          ]
+        },
+        {
+          name: 'assets/platform-hero.webp',
+          size: 234560,
+          gzipSize: 234560,
           type: 'image',
           chunks: [],
           modules: [],
           isEntry: false,
           isInitial: false,
-          optimizationScore: 4.2,
+          optimizationScore: 8.2,
           suggestions: [
-            'Optimize image compression',
-            'Consider WebP format',
-            'Implement responsive images'
+            'Implement responsive image loading',
+            'Consider progressive JPEG for complex images'
           ]
+        },
+        {
+          name: 'fonts/inter-variable.woff2',
+          size: 89340,
+          gzipSize: 89340,
+          type: 'font',
+          chunks: [],
+          modules: [],
+          isEntry: false,
+          isInitial: false,
+          optimizationScore: 9.1,
+          suggestions: []
         }
       ];
 
-      const mockChunks: BundleChunk[] = [
+      const fallbackChunks: BundleChunk[] = [
         {
           id: 'main',
           name: 'main',
-          size: 335100,
-          files: ['main.js', 'styles.css'],
+          size: 533320,
+          files: ['digame-main.js', 'platform-styles.css'],
           modules: [],
           isEntry: true,
           isInitial: true,
           parents: [],
-          children: ['dashboard', 'analytics']
+          children: ['digital-twin', 'analytics', 'performance']
         },
         {
-          id: 'vendor',
-          name: 'vendor',
-          size: 512340,
-          files: ['vendor.js'],
+          id: 'vendor-core',
+          name: 'vendor-core',
+          size: 678920,
+          files: ['vendor-core.js'],
           modules: [],
           isEntry: false,
           isInitial: true,
@@ -234,10 +303,10 @@ const BundleAnalyzer: React.FC<BundleAnalyzerProps> = ({
           children: []
         },
         {
-          id: 'dashboard',
-          name: 'dashboard',
-          size: 178920,
-          files: ['dashboard.chunk.js'],
+          id: 'digital-twin',
+          name: 'digital-twin',
+          size: 298760,
+          files: ['digital-twin.chunk.js'],
           modules: [],
           isEntry: false,
           isInitial: false,
@@ -247,8 +316,19 @@ const BundleAnalyzer: React.FC<BundleAnalyzerProps> = ({
         {
           id: 'analytics',
           name: 'analytics',
-          size: 234560,
-          files: ['analytics.chunk.js'],
+          size: 234890,
+          files: ['analytics-dashboard.chunk.js'],
+          modules: [],
+          isEntry: false,
+          isInitial: false,
+          parents: ['main'],
+          children: []
+        },
+        {
+          id: 'performance',
+          name: 'performance',
+          size: 167890,
+          files: ['performance-monitoring.chunk.js'],
           modules: [],
           isEntry: false,
           isInitial: false,
@@ -257,108 +337,111 @@ const BundleAnalyzer: React.FC<BundleAnalyzerProps> = ({
         }
       ];
 
-      const mockStats: BundleStats = {
-        totalSize: 1717100,
-        totalGzipSize: 818660,
-        assetCount: 6,
-        chunkCount: 4,
-        moduleCount: 247,
-        duplicateModules: 12,
-        unusedAssets: 3,
-        compressionRatio: 0.477,
-        loadTime: 2.34,
-        parseTime: 0.89
+      const fallbackStats: BundleStats = {
+        totalSize: 2237230,
+        totalGzipSize: 1045157,
+        assetCount: 8,
+        chunkCount: 5,
+        moduleCount: 342,
+        duplicateModules: 18,
+        unusedAssets: 5,
+        compressionRatio: 0.467,
+        loadTime: 3.12,
+        parseTime: 1.23
       };
 
-      const mockRecommendations: OptimizationRecommendation[] = [
+      const fallbackRecommendations: OptimizationRecommendation[] = [
         {
-          id: '1',
+          id: 'rec_001',
           type: 'code_splitting',
           priority: 'high',
-          title: 'Implement Route-Based Code Splitting',
-          description: 'Split your application by routes to reduce initial bundle size',
-          impact: '30-40% reduction in initial load time',
+          title: 'Implement Advanced Route-Based Code Splitting for Digital Twin Features',
+          description: 'Split digital twin components by functionality to reduce initial bundle size and improve loading performance',
+          impact: '35-45% reduction in initial load time for non-AI users',
           effort: 'medium',
-          savingsEstimate: 245760,
+          savingsEstimate: 298760,
           implementation: [
-            'Use React.lazy() for route components',
-            'Implement Suspense boundaries',
-            'Configure webpack splitChunks optimization'
+            'Use React.lazy() for digital twin dashboard components',
+            'Implement Suspense boundaries with loading states',
+            'Split AI/ML features into separate chunks',
+            'Configure webpack splitChunks for optimal chunking strategy'
           ]
         },
         {
-          id: '2',
+          id: 'rec_002',
           type: 'tree_shaking',
           priority: 'high',
-          title: 'Optimize Vendor Dependencies',
-          description: 'Replace heavy libraries with lighter alternatives',
-          impact: '25-35% reduction in vendor bundle size',
+          title: 'Optimize Heavy Dependencies and Library Usage',
+          description: 'Replace heavy libraries with lighter alternatives and improve tree shaking',
+          impact: '40-50% reduction in vendor bundle size',
           effort: 'medium',
-          savingsEstimate: 156780,
+          savingsEstimate: 267368,
           implementation: [
-            'Replace moment.js with date-fns',
-            'Use lodash-es instead of lodash',
-            'Remove unused library exports'
+            'Replace TensorFlow.js with lighter ML alternatives for simple tasks',
+            'Use lodash-es instead of lodash for better tree shaking',
+            'Implement selective imports for D3.js and Chart.js',
+            'Remove unused Lucide React icons'
           ]
         },
         {
-          id: '3',
+          id: 'rec_003',
+          type: 'lazy_loading',
+          priority: 'high',
+          title: 'Implement Smart Lazy Loading for Analytics and Performance Components',
+          description: 'Lazy load analytics dashboards and performance monitoring tools based on user access patterns',
+          impact: '25-35% improvement in initial page load',
+          effort: 'low',
+          savingsEstimate: 402780,
+          implementation: [
+            'Lazy load analytics dashboard components',
+            'Implement intersection observer for performance monitoring widgets',
+            'Use dynamic imports for chart libraries',
+            'Load monitoring tools only when performance tab is accessed'
+          ]
+        },
+        {
+          id: 'rec_004',
           type: 'asset_optimization',
           priority: 'medium',
-          title: 'Optimize Image Assets',
-          description: 'Compress and modernize image formats',
-          impact: '50-60% reduction in image sizes',
+          title: 'Optimize Platform Assets and Images',
+          description: 'Implement advanced image optimization and modern formats for better performance',
+          impact: '60-70% reduction in image asset sizes',
           effort: 'low',
-          savingsEstimate: 228390,
+          savingsEstimate: 140736,
           implementation: [
-            'Convert images to WebP format',
-            'Implement responsive images',
-            'Use image compression tools'
+            'Convert all images to WebP format with JPEG fallbacks',
+            'Implement responsive image loading with srcset',
+            'Use progressive JPEG for complex hero images',
+            'Optimize font loading with font-display: swap'
           ]
         },
         {
-          id: '4',
-          type: 'lazy_loading',
-          priority: 'medium',
-          title: 'Implement Component Lazy Loading',
-          description: 'Lazy load heavy components and libraries',
-          impact: '15-25% improvement in initial load',
-          effort: 'low',
-          savingsEstimate: 89340,
-          implementation: [
-            'Lazy load chart libraries',
-            'Implement intersection observer for below-fold components',
-            'Use dynamic imports for heavy utilities'
-          ]
-        },
-        {
-          id: '5',
+          id: 'rec_005',
           type: 'compression',
-          priority: 'low',
-          title: 'Enable Advanced Compression',
-          description: 'Implement Brotli compression for better compression ratios',
-          impact: '10-15% additional size reduction',
+          priority: 'medium',
+          title: 'Enable Advanced Compression and Caching Strategies',
+          description: 'Implement Brotli compression and optimize caching headers for better performance',
+          impact: '15-20% additional size reduction with improved caching',
           effort: 'low',
-          savingsEstimate: 81866,
+          savingsEstimate: 156773,
           implementation: [
-            'Configure Brotli compression on server',
-            'Enable compression for all text assets',
-            'Optimize compression settings'
+            'Configure Brotli compression on server for all text assets',
+            'Implement service worker for intelligent caching',
+            'Optimize cache headers for static assets',
+            'Enable HTTP/2 push for critical resources'
           ]
         }
       ];
 
-      setAssets(mockAssets);
-      setChunks(mockChunks);
-      setStats(mockStats);
-      setRecommendations(mockRecommendations);
-    } catch (err) {
-      setError('Failed to fetch bundle analysis data');
-      console.error('Bundle analyzer error:', err);
+      setAssets(fallbackAssets);
+      setChunks(fallbackChunks);
+      setStats(fallbackStats);
+      setRecommendations(fallbackRecommendations);
+      setError(`Failed to load bundle analysis data: ${err.message}`);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [success, warning]);
 
   useEffect(() => {
     fetchBundleData();
@@ -497,6 +580,11 @@ const BundleAnalyzer: React.FC<BundleAnalyzerProps> = ({
             <div>
               <h2 className="text-lg font-semibold text-gray-900">Bundle Analyzer</h2>
               <p className="text-sm text-gray-600">Analyze and optimize your application bundle</p>
+              {usingFallbackData && (
+                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 mt-1">
+                  Demo Data
+                </span>
+              )}
             </div>
           </div>
           <div className="flex items-center space-x-3">

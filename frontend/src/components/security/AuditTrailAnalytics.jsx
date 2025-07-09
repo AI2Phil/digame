@@ -4,9 +4,11 @@ import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
 import { useToastHelpers } from '../ui/Toaster';
 import {
-  Search, Filter, Download, Calendar, Clock, User, 
-  Activity, AlertTriangle, CheckCircle, Eye, BarChart3,
-  TrendingUp, Database, Shield, Globe, Smartphone
+  FileText, Eye, Download, Filter, Search, Calendar,
+  User, Shield, AlertTriangle, CheckCircle, Clock,
+  BarChart3, TrendingUp, Activity, Database, Globe,
+  Smartphone, Monitor, Server, Lock, Key, Settings,
+  RefreshCw
 } from 'lucide-react';
 
 const AuditTrailAnalytics = () => {
@@ -14,49 +16,39 @@ const AuditTrailAnalytics = () => {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
   const [usingFallbackData, setUsingFallbackData] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterType, setFilterType] = useState('all');
+  const [dateRange, setDateRange] = useState('7d');
 
   // State for audit data
   const [auditOverview, setAuditOverview] = useState(null);
   const [auditLogs, setAuditLogs] = useState([]);
-  const [auditMetrics, setAuditMetrics] = useState(null);
   const [userActivity, setUserActivity] = useState([]);
   const [systemEvents, setSystemEvents] = useState([]);
-  const [complianceEvents, setComplianceEvents] = useState([]);
-
-  // Filter states
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedUser, setSelectedUser] = useState('all');
-  const [selectedEventType, setSelectedEventType] = useState('all');
-  const [selectedSeverity, setSelectedSeverity] = useState('all');
-  const [dateRange, setDateRange] = useState('7d');
+  const [securityEvents, setSecurityEvents] = useState([]);
 
   useEffect(() => {
     fetchAuditData();
-  }, [dateRange, selectedUser, selectedEventType, selectedSeverity]);
+  }, [dateRange]);
 
   const fetchAuditData = async () => {
     try {
       setLoading(true);
-      
-      const params = new URLSearchParams({
-        date_range: dateRange,
-        user_id: selectedUser !== 'all' ? selectedUser : '',
-        event_type: selectedEventType !== 'all' ? selectedEventType : '',
-        severity: selectedSeverity !== 'all' ? selectedSeverity : '',
-        search: searchTerm
-      });
 
-      const [overviewResponse, logsResponse, metricsResponse, activityResponse] = await Promise.all([
-        fetch(`http://localhost:8001/api/security/audit/overview?${params}`, {
+      const [overviewResponse, logsResponse, activityResponse, eventsResponse, securityResponse] = await Promise.all([
+        fetch(`http://localhost:8001/api/security/audit-trail/overview?range=${dateRange}`, {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
         }),
-        fetch(`http://localhost:8001/api/security/audit/logs?${params}&limit=50`, {
+        fetch(`http://localhost:8001/api/security/audit-trail/logs?range=${dateRange}`, {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
         }),
-        fetch(`http://localhost:8001/api/security/audit/metrics?${params}`, {
+        fetch(`http://localhost:8001/api/security/audit-trail/user-activity?range=${dateRange}`, {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
         }),
-        fetch(`http://localhost:8001/api/security/audit/user-activity?${params}`, {
+        fetch(`http://localhost:8001/api/security/audit-trail/system-events?range=${dateRange}`, {
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        }),
+        fetch(`http://localhost:8001/api/security/audit-trail/security-events?range=${dateRange}`, {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
         })
       ]);
@@ -75,15 +67,21 @@ const AuditTrailAnalytics = () => {
         hasRealData = true;
       }
 
-      if (metricsResponse.ok) {
-        const data = await metricsResponse.json();
-        setAuditMetrics(data.data || data);
-        hasRealData = true;
-      }
-
       if (activityResponse.ok) {
         const data = await activityResponse.json();
         setUserActivity(data.data || data);
+        hasRealData = true;
+      }
+
+      if (eventsResponse.ok) {
+        const data = await eventsResponse.json();
+        setSystemEvents(data.data || data);
+        hasRealData = true;
+      }
+
+      if (securityResponse.ok) {
+        const data = await securityResponse.json();
+        setSecurityEvents(data.data || data);
         hasRealData = true;
       }
 
@@ -108,238 +106,236 @@ const AuditTrailAnalytics = () => {
   const loadFallbackData = () => {
     // Enhanced sample audit overview
     const sampleOverview = {
-      total_events: 15847,
-      events_today: 342,
-      critical_events: 23,
-      failed_logins: 156,
-      successful_logins: 2847,
-      data_access_events: 1234,
-      configuration_changes: 89,
+      total_events: 15420,
+      user_actions: 12340,
+      system_events: 2180,
+      security_events: 900,
+      failed_logins: 45,
+      successful_logins: 1890,
+      data_access_events: 3450,
+      configuration_changes: 234,
       policy_violations: 12,
-      unique_users: 234,
-      unique_ips: 156,
-      event_trend: 8.5,
-      top_event_types: [
-        { type: 'login', count: 2847 },
-        { type: 'data_access', count: 1234 },
-        { type: 'logout', count: 2756 },
-        { type: 'failed_login', count: 156 },
-        { type: 'configuration_change', count: 89 }
-      ]
+      compliance_events: 567,
+      top_users: [
+        { user: 'john.doe@company.com', events: 1234, risk_score: 'low' },
+        { user: 'jane.smith@company.com', events: 987, risk_score: 'medium' },
+        { user: 'admin@company.com', events: 756, risk_score: 'high' }
+      ],
+      event_trends: {
+        login_attempts: [120, 135, 98, 156, 143, 167, 189],
+        data_access: [450, 523, 398, 612, 567, 634, 589],
+        config_changes: [12, 8, 15, 23, 19, 31, 27]
+      }
     };
 
     // Enhanced sample audit logs
-    const sampleLogs = [
+    const sampleAuditLogs = [
       {
         id: 1,
-        timestamp: new Date(Date.now() - 300000).toISOString(), // 5 minutes ago
-        user_id: 1,
-        user_email: 'admin@company.com',
-        event_type: 'configuration_change',
-        event_category: 'system',
-        severity: 'high',
-        description: 'Security policy updated: Password complexity requirements',
+        timestamp: '2024-03-08T14:30:25Z',
+        event_type: 'user_login',
+        user: 'john.doe@company.com',
+        action: 'Successful login',
+        resource: 'Authentication System',
         ip_address: '192.168.1.100',
         user_agent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-        resource_accessed: '/admin/security/policies',
-        action_taken: 'UPDATE',
-        result: 'success',
-        session_id: 'sess_abc123',
-        metadata: {
-          policy_id: 'pwd_policy_001',
-          changes: ['min_length: 8 -> 12', 'require_special: true']
-        }
+        location: 'New York, NY',
+        risk_level: 'low',
+        details: 'Standard login with MFA verification'
       },
       {
         id: 2,
-        timestamp: new Date(Date.now() - 900000).toISOString(), // 15 minutes ago
-        user_id: 2,
-        user_email: 'john.doe@company.com',
+        timestamp: '2024-03-08T14:25:12Z',
         event_type: 'data_access',
-        event_category: 'data_access',
-        severity: 'medium',
-        description: 'Accessed sensitive customer data',
-        ip_address: '192.168.1.45',
-        user_agent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
-        resource_accessed: '/api/customers/sensitive',
-        action_taken: 'READ',
-        result: 'success',
-        session_id: 'sess_def456',
-        metadata: {
-          records_accessed: 25,
-          data_classification: 'confidential'
-        }
+        user: 'jane.smith@company.com',
+        action: 'Accessed customer database',
+        resource: 'Customer Database',
+        ip_address: '192.168.1.105',
+        user_agent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)',
+        location: 'San Francisco, CA',
+        risk_level: 'medium',
+        details: 'Accessed 150 customer records for analytics report'
       },
       {
         id: 3,
-        timestamp: new Date(Date.now() - 1800000).toISOString(), // 30 minutes ago
-        user_id: null,
-        user_email: 'unknown',
-        event_type: 'failed_login',
-        event_category: 'authentication',
-        severity: 'high',
-        description: 'Multiple failed login attempts detected',
-        ip_address: '203.0.113.42',
-        user_agent: 'curl/7.68.0',
-        resource_accessed: '/auth/login',
-        action_taken: 'LOGIN_ATTEMPT',
-        result: 'failure',
-        session_id: null,
-        metadata: {
-          attempt_count: 5,
-          blocked: true,
-          threat_detected: true
-        }
+        timestamp: '2024-03-08T14:20:45Z',
+        event_type: 'config_change',
+        user: 'admin@company.com',
+        action: 'Modified security policy',
+        resource: 'Security Configuration',
+        ip_address: '192.168.1.10',
+        user_agent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+        location: 'Chicago, IL',
+        risk_level: 'high',
+        details: 'Updated password complexity requirements'
       },
       {
         id: 4,
-        timestamp: new Date(Date.now() - 3600000).toISOString(), // 1 hour ago
-        user_id: 3,
-        user_email: 'sarah.johnson@company.com',
-        event_type: 'mfa_setup',
-        event_category: 'authentication',
-        severity: 'medium',
-        description: 'Multi-factor authentication configured',
-        ip_address: '192.168.1.78',
-        user_agent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 14_7_1 like Mac OS X)',
-        resource_accessed: '/security/mfa/setup',
-        action_taken: 'CREATE',
-        result: 'success',
-        session_id: 'sess_ghi789',
-        metadata: {
-          mfa_method: 'totp',
-          device_registered: true
-        }
+        timestamp: '2024-03-08T14:15:33Z',
+        event_type: 'failed_login',
+        user: 'unknown@external.com',
+        action: 'Failed login attempt',
+        resource: 'Authentication System',
+        ip_address: '203.0.113.45',
+        user_agent: 'curl/7.68.0',
+        location: 'Unknown',
+        risk_level: 'high',
+        details: 'Multiple failed login attempts detected'
       },
       {
         id: 5,
-        timestamp: new Date(Date.now() - 7200000).toISOString(), // 2 hours ago
-        user_id: 1,
-        user_email: 'admin@company.com',
-        event_type: 'user_permission_change',
-        event_category: 'authorization',
-        severity: 'critical',
-        description: 'User permissions elevated to admin level',
-        ip_address: '192.168.1.100',
-        user_agent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-        resource_accessed: '/admin/users/permissions',
-        action_taken: 'UPDATE',
-        result: 'success',
-        session_id: 'sess_jkl012',
-        metadata: {
-          target_user: 'mike.wilson@company.com',
-          old_role: 'user',
-          new_role: 'admin',
-          approval_required: true
-        }
+        timestamp: '2024-03-08T14:10:18Z',
+        event_type: 'data_export',
+        user: 'mike.wilson@company.com',
+        action: 'Exported financial report',
+        resource: 'Financial System',
+        ip_address: '192.168.1.120',
+        user_agent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+        location: 'Boston, MA',
+        risk_level: 'medium',
+        details: 'Exported Q1 financial summary report'
       }
     ];
-
-    // Enhanced sample metrics
-    const sampleMetrics = {
-      hourly_distribution: [
-        { hour: 0, count: 45 }, { hour: 1, count: 23 }, { hour: 2, count: 12 },
-        { hour: 3, count: 8 }, { hour: 4, count: 15 }, { hour: 5, count: 34 },
-        { hour: 6, count: 67 }, { hour: 7, count: 123 }, { hour: 8, count: 234 },
-        { hour: 9, count: 345 }, { hour: 10, count: 298 }, { hour: 11, count: 267 },
-        { hour: 12, count: 234 }, { hour: 13, count: 278 }, { hour: 14, count: 312 },
-        { hour: 15, count: 289 }, { hour: 16, count: 245 }, { hour: 17, count: 198 },
-        { hour: 18, count: 156 }, { hour: 19, count: 123 }, { hour: 20, count: 89 },
-        { hour: 21, count: 67 }, { hour: 22, count: 45 }, { hour: 23, count: 34 }
-      ],
-      daily_trends: [
-        { date: '2024-03-01', events: 1234, critical: 5 },
-        { date: '2024-03-02', events: 1456, critical: 3 },
-        { date: '2024-03-03', events: 1123, critical: 8 },
-        { date: '2024-03-04', events: 1678, critical: 2 },
-        { date: '2024-03-05', events: 1345, critical: 6 },
-        { date: '2024-03-06', events: 1567, critical: 4 },
-        { date: '2024-03-07', events: 1789, critical: 7 }
-      ],
-      severity_distribution: {
-        critical: 23,
-        high: 156,
-        medium: 1234,
-        low: 2847,
-        info: 11587
-      },
-      top_users: [
-        { user: 'admin@company.com', events: 234, risk_score: 85 },
-        { user: 'john.doe@company.com', events: 189, risk_score: 45 },
-        { user: 'sarah.johnson@company.com', events: 156, risk_score: 32 },
-        { user: 'mike.wilson@company.com', events: 134, risk_score: 67 },
-        { user: 'jane.smith@company.com', events: 123, risk_score: 28 }
-      ],
-      geographic_distribution: [
-        { country: 'United States', count: 8945 },
-        { country: 'Canada', count: 2341 },
-        { country: 'United Kingdom', count: 1876 },
-        { country: 'Germany', count: 1234 },
-        { country: 'France', count: 987 }
-      ]
-    };
 
     // Enhanced sample user activity
     const sampleUserActivity = [
       {
-        user_id: 1,
-        user_email: 'admin@company.com',
-        total_events: 234,
-        login_count: 45,
-        failed_login_count: 2,
-        data_access_count: 89,
-        config_changes: 23,
-        last_activity: new Date(Date.now() - 300000).toISOString(),
-        risk_score: 85,
-        unusual_activity: true,
-        locations: ['New York, US', 'London, UK'],
-        devices: ['Windows Desktop', 'iPhone']
+        user: 'john.doe@company.com',
+        role: 'Senior Developer',
+        department: 'Engineering',
+        total_events: 1234,
+        login_events: 45,
+        data_access_events: 890,
+        config_changes: 12,
+        last_activity: '2024-03-08T14:30:25Z',
+        risk_score: 'low',
+        unusual_activity: false,
+        locations: ['New York, NY', 'Remote'],
+        devices: ['Windows Desktop', 'MacBook Pro']
       },
       {
-        user_id: 2,
-        user_email: 'john.doe@company.com',
-        total_events: 189,
-        login_count: 34,
-        failed_login_count: 1,
-        data_access_count: 67,
-        config_changes: 0,
-        last_activity: new Date(Date.now() - 900000).toISOString(),
-        risk_score: 45,
+        user: 'jane.smith@company.com',
+        role: 'Data Analyst',
+        department: 'Analytics',
+        total_events: 987,
+        login_events: 38,
+        data_access_events: 756,
+        config_changes: 3,
+        last_activity: '2024-03-08T14:25:12Z',
+        risk_score: 'medium',
+        unusual_activity: true,
+        locations: ['San Francisco, CA'],
+        devices: ['MacBook Air', 'iPhone']
+      },
+      {
+        user: 'admin@company.com',
+        role: 'System Administrator',
+        department: 'IT',
+        total_events: 756,
+        login_events: 28,
+        data_access_events: 234,
+        config_changes: 89,
+        last_activity: '2024-03-08T14:20:45Z',
+        risk_score: 'high',
         unusual_activity: false,
-        locations: ['San Francisco, US'],
-        devices: ['MacBook Pro']
+        locations: ['Chicago, IL'],
+        devices: ['Windows Workstation']
+      }
+    ];
+
+    // Enhanced sample security events
+    const sampleSecurityEvents = [
+      {
+        id: 1,
+        timestamp: '2024-03-08T14:15:33Z',
+        event_type: 'suspicious_login',
+        severity: 'high',
+        source: 'Authentication System',
+        description: 'Multiple failed login attempts from unknown IP',
+        ip_address: '203.0.113.45',
+        user_agent: 'curl/7.68.0',
+        location: 'Unknown',
+        status: 'investigating',
+        assigned_to: 'Security Team',
+        mitigation_actions: ['IP blocked', 'User notified', 'Monitoring increased']
+      },
+      {
+        id: 2,
+        timestamp: '2024-03-08T13:45:22Z',
+        event_type: 'privilege_escalation',
+        severity: 'critical',
+        source: 'Access Control System',
+        description: 'Unauthorized privilege escalation attempt detected',
+        ip_address: '192.168.1.150',
+        user_agent: 'Mozilla/5.0 (Linux; Android 10)',
+        location: 'Internal Network',
+        status: 'resolved',
+        assigned_to: 'Security Team',
+        mitigation_actions: ['Access revoked', 'Account suspended', 'Investigation completed']
+      },
+      {
+        id: 3,
+        timestamp: '2024-03-08T12:30:15Z',
+        event_type: 'data_exfiltration',
+        severity: 'medium',
+        source: 'Data Loss Prevention',
+        description: 'Large data download detected outside business hours',
+        ip_address: '192.168.1.200',
+        user_agent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+        location: 'Remote VPN',
+        status: 'monitoring',
+        assigned_to: 'Compliance Team',
+        mitigation_actions: ['User contacted', 'Download logged', 'Manager notified']
       }
     ];
 
     setAuditOverview(sampleOverview);
-    setAuditLogs(sampleLogs);
-    setAuditMetrics(sampleMetrics);
+    setAuditLogs(sampleAuditLogs);
     setUserActivity(sampleUserActivity);
+    setSecurityEvents(sampleSecurityEvents);
   };
 
-  const getSeverityColor = (severity) => {
-    switch (severity) {
-      case 'critical': return 'text-red-600 bg-red-100';
-      case 'high': return 'text-orange-600 bg-orange-100';
-      case 'medium': return 'text-yellow-600 bg-yellow-100';
-      case 'low': return 'text-blue-600 bg-blue-100';
-      case 'info': return 'text-gray-600 bg-gray-100';
+  const getEventTypeColor = (type) => {
+    switch (type) {
+      case 'user_login': return 'text-green-600 bg-green-100';
+      case 'failed_login': return 'text-red-600 bg-red-100';
+      case 'data_access': return 'text-blue-600 bg-blue-100';
+      case 'config_change': return 'text-orange-600 bg-orange-100';
+      case 'data_export': return 'text-purple-600 bg-purple-100';
       default: return 'text-gray-600 bg-gray-100';
     }
   };
 
-  const getEventTypeIcon = (eventType) => {
-    switch (eventType) {
-      case 'login': return <CheckCircle className="h-4 w-4 text-green-600" />;
-      case 'logout': return <Activity className="h-4 w-4 text-blue-600" />;
-      case 'failed_login': return <AlertTriangle className="h-4 w-4 text-red-600" />;
-      case 'data_access': return <Database className="h-4 w-4 text-purple-600" />;
-      case 'configuration_change': return <Shield className="h-4 w-4 text-orange-600" />;
-      case 'mfa_setup': return <Shield className="h-4 w-4 text-green-600" />;
-      case 'user_permission_change': return <User className="h-4 w-4 text-red-600" />;
-      default: return <Activity className="h-4 w-4 text-gray-600" />;
+  const getRiskLevelColor = (level) => {
+    switch (level) {
+      case 'low': return 'text-green-600 bg-green-100';
+      case 'medium': return 'text-yellow-600 bg-yellow-100';
+      case 'high': return 'text-red-600 bg-red-100';
+      case 'critical': return 'text-red-800 bg-red-200';
+      default: return 'text-gray-600 bg-gray-100';
     }
   };
+
+  const getSeverityColor = (severity) => {
+    switch (severity) {
+      case 'low': return 'text-green-600 bg-green-100';
+      case 'medium': return 'text-yellow-600 bg-yellow-100';
+      case 'high': return 'text-red-600 bg-red-100';
+      case 'critical': return 'text-red-800 bg-red-200';
+      default: return 'text-gray-600 bg-gray-100';
+    }
+  };
+
+  const filteredAuditLogs = auditLogs.filter(log => {
+    const matchesSearch = searchTerm === '' || 
+      log.user.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      log.action.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      log.resource.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesFilter = filterType === 'all' || log.event_type === filterType;
+    
+    return matchesSearch && matchesFilter;
+  });
 
   const renderOverview = () => (
     <div className="space-y-6">
@@ -356,10 +352,6 @@ const AuditTrailAnalytics = () => {
                 <Activity className="h-6 w-6 text-blue-600" />
               </div>
             </div>
-            <div className="mt-2 flex items-center text-sm">
-              <TrendingUp className="h-4 w-4 text-green-500 mr-1" />
-              <span className="text-green-600">+{auditOverview?.event_trend}% from last week</span>
-            </div>
           </CardContent>
         </Card>
 
@@ -367,36 +359,8 @@ const AuditTrailAnalytics = () => {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Critical Events</p>
-                <p className="text-2xl font-bold text-red-600">{auditOverview?.critical_events}</p>
-              </div>
-              <div className="p-3 rounded-full bg-red-100">
-                <AlertTriangle className="h-6 w-6 text-red-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Failed Logins</p>
-                <p className="text-2xl font-bold text-orange-600">{auditOverview?.failed_logins}</p>
-              </div>
-              <div className="p-3 rounded-full bg-orange-100">
-                <Shield className="h-6 w-6 text-orange-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Unique Users</p>
-                <p className="text-2xl font-bold text-green-600">{auditOverview?.unique_users}</p>
+                <p className="text-sm font-medium text-gray-600">User Actions</p>
+                <p className="text-2xl font-bold text-green-600">{auditOverview?.user_actions?.toLocaleString()}</p>
               </div>
               <div className="p-3 rounded-full bg-green-100">
                 <User className="h-6 w-6 text-green-600" />
@@ -404,36 +368,61 @@ const AuditTrailAnalytics = () => {
             </div>
           </CardContent>
         </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Security Events</p>
+                <p className="text-2xl font-bold text-red-600">{auditOverview?.security_events?.toLocaleString()}</p>
+              </div>
+              <div className="p-3 rounded-full bg-red-100">
+                <Shield className="h-6 w-6 text-red-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Policy Violations</p>
+                <p className="text-2xl font-bold text-orange-600">{auditOverview?.policy_violations}</p>
+              </div>
+              <div className="p-3 rounded-full bg-orange-100">
+                <AlertTriangle className="h-6 w-6 text-orange-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
-      {/* Event Type Distribution */}
+      {/* Top Users and Event Breakdown */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <BarChart3 className="h-5 w-5 text-blue-600" />
-              Top Event Types
+              <User className="h-5 w-5 text-blue-600" />
+              Top Active Users
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {auditOverview?.top_event_types?.map((eventType, index) => (
-                <div key={eventType.type} className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    {getEventTypeIcon(eventType.type)}
-                    <span className="font-medium capitalize">{eventType.type.replace('_', ' ')}</span>
+              {auditOverview?.top_users?.map((user, index) => (
+                <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div>
+                    <p className="font-medium text-gray-900">{user.user}</p>
+                    <p className="text-sm text-gray-600">{user.events} events</p>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-24 bg-gray-200 rounded-full h-2">
-                      <div
-                        className="bg-blue-600 h-2 rounded-full"
-                        style={{
-                          width: `${(eventType.count / Math.max(...auditOverview.top_event_types.map(t => t.count))) * 100}%`
-                        }}
-                      />
-                    </div>
-                    <span className="text-sm font-medium w-16 text-right">{eventType.count.toLocaleString()}</span>
-                  </div>
+                  <Badge
+                    variant={user.risk_score === 'low' ? 'success' : user.risk_score === 'medium' ? 'warning' : 'error'}
+                    size="sm"
+                    icon={null}
+                    onRemove={() => {}}
+                  >
+                    {user.risk_score} risk
+                  </Badge>
                 </div>
               ))}
             </div>
@@ -443,201 +432,158 @@ const AuditTrailAnalytics = () => {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Globe className="h-5 w-5 text-purple-600" />
-              Geographic Distribution
+              <BarChart3 className="h-5 w-5 text-purple-600" />
+              Event Categories
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {auditMetrics?.geographic_distribution?.slice(0, 5).map((location) => (
-                <div key={location.country} className="flex items-center justify-between">
-                  <span className="font-medium">{location.country}</span>
-                  <div className="flex items-center gap-2">
-                    <div className="w-24 bg-gray-200 rounded-full h-2">
-                      <div
-                        className="bg-purple-600 h-2 rounded-full"
-                        style={{
-                          width: `${(location.count / Math.max(...auditMetrics.geographic_distribution.map(l => l.count))) * 100}%`
-                        }}
-                      />
-                    </div>
-                    <span className="text-sm font-medium w-16 text-right">{location.count.toLocaleString()}</span>
-                  </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-green-500" />
+                  <span className="font-medium">Login Events</span>
                 </div>
-              ))}
+                <span className="text-lg font-semibold">{auditOverview?.successful_logins?.toLocaleString()}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-blue-500" />
+                  <span className="font-medium">Data Access</span>
+                </div>
+                <span className="text-lg font-semibold">{auditOverview?.data_access_events?.toLocaleString()}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-orange-500" />
+                  <span className="font-medium">Config Changes</span>
+                </div>
+                <span className="text-lg font-semibold">{auditOverview?.configuration_changes}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-red-500" />
+                  <span className="font-medium">Failed Logins</span>
+                </div>
+                <span className="text-lg font-semibold">{auditOverview?.failed_logins}</span>
+              </div>
             </div>
           </CardContent>
         </Card>
       </div>
-
-      {/* Severity Distribution */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <AlertTriangle className="h-5 w-5 text-red-600" />
-            Event Severity Distribution
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-            {auditMetrics?.severity_distribution && Object.entries(auditMetrics.severity_distribution).map(([severity, count]) => (
-              <div key={severity} className="text-center">
-                <div className={`text-2xl font-bold ${
-                  severity === 'critical' ? 'text-red-600' :
-                  severity === 'high' ? 'text-orange-600' :
-                  severity === 'medium' ? 'text-yellow-600' :
-                  severity === 'low' ? 'text-blue-600' : 'text-gray-600'
-                }`}>
-                  {count.toLocaleString()}
-                </div>
-                <div className="text-sm text-gray-600 capitalize">{severity}</div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 
   const renderAuditLogs = () => (
     <div className="space-y-6">
       {/* Filters */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search events..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            
-            <select
-              value={selectedEventType}
-              onChange={(e) => setSelectedEventType(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="all">All Event Types</option>
-              <option value="login">Login</option>
-              <option value="logout">Logout</option>
-              <option value="failed_login">Failed Login</option>
-              <option value="data_access">Data Access</option>
-              <option value="configuration_change">Config Change</option>
-            </select>
-
-            <select
-              value={selectedSeverity}
-              onChange={(e) => setSelectedSeverity(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="all">All Severities</option>
-              <option value="critical">Critical</option>
-              <option value="high">High</option>
-              <option value="medium">Medium</option>
-              <option value="low">Low</option>
-              <option value="info">Info</option>
-            </select>
-
-            <select
-              value={dateRange}
-              onChange={(e) => setDateRange(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="1h">Last Hour</option>
-              <option value="24h">Last 24 Hours</option>
-              <option value="7d">Last 7 Days</option>
-              <option value="30d">Last 30 Days</option>
-              <option value="90d">Last 90 Days</option>
-            </select>
-
-            <Button onClick={fetchAuditData}>
-              <Filter className="h-4 w-4 mr-2" />
-              Apply Filters
-            </Button>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <div className="relative">
+            <Search className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search logs..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
           </div>
-        </CardContent>
-      </Card>
+          <select
+            value={filterType}
+            onChange={(e) => setFilterType(e.target.value)}
+            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          >
+            <option value="all">All Events</option>
+            <option value="user_login">Login Events</option>
+            <option value="data_access">Data Access</option>
+            <option value="config_change">Config Changes</option>
+            <option value="failed_login">Failed Logins</option>
+            <option value="data_export">Data Export</option>
+          </select>
+          <select
+            value={dateRange}
+            onChange={(e) => setDateRange(e.target.value)}
+            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          >
+            <option value="1d">Last 24 Hours</option>
+            <option value="7d">Last 7 Days</option>
+            <option value="30d">Last 30 Days</option>
+            <option value="90d">Last 90 Days</option>
+          </select>
+        </div>
+        <Button>
+          <Download className="h-4 w-4 mr-2" />
+          Export Logs
+        </Button>
+      </div>
 
       {/* Audit Logs Table */}
       <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <Database className="h-5 w-5 text-blue-600" />
-              Audit Trail ({auditLogs.length} events)
-            </CardTitle>
-            <Button variant="outline" size="sm">
-              <Download className="h-4 w-4 mr-2" />
-              Export
-            </Button>
-          </div>
-        </CardHeader>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-gray-50 border-b">
                 <tr>
-                  <th className="text-left p-4 font-medium text-gray-900">Timestamp</th>
-                  <th className="text-left p-4 font-medium text-gray-900">User</th>
-                  <th className="text-left p-4 font-medium text-gray-900">Event</th>
-                  <th className="text-left p-4 font-medium text-gray-900">Severity</th>
-                  <th className="text-left p-4 font-medium text-gray-900">IP Address</th>
-                  <th className="text-left p-4 font-medium text-gray-900">Result</th>
-                  <th className="text-left p-4 font-medium text-gray-900">Actions</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Timestamp
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Event Type
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    User
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Action
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Resource
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Risk Level
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Actions
+                  </th>
                 </tr>
               </thead>
-              <tbody>
-                {auditLogs.map((log) => (
-                  <tr key={log.id} className="border-b hover:bg-gray-50">
-                    <td className="p-4">
-                      <div className="flex items-center gap-2">
-                        <Clock className="h-4 w-4 text-gray-400" />
-                        <span className="text-sm">{new Date(log.timestamp).toLocaleString()}</span>
-                      </div>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {filteredAuditLogs.map((log) => (
+                  <tr key={log.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {new Date(log.timestamp).toLocaleString()}
                     </td>
-                    <td className="p-4">
-                      <div className="flex items-center gap-2">
-                        <User className="h-4 w-4 text-gray-400" />
-                        <span className="text-sm font-medium">{log.user_email || 'System'}</span>
-                      </div>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <Badge
+                        variant="default"
+                        size="sm"
+                        className={getEventTypeColor(log.event_type)}
+                        icon={null}
+                        onRemove={() => {}}
+                      >
+                        {log.event_type.replace('_', ' ')}
+                      </Badge>
                     </td>
-                    <td className="p-4">
-                      <div className="flex items-center gap-2">
-                        {getEventTypeIcon(log.event_type)}
-                        <div>
-                          <div className="text-sm font-medium capitalize">{log.event_type.replace('_', ' ')}</div>
-                          <div className="text-xs text-gray-500">{log.description}</div>
-                        </div>
-                      </div>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {log.user}
                     </td>
-                    <td className="p-4">
-                      <Badge 
-                        variant={log.severity === 'critical' ? 'error' : log.severity === 'high' ? 'warning' : 'default'}
+                    <td className="px-6 py-4 text-sm text-gray-900">
+                      {log.action}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {log.resource}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <Badge
+                        variant={log.risk_level === 'low' ? 'success' : log.risk_level === 'medium' ? 'warning' : 'error'}
                         size="sm"
                         icon={null}
                         onRemove={() => {}}
                       >
-                        {log.severity}
+                        {log.risk_level}
                       </Badge>
                     </td>
-                    <td className="p-4">
-                      <span className="text-sm font-mono">{log.ip_address}</span>
-                    </td>
-                    <td className="p-4">
-                      <Badge 
-                        variant={log.result === 'success' ? 'success' : 'error'}
-                        size="sm"
-                        icon={null}
-                        onRemove={() => {}}
-                      >
-                        {log.result}
-                      </Badge>
-                    </td>
-                    <td className="p-4">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <Button variant="outline" size="sm">
                         <Eye className="h-4 w-4 mr-1" />
                         Details
@@ -655,31 +601,23 @@ const AuditTrailAnalytics = () => {
 
   const renderUserActivity = () => (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold">User Activity Analysis</h2>
-        <Button variant="outline" size="sm">
-          <Download className="h-4 w-4 mr-2" />
-          Export Report
-        </Button>
-      </div>
-
-      <div className="grid grid-cols-1 gap-6">
-        {userActivity.map((user) => (
-          <Card key={user.user_id}>
+      <div className="grid grid-cols-1 gap-4">
+        {userActivity.map((user, index) => (
+          <Card key={index}>
             <CardContent className="p-6">
               <div className="flex items-start justify-between mb-4">
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900">{user.user_email}</h3>
-                  <p className="text-sm text-gray-600">Last activity: {new Date(user.last_activity).toLocaleString()}</p>
+                  <h3 className="text-lg font-semibold text-gray-900">{user.user}</h3>
+                  <p className="text-gray-600">{user.role} - {user.department}</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <Badge
-                    variant={user.risk_score >= 70 ? 'error' : user.risk_score >= 40 ? 'warning' : 'success'}
+                    variant={user.risk_score === 'low' ? 'success' : user.risk_score === 'medium' ? 'warning' : 'error'}
                     size="sm"
                     icon={null}
                     onRemove={() => {}}
                   >
-                    Risk: {user.risk_score}
+                    {user.risk_score} risk
                   </Badge>
                   {user.unusual_activity && (
                     <Badge variant="warning" size="sm" icon={null} onRemove={() => {}}>
@@ -689,47 +627,62 @@ const AuditTrailAnalytics = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-blue-600">{user.total_events}</div>
-                  <div className="text-sm text-gray-600">Total Events</div>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div>
+                  <h4 className="font-medium text-gray-900 mb-2">Activity Summary</h4>
+                  <div className="space-y-1 text-sm">
+                    <div className="flex justify-between">
+                      <span>Total Events:</span>
+                      <span className="font-medium">{user.total_events}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Logins:</span>
+                      <span className="font-medium">{user.login_events}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Data Access:</span>
+                      <span className="font-medium">{user.data_access_events}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Config Changes:</span>
+                      <span className="font-medium">{user.config_changes}</span>
+                    </div>
+                  </div>
                 </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-green-600">{user.login_count}</div>
-                  <div className="text-sm text-gray-600">Logins</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-red-600">{user.failed_login_count}</div>
-                  <div className="text-sm text-gray-600">Failed Logins</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-purple-600">{user.data_access_count}</div>
-                  <div className="text-sm text-gray-600">Data Access</div>
-                </div>
-              </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <h4 className="font-medium text-gray-900 mb-2">Locations</h4>
                   <div className="space-y-1">
-                    {user.locations.map((location, index) => (
-                      <div key={index} className="flex items-center gap-2 text-sm">
-                        <Globe className="h-4 w-4 text-gray-400" />
+                    {user.locations.map((location, idx) => (
+                      <div key={idx} className="flex items-center gap-2 text-sm">
+                        <Globe className="h-3 w-3 text-gray-400" />
                         <span>{location}</span>
                       </div>
                     ))}
                   </div>
                 </div>
+
                 <div>
                   <h4 className="font-medium text-gray-900 mb-2">Devices</h4>
                   <div className="space-y-1">
-                    {user.devices.map((device, index) => (
-                      <div key={index} className="flex items-center gap-2 text-sm">
-                        <Smartphone className="h-4 w-4 text-gray-400" />
+                    {user.devices.map((device, idx) => (
+                      <div key={idx} className="flex items-center gap-2 text-sm">
+                        {device.includes('iPhone') || device.includes('Android') ? (
+                          <Smartphone className="h-3 w-3 text-gray-400" />
+                        ) : (
+                          <Monitor className="h-3 w-3 text-gray-400" />
+                        )}
                         <span>{device}</span>
                       </div>
                     ))}
                   </div>
+                </div>
+
+                <div>
+                  <h4 className="font-medium text-gray-900 mb-2">Last Activity</h4>
+                  <p className="text-sm text-gray-600">
+                    {new Date(user.last_activity).toLocaleString()}
+                  </p>
                 </div>
               </div>
 
@@ -750,113 +703,108 @@ const AuditTrailAnalytics = () => {
     </div>
   );
 
-  const renderAnalytics = () => (
+  const renderSecurityEvents = () => (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Hourly Distribution */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Clock className="h-5 w-5 text-blue-600" />
-              Hourly Activity Distribution
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {auditMetrics?.hourly_distribution?.map((hour) => (
-                <div key={hour.hour} className="flex items-center justify-between">
-                  <span className="text-sm font-medium w-12">{hour.hour}:00</span>
-                  <div className="flex-1 mx-4">
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div
-                        className="bg-blue-600 h-2 rounded-full"
-                        style={{
-                          width: `${(hour.count / Math.max(...auditMetrics.hourly_distribution.map(h => h.count))) * 100}%`
-                        }}
-                      />
-                    </div>
-                  </div>
-                  <span className="text-sm text-gray-600 w-12 text-right">{hour.count}</span>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Top Users by Activity */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <User className="h-5 w-5 text-green-600" />
-              Top Users by Activity
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {auditMetrics?.top_users?.map((user, index) => (
-                <div key={user.user} className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-xs font-medium">
-                      {index + 1}
-                    </div>
-                    <span className="text-sm font-medium">{user.user}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-gray-600">{user.events} events</span>
+      <div className="grid grid-cols-1 gap-4">
+        {securityEvents.map((event) => (
+          <Card key={event.id}>
+            <CardContent className="p-6">
+              <div className="flex items-start justify-between mb-4">
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
                     <Badge
-                      variant={user.risk_score >= 70 ? 'error' : user.risk_score >= 40 ? 'warning' : 'success'}
+                      variant={event.severity === 'low' ? 'success' : event.severity === 'medium' ? 'warning' : 'error'}
                       size="sm"
                       icon={null}
                       onRemove={() => {}}
                     >
-                      {user.risk_score}
+                      {event.severity} severity
+                    </Badge>
+                    <Badge
+                      variant={event.status === 'resolved' ? 'success' : event.status === 'investigating' ? 'warning' : 'default'}
+                      size="sm"
+                      icon={null}
+                      onRemove={() => {}}
+                    >
+                      {event.status}
                     </Badge>
                   </div>
+                  <h3 className="text-lg font-semibold text-gray-900">{event.event_type.replace('_', ' ')}</h3>
+                  <p className="text-gray-600">{event.description}</p>
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+                <div className="text-right">
+                  <p className="text-sm text-gray-500">{new Date(event.timestamp).toLocaleString()}</p>
+                  <p className="text-sm font-medium text-gray-700">{event.source}</p>
+                </div>
+              </div>
 
-      {/* Daily Trends */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <TrendingUp className="h-5 w-5 text-purple-600" />
-            Daily Activity Trends
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {auditMetrics?.daily_trends?.map((day) => (
-              <div key={day.date} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <div className="flex items-center gap-4">
-                  <Calendar className="h-4 w-4 text-gray-400" />
-                  <span className="font-medium">{new Date(day.date).toLocaleDateString()}</span>
-                </div>
-                <div className="flex items-center gap-6">
-                  <div className="text-center">
-                    <div className="text-lg font-semibold text-blue-600">{day.events.toLocaleString()}</div>
-                    <div className="text-xs text-gray-600">Events</div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
+                <div>
+                  <h4 className="font-medium text-gray-900 mb-2">Network Details</h4>
+                  <div className="space-y-1 text-sm">
+                    <div className="flex justify-between">
+                      <span>IP Address:</span>
+                      <span className="font-medium">{event.ip_address}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Location:</span>
+                      <span className="font-medium">{event.location}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>User Agent:</span>
+                      <span className="font-medium text-xs">{event.user_agent.substring(0, 30)}...</span>
+                    </div>
                   </div>
-                  <div className="text-center">
-                    <div className="text-lg font-semibold text-red-600">{day.critical}</div>
-                    <div className="text-xs text-gray-600">Critical</div>
+                </div>
+
+                <div>
+                  <h4 className="font-medium text-gray-900 mb-2">Assignment</h4>
+                  <div className="space-y-1 text-sm">
+                    <div className="flex justify-between">
+                      <span>Assigned To:</span>
+                      <span className="font-medium">{event.assigned_to}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Status:</span>
+                      <span className="font-medium">{event.status}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="font-medium text-gray-900 mb-2">Mitigation Actions</h4>
+                  <div className="space-y-1">
+                    {event.mitigation_actions.map((action, idx) => (
+                      <div key={idx} className="flex items-center gap-2 text-sm">
+                        <CheckCircle className="h-3 w-3 text-green-500" />
+                        <span>{action}</span>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+
+              <div className="flex items-center justify-end gap-2 pt-4 border-t">
+                <Button variant="outline" size="sm">
+                  <Eye className="h-4 w-4 mr-1" />
+                  View Details
+                </Button>
+                <Button variant="outline" size="sm">
+                  <Settings className="h-4 w-4 mr-1" />
+                  Manage
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
     </div>
   );
 
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
       </div>
     );
   }
@@ -866,58 +814,44 @@ const AuditTrailAnalytics = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-            <Database className="h-6 w-6 text-blue-600" />
-            Audit Trail Analytics
-          </h1>
-          <p className="text-gray-600 mt-1">Comprehensive audit log analysis and user activity monitoring</p>
-          {usingFallbackData && (
-            <div className="mt-2 text-sm text-amber-600 bg-amber-50 px-3 py-1 rounded-md">
-              ⚠️ Using sample data - API endpoints unavailable
-            </div>
-          )}
+          <h1 className="text-2xl font-bold text-gray-900">Audit Trail Analytics</h1>
+          <p className="text-gray-600">Comprehensive audit logging and security event monitoring</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={fetchAuditData}>
-            <Activity className="h-4 w-4 mr-2" />
+          {usingFallbackData && (
+            <Badge variant="warning" size="sm" icon={null} onRemove={() => {}}>
+              Sample Data
+            </Badge>
+          )}
+          <Button onClick={fetchAuditData}>
+            <RefreshCw className="h-4 w-4 mr-2" />
             Refresh
-          </Button>
-          <Button variant="outline" size="sm">
-            <Download className="h-4 w-4 mr-2" />
-            Export All
-          </Button>
-          <Button size="sm">
-            <AlertTriangle className="h-4 w-4 mr-2" />
-            Create Alert
           </Button>
         </div>
       </div>
 
-      {/* Navigation Tabs */}
+      {/* Tab Navigation */}
       <div className="border-b border-gray-200">
-        <nav className="flex space-x-8">
+        <nav className="-mb-px flex space-x-8">
           {[
             { id: 'overview', label: 'Overview', icon: BarChart3 },
-            { id: 'logs', label: 'Audit Logs', icon: Database },
-            { id: 'users', label: 'User Activity', icon: User },
-            { id: 'analytics', label: 'Analytics', icon: TrendingUp }
-          ].map((tab) => {
-            const Icon = tab.icon;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 py-2 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === tab.id
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                <Icon className="h-4 w-4" />
-                {tab.label}
-              </button>
-            );
-          })}
+            { id: 'logs', label: 'Audit Logs', icon: FileText },
+            { id: 'activity', label: 'User Activity', icon: User },
+            { id: 'security', label: 'Security Events', icon: Shield }
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex items-center gap-2 py-2 px-1 border-b-2 font-medium text-sm ${
+                activeTab === tab.id
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              <tab.icon className="h-4 w-4" />
+              {tab.label}
+            </button>
+          ))}
         </nav>
       </div>
 
@@ -925,8 +859,8 @@ const AuditTrailAnalytics = () => {
       <div>
         {activeTab === 'overview' && renderOverview()}
         {activeTab === 'logs' && renderAuditLogs()}
-        {activeTab === 'users' && renderUserActivity()}
-        {activeTab === 'analytics' && renderAnalytics()}
+        {activeTab === 'activity' && renderUserActivity()}
+        {activeTab === 'security' && renderSecurityEvents()}
       </div>
     </div>
   );

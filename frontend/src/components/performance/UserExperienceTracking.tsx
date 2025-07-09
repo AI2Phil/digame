@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { 
-  Clock, 
-  Zap, 
-  Eye, 
-  MousePointer, 
-  Smartphone, 
-  Monitor, 
+import {
+  Clock,
+  Zap,
+  Eye,
+  MousePointer,
+  Smartphone,
+  Monitor,
   Tablet,
   TrendingUp,
   TrendingDown,
@@ -14,6 +14,7 @@ import {
   BarChart3,
   Activity
 } from 'lucide-react';
+import { useToastHelpers } from '../ui/Toaster';
 
 interface PerformanceMetric {
   name: string;
@@ -70,6 +71,8 @@ const UserExperienceTracking: React.FC<UserExperienceTrackingProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [selectedTimeRange, setSelectedTimeRange] = useState('24h');
   const [selectedDevice, setSelectedDevice] = useState<string>('all');
+  const [usingFallbackData, setUsingFallbackData] = useState(false);
+  const { success, error: showError, warning, info } = useToastHelpers();
 
   // Core Web Vitals tracking
   const trackWebVitals = useCallback(() => {
@@ -158,104 +161,183 @@ const UserExperienceTracking: React.FC<UserExperienceTrackingProps> = ({
     };
   }, []);
 
-  // Fetch performance data
+  // Fetch performance data from database-driven API
   const fetchPerformanceData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
+      setUsingFallbackData(false);
 
-      // Simulate API call for user sessions
-      const mockSessions: UserSession[] = [
+      // Try multiple possible token keys for better compatibility
+      const token = sessionStorage.getItem('accessToken') ||
+                   sessionStorage.getItem('token') ||
+                   localStorage.getItem('accessToken') ||
+                   localStorage.getItem('token');
+
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      // Fetch user experience data from database-driven API
+      const response = await fetch(`http://localhost:8001/api/performance/user-experience/session?timeRange=${selectedTimeRange}&device=${selectedDevice}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setSessions(data.sessions || []);
+        setPagePerformance(data.pagePerformance || []);
+        success('User experience data loaded successfully');
+      } else {
+        throw new Error(`Failed to fetch user experience data: ${response.status} ${response.statusText}`);
+      }
+    } catch (err) {
+      console.error('Failed to fetch user experience data:', err);
+      setUsingFallbackData(true);
+      warning(`Using sample data: ${err.message}`);
+      
+      // Enhanced fallback data with realistic patterns
+      const fallbackSessions: UserSession[] = [
         {
-          id: '1',
-          userId: 'user_123',
-          startTime: new Date(Date.now() - 3600000),
-          duration: 1847,
-          pageViews: 8,
-          interactions: 45,
+          id: 'session_001',
+          userId: 'user_philip_oshea',
+          startTime: new Date(Date.now() - 2400000),
+          duration: 2847,
+          pageViews: 12,
+          interactions: 89,
           device: 'desktop',
-          browser: 'Chrome',
+          browser: 'Chrome 120',
           location: 'San Francisco, CA',
-          bounceRate: 0.25,
+          bounceRate: 0.15,
+          conversionEvents: 4
+        },
+        {
+          id: 'session_002',
+          userId: 'user_sarah_chen',
+          startTime: new Date(Date.now() - 3600000),
+          duration: 1456,
+          pageViews: 7,
+          interactions: 34,
+          device: 'mobile',
+          browser: 'Safari 17',
+          location: 'New York, NY',
+          bounceRate: 0.28,
           conversionEvents: 2
         },
         {
-          id: '2',
-          userId: 'user_456',
-          startTime: new Date(Date.now() - 7200000),
-          duration: 892,
-          pageViews: 3,
-          interactions: 12,
-          device: 'mobile',
-          browser: 'Safari',
-          location: 'New York, NY',
-          bounceRate: 0.67,
-          conversionEvents: 0
+          id: 'session_003',
+          userId: 'user_alex_rodriguez',
+          startTime: new Date(Date.now() - 1800000),
+          duration: 3241,
+          pageViews: 18,
+          interactions: 127,
+          device: 'desktop',
+          browser: 'Firefox 121',
+          location: 'London, UK',
+          bounceRate: 0.11,
+          conversionEvents: 6
         },
         {
-          id: '3',
-          userId: 'user_789',
-          startTime: new Date(Date.now() - 1800000),
-          duration: 2341,
-          pageViews: 12,
-          interactions: 78,
+          id: 'session_004',
+          userId: 'user_maria_garcia',
+          startTime: new Date(Date.now() - 5400000),
+          duration: 892,
+          pageViews: 4,
+          interactions: 18,
           device: 'tablet',
-          browser: 'Firefox',
-          location: 'London, UK',
-          bounceRate: 0.17,
+          browser: 'Safari 17',
+          location: 'Madrid, Spain',
+          bounceRate: 0.45,
+          conversionEvents: 1
+        },
+        {
+          id: 'session_005',
+          userId: 'user_david_kim',
+          startTime: new Date(Date.now() - 7200000),
+          duration: 2156,
+          pageViews: 9,
+          interactions: 67,
+          device: 'desktop',
+          browser: 'Edge 120',
+          location: 'Seoul, South Korea',
+          bounceRate: 0.22,
           conversionEvents: 3
         }
       ];
 
-      // Simulate API call for page performance
-      const mockPagePerformance: PagePerformance[] = [
+      const fallbackPagePerformance: PagePerformance[] = [
         {
           path: '/dashboard',
           loadTime: 1234,
           firstContentfulPaint: 892,
           largestContentfulPaint: 1456,
-          cumulativeLayoutShift: 0.05,
+          cumulativeLayoutShift: 0.045,
           firstInputDelay: 23,
           timeToInteractive: 1678,
-          visits: 2847,
-          bounceRate: 0.23,
-          avgSessionDuration: 1892
-        },
-        {
-          path: '/analytics',
-          loadTime: 2156,
-          firstContentfulPaint: 1234,
-          largestContentfulPaint: 2890,
-          cumulativeLayoutShift: 0.12,
-          firstInputDelay: 45,
-          timeToInteractive: 3234,
-          visits: 1456,
-          bounceRate: 0.34,
+          visits: 4521,
+          bounceRate: 0.18,
           avgSessionDuration: 2341
         },
         {
-          path: '/team',
+          path: '/analytics/platform',
+          loadTime: 1876,
+          firstContentfulPaint: 1123,
+          largestContentfulPaint: 2234,
+          cumulativeLayoutShift: 0.067,
+          firstInputDelay: 34,
+          timeToInteractive: 2456,
+          visits: 3247,
+          bounceRate: 0.24,
+          avgSessionDuration: 2789
+        },
+        {
+          path: '/digital-twin/dashboard',
+          loadTime: 2156,
+          firstContentfulPaint: 1456,
+          largestContentfulPaint: 2890,
+          cumulativeLayoutShift: 0.089,
+          firstInputDelay: 45,
+          timeToInteractive: 3234,
+          visits: 2134,
+          bounceRate: 0.31,
+          avgSessionDuration: 3456
+        },
+        {
+          path: '/team/collaboration',
           loadTime: 987,
           firstContentfulPaint: 567,
           largestContentfulPaint: 1123,
-          cumulativeLayoutShift: 0.03,
+          cumulativeLayoutShift: 0.023,
           firstInputDelay: 12,
           timeToInteractive: 1345,
-          visits: 3421,
-          bounceRate: 0.18,
-          avgSessionDuration: 2789
+          visits: 5678,
+          bounceRate: 0.14,
+          avgSessionDuration: 2987
+        },
+        {
+          path: '/workflow/automation',
+          loadTime: 1567,
+          firstContentfulPaint: 934,
+          largestContentfulPaint: 1789,
+          cumulativeLayoutShift: 0.056,
+          firstInputDelay: 28,
+          timeToInteractive: 2123,
+          visits: 1876,
+          bounceRate: 0.27,
+          avgSessionDuration: 2456
         }
       ];
 
-      setSessions(mockSessions);
-      setPagePerformance(mockPagePerformance);
-    } catch (err) {
-      setError('Failed to fetch performance data');
-      console.error('Performance tracking error:', err);
+      setSessions(fallbackSessions);
+      setPagePerformance(fallbackPagePerformance);
+      setError(`Failed to load user experience data: ${err.message}`);
     } finally {
       setLoading(false);
     }
-  }, [selectedTimeRange, selectedDevice]);
+  }, [selectedTimeRange, selectedDevice, success, warning]);
 
   useEffect(() => {
     trackWebVitals();
@@ -371,6 +453,11 @@ const UserExperienceTracking: React.FC<UserExperienceTrackingProps> = ({
             <div>
               <h2 className="text-lg font-semibold text-gray-900">User Experience Tracking</h2>
               <p className="text-sm text-gray-600">Real-time performance and user interaction monitoring</p>
+              {usingFallbackData && (
+                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 mt-1">
+                  Demo Data
+                </span>
+              )}
             </div>
           </div>
           <div className="flex items-center space-x-3">

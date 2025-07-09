@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { 
-  Activity, 
-  Zap, 
-  Clock, 
-  TrendingUp, 
-  TrendingDown, 
-  AlertTriangle, 
-  CheckCircle, 
+import {
+  Activity,
+  Zap,
+  Clock,
+  TrendingUp,
+  TrendingDown,
+  AlertTriangle,
+  CheckCircle,
   RefreshCw,
   Settings,
   Eye,
@@ -22,6 +22,7 @@ import {
   Bell,
   Filter
 } from 'lucide-react';
+import { useToastHelpers } from '../ui/Toaster';
 import UserExperienceTracking from './UserExperienceTracking';
 import QueryOptimization from './QueryOptimization';
 import BundleAnalyzer from './BundleAnalyzer';
@@ -94,233 +95,285 @@ const PerformanceMonitoringDashboard: React.FC<PerformanceMonitoringDashboardPro
   const [selectedView, setSelectedView] = useState<'overview' | 'ux' | 'queries' | 'bundle' | 'alerts'>('overview');
   const [autoOptimize, setAutoOptimize] = useState(false);
   const [alertFilter, setAlertFilter] = useState<string>('all');
+  const [usingFallbackData, setUsingFallbackData] = useState(false);
+  const { success, error: showError, warning, info } = useToastHelpers();
 
-  // Fetch performance data
+  // Fetch performance data from database-driven API
   const fetchPerformanceData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
+      setUsingFallbackData(false);
 
-      // Simulate API calls for performance data
-      const mockMetrics: PerformanceMetric[] = [
+      // Try multiple possible token keys for better compatibility
+      const token = sessionStorage.getItem('accessToken') ||
+                   sessionStorage.getItem('token') ||
+                   localStorage.getItem('accessToken') ||
+                   localStorage.getItem('token');
+
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      // Fetch comprehensive performance monitoring data from database-driven API
+      const response = await fetch('http://localhost:8001/api/performance/monitoring-dashboard', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setMetrics(data.metrics || []);
+        setSystemHealth(data.systemHealth || null);
+        setAlerts(data.alerts || []);
+        setOptimizations(data.optimizations || []);
+        success('Performance monitoring data loaded successfully');
+      } else {
+        throw new Error(`Failed to fetch performance monitoring data: ${response.status} ${response.statusText}`);
+      }
+    } catch (err) {
+      console.error('Failed to fetch performance monitoring data:', err);
+      setUsingFallbackData(true);
+      warning(`Using sample data: ${err.message}`);
+      
+      // Enhanced fallback data with realistic Digame platform performance patterns
+      const fallbackMetrics: PerformanceMetric[] = [
         {
-          name: 'Page Load Time',
-          value: 2.34,
-          unit: 's',
-          status: 'warning',
-          trend: 'up',
-          change: 12.5,
-          threshold: { warning: 2.0, critical: 3.0 }
-        },
-        {
-          name: 'First Contentful Paint',
-          value: 1.2,
+          name: 'Digital Twin Load Time',
+          value: 1.89,
           unit: 's',
           status: 'good',
           trend: 'down',
-          change: -8.3,
+          change: -12.3,
+          threshold: { warning: 2.0, critical: 3.0 }
+        },
+        {
+          name: 'Analytics Dashboard FCP',
+          value: 1.45,
+          unit: 's',
+          status: 'good',
+          trend: 'stable',
+          change: -2.1,
           threshold: { warning: 1.8, critical: 2.5 }
         },
         {
-          name: 'Time to Interactive',
-          value: 3.1,
+          name: 'Platform TTI',
+          value: 2.67,
           unit: 's',
-          status: 'critical',
+          status: 'warning',
           trend: 'up',
-          change: 15.7,
-          threshold: { warning: 2.5, critical: 3.0 }
+          change: 8.4,
+          threshold: { warning: 2.5, critical: 3.5 }
         },
         {
-          name: 'Cumulative Layout Shift',
-          value: 0.08,
+          name: 'Layout Stability (CLS)',
+          value: 0.045,
           unit: '',
           status: 'good',
-          trend: 'stable',
-          change: 0.2,
+          trend: 'down',
+          change: -15.6,
           threshold: { warning: 0.1, critical: 0.25 }
         },
         {
           name: 'API Response Time',
-          value: 245,
+          value: 189,
           unit: 'ms',
           status: 'good',
           trend: 'down',
-          change: -5.2,
+          change: -8.7,
           threshold: { warning: 300, critical: 500 }
         },
         {
           name: 'Database Query Time',
-          value: 89,
+          value: 67,
           unit: 'ms',
           status: 'good',
           trend: 'stable',
-          change: 1.1,
+          change: 2.3,
           threshold: { warning: 100, critical: 200 }
         },
         {
-          name: 'Error Rate',
-          value: 0.12,
+          name: 'Platform Error Rate',
+          value: 0.08,
           unit: '%',
           status: 'good',
           trend: 'down',
-          change: -23.4,
+          change: -34.2,
           threshold: { warning: 0.5, critical: 1.0 }
         },
         {
           name: 'Bundle Size',
-          value: 1.67,
+          value: 2.23,
           unit: 'MB',
           status: 'warning',
           trend: 'up',
-          change: 8.9,
-          threshold: { warning: 1.5, critical: 2.0 }
+          change: 15.6,
+          threshold: { warning: 2.0, critical: 3.0 }
         }
       ];
 
-      const mockSystemHealth: SystemHealth = {
-        cpu: 45.2,
-        memory: 67.8,
-        disk: 23.4,
-        network: 12.1,
-        uptime: 99.97,
-        activeConnections: 247,
-        responseTime: 234,
-        errorRate: 0.12
+      const fallbackSystemHealth: SystemHealth = {
+        cpu: 34.7,
+        memory: 58.2,
+        disk: 19.8,
+        network: 8.4,
+        uptime: 99.94,
+        activeConnections: 342,
+        responseTime: 189,
+        errorRate: 0.08
       };
 
-      const mockAlerts: PerformanceAlert[] = [
+      const fallbackAlerts: PerformanceAlert[] = [
         {
-          id: '1',
+          id: 'alert_001',
           type: 'performance',
-          severity: 'high',
-          title: 'High Time to Interactive',
-          description: 'TTI has increased by 15.7% in the last hour, affecting user experience',
-          timestamp: new Date(Date.now() - 300000),
-          component: 'Frontend',
+          severity: 'medium',
+          title: 'Digital Twin Component Loading Slower',
+          description: 'Digital twin dashboard components are taking 8.4% longer to become interactive, potentially affecting user experience',
+          timestamp: new Date(Date.now() - 420000),
+          component: 'Digital Twin Frontend',
           resolved: false,
           actions: [
-            'Analyze bundle size and optimize',
-            'Check for blocking resources',
-            'Review third-party scripts'
+            'Analyze digital twin component bundle size',
+            'Implement lazy loading for AI/ML features',
+            'Optimize TensorFlow.js loading strategy',
+            'Review third-party chart library usage'
           ]
         },
         {
-          id: '2',
+          id: 'alert_002',
           type: 'resource',
           severity: 'medium',
-          title: 'Memory Usage Above Threshold',
-          description: 'Server memory usage is at 67.8%, approaching warning threshold',
-          timestamp: new Date(Date.now() - 600000),
-          component: 'Backend',
-          resolved: false,
-          actions: [
-            'Monitor memory leaks',
-            'Optimize caching strategy',
-            'Consider scaling resources'
-          ]
-        },
-        {
-          id: '3',
-          type: 'performance',
-          severity: 'medium',
-          title: 'Bundle Size Increase',
-          description: 'Application bundle size has grown by 8.9% this week',
+          title: 'Bundle Size Growth Detected',
+          description: 'Application bundle size has increased by 15.6% over the past week, approaching warning threshold',
           timestamp: new Date(Date.now() - 1800000),
           component: 'Build System',
           resolved: false,
           actions: [
-            'Run bundle analyzer',
-            'Remove unused dependencies',
-            'Implement code splitting'
+            'Run comprehensive bundle analysis',
+            'Remove unused dependencies and imports',
+            'Implement advanced code splitting strategies',
+            'Optimize vendor chunk splitting'
           ]
         },
         {
-          id: '4',
-          type: 'error',
+          id: 'alert_003',
+          type: 'performance',
           severity: 'low',
-          title: 'API Error Rate Decreased',
-          description: 'Error rate has improved by 23.4% due to recent optimizations',
+          title: 'Analytics Dashboard Performance Improved',
+          description: 'Recent optimizations have reduced analytics dashboard error rate by 34.2%',
           timestamp: new Date(Date.now() - 3600000),
-          component: 'API',
+          component: 'Analytics API',
+          resolved: true,
+          actions: []
+        },
+        {
+          id: 'alert_004',
+          type: 'performance',
+          severity: 'low',
+          title: 'Database Query Optimization Success',
+          description: 'New indexes have improved query performance, maintaining stable response times',
+          timestamp: new Date(Date.now() - 7200000),
+          component: 'Database Layer',
           resolved: true,
           actions: []
         }
       ];
 
-      const mockOptimizations: PerformanceOptimization[] = [
+      const fallbackOptimizations: PerformanceOptimization[] = [
         {
-          id: '1',
+          id: 'opt_001',
           category: 'frontend',
-          title: 'Implement Code Splitting',
-          description: 'Split application code by routes to reduce initial bundle size',
+          title: 'Implement Advanced Code Splitting for Digital Twin Features',
+          description: 'Split digital twin components by functionality and implement smart lazy loading for AI/ML features',
           impact: 'high',
           effort: 'medium',
-          estimatedImprovement: '30-40% faster initial load',
+          estimatedImprovement: '35-45% faster initial load for non-AI users',
           status: 'pending',
           implementation: [
-            'Configure React.lazy for route components',
-            'Set up Suspense boundaries',
-            'Optimize webpack splitChunks'
+            'Configure React.lazy for digital twin dashboard components',
+            'Implement Suspense boundaries with intelligent loading states',
+            'Split AI/ML libraries into separate chunks',
+            'Optimize TensorFlow.js loading with dynamic imports'
           ]
         },
         {
-          id: '2',
+          id: 'opt_002',
           category: 'database',
-          title: 'Add Database Indexes',
-          description: 'Create indexes for frequently queried columns',
+          title: 'Optimize Analytics Query Performance',
+          description: 'Create specialized indexes for analytics queries and implement query result caching',
           impact: 'high',
           effort: 'low',
-          estimatedImprovement: '50-70% faster queries',
+          estimatedImprovement: '60-75% faster analytics dashboard loading',
           status: 'in_progress',
           implementation: [
-            'Analyze slow query log',
-            'Create composite indexes',
-            'Monitor query performance'
+            'Analyze slow analytics queries',
+            'Create composite indexes for time-series data',
+            'Implement Redis caching for frequent analytics queries',
+            'Optimize aggregation queries with materialized views'
           ]
         },
         {
-          id: '3',
+          id: 'opt_003',
           category: 'backend',
-          title: 'Implement Response Caching',
-          description: 'Cache API responses to reduce server load',
+          title: 'Enhance API Response Caching Strategy',
+          description: 'Implement intelligent caching for platform APIs with cache invalidation strategies',
           impact: 'medium',
           effort: 'medium',
-          estimatedImprovement: '25-35% faster API responses',
+          estimatedImprovement: '30-40% faster API responses',
           status: 'completed',
           implementation: [
-            'Set up Redis cache',
-            'Implement cache invalidation',
-            'Add cache headers'
+            'Set up Redis cache cluster',
+            'Implement cache invalidation for real-time data',
+            'Add cache headers for static content',
+            'Optimize cache key strategies'
           ]
         },
         {
-          id: '4',
+          id: 'opt_004',
           category: 'infrastructure',
-          title: 'Enable CDN for Static Assets',
-          description: 'Use CDN to serve static assets globally',
+          title: 'Deploy CDN for Platform Assets',
+          description: 'Use CDN to serve static assets globally and implement asset optimization',
           impact: 'medium',
           effort: 'low',
-          estimatedImprovement: '20-30% faster asset loading',
+          estimatedImprovement: '25-35% faster asset loading globally',
           status: 'pending',
           implementation: [
-            'Configure CDN service',
-            'Update asset URLs',
-            'Set up cache policies'
+            'Configure CDN service for static assets',
+            'Implement asset versioning and cache busting',
+            'Optimize image formats and compression',
+            'Set up geographic distribution policies'
+          ]
+        },
+        {
+          id: 'opt_005',
+          category: 'frontend',
+          title: 'Optimize Performance Monitoring Components',
+          description: 'Implement lazy loading and optimize performance monitoring dashboard components',
+          impact: 'medium',
+          effort: 'low',
+          estimatedImprovement: '20-30% faster performance dashboard loading',
+          status: 'pending',
+          implementation: [
+            'Lazy load performance monitoring widgets',
+            'Implement intersection observer for below-fold components',
+            'Optimize chart library loading',
+            'Use web workers for performance calculations'
           ]
         }
       ];
 
-      setMetrics(mockMetrics);
-      setSystemHealth(mockSystemHealth);
-      setAlerts(mockAlerts);
-      setOptimizations(mockOptimizations);
-    } catch (err) {
-      setError('Failed to fetch performance data');
-      console.error('Performance monitoring error:', err);
+      setMetrics(fallbackMetrics);
+      setSystemHealth(fallbackSystemHealth);
+      setAlerts(fallbackAlerts);
+      setOptimizations(fallbackOptimizations);
+      setError(`Failed to load performance monitoring data: ${err.message}`);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [success, warning]);
 
   useEffect(() => {
     fetchPerformanceData();
@@ -458,6 +511,11 @@ const PerformanceMonitoringDashboard: React.FC<PerformanceMonitoringDashboardPro
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Performance Monitoring Dashboard</h1>
               <p className="text-gray-600">Real-time performance metrics and optimization insights</p>
+              {usingFallbackData && (
+                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 mt-1">
+                  Demo Data
+                </span>
+              )}
             </div>
           </div>
           <div className="flex items-center space-x-3">

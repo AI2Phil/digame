@@ -21,6 +21,7 @@ import { Input } from '../ui/Input';
 import { Label } from '../ui/Label';
 import { Textarea } from '../ui/Textarea';
 import { Switch } from '../ui/Switch';
+import { useToast } from '../ui/Toast';
 import {
   MessageSquare,
   Brain,
@@ -152,6 +153,10 @@ const NLPEnhancement = () => {
   const [sentimentData, setSentimentData] = useState([]);
   const [performance, setPerformance] = useState({});
   const [isProcessing, setIsProcessing] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [usingFallbackData, setUsingFallbackData] = useState(false);
+  const { toast } = useToast();
 
   // Mock conversation data
   const conversationData = [
@@ -362,14 +367,85 @@ const NLPEnhancement = () => {
   ];
 
   useEffect(() => {
+    loadNLPData();
+  }, []);
+
+  const loadNLPData = async () => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      // Try to fetch from database first
+      const [conversationsRes, modelsRes, analysisRes, sentimentRes, performanceRes] = await Promise.all([
+        fetch('http://localhost:8001/api/ai/nlp/conversations', {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            'Content-Type': 'application/json',
+          },
+        }),
+        fetch('http://localhost:8001/api/ai/nlp/models', {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            'Content-Type': 'application/json',
+          },
+        }),
+        fetch('http://localhost:8001/api/ai/nlp/text-analysis', {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            'Content-Type': 'application/json',
+          },
+        }),
+        fetch('http://localhost:8001/api/ai/nlp/sentiment-trends', {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            'Content-Type': 'application/json',
+          },
+        }),
+        fetch('http://localhost:8001/api/ai/nlp/performance', {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            'Content-Type': 'application/json',
+          },
+        })
+      ]);
+
+      if (conversationsRes.ok && modelsRes.ok && analysisRes.ok && sentimentRes.ok && performanceRes.ok) {
+        const [conversationsData, modelsData, analysisData, sentimentData, performanceData] = await Promise.all([
+          conversationsRes.json(),
+          modelsRes.json(),
+          analysisRes.json(),
+          sentimentRes.json(),
+          performanceRes.json()
+        ]);
+
+        setConversations(conversationsData.data || conversationsData);
+        setLanguageModels(modelsData.data || modelsData);
+        setTextAnalysis(analysisData.data || analysisData);
+        setSentimentData(sentimentData.data || sentimentData);
+        setPerformance(performanceData.data || performanceData);
+        setUsingFallbackData(false);
+      } else {
+        throw new Error('Failed to load NLP data from database');
+      }
+    } catch (error) {
+      console.warn('Failed to load NLP data from database, using fallback data:', error);
+      loadFallbackData();
+      setUsingFallbackData(true);
+      toast({
+        title: 'Using Demo Data',
+        description: 'Database unavailable - showing sample NLP data',
+        variant: 'warning'
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadFallbackData = () => {
     setConversations(conversationData);
     setLanguageModels(nlpModels);
     setTextAnalysis(textAnalysisResults);
     setSentimentData(sentimentTrends);
-    loadPerformanceData();
-  }, []);
-
-  const loadPerformanceData = async () => {
     setPerformance({
       totalConversations: 8927,
       averageSentiment: 0.72,
@@ -382,12 +458,80 @@ const NLPEnhancement = () => {
   };
 
   const processText = useCallback(async (text) => {
+    if (!text.trim()) {
+      toast({
+        title: 'Error',
+        description: 'Please enter text to analyze',
+        variant: 'destructive'
+      });
+      return;
+    }
+
     setIsProcessing(true);
-    // Simulate API call
-    setTimeout(() => {
+    
+    try {
+      const response = await fetch('http://localhost:8001/api/ai/nlp/analyze-text', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          text: text,
+          analysis_type: analysisType,
+          model: selectedModel
+        })
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        // Add the new analysis to the existing results
+        setTextAnalysis(prev => [result.data, ...prev.slice(0, 9)]); // Keep last 10 results
+        toast({
+          title: 'Analysis Complete',
+          description: 'Text analysis completed successfully',
+          variant: 'success'
+        });
+      } else {
+        throw new Error('Failed to analyze text');
+      }
+    } catch (error) {
+      console.error('Text analysis failed:', error);
+      toast({
+        title: 'Analysis Failed',
+        description: 'Unable to analyze text - using demo mode',
+        variant: 'warning'
+      });
+      
+      // Simulate analysis result for demo
+      const mockResult = {
+        id: `analysis-${Date.now()}`,
+        text: text,
+        sentiment: Math.random() > 0.5 ? 'positive' : 'negative',
+        confidence: 0.85 + Math.random() * 0.15,
+        emotions: {
+          joy: Math.random() * 0.8,
+          trust: Math.random() * 0.8,
+          anticipation: Math.random() * 0.6,
+          surprise: Math.random() * 0.4
+        },
+        topics: ['analysis', 'demo', 'nlp'],
+        intent: 'analysis-request',
+        language: 'English',
+        keyPhrases: text.split(' ').slice(0, 3),
+        entities: ['text', 'analysis'],
+        timestamp: new Date().toISOString()
+      };
+      
+      setTextAnalysis(prev => [mockResult, ...prev.slice(0, 9)]);
+    } finally {
       setIsProcessing(false);
-    }, 2000);
-  }, []);
+    }
+  }, [analysisType, selectedModel, toast]);
+
+  const handleRefresh = async () => {
+    await loadNLPData();
+  };
 
   const renderConversationTab = () => (
     <div className="space-y-6">
@@ -568,7 +712,10 @@ const NLPEnhancement = () => {
               className="min-h-[100px]"
             />
             <div className="flex items-center space-x-4">
-              <Button onClick={() => processText('')} disabled={isProcessing}>
+              <Button onClick={() => {
+                const textArea = document.querySelector('textarea');
+                if (textArea) processText(textArea.value);
+              }} disabled={isProcessing}>
                 {isProcessing ? (
                   <>
                     <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
@@ -1064,13 +1211,41 @@ const NLPEnhancement = () => {
     </div>
   );
 
+  if (loading) {
+    return (
+      <div className="container mx-auto p-6">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-4 text-blue-500" />
+            <p className="text-muted-foreground">Loading NLP Enhancement data...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto p-6">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold">NLP Enhancement</h1>
-        <p className="text-muted-foreground mt-2">
-          Natural language processing and conversation management
-        </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold">NLP Enhancement</h1>
+            <p className="text-muted-foreground mt-2">
+              Natural language processing and conversation management
+            </p>
+          </div>
+          <div className="flex items-center space-x-2">
+            {usingFallbackData && (
+              <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
+                Demo Data
+              </Badge>
+            )}
+            <Button onClick={handleRefresh} variant="outline" size="sm">
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Refresh
+            </Button>
+          </div>
+        </div>
       </div>
 
       {/* Controls */}
@@ -1103,12 +1278,12 @@ const NLPEnhancement = () => {
               </SelectContent>
             </Select>
             
-            <Button>
+            <Button onClick={() => processText('')}>
               <Brain className="h-4 w-4 mr-2" />
               Run Analysis
             </Button>
             
-            <Button variant="outline">
+            <Button variant="outline" onClick={handleRefresh}>
               <RefreshCw className="h-4 w-4 mr-2" />
               Refresh
             </Button>

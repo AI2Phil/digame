@@ -12,6 +12,7 @@ import {
   BarChart3,
   Lightbulb
 } from 'lucide-react';
+import { useToastHelpers } from '../ui/Toaster';
 
 interface Pattern {
   type: string;
@@ -53,6 +54,8 @@ const IntelligenceInsights: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [usingFallbackData, setUsingFallbackData] = useState(false);
+  const { success, error, warning, info } = useToastHelpers();
 
   const tabs = [
     { id: 'overview', label: 'Overview', icon: <BarChart3 className="w-4 h-4" /> },
@@ -69,43 +72,59 @@ const IntelligenceInsights: React.FC = () => {
   const fetchIntelligenceData = async () => {
     try {
       setLoading(true);
+      setUsingFallbackData(false);
       
+      // Try multiple possible token keys
+      const token = sessionStorage.getItem('accessToken') ||
+                   sessionStorage.getItem('token') ||
+                   localStorage.getItem('accessToken') ||
+                   localStorage.getItem('token');
+      
+      if (!token) {
+        warning('No authentication token found. Using demo data.');
+        setUsingFallbackData(true);
+        setIntelligenceData(getFallbackIntelligenceData());
+        setLastUpdated(new Date());
+        setLoading(false);
+        return;
+      }
+
       // Fetch patterns
-      const patternsResponse = await fetch('/api/v1/intelligence/patterns/analyze', {
+      const patternsResponse = await fetch('http://localhost:8001/api/v1/intelligence/patterns/analyze', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify(getSampleActivityData())
       });
 
       // Fetch productivity predictions
-      const productivityResponse = await fetch('/api/v1/intelligence/predictions/productivity', {
+      const productivityResponse = await fetch('http://localhost:8001/api/v1/intelligence/predictions/productivity', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify(getSampleProductivityData())
       });
 
       // Fetch energy insights
-      const energyResponse = await fetch('/api/v1/intelligence/predictions/energy', {
+      const energyResponse = await fetch('http://localhost:8001/api/v1/intelligence/predictions/energy', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify(getSampleEnergyData())
       });
 
       // Fetch comprehensive insights
-      const comprehensiveResponse = await fetch('/api/v1/intelligence/insights/comprehensive', {
+      const comprehensiveResponse = await fetch('http://localhost:8001/api/v1/intelligence/insights/comprehensive', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify(getSampleComprehensiveData())
       });
@@ -123,9 +142,16 @@ const IntelligenceInsights: React.FC = () => {
           comprehensive_insights: comprehensive
         });
         setLastUpdated(new Date());
+        success('Intelligence insights updated successfully');
+      } else {
+        throw new Error('One or more API requests failed');
       }
     } catch (error) {
       console.error('Failed to fetch intelligence data:', error);
+      error('Failed to load intelligence data. Using demo data.');
+      setUsingFallbackData(true);
+      setIntelligenceData(getFallbackIntelligenceData());
+      setLastUpdated(new Date());
     } finally {
       setLoading(false);
     }
@@ -185,6 +211,156 @@ const IntelligenceInsights: React.FC = () => {
     ...getSampleEnergyData()
   });
 
+  const getFallbackIntelligenceData = (): IntelligenceData => ({
+    patterns: [
+      {
+        type: 'morning_productivity',
+        pattern_category: 'productivity',
+        data: {
+          peak_hours: ['09:00', '10:00', '11:00'],
+          average_score: 0.85,
+          consistency: 0.78,
+          factors: ['good_sleep', 'morning_routine', 'caffeine']
+        },
+        confidence: 0.87,
+        impact: 'high',
+        frequency_score: 0.92,
+        discovered_at: new Date(Date.now() - 86400000 * 3).toISOString()
+      },
+      {
+        type: 'afternoon_dip',
+        pattern_category: 'energy',
+        data: {
+          dip_time: '14:00-15:00',
+          severity: 0.65,
+          recovery_time: 30,
+          mitigation_strategies: ['short_walk', 'healthy_snack', 'brief_meditation']
+        },
+        confidence: 0.73,
+        impact: 'medium',
+        frequency_score: 0.68,
+        discovered_at: new Date(Date.now() - 86400000 * 5).toISOString()
+      },
+      {
+        type: 'deep_work_blocks',
+        pattern_category: 'focus',
+        data: {
+          optimal_duration: 90,
+          best_times: ['09:30', '15:30'],
+          interruption_sensitivity: 0.8,
+          productivity_multiplier: 1.4
+        },
+        confidence: 0.91,
+        impact: 'high',
+        frequency_score: 0.85,
+        discovered_at: new Date(Date.now() - 86400000 * 7).toISOString()
+      }
+    ],
+    productivity_predictions: {
+      predictions: [
+        {
+          date: new Date(Date.now() + 86400000).toISOString().split('T')[0],
+          predicted_score: 0.82,
+          confidence: 0.78,
+          day_of_week: 'Tomorrow',
+          factors: ['good_sleep_predicted', 'morning_meeting', 'focused_work_blocks']
+        },
+        {
+          date: new Date(Date.now() + 86400000 * 2).toISOString().split('T')[0],
+          predicted_score: 0.75,
+          confidence: 0.71,
+          day_of_week: 'Day After Tomorrow',
+          factors: ['team_collaboration', 'afternoon_meetings', 'project_deadline']
+        },
+        {
+          date: new Date(Date.now() + 86400000 * 3).toISOString().split('T')[0],
+          predicted_score: 0.88,
+          confidence: 0.85,
+          day_of_week: 'In 3 Days',
+          factors: ['deep_work_day', 'minimal_meetings', 'high_energy_predicted']
+        }
+      ],
+      trend_analysis: {
+        trend: 'improving',
+        confidence: 0.82,
+        slope: 0.05,
+        factors: ['consistent_sleep', 'optimized_schedule', 'reduced_interruptions']
+      },
+      recommendation: 'Your productivity is trending upward. Focus on maintaining your current sleep schedule and protecting your deep work blocks.'
+    },
+    energy_insights: {
+      energy_predictions: [
+        {
+          time: '09:00',
+          predicted_energy: 0.9,
+          confidence: 0.85,
+          factors: ['morning_routine', 'good_sleep', 'caffeine']
+        },
+        {
+          time: '14:00',
+          predicted_energy: 0.6,
+          confidence: 0.78,
+          factors: ['post_lunch_dip', 'meeting_fatigue']
+        },
+        {
+          time: '16:00',
+          predicted_energy: 0.75,
+          confidence: 0.72,
+          factors: ['afternoon_recovery', 'light_exercise']
+        }
+      ],
+      scheduling_recommendations: [
+        'Schedule your most important tasks between 9:00-11:00 AM when your energy is highest',
+        'Take a 15-minute walk around 2:00 PM to combat the afternoon energy dip',
+        'Block 90-minute focused work sessions during your peak energy periods',
+        'Avoid scheduling important meetings right after lunch (1:00-2:00 PM)',
+        'Consider a brief meditation or breathing exercise at 3:30 PM for energy recovery'
+      ]
+    },
+    comprehensive_insights: {
+      combined_insights: {
+        key_insights: [
+          'Your productivity peaks in the morning hours (9:00-11:00 AM) with 85% average efficiency',
+          'Deep work blocks of 90 minutes show 40% higher productivity than shorter sessions',
+          'Consistent sleep schedule correlates with 23% better next-day performance',
+          'Afternoon energy dips are predictable and can be mitigated with strategic breaks'
+        ],
+        opportunities: [
+          'Optimize your schedule by moving complex tasks to morning peak hours',
+          'Implement structured break patterns to maintain energy throughout the day',
+          'Reduce context switching during deep work blocks to maximize focus',
+          'Establish pre-work routines that consistently prepare you for high performance'
+        ]
+      },
+      actionable_recommendations: [
+        {
+          category: 'schedule_optimization',
+          priority: 'high',
+          action: 'Block 9:00-11:00 AM daily for your most challenging and important work',
+          expected_impact: 'Increase overall productivity by 25-30% by leveraging your natural peak performance window'
+        },
+        {
+          category: 'energy_management',
+          priority: 'medium',
+          action: 'Implement a 15-minute walking routine at 2:00 PM to combat afternoon energy dips',
+          expected_impact: 'Maintain 70% energy levels throughout the afternoon instead of dropping to 50%'
+        },
+        {
+          category: 'focus_enhancement',
+          priority: 'high',
+          action: 'Use 90-minute deep work blocks with 15-minute breaks between sessions',
+          expected_impact: 'Improve task completion rate by 40% and reduce time to completion by 25%'
+        },
+        {
+          category: 'routine_optimization',
+          priority: 'medium',
+          action: 'Establish a consistent morning routine that includes light exercise and planning',
+          expected_impact: 'Increase morning productivity consistency from 78% to 90%'
+        }
+      ]
+    }
+  });
+
   const getConfidenceColor = (confidence: number) => {
     if (confidence >= 0.8) return 'text-green-600 bg-green-100';
     if (confidence >= 0.6) return 'text-yellow-600 bg-yellow-100';
@@ -217,7 +393,14 @@ const IntelligenceInsights: React.FC = () => {
       <div className="mb-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Intelligence Insights</h1>
+            <h1 className="text-2xl font-bold text-gray-900 flex items-center">
+              Intelligence Insights
+              {usingFallbackData && (
+                <span className="ml-3 px-2 py-1 bg-yellow-100 text-yellow-800 text-xs font-medium rounded-full">
+                  Demo Data
+                </span>
+              )}
+            </h1>
             <p className="text-gray-600">AI-powered insights into your productivity patterns</p>
           </div>
           <div className="flex items-center space-x-4">
@@ -228,9 +411,10 @@ const IntelligenceInsights: React.FC = () => {
             )}
             <button
               onClick={fetchIntelligenceData}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center"
+              disabled={loading}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center"
             >
-              <RefreshCw className="w-4 h-4 mr-2" />
+              <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
               Refresh
             </button>
           </div>
