@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useRouter } from 'next/router';
 import { useToastActions } from '../ui/Toast';
+import { teamApi, Team as ApiTeam, TeamCreate, TeamMember as ApiTeamMember, InviteRequest } from '../../services/api/teamApi';
 
 interface TeamMember {
   userId: number;
@@ -70,34 +71,24 @@ const TeamManagement: React.FC<TeamManagementProps> = ({ onTeamCreated }) => {
     try {
       setIsLoading(true);
       setError('');
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001';
-      const response = await fetch(`${apiUrl}/teams`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setUserTeams(data.teams || []);
-        if (data.teams?.length > 0) {
-          setSelectedTeam(data.teams[0]);
-        }
-        
-        if (data.teams?.length === 0) {
-          toast.info('No Teams Found', 'Create your first team to start collaborating with others.');
-        }
-      } else {
-        const errorData = await response.json();
-        const errorMessage = errorData.message || 'Failed to load teams';
-        setError(errorMessage);
-        toast.error('Failed to Load Teams', errorMessage);
+      
+      const teams = await teamApi.getTeams();
+      setUserTeams(teams);
+      
+      if (teams.length > 0) {
+        setSelectedTeam(teams[0]);
       }
+      
+      if (teams.length === 0) {
+        toast.info('No Teams Found', 'Create your first team to start collaborating with others.');
+      }
+      
+      toast.success('Teams Loaded', `Loaded ${teams.length} teams from database.`);
     } catch (error) {
       console.error('Failed to load teams:', error);
-      const errorMessage = 'Network error while loading teams';
+      const errorMessage = error instanceof Error ? error.message : 'Network error while loading teams';
       setError(errorMessage);
-      toast.error('Connection Error', errorMessage);
+      toast.error('Failed to Load Teams', errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -113,40 +104,28 @@ const TeamManagement: React.FC<TeamManagementProps> = ({ onTeamCreated }) => {
         return;
       }
 
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001';
-      const response = await fetch(`${apiUrl}/teams`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
-        },
-        body: JSON.stringify(teamForm)
-      });
+      const teamData: TeamCreate = {
+        name: teamForm.name,
+        description: teamForm.description,
+        subscriptionTier: teamForm.subscriptionTier
+      };
 
-      if (response.ok) {
-        const data = await response.json();
-        const newTeam = data.team;
-        setUserTeams(prev => [...prev, newTeam]);
-        setSelectedTeam(newTeam);
-        setCurrentView('manage');
-        setTeamForm({ name: '', description: '', subscriptionTier: 'team' });
-        
-        toast.success('Team Created Successfully', `${newTeam.name} has been created and you can now invite members.`);
-        
-        if (onTeamCreated) {
-          onTeamCreated(newTeam);
-        }
-      } else {
-        const errorData = await response.json();
-        const errorMessage = errorData.message || 'Failed to create team';
-        setError(errorMessage);
-        toast.error('Team Creation Failed', errorMessage);
+      const newTeam = await teamApi.createTeam(teamData);
+      setUserTeams(prev => [...prev, newTeam]);
+      setSelectedTeam(newTeam);
+      setCurrentView('manage');
+      setTeamForm({ name: '', description: '', subscriptionTier: 'team' });
+      
+      toast.success('Team Created Successfully', `${newTeam.name} has been created and you can now invite members.`);
+      
+      if (onTeamCreated) {
+        onTeamCreated(newTeam);
       }
     } catch (error) {
       console.error('Team creation error:', error);
-      const errorMessage = 'Network error while creating team';
+      const errorMessage = error instanceof Error ? error.message : 'Network error while creating team';
       setError(errorMessage);
-      toast.error('Connection Error', errorMessage);
+      toast.error('Team Creation Failed', errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -157,32 +136,21 @@ const TeamManagement: React.FC<TeamManagementProps> = ({ onTeamCreated }) => {
 
     try {
       setIsLoading(true);
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001';
-      const response = await fetch(`${apiUrl}/teams/${selectedTeam.id}/invite`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
-        },
-        body: JSON.stringify(inviteForm)
-      });
+      
+      const inviteData: InviteRequest = {
+        email: inviteForm.email,
+        role: inviteForm.role
+      };
 
-      if (response.ok) {
-        const data = await response.json();
-        setInviteForm({ email: '', role: 'member' });
-        await loadUserTeams(); // Refresh team data
-        toast.success('Invitation Sent', `Invitation sent to ${inviteForm.email} successfully.`);
-      } else {
-        const errorData = await response.json();
-        const errorMessage = errorData.message || 'Failed to send invitation';
-        setError(errorMessage);
-        toast.error('Invitation Failed', errorMessage);
-      }
+      await teamApi.inviteMember(selectedTeam.id, inviteData);
+      setInviteForm({ email: '', role: 'member' });
+      await loadUserTeams(); // Refresh team data
+      toast.success('Invitation Sent', `Invitation sent to ${inviteForm.email} successfully.`);
     } catch (error) {
       console.error('Invitation error:', error);
-      const errorMessage = 'Network error while sending invitation';
+      const errorMessage = error instanceof Error ? error.message : 'Network error while sending invitation';
       setError(errorMessage);
-      toast.error('Connection Error', errorMessage);
+      toast.error('Invitation Failed', errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -192,28 +160,14 @@ const TeamManagement: React.FC<TeamManagementProps> = ({ onTeamCreated }) => {
     if (!selectedTeam) return;
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001';
-      const response = await fetch(`${apiUrl}/teams/${selectedTeam.id}/members/${userId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
-        }
-      });
-
-      if (response.ok) {
-        await loadUserTeams(); // Refresh team data
-        toast.success('Member Removed', 'Team member has been removed successfully.');
-      } else {
-        const errorData = await response.json();
-        const errorMessage = errorData.message || 'Failed to remove member';
-        setError(errorMessage);
-        toast.error('Remove Member Failed', errorMessage);
-      }
+      await teamApi.removeTeamMember(selectedTeam.id, userId);
+      await loadUserTeams(); // Refresh team data
+      toast.success('Member Removed', 'Team member has been removed successfully.');
     } catch (error) {
       console.error('Remove member error:', error);
-      const errorMessage = 'Network error while removing member';
+      const errorMessage = error instanceof Error ? error.message : 'Network error while removing member';
       setError(errorMessage);
-      toast.error('Connection Error', errorMessage);
+      toast.error('Remove Member Failed', errorMessage);
     }
   };
 
@@ -221,30 +175,14 @@ const TeamManagement: React.FC<TeamManagementProps> = ({ onTeamCreated }) => {
     if (!selectedTeam) return;
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001';
-      const response = await fetch(`${apiUrl}/teams/${selectedTeam.id}/members/${userId}/role`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
-        },
-        body: JSON.stringify({ role: newRole })
-      });
-
-      if (response.ok) {
-        await loadUserTeams(); // Refresh team data
-        toast.success('Role Updated', `Member role has been updated to ${newRole} successfully.`);
-      } else {
-        const errorData = await response.json();
-        const errorMessage = errorData.message || 'Failed to update member role';
-        setError(errorMessage);
-        toast.error('Role Update Failed', errorMessage);
-      }
+      await teamApi.updateTeamMember(selectedTeam.id, userId, { role: newRole });
+      await loadUserTeams(); // Refresh team data
+      toast.success('Role Updated', `Member role has been updated to ${newRole} successfully.`);
     } catch (error) {
       console.error('Update role error:', error);
-      const errorMessage = 'Network error while updating member role';
+      const errorMessage = error instanceof Error ? error.message : 'Network error while updating member role';
       setError(errorMessage);
-      toast.error('Connection Error', errorMessage);
+      toast.error('Role Update Failed', errorMessage);
     }
   };
 

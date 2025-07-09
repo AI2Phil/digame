@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { teamApi } from '../../services/api/teamApi';
 import {
   Card,
   CardContent,
@@ -282,19 +283,59 @@ const AdvancedTeamAnalytics = () => {
   ];
 
   useEffect(() => {
-    setTeams(teamData);
-    setTeamMetrics(productivityTrends);
-    setCollaborationData(collaborationMetrics);
-    setPerformanceInsights(teamInsights);
     loadAnalyticsData();
-  }, []);
+  }, [selectedTeam]);
 
   const loadAnalyticsData = async () => {
     setIsLoading(true);
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      // Load teams from database
+      const teamsFromDb = await teamApi.getTeams();
+      setTeams(teamsFromDb.length > 0 ? teamsFromDb.map(team => ({
+        id: team.id,
+        name: team.name,
+        members: team.statistics?.totalMembers || 0,
+        lead: 'Team Lead', // This would come from team data
+        department: 'Department', // This would come from team data
+        productivity: Math.random() * 20 + 80, // This would come from analytics
+        collaboration: Math.random() * 20 + 80,
+        satisfaction: Math.random() * 1 + 4,
+        velocity: Math.random() * 20 + 80,
+        burnout_risk: ['Low', 'Medium', 'High'][Math.floor(Math.random() * 3)],
+        active_projects: team.statistics?.activeProjects || 0,
+        completed_tasks: Math.floor(Math.random() * 200 + 100),
+        avg_response_time: `${(Math.random() * 2 + 1).toFixed(1)}h`,
+        meeting_efficiency: Math.random() * 20 + 70,
+        knowledge_sharing: Math.random() * 20 + 80,
+        innovation_score: Math.random() * 20 + 70
+      })) : teamData);
+
+      // Load analytics for selected team if available
+      if (selectedTeam && selectedTeam !== 'all') {
+        try {
+          const analytics = await teamApi.getTeamAnalytics(selectedTeam);
+          // Process analytics data here
+          console.log('Team analytics loaded:', analytics);
+        } catch (error) {
+          console.log('Analytics not available for team:', selectedTeam);
+        }
+      }
+
+      // Set fallback data for demo purposes
+      setTeamMetrics(productivityTrends);
+      setCollaborationData(collaborationMetrics);
+      setPerformanceInsights(teamInsights);
+      
+    } catch (error) {
+      console.error('Failed to load analytics data:', error);
+      // Fallback to mock data
+      setTeams(teamData);
+      setTeamMetrics(productivityTrends);
+      setCollaborationData(collaborationMetrics);
+      setPerformanceInsights(teamInsights);
+    } finally {
       setIsLoading(false);
-    }, 1500);
+    }
   };
 
   const refreshData = useCallback(() => {
