@@ -1,0 +1,160 @@
+# Prometheus Configuration for Digame Platform Production Monitoring
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: 'digame-production'
+    environment: 'production'
+
+# Alertmanager configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - alertmanager:9093
+
+# Load rules once and periodically evaluate them according to the global 'evaluation_interval'.
+rule_files:
+  - "alert_rules.yml"
+  - "recording_rules.yml"
+
+# Scrape configuration for monitoring targets
+scrape_configs:
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+    scrape_interval: 15s
+    metrics_path: /metrics
+
+  # Backend API monitoring
+  - job_name: 'digame-backend'
+    static_configs:
+      - targets: ['backend:8001']
+    scrape_interval: 10s
+    metrics_path: /metrics
+    scrape_timeout: 10s
+    honor_labels: true
+    params:
+      format: ['prometheus']
+
+  # Frontend Next.js monitoring
+  - job_name: 'digame-frontend'
+    static_configs:
+      - targets: ['frontend:3000']
+    scrape_interval: 15s
+    metrics_path: /api/metrics
+    scrape_timeout: 10s
+
+  # PostgreSQL database monitoring
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['postgres:5432']
+    scrape_interval: 30s
+    metrics_path: /metrics
+    params:
+      collect[]: ['pg_stat_database', 'pg_stat_user_tables', 'pg_locks']
+
+  # Redis cache monitoring
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis:6379']
+    scrape_interval: 15s
+    metrics_path: /metrics
+
+  # Nginx reverse proxy monitoring
+  - job_name: 'nginx'
+    static_configs:
+      - targets: ['nginx:80']
+    scrape_interval: 15s
+    metrics_path: /nginx_status
+    scrape_timeout: 10s
+
+  # Node Exporter for system metrics
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+    scrape_interval: 15s
+    scrape_timeout: 10s
+
+  # cAdvisor for container metrics
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: ['cadvisor:8080']
+    scrape_interval: 15s
+    scrape_timeout: 10s
+    honor_labels: true
+
+  # Elasticsearch monitoring
+  - job_name: 'elasticsearch'
+    static_configs:
+      - targets: ['elasticsearch:9200']
+    scrape_interval: 30s
+    metrics_path: /_prometheus/metrics
+    scrape_timeout: 15s
+
+  # Custom application metrics
+  - job_name: 'digame-custom-metrics'
+    static_configs:
+      - targets: ['backend:8001']
+    scrape_interval: 10s
+    metrics_path: /api/metrics/custom
+    scrape_timeout: 10s
+    params:
+      module: ['digame_platform']
+
+  # Business metrics monitoring
+  - job_name: 'business-metrics'
+    static_configs:
+      - targets: ['backend:8001']
+    scrape_interval: 60s
+    metrics_path: /api/metrics/business
+    scrape_timeout: 30s
+    honor_timestamps: true
+
+  # Security metrics monitoring
+  - job_name: 'security-metrics'
+    static_configs:
+      - targets: ['backend:8001']
+    scrape_interval: 30s
+    metrics_path: /api/security/metrics
+    scrape_timeout: 15s
+    params:
+      include_sensitive: ['false']
+
+  # ML/AI model performance monitoring
+  - job_name: 'ml-metrics'
+    static_configs:
+      - targets: ['backend:8001']
+    scrape_interval: 60s
+    metrics_path: /api/ml/metrics
+    scrape_timeout: 30s
+
+  # Collaboration system monitoring
+  - job_name: 'collaboration-metrics'
+    static_configs:
+      - targets: ['backend:8001']
+    scrape_interval: 30s
+    metrics_path: /api/collaboration/metrics
+    scrape_timeout: 15s
+
+  # Notification system monitoring
+  - job_name: 'notification-metrics'
+    static_configs:
+      - targets: ['backend:8001']
+    scrape_interval: 30s
+    metrics_path: /api/notifications/metrics
+    scrape_timeout: 15s
+
+# Remote write configuration for long-term storage
+remote_write:
+  - url: "http://prometheus-remote-storage:9201/write"
+    queue_config:
+      max_samples_per_send: 10000
+      max_shards: 200
+      capacity: 2500
+
+# Remote read configuration
+remote_read:
+  - url: "http://prometheus-remote-storage:9201/read"
+    read_recent: true

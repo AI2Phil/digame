@@ -1,0 +1,33 @@
+{
+  "name": "digame-frontend-integration-tests",
+  "version": "1.0.0",
+  "description": "Frontend integration testing suite for Digame Platform",
+  "main": "integration-test-suite.js",
+  "scripts": {
+    "test": "node integration-test-suite.js",
+    "test:headless": "node integration-test-suite.js",
+    "test:headed": "HEADLESS=false node integration-test-suite.js",
+    "test:mobile": "MOBILE=true node integration-test-suite.js",
+    "setup": "mkdir -p screenshots && npm install"
+  },
+  "dependencies": {
+    "puppeteer": "^21.0.0",
+    "jest": "^29.0.0",
+    "playwright": "^1.40.0"
+  },
+  "devDependencies": {
+    "@types/puppeteer": "^7.0.0"
+  },
+  "keywords": [
+    "testing",
+    "integration",
+    "frontend",
+    "puppeteer",
+    "digame"
+  ],
+  "author": "Digame Platform Team",
+  "license": "MIT",
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}
