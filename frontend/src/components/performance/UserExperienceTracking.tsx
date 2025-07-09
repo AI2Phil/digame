@@ -1,91 +1,91 @@
-import React, { useState, useEffect } from 'react';
-import {
-  Box,
-  Card,
-  CardContent,
-  Typography,
-  Grid,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  Chip,
-  IconButton,
-  Tooltip,
-  Alert,
-  CircularProgress,
-  Button,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  LinearProgress,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemIcon
-} from '@mui/material';
-import {
-  Refresh as RefreshIcon,
-  Speed as SpeedIcon,
-  Error as ErrorIcon,
-  ExitToApp as ExitToAppIcon,
-  Devices as DevicesIcon,
-  Web as WebIcon,
-  TrendingUp as TrendingUpIcon,
-  TrendingDown as TrendingDownIcon,
-  ExpandMore as ExpandMoreIcon,
-  Lightbulb as LightbulbIcon,
-  Warning as WarningIcon,
-  CheckCircle as CheckCircleIcon
-} from '@mui/icons-material';
-import { Line, Bar, Doughnut } from 'react-chartjs-2';
-import { performanceApi } from '../../services/performanceApi';
+import React, { useState, useEffect, useCallback } from 'react';
+import { 
+  Clock, 
+  Zap, 
+  Eye, 
+  MousePointer, 
+  Smartphone, 
+  Monitor, 
+  Tablet,
+  TrendingUp,
+  TrendingDown,
+  AlertTriangle,
+  CheckCircle,
+  BarChart3,
+  Activity
+} from 'lucide-react';
 
-interface UserExperienceInsights {
-  time_range_hours: number;
-  total_interactions: number;
-  error_rate_percent: number;
-  bounce_rate_percent: number;
-  slow_pages: Array<{
-    page: string;
-    avg_load_time_ms: number;
-    sample_count: number;
-    p95_load_time_ms: number;
-  }>;
-  device_performance: Record<string, {
-    avg_load_time_ms: number;
-    sample_count: number;
-  }>;
-  recommendations: string[];
+interface PerformanceMetric {
+  name: string;
+  value: number;
+  unit: string;
+  threshold: number;
+  status: 'good' | 'warning' | 'poor';
+  trend: 'up' | 'down' | 'stable';
+  change: number;
 }
 
-const UserExperienceTracking: React.FC = () => {
-  const [insights, setInsights] = useState<UserExperienceInsights | null>(null);
+interface UserSession {
+  id: string;
+  userId: string;
+  startTime: Date;
+  duration: number;
+  pageViews: number;
+  interactions: number;
+  device: 'desktop' | 'mobile' | 'tablet';
+  browser: string;
+  location: string;
+  bounceRate: number;
+  conversionEvents: number;
+}
+
+interface PagePerformance {
+  path: string;
+  loadTime: number;
+  firstContentfulPaint: number;
+  largestContentfulPaint: number;
+  cumulativeLayoutShift: number;
+  firstInputDelay: number;
+  timeToInteractive: number;
+  visits: number;
+  bounceRate: number;
+  avgSessionDuration: number;
+}
+
+interface UserExperienceTrackingProps {
+  className?: string;
+  autoRefresh?: boolean;
+  refreshInterval?: number;
+}
+
+const UserExperienceTracking: React.FC<UserExperienceTrackingProps> = ({
+  className = '',
+  autoRefresh = true,
+  refreshInterval = 30000
+}) => {
+  const [metrics, setMetrics] = useState<PerformanceMetric[]>([]);
+  const [sessions, setSessions] = useState<UserSession[]>([]);
+  const [pagePerformance, setPagePerformance] = useState<PagePerformance[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [timeRange, setTimeRange] = useState(24);
+  const [selectedTimeRange, setSelectedTimeRange] = useState('24h');
+  const [selectedDevice, setSelectedDevice] = useState<string>('all');
 
-  const fetchInsights = async () => {
-    try {
-      setLoading(true);
-      const response = await performanceApi.getUserExperienceInsights(timeRange);
-      setInsights(response.data);
-      setError(null);
-    } catch (err) {
-      setError('Failed to fetch user experience insights');
-      console.error('UX insights fetch error:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  // Core Web Vitals tracking
+  const trackWebVitals = useCallback(() => {
+    if (typeof window !== 'undefined' && 'performance' in window) {
+      const navigation = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming;
+      const paint = performance.getEntriesByType('paint');
+      
+      const metrics: PerformanceMetric[] = [
+        {
+          name: 'First Contentful Paint',
+          value: paint.find(p => p.name === 'first-contentful-paint')?.startTime || 0,
+          unit: 'ms',
+          threshold: 1800,
+          status: 'good',
+          trend: 'stable',
+          change: 0
   useEffect(() => {
     fetchInsights();
   }, [timeRange]);

@@ -73,9 +73,21 @@ const PlatformSettings: React.FC = () => {
   const fetchSettings = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/v1/platform-owner/settings', {
+      
+      // Try multiple possible token keys for better compatibility
+      const token = sessionStorage.getItem('accessToken') ||
+                   sessionStorage.getItem('token') ||
+                   localStorage.getItem('accessToken') ||
+                   localStorage.getItem('token');
+      
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      const response = await fetch('http://localhost:8001/platform-owner/settings', {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         }
       });
 
@@ -83,10 +95,11 @@ const PlatformSettings: React.FC = () => {
         const data = await response.json();
         setSettings(data.settings);
       } else {
-        throw new Error('Failed to fetch settings');
+        throw new Error(`Failed to fetch settings: ${response.status} ${response.statusText}`);
       }
     } catch (error) {
-      setMessage({ type: 'error', text: 'Failed to load platform settings' });
+      console.error('Failed to fetch platform settings:', error);
+      setMessage({ type: 'error', text: `Failed to load platform settings: ${error.message}` });
     } finally {
       setLoading(false);
     }
@@ -97,23 +110,36 @@ const PlatformSettings: React.FC = () => {
 
     try {
       setSaving(true);
-      const response = await fetch('/api/v1/platform-owner/settings', {
+      
+      // Try multiple possible token keys for better compatibility
+      const token = sessionStorage.getItem('accessToken') ||
+                   sessionStorage.getItem('token') ||
+                   localStorage.getItem('accessToken') ||
+                   localStorage.getItem('token');
+      
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      const response = await fetch('http://localhost:8001/platform-owner/settings', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify(settings)
       });
 
       if (response.ok) {
+        const data = await response.json();
         setMessage({ type: 'success', text: 'Settings saved successfully' });
         setTimeout(() => setMessage(null), 3000);
       } else {
-        throw new Error('Failed to save settings');
+        throw new Error(`Failed to save settings: ${response.status} ${response.statusText}`);
       }
     } catch (error) {
-      setMessage({ type: 'error', text: 'Failed to save settings' });
+      console.error('Failed to save platform settings:', error);
+      setMessage({ type: 'error', text: `Failed to save settings: ${error.message}` });
     } finally {
       setSaving(false);
     }

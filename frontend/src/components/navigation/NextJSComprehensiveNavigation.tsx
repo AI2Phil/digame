@@ -318,6 +318,7 @@ const NextJSComprehensiveNavigation: React.FC<NextJSComprehensiveNavigationProps
       platformOwnerOnly: true,
       items: [
         { label: 'Platform Console', icon: <Server className="w-4 h-4" />, path: '/platform-owner/console', subtitle: 'PLATFORM MANAGEMENT' },
+        { label: 'Intelligence Insights', icon: <Brain className="w-4 h-4" />, path: '/platform-owner/intelligence-insights', subtitle: 'AI ANALYTICS', description: 'Real-time intelligence metrics, model accuracy, and AI performance analytics' },
         { label: 'Go-Live Checklist', icon: <CheckCircle className="w-4 h-4" />, path: '/platform-owner/go-live-checklist', subtitle: 'PRODUCTION READINESS', description: 'Comprehensive go-live validation and production readiness assessment' },
         { label: 'Data Management', icon: <Database className="w-4 h-4" />, path: '/platform-owner/data-management', subtitle: 'DATA LIFECYCLE' },
         { label: 'Tenant Management', icon: <Building className="w-4 h-4" />, path: '/platform-owner/tenants', subtitle: 'ALL TENANTS' },
