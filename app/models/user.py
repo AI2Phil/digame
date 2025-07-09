@@ -199,6 +199,14 @@ class User(Base):
     # If User can create teams (e.g. created_by_user_id in Team model)
     created_teams = relationship("Team", back_populates="creator", cascade="all, delete-orphan")
 
+    # ML Model relationships
+    ml_models = relationship("MLModel", back_populates="creator", cascade="all, delete-orphan")
+    training_jobs = relationship("TrainingJob", back_populates="creator", cascade="all, delete-orphan")
+    predictions = relationship("ModelPrediction", back_populates="creator", cascade="all, delete-orphan")
+    model_evaluations = relationship("ModelEvaluation", back_populates="evaluator", cascade="all, delete-orphan")
+    model_deployments = relationship("ModelDeployment", back_populates="deployer", cascade="all, delete-orphan")
+    datasets = relationship("DatasetMetadata", back_populates="creator", cascade="all, delete-orphan")
+    experiment_runs = relationship("ExperimentRun", back_populates="creator", cascade="all, delete-orphan")
 
     def __repr__(self):
         return f"<User(id={self.id}, username='{self.username}', email='{self.email}')>"
