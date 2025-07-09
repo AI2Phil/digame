@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
+import { useToastHelpers } from '../ui/Toaster';
 import {
   Shield, Lock, Key, Eye, AlertTriangle, CheckCircle,
   Users, FileText, Clock, TrendingUp, BarChart3,
@@ -63,29 +64,14 @@ interface AccessReview {
 }
 
 export const AdvancedSecurityDashboard: React.FC = () => {
+  const toast = useToastHelpers();
   const [activeTab, setActiveTab] = useState<'overview' | 'compliance' | 'policies' | 'access' | 'incidents' | 'reports'>('overview');
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
+  const [usingFallbackData, setUsingFallbackData] = useState(false);
 
-  const [metrics, setMetrics] = useState<SecurityMetrics>({
-    compliance_score: 94,
-    policy_violations: 12,
-    access_reviews_pending: 8,
-    certificates_expiring: 3,
-    security_incidents: 2,
-    data_classification: {
-      public: 1250,
-      internal: 3400,
-      confidential: 890,
-      restricted: 156
-    },
-    access_patterns: {
-      normal: 15420,
-      suspicious: 23,
-      blocked: 7
-    }
-  });
+  const [metrics, setMetrics] = useState<SecurityMetrics | null>(null);
 
   const [complianceFrameworks, setComplianceFrameworks] = useState<ComplianceFramework[]>([
     {
@@ -210,27 +196,97 @@ export const AdvancedSecurityDashboard: React.FC = () => {
   ]);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      // Simulate real-time updates
-      setMetrics(prev => ({
-        ...prev,
-        security_incidents: prev.security_incidents + Math.floor(Math.random() * 2),
-        access_patterns: {
-          ...prev.access_patterns,
-          normal: prev.access_patterns.normal + Math.floor(Math.random() * 10),
-          suspicious: prev.access_patterns.suspicious + Math.floor(Math.random() * 2)
-        }
-      }));
-    }, 30000);
-
-    return () => clearInterval(interval);
+    fetchSecurityData();
   }, []);
 
+  const fetchSecurityData = async () => {
+    try {
+      setLoading(true);
+      
+      const [metricsResponse, frameworksResponse, policiesResponse, reviewsResponse] = await Promise.all([
+        fetch('http://localhost:8001/api/security/dashboard/metrics', {
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        }),
+        fetch('http://localhost:8001/api/security/compliance/frameworks', {
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        }),
+        fetch('http://localhost:8001/api/security/policies', {
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        }),
+        fetch('http://localhost:8001/api/security/access-reviews', {
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        })
+      ]);
+
+      let hasRealData = false;
+
+      if (metricsResponse.ok) {
+        const data = await metricsResponse.json();
+        setMetrics(data.data || data);
+        hasRealData = true;
+      }
+
+      if (frameworksResponse.ok) {
+        const data = await frameworksResponse.json();
+        setComplianceFrameworks(data.data || data);
+        hasRealData = true;
+      }
+
+      if (policiesResponse.ok) {
+        const data = await policiesResponse.json();
+        setSecurityPolicies(data.data || data);
+        hasRealData = true;
+      }
+
+      if (reviewsResponse.ok) {
+        const data = await reviewsResponse.json();
+        setAccessReviews(data.data || data);
+        hasRealData = true;
+      }
+
+      if (!hasRealData) {
+        loadFallbackData();
+        setUsingFallbackData(true);
+        toast.info('Using sample security data - API endpoints unavailable');
+      } else {
+        setUsingFallbackData(false);
+      }
+
+    } catch (error) {
+      console.error('Failed to load security data:', error);
+      loadFallbackData();
+      setUsingFallbackData(true);
+      toast.error('Failed to load security data - using sample data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadFallbackData = () => {
+    const fallbackMetrics: SecurityMetrics = {
+      compliance_score: 94,
+      policy_violations: 12,
+      access_reviews_pending: 8,
+      certificates_expiring: 3,
+      security_incidents: 2,
+      data_classification: {
+        public: 1250,
+        internal: 3400,
+        confidential: 890,
+        restricted: 156
+      },
+      access_patterns: {
+        normal: 15420,
+        suspicious: 23,
+        blocked: 7
+      }
+    };
+
+    setMetrics(fallbackMetrics);
+  };
+
   const handleRefresh = async () => {
-    setLoading(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    setLoading(false);
+    await fetchSecurityData();
   };
 
   const handleApproveAccess = (reviewId: string) => {
@@ -576,6 +632,14 @@ export const AdvancedSecurityDashboard: React.FC = () => {
     </div>
   );
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -583,6 +647,11 @@ export const AdvancedSecurityDashboard: React.FC = () => {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Advanced Security & Compliance</h1>
           <p className="text-gray-600">Comprehensive security management and compliance monitoring</p>
+          {usingFallbackData && (
+            <div className="mt-2 text-sm text-amber-600 bg-amber-50 px-3 py-1 rounded-md">
+              ⚠️ Using sample data - API endpoints unavailable
+            </div>
+          )}
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={handleRefresh} disabled={loading}>

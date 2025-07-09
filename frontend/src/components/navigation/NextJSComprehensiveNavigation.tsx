@@ -150,6 +150,7 @@ const NextJSComprehensiveNavigation: React.FC<NextJSComprehensiveNavigationProps
         { label: 'Twin Workspace', icon: <Brain className="w-4 h-4" />, path: '/digital-twin/workspace', subtitle: 'WORKSPACE', description: 'Advanced workspace with intent recognition and analytics' },
         { label: 'Twin Simulation', icon: <Layers className="w-4 h-4" />, path: '/digital-twin/simulation', subtitle: 'SIMULATION' },
         { label: 'Twin Settings', icon: <SettingsIcon className="w-4 h-4" />, path: '/digital-twin/settings', subtitle: 'SETTINGS', description: 'Configure your digital twin preferences and advanced options' },
+        { label: 'Team Coordination', icon: <Users className="w-4 h-4" />, path: '/digital-twin/team-coordination', subtitle: 'TEAM COORDINATION', description: 'Orchestrate multi-twin optimization and team collaboration' },
         { label: 'Behavior Modeling', icon: <Brain className="w-4 h-4" />, path: '/digital-twin/behavior', subtitle: 'MODELING' },
         { label: 'Twin Analytics', icon: <BarChart3 className="w-4 h-4" />, path: '/digital-twin/analytics', subtitle: 'INSIGHTS' }
       ]
@@ -253,9 +254,12 @@ const NextJSComprehensiveNavigation: React.FC<NextJSComprehensiveNavigationProps
       description: 'Security management and compliance tools',
       items: [
         { label: 'Security Dashboard', icon: <Shield className="w-4 h-4" />, path: '/security', description: 'Security overview' },
+        { label: 'Advanced Security Dashboard', icon: <Shield className="w-4 h-4" />, path: '/security/advanced-dashboard', subtitle: 'ADVANCED SECURITY', description: 'Comprehensive security monitoring with real-time threat detection' },
+        { label: 'Compliance Management', icon: <CheckCircle className="w-4 h-4" />, path: '/security/compliance', subtitle: 'COMPLIANCE FRAMEWORKS', description: 'Automated compliance monitoring for SOC 2, ISO 27001, GDPR, HIPAA, and PCI DSS' },
+        { label: 'Audit Trail Analytics', icon: <FileText className="w-4 h-4" />, path: '/security/audit-trail', subtitle: 'AUDIT ANALYTICS', description: 'Comprehensive audit log analysis with user activity monitoring' },
+        { label: 'Risk Assessment Engine', icon: <AlertTriangle className="w-4 h-4" />, path: '/security/risk-assessment', subtitle: 'RISK MANAGEMENT', description: 'Advanced risk scoring with vulnerability assessment and threat modeling' },
         { label: 'Access Control', icon: <Lock className="w-4 h-4" />, path: '/security/access', subtitle: 'ACCESS MANAGEMENT' },
         { label: 'Audit Logs', icon: <FileText className="w-4 h-4" />, path: '/security/audit', description: 'Security audit trails' },
-        { label: 'Compliance', icon: <CheckCircle className="w-4 h-4" />, path: '/security/compliance', subtitle: 'COMPLIANCE' },
         { label: 'Multi-Factor Auth', icon: <Smartphone className="w-4 h-4" />, path: '/security/mfa', subtitle: 'MFA' }
       ]
     },

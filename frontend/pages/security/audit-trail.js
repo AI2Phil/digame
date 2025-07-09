@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import ComplianceManagementSystem from '../../src/components/security/ComplianceManagementSystem';
+import AuditTrailAnalytics from '../../src/components/security/AuditTrailAnalytics';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -10,12 +10,12 @@ const queryClient = new QueryClient({
   },
 });
 
-export default function CompliancePage() {
+export default function AuditTrailPage() {
   return (
     <QueryClientProvider client={queryClient}>
       <div className="min-h-screen bg-gray-50">
         <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-          <ComplianceManagementSystem />
+          <AuditTrailAnalytics />
         </div>
       </div>
     </QueryClientProvider>
