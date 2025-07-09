@@ -1070,3 +1070,5 @@ const CollaborationOptimization = () => {
   );
 };
 
+
+export default CollaborationOptimization;

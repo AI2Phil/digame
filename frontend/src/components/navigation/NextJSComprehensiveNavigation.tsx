@@ -207,13 +207,14 @@ const NextJSComprehensiveNavigation: React.FC<NextJSComprehensiveNavigationProps
       icon: <Users className="w-5 h-5" />,
       description: 'Team management and collaboration tools',
       items: [
-        { label: 'Team Management', icon: <Users className="w-4 h-4" />, path: '/team', description: 'Team dashboard' },
+        { label: 'Team Management', icon: <Users className="w-4 h-4" />, path: '/team', description: 'Team dashboard and member management' },
+        { label: 'Team Analytics', icon: <BarChart3 className="w-4 h-4" />, path: '/team/analytics', subtitle: 'ADVANCED ANALYTICS', description: 'Team performance metrics, collaboration scoring, and AI-powered insights' },
+        { label: 'Collaboration Optimization', icon: <Workflow className="w-4 h-4" />, path: '/team/collaboration', subtitle: 'OPTIMIZATION', description: 'AI-powered workflow optimization and collaboration recommendations' },
         { label: 'Team Dashboard', icon: <BarChart3 className="w-4 h-4" />, path: '/team/dashboard', subtitle: 'TEAM INSIGHTS' },
         { label: 'Real-Time Collaboration', icon: <MessageSquare className="w-4 h-4" />, path: '/collaboration/real-time', subtitle: 'REAL-TIME COMMUNICATION', description: 'Real-time messaging, video calls, and workspace collaboration' },
         { label: 'Social Collaboration', icon: <MessageCircle className="w-4 h-4" />, path: '/team/social', subtitle: 'COLLABORATION' },
         { label: 'Mentorship Programs', icon: <GraduationCap className="w-4 h-4" />, path: '/team/mentorship', subtitle: 'MENTORSHIP' },
-        { label: 'Skill Gap Analysis', icon: <Target className="w-4 h-4" />, path: '/team/skills', subtitle: 'SKILLS ANALYSIS' },
-        { label: 'Workflow Optimization', icon: <Workflow className="w-4 h-4" />, path: '/team/workflows', subtitle: 'OPTIMIZATION' }
+        { label: 'Skill Gap Analysis', icon: <Target className="w-4 h-4" />, path: '/team/skills', subtitle: 'SKILLS ANALYSIS' }
       ]
     },
     {
@@ -236,9 +237,11 @@ const NextJSComprehensiveNavigation: React.FC<NextJSComprehensiveNavigationProps
       icon: <FileText className="w-5 h-5" />,
       description: 'Report generation and content publishing',
       items: [
-        { label: 'Reports Dashboard', icon: <FileText className="w-4 h-4" />, path: '/reports', description: 'Reports overview' },
+        { label: 'Advanced Reporting Dashboard', icon: <FileText className="w-4 h-4" />, path: '/reports', subtitle: 'BUSINESS INTELLIGENCE', description: 'Comprehensive business intelligence and analytics dashboard' },
+        { label: 'Custom Report Builder', icon: <Wrench className="w-4 h-4" />, path: '/reports/builder', subtitle: 'REPORT BUILDER', description: 'Create custom reports with advanced visualization and filtering' },
+        { label: 'Data Visualization Engine', icon: <BarChart3 className="w-4 h-4" />, path: '/reports/visualization', subtitle: 'VISUALIZATION ENGINE', description: 'Advanced visualization rendering and optimization platform' },
+        { label: 'Predictive Analytics Engine', icon: <Brain className="w-4 h-4" />, path: '/reports/predictive', subtitle: 'AI-POWERED ANALYTICS', description: 'AI-powered forecasting and machine learning platform', minSubscriptionTier: 'enterprise' },
         { label: 'Analytics Reports', icon: <BarChart3 className="w-4 h-4" />, path: '/reports/analytics', subtitle: 'DATA REPORTS' },
-        { label: 'Custom Reports', icon: <Wrench className="w-4 h-4" />, path: '/reports/custom', subtitle: 'CUSTOM BUILDER' },
         { label: 'Scheduled Reports', icon: <Clock className="w-4 h-4" />, path: '/reports/scheduled', description: 'Automated reporting' },
         { label: 'Report Publishing', icon: <Share className="w-4 h-4" />, path: '/reports/publish', subtitle: 'PUBLISHING' }
       ]

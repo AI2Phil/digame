@@ -1,5 +1,13 @@
 # Platform Data Audit - Mock Data Replacement Tracking
 
+1. confirm the comprehensive menu includes page to this URL as a menu item NextJSComprehensiveNavigation.tsx, 2. implement similarly the Advanced Reporting Components for business intelligence features, including:
+Advanced Reporting Dashboard
+Custom Report Builder
+Data Visualization Engine
+Predictive Analytics Engine
+
+Read /docs/IMPLEMENTATION_PROMPT_FOR_ROO.md file before implementing the WorkflowAutomationDashboard.tsx, and AFTER WHICH update /docs/AUDIT.md for stage of completion, while preserving the structure and contents
+
 ## Overview
 This document provides a comprehensive audit of all pages, components, and sub-pages that currently contain mock data requiring replacement with database-driven content. This checklist enables tracking progress for production readiness completion.
 

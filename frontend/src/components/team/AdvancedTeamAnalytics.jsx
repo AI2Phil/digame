@@ -941,3 +941,5 @@ const AdvancedTeamAnalytics = () => {
   );
 };
 
+
+export default AdvancedTeamAnalytics;
