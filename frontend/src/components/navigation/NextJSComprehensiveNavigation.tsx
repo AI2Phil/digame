@@ -126,6 +126,7 @@ const NextJSComprehensiveNavigation: React.FC<NextJSComprehensiveNavigationProps
         { label: 'Pattern Recognition', icon: <Target className="w-4 h-4" />, path: '/analytics/patterns', subtitle: 'AI-POWERED' },
         { label: 'Anomaly Detection', icon: <AlertTriangle className="w-4 h-4" />, path: '/analytics/anomalies', subtitle: 'AI-POWERED' },
         { label: 'Performance Monitoring', icon: <Monitor className="w-4 h-4" />, path: '/analytics/performance', description: 'System performance metrics' },
+        { label: 'Performance Dashboard', icon: <Activity className="w-4 h-4" />, path: '/performance/dashboard', subtitle: 'COMPREHENSIVE', description: 'Comprehensive performance monitoring with UX tracking, query optimization, and bundle analysis' },
         { label: 'Real-Time Monitor', icon: <Activity className="w-4 h-4" />, path: '/performance/real-time-monitor', subtitle: 'REAL-TIME', description: 'Live performance monitoring with automated optimizations' },
         { label: 'Dashboard Builder', icon: <Wrench className="w-4 h-4" />, path: '/analytics/dashboard-builder', subtitle: 'DASHBOARD TOOLS', description: 'Create and customize analytics dashboards' },
         { label: 'Platform Analytics', icon: <Database className="w-4 h-4" />, path: '/analytics/platform', platformOwnerOnly: true }

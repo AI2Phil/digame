@@ -38,16 +38,16 @@ import {
   Eye, EyeOff, Maximize2, Minimize2, RefreshCw, Share2
 } from 'lucide-react';
 
-const DataVisualizationEngine = ({ 
-  data, 
-  chartType = 'line', 
-  title, 
+const DataVisualizationEngine = ({
+  data,
+  chartType = 'line',
+  title,
   description,
   interactive = true,
   exportable = true,
   customizable = true,
   realTime = false,
-  onDataUpdate,
+  onDataUpdate = null,
   className = ''
 }) => {
   const [currentChartType, setCurrentChartType] = useState(chartType);

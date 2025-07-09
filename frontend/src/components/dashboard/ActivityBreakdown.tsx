@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '../ui/Card';
 import { Progress } from '../ui/Progress';
+import { Badge } from '../ui/Badge';
 
 interface ActivityCategory {
   name: string;
   value: number;
   color: string;
   icon: string;
+  hours?: number;
+  avgProductivity?: number;
 }
 
 interface ActivityData {
@@ -14,50 +17,70 @@ interface ActivityData {
   totalHours: number;
   mostProductiveTime: string;
   efficiency: number;
+  period?: string;
+  dataSource?: string;
 }
 
 interface ActivityBreakdownProps {
-  userId: number;
+  userId?: number;
+  days?: number;
 }
 
-const ActivityBreakdown: React.FC<ActivityBreakdownProps> = ({ userId }) => {
+const ActivityBreakdown: React.FC<ActivityBreakdownProps> = ({ userId = 1, days = 7 }) => {
   const [activityData, setActivityData] = useState<ActivityData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
-
-  // Sample data for demo mode
-  const sampleData: ActivityData = {
-    categories: [
-      { name: 'Development', value: 45, color: '#2563eb', icon: '💻' },
-      { name: 'Meetings', value: 25, color: '#7c3aed', icon: '📞' },
-      { name: 'Learning', value: 15, color: '#16a34a', icon: '📚' },
-      { name: 'Planning', value: 10, color: '#ea580c', icon: '📋' },
-      { name: 'Break', value: 5, color: '#6b7280', icon: '☕' }
-    ],
-    totalHours: 8.5,
-    mostProductiveTime: '9:00 AM - 11:00 AM',
-    efficiency: 87
-  };
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Simulate API call
     const fetchActivityData = async (): Promise<void> => {
       try {
         setLoading(true);
-        // In demo mode, use sample data
-        setTimeout(() => {
-          setActivityData(sampleData);
-          setLoading(false);
-        }, 500);
+        setError(null);
+        
+        // Call the new database-driven API endpoint
+        const response = await fetch(`http://localhost:8001/api/activity/breakdown?days=${days}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            // Add authorization header if available
+            ...(localStorage.getItem('token') && {
+              'Authorization': `Bearer ${localStorage.getItem('token')}`
+            })
+          }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setActivityData(data);
+        } else {
+          throw new Error(`API request failed: ${response.status}`);
+        }
       } catch (error) {
         console.error('Error fetching activity data:', error);
-        setActivityData(sampleData);
+        setError('Failed to load activity data');
+        
+        // Enhanced fallback data
+        setActivityData({
+          categories: [
+            { name: 'Development', value: 45, color: '#2563eb', icon: '💻', hours: 3.8, avgProductivity: 85 },
+            { name: 'Meetings', value: 25, color: '#7c3aed', icon: '📞', hours: 2.1, avgProductivity: 72 },
+            { name: 'Learning', value: 15, color: '#16a34a', icon: '📚', hours: 1.3, avgProductivity: 88 },
+            { name: 'Planning', value: 10, color: '#ea580c', icon: '📋', hours: 0.8, avgProductivity: 78 },
+            { name: 'Break', value: 5, color: '#6b7280', icon: '☕', hours: 0.4, avgProductivity: 45 }
+          ],
+          totalHours: 8.4,
+          mostProductiveTime: '9:00 AM - 11:00 AM',
+          efficiency: 82,
+          period: `Last ${days} days`,
+          dataSource: 'fallback'
+        });
+      } finally {
         setLoading(false);
       }
     };
 
     fetchActivityData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId]);
+  }, [userId, days]);
 
   if (loading) {
     return (
@@ -98,7 +121,14 @@ const ActivityBreakdown: React.FC<ActivityBreakdownProps> = ({ userId }) => {
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg">Activity Breakdown</CardTitle>
-          <span className="text-sm text-gray-500">Last 7 days</span>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-500">{activityData?.period || `Last ${days} days`}</span>
+            {activityData?.dataSource && (
+              <Badge variant={activityData.dataSource === 'database' ? 'default' : 'secondary'}>
+                {activityData.dataSource === 'database' ? 'Live Data' : 'Demo Data'}
+              </Badge>
+            )}
+          </div>
         </div>
       </CardHeader>
       <CardContent>
@@ -109,11 +139,23 @@ const ActivityBreakdown: React.FC<ActivityBreakdownProps> = ({ userId }) => {
               <div className="flex items-center justify-between mb-1">
                 <div className="flex items-center space-x-3">
                   <span className="text-lg">{category.icon}</span>
-                  <span className="text-sm font-medium text-gray-900">{category.name}</span>
+                  <div className="flex flex-col">
+                    <span className="text-sm font-medium text-gray-900">{category.name}</span>
+                    {category.hours && (
+                      <span className="text-xs text-gray-500">{category.hours}h</span>
+                    )}
+                  </div>
                 </div>
-                <span className="text-sm font-semibold text-gray-900">{category.value}%</span>
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm font-semibold text-gray-900">{category.value}%</span>
+                  {category.avgProductivity && (
+                    <Badge variant="outline" className="text-xs">
+                      {category.avgProductivity}% productive
+                    </Badge>
+                  )}
+                </div>
               </div>
-              <Progress value={category.value} />
+              <Progress value={category.value} className="h-2" />
             </div>
           ))}
         </div>

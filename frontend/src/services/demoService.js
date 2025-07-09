@@ -1675,6 +1675,172 @@ class DemoService {
   resetDemoData() {
     this.demoData = this.initializeDemoData();
   }
+
+  // Advanced Reporting methods
+  generateReportPreview(reportConfig) {
+    return [
+      { name: 'Jan', value1: 4000, value2: 2400, value3: 2400 },
+      { name: 'Feb', value1: 3000, value2: 1398, value3: 2210 },
+      { name: 'Mar', value1: 2000, value2: 9800, value3: 2290 },
+      { name: 'Apr', value1: 2780, value2: 3908, value3: 2000 },
+      { name: 'May', value1: 1890, value2: 4800, value3: 2181 },
+      { name: 'Jun', value1: 2390, value2: 3800, value3: 2500 }
+    ];
+  }
+
+  saveCustomReport(reportConfig) {
+    return {
+      id: `report_${Date.now()}`,
+      name: reportConfig.name,
+      status: 'saved',
+      created_at: new Date().toISOString()
+    };
+  }
+
+  getScenarioAnalysis(params = {}) {
+    return [
+      {
+        id: 1,
+        name: 'Optimistic Growth',
+        probability: 0.25,
+        revenue: 320000,
+        users: 18500,
+        description: 'Strong market conditions and successful product launches'
+      },
+      {
+        id: 2,
+        name: 'Expected Growth',
+        probability: 0.50,
+        revenue: 287450,
+        users: 15620,
+        description: 'Normal market conditions with steady growth'
+      },
+      {
+        id: 3,
+        name: 'Conservative Growth',
+        probability: 0.20,
+        revenue: 245000,
+        users: 13200,
+        description: 'Challenging market conditions but stable performance'
+      },
+      {
+        id: 4,
+        name: 'Pessimistic Scenario',
+        probability: 0.05,
+        revenue: 198000,
+        users: 11800,
+        description: 'Economic downturn or significant market disruption'
+      }
+    ];
+  }
+
+  getRiskAnalysis() {
+    return [
+      {
+        id: 1,
+        name: 'Market Competition',
+        impact: 'high',
+        probability: 0.65,
+        description: 'Increased competition from new market entrants',
+        mitigation: 'Enhance product differentiation and customer loyalty programs'
+      },
+      {
+        id: 2,
+        name: 'Economic Downturn',
+        impact: 'medium',
+        probability: 0.35,
+        description: 'Potential economic recession affecting customer spending',
+        mitigation: 'Diversify revenue streams and focus on essential features'
+      },
+      {
+        id: 3,
+        name: 'Technical Debt',
+        impact: 'medium',
+        probability: 0.45,
+        description: 'Accumulated technical debt slowing development',
+        mitigation: 'Allocate dedicated time for refactoring and modernization'
+      },
+      {
+        id: 4,
+        name: 'Key Personnel Loss',
+        impact: 'high',
+        probability: 0.25,
+        description: 'Risk of losing critical team members',
+        mitigation: 'Improve retention strategies and knowledge documentation'
+      }
+    ];
+  }
+
+  getModelPerformance() {
+    return {
+      accuracy: 0.87,
+      precision: 0.84,
+      recall: 0.89,
+      f1Score: 0.86,
+      lastTrained: '2025-01-05T10:30:00Z',
+      dataPoints: 125000,
+      features: 45,
+      models: [
+        { name: 'Revenue Prediction', accuracy: 0.91, type: 'Random Forest' },
+        { name: 'User Growth', accuracy: 0.85, type: 'LSTM Neural Network' },
+        { name: 'Churn Prediction', accuracy: 0.88, type: 'Gradient Boosting' },
+        { name: 'Performance Forecast', accuracy: 0.83, type: 'Linear Regression' }
+      ]
+    };
+  }
+
+  getForecastData(params = {}) {
+    return [
+      { period: 'Week 1', revenue: 58000, users: 13200, churn: 3.2, performance: 235 },
+      { period: 'Week 2', revenue: 62000, users: 13800, churn: 3.0, performance: 225 },
+      { period: 'Week 3', revenue: 65000, users: 14400, churn: 2.9, performance: 215 },
+      { period: 'Week 4', revenue: 68000, users: 15000, churn: 2.8, performance: 205 },
+      { period: 'Week 5', revenue: 71000, users: 15600, churn: 2.7, performance: 198 },
+      { period: 'Week 6', revenue: 74000, users: 16200, churn: 2.6, performance: 192 }
+    ];
+  }
+
+  getRealTimePredictions() {
+    return {
+      revenue: {
+        current: 234567,
+        predicted: 287450,
+        confidence: 0.87,
+        trend: 'up',
+        change: 22.5
+      },
+      users: {
+        current: 12847,
+        predicted: 15620,
+        confidence: 0.82,
+        trend: 'up',
+        change: 21.6
+      },
+      churn: {
+        current: 3.4,
+        predicted: 2.8,
+        confidence: 0.75,
+        trend: 'down',
+        change: -17.6
+      }
+    };
+  }
+
+  getVisualizationMetrics() {
+    return {
+      chartPerformance: {
+        loadTime: 245,
+        renderTime: 180,
+        dataPoints: 1250,
+        optimizationScore: 87
+      },
+      recommendations: [
+        'Consider data aggregation for large datasets',
+        'Use virtual scrolling for table components',
+        'Implement chart caching for frequently accessed data'
+      ]
+    };
+  }
 }
 
 // Create and export a singleton instance

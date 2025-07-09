@@ -1,7 +1,7 @@
 import React from 'react';
 import { GetServerSideProps } from 'next';
 import Head from 'next/head';
-import PredictiveAnalyticsEngine from '../../components/reports/PredictiveAnalyticsEngine';
+import PredictiveAnalyticsEngine from '../../components/PredictiveAnalyticsEngine';
 
 interface PredictivePageProps {
   user?: {
@@ -23,7 +23,14 @@ const PredictivePage: React.FC<PredictivePageProps> = ({ user }) => {
       
       <div className="min-h-screen bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <PredictiveAnalyticsEngine />
+          <PredictiveAnalyticsEngine
+            dataSource="comprehensive"
+            timeHorizon="30d"
+            confidenceThreshold={0.7}
+            onPredictionUpdate={(predictions) => {
+              console.log('Predictions updated:', predictions);
+            }}
+          />
         </div>
       </div>
     </>

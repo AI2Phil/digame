@@ -101,16 +101,16 @@ export const AdvancedReportingDashboard: React.FC = () => {
       setLoading(true);
       
       const [reportsRes, sourcesRes, exportsRes, metricsRes] = await Promise.all([
-        fetch('/api/reporting/reports', {
+        fetch('http://localhost:8001/api/advanced-reporting/report-builder', {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
         }),
-        fetch('/api/reporting/data-sources', {
+        fetch('http://localhost:8001/api/advanced-reporting/data-sources', {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
         }),
-        fetch('/api/reporting/exports', {
+        fetch('http://localhost:8001/api/advanced-reporting/exports', {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
         }),
-        fetch('/api/reporting/analytics', {
+        fetch('http://localhost:8001/api/advanced-reporting/dashboard', {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
         })
       ]);
@@ -145,7 +145,7 @@ export const AdvancedReportingDashboard: React.FC = () => {
 
   const handleExportReport = async (reportId: string, format: 'pdf' | 'excel' | 'csv' | 'json') => {
     try {
-      const response = await fetch(`/api/reporting/reports/${reportId}/export`, {
+      const response = await fetch(`http://localhost:8001/api/advanced-reporting/reports/${reportId}/export`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -166,7 +166,7 @@ export const AdvancedReportingDashboard: React.FC = () => {
 
   const handleScheduleReport = async (reportId: string, schedule: any) => {
     try {
-      const response = await fetch(`/api/reporting/reports/${reportId}/schedule`, {
+      const response = await fetch(`http://localhost:8001/api/advanced-reporting/reports/${reportId}/schedule`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

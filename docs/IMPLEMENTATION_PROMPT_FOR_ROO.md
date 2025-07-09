@@ -1,5 +1,7 @@
 # Mock Data Replacement Implementation Prompt for Roo
 
+/docs/IMPLEMENTATION_PROMPT_FOR_ROO.md
+
 ## Current Status Update - January 8, 2025
 
 **Platform Completion**: 98% complete - Only mock data replacement remaining for production readiness

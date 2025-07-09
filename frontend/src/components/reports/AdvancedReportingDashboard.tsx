@@ -88,7 +88,7 @@ const AdvancedReportingDashboard: React.FC = () => {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`http://localhost:3001/advanced-reporting/dashboard?timeRange=${selectedTimeRange}`);
+      const response = await fetch(`http://localhost:8001/api/advanced-reporting/dashboard?timeRange=${selectedTimeRange}`);
       
       if (!response.ok) {
         throw new Error('Failed to fetch dashboard data');

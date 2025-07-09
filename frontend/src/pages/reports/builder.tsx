@@ -1,7 +1,7 @@
 import React from 'react';
 import { GetServerSideProps } from 'next';
 import Head from 'next/head';
-import CustomReportBuilder from '../../components/reports/CustomReportBuilder';
+import CustomReportBuilder from '../../components/CustomReportBuilder';
 
 interface ReportBuilderPageProps {
   user?: {
@@ -23,7 +23,16 @@ const ReportBuilderPage: React.FC<ReportBuilderPageProps> = ({ user }) => {
       
       <div className="min-h-screen bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <CustomReportBuilder />
+          <CustomReportBuilder
+            onSave={(report) => {
+              console.log('Report saved:', report);
+              // Handle report save - could redirect or show success message
+            }}
+            onCancel={() => {
+              console.log('Report creation cancelled');
+              // Handle cancel - could redirect back to reports list
+            }}
+          />
         </div>
       </div>
     </>

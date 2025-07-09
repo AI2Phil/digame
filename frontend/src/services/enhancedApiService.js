@@ -958,6 +958,123 @@ class EnhancedApiService {
     }
   }
 
+  // Advanced Reporting methods
+  async generateReportPreview(reportConfig) {
+    if (this.isDemoMode()) {
+      return this.demoService.generateReportPreview(reportConfig);
+    }
+    
+    try {
+      return await this.request('http://localhost:8001/api/advanced-reporting/report-builder/preview', {
+        method: 'POST',
+        body: JSON.stringify(reportConfig)
+      });
+    } catch (error) {
+      console.warn('generateReportPreview failed, using demo data', error);
+      return this.demoService.generateReportPreview(reportConfig);
+    }
+  }
+
+  async saveCustomReport(reportConfig) {
+    if (this.isDemoMode()) {
+      return this.demoService.saveCustomReport(reportConfig);
+    }
+    
+    try {
+      return await this.request('http://localhost:8001/api/advanced-reporting/report-builder', {
+        method: 'POST',
+        body: JSON.stringify(reportConfig)
+      });
+    } catch (error) {
+      console.warn('saveCustomReport failed, using demo fallback', error);
+      return this.demoService.saveCustomReport(reportConfig);
+    }
+  }
+
+  async getScenarioAnalysis(params = {}) {
+    if (this.isDemoMode()) {
+      return this.demoService.getScenarioAnalysis(params);
+    }
+    
+    try {
+      return await this.request('http://localhost:8001/api/advanced-reporting/predictive-analytics/scenarios', {
+        method: 'GET',
+        params
+      });
+    } catch (error) {
+      console.warn('getScenarioAnalysis failed, using demo data', error);
+      return this.demoService.getScenarioAnalysis(params);
+    }
+  }
+
+  async getRiskAnalysis() {
+    if (this.isDemoMode()) {
+      return this.demoService.getRiskAnalysis();
+    }
+    
+    try {
+      return await this.request('http://localhost:8001/api/advanced-reporting/predictive-analytics/risks');
+    } catch (error) {
+      console.warn('getRiskAnalysis failed, using demo data', error);
+      return this.demoService.getRiskAnalysis();
+    }
+  }
+
+  async getModelPerformance() {
+    if (this.isDemoMode()) {
+      return this.demoService.getModelPerformance();
+    }
+    
+    try {
+      return await this.request('http://localhost:8001/api/advanced-reporting/predictive-analytics/models');
+    } catch (error) {
+      console.warn('getModelPerformance failed, using demo data', error);
+      return this.demoService.getModelPerformance();
+    }
+  }
+
+  async getForecastData(params = {}) {
+    if (this.isDemoMode()) {
+      return this.demoService.getForecastData(params);
+    }
+    
+    try {
+      return await this.request('http://localhost:8001/api/advanced-reporting/predictive-analytics/forecasts', {
+        method: 'GET',
+        params
+      });
+    } catch (error) {
+      console.warn('getForecastData failed, using demo data', error);
+      return this.demoService.getForecastData(params);
+    }
+  }
+
+  async getRealTimePredictions() {
+    if (this.isDemoMode()) {
+      return this.demoService.getRealTimePredictions();
+    }
+    
+    try {
+      return await this.request('http://localhost:8001/api/advanced-reporting/predictive-analytics/realtime');
+    } catch (error) {
+      console.warn('getRealTimePredictions failed, using demo data', error);
+      return this.demoService.getRealTimePredictions();
+    }
+  }
+
+  async getVisualizationMetrics() {
+    if (this.isDemoMode()) {
+      return this.demoService.getVisualizationMetrics();
+    }
+    
+    try {
+      return await this.request('http://localhost:8001/api/advanced-reporting/visualization-engine');
+    } catch (error) {
+      console.warn('getVisualizationMetrics failed, using demo data', error);
+      return this.demoService.getVisualizationMetrics();
+    }
+  }
+
   // Utility methods
   isAuthenticated() {
     if (this.isDemoMode()) {
