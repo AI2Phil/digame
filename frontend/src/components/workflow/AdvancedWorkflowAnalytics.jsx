@@ -19,6 +19,7 @@ import {
 } from '../ui/Select';
 import { Input } from '../ui/Input';
 import { Label } from '../ui/Label';
+import { useToastHelpers } from '../ui/Toaster';
 import {
   Activity,
   TrendingUp,
@@ -56,21 +57,21 @@ import {
   LineChart,
   PieChart
 } from 'lucide-react';
-import { 
-  LineChart as RechartsLineChart, 
-  Line, 
-  AreaChart, 
-  Area, 
-  BarChart as RechartsBarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  Legend, 
-  ResponsiveContainer, 
-  PieChart as RechartsPieChart, 
-  Pie, 
+import {
+  LineChart as RechartsLineChart,
+  Line,
+  AreaChart,
+  Area,
+  BarChart as RechartsBarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  PieChart as RechartsPieChart,
+  Pie,
   Cell,
   ComposedChart,
   RadarChart,
@@ -91,7 +92,11 @@ const AdvancedWorkflowAnalytics = () => {
   const [performanceData, setPerformanceData] = useState([]);
   const [bottleneckAnalysis, setBottleneckAnalysis] = useState([]);
   const [resourceUtilization, setResourceUtilization] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [realTimeMetrics, setRealTimeMetrics] = useState({});
+  const [workflowSuccessRates, setWorkflowSuccessRates] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [dataSource, setDataSource] = useState('loading');
+  const { success, error, warning, info } = useToastHelpers();
 
   // Mock workflow performance data
   const workflowPerformanceData = [
@@ -162,7 +167,8 @@ const AdvancedWorkflowAnalytics = () => {
     { resource: 'Storage', current: 28, average: 31, peak: 45, trend: 'stable' }
   ];
 
-  const workflowSuccessRates = [
+  // Enhanced fallback data for workflow success rates
+  const generateFallbackSuccessRates = () => [
     { name: 'User Onboarding', success: 94.2, total: 1247, category: 'User Management' },
     { name: 'Data Processing', success: 91.7, total: 856, category: 'Data Operations' },
     { name: 'Report Generation', success: 96.8, total: 2341, category: 'Reporting' },
@@ -171,7 +177,8 @@ const AdvancedWorkflowAnalytics = () => {
     { name: 'Integration Sync', success: 87.6, total: 423, category: 'Integrations' }
   ];
 
-  const realTimeMetrics = {
+  // Enhanced fallback data for real-time metrics
+  const generateFallbackRealTimeMetrics = () => ({
     activeWorkflows: 23,
     queuedExecutions: 156,
     avgExecutionTime: 2.8,
@@ -180,37 +187,91 @@ const AdvancedWorkflowAnalytics = () => {
     errorRate: 6.6,
     resourceEfficiency: 87.2,
     costPerExecution: 0.034
-  };
+  });
 
   useEffect(() => {
-    setWorkflowMetrics(workflowPerformanceData);
-    setPerformanceData(workflowPerformanceData);
-    setBottleneckAnalysis(bottleneckData);
-    setResourceUtilization(resourceUtilizationData);
     loadWorkflowAnalytics();
   }, [selectedTimeRange, selectedWorkflow]);
 
   const loadWorkflowAnalytics = async () => {
-    setIsLoading(true);
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      setIsLoading(true);
+      
+      // Parallel API calls for comprehensive analytics data
+      const [performanceResponse, bottleneckResponse, resourceResponse, metricsResponse] = await Promise.all([
+        fetch(`http://localhost:8001/api/workflow-automation/analytics/performance?timeRange=${selectedTimeRange}&workflow=${selectedWorkflow}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            // Add authentication header if available
+            // 'Authorization': `Bearer ${token}`
+          },
+        }),
+        fetch(`http://localhost:8001/api/workflow-automation/analytics/bottlenecks?timeRange=${selectedTimeRange}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }),
+        fetch(`http://localhost:8001/api/workflow-automation/analytics/resources?timeRange=${selectedTimeRange}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }),
+        fetch(`http://localhost:8001/api/workflow-automation/analytics/metrics?timeRange=${selectedTimeRange}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        })
+      ]);
+
+      if (performanceResponse.ok && bottleneckResponse.ok && resourceResponse.ok && metricsResponse.ok) {
+        const [performanceData, bottleneckData, resourceData, metricsData] = await Promise.all([
+          performanceResponse.json(),
+          bottleneckResponse.json(),
+          resourceResponse.json(),
+          metricsResponse.json()
+        ]);
+
+        setPerformanceData(performanceData.performance_data || []);
+        setWorkflowMetrics(performanceData.performance_data || []);
+        setBottleneckAnalysis(bottleneckData.bottlenecks || []);
+        setResourceUtilization(resourceData.resources || []);
+        setRealTimeMetrics(metricsData.real_time_metrics || {});
+        setWorkflowSuccessRates(metricsData.success_rates || []);
+        setDataSource(metricsData.data_source || 'database');
+        
+        if (metricsData.data_source === 'enhanced_fallback') {
+          info('Using demo data - API unavailable');
+        } else if (metricsData.data_source === 'database') {
+          success('Workflow analytics loaded successfully');
+        }
+      } else {
+        throw new Error('Failed to load workflow analytics');
+      }
+    } catch (err) {
+      console.error('Error loading workflow analytics:', err);
+      error('Failed to load workflow analytics');
+      
+      // Enhanced fallback data
+      setPerformanceData(workflowPerformanceData);
+      setWorkflowMetrics(workflowPerformanceData);
+      setBottleneckAnalysis(bottleneckData);
+      setResourceUtilization(resourceUtilizationData);
+      setRealTimeMetrics(generateFallbackRealTimeMetrics());
+      setWorkflowSuccessRates(generateFallbackSuccessRates());
+      setDataSource('enhanced_fallback');
+      warning('Using enhanced demo data - API unavailable');
+    } finally {
       setIsLoading(false);
-    }, 1500);
+    }
   };
 
   const refreshAnalytics = useCallback(async () => {
-    setIsLoading(true);
-    // Simulate real-time data refresh
-    setTimeout(() => {
-      setIsLoading(false);
-      // Update metrics with slight variations
-      setWorkflowMetrics(prev => prev.map(metric => ({
-        ...metric,
-        executions: metric.executions + Math.floor(Math.random() * 10 - 5),
-        throughput: metric.throughput + Math.random() * 4 - 2
-      })));
-    }, 1000);
-  }, []);
+    await loadWorkflowAnalytics();
+  }, [selectedTimeRange, selectedWorkflow]);
 
   const renderPerformanceTab = () => (
     <div className="space-y-6">
@@ -823,4 +884,6 @@ const AdvancedWorkflowAnalytics = () => {
     </div>
   );
 };
+
+export default AdvancedWorkflowAnalytics;
 

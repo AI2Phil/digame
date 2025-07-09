@@ -34,6 +34,8 @@ from .routers import task_router # Import the task management router
 from .routers import enterprise_dashboard_router # Import the enterprise dashboard router
 from .routers import market_intelligence_router # Import the market intelligence router
 from .routers import workflow_automation_router # Import the workflow automation router
+from .routers import workflow_analytics_router # Import the workflow analytics router
+from .routers import workflow_marketplace_router # Import the workflow marketplace router
 from .routers import integration_router # Import the integration router
 # from .routers import tenant_router # Import the tenant router - temporarily disabled due to UserRole conflicts
 from .routers import notification_router # Import the notification router
@@ -169,6 +171,10 @@ app = FastAPI(
         {
             "name": "Workflow Automation",
             "description": "Automated workflow and process management"
+        },
+        {
+            "name": "Workflow Marketplace",
+            "description": "Workflow template marketplace, sharing, and community features"
         },
         {
             "name": "Integrations",
@@ -358,6 +364,8 @@ app.include_router(task_router.router, tags=["Task Management"])
 app.include_router(enterprise_dashboard_router.router, tags=["Enterprise Dashboard"])
 app.include_router(market_intelligence_router.router, tags=["Market Intelligence"])
 app.include_router(workflow_automation_router.router, tags=["Workflow Automation"])
+app.include_router(workflow_analytics_router.router, prefix="/api/workflow-automation/analytics", tags=["Workflow Analytics"])
+app.include_router(workflow_marketplace_router.router, tags=["Workflow Marketplace"])
 app.include_router(integration_router.router, tags=["Integrations"])
 # app.include_router(tenant_router.router, tags=["Tenant Management"]) # Temporarily disabled
 app.include_router(notification_router.router, prefix="/api", tags=["Notifications"])

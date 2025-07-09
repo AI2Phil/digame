@@ -14,7 +14,7 @@ import {
   Users, BarChart3, Brain, Zap, FileText, Calendar,
   MessageSquare, Target, Briefcase, GraduationCap, Bell, Lock,
   Smartphone, Cloud, Database, Activity, TrendingUp,
-  Workflow, Bot, Mic, Eye, Download, Upload, Share, Code,
+  Workflow, Bot, Mic, Eye, Download, Upload, Share, Code, Store,
   Puzzle, Network, Layers, Server, Monitor, AlertTriangle,
   CheckCircle, Clock, Star, Award, Gift, Gamepad2, BookOpen,
   Camera, Video, Headphones, Map, Compass, Rocket, Lightbulb,
@@ -180,6 +180,8 @@ const NextJSComprehensiveNavigation: React.FC<NextJSComprehensiveNavigationProps
       description: 'Workflow automation and process optimization',
       items: [
         { label: 'Workflow Automation', icon: <Zap className="w-4 h-4" />, path: '/workflow/automation', subtitle: 'AUTOMATION' },
+        { label: 'Advanced Workflow Analytics', icon: <BarChart3 className="w-4 h-4" />, path: '/workflow/advanced-analytics', subtitle: 'ADVANCED ANALYTICS', description: 'Real-time workflow performance metrics, bottleneck analysis, and AI-powered optimization insights' },
+        { label: 'Workflow Marketplace', icon: <Store className="w-4 h-4" />, path: '/workflow/marketplace', subtitle: 'MARKETPLACE', description: 'Discover, share, and collaborate on workflow templates with the community' },
         { label: 'Advanced Workflows', icon: <Network className="w-4 h-4" />, path: '/workflow/advanced', subtitle: 'ADVANCED' },
         { label: 'Process Optimization', icon: <TrendingUp className="w-4 h-4" />, path: '/workflow/optimization', subtitle: 'OPTIMIZATION' },
         { label: 'Process Notes', icon: <FileText className="w-4 h-4" />, path: '/workflow/notes', description: 'Process documentation' },
