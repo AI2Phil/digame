@@ -240,7 +240,7 @@ const NextJSComprehensiveNavigation: React.FC<NextJSComprehensiveNavigationProps
         { label: 'Course Catalog', icon: <BookOpen className="w-4 h-4" />, path: '/learning/courses', subtitle: 'COURSE LIBRARY', description: 'Browse and enroll in professional development courses' },
         { label: 'AI Learning Assistant', icon: <Bot className="w-4 h-4" />, path: '/learning/ai-assistant', subtitle: 'AI-POWERED LEARNING', description: 'Personalized AI learning assistant for adaptive education' },
         { label: 'Language Learning', icon: <Globe className="w-4 h-4" />, path: '/learning/language', subtitle: 'LANGUAGE SKILLS', description: 'AI-powered language learning and communication enhancement' },
-        { label: 'Skill Tracking', icon: <TrendingUp className="w-4 h-4" />, path: '/learning/tracking', subtitle: 'PROGRESS MONITORING', description: 'Track skill development progress and learning milestones' },
+        { label: 'Skill Tracking', icon: <TrendingUp className="w-4 h-4" />, path: '/learning/skill-tracking', subtitle: 'PROGRESS MONITORING', description: 'Track skill development progress and learning milestones' },
         { label: 'Learning Analytics', icon: <BarChart3 className="w-4 h-4" />, path: '/learning/analytics', subtitle: 'LEARNING INSIGHTS', description: 'Detailed analytics on learning progress and effectiveness' },
         { label: 'Certification Hub', icon: <Award className="w-4 h-4" />, path: '/learning/certifications', subtitle: 'CERTIFICATIONS', description: 'Manage professional certifications and credentials' }
       ]
@@ -331,10 +331,10 @@ const NextJSComprehensiveNavigation: React.FC<NextJSComprehensiveNavigationProps
         { label: 'Configuration Categories', icon: <Layers className="w-4 h-4" />, path: '/admin/config/categories', subtitle: 'ORGANIZED SETTINGS', description: 'Browse configuration settings by category: Security, Database, Performance, Notifications' },
         { label: 'Configuration Backups', icon: <Archive className="w-4 h-4" />, path: '/admin/config/backups', subtitle: 'BACKUP MANAGEMENT', description: 'Create, manage, and restore configuration backups with version control' },
         { label: 'Configuration Monitoring', icon: <Monitor className="w-4 h-4" />, path: '/admin/config/monitoring', subtitle: 'DRIFT DETECTION', description: 'Monitor configuration changes and detect drift from expected values' },
-        { label: 'Environment Management', icon: <Server className="w-4 h-4" />, path: '/admin/config/environments', subtitle: 'ENVIRONMENT CONFIG', description: 'Manage configurations across different environments (dev, staging, production)' },
-        { label: 'Configuration Templates', icon: <FileText className="w-4 h-4" />, path: '/admin/config/templates', subtitle: 'TEMPLATES', description: 'Pre-configured templates for common system setups and deployments' },
-        { label: 'Audit Trail', icon: <Clock className="w-4 h-4" />, path: '/admin/config/audit', subtitle: 'CHANGE TRACKING', description: 'Complete audit trail of all configuration changes with user attribution' },
-        { label: 'Configuration API', icon: <Code className="w-4 h-4" />, path: '/admin/config/api', subtitle: 'API MANAGEMENT', description: 'Programmatic configuration management via REST API' }
+        { label: 'Environment Management', icon: <Server className="w-4 h-4" />, path: '/config/environments', subtitle: 'ENVIRONMENT CONFIG', description: 'Manage configurations across different environments (dev, staging, production)' },
+        { label: 'Configuration Templates', icon: <FileText className="w-4 h-4" />, path: '/config/templates', subtitle: 'TEMPLATES', description: 'Pre-configured templates for common system setups and deployments' },
+        { label: 'Audit Trail', icon: <Clock className="w-4 h-4" />, path: '/config/audit', subtitle: 'CHANGE TRACKING', description: 'Complete audit trail of all configuration changes with user attribution' },
+        { label: 'Configuration API', icon: <Code className="w-4 h-4" />, path: '/config/api', subtitle: 'API MANAGEMENT', description: 'Programmatic configuration management via REST API' }
       ]
     },
     {

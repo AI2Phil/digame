@@ -4,7 +4,7 @@ import SkillTracking from '../../src/components/learning/SkillTracking';
 
 export default function SkillTrackingPage() {
   return (
-    <Container maxWidth="xl">
+    <Container maxWidth="xl" sx={{ py: 4 }}>
       <SkillTracking />
     </Container>
   );

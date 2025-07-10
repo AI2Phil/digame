@@ -4,7 +4,7 @@ import AILearningAssistant from '../../src/components/learning/AILearningAssista
 
 export default function AIAssistantPage() {
   return (
-    <Container maxWidth="xl">
+    <Container maxWidth="xl" sx={{ py: 4 }}>
       <AILearningAssistant />
     </Container>
   );

@@ -2,7 +2,9 @@
 
 1. confirm the comprehensive menu includes page to this URL as a menu item NextJSComprehensiveNavigation.tsx, 2. 
 
-1. Read /docs/IMPLEMENTATION_PROMPT_FOR_ROO.md file and /docs/AUDIT.md, 2. implement the next set of tasks foloowed by an update to the files for stage of completion, while preserving their structure and contents
+1. Read /docs/IMPLEMENTATION_PROMPT_FOR_ROO.md file and /docs/AUDIT.md
+
+implement the next set of tasks foloowed by an update to the files for stage of completion, while preserving their structure and contents
 
 ## Overview
 This document provides a comprehensive audit of all pages, components, and sub-pages that currently contain mock data requiring replacement with database-driven content. This checklist enables tracking progress for production readiness completion.
