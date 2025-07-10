@@ -33,8 +33,8 @@ jobs:
     name: Security & Quality Scan
     runs-on: ubuntu-latest
     permissions:
-      security-events: write
       contents: read
+      actions: read
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -49,11 +49,12 @@ jobs:
           format: 'sarif'
           output: 'trivy-results.sarif'
 
-      - name: Upload Trivy scan results
-        uses: github/codeql-action/upload-sarif@v3
-        if: always()
-        with:
-          sarif_file: 'trivy-results.sarif'
+      # Note: SARIF upload disabled for private repository without GitHub Advanced Security
+      # - name: Upload Trivy scan results
+      #   uses: github/codeql-action/upload-sarif@v3
+      #   if: always()
+      #   with:
+      #     sarif_file: 'trivy-results.sarif'
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
