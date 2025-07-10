@@ -2,11 +2,43 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
-import { 
+import {
   Users, MessageCircle, Target, TrendingUp, Star,
   Network, GraduationCap, BookOpen, Award, Eye,
   Plus, ArrowRight, Activity, Heart, Zap
 } from 'lucide-react';
+
+// API service functions
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+
+const apiService = {
+  async fetchSocialDashboard() {
+    const response = await fetch(`${API_BASE_URL}/api/social/dashboard`, {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        'Content-Type': 'application/json',
+      },
+    });
+    if (!response.ok) {
+      throw new Error('Failed to fetch social dashboard data');
+    }
+    return response.json();
+  },
+
+  async refreshMetrics() {
+    const response = await fetch(`${API_BASE_URL}/api/social/refresh-metrics`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        'Content-Type': 'application/json',
+      },
+    });
+    if (!response.ok) {
+      throw new Error('Failed to refresh metrics');
+    }
+    return response.json();
+  }
+};
 
 interface SocialMetrics {
   total_connections: number;
@@ -52,85 +84,76 @@ export const SocialDashboard: React.FC = () => {
   const fetchSocialData = async () => {
     try {
       setLoading(true);
-      
-      // For now, use mock data - will be replaced with actual API calls
-      const mockMetrics: SocialMetrics = {
-        total_connections: 47,
-        active_mentorships: 3,
-        learning_partnerships: 5,
-        knowledge_shared: 12,
-        collaboration_score: 78,
-        network_growth_rate: 15.3,
-        engagement_level: 'high'
-      };
-
-      const mockActivity: RecentActivity[] = [
-        {
-          id: '1',
-          type: 'connection',
-          title: 'New Connection',
-          description: 'Connected with Sarah Chen, Senior Developer at TechCorp',
-          timestamp: new Date(Date.now() - 3600000).toISOString(),
-          user_name: 'Sarah Chen'
-        },
-        {
-          id: '2',
-          type: 'mentorship',
-          title: 'Mentorship Session',
-          description: 'Completed React Advanced Patterns session with mentor',
-          timestamp: new Date(Date.now() - 7200000).toISOString()
-        },
-        {
-          id: '3',
-          type: 'learning',
-          title: 'Learning Partnership',
-          description: 'Started TypeScript study group with 3 peers',
-          timestamp: new Date(Date.now() - 86400000).toISOString()
-        },
-        {
-          id: '4',
-          type: 'achievement',
-          title: 'Achievement Unlocked',
-          description: 'Earned "Knowledge Sharer" badge for helping 10+ peers',
-          timestamp: new Date(Date.now() - 172800000).toISOString()
-        }
-      ];
-
-      const mockSuggestions: PeerSuggestion[] = [
-        {
-          id: '1',
-          name: 'Alex Rodriguez',
-          title: 'Full Stack Developer',
-          company: 'StartupXYZ',
-          compatibility_score: 92,
-          shared_skills: ['React', 'Node.js', 'TypeScript']
-        },
-        {
-          id: '2',
-          name: 'Maria Kim',
-          title: 'UX Designer',
-          company: 'DesignStudio',
-          compatibility_score: 87,
-          shared_skills: ['Design Systems', 'Figma', 'User Research']
-        },
-        {
-          id: '3',
-          name: 'David Thompson',
-          title: 'DevOps Engineer',
-          company: 'CloudTech',
-          compatibility_score: 84,
-          shared_skills: ['Docker', 'Kubernetes', 'AWS']
-        }
-      ];
-
-      setMetrics(mockMetrics);
-      setRecentActivity(mockActivity);
-      setPeerSuggestions(mockSuggestions);
       setError(null);
+      
+      // Use actual API call
+      const data = await apiService.fetchSocialDashboard();
+      
+      setMetrics(data.metrics);
+      setRecentActivity(data.recent_activity || []);
+      setPeerSuggestions(data.peer_suggestions || []);
     } catch (err) {
+      console.error('Error fetching social data:', err);
       setError(err instanceof Error ? err.message : 'Failed to load social data');
+      
+      // Fallback to mock data in development
+      if (process.env.NODE_ENV === 'development') {
+        const mockMetrics: SocialMetrics = {
+          total_connections: 47,
+          active_mentorships: 3,
+          learning_partnerships: 5,
+          knowledge_shared: 12,
+          collaboration_score: 78,
+          network_growth_rate: 15.3,
+          engagement_level: 'high'
+        };
+
+        const mockActivity: RecentActivity[] = [
+          {
+            id: '1',
+            type: 'connection',
+            title: 'New Connection',
+            description: 'Connected with Sarah Chen, Senior Developer at TechCorp',
+            timestamp: new Date(Date.now() - 3600000).toISOString(),
+            user_name: 'Sarah Chen'
+          },
+          {
+            id: '2',
+            type: 'mentorship',
+            title: 'Mentorship Session',
+            description: 'Completed React Advanced Patterns session with mentor',
+            timestamp: new Date(Date.now() - 7200000).toISOString()
+          }
+        ];
+
+        const mockSuggestions: PeerSuggestion[] = [
+          {
+            id: '1',
+            name: 'Alex Rodriguez',
+            title: 'Full Stack Developer',
+            company: 'StartupXYZ',
+            compatibility_score: 92,
+            shared_skills: ['React', 'Node.js', 'TypeScript']
+          }
+        ];
+
+        setMetrics(mockMetrics);
+        setRecentActivity(mockActivity);
+        setPeerSuggestions(mockSuggestions);
+        setError(null);
+      }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleRefreshMetrics = async () => {
+    try {
+      await apiService.refreshMetrics();
+      await fetchSocialData(); // Refresh the dashboard data
+    } catch (err) {
+      console.error('Error refreshing metrics:', err);
+      setError('Failed to refresh metrics');
     }
   };
 
@@ -182,6 +205,10 @@ export const SocialDashboard: React.FC = () => {
           <p className="text-gray-600 mt-1">Your professional networking hub</p>
         </div>
         <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={handleRefreshMetrics}>
+            <TrendingUp className="h-4 w-4 mr-2" />
+            Refresh Metrics
+          </Button>
           <Button variant="outline" size="sm">
             <Eye className="h-4 w-4 mr-2" />
             View All

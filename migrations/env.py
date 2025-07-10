@@ -37,6 +37,9 @@ from app.models.dashboard_custom import ReportDefinition, DashboardWidget, Analy
 from app.models.reporting import Report, ReportExecution, ReportSchedule, ReportSubscription, ReportTemplate, ReportAuditLog, ReportCache
 # Import comparative benchmark models
 from app.models.comparative_benchmark import ComparativeBenchmark
+# Import Phase 1 models - Social Networking and Learning
+from app.models.social import UserConnection, PeerMatch, SocialMetrics, UserSkill
+from app.models.learning import CourseCategory, Course, CourseEnrollment, LearningProgress, LearningRecommendation
 # Also import any other models that might be relevant if they were missed by generic import
 # For example, if UserSetting was a separate file and not covered by app.models import:
 # from app.models.user_setting import UserSetting

@@ -32,6 +32,39 @@ import {
   LocalFireDepartment as FireIcon
 } from '@mui/icons-material';
 
+// API service functions
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+
+const apiService = {
+  async fetchLearningDashboard() {
+    const response = await fetch(`${API_BASE_URL}/api/learning/dashboard`, {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        'Content-Type': 'application/json',
+      },
+    });
+    if (!response.ok) {
+      throw new Error('Failed to fetch learning dashboard data');
+    }
+    return response.json();
+  },
+
+  async enrollInCourse(courseId: number) {
+    const response = await fetch(`${API_BASE_URL}/api/learning/enroll`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ course_id: courseId }),
+    });
+    if (!response.ok) {
+      throw new Error('Failed to enroll in course');
+    }
+    return response.json();
+  }
+};
+
 // Types
 interface LearningProgressSummary {
   total_courses_enrolled: number;
@@ -90,82 +123,82 @@ const LearningDashboard: React.FC = () => {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      // Mock data for development - replace with actual API call
-      const mockData: LearningDashboardData = {
-        progress_summary: {
-          total_courses_enrolled: 8,
-          courses_completed: 3,
-          courses_in_progress: 2,
-          total_learning_hours: 45.5,
-          completion_rate: 37.5,
-          current_streak: 7
-        },
-        recent_activity: [
-          {
-            id: '1',
-            type: 'enrollment',
-            title: 'Course Enrollment',
-            description: 'Enrolled in Advanced React Patterns',
-            timestamp: new Date().toISOString(),
-            course_title: 'Advanced React Patterns'
-          },
-          {
-            id: '2',
-            type: 'completion',
-            title: 'Course Completed',
-            description: 'Completed JavaScript Fundamentals',
-            timestamp: new Date(Date.now() - 86400000).toISOString(),
-            course_title: 'JavaScript Fundamentals'
-          }
-        ],
-        skill_gaps: [
-          {
-            skill_name: 'TypeScript',
-            current_level: 'beginner',
-            target_level: 'advanced',
-            gap_score: 60,
-            recommended_courses: ['TypeScript Fundamentals', 'Advanced TypeScript']
-          },
-          {
-            skill_name: 'System Design',
-            current_level: 'intermediate',
-            target_level: 'expert',
-            gap_score: 40,
-            recommended_courses: ['System Design Patterns', 'Scalable Architecture']
-          }
-        ],
-        recommended_courses: [
-          {
-            id: 1,
-            title: 'Advanced React Patterns',
-            description: 'Learn advanced React patterns and best practices',
-            difficulty_level: 'advanced',
-            estimated_duration_hours: 12,
-            tags: ['React', 'JavaScript', 'Frontend'],
-            instructor_id: 1,
-            enrollment_count: 245,
-            average_rating: 4.8
-          },
-          {
-            id: 2,
-            title: 'TypeScript Fundamentals',
-            description: 'Master TypeScript from basics to advanced concepts',
-            difficulty_level: 'intermediate',
-            estimated_duration_hours: 8,
-            tags: ['TypeScript', 'JavaScript'],
-            instructor_id: 2,
-            enrollment_count: 189,
-            average_rating: 4.6
-          }
-        ]
-      };
+      setError(null);
       
-      setDashboardData(mockData);
+      // Use actual API call
+      const data = await apiService.fetchLearningDashboard();
+      setDashboardData(data);
     } catch (err) {
-      setError('Failed to load learning dashboard data');
       console.error('Error fetching dashboard data:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load learning dashboard data');
+      
+      // Fallback to mock data in development
+      if (process.env.NODE_ENV === 'development') {
+        const mockData: LearningDashboardData = {
+          progress_summary: {
+            total_courses_enrolled: 8,
+            courses_completed: 3,
+            courses_in_progress: 2,
+            total_learning_hours: 45.5,
+            completion_rate: 37.5,
+            current_streak: 7
+          },
+          recent_activity: [
+            {
+              id: '1',
+              type: 'enrollment',
+              title: 'Course Enrollment',
+              description: 'Enrolled in Advanced React Patterns',
+              timestamp: new Date().toISOString(),
+              course_title: 'Advanced React Patterns'
+            },
+            {
+              id: '2',
+              type: 'completion',
+              title: 'Course Completed',
+              description: 'Completed JavaScript Fundamentals',
+              timestamp: new Date(Date.now() - 86400000).toISOString(),
+              course_title: 'JavaScript Fundamentals'
+            }
+          ],
+          skill_gaps: [
+            {
+              skill_name: 'TypeScript',
+              current_level: 'beginner',
+              target_level: 'advanced',
+              gap_score: 60,
+              recommended_courses: ['TypeScript Fundamentals', 'Advanced TypeScript']
+            }
+          ],
+          recommended_courses: [
+            {
+              id: 1,
+              title: 'Advanced React Patterns',
+              description: 'Learn advanced React patterns and best practices',
+              difficulty_level: 'advanced',
+              estimated_duration_hours: 12,
+              tags: ['React', 'JavaScript', 'Frontend'],
+              instructor_id: 1,
+              enrollment_count: 245,
+              average_rating: 4.8
+            }
+          ]
+        };
+        setDashboardData(mockData);
+        setError(null);
+      }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleEnrollInCourse = async (courseId: number) => {
+    try {
+      await apiService.enrollInCourse(courseId);
+      await fetchDashboardData(); // Refresh the dashboard data
+    } catch (err) {
+      console.error('Error enrolling in course:', err);
+      setError('Failed to enroll in course');
     }
   };
 

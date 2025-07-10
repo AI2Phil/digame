@@ -4,13 +4,12 @@ SQLAlchemy 2.0 models for workspace management, messaging, and real-time communi
 """
 
 from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean, JSON, ForeignKey, Index, Enum
-from sqlalchemy.orm import relationship, declarative_base
+from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from datetime import datetime
 from typing import Optional, Dict, Any, List
 import enum
-
-Base = declarative_base()
+from app.models.user import Base
 
 class ChannelType(enum.Enum):
     """Channel types for collaboration"""
@@ -138,7 +137,7 @@ class Channel(Base):
     # Message statistics
     message_count = Column(Integer, default=0)
     last_message_at = Column(DateTime(timezone=True))
-    last_message_id = Column(Integer, ForeignKey('messages.id'), nullable=True)
+    last_message_id = Column(Integer, ForeignKey('collaboration_messages.id'), nullable=True)
     
     # Metadata
     created_by = Column(Integer, ForeignKey('users.id'), nullable=False)
@@ -158,7 +157,7 @@ class Channel(Base):
 
 class Message(Base):
     """Messages within channels"""
-    __tablename__ = 'messages'
+    __tablename__ = 'collaboration_messages'
     
     id = Column(Integer, primary_key=True, index=True)
     channel_id = Column(Integer, ForeignKey('channels.id'), nullable=False, index=True)
@@ -169,7 +168,7 @@ class Message(Base):
     type = Column(Enum(MessageType), nullable=False, default=MessageType.TEXT)
     
     # Message metadata
-    thread_id = Column(Integer, ForeignKey('messages.id'), nullable=True)  # For threaded replies
+    thread_id = Column(Integer, ForeignKey('collaboration_messages.id'), nullable=True)  # For threaded replies
     reply_count = Column(Integer, default=0)
     is_pinned = Column(Boolean, default=False)
     is_edited = Column(Boolean, default=False)
@@ -183,7 +182,7 @@ class Message(Base):
     # Rich content
     attachments = Column(JSON, default=[])  # File attachments
     mentions = Column(JSON, default=[])  # User mentions
-    metadata = Column(JSON, default={})  # Additional message data
+    message_metadata = Column(JSON, default={})  # Additional message data
     
     # Relationships
     channel = relationship("Channel", back_populates="messages", foreign_keys=[channel_id])
@@ -203,7 +202,7 @@ class MessageReaction(Base):
     __tablename__ = 'message_reactions'
     
     id = Column(Integer, primary_key=True, index=True)
-    message_id = Column(Integer, ForeignKey('messages.id'), nullable=False, index=True)
+    message_id = Column(Integer, ForeignKey('collaboration_messages.id'), nullable=False, index=True)
     user_id = Column(Integer, ForeignKey('users.id'), nullable=False, index=True)
     
     # Reaction details
@@ -316,7 +315,7 @@ class MessageAttachment(Base):
     __tablename__ = 'message_attachments'
     
     id = Column(Integer, primary_key=True, index=True)
-    message_id = Column(Integer, ForeignKey('messages.id'), nullable=False, index=True)
+    message_id = Column(Integer, ForeignKey('collaboration_messages.id'), nullable=False, index=True)
     
     # File details
     filename = Column(String(255), nullable=False)

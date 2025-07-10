@@ -45,6 +45,48 @@ import {
   Clear as ClearIcon
 } from '@mui/icons-material';
 
+// API service functions
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+
+const apiService = {
+  async fetchCourses(params: {
+    limit?: number;
+    offset?: number;
+    difficulty_level?: string;
+  } = {}) {
+    const queryParams = new URLSearchParams();
+    if (params.limit) queryParams.append('limit', params.limit.toString());
+    if (params.offset) queryParams.append('offset', params.offset.toString());
+    if (params.difficulty_level) queryParams.append('difficulty_level', params.difficulty_level);
+
+    const response = await fetch(`${API_BASE_URL}/api/learning/courses?${queryParams}`, {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        'Content-Type': 'application/json',
+      },
+    });
+    if (!response.ok) {
+      throw new Error('Failed to fetch courses');
+    }
+    return response.json();
+  },
+
+  async enrollInCourse(courseId: number) {
+    const response = await fetch(`${API_BASE_URL}/api/learning/enroll`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ course_id: courseId }),
+    });
+    if (!response.ok) {
+      throw new Error('Failed to enroll in course');
+    }
+    return response.json();
+  }
+};
+
 // Types
 interface Course {
   id: number;
@@ -111,8 +153,22 @@ const CourseCatalog: React.FC = () => {
   const fetchCourses = async () => {
     try {
       setLoading(true);
-      // Mock data for development - replace with actual API call
-      const mockCourses: Course[] = [
+      setError(null);
+      
+      // Use actual API call
+      const data = await apiService.fetchCourses({
+        limit: 50,
+        difficulty_level: filters.difficulty_level || undefined
+      });
+      
+      setCourses(data);
+    } catch (err) {
+      console.error('Error fetching courses:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load courses');
+      
+      // Fallback to mock data in development
+      if (process.env.NODE_ENV === 'development') {
+        const mockCourses: Course[] = [
         {
           id: 1,
           title: 'Advanced React Patterns',
@@ -229,10 +285,9 @@ const CourseCatalog: React.FC = () => {
         }
       ];
 
-      setCourses(mockCourses);
-    } catch (err) {
-      setError('Failed to load courses');
-      console.error('Error fetching courses:', err);
+        setCourses(mockCourses);
+        setError(null);
+      }
     } finally {
       setLoading(false);
     }
@@ -297,16 +352,17 @@ const CourseCatalog: React.FC = () => {
 
   const handleEnroll = async (courseId: number) => {
     try {
-      // Mock API call - replace with actual implementation
-      console.log('Enrolling in course:', courseId);
+      await apiService.enrollInCourse(courseId);
       
-      setCourses(prev => prev.map(course => 
-        course.id === courseId 
+      // Update local state
+      setCourses(prev => prev.map(course =>
+        course.id === courseId
           ? { ...course, is_enrolled: true, enrollment_count: course.enrollment_count + 1 }
           : course
       ));
     } catch (err) {
       console.error('Error enrolling in course:', err);
+      setError('Failed to enroll in course');
     }
   };
 

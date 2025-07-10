@@ -40,6 +40,54 @@ import {
   Refresh as RefreshIcon
 } from '@mui/icons-material';
 
+// API service functions
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+
+const apiService = {
+  async fetchPeerSuggestions(limit: number = 5) {
+    const response = await fetch(`${API_BASE_URL}/api/social/peer-suggestions?limit=${limit}`, {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        'Content-Type': 'application/json',
+      },
+    });
+    if (!response.ok) {
+      throw new Error('Failed to fetch peer suggestions');
+    }
+    return response.json();
+  },
+
+  async sendConnectionRequest(userId: string, message: string) {
+    const response = await fetch(`${API_BASE_URL}/api/social/connect`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ user_id: userId, message }),
+    });
+    if (!response.ok) {
+      throw new Error('Failed to send connection request');
+    }
+    return response.json();
+  },
+
+  async respondToConnectionRequest(requestId: string, response: 'accept' | 'decline') {
+    const apiResponse = await fetch(`${API_BASE_URL}/api/social/connection-response`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ request_id: requestId, response }),
+    });
+    if (!apiResponse.ok) {
+      throw new Error('Failed to respond to connection request');
+    }
+    return apiResponse.json();
+  }
+};
+
 // Types
 interface PeerSuggestion {
   id: string;
@@ -95,8 +143,42 @@ const PeerMatching: React.FC = () => {
   const fetchPeerData = async () => {
     try {
       setLoading(true);
-      // Mock data for development - replace with actual API calls
-      const mockSuggestions: PeerSuggestion[] = [
+      setError(null);
+      
+      // Use actual API call
+      const suggestions = await apiService.fetchPeerSuggestions(5);
+      setPeerSuggestions(suggestions);
+      
+      // For now, use mock data for connection requests until that API is implemented
+      const mockRequests: ConnectionRequest[] = [
+        {
+          id: '1',
+          from_user_id: '201',
+          from_user_name: 'Alex Kim',
+          from_user_title: 'Product Manager',
+          message: 'Hi! I noticed we both work in the fintech space. Would love to connect and share experiences.',
+          timestamp: new Date().toISOString(),
+          status: 'pending'
+        },
+        {
+          id: '2',
+          from_user_id: '202',
+          from_user_name: 'Jennifer Wu',
+          from_user_title: 'UX Designer',
+          message: 'Hello! I saw your work on design systems. Would be great to connect!',
+          timestamp: new Date(Date.now() - 86400000).toISOString(),
+          status: 'pending'
+        }
+      ];
+      
+      setConnectionRequests(mockRequests);
+    } catch (err) {
+      console.error('Error fetching peer data:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load peer matching data');
+      
+      // Fallback to mock data in development
+      if (process.env.NODE_ENV === 'development') {
+        const mockSuggestions: PeerSuggestion[] = [
         {
           id: '1',
           user_id: '101',
@@ -135,32 +217,22 @@ const PeerMatching: React.FC = () => {
         }
       ];
 
-      const mockRequests: ConnectionRequest[] = [
-        {
-          id: '1',
-          from_user_id: '201',
-          from_user_name: 'Alex Kim',
-          from_user_title: 'Product Manager',
-          message: 'Hi! I noticed we both work in the fintech space. Would love to connect and share experiences.',
-          timestamp: new Date().toISOString(),
-          status: 'pending'
-        },
-        {
-          id: '2',
-          from_user_id: '202',
-          from_user_name: 'Jennifer Wu',
-          from_user_title: 'UX Designer',
-          message: 'Hello! I saw your work on design systems. Would be great to connect!',
-          timestamp: new Date(Date.now() - 86400000).toISOString(),
-          status: 'pending'
-        }
-      ];
+        const mockRequests: ConnectionRequest[] = [
+          {
+            id: '1',
+            from_user_id: '201',
+            from_user_name: 'Alex Kim',
+            from_user_title: 'Product Manager',
+            message: 'Hi! I noticed we both work in the fintech space. Would love to connect and share experiences.',
+            timestamp: new Date().toISOString(),
+            status: 'pending'
+          }
+        ];
 
-      setPeerSuggestions(mockSuggestions);
-      setConnectionRequests(mockRequests);
-    } catch (err) {
-      setError('Failed to load peer matching data');
-      console.error('Error fetching peer data:', err);
+        setPeerSuggestions(mockSuggestions);
+        setConnectionRequests(mockRequests);
+        setError(null);
+      }
     } finally {
       setLoading(false);
     }
@@ -175,8 +247,7 @@ const PeerMatching: React.FC = () => {
     if (!selectedPeer) return;
 
     try {
-      // Mock API call - replace with actual implementation
-      console.log('Sending connection request to:', selectedPeer.name, 'Message:', connectionMessage);
+      await apiService.sendConnectionRequest(selectedPeer.user_id, connectionMessage);
       
       // Remove from suggestions after connecting
       setPeerSuggestions(prev => prev.filter(p => p.id !== selectedPeer.id));
@@ -186,23 +257,24 @@ const PeerMatching: React.FC = () => {
       setSelectedPeer(null);
     } catch (err) {
       console.error('Error sending connection request:', err);
+      setError('Failed to send connection request');
     }
   };
 
   const handleConnectionResponse = async (requestId: string, response: 'accept' | 'decline') => {
     try {
-      // Mock API call - replace with actual implementation
-      console.log('Responding to connection request:', requestId, 'Response:', response);
+      await apiService.respondToConnectionRequest(requestId, response);
       
-      setConnectionRequests(prev => 
-        prev.map(req => 
-          req.id === requestId 
+      setConnectionRequests(prev =>
+        prev.map(req =>
+          req.id === requestId
             ? { ...req, status: response === 'accept' ? 'accepted' : 'declined' }
             : req
         )
       );
     } catch (err) {
       console.error('Error responding to connection request:', err);
+      setError('Failed to respond to connection request');
     }
   };
 
