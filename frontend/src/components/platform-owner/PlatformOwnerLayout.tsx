@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Outlet, useNavigate, useLocation } from 'react-router-dom';
+import { useRouter } from 'next/router';
 import {
   Settings,
   TestTube,
@@ -21,8 +21,7 @@ interface MenuItem {
 
 const PlatformOwnerLayout: React.FC = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const navigate = useNavigate();
-  const location = useLocation();
+  const router = useRouter();
 
   const menuItems: MenuItem[] = [
     {
@@ -74,7 +73,7 @@ const PlatformOwnerLayout: React.FC = () => {
   };
 
   const handleMenuClick = (item: MenuItem) => {
-    navigate(item.path);
+    router.push(item.path);
   };
 
   return (
@@ -156,7 +155,10 @@ const PlatformOwnerLayout: React.FC = () => {
 
         {/* Page Content */}
         <div className="flex-1 overflow-auto">
-          <Outlet />
+          {/* Content will be rendered by Next.js pages */}
+          <div className="p-6">
+            <p className="text-gray-600">Platform Owner content goes here</p>
+          </div>
         </div>
       </div>
     </div>

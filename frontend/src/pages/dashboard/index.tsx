@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useRouter } from 'next/router';
 import { useAuth } from '../../contexts/AuthContext';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import PersonalizedDashboard from '../../components/dashboard/PersonalizedDashboard';
@@ -33,8 +33,7 @@ interface DashboardPageProps {
 }
 
 const DashboardPage: React.FC<DashboardPageProps> = ({ isDemoMode: propIsDemoMode, onLogout: propOnLogout, isNewUser }) => {
-  const navigate = useNavigate();
-  const location = useLocation();
+  const router = useRouter();
   const { user, isAuthenticated, isDemoMode: authIsDemoMode, logout, isLoading } = useAuth();
   
   // Use AuthContext values or fallback to props
@@ -46,16 +45,16 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ isDemoMode: propIsDemoMod
       propOnLogout();
     } else {
       logout();
-      navigate('/login');
+      router.push('/login');
     }
   };
 
   // Redirect to login if not authenticated
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
-      navigate('/login');
+      router.push('/login');
     }
-  }, [isAuthenticated, isLoading, navigate]);
+  }, [isAuthenticated, isLoading, router]);
 
   if (isLoading) {
     return (
@@ -73,7 +72,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ isDemoMode: propIsDemoMod
 
   // Check if user has completed onboarding
   if (currentUser && !currentUser.onboardingCompleted && !isDemoMode) {
-    navigate('/onboarding-wizard');
+    router.push('/onboarding-wizard');
     return null;
   }
 

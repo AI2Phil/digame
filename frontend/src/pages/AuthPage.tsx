@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useRouter } from 'next/router';
 import { useAuth } from '../contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -8,7 +8,7 @@ import { Eye, EyeOff, Mail, Lock, User } from 'lucide-react';
 
 const AuthPage: React.FC = () => {
   const { isAuthenticated, login, isLoading, user } = useAuth();
-  const navigate = useNavigate();
+  const router = useRouter();
   const [isLoginMode, setIsLoginMode] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
@@ -36,9 +36,9 @@ const AuthPage: React.FC = () => {
       }
       
       console.log('AuthPage: User authenticated, redirecting to:', redirectPath);
-      navigate(redirectPath);
+      router.push(redirectPath);
     }
-  }, [isAuthenticated, user, navigate]);
+  }, [isAuthenticated, user, router]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;

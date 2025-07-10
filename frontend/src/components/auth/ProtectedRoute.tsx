@@ -1,5 +1,5 @@
-import React from 'react';
-import { Navigate } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { useRouter } from 'next/router';
 import { useAuth } from '../../contexts/AuthContext';
 
 interface ProtectedRouteProps {
@@ -8,12 +8,13 @@ interface ProtectedRouteProps {
   redirectTo?: string;
 }
 
-const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ 
-  children, 
-  requireAuth = true, 
-  redirectTo = '/' 
+const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
+  children,
+  requireAuth = true,
+  redirectTo = '/'
 }) => {
   const { isAuthenticated, isLoading } = useAuth();
+  const router = useRouter();
 
   // Show loading spinner while checking authentication
   if (isLoading) {
@@ -30,14 +31,31 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     );
   }
 
-  // Redirect if authentication is required but user is not authenticated
-  if (requireAuth && !isAuthenticated) {
-    return <Navigate to={redirectTo} replace />;
-  }
+  // Handle redirects with useEffect
+  useEffect(() => {
+    if (!isLoading) {
+      // Redirect if authentication is required but user is not authenticated
+      if (requireAuth && !isAuthenticated) {
+        router.push(redirectTo);
+        return;
+      }
 
-  // Redirect if authentication is not required but user is authenticated
-  if (!requireAuth && isAuthenticated) {
-    return <Navigate to="/dashboard" replace />;
+      // Redirect if authentication is not required but user is authenticated
+      if (!requireAuth && isAuthenticated) {
+        router.push('/dashboard');
+        return;
+      }
+    }
+  }, [isLoading, requireAuth, isAuthenticated, redirectTo, router]);
+
+  // Don't render children if we need to redirect
+  if (!isLoading) {
+    if (requireAuth && !isAuthenticated) {
+      return null;
+    }
+    if (!requireAuth && isAuthenticated) {
+      return null;
+    }
   }
 
   return <>{children}</>;

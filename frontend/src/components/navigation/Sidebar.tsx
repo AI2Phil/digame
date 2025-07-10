@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useRouter } from 'next/router';
 import { Shield, ChevronDown, ChevronRight, Menu, X, Crown, Building, Globe, Settings as SettingsIcon } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
@@ -79,7 +79,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   availableTenants = [], 
   onTenantSwitch 
 }) => {
-  const navigate = useNavigate();
+  const router = useRouter();
   const [expandedSections, setExpandedSections] = useState<ExpandedSections>({
     analytics: false,
     aiTools: false,
@@ -417,7 +417,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             variant="ghost"
             className="w-full justify-start text-blue-700 bg-blue-50 hover:bg-blue-100 font-semibold"
             onClick={() => {
-              navigate('/dashboard');
+              router.push('/dashboard');
               // Only close sidebar on mobile
               if (window.innerWidth < 1024) {
                 onToggle();
@@ -474,7 +474,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                           item.platformOwnerOnly ? 'text-yellow-600' : 'text-gray-600'
                         }`}
                         onClick={() => {
-                          navigate(item.path);
+                          router.push(item.path);
                           // Only close sidebar on mobile
                           if (window.innerWidth < 1024) {
                             onToggle();
@@ -501,7 +501,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             variant="ghost"
             className="w-full justify-start text-gray-700 hover:text-gray-900 hover:bg-gray-100 font-medium"
             onClick={() => {
-              navigate('/reports');
+              router.push('/reports');
               // Only close sidebar on mobile
               if (window.innerWidth < 1024) {
                 onToggle();
@@ -518,7 +518,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               variant="ghost"
               className="w-full justify-start text-gray-700 hover:text-gray-900 hover:bg-gray-100 font-medium"
               onClick={() => {
-                navigate('/admin/dashboard');
+                router.push('/admin/dashboard');
                 // Only close sidebar on mobile
                 if (window.innerWidth < 1024) {
                   onToggle();
