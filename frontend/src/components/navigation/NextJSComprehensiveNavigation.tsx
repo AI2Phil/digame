@@ -21,7 +21,13 @@ import {
   Wrench, Cog, Filter, Archive, Bookmark, Flag, Hash, Link,
   Mail, Phone, MapPin, CreditCard, ShoppingCart, Package,
   Truck, Home, Coffee, Heart, Smile, ThumbsUp, MessageCircle,
-  Key, Palette
+  Key, Palette, Gauge, LineChart, PieChart, BarChart, Radar,
+  Cpu, HardDrive, Wifi, Signal, Zap as Lightning, Shield as ShieldCheck,
+  UserCheck, Settings2, Sliders, GitBranch, GitMerge, Boxes,
+  Container, Layers2, Workflow as WorkflowIcon, Sparkles,
+  Microscope, TestTube, FlaskConical, Beaker, Scale, Gavel,
+  FileCheck, ClipboardCheck, UserCog, Users2, Building2,
+  Factory, Warehouse, Store as StoreIcon, ShoppingBag, Handshake
 } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
@@ -366,20 +372,49 @@ const NextJSComprehensiveNavigation: React.FC<NextJSComprehensiveNavigationProps
       id: 'platformOwner',
       title: 'Platform Owner',
       icon: <Crown className="w-5 h-5" />,
-      description: 'Platform owner exclusive management tools',
+      description: 'Comprehensive platform management and intelligence command center',
       platformOwnerOnly: true,
       items: [
-        { label: 'Platform Console', icon: <Server className="w-4 h-4" />, path: '/platform-owner/console', subtitle: 'PLATFORM MANAGEMENT' },
+        // Existing Core Features
+        { label: 'Platform Console', icon: <Server className="w-4 h-4" />, path: '/platform-owner/console', subtitle: 'PLATFORM MANAGEMENT', description: 'Central platform management dashboard' },
         { label: 'Intelligence Insights', icon: <Brain className="w-4 h-4" />, path: '/intelligence/insights', subtitle: 'AI ANALYTICS', description: 'Real-time intelligence metrics, model accuracy, and AI performance analytics' },
         { label: 'Go-Live Checklist', icon: <CheckCircle className="w-4 h-4" />, path: '/platform-owner/go-live-checklist', subtitle: 'PRODUCTION READINESS', description: 'Comprehensive go-live validation and production readiness assessment' },
-        { label: 'Data Management', icon: <Database className="w-4 h-4" />, path: '/platform-owner/data-management', subtitle: 'DATA LIFECYCLE' },
-        { label: 'Tenant Management', icon: <Building className="w-4 h-4" />, path: '/platform-owner/tenants', subtitle: 'ALL TENANTS' },
-        { label: 'User Management', icon: <Users className="w-4 h-4" />, path: '/platform-owner/users', subtitle: 'ALL USERS' },
-        { label: 'Revenue Analytics', icon: <TrendingUp className="w-4 h-4" />, path: '/platform-owner/revenue', subtitle: 'BUSINESS INTELLIGENCE' },
-        { label: 'System Health', icon: <Activity className="w-4 h-4" />, path: '/platform-owner/health', subtitle: 'MONITORING' },
-        { label: 'Platform Settings', icon: <SettingsIcon className="w-4 h-4" />, path: '/platform-owner/settings', subtitle: 'CONFIGURATION' },
+        { label: 'Data Management', icon: <Database className="w-4 h-4" />, path: '/platform-owner/data-management', subtitle: 'DATA LIFECYCLE', description: 'Comprehensive data lifecycle management' },
+        { label: 'Tenant Management', icon: <Building className="w-4 h-4" />, path: '/platform-owner/tenants', subtitle: 'ALL TENANTS', description: 'Multi-tenant oversight and management' },
+        { label: 'User Management', icon: <Users className="w-4 h-4" />, path: '/platform-owner/users', subtitle: 'ALL USERS', description: 'Platform-wide user management' },
+        { label: 'Revenue Analytics', icon: <TrendingUp className="w-4 h-4" />, path: '/platform-owner/revenue', subtitle: 'BUSINESS INTELLIGENCE', description: 'Revenue insights and business intelligence' },
+        { label: 'System Health', icon: <Activity className="w-4 h-4" />, path: '/platform-owner/health', subtitle: 'MONITORING', description: 'System health monitoring and alerts' },
+        { label: 'Platform Settings', icon: <SettingsIcon className="w-4 h-4" />, path: '/platform-owner/settings', subtitle: 'CONFIGURATION', description: 'Platform configuration management' },
         { label: 'API Test Zone', icon: <Code className="w-4 h-4" />, path: '/platform-owner/test-zone', subtitle: 'DEVELOPMENT', description: 'API testing and validation tools' },
-        { label: 'Service Discovery Test', icon: <Network className="w-4 h-4" />, path: '/service-test', subtitle: 'DEVELOPMENT', description: 'Dynamic service discovery testing' }
+        { label: 'Service Discovery Test', icon: <Network className="w-4 h-4" />, path: '/service-test', subtitle: 'DEVELOPMENT', description: 'Dynamic service discovery testing' },
+
+        // Category 1: Strategic Business Intelligence
+        { label: 'Platform Performance Dashboard', icon: <Gauge className="w-4 h-4" />, path: '/platform-owner/performance-overview', subtitle: 'PERFORMANCE INTELLIGENCE', description: 'Comprehensive platform-wide performance metrics, response times, and user satisfaction scores' },
+        { label: 'Competitive Intelligence Hub', icon: <Radar className="w-4 h-4" />, path: '/platform-owner/competitive-intelligence', subtitle: 'MARKET INTELLIGENCE', description: 'Market positioning, competitive analysis, feature comparison, and market trends' },
+        { label: 'Platform ROI Analytics', icon: <PieChart className="w-4 h-4" />, path: '/platform-owner/roi-analytics', subtitle: 'ROI OPTIMIZATION', description: 'Return on investment tracking, cost per user, feature adoption rates, and revenue attribution' },
+        { label: 'Strategic Planning Dashboard', icon: <GitBranch className="w-4 h-4" />, path: '/platform-owner/strategic-planning', subtitle: 'STRATEGIC PLANNING', description: 'Long-term platform strategy, feature roadmap, resource allocation, and milestone tracking' },
+
+        // Category 2: Advanced Operations Management
+        { label: 'Global System Orchestration', icon: <Boxes className="w-4 h-4" />, path: '/platform-owner/system-orchestration', subtitle: 'SYSTEM ORCHESTRATION', description: 'Cross-system coordination, service mesh management, load balancing, and auto-scaling controls' },
+        { label: 'Incident Command Center', icon: <AlertTriangle className="w-4 h-4" />, path: '/platform-owner/incident-management', subtitle: 'INCIDENT MANAGEMENT', description: 'Centralized incident response, real-time alerts, escalation workflows, and post-mortem analysis' },
+        { label: 'Capacity Planning Center', icon: <BarChart className="w-4 h-4" />, path: '/platform-owner/capacity-planning', subtitle: 'CAPACITY PLANNING', description: 'Resource forecasting, growth projections, capacity management, and cost optimization' },
+        { label: 'Feature Flag Management', icon: <Flag className="w-4 h-4" />, path: '/platform-owner/feature-flags', subtitle: 'FEATURE CONTROL', description: 'Global feature rollout, A/B testing, gradual rollouts, and emergency shutoffs' },
+
+        // Category 3: Advanced Analytics & Intelligence
+        { label: 'User Journey Intelligence', icon: <GitMerge className="w-4 h-4" />, path: '/platform-owner/user-journey-analytics', subtitle: 'USER JOURNEY ANALYTICS', description: 'Deep user behavior analysis, conversion funnels, drop-off analysis, and engagement patterns' },
+        { label: 'Platform Health Scoring', icon: <LineChart className="w-4 h-4" />, path: '/platform-owner/health-scoring', subtitle: 'HEALTH SCORING', description: 'Comprehensive platform health assessment, health scores, trend analysis, and predictive alerts' },
+        { label: 'AI Model Observatory', icon: <Microscope className="w-4 h-4" />, path: '/platform-owner/ai-model-observatory', subtitle: 'AI MODEL MONITORING', description: 'Centralized AI model performance monitoring, accuracy tracking, bias detection, and optimization' },
+        { label: 'Data Quality Command Center', icon: <TestTube className="w-4 h-4" />, path: '/platform-owner/data-quality', subtitle: 'DATA QUALITY', description: 'Platform-wide data quality monitoring, data lineage, quality scores, and anomaly detection' },
+
+        // Category 4: Governance & Compliance
+        { label: 'Compliance Dashboard', icon: <ShieldCheck className="w-4 h-4" />, path: '/platform-owner/compliance-dashboard', subtitle: 'COMPLIANCE MONITORING', description: 'Regulatory compliance monitoring, GDPR compliance, SOC 2 status, and audit trail management' },
+        { label: 'Risk Management Center', icon: <Scale className="w-4 h-4" />, path: '/platform-owner/risk-management', subtitle: 'RISK MANAGEMENT', description: 'Enterprise risk assessment, risk scoring, threat modeling, and mitigation tracking' },
+        { label: 'Audit Trail Analytics', icon: <FileCheck className="w-4 h-4" />, path: '/platform-owner/audit-analytics', subtitle: 'AUDIT ANALYTICS', description: 'Advanced audit log analysis, pattern detection, compliance reporting, and anomaly identification' },
+
+        // Category 5: Developer & Partner Ecosystem
+        { label: 'Developer Portal Management', icon: <UserCog className="w-4 h-4" />, path: '/platform-owner/developer-portal', subtitle: 'DEVELOPER ECOSYSTEM', description: 'Developer ecosystem management, API usage analytics, developer onboarding, and documentation management' },
+        { label: 'Partner Integration Hub', icon: <Handshake className="w-4 h-4" />, path: '/platform-owner/partner-integrations', subtitle: 'PARTNER MANAGEMENT', description: 'Third-party integration management, integration health monitoring, partner analytics, and API versioning' },
+        { label: 'Marketplace Management', icon: <StoreIcon className="w-4 h-4" />, path: '/platform-owner/marketplace-management', subtitle: 'MARKETPLACE OVERSIGHT', description: 'Platform marketplace oversight, app approval workflows, revenue sharing, and quality metrics' }
       ]
     }
   ];

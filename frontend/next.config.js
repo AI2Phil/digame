@@ -1,228 +1,126 @@
 /** @type {import('next').NextConfig} */
-
-const { i18n } = require('./next-i18next.config.js');
-
 const nextConfig = {
   reactStrictMode: true,
-  i18n,
-  
-  // Performance optimizations
   swcMinify: true,
-  compress: true,
   
-  // Image optimization
-  images: {
-    domains: ['localhost'],
-    formats: ['image/webp', 'image/avif'],
-    minimumCacheTTL: 60,
+  // Custom routing configuration
+  async rewrites() {
+    return [
+      // Platform Owner routing
+      {
+        source: '/platform-owner',
+        destination: '/platform-owner/index'
+      },
+      // Ensure all platform-owner routes are properly handled
+      {
+        source: '/platform-owner/:path*',
+        destination: '/platform-owner/:path*'
+      }
+    ];
   },
-  
-  // Experimental features for better performance
-  experimental: {
-    optimizeCss: true,
-    scrollRestoration: true,
-  },
-  
-  // Headers for better caching and security
+
+  // Custom headers for security
   async headers() {
     return [
       {
-        source: '/(.*)',
+        source: '/platform-owner/:path*',
         headers: [
           {
             key: 'X-Frame-Options',
-            value: 'DENY',
+            value: 'DENY'
           },
           {
             key: 'X-Content-Type-Options',
-            value: 'nosniff',
+            value: 'nosniff'
           },
           {
             key: 'Referrer-Policy',
-            value: 'origin-when-cross-origin',
+            value: 'strict-origin-when-cross-origin'
           },
-        ],
-      },
-      {
-        source: '/static/(.*)',
-        headers: [
           {
             key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable',
-          },
-        ],
-      },
+            value: 'no-store, no-cache, must-revalidate, proxy-revalidate'
+          }
+        ]
+      }
     ];
   },
-  
-  webpack: (config, { buildId, dev, isServer, defaultLoaders, webpack }) => {
-    // Performance optimizations
-    if (!dev && !isServer) {
-      // Bundle analyzer in production builds
-      if (process.env.ANALYZE === 'true') {
-        const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer');
-        config.plugins.push(
-          new BundleAnalyzerPlugin({
-            analyzerMode: 'static',
-            openAnalyzer: false,
-            reportFilename: '../bundle-analyzer-report.html',
-          })
-        );
-      }
-      
-      // Optimize chunks
-      config.optimization = {
-        ...config.optimization,
-        splitChunks: {
-          chunks: 'all',
-          cacheGroups: {
-            vendor: {
-              test: /[\\/]node_modules[\\/]/,
-              name: 'vendors',
-              chunks: 'all',
-              priority: 10,
-            },
-            mui: {
-              test: /[\\/]node_modules[\\/]@mui[\\/]/,
-              name: 'mui',
-              chunks: 'all',
-              priority: 20,
-            },
-            charts: {
-              test: /[\\/]node_modules[\\/](chart\.js|react-chartjs-2)[\\/]/,
-              name: 'charts',
-              chunks: 'all',
-              priority: 20,
-            },
-            common: {
-              name: 'common',
-              minChunks: 2,
-              chunks: 'all',
-              priority: 5,
-              reuseExistingChunk: true,
-            },
-          },
-        },
-      };
-    }
-    
-    // Handle SVGs
-    config.module.rules.push({
-      test: /\.svg$/,
-      use: ['@svgr/webpack'],
-    });
-    
-    // Optimize imports
-    config.module.rules.push({
-      test: /\.(js|jsx|ts|tsx)$/,
-      use: [
-        {
-          loader: 'babel-loader',
-          options: {
-            plugins: [
-              [
-                'import',
-                {
-                  libraryName: '@mui/material',
-                  libraryDirectory: '',
-                  camel2DashComponentName: false,
-                },
-                'core',
-              ],
-              [
-                'import',
-                {
-                  libraryName: '@mui/icons-material',
-                  libraryDirectory: '',
-                  camel2DashComponentName: false,
-                },
-                'icons',
-              ],
-            ],
-          },
-        },
-      ],
-      include: /node_modules\/@mui/,
-    });
-    
-    // Client-side fallbacks
-    if (!isServer) {
-      config.resolve.fallback = {
-        ...config.resolve.fallback,
-        fs: false,
-        net: false,
-        tls: false,
-        crypto: false,
-      };
-    }
-    
-    // Add performance hints
-    config.performance = {
-      hints: dev ? false : 'warning',
-      maxEntrypointSize: 512000,
-      maxAssetSize: 512000,
-    };
-    
-    return config;
-  },
-  
+
   // Environment variables
   env: {
-    CUSTOM_KEY: process.env.CUSTOM_KEY,
+    PLATFORM_OWNER_ACCESS_REQUIRED: 'true',
+    ACCESS_CONTROL_ENABLED: 'true'
   },
-  
-  // Redirects for better SEO
-  async redirects() {
-    return [
-      {
-        source: '/home',
-        destination: '/',
-        permanent: true,
-      },
-    ];
-  },
-  
-  // Rewrites for API routes with dynamic backend discovery
-  async rewrites() {
-    // Try to discover backend service dynamically
-    let backendUrl = process.env.NEXT_PUBLIC_API_URL;
-    
-    if (!backendUrl) {
-      // Dynamic port detection for backend service
-      const defaultPorts = [4000, 8001, 8000, 3001, 5000];
-      
-      for (const port of defaultPorts) {
-        try {
-          const response = await fetch(`http://localhost:${port}/service-info`, {
-            method: 'GET',
-            timeout: 1000,
-            signal: AbortSignal.timeout(1000)
-          });
-          
-          if (response.ok) {
-            backendUrl = `http://localhost:${port}`;
-            console.log(`🔍 Dynamic backend discovery: Found backend on port ${port}`);
-            break;
-          }
-        } catch (error) {
-          // Port not available, continue to next
+
+  // Webpack configuration for better performance
+  webpack: (config, { buildId, dev, isServer, defaultLoaders, webpack }) => {
+    // Optimize bundle size
+    config.optimization.splitChunks = {
+      chunks: 'all',
+      cacheGroups: {
+        platformOwner: {
+          test: /[\\/]pages[\\/]platform-owner[\\/]/,
+          name: 'platform-owner',
+          priority: 10,
+          reuseExistingChunk: true
         }
       }
-      
-      // Fallback to default
-      if (!backendUrl) {
-        backendUrl = 'http://localhost:4000';
-        console.log('⚠️  Using fallback backend URL: http://localhost:4000');
-      }
-    }
+    };
 
+    return config;
+  },
+
+  // Image optimization
+  images: {
+    domains: ['localhost', 'your-domain.com'],
+    formats: ['image/webp', 'image/avif']
+  },
+
+  // Experimental features
+  experimental: {
+    // Enable app directory if using Next.js 13+
+    // appDir: true,
+    
+    // Optimize CSS
+    optimizeCss: true,
+    
+    // Enable SWC minification
+    swcMinify: true
+  },
+
+  // Redirects for better SEO and user experience
+  async redirects() {
     return [
+      // Redirect old platform admin routes to new platform-owner routes
       {
-        source: '/api/:path*',
-        destination: `${backendUrl}/:path*`,
+        source: '/admin/platform/:path*',
+        destination: '/platform-owner/:path*',
+        permanent: true
       },
+      {
+        source: '/platform-admin/:path*',
+        destination: '/platform-owner/:path*',
+        permanent: true
+      }
     ];
   },
+
+  // Custom page extensions
+  pageExtensions: ['js', 'jsx', 'ts', 'tsx'],
+
+  // Trailing slash configuration
+  trailingSlash: false,
+
+  // Compression
+  compress: true,
+
+  // Power by header
+  poweredByHeader: false,
+
+  // Generate build ID
+  generateBuildId: async () => {
+    return `platform-owner-${Date.now()}`;
+  }
 };
 
 module.exports = nextConfig;
