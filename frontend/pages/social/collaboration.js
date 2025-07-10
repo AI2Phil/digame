@@ -1,11 +1,11 @@
 import React from 'react';
-import Layout from '../../src/components/layout/Layout';
+import DashboardLayout from '../../src/components/layout/DashboardLayout';
 import SocialCollaborationDashboard from '../../src/components/social/SocialCollaborationDashboard';
 
 export default function SocialCollaborationPage() {
   return (
-    <Layout>
+    <DashboardLayout>
       <SocialCollaborationDashboard />
-    </Layout>
+    </DashboardLayout>
   );
 }

@@ -1,11 +1,11 @@
 import React from 'react';
-import Layout from '../../src/components/layout/Layout';
+import DashboardLayout from '../../src/components/layout/DashboardLayout';
 import SystemConfigurationDashboard from '../../src/components/settings/SystemConfigurationDashboard';
 
 // Configuration Backups - extracted view from SystemConfigurationDashboard
 export default function ConfigurationBackups() {
   return (
-    <Layout>
+    <DashboardLayout>
       <div className="min-h-screen bg-gray-50">
         <div className="px-6 py-8">
           <div className="max-w-7xl mx-auto">
@@ -19,6 +19,6 @@ export default function ConfigurationBackups() {
           </div>
         </div>
       </div>
-    </Layout>
+    </DashboardLayout>
   );
 }

@@ -1,11 +1,11 @@
 import React from 'react';
-import Layout from '../../src/components/layout/Layout';
+import DashboardLayout from '../../src/components/layout/DashboardLayout';
 import SystemConfigurationDashboard from '../../src/components/settings/SystemConfigurationDashboard';
 
 export default function ConfigurationPage() {
   return (
-    <Layout>
+    <DashboardLayout>
       <SystemConfigurationDashboard />
-    </Layout>
+    </DashboardLayout>
   );
 }

@@ -1,11 +1,11 @@
 import React from 'react';
-import Layout from '../../src/components/layout/Layout';
+import DashboardLayout from '../../src/components/layout/DashboardLayout';
 import SocialDashboard from '../../src/components/social/SocialDashboard';
 
 export default function SocialIndex() {
   return (
-    <Layout>
+    <DashboardLayout>
       <SocialDashboard />
-    </Layout>
+    </DashboardLayout>
   );
 }
