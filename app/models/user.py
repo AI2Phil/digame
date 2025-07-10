@@ -208,6 +208,19 @@ class User(Base):
     datasets = relationship("DatasetMetadata", back_populates="creator", cascade="all, delete-orphan")
     experiment_runs = relationship("ExperimentRun", back_populates="creator", cascade="all, delete-orphan")
 
+    # Social Networking relationships
+    connections_initiated = relationship("UserConnection", foreign_keys="UserConnection.user_id", back_populates="user", cascade="all, delete-orphan")
+    connections_received = relationship("UserConnection", foreign_keys="UserConnection.connected_user_id", back_populates="connected_user", cascade="all, delete-orphan")
+    peer_matches_initiated = relationship("PeerMatch", foreign_keys="PeerMatch.user_id", back_populates="user", cascade="all, delete-orphan")
+    peer_matches_received = relationship("PeerMatch", foreign_keys="PeerMatch.matched_user_id", back_populates="matched_user", cascade="all, delete-orphan")
+    social_metrics = relationship("SocialMetrics", back_populates="user", uselist=False, cascade="all, delete-orphan")
+    skills = relationship("UserSkill", back_populates="user", cascade="all, delete-orphan")
+
+    # Learning & Development relationships
+    course_enrollments = relationship("CourseEnrollment", back_populates="user", cascade="all, delete-orphan")
+    learning_progress = relationship("LearningProgress", back_populates="user", cascade="all, delete-orphan")
+    learning_recommendations = relationship("LearningRecommendation", back_populates="user", cascade="all, delete-orphan")
+
     def __repr__(self):
         return f"<User(id={self.id}, username='{self.username}', email='{self.email}')>"
 

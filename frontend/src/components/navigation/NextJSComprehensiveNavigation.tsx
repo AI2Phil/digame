@@ -207,6 +207,39 @@ const NextJSComprehensiveNavigation: React.FC<NextJSComprehensiveNavigationProps
       ]
     },
     {
+      id: 'social',
+      title: 'Social Networking',
+      icon: <Network className="w-5 h-5" />,
+      description: 'Professional networking and social collaboration platform',
+      items: [
+        { label: 'Social Collaboration Dashboard', icon: <Users className="w-4 h-4" />, path: '/social/collaboration', subtitle: 'NETWORKING HUB', description: 'Comprehensive professional networking platform with peer matching, mentorship programs, and learning partnerships' },
+        { label: 'Peer Matching', icon: <Network className="w-4 h-4" />, path: '/social/peer-matching', subtitle: 'PEER DISCOVERY', description: 'AI-powered peer matching based on skills, goals, and compatibility factors' },
+        { label: 'Professional Network', icon: <Users className="w-4 h-4" />, path: '/social/network', subtitle: 'NETWORK MANAGEMENT', description: 'Manage your professional connections and network growth' },
+        { label: 'Mentorship Hub', icon: <GraduationCap className="w-4 h-4" />, path: '/social/mentorship', subtitle: 'MENTORSHIP PROGRAMS', description: 'Join mentorship programs or become a mentor in your expertise area' },
+        { label: 'Learning Partners', icon: <BookOpen className="w-4 h-4" />, path: '/social/learning-partners', subtitle: 'COLLABORATIVE LEARNING', description: 'Find study buddies, project partners, and accountability partners' },
+        { label: 'Community Forums', icon: <MessageCircle className="w-4 h-4" />, path: '/social/forums', subtitle: 'COMMUNITY ENGAGEMENT', description: 'Participate in professional discussions and knowledge sharing' },
+        { label: 'Networking Events', icon: <Calendar className="w-4 h-4" />, path: '/social/events', subtitle: 'EVENTS & MEETUPS', description: 'Discover and attend professional networking events' },
+        { label: 'Social Analytics', icon: <BarChart3 className="w-4 h-4" />, path: '/social/analytics', subtitle: 'NETWORK INSIGHTS', description: 'Track your networking progress and collaboration metrics' }
+      ]
+    },
+    {
+      id: 'learning',
+      title: 'Learning & Development',
+      icon: <GraduationCap className="w-5 h-5" />,
+      description: 'Comprehensive learning and skill development platform',
+      items: [
+        { label: 'Learning Dashboard', icon: <BookOpen className="w-4 h-4" />, path: '/learning/dashboard', subtitle: 'LEARNING HUB', description: 'Centralized learning dashboard with progress tracking and recommendations' },
+        { label: 'Learning Paths', icon: <Target className="w-4 h-4" />, path: '/learning/paths', subtitle: 'STRUCTURED LEARNING', description: 'Curated learning paths for skill development and career advancement' },
+        { label: 'Skills Assessment', icon: <Award className="w-4 h-4" />, path: '/learning/assessment', subtitle: 'SKILL EVALUATION', description: 'Comprehensive skills assessment and gap analysis' },
+        { label: 'Course Catalog', icon: <BookOpen className="w-4 h-4" />, path: '/learning/courses', subtitle: 'COURSE LIBRARY', description: 'Browse and enroll in professional development courses' },
+        { label: 'AI Learning Assistant', icon: <Bot className="w-4 h-4" />, path: '/learning/ai-assistant', subtitle: 'AI-POWERED LEARNING', description: 'Personalized AI learning assistant for adaptive education' },
+        { label: 'Language Learning', icon: <Globe className="w-4 h-4" />, path: '/learning/language', subtitle: 'LANGUAGE SKILLS', description: 'AI-powered language learning and communication enhancement' },
+        { label: 'Skill Tracking', icon: <TrendingUp className="w-4 h-4" />, path: '/learning/tracking', subtitle: 'PROGRESS MONITORING', description: 'Track skill development progress and learning milestones' },
+        { label: 'Learning Analytics', icon: <BarChart3 className="w-4 h-4" />, path: '/learning/analytics', subtitle: 'LEARNING INSIGHTS', description: 'Detailed analytics on learning progress and effectiveness' },
+        { label: 'Certification Hub', icon: <Award className="w-4 h-4" />, path: '/learning/certifications', subtitle: 'CERTIFICATIONS', description: 'Manage professional certifications and credentials' }
+      ]
+    },
+    {
       id: 'teams',
       title: 'Team Collaboration',
       icon: <Users className="w-5 h-5" />,
@@ -218,7 +251,6 @@ const NextJSComprehensiveNavigation: React.FC<NextJSComprehensiveNavigationProps
         { label: 'Team Dashboard', icon: <BarChart3 className="w-4 h-4" />, path: '/team/dashboard', subtitle: 'TEAM INSIGHTS' },
         { label: 'Real-Time Collaboration', icon: <MessageSquare className="w-4 h-4" />, path: '/collaboration/real-time', subtitle: 'REAL-TIME COMMUNICATION', description: 'Real-time collaboration dashboard with messaging, video calls, and workspace collaboration - Required Next.js page integration' },
         { label: 'Social Collaboration', icon: <MessageCircle className="w-4 h-4" />, path: '/team/social', subtitle: 'COLLABORATION' },
-        { label: 'Mentorship Programs', icon: <GraduationCap className="w-4 h-4" />, path: '/team/mentorship', subtitle: 'MENTORSHIP' },
         { label: 'Skill Gap Analysis', icon: <Target className="w-4 h-4" />, path: '/team/skills', subtitle: 'SKILLS ANALYSIS' }
       ]
     },
@@ -283,10 +315,27 @@ const NextJSComprehensiveNavigation: React.FC<NextJSComprehensiveNavigationProps
       ]
     },
     {
+      id: 'configuration',
+      title: 'Advanced Configuration',
+      icon: <Cog className="w-5 h-5" />,
+      description: 'Enterprise-grade system configuration and management',
+      minSubscriptionTier: 'team',
+      items: [
+        { label: 'System Configuration Dashboard', icon: <Cog className="w-4 h-4" />, path: '/admin/system-configuration', subtitle: 'CONFIGURATION HUB', description: 'Comprehensive system configuration management with enterprise-grade controls and monitoring' },
+        { label: 'Configuration Categories', icon: <Layers className="w-4 h-4" />, path: '/admin/config/categories', subtitle: 'ORGANIZED SETTINGS', description: 'Browse configuration settings by category: Security, Database, Performance, Notifications' },
+        { label: 'Configuration Backups', icon: <Archive className="w-4 h-4" />, path: '/admin/config/backups', subtitle: 'BACKUP MANAGEMENT', description: 'Create, manage, and restore configuration backups with version control' },
+        { label: 'Configuration Monitoring', icon: <Monitor className="w-4 h-4" />, path: '/admin/config/monitoring', subtitle: 'DRIFT DETECTION', description: 'Monitor configuration changes and detect drift from expected values' },
+        { label: 'Environment Management', icon: <Server className="w-4 h-4" />, path: '/admin/config/environments', subtitle: 'ENVIRONMENT CONFIG', description: 'Manage configurations across different environments (dev, staging, production)' },
+        { label: 'Configuration Templates', icon: <FileText className="w-4 h-4" />, path: '/admin/config/templates', subtitle: 'TEMPLATES', description: 'Pre-configured templates for common system setups and deployments' },
+        { label: 'Audit Trail', icon: <Clock className="w-4 h-4" />, path: '/admin/config/audit', subtitle: 'CHANGE TRACKING', description: 'Complete audit trail of all configuration changes with user attribution' },
+        { label: 'Configuration API', icon: <Code className="w-4 h-4" />, path: '/admin/config/api', subtitle: 'API MANAGEMENT', description: 'Programmatic configuration management via REST API' }
+      ]
+    },
+    {
       id: 'admin',
       title: 'Administration',
       icon: <SettingsIcon className="w-5 h-5" />,
-      description: 'System administration and management',
+      description: 'System administration and user management',
       minSubscriptionTier: 'team',
       items: [
         { label: 'Admin Dashboard', icon: <SettingsIcon className="w-4 h-4" />, path: '/admin/dashboard', description: 'Admin overview' },
@@ -294,8 +343,7 @@ const NextJSComprehensiveNavigation: React.FC<NextJSComprehensiveNavigationProps
         { label: 'System Analytics', icon: <BarChart3 className="w-4 h-4" />, path: '/admin/system-analytics', subtitle: 'SYSTEM ANALYTICS', description: 'System performance monitoring and analytics' },
         { label: 'System Monitoring', icon: <Monitor className="w-4 h-4" />, path: '/admin/monitoring', subtitle: 'MONITORING' },
         { label: 'Advanced Monitoring', icon: <Activity className="w-4 h-4" />, path: '/monitoring/advanced', subtitle: 'ADVANCED MONITORING', description: 'Advanced system monitoring, alerting, metrics tracking, and service health monitoring' },
-        { label: 'RBAC Management', icon: <Shield className="w-4 h-4" />, path: '/admin/rbac', subtitle: 'ROLE MANAGEMENT' },
-        { label: 'System Config', icon: <Cog className="w-4 h-4" />, path: '/admin/config', subtitle: 'CONFIGURATION' }
+        { label: 'RBAC Management', icon: <Shield className="w-4 h-4" />, path: '/admin/rbac', subtitle: 'ROLE MANAGEMENT' }
       ]
     },
     {
