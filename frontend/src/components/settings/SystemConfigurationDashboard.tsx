@@ -1038,3 +1038,5 @@ export const SystemConfigurationDashboard: React.FC = () => {
     </div>
   );
 };
+
+export default SystemConfigurationDashboard;

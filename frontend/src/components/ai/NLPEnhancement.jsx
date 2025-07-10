@@ -1324,3 +1324,5 @@ const NLPEnhancement = () => {
   );
 };
 
+export default NLPEnhancement;
+

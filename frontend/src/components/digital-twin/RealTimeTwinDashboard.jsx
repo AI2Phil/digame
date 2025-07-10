@@ -7,7 +7,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useTwinWebSocket } from '../../hooks/useWebSocket';
 import { digitalTwinApi } from '../../services/digitalTwinApi';
-import { Toast } from '../ui/Toast';
+import { useToast } from '../ui/Toast';
 import styles from './RealTimeTwinDashboard.module.css';
 
 const RealTimeTwinDashboard = ({ twinId, userId }) => {
@@ -32,13 +32,12 @@ const RealTimeTwinDashboard = ({ twinId, userId }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [usingFallbackData, setUsingFallbackData] = useState(false);
   
+  // Toast hook
+  const { toast } = useToast();
+  
   // Toast helper function
   const showToast = (message, type = 'info') => {
-    Toast.show({
-      title: type === 'info' ? 'Information' : 'Notice',
-      description: message,
-      variant: type
-    });
+    toast[type](type === 'info' ? 'Information' : 'Notice', message);
   };
 
   // WebSocket connection for real-time updates
