@@ -5,9 +5,10 @@ from datetime import datetime, timedelta, timezone
 
 # Models to import for type hinting and creating mock instances
 from app.models.tenant import Tenant as TenantModel
-from app.models.tenant import User as UserModel
-from app.models.tenant import Role as RoleModel
-from app.models.tenant import UserRole as UserRoleModel
+from app.models.user import User as UserModel
+# Role and UserRole models may not exist - using mock objects instead
+# from app.models.tenant import Role as RoleModel
+# from app.models.tenant import UserRole as UserRoleModel
 from app.models.tenant import TenantSettings as TenantSettingsModel
 from app.models.tenant import TenantInvitation as TenantInvitationModel
 from app.models.tenant import TenantAuditLog as TenantAuditLogModel

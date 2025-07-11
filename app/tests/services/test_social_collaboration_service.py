@@ -219,4 +219,3 @@ def test_get_learning_partner_recommendations_target_no_goals(
 # - Test if user_crud.get_users returns users without profiles gracefully.
 # - Test parsing of skills if they are stored as list of objects (e.g. {"skill": "Python", "level": "Advanced"})
 #   (current tests assume list of strings for skills/goals based on service impl).
-```

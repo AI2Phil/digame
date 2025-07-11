@@ -1,5 +1,6 @@
 import pytest
 import json
+from typing import Optional
 from unittest.mock import MagicMock, patch, call
 from datetime import datetime, timedelta
 
@@ -9,7 +10,7 @@ from fastapi import HTTPException
 # Models
 from app.models.user import User as UserModel
 from app.models.tenant import Tenant as TenantModel
-from app.models.tenant_user import TenantUser as TenantUserModel
+# TenantUser model doesn't exist - relationship is direct through User.tenant_id
 from app.models.task import Task as TaskModel # Assuming this is the correct import path
 
 # Service to test
@@ -33,16 +34,15 @@ def mock_tenant_model_task_prio(): # Renamed
     tenant = create_mock_model(TenantModel, id=7,
         name="Task Prio Tenant",
         admin_email="admin@tasktenant.com",
-        features={"intelligent_task_prioritization": True} # Default to enabled)
+        features={"intelligent_task_prioritization": True}) # Default to enabled
     return tenant
 
 @pytest.fixture
 def mock_tenant_user_link_task_prio(mock_user_model_task_prio, mock_tenant_model_task_prio): # Renamed
-    link = Tenantcreate_mock_model(UserModel, user_id=mock_user_model_task_prio.id, tenant_id=mock_tenant_model_task_prio.id)
-    link.user = mock_user_model_task_prio
-    link.tenant = mock_tenant_model_task_prio
-    mock_user_model_task_prio.tenants.append(link)
-    return link
+    # Set up the direct relationship - user belongs to tenant
+    mock_user_model_task_prio.tenant_id = mock_tenant_model_task_prio.id
+    mock_user_model_task_prio.tenant = mock_tenant_model_task_prio
+    return mock_user_model_task_prio  # Return the user since there's no separate link object
 
 @pytest.fixture
 def create_mock_task():

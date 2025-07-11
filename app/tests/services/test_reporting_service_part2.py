@@ -272,4 +272,3 @@ async def test_report_scheduler_runs_due_schedules(
     assert calls[0][0][0] == sample_schedule_for_definition
     assert calls[1][0][0] == sample_schedule_for_legacy_report
     assert not report_scheduler.running # Scheduler should have stopped
-```
