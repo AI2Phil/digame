@@ -452,9 +452,19 @@ jobs:
       - name: Run Lighthouse CI
         working-directory: ./frontend
         run: |
+          # Ensure the build directory exists
+          if [ ! -d "out" ]; then
+            echo "Build directory 'out' not found, running build..."
+            npm run build
+          fi
+          # Start the server in background
           npm run serve:dist &
-          sleep 5
-          lhci autorun
+          SERVER_PID=$!
+          sleep 10
+          # Run Lighthouse CI with explicit configuration
+          lhci autorun --config=lighthouserc.js
+          # Clean up server process
+          kill $SERVER_PID || true
 
       - name: Setup Python for load testing
         uses: actions/setup-python@v4
