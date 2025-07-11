@@ -27,7 +27,7 @@ Both tools are designed for developers, system administrators, and DevOps teams 
 ### System Requirements
 - **Node.js**: 22.x or higher
 - **npm**: 10.0 or higher
-- **Python**: 3.13.x (for backend dependencies)
+- **Python**: 3.11.x (for backend dependencies)
 - **Working Directory**: Must be in `/backend` directory
 - **Database**: SQLite (default) or PostgreSQL (with DATABASE_URL)
 
@@ -74,19 +74,17 @@ The comprehensive implementation and testing of the Digame Platform CI/CD pipeli
 5. **Node.js Version Consistency**: Updated all jobs to use Node.js 22.x consistently
 
 ### Python 3.13 Compatibility Issue - RESOLVED ✅
-**Issue**: Backend dependencies failing to install with Python 3.13 due to pandas 2.1.4 compatibility issues
+**Issue**: Backend dependencies failing to install with Python 3.13 due to pydantic-core compatibility issues
 
 **Root Causes Identified**:
-- pandas 2.1.4 using deprecated Python C API functions incompatible with Python 3.13
-- Several other dependencies requiring updates for Python 3.13 support
-- Outdated package versions not supporting latest Python features
+- pydantic-core (required by pydantic 2.5.0) incompatible with Python 3.13
+- `ForwardRef._evaluate()` missing required `recursive_guard` parameter in Python 3.13
+- Many popular libraries not yet stable with Python 3.13
 
-**Solutions Implemented**:
-1. **Updated Core Data Libraries**: pandas 2.1.4 → 2.2.3, numpy 1.25.2 → 1.26.4
-2. **Updated ML/AI Libraries**: scikit-learn 1.3.2 → 1.4.2, torch 2.1.2 → 2.5.1
-3. **Updated Development Tools**: pytest 7.4.3 → 8.3.3, black 23.11.0 → 24.10.0
-4. **Updated Visualization Libraries**: matplotlib 3.8.2 → 3.9.2, plotly 5.17.0 → 5.24.1
-5. **Updated Production Server**: gunicorn 21.2.0 → 23.0.0
+**Solution Implemented**:
+1. **Downgraded Python Version**: Python 3.13 → 3.11 in GitHub Actions workflow
+2. **Maintained Stable Dependencies**: Kept proven-compatible versions with Python 3.11
+3. **Ensured Compatibility**: All dependencies (pydantic 2.5.0, pandas 2.1.4, etc.) fully compatible with Python 3.11
 
 ---
 
@@ -120,7 +118,7 @@ The comprehensive implementation and testing of the Digame Platform CI/CD pipeli
 |-----------|-------------|---------|
 | **Security Vulnerabilities** | 17 → 0 | Complete npm and Docker vulnerability resolution |
 | **Node.js Version** | v22.x | Latest LTS with security patches |
-| **Python Version** | v3.13.x | Latest Python with updated dependencies for compatibility |
+| **Python Version** | v3.11.x | Stable Python version with full pydantic and dependency compatibility |
 | **Package Synchronization** | 1926 packages | Clean audit with zero conflicts |
 | **Docker Base Image** | Alpine Linux 3.20 | Latest secure base with minimal attack surface |
 

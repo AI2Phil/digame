@@ -1,9 +1,10 @@
 # GitHub Actions Caching Issue - Final Resolution
 
 ## Issue Description
-GitHub Actions workflow was failing with the error:
+GitHub Actions workflow was failing with multiple errors:
 ```
 Error: Some specified paths were not resolved, unable to cache dependencies.
+TypeError: ForwardRef._evaluate() missing 1 required keyword-only argument: 'recursive_guard'
 ```
 
 ## Root Cause Analysis
@@ -11,14 +12,15 @@ Error: Some specified paths were not resolved, unable to cache dependencies.
 2. **Outdated Node.js version** - Using Node.js 18.x instead of the project's Node.js 22.x
 3. **Inconsistent caching strategy** - Mixed use of built-in npm caching and explicit cache actions
 4. **Cache action version mismatch** - Using older `actions/cache@v3` instead of `actions/cache@v4`
+5. **Python 3.13 compatibility** - pydantic-core incompatible with Python 3.13 due to ForwardRef._evaluate() changes
 
 ## Solution Implemented
 
-### 1. Updated Node.js Version
+### 1. Updated Versions
 ```yaml
 env:
   NODE_VERSION: '22.x'  # Updated from '18.x'
-  PYTHON_VERSION: '3.13'  # Updated from '3.11'
+  PYTHON_VERSION: '3.11'  # Downgraded from '3.13' for pydantic compatibility
 ```
 
 ### 2. Removed Built-in npm Caching
@@ -80,18 +82,31 @@ if: matrix.node-version == '22.x' && success()  # Updated from '18.x'
 - **Upgraded cache action** to v4 for better reliability
 - **Dual cache paths** for both npm cache and node_modules
 
+### 6. Fixed Python Compatibility Issue
+**Problem**: Python 3.13 incompatible with pydantic-core due to ForwardRef._evaluate() changes
+**Solution**: Downgraded to Python 3.11 which is fully compatible with pydantic 2.5.0
+
+```yaml
+env:
+  PYTHON_VERSION: '3.11'  # Stable version with full pydantic compatibility
+```
+
 ## Expected Results
 - ✅ No more "Some specified paths were not resolved" errors
+- ✅ No more pydantic-core build failures with Python compatibility
 - ✅ Faster builds with proper npm and node_modules caching
 - ✅ Consistent Node.js 22.x environment across all jobs
+- ✅ Stable Python 3.11 environment with proven dependency compatibility
 - ✅ Better cache hit rates with improved key strategy
 - ✅ More reliable artifact generation and downstream job execution
 
 ## Verification
-The fix addresses the specific error by:
-1. Removing the problematic `cache-dependency-path` parameter
-2. Using explicit cache management with verified paths
-3. Ensuring Node.js version consistency
-4. Providing fallback cache keys for better reliability
+The fix addresses both critical issues by:
+1. **Caching**: Removing the problematic `cache-dependency-path` parameter
+2. **Caching**: Using explicit cache management with verified paths
+3. **Caching**: Ensuring Node.js version consistency
+4. **Caching**: Providing fallback cache keys for better reliability
+5. **Python**: Using Python 3.11 for stable pydantic and dependency compatibility
+6. **Python**: Maintaining proven-compatible dependency versions
 
-This resolves the final GitHub Actions caching issue and completes the CI/CD pipeline implementation.
+This resolves both the GitHub Actions caching issue and Python compatibility problems, completing the CI/CD pipeline implementation.
