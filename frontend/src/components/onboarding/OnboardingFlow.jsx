@@ -250,7 +250,7 @@ const GoalsStep = ({ data, onNext, onPrevious, canGoBack }) => {
                 </div>
               )}
             </div>
-          </button>
+          </Button>
         ))}
       </div>
 
@@ -350,7 +350,7 @@ const WorkStyleStep = ({ data, onNext, onPrevious, canGoBack }) => {
                 </div>
               )}
             </div>
-          </button>
+          </Button>
         ))}
       </div>
 

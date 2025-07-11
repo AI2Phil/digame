@@ -592,7 +592,7 @@ const TeamInsightsSection = ({ dashboardData }) => {
   const performanceScore = dashboardData?.overall_performance_score;
   const devProgress = dashboardData?.team_development_progress;
 
-  let insights = [];
+  const insights = [];
   if (performanceScore) {
     insights.push({
         title: "Overall Performance",

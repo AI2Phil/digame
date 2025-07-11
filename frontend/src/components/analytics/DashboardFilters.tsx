@@ -56,7 +56,7 @@ export const DashboardFilters: React.FC<DashboardFiltersProps> = ({
       onTimeRangeChange({ ...timeRange, preset, custom: true });
     } else {
       const now = new Date();
-      let startDate = new Date();
+      const startDate = new Date();
       
       switch (preset) {
         case '24h':
