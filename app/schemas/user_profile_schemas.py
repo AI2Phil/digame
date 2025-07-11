@@ -21,8 +21,7 @@ class MinimalUserBase(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 
 class UserProfileBase(BaseModel):
@@ -45,10 +44,7 @@ class UserProfileResponse(UserProfileBase):
     user_id: int
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
-
-# New schema combining User and UserProfile information
+    model_config = {"from_attributes": True}
 class UserWithProfileResponse(MinimalUserBase): # Inherits from MinimalUserBase defined above
     profile: Optional[UserProfileResponse] = None
 

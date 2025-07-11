@@ -39,10 +39,7 @@ class DigitalTwinResponse(DigitalTwinBase):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
-
-# Activity Pattern schemas
+    model_config = {"from_attributes": True}
 class ActivityPatternBase(BaseModel):
     pattern_type: str = Field(..., description="Type of activity pattern")
     pattern_data: Dict[str, Any] = Field(..., description="Pattern data as JSON")
@@ -61,10 +58,7 @@ class ActivityPatternResponse(ActivityPatternBase):
     discovered_at: datetime
     validated_at: Optional[datetime] = None
 
-    class Config:
-        from_attributes = True
-
-# Twin Interaction schemas
+    model_config = {"from_attributes": True}
 class TwinInteractionBase(BaseModel):
     interaction_type: str = Field(..., description="Type of interaction")
     input_data: Optional[Dict[str, Any]] = Field(None, description="Input data as JSON")
@@ -82,10 +76,7 @@ class TwinInteractionResponse(TwinInteractionBase):
     processing_time_ms: Optional[int] = None
     created_at: datetime
 
-    class Config:
-        from_attributes = True
-
-# Twin Insights schemas
+    model_config = {"from_attributes": True}
 class TwinInsightsResponse(BaseModel):
     """Schema for comprehensive twin insights"""
     twin_status: Dict[str, Any] = Field(..., description="Current twin status information")
@@ -121,10 +112,7 @@ class SimulationResponse(BaseModel):
     execution_time_ms: Optional[int] = None
     created_at: datetime
 
-    class Config:
-        from_attributes = True
-
-# Prediction schemas
+    model_config = {"from_attributes": True}
 class PredictionRequest(BaseModel):
     """Schema for prediction requests"""
     prediction_type: str = Field(..., description="Type of prediction to generate")

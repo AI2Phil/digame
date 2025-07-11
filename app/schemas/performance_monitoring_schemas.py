@@ -33,11 +33,7 @@ class PerformanceMetricResponse(PerformanceMetricBase):
     aggregation_period: Optional[str] = None
     sample_count: int
 
-    class Config:
-        from_attributes = True
-
-
-# Query performance schemas
+    model_config = {"from_attributes": True}
 class QueryPerformanceBase(BaseModel):
     query_text: str = Field(..., description="SQL query text")
     execution_time_ms: float = Field(..., description="Execution time in milliseconds")
@@ -68,11 +64,7 @@ class QueryPerformanceResponse(QueryPerformanceBase):
     optimization_suggestions: Optional[List[str]] = None
     index_recommendations: Optional[List[str]] = None
 
-    class Config:
-        from_attributes = True
-
-
-# User experience schemas
+    model_config = {"from_attributes": True}
 class UserExperienceMetricBase(BaseModel):
     page_url: str = Field(..., description="Page URL")
     action_type: str = Field(..., description="Action type (page_load, click, form_submit)")
@@ -112,11 +104,7 @@ class UserExperienceMetricResponse(UserExperienceMetricBase):
     conversion: bool
     error_stack: Optional[str] = None
 
-    class Config:
-        from_attributes = True
-
-
-# System health check schemas
+    model_config = {"from_attributes": True}
 class SystemHealthCheckBase(BaseModel):
     check_name: str = Field(..., description="Name of the health check")
     check_type: str = Field(..., description="Type of check (database, api, service, external)")
@@ -143,11 +131,7 @@ class SystemHealthCheckResponse(SystemHealthCheckBase):
     check_interval_seconds: int
     timeout_seconds: int
 
-    class Config:
-        from_attributes = True
-
-
-# Performance alert schemas
+    model_config = {"from_attributes": True}
 class PerformanceAlertBase(BaseModel):
     alert_name: str = Field(..., description="Alert name")
     alert_type: str = Field(..., description="Alert type (threshold, anomaly, trend)")
@@ -179,11 +163,7 @@ class PerformanceAlertResponse(PerformanceAlertBase):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
-
-
-# Performance incident schemas
+    model_config = {"from_attributes": True}
 class PerformanceIncidentBase(BaseModel):
     title: str = Field(..., description="Incident title")
     description: Optional[str] = Field(None, description="Incident description")
@@ -231,11 +211,7 @@ class PerformanceIncidentResponse(PerformanceIncidentBase):
     communication_log: Optional[List[Dict[str, Any]]] = None
     external_communication: Optional[str] = None
 
-    class Config:
-        from_attributes = True
-
-
-# Performance optimization schemas
+    model_config = {"from_attributes": True}
 class PerformanceOptimizationBase(BaseModel):
     optimization_type: str = Field(..., description="Type (query, index, caching, scaling)")
     component: str = Field(..., description="Component to optimize")
@@ -282,11 +258,7 @@ class PerformanceOptimizationResponse(PerformanceOptimizationBase):
     approved_at: Optional[datetime] = None
     rejection_reason: Optional[str] = None
 
-    class Config:
-        from_attributes = True
-
-
-# Dashboard and analytics schemas
+    model_config = {"from_attributes": True}
 class PerformanceDashboardResponse(BaseModel):
     """Schema for performance dashboard data"""
     time_range_hours: int
@@ -353,11 +325,7 @@ class PerformanceBaselineResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
-
-
-# Monitoring configuration schemas
+    model_config = {"from_attributes": True}
 class MonitoringConfigurationBase(BaseModel):
     metric_collection_interval: int = Field(60, description="Metric collection interval in seconds")
     health_check_interval: int = Field(300, description="Health check interval in seconds")
@@ -379,11 +347,7 @@ class MonitoringConfigurationResponse(MonitoringConfigurationBase):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
-
-
-# Bulk operations schemas
+    model_config = {"from_attributes": True}
 class BulkMetricCreate(BaseModel):
     """Schema for bulk metric creation"""
     metrics: List[PerformanceMetricCreate]

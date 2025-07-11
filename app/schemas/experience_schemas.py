@@ -20,8 +20,7 @@ class ExperienceInDBBase(ExperienceBase):
     id: int
     user_id: int
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 class ExperienceSchema(ExperienceInDBBase):
     pass

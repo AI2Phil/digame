@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware # Added for GZip compression
@@ -98,8 +99,49 @@ formatter = jsonlogger.JsonFormatter(
 logHandler.setFormatter(formatter)
 logger.addHandler(logHandler)
 
+# Lifespan context manager for startup and shutdown events
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    logger.info("🚀 Starting Digame API...")
+    logger.info(f"📊 API Version: {app.version}")
+    logger.info(f"🔐 Authentication: {'Enabled' if auth_settings.auth_middleware_enabled else 'Disabled'}")
+    logger.info(f"🛡️  Rate Limiting: {'Enabled' if auth_settings.rate_limit_enabled else 'Disabled'}")
+    logger.info(f"🌐 CORS: {'Enabled' if auth_settings.cors_enabled else 'Disabled'}")
+    
+    # Create database tables first
+    try:
+        from .database import create_tables
+        logger.info("🗄️  Creating database tables...")
+        create_tables()
+        logger.info("✅ Database tables created successfully")
+    except Exception as e:
+        logger.error(f"❌ Database table creation error: {e}")
+    
+    if auth_settings.create_default_roles:
+        try:
+            from .auth.init_auth_db import initialize_auth_database
+            from .db import get_db
+            
+            db = next(get_db())
+            success = initialize_auth_database(db)
+            db.close()
+
+            if success:
+                logger.info("✅ Authentication database initialized successfully")
+            else:
+                logger.warning("⚠️  Authentication database initialization failed")
+        except Exception as e:
+            logger.error(f"❌ Authentication database initialization error: {e}")
+    
+    yield
+    
+    # Shutdown
+    logger.info("🛑 Shutting down Digame API...")
+
 # Create FastAPI application with enhanced metadata
 app = FastAPI(
+    lifespan=lifespan,
     title="Digame API",
     description="""
     ## Digame - Digital Professional Twin Platform
@@ -412,44 +454,6 @@ app.include_router(activity_router, tags=["Activity Tracking"]) # Add activity t
 # app.include_router(performance_optimization.router, prefix="/api/v1", tags=["Performance Optimization"]) # Add performance optimization router - temporarily disabled
 # app.include_router(testing_quality_assurance.router, prefix="/api/v1", tags=["Testing & Quality Assurance"]) # Add testing quality assurance router - temporarily disabled
 
-
-# Startup and shutdown events
-@app.on_event("startup")
-async def startup_event():
-    logger.info("🚀 Starting Digame API...")
-    logger.info(f"📊 API Version: {app.version}")
-    logger.info(f"🔐 Authentication: {'Enabled' if auth_settings.auth_middleware_enabled else 'Disabled'}")
-    logger.info(f"🛡️  Rate Limiting: {'Enabled' if auth_settings.rate_limit_enabled else 'Disabled'}")
-    logger.info(f"🌐 CORS: {'Enabled' if auth_settings.cors_enabled else 'Disabled'}")
-    
-    # Create database tables first
-    try:
-        from .database import create_tables
-        logger.info("🗄️  Creating database tables...")
-        create_tables()
-        logger.info("✅ Database tables created successfully")
-    except Exception as e:
-        logger.error(f"❌ Database table creation error: {e}")
-    
-    if auth_settings.create_default_roles:
-        try:
-            from .auth.init_auth_db import initialize_auth_database
-            from .db import get_db
-            
-            db = next(get_db())
-            success = initialize_auth_database(db)
-            db.close()
-
-            if success:
-                logger.info("✅ Authentication database initialized successfully")
-            else:
-                logger.warning("⚠️  Authentication database initialization failed")
-        except Exception as e:
-            logger.error(f"❌ Authentication database initialization error: {e}")
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    logger.info("🛑 Shutting down Digame API...")
 
 # Health check endpoints
 @app.get("/", tags=["Health"])

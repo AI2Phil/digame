@@ -50,6 +50,5 @@ class OnboardingDataResponse(OnboardingDataBase):
     """
     user_id: int # For context, linking back to the user
 
-    class Config:
-        from_attributes = True # Though this schema is not directly mapped from User.onboarding_data as a whole ORM object.
+    model_config = {"from_attributes": True}
                                # It's constructed. Still, good practice.

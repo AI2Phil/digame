@@ -19,8 +19,7 @@ class PermissionResponse(PermissionBase):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True # For SQLAlchemy model conversion (Pydantic v2)
+    model_config = {"from_attributes": True}
 
 # --- Role Schemas ---
 class RoleBase(BaseModel):
@@ -41,10 +40,7 @@ class RoleResponse(RoleBase):
     updated_at: datetime
     permissions: List[PermissionResponse] = [] # Show permissions associated with the role
 
-    class Config:
-        from_attributes = True
-
-# --- Assignment Schemas ---
+    model_config = {"from_attributes": True}
 class UserRoleAssignRequest(BaseModel):
     user_id: int
     role_name: str # Using name for role assignment might be more user-friendly than ID
@@ -69,10 +65,7 @@ class UserMinimumResponse(BaseModel): # A very basic User representation
     username: str
     is_active: bool
 
-    class Config:
-        from_attributes = True
-
-# Simplified role response for user assignments (without nested permissions)
+    model_config = {"from_attributes": True}
 class RoleBasicResponse(BaseModel):
     id: int
     name: str
@@ -80,8 +73,7 @@ class RoleBasicResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 class UserWithRolesResponse(UserMinimumResponse):
     roles: List[RoleBasicResponse] = [] # Use simplified role response to avoid deep nesting

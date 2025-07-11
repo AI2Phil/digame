@@ -92,8 +92,7 @@ class MFAConfigResponse(MFAConfigBase):
     updated_at: datetime
     last_used_at: Optional[datetime] = None
     
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 class MFASetupRequest(BaseModel):
     method: MFAMethod
@@ -131,8 +130,7 @@ class SecurityAuditLogResponse(SecurityAuditLogBase):
     user_id: Optional[int] = None
     timestamp: datetime
     
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 class SecurityAuditLogFilter(BaseModel):
     user_id: Optional[int] = None
@@ -169,10 +167,7 @@ class SecurityPolicyResponse(SecurityPolicyBase):
     updated_at: datetime
     created_by: int
     
-    class Config:
-        from_attributes = True
-
-# Threat Detection Schemas
+    model_config = {"from_attributes": True}
 class ThreatDetectionBase(BaseModel):
     detection_type: str
     threat_level: ThreatLevel
@@ -200,10 +195,7 @@ class ThreatDetectionResponse(ThreatDetectionBase):
     resolved_at: Optional[datetime] = None
     resolved_by: Optional[int] = None
     
-    class Config:
-        from_attributes = True
-
-# Security Incident Schemas
+    model_config = {"from_attributes": True}
 class SecurityIncidentBase(BaseModel):
     title: str = Field(..., min_length=1, max_length=200)
     description: str
@@ -241,10 +233,7 @@ class SecurityIncidentResponse(SecurityIncidentBase):
     created_by: int
     assigned_to: Optional[int] = None
     
-    class Config:
-        from_attributes = True
-
-# Access Control Schemas
+    model_config = {"from_attributes": True}
 class AccessControlBase(BaseModel):
     rule_name: str = Field(..., min_length=1, max_length=100)
     rule_type: AccessControlType
@@ -275,10 +264,7 @@ class AccessControlResponse(AccessControlBase):
     updated_at: datetime
     created_by: int
     
-    class Config:
-        from_attributes = True
-
-# Security Metrics Schemas
+    model_config = {"from_attributes": True}
 class SecurityMetricsBase(BaseModel):
     metric_name: str
     metric_type: str
@@ -293,10 +279,7 @@ class SecurityMetricsResponse(SecurityMetricsBase):
     id: int
     timestamp: datetime
     
-    class Config:
-        from_attributes = True
-
-# Dashboard and Analytics Schemas
+    model_config = {"from_attributes": True}
 class SecurityDashboardSummary(BaseModel):
     """Summary statistics for security dashboard"""
     total_users_with_mfa: int

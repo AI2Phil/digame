@@ -51,8 +51,7 @@ class SSOProviderResponse(SSOProviderBase):
     updated_at: datetime
     last_tested_at: Optional[datetime] = None
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 
 class SSOProviderSummary(BaseModel):
@@ -65,11 +64,7 @@ class SSOProviderSummary(BaseModel):
     last_tested_at: Optional[datetime] = None
     active_sessions_count: int = 0
 
-    class Config:
-        from_attributes = True
-
-
-# SSO Session schemas
+    model_config = {"from_attributes": True}
 class SSOSessionResponse(BaseModel):
     """Schema for SSO session response"""
     id: int
@@ -85,11 +80,7 @@ class SSOSessionResponse(BaseModel):
     expires_at: datetime
     is_active: bool
 
-    class Config:
-        from_attributes = True
-
-
-# SSO Configuration schemas
+    model_config = {"from_attributes": True}
 class TenantSSOConfigurationBase(BaseModel):
     enforce_sso: bool = Field(False, description="Enforce SSO for all users")
     allow_local_login: bool = Field(True, description="Allow local password login")
@@ -122,11 +113,7 @@ class TenantSSOConfigurationResponse(TenantSSOConfigurationBase):
     updated_at: datetime
     updated_by: Optional[int] = None
 
-    class Config:
-        from_attributes = True
-
-
-# SSO Authentication schemas
+    model_config = {"from_attributes": True}
 class SSOLoginInitiateRequest(BaseModel):
     """Schema for initiating SSO login"""
     provider_id: int
@@ -206,8 +193,7 @@ class SSOAuditLogResponse(BaseModel):
     error_message: Optional[str] = None
     timestamp: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 
 class SSOAuditLogFilter(BaseModel):
@@ -252,11 +238,7 @@ class SSOUserMappingResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
-
-
-# Bulk operations schemas
+    model_config = {"from_attributes": True}
 class SSOBulkOperationRequest(BaseModel):
     """Schema for bulk SSO operations"""
     operation: str  # deactivate_sessions, update_mappings, etc.

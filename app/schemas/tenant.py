@@ -55,8 +55,7 @@ class TenantResponse(TenantBase):
     created_at: datetime
     updated_at: Optional[datetime] = None
 
-    class Config:
-        from_attributes = True # Replaces orm_mode = True
+    model_config = {"from_attributes": True}
 
 # --- TenantSettings (Key-Value) Schemas ---
 class TenantSettingBase(BaseModel):
@@ -75,10 +74,7 @@ class TenantSettingResponse(TenantSettingBase):
     created_at: datetime
     updated_at: Optional[datetime] = None
 
-    class Config:
-        from_attributes = True
-
-# --- TenantInvitation Schemas ---
+    model_config = {"from_attributes": True}
 class TenantInvitationCreate(BaseModel):
     email: EmailStr
     role: str = "User" # Default role for invitation
@@ -94,8 +90,7 @@ class TenantInvitationResponse(BaseModel):
     created_at: datetime
     invited_by_user_id: int
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 class AcceptInvitationRequest(BaseModel):
     # User accepting the invitation is typically the authenticated user.
@@ -116,18 +111,14 @@ class TenantAuditLogResponse(BaseModel):
     user_agent: Optional[str] = None
     created_at: datetime
 
-    class Config:
-        from_attributes = True
-
-# --- User Schemas (simplified for router context, full user schemas might be elsewhere) ---
+    model_config = {"from_attributes": True}
 class UserBasicResponse(BaseModel): # For representing users within tenant context
     id: int
     username: str
     email: EmailStr
     is_active: bool
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 class UserCreateForTenant(BaseModel):
     username: str

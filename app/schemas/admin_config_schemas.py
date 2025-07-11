@@ -73,8 +73,7 @@ class AdminAPIKeyConfigResponse(AdminAPIKeyConfigBase):
     updated_at: datetime
     created_by: int
     
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 class AdminAPIKeyConfigList(BaseModel):
     configs: List[AdminAPIKeyConfigResponse]
@@ -101,8 +100,7 @@ class APIKeyUsageLogResponse(APIKeyUsageLogBase):
     service_name: ServiceName
     request_timestamp: datetime
     
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 class APIKeyUsageStats(BaseModel):
     """Usage statistics for API keys"""
@@ -146,8 +144,7 @@ class AdminSystemConfigResponse(AdminSystemConfigBase):
     updated_at: datetime
     created_by: int
     
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 class AdminSystemConfigList(BaseModel):
     configs: List[AdminSystemConfigResponse]

@@ -28,8 +28,7 @@ class TeamMember(TeamMemberBase):
     team_id: int
     joined_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 class TeamBase(BaseModel):
     name: str = Field(..., min_length=3, max_length=100)
@@ -51,10 +50,7 @@ class Team(TeamBase):
     members: List[TeamMember] = []
     # We can add performance_metrics, skill_gaps, workflows later if needed for full team object responses
 
-    class Config:
-        from_attributes = True
-
-# Performance Metric Schemas
+    model_config = {"from_attributes": True}
 class TeamPerformanceMetricBase(BaseModel):
     metric_name: str = Field(..., max_length=100)
     metric_value: Dict[str, Any] # Flexible JSON value
@@ -73,10 +69,7 @@ class TeamPerformanceMetric(TeamPerformanceMetricBase):
     team_id: int
     recorded_at: datetime
 
-    class Config:
-        from_attributes = True
-
-# Skill Gap Schemas
+    model_config = {"from_attributes": True}
 class TeamSkillGapBase(BaseModel):
     skill_name: str = Field(..., max_length=100)
     description: Optional[str] = Field(None, max_length=1000)
@@ -97,10 +90,7 @@ class TeamSkillGap(TeamSkillGapBase):
     team_id: int
     identified_at: datetime
 
-    class Config:
-        from_attributes = True
-
-# Workflow Schemas
+    model_config = {"from_attributes": True}
 class TeamWorkflowBase(BaseModel):
     workflow_name: str = Field(..., max_length=150)
     description: Optional[str] = Field(None, max_length=1000)
@@ -124,11 +114,7 @@ class TeamWorkflow(TeamWorkflowBase):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
-
-
-# Schemas for Team Insights - these might be more complex and derived, not direct CRUD
+    model_config = {"from_attributes": True}
 class TeamCollaborationPattern(BaseModel):
     pattern_name: str
     description: str

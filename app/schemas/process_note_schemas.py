@@ -16,10 +16,7 @@ class ProcessNoteResponse(ProcessNoteBase):
     first_observed_at: datetime
     last_observed_at: datetime
 
-    class Config:
-        from_attributes = True
-
-# Schema for the trigger response
+    model_config = {"from_attributes": True}
 class ProcessDiscoveryResponse(BaseModel):
     message: str
     user_id: int

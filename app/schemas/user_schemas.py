@@ -1,5 +1,5 @@
 import json # Added for validator
-from pydantic import BaseModel, EmailStr, Field, validator # Added validator
+from pydantic import BaseModel, EmailStr, Field, field_validator
 from typing import List, Optional
 from datetime import datetime
 
@@ -60,10 +60,10 @@ class User(UserBase): # UserBase already includes detailed_bio, contact_info, sk
     experience_entries: List[ExperienceSchema] = Field(default_factory=list) # Matches model relationship name
     education_entries: List[EducationSchema] = Field(default_factory=list) # Matches model relationship name
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
-    @validator('contact_info', pre=True, allow_reuse=True)
+    @field_validator('contact_info', mode='before')
+    @classmethod
     def parse_contact_info(cls, value):
         if isinstance(value, str):
             if not value: # Handle empty string case
@@ -79,7 +79,8 @@ class User(UserBase): # UserBase already includes detailed_bio, contact_info, sk
         # If it's already ContactInfoSchema, it will pass.
         return value
 
-    @validator('skills', pre=True, allow_reuse=True)
+    @field_validator('skills', mode='before')
+    @classmethod
     def parse_skills(cls, value):
         if isinstance(value, str):
             if not value: # Handle empty string case for skills
@@ -99,5 +100,4 @@ class User(UserBase): # UserBase already includes detailed_bio, contact_info, sk
 class UserWithRoles(User):
     roles: List[str] = []
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}

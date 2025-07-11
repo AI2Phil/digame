@@ -74,5 +74,4 @@ class TaskResponse(TaskBase):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True # Changed from orm_mode for Pydantic v2, though orm_mode is an alias.
+    model_config = {"from_attributes": True}

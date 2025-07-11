@@ -78,11 +78,7 @@ class SimulationResponse(SimulationBase):
     updated_at: Optional[datetime] = None
     created_by: int
 
-    class Config:
-        from_attributes = True
-
-
-# Scenario schemas
+    model_config = {"from_attributes": True}
 class ScenarioBase(BaseModel):
     name: str = Field(..., min_length=1, max_length=200)
     description: Optional[str] = None
@@ -109,11 +105,7 @@ class ScenarioResponse(ScenarioBase):
     created_at: datetime
     updated_at: Optional[datetime] = None
 
-    class Config:
-        from_attributes = True
-
-
-# Decision Analysis schemas
+    model_config = {"from_attributes": True}
 class DecisionAnalysisBase(BaseModel):
     decision_name: str = Field(..., min_length=1, max_length=200)
     decision_description: Optional[str] = None
@@ -144,11 +136,7 @@ class DecisionAnalysisResponse(DecisionAnalysisBase):
     created_at: datetime
     updated_at: Optional[datetime] = None
 
-    class Config:
-        from_attributes = True
-
-
-# Risk Assessment schemas
+    model_config = {"from_attributes": True}
 class RiskAssessmentBase(BaseModel):
     risk_name: str = Field(..., min_length=1, max_length=200)
     risk_description: Optional[str] = None
@@ -187,11 +175,7 @@ class RiskAssessmentResponse(RiskAssessmentBase):
     created_at: datetime
     updated_at: Optional[datetime] = None
 
-    class Config:
-        from_attributes = True
-
-
-# Strategic Plan schemas
+    model_config = {"from_attributes": True}
 class StrategicPlanBase(BaseModel):
     plan_name: str = Field(..., min_length=1, max_length=200)
     plan_description: Optional[str] = None
@@ -235,11 +219,7 @@ class StrategicPlanResponse(StrategicPlanBase):
     updated_at: Optional[datetime] = None
     created_by: int
 
-    class Config:
-        from_attributes = True
-
-
-# Simulation Template schemas
+    model_config = {"from_attributes": True}
 class SimulationTemplateBase(BaseModel):
     name: str = Field(..., min_length=1, max_length=200)
     description: Optional[str] = None
@@ -267,11 +247,7 @@ class SimulationTemplateResponse(SimulationTemplateBase):
     updated_at: Optional[datetime] = None
     created_by: int
 
-    class Config:
-        from_attributes = True
-
-
-# Specialized request/response schemas for different simulation types
+    model_config = {"from_attributes": True}
 
 class ScenarioPlanningRequest(BaseModel):
     name: str = Field(..., min_length=1, max_length=200)

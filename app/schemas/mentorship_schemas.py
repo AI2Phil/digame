@@ -41,8 +41,7 @@ class MentorshipProgramResponse(BaseModel):
     max_participants: int
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 
 class MentorApplicationCreate(BaseModel):
@@ -65,8 +64,7 @@ class MentorApplicationResponse(BaseModel):
     submitted_at: datetime
     reviewed_at: Optional[datetime] = None
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 
 class MentorshipMatchResponse(BaseModel):
@@ -121,8 +119,7 @@ class MentorQualificationResponse(BaseModel):
     strengths: List[str]
     evaluated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 
 class MentorshipConnectionCreate(BaseModel):
@@ -148,8 +145,7 @@ class MentorshipConnectionResponse(BaseModel):
     started_at: datetime
     ended_at: Optional[datetime] = None
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 
 class MentorshipSessionCreate(BaseModel):
@@ -175,8 +171,7 @@ class MentorshipSessionResponse(BaseModel):
     mentee_notes: Optional[str] = None
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 
 class MentorshipFeedbackCreate(BaseModel):

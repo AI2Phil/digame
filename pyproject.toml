@@ -31,6 +31,7 @@ dependencies = [
     "scikit-learn==1.5.0",
     "pytest>=7.0.0",
     "pytest-asyncio>=0.21.0",
+    "pytest-cov>=4.0.0",
     "httpx>=0.24.0",
 ]
 
@@ -38,6 +39,7 @@ dependencies = [
 dev = [
     "pytest>=7.0.0",
     "pytest-asyncio>=0.21.0",
+    "pytest-cov>=4.0.0",
     "httpx>=0.24.0",
     "black>=23.0.0",
     "isort>=5.12.0",
@@ -71,12 +73,13 @@ flexible_init_classes = [
 ]
 
 [tool.pytest.ini_options]
-testpaths = ["digame/app/tests", "digame/tests"]
+testpaths = ["app/tests", "tests", "tests/unit"]
 python_files = ["test_*.py", "*_test.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
 addopts = "-v --tb=short"
 asyncio_mode = "auto"
+pythonpath = ["."]
 
 [tool.black]
 line-length = 88

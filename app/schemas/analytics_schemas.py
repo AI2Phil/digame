@@ -75,8 +75,7 @@ class PerformanceMetricInDB(PerformanceMetricBase, BaseAuditModel, TenantAssocia
     alert_status: Optional[str] = None
     measured_by_user_id: Optional[int] = None
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 class BenchmarkComparisonInput(BaseModel):
     performance_metric_id: int
@@ -166,10 +165,7 @@ class AnalyticsModelInDB(AnalyticsModelBase, BaseAuditModel, TenantAssociatedMod
     model_path: Optional[str] = None
     training_metadata: Optional[Dict[str, Any]] = None
 
-    class Config:
-        from_attributes = True
-
-# --- AnalyticsPrediction Schemas ---
+    model_config = {"from_attributes": True}
 class AnalyticsPredictionBase(BaseModel):
     model_id: int
     entity_type: str = Field(..., description="Type of entity")
@@ -205,11 +201,7 @@ class AnalyticsPredictionInDB(AnalyticsPredictionBase, BaseAuditModel, TenantAss
     last_viewed_at: Optional[datetime] = None
     created_by_user_id: Optional[int] = None # Can be system generated
 
-    class Config:
-        from_attributes = True
-
-
-# --- ROICalculation Schemas ---
+    model_config = {"from_attributes": True}
 class ROIMetricLink(BaseModel):
     roi_field_to_update: str = Field(..., description="Field to update in ROICalculation")
     source_type: str = Field(..., description="performance_metric or analytics_prediction")
@@ -294,11 +286,12 @@ class ROICalculationInDB(ROICalculationBase, BaseAuditModel, TenantAssociatedMod
     approved_by_user_id: Optional[int] = None
     approved_at: Optional[datetime] = None
 
-    class Config:
-        from_attributes = True
-        json_encoders = {
+    model_config = {
+        "from_attributes": True,
+        "json_encoders": {
             Decimal: lambda v: float(v) if v is not None else None
         }
+    }
 
 # --- ComparativeBenchmark Schemas ---
 class ComparativeBenchmarkBase(BaseModel):
@@ -357,10 +350,7 @@ class ComparativeBenchmarkInDB(ComparativeBenchmarkBase, BaseAuditModel):
     tenant_id: Optional[int] = None # Included for response clarity
     created_by_user_id: Optional[int] = None
 
-    class Config:
-        from_attributes = True
-
-# --- Dashboard & Reporting Schemas (Conceptual) ---
+    model_config = {"from_attributes": True}
 
 # Widget Configuration
 class DashboardWidgetDataSource(BaseModel):
@@ -387,10 +377,7 @@ class DashboardWidgetConfigInDB(DashboardWidgetConfigBase, BaseAuditModel):
     id: int # Assuming these are stored and have IDs
     widget_uuid: str
 
-    class Config:
-        from_attributes = True
-
-# Dashboard Layout and Structure
+    model_config = {"from_attributes": True}
 class DashboardLayoutItem(BaseModel):
     widget_id: int # Reference to a stored DashboardWidgetConfig
     x: int # Grid position X
@@ -421,10 +408,7 @@ class AnalyticsDashboardInDB(AnalyticsDashboardBase, BaseAuditModel, TenantAssoc
     dashboard_uuid: str
     user_id: int # Owner of the dashboard
 
-    class Config:
-        from_attributes = True
-
-# --- Reporting Schemas ---
+    model_config = {"from_attributes": True}
 class ReportFilter(BaseModel):
     field: str
     operator: str # e.g., "eq", "gt", "lt", "in", "like"
@@ -438,8 +422,7 @@ class ReportContentBlock(BaseModel):
     display_options: Optional[Dict[str, Any]] = Field(default_factory=dict, description="Display options")
     text_content: Optional[str] = Field(None, description="Text content for text blocks")
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 
 class ReportDefinitionBase(BaseModel):
@@ -467,8 +450,7 @@ class ReportDefinitionInDB(ReportDefinitionBase, BaseAuditModel, TenantAssociate
     definition_uuid: str
     user_id: int
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 class ReportScheduleBase(BaseModel):
     report_definition_id: int
@@ -486,8 +468,7 @@ class ReportScheduleInDB(ReportScheduleBase, BaseAuditModel, TenantAssociatedMod
     last_run_time: Optional[datetime] = None
     last_run_status: Optional[str] = None # success, failed
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 class GeneratedReportInfo(BaseModel):
     report_id: str # Could be a file ID or internal ID
@@ -542,10 +523,7 @@ class WidgetConfigInDB(WidgetConfigBase, BaseAuditModel, TenantAssociatedModel):
     widget_uuid: str
     dashboard_id: int # Explicitly show it's linked
 
-    class Config:
-        from_attributes = True
-
-# Renaming DashboardLayoutItem to LayoutItem
+    model_config = {"from_attributes": True}
 class LayoutItem(BaseModel):
     widget_config_id: int = Field(..., description="ID of the DashboardWidgetConfig this layout item refers to")
     x: int = Field(..., description="Grid position X (column)")
@@ -581,5 +559,4 @@ class DashboardInDB(DashboardBase, BaseAuditModel, TenantAssociatedModel):
     layout: List[LayoutItem] = Field(default_factory=list) # Ensure layout is always present, even if empty
     widgets: List[WidgetConfigInDB] = Field(default_factory=list) # Full widget configs embedded
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}

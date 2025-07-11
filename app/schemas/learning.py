@@ -70,11 +70,7 @@ class CourseResponse(CourseBase):
     created_at: datetime = Field(description="Course creation date")
     updated_at: datetime = Field(description="Last update date")
 
-    class Config:
-        from_attributes = True
-
-
-# Enrollment Schemas
+    model_config = {"from_attributes": True}
 class EnrollmentBase(BaseModel):
     course_id: int = Field(description="Course ID")
     status: EnrollmentStatus = Field(default=EnrollmentStatus.ENROLLED, description="Enrollment status")
@@ -98,11 +94,7 @@ class EnrollmentResponse(EnrollmentBase):
     enrolled_at: datetime = Field(description="Enrollment date")
     last_accessed: Optional[datetime] = Field(None, description="Last access date")
 
-    class Config:
-        from_attributes = True
-
-
-# Learning Path Schemas
+    model_config = {"from_attributes": True}
 class LearningPathBase(BaseModel):
     name: str = Field(max_length=255, description="Learning path name")
     description: str = Field(description="Learning path description")
@@ -132,11 +124,7 @@ class LearningPathResponse(LearningPathBase):
     created_at: datetime = Field(description="Creation date")
     updated_at: datetime = Field(description="Last update date")
 
-    class Config:
-        from_attributes = True
-
-
-# Skill Assessment Schemas
+    model_config = {"from_attributes": True}
 class SkillAssessmentBase(BaseModel):
     skill_name: str = Field(max_length=100, description="Name of the skill")
     current_level: SkillLevel = Field(description="Current skill level")
@@ -160,11 +148,7 @@ class SkillAssessmentResponse(SkillAssessmentBase):
     created_at: datetime = Field(description="Assessment date")
     updated_at: datetime = Field(description="Last update date")
 
-    class Config:
-        from_attributes = True
-
-
-# Dashboard Schemas
+    model_config = {"from_attributes": True}
 class LearningProgressSummary(BaseModel):
     total_courses_enrolled: int = Field(description="Total courses enrolled")
     courses_completed: int = Field(description="Courses completed")
@@ -197,11 +181,7 @@ class LearningDashboardResponse(BaseModel):
     skill_gaps: List[SkillGapAnalysis] = Field(description="Identified skill gaps")
     recommended_courses: List[CourseResponse] = Field(description="Recommended courses")
 
-    class Config:
-        from_attributes = True
-
-
-# Request Schemas
+    model_config = {"from_attributes": True}
 class EnrollInCourseRequest(BaseModel):
     course_id: int = Field(description="Course ID to enroll in")
 

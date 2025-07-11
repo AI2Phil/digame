@@ -27,10 +27,7 @@ class PeerMatchResponse(PeerMatchBase):
     created_at: datetime
     updated_at: Optional[datetime] = None
 
-    class Config:
-        from_attributes = True
-
-# --- Project Matching Schemas ---
+    model_config = {"from_attributes": True}
 class ProjectMatchBase(BaseModel):
     project_type: str
     required_skills: List[str]
@@ -52,10 +49,7 @@ class ProjectMatchResponse(ProjectMatchBase):
     created_at: datetime
     updated_at: Optional[datetime] = None
 
-    class Config:
-        from_attributes = True
-
-# --- Collaboration Request Schemas ---
+    model_config = {"from_attributes": True}
 class CollaborationRequestBase(BaseModel):
     message: str
     collaboration_type: str

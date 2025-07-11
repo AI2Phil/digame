@@ -43,8 +43,7 @@ class SocialMetricsBase(BaseModel):
 class SocialMetricsResponse(SocialMetricsBase):
     last_calculated: datetime = Field(description="When metrics were last calculated")
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 
 class RecentActivityBase(BaseModel):
@@ -59,8 +58,7 @@ class RecentActivityResponse(RecentActivityBase):
     user_name: Optional[str] = Field(None, description="Name of related user")
     user_avatar: Optional[str] = Field(None, description="Avatar URL of related user")
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 
 class PeerSuggestionBase(BaseModel):
@@ -76,8 +74,7 @@ class PeerSuggestionResponse(PeerSuggestionBase):
     user_id: str = Field(description="Peer's user ID")
     avatar: Optional[str] = Field(None, description="Peer's avatar URL")
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 
 class UserConnectionBase(BaseModel):
@@ -97,8 +94,7 @@ class UserConnectionResponse(UserConnectionBase):
     connected_at: Optional[datetime] = Field(None, description="When connection was established")
     created_at: datetime = Field(description="When connection request was created")
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 
 class PeerMatchBase(BaseModel):
@@ -115,8 +111,7 @@ class PeerMatchResponse(PeerMatchBase):
     responded_at: Optional[datetime] = Field(None, description="When user responded to match")
     created_at: datetime = Field(description="When match was created")
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 
 class UserSkillBase(BaseModel):
@@ -144,21 +139,13 @@ class UserSkillResponse(UserSkillBase):
     created_at: datetime = Field(description="When skill was added")
     updated_at: datetime = Field(description="When skill was last updated")
 
-    class Config:
-        from_attributes = True
-
-
-# Comprehensive Dashboard Response
+    model_config = {"from_attributes": True}
 class SocialDashboardResponse(BaseModel):
     metrics: SocialMetricsResponse = Field(description="User's social metrics")
     recent_activity: List[RecentActivityResponse] = Field(description="Recent social activities")
     peer_suggestions: List[PeerSuggestionResponse] = Field(description="Suggested peer connections")
 
-    class Config:
-        from_attributes = True
-
-
-# Request Schemas
+    model_config = {"from_attributes": True}
 class ConnectToPeerRequest(BaseModel):
     user_id: int = Field(description="ID of user to connect with")
     connection_type: str = Field(default="professional", description="Type of connection")
@@ -179,8 +166,7 @@ class NetworkAnalytics(BaseModel):
     top_connection_sources: List[Dict[str, Any]] = Field(description="Top sources of connections")
     engagement_trends: List[Dict[str, Any]] = Field(description="Engagement trends over time")
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 
 class CollaborationInsights(BaseModel):

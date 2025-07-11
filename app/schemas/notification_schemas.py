@@ -32,8 +32,7 @@ class Notification(NotificationBase):
     updated_at: Optional[datetime] = None  # Include updated_at from HEAD
     is_read: bool
 
-    class Config:
-        from_attributes = True # For Pydantic v2 (preferred for new development)
+    model_config = {"from_attributes": True}
         # orm_mode = True # For Pydantic v1
 
 # You might also want a schema for listing multiple notifications, e.g.,

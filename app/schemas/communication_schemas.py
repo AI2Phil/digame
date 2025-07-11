@@ -13,8 +13,7 @@ class MessageUser(BaseModel):
     first_name: Optional[str] = None
     last_name: Optional[str] = None
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 class MessageBase(BaseModel):
     content: str
@@ -30,8 +29,7 @@ class MessageResponse(MessageBase):
     is_read: bool
     sender: Optional[MessageUser] = None # Include sender details in the response
 
-    class Config:
-        from_attributes = True # For Pydantic V2 to work with ORM objects
+    model_config = {"from_attributes": True}
 
 class ConversationResponse(BaseModel):
     peer_user: MessageUser # Details of the other user in the conversation

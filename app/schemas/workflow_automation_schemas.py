@@ -38,9 +38,7 @@ class WorkflowReportConfigResponse(WorkflowReportConfigBase):
     updated_at: Optional[datetime] = None
     created_by: int
 
-    class Config:
-        from_attributes = True
-        # Pydantic v1 used orm_mode = True
+    model_config = {"from_attributes": True}
         # Pydantic v2 uses from_attributes = True, orm_mode is an alias.
 
 # Schemas for OptimizationRecommendation
@@ -77,5 +75,4 @@ class OptimizationRecommendationResponse(OptimizationRecommendationBase):
     last_reviewed_at: Optional[datetime] = None
     reviewed_by: Optional[int] = None # User ID of the reviewer
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}

@@ -41,8 +41,7 @@ class JobSchema(BaseModel):
     # skills: Optional[List[str]] = None
     # employment_type: Optional[str] = None # e.g., "Full-time", "Part-time"
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 class JobSearchResponse(BaseModel):
     """
