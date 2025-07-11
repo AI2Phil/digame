@@ -107,7 +107,7 @@ jobs:
     if: ${{ !inputs.skip_tests }}
     strategy:
       matrix:
-        node-version: ['16.x', '18.x', '20.x']
+        node-version: ['18.x', '20.x']
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
