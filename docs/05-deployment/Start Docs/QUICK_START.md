@@ -298,6 +298,12 @@ curl -X POST "http://localhost:8001/auth/register" \
 4. Complete onboarding flow
 5. Explore dashboard features
 
+
+### 4. Lint Commands
+npm run lint:fix 
+npm run lint 
+npm run build 
+
 ## 📚 Next Steps
 
 ### Immediate Actions
