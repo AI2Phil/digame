@@ -10,7 +10,7 @@ from typing import List, Optional
 from datetime import datetime, timedelta
 import logging
 
-from ..models.social import UserConnection, PeerMatch, SocialMetrics, UserSkill
+from ..models.social import UserConnection, PeerMatch, SocialMetrics  # UserSkill temporarily disabled
 from ..models.user import User
 from ..schemas.social import (
     SocialMetricsResponse,

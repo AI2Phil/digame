@@ -46,7 +46,7 @@ def create_user(db: Session, user: UserCreate) -> User:
         # New fields
         detailed_bio=user.detailed_bio if hasattr(user, 'detailed_bio') else None,
         contact_info=json.dumps(user.contact_info.dict()) if hasattr(user, 'contact_info') and user.contact_info else None,
-        skills=json.dumps(user.skills) if hasattr(user, 'skills') and user.skills is not None else None,
+        skills_json=json.dumps(user.skills) if hasattr(user, 'skills') and user.skills is not None else None,
         kudos_count=0 # Initialize kudos_count
     )
     db.add(db_user)
@@ -79,7 +79,7 @@ def update_user(db: Session, user_id: int, user_update: UserUpdate) -> Optional[
         if key == "contact_info" and value is not None:
             setattr(db_user, key, json.dumps(value)) # value is already a dict due to UserUpdate schema
         elif key == "skills" and value is not None:
-            setattr(db_user, key, json.dumps(value)) # value is already a list
+            setattr(db_user, "skills_json", json.dumps(value)) # value is already a list
         else:
             setattr(db_user, key, value)
     

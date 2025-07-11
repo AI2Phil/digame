@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, Text, ForeignKey
 from sqlalchemy.orm import relationship
-from .user import Base # Importing Base from user.py
+from app.database import Base # Importing Base from user.py
 
 class Experience(Base):
     __tablename__ = "experience_entries" # Changed table name to match relationship in User

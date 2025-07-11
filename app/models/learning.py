@@ -3,8 +3,7 @@ Learning & Development Models
 Phase 1 implementation for learning features including courses, enrollments, and progress tracking.
 """
 
-from sqlalchemy import Column, Integer, String, DateTime, Boolean, Numeric, ForeignKey, Text, UniqueConstraint, Date
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy import Column, Integer, String, DateTime, Boolean, Numeric, ForeignKey, Text, UniqueConstraint, Date, JSON
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.models.user import Base
@@ -43,9 +42,9 @@ class Course(Base):
     difficulty_level = Column(String(20), nullable=False, default="beginner", index=True)  # beginner, intermediate, advanced
     duration_hours = Column(Integer, nullable=True)
     estimated_completion_days = Column(Integer, nullable=True)
-    prerequisites = Column(JSONB, nullable=True)  # List of prerequisite skills or courses
-    learning_objectives = Column(JSONB, nullable=True)  # List of learning objectives
-    skills_covered = Column(JSONB, nullable=True)  # List of skills this course covers
+    prerequisites = Column(JSON, nullable=True)  # List of prerequisite skills or courses
+    learning_objectives = Column(JSON, nullable=True)  # List of learning objectives
+    skills_covered = Column(JSON, nullable=True)  # List of skills this course covers
     instructor_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     max_enrollments = Column(Integer, nullable=True)
     current_enrollments = Column(Integer, nullable=False, default=0)

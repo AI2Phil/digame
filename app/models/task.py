@@ -3,7 +3,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
 # Import Base from user.py to ensure all tables use the same metadata declaration
-from .user import Base
+from app.database import Base
 # Import User and ProcessNote models for establishing relationships
 from .user import User # Renamed to avoid potential confusion
 from .process_notes import ProcessNote # Renamed

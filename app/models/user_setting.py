@@ -2,7 +2,7 @@ from sqlalchemy import Column, Integer, Text, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
 from datetime import datetime
 
-from .user import Base  # Import Base from user.py
+from app.database import Base  # Import Base from user.py
 
 class UserSetting(Base):
     __tablename__ = 'user_settings'

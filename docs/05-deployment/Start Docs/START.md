@@ -146,6 +146,7 @@ npm run dev
 - **Both services are now running**
 - Backend: http://localhost:8001 ✅
 - Frontend: http://localhost:3000 ✅
+
 🎉 **That's it!** Your Digame platform is now running:
 - **Frontend Web App**: http://localhost:3000
 - **Backend API**: http://localhost:8001

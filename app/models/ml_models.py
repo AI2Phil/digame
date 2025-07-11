@@ -8,7 +8,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from datetime import datetime
 from enum import Enum
-from .user import Base
+from app.database import Base
 
 class ModelType(str, Enum):
     CLASSIFICATION = "classification"

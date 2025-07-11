@@ -422,6 +422,15 @@ async def startup_event():
     logger.info(f"🛡️  Rate Limiting: {'Enabled' if auth_settings.rate_limit_enabled else 'Disabled'}")
     logger.info(f"🌐 CORS: {'Enabled' if auth_settings.cors_enabled else 'Disabled'}")
     
+    # Create database tables first
+    try:
+        from .database import create_tables
+        logger.info("🗄️  Creating database tables...")
+        create_tables()
+        logger.info("✅ Database tables created successfully")
+    except Exception as e:
+        logger.error(f"❌ Database table creation error: {e}")
+    
     if auth_settings.create_default_roles:
         try:
             from .auth.init_auth_db import initialize_auth_database

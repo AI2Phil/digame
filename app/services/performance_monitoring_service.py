@@ -13,7 +13,7 @@ import numpy as np
 from collections import defaultdict, Counter
 
 from ..models.performance_monitoring import (
-    PerformanceMetric, SystemHealthCheck, QueryPerformance, 
+    CorePerformanceMetric, SystemHealthCheck, QueryPerformance,
     UserExperienceMetric, PerformanceAlert, PerformanceIncident,
     PerformanceBaseline, PerformanceOptimization
 )
@@ -39,10 +39,10 @@ class PerformanceMonitoringService:
         source: Optional[str] = None,
         tags: Optional[Dict[str, Any]] = None,
         dimensions: Optional[Dict[str, Any]] = None
-    ) -> PerformanceMetric:
+    ) -> CorePerformanceMetric:
         """Record a performance metric"""
         
-        metric = PerformanceMetric()
+        metric = CorePerformanceMetric()
         setattr(metric, 'tenant_id', tenant_id)  # type: ignore
         setattr(metric, 'metric_name', metric_name)  # type: ignore
         setattr(metric, 'metric_category', metric_category)  # type: ignore
@@ -468,10 +468,10 @@ class PerformanceMonitoringService:
         
         for alert in active_alerts:
             # Get recent metrics for this alert
-            recent_metrics = self.db.query(PerformanceMetric).filter(
-                PerformanceMetric.tenant_id == tenant_id,
-                PerformanceMetric.metric_name == alert.metric_name,
-                PerformanceMetric.created_at >= datetime.now(timezone.utc) - timedelta(minutes=5)
+            recent_metrics = self.db.query(CorePerformanceMetric).filter(
+                CorePerformanceMetric.tenant_id == tenant_id,
+                CorePerformanceMetric.metric_name == alert.metric_name,
+                CorePerformanceMetric.created_at >= datetime.now(timezone.utc) - timedelta(minutes=5)
             ).all()
             
             for metric in recent_metrics:
@@ -608,7 +608,7 @@ class PerformanceMonitoringService:
         
         return suggestions
     
-    def _check_metric_alerts(self, metric: PerformanceMetric):
+    def _check_metric_alerts(self, metric: CorePerformanceMetric):
         """Check if metric triggers any alerts"""
         
         metric_tenant_id = getattr(metric, 'tenant_id', 0)  # type: ignore
@@ -696,12 +696,12 @@ class PerformanceMonitoringService:
     def _get_system_metrics_summary(self, tenant_id: int, start_time: datetime) -> Dict[str, Any]:
         """Get system metrics summary"""
         
-        metrics = self.db.query(PerformanceMetric).filter(
-            PerformanceMetric.tenant_id == tenant_id
+        metrics = self.db.query(CorePerformanceMetric).filter(
+            CorePerformanceMetric.tenant_id == tenant_id
         ).filter(
-            PerformanceMetric.metric_category == "system"
+            CorePerformanceMetric.metric_category == "system"
         ).filter(
-            PerformanceMetric.timestamp >= start_time
+            CorePerformanceMetric.timestamp >= start_time
         ).all()
         
         if not metrics:

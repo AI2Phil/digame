@@ -2,7 +2,7 @@ from sqlalchemy import Column, Integer, String, DateTime, Text, Float, ForeignKe
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
-from .user import Base
+from app.database import Base
 
 class Job(Base):
     """

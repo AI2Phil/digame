@@ -4,7 +4,8 @@
 # and to ensure they are registered with Base.metadata for Alembic discovery
 # if env.py imports this models package.
 
-from .user import User, Base # Base is often defined in one model file (e.g., user.py) or a database.py
+from .user import User
+from app.database import Base # Import Base from the centralized database module
 from .rbac import Role, Permission, UserRole, user_roles_table, role_permissions_table
 from .process_notes import ProcessNote
 from .activity import Activity
@@ -13,7 +14,8 @@ from .anomaly import DetectedAnomaly
 from .task import Task # Added new model
 from .behavior_model import BehavioralModel, BehavioralPattern # Added behavioral models
 from .user_setting import UserSetting # Import the new UserSetting model
-from .notification import Notification # Import the new Notification model
+# Import from the comprehensive notifications module instead of the old notification module
+# from .notification import Notification # Old simple version - removed to avoid conflicts
 # Import the actual models from the existing workflow_automation.py
 from .workflow_automation import (
     WorkflowTemplate,
@@ -30,6 +32,7 @@ from .project import Project # Import the new Project model
 from .experience import Experience # Import the new Experience model
 from .education import Education # Import the new Education model
 from .communication import Message # Import the new Message model
+from .social import UserConnection, PeerMatch, SocialMetrics, UserSkill # Import social networking models
 from .social_collaboration import (
     PeerConnection, PeerMessage, CollaborationProject, ProjectMember,
     ProjectApplication, SkillEndorsement, MentorshipConnection,
@@ -57,6 +60,14 @@ from .collaboration_models import (
     UserPresence, CollaborationSession, MessageAttachment,
     ChannelType, MessageType, SessionType, UserStatus
 ) # Added real-time collaboration models
+from .ml_models import (
+    MLModel, TrainingJob, ModelPrediction, ModelEvaluation,
+    ModelDeployment, DatasetMetadata, ExperimentRun,
+    ModelType, ModelStatus, TrainingStatus
+) # Added ML models
+from .learning import (
+    CourseCategory, Course, CourseEnrollment, LearningProgress, LearningRecommendation
+) # Added learning models
 
 # Optionally, define __all__ to specify what is exported when 'from .models import *' is used
 __all__ = [
@@ -87,6 +98,10 @@ __all__ = [
     "Experience", # Add Experience to __all__
     "Education", # Add Education to __all__
     "Message", # Add Message to __all__
+    "UserConnection", # Add social networking models to __all__
+    "PeerMatch",
+    "SocialMetrics",
+    "UserSkill", # UserSkill model restored
     "PeerConnection", # Add enhanced social collaboration models to __all__
     "PeerMessage",
     "CollaborationProject",

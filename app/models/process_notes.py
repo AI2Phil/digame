@@ -3,7 +3,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func # For server_default=func.now()
 
 # Import Base from user.py to ensure all tables use the same metadata declaration
-from .user import Base 
+from app.database import Base 
 # Assuming User model is also in .user or accessible via this Base
 from .user import User # For establishing relationship
 

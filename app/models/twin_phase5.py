@@ -4,7 +4,6 @@ Production Deployment with Kubernetes orchestration, comprehensive monitoring, a
 """
 
 from sqlalchemy import Column, String, Integer, Float, DateTime, Boolean, Text, JSON, ForeignKey, Index
-from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 import uuid
@@ -30,7 +29,7 @@ class KubernetesDeployment(Base):  # type: ignore
     # Status Information
     status = Column(String(50), nullable=False, default="Pending")  # type: ignore  # Pending, Running, Failed, Succeeded
     phase = Column(String(50), nullable=False, default="Initializing")  # type: ignore
-    conditions = Column(JSONB, nullable=True)  # type: ignore
+    conditions = Column(JSON, nullable=True)  # type: ignore
     
     # Resource Configuration
     cpu_request = Column(String(20), nullable=True)  # type: ignore  # e.g., "250m"
@@ -45,8 +44,8 @@ class KubernetesDeployment(Base):  # type: ignore
     
     # Health and Monitoring
     health_check_path = Column(String(200), nullable=True)  # type: ignore
-    readiness_probe = Column(JSONB, nullable=True)  # type: ignore
-    liveness_probe = Column(JSONB, nullable=True)  # type: ignore
+    readiness_probe = Column(JSON, nullable=True)  # type: ignore
+    liveness_probe = Column(JSON, nullable=True)  # type: ignore
     
     # Timestamps
     created_at = Column(DateTime(timezone=True), server_default=func.now())  # type: ignore
@@ -80,7 +79,7 @@ class KubernetesPod(Base):  # type: ignore
     # Pod Status
     phase = Column(String(50), nullable=False, default="Pending")  # type: ignore  # Pending, Running, Succeeded, Failed, Unknown
     status = Column(String(50), nullable=False, default="Initializing")  # type: ignore
-    conditions = Column(JSONB, nullable=True)  # type: ignore
+    conditions = Column(JSON, nullable=True)  # type: ignore
     restart_count = Column(Integer, nullable=False, default=0)  # type: ignore
     
     # Resource Usage
@@ -96,7 +95,7 @@ class KubernetesPod(Base):  # type: ignore
     # Container Information
     container_count = Column(Integer, nullable=False, default=1)  # type: ignore
     ready_containers = Column(Integer, nullable=False, default=0)  # type: ignore
-    container_statuses = Column(JSONB, nullable=True)  # type: ignore
+    container_statuses = Column(JSON, nullable=True)  # type: ignore
     
     # Timestamps
     created_at = Column(DateTime(timezone=True), server_default=func.now())  # type: ignore
@@ -130,8 +129,8 @@ class KubernetesService(Base):  # type: ignore
     # Service Configuration
     cluster_ip = Column(String(45), nullable=True)  # type: ignore
     external_ip = Column(String(45), nullable=True)  # type: ignore
-    ports = Column(JSONB, nullable=False)  # type: ignore  # Array of port configurations
-    selector = Column(JSONB, nullable=True)  # type: ignore  # Label selector
+    ports = Column(JSON, nullable=False)  # type: ignore  # Array of port configurations
+    selector = Column(JSON, nullable=True)  # type: ignore  # Label selector
     
     # Health and Status
     endpoint_count = Column(Integer, nullable=False, default=0)  # type: ignore
@@ -141,7 +140,7 @@ class KubernetesService(Base):  # type: ignore
     # Load Balancer Information (if applicable)
     load_balancer_ip = Column(String(45), nullable=True)  # type: ignore
     load_balancer_hostname = Column(String(255), nullable=True)  # type: ignore
-    load_balancer_ingress = Column(JSONB, nullable=True)  # type: ignore
+    load_balancer_ingress = Column(JSON, nullable=True)  # type: ignore
     
     # Timestamps
     created_at = Column(DateTime(timezone=True), server_default=func.now())  # type: ignore
@@ -181,12 +180,12 @@ class KubernetesHPA(Base):  # type: ignore
     current_memory_utilization = Column(Integer, nullable=True)  # type: ignore  # Percentage
     
     # Custom Metrics
-    custom_metrics = Column(JSONB, nullable=True)  # type: ignore
-    external_metrics = Column(JSONB, nullable=True)  # type: ignore
+    custom_metrics = Column(JSON, nullable=True)  # type: ignore
+    external_metrics = Column(JSON, nullable=True)  # type: ignore
     
     # Status and Conditions
     status = Column(String(50), nullable=False, default="Unknown")  # type: ignore  # Stable, Scaling, Failed
-    conditions = Column(JSONB, nullable=True)  # type: ignore
+    conditions = Column(JSON, nullable=True)  # type: ignore
     last_scale_time = Column(DateTime(timezone=True), nullable=True)  # type: ignore
     
     # Timestamps
@@ -214,7 +213,7 @@ class KubernetesStorage(Base):  # type: ignore
     
     # Storage Configuration
     capacity = Column(String(20), nullable=False)  # type: ignore  # e.g., "10Gi"
-    access_modes = Column(JSONB, nullable=False)  # type: ignore  # Array of access modes
+    access_modes = Column(JSON, nullable=False)  # type: ignore  # Array of access modes
     volume_mode = Column(String(50), nullable=False, default="Filesystem")  # type: ignore
     
     # Usage and Status
@@ -283,7 +282,7 @@ class KubernetesMonitoring(Base):  # type: ignore
     inhibited_alerts = Column(Integer, nullable=True)  # type: ignore
     
     # Configuration and Settings
-    configuration = Column(JSONB, nullable=True)  # type: ignore
+    configuration = Column(JSON, nullable=True)  # type: ignore
     data_retention = Column(String(50), nullable=True)  # type: ignore  # e.g., "15d"
     storage_size = Column(String(20), nullable=True)  # type: ignore  # e.g., "20Gi"
     
@@ -314,17 +313,17 @@ class KubernetesSecurity(Base):  # type: ignore
     subject_type = Column(String(50), nullable=True)  # type: ignore  # User, Group, ServiceAccount
     subject_name = Column(String(255), nullable=True)  # type: ignore
     role_name = Column(String(255), nullable=True)  # type: ignore
-    permissions = Column(JSONB, nullable=True)  # type: ignore  # Array of permissions
+    permissions = Column(JSON, nullable=True)  # type: ignore  # Array of permissions
     
     # Network Policy Information
-    policy_types = Column(JSONB, nullable=True)  # type: ignore  # Ingress, Egress
-    pod_selector = Column(JSONB, nullable=True)  # type: ignore
-    ingress_rules = Column(JSONB, nullable=True)  # type: ignore
-    egress_rules = Column(JSONB, nullable=True)  # type: ignore
+    policy_types = Column(JSON, nullable=True)  # type: ignore  # Ingress, Egress
+    pod_selector = Column(JSON, nullable=True)  # type: ignore
+    ingress_rules = Column(JSON, nullable=True)  # type: ignore
+    egress_rules = Column(JSON, nullable=True)  # type: ignore
     
     # Secret Information
     secret_type = Column(String(100), nullable=True)  # type: ignore  # Opaque, kubernetes.io/tls, etc.
-    data_keys = Column(JSONB, nullable=True)  # type: ignore  # Array of secret keys (not values)
+    data_keys = Column(JSON, nullable=True)  # type: ignore  # Array of secret keys (not values)
     
     # Security Status
     status = Column(String(50), nullable=False, default="Active")  # type: ignore  # Active, Inactive, Failed
@@ -360,9 +359,9 @@ class KubernetesIngress(Base):  # type: ignore
     ingress_class = Column(String(255), nullable=True)  # type: ignore
     
     # Ingress Configuration
-    hosts = Column(JSONB, nullable=False)  # type: ignore  # Array of hostnames
-    paths = Column(JSONB, nullable=False)  # type: ignore  # Array of path configurations
-    backend_services = Column(JSONB, nullable=False)  # type: ignore  # Array of backend service configurations
+    hosts = Column(JSON, nullable=False)  # type: ignore  # Array of hostnames
+    paths = Column(JSON, nullable=False)  # type: ignore  # Array of path configurations
+    backend_services = Column(JSON, nullable=False)  # type: ignore  # Array of backend service configurations
     
     # SSL/TLS Configuration
     tls_enabled = Column(Boolean, nullable=False, default=False)  # type: ignore
@@ -382,8 +381,8 @@ class KubernetesIngress(Base):  # type: ignore
     
     # Rate Limiting and Security
     rate_limit_enabled = Column(Boolean, nullable=False, default=False)  # type: ignore
-    rate_limit_config = Column(JSONB, nullable=True)  # type: ignore
-    security_headers = Column(JSONB, nullable=True)  # type: ignore
+    rate_limit_config = Column(JSON, nullable=True)  # type: ignore
+    security_headers = Column(JSON, nullable=True)  # type: ignore
     
     # Status and Health
     status = Column(String(50), nullable=False, default="Pending")  # type: ignore  # Pending, Active, Failed
@@ -424,7 +423,7 @@ class ProductionMetrics(Base):  # type: ignore
     alert_acknowledged = Column(Boolean, nullable=False, default=False)  # type: ignore
     
     # Context and Metadata
-    labels = Column(JSONB, nullable=True)  # type: ignore  # Additional metric labels
+    labels = Column(JSON, nullable=True)  # type: ignore  # Additional metric labels
     description = Column(Text, nullable=True)  # type: ignore
     collection_method = Column(String(100), nullable=True)  # type: ignore  # prometheus, custom, external
     
@@ -455,7 +454,7 @@ class DeploymentHistory(Base):  # type: ignore
     # Deployment Details
     image_name = Column(String(500), nullable=False)  # type: ignore
     image_tag = Column(String(100), nullable=False)  # type: ignore
-    deployment_config = Column(JSONB, nullable=False)  # type: ignore
+    deployment_config = Column(JSON, nullable=False)  # type: ignore
     
     # Deployment Status
     status = Column(String(50), nullable=False)  # type: ignore  # InProgress, Successful, Failed, RolledBack

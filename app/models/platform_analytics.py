@@ -6,7 +6,7 @@ Comprehensive analytics and monitoring for Platform Owner insights
 from sqlalchemy import Column, Integer, String, DateTime, Float, Text, JSON, ForeignKey, Date
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
-from .user import Base
+from app.database import Base
 
 
 class PlatformUsageMetric(Base):  # type: ignore

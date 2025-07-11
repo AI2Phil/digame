@@ -2,7 +2,7 @@ from typing import List, Optional
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from datetime import datetime, timezone
-from ..models.notification import Notification
+from ..models.notifications import Notification
 from ..schemas.notification_schemas import NotificationCreate, NotificationUpdate
 
 def create_notification(db: Session, notification: NotificationCreate, user_id: int) -> Notification:

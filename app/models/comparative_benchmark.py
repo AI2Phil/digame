@@ -3,7 +3,7 @@ from sqlalchemy.orm import relationship
 from datetime import datetime
 import uuid
 
-from .user import Base
+from app.database import Base
 
 class ComparativeBenchmark(Base):
     """

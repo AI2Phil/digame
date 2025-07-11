@@ -2,7 +2,7 @@ from sqlalchemy import Column, Integer, String, Boolean, ForeignKey
 from sqlalchemy.orm import relationship
 
 # Import Base from user.py to ensure all tables use the same metadata declaration
-from .user import Base 
+from app.database import Base 
 # Import Activity model for establishing the relationship
 # from .activity import Activity # This will be used as a string reference to avoid circular imports if needed
 

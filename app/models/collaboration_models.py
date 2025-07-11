@@ -9,7 +9,7 @@ from sqlalchemy.sql import func
 from datetime import datetime
 from typing import Optional, Dict, Any, List
 import enum
-from app.models.user import Base
+from app.database import Base
 
 class ChannelType(enum.Enum):
     """Channel types for collaboration"""
@@ -146,8 +146,8 @@ class Channel(Base):
     
     # Relationships
     workspace = relationship("Workspace", back_populates="channels")
-    messages = relationship("Message", back_populates="channel", cascade="all, delete-orphan", foreign_keys="Message.channel_id")
-    last_message = relationship("Message", foreign_keys=[last_message_id], post_update=True)
+    messages = relationship("app.models.collaboration_models.Message", back_populates="channel", cascade="all, delete-orphan", foreign_keys="app.models.collaboration_models.Message.channel_id")
+    last_message = relationship("app.models.collaboration_models.Message", foreign_keys=[last_message_id], post_update=True)
     
     __table_args__ = (
         Index('idx_channels_workspace_type', 'workspace_id', 'type'),
@@ -188,7 +188,7 @@ class Message(Base):
     channel = relationship("Channel", back_populates="messages", foreign_keys=[channel_id])
     user = relationship("User")
     reactions = relationship("MessageReaction", back_populates="message", cascade="all, delete-orphan")
-    thread_replies = relationship("Message", backref="parent_message", remote_side=[id])
+    thread_replies = relationship("app.models.collaboration_models.Message", backref="parent_message", remote_side=[id])
     
     __table_args__ = (
         Index('idx_messages_channel_timestamp', 'channel_id', 'timestamp'),
@@ -213,7 +213,7 @@ class MessageReaction(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     
     # Relationships
-    message = relationship("Message", back_populates="reactions")
+    message = relationship("app.models.collaboration_models.Message", back_populates="reactions")
     user = relationship("User")
     
     __table_args__ = (
@@ -340,7 +340,7 @@ class MessageAttachment(Base):
     scan_result = Column(String(50))  # clean, infected, pending
     
     # Relationships
-    message = relationship("Message")
+    message = relationship("app.models.collaboration_models.Message")
     uploader = relationship("User")
     
     __table_args__ = (

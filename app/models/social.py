@@ -3,11 +3,10 @@ Social Networking Models
 Phase 1 implementation for social features including user connections, peer matching, and social metrics.
 """
 
-from sqlalchemy import Column, Integer, String, DateTime, Boolean, Numeric, ForeignKey, Text, UniqueConstraint
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy import Column, Integer, String, DateTime, Boolean, Numeric, ForeignKey, Text, UniqueConstraint, JSON
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
-from app.models.user import Base
+from app.database import Base
 
 
 class UserConnection(Base):
@@ -43,7 +42,7 @@ class PeerMatch(Base):
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     matched_user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     compatibility_score = Column(Numeric(5, 2), nullable=False, index=True)
-    match_factors = Column(JSONB, nullable=True)  # Store matching criteria and reasons
+    match_factors = Column(JSON, nullable=True)  # Store matching criteria and reasons
     status = Column(String(20), nullable=False, default="suggested")
     viewed_at = Column(DateTime, nullable=True)
     responded_at = Column(DateTime, nullable=True)
@@ -84,7 +83,7 @@ class SocialMetrics(Base):
 class UserSkill(Base):
     """User skills for peer matching and mentorship"""
     __tablename__ = "user_skills"
-    
+
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     skill_name = Column(String(100), nullable=False, index=True)
@@ -94,10 +93,10 @@ class UserSkill(Base):
     is_offering_mentorship = Column(Boolean, nullable=False, default=False)
     created_at = Column(DateTime, nullable=False, server_default=func.now())
     updated_at = Column(DateTime, nullable=False, server_default=func.now(), onupdate=func.now())
-    
-    # Relationships
+
+    # Relationships - using string reference to avoid circular import issues
     user = relationship("User", back_populates="skills")
-    
+
     # Constraints
     __table_args__ = (
         UniqueConstraint('user_id', 'skill_name', name='unique_user_skill'),

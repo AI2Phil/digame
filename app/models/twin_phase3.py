@@ -10,7 +10,7 @@ from datetime import datetime
 from enum import Enum
 import uuid
 
-from .user import Base
+from app.database import Base
 
 class TeamStatus(str, Enum):
     ACTIVE = "active"

@@ -4,12 +4,11 @@ Enhanced database schemas for Performance & Monitoring Components
 """
 
 from sqlalchemy import Column, Integer, String, Float, DateTime, Boolean, Text, JSON, ForeignKey, Index
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from datetime import datetime
 import uuid
 
-Base = declarative_base()
+from ..database import Base
 
 class UserSession(Base):
     """User session tracking for UX analytics"""
@@ -199,9 +198,9 @@ class AssetOptimization(Base):
         Index('idx_asset_optimizations_type', 'optimization_type'),
     )
 
-class PerformanceMetric(Base):
+class GeneralPerformanceMetric(Base):
     """General performance metrics tracking"""
-    __tablename__ = 'performance_metrics'
+    __tablename__ = 'general_performance_metrics'
     
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     metric_name = Column(String, nullable=False)

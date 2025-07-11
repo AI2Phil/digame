@@ -23,8 +23,9 @@ from ..crud import task_crud
 from .task_prioritization_service import TaskPrioritizationService
 # CalendarService might be used later if events are directly created/updated here
 # from .calendar_service import CalendarService
-from .reporting_service_part1 import ReportingService # For triggering reports
-from ..models.dashboard_custom import ReportDefinition # To fetch ReportDefinition for reporting service
+# Temporarily disabled to resolve Base class conflicts
+# from .reporting_service_part1 import ReportingService # For triggering reports
+# from ..models.dashboard_custom import ReportDefinition # To fetch ReportDefinition for reporting service
 
 
 class WorkflowAutomationService:
@@ -32,7 +33,7 @@ class WorkflowAutomationService:
     Core workflow automation service for managing business process automation
     """
     
-    def __init__(self, db: Session, task_prioritization_service: TaskPrioritizationService, reporting_service: ReportingService) -> None:
+    def __init__(self, db: Session, task_prioritization_service: TaskPrioritizationService, reporting_service: Optional[Any] = None) -> None:
         self.db = db
         self.task_prioritization_service = task_prioritization_service
         self.reporting_service = reporting_service # Added ReportingService

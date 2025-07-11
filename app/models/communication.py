@@ -3,7 +3,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from datetime import datetime
 
-from .user import Base # Assuming Base is defined in user.py or a shared models.base
+from app.database import Base # Assuming Base is defined in user.py or a shared models.base
 
 class Message(Base):
     __tablename__ = "messages"

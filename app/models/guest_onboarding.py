@@ -5,7 +5,7 @@ Guest User Onboarding Models for Digital Twin Setup
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, ForeignKey, JSON, Float
 from sqlalchemy.orm import relationship
 from datetime import datetime
-from .user import Base
+from app.database import Base
 
 
 class GuestOnboardingProgress(Base):

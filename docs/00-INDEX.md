@@ -20,6 +20,18 @@ This document provides a comprehensive overview of the organized documentation s
 - [`COMPONENTS.md`](02-development/COMPONENTS.md) - UI component library documentation and implementation guide
 - [`FRONTEND_SETTINGS_IMPLEMENTATION.md`](02-development/FRONTEND_SETTINGS_IMPLEMENTATION.md) - Frontend configuration and settings
 - [`DOCUMENTATION_SYSTEM.md`](02-development/DOCUMENTATION_SYSTEM.md) - Documentation standards and guidelines
+
+### 02-implementation/
+**Purpose**: Implementation guides and technical fixes
+
+- [`QUICK_START.md`](02-implementation/QUICK_START.md) - Complete platform setup guide
+- [`DATABASE_CONFIGURATION.md`](02-implementation/DATABASE_CONFIGURATION.md) - Database configuration analysis and dual backend setup
+- [`USER_SKILLS.md`](02-implementation/USER_SKILLS.md) - UserSkill model temporary disable documentation
+- [`MESSAGE_CLASS_CONFLICT.md`](02-implementation/MESSAGE_CLASS_CONFLICT.md) - SQLAlchemy Message class conflict resolution
+
+## 🗄️ Database Management
+
+- [`DB_CONSOL.md`](DB_CONSOL.md) - **Database Consolidation Guide** - Step-by-step plan for consolidating dual database configuration into production-ready setup, including troubleshooting for schema issues and authentication warnings
 - [`API_KEY_CONFIGURATION_GUIDE.md`](02-development/API_KEY_CONFIGURATION_GUIDE.md) - API key setup and management
 - [`API_KEY.md`](02-development/API_KEY.md) - API key implementation and usage guide
 - [`AUTHENTICATION_REDIRECT_FIX.md`](02-development/AUTHENTICATION_REDIRECT_FIX.md) - Authentication system fixes and improvements

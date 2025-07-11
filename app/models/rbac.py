@@ -2,7 +2,7 @@ from sqlalchemy import Column, Integer, String, DateTime, Table, ForeignKey, Boo
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.associationproxy import association_proxy
 # Import Base from .user to ensure all models use the same Base instance
-from .user import Base
+from app.database import Base
 from datetime import datetime
 
 # Association Table: user_roles

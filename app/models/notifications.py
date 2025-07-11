@@ -5,7 +5,7 @@ Notification Models for Platform Owner Alerts
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, JSON, ForeignKey, Enum
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
-from .user import Base
+from app.database import Base
 from enum import Enum as PyEnum
 from datetime import datetime
 

@@ -8,7 +8,7 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy import text
 from datetime import datetime
 from enum import Enum
-from .user import Base
+from app.database import Base
 
 class TwinStatus(str, Enum):
     INITIALIZING = "initializing"

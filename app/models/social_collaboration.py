@@ -8,7 +8,7 @@ from sqlalchemy.orm import relationship
 from datetime import datetime
 import enum
 
-from .user import Base
+from app.database import Base
 
 
 class ConnectionStatus(enum.Enum):

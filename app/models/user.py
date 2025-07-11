@@ -1,10 +1,8 @@
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, ForeignKey, JSON, Float # Added ForeignKey, JSON, Float
-from sqlalchemy.orm import relationship, DeclarativeBase
+from sqlalchemy.orm import relationship
 from sqlalchemy.ext.associationproxy import association_proxy
 from datetime import datetime # Changed to just datetime for consistency, as utcnow is method of datetime
-
-class Base(DeclarativeBase):
-    pass
+from app.database import Base
 
 class User(Base):
     __tablename__ = "users"
@@ -68,7 +66,7 @@ class User(Base):
     # New profile fields
     detailed_bio = Column(Text(), nullable=True)
     contact_info = Column(Text(), nullable=True)  # JSON string for linkedin, website, professionalEmail
-    skills = Column(Text(), nullable=True)  # JSON string for list[str]
+    skills_json = Column(Text(), nullable=True)  # JSON string for list[str] - renamed to avoid conflict with skills relationship
     kudos_count = Column(Integer(), default=0)
 
     # Enhanced relationships for tenant-aware RBAC
@@ -154,14 +152,13 @@ class User(Base):
         cascade="all, delete-orphan"
     )
 
-    # Relationship to GuestOnboardingProgress (One-to-One)
-    # Temporarily commented out due to import issues
-    # onboarding_progress = relationship(
-    #     "GuestOnboardingProgress",
-    #     back_populates="user",
-    #     uselist=False,
-    #     cascade="all, delete-orphan"
-    # )
+    # Relationship to UserOnboardingProgress (One-to-One)
+    onboarding_progress = relationship(
+        "UserOnboardingProgress",
+        back_populates="user",
+        uselist=False,
+        cascade="all, delete-orphan"
+    )
     
     # Relationship to DigitalTwinProfile (One-to-One)
     # Temporarily commented out due to import issues

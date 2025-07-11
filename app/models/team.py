@@ -2,7 +2,7 @@ import enum
 from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, JSON, Enum as DBEnum
 from sqlalchemy.orm import relationship
 from datetime import datetime
-from .user import Base
+from app.database import Base
 
 class TeamRoleEnum(enum.Enum):
     MEMBER = "member"

@@ -5,7 +5,7 @@ Security Models for Advanced Authentication Features
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, JSON, ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
-from .user import Base
+from app.database import Base
 from datetime import datetime
 
 

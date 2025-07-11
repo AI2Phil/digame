@@ -8,9 +8,9 @@ from datetime import datetime
 from ..database import Base
 
 
-class PerformanceMetric(Base):  # type: ignore
+class CorePerformanceMetric(Base):  # type: ignore
     """Core performance metrics collection"""
-    __tablename__ = "performance_metrics"
+    __tablename__ = "core_performance_metrics"
     
     id = Column(Integer, primary_key=True, index=True)  # type: ignore
     tenant_id = Column(Integer, nullable=False, index=True)  # type: ignore
@@ -186,7 +186,7 @@ class PerformanceAlert(Base):  # type: ignore
     
     id = Column(Integer, primary_key=True, index=True)  # type: ignore
     tenant_id = Column(Integer, nullable=False, index=True)  # type: ignore
-    metric_id = Column(Integer, ForeignKey("performance_metrics.id"))  # type: ignore
+    metric_id = Column(Integer, ForeignKey("core_performance_metrics.id"))  # type: ignore
     
     # Alert Configuration
     alert_name = Column(String(255), nullable=False)  # type: ignore
@@ -218,7 +218,7 @@ class PerformanceAlert(Base):  # type: ignore
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)  # type: ignore
     
     # Relationships
-    metric = relationship("PerformanceMetric", back_populates="alerts")
+    metric = relationship("CorePerformanceMetric", back_populates="alerts")
     incidents = relationship("PerformanceIncident", back_populates="alert", cascade="all, delete-orphan")
 
 
