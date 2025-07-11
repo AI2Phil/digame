@@ -70,7 +70,7 @@ export const TwinSettings: React.FC<TwinSettingsProps> = ({ twin, onUpdate }) =>
   const [loading, setLoading] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isUsingFallback, setIsUsingFallback] = useState(false);
-  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [isOnline, setIsOnline] = useState(true);
   const { success, error, info } = useToastHelpers();
 
   // Generate comprehensive fallback settings data
@@ -170,6 +170,12 @@ export const TwinSettings: React.FC<TwinSettingsProps> = ({ twin, onUpdate }) =>
 
   // Handle online/offline status
   useEffect(() => {
+    // Only run on client side
+    if (typeof window === 'undefined') return;
+    
+    // Set initial online status
+    setIsOnline(navigator.onLine);
+    
     const handleOnline = () => setIsOnline(true);
     const handleOffline = () => setIsOnline(false);
     
