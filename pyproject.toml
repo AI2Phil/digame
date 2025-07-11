@@ -73,7 +73,7 @@ flexible_init_classes = [
 ]
 
 [tool.pytest.ini_options]
-testpaths = ["app/tests", "tests", "tests/unit"]
+testpaths = ["app/tests", "tests", "tests/unit", "tests/integration"]
 python_files = ["test_*.py", "*_test.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
