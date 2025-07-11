@@ -71,11 +71,8 @@ def run_migrations_offline() -> None:
     script output.
 
     """
-    url = config.get_main_option("sqlalchemy.url")
-    
-    # Override with environment variable if available
-    if not url:
-        url = os.environ.get("DATABASE_URL")
+    # Try environment variable first, then fall back to alembic.ini
+    url = os.environ.get("DATABASE_URL") or config.get_main_option("sqlalchemy.url")
     
     if not url:
         raise ValueError("No database URL found. Set DATABASE_URL environment variable or configure sqlalchemy.url in alembic.ini")
@@ -100,10 +97,15 @@ def run_migrations_online() -> None:
     # Get configuration section
     configuration = config.get_section(config.config_ini_section) or {}
     
-    # Override database URL with environment variable if available
+    # Use environment variable if available, otherwise use alembic.ini configuration
     database_url = os.environ.get("DATABASE_URL")
     if database_url:
         configuration["sqlalchemy.url"] = database_url
+    elif not configuration.get("sqlalchemy.url"):
+        # Ensure we have the fallback URL from alembic.ini
+        fallback_url = config.get_main_option("sqlalchemy.url")
+        if fallback_url:
+            configuration["sqlalchemy.url"] = fallback_url
     
     connectable = engine_from_config(
         configuration,

@@ -1,6 +1,6 @@
 """Platform Owner Infrastructure
 
-Revision ID: 001_platform_owner
+Revision ID: 001_platform_owner_infrastructure
 Revises: 
 Create Date: 2025-06-28 14:40:00.000000
 
@@ -9,7 +9,7 @@ from alembic import op
 import sqlalchemy as sa
 
 # revision identifiers
-revision = '001_platform_owner'
+revision = '001_platform_owner_infrastructure'
 down_revision = None
 branch_labels = None
 depends_on = None
