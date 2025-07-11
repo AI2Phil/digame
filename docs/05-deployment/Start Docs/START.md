@@ -480,6 +480,20 @@ docker-compose exec postgres psql -U postgres -d digame -c "SELECT 1;"
 
 ### Troubleshooting Startup
 
+#### Lint Commands
+npm run lint:fix 
+npm run lint 
+npm run build 
+
+#### CI/CD Pipeline Status
+Test if all CI/CD scripts are working perfectly:
+✅ npm run build - Complete platform build (frontend + backend)
+✅ npm run lint:fix - Fixes linting issues automatically
+✅ npm run lint:security - Security-focused linting with custom rules
+✅ npm run test:unit - Unit testing with coverage and graceful handling
+✅ npm run analyze:bundle - Bundle analysis for performance optimization
+✅ npm run serve:dist - Serves built application for testing
+
 #### Node.js Backend Issues
 ```bash
 # Check Node.js version (requires 18+)

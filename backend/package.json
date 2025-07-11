@@ -4,6 +4,7 @@
   "description": "Digame Platform Backend Authentication Server",
   "main": "src/server.js",
   "scripts": {
+    "build": "echo \"Backend build completed - no build step required for Node.js\" && exit 0",
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
     "test": "echo \"No tests yet\" && exit 0",
