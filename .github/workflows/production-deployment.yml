@@ -371,10 +371,19 @@ jobs:
           pip install -r requirements.txt
 
       - name: Download frontend build
+        id: download-build
         uses: actions/download-artifact@v4
         with:
           name: frontend-build
           path: frontend/dist/
+        continue-on-error: true
+        
+      - name: Build frontend if artifact missing
+        if: steps.download-build.outcome == 'failure'
+        working-directory: ./frontend
+        run: |
+          npm ci
+          npm run build
 
       - name: Start backend server
         env:
@@ -426,10 +435,19 @@ jobs:
         run: npm install -g @lhci/cli@0.12.x
 
       - name: Download frontend build
+        id: download-build-perf
         uses: actions/download-artifact@v4
         with:
           name: frontend-build
           path: frontend/dist/
+        continue-on-error: true
+        
+      - name: Build frontend if artifact missing
+        if: steps.download-build-perf.outcome == 'failure'
+        working-directory: ./frontend
+        run: |
+          npm ci
+          npm run build
 
       - name: Run Lighthouse CI
         working-directory: ./frontend
