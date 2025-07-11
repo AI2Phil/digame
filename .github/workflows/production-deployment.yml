@@ -452,16 +452,19 @@ jobs:
       - name: Run Lighthouse CI
         working-directory: ./frontend
         run: |
-          # Ensure the build directory exists
-          if [ ! -d "out" ]; then
-            echo "Build directory 'out' not found, running build..."
+          # Build the application if not already built
+          if [ ! -d ".next" ]; then
+            echo "Build directory '.next' not found, running build..."
             npm run build
           fi
-          # Start the server in background
-          npm run serve:dist &
+          # Start the Next.js server in background
+          npm run start &
           SERVER_PID=$!
-          sleep 10
-          # Run Lighthouse CI with explicit configuration
+          # Wait for server to be ready
+          sleep 15
+          # Check if server is responding
+          curl -f http://localhost:3000 || (echo "Server not ready" && exit 1)
+          # Run Lighthouse CI
           lhci autorun --config=lighthouserc.js
           # Clean up server process
           kill $SERVER_PID || true

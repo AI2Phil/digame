@@ -1,10 +1,8 @@
 module.exports = {
   ci: {
     collect: {
-      // Tell Lighthouse CI where to find the built static files
-      staticDistDir: './out',
-      // Alternative: specify the URL if serving from a different location
-      // url: ['http://localhost:3000'],
+      // Use URL-based collection since Next.js builds for SSR, not static export
+      url: ['http://localhost:3000'],
       numberOfRuns: 3,
       settings: {
         chromeFlags: '--no-sandbox --disable-dev-shm-usage',
