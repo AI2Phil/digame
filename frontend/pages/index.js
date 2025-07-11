@@ -24,7 +24,7 @@ export default function HomePage() {
   };
 
   const handleSignIn = () => {
-    window.location.href = '/auth';
+    router.push('/auth');
   };
 
   if (showOnboarding) {

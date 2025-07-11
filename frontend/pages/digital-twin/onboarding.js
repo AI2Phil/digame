@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import Head from 'next/head';
+import { useRouter } from 'next/router';
 import { Rocket, Brain, Target, Settings, CheckCircle, ArrowRight, ArrowLeft } from 'lucide-react';
 import PageHeader from '../../components/PageHeader';
 
 export default function DigitalTwinOnboarding() {
+  const router = useRouter();
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
     goals: [],
@@ -106,8 +108,8 @@ export default function DigitalTwinOnboarding() {
         if (response.ok) {
           const data = await response.json();
           alert('Digital Twin configured successfully! Redirecting to your twin dashboard...');
-          // In a real app, this would redirect to the dashboard
-          window.location.href = '/digital-twin/my-twin';
+          // Use Next.js router for navigation
+          router.push('/digital-twin/my-twin');
         } else {
           setError('Failed to save configuration. Please try again.');
         }

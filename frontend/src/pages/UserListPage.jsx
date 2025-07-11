@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Avatar, Button, Card, Pagination, Select, Input, Spinner } from '@nextui-org/react'; // Assuming NextUI components
+import { Avatar, Button, Card, Pagination, Select, Input, Spinner } from '@nextui-org/react'; // NextUI components
 import { safeNavigate } from '../hooks/useClientNavigation';
 // import apiService from '../services/apiService'; // Uncomment when apiService is ready
 
