@@ -249,7 +249,34 @@ class UserRepository {
    */
   _rowToUser(row) {
     if (!row) return null;
-    return new User(row);
+    
+    // The database row already has camelCase properties, so use them directly
+    const mappedData = {
+      id: row.id,
+      email: row.email,
+      username: row.username,
+      firstName: row.firstName,
+      lastName: row.lastName,
+      passwordHash: row.passwordHash,
+      role: row.role || 'user',
+      subscriptionTier: row.subscriptionTier || 'free',
+      teamId: row.teamId,
+      permissions: row.permissions ? JSON.parse(row.permissions) : [],
+      isPlatformOwner: Boolean(row.isPlatformOwner),
+      isActive: Boolean(row.isActive),
+      isVerified: Boolean(row.isVerified),
+      onboardingCompleted: Boolean(row.onboardingCompleted),
+      onboardingData: row.onboardingData ? JSON.parse(row.onboardingData) : {},
+      unlockedFeatures: row.unlockedFeatures ? JSON.parse(row.unlockedFeatures) : [],
+      lastLogin: row.lastLogin ? new Date(row.lastLogin) : null,
+      createdAt: row.createdAt ? new Date(row.createdAt) : new Date(),
+      updatedAt: row.updatedAt ? new Date(row.updatedAt) : new Date(),
+      profile: row.profile ? JSON.parse(row.profile) : {},
+      preferences: row.preferences ? JSON.parse(row.preferences) : {},
+      metadata: row.metadata ? JSON.parse(row.metadata) : {}
+    };
+    
+    return new User(mappedData);
   }
 
   /**

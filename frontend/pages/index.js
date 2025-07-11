@@ -20,7 +20,11 @@ export default function HomePage() {
   };
 
   const handleSignUp = () => {
-    router.push('/login');
+    router.push('/auth');
+  };
+
+  const handleSignIn = () => {
+    window.location.href = '/auth';
   };
 
   if (showOnboarding) {
@@ -200,12 +204,12 @@ export default function HomePage() {
             <Link href="/pricing" className="text-gray-600 hover:text-gray-900 transition-colors">Pricing</Link>
           </div>
           <div className="flex items-center space-x-2 sm:space-x-4">
-            <Link
-              href="/auth"
-              className="text-gray-600 hover:text-gray-900 transition-colors font-medium text-sm sm:text-base"
+            <button
+              onClick={handleSignIn}
+              className="text-gray-600 hover:text-gray-900 transition-colors font-medium text-sm sm:text-base bg-transparent border-none cursor-pointer"
             >
               Sign In
-            </Link>
+            </button>
             <Button
               onClick={handleGetStarted}
               variant="primary"
