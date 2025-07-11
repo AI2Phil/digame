@@ -108,6 +108,7 @@ jobs:
     strategy:
       matrix:
         node-version: ['18.x', '20.x']
+      fail-fast: false
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -162,6 +163,16 @@ jobs:
           name: frontend-build-${{ matrix.node-version }}
           path: frontend/dist/
           retention-days: 7
+        if: success()
+
+      # Always upload a canonical build artifact from 18.x for downstream jobs
+      - name: Upload canonical build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-build
+          path: frontend/dist/
+          retention-days: 7
+        if: matrix.node-version == '18.x' && success()
 
   # Backend Testing
   backend-test:
@@ -297,7 +308,7 @@ jobs:
       - name: Download frontend build
         uses: actions/download-artifact@v4
         with:
-          name: frontend-build-18.x
+          name: frontend-build
           path: frontend/dist/
 
       - name: Start backend server
@@ -352,7 +363,7 @@ jobs:
       - name: Download frontend build
         uses: actions/download-artifact@v4
         with:
-          name: frontend-build-18.x
+          name: frontend-build
           path: frontend/dist/
 
       - name: Run Lighthouse CI
@@ -616,5 +627,6 @@ jobs:
         with:
           name: |
             frontend-build-*
+            frontend-build
             e2e-test-results
           failOnError: false
