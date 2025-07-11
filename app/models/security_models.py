@@ -4,12 +4,11 @@ SQLAlchemy 2.0 models for comprehensive security monitoring and compliance track
 """
 
 from sqlalchemy import Column, Integer, String, Text, DateTime, Float, Boolean, JSON, ForeignKey, Index
-from sqlalchemy.orm import relationship, declarative_base
+from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from datetime import datetime
 from typing import Optional, Dict, Any, List
-
-Base = declarative_base()
+from app.database import Base
 
 class AuditEvent(Base):
     """Comprehensive audit trail for all system activities"""

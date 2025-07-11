@@ -8,7 +8,7 @@ from fastapi import HTTPException
 # Models
 from app.models.user import User as UserModel
 from app.models.tenant import Tenant as TenantModel
-from app.models.tenant_user import TenantUser as TenantUserModel
+# TenantUser model doesn't exist - relationship is direct through User.tenant_id
 from app.models.user_setting import UserSetting as UserSettingModel
 
 # Service to test
@@ -24,7 +24,7 @@ def mock_db_session():
 
 @pytest.fixture
 def mock_user_model_lang_learn(): # Renamed for clarity
-    user = create_mock_model(UserModel, id=5, email="lang_user@example.com", full_name="Language Test User", tenants=[])
+    user = create_mock_model(UserModel, id=5, email="lang_user@example.com", full_name="Language Test User", tenant_id=5)
     return user
 
 @pytest.fixture
@@ -32,7 +32,8 @@ def mock_tenant_model_lang_learn(): # Renamed
     tenant = create_mock_model(TenantModel, id=5,
         name="Language Learning Tenant",
         admin_email="admin@langtenant.com",
-        features={"language_learning_support": True} # Default to enabled)
+        features={"language_learning_support": True} # Default to enabled
+    )
     return tenant
 
 @pytest.fixture
@@ -45,11 +46,10 @@ def mock_user_setting_model_lang_learn(): # Renamed
 
 @pytest.fixture
 def mock_tenant_user_link_lang_learn(mock_user_model_lang_learn, mock_tenant_model_lang_learn): # Renamed
-    link = Tenantcreate_mock_model(UserModel, user_id=mock_user_model_lang_learn.id, tenant_id=mock_tenant_model_lang_learn.id)
-    link.user = mock_user_model_lang_learn
-    link.tenant = mock_tenant_model_lang_learn
-    mock_user_model_lang_learn.tenants.append(link)
-    return link
+    # Set up the direct relationship - user belongs to tenant
+    mock_user_model_lang_learn.tenant_id = mock_tenant_model_lang_learn.id
+    mock_user_model_lang_learn.tenant = mock_tenant_model_lang_learn
+    return mock_user_model_lang_learn  # Return the user since there's no separate link object
 
 # --- Tests for LanguageLearningService: Translation ---
 def create_mock_model(model_class, **kwargs):
@@ -160,7 +160,8 @@ def test_translate_external_service_general_failure(mock_db_session, mock_user_m
 
 def test_translate_user_not_in_tenant(mock_db_session, mock_user_model_lang_learn):
     # Arrange
-    mock_user_model_lang_learn.tenants = []
+    mock_user_model_lang_learn.tenant_id = None  # User not associated with any tenant
+    mock_user_model_lang_learn.tenant = None
     service = LanguageLearningService(db=mock_db_session)
     # Action & Assertion
     with pytest.raises(HTTPException) as exc:
@@ -265,7 +266,8 @@ def test_define_external_service_general_failure(mock_db_session, mock_user_mode
 
 def test_define_user_not_in_tenant(mock_db_session, mock_user_model_lang_learn):
     # Arrange
-    mock_user_model_lang_learn.tenants = []
+    mock_user_model_lang_learn.tenant_id = None  # User not associated with any tenant
+    mock_user_model_lang_learn.tenant = None
     service = LanguageLearningService(db=mock_db_session)
     with pytest.raises(HTTPException) as exc:
         service.get_vocabulary_definition(mock_user_model_lang_learn, "word", "en")

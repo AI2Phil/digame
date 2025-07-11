@@ -10,7 +10,7 @@ from pydantic import BaseModel
 from ..database import get_db
 from ..services.tenant_service import TenantService, UserService
 # Assuming User model is needed for type hinting current_user, adjust if defined elsewhere
-from ..models.tenant import User as UserModel
+from ..models.user import User as UserModel
 from ..schemas import tenant # Import the tenant schemas module
 
 router = APIRouter(

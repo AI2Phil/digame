@@ -105,4 +105,3 @@ class TestMobileAIServiceVoiceCommands:
         # The print statement in the service would show the language.
         assert response.intent == "unknown_command"
         # A real NLU would use the language parameter.
-```

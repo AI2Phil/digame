@@ -8,10 +8,11 @@ from sqlalchemy.orm import sessionmaker
 from datetime import datetime
 
 from ..models.gamification import (
-    Achievement, UserAchievement, Streak, UserPoints, 
+    Achievement, UserAchievement, Streak, UserPoints,
     AchievementType, AchievementRarity
 )
-from ..models.user import Base, User
+from ..models.user import User
+from ..database import Base
 from ..services.gamification_service import GamificationService, create_default_achievements
 
 # Test database setup

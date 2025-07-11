@@ -10,7 +10,7 @@ from fastapi import HTTPException
 # Models
 from app.models.user import User as UserModel
 from app.models.tenant import Tenant as TenantModel
-from app.models.tenant_user import TenantUser as TenantUserModel
+# TenantUser model doesn't exist - relationship is direct through User.tenant_id
 from app.models.user_setting import UserSetting as UserSettingModel
 
 # Service to test
@@ -29,7 +29,7 @@ def mock_db_session():
 
 @pytest.fixture
 def mock_user_model_email_analysis(): # Renamed for clarity
-    user = create_mock_model(UserModel, id=4, email="email_user@example.com", full_name="Email Test User", tenants=[])
+    user = create_mock_model(UserModel, id=4, email="email_user@example.com", full_name="Email Test User", tenant_id=4)
     return user
 
 @pytest.fixture
@@ -59,11 +59,10 @@ def mock_user_setting_model_email_analysis_no_key(): # For internal analysis
 
 @pytest.fixture
 def mock_tenant_user_link_email_analysis(mock_user_model_email_analysis, mock_tenant_model_email_analysis): # Renamed
-    link = create_mock_model(TenantUserModel, user_id=mock_user_model_email_analysis.id, tenant_id=mock_tenant_model_email_analysis.id)
-    link.user = mock_user_model_email_analysis
-    link.tenant = mock_tenant_model_email_analysis
-    mock_user_model_email_analysis.tenants.append(link)
-    return link
+    # Set up the direct relationship - user belongs to tenant
+    mock_user_model_email_analysis.tenant_id = mock_tenant_model_email_analysis.id
+    mock_user_model_email_analysis.tenant = mock_tenant_model_email_analysis
+    return mock_user_model_email_analysis  # Return the user since there's no separate link object
 
 @pytest.fixture
 def sample_emails_data() -> List[EmailDataItem]:
@@ -201,7 +200,8 @@ def test_analyze_email_data_external_service_general_failure(mock_db_session, mo
 
 def test_analyze_email_data_user_not_in_tenant(mock_db_session, mock_user_model_email_analysis, sample_emails_data):
     # Arrange
-    mock_user_model_email_analysis.tenants = []
+    mock_user_model_email_analysis.tenant_id = None  # User not associated with any tenant
+    mock_user_model_email_analysis.tenant = None
     service = EmailAnalysisService(db=mock_db_session)
 
     # Action & Assertion
@@ -265,12 +265,9 @@ def test_internal_analysis_basic_output(mock_db_session, sample_emails_data):
 
 def test_analyze_email_data_tenant_link_missing_tenant_attr(mock_db_session, mock_user_model_email_analysis, sample_emails_data):
     # Arrange
-    mock_bad_link = MagicMock(spec=TenantUserModel)
-    mock_bad_link.user_id = mock_user_model_email_analysis.id
-    mock_bad_link.tenant_id = 1
-    del mock_bad_link.tenant # Simulate missing attribute
-
-    mock_user_model_email_analysis.tenants = [mock_bad_link]
+    # Simulate a user with tenant_id but no tenant relationship loaded
+    mock_user_model_email_analysis.tenant_id = 1
+    mock_user_model_email_analysis.tenant = None  # Simulate missing tenant relationship
     service = EmailAnalysisService(db=mock_db_session)
 
     # Action & Assertion

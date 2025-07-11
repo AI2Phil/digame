@@ -8,7 +8,7 @@ from fastapi import HTTPException
 # Models
 from app.models.user import User as UserModel
 from app.models.tenant import Tenant as TenantModel
-from app.models.tenant_user import TenantUser as TenantUserModel
+# TenantUser model doesn't exist - relationship is direct through User.tenant_id
 from app.models.user_setting import UserSetting as UserSettingModel
 
 # Service to test
@@ -32,7 +32,7 @@ def mock_tenant_model_insights(): # Renamed
     tenant = create_mock_model(TenantModel, id=3,
         name="Insights Tenant",
         admin_email="admin@insightstenant.com",
-        features={"meeting_insights": True} # Default to enabled)
+        features={"meeting_insights": True}) # Default to enabled
     return tenant
 
 @pytest.fixture
@@ -45,7 +45,7 @@ def mock_user_setting_model_insights(): # Renamed
 
 @pytest.fixture
 def mock_tenant_user_link_insights(mock_user_model_insights, mock_tenant_model_insights): # Renamed
-    link = Tenantcreate_mock_model(UserModel, user_id=mock_user_model_insights.id, tenant_id=mock_tenant_model_insights.id)
+    link = create_mock_model(TenantUserModel, user_id=mock_user_model_insights.id, tenant_id=mock_tenant_model_insights.id)
     link.user = mock_user_model_insights
     link.tenant = mock_tenant_model_insights
     mock_user_model_insights.tenants.append(link)

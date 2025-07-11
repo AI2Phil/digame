@@ -4,78 +4,14 @@ SQLAlchemy 2.0 models for comprehensive reporting and analytics
 """
 
 from sqlalchemy import Column, Integer, String, Text, DateTime, Float, Boolean, JSON, ForeignKey, Index
-from sqlalchemy.orm import relationship, declarative_base
+from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from datetime import datetime
 from typing import Optional, Dict, Any, List
+from app.database import Base
 
-Base = declarative_base()
-
-class ReportTemplate(Base):
-    """Report templates for custom report generation"""
-    __tablename__ = 'report_templates'
-    
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String(255), nullable=False, index=True)
-    description = Column(Text)
-    category = Column(String(100), nullable=False, index=True)
-    report_type = Column(String(50), nullable=False)  # table, chart, dashboard, pivot, summary
-    
-    # Configuration
-    data_source_config = Column(JSON)  # Data source configuration
-    filter_config = Column(JSON)  # Filter definitions
-    column_config = Column(JSON)  # Column settings
-    visualization_config = Column(JSON)  # Chart/visualization settings
-    schedule_config = Column(JSON)  # Scheduling configuration
-    
-    # Metadata
-    created_by = Column(Integer, ForeignKey('users.id'))
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
-    is_active = Column(Boolean, default=True)
-    is_public = Column(Boolean, default=False)
-    usage_count = Column(Integer, default=0)
-    
-    # Relationships
-    executions = relationship("ReportExecution", back_populates="template")
-    
-    __table_args__ = (
-        Index('idx_report_templates_category_type', 'category', 'report_type'),
-        Index('idx_report_templates_created_by', 'created_by'),
-    )
-
-class ReportExecution(Base):
-    """Report execution history and results"""
-    __tablename__ = 'report_executions'
-    
-    id = Column(Integer, primary_key=True, index=True)
-    template_id = Column(Integer, ForeignKey('report_templates.id'), nullable=False)
-    
-    # Execution details
-    execution_status = Column(String(50), nullable=False)  # pending, running, completed, failed
-    execution_time = Column(Float)  # Execution time in milliseconds
-    data_points_processed = Column(Integer)
-    result_size = Column(Integer)  # Size of result in bytes
-    
-    # Parameters and results
-    execution_parameters = Column(JSON)  # Runtime parameters
-    result_data = Column(JSON)  # Execution results (for small datasets)
-    result_file_path = Column(String(500))  # Path to result file (for large datasets)
-    error_message = Column(Text)
-    
-    # Metadata
-    executed_by = Column(Integer, ForeignKey('users.id'))
-    executed_at = Column(DateTime(timezone=True), server_default=func.now())
-    completed_at = Column(DateTime(timezone=True))
-    
-    # Relationships
-    template = relationship("ReportTemplate", back_populates="executions")
-    
-    __table_args__ = (
-        Index('idx_report_executions_template_status', 'template_id', 'execution_status'),
-        Index('idx_report_executions_executed_by', 'executed_by'),
-        Index('idx_report_executions_executed_at', 'executed_at'),
-    )
+# Import the ReportTemplate and ReportExecution from the main reporting module to avoid conflicts
+from .reporting import ReportTemplate, ReportExecution
 
 class DataSource(Base):
     """Data sources for report generation"""
@@ -189,67 +125,11 @@ class PredictiveModel(Base):
         Index('idx_predictive_models_last_trained', 'last_trained'),
     )
 
-class ModelPrediction(Base):
-    """Model predictions and forecasts"""
-    __tablename__ = 'model_predictions'
-    
-    id = Column(Integer, primary_key=True, index=True)
-    model_id = Column(Integer, ForeignKey('predictive_models.id'), nullable=False)
-    
-    # Prediction details
-    prediction_date = Column(DateTime(timezone=True), nullable=False)
-    predicted_value = Column(JSON)  # Can be numeric, categorical, or complex
-    confidence_score = Column(Float)
-    prediction_interval = Column(JSON)  # Confidence intervals
-    
-    # Input features
-    input_features = Column(JSON)  # Features used for prediction
-    feature_importance = Column(JSON)  # Feature importance for this prediction
-    
-    # Metadata
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    prediction_type = Column(String(50))  # forecast, classification, anomaly, etc.
-    
-    # Relationships
-    model = relationship("PredictiveModel", back_populates="predictions")
-    
-    __table_args__ = (
-        Index('idx_model_predictions_model_date', 'model_id', 'prediction_date'),
-        Index('idx_model_predictions_type', 'prediction_type'),
-    )
+# Import ModelPrediction from ml_models to avoid conflicts
+from .ml_models import ModelPrediction
 
-class ReportSchedule(Base):
-    """Scheduled report executions"""
-    __tablename__ = 'report_schedules'
-    
-    id = Column(Integer, primary_key=True, index=True)
-    template_id = Column(Integer, ForeignKey('report_templates.id'), nullable=False)
-    
-    # Schedule configuration
-    schedule_name = Column(String(255), nullable=False)
-    frequency = Column(String(50), nullable=False)  # hourly, daily, weekly, monthly
-    schedule_config = Column(JSON)  # Cron expression, specific times, etc.
-    
-    # Delivery configuration
-    delivery_method = Column(String(50))  # email, webhook, file_system, dashboard
-    delivery_config = Column(JSON)  # Delivery parameters
-    
-    # Status
-    is_active = Column(Boolean, default=True)
-    last_execution = Column(DateTime(timezone=True))
-    next_execution = Column(DateTime(timezone=True))
-    execution_count = Column(Integer, default=0)
-    success_count = Column(Integer, default=0)
-    
-    # Metadata
-    created_by = Column(Integer, ForeignKey('users.id'))
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
-    
-    __table_args__ = (
-        Index('idx_report_schedules_template_active', 'template_id', 'is_active'),
-        Index('idx_report_schedules_next_execution', 'next_execution'),
-    )
+# Import ReportSchedule from the main reporting module to avoid conflicts
+from .reporting import ReportSchedule
 
 class ReportInsight(Base):
     """AI-generated insights from reports"""

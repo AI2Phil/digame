@@ -3,7 +3,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
 from app.database import Base  # Adjust if your Base is elsewhere, e.g. app.models.user or app.db
 from app.models.user import User # Assuming User model is here
-from app.models.notification import Notification # Import Notification model as well
+from app.models.notifications import Notification # Import Notification model as well
 
 # In-memory SQLite database for testing
 SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"

@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from fastapi import status
 
 # Assuming conftest.py provides these fixtures
-from app.tests.conftest import db_session_test, client
+from app.tests.conftest import db_session
 
 from app.models.user import User as UserModel
 from app.models.user_setting import UserSetting as UserSettingModel
@@ -37,13 +37,19 @@ def create_and_get_test_user_for_api(db: Session, username_prefix: str) -> UserM
 
 
 @pytest.fixture(scope="function")
-def override_auth_for_settings_api(client: TestClient, db_session_test: Session):
+def client():
+    """Create a test client for the FastAPI app."""
+    from app.main import app
+    return TestClient(app)
+
+@pytest.fixture(scope="function")
+def override_auth_for_settings_api(client: TestClient, db_session: Session):
     """Fixture to create a test user and override auth for settings API tests."""
-    test_user = create_and_get_test_user_for_api(db_session_test, "settings_user")
+    test_user = create_and_get_test_user_for_api(db_session, "settings_user")
 
     def override_get_current_active_user_for_settings():
         # Return a fresh instance from DB to ensure it has latest data if settings are created/updated
-        return db_session_test.query(UserModel).filter(UserModel.id == test_user.id).first()
+        return db_session.query(UserModel).filter(UserModel.id == test_user.id).first()
 
     client.app.dependency_overrides[get_current_active_user] = override_get_current_active_user_for_settings
     yield test_user # Provide the user to the test if needed
@@ -91,7 +97,7 @@ def test_get_api_keys_no_settings_exist(client: TestClient, override_auth_for_se
     assert data["user_id"] == override_auth_for_settings_api.id # User provided by fixture
 
 
-def test_get_api_keys_existing_settings(client: TestClient, db_session_test: Session, override_auth_for_settings_api):
+def test_get_api_keys_existing_settings(client: TestClient, db_session: Session, override_auth_for_settings_api):
     """
     Test GET /settings/api-keys when settings already exist.
     """
@@ -100,8 +106,8 @@ def test_get_api_keys_existing_settings(client: TestClient, db_session_test: Ses
     # Create settings directly using CRUD for setup
     initial_keys = {"service_get_api": "key_get_api_val"}
     user_setting_crud.create_user_setting(
-        db_session_test, 
-        user_id=current_test_user.id, 
+        db_session,
+        user_id=current_test_user.id,
         settings=UserSettingSchema(api_keys=initial_keys) # UserSettingCreate schema
     )
 
@@ -112,7 +118,7 @@ def test_get_api_keys_existing_settings(client: TestClient, db_session_test: Ses
     assert data["user_id"] == current_test_user.id
 
 
-def test_post_api_keys_create_and_update(client: TestClient, db_session_test: Session, override_auth_for_settings_api):
+def test_post_api_keys_create_and_update(client: TestClient, db_session: Session, override_auth_for_settings_api):
     """
     Test POST /settings/api-keys:
     - Scenario 1 (No settings): POST new API keys.
@@ -129,7 +135,7 @@ def test_post_api_keys_create_and_update(client: TestClient, db_session_test: Se
     assert data_create["user_id"] == current_test_user.id
 
     # Verify in DB
-    db_settings_after_create = user_setting_crud.get_user_setting(db_session_test, user_id=current_test_user.id)
+    db_settings_after_create = user_setting_crud.get_user_setting(db_session, user_id=current_test_user.id)
     assert db_settings_after_create is not None
     assert json.loads(db_settings_after_create.api_keys) == keys_to_create
 
@@ -142,12 +148,12 @@ def test_post_api_keys_create_and_update(client: TestClient, db_session_test: Se
     assert data_update["user_id"] == current_test_user.id
     
     # Verify in DB
-    db_settings_after_update = user_setting_crud.get_user_setting(db_session_test, user_id=current_test_user.id)
+    db_settings_after_update = user_setting_crud.get_user_setting(db_session, user_id=current_test_user.id)
     assert db_settings_after_update is not None
     assert json.loads(db_settings_after_update.api_keys) == keys_to_update
 
 
-def test_delete_api_key(client: TestClient, db_session_test: Session, override_auth_for_settings_api):
+def test_delete_api_key(client: TestClient, db_session: Session, override_auth_for_settings_api):
     """
     Test DELETE /settings/api-keys/{key_name}:
     - Delete an existing key.
@@ -174,7 +180,7 @@ def test_delete_api_key(client: TestClient, db_session_test: Session, override_a
     assert data_delete_existing["user_id"] == current_test_user.id
 
     # Verify in DB
-    db_settings_after_delete = user_setting_crud.get_user_setting(db_session_test, user_id=current_test_user.id)
+    db_settings_after_delete = user_setting_crud.get_user_setting(db_session, user_id=current_test_user.id)
     assert db_settings_after_delete is not None
     assert json.loads(db_settings_after_delete.api_keys) == expected_keys_after_delete
 
@@ -183,16 +189,16 @@ def test_delete_api_key(client: TestClient, db_session_test: Session, override_a
     response_delete_non_existent = client.delete(f"/settings/api-keys/{non_existent_key_name}")
     assert response_delete_non_existent.status_code == status.HTTP_404_NOT_FOUND
 
-def test_delete_api_key_no_settings_or_key_not_found(client: TestClient, db_session_test: Session, override_auth_for_settings_api):
+def test_delete_api_key_no_settings_or_key_not_found(client: TestClient, db_session: Session, override_auth_for_settings_api):
     """
     Test DELETE /settings/api-keys/{key_name}:
     - When no settings exist for the user (endpoint logic might create them, then fail to find key -> 404).
     - When settings exist but api_keys field is empty or key not present.
     """
-    current_test_user_no_keys = create_and_get_test_user_for_api(db_session_test, "settings_user_no_keys") # Fresh user
+    current_test_user_no_keys = create_and_get_test_user_for_api(db_session, "settings_user_no_keys") # Fresh user
 
     def override_get_current_active_user_no_keys():
-        return db_session_test.query(UserModel).filter(UserModel.id == current_test_user_no_keys.id).first()
+        return db_session.query(UserModel).filter(UserModel.id == current_test_user_no_keys.id).first()
 
     client.app.dependency_overrides[get_current_active_user] = override_get_current_active_user_no_keys
     
@@ -206,8 +212,8 @@ def test_delete_api_key_no_settings_or_key_not_found(client: TestClient, db_sess
 
     # Scenario 2: Settings exist, but api_keys is empty
     user_setting_crud.create_user_setting(
-        db_session_test, 
-        user_id=current_test_user_no_keys.id, 
+        db_session,
+        user_id=current_test_user_no_keys.id,
         settings=UserSettingSchema(api_keys={}) # UserSettingCreate schema
     )
     response_del_key_empty_dict = client.delete("/settings/api-keys/some_key")

@@ -3,7 +3,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from datetime import datetime
 
-from app.models.base import Base  # Assuming your Base is accessible here
+from app.database import Base  # Import Base from the centralized database module
 from app.models.user import User  # Needed for relationships
 from app.models.team import Team, TeamMember, TeamPerformanceMetric, TeamSkillGap, TeamWorkflow, TeamRoleEnum
 

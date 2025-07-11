@@ -8,7 +8,7 @@ from fastapi import HTTPException
 # Models
 from app.models.user import User as UserModel
 from app.models.tenant import Tenant as TenantModel
-from app.models.tenant_user import TenantUser as TenantUserModel
+# TenantUser model doesn't exist - relationship is direct through User.tenant_id
 from app.models.user_setting import UserSetting as UserSettingModel
 
 # Service to test
@@ -24,7 +24,7 @@ def mock_db_session():
 
 @pytest.fixture
 def mock_user_model():
-    user = create_mock_model(UserModel, id=1, email="comm_user@example.com", full_name="Comm Test User", tenants=[])
+    user = create_mock_model(UserModel, id=1, email="comm_user@example.com", full_name="Comm Test User", tenant_id=1)
     return user
 
 @pytest.fixture
@@ -46,11 +46,10 @@ def mock_user_setting_model_comm_style(): # Renamed
 
 @pytest.fixture
 def mock_tenant_user_link_comm_style(mock_user_model, mock_tenant_model_comm_style): # Renamed
-    link = create_mock_model(TenantUserModel, user_id=mock_user_model.id, tenant_id=mock_tenant_model_comm_style.id)
-    link.user = mock_user_model
-    link.tenant = mock_tenant_model_comm_style
-    mock_user_model.tenants.append(link)
-    return link
+    # Set up the direct relationship - user belongs to tenant
+    mock_user_model.tenant_id = mock_tenant_model_comm_style.id
+    mock_user_model.tenant = mock_tenant_model_comm_style
+    return mock_user_model  # Return the user since there's no separate link object
 
 # --- Tests for CommunicationStyleService ---
 def create_mock_model(model_class, **kwargs):
@@ -167,11 +166,9 @@ def test_get_analysis_invalid_api_key_external_error(mock_db_session, mock_user_
 
 def test_get_analysis_user_not_in_tenant(mock_db_session, mock_user_model):
     # Arrange
-    mock_user_model.tenants = [] # User not associated with any tenant
+    mock_user_model.tenant_id = None  # User not associated with any tenant
+    mock_user_model.tenant = None
     service = CommunicationStyleService(db=mock_db_session)
-
-    # No need to mock user_crud.get_user if current_user is taken as is and relationships are primary.
-    # The service code directly checks `current_user.tenants`.
 
     # Action & Assertion
     with pytest.raises(HTTPException) as exc_info:
@@ -208,13 +205,9 @@ def test_get_analysis_corrupted_user_settings_api_keys_json(mock_db_session, moc
 
 def test_get_analysis_tenant_link_missing_tenant_attr(mock_db_session, mock_user_model):
     # Arrange
-    # Create a mock link that doesn't have .tenant attribute properly set up (e.g., by deleting it)
-    mock_bad_link = MagicMock(spec=TenantUserModel)
-    mock_bad_link.user_id = mock_user_model.id
-    mock_bad_link.tenant_id = 1 # Some tenant ID
-    del mock_bad_link.tenant # Simulate missing attribute
-
-    mock_user_model.tenants = [mock_bad_link]
+    # Simulate a user with tenant_id but no tenant relationship loaded
+    mock_user_model.tenant_id = 1
+    mock_user_model.tenant = None  # Simulate missing tenant relationship
     service = CommunicationStyleService(db=mock_db_session)
 
     # Action & Assertion

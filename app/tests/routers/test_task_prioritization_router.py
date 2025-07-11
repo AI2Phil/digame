@@ -3,6 +3,7 @@ from unittest.mock import MagicMock, patch
 from fastapi.testclient import TestClient
 from fastapi import HTTPException, status
 from datetime import datetime
+from typing import List
 
 from app.main import app # Main FastAPI app
 from app.schemas.task_prioritization_schemas import PrioritizationResponse, PrioritizedTaskDetail

@@ -4,13 +4,11 @@ Provides comprehensive activity breakdown and productivity tracking capabilities
 """
 
 from sqlalchemy import Column, Integer, String, Float, DateTime, Text, Boolean, ForeignKey, Index
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from datetime import datetime
 from typing import Optional
-
-Base = declarative_base()
+from app.database import Base
 
 class ActivityCategory(Base):
     """Activity categories for organizing user activities"""
@@ -103,33 +101,8 @@ class ProductivityMetric(Base):
         Index('idx_productivity_metrics_efficiency', 'efficiency_score'),
     )
 
-class ActivityPattern(Base):
-    """Detected activity patterns and insights"""
-    __tablename__ = "activity_patterns"
-    
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, nullable=False)
-    pattern_type = Column(String(50), nullable=False)  # daily, weekly, monthly
-    pattern_name = Column(String(100), nullable=False)
-    description = Column(Text)
-    confidence_score = Column(Float, default=0.0)  # 0-1 confidence in pattern
-    frequency = Column(String(50))  # how often pattern occurs
-    impact_score = Column(Float, default=0.0)  # impact on productivity
-    start_date = Column(DateTime(timezone=True), nullable=False)
-    end_date = Column(DateTime(timezone=True))
-    is_active = Column(Boolean, default=True)
-    pattern_data = Column(Text)  # JSON data about the pattern
-    recommendations = Column(Text)  # JSON array of recommendations
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
-    
-    # Indexes
-    __table_args__ = (
-        Index('idx_activity_patterns_user_id', 'user_id'),
-        Index('idx_activity_patterns_type', 'pattern_type'),
-        Index('idx_activity_patterns_confidence', 'confidence_score'),
-        Index('idx_activity_patterns_active', 'is_active'),
-    )
+# Import ActivityPattern from digital_twin to avoid conflicts
+from .digital_twin import ActivityPattern
 
 class ActivityGoal(Base):
     """User-defined activity and productivity goals"""

@@ -3,7 +3,7 @@ import unittest
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta, timezone
 
-from app.models.notification import Notification
+from app.models.notifications import Notification
 from app.models.user import User # Required for the test_user fixture and relationships
 
 # The db_session and test_user fixtures are defined in conftest.py and will be automatically discovered by pytest.
