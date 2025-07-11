@@ -385,7 +385,6 @@ docker-compose --profile dual-backend --profile cache --profile database up
 ```
 
 ### Access Points
-
 Access points depend on your chosen startup method:
 
 #### Single Backend Mode (Node.js - Recommended)
