@@ -1,7 +1,7 @@
 """ACO Integration Migration
 
 Revision ID: 002_aco_integration
-Revises: 001_platform_owner_infrastructure
+Revises: 001_platform_owner_infra
 Create Date: 2025-06-28 14:56:00.000000
 
 """
@@ -11,7 +11,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision = '002_aco_integration'
-down_revision = '001_platform_owner_infrastructure'
+down_revision = '001_platform_owner_infra'
 branch_labels = None
 depends_on = None
 
