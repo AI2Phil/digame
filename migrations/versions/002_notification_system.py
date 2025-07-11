@@ -16,7 +16,21 @@ branch_labels = None
 depends_on = None
 
 def upgrade():
-    # Create notifications table
+    # Check if notifications table already exists and handle accordingly
+    from sqlalchemy import inspect
+    from alembic import context
+    
+    # Get the current connection
+    connection = context.get_bind()
+    inspector = inspect(connection)
+    
+    # Check if notifications table already exists
+    if 'notifications' in inspector.get_table_names():
+        # Table exists, so we need to alter it to add new columns
+        # First, drop the existing simple table to recreate with full schema
+        op.drop_table('notifications')
+    
+    # Create the full notifications table
     op.create_table('notifications',
         sa.Column('id', sa.Integer(), primary_key=True, index=True),
         sa.Column('title', sa.String(255), nullable=False),
