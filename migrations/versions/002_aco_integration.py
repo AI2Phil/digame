@@ -32,24 +32,57 @@ def upgrade():
     op.create_foreign_key('fk_tenants_owner_id', 'tenants', 'users', ['owner_id'], ['id'])
     op.create_index('ix_tenants_owner_id', 'tenants', ['owner_id'])
     
-    # Create platform_usage_metrics table
-    op.create_table('platform_usage_metrics',
-        sa.Column('id', sa.Integer(), nullable=False),
-        sa.Column('user_id', sa.Integer(), nullable=True),
-        sa.Column('tenant_id', sa.Integer(), nullable=True),
-        sa.Column('metric_type', sa.String(length=100), nullable=False),
-        sa.Column('metric_value', sa.Float(), nullable=True, default=1.0),
-        sa.Column('metric_metadata', sa.JSON(), nullable=True),
-        sa.Column('timestamp', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
-        sa.ForeignKeyConstraint(['tenant_id'], ['tenants.id'], ),
-        sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
-        sa.PrimaryKeyConstraint('id')
-    )
-    op.create_index('ix_platform_usage_metrics_id', 'platform_usage_metrics', ['id'])
-    op.create_index('ix_platform_usage_metrics_user_id', 'platform_usage_metrics', ['user_id'])
-    op.create_index('ix_platform_usage_metrics_tenant_id', 'platform_usage_metrics', ['tenant_id'])
-    op.create_index('ix_platform_usage_metrics_metric_type', 'platform_usage_metrics', ['metric_type'])
-    op.create_index('ix_platform_usage_metrics_timestamp', 'platform_usage_metrics', ['timestamp'])
+    # Check if platform_usage_metrics table already exists
+    from sqlalchemy import inspect
+    from alembic import context
+    
+    # Get the current connection
+    connection = context.get_bind()
+    inspector = inspect(connection)
+    
+    # Only create platform_usage_metrics table if it doesn't exist
+    if 'platform_usage_metrics' not in inspector.get_table_names():
+        # Create platform_usage_metrics table
+        op.create_table('platform_usage_metrics',
+            sa.Column('id', sa.Integer(), nullable=False),
+            sa.Column('user_id', sa.Integer(), nullable=True),
+            sa.Column('tenant_id', sa.Integer(), nullable=True),
+            sa.Column('metric_type', sa.String(length=100), nullable=False),
+            sa.Column('metric_value', sa.Float(), nullable=True, default=1.0),
+            sa.Column('metric_metadata', sa.JSON(), nullable=True),
+            sa.Column('timestamp', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+            sa.ForeignKeyConstraint(['tenant_id'], ['tenants.id'], ),
+            sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
+            sa.PrimaryKeyConstraint('id')
+        )
+        # Create indexes for the new table
+        op.create_index('ix_platform_usage_metrics_id', 'platform_usage_metrics', ['id'])
+        op.create_index('ix_platform_usage_metrics_user_id', 'platform_usage_metrics', ['user_id'])
+        op.create_index('ix_platform_usage_metrics_tenant_id', 'platform_usage_metrics', ['tenant_id'])
+        op.create_index('ix_platform_usage_metrics_metric_type', 'platform_usage_metrics', ['metric_type'])
+        op.create_index('ix_platform_usage_metrics_timestamp', 'platform_usage_metrics', ['timestamp'])
+    else:
+        # Table already exists, just create the indexes if they don't exist
+        try:
+            op.create_index('ix_platform_usage_metrics_id', 'platform_usage_metrics', ['id'])
+        except:
+            pass  # Index might already exist
+        try:
+            op.create_index('ix_platform_usage_metrics_user_id', 'platform_usage_metrics', ['user_id'])
+        except:
+            pass
+        try:
+            op.create_index('ix_platform_usage_metrics_tenant_id', 'platform_usage_metrics', ['tenant_id'])
+        except:
+            pass
+        try:
+            op.create_index('ix_platform_usage_metrics_metric_type', 'platform_usage_metrics', ['metric_type'])
+        except:
+            pass
+        try:
+            op.create_index('ix_platform_usage_metrics_timestamp', 'platform_usage_metrics', ['timestamp'])
+        except:
+            pass
     
     # Add indexes for founding member fields
     op.create_index('ix_users_is_founding_member', 'users', ['is_founding_member'])
