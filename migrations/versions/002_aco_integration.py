@@ -32,60 +32,18 @@ def upgrade():
     op.create_foreign_key('fk_tenants_owner_id', 'tenants', 'users', ['owner_id'], ['id'])
     op.create_index('ix_tenants_owner_id', 'tenants', ['owner_id'])
     
-    # Check if platform_usage_metrics table already exists
-    from sqlalchemy import inspect
-    from alembic import context
+    # Add ACO-specific columns to existing platform_usage_metrics table
+    # (Table was already created in 001_platform_owner_infra migration)
+    try:
+        op.add_column('platform_usage_metrics', sa.Column('metric_metadata', sa.JSON(), nullable=True))
+    except:
+        pass  # Column might already exist
     
-    # Get the current connection
-    connection = context.get_bind()
-    inspector = inspect(connection)
-    
-    # Only create platform_usage_metrics table if it doesn't exist
-    if 'platform_usage_metrics' not in inspector.get_table_names():
-        # Create platform_usage_metrics table
-        op.create_table('platform_usage_metrics',
-            sa.Column('id', sa.Integer(), nullable=False),
-            sa.Column('user_id', sa.Integer(), nullable=True),
-            sa.Column('tenant_id', sa.Integer(), nullable=True),
-            sa.Column('metric_type', sa.String(length=100), nullable=False),
-            sa.Column('metric_value', sa.Float(), nullable=True, default=1.0),
-            sa.Column('metric_metadata', sa.JSON(), nullable=True),
-            sa.Column('timestamp', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
-            sa.ForeignKeyConstraint(['tenant_id'], ['tenants.id'], ),
-            sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
-            sa.PrimaryKeyConstraint('id')
-        )
-        # Create indexes for the new table
-        op.create_index('ix_platform_usage_metrics_id', 'platform_usage_metrics', ['id'])
-        op.create_index('ix_platform_usage_metrics_user_id', 'platform_usage_metrics', ['user_id'])
-        op.create_index('ix_platform_usage_metrics_tenant_id', 'platform_usage_metrics', ['tenant_id'])
-        op.create_index('ix_platform_usage_metrics_metric_type', 'platform_usage_metrics', ['metric_type'])
-        op.create_index('ix_platform_usage_metrics_timestamp', 'platform_usage_metrics', ['timestamp'])
-    else:
-        # Table already exists, just create the indexes if they don't exist
-        try:
-            op.create_index('ix_platform_usage_metrics_id', 'platform_usage_metrics', ['id'])
-        except:
-            pass  # Index might already exist
-        try:
-            op.create_index('ix_platform_usage_metrics_user_id', 'platform_usage_metrics', ['user_id'])
-        except:
-            pass
-        try:
-            op.create_index('ix_platform_usage_metrics_tenant_id', 'platform_usage_metrics', ['tenant_id'])
-        except:
-            pass
-        try:
-            op.create_index('ix_platform_usage_metrics_metric_type', 'platform_usage_metrics', ['metric_type'])
-        except:
-            pass
-        try:
-            op.create_index('ix_platform_usage_metrics_timestamp', 'platform_usage_metrics', ['timestamp'])
-        except:
-            pass
-    
-    # Add indexes for founding member fields
-    op.create_index('ix_users_is_founding_member', 'users', ['is_founding_member'])
+    # Add indexes for founding member fields (column was added in 001_platform_owner_infra)
+    try:
+        op.create_index('ix_users_is_founding_member', 'users', ['is_founding_member'])
+    except:
+        pass  # Index might already exist
     
     print("✅ ACO Integration migration completed successfully")
 
@@ -95,21 +53,29 @@ def downgrade():
     Reverse ACO Integration database changes
     """
     
-    # Drop platform_usage_metrics table
-    op.drop_index('ix_platform_usage_metrics_timestamp', 'platform_usage_metrics')
-    op.drop_index('ix_platform_usage_metrics_metric_type', 'platform_usage_metrics')
-    op.drop_index('ix_platform_usage_metrics_tenant_id', 'platform_usage_metrics')
-    op.drop_index('ix_platform_usage_metrics_user_id', 'platform_usage_metrics')
-    op.drop_index('ix_platform_usage_metrics_id', 'platform_usage_metrics')
-    op.drop_table('platform_usage_metrics')
+    # Remove ACO-specific columns from platform_usage_metrics table
+    # (Don't drop the table as it was created in 001_platform_owner_infra)
+    try:
+        op.drop_column('platform_usage_metrics', 'metric_metadata')
+    except:
+        pass  # Column might not exist
     
     # Remove owner_id from tenants table
-    op.drop_index('ix_tenants_owner_id', 'tenants')
-    op.drop_constraint('fk_tenants_owner_id', 'tenants', type_='foreignkey')
+    try:
+        op.drop_index('ix_tenants_owner_id', 'tenants')
+    except:
+        pass
+    try:
+        op.drop_constraint('fk_tenants_owner_id', 'tenants', type_='foreignkey')
+    except:
+        pass
     op.drop_column('tenants', 'owner_id')
     
-    # Remove founding member fields from users table
-    op.drop_index('ix_users_is_founding_member', 'users')
+    # Remove founding member fields from users table (but keep is_founding_member as it's from 001_platform_owner_infra)
+    try:
+        op.drop_index('ix_users_is_founding_member', 'users')
+    except:
+        pass  # Index might not exist
     op.drop_column('users', 'subscription_updated_at')
     op.drop_column('users', 'founding_member_monthly_price')
     op.drop_column('users', 'founding_member_discount_percent')
