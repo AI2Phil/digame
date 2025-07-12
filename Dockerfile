@@ -1,5 +1,5 @@
-# Base image
-FROM python:3.11-slim
+# Base image - Updated to latest secure version
+FROM python:3.12.7-slim-bookworm
 
 # Update system packages and install necessary tools
 RUN apt-get update && apt-get upgrade -y && \
