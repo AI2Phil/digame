@@ -21,7 +21,9 @@ const withPWA = require('next-pwa')({
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
-  output: 'standalone',
+  output: 'export',
+  distDir: 'dist',
+  trailingSlash: true,
   
   // Custom routing configuration
   async rewrites() {
@@ -216,8 +218,6 @@ const nextConfig = {
   // Custom page extensions
   pageExtensions: ['js', 'jsx', 'ts', 'tsx'],
 
-  // Trailing slash configuration
-  trailingSlash: false,
 
   // Compression
   compress: true,
