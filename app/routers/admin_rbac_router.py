@@ -6,6 +6,7 @@ from typing import List
 from ..crud import rbac_crud
 from ..schemas import rbac_schemas
 from ..models import user as user_model_sqla # SQLAlchemy model for User
+from ..models.rbac import UserRole, Role
 from ..db import get_db # Import get_db from the new db module
 # For now, we won't have current_user dependency as we are not protecting routes yet.
 from ..auth.auth_dependencies import get_current_active_admin_user # Import the protection dependency
@@ -124,7 +125,6 @@ def assign_role_to_user_endpoint(assignment: rbac_schemas.UserRoleAssignRequest,
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Could not assign role to user.")
     
     # Manually query roles to avoid the problematic @property method
-    from ..models.rbac import UserRole, Role
     user_roles = db.query(UserRole).filter(UserRole.user_id == user.id).all()
     roles_data = []
     for user_role in user_roles:
@@ -160,7 +160,6 @@ def remove_role_from_user_endpoint(assignment: rbac_schemas.UserRoleRemoveReques
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Could not remove role from user.")
     
     # Manually query roles to avoid the problematic @property method
-    from ..models.rbac import UserRole, Role
     user_roles = db.query(UserRole).filter(UserRole.user_id == user.id).all()
     roles_data = []
     for user_role in user_roles:
