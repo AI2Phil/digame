@@ -1,5 +1,5 @@
-# Base image - Updated to latest secure version
-FROM python:3.12.7-slim-bookworm
+# Base image - Using Python 3.11 for better package compatibility
+FROM python:3.11.10-slim-bookworm
 
 # Update system packages and install necessary tools
 RUN apt-get update && apt-get upgrade -y && \
@@ -18,7 +18,7 @@ WORKDIR $APP_HOME
 COPY requirements.txt .
 
 # Add build tools to ensure packages can be built from source
-RUN pip install --no-cache-dir --upgrade pip setuptools wheel
+RUN pip install --no-cache-dir --upgrade pip setuptools==70.0.0 wheel
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code (will be mounted as volume in dev mode)

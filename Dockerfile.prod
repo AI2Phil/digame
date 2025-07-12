@@ -1,5 +1,5 @@
 # Production Dockerfile for FastAPI Backend
-FROM python:3.12.7-slim-bookworm AS base
+FROM python:3.11.10-slim-bookworm AS base
 
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1
@@ -23,7 +23,7 @@ WORKDIR /app
 COPY requirements.txt .
 
 # Add build tools to ensure packages can be built from source
-RUN pip install --no-cache-dir --upgrade pip setuptools wheel
+RUN pip install --no-cache-dir --upgrade pip setuptools==70.0.0 wheel
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code

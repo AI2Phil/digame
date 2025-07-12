@@ -2,7 +2,7 @@
 # Multi-stage build for optimized production image
 
 # Build stage
-FROM python:3.12.7-slim-bookworm AS builder
+FROM python:3.11.10-slim-bookworm AS builder
 
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -32,11 +32,11 @@ ENV PATH="/opt/venv/bin:$PATH"
 COPY requirements.txt .
 
 # Add build tools to ensure packages can be built from source
-RUN pip install --upgrade pip setuptools wheel && \
+RUN pip install --upgrade pip setuptools==70.0.0 wheel && \
     pip install -r requirements.txt
 
 # Production stage
-FROM python:3.12.7-slim-bookworm AS production
+FROM python:3.11.10-slim-bookworm AS production
 
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1 \
