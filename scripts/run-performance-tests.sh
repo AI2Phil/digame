@@ -20,6 +20,22 @@ BACKEND_HEALTH_URL="http://localhost:8000/health"
 FRONTEND_HEALTH_URL="http://localhost:3000/api/health"
 LOCUST_UI_URL="http://localhost:8089"
 
+# Docker Compose command detection
+DOCKER_COMPOSE_CMD=""
+
+# Function to detect Docker Compose command
+detect_docker_compose() {
+    if command -v docker-compose &> /dev/null; then
+        DOCKER_COMPOSE_CMD="docker-compose"
+    elif docker compose version &> /dev/null; then
+        DOCKER_COMPOSE_CMD="docker compose"
+    else
+        print_error "Neither 'docker-compose' nor 'docker compose' is available"
+        exit 1
+    fi
+    print_status "Using Docker Compose command: $DOCKER_COMPOSE_CMD"
+}
+
 # Function to print colored output
 print_status() {
     echo -e "${BLUE}[INFO]${NC} $1"
@@ -88,7 +104,7 @@ start_performance_env() {
     mkdir -p performance-reports
     
     # Start the services
-    docker-compose -f "$COMPOSE_FILE" -p "$PROJECT_NAME" up -d backend frontend
+    $DOCKER_COMPOSE_CMD -f "$COMPOSE_FILE" -p "$PROJECT_NAME" up -d backend frontend
     
     # Wait for services to be ready
     if wait_for_services; then
@@ -106,7 +122,7 @@ run_fullstack_tests() {
     print_status "Starting full-stack performance tests with Locust..."
     
     # Start Locust master and workers
-    docker-compose -f "$COMPOSE_FILE" -p "$PROJECT_NAME" up -d locust-master locust-worker
+    $DOCKER_COMPOSE_CMD -f "$COMPOSE_FILE" -p "$PROJECT_NAME" up -d locust-master locust-worker
     
     print_success "Locust performance testing started!"
     print_status "Locust Web UI: $LOCUST_UI_URL"
@@ -118,7 +134,7 @@ run_fullstack_tests() {
     read -r
     
     # Stop Locust services
-    docker-compose -f "$COMPOSE_FILE" -p "$PROJECT_NAME" stop locust-master locust-worker
+    $DOCKER_COMPOSE_CMD -f "$COMPOSE_FILE" -p "$PROJECT_NAME" stop locust-master locust-worker
     print_success "Performance tests stopped"
 }
 
@@ -127,7 +143,7 @@ run_frontend_tests() {
     print_status "Starting frontend-only performance tests..."
     
     # Start frontend-only Locust testing
-    docker-compose -f "$COMPOSE_FILE" -p "$PROJECT_NAME" --profile frontend-only up -d locust-frontend
+    $DOCKER_COMPOSE_CMD -f "$COMPOSE_FILE" -p "$PROJECT_NAME" --profile frontend-only up -d locust-frontend
     
     print_success "Frontend performance testing started!"
     print_status "Locust Web UI: http://localhost:8090"
@@ -138,7 +154,7 @@ run_frontend_tests() {
     read -r
     
     # Stop frontend testing
-    docker-compose -f "$COMPOSE_FILE" -p "$PROJECT_NAME" stop locust-frontend
+    $DOCKER_COMPOSE_CMD -f "$COMPOSE_FILE" -p "$PROJECT_NAME" stop locust-frontend
     print_success "Frontend tests stopped"
 }
 
@@ -152,7 +168,7 @@ run_headless_tests() {
     print_status "Users: $users, Spawn Rate: $spawn_rate, Duration: $run_time"
     
     # Run headless Locust test
-    docker-compose -f "$COMPOSE_FILE" -p "$PROJECT_NAME" run --rm locust-master \
+    $DOCKER_COMPOSE_CMD -f "$COMPOSE_FILE" -p "$PROJECT_NAME" run --rm locust-master \
         locust -f /app/tests/performance/locustfile.py \
         --headless \
         --users "$users" \
@@ -170,7 +186,7 @@ run_headless_tests() {
 start_monitoring() {
     print_status "Starting performance monitoring (Prometheus + Grafana)..."
     
-    docker-compose -f "$COMPOSE_FILE" -p "$PROJECT_NAME" --profile monitoring up -d prometheus grafana
+    $DOCKER_COMPOSE_CMD -f "$COMPOSE_FILE" -p "$PROJECT_NAME" --profile monitoring up -d prometheus grafana
     
     print_success "Monitoring started!"
     print_status "Prometheus: http://localhost:9090"
@@ -181,7 +197,7 @@ start_monitoring() {
 stop_all() {
     print_status "Stopping all performance testing services..."
     
-    docker-compose -f "$COMPOSE_FILE" -p "$PROJECT_NAME" down
+    $DOCKER_COMPOSE_CMD -f "$COMPOSE_FILE" -p "$PROJECT_NAME" down
     
     print_success "All services stopped"
 }
@@ -190,7 +206,7 @@ stop_all() {
 cleanup() {
     print_status "Cleaning up performance testing environment..."
     
-    docker-compose -f "$COMPOSE_FILE" -p "$PROJECT_NAME" down -v --remove-orphans
+    $DOCKER_COMPOSE_CMD -f "$COMPOSE_FILE" -p "$PROJECT_NAME" down -v --remove-orphans
     
     print_success "Cleanup completed"
 }
@@ -200,16 +216,16 @@ show_logs() {
     local service=${1:-}
     
     if [ -n "$service" ]; then
-        docker-compose -f "$COMPOSE_FILE" -p "$PROJECT_NAME" logs -f "$service"
+        $DOCKER_COMPOSE_CMD -f "$COMPOSE_FILE" -p "$PROJECT_NAME" logs -f "$service"
     else
-        docker-compose -f "$COMPOSE_FILE" -p "$PROJECT_NAME" logs -f
+        $DOCKER_COMPOSE_CMD -f "$COMPOSE_FILE" -p "$PROJECT_NAME" logs -f
     fi
 }
 
 # Function to show status
 show_status() {
     print_status "Performance testing environment status:"
-    docker-compose -f "$COMPOSE_FILE" -p "$PROJECT_NAME" ps
+    $DOCKER_COMPOSE_CMD -f "$COMPOSE_FILE" -p "$PROJECT_NAME" ps
 }
 
 # Main menu
@@ -231,16 +247,14 @@ show_menu() {
 
 # Main script logic
 main() {
-    # Check if Docker and Docker Compose are available
+    # Check if Docker is available
     if ! command -v docker &> /dev/null; then
         print_error "Docker is not installed or not in PATH"
         exit 1
     fi
     
-    if ! command -v docker-compose &> /dev/null; then
-        print_error "Docker Compose is not installed or not in PATH"
-        exit 1
-    fi
+    # Detect Docker Compose command
+    detect_docker_compose
     
     # Check if compose file exists
     if [ ! -f "$COMPOSE_FILE" ]; then

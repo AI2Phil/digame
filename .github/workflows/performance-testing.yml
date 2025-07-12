@@ -53,11 +53,11 @@ jobs:
 
     - name: Build Docker images
       run: |
-        docker-compose -f $COMPOSE_FILE build --parallel
+        docker compose -f $COMPOSE_FILE build --parallel
 
     - name: Start backend and frontend services
       run: |
-        docker-compose -f $COMPOSE_FILE -p $PROJECT_NAME up -d backend frontend
+        docker compose -f $COMPOSE_FILE -p $PROJECT_NAME up -d backend frontend
 
     - name: Wait for services to be healthy
       run: |
@@ -72,7 +72,7 @@ jobs:
     - name: Run Core Web Vitals Performance Tests
       if: github.event.inputs.test_type == 'core-web-vitals' || github.event.inputs.test_type == ''
       run: |
-        docker-compose -f $COMPOSE_FILE -p $PROJECT_NAME run --rm locust-master \
+        docker compose -f $COMPOSE_FILE -p $PROJECT_NAME run --rm locust-master \
           locust -f /app/tests/performance/locustfile.py \
           --headless \
           --users ${{ github.event.inputs.users || '50' }} \
@@ -85,7 +85,7 @@ jobs:
     - name: Run Frontend-Only Performance Tests
       if: github.event.inputs.test_type == 'frontend-only'
       run: |
-        docker-compose -f $COMPOSE_FILE -p $PROJECT_NAME run --rm locust-frontend \
+        docker compose -f $COMPOSE_FILE -p $PROJECT_NAME run --rm locust-frontend \
           locust -f /app/tests/performance/frontend-only.py \
           --headless \
           --users ${{ github.event.inputs.users || '30' }} \
@@ -98,7 +98,7 @@ jobs:
     - name: Run Full-Stack Performance Tests
       if: github.event.inputs.test_type == 'fullstack'
       run: |
-        docker-compose -f $COMPOSE_FILE -p $PROJECT_NAME run --rm locust-master \
+        docker compose -f $COMPOSE_FILE -p $PROJECT_NAME run --rm locust-master \
           locust -f /app/tests/performance/locustfile.py \
           --headless \
           --users ${{ github.event.inputs.users || '100' }} \
@@ -112,15 +112,15 @@ jobs:
       if: always()
       run: |
         echo "=== Backend Logs ===" > service-logs.txt
-        docker-compose -f $COMPOSE_FILE -p $PROJECT_NAME logs backend >> service-logs.txt 2>&1 || true
+        docker compose -f $COMPOSE_FILE -p $PROJECT_NAME logs backend >> service-logs.txt 2>&1 || true
         echo "=== Frontend Logs ===" >> service-logs.txt
-        docker-compose -f $COMPOSE_FILE -p $PROJECT_NAME logs frontend >> service-logs.txt 2>&1 || true
+        docker compose -f $COMPOSE_FILE -p $PROJECT_NAME logs frontend >> service-logs.txt 2>&1 || true
 
     - name: Extract performance reports
       if: always()
       run: |
         # Copy reports from containers to host
-        docker cp $(docker-compose -f $COMPOSE_FILE -p $PROJECT_NAME ps -q locust-master):/app/reports/. ./performance-reports/ 2>/dev/null || true
+        docker cp $(docker compose -f $COMPOSE_FILE -p $PROJECT_NAME ps -q locust-master):/app/reports/. ./performance-reports/ 2>/dev/null || true
         
         # List generated reports
         ls -la performance-reports/ || true
@@ -247,4 +247,4 @@ jobs:
     - name: Cleanup
       if: always()
       run: |
-        docker-compose -f $COMPOSE_FILE -p $PROJECT_NAME down -v --remove-orphans
+        docker compose -f $COMPOSE_FILE -p $PROJECT_NAME down -v --remove-orphans
