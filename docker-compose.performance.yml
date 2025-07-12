@@ -1,0 +1,191 @@
+version: '3.8'
+
+services:
+  # Backend Service for Performance Testing
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    container_name: digame-backend-perf
+    ports:
+      - "8000:8000"
+    environment:
+      - ENVIRONMENT=testing
+      - DATABASE_URL=sqlite:///./test.db
+      - SECRET_KEY=test-secret-key-for-performance-testing
+      - JWT_SECRET_KEY=test-jwt-secret-key
+      - ALLOWED_ORIGINS=["http://frontend:3000", "http://localhost:3000"]
+      - LOG_LEVEL=WARNING
+      - PERFORMANCE_MONITORING=true
+    networks:
+      - perf-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+
+  # Frontend Service for Performance Testing
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod
+    container_name: digame-frontend-perf
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=http://backend:8000
+      - NEXT_PUBLIC_PERFORMANCE_MONITORING=true
+      - NEXT_PUBLIC_REAL_TIME_MONITORING=true
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - perf-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+    restart: unless-stopped
+
+  # Locust Performance Testing Service
+  locust-master:
+    build:
+      context: .
+      dockerfile: tests/performance/Dockerfile.locust
+    container_name: digame-locust-master
+    ports:
+      - "8089:8089"  # Locust Web UI
+    environment:
+      - LOCUST_MODE=master
+      - LOCUST_HOST=http://backend:8000
+      - LOCUST_USERS=100
+      - LOCUST_SPAWN_RATE=10
+      - LOCUST_RUN_TIME=300s
+    volumes:
+      - ./tests/performance:/app/tests/performance
+      - ./performance-reports:/app/reports
+    depends_on:
+      backend:
+        condition: service_healthy
+      frontend:
+        condition: service_healthy
+    networks:
+      - perf-network
+    command: >
+      locust
+      -f /app/tests/performance/locustfile.py
+      --master
+      --web-host=0.0.0.0
+      --web-port=8089
+      --host=http://backend:8000
+
+  # Locust Worker for Distributed Load Testing
+  locust-worker:
+    build:
+      context: .
+      dockerfile: tests/performance/Dockerfile.locust
+    environment:
+      - LOCUST_MODE=worker
+      - LOCUST_MASTER_HOST=locust-master
+    volumes:
+      - ./tests/performance:/app/tests/performance
+    depends_on:
+      - locust-master
+    networks:
+      - perf-network
+    scale: 2  # Run 2 worker instances
+    command: >
+      locust
+      -f /app/tests/performance/locustfile.py
+      --worker
+      --master-host=locust-master
+
+  # Frontend-Only Locust Testing
+  locust-frontend:
+    build:
+      context: .
+      dockerfile: tests/performance/Dockerfile.locust
+    container_name: digame-locust-frontend
+    ports:
+      - "8090:8089"  # Alternative port for frontend testing
+    environment:
+      - LOCUST_MODE=standalone
+      - LOCUST_HOST=http://frontend:3000
+      - LOCUST_USERS=50
+      - LOCUST_SPAWN_RATE=5
+      - LOCUST_RUN_TIME=180s
+    volumes:
+      - ./tests/performance:/app/tests/performance
+      - ./performance-reports:/app/reports
+    depends_on:
+      frontend:
+        condition: service_healthy
+    networks:
+      - perf-network
+    profiles:
+      - frontend-only
+    command: >
+      locust
+      -f /app/tests/performance/frontend-only.py
+      --web-host=0.0.0.0
+      --web-port=8089
+      --host=http://frontend:3000
+
+  # Performance Monitoring with Prometheus
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: digame-prometheus-perf
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./tests/performance/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=24h'
+      - '--web.enable-lifecycle'
+    networks:
+      - perf-network
+    profiles:
+      - monitoring
+
+  # Grafana for Performance Visualization
+  grafana:
+    image: grafana/grafana:latest
+    container_name: digame-grafana-perf
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./tests/performance/grafana:/etc/grafana/provisioning:ro
+    depends_on:
+      - prometheus
+    networks:
+      - perf-network
+    profiles:
+      - monitoring
+
+volumes:
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local
+
+networks:
+  perf-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.30.0.0/16

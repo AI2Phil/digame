@@ -1,0 +1,250 @@
+name: Performance Testing
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    # Run performance tests daily at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      users:
+        description: 'Number of concurrent users'
+        required: false
+        default: '50'
+      spawn_rate:
+        description: 'User spawn rate per second'
+        required: false
+        default: '5'
+      run_time:
+        description: 'Test duration (e.g., 300s, 5m)'
+        required: false
+        default: '180s'
+      test_type:
+        description: 'Type of performance test'
+        required: false
+        default: 'fullstack'
+        type: choice
+        options:
+          - fullstack
+          - frontend-only
+          - core-web-vitals
+
+env:
+  COMPOSE_FILE: docker-compose.performance.yml
+  PROJECT_NAME: digame-performance-ci
+
+jobs:
+  performance-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Create performance reports directory
+      run: mkdir -p performance-reports
+
+    - name: Build Docker images
+      run: |
+        docker-compose -f $COMPOSE_FILE build --parallel
+
+    - name: Start backend and frontend services
+      run: |
+        docker-compose -f $COMPOSE_FILE -p $PROJECT_NAME up -d backend frontend
+
+    - name: Wait for services to be healthy
+      run: |
+        echo "Waiting for backend to be healthy..."
+        timeout 120 bash -c 'until curl -f http://localhost:8000/health; do sleep 2; done'
+        
+        echo "Waiting for frontend to be healthy..."
+        timeout 120 bash -c 'until curl -f http://localhost:3000/api/health; do sleep 2; done'
+        
+        echo "All services are healthy!"
+
+    - name: Run Core Web Vitals Performance Tests
+      if: github.event.inputs.test_type == 'core-web-vitals' || github.event.inputs.test_type == ''
+      run: |
+        docker-compose -f $COMPOSE_FILE -p $PROJECT_NAME run --rm locust-master \
+          locust -f /app/tests/performance/locustfile.py \
+          --headless \
+          --users ${{ github.event.inputs.users || '50' }} \
+          --spawn-rate ${{ github.event.inputs.spawn_rate || '5' }} \
+          --run-time ${{ github.event.inputs.run_time || '180s' }} \
+          --host http://backend:8000 \
+          --html /app/reports/core-web-vitals-report-${{ github.run_number }}.html \
+          --csv /app/reports/core-web-vitals-data-${{ github.run_number }}
+
+    - name: Run Frontend-Only Performance Tests
+      if: github.event.inputs.test_type == 'frontend-only'
+      run: |
+        docker-compose -f $COMPOSE_FILE -p $PROJECT_NAME run --rm locust-frontend \
+          locust -f /app/tests/performance/frontend-only.py \
+          --headless \
+          --users ${{ github.event.inputs.users || '30' }} \
+          --spawn-rate ${{ github.event.inputs.spawn_rate || '3' }} \
+          --run-time ${{ github.event.inputs.run_time || '120s' }} \
+          --host http://frontend:3000 \
+          --html /app/reports/frontend-only-report-${{ github.run_number }}.html \
+          --csv /app/reports/frontend-only-data-${{ github.run_number }}
+
+    - name: Run Full-Stack Performance Tests
+      if: github.event.inputs.test_type == 'fullstack'
+      run: |
+        docker-compose -f $COMPOSE_FILE -p $PROJECT_NAME run --rm locust-master \
+          locust -f /app/tests/performance/locustfile.py \
+          --headless \
+          --users ${{ github.event.inputs.users || '100' }} \
+          --spawn-rate ${{ github.event.inputs.spawn_rate || '10' }} \
+          --run-time ${{ github.event.inputs.run_time || '300s' }} \
+          --host http://backend:8000 \
+          --html /app/reports/fullstack-report-${{ github.run_number }}.html \
+          --csv /app/reports/fullstack-data-${{ github.run_number }}
+
+    - name: Collect service logs
+      if: always()
+      run: |
+        echo "=== Backend Logs ===" > service-logs.txt
+        docker-compose -f $COMPOSE_FILE -p $PROJECT_NAME logs backend >> service-logs.txt 2>&1 || true
+        echo "=== Frontend Logs ===" >> service-logs.txt
+        docker-compose -f $COMPOSE_FILE -p $PROJECT_NAME logs frontend >> service-logs.txt 2>&1 || true
+
+    - name: Extract performance reports
+      if: always()
+      run: |
+        # Copy reports from containers to host
+        docker cp $(docker-compose -f $COMPOSE_FILE -p $PROJECT_NAME ps -q locust-master):/app/reports/. ./performance-reports/ 2>/dev/null || true
+        
+        # List generated reports
+        ls -la performance-reports/ || true
+
+    - name: Analyze performance results
+      if: always()
+      run: |
+        # Create performance summary
+        echo "# Performance Test Summary" > performance-summary.md
+        echo "- **Test Run**: #${{ github.run_number }}" >> performance-summary.md
+        echo "- **Commit**: ${{ github.sha }}" >> performance-summary.md
+        echo "- **Branch**: ${{ github.ref_name }}" >> performance-summary.md
+        echo "- **Test Type**: ${{ github.event.inputs.test_type || 'core-web-vitals' }}" >> performance-summary.md
+        echo "- **Users**: ${{ github.event.inputs.users || '50' }}" >> performance-summary.md
+        echo "- **Duration**: ${{ github.event.inputs.run_time || '180s' }}" >> performance-summary.md
+        echo "" >> performance-summary.md
+        
+        # Check for CSV files and extract key metrics
+        if ls performance-reports/*.csv 1> /dev/null 2>&1; then
+          echo "## Key Metrics" >> performance-summary.md
+          for csv_file in performance-reports/*_stats.csv; do
+            if [ -f "$csv_file" ]; then
+              echo "### $(basename "$csv_file")" >> performance-summary.md
+              echo '```' >> performance-summary.md
+              head -10 "$csv_file" >> performance-summary.md
+              echo '```' >> performance-summary.md
+            fi
+          done
+        fi
+
+    - name: Upload performance reports
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: performance-reports-${{ github.run_number }}
+        path: |
+          performance-reports/
+          performance-summary.md
+          service-logs.txt
+        retention-days: 30
+
+    - name: Comment PR with performance results
+      if: github.event_name == 'pull_request' && always()
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          
+          let summary = '## 🚀 Performance Test Results\n\n';
+          
+          try {
+            if (fs.existsSync('performance-summary.md')) {
+              const content = fs.readFileSync('performance-summary.md', 'utf8');
+              summary += content;
+            } else {
+              summary += '⚠️ Performance summary not available\n';
+            }
+            
+            summary += '\n📊 [View detailed reports in artifacts](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})\n';
+            
+            // Check if there are any performance reports
+            if (fs.existsSync('performance-reports')) {
+              const files = fs.readdirSync('performance-reports');
+              if (files.length > 0) {
+                summary += '\n### Generated Reports:\n';
+                files.forEach(file => {
+                  summary += `- ${file}\n`;
+                });
+              }
+            }
+          } catch (error) {
+            summary += `\n❌ Error generating summary: ${error.message}\n`;
+          }
+          
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: summary
+          });
+
+    - name: Check performance thresholds
+      if: always()
+      run: |
+        # Define performance thresholds
+        MAX_RESPONSE_TIME=2000  # 2 seconds
+        MAX_ERROR_RATE=5        # 5%
+        MIN_RPS=10              # 10 requests per second
+        
+        echo "Checking performance thresholds..."
+        
+        # Check if any CSV files exist
+        if ls performance-reports/*_stats.csv 1> /dev/null 2>&1; then
+          for csv_file in performance-reports/*_stats.csv; do
+            if [ -f "$csv_file" ]; then
+              echo "Analyzing $csv_file..."
+              
+              # Extract metrics (this is a simplified example)
+              # In a real scenario, you'd parse the CSV more thoroughly
+              avg_response_time=$(awk -F',' 'NR>1 && $1!="Aggregated" {sum+=$6; count++} END {if(count>0) print int(sum/count); else print 0}' "$csv_file")
+              error_rate=$(awk -F',' 'NR>1 && $1!="Aggregated" {if($4>0) errors+=$5; requests+=$4} END {if(requests>0) print int((errors/requests)*100); else print 0}' "$csv_file")
+              
+              echo "Average Response Time: ${avg_response_time}ms"
+              echo "Error Rate: ${error_rate}%"
+              
+              # Check thresholds
+              if [ "$avg_response_time" -gt "$MAX_RESPONSE_TIME" ]; then
+                echo "❌ PERFORMANCE THRESHOLD EXCEEDED: Response time ${avg_response_time}ms > ${MAX_RESPONSE_TIME}ms"
+                exit 1
+              fi
+              
+              if [ "$error_rate" -gt "$MAX_ERROR_RATE" ]; then
+                echo "❌ PERFORMANCE THRESHOLD EXCEEDED: Error rate ${error_rate}% > ${MAX_ERROR_RATE}%"
+                exit 1
+              fi
+              
+              echo "✅ Performance thresholds passed"
+            fi
+          done
+        else
+          echo "⚠️ No performance data files found for threshold checking"
+        fi
+
+    - name: Cleanup
+      if: always()
+      run: |
+        docker-compose -f $COMPOSE_FILE -p $PROJECT_NAME down -v --remove-orphans

@@ -196,3 +196,124 @@ The performance tests are designed to integrate with:
 - Monitoring and alerting systems
 
 Results can be exported in various formats for integration with performance monitoring tools.
+
+## Deployment Configurations
+
+### Automated Performance Testing
+
+The performance tests are fully integrated with CI/CD pipelines:
+
+#### GitHub Actions Workflow
+- **File**: `.github/workflows/performance-testing.yml`
+- **Triggers**: Push to main/develop, PRs, daily schedule, manual dispatch
+- **Features**: Automated testing, threshold checking, report generation, PR comments
+
+#### Docker Compose Orchestration
+- **File**: `docker-compose.performance.yml`
+- **Services**: Backend, Frontend, Locust (master/worker), Monitoring
+- **Networks**: Isolated performance testing network
+- **Profiles**: Frontend-only testing, monitoring stack
+
+#### Deployment Script
+- **File**: `scripts/run-performance-tests.sh`
+- **Features**: Interactive menu, service health checks, automated deployment
+- **Usage**: `./scripts/run-performance-tests.sh [command]`
+
+### Quick Start Commands
+
+```bash
+# Interactive menu
+./scripts/run-performance-tests.sh
+
+# Start environment only
+./scripts/run-performance-tests.sh start
+
+# Run full performance tests
+./scripts/run-performance-tests.sh test
+
+# Run frontend-only tests
+./scripts/run-performance-tests.sh frontend
+
+# Run headless tests with custom parameters
+./scripts/run-performance-tests.sh headless 100 10 300s
+
+# Start monitoring stack
+./scripts/run-performance-tests.sh monitoring
+
+# Check service status
+./scripts/run-performance-tests.sh status
+
+# View logs
+./scripts/run-performance-tests.sh logs [service]
+
+# Stop all services
+./scripts/run-performance-tests.sh stop
+
+# Complete cleanup
+./scripts/run-performance-tests.sh cleanup
+```
+
+### Docker Compose Usage
+
+```bash
+# Start basic performance testing environment
+docker-compose -f docker-compose.performance.yml up -d backend frontend
+
+# Run full-stack performance tests
+docker-compose -f docker-compose.performance.yml up -d locust-master locust-worker
+
+# Run frontend-only tests
+docker-compose -f docker-compose.performance.yml --profile frontend-only up -d locust-frontend
+
+# Start monitoring stack
+docker-compose -f docker-compose.performance.yml --profile monitoring up -d prometheus grafana
+
+# Run headless performance test
+docker-compose -f docker-compose.performance.yml run --rm locust-master \
+  locust -f /app/tests/performance/locustfile.py \
+  --headless --users 100 --spawn-rate 10 --run-time 300s \
+  --host http://backend:8000 \
+  --html /app/reports/performance-report.html
+
+# Cleanup
+docker-compose -f docker-compose.performance.yml down -v --remove-orphans
+```
+
+### Service URLs
+
+When running the performance testing environment:
+
+- **Backend API**: http://localhost:8000
+- **Frontend App**: http://localhost:3000
+- **Locust Web UI**: http://localhost:8089
+- **Frontend Locust UI**: http://localhost:8090
+- **Prometheus**: http://localhost:9090
+- **Grafana**: http://localhost:3001 (admin/admin)
+
+### Performance Thresholds
+
+The CI/CD pipeline enforces these performance thresholds:
+
+| Metric | Threshold | Action on Failure |
+|--------|-----------|-------------------|
+| Average Response Time | < 2000ms | Fail CI build |
+| Error Rate | < 5% | Fail CI build |
+| Minimum RPS | > 10 req/s | Warning only |
+
+### Monitoring Integration
+
+- **Prometheus**: Collects metrics from all services
+- **Grafana**: Visualizes performance data and trends
+- **Alerting**: Configurable alerts for performance degradation
+- **Reports**: Automated HTML and CSV report generation
+
+### Resolving Locust Connection Issues
+
+The deployment configurations resolve the common Locust connection issues:
+
+1. **Service Discovery**: Uses Docker network names (backend:8000, frontend:3000)
+2. **Health Checks**: Ensures services are ready before testing starts
+3. **Proper Orchestration**: Services start in correct dependency order
+4. **Network Isolation**: Dedicated performance testing network prevents conflicts
+
+Results can be exported in various formats for integration with performance monitoring tools and dashboards.
