@@ -97,10 +97,10 @@ def upgrade() -> None:
         
         if is_active_col and str(is_active_col['type']) != 'BOOLEAN':
             print("Converting is_active from Integer to Boolean")
-            # First update existing data
-            op.execute("UPDATE users SET is_active = CASE WHEN is_active = 1 THEN true ELSE false END WHERE is_active IS NOT NULL")
-            # Then alter column type
-            op.alter_column('users', 'is_active', type_=sa.Boolean(), nullable=True, default=True)
+            # First update existing data - use integers instead of boolean literals
+            op.execute("UPDATE users SET is_active = CASE WHEN is_active = 1 THEN 1 ELSE 0 END WHERE is_active IS NOT NULL")
+            # Then alter column type using USING clause for PostgreSQL compatibility
+            op.execute("ALTER TABLE users ALTER COLUMN is_active TYPE boolean USING (is_active = 1)")
 
 
 def downgrade() -> None:
