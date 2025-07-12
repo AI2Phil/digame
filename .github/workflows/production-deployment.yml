@@ -405,7 +405,7 @@ jobs:
       - name: Install dependencies
         run: |
           cd frontend && npm ci
-          pip install -r requirements.txt
+          pip install -r ../requirements.txt
 
       - name: Download frontend build
         id: download-build
