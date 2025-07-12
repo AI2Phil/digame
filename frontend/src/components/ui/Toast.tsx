@@ -198,26 +198,23 @@ const ToastItem: React.FC<{ toast: Toast }> = ({ toast }) => {
   );
 };
 
-// Convenience functions for different toast types
+// Note: These convenience functions are deprecated. Use useToastActions() hook instead.
+// Keeping for backward compatibility but they should not be used directly.
 export const toast = {
   success: (title: string, message?: string, options?: Partial<Toast>) => {
-    const { addToast } = useToast();
-    addToast({ type: 'success', title, message, ...options });
+    console.warn('toast.success() is deprecated. Use useToastActions() hook instead.');
   },
   
   error: (title: string, message?: string, options?: Partial<Toast>) => {
-    const { addToast } = useToast();
-    addToast({ type: 'error', title, message, ...options });
+    console.warn('toast.error() is deprecated. Use useToastActions() hook instead.');
   },
   
   warning: (title: string, message?: string, options?: Partial<Toast>) => {
-    const { addToast } = useToast();
-    addToast({ type: 'warning', title, message, ...options });
+    console.warn('toast.warning() is deprecated. Use useToastActions() hook instead.');
   },
   
   info: (title: string, message?: string, options?: Partial<Toast>) => {
-    const { addToast } = useToast();
-    addToast({ type: 'info', title, message, ...options });
+    console.warn('toast.info() is deprecated. Use useToastActions() hook instead.');
   }
 };
 

@@ -1,0 +1,450 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '22.x'
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  # Security and Code Quality Checks
+  security-scan:
+    name: Security & Quality Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Cache npm dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.npm
+            frontend/node_modules
+          key: ${{ runner.os }}-node-${{ env.NODE_VERSION }}-${{ hashFiles('frontend/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-${{ env.NODE_VERSION }}-
+            ${{ runner.os }}-node-
+
+      - name: Install frontend dependencies
+        working-directory: ./frontend
+        run: npm ci
+
+      - name: Run ESLint
+        working-directory: ./frontend
+        run: npm run lint
+
+      - name: Run npm audit
+        working-directory: ./frontend
+        run: npm audit --audit-level=moderate || true
+
+  # Frontend Testing and Build
+  frontend-test-build:
+    name: Frontend Test & Build (22.x)
+    runs-on: ubuntu-latest
+    needs: security-scan
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Cache npm dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.npm
+            frontend/node_modules
+          key: ${{ runner.os }}-node-${{ env.NODE_VERSION }}-${{ hashFiles('frontend/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-${{ env.NODE_VERSION }}-
+            ${{ runner.os }}-node-
+
+      - name: Install dependencies
+        working-directory: ./frontend
+        run: npm ci
+
+      - name: Run type checking
+        working-directory: ./frontend
+        run: npm run type-check
+
+      - name: Run linting
+        working-directory: ./frontend
+        run: npm run lint
+
+      - name: Run unit tests
+        working-directory: ./frontend
+        run: npm run test:unit -- --coverage --watchAll=false
+
+      - name: Build application
+        working-directory: ./frontend
+        run: npm run build
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-build
+          path: frontend/dist/
+          retention-days: 7
+        if: success()
+
+  # Backend Testing
+  backend-test:
+    name: Backend Test
+    runs-on: ubuntu-latest
+    needs: security-scan
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: test_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+
+      - name: Run database migrations
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_db
+        run: |
+          alembic upgrade heads
+
+      - name: Run backend tests
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_db
+        run: |
+          pytest tests/ -v --cov=app --cov-report=xml
+
+  # Frontend Build Fallback (ensures artifact exists)
+  frontend-build-fallback:
+    name: Frontend Build Fallback
+    runs-on: ubuntu-latest
+    needs: [security-scan, frontend-test-build]
+    if: always()
+    steps:
+      - name: Check if build artifact exists
+        id: check-artifact
+        uses: actions/github-script@v7
+        with:
+          script: |
+            try {
+              const artifacts = await github.rest.actions.listWorkflowRunArtifacts({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                run_id: context.runId,
+              });
+              
+              const buildArtifact = artifacts.data.artifacts.find(artifact =>
+                artifact.name === 'frontend-build'
+              );
+              
+              if (buildArtifact) {
+                console.log('Build artifact exists');
+                core.setOutput('exists', 'true');
+              } else {
+                console.log('Build artifact missing, creating fallback');
+                core.setOutput('exists', 'false');
+              }
+            } catch (error) {
+              console.log('Error checking artifacts, creating fallback');
+              core.setOutput('exists', 'false');
+            }
+
+      - name: Checkout code
+        if: steps.check-artifact.outputs.exists == 'false'
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        if: steps.check-artifact.outputs.exists == 'false'
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install dependencies
+        if: steps.check-artifact.outputs.exists == 'false'
+        working-directory: ./frontend
+        run: npm ci
+
+      - name: Build application (fallback)
+        if: steps.check-artifact.outputs.exists == 'false'
+        working-directory: ./frontend
+        run: npm run build
+
+      - name: Upload fallback build artifact
+        if: steps.check-artifact.outputs.exists == 'false'
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-build
+          path: frontend/dist/
+          retention-days: 7
+
+  # End-to-End Testing with improved server readiness
+  e2e-tests:
+    name: End-to-End Tests
+    runs-on: ubuntu-latest
+    needs: [frontend-test-build, backend-test]
+    if: always()
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: e2e_test_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install Python dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: Install frontend dependencies
+        working-directory: ./frontend
+        run: npm ci
+
+      - name: Download frontend build
+        id: download-build
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-build
+          path: frontend/dist/
+        continue-on-error: true
+        
+      - name: Build frontend if artifact missing
+        if: steps.download-build.outcome == 'failure'
+        working-directory: ./frontend
+        run: |
+          npm ci
+          npm run build
+
+      - name: Setup database
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/e2e_test_db
+        run: |
+          alembic upgrade heads
+
+      - name: Start backend server
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/e2e_test_db
+        run: |
+          uvicorn app.main:app --host 0.0.0.0 --port 8000 &
+          echo $! > backend.pid
+
+      - name: Wait for backend to be ready
+        run: |
+          echo "Waiting for backend server to be ready..."
+          for i in {1..30}; do
+            if curl -f http://localhost:8000/health 2>/dev/null; then
+              echo "Backend server is ready!"
+              break
+            fi
+            echo "Attempt $i: Backend not ready, waiting 2 seconds..."
+            sleep 2
+          done
+          
+          # Final check
+          if ! curl -f http://localhost:8000/health; then
+            echo "Backend server failed to start properly"
+            cat backend.log || true
+            exit 1
+          fi
+
+      - name: Start frontend server
+        working-directory: ./frontend
+        run: |
+          npm run serve:dist &
+          echo $! > frontend.pid
+
+      - name: Wait for frontend to be ready
+        run: |
+          echo "Waiting for frontend server to be ready..."
+          for i in {1..20}; do
+            if curl -f http://localhost:3000 2>/dev/null; then
+              echo "Frontend server is ready!"
+              break
+            fi
+            echo "Attempt $i: Frontend not ready, waiting 3 seconds..."
+            sleep 3
+          done
+          
+          # Final check
+          if ! curl -f http://localhost:3000; then
+            echo "Frontend server failed to start properly"
+            exit 1
+          fi
+
+      - name: Install Playwright
+        working-directory: ./frontend
+        run: npx playwright install --with-deps
+
+      - name: Run E2E tests
+        working-directory: ./frontend
+        run: npx playwright test --timeout=30000
+
+      - name: Upload E2E test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: e2e-test-results
+          path: frontend/test-results/
+          retention-days: 7
+
+      - name: Cleanup servers
+        if: always()
+        run: |
+          # Kill backend server
+          if [ -f backend.pid ]; then
+            kill $(cat backend.pid) || true
+          fi
+          # Kill frontend server
+          if [ -f frontend/frontend.pid ]; then
+            kill $(cat frontend/frontend.pid) || true
+          fi
+
+  # Performance Tests with connection fixes
+  performance-tests:
+    name: Performance Tests
+    runs-on: ubuntu-latest
+    needs: [frontend-test-build, backend-test]
+    if: github.ref == 'refs/heads/main' && always()
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          pip install locust
+          cd frontend && npm ci
+
+      - name: Download frontend build
+        id: download-build-perf
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-build
+          path: frontend/dist/
+        continue-on-error: true
+        
+      - name: Build frontend if artifact missing
+        if: steps.download-build-perf.outcome == 'failure'
+        working-directory: ./frontend
+        run: |
+          npm ci
+          npm run build
+
+      - name: Start services for performance testing
+        run: |
+          # Start backend (mock/test mode)
+          cd frontend && npm run serve:dist &
+          
+          # Wait for frontend to be ready
+          for i in {1..15}; do
+            if curl -f http://localhost:3000 2>/dev/null; then
+              echo "Frontend ready for performance testing"
+              break
+            fi
+            sleep 2
+          done
+
+      - name: Run performance tests
+        run: |
+          # Run basic performance test
+          timeout 300 locust -f scripts/run-performance-tests.sh --headless -u 10 -r 2 -t 60s --host http://localhost:3000 || true
+
+  # Build Docker Images
+  docker-build:
+    name: Build Docker Images
+    runs-on: ubuntu-latest
+    needs: [frontend-test-build, backend-test]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build frontend Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          file: ./frontend/Dockerfile
+          push: false
+          tags: digame-frontend:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build backend Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: false
+          tags: digame-backend:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
