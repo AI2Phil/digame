@@ -42,6 +42,7 @@ class PeerConnection(Base):
     Model for peer-to-peer connections between users
     """
     __tablename__ = "peer_connections"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True)
     requester_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
@@ -64,6 +65,7 @@ class PeerMessage(Base):
     Model for messages between connected peers
     """
     __tablename__ = "peer_messages"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True)
     connection_id = Column(Integer, ForeignKey("peer_connections.id"), nullable=False, index=True)
@@ -87,6 +89,7 @@ class CollaborationProject(Base):
     Model for real collaboration projects with enhanced features
     """
     __tablename__ = "collaboration_projects"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(200), nullable=False)
@@ -132,6 +135,7 @@ class ProjectMember(Base):
     Model for project team members with roles and contributions
     """
     __tablename__ = "project_members"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True)
     project_id = Column(Integer, ForeignKey("collaboration_projects.id"), nullable=False, index=True)
@@ -154,6 +158,7 @@ class ProjectApplication(Base):
     Model for applications to join collaboration projects
     """
     __tablename__ = "project_applications"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True)
     project_id = Column(Integer, ForeignKey("collaboration_projects.id"), nullable=False, index=True)
@@ -180,6 +185,7 @@ class SkillEndorsement(Base):
     Model for peer skill endorsements to improve matching accuracy
     """
     __tablename__ = "skill_endorsements"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True)
     endorser_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
@@ -202,6 +208,7 @@ class MentorshipConnection(Base):
     Model for formal mentorship relationships
     """
     __tablename__ = "mentorship_connections"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True)
     mentor_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
