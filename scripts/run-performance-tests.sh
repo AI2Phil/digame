@@ -16,8 +16,8 @@ NC='\033[0m' # No Color
 # Configuration
 COMPOSE_FILE="docker-compose.performance.yml"
 PROJECT_NAME="digame-performance"
-BACKEND_HEALTH_URL="http://localhost:8000/health"
-FRONTEND_HEALTH_URL="http://localhost:3000/api/health"
+BACKEND_HEALTH_URL="http://localhost:8001/health"
+FRONTEND_HEALTH_URL="http://localhost:3001/api/health"
 LOCUST_UI_URL="http://localhost:8089"
 
 # Docker Compose command detection
@@ -174,7 +174,7 @@ run_headless_tests() {
         --users "$users" \
         --spawn-rate "$spawn_rate" \
         --run-time "$run_time" \
-        --host http://backend:8000 \
+        --host http://backend:8001 \
         --html /app/reports/performance-report-$(date +%Y%m%d-%H%M%S).html \
         --csv /app/reports/performance-data-$(date +%Y%m%d-%H%M%S)
     
