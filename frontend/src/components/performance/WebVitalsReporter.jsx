@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { getCLS, getFID, getFCP, getLCP, getTTFB } from 'web-vitals';
+import { onCLS, onFCP, onLCP, onTTFB, onINP } from 'web-vitals';
 
 const WebVitalsReporter = () => {
   useEffect(() => {
@@ -43,11 +43,11 @@ const WebVitalsReporter = () => {
     };
 
     // Measure and report Core Web Vitals
-    getCLS(sendToAnalytics);
-    getFID(sendToAnalytics);
-    getFCP(sendToAnalytics);
-    getLCP(sendToAnalytics);
-    getTTFB(sendToAnalytics);
+    onCLS(sendToAnalytics);
+    onINP(sendToAnalytics);
+    onFCP(sendToAnalytics);
+    onLCP(sendToAnalytics);
+    onTTFB(sendToAnalytics);
 
     // Additional performance monitoring
     const measureResourceTiming = () => {

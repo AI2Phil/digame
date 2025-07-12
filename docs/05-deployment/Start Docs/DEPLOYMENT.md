@@ -457,3 +457,350 @@ The platform is now ready for production use with:
 - ✅ Performance optimization
 
 For additional support or customization requirements, please refer to the technical documentation or contact the support team.
+
+## Performance Testing and CI/CD Integration
+
+### Overview
+
+The Digital Twin Platform includes comprehensive performance testing infrastructure that integrates with the production deployment pipeline. This system provides automated performance validation, load testing capabilities, and continuous monitoring to ensure optimal performance in production environments.
+
+### Performance Testing Architecture
+
+#### Integrated Testing Pipeline
+
+The performance testing system complements the production deployment with:
+
+- **Pre-deployment Validation**: Automated performance testing before production releases
+- **Load Testing Infrastructure**: Distributed Locust-based testing with Docker orchestration
+- **Performance Monitoring**: Real-time metrics collection and analysis
+- **CI/CD Integration**: GitHub Actions workflow with automated performance validation
+- **Threshold Validation**: Configurable performance budgets and automated alerts
+
+#### Service Components
+
+**Performance Testing Stack:**
+- **Locust Master**: Distributed load testing coordinator
+- **Locust Workers**: Scalable test execution nodes
+- **Prometheus**: Performance metrics collection
+- **Grafana**: Real-time performance dashboards
+- **Test Services**: Containerized frontend and backend for testing
+
+### CI/CD Pipeline Integration
+
+#### GitHub Actions Workflow
+
+The [`performance-testing.yml`](.github/workflows/performance-testing.yml:1) workflow provides automated performance validation:
+
+```yaml
+name: Performance Testing
+on: [push, pull_request]
+
+jobs:
+  performance-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Docker Compose
+        run: |
+          # Modern Docker Compose compatibility
+          docker compose -f docker-compose.performance.yml up -d
+      
+      - name: Wait for services
+        run: |
+          # Health check validation
+          ./scripts/wait-for-services.sh
+      
+      - name: Run performance tests
+        run: |
+          # Execute load tests with thresholds
+          ./scripts/run-performance-tests.sh --ci-mode
+      
+      - name: Validate performance metrics
+        run: |
+          # Check against performance budgets
+          ./scripts/validate-performance.sh
+```
+
+#### Performance Thresholds
+
+Configurable performance budgets for automated validation:
+
+```bash
+# Performance thresholds
+MAX_RESPONSE_TIME=2000ms      # Maximum API response time
+MIN_SUCCESS_RATE=95%          # Minimum request success rate
+MAX_ERROR_RATE=5%             # Maximum error rate threshold
+MAX_P95_RESPONSE_TIME=3000ms  # 95th percentile response time
+MIN_THROUGHPUT=100rps         # Minimum requests per second
+```
+
+### Docker Compose Performance Testing
+
+#### Modern Docker Compose Compatibility
+
+The performance testing infrastructure supports both legacy and modern Docker Compose installations:
+
+```bash
+# Automatic command detection
+if command -v docker &> /dev/null && docker compose version &> /dev/null 2>&1; then
+    DOCKER_COMPOSE_CMD="docker compose"
+elif command -v docker-compose &> /dev/null; then
+    DOCKER_COMPOSE_CMD="docker-compose"
+else
+    echo "❌ Docker Compose not found"
+    exit 1
+fi
+```
+
+#### Performance Testing Deployment
+
+**Interactive Deployment:**
+```bash
+# Launch interactive performance testing
+./scripts/run-performance-tests.sh
+
+# Menu options:
+# 1. Deploy Full Stack - Complete testing infrastructure
+# 2. Deploy Frontend Only - Lightweight frontend testing
+# 3. View Service Status - Check running services
+# 4. Performance Report - Generate test results
+# 5. Stop Services - Clean shutdown
+```
+
+**Direct Docker Compose:**
+```bash
+# Start performance testing stack
+docker compose -f docker-compose.performance.yml up -d
+
+# Monitor test execution
+docker compose -f docker-compose.performance.yml logs -f locust-master
+
+# Generate performance report
+curl -s http://localhost:8089/stats/requests | jq .
+```
+
+### Performance Monitoring Integration
+
+#### Prometheus Metrics Collection
+
+Integration with production monitoring stack:
+
+```yaml
+# Performance metrics scraping
+scrape_configs:
+  - job_name: 'performance-tests'
+    static_configs:
+      - targets: ['locust-master:8089']
+    scrape_interval: 15s
+    metrics_path: '/stats/prometheus'
+  
+  - job_name: 'test-backend'
+    static_configs:
+      - targets: ['digame-backend-perf:8000']
+    scrape_interval: 30s
+```
+
+#### Grafana Dashboard Integration
+
+Pre-configured dashboards for performance analysis:
+
+- **Load Testing Overview**: Request rates, response times, error rates
+- **Core Web Vitals**: LCP, FID, CLS measurements
+- **System Performance**: CPU, memory, network utilization
+- **Service Health**: Uptime, availability, error tracking
+
+### Pre-Production Validation
+
+#### Automated Performance Gates
+
+Performance validation before production deployment:
+
+```bash
+# Pre-deployment performance check
+./scripts/pre-deployment-check.sh
+
+# Validation steps:
+# 1. Deploy test environment
+# 2. Execute performance tests
+# 3. Validate against thresholds
+# 4. Generate performance report
+# 5. Approve/reject deployment
+```
+
+#### Performance Budget Validation
+
+Automated checks against performance budgets:
+
+```javascript
+// Performance budget configuration
+const performanceBudgets = {
+  "api_response_time": { max: 2000, unit: "ms" },
+  "page_load_time": { max: 3000, unit: "ms" },
+  "error_rate": { max: 5, unit: "%" },
+  "throughput": { min: 100, unit: "rps" },
+  "availability": { min: 99.9, unit: "%" }
+};
+```
+
+### Core Web Vitals Testing
+
+#### Frontend Performance Validation
+
+Automated Core Web Vitals measurement:
+
+```python
+# Frontend performance testing
+class FrontendPerformanceUser(HttpUser):
+    wait_time = between(1, 2)
+    
+    @task
+    def measure_core_web_vitals(self):
+        # Largest Contentful Paint (LCP)
+        # First Input Delay (FID)
+        # Cumulative Layout Shift (CLS)
+        # First Contentful Paint (FCP)
+        # Time to First Byte (TTFB)
+        pass
+```
+
+#### Performance Optimization Validation
+
+Testing performance optimizations:
+
+- **Resource Loading**: Preloading, lazy loading validation
+- **Caching Strategies**: Cache hit rates and performance impact
+- **Bundle Optimization**: JavaScript bundle size and load times
+- **Image Optimization**: WebP conversion and responsive images
+- **Service Worker**: PWA performance and offline capabilities
+
+### Integration with Production Deployment
+
+#### Staging Environment Testing
+
+Performance testing in staging before production:
+
+```bash
+# Staging performance validation
+export ENVIRONMENT=staging
+export API_URL=https://staging-api.digitaltwin.example.com
+export FRONTEND_URL=https://staging.digitaltwin.example.com
+
+# Run comprehensive performance tests
+./scripts/run-performance-tests.sh --environment=staging
+```
+
+#### Production Performance Monitoring
+
+Continuous performance monitoring in production:
+
+```yaml
+# Production monitoring configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: performance-monitoring-config
+data:
+  prometheus.yml: |
+    global:
+      scrape_interval: 15s
+    scrape_configs:
+      - job_name: 'digital-twin-api'
+        kubernetes_sd_configs:
+          - role: pod
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_pod_label_app]
+            action: keep
+            regex: digital-twin-api
+```
+
+### Performance Testing Best Practices
+
+#### Load Testing Strategy
+
+1. **Baseline Testing**: Establish performance baselines
+2. **Stress Testing**: Identify system breaking points
+3. **Spike Testing**: Validate sudden load handling
+4. **Volume Testing**: Test with realistic data volumes
+5. **Endurance Testing**: Long-running stability validation
+
+#### Performance Optimization Workflow
+
+1. **Measure**: Establish current performance metrics
+2. **Analyze**: Identify performance bottlenecks
+3. **Optimize**: Implement performance improvements
+4. **Validate**: Verify optimization effectiveness
+5. **Monitor**: Continuous performance tracking
+
+### Troubleshooting Performance Issues
+
+#### Common Performance Problems
+
+**1. High API Response Times**
+```bash
+# Investigate API performance
+kubectl logs -n digital-twin-platform -l app=digital-twin-api | grep "slow query"
+
+# Check database performance
+kubectl exec -n digital-twin-platform postgresql-0 -- pg_stat_statements
+```
+
+**2. Frontend Performance Issues**
+```bash
+# Analyze Core Web Vitals
+curl -s http://localhost:8089/stats/requests | jq '.stats[] | select(.name | contains("frontend"))'
+
+# Check bundle sizes
+docker compose exec frontend npm run analyze
+```
+
+**3. Memory Leaks**
+```bash
+# Monitor memory usage
+kubectl top pods -n digital-twin-platform --sort-by=memory
+
+# Check for memory leaks
+kubectl exec -n digital-twin-platform <pod-name> -- ps aux | grep node
+```
+
+#### Performance Debugging Tools
+
+```bash
+# Real-time performance monitoring
+docker compose -f docker-compose.performance.yml logs -f prometheus
+
+# Performance profiling
+kubectl exec -n digital-twin-platform <api-pod> -- py-spy top --pid 1
+
+# Database query analysis
+kubectl exec -n digital-twin-platform postgresql-0 -- pg_stat_activity
+```
+
+### Performance Testing Automation
+
+#### Scheduled Performance Tests
+
+Automated performance testing schedule:
+
+```yaml
+# GitHub Actions scheduled testing
+on:
+  schedule:
+    - cron: '0 2 * * *'  # Daily at 2 AM
+    - cron: '0 14 * * 1' # Weekly on Monday at 2 PM
+```
+
+#### Performance Regression Detection
+
+Automated detection of performance regressions:
+
+```bash
+# Performance comparison
+./scripts/compare-performance.sh \
+  --baseline=main \
+  --current=feature-branch \
+  --threshold=10%
+```
+
+This performance testing infrastructure ensures that the Digital Twin Platform maintains optimal performance throughout the development and deployment lifecycle, providing comprehensive validation before production releases and continuous monitoring in production environments.

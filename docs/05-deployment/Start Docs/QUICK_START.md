@@ -147,6 +147,16 @@ docker-compose --profile dual-backend up
 docker-compose --profile dual-backend --profile cache --profile database up
 ```
 
+# Performance tests
+Interactive script usage: 
+```
+./scripts/run-performance-tests.sh
+```
+Direct Docker Compose: 
+```
+docker compose -f docker-compose.performance.yml up -d
+```
+
 ## 🔧 Configuration
 
 ### Database Configuration
@@ -359,3 +369,311 @@ You now have the complete Digame platform running with:
 - 📖 **Full Documentation**: [`docs/05-deployment/Start Docs/START.md`](05-deployment/Start%20Docs/START.md)
 - 🐛 **Troubleshooting**: See the troubleshooting section above
 - 💬 **Support**: Check the issues section or community discussions
+
+## 🚀 Performance Testing & CI/CD Quick Start
+
+### Overview
+
+The Digame platform now includes comprehensive performance testing infrastructure that enhances your development experience with automated performance validation, load testing capabilities, and continuous monitoring. Get started with performance testing in under 2 minutes!
+
+### ⚡ Performance Testing Quick Start (60 seconds)
+
+#### Option 1: Interactive Performance Testing (Recommended)
+
+```bash
+# Launch interactive performance testing menu
+./scripts/run-performance-tests.sh
+
+# Choose from menu:
+# 1. Deploy Full Stack - Complete infrastructure with monitoring
+# 2. Deploy Frontend Only - Lightweight frontend testing  
+# 3. View Service Status - Check running services
+# 4. View Logs - Real-time log monitoring
+# 5. Stop Services - Clean shutdown
+# 6. Performance Report - Generate test results
+```
+
+#### Option 2: Direct Docker Compose
+
+```bash
+# Start performance testing infrastructure
+docker compose -f docker-compose.performance.yml up -d
+
+# Access performance testing interfaces:
+# - Locust Web UI: http://localhost:8089
+# - Prometheus Metrics: http://localhost:9090  
+# - Grafana Dashboards: http://localhost:3001 (admin/admin)
+```
+
+### 🎯 Performance Testing Integration with Development
+
+#### Enhanced Development Workflow
+
+Performance testing integrates seamlessly with your existing development workflow:
+
+```bash
+# Standard development startup
+npm run dev                           # Start development environment
+
+# Launch performance testing (new terminal)
+./scripts/run-performance-tests.sh   # Interactive performance testing
+
+# Access points:
+# Development: http://localhost:3000 (frontend), http://localhost:8001 (backend)
+# Performance: http://localhost:8089 (Locust), http://localhost:9090 (Prometheus)
+```
+
+#### Real-time Performance Validation
+
+Test performance impact of your changes in real-time:
+
+```bash
+# 1. Make code changes in your development environment
+# 2. Performance tests automatically detect changes
+# 3. View real-time metrics in Locust UI: http://localhost:8089
+# 4. Monitor system metrics in Grafana: http://localhost:3001
+```
+
+### 🏗️ Performance Testing Architecture
+
+#### Service Components
+
+The performance testing stack includes:
+
+| Service | URL | Description |
+|---------|-----|-------------|
+| **Locust Master** | http://localhost:8089 | Load testing coordinator with web UI |
+| **Locust Workers** | - | Distributed test execution nodes |
+| **Prometheus** | http://localhost:9090 | Performance metrics collection |
+| **Grafana** | http://localhost:3001 | Real-time dashboards (admin/admin) |
+| **Test Backend** | http://localhost:8000 | Containerized backend for testing |
+| **Test Frontend** | http://localhost:3000 | Containerized frontend for testing |
+
+#### Docker Compose Compatibility
+
+Supports both legacy and modern Docker Compose installations:
+
+```bash
+# Modern Docker Compose (recommended)
+docker compose -f docker-compose.performance.yml up -d
+
+# Legacy Docker Compose (automatic fallback)
+docker-compose -f docker-compose.performance.yml up -d
+
+# Automatic detection in scripts
+./scripts/run-performance-tests.sh  # Detects available command
+```
+
+### 🎯 Core Web Vitals Testing
+
+#### Frontend Performance Metrics
+
+Automated measurement of Core Web Vitals:
+
+- **Largest Contentful Paint (LCP)**: < 2.5s target
+- **First Input Delay (FID)**: < 100ms target  
+- **Cumulative Layout Shift (CLS)**: < 0.1 target
+- **First Contentful Paint (FCP)**: < 1.8s target
+- **Time to First Byte (TTFB)**: < 600ms target
+
+#### Performance Optimization Validation
+
+Test performance optimizations:
+
+```bash
+# Run frontend-only performance tests
+curl -X POST http://localhost:8089/swarm \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "user_count=10&spawn_rate=2&host=http://localhost:3000"
+
+# Monitor Core Web Vitals in real-time
+open http://localhost:8089
+```
+
+### 🔄 CI/CD Integration
+
+#### GitHub Actions Workflow
+
+Automated performance testing in CI/CD pipeline:
+
+```yaml
+# .github/workflows/performance-testing.yml
+name: Performance Testing
+on: [push, pull_request]
+
+jobs:
+  performance-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run Performance Tests
+        run: |
+          docker compose -f docker-compose.performance.yml up -d
+          ./scripts/run-performance-tests.sh --ci-mode
+```
+
+#### Performance Thresholds
+
+Configurable performance budgets:
+
+```bash
+# Default performance thresholds
+MAX_RESPONSE_TIME=2000ms      # Maximum API response time
+MIN_SUCCESS_RATE=95%          # Minimum request success rate  
+MAX_ERROR_RATE=5%             # Maximum error rate
+MAX_P95_RESPONSE_TIME=3000ms  # 95th percentile response time
+MIN_THROUGHPUT=100rps         # Minimum requests per second
+```
+
+### 🛠️ Build Optimization
+
+#### Docker Build Context Optimization
+
+Optimized build process for faster performance testing:
+
+```dockerfile
+# frontend/.dockerignore
+node_modules/
+.next/
+.git/
+*.log
+coverage/
+
+# Build context reduced from 125MB+ to 3.21MB
+```
+
+#### Multi-Stage Docker Builds
+
+Efficient Docker images for performance testing:
+
+```dockerfile
+# Optimized Dockerfile structure
+FROM node:22-alpine AS deps     # Install dependencies
+FROM node:22-alpine AS builder  # Build application  
+FROM node:22-alpine AS runner   # Production runtime
+```
+
+### 🔧 Performance Testing Troubleshooting
+
+#### Quick Fixes
+
+**1. Docker Compose Command Not Found**
+```bash
+# Use modern syntax
+docker compose -f docker-compose.performance.yml up -d
+```
+
+**2. Service Connection Issues**
+```bash
+# Check service health
+docker compose -f docker-compose.performance.yml ps
+curl http://localhost:8000/health  # Backend
+curl http://localhost:3000/api/health  # Frontend
+```
+
+**3. Port Conflicts**
+```bash
+# Check for conflicts
+lsof -i :8089  # Locust
+lsof -i :9090  # Prometheus  
+lsof -i :3001  # Grafana
+
+# Kill conflicting processes
+lsof -ti:8089 | xargs kill -9
+```
+
+#### Performance Testing Validation
+
+```bash
+# Validate complete infrastructure
+./scripts/run-performance-tests.sh
+
+# Check all services
+docker compose -f docker-compose.performance.yml ps
+
+# Generate performance report
+curl -s http://localhost:8089/stats/requests | jq .
+```
+
+### 📊 Performance Monitoring Quick Access
+
+#### Real-time Dashboards
+
+Access comprehensive performance monitoring:
+
+```bash
+# Locust testing interface
+open http://localhost:8089
+
+# Prometheus metrics
+open http://localhost:9090
+
+# Grafana dashboards  
+open http://localhost:3001  # admin/admin
+```
+
+#### Key Metrics to Monitor
+
+- **Request Metrics**: Response times, throughput, error rates
+- **System Metrics**: CPU, memory, network utilization
+- **Core Web Vitals**: LCP, FID, CLS, FCP, TTFB measurements
+- **Service Health**: Uptime, availability, error tracking
+
+### 🎯 Performance Testing Best Practices
+
+#### Quick Testing Strategy
+
+1. **Baseline Testing**: Establish performance baselines before changes
+2. **Feature Testing**: Validate performance impact of new features
+3. **Stress Testing**: Identify system limits and breaking points
+4. **Regression Testing**: Ensure changes don't degrade performance
+
+#### Development Integration
+
+```bash
+# Pre-commit performance check
+./scripts/run-performance-tests.sh --quick
+
+# Feature branch validation  
+./scripts/run-performance-tests.sh --baseline=main --current=feature-branch
+
+# Release validation
+./scripts/run-performance-tests.sh --comprehensive
+```
+
+### 🚀 Enhanced Quick Start Commands
+
+#### Development + Performance Testing
+
+Complete development workflow with performance validation:
+
+```bash
+# Option 1: Sequential startup
+npm run dev                           # Start development
+./scripts/run-performance-tests.sh   # Launch performance testing
+
+# Option 2: Combined startup (if available)
+npm run dev:with-performance         # Development + Performance testing
+
+# Option 3: Docker-based development
+docker compose up                     # Development environment
+docker compose -f docker-compose.performance.yml up -d  # Performance testing
+```
+
+#### Quick Performance Validation
+
+Rapid performance testing for immediate feedback:
+
+```bash
+# Quick frontend performance test
+curl -X POST http://localhost:8089/swarm \
+  -d "user_count=5&spawn_rate=1&host=http://localhost:3000"
+
+# Quick backend performance test  
+curl -X POST http://localhost:8089/swarm \
+  -d "user_count=5&spawn_rate=1&host=http://localhost:8000"
+
+# View results
+open http://localhost:8089
+```
+
+This performance testing infrastructure ensures that your Digame platform maintains optimal performance throughout development, providing immediate feedback on performance impact and comprehensive monitoring capabilities for a superior development experience.

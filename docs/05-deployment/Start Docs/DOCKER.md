@@ -634,3 +634,346 @@ The intelligent cache system demonstrates advanced capabilities that can be inte
 - **Real-time Updates**: WebSocket-based cache monitoring
 
 This dual-backend approach showcases both production-ready enterprise features (Python FastAPI) and cutting-edge intelligent caching capabilities (Node.js), providing a comprehensive platform for digital professional development.
+
+## Performance Testing Infrastructure
+
+### Overview
+
+The Digame platform includes a comprehensive performance testing infrastructure built with Locust, Docker Compose orchestration, and automated CI/CD integration. This system provides distributed load testing, Core Web Vitals monitoring, and automated performance validation.
+
+### Performance Testing Architecture
+
+#### Services Overview
+- **Backend Service** (`digame-backend-perf`): FastAPI application on port 8000
+- **Frontend Service** (`digame-frontend-perf`): Next.js application on port 3000
+- **Locust Master** (`locust-master`): Load testing coordinator on port 8089
+- **Locust Workers** (`locust-worker-1`, `locust-worker-2`): Distributed test execution
+- **Prometheus** (`prometheus`): Metrics collection on port 9090
+- **Grafana** (`grafana`): Performance dashboards on port 3001
+
+#### Docker Compose Configuration
+
+The performance testing uses [`docker-compose.performance.yml`](docker-compose.performance.yml:1) for complete service orchestration:
+
+```yaml
+# Key features:
+- Health checks for all services
+- Proper service dependencies
+- Docker networking with digame-perf-network
+- Volume persistence for monitoring data
+- Environment-based configuration
+```
+
+### Docker Compose Compatibility
+
+#### Modern Docker Compose Syntax
+
+The infrastructure supports both legacy and modern Docker Compose installations:
+
+**Legacy (docker-compose):**
+```bash
+docker-compose -f docker-compose.performance.yml up -d
+```
+
+**Modern (docker compose):**
+```bash
+docker compose -f docker-compose.performance.yml up -d
+```
+
+#### Automatic Command Detection
+
+The [`scripts/run-performance-tests.sh`](scripts/run-performance-tests.sh:1) script automatically detects available Docker Compose commands:
+
+```bash
+# Automatic detection logic
+if command -v docker &> /dev/null && docker compose version &> /dev/null 2>&1; then
+    DOCKER_COMPOSE_CMD="docker compose"
+elif command -v docker-compose &> /dev/null; then
+    DOCKER_COMPOSE_CMD="docker-compose"
+else
+    echo "❌ Neither 'docker compose' nor 'docker-compose' found"
+    exit 1
+fi
+```
+
+### Performance Testing Usage
+
+#### Interactive Deployment
+
+Use the interactive script for guided deployment:
+
+```bash
+./scripts/run-performance-tests.sh
+```
+
+**Menu Options:**
+1. **Deploy Full Stack** - Complete infrastructure with monitoring
+2. **Deploy Frontend Only** - Lightweight frontend-only testing
+3. **View Service Status** - Check running services
+4. **View Logs** - Real-time log monitoring
+5. **Stop Services** - Clean shutdown
+6. **Performance Report** - Generate test results
+
+#### Direct Docker Compose
+
+For direct control over the infrastructure:
+
+```bash
+# Start all services
+docker compose -f docker-compose.performance.yml up -d
+
+# Check service health
+docker compose -f docker-compose.performance.yml ps
+
+# View logs
+docker compose -f docker-compose.performance.yml logs -f
+
+# Stop services
+docker compose -f docker-compose.performance.yml down
+```
+
+#### Service Access Points
+
+- **Locust Web UI**: http://localhost:8089
+- **Prometheus Metrics**: http://localhost:9090
+- **Grafana Dashboards**: http://localhost:3001 (admin/admin)
+- **Frontend Application**: http://localhost:3000
+- **Backend API**: http://localhost:8000
+
+### Health Check System
+
+#### Service Health Validation
+
+All services include comprehensive health checks:
+
+```bash
+# Backend health check
+curl -s http://localhost:8000/health | jq .
+
+# Frontend health check  
+curl -s http://localhost:3000/api/health | jq .
+
+# Locust master health
+curl -s http://localhost:8089/stats/requests | jq .
+```
+
+#### Health Check Endpoints
+
+**Backend Health Response:**
+```json
+{
+  "status": "healthy",
+  "service": "digame-api",
+  "version": "1.0.0",
+  "timestamp": "2025-07-12T13:06:00.000Z"
+}
+```
+
+**Frontend Health Response:**
+```json
+{
+  "status": "ok",
+  "timestamp": "2025-07-12T13:06:00.000Z",
+  "uptime": 120.5
+}
+```
+
+### Performance Testing Configurations
+
+#### Full-Stack Testing
+
+Tests both frontend and backend services with realistic user scenarios:
+
+```python
+# tests/performance/locustfile.py
+class WebsiteUser(HttpUser):
+    wait_time = between(1, 3)
+    
+    def on_start(self):
+        # User authentication and setup
+        
+    @task(3)
+    def view_homepage(self):
+        # Frontend page load testing
+        
+    @task(2)
+    def api_health_check(self):
+        # Backend API testing
+```
+
+#### Frontend-Only Testing
+
+Lightweight testing focused on frontend performance:
+
+```python
+# tests/performance/frontend-only.py
+class FrontendUser(HttpUser):
+    wait_time = between(1, 2)
+    
+    @task
+    def load_pages(self):
+        # Core Web Vitals testing
+        # Page load performance
+        # Resource loading optimization
+```
+
+### CI/CD Integration
+
+#### GitHub Actions Workflow
+
+Automated performance testing in CI/CD pipeline:
+
+```yaml
+# .github/workflows/performance-testing.yml
+name: Performance Testing
+on: [push, pull_request]
+
+jobs:
+  performance-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run Performance Tests
+        run: |
+          docker compose -f docker-compose.performance.yml up -d
+          # Wait for services and run tests
+```
+
+#### Performance Thresholds
+
+Automated validation with configurable thresholds:
+
+```bash
+# Default thresholds
+MAX_RESPONSE_TIME=2000ms
+MIN_SUCCESS_RATE=95%
+MAX_ERROR_RATE=5%
+```
+
+### Build Optimization
+
+#### Docker Build Context Optimization
+
+Reduced build context size from 125MB+ to 3.21MB:
+
+```dockerfile
+# frontend/.dockerignore
+node_modules/
+.next/
+.git/
+*.log
+coverage/
+.nyc_output/
+```
+
+#### Multi-Stage Builds
+
+Optimized Docker images for production:
+
+```dockerfile
+# Frontend Dockerfile
+FROM node:22-alpine AS deps
+# Install dependencies
+
+FROM node:22-alpine AS builder  
+# Build application
+
+FROM node:22-alpine AS runner
+# Production runtime
+```
+
+### Monitoring and Analytics
+
+#### Prometheus Metrics Collection
+
+Comprehensive metrics collection:
+
+```yaml
+# tests/performance/prometheus.yml
+scrape_configs:
+  - job_name: 'locust'
+    static_configs:
+      - targets: ['locust-master:8089']
+  - job_name: 'backend'
+    static_configs:
+      - targets: ['digame-backend-perf:8000']
+```
+
+#### Grafana Dashboards
+
+Pre-configured dashboards for:
+- **Load Testing Metrics**: Request rates, response times, error rates
+- **System Performance**: CPU, memory, network usage
+- **Core Web Vitals**: LCP, FID, CLS measurements
+- **Service Health**: Uptime, availability, error tracking
+
+### Troubleshooting Performance Testing
+
+#### Common Issues and Solutions
+
+**1. Docker Compose Command Not Found**
+```bash
+# Error: docker-compose: command not found
+# Solution: Use modern Docker Compose syntax
+docker compose -f docker-compose.performance.yml up -d
+```
+
+**2. Service Connection Refused**
+```bash
+# Error: ConnectionRefusedError
+# Solution: Verify service health and networking
+docker compose -f docker-compose.performance.yml ps
+curl http://localhost:8000/health
+```
+
+**3. Build Context Too Large**
+```bash
+# Error: Build context size exceeds limits
+# Solution: Verify .dockerignore is properly configured
+ls -la frontend/.dockerignore
+```
+
+**4. Port Conflicts**
+```bash
+# Error: Port already in use
+# Solution: Check for conflicting services
+lsof -i :8089  # Locust
+lsof -i :9090  # Prometheus
+lsof -i :3001  # Grafana
+```
+
+#### Performance Testing Validation
+
+```bash
+# Validate complete infrastructure
+./scripts/run-performance-tests.sh
+
+# Check service status
+docker compose -f docker-compose.performance.yml ps --format "table {{.Name}}\t{{.Status}}\t{{.Ports}}"
+
+# Monitor real-time metrics
+docker compose -f docker-compose.performance.yml logs -f locust-master
+
+# Generate performance report
+curl -s http://localhost:8089/stats/requests | jq '.stats[] | {name: .name, requests: .num_requests, failures: .num_failures, avg_response_time: .avg_response_time}'
+```
+
+### Performance Testing Best Practices
+
+#### Load Testing Strategy
+
+1. **Baseline Testing**: Establish performance baselines
+2. **Stress Testing**: Identify breaking points
+3. **Spike Testing**: Validate sudden load handling
+4. **Volume Testing**: Test with realistic data volumes
+5. **Endurance Testing**: Long-running stability tests
+
+#### Monitoring Strategy
+
+1. **Real-time Monitoring**: Live performance dashboards
+2. **Alerting**: Automated threshold notifications
+3. **Historical Analysis**: Performance trend tracking
+4. **Capacity Planning**: Resource utilization forecasting
+5. **Performance Budgets**: Automated performance validation
+
+This performance testing infrastructure provides enterprise-grade load testing capabilities with comprehensive monitoring, automated CI/CD integration, and modern Docker Compose compatibility for the Digame platform.
