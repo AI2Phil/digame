@@ -31,6 +31,7 @@ class UserConnection(Base):
     # Constraints
     __table_args__ = (
         UniqueConstraint('user_id', 'connected_user_id', name='unique_user_connection'),
+        {'extend_existing': True}
     )
 
 
@@ -56,12 +57,14 @@ class PeerMatch(Base):
     # Constraints
     __table_args__ = (
         UniqueConstraint('user_id', 'matched_user_id', name='unique_peer_match'),
+        {'extend_existing': True}
     )
 
 
 class SocialMetrics(Base):
     """Social networking metrics and analytics for users"""
     __tablename__ = "social_metrics"
+    __table_args__ = {'extend_existing': True}
     
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, unique=True)
@@ -100,4 +103,5 @@ class UserSkill(Base):
     # Constraints
     __table_args__ = (
         UniqueConstraint('user_id', 'skill_name', name='unique_user_skill'),
+        {'extend_existing': True}
     )
