@@ -31,6 +31,42 @@ This directory contains utility scripts for the Digame platform, including devel
 | [`simple_git.py`](#simple_gitpy) | Basic Git operations | `python simple_git.py status` | ✅ Active |
 | [`git_remote.py`](#git_remotepy) | Remote repository management | `python git_remote.py push` | ✅ Active |
 | [`git_status_summary.py`](#git_status_summarypy) | Repository status and guidance | `python git_status_summary.py` | ✅ Active |
+| [`fix_table_definitions.py`](#fix_table_definitionspy) | Database table definition fixes | `python fix_table_definitions.py` | ✅ Active |
+| [`test_api_keys.py`](#test_api_keyspy) | API key testing and validation | `python test_api_keys.py` | ✅ Active |
+| [`activate_digame.sh`](#activate_digamesh) | Environment activation script | `./activate_digame.sh` | ✅ Active |
+| [`docker-cleanup.sh`](#docker-cleanupsh) | Docker storage cleanup and optimization | `./docker-cleanup.sh` | ✅ Active |
+| [`system-monitor.sh`](#system-monitorsh) | System monitoring and health checks | `./system-monitor.sh` | ✅ Active |
+| [`run-performance-tests.sh`](#run-performance-testssh) | Performance testing automation | `./run-performance-tests.sh` | ✅ Active |
+| [`health-checks.sh`](#health-checkssh) | Infrastructure health monitoring | `./health-checks.sh` | ✅ Active |
+| [`validate_pipeline.sh`](#validate_pipelinesh) | CI/CD pipeline validation | `./validate_pipeline.sh` | ✅ Active |
+| [`deploy.sh`](#deploysh) | General deployment automation | `./deploy.sh` | ✅ Active |
+| [`deploy-environment.sh`](#deploy-environmentsh) | Environment-specific deployment | `./deploy-environment.sh` | ✅ Active |
+| [`deploy-production.sh`](#deploy-productionsh) | Production deployment automation | `./deploy-production.sh` | ✅ Active |
+| [`production_deployment.py`](#production_deploymentpy) | Python production deployment tool | `python production_deployment.py` | ✅ Active |
+| [`production_backup.py`](#production_backuppy) | Production backup automation | `python production_backup.py` | ✅ Active |
+| [`production_environment.py`](#production_environmentpy) | Production environment management | `python production_environment.py` | ✅ Active |
+| [`production_health_monitor.py`](#production_health_monitorpy) | Production health monitoring | `python production_health_monitor.py` | ✅ Active |
+| [`setup_dev_env.py`](#setup_dev_envpy) | Development environment setup | `python setup_dev_env.py` | ✅ Active |
+| [`setup_platform_owner.py`](#setup_platform_ownerpy) | Platform Owner setup automation | `python setup_platform_owner.py` | ✅ Active |
+| [`setup_aco_integration.py`](#setup_aco_integrationpy) | ACO integration setup | `python setup_aco_integration.py` | ✅ Active |
+| [`documentation_automation.py`](#documentation_automationpy) | Documentation generation automation | `python documentation_automation.py` | ✅ Active |
+| [`integration_helper.py`](#integration_helperpy) | Integration testing helper | `python integration_helper.py` | ✅ Active |
+| [`validate_nextjs_routing.js`](#validate_nextjs_routingjs) | Next.js routing validation | `node validate_nextjs_routing.js` | ✅ Active |
+| [`upgrade_fastapi_python313.py`](#upgrade_fastapi_python313py) | FastAPI Python 3.13 upgrade | `python upgrade_fastapi_python313.py` | ✅ Active |
+| [`verify_and_cleanup_fixes.py`](#verify_and_cleanup_fixespy) | Fix verification and cleanup | `python verify_and_cleanup_fixes.py` | ✅ Active |
+| [`fix_circular_imports.py`](#fix_circular_importspy) | Circular import resolution | `python fix_circular_imports.py` | ✅ Active |
+| [`fix_dependencies_and_imports.py`](#fix_dependencies_and_importspy) | Dependency and import fixes | `python fix_dependencies_and_imports.py` | ✅ Active |
+| [`fix_import_paths.py`](#fix_import_pathspy) | Import path corrections | `python fix_import_paths.py` | ✅ Active |
+| [`fix_pyrefly_errors.py`](#fix_pyrefly_errorspy) | Pyrefly error resolution | `python fix_pyrefly_errors.py` | ✅ Active |
+| [`fix_remaining_test_errors.py`](#fix_remaining_test_errorspy) | Test error resolution | `python fix_remaining_test_errors.py` | ✅ Active |
+| [`seed_test_data.py`](#seed_test_datapy) | Test data seeding | `python seed_test_data.py` | ✅ Active |
+| [`seed_demo_users.py`](#seed_demo_userspy) | Demo user data seeding | `python seed_demo_users.py` | ✅ Active |
+| [`seed_activities.py`](#seed_activitiespy) | Activity data seeding | `python seed_activities.py` | ✅ Active |
+| [`seed_analytics_data.py`](#seed_analytics_datapy) | Analytics data seeding | `python seed_analytics_data.py` | ✅ Active |
+| [`seed_behavioral_data.py`](#seed_behavioral_datapy) | Behavioral data seeding | `python seed_behavioral_data.py` | ✅ Active |
+| [`seed_aiml_data.py`](#seed_aiml_datapy) | AI/ML data seeding | `python seed_aiml_data.py` | ✅ Active |
+| [`seed_aiml_data_simple.py`](#seed_aiml_data_simplepy) | Simple AI/ML data seeding | `python seed_aiml_data_simple.py` | ✅ Active |
+| [`simple_seed.py`](#simple_seedpy) | Simple data seeding utility | `python simple_seed.py` | ✅ Active |
 | [`data-migration/migrate_mock_to_production.py`](#data-migrationmigrate_mock_to_productionpy) | Production migration tool | `python data-migration/migrate_mock_to_production.py` | ✅ Active |
 | [`data-migration/validate_data_integrity.py`](#data-migrationvalidate_data_integritypy) | Data integrity validation | `python data-migration/validate_data_integrity.py` | ✅ Active |
 
@@ -288,7 +324,325 @@ python digame/scripts/test_migrations.py --docker
 
 ---
 
+### `fix_table_definitions.py`
+**Purpose**: Database table definition fixes and schema corrections
+
+**Description**:
+- Fixes database table definition issues and schema inconsistencies
+- Corrects column types, constraints, and relationships
+- Handles table structure updates and migrations
+- Provides safe schema modification with backup and rollback capabilities
+
+**Usage**:
+```bash
+# Fix table definitions with automatic detection
+python scripts/fix_table_definitions.py
+
+# Fix specific table definitions
+python scripts/fix_table_definitions.py --table users
+
+# Dry run to see what would be fixed
+python scripts/fix_table_definitions.py --dry-run
+```
+
+**Features**:
+- ✅ **Schema Analysis**: Analyzes current table structures for issues
+- ✅ **Automatic Fixes**: Applies common table definition corrections
+- ✅ **Backup Creation**: Creates backups before making changes
+- ✅ **Rollback Support**: Provides rollback capabilities for failed fixes
+- ✅ **Constraint Validation**: Ensures foreign key and constraint integrity
+- ✅ **Migration Integration**: Works with Alembic migration system
+
+**Common Fixes Applied**:
+- Column type corrections (VARCHAR lengths, data types)
+- Missing NOT NULL constraints
+- Foreign key relationship fixes
+- Index creation for performance optimization
+- Default value corrections
+
+---
+
+### `test_api_keys.py`
+**Purpose**: API key testing and validation for external service integrations
+
+**Description**:
+- Tests API key functionality and connectivity to external services
+- Validates API key permissions and access levels
+- Provides comprehensive API endpoint testing
+- Ensures proper authentication and authorization workflows
+
+**Usage**:
+```bash
+# Test all configured API keys
+python scripts/test_api_keys.py
+
+# Test specific API service
+python scripts/test_api_keys.py --service openai
+
+# Test with verbose output
+python scripts/test_api_keys.py --verbose
+
+# Test API keys from specific environment
+python scripts/test_api_keys.py --env production
+```
+
+**Features**:
+- ✅ **Multi-Service Support**: Tests various API services (OpenAI, GitHub, etc.)
+- ✅ **Permission Validation**: Checks API key permissions and access levels
+- ✅ **Connectivity Testing**: Verifies network connectivity and response times
+- ✅ **Rate Limit Checking**: Tests API rate limits and quota usage
+- ✅ **Error Handling**: Provides detailed error reporting and troubleshooting
+- ✅ **Environment Support**: Tests keys across different environments
+
+**Supported API Services**:
+- OpenAI API (GPT models, embeddings)
+- GitHub API (repository access, actions)
+- Database APIs (connection testing)
+- Custom internal APIs
+
+**Test Categories**:
+- Authentication validation
+- Permission scope verification
+- Rate limit compliance
+- Response format validation
+- Error handling verification
+
+---
+
+## 🌟 Environment & Activation Scripts
+
+### `activate_digame.sh`
+**Purpose**: Environment activation script for Digame platform development
+
+**Description**:
+- Activates the Digame development environment with proper PATH and environment variables
+- Sets up Python virtual environment and Node.js environment
+- Configures database connections and API keys
+- Provides consistent development environment across different systems
+
+**Usage**:
+```bash
+# Activate Digame environment
+source ./scripts/activate_digame.sh
+
+# Or run directly
+./scripts/activate_digame.sh
+```
+
+**Features**:
+- ✅ **Environment Variables**: Sets up all required environment variables
+- ✅ **Virtual Environment**: Activates Python virtual environment if available
+- ✅ **Path Configuration**: Adds necessary paths to system PATH
+- ✅ **Database Setup**: Configures database connection strings
+- ✅ **API Configuration**: Sets up API keys and endpoints
+- ✅ **Cross-Platform**: Works on macOS, Linux, and Windows (WSL)
+
+**Environment Variables Set**:
+- `DIGAME_ENV` - Environment type (development/staging/production)
+- `DATABASE_URL` - Database connection string
+- `API_BASE_URL` - Base URL for API endpoints
+- `NODE_ENV` - Node.js environment setting
+
+---
+
 ## 🐳 Docker & Infrastructure Scripts
+
+### `docker-cleanup.sh`
+**Purpose**: Docker storage cleanup and optimization for development environments
+
+**Description**:
+- Comprehensive Docker storage cleanup to reclaim disk space
+- Removes unused containers, images, volumes, and networks
+- Provides safe cleanup with confirmation prompts
+- Includes system monitoring and storage analysis
+
+**Usage**:
+```bash
+# Interactive cleanup with prompts
+./scripts/docker-cleanup.sh
+
+# Aggressive cleanup (removes everything unused)
+./scripts/docker-cleanup.sh --aggressive
+
+# Dry run to see what would be cleaned
+./scripts/docker-cleanup.sh --dry-run
+```
+
+**Features**:
+- ✅ **Storage Analysis**: Shows current Docker storage usage
+- ✅ **Safe Cleanup**: Removes only unused Docker resources
+- ✅ **Confirmation Prompts**: Interactive confirmation for destructive operations
+- ✅ **Comprehensive Cleanup**: Handles containers, images, volumes, networks
+- ✅ **Space Reporting**: Shows space reclaimed after cleanup
+- ✅ **Build Cache Cleanup**: Removes Docker build cache
+
+**Cleanup Categories**:
+- Stopped containers and unused images
+- Dangling and unused volumes
+- Unused networks and build cache
+- System-wide Docker cleanup
+
+---
+
+### `system-monitor.sh`
+**Purpose**: System monitoring and health checks for development and production environments
+
+**Description**:
+- Monitors system resources (CPU, memory, disk, network)
+- Provides real-time health status of services and containers
+- Generates alerts for resource thresholds
+- Includes Docker container monitoring and log analysis
+
+**Usage**:
+```bash
+# Start continuous monitoring
+./scripts/system-monitor.sh
+
+# One-time health check
+./scripts/system-monitor.sh --check
+
+# Monitor with alerts
+./scripts/system-monitor.sh --alerts
+
+# Generate monitoring report
+./scripts/system-monitor.sh --report
+```
+
+**Features**:
+- ✅ **Resource Monitoring**: CPU, memory, disk, and network usage
+- ✅ **Service Health**: Monitors Docker containers and services
+- ✅ **Threshold Alerts**: Configurable alerts for resource limits
+- ✅ **Log Analysis**: Analyzes application and system logs
+- ✅ **Performance Metrics**: Collects and reports performance data
+- ✅ **Historical Data**: Maintains monitoring history and trends
+
+**Monitoring Categories**:
+- System resources and performance
+- Docker container health and logs
+- Database connectivity and performance
+- Network connectivity and latency
+
+---
+
+### `run-performance-tests.sh`
+**Purpose**: Performance testing automation for load testing and benchmarking
+
+**Description**:
+- Automated performance testing using Locust and other testing tools
+- Provides comprehensive load testing scenarios
+- Generates performance reports and metrics
+- Supports multiple testing environments and configurations
+
+**Usage**:
+```bash
+# Run basic performance tests
+./scripts/run-performance-tests.sh
+
+# Run with specific user count and duration
+./scripts/run-performance-tests.sh --users 100 --duration 300
+
+# Run against specific environment
+./scripts/run-performance-tests.sh --env staging
+
+# Generate detailed reports
+./scripts/run-performance-tests.sh --report
+```
+
+**Features**:
+- ✅ **Load Testing**: Simulates multiple concurrent users
+- ✅ **Performance Metrics**: Measures response times, throughput, error rates
+- ✅ **Scenario Testing**: Tests various user workflows and API endpoints
+- ✅ **Report Generation**: Creates detailed performance reports
+- ✅ **Environment Support**: Tests against different environments
+- ✅ **Threshold Validation**: Validates performance against defined thresholds
+
+**Test Scenarios**:
+- User authentication and registration
+- API endpoint performance
+- Database query performance
+- Frontend page load times
+
+---
+
+### `health-checks.sh`
+**Purpose**: Infrastructure health monitoring and service validation
+
+**Description**:
+- Comprehensive health checks for all system components
+- Validates service availability and performance
+- Provides detailed health status reports
+- Supports automated monitoring and alerting
+
+**Usage**:
+```bash
+# Run all health checks
+./scripts/health-checks.sh
+
+# Check specific services
+./scripts/health-checks.sh --service database
+
+# Continuous monitoring mode
+./scripts/health-checks.sh --monitor
+
+# Generate health report
+./scripts/health-checks.sh --report
+```
+
+**Features**:
+- ✅ **Service Validation**: Checks database, API, frontend availability
+- ✅ **Performance Monitoring**: Measures response times and resource usage
+- ✅ **Dependency Checking**: Validates external service dependencies
+- ✅ **Alert Generation**: Sends alerts for failed health checks
+- ✅ **Historical Tracking**: Maintains health check history
+- ✅ **Dashboard Integration**: Provides data for monitoring dashboards
+
+**Health Check Categories**:
+- Database connectivity and performance
+- API endpoint availability and response times
+- Frontend application accessibility
+- External service dependencies
+
+---
+
+### `validate_pipeline.sh`
+**Purpose**: CI/CD pipeline validation and testing
+
+**Description**:
+- Validates CI/CD pipeline configuration and functionality
+- Tests pipeline stages and deployment processes
+- Provides comprehensive pipeline health assessment
+- Ensures pipeline reliability and performance
+
+**Usage**:
+```bash
+# Validate complete pipeline
+./scripts/validate_pipeline.sh
+
+# Validate specific pipeline stage
+./scripts/validate_pipeline.sh --stage build
+
+# Dry run validation
+./scripts/validate_pipeline.sh --dry-run
+
+# Generate validation report
+./scripts/validate_pipeline.sh --report
+```
+
+**Features**:
+- ✅ **Pipeline Testing**: Tests all pipeline stages and workflows
+- ✅ **Configuration Validation**: Validates pipeline configuration files
+- ✅ **Dependency Checking**: Ensures all pipeline dependencies are available
+- ✅ **Performance Analysis**: Measures pipeline execution times
+- ✅ **Error Detection**: Identifies potential pipeline issues
+- ✅ **Best Practice Validation**: Ensures pipeline follows best practices
+
+**Validation Categories**:
+- Build process validation
+- Test execution verification
+- Deployment process testing
+- Security and compliance checks
+
+---
 
 ### `entrypoint.sh`
 **Purpose**: Docker container entrypoint script for application startup
@@ -331,6 +685,242 @@ python digame/scripts/test_migrations.py --docker
 ENTRYPOINT ["/app/scripts/entrypoint.sh"]
 CMD ["prod"]
 ```
+
+---
+
+## 🚀 Deployment & Production Scripts
+
+### `deploy.sh`
+**Purpose**: General deployment automation for multiple environments
+
+**Description**:
+- Automated deployment script supporting multiple environments
+- Handles build, test, and deployment processes
+- Provides rollback capabilities and deployment validation
+- Supports both staging and production deployments
+
+**Usage**:
+```bash
+# Deploy to staging environment
+./scripts/deploy.sh staging
+
+# Deploy to production environment
+./scripts/deploy.sh production
+
+# Deploy with specific version
+./scripts/deploy.sh production --version v1.2.3
+
+# Dry run deployment
+./scripts/deploy.sh staging --dry-run
+```
+
+**Features**:
+- ✅ **Multi-Environment**: Supports staging, production, and custom environments
+- ✅ **Build Automation**: Automated build and packaging processes
+- ✅ **Health Validation**: Post-deployment health checks and validation
+- ✅ **Rollback Support**: Automatic rollback on deployment failures
+- ✅ **Version Management**: Supports versioned deployments
+- ✅ **Notification Integration**: Sends deployment notifications
+
+---
+
+### `deploy-environment.sh`
+**Purpose**: Environment-specific deployment with configuration management
+
+**Description**:
+- Environment-specific deployment script with configuration management
+- Handles environment variables and configuration files
+- Provides environment validation and setup
+- Supports multiple deployment strategies
+
+**Usage**:
+```bash
+# Deploy to specific environment
+./scripts/deploy-environment.sh development
+
+# Deploy with custom configuration
+./scripts/deploy-environment.sh staging --config custom.env
+
+# Validate environment before deployment
+./scripts/deploy-environment.sh production --validate-only
+```
+
+**Features**:
+- ✅ **Environment Configuration**: Manages environment-specific settings
+- ✅ **Configuration Validation**: Validates configuration before deployment
+- ✅ **Secret Management**: Handles sensitive configuration securely
+- ✅ **Service Orchestration**: Coordinates multiple service deployments
+- ✅ **Environment Isolation**: Ensures proper environment separation
+
+---
+
+### `deploy-production.sh`
+**Purpose**: Production deployment automation with enhanced safety measures
+
+**Description**:
+- Production-specific deployment with enhanced safety and validation
+- Includes comprehensive pre-deployment checks and validations
+- Provides blue-green deployment and zero-downtime deployment options
+- Includes automated backup and recovery procedures
+
+**Usage**:
+```bash
+# Standard production deployment
+./scripts/deploy-production.sh
+
+# Blue-green deployment
+./scripts/deploy-production.sh --strategy blue-green
+
+# Deploy with maintenance mode
+./scripts/deploy-production.sh --maintenance
+
+# Emergency rollback
+./scripts/deploy-production.sh --rollback
+```
+
+**Features**:
+- ✅ **Safety Checks**: Comprehensive pre-deployment validation
+- ✅ **Zero Downtime**: Blue-green and rolling deployment strategies
+- ✅ **Backup Integration**: Automated backup before deployment
+- ✅ **Monitoring Integration**: Real-time deployment monitoring
+- ✅ **Emergency Procedures**: Quick rollback and recovery options
+- ✅ **Compliance Logging**: Detailed audit logs for compliance
+
+---
+
+### `production_deployment.py`
+**Purpose**: Python-based production deployment tool with advanced features
+
+**Description**:
+- Advanced Python deployment tool with database migration support
+- Provides comprehensive deployment orchestration and monitoring
+- Includes automated testing and validation during deployment
+- Supports complex deployment workflows and dependencies
+
+**Usage**:
+```bash
+# Standard production deployment
+python scripts/production_deployment.py
+
+# Deploy with migrations
+python scripts/production_deployment.py --with-migrations
+
+# Deploy specific version
+python scripts/production_deployment.py --version v2.1.0
+
+# Validate deployment readiness
+python scripts/production_deployment.py --validate
+```
+
+**Features**:
+- ✅ **Migration Support**: Automated database migration handling
+- ✅ **Dependency Management**: Handles service dependencies and ordering
+- ✅ **Real-time Monitoring**: Live deployment progress and health monitoring
+- ✅ **Automated Testing**: Runs deployment tests and validations
+- ✅ **Configuration Management**: Advanced configuration and secret handling
+- ✅ **Notification System**: Comprehensive deployment notifications
+
+---
+
+### `production_backup.py`
+**Purpose**: Production backup automation and management
+
+**Description**:
+- Automated backup system for production environments
+- Supports database, file system, and configuration backups
+- Provides backup scheduling, retention, and restoration capabilities
+- Includes backup validation and integrity checking
+
+**Usage**:
+```bash
+# Create full production backup
+python scripts/production_backup.py
+
+# Database-only backup
+python scripts/production_backup.py --database-only
+
+# Restore from backup
+python scripts/production_backup.py --restore backup_20250106_120000
+
+# Validate backup integrity
+python scripts/production_backup.py --validate
+```
+
+**Features**:
+- ✅ **Comprehensive Backups**: Database, files, and configuration backups
+- ✅ **Scheduled Backups**: Automated backup scheduling and execution
+- ✅ **Retention Management**: Automated backup cleanup and retention policies
+- ✅ **Integrity Validation**: Backup verification and integrity checking
+- ✅ **Restoration Tools**: Easy backup restoration and recovery
+- ✅ **Compression**: Efficient backup compression and storage
+
+---
+
+### `production_environment.py`
+**Purpose**: Production environment management and configuration
+
+**Description**:
+- Production environment setup and configuration management
+- Handles environment provisioning and infrastructure setup
+- Provides environment monitoring and maintenance capabilities
+- Supports infrastructure as code and automated provisioning
+
+**Usage**:
+```bash
+# Setup production environment
+python scripts/production_environment.py setup
+
+# Validate environment configuration
+python scripts/production_environment.py validate
+
+# Update environment settings
+python scripts/production_environment.py update
+
+# Monitor environment health
+python scripts/production_environment.py monitor
+```
+
+**Features**:
+- ✅ **Environment Provisioning**: Automated infrastructure setup
+- ✅ **Configuration Management**: Centralized configuration handling
+- ✅ **Health Monitoring**: Continuous environment health monitoring
+- ✅ **Scaling Support**: Automated scaling and resource management
+- ✅ **Security Configuration**: Security hardening and compliance
+- ✅ **Disaster Recovery**: Backup and recovery procedures
+
+---
+
+### `production_health_monitor.py`
+**Purpose**: Production health monitoring and alerting system
+
+**Description**:
+- Comprehensive production health monitoring and alerting
+- Monitors application performance, resource usage, and service availability
+- Provides real-time alerts and notification systems
+- Includes performance analytics and trend analysis
+
+**Usage**:
+```bash
+# Start health monitoring
+python scripts/production_health_monitor.py
+
+# Check current health status
+python scripts/production_health_monitor.py --status
+
+# Generate health report
+python scripts/production_health_monitor.py --report
+
+# Configure alert thresholds
+python scripts/production_health_monitor.py --configure
+```
+
+**Features**:
+- ✅ **Real-time Monitoring**: Continuous health and performance monitoring
+- ✅ **Alert System**: Configurable alerts and notification channels
+- ✅ **Performance Analytics**: Detailed performance metrics and analysis
+- ✅ **Trend Analysis**: Historical data analysis and trend identification
+- ✅ **Dashboard Integration**: Integration with monitoring dashboards
+- ✅ **Incident Management**: Automated incident detection and response
 
 ---
 
@@ -424,6 +1014,726 @@ python scripts/test_team_endpoints.py
 - `/api/teams/{id}/performance` - Get team performance metrics
 - `/api/teams/{id}/skill-gaps` - Get team skill gaps
 - `/api/teams/{id}/workflows` - Get team workflows
+
+---
+
+## ⚙️ Setup & Development Environment Scripts
+
+### `setup_dev_env.py`
+**Purpose**: Development environment setup and configuration automation
+
+**Description**:
+- Automated setup of complete development environment
+- Installs and configures all necessary dependencies and tools
+- Sets up database, creates initial data, and configures services
+- Provides consistent development environment across different systems
+
+**Usage**:
+```bash
+# Setup complete development environment
+python scripts/setup_dev_env.py
+
+# Setup with specific configuration
+python scripts/setup_dev_env.py --config development
+
+# Reset development environment
+python scripts/setup_dev_env.py --reset
+
+# Validate development environment
+python scripts/setup_dev_env.py --validate
+```
+
+**Features**:
+- ✅ **Dependency Installation**: Installs Python, Node.js, and system dependencies
+- ✅ **Database Setup**: Creates and configures development database
+- ✅ **Service Configuration**: Configures all required services and APIs
+- ✅ **Environment Validation**: Validates setup and configuration
+- ✅ **Cross-Platform**: Works on macOS, Linux, and Windows
+- ✅ **Version Management**: Manages tool and dependency versions
+
+---
+
+### `setup_platform_owner.py`
+**Purpose**: Platform Owner setup automation with comprehensive configuration
+
+**Description**:
+- Automated Platform Owner account creation and configuration
+- Sets up complete Platform Owner environment with permissions
+- Configures team management and administrative capabilities
+- Provides comprehensive onboarding and setup validation
+
+**Usage**:
+```bash
+# Setup Platform Owner account
+python scripts/setup_platform_owner.py
+
+# Setup with custom configuration
+python scripts/setup_platform_owner.py --config custom.json
+
+# Validate Platform Owner setup
+python scripts/setup_platform_owner.py --validate
+
+# Reset Platform Owner configuration
+python scripts/setup_platform_owner.py --reset
+```
+
+**Features**:
+- ✅ **Account Creation**: Creates Platform Owner account with proper permissions
+- ✅ **Environment Setup**: Configures Platform Owner environment and tools
+- ✅ **Permission Management**: Sets up administrative permissions and access
+- ✅ **Team Configuration**: Configures team management capabilities
+- ✅ **Onboarding Automation**: Automated onboarding process completion
+- ✅ **Validation Tools**: Comprehensive setup validation and testing
+
+---
+
+### `setup_aco_integration.py`
+**Purpose**: ACO (Ant Colony Optimization) integration setup and configuration
+
+**Description**:
+- Sets up ACO integration for optimization algorithms
+- Configures ACO parameters and optimization settings
+- Provides ACO algorithm testing and validation
+- Integrates ACO with existing platform optimization features
+
+**Usage**:
+```bash
+# Setup ACO integration
+python scripts/setup_aco_integration.py
+
+# Configure ACO parameters
+python scripts/setup_aco_integration.py --configure
+
+# Test ACO algorithms
+python scripts/setup_aco_integration.py --test
+
+# Validate ACO integration
+python scripts/setup_aco_integration.py --validate
+```
+
+**Features**:
+- ✅ **Algorithm Integration**: Integrates ACO algorithms with platform
+- ✅ **Parameter Configuration**: Configures ACO algorithm parameters
+- ✅ **Performance Testing**: Tests ACO algorithm performance
+- ✅ **Optimization Validation**: Validates optimization results
+- ✅ **Integration Testing**: Tests integration with existing systems
+- ✅ **Documentation**: Provides ACO integration documentation
+
+---
+
+### `documentation_automation.py`
+**Purpose**: Documentation generation automation and maintenance
+
+**Description**:
+- Automated documentation generation from code and configuration
+- Maintains up-to-date API documentation and user guides
+- Generates deployment and operational documentation
+- Provides documentation validation and quality checks
+
+**Usage**:
+```bash
+# Generate all documentation
+python scripts/documentation_automation.py
+
+# Generate API documentation only
+python scripts/documentation_automation.py --api-only
+
+# Update existing documentation
+python scripts/documentation_automation.py --update
+
+# Validate documentation quality
+python scripts/documentation_automation.py --validate
+```
+
+**Features**:
+- ✅ **API Documentation**: Automated API documentation generation
+- ✅ **Code Documentation**: Generates documentation from code comments
+- ✅ **User Guides**: Creates and maintains user documentation
+- ✅ **Deployment Docs**: Generates deployment and operational guides
+- ✅ **Quality Validation**: Validates documentation completeness and quality
+- ✅ **Multi-Format**: Supports multiple documentation formats
+
+---
+
+### `integration_helper.py`
+**Purpose**: Integration testing helper and automation tool
+
+**Description**:
+- Provides comprehensive integration testing capabilities
+- Automates integration test setup and execution
+- Validates service integrations and API connectivity
+- Supports end-to-end integration testing workflows
+
+**Usage**:
+```bash
+# Run all integration tests
+python scripts/integration_helper.py
+
+# Test specific integration
+python scripts/integration_helper.py --service database
+
+# Setup integration test environment
+python scripts/integration_helper.py --setup
+
+# Generate integration test report
+python scripts/integration_helper.py --report
+```
+
+**Features**:
+- ✅ **Service Integration**: Tests integration between services
+- ✅ **API Testing**: Comprehensive API integration testing
+- ✅ **Database Integration**: Tests database connectivity and operations
+- ✅ **End-to-End Testing**: Complete workflow integration testing
+- ✅ **Test Automation**: Automated test execution and reporting
+- ✅ **Environment Management**: Integration test environment setup
+
+---
+
+### `validate_nextjs_routing.js`
+**Purpose**: Next.js routing validation and testing tool
+
+**Description**:
+- Validates Next.js application routing configuration
+- Tests route accessibility and functionality
+- Provides routing performance analysis
+- Ensures proper routing setup and navigation
+
+**Usage**:
+```bash
+# Validate all routes
+node scripts/validate_nextjs_routing.js
+
+# Test specific route
+node scripts/validate_nextjs_routing.js --route /dashboard
+
+# Performance analysis
+node scripts/validate_nextjs_routing.js --performance
+
+# Generate routing report
+node scripts/validate_nextjs_routing.js --report
+```
+
+**Features**:
+- ✅ **Route Validation**: Validates all application routes
+- ✅ **Accessibility Testing**: Tests route accessibility and navigation
+- ✅ **Performance Analysis**: Analyzes routing performance
+- ✅ **Configuration Validation**: Validates routing configuration
+- ✅ **Error Detection**: Identifies routing issues and errors
+- ✅ **Report Generation**: Generates comprehensive routing reports
+
+---
+
+## 🔧 Code Quality & Fix Scripts
+
+### `upgrade_fastapi_python313.py`
+**Purpose**: FastAPI Python 3.13 upgrade automation and compatibility fixes
+
+**Description**:
+- Automates FastAPI upgrade to Python 3.13 compatibility
+- Fixes compatibility issues and deprecated features
+- Updates dependencies and configuration for Python 3.13
+- Provides comprehensive upgrade validation and testing
+
+**Usage**:
+```bash
+# Upgrade FastAPI to Python 3.13
+python scripts/upgrade_fastapi_python313.py
+
+# Dry run upgrade analysis
+python scripts/upgrade_fastapi_python313.py --dry-run
+
+# Validate upgrade compatibility
+python scripts/upgrade_fastapi_python313.py --validate
+
+# Rollback upgrade changes
+python scripts/upgrade_fastapi_python313.py --rollback
+```
+
+**Features**:
+- ✅ **Compatibility Fixes**: Fixes Python 3.13 compatibility issues
+- ✅ **Dependency Updates**: Updates all dependencies for Python 3.13
+- ✅ **Configuration Updates**: Updates configuration for new Python version
+- ✅ **Validation Testing**: Comprehensive upgrade validation
+- ✅ **Rollback Support**: Safe rollback of upgrade changes
+- ✅ **Migration Guide**: Provides upgrade migration guidance
+
+---
+
+### `verify_and_cleanup_fixes.py`
+**Purpose**: Fix verification and cleanup automation tool
+
+**Description**:
+- Verifies applied fixes and ensures proper implementation
+- Cleans up temporary files and artifacts from fix processes
+- Validates fix effectiveness and system stability
+- Provides comprehensive fix reporting and documentation
+
+**Usage**:
+```bash
+# Verify all applied fixes
+python scripts/verify_and_cleanup_fixes.py
+
+# Cleanup fix artifacts
+python scripts/verify_and_cleanup_fixes.py --cleanup
+
+# Generate fix report
+python scripts/verify_and_cleanup_fixes.py --report
+
+# Validate system stability
+python scripts/verify_and_cleanup_fixes.py --validate
+```
+
+**Features**:
+- ✅ **Fix Verification**: Verifies effectiveness of applied fixes
+- ✅ **Cleanup Automation**: Cleans up temporary files and artifacts
+- ✅ **Stability Testing**: Tests system stability after fixes
+- ✅ **Report Generation**: Generates comprehensive fix reports
+- ✅ **Rollback Detection**: Identifies fixes that need rollback
+- ✅ **Documentation**: Documents fix history and outcomes
+
+---
+
+### `fix_circular_imports.py`
+**Purpose**: Circular import detection and resolution tool
+
+**Description**:
+- Detects circular import dependencies in Python code
+- Provides automated resolution strategies for circular imports
+- Analyzes import structure and suggests refactoring
+- Ensures clean import architecture and dependency management
+
+**Usage**:
+```bash
+# Detect circular imports
+python scripts/fix_circular_imports.py
+
+# Fix detected circular imports
+python scripts/fix_circular_imports.py --fix
+
+# Analyze import structure
+python scripts/fix_circular_imports.py --analyze
+
+# Generate import dependency report
+python scripts/fix_circular_imports.py --report
+```
+
+**Features**:
+- ✅ **Circular Import Detection**: Identifies circular import patterns
+- ✅ **Automated Resolution**: Provides automated fix strategies
+- ✅ **Import Analysis**: Analyzes complete import structure
+- ✅ **Refactoring Suggestions**: Suggests code refactoring approaches
+- ✅ **Dependency Mapping**: Creates import dependency maps
+- ✅ **Architecture Validation**: Validates import architecture
+
+---
+
+### `fix_dependencies_and_imports.py`
+**Purpose**: Comprehensive dependency and import management tool
+
+**Description**:
+- Manages Python dependencies and import statements
+- Fixes import errors and dependency conflicts
+- Updates import statements and dependency versions
+- Provides comprehensive dependency analysis and management
+
+**Usage**:
+```bash
+# Fix all dependency and import issues
+python scripts/fix_dependencies_and_imports.py
+
+# Update dependencies only
+python scripts/fix_dependencies_and_imports.py --dependencies
+
+# Fix import statements only
+python scripts/fix_dependencies_and_imports.py --imports
+
+# Analyze dependency conflicts
+python scripts/fix_dependencies_and_imports.py --analyze
+```
+
+**Features**:
+- ✅ **Dependency Management**: Manages Python package dependencies
+- ✅ **Import Fixing**: Fixes import statement errors
+- ✅ **Conflict Resolution**: Resolves dependency conflicts
+- ✅ **Version Management**: Manages dependency versions
+- ✅ **Compatibility Checking**: Checks dependency compatibility
+- ✅ **Automated Updates**: Automated dependency updates
+
+---
+
+### `fix_import_paths.py`
+**Purpose**: Import path correction and standardization tool
+
+**Description**:
+- Corrects import paths and ensures proper module resolution
+- Standardizes import path formats across the codebase
+- Fixes relative and absolute import path issues
+- Provides import path validation and optimization
+
+**Usage**:
+```bash
+# Fix all import paths
+python scripts/fix_import_paths.py
+
+# Fix relative import paths
+python scripts/fix_import_paths.py --relative
+
+# Fix absolute import paths
+python scripts/fix_import_paths.py --absolute
+
+# Validate import paths
+python scripts/fix_import_paths.py --validate
+```
+
+**Features**:
+- ✅ **Path Correction**: Corrects incorrect import paths
+- ✅ **Standardization**: Standardizes import path formats
+- ✅ **Relative/Absolute**: Handles both relative and absolute imports
+- ✅ **Module Resolution**: Ensures proper module resolution
+- ✅ **Path Validation**: Validates import path correctness
+- ✅ **Optimization**: Optimizes import path structure
+
+---
+
+### `fix_pyrefly_errors.py`
+**Purpose**: Pyrefly-specific error resolution and compatibility fixes
+
+**Description**:
+- Fixes Pyrefly-specific errors and compatibility issues
+- Resolves Pyrefly integration problems
+- Updates Pyrefly configuration and dependencies
+- Provides Pyrefly troubleshooting and error resolution
+
+**Usage**:
+```bash
+# Fix all Pyrefly errors
+python scripts/fix_pyrefly_errors.py
+
+# Fix specific error type
+python scripts/fix_pyrefly_errors.py --error-type config
+
+# Validate Pyrefly integration
+python scripts/fix_pyrefly_errors.py --validate
+
+# Update Pyrefly configuration
+python scripts/fix_pyrefly_errors.py --update-config
+```
+
+**Features**:
+- ✅ **Error Resolution**: Fixes Pyrefly-specific errors
+- ✅ **Integration Fixes**: Resolves Pyrefly integration issues
+- ✅ **Configuration Updates**: Updates Pyrefly configuration
+- ✅ **Compatibility Fixes**: Ensures Pyrefly compatibility
+- ✅ **Troubleshooting**: Provides Pyrefly troubleshooting tools
+- ✅ **Validation**: Validates Pyrefly setup and configuration
+
+---
+
+### `fix_remaining_test_errors.py`
+**Purpose**: Test error resolution and test suite maintenance tool
+
+**Description**:
+- Identifies and fixes remaining test errors and failures
+- Provides comprehensive test suite maintenance and optimization
+- Fixes test configuration and setup issues
+- Ensures test suite reliability and consistency
+
+**Usage**:
+```bash
+# Fix all remaining test errors
+python scripts/fix_remaining_test_errors.py
+
+# Fix specific test category
+python scripts/fix_remaining_test_errors.py --category unit
+
+# Analyze test failures
+python scripts/fix_remaining_test_errors.py --analyze
+
+# Optimize test suite
+python scripts/fix_remaining_test_errors.py --optimize
+```
+
+**Features**:
+- ✅ **Error Resolution**: Fixes test errors and failures
+- ✅ **Test Maintenance**: Maintains and optimizes test suite
+- ✅ **Configuration Fixes**: Fixes test configuration issues
+- ✅ **Reliability Improvement**: Improves test reliability
+- ✅ **Performance Optimization**: Optimizes test execution
+- ✅ **Coverage Analysis**: Analyzes test coverage and gaps
+
+---
+
+## 📊 Data Seeding & Management Scripts
+
+### `seed_test_data.py`
+**Purpose**: Comprehensive test data seeding for development and testing
+
+**Description**:
+- Seeds comprehensive test data for development and testing environments
+- Provides realistic test data scenarios and edge cases
+- Supports multiple data categories and relationships
+- Ensures consistent test data across environments
+
+**Usage**:
+```bash
+# Seed all test data
+python scripts/seed_test_data.py
+
+# Seed specific data category
+python scripts/seed_test_data.py --category users
+
+# Reset and reseed data
+python scripts/seed_test_data.py --reset
+
+# Validate seeded data
+python scripts/seed_test_data.py --validate
+```
+
+**Features**:
+- ✅ **Comprehensive Data**: Seeds all necessary test data categories
+- ✅ **Realistic Scenarios**: Provides realistic test data scenarios
+- ✅ **Relationship Management**: Maintains data relationships and integrity
+- ✅ **Edge Case Coverage**: Includes edge cases and boundary conditions
+- ✅ **Environment Consistency**: Ensures consistent data across environments
+- ✅ **Data Validation**: Validates seeded data integrity
+
+---
+
+### `seed_demo_users.py`
+**Purpose**: Demo user data seeding for demonstrations and testing
+
+**Description**:
+- Seeds demo user accounts for demonstrations and presentations
+- Creates users with various roles and permission levels
+- Provides realistic user profiles and activity data
+- Supports demo scenario setup and configuration
+
+**Usage**:
+```bash
+# Seed demo users
+python scripts/seed_demo_users.py
+
+# Seed specific user roles
+python scripts/seed_demo_users.py --roles admin,user
+
+# Create demo scenarios
+python scripts/seed_demo_users.py --scenarios
+
+# Reset demo users
+python scripts/seed_demo_users.py --reset
+```
+
+**Features**:
+- ✅ **Demo User Creation**: Creates realistic demo user accounts
+- ✅ **Role Management**: Creates users with various roles and permissions
+- ✅ **Profile Data**: Provides realistic user profiles and information
+- ✅ **Activity Simulation**: Simulates user activity and interactions
+- ✅ **Scenario Support**: Supports demo scenario setup
+- ✅ **Reset Capability**: Easy reset and recreation of demo data
+
+---
+
+### `seed_activities.py`
+**Purpose**: Activity data seeding for user engagement and analytics
+
+**Description**:
+- Seeds user activity data for engagement analytics
+- Creates realistic activity patterns and user interactions
+- Provides activity data for testing analytics and reporting
+- Supports various activity types and engagement metrics
+
+**Usage**:
+```bash
+# Seed activity data
+python scripts/seed_activities.py
+
+# Seed specific activity types
+python scripts/seed_activities.py --types login,interaction
+
+# Generate activity patterns
+python scripts/seed_activities.py --patterns
+
+# Validate activity data
+python scripts/seed_activities.py --validate
+```
+
+**Features**:
+- ✅ **Activity Generation**: Generates realistic user activity data
+- ✅ **Pattern Creation**: Creates realistic activity patterns
+- ✅ **Analytics Support**: Provides data for analytics and reporting
+- ✅ **Engagement Metrics**: Supports engagement metric calculation
+- ✅ **Time-based Data**: Creates time-based activity sequences
+- ✅ **User Interaction**: Simulates user interactions and behaviors
+
+---
+
+### `seed_analytics_data.py`
+**Purpose**: Analytics data seeding for reporting and business intelligence
+
+**Description**:
+- Seeds analytics data for reporting and business intelligence testing
+- Creates metrics, KPIs, and performance data
+- Provides historical data for trend analysis
+- Supports dashboard and reporting system testing
+
+**Usage**:
+```bash
+# Seed analytics data
+python scripts/seed_analytics_data.py
+
+# Seed specific metrics
+python scripts/seed_analytics_data.py --metrics performance,usage
+
+# Generate historical data
+python scripts/seed_analytics_data.py --historical
+
+# Create dashboard data
+python scripts/seed_analytics_data.py --dashboard
+```
+
+**Features**:
+- ✅ **Metrics Generation**: Generates business metrics and KPIs
+- ✅ **Historical Data**: Creates historical data for trend analysis
+- ✅ **Dashboard Support**: Provides data for dashboard testing
+- ✅ **Performance Metrics**: Creates performance and usage metrics
+- ✅ **Trend Simulation**: Simulates data trends and patterns
+- ✅ **BI Testing**: Supports business intelligence system testing
+
+---
+
+### `seed_behavioral_data.py`
+**Purpose**: Behavioral data seeding for AI/ML model training and testing
+
+**Description**:
+- Seeds behavioral data for AI/ML model training and validation
+- Creates user behavior patterns and interaction data
+- Provides data for behavioral analysis and prediction models
+- Supports machine learning algorithm testing and validation
+
+**Usage**:
+```bash
+# Seed behavioral data
+python scripts/seed_behavioral_data.py
+
+# Seed specific behavior types
+python scripts/seed_behavioral_data.py --types navigation,interaction
+
+# Generate behavior patterns
+python scripts/seed_behavioral_data.py --patterns
+
+# Create ML training data
+python scripts/seed_behavioral_data.py --ml-training
+```
+
+**Features**:
+- ✅ **Behavior Simulation**: Simulates realistic user behaviors
+- ✅ **Pattern Generation**: Creates behavioral patterns and sequences
+- ✅ **ML Data Support**: Provides data for machine learning training
+- ✅ **Prediction Testing**: Supports behavioral prediction model testing
+- ✅ **Analysis Support**: Enables behavioral analysis and insights
+- ✅ **Model Validation**: Supports AI/ML model validation
+
+---
+
+### `seed_aiml_data.py`
+**Purpose**: Comprehensive AI/ML data seeding for model training and testing
+
+**Description**:
+- Seeds comprehensive AI/ML training and testing data
+- Creates datasets for various machine learning algorithms
+- Provides labeled data for supervised learning models
+- Supports deep learning and neural network training data
+
+**Usage**:
+```bash
+# Seed AI/ML data
+python scripts/seed_aiml_data.py
+
+# Seed specific model data
+python scripts/seed_aiml_data.py --model classification
+
+# Generate training datasets
+python scripts/seed_aiml_data.py --training
+
+# Create validation data
+python scripts/seed_aiml_data.py --validation
+```
+
+**Features**:
+- ✅ **Dataset Creation**: Creates comprehensive ML datasets
+- ✅ **Labeled Data**: Provides labeled data for supervised learning
+- ✅ **Model Support**: Supports various ML model types
+- ✅ **Training/Validation**: Creates training and validation datasets
+- ✅ **Feature Engineering**: Supports feature engineering and selection
+- ✅ **Algorithm Testing**: Enables ML algorithm testing and validation
+
+---
+
+### `seed_aiml_data_simple.py`
+**Purpose**: Simple AI/ML data seeding for basic model testing
+
+**Description**:
+- Provides simple AI/ML data seeding for basic model testing
+- Creates lightweight datasets for quick model validation
+- Supports basic machine learning algorithm testing
+- Provides simple data for proof-of-concept development
+
+**Usage**:
+```bash
+# Seed simple AI/ML data
+python scripts/seed_aiml_data_simple.py
+
+# Create basic classification data
+python scripts/seed_aiml_data_simple.py --classification
+
+# Generate regression data
+python scripts/seed_aiml_data_simple.py --regression
+
+# Create clustering data
+python scripts/seed_aiml_data_simple.py --clustering
+```
+
+**Features**:
+- ✅ **Simple Datasets**: Creates simple, lightweight datasets
+- ✅ **Quick Testing**: Enables quick model testing and validation
+- ✅ **Basic Algorithms**: Supports basic ML algorithm testing
+- ✅ **Proof of Concept**: Supports POC development and testing
+- ✅ **Educational Use**: Suitable for learning and educational purposes
+- ✅ **Fast Generation**: Quick data generation for rapid prototyping
+
+---
+
+### `simple_seed.py`
+**Purpose**: Simple data seeding utility for basic development needs
+
+**Description**:
+- Provides simple data seeding for basic development and testing
+- Creates minimal viable data for application functionality
+- Supports quick setup of development environments
+- Provides essential data for basic application testing
+
+**Usage**:
+```bash
+# Simple data seeding
+python scripts/simple_seed.py
+
+# Seed minimal data
+python scripts/simple_seed.py --minimal
+
+# Reset and reseed
+python scripts/simple_seed.py --reset
+
+# Validate seeded data
+python scripts/simple_seed.py --validate
+```
+
+**Features**:
+- ✅ **Simple Setup**: Quick and simple data seeding
+- ✅ **Minimal Data**: Creates minimal viable data sets
+- ✅ **Fast Execution**: Quick execution for rapid development
+- ✅ **Basic Testing**: Supports basic application testing
+- ✅ **Development Focus**: Optimized for development environments
+- ✅ **Easy Reset**: Simple data reset and recreation
 
 ---
 
@@ -1158,6 +2468,181 @@ python scripts/fix_platform_owner_onboarding.py
 python scripts/test_team_endpoints.py
 ```
 
+### **Database Schema Management Workflow**
+```bash
+# 1. Check current schema for issues
+python scripts/check_db_schema.py
+
+# 2. Fix table definition issues
+python scripts/fix_table_definitions.py --dry-run
+python scripts/fix_table_definitions.py
+
+# 3. Test migrations after fixes
+python scripts/test_migrations.py
+
+# 4. Validate data integrity
+python scripts/data-migration/validate_data_integrity.py
+```
+
+### **API Integration Testing Workflow**
+```bash
+# 1. Test all API keys and services
+python scripts/test_api_keys.py
+
+# 2. Test specific API service
+python scripts/test_api_keys.py --service openai
+
+# 3. Test team collaboration endpoints
+python scripts/test_team_endpoints.py
+
+# 4. Run comprehensive API validation
+python scripts/test_api_keys.py --verbose
+```
+
+### **Complete Development Environment Setup Workflow**
+```bash
+# 1. Activate Digame environment
+source ./scripts/activate_digame.sh
+
+# 2. Setup development environment
+python scripts/setup_dev_env.py
+
+# 3. Setup Platform Owner
+python scripts/setup_platform_owner.py
+
+# 4. Seed test data
+python scripts/seed_test_data.py
+
+# 5. Start development environment
+./scripts/start-dev.sh
+
+# 6. Validate setup
+python scripts/integration_helper.py --validate
+```
+
+### **Production Deployment Workflow**
+```bash
+# 1. Validate pipeline before deployment
+./scripts/validate_pipeline.sh
+
+# 2. Run health checks
+./scripts/health-checks.sh
+
+# 3. Create production backup
+python scripts/production_backup.py
+
+# 4. Deploy to production
+./scripts/deploy-production.sh
+
+# 5. Monitor deployment health
+python scripts/production_health_monitor.py
+
+# 6. Validate deployment
+python scripts/production_environment.py validate
+```
+
+### **Performance Testing and Monitoring Workflow**
+```bash
+# 1. Run performance tests
+./scripts/run-performance-tests.sh
+
+# 2. Monitor system resources
+./scripts/system-monitor.sh --check
+
+# 3. Check infrastructure health
+./scripts/health-checks.sh
+
+# 4. Generate performance report
+./scripts/run-performance-tests.sh --report
+
+# 5. Monitor production health
+python scripts/production_health_monitor.py --status
+```
+
+### **Code Quality and Fix Workflow**
+```bash
+# 1. Fix circular imports
+python scripts/fix_circular_imports.py
+
+# 2. Fix dependencies and imports
+python scripts/fix_dependencies_and_imports.py
+
+# 3. Fix import paths
+python scripts/fix_import_paths.py
+
+# 4. Fix remaining test errors
+python scripts/fix_remaining_test_errors.py
+
+# 5. Verify and cleanup fixes
+python scripts/verify_and_cleanup_fixes.py
+
+# 6. Validate Next.js routing
+node scripts/validate_nextjs_routing.js
+```
+
+### **Data Seeding and Management Workflow**
+```bash
+# 1. Seed basic test data
+python scripts/simple_seed.py
+
+# 2. Seed demo users
+python scripts/seed_demo_users.py
+
+# 3. Seed activity data
+python scripts/seed_activities.py
+
+# 4. Seed analytics data
+python scripts/seed_analytics_data.py
+
+# 5. Seed AI/ML data
+python scripts/seed_aiml_data_simple.py
+
+# 6. Validate all seeded data
+python scripts/seed_test_data.py --validate
+```
+
+### **Docker and Infrastructure Management Workflow**
+```bash
+# 1. Clean up Docker storage
+./scripts/docker-cleanup.sh
+
+# 2. Monitor system resources
+./scripts/system-monitor.sh
+
+# 3. Run health checks
+./scripts/health-checks.sh
+
+# 4. Deploy environment
+./scripts/deploy-environment.sh staging
+
+# 5. Validate deployment
+./scripts/validate_pipeline.sh
+
+# 6. Monitor production health
+python scripts/production_health_monitor.py
+```
+
+### **Documentation and Integration Workflow**
+```bash
+# 1. Generate documentation
+python scripts/documentation_automation.py
+
+# 2. Run integration tests
+python scripts/integration_helper.py
+
+# 3. Validate Next.js routing
+node scripts/validate_nextjs_routing.js
+
+# 4. Setup ACO integration
+python scripts/setup_aco_integration.py
+
+# 5. Upgrade FastAPI to Python 3.13
+python scripts/upgrade_fastapi_python313.py --validate
+
+# 6. Verify all fixes and cleanup
+python scripts/verify_and_cleanup_fixes.py
+```
+
 ### **Git Repository Setup**
 ```bash
 # 1. Initialize repository
@@ -1316,6 +2801,24 @@ python digame/scripts/git-setup.py config 'Your Name' 'your.email@example.com'
 ---
 
 ## 📝 Recent Updates
+
+**January 6, 2025**: Completed comprehensive script documentation and organization:
+- Added detailed documentation for 34 additional scripts including environment, deployment, setup, code quality, and data seeding scripts
+- Documented environment scripts: `activate_digame.sh`, `docker-cleanup.sh`, `system-monitor.sh`, `run-performance-tests.sh`, `health-checks.sh`, `validate_pipeline.sh`
+- Documented deployment scripts: `deploy.sh`, `deploy-environment.sh`, `deploy-production.sh`, `production_deployment.py`, `production_backup.py`, `production_environment.py`, `production_health_monitor.py`
+- Documented setup scripts: `setup_dev_env.py`, `setup_platform_owner.py`, `setup_aco_integration.py`, `documentation_automation.py`, `integration_helper.py`, `validate_nextjs_routing.js`
+- Documented code quality scripts: `upgrade_fastapi_python313.py`, `verify_and_cleanup_fixes.py`, `fix_circular_imports.py`, `fix_dependencies_and_imports.py`, `fix_import_paths.py`, `fix_pyrefly_errors.py`, `fix_remaining_test_errors.py`
+- Documented data seeding scripts: `seed_test_data.py`, `seed_demo_users.py`, `seed_activities.py`, `seed_analytics_data.py`, `seed_behavioral_data.py`, `seed_aiml_data.py`, `seed_aiml_data_simple.py`, `simple_seed.py`
+- Added 8 new comprehensive workflow sections covering complete development setup, production deployment, performance testing, code quality, data management, Docker infrastructure, and documentation workflows
+- Enhanced script organization table with all 70+ scripts now properly categorized and documented
+- Provided complete usage examples, features, and technical details for all newly documented scripts
+
+**January 6, 2025**: Moved additional utility scripts from root to `/scripts/` directory:
+- Moved `fix_table_definitions.py` - Database table definition fixes and schema corrections
+- Moved `test_api_keys.py` - API key testing and validation for external service integrations
+- Added comprehensive documentation for database schema management and API testing scripts
+- Updated common use cases to include database schema management and API integration testing workflows
+- Enhanced script organization with additional utility scripts for better project maintenance
 
 **January 6, 2025**: Moved development and frontend scripts from root to `/scripts/` directory:
 - Moved `start-dev.sh` - Interactive development environment startup script

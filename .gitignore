@@ -356,7 +356,10 @@ playwright-report/
 *.gif
 *.webp
 *.svg
-*.md
+test-results/*.md
+playwright-report/*.md
+test-failed-*.md
+error-context.md
 *.json
 *.xml
 *.html
