@@ -12,8 +12,8 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision: str = 'add_user_profiles_and_enhanced_rbac'
-down_revision: Union[str, None] = 'add_missing_user_columns'
+revision: str = 'add_profiles_rbac'
+down_revision: Union[str, None] = 'add_user_cols'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
