@@ -225,6 +225,7 @@ class User(Base):
 
 class UserProfile(Base):
     __tablename__ = "user_profiles" # Changed table name to plural
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer(), primary_key=True, index=True)
     user_id = Column(Integer(), ForeignKey("users.id"), unique=True, nullable=False)
