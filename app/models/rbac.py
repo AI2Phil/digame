@@ -21,6 +21,7 @@ role_permissions_table = Table('role_permissions', Base.metadata,
 
 class Role(Base):
     __tablename__ = "roles"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer(), primary_key=True, index=True)
     name = Column(String(), unique=True, index=True, nullable=False)
@@ -51,6 +52,7 @@ class Role(Base):
 
 class Permission(Base):
     __tablename__ = "permissions"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer(), primary_key=True, index=True)
     name = Column(String(), unique=True, index=True, nullable=False) # e.g., "view_own_activity_logs"
@@ -101,6 +103,7 @@ class UserRole(Base):
     # Unique constraint: user can have role only once per tenant
     __table_args__ = (
         UniqueConstraint('user_id', 'role_id', 'tenant_id', name='unique_user_role_tenant'),
+        {'extend_existing': True}
     )
 
     def __repr__(self):

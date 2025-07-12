@@ -117,7 +117,7 @@ class PredictiveModel(Base):
     is_active = Column(Boolean, default=True)
     
     # Relationships
-    predictions = relationship("ModelPrediction", back_populates="model")
+    predictions = relationship("ModelPrediction", back_populates="predictive_model")
     
     __table_args__ = (
         Index('idx_predictive_models_type_status', 'model_type', 'status'),

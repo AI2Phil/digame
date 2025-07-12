@@ -8,6 +8,10 @@ from .user import User # For establishing relationship
 
 class Activity(Base):
     __tablename__ = "digital_activities" # As per problem description context
+    __table_args__ = (
+        Index('ix_digital_activities_user_id_timestamp', 'user_id', 'timestamp'),
+        {'extend_existing': True}
+    )
 
     id = Column(Integer(), primary_key=True, index=True, autoincrement=True)
     
@@ -35,9 +39,6 @@ class Activity(Base):
         cascade="all, delete-orphan"
     )
 
-    __table_args__ = (
-        Index('ix_digital_activities_user_id_timestamp', 'user_id', 'timestamp'),
-    )
 
     def __repr__(self):
         return f"<Activity(id={self.id}, user_id={self.user_id}, type='{self.activity_type}', time='{self.timestamp}')>"
