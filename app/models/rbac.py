@@ -79,7 +79,11 @@ class UserRole(Base):
     Enhanced UserRole model for tenant-aware role assignments
     Replaces the simple many-to-many table approach
     """
-    __tablename__ = "user_roles_enhanced"
+    __tablename__ = "user_role_assignments"
+    __table_args__ = (
+        UniqueConstraint('user_id', 'role_id', 'tenant_id', name='unique_user_role_tenant'),
+        {'extend_existing': True}
+    )
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
@@ -102,11 +106,6 @@ class UserRole(Base):
     tenant = relationship("Tenant", back_populates="user_roles")
     assigner = relationship("User", foreign_keys=[assigned_by])
     
-    # Unique constraint: user can have role only once per tenant
-    __table_args__ = (
-        UniqueConstraint('user_id', 'role_id', 'tenant_id', name='unique_user_role_tenant'),
-        {'extend_existing': True}
-    )
 
     def __repr__(self):
         return f"<UserRole(id={self.id}, user_id={self.user_id}, role_id={self.role_id}, tenant_id={self.tenant_id})>"

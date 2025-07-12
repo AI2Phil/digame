@@ -87,7 +87,6 @@ __all__ = [
     "BehavioralModel", # Added behavioral models
     "BehavioralPattern",
     "UserSetting", # Add UserSetting to __all__
-    "Notification", # Add Notification to __all__
     "WorkflowTemplate",
     "WorkflowInstance",
     "WorkflowStepExecution",

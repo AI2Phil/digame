@@ -10,6 +10,10 @@ import os
 # Database URL - using SQLite for development, can be changed to PostgreSQL for production
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./digame.db")
 
+# For PostgreSQL production, use the correct user from docker-compose
+if "postgresql" in DATABASE_URL and "root" in DATABASE_URL:
+    DATABASE_URL = DATABASE_URL.replace("root", "digame_user")
+
 # Create engine with appropriate settings
 if DATABASE_URL.startswith("sqlite"):
     engine = create_engine(

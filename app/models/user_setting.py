@@ -6,6 +6,7 @@ from app.database import Base  # Import Base from user.py
 
 class UserSetting(Base):
     __tablename__ = 'user_settings'
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey('users.id'), unique=True, index=True)
