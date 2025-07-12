@@ -55,6 +55,7 @@ from .digital_twin import (
     SimulationResult, TwinInteraction, ActivityStream, TwinKnowledge, TwinStatus
 ) # Added Digital Twin models
 from .guest_onboarding import GuestOnboardingProgress, DigitalTwinProfile, EmailVerification # Added guest onboarding models
+from .onboarding_persistence import UserOnboardingProgress # Added user onboarding progress model
 from .collaboration_models import (
     Workspace, WorkspaceMember, Channel, Message, MessageReaction,
     UserPresence, CollaborationSession, MessageAttachment,
@@ -169,6 +170,7 @@ __all__ = [
     "GuestOnboardingProgress",  # Added guest onboarding models
     "DigitalTwinProfile",
     "EmailVerification",
+    "UserOnboardingProgress",   # Added user onboarding progress model
     "Workspace",              # Added real-time collaboration models
     "WorkspaceMember",
     "Channel",

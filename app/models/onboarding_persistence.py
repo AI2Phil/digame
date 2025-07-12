@@ -14,6 +14,7 @@ class UserOnboardingProgress(Base):
     Persistent storage for user onboarding progress and preferences
     """
     __tablename__ = "user_onboarding_progress"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer(), primary_key=True, index=True)
     user_id = Column(Integer(), ForeignKey("users.id"), unique=True, nullable=False, index=True)
@@ -74,6 +75,7 @@ class OnboardingAnalytics(Base):
     Analytics and metrics for onboarding performance
     """
     __tablename__ = "onboarding_analytics"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer(), primary_key=True, index=True)
     user_id = Column(Integer(), ForeignKey("users.id"), nullable=False, index=True)
@@ -132,6 +134,7 @@ class OnboardingMetrics(Base):
     Aggregated onboarding metrics and KPIs
     """
     __tablename__ = "onboarding_metrics"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer(), primary_key=True, index=True)
     
@@ -218,6 +221,7 @@ class OnboardingFeedback(Base):
     User feedback and satisfaction data for onboarding
     """
     __tablename__ = "onboarding_feedback"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer(), primary_key=True, index=True)
     user_id = Column(Integer(), ForeignKey("users.id"), nullable=False, index=True)

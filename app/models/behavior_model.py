@@ -12,6 +12,7 @@ class BehavioralModel(Base):
     This includes clustering models and their parameters.
     """
     __tablename__ = "behavioral_models"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer(), primary_key=True, index=True, autoincrement=True)
     user_id = Column(Integer(), ForeignKey("users.id"), nullable=False, index=True)
@@ -75,6 +76,7 @@ class BehavioralPattern(Base):
 
     __table_args__ = (
         Index('ix_behavioral_patterns_model_id_pattern_label', 'model_id', 'pattern_label'),
+        {'extend_existing': True}
     )
     
     def __repr__(self):
