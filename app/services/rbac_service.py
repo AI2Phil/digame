@@ -402,7 +402,7 @@ def user_has_permission(user, permission_name: str, tenant_id: Optional[int] = N
         return False
 
 
-def get_user_roles(user, tenant_id: Optional[int] = None) -> List[str]:
+def get_user_roles(user, tenant_id: Optional[int] = None) -> set:
     """
     Backward compatibility function for getting user roles
     
@@ -411,25 +411,29 @@ def get_user_roles(user, tenant_id: Optional[int] = None) -> List[str]:
         tenant_id: Optional tenant ID for context
         
     Returns:
-        List[str]: List of role names
+        set: Set of role names
     """
+    # Handle None user
+    if user is None:
+        return set()
+    
     # For mock users (used in auth_dependencies), get roles directly
     user_roles = getattr(user, 'roles', [])
     if user_roles and hasattr(user_roles[0] if user_roles else None, 'name'):
-        return [getattr(role, 'name', '') for role in user_roles]
+        return {getattr(role, 'name', '') for role in user_roles}
     
     # For real database users, use the RBAC service
     try:
         db = next(get_db())
         rbac_service = RBACService(db)
         user_roles = rbac_service.get_user_roles(getattr(user, 'id', 0), tenant_id)
-        return [getattr(getattr(ur, 'role', None), 'name', '') for ur in user_roles]
+        return {getattr(getattr(ur, 'role', None), 'name', '') for ur in user_roles}
     except Exception:
         # Fallback for cases where database is not available
-        return []
+        return set()
 
 
-def get_user_permissions(user, tenant_id: Optional[int] = None) -> List[str]:
+def get_user_permissions(user, tenant_id: Optional[int] = None) -> set:
     """
     Backward compatibility function for getting user permissions
     
@@ -438,8 +442,12 @@ def get_user_permissions(user, tenant_id: Optional[int] = None) -> List[str]:
         tenant_id: Optional tenant ID for context
         
     Returns:
-        List[str]: List of permission names
+        set: Set of permission names
     """
+    # Handle None user
+    if user is None:
+        return set()
+    
     # For mock users (used in auth_dependencies), get permissions directly
     user_roles = getattr(user, 'roles', [])
     if user_roles and hasattr(user_roles[0] if user_roles else None, 'permissions'):
@@ -448,13 +456,14 @@ def get_user_permissions(user, tenant_id: Optional[int] = None) -> List[str]:
             role_permissions = getattr(role, 'permissions', [])
             for permission in role_permissions:
                 permissions.add(getattr(permission, 'name', ''))
-        return list(permissions)
+        return permissions
     
     # For real database users, use the RBAC service
     try:
         db = next(get_db())
         rbac_service = RBACService(db)
-        return rbac_service.get_user_permissions(getattr(user, 'id', 0), tenant_id)
+        permissions = rbac_service.get_user_permissions(getattr(user, 'id', 0), tenant_id)
+        return set(permissions)
     except Exception:
         # Fallback for cases where database is not available
-        return []
+        return set()
