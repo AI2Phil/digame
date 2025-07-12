@@ -9,6 +9,7 @@ from .user import User # For establishing relationship
 
 class ProcessNote(Base):
     __tablename__ = "process_notes"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer(), primary_key=True, index=True, autoincrement=True)
     

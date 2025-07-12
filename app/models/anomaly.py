@@ -9,6 +9,7 @@ from .user import User # Renamed to avoid potential confusion if UserModel was a
 
 class DetectedAnomaly(Base):
     __tablename__ = "detected_anomalies"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer(), primary_key=True, index=True, autoincrement=True)
     
