@@ -64,7 +64,9 @@ test.describe('Workflow Execution End-to-End Testing', () => {
   });
 
   test.afterAll(async () => {
-    await context.close();
+    if (context) {
+      await context.close();
+    }
   });
 
   test.describe('Workflow Template Management', () => {

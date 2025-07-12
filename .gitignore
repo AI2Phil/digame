@@ -346,3 +346,33 @@ settings.local.py
 # Backup files
 *.bak
 *.backup
+
+# Test output and reports
+test-results/
+playwright-report/
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.webp
+*.svg
+*.md
+*.json
+*.xml
+*.html
+.last-run.json
+results.json
+results.xml
+error-context.md
+test-failed-*.png
+
+# Playwright specific
+frontend/playwright-report/
+frontend/test-results/
+frontend/.last-run.json
+frontend/results.json
+frontend/results.xml
+
+# Jest coverage and output
+frontend/coverage/
+frontend/jest-coverage/
