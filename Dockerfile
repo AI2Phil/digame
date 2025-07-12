@@ -16,6 +16,9 @@ WORKDIR $APP_HOME
 # Install dependencies
 # Copy requirements.txt first to leverage Docker cache
 COPY requirements.txt .
+
+# Add build tools to ensure packages can be built from source
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code (will be mounted as volume in dev mode)

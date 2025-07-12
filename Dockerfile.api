@@ -30,7 +30,9 @@ ENV PATH="/opt/venv/bin:$PATH"
 
 # Copy requirements and install Python dependencies
 COPY requirements.txt .
-RUN pip install --upgrade pip && \
+
+# Add build tools to ensure packages can be built from source
+RUN pip install --upgrade pip setuptools wheel && \
     pip install -r requirements.txt
 
 # Production stage
