@@ -4,6 +4,7 @@ from app.database import Base # Importing Base from user.py
 
 class Experience(Base):
     __tablename__ = "experience_entries" # Changed table name to match relationship in User
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer(), primary_key=True, index=True)
     user_id = Column(Integer(), ForeignKey("users.id"), nullable=False)

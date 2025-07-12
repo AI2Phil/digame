@@ -12,6 +12,7 @@ class TeamRoleEnum(enum.Enum):
 
 class Team(Base):
     __tablename__ = "teams"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer(), primary_key=True, index=True)
     name = Column(String(), index=True, nullable=False)
@@ -30,6 +31,7 @@ class Team(Base):
 
 class TeamMember(Base):
     __tablename__ = "team_members"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer(), primary_key=True, index=True)
     team_id = Column(Integer(), ForeignKey("teams.id"), nullable=False)
@@ -44,6 +46,7 @@ class TeamMember(Base):
 
 class TeamPerformanceMetric(Base):
     __tablename__ = "team_performance_metrics"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer(), primary_key=True, index=True)
     team_id = Column(Integer(), ForeignKey("teams.id"), nullable=False)
