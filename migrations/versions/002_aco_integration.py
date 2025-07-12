@@ -21,16 +21,41 @@ def upgrade():
     Apply ACO Integration database changes
     """
     
-    # Add founding member fields to users table
-    op.add_column('users', sa.Column('founding_member_enrolled_at', sa.DateTime(timezone=True), nullable=True))
-    op.add_column('users', sa.Column('founding_member_discount_percent', sa.Integer(), nullable=True))
-    op.add_column('users', sa.Column('founding_member_monthly_price', sa.Float(), nullable=True))
-    op.add_column('users', sa.Column('subscription_updated_at', sa.DateTime(timezone=True), nullable=True))
+    # Check existing columns to avoid duplicates
+    connection = op.get_bind()
+    inspector = sa.inspect(connection)
     
-    # Add owner_id to tenants table
-    op.add_column('tenants', sa.Column('owner_id', sa.Integer(), nullable=True))
-    op.create_foreign_key('fk_tenants_owner_id', 'tenants', 'users', ['owner_id'], ['id'])
-    op.create_index('ix_tenants_owner_id', 'tenants', ['owner_id'])
+    # Add founding member fields to users table - only if they don't exist
+    existing_user_columns = [col['name'] for col in inspector.get_columns('users')]
+    user_columns_to_add = [
+        ('founding_member_enrolled_at', sa.DateTime(timezone=True), True),
+        ('founding_member_discount_percent', sa.Integer(), True),
+        ('founding_member_monthly_price', sa.Float(), True),
+        ('subscription_updated_at', sa.DateTime(timezone=True), True),
+    ]
+    
+    for col_name, col_type, nullable in user_columns_to_add:
+        if col_name not in existing_user_columns:
+            print(f"Adding column {col_name} to users table")
+            try:
+                op.add_column('users', sa.Column(col_name, col_type, nullable=nullable))
+            except Exception as e:
+                print(f"Warning: Could not add column {col_name}: {e}")
+        else:
+            print(f"Column {col_name} already exists in users table, skipping")
+    
+    # Add owner_id to tenants table - only if it doesn't exist
+    existing_tenant_columns = [col['name'] for col in inspector.get_columns('tenants')]
+    if 'owner_id' not in existing_tenant_columns:
+        print("Adding owner_id to tenants table")
+        try:
+            op.add_column('tenants', sa.Column('owner_id', sa.Integer(), nullable=True))
+            op.create_foreign_key('fk_tenants_owner_id', 'tenants', 'users', ['owner_id'], ['id'])
+            op.create_index('ix_tenants_owner_id', 'tenants', ['owner_id'])
+        except Exception as e:
+            print(f"Warning: Could not add owner_id column or constraints: {e}")
+    else:
+        print("Column owner_id already exists in tenants table, skipping")
     
     # Add ACO-specific columns to existing platform_usage_metrics table
     # (Table was already created in 001_platform_owner_infra migration)
