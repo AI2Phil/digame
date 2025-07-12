@@ -1,10 +1,6 @@
 name: Performance Testing
 
 on:
-  push:
-    branches: [ main, develop ]
-  pull_request:
-    branches: [ main ]
   schedule:
     # Run performance tests daily at 2 AM UTC
     - cron: '0 2 * * *'
@@ -14,23 +10,24 @@ on:
         description: 'Number of concurrent users'
         required: false
         default: '50'
+        type: string
       spawn_rate:
         description: 'User spawn rate per second'
         required: false
         default: '5'
+        type: string
       run_time:
         description: 'Test duration (e.g., 300s, 5m)'
         required: false
         default: '180s'
+        type: string
       test_type:
         description: 'Type of performance test'
         required: false
         default: 'fullstack'
-        type: choice
-        options:
-          - fullstack
-          - frontend-only
-          - core-web-vitals
+        type: string
+  workflow_call:
+    # Allow this workflow to be called by other workflows
 
 env:
   COMPOSE_FILE: docker-compose.performance.yml
