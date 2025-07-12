@@ -23,11 +23,18 @@
     "test:frontend": "cd frontend && npm test",
     "test:backend": "cd backend && npm test"
   },
-  "keywords": ["digame", "platform", "fullstack", "dashboard", "analytics"],
+  "keywords": [
+    "digame",
+    "platform",
+    "fullstack",
+    "dashboard",
+    "analytics"
+  ],
   "author": "Digame Team",
   "license": "ISC",
   "devDependencies": {
-    "concurrently": "^9.1.0"
+    "concurrently": "^9.1.0",
+    "sharp": "^0.34.3"
   },
   "engines": {
     "node": ">=18.0.0",
@@ -36,5 +43,8 @@
   "workspaces": [
     "frontend",
     "backend"
-  ]
+  ],
+  "dependencies": {
+    "next-pwa": "^5.6.0"
+  }
 }

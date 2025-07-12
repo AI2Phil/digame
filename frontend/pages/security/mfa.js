@@ -24,7 +24,8 @@ import {
   TrendingUp,
   Activity,
   MapPin,
-  X
+  X,
+  Star
 } from 'lucide-react';
 
 // UI Components

@@ -86,5 +86,8 @@ black==24.10.0
 flake8==7.1.1
 mypy==1.13.0
 
+# Performance Testing
+locust==2.17.0
+
 # Production WSGI Server
 gunicorn==23.0.0

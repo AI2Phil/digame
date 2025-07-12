@@ -1,4 +1,23 @@
 /** @type {import('next').NextConfig} */
+const withPWA = require('next-pwa')({
+  dest: 'public',
+  register: true,
+  skipWaiting: true,
+  disable: process.env.NODE_ENV === 'development',
+  runtimeCaching: [
+    {
+      urlPattern: /^https?.*/,
+      handler: 'NetworkFirst',
+      options: {
+        cacheName: 'offlineCache',
+        expiration: {
+          maxEntries: 200,
+        },
+      },
+    },
+  ],
+});
+
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
@@ -20,12 +39,13 @@ const nextConfig = {
     ];
   },
 
-  // Custom headers for security
+  // Enhanced headers for security and performance
   async headers() {
     return [
       {
-        source: '/platform-owner/:path*',
+        source: '/(.*)',
         headers: [
+          // Security headers
           {
             key: 'X-Frame-Options',
             value: 'DENY'
@@ -39,8 +59,44 @@ const nextConfig = {
             value: 'strict-origin-when-cross-origin'
           },
           {
+            key: 'X-XSS-Protection',
+            value: '1; mode=block'
+          },
+          // Performance headers
+          {
+            key: 'X-DNS-Prefetch-Control',
+            value: 'on'
+          },
+          {
+            key: 'Strict-Transport-Security',
+            value: 'max-age=31536000; includeSubDomains'
+          }
+        ]
+      },
+      {
+        source: '/platform-owner/:path*',
+        headers: [
+          {
             key: 'Cache-Control',
             value: 'no-store, no-cache, must-revalidate, proxy-revalidate'
+          }
+        ]
+      },
+      {
+        source: '/static/(.*)',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable'
+          }
+        ]
+      },
+      {
+        source: '/_next/static/(.*)',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable'
           }
         ]
       }
@@ -53,40 +109,91 @@ const nextConfig = {
     ACCESS_CONTROL_ENABLED: 'true'
   },
 
-  // Webpack configuration for better performance
+  // Enhanced webpack configuration for Core Web Vitals
   webpack: (config, { buildId, dev, isServer, defaultLoaders, webpack }) => {
-    // Optimize bundle size
+    // Optimize bundle size and splitting
     config.optimization.splitChunks = {
       chunks: 'all',
+      minSize: 20000,
+      maxSize: 244000,
       cacheGroups: {
+        default: {
+          minChunks: 2,
+          priority: -20,
+          reuseExistingChunk: true
+        },
+        vendor: {
+          test: /[\\/]node_modules[\\/]/,
+          name: 'vendors',
+          priority: -10,
+          chunks: 'all'
+        },
         platformOwner: {
           test: /[\\/]pages[\\/]platform-owner[\\/]/,
           name: 'platform-owner',
           priority: 10,
           reuseExistingChunk: true
+        },
+        common: {
+          name: 'common',
+          minChunks: 2,
+          priority: -5,
+          reuseExistingChunk: true
         }
       }
     };
 
+    // Add bundle analyzer in development
+    if (!dev && !isServer) {
+      config.optimization.usedExports = true;
+      config.optimization.sideEffects = false;
+    }
+
+    // Optimize for production
+    if (!dev) {
+      config.optimization.minimize = true;
+    }
+
     return config;
   },
 
-  // Image optimization
+  // Enhanced image optimization for Core Web Vitals
   images: {
     domains: ['localhost', 'your-domain.com'],
-    formats: ['image/webp', 'image/avif']
+    formats: ['image/webp', 'image/avif'],
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+    minimumCacheTTL: 60,
+    dangerouslyAllowSVG: true,
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
 
-  // Experimental features
+  // Enhanced experimental features for performance
   experimental: {
-    // Enable app directory if using Next.js 13+
-    // appDir: true,
-    
     // Optimize CSS
     optimizeCss: true,
     
     // Enable SWC minification
-    swcMinify: true
+    swcMinify: true,
+    
+    // Enable modern JavaScript features
+    esmExternals: true,
+    
+    // Optimize server components
+    serverComponentsExternalPackages: ['sharp'],
+    
+    // Enable optimized package imports
+    optimizePackageImports: ['lucide-react', 'recharts'],
+    
+    // Enable turbo mode for faster builds
+    turbo: {
+      rules: {
+        '*.svg': {
+          loaders: ['@svgr/webpack'],
+          as: '*.js'
+        }
+      }
+    }
   },
 
   // Redirects for better SEO and user experience
@@ -124,4 +231,4 @@ const nextConfig = {
   }
 };
 
-module.exports = nextConfig;
+module.exports = withPWA(nextConfig);
