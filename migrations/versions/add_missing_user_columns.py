@@ -1,6 +1,6 @@
 """Add missing user columns
 
-Revision ID: add_missing_user_columns
+Revision ID: add_user_cols
 Revises: 001_initial_schema
 Create Date: 2025-01-12 11:39:00.000000
 
@@ -65,10 +65,15 @@ def upgrade() -> None:
     for col_name, col_type, foreign_key, default_val, nullable in columns_to_add:
         if col_name not in existing_columns:
             print(f"Adding column: {col_name}")
-            if foreign_key:
-                op.add_column('users', sa.Column(col_name, col_type, foreign_key, nullable=nullable, default=default_val))
-            else:
-                op.add_column('users', sa.Column(col_name, col_type, nullable=nullable, default=default_val))
+            try:
+                if foreign_key:
+                    op.add_column('users', sa.Column(col_name, col_type, foreign_key, nullable=nullable, default=default_val))
+                else:
+                    op.add_column('users', sa.Column(col_name, col_type, nullable=nullable, default=default_val))
+            except Exception as e:
+                print(f"Warning: Could not add column {col_name}: {e}")
+                # Continue with other columns
+                pass
         else:
             print(f"Column {col_name} already exists, skipping")
     
@@ -85,7 +90,12 @@ def upgrade() -> None:
     for idx_name, columns in indexes_to_add:
         if idx_name not in existing_indexes:
             print(f"Adding index: {idx_name}")
-            op.create_index(idx_name, 'users', columns, unique=False)
+            try:
+                op.create_index(idx_name, 'users', columns, unique=False)
+            except Exception as e:
+                print(f"Warning: Could not create index {idx_name}: {e}")
+                # Continue with other indexes
+                pass
         else:
             print(f"Index {idx_name} already exists, skipping")
     
