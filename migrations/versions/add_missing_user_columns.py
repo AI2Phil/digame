@@ -29,8 +29,8 @@ def upgrade() -> None:
     existing_columns = [col['name'] for col in inspector.get_columns('users')]
     
     # Add missing columns only if they don't exist
+    # Note: Skipping tenant_id since multi-tenancy migration handles tenant relationships via current_tenant_id
     columns_to_add = [
-        ('tenant_id', sa.Integer(), sa.ForeignKey('tenants.id'), True, True),
         ('is_guest', sa.Boolean(), None, False, True),
         ('guest_expires_at', sa.DateTime(), None, True, True),
         ('is_platform_owner', sa.Boolean(), None, False, False),
@@ -79,7 +79,6 @@ def upgrade() -> None:
     
     # Add indexes for new columns that need them
     indexes_to_add = [
-        ('ix_users_tenant_id', ['tenant_id']),
         ('ix_users_is_guest', ['is_guest']),
         ('ix_users_subscription_tier', ['subscription_tier']),
         ('ix_users_email_verified', ['email_verified']),
@@ -118,8 +117,7 @@ def downgrade() -> None:
     
     # Remove indexes first
     indexes_to_remove = [
-        'ix_users_tenant_id',
-        'ix_users_is_guest', 
+        'ix_users_is_guest',
         'ix_users_subscription_tier',
         'ix_users_email_verified',
     ]
@@ -161,7 +159,6 @@ def downgrade() -> None:
         'is_platform_owner',
         'guest_expires_at',
         'is_guest',
-        'tenant_id',
     ]
     
     for col_name in columns_to_remove:
