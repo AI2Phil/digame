@@ -16,6 +16,11 @@ from .reporting import ReportTemplate, ReportExecution
 class DataSource(Base):
     """Data sources for report generation"""
     __tablename__ = 'data_sources'
+    __table_args__ = (
+        Index('idx_data_sources_type_status', 'source_type', 'status'),
+        Index('idx_data_sources_created_by', 'created_by'),
+        {'extend_existing': True}
+    )
     
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(255), nullable=False, index=True)
@@ -40,14 +45,15 @@ class DataSource(Base):
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     is_active = Column(Boolean, default=True)
     
-    __table_args__ = (
-        Index('idx_data_sources_type_status', 'source_type', 'status'),
-        Index('idx_data_sources_created_by', 'created_by'),
-    )
 
 class VisualizationMetric(Base):
     """Visualization engine performance metrics"""
     __tablename__ = 'visualization_metrics'
+    __table_args__ = (
+        Index('idx_visualization_metrics_chart_type_date', 'chart_type', 'date'),
+        Index('idx_visualization_metrics_data_size', 'data_size_category'),
+        {'extend_existing': True}
+    )
     
     id = Column(Integer, primary_key=True, index=True)
     chart_type = Column(String(50), nullable=False, index=True)
@@ -72,14 +78,16 @@ class VisualizationMetric(Base):
     date = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     
-    __table_args__ = (
-        Index('idx_visualization_metrics_chart_type_date', 'chart_type', 'date'),
-        Index('idx_visualization_metrics_data_size', 'data_size_category'),
-    )
 
 class PredictiveModel(Base):
     """Predictive analytics models"""
     __tablename__ = 'predictive_models'
+    __table_args__ = (
+        Index('idx_predictive_models_type_status', 'model_type', 'status'),
+        Index('idx_predictive_models_created_by', 'created_by'),
+        Index('idx_predictive_models_last_trained', 'last_trained'),
+        {'extend_existing': True}
+    )
     
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(255), nullable=False, index=True)
@@ -116,14 +124,8 @@ class PredictiveModel(Base):
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     is_active = Column(Boolean, default=True)
     
-    # Relationships
-    predictions = relationship("ModelPrediction", back_populates="predictive_model")
-    
-    __table_args__ = (
-        Index('idx_predictive_models_type_status', 'model_type', 'status'),
-        Index('idx_predictive_models_created_by', 'created_by'),
-        Index('idx_predictive_models_last_trained', 'last_trained'),
-    )
+    # Relationships - Note: ModelPrediction relates to MLModel, not PredictiveModel
+    # predictions = relationship("ModelPrediction", back_populates="predictive_model")
 
 # Import ModelPrediction from ml_models to avoid conflicts
 from .ml_models import ModelPrediction
@@ -160,4 +162,5 @@ class ReportInsight(Base):
     __table_args__ = (
         Index('idx_report_insights_type_impact', 'insight_type', 'impact_level'),
         Index('idx_report_insights_execution', 'report_execution_id'),
+        {'extend_existing': True}
     )

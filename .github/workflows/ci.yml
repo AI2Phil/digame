@@ -96,7 +96,7 @@ jobs:
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: frontend-build
+          name: frontend-build-${{ github.run_id }}
           path: frontend/dist/
           retention-days: 7
         if: success()
@@ -174,7 +174,7 @@ jobs:
               });
               
               const buildArtifact = artifacts.data.artifacts.find(artifact =>
-                artifact.name === 'frontend-build'
+                artifact.name === `frontend-build-${context.runId}`
               );
               
               if (buildArtifact) {
@@ -213,7 +213,7 @@ jobs:
         if: steps.check-artifact.outputs.exists == 'false'
         uses: actions/upload-artifact@v4
         with:
-          name: frontend-build
+          name: frontend-build-fallback-${{ github.run_id }}
           path: frontend/dist/
           retention-days: 7
 
@@ -263,7 +263,7 @@ jobs:
         id: download-build
         uses: actions/download-artifact@v4
         with:
-          name: frontend-build
+          name: frontend-build-${{ github.run_id }}
           path: frontend/dist/
         continue-on-error: true
         
@@ -342,7 +342,7 @@ jobs:
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: e2e-test-results
+          name: e2e-test-results-${{ github.run_id }}
           path: frontend/test-results/
           retention-days: 7
 
@@ -387,7 +387,7 @@ jobs:
         id: download-build-perf
         uses: actions/download-artifact@v4
         with:
-          name: frontend-build
+          name: frontend-build-${{ github.run_id }}
           path: frontend/dist/
         continue-on-error: true
         
