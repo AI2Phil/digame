@@ -11,6 +11,80 @@ from alembic import op
 import sqlalchemy as sa
 
 
+def table_exists(table_name):
+    """Check if a table exists in the database."""
+    connection = op.get_bind()
+    
+    # Try PostgreSQL first (production)
+    try:
+        result = connection.execute(sa.text("""
+            SELECT EXISTS (
+                SELECT FROM information_schema.tables 
+                WHERE table_schema = 'public' 
+                AND table_name = :table_name
+            );
+        """), {"table_name": table_name})
+        return result.scalar()
+    except Exception:
+        # Fallback for SQLite or other databases
+        try:
+            result = connection.execute(sa.text(f"SELECT name FROM sqlite_master WHERE type='table' AND name='{table_name}';"))
+            return result.fetchone() is not None
+        except Exception:
+            # Final fallback - try to describe the table
+            try:
+                connection.execute(sa.text(f"SELECT 1 FROM {table_name} LIMIT 1;"))
+                return True
+            except Exception:
+                return False
+
+
+def index_exists(index_name, table_name):
+    """Check if an index exists in the database."""
+    connection = op.get_bind()
+    
+    # Try PostgreSQL first (production)
+    try:
+        result = connection.execute(sa.text("""
+            SELECT EXISTS (
+                SELECT FROM pg_indexes 
+                WHERE schemaname = 'public' 
+                AND tablename = :table_name 
+                AND indexname = :index_name
+            );
+        """), {"table_name": table_name, "index_name": index_name})
+        return result.scalar()
+    except Exception:
+        # Fallback for SQLite or other databases
+        try:
+            result = connection.execute(sa.text(f"SELECT name FROM sqlite_master WHERE type='index' AND name='{index_name}';"))
+            return result.fetchone() is not None
+        except Exception:
+            return False
+
+
+def create_table_safe(table_name, create_func):
+    """Safely create a table only if it doesn't exist."""
+    if table_exists(table_name):
+        print(f"✓ Table {table_name} already exists")
+        return False
+    else:
+        create_func()
+        print(f"✓ Created table: {table_name}")
+        return True
+
+
+def create_index_safe(index_name, table_name, create_func):
+    """Safely create an index only if it doesn't exist."""
+    if index_exists(index_name, table_name):
+        print(f"✓ Index {index_name} already exists")
+        return False
+    else:
+        create_func()
+        print(f"✓ Created index: {index_name}")
+        return True
+
+
 # revision identifiers, used by Alembic.
 revision: str = 'create_reporting_tables_manual'
 down_revision: Union[str, None] = '040ac82a5122'
@@ -21,7 +95,7 @@ depends_on: Union[str, Sequence[str], None] = None
 def upgrade() -> None:
     """Upgrade schema."""
     # Create reports table first (required for foreign key references)
-    op.create_table('reports',
+    create_table_safe('reports', lambda: op.create_table('reports',
         sa.Column('id', sa.Integer(), nullable=False),
         sa.Column('tenant_id', sa.Integer(), nullable=False),
         sa.Column('report_uuid', sa.String(length=36), nullable=True),
@@ -52,14 +126,20 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(['created_by_user_id'], ['users.id'], ),
         sa.ForeignKeyConstraint(['tenant_id'], ['tenants.id'], ),
         sa.PrimaryKeyConstraint('id')
-    )
-    op.create_index(op.f('ix_reports_category'), 'reports', ['category'], unique=False)
-    op.create_index(op.f('ix_reports_id'), 'reports', ['id'], unique=False)
-    op.create_index(op.f('ix_reports_report_uuid'), 'reports', ['report_uuid'], unique=True)
-    op.create_index(op.f('ix_reports_tenant_id'), 'reports', ['tenant_id'], unique=False)
+    ))
+    
+    # Create indexes for reports table
+    create_index_safe('ix_reports_category', 'reports', 
+                     lambda: op.create_index(op.f('ix_reports_category'), 'reports', ['category'], unique=False))
+    create_index_safe('ix_reports_id', 'reports', 
+                     lambda: op.create_index(op.f('ix_reports_id'), 'reports', ['id'], unique=False))
+    create_index_safe('ix_reports_report_uuid', 'reports', 
+                     lambda: op.create_index(op.f('ix_reports_report_uuid'), 'reports', ['report_uuid'], unique=True))
+    create_index_safe('ix_reports_tenant_id', 'reports', 
+                     lambda: op.create_index(op.f('ix_reports_tenant_id'), 'reports', ['tenant_id'], unique=False))
 
     # Create report_definitions table
-    op.create_table('report_definitions',
+    create_table_safe('report_definitions', lambda: op.create_table('report_definitions',
         sa.Column('id', sa.Integer(), nullable=False),
         sa.Column('definition_uuid', sa.String(length=36), nullable=True),
         sa.Column('name', sa.String(length=255), nullable=False),
@@ -75,15 +155,22 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(['tenant_id'], ['tenants.id'], ),
         sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
         sa.PrimaryKeyConstraint('id')
-    )
-    op.create_index(op.f('ix_report_definitions_definition_uuid'), 'report_definitions', ['definition_uuid'], unique=True)
-    op.create_index(op.f('ix_report_definitions_id'), 'report_definitions', ['id'], unique=False)
-    op.create_index(op.f('ix_report_definitions_report_type'), 'report_definitions', ['report_type'], unique=False)
-    op.create_index(op.f('ix_report_definitions_tenant_id'), 'report_definitions', ['tenant_id'], unique=False)
-    op.create_index(op.f('ix_report_definitions_user_id'), 'report_definitions', ['user_id'], unique=False)
+    ))
+    
+    # Create indexes for report_definitions table
+    create_index_safe('ix_report_definitions_definition_uuid', 'report_definitions', 
+                     lambda: op.create_index(op.f('ix_report_definitions_definition_uuid'), 'report_definitions', ['definition_uuid'], unique=True))
+    create_index_safe('ix_report_definitions_id', 'report_definitions', 
+                     lambda: op.create_index(op.f('ix_report_definitions_id'), 'report_definitions', ['id'], unique=False))
+    create_index_safe('ix_report_definitions_report_type', 'report_definitions', 
+                     lambda: op.create_index(op.f('ix_report_definitions_report_type'), 'report_definitions', ['report_type'], unique=False))
+    create_index_safe('ix_report_definitions_tenant_id', 'report_definitions', 
+                     lambda: op.create_index(op.f('ix_report_definitions_tenant_id'), 'report_definitions', ['tenant_id'], unique=False))
+    create_index_safe('ix_report_definitions_user_id', 'report_definitions', 
+                     lambda: op.create_index(op.f('ix_report_definitions_user_id'), 'report_definitions', ['user_id'], unique=False))
 
     # Create report_schedules table (now that reports table exists)
-    op.create_table('report_schedules',
+    create_table_safe('report_schedules', lambda: op.create_table('report_schedules',
         sa.Column('id', sa.Integer(), nullable=False),
         sa.Column('report_id', sa.Integer(), nullable=True),
         sa.Column('report_definition_id', sa.Integer(), nullable=True),
@@ -113,13 +200,21 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(['report_id'], ['reports.id'], ),
         sa.ForeignKeyConstraint(['tenant_id'], ['tenants.id'], ),
         sa.PrimaryKeyConstraint('id')
-    )
-    op.create_index(op.f('ix_report_schedules_id'), 'report_schedules', ['id'], unique=False)
-    op.create_index(op.f('ix_report_schedules_next_run_at'), 'report_schedules', ['next_run_at'], unique=False)
-    op.create_index(op.f('ix_report_schedules_report_definition_id'), 'report_schedules', ['report_definition_id'], unique=False)
-    op.create_index(op.f('ix_report_schedules_report_id'), 'report_schedules', ['report_id'], unique=False)
-    op.create_index(op.f('ix_report_schedules_schedule_uuid'), 'report_schedules', ['schedule_uuid'], unique=True)
-    op.create_index(op.f('ix_report_schedules_tenant_id'), 'report_schedules', ['tenant_id'], unique=False)
+    ))
+    
+    # Create indexes for report_schedules table
+    create_index_safe('ix_report_schedules_id', 'report_schedules', 
+                     lambda: op.create_index(op.f('ix_report_schedules_id'), 'report_schedules', ['id'], unique=False))
+    create_index_safe('ix_report_schedules_next_run_at', 'report_schedules', 
+                     lambda: op.create_index(op.f('ix_report_schedules_next_run_at'), 'report_schedules', ['next_run_at'], unique=False))
+    create_index_safe('ix_report_schedules_report_definition_id', 'report_schedules', 
+                     lambda: op.create_index(op.f('ix_report_schedules_report_definition_id'), 'report_schedules', ['report_definition_id'], unique=False))
+    create_index_safe('ix_report_schedules_report_id', 'report_schedules', 
+                     lambda: op.create_index(op.f('ix_report_schedules_report_id'), 'report_schedules', ['report_id'], unique=False))
+    create_index_safe('ix_report_schedules_schedule_uuid', 'report_schedules', 
+                     lambda: op.create_index(op.f('ix_report_schedules_schedule_uuid'), 'report_schedules', ['schedule_uuid'], unique=True))
+    create_index_safe('ix_report_schedules_tenant_id', 'report_schedules', 
+                     lambda: op.create_index(op.f('ix_report_schedules_tenant_id'), 'report_schedules', ['tenant_id'], unique=False))
 
 
 def downgrade() -> None:
