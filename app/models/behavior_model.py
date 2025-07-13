@@ -51,6 +51,7 @@ class BehavioralPattern(Base):
     Each pattern represents a cluster or a significant grouping of activities.
     """
     __tablename__ = "behavioral_patterns"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer(), primary_key=True, index=True, autoincrement=True)
     model_id = Column(Integer(), ForeignKey("behavioral_models.id"), nullable=False, index=True)

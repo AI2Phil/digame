@@ -31,6 +31,7 @@ class AchievementRarity(enum.Enum):
 class Achievement(Base):
     """Achievement definitions"""
     __tablename__ = "achievements"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String(200), nullable=False)

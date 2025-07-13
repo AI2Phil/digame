@@ -12,6 +12,7 @@ from app.database import Base
 class UserConnection(Base):
     """User connections for professional networking"""
     __tablename__ = "user_connections"
+    __table_args__ = {'extend_existing': True}
     
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
