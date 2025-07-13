@@ -25,17 +25,21 @@ def db_session() -> Session:
     Pytest fixture to create a new database session for each test function.
     Creates all tables before the test and drops them afterwards.
     """
-    # Create all tables defined by Base's subclasses
+    # Drop all tables first to ensure clean state
+    Base.metadata.drop_all(bind=engine)
+    
+    # Create all tables defined by Base's subclasses with checkfirst=True
     # Ensure all models that extend Base are imported before this line,
     # so Base.metadata knows about them. (User, Notification are imported above)
-    Base.metadata.create_all(bind=engine)
+    Base.metadata.create_all(bind=engine, checkfirst=True)
 
     db = TestingSessionLocal()
     try:
         yield db  # Provide the session to the test
     finally:
         db.close()
-        Base.metadata.drop_all(bind=engine) # Clean up by dropping all tables
+        # Clean up by dropping all tables after test
+        Base.metadata.drop_all(bind=engine)
 
 # Helper fixture to create a test user, can be used by other test modules
 @pytest.fixture(scope="function")
