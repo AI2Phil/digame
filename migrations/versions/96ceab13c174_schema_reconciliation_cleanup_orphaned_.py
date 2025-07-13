@@ -50,6 +50,7 @@ def table_exists(table_name: str) -> bool:
         return bool(result.scalar())
     except Exception as e:
         print(f"⚠️ Error checking table existence for {table_name}: {e}")
+        # If we can't check, assume it doesn't exist for safety
         return False
 
 
@@ -93,6 +94,7 @@ def drop_table_safe(table_name: str, cascade: bool = False) -> None:
                 connection = op.get_bind()
                 dialect_name = connection.dialect.name
                 if dialect_name == 'postgresql':
+                    # Use CASCADE to drop dependent objects too
                     connection.execute(text(f"DROP TABLE IF EXISTS {table_name} CASCADE"))
                     print(f"✅ Dropped orphaned table with CASCADE: {table_name}")
                 else:
@@ -104,6 +106,17 @@ def drop_table_safe(table_name: str, cascade: bool = False) -> None:
                 print(f"✅ Dropped orphaned table: {table_name}")
         except Exception as e:
             print(f"⚠️ Failed to drop table {table_name}: {e}")
+            # If normal drop fails, try CASCADE for PostgreSQL
+            if not cascade:
+                connection = op.get_bind()
+                dialect_name = connection.dialect.name
+                if dialect_name == 'postgresql':
+                    try:
+                        print(f"🔄 Retrying {table_name} with CASCADE...")
+                        connection.execute(text(f"DROP TABLE IF EXISTS {table_name} CASCADE"))
+                        print(f"✅ Dropped orphaned table with CASCADE (retry): {table_name}")
+                    except Exception as e2:
+                        print(f"❌ Failed to drop table {table_name} even with CASCADE: {e2}")
     else:
         print(f"ℹ️ Table {table_name} does not exist, skipping")
 
@@ -202,8 +215,8 @@ def upgrade() -> None:
     cleaned_count = 0
     for table_name in orphaned_tables_ordered:
         if table_exists(table_name):
-            # Use CASCADE for platform_roles in case there are still dependencies
-            use_cascade = table_name == 'platform_roles'
+            # Use CASCADE for platform-related tables that might have dependencies
+            use_cascade = table_name in ['platform_roles', 'user_platform_roles']
             drop_table_safe(table_name, cascade=use_cascade)
             cleaned_count += 1
         else:
