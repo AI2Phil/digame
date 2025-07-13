@@ -8,7 +8,8 @@ This script addresses the specific errors mentioned in the CI logs:
 
 import sys
 import os
-sys.path.append(os.path.join(os.path.dirname(__file__), 'app'))
+# Add the parent directory to sys.path so we can import from 'app'
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 from sqlalchemy import create_engine, text, inspect
 from sqlalchemy.exc import ProgrammingError
