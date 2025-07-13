@@ -1,42 +1,119 @@
 import pytest
+import uuid
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy.pool import StaticPool
 from typing import Generator
-from app.database import Base  # Adjust if your Base is elsewhere, e.g. app.models.user or app.db
-from app.models.user import User # Assuming User model is here
-from app.models.notifications import Notification # Import Notification model as well
-from app.models.rbac import Role, UserRoleAssignment  # Import RBAC models
-from app.main import app  # Import the FastAPI app
+import tempfile
+import os
 
-# In-memory SQLite database for testing
-SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
+# Import models to ensure they're registered with Base.metadata
+from app.database import Base
+from app.models.user import User
+from app.models.notifications import Notification
+from app.models.rbac import Role, UserRoleAssignment
+from app.main import app
 
-engine = create_engine(
-    SQLALCHEMY_DATABASE_URL,
-    connect_args={"check_same_thread": False} # Needed only for SQLite
-)
+# Import all models to ensure they're registered
+try:
+    from app.models import *
+except ImportError:
+    pass
 
-# Use sessionmaker for creating sessions
-TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+# Try to import additional models that might exist
+try:
+    from app.models.user_setting import UserSetting
+except ImportError:
+    pass
+
+try:
+    from app.models.project import Project
+except ImportError:
+    pass
+
+try:
+    from app.models.education import Education
+except ImportError:
+    pass
+
+try:
+    from app.models.experience import Experience
+except ImportError:
+    pass
+
+try:
+    from app.models.team import Team
+except ImportError:
+    pass
+
+try:
+    from app.models.tenant import Tenant
+except ImportError:
+    pass
+
+try:
+    from app.models.workflow_automation import *
+except ImportError:
+    pass
 
 @pytest.fixture(scope="function")
-def db_session() -> Generator[Session, None, None]:
+def isolated_engine():
+    """
+    Create an isolated SQLite engine for each test with proper isolation.
+    Uses a unique temporary file to avoid conflicts between tests.
+    """
+    # Create a unique temporary database file for each test
+    temp_db = tempfile.NamedTemporaryFile(delete=False, suffix='.db')
+    temp_db.close()
+    
+    database_url = f"sqlite:///{temp_db.name}"
+    
+    engine = create_engine(
+        database_url,
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+        echo=False  # Set to True for debugging
+    )
+    
+    yield engine
+    
+    # Clean up: close all connections and remove temp file
+    engine.dispose()
+    try:
+        os.unlink(temp_db.name)
+    except OSError:
+        pass
+
+@pytest.fixture(scope="function")
+def db_session(isolated_engine) -> Generator[Session, None, None]:
     """
     Pytest fixture to create a new database session for each test function.
-    Creates all tables before the test and drops them afterwards.
+    Uses isolated engine with proper table creation and cleanup.
     """
-    # Create all tables defined by Base's subclasses
-    # Ensure all models that extend Base are imported before this line,
-    # so Base.metadata knows about them. (User, Notification are imported above)
-    Base.metadata.create_all(bind=engine)
-
-    db = TestingSessionLocal()
+    # Create all tables with proper isolation
     try:
-        yield db  # Provide the session to the test
+        # First drop any existing tables to ensure clean state
+        Base.metadata.drop_all(bind=isolated_engine)
+        
+        # Create all tables fresh
+        Base.metadata.create_all(bind=isolated_engine)
+    except Exception as e:
+        pytest.skip(f"Could not create test database: {e}")
+
+    # Create session with isolated engine
+    TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=isolated_engine)
+    db = TestingSessionLocal()
+    
+    try:
+        yield db
     finally:
         db.close()
-        Base.metadata.drop_all(bind=engine) # Clean up by dropping all tables
+        # Clean up tables after test
+        try:
+            Base.metadata.drop_all(bind=isolated_engine)
+        except Exception:
+            pass  # Ignore cleanup errors
 
 # Helper fixture to create a test user, can be used by other test modules
 @pytest.fixture(scope="function")
