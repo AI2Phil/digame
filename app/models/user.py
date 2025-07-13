@@ -13,7 +13,7 @@ class User(Base):
         {'extend_existing': True}
     )
 
-    id = Column(Integer(), primary_key=True, index=True)
+    id = Column(Integer(), primary_key=True)
     username = Column(String(), unique=True, nullable=False)  # Removed index=True
     email = Column(String(), unique=True, nullable=False)  # Removed index=True
     hashed_password = Column(String(), nullable=False)
@@ -89,12 +89,12 @@ class User(Base):
     
     # Tenant relationship - specify foreign_keys to resolve ambiguity
     tenant = relationship("Tenant", foreign_keys=[tenant_id], back_populates="users")
-    # Temporarily commented out to resolve SQLAlchemy mapper issues
-    # process_notes = relationship(
-    #     "ProcessNote",
-    #     back_populates="user",
-    #     cascade="all, delete-orphan"
-    # )
+    # Relationship to ProcessNote model
+    process_notes = relationship(
+        "ProcessNote",
+        back_populates="user",
+        cascade="all, delete-orphan"
+    )
     # activities = relationship(
     #     "Activity",
     #     back_populates="user",
@@ -232,7 +232,7 @@ class UserProfile(Base):
     __tablename__ = "user_profiles" # Changed table name to plural
     __table_args__ = {'extend_existing': True}
 
-    id = Column(Integer(), primary_key=True, index=True)
+    id = Column(Integer(), primary_key=True)
     user_id = Column(Integer(), ForeignKey("users.id"), unique=True, nullable=False)
 
     skills = Column(JSON, nullable=True)

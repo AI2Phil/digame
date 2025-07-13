@@ -2,13 +2,10 @@ from sqlalchemy import Column, Integer, String, DateTime, JSON, Text, ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func # For server_default=func.now()
 
-# Import Base from user.py to ensure all tables use the same metadata declaration
-from app.database import Base 
-# Assuming User model is also in .user or accessible via this Base
-from .user import User # For establishing relationship
+# Import Base from database to avoid circular imports
+from app.database import Base
 
 class ProcessNote(Base):
-    __table_args__ = {'extend_existing': True}
     __tablename__ = "process_notes"
     __table_args__ = {'extend_existing': True}
 
@@ -32,17 +29,14 @@ class ProcessNote(Base):
     user_feedback = Column(String(), nullable=True) # e.g., "accurate", "inaccurate"
     user_tags = Column(JSON(), nullable=True) # Array of strings
 
-    # Temporarily commented out to resolve SQLAlchemy mapper issues
-    # # Relationship to User model
-    # # This allows accessing the User object from a ProcessNote instance
-    # user = relationship("User", back_populates="process_notes")
+    # Relationship to User model using string reference to avoid circular imports
+    user = relationship("User", back_populates="process_notes")
 
     # Relationship to Task model (one-to-many: one ProcessNote can generate multiple Tasks)
     generated_tasks = relationship(
         "Task", # String reference to the Task class
         back_populates="process_note", # Corresponds to the 'process_note' attribute in Task
         cascade="all, delete-orphan" # If a ProcessNote is deleted, related tasks are also deleted.
-                                     # Adjust cascade as needed, e.g., "save-update, merge" if tasks should remain but be de-linked.
     )
 
     def __repr__(self):

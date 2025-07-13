@@ -75,7 +75,20 @@ export default defineConfig({
     /* Test against branded browsers. */
     {
       name: 'Microsoft Edge',
-      use: { ...devices['Desktop Edge'], channel: 'msedge' },
+      use: {
+        ...devices['Desktop Edge'],
+        channel: 'msedge',
+        launchOptions: {
+          args: [
+            '--no-sandbox',
+            '--disable-dev-shm-usage',
+            '--disable-web-security',
+            '--allow-running-insecure-content'
+          ]
+        }
+      },
+      retries: 2, // Extra retries for Edge
+      timeout: 90000, // Longer timeout for Edge
     },
     {
       name: 'Google Chrome',
@@ -85,7 +98,7 @@ export default defineConfig({
 
   /* Run your local dev server before starting the tests */
   webServer: {
-    command: 'npm run dev',
+    command: 'cp next.config.test.js next.config.js && npm run dev -- --port 3001',
     url: 'http://localhost:3001',
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000,

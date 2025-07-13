@@ -15,7 +15,7 @@ class SSOProvider(Base):
     __table_args__ = {'extend_existing': True}
     
     id = Column(Integer, primary_key=True, index=True)
-    tenant_id = Column(Integer, nullable=False, index=True)
+    tenant_id = Column(Integer, nullable=False)
     name = Column(String(255), nullable=False)
     provider_type = Column(String(50), nullable=False)  # saml, oidc, ldap, azure_ad, google_workspace
     status = Column(String(20), default="active")  # active, inactive, testing
@@ -52,7 +52,7 @@ class SSOSession(Base):
     __table_args__ = {'extend_existing': True}
     
     id = Column(Integer, primary_key=True, index=True)
-    tenant_id = Column(Integer, nullable=False, index=True)
+    tenant_id = Column(Integer, nullable=False)
     provider_id = Column(Integer, ForeignKey("sso_providers.id"), nullable=False)
     user_id = Column(Integer, nullable=False, index=True)
     
@@ -86,7 +86,7 @@ class SSOAuditLog(Base):
     __table_args__ = {'extend_existing': True}
     
     id = Column(Integer, primary_key=True, index=True)
-    tenant_id = Column(Integer, nullable=False, index=True)
+    tenant_id = Column(Integer, nullable=False)
     provider_id = Column(Integer, ForeignKey("sso_providers.id"))
     user_id = Column(Integer, index=True)
     
@@ -120,7 +120,7 @@ class TenantSSOConfiguration(Base):
     __table_args__ = {'extend_existing': True}
     
     id = Column(Integer, primary_key=True, index=True)
-    tenant_id = Column(Integer, unique=True, nullable=False, index=True)
+    tenant_id = Column(Integer, unique=True, nullable=False)
     
     # SSO Enforcement
     enforce_sso = Column(Boolean, default=False)
@@ -164,7 +164,7 @@ class SSOUserMapping(Base):
     __tablename__ = "sso_user_mappings"
     
     id = Column(Integer, primary_key=True, index=True)
-    tenant_id = Column(Integer, nullable=False, index=True)
+    tenant_id = Column(Integer, nullable=False)
     provider_id = Column(Integer, ForeignKey("sso_providers.id"), nullable=False)
     user_id = Column(Integer, nullable=False, index=True)
     

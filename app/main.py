@@ -53,7 +53,7 @@ from .routers import task_prioritization_router # Import the new task prioritiza
 from .routers import user_profile_router # Import the new user profile router
 from .routers import dashboard_router # Import the dashboard router
 from .routers import productivity_router # Import the productivity router
-from .routers import performance_monitoring_router # Import the performance monitoring router
+from .routers import consolidated_monitoring_router # Import the consolidated monitoring router
 from .routers import team_router # Import the new team router
 from .routers import advanced_analytics_router # Import the new advanced analytics router
 from .routers import document_processing_router # Import the new document processing router
@@ -337,8 +337,8 @@ app = FastAPI(
             "description": "Real-time communication, workspace management, messaging, and team collaboration features"
         },
         {
-            "name": "Advanced Monitoring",
-            "description": "Advanced system monitoring, alerting, metrics tracking, service health monitoring, and monitoring rules management"
+            "name": "Consolidated Monitoring",
+            "description": "Unified monitoring system combining performance metrics, system health, alerts, user experience analytics, and real-time monitoring capabilities"
         },
         {
             "name": "Integration Dashboard",
@@ -390,7 +390,7 @@ app.include_router(aco_router.router, tags=["ACO Integration"])
 # Include dashboard and onboarding routers
 app.include_router(dashboard_router.router, tags=["Dashboard"])
 app.include_router(productivity_router.router, tags=["Productivity"])
-app.include_router(performance_monitoring_router.router, tags=["Performance Monitoring"])
+app.include_router(consolidated_monitoring_router.router, tags=["Consolidated Monitoring"])
 app.include_router(onboarding_router.router, tags=["Onboarding"])
 app.include_router(enhanced_onboarding_router.router, prefix="/api/v1", tags=["Enhanced Onboarding"])
 
@@ -442,7 +442,7 @@ app.include_router(advanced_nlp_router.router, tags=["Advanced NLP"]) # Add adva
 app.include_router(data_management_router.router, tags=["Data Management"]) # Add data management router
 app.include_router(multi_tenancy_router.router, prefix="/api/multi-tenancy", tags=["Multi-Tenancy Management"]) # Add multi-tenancy router
 app.include_router(real_time_collaboration_router.router, prefix="/api/collaboration", tags=["Real-Time Collaboration"]) # Add real-time collaboration router
-app.include_router(advanced_monitoring_router.router, prefix="/api/monitoring", tags=["Advanced Monitoring"]) # Add advanced monitoring router
+# Consolidated monitoring router replaces both performance_monitoring_router and advanced_monitoring_router
 app.include_router(integration_dashboard_router.router, tags=["Integration Dashboard"]) # Add integration dashboard router
 app.include_router(advanced_reporting_router.router, prefix="/api/advanced-reporting", tags=["Advanced Reporting"]) # Add advanced reporting router
 

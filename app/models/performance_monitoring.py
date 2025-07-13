@@ -13,7 +13,7 @@ class CorePerformanceMetric(Base):  # type: ignore
     __tablename__ = "core_performance_metrics"
     
     id = Column(Integer, primary_key=True, index=True)  # type: ignore
-    tenant_id = Column(Integer, nullable=False, index=True)  # type: ignore
+    tenant_id = Column(Integer, nullable=False)  # type: ignore
     
     # Metric Identification
     metric_name = Column(String(255), nullable=False, index=True)  # type: ignore
@@ -53,7 +53,7 @@ class SystemHealthCheck(Base):  # type: ignore
     __tablename__ = "system_health_checks"
     
     id = Column(Integer, primary_key=True, index=True)  # type: ignore
-    tenant_id = Column(Integer, nullable=False, index=True)  # type: ignore
+    tenant_id = Column(Integer, nullable=False)  # type: ignore
     
     # Health Check Details
     check_name = Column(String(255), nullable=False)  # type: ignore
@@ -86,7 +86,7 @@ class QueryPerformance(Base):  # type: ignore
     __tablename__ = "query_performance"
     
     id = Column(Integer, primary_key=True, index=True)  # type: ignore
-    tenant_id = Column(Integer, nullable=False, index=True)  # type: ignore
+    tenant_id = Column(Integer, nullable=False)  # type: ignore
     
     # Query Identification
     query_hash = Column(String(64), nullable=False, index=True)  # type: ignore  # Hash of normalized query
@@ -131,7 +131,7 @@ class UserExperienceMetric(Base):  # type: ignore
     __tablename__ = "user_experience_metrics"
     
     id = Column(Integer, primary_key=True, index=True)  # type: ignore
-    tenant_id = Column(Integer, nullable=False, index=True)  # type: ignore
+    tenant_id = Column(Integer, nullable=False)  # type: ignore
     user_id = Column(Integer, index=True)  # type: ignore
     session_id = Column(String(255), index=True)  # type: ignore
     
@@ -185,7 +185,7 @@ class PerformanceAlert(Base):  # type: ignore
     __tablename__ = "performance_alerts"
     
     id = Column(Integer, primary_key=True, index=True)  # type: ignore
-    tenant_id = Column(Integer, nullable=False, index=True)  # type: ignore
+    tenant_id = Column(Integer, nullable=False)  # type: ignore
     metric_id = Column(Integer, ForeignKey("core_performance_metrics.id"))  # type: ignore
     
     # Alert Configuration
@@ -227,7 +227,7 @@ class PerformanceIncident(Base):  # type: ignore
     __tablename__ = "performance_incidents"
     
     id = Column(Integer, primary_key=True, index=True)  # type: ignore
-    tenant_id = Column(Integer, nullable=False, index=True)  # type: ignore
+    tenant_id = Column(Integer, nullable=False)  # type: ignore
     alert_id = Column(Integer, ForeignKey("performance_alerts.id"))  # type: ignore
     health_check_id = Column(Integer, ForeignKey("system_health_checks.id"))  # type: ignore
     
@@ -276,7 +276,7 @@ class PerformanceBaseline(Base):  # type: ignore
     __tablename__ = "performance_baselines"
     
     id = Column(Integer, primary_key=True, index=True)  # type: ignore
-    tenant_id = Column(Integer, nullable=False, index=True)  # type: ignore
+    tenant_id = Column(Integer, nullable=False)  # type: ignore
     
     # Baseline Identification
     metric_name = Column(String(255), nullable=False)  # type: ignore
@@ -318,7 +318,7 @@ class PerformanceOptimization(Base):  # type: ignore
     __table_args__ = {'extend_existing': True}
     
     id = Column(Integer, primary_key=True, index=True)  # type: ignore
-    tenant_id = Column(Integer, nullable=False, index=True)  # type: ignore
+    tenant_id = Column(Integer, nullable=False)  # type: ignore
     
     # Optimization Details
     optimization_type = Column(String(100), nullable=False)  # type: ignore  # query, index, caching, scaling
