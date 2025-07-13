@@ -19,28 +19,41 @@ import tempfile
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Import models at module level to ensure they're registered
+try:
+    from app.database import Base
+    from app.models.user import User
+    from app.models.notifications import Notification
+    from app.models.rbac import Role, UserRoleAssignment
+    
+    # Try to import additional models
+    try:
+        from app.models.user_setting import UserSetting
+        from app.models.project import Project
+        from app.models.education import Education
+        from app.models.experience import Experience
+        from app.models.team import Team
+        from app.models.tenant import Tenant
+    except ImportError:
+        pass
+        
+    try:
+        import app.models.workflow_automation
+    except ImportError:
+        pass
+        
+except ImportError as e:
+    logger.warning(f"Could not import some models: {e}")
+    Base = None
+
 def test_database_isolation():
     """Test that database isolation works properly"""
     logger.info("Testing database isolation for test environments...")
     
     try:
-        # Import models to ensure they're registered
-        from app.database import Base
-        from app.models.user import User
-        from app.models.notifications import Notification
-        from app.models.rbac import Role, UserRoleAssignment
-        
-        # Try to import additional models
-        try:
-            from app.models.user_setting import UserSetting
-            from app.models.project import Project
-            from app.models.education import Education
-            from app.models.experience import Experience
-            from app.models.team import Team
-            from app.models.tenant import Tenant
-            from app.models.workflow_automation import *
-        except ImportError as e:
-            logger.info(f"Some models not available: {e}")
+        if Base is None:
+            logger.error("Base model not available, skipping test")
+            return False
         
         # Test 1: Create isolated test database
         logger.info("Test 1: Creating isolated test database...")
@@ -134,30 +147,22 @@ def fix_model_conflicts():
     logger.info("Checking and fixing SQLAlchemy model conflicts...")
     
     try:
-        # Import all models to check for conflicts
-        from app.database import Base
-        
+        if Base is None:
+            logger.error("Base model not available, skipping model conflict check")
+            return False
+            
         # Check if models have proper __table_args__
         models_to_check: list = []
         
-        try:
-            from app.models.user import User
+        # Add available models to check list
+        if 'User' in globals():
             models_to_check.append(User)
-        except ImportError:
-            pass
-            
-        try:
-            from app.models.rbac import Role, UserRoleAssignment
+        if 'Role' in globals():
             models_to_check.append(Role)
+        if 'UserRoleAssignment' in globals():
             models_to_check.append(UserRoleAssignment)
-        except ImportError:
-            pass
-            
-        try:
-            from app.models.notifications import Notification
+        if 'Notification' in globals():
             models_to_check.append(Notification)
-        except ImportError:
-            pass
         
         # Check each model for proper configuration
         for model in models_to_check:
