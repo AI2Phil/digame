@@ -17,83 +17,151 @@ depends_on = None
 
 
 def upgrade():
+    from alembic import context
+    from sqlalchemy.exc import ProgrammingError
+    
+    connection = context.get_bind()
+    
+    def table_exists(table_name):
+        """Check if a table exists using raw SQL"""
+        try:
+            result = connection.execute(sa.text(f"""
+                SELECT EXISTS (
+                    SELECT FROM information_schema.tables
+                    WHERE table_schema = 'public'
+                    AND table_name = '{table_name}'
+                );
+            """))
+            return result.scalar()
+        except Exception:
+            # Fallback: try to query the table directly
+            try:
+                connection.execute(sa.text(f"SELECT 1 FROM {table_name} LIMIT 1"))
+                return True
+            except Exception:
+                return False
+    
+    def create_table_safe(table_name, create_func):
+        """Safely create a table, handling conflicts"""
+        if not table_exists(table_name):
+            try:
+                create_func()
+                print(f"✓ Created table: {table_name}")
+            except ProgrammingError as e:
+                if "already exists" in str(e).lower():
+                    print(f"✓ Table {table_name} already exists")
+                else:
+                    raise
+        else:
+            print(f"✓ Table {table_name} already exists")
+    
     # Create teams table
-    op.create_table('teams',
-        sa.Column('id', sa.Integer(), nullable=False),
-        sa.Column('name', sa.String(length=100), nullable=False),
-        sa.Column('description', sa.Text(), nullable=True),
-        sa.Column('created_by_user_id', sa.Integer(), nullable=True),
-        sa.Column('created_at', sa.DateTime(), nullable=True),
-        sa.Column('updated_at', sa.DateTime(), nullable=True),
-        sa.ForeignKeyConstraint(['created_by_user_id'], ['users.id'], ),
-        sa.PrimaryKeyConstraint('id')
-    )
-    op.create_index(op.f('ix_teams_id'), 'teams', ['id'], unique=False)
-    op.create_index(op.f('ix_teams_name'), 'teams', ['name'], unique=False)
+    def create_teams():
+        op.create_table('teams',
+            sa.Column('id', sa.Integer(), nullable=False),
+            sa.Column('name', sa.String(length=100), nullable=False),
+            sa.Column('description', sa.Text(), nullable=True),
+            sa.Column('created_by_user_id', sa.Integer(), nullable=True),
+            sa.Column('created_at', sa.DateTime(), nullable=True),
+            sa.Column('updated_at', sa.DateTime(), nullable=True),
+            sa.ForeignKeyConstraint(['created_by_user_id'], ['users.id'], ),
+            sa.PrimaryKeyConstraint('id')
+        )
+        try:
+            op.create_index(op.f('ix_teams_id'), 'teams', ['id'], unique=False)
+            op.create_index(op.f('ix_teams_name'), 'teams', ['name'], unique=False)
+        except ProgrammingError:
+            pass  # Indexes might already exist
+    
+    create_table_safe('teams', create_teams)
 
     # Create team_members table
-    op.create_table('team_members',
-        sa.Column('id', sa.Integer(), nullable=False),
-        sa.Column('team_id', sa.Integer(), nullable=False),
-        sa.Column('user_id', sa.Integer(), nullable=False),
-        sa.Column('role', sa.String(length=50), nullable=False, default='member'),
-        sa.Column('joined_at', sa.DateTime(), nullable=True),
-        sa.Column('custom_attributes', sa.JSON(), nullable=True),
-        sa.ForeignKeyConstraint(['team_id'], ['teams.id'], ),
-        sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
-        sa.PrimaryKeyConstraint('id'),
-        sa.UniqueConstraint('team_id', 'user_id', name='unique_team_user')
-    )
-    op.create_index(op.f('ix_team_members_id'), 'team_members', ['id'], unique=False)
-    op.create_index(op.f('ix_team_members_team_id'), 'team_members', ['team_id'], unique=False)
-    op.create_index(op.f('ix_team_members_user_id'), 'team_members', ['user_id'], unique=False)
+    def create_team_members():
+        op.create_table('team_members',
+            sa.Column('id', sa.Integer(), nullable=False),
+            sa.Column('team_id', sa.Integer(), nullable=False),
+            sa.Column('user_id', sa.Integer(), nullable=False),
+            sa.Column('role', sa.String(length=50), nullable=False, default='member'),
+            sa.Column('joined_at', sa.DateTime(), nullable=True),
+            sa.Column('custom_attributes', sa.JSON(), nullable=True),
+            sa.ForeignKeyConstraint(['team_id'], ['teams.id'], ),
+            sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
+            sa.PrimaryKeyConstraint('id'),
+            sa.UniqueConstraint('team_id', 'user_id', name='unique_team_user')
+        )
+        try:
+            op.create_index(op.f('ix_team_members_id'), 'team_members', ['id'], unique=False)
+            op.create_index(op.f('ix_team_members_team_id'), 'team_members', ['team_id'], unique=False)
+            op.create_index(op.f('ix_team_members_user_id'), 'team_members', ['user_id'], unique=False)
+        except ProgrammingError:
+            pass  # Indexes might already exist
+    
+    create_table_safe('team_members', create_team_members)
 
     # Create team_performance_metrics table
-    op.create_table('team_performance_metrics',
-        sa.Column('id', sa.Integer(), nullable=False),
-        sa.Column('team_id', sa.Integer(), nullable=False),
-        sa.Column('metric_name', sa.String(length=100), nullable=False),
-        sa.Column('metric_value', sa.JSON(), nullable=False),
-        sa.Column('recorded_at', sa.DateTime(), nullable=True),
-        sa.Column('notes', sa.String(), nullable=True),
-        sa.ForeignKeyConstraint(['team_id'], ['teams.id'], ),
-        sa.PrimaryKeyConstraint('id')
-    )
-    op.create_index(op.f('ix_team_performance_metrics_id'), 'team_performance_metrics', ['id'], unique=False)
-    op.create_index(op.f('ix_team_performance_metrics_team_id'), 'team_performance_metrics', ['team_id'], unique=False)
+    def create_team_performance_metrics():
+        op.create_table('team_performance_metrics',
+            sa.Column('id', sa.Integer(), nullable=False),
+            sa.Column('team_id', sa.Integer(), nullable=False),
+            sa.Column('metric_name', sa.String(length=100), nullable=False),
+            sa.Column('metric_value', sa.JSON(), nullable=False),
+            sa.Column('recorded_at', sa.DateTime(), nullable=True),
+            sa.Column('notes', sa.String(), nullable=True),
+            sa.ForeignKeyConstraint(['team_id'], ['teams.id'], ),
+            sa.PrimaryKeyConstraint('id')
+        )
+        try:
+            op.create_index(op.f('ix_team_performance_metrics_id'), 'team_performance_metrics', ['id'], unique=False)
+            op.create_index(op.f('ix_team_performance_metrics_team_id'), 'team_performance_metrics', ['team_id'], unique=False)
+        except ProgrammingError:
+            pass  # Indexes might already exist
+    
+    create_table_safe('team_performance_metrics', create_team_performance_metrics)
 
     # Create team_skill_gaps table
-    op.create_table('team_skill_gaps',
-        sa.Column('id', sa.Integer(), nullable=False),
-        sa.Column('team_id', sa.Integer(), nullable=False),
-        sa.Column('skill_name', sa.String(length=100), nullable=False),
-        sa.Column('description', sa.String(), nullable=True),
-        sa.Column('identified_at', sa.DateTime(), nullable=True),
-        sa.Column('priority', sa.Integer(), nullable=True, default=0),
-        sa.Column('suggested_development_plan', sa.String(), nullable=True),
-        sa.ForeignKeyConstraint(['team_id'], ['teams.id'], ),
-        sa.PrimaryKeyConstraint('id')
-    )
-    op.create_index(op.f('ix_team_skill_gaps_id'), 'team_skill_gaps', ['id'], unique=False)
-    op.create_index(op.f('ix_team_skill_gaps_team_id'), 'team_skill_gaps', ['team_id'], unique=False)
-    op.create_index(op.f('ix_team_skill_gaps_skill_name'), 'team_skill_gaps', ['skill_name'], unique=False)
+    def create_team_skill_gaps():
+        op.create_table('team_skill_gaps',
+            sa.Column('id', sa.Integer(), nullable=False),
+            sa.Column('team_id', sa.Integer(), nullable=False),
+            sa.Column('skill_name', sa.String(length=100), nullable=False),
+            sa.Column('description', sa.String(), nullable=True),
+            sa.Column('identified_at', sa.DateTime(), nullable=True),
+            sa.Column('priority', sa.Integer(), nullable=True, default=0),
+            sa.Column('suggested_development_plan', sa.String(), nullable=True),
+            sa.ForeignKeyConstraint(['team_id'], ['teams.id'], ),
+            sa.PrimaryKeyConstraint('id')
+        )
+        try:
+            op.create_index(op.f('ix_team_skill_gaps_id'), 'team_skill_gaps', ['id'], unique=False)
+            op.create_index(op.f('ix_team_skill_gaps_team_id'), 'team_skill_gaps', ['team_id'], unique=False)
+            op.create_index(op.f('ix_team_skill_gaps_skill_name'), 'team_skill_gaps', ['skill_name'], unique=False)
+        except ProgrammingError:
+            pass  # Indexes might already exist
+    
+    create_table_safe('team_skill_gaps', create_team_skill_gaps)
 
     # Create team_workflows table
-    op.create_table('team_workflows',
-        sa.Column('id', sa.Integer(), nullable=False),
-        sa.Column('team_id', sa.Integer(), nullable=False),
-        sa.Column('workflow_name', sa.String(length=100), nullable=False),
-        sa.Column('description', sa.String(), nullable=True),
-        sa.Column('steps', sa.JSON(), nullable=True),
-        sa.Column('is_optimized', sa.Integer(), nullable=True, default=0),
-        sa.Column('optimization_suggestions', sa.JSON(), nullable=True),
-        sa.Column('created_at', sa.DateTime(), nullable=True),
-        sa.Column('updated_at', sa.DateTime(), nullable=True),
-        sa.ForeignKeyConstraint(['team_id'], ['teams.id'], ),
-        sa.PrimaryKeyConstraint('id')
-    )
-    op.create_index(op.f('ix_team_workflows_id'), 'team_workflows', ['id'], unique=False)
-    op.create_index(op.f('ix_team_workflows_team_id'), 'team_workflows', ['team_id'], unique=False)
+    def create_team_workflows():
+        op.create_table('team_workflows',
+            sa.Column('id', sa.Integer(), nullable=False),
+            sa.Column('team_id', sa.Integer(), nullable=False),
+            sa.Column('workflow_name', sa.String(length=100), nullable=False),
+            sa.Column('description', sa.String(), nullable=True),
+            sa.Column('steps', sa.JSON(), nullable=True),
+            sa.Column('is_optimized', sa.Integer(), nullable=True, default=0),
+            sa.Column('optimization_suggestions', sa.JSON(), nullable=True),
+            sa.Column('created_at', sa.DateTime(), nullable=True),
+            sa.Column('updated_at', sa.DateTime(), nullable=True),
+            sa.ForeignKeyConstraint(['team_id'], ['teams.id'], ),
+            sa.PrimaryKeyConstraint('id')
+        )
+        try:
+            op.create_index(op.f('ix_team_workflows_id'), 'team_workflows', ['id'], unique=False)
+            op.create_index(op.f('ix_team_workflows_team_id'), 'team_workflows', ['team_id'], unique=False)
+        except ProgrammingError:
+            pass  # Indexes might already exist
+    
+    create_table_safe('team_workflows', create_team_workflows)
 
 
 def downgrade():
