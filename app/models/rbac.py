@@ -17,7 +17,6 @@ role_permissions_table = Table('role_permissions', Base.metadata,
 )
 
 class Role(Base):
-    __table_args__ = {'extend_existing': True}
     __tablename__ = "roles"
     __table_args__ = {'extend_existing': True}
 
@@ -49,7 +48,6 @@ class Role(Base):
         return f"<Role(id={self.id}, name='{self.name}', tenant_id={self.tenant_id})>"
 
 class Permission(Base):
-    __table_args__ = {'extend_existing': True}
     __tablename__ = "permissions"
     __table_args__ = {'extend_existing': True}
 
@@ -76,7 +74,6 @@ class UserRoleAssignment(Base):
     Enhanced UserRole model for tenant-aware role assignments
     Replaces the simple many-to-many table approach
     """
-    __table_args__ = {'extend_existing': True}
     __tablename__ = "user_role_assignments"
     __table_args__ = (
         UniqueConstraint('user_id', 'role_id', 'tenant_id', name='unique_user_role_tenant'),
