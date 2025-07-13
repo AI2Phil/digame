@@ -36,7 +36,7 @@ class Role(Base):
     updated_at = Column(DateTime(), default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # Enhanced relationships for tenant-aware RBAC
-    user_roles = relationship("UserRole", back_populates="role")
+    user_roles = relationship("app.models.rbac.UserRole", back_populates="role")
     users = association_proxy("user_roles", "user")  # Maintains backward compatibility
     
     # Tenant relationship
