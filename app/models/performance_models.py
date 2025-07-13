@@ -12,7 +12,6 @@ from ..database import Base
 
 class UserSession(Base):
     """User session tracking for UX analytics"""
-    __table_args__ = {'extend_existing': True}
     __tablename__ = 'user_sessions'
     
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
@@ -38,16 +37,16 @@ class UserSession(Base):
     page_views_rel = relationship("PageView", back_populates="session")
     web_vitals = relationship("WebVital", back_populates="session")
     
-    # Indexes
+    # Indexes with extend_existing
     __table_args__ = (
         Index('idx_user_sessions_user_id', 'user_id'),
         Index('idx_user_sessions_start_time', 'start_time'),
         Index('idx_user_sessions_device_type', 'device_type'),
+        {'extend_existing': True}
     )
 
 class PageView(Base):
     """Individual page view tracking"""
-    __table_args__ = {'extend_existing': True}
     __tablename__ = 'page_views'
     
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
@@ -64,16 +63,16 @@ class PageView(Base):
     # Relationships
     session = relationship("UserSession", back_populates="page_views_rel")
     
-    # Indexes
+    # Indexes with extend_existing
     __table_args__ = (
         Index('idx_page_views_session_id', 'session_id'),
         Index('idx_page_views_page_path', 'page_path'),
         Index('idx_page_views_timestamp', 'timestamp'),
+        {'extend_existing': True}
     )
 
 class WebVital(Base):
     """Core Web Vitals tracking"""
-    __table_args__ = {'extend_existing': True}
     __tablename__ = 'web_vitals'
     
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
@@ -88,17 +87,17 @@ class WebVital(Base):
     # Relationships
     session = relationship("UserSession", back_populates="web_vitals")
     
-    # Indexes
+    # Indexes with extend_existing
     __table_args__ = (
         Index('idx_web_vitals_session_id', 'session_id'),
         Index('idx_web_vitals_metric_name', 'metric_name'),
         Index('idx_web_vitals_timestamp', 'timestamp'),
         Index('idx_web_vitals_page_path', 'page_path'),
+        {'extend_existing': True}
     )
 
 class DatabaseQuery(Base):
     """Database query performance tracking"""
-    __table_args__ = {'extend_existing': True}
     __tablename__ = 'database_queries'
     
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
@@ -115,17 +114,17 @@ class DatabaseQuery(Base):
     user_id = Column(String)
     timestamp = Column(DateTime, default=datetime.utcnow)
     
-    # Indexes
+    # Indexes with extend_existing
     __table_args__ = (
         Index('idx_database_queries_hash', 'query_hash'),
         Index('idx_database_queries_database', 'database_name'),
         Index('idx_database_queries_execution_time', 'execution_time'),
         Index('idx_database_queries_timestamp', 'timestamp'),
+        {'extend_existing': True}
     )
 
 class QueryOptimization(Base):
     """Query optimization recommendations"""
-    __table_args__ = {'extend_existing': True}
     __tablename__ = 'query_optimizations'
     
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
@@ -140,16 +139,16 @@ class QueryOptimization(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
-    # Indexes
+    # Indexes with extend_existing
     __table_args__ = (
         Index('idx_query_optimizations_hash', 'query_hash'),
         Index('idx_query_optimizations_priority', 'priority'),
         Index('idx_query_optimizations_status', 'status'),
+        {'extend_existing': True}
     )
 
 class BundleAsset(Base):
     """Bundle asset tracking"""
-    __table_args__ = {'extend_existing': True}
     __tablename__ = 'bundle_assets'
     
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
@@ -169,16 +168,16 @@ class BundleAsset(Base):
     # Relationships
     optimizations = relationship("AssetOptimization", back_populates="asset")
     
-    # Indexes
+    # Indexes with extend_existing
     __table_args__ = (
         Index('idx_bundle_assets_build_id', 'build_id'),
         Index('idx_bundle_assets_type', 'asset_type'),
         Index('idx_bundle_assets_size', 'file_size'),
+        {'extend_existing': True}
     )
 
 class AssetOptimization(Base):
     """Asset optimization recommendations"""
-    __table_args__ = {'extend_existing': True}
     __tablename__ = 'asset_optimizations'
     
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
@@ -198,16 +197,16 @@ class AssetOptimization(Base):
     # Relationships
     asset = relationship("BundleAsset", back_populates="optimizations")
     
-    # Indexes
+    # Indexes with extend_existing
     __table_args__ = (
         Index('idx_asset_optimizations_asset_id', 'asset_id'),
         Index('idx_asset_optimizations_priority', 'priority'),
         Index('idx_asset_optimizations_type', 'optimization_type'),
+        {'extend_existing': True}
     )
 
 class GeneralPerformanceMetric(Base):
     """General performance metrics tracking"""
-    __table_args__ = {'extend_existing': True}
     __tablename__ = 'general_performance_metrics'
     
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
@@ -221,17 +220,17 @@ class GeneralPerformanceMetric(Base):
     threshold_critical = Column(Float)
     timestamp = Column(DateTime, default=datetime.utcnow)
     
-    # Indexes
+    # Indexes with extend_existing
     __table_args__ = (
         Index('idx_performance_metrics_name', 'metric_name'),
         Index('idx_performance_metrics_category', 'category'),
         Index('idx_performance_metrics_timestamp', 'timestamp'),
         Index('idx_performance_metrics_status', 'status'),
+        {'extend_existing': True}
     )
 
 class PerformanceAlert(Base):
     """Performance alerts and notifications"""
-    __table_args__ = {'extend_existing': True}
     __tablename__ = 'performance_alerts'
     
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
@@ -250,17 +249,17 @@ class PerformanceAlert(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
-    # Indexes
+    # Indexes with extend_existing
     __table_args__ = (
         Index('idx_performance_alerts_type', 'alert_type'),
         Index('idx_performance_alerts_severity', 'severity'),
         Index('idx_performance_alerts_resolved', 'resolved'),
         Index('idx_performance_alerts_created_at', 'created_at'),
+        {'extend_existing': True}
     )
 
 class SystemHealth(Base):
     """System health metrics"""
-    __table_args__ = {'extend_existing': True}
     __tablename__ = 'system_health'
     
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
@@ -275,8 +274,9 @@ class SystemHealth(Base):
     uptime = Column(Float)  # percentage
     timestamp = Column(DateTime, default=datetime.utcnow)
     
-    # Indexes
+    # Indexes with extend_existing
     __table_args__ = (
         Index('idx_system_health_server_id', 'server_id'),
         Index('idx_system_health_timestamp', 'timestamp'),
+        {'extend_existing': True}
     )

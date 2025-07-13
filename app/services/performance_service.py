@@ -14,7 +14,7 @@ import statistics
 
 from app.models.performance_models import (
     UserSession, PageView, WebVital, DatabaseQuery, QueryOptimization,
-    BundleAsset, AssetOptimization, PerformanceMetric, PerformanceAlert, SystemHealth
+    BundleAsset, AssetOptimization, GeneralPerformanceMetric, PerformanceAlert, SystemHealth
 )
 
 class PerformanceService:
@@ -616,9 +616,9 @@ class PerformanceService:
     
     # Performance Monitoring Methods
     
-    def record_performance_metric(self, metric_data: Dict[str, Any]) -> PerformanceMetric:
+    def record_performance_metric(self, metric_data: Dict[str, Any]) -> GeneralPerformanceMetric:
         """Record a performance metric"""
-        metric = PerformanceMetric(
+        metric = GeneralPerformanceMetric(
             metric_name=metric_data.get('metric_name'),
             metric_value=metric_data.get('metric_value'),
             metric_unit=metric_data.get('metric_unit'),
@@ -636,8 +636,8 @@ class PerformanceService:
     def get_performance_dashboard_data(self) -> Dict[str, Any]:
         """Get comprehensive performance dashboard data"""
         # Get recent metrics
-        recent_metrics = self.db.query(PerformanceMetric).filter(
-            PerformanceMetric.timestamp >= datetime.utcnow() - timedelta(hours=1)
+        recent_metrics = self.db.query(GeneralPerformanceMetric).filter(
+            GeneralPerformanceMetric.timestamp >= datetime.utcnow() - timedelta(hours=1)
         ).all()
         
         # Get system health
@@ -658,7 +658,7 @@ class PerformanceService:
             'optimizations': optimizations
         }
     
-    def _format_performance_metric(self, metric: PerformanceMetric) -> Dict[str, Any]:
+    def _format_performance_metric(self, metric: GeneralPerformanceMetric) -> Dict[str, Any]:
         """Format performance metric for frontend"""
         return {
             'name': metric.metric_name,
