@@ -22,16 +22,11 @@ def upgrade():
     connection = context.get_bind()
     
     def table_exists(table_name):
-        """Check if a table exists using raw SQL"""
+        """Check if a table exists using database-agnostic approach"""
         try:
-            result = connection.execute(sa.text(f"""
-                SELECT EXISTS (
-                    SELECT FROM information_schema.tables
-                    WHERE table_schema = 'public'
-                    AND table_name = '{table_name}'
-                );
-            """))
-            return result.scalar()
+            # Use SQLAlchemy inspector for database-agnostic table checking
+            inspector = sa.inspect(connection)
+            return table_name in inspector.get_table_names()
         except Exception:
             # Fallback: try to query the table directly
             try:
@@ -150,14 +145,47 @@ def upgrade():
     create_table_safe('notification_logs', create_notification_logs)
     
     # Create indexes for better performance
-    try:
-        op.create_index('idx_notifications_recipient_status', 'notifications', ['recipient_id', 'status'])
-        op.create_index('idx_notifications_type_priority', 'notifications', ['notification_type', 'priority'])
-        op.create_index('idx_notifications_created_at', 'notifications', ['created_at'])
-        op.create_index('idx_notification_logs_notification_channel', 'notification_logs', ['notification_id', 'channel'])
-        print("✓ Created performance indexes")
-    except ProgrammingError:
-        print("✓ Performance indexes already exist")
+    def create_indexes_safe():
+        """Safely create indexes, checking if columns exist"""
+        inspector = sa.inspect(connection)
+        
+        # Check if notifications table and columns exist
+        if 'notifications' in inspector.get_table_names():
+            notifications_columns = [col['name'] for col in inspector.get_columns('notifications')]
+            
+            if 'recipient_id' in notifications_columns and 'status' in notifications_columns:
+                try:
+                    op.create_index('idx_notifications_recipient_status', 'notifications', ['recipient_id', 'status'])
+                    print("✓ Created index: idx_notifications_recipient_status")
+                except Exception as e:
+                    print(f"✓ Index idx_notifications_recipient_status already exists or failed: {e}")
+            
+            if 'notification_type' in notifications_columns and 'priority' in notifications_columns:
+                try:
+                    op.create_index('idx_notifications_type_priority', 'notifications', ['notification_type', 'priority'])
+                    print("✓ Created index: idx_notifications_type_priority")
+                except Exception as e:
+                    print(f"✓ Index idx_notifications_type_priority already exists or failed: {e}")
+            
+            if 'created_at' in notifications_columns:
+                try:
+                    op.create_index('idx_notifications_created_at', 'notifications', ['created_at'])
+                    print("✓ Created index: idx_notifications_created_at")
+                except Exception as e:
+                    print(f"✓ Index idx_notifications_created_at already exists or failed: {e}")
+        
+        # Check if notification_logs table and columns exist
+        if 'notification_logs' in inspector.get_table_names():
+            logs_columns = [col['name'] for col in inspector.get_columns('notification_logs')]
+            
+            if 'notification_id' in logs_columns and 'channel' in logs_columns:
+                try:
+                    op.create_index('idx_notification_logs_notification_channel', 'notification_logs', ['notification_id', 'channel'])
+                    print("✓ Created index: idx_notification_logs_notification_channel")
+                except Exception as e:
+                    print(f"✓ Index idx_notification_logs_notification_channel already exists or failed: {e}")
+    
+    create_indexes_safe()
 
 def downgrade():
     # Drop indexes

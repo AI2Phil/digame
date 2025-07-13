@@ -28,16 +28,11 @@ def upgrade():
     connection = context.get_bind()
     
     def table_exists(table_name):
-        """Check if a table exists using raw SQL"""
+        """Check if a table exists using database-agnostic SQLAlchemy inspector"""
         try:
-            result = connection.execute(sa.text(f"""
-                SELECT EXISTS (
-                    SELECT FROM information_schema.tables
-                    WHERE table_schema = 'public'
-                    AND table_name = '{table_name}'
-                );
-            """))
-            return result.scalar()
+            from sqlalchemy import inspect
+            inspector = inspect(connection)
+            return table_name in inspector.get_table_names()
         except Exception:
             # Fallback: try to query the table directly
             try:
@@ -74,8 +69,8 @@ def upgrade():
             sa.Column('status', sa.String(20), nullable=False, default='pending'),
             sa.Column('initiated_by', sa.Integer(), nullable=False),
             sa.Column('connected_at', sa.DateTime(), nullable=True),
-            sa.Column('created_at', sa.DateTime(), nullable=False, server_default=sa.text('NOW()')),
-            sa.Column('updated_at', sa.DateTime(), nullable=False, server_default=sa.text('NOW()')),
+            sa.Column('created_at', sa.DateTime(), nullable=False, server_default=sa.text('CURRENT_TIMESTAMP')),
+            sa.Column('updated_at', sa.DateTime(), nullable=False, server_default=sa.text('CURRENT_TIMESTAMP')),
             sa.PrimaryKeyConstraint('id'),
             sa.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='CASCADE'),
             sa.ForeignKeyConstraint(['connected_user_id'], ['users.id'], ondelete='CASCADE'),
@@ -92,12 +87,12 @@ def upgrade():
             sa.Column('user_id', sa.Integer(), nullable=False),
             sa.Column('matched_user_id', sa.Integer(), nullable=False),
             sa.Column('compatibility_score', sa.Numeric(5, 2), nullable=False),
-            sa.Column('match_factors', postgresql.JSONB(), nullable=True),
+            sa.Column('match_factors', sa.JSON(), nullable=True),
             sa.Column('status', sa.String(20), nullable=False, default='suggested'),
             sa.Column('viewed_at', sa.DateTime(), nullable=True),
             sa.Column('responded_at', sa.DateTime(), nullable=True),
-            sa.Column('created_at', sa.DateTime(), nullable=False, server_default=sa.text('NOW()')),
-            sa.Column('updated_at', sa.DateTime(), nullable=False, server_default=sa.text('NOW()')),
+            sa.Column('created_at', sa.DateTime(), nullable=False, server_default=sa.text('CURRENT_TIMESTAMP')),
+            sa.Column('updated_at', sa.DateTime(), nullable=False, server_default=sa.text('CURRENT_TIMESTAMP')),
             sa.PrimaryKeyConstraint('id'),
             sa.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='CASCADE'),
             sa.ForeignKeyConstraint(['matched_user_id'], ['users.id'], ondelete='CASCADE'),
@@ -118,9 +113,9 @@ def upgrade():
             sa.Column('collaboration_score', sa.Integer(), nullable=False, default=0),
             sa.Column('network_growth_rate', sa.Numeric(5, 2), nullable=False, default=0.0),
             sa.Column('engagement_level', sa.String(20), nullable=False, default='low'),
-            sa.Column('last_calculated', sa.DateTime(), nullable=False, server_default=sa.text('NOW()')),
-            sa.Column('created_at', sa.DateTime(), nullable=False, server_default=sa.text('NOW()')),
-            sa.Column('updated_at', sa.DateTime(), nullable=False, server_default=sa.text('NOW()')),
+            sa.Column('last_calculated', sa.DateTime(), nullable=False, server_default=sa.text('CURRENT_TIMESTAMP')),
+            sa.Column('created_at', sa.DateTime(), nullable=False, server_default=sa.text('CURRENT_TIMESTAMP')),
+            sa.Column('updated_at', sa.DateTime(), nullable=False, server_default=sa.text('CURRENT_TIMESTAMP')),
             sa.PrimaryKeyConstraint('id'),
             sa.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='CASCADE'),
             sa.UniqueConstraint('user_id', name='unique_user_social_metrics')
@@ -138,8 +133,8 @@ def upgrade():
             sa.Column('years_experience', sa.Integer(), nullable=True),
             sa.Column('is_seeking_mentorship', sa.Boolean(), nullable=False, default=False),
             sa.Column('is_offering_mentorship', sa.Boolean(), nullable=False, default=False),
-            sa.Column('created_at', sa.DateTime(), nullable=False, server_default=sa.text('NOW()')),
-            sa.Column('updated_at', sa.DateTime(), nullable=False, server_default=sa.text('NOW()')),
+            sa.Column('created_at', sa.DateTime(), nullable=False, server_default=sa.text('CURRENT_TIMESTAMP')),
+            sa.Column('updated_at', sa.DateTime(), nullable=False, server_default=sa.text('CURRENT_TIMESTAMP')),
             sa.PrimaryKeyConstraint('id'),
             sa.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='CASCADE'),
             sa.UniqueConstraint('user_id', 'skill_name', name='unique_user_skill')
@@ -160,8 +155,8 @@ def upgrade():
             sa.Column('parent_category_id', sa.Integer(), nullable=True),
             sa.Column('sort_order', sa.Integer(), nullable=False, default=0),
             sa.Column('is_active', sa.Boolean(), nullable=False, default=True),
-            sa.Column('created_at', sa.DateTime(), nullable=False, server_default=sa.text('NOW()')),
-            sa.Column('updated_at', sa.DateTime(), nullable=False, server_default=sa.text('NOW()')),
+            sa.Column('created_at', sa.DateTime(), nullable=False, server_default=sa.text('CURRENT_TIMESTAMP')),
+            sa.Column('updated_at', sa.DateTime(), nullable=False, server_default=sa.text('CURRENT_TIMESTAMP')),
             sa.PrimaryKeyConstraint('id'),
             sa.ForeignKeyConstraint(['parent_category_id'], ['course_categories.id'], ondelete='SET NULL'),
             sa.UniqueConstraint('name', name='unique_category_name')
@@ -180,9 +175,9 @@ def upgrade():
             sa.Column('difficulty_level', sa.String(20), nullable=False, default='beginner'),
             sa.Column('duration_hours', sa.Integer(), nullable=True),
             sa.Column('estimated_completion_days', sa.Integer(), nullable=True),
-            sa.Column('prerequisites', postgresql.JSONB(), nullable=True),
-            sa.Column('learning_objectives', postgresql.JSONB(), nullable=True),
-            sa.Column('skills_covered', postgresql.JSONB(), nullable=True),
+            sa.Column('prerequisites', sa.JSON(), nullable=True),
+            sa.Column('learning_objectives', sa.JSON(), nullable=True),
+            sa.Column('skills_covered', sa.JSON(), nullable=True),
             sa.Column('instructor_id', sa.Integer(), nullable=True),
             sa.Column('max_enrollments', sa.Integer(), nullable=True),
             sa.Column('current_enrollments', sa.Integer(), nullable=False, default=0),
@@ -190,8 +185,8 @@ def upgrade():
             sa.Column('rating_count', sa.Integer(), nullable=False, default=0),
             sa.Column('is_published', sa.Boolean(), nullable=False, default=False),
             sa.Column('published_at', sa.DateTime(), nullable=True),
-            sa.Column('created_at', sa.DateTime(), nullable=False, server_default=sa.text('NOW()')),
-            sa.Column('updated_at', sa.DateTime(), nullable=False, server_default=sa.text('NOW()')),
+            sa.Column('created_at', sa.DateTime(), nullable=False, server_default=sa.text('CURRENT_TIMESTAMP')),
+            sa.Column('updated_at', sa.DateTime(), nullable=False, server_default=sa.text('CURRENT_TIMESTAMP')),
             sa.PrimaryKeyConstraint('id'),
             sa.ForeignKeyConstraint(['category_id'], ['course_categories.id'], ondelete='RESTRICT'),
             sa.ForeignKeyConstraint(['instructor_id'], ['users.id'], ondelete='SET NULL')
@@ -211,8 +206,8 @@ def upgrade():
             sa.Column('completed_at', sa.DateTime(), nullable=True),
             sa.Column('last_accessed_at', sa.DateTime(), nullable=True),
             sa.Column('time_spent_minutes', sa.Integer(), nullable=False, default=0),
-            sa.Column('enrolled_at', sa.DateTime(), nullable=False, server_default=sa.text('NOW()')),
-            sa.Column('updated_at', sa.DateTime(), nullable=False, server_default=sa.text('NOW()')),
+            sa.Column('enrolled_at', sa.DateTime(), nullable=False, server_default=sa.text('CURRENT_TIMESTAMP')),
+            sa.Column('updated_at', sa.DateTime(), nullable=False, server_default=sa.text('CURRENT_TIMESTAMP')),
             sa.PrimaryKeyConstraint('id'),
             sa.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='CASCADE'),
             sa.ForeignKeyConstraint(['course_id'], ['courses.id'], ondelete='CASCADE'),
@@ -234,8 +229,8 @@ def upgrade():
             sa.Column('total_study_hours', sa.Integer(), nullable=False, default=0),
             sa.Column('last_activity_at', sa.DateTime(), nullable=True),
             sa.Column('target_completion_date', sa.Date(), nullable=True),
-            sa.Column('created_at', sa.DateTime(), nullable=False, server_default=sa.text('NOW()')),
-            sa.Column('updated_at', sa.DateTime(), nullable=False, server_default=sa.text('NOW()')),
+            sa.Column('created_at', sa.DateTime(), nullable=False, server_default=sa.text('CURRENT_TIMESTAMP')),
+            sa.Column('updated_at', sa.DateTime(), nullable=False, server_default=sa.text('CURRENT_TIMESTAMP')),
             sa.PrimaryKeyConstraint('id'),
             sa.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='CASCADE'),
             sa.UniqueConstraint('user_id', 'skill_name', name='unique_user_skill_progress')
@@ -259,8 +254,8 @@ def upgrade():
             sa.Column('viewed_at', sa.DateTime(), nullable=True),
             sa.Column('responded_at', sa.DateTime(), nullable=True),
             sa.Column('expires_at', sa.DateTime(), nullable=True),
-            sa.Column('created_at', sa.DateTime(), nullable=False, server_default=sa.text('NOW()')),
-            sa.Column('updated_at', sa.DateTime(), nullable=False, server_default=sa.text('NOW()')),
+            sa.Column('created_at', sa.DateTime(), nullable=False, server_default=sa.text('CURRENT_TIMESTAMP')),
+            sa.Column('updated_at', sa.DateTime(), nullable=False, server_default=sa.text('CURRENT_TIMESTAMP')),
             sa.PrimaryKeyConstraint('id'),
             sa.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='CASCADE'),
             sa.ForeignKeyConstraint(['course_id'], ['courses.id'], ondelete='CASCADE')

@@ -5,13 +5,49 @@ Script to create database tables using SQLAlchemy
 import sys
 import os
 
-# Add the digame directory to the Python path
-sys.path.insert(0, os.path.dirname(__file__))
+# Add the project root to the Python path
+project_root = os.path.dirname(os.path.dirname(__file__))
+sys.path.insert(0, project_root)
 
-from app.database import engine, Base
+# Import our CLI safety utilities
+from cli_utils import (
+    SafeModelImporter,
+    create_safe_model_importer,
+    safe_import_all_models,
+    validate_model_imports
+)
 
-# Import all models to ensure they are registered with Base.metadata
-from app.models import *  # This imports all models from __init__.py
+def safe_import_database_and_models():
+    """Safely import database and all models."""
+    print("🔧 Performing safe model imports...")
+    
+    try:
+        # First try direct imports
+        from app.database import engine, Base
+        
+        # Use safe model importer to import all models
+        importer = create_safe_model_importer()
+        modules = safe_import_all_models()
+        
+        print(f"✅ Successfully imported {len(modules)} model modules")
+        
+        # Validate the imports
+        validation_report = validate_model_imports()
+        if not validation_report["import_success"]:
+            print("⚠️  Model import validation found issues:")
+            for error in validation_report["import_errors"]:
+                print(f"   - {error}")
+        else:
+            print(f"✅ Model validation passed: {validation_report['total_models']} models found")
+        
+        return engine, Base, modules
+        
+    except Exception as e:
+        print(f"❌ Safe model import failed: {e}")
+        raise
+
+# Perform safe imports
+engine, Base, model_modules = safe_import_database_and_models()
 
 def create_tables():
     """Create all database tables"""

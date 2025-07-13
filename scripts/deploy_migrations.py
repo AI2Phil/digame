@@ -24,6 +24,16 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
+# Import our CLI safety utilities
+from cli_utils import (
+    SafeMigrationRunner,
+    create_safe_migration_runner,
+    safe_upgrade,
+    check_migration_health,
+    wait_for_database as safe_wait_for_database,
+    get_database_url_from_env
+)
+
 def log(message, level="INFO"):
     """Log a message with timestamp."""
     timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
@@ -57,139 +67,113 @@ def run_command(cmd, cwd=None, timeout=300):
         return e.stdout, e.stderr, e.returncode
 
 def wait_for_database(max_attempts=30, delay=2):
-    """Wait for the database to be available."""
+    """Wait for the database to be available using safe utilities."""
     log("Waiting for database to be available...")
-    
-    for attempt in range(max_attempts):
-        try:
-            # Try to connect to the database using alembic
-            stdout, stderr, code = run_command("alembic current", timeout=10)
-            if code == 0:
-                log("Database is available")
-                return True
-            else:
-                log(f"Database not ready (attempt {attempt + 1}/{max_attempts})")
-                time.sleep(delay)
-        except Exception as e:
-            log(f"Database connection attempt failed: {e}")
-            time.sleep(delay)
-    
-    log("Database is not available after maximum attempts", "ERROR")
-    return False
+    database_url = get_database_url_from_env()
+    return safe_wait_for_database(max_attempts=max_attempts, delay=delay, database_url=database_url)
 
 def check_migration_status():
-    """Check the current migration status."""
+    """Check the current migration status using safe utilities."""
     log("Checking current migration status...")
     
-    stdout, stderr, code = run_command("alembic current")
-    if code != 0:
-        log("Failed to check migration status", "ERROR")
+    try:
+        health = check_migration_health()
+        
+        if not health["connected"]:
+            log("Failed to connect to database", "ERROR")
+            return None, False
+        
+        current_revision = health["current_revision"]
+        head_revision = health["head_revision"]
+        
+        if not current_revision:
+            log("No migrations have been applied yet")
+            return None, True
+        
+        log(f"Current migration: {current_revision}")
+        log(f"Latest migration: {head_revision}")
+        
+        if health["pending_migrations"]:
+            log("Database has pending migrations")
+        else:
+            log("Database is up to date")
+        
+        if health["errors"]:
+            for error in health["errors"]:
+                log(f"Health check warning: {error}", "WARNING")
+        
+        return current_revision, True
+        
+    except Exception as e:
+        log(f"Failed to check migration status: {e}", "ERROR")
         return None, False
-    
-    current_revision = stdout.strip()
-    if not current_revision or current_revision == "None":
-        log("No migrations have been applied yet")
-        return None, True
-    
-    log(f"Current migration: {current_revision}")
-    
-    # Check if there are pending migrations
-    stdout, stderr, code = run_command("alembic heads")
-    if code != 0:
-        log("Failed to check migration heads", "ERROR")
-        return current_revision, False
-    
-    head_revision = stdout.strip()
-    log(f"Latest migration: {head_revision}")
-    
-    if current_revision == head_revision:
-        log("Database is up to date")
-        return current_revision, True
-    else:
-        log("Database has pending migrations")
-        return current_revision, True
 
 def apply_migrations(force=False):
-    """Apply pending migrations."""
+    """Apply pending migrations using safe utilities."""
     log("Applying database migrations...")
     
-    # Check if there are pending migrations first
-    current_revision, success = check_migration_status()
-    if not success:
-        log("Failed to check migration status", "ERROR")
-        return False
-    
-    # Get the head revision
-    stdout, stderr, code = run_command("alembic heads")
-    if code != 0:
-        log("Failed to get head revision", "ERROR")
-        return False
-    
-    head_revision = stdout.strip()
-    
-    # If we're already at head, no need to migrate
-    if current_revision and current_revision == head_revision:
-        log("Database is already up to date")
-        return True
-    
-    # Check for any warnings or conflicts (only if not forcing and there are existing migrations)
-    if not force and current_revision:
-        stdout, stderr, code = run_command("alembic check")
-        if code != 0 and "Target database is not up to date" not in stderr:
-            # Only fail if it's not just an "out of date" warning
-            log("Migration check failed - there may be conflicts", "WARNING")
-            log("Use --force to apply migrations anyway", "WARNING")
-            return False
+    try:
+        # Use our safe upgrade function which includes all the safety checks
+        success = safe_upgrade(target="head", force=force, dry_run=False)
+        
+        if success:
+            log("Migrations applied successfully")
+            return True
         else:
-            log("Migration check passed or only out-of-date warning")
-    else:
-        log("Skipping migration check (force mode or empty database)")
-    
-    # Apply migrations
-    stdout, stderr, code = run_command("alembic upgrade head", timeout=600)
-    if code != 0:
-        log("Failed to apply migrations", "ERROR")
+            log("Failed to apply migrations", "ERROR")
+            return False
+            
+    except Exception as e:
+        log(f"Migration application failed with exception: {e}", "ERROR")
         return False
-    
-    log("Migrations applied successfully")
-    return True
 
 def verify_migration_integrity():
-    """Verify that migrations were applied correctly."""
+    """Verify that migrations were applied correctly using safe utilities."""
     log("Verifying migration integrity...")
     
-    # Check that we're at the head revision
-    current_revision, success = check_migration_status()
-    if not success:
+    try:
+        health = check_migration_health()
+        
+        if not health["connected"]:
+            log("Migration verification failed - database not connected", "ERROR")
+            return False
+        
+        if health["pending_migrations"]:
+            log("Migration verification failed - still have pending migrations", "ERROR")
+            return False
+        
+        if health["errors"]:
+            log("Migration verification found issues:", "WARNING")
+            for error in health["errors"]:
+                log(f"  - {error}", "WARNING")
+        
+        log("Migration integrity verified")
+        return True
+        
+    except Exception as e:
+        log(f"Migration verification failed: {e}", "ERROR")
         return False
-    
-    stdout, stderr, code = run_command("alembic heads")
-    if code != 0:
-        log("Failed to verify migration heads", "ERROR")
-        return False
-    
-    head_revision = stdout.strip()
-    
-    if current_revision != head_revision:
-        log("Migration verification failed - not at head revision", "ERROR")
-        return False
-    
-    log("Migration integrity verified")
-    return True
 
 def create_backup_point():
     """Create a backup point before applying migrations."""
     log("Creating backup point...")
     
-    # In a production environment, you would implement actual backup logic here
-    # For now, we'll just log the current state
-    current_revision, success = check_migration_status()
-    if success and current_revision:
-        log(f"Backup point created at revision: {current_revision}")
+    try:
+        # Use our safe health check to get current state
+        health = check_migration_health()
+        
+        if health["connected"] and health["current_revision"]:
+            log(f"Backup point created at revision: {health['current_revision']}")
+            # In a production environment, you would implement actual backup logic here
+            # This could include database dumps, snapshots, etc.
+            return True
+        
+        log("No backup needed - database is empty or not connected")
         return True
-    
-    log("No backup needed - database is empty")
-    return True
+        
+    except Exception as e:
+        log(f"Failed to create backup point: {e}", "WARNING")
+        return True  # Don't fail deployment for backup issues
 
 def main():
     parser = argparse.ArgumentParser(description="Deploy Digame database migrations")

@@ -91,13 +91,15 @@ def upgrade():
             sa.Column('can_manage_platform_users', sa.Boolean(), default=False),
             sa.Column('created_at', sa.DateTime(), default=sa.func.now())
             )
+            print("✓ Created platform_roles table")
         except Exception as e:
             if "already exists" in str(e).lower():
-                print("platform_roles table already exists, skipping")
+                print("✓ platform_roles table already exists")
             else:
-                print(f"Warning: Could not create platform_roles table: {e}")
+                print(f"✗ Error creating platform_roles table: {e}")
+                raise  # Re-raise to abort transaction properly
     else:
-        print("platform_roles table already exists, skipping")
+        print("✓ platform_roles table already exists")
     
     # Create user_platform_roles table if it doesn't exist
     if 'user_platform_roles' not in existing_tables:
@@ -110,13 +112,15 @@ def upgrade():
             sa.Column('assigned_by', sa.Integer(), sa.ForeignKey('users.id'), nullable=False),
             sa.Column('assigned_at', sa.DateTime(), default=sa.func.now())
             )
+            print("✓ Created user_platform_roles table")
         except Exception as e:
             if "already exists" in str(e).lower():
-                print("user_platform_roles table already exists, skipping")
+                print("✓ user_platform_roles table already exists")
             else:
-                print(f"Warning: Could not create user_platform_roles table: {e}")
+                print(f"✗ Error creating user_platform_roles table: {e}")
+                raise  # Re-raise to abort transaction properly
     else:
-        print("user_platform_roles table already exists, skipping")
+        print("✓ user_platform_roles table already exists")
     
     # Create platform_usage_metrics table if it doesn't exist
     if 'platform_usage_metrics' not in existing_tables:
@@ -138,13 +142,15 @@ def upgrade():
             sa.Column('period_start', sa.DateTime(), nullable=True),
             sa.Column('period_end', sa.DateTime(), nullable=True)
             )
+            print("✓ Created platform_usage_metrics table")
         except Exception as e:
             if "already exists" in str(e).lower():
-                print("platform_usage_metrics table already exists, skipping")
+                print("✓ platform_usage_metrics table already exists")
             else:
-                print(f"Warning: Could not create platform_usage_metrics table: {e}")
+                print(f"✗ Error creating platform_usage_metrics table: {e}")
+                raise  # Re-raise to abort transaction properly
     else:
-        print("platform_usage_metrics table already exists, skipping")
+        print("✓ platform_usage_metrics table already exists")
     
     # Create platform_health_metrics table if it doesn't exist
     if 'platform_health_metrics' not in existing_tables:
@@ -161,13 +167,15 @@ def upgrade():
             sa.Column('component_name', sa.String(), nullable=True),
             sa.Column('measured_at', sa.DateTime(), default=sa.func.now(), index=True)
             )
+            print("✓ Created platform_health_metrics table")
         except Exception as e:
             if "already exists" in str(e).lower():
-                print("platform_health_metrics table already exists, skipping")
+                print("✓ platform_health_metrics table already exists")
             else:
-                print(f"Warning: Could not create platform_health_metrics table: {e}")
+                print(f"✗ Error creating platform_health_metrics table: {e}")
+                raise  # Re-raise to abort transaction properly
     else:
-        print("platform_health_metrics table already exists, skipping")
+        print("✓ platform_health_metrics table already exists")
     
     # Create tenant_analytics_summary table if it doesn't exist
     if 'tenant_analytics_summary' not in existing_tables:
@@ -191,13 +199,15 @@ def upgrade():
             sa.Column('summary_date', sa.Date(), default=sa.func.current_date(), index=True),
             sa.Column('created_at', sa.DateTime(), default=sa.func.now())
             )
+            print("✓ Created tenant_analytics_summary table")
         except Exception as e:
             if "already exists" in str(e).lower():
-                print("tenant_analytics_summary table already exists, skipping")
+                print("✓ tenant_analytics_summary table already exists")
             else:
-                print(f"Warning: Could not create tenant_analytics_summary table: {e}")
+                print(f"✗ Error creating tenant_analytics_summary table: {e}")
+                raise  # Re-raise to abort transaction properly
     else:
-        print("tenant_analytics_summary table already exists, skipping")
+        print("✓ tenant_analytics_summary table already exists")
 
 def downgrade():
     # Drop new tables
