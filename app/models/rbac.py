@@ -31,11 +31,11 @@ class Role(Base):
     updated_at = Column(DateTime(), default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # Enhanced relationships for tenant-aware RBAC
-    user_roles = relationship("UserRoleAssignment", back_populates="role")
+    user_roles = relationship("app.models.rbac.UserRoleAssignment", back_populates="role")
     users = association_proxy("user_roles", "user")  # Maintains backward compatibility
     
     # Tenant relationship
-    tenant = relationship("Tenant", back_populates="roles")
+    tenant = relationship("app.models.tenant.Tenant", back_populates="roles")
 
     # Many-to-Many relationship with Permission (unchanged)
     permissions = relationship(
@@ -82,7 +82,9 @@ class UserRoleAssignment(Base):
     
     # Add a unique registry key to prevent SQLAlchemy conflicts
     __mapper_args__ = {
-        'polymorphic_identity': 'user_role_assignment'
+        'polymorphic_identity': 'digame_user_role_assignment',  # More unique identifier
+        'confirm_deleted_rows': False,  # Helps with test isolation
+        'eager_defaults': True  # Helps with test isolation
     }
 
     id = Column(Integer, primary_key=True, index=True)
@@ -101,10 +103,10 @@ class UserRoleAssignment(Base):
     is_active = Column(Boolean, default=True)
     
     # Relationships
-    user = relationship("User", foreign_keys=[user_id], back_populates="user_roles")
-    role = relationship("Role", back_populates="user_roles")
-    tenant = relationship("Tenant", back_populates="user_roles")
-    assigner = relationship("User", foreign_keys=[assigned_by])
+    user = relationship("app.models.user.User", foreign_keys=[user_id], back_populates="user_roles")
+    role = relationship("app.models.rbac.Role", back_populates="user_roles")
+    tenant = relationship("app.models.tenant.Tenant", back_populates="user_roles")
+    assigner = relationship("app.models.user.User", foreign_keys=[assigned_by])
     
 
     def __repr__(self):

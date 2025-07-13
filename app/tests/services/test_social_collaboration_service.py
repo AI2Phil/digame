@@ -61,7 +61,7 @@ def mock_user_1():
 
 @pytest.fixture
 def mock_user_profile_1_skills():
-    return UserProfileModel(
+    return create_mock_model(UserProfileModel,
         user_id=1,
         skills=["Python", "FastAPI", "SQL"],
         learning_goals=["Docker", "Kubernetes"],
@@ -74,7 +74,7 @@ def mock_user_2():
 
 @pytest.fixture
 def mock_user_profile_2_skills_match():
-    return UserProfileModel(
+    return create_mock_model(UserProfileModel,
         user_id=2,
         skills=["Python", "SQL", "JavaScript"],
         learning_goals=["FastAPI"],
@@ -87,7 +87,7 @@ def mock_user_3():
 
 @pytest.fixture
 def mock_user_profile_3_learning_match():
-    return UserProfileModel(
+    return create_mock_model(UserProfileModel,
         user_id=3,
         skills=["Docker", "AWS"],
         learning_goals=["React"],
@@ -144,7 +144,7 @@ def test_get_skill_based_matches_target_no_skills(
 ):
     # Arrange
     target_user_id = 1
-    mock_get_user_profile.return_value = UserProfileModel(user_id=1, skills=None) # Target has no skills
+    mock_get_user_profile.return_value = create_mock_model(UserProfileModel, user_id=1, skills=None) # Target has no skills
     mock_get_users.return_value = [] # No other users needed for this test
 
     # Act
@@ -203,7 +203,7 @@ def test_get_learning_partner_recommendations_target_no_goals(
 ):
     # Arrange
     target_user_id = 1
-    mock_get_user_profile.return_value = UserProfileModel(user_id=1, learning_goals=None) # Target has no learning goals
+    mock_get_user_profile.return_value = create_mock_model(UserProfileModel, user_id=1, learning_goals=None) # Target has no learning goals
     mock_get_users.return_value = []
 
     # Act
