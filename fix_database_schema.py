@@ -43,12 +43,97 @@ def fix_database_schema():
 def fix_postgresql_schema(conn):
     """Fix PostgreSQL specific schema issues"""
     
-    # 1. Check if user_role_assignments table exists
+    # 1. Ensure prerequisite tables exist first
+    logger.info("Ensuring prerequisite tables exist...")
+    
+    # Create users table if it doesn't exist
+    logger.info("Checking if users table exists...")
+    result = conn.execute(text("""
+        SELECT EXISTS (
+            SELECT FROM information_schema.tables
+            WHERE table_schema = 'public'
+            AND table_name = 'users'
+        );
+    """))
+    users_table_exists = result.scalar()
+    
+    if not users_table_exists:
+        logger.info("Creating users table...")
+        conn.execute(text("""
+            CREATE TABLE IF NOT EXISTS users (
+                id SERIAL PRIMARY KEY,
+                username VARCHAR(255) UNIQUE NOT NULL,
+                email VARCHAR(255) UNIQUE NOT NULL,
+                hashed_password VARCHAR(255) NOT NULL,
+                is_active BOOLEAN DEFAULT TRUE,
+                is_superuser BOOLEAN DEFAULT FALSE,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        """))
+        logger.info("✓ Created users table")
+    else:
+        logger.info("✓ users table already exists")
+    
+    # Create roles table if it doesn't exist
+    logger.info("Checking if roles table exists...")
+    result = conn.execute(text("""
+        SELECT EXISTS (
+            SELECT FROM information_schema.tables
+            WHERE table_schema = 'public'
+            AND table_name = 'roles'
+        );
+    """))
+    roles_table_exists = result.scalar()
+    
+    if not roles_table_exists:
+        logger.info("Creating roles table...")
+        conn.execute(text("""
+            CREATE TABLE IF NOT EXISTS roles (
+                id SERIAL PRIMARY KEY,
+                name VARCHAR(255) UNIQUE NOT NULL,
+                description TEXT,
+                tenant_id INTEGER,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        """))
+        logger.info("✓ Created roles table")
+    else:
+        logger.info("✓ roles table already exists")
+    
+    # Create tenants table if it doesn't exist (optional dependency)
+    logger.info("Checking if tenants table exists...")
+    result = conn.execute(text("""
+        SELECT EXISTS (
+            SELECT FROM information_schema.tables
+            WHERE table_schema = 'public'
+            AND table_name = 'tenants'
+        );
+    """))
+    tenants_table_exists = result.scalar()
+    
+    if not tenants_table_exists:
+        logger.info("Creating tenants table...")
+        conn.execute(text("""
+            CREATE TABLE IF NOT EXISTS tenants (
+                id SERIAL PRIMARY KEY,
+                name VARCHAR(255) UNIQUE NOT NULL,
+                slug VARCHAR(255) UNIQUE NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        """))
+        logger.info("✓ Created tenants table")
+    else:
+        logger.info("✓ tenants table already exists")
+    
+    # 2. Now create user_role_assignments table with proper dependencies
     logger.info("Checking if user_role_assignments table exists...")
     result = conn.execute(text("""
         SELECT EXISTS (
-            SELECT FROM information_schema.tables 
-            WHERE table_schema = 'public' 
+            SELECT FROM information_schema.tables
+            WHERE table_schema = 'public'
             AND table_name = 'user_role_assignments'
         );
     """))
@@ -126,7 +211,50 @@ def fix_postgresql_schema(conn):
 def fix_sqlite_schema(conn):
     """Fix SQLite specific schema issues"""
     
-    # SQLite is more forgiving, but let's ensure the table exists
+    # Ensure prerequisite tables exist first
+    logger.info("Ensuring prerequisite tables exist in SQLite...")
+    
+    # Create users table if it doesn't exist
+    conn.execute(text("""
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username VARCHAR(255) UNIQUE NOT NULL,
+            email VARCHAR(255) UNIQUE NOT NULL,
+            hashed_password VARCHAR(255) NOT NULL,
+            is_active BOOLEAN DEFAULT 1,
+            is_superuser BOOLEAN DEFAULT 0,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+    """))
+    logger.info("✓ users table ensured")
+    
+    # Create roles table if it doesn't exist
+    conn.execute(text("""
+        CREATE TABLE IF NOT EXISTS roles (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name VARCHAR(255) UNIQUE NOT NULL,
+            description TEXT,
+            tenant_id INTEGER,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+    """))
+    logger.info("✓ roles table ensured")
+    
+    # Create tenants table if it doesn't exist
+    conn.execute(text("""
+        CREATE TABLE IF NOT EXISTS tenants (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name VARCHAR(255) UNIQUE NOT NULL,
+            slug VARCHAR(255) UNIQUE NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+    """))
+    logger.info("✓ tenants table ensured")
+    
+    # Now create user_role_assignments table with proper dependencies
     logger.info("Ensuring user_role_assignments table exists in SQLite...")
     
     conn.execute(text("""
@@ -144,7 +272,7 @@ def fix_sqlite_schema(conn):
     """))
     
     conn.commit()
-    logger.info("✓ SQLite schema verified")
+    logger.info("✓ SQLite schema verified with proper table dependencies")
 
 def verify_schema():
     """Verify that the schema fixes worked"""
