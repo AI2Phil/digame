@@ -77,95 +77,125 @@ def upgrade():
     existing_tables = inspector.get_table_names()
     if 'platform_roles' not in existing_tables:
         print("Creating platform_roles table")
-        op.create_table('platform_roles',
-        sa.Column('id', sa.Integer(), primary_key=True, index=True),
-        sa.Column('name', sa.String(), unique=True, nullable=False),
-        sa.Column('level', sa.Integer(), nullable=False),
-        sa.Column('description', sa.Text(), nullable=True),
-        sa.Column('can_create_tenants', sa.Boolean(), default=False),
-        sa.Column('can_manage_all_tenants', sa.Boolean(), default=False),
-        sa.Column('can_access_all_data', sa.Boolean(), default=False),
-        sa.Column('can_modify_platform_settings', sa.Boolean(), default=False),
-        sa.Column('can_view_platform_analytics', sa.Boolean(), default=False),
-        sa.Column('can_manage_platform_users', sa.Boolean(), default=False),
-        sa.Column('created_at', sa.DateTime(), default=sa.func.now())
-        )
+        try:
+            op.create_table('platform_roles',
+            sa.Column('id', sa.Integer(), primary_key=True, index=True),
+            sa.Column('name', sa.String(), unique=True, nullable=False),
+            sa.Column('level', sa.Integer(), nullable=False),
+            sa.Column('description', sa.Text(), nullable=True),
+            sa.Column('can_create_tenants', sa.Boolean(), default=False),
+            sa.Column('can_manage_all_tenants', sa.Boolean(), default=False),
+            sa.Column('can_access_all_data', sa.Boolean(), default=False),
+            sa.Column('can_modify_platform_settings', sa.Boolean(), default=False),
+            sa.Column('can_view_platform_analytics', sa.Boolean(), default=False),
+            sa.Column('can_manage_platform_users', sa.Boolean(), default=False),
+            sa.Column('created_at', sa.DateTime(), default=sa.func.now())
+            )
+        except Exception as e:
+            if "already exists" in str(e).lower():
+                print("platform_roles table already exists, skipping")
+            else:
+                print(f"Warning: Could not create platform_roles table: {e}")
     else:
         print("platform_roles table already exists, skipping")
     
     # Create user_platform_roles table if it doesn't exist
     if 'user_platform_roles' not in existing_tables:
         print("Creating user_platform_roles table")
-        op.create_table('user_platform_roles',
-        sa.Column('id', sa.Integer(), primary_key=True, index=True),
-        sa.Column('user_id', sa.Integer(), sa.ForeignKey('users.id'), nullable=False),
-        sa.Column('platform_role_id', sa.Integer(), sa.ForeignKey('platform_roles.id'), nullable=False),
-        sa.Column('assigned_by', sa.Integer(), sa.ForeignKey('users.id'), nullable=False),
-        sa.Column('assigned_at', sa.DateTime(), default=sa.func.now())
-        )
+        try:
+            op.create_table('user_platform_roles',
+            sa.Column('id', sa.Integer(), primary_key=True, index=True),
+            sa.Column('user_id', sa.Integer(), sa.ForeignKey('users.id'), nullable=False),
+            sa.Column('platform_role_id', sa.Integer(), sa.ForeignKey('platform_roles.id'), nullable=False),
+            sa.Column('assigned_by', sa.Integer(), sa.ForeignKey('users.id'), nullable=False),
+            sa.Column('assigned_at', sa.DateTime(), default=sa.func.now())
+            )
+        except Exception as e:
+            if "already exists" in str(e).lower():
+                print("user_platform_roles table already exists, skipping")
+            else:
+                print(f"Warning: Could not create user_platform_roles table: {e}")
     else:
         print("user_platform_roles table already exists, skipping")
     
     # Create platform_usage_metrics table if it doesn't exist
     if 'platform_usage_metrics' not in existing_tables:
         print("Creating platform_usage_metrics table")
-        op.create_table('platform_usage_metrics',
-        sa.Column('id', sa.Integer(), primary_key=True, index=True),
-        sa.Column('metric_type', sa.String(), nullable=False),
-        sa.Column('metric_category', sa.String(), nullable=False),
-        sa.Column('metric_name', sa.String(), nullable=False),
-        sa.Column('metric_value', sa.Float(), nullable=False),
-        sa.Column('metric_unit', sa.String(), nullable=True),
-        sa.Column('tenant_id', sa.Integer(), sa.ForeignKey('tenants.id'), nullable=True),
-        sa.Column('user_id', sa.Integer(), sa.ForeignKey('users.id'), nullable=True),
-        sa.Column('subscription_tier', sa.String(), nullable=True),
-        sa.Column('feature_name', sa.String(), nullable=True),
-        sa.Column('endpoint_path', sa.String(), nullable=True),
-        sa.Column('recorded_at', sa.DateTime(), default=sa.func.now(), index=True),
-        sa.Column('period_start', sa.DateTime(), nullable=True),
-        sa.Column('period_end', sa.DateTime(), nullable=True)
-        )
+        try:
+            op.create_table('platform_usage_metrics',
+            sa.Column('id', sa.Integer(), primary_key=True, index=True),
+            sa.Column('metric_type', sa.String(), nullable=False),
+            sa.Column('metric_category', sa.String(), nullable=False),
+            sa.Column('metric_name', sa.String(), nullable=False),
+            sa.Column('metric_value', sa.Float(), nullable=False),
+            sa.Column('metric_unit', sa.String(), nullable=True),
+            sa.Column('tenant_id', sa.Integer(), sa.ForeignKey('tenants.id'), nullable=True),
+            sa.Column('user_id', sa.Integer(), sa.ForeignKey('users.id'), nullable=True),
+            sa.Column('subscription_tier', sa.String(), nullable=True),
+            sa.Column('feature_name', sa.String(), nullable=True),
+            sa.Column('endpoint_path', sa.String(), nullable=True),
+            sa.Column('recorded_at', sa.DateTime(), default=sa.func.now(), index=True),
+            sa.Column('period_start', sa.DateTime(), nullable=True),
+            sa.Column('period_end', sa.DateTime(), nullable=True)
+            )
+        except Exception as e:
+            if "already exists" in str(e).lower():
+                print("platform_usage_metrics table already exists, skipping")
+            else:
+                print(f"Warning: Could not create platform_usage_metrics table: {e}")
     else:
         print("platform_usage_metrics table already exists, skipping")
     
     # Create platform_health_metrics table if it doesn't exist
     if 'platform_health_metrics' not in existing_tables:
         print("Creating platform_health_metrics table")
-        op.create_table('platform_health_metrics',
-        sa.Column('id', sa.Integer(), primary_key=True, index=True),
-        sa.Column('metric_name', sa.String(), nullable=False),
-        sa.Column('current_value', sa.Float(), nullable=False),
-        sa.Column('threshold_warning', sa.Float(), nullable=True),
-        sa.Column('threshold_critical', sa.Float(), nullable=True),
-        sa.Column('status', sa.String(), default='healthy'),
-        sa.Column('service_name', sa.String(), nullable=True),
-        sa.Column('component_name', sa.String(), nullable=True),
-        sa.Column('measured_at', sa.DateTime(), default=sa.func.now(), index=True)
-        )
+        try:
+            op.create_table('platform_health_metrics',
+            sa.Column('id', sa.Integer(), primary_key=True, index=True),
+            sa.Column('metric_name', sa.String(), nullable=False),
+            sa.Column('current_value', sa.Float(), nullable=False),
+            sa.Column('threshold_warning', sa.Float(), nullable=True),
+            sa.Column('threshold_critical', sa.Float(), nullable=True),
+            sa.Column('status', sa.String(), default='healthy'),
+            sa.Column('service_name', sa.String(), nullable=True),
+            sa.Column('component_name', sa.String(), nullable=True),
+            sa.Column('measured_at', sa.DateTime(), default=sa.func.now(), index=True)
+            )
+        except Exception as e:
+            if "already exists" in str(e).lower():
+                print("platform_health_metrics table already exists, skipping")
+            else:
+                print(f"Warning: Could not create platform_health_metrics table: {e}")
     else:
         print("platform_health_metrics table already exists, skipping")
     
     # Create tenant_analytics_summary table if it doesn't exist
     if 'tenant_analytics_summary' not in existing_tables:
         print("Creating tenant_analytics_summary table")
-        op.create_table('tenant_analytics_summary',
-        sa.Column('id', sa.Integer(), primary_key=True, index=True),
-        sa.Column('tenant_id', sa.Integer(), sa.ForeignKey('tenants.id'), nullable=False),
-        sa.Column('total_users', sa.Integer(), default=0),
-        sa.Column('active_users_daily', sa.Integer(), default=0),
-        sa.Column('active_users_weekly', sa.Integer(), default=0),
-        sa.Column('active_users_monthly', sa.Integer(), default=0),
-        sa.Column('total_api_calls', sa.Integer(), default=0),
-        sa.Column('total_storage_gb', sa.Float(), default=0.0),
-        sa.Column('total_features_used', sa.Integer(), default=0),
-        sa.Column('avg_session_duration', sa.Float(), default=0.0),
-        sa.Column('total_logins', sa.Integer(), default=0),
-        sa.Column('feature_adoption_rate', sa.Float(), default=0.0),
-        sa.Column('monthly_revenue', sa.Float(), default=0.0),
-        sa.Column('lifetime_value', sa.Float(), default=0.0),
-        sa.Column('summary_date', sa.Date(), default=sa.func.current_date(), index=True),
-        sa.Column('created_at', sa.DateTime(), default=sa.func.now())
-        )
+        try:
+            op.create_table('tenant_analytics_summary',
+            sa.Column('id', sa.Integer(), primary_key=True, index=True),
+            sa.Column('tenant_id', sa.Integer(), sa.ForeignKey('tenants.id'), nullable=False),
+            sa.Column('total_users', sa.Integer(), default=0),
+            sa.Column('active_users_daily', sa.Integer(), default=0),
+            sa.Column('active_users_weekly', sa.Integer(), default=0),
+            sa.Column('active_users_monthly', sa.Integer(), default=0),
+            sa.Column('total_api_calls', sa.Integer(), default=0),
+            sa.Column('total_storage_gb', sa.Float(), default=0.0),
+            sa.Column('total_features_used', sa.Integer(), default=0),
+            sa.Column('avg_session_duration', sa.Float(), default=0.0),
+            sa.Column('total_logins', sa.Integer(), default=0),
+            sa.Column('feature_adoption_rate', sa.Float(), default=0.0),
+            sa.Column('monthly_revenue', sa.Float(), default=0.0),
+            sa.Column('lifetime_value', sa.Float(), default=0.0),
+            sa.Column('summary_date', sa.Date(), default=sa.func.current_date(), index=True),
+            sa.Column('created_at', sa.DateTime(), default=sa.func.now())
+            )
+        except Exception as e:
+            if "already exists" in str(e).lower():
+                print("tenant_analytics_summary table already exists, skipping")
+            else:
+                print(f"Warning: Could not create tenant_analytics_summary table: {e}")
     else:
         print("tenant_analytics_summary table already exists, skipping")
 
