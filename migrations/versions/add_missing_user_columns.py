@@ -107,17 +107,37 @@ def upgrade() -> None:
         if is_active_col and str(is_active_col['type']) != 'BOOLEAN':
             print("Converting is_active from Integer to Boolean")
             try:
-                # For SQLite, we need to use batch operations to change column types
-                with op.batch_alter_table('users', schema=None) as batch_op:
-                    # First update existing data to ensure consistency
+                # Detect database type
+                dialect_name = connection.dialect.name
+                
+                if dialect_name == 'postgresql':
+                    # PostgreSQL requires USING clause for type conversion
+                    print("Using PostgreSQL-specific conversion")
+                    op.execute("UPDATE users SET is_active = CASE WHEN is_active = 1 THEN true ELSE false END WHERE is_active IS NOT NULL")
+                    op.alter_column('users', 'is_active',
+                                  type_=sa.Boolean(),
+                                  nullable=True,
+                                  postgresql_using='is_active::boolean')
+                elif dialect_name == 'sqlite':
+                    # For SQLite, we need to use batch operations to change column types
+                    print("Using SQLite-specific conversion")
+                    with op.batch_alter_table('users', schema=None) as batch_op:
+                        # First update existing data to ensure consistency
+                        op.execute("UPDATE users SET is_active = CASE WHEN is_active = 1 THEN 1 ELSE 0 END WHERE is_active IS NOT NULL")
+                        # Then alter column type using batch mode for SQLite compatibility
+                        batch_op.alter_column('is_active', type_=sa.Boolean(), nullable=True)
+                else:
+                    # For other databases, try direct approach
+                    print(f"Using generic conversion for {dialect_name}")
                     op.execute("UPDATE users SET is_active = CASE WHEN is_active = 1 THEN 1 ELSE 0 END WHERE is_active IS NOT NULL")
-                    # Then alter column type using batch mode for SQLite compatibility
-                    batch_op.alter_column('is_active', type_=sa.Boolean(), nullable=True)
+                    op.alter_column('users', 'is_active', type_=sa.Boolean(), nullable=True)
+                    
             except Exception as e:
                 print(f"Warning: Could not convert is_active column type: {e}")
-                # For databases that don't support batch operations, try direct approach
+                # Try fallback approach without type conversion
                 try:
                     op.execute("UPDATE users SET is_active = CASE WHEN is_active = 1 THEN 1 ELSE 0 END WHERE is_active IS NOT NULL")
+                    print("Data normalization completed, but type conversion failed")
                 except Exception as e2:
                     print(f"Warning: Could not update is_active data: {e2}")
 

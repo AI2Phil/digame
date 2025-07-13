@@ -65,8 +65,8 @@ class Tenant(Base):
     
     # Relationships to User, Role, and UserRole models
     users = relationship("app.models.user.User", back_populates="tenant", foreign_keys="app.models.user.User.tenant_id")
-    roles = relationship("app.models.rbac.Role", back_populates="tenant")
-    user_roles = relationship("app.models.rbac.UserRoleAssignment", back_populates="tenant")
+    roles = relationship("Role", back_populates="tenant")
+    user_roles = relationship("UserRoleAssignment", back_populates="tenant")
     creator = relationship("User", foreign_keys=[created_by])
     manager = relationship("User", foreign_keys=[managed_by])
     

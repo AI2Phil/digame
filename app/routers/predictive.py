@@ -146,10 +146,15 @@ async def predict_endpoint(
     model_path_base = DEFAULT_MODEL_PATH_TEMPLATE.format(user_id=user_id)
     
     # 1. Load model, encoders, scaler, and model parameters
-    model, _, encoders, scaler, model_params = service_load_model(model_path_base=model_path_base)
+    try:
+        model, _, encoders, scaler, model_params = service_load_model(model_path_base=model_path_base)
+    except FileNotFoundError:
+        raise HTTPException(status_code=409, detail="Model not trained yet. Please train the model first.")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error loading model: {str(e)}")
     
     if model is None or encoders is None or scaler is None or model_params is None:
-        raise HTTPException(status_code=404, detail=f"Model for user {user_id} not found or artifacts incomplete. Please train the model first.")
+        raise HTTPException(status_code=409, detail="Model not trained yet or artifacts incomplete. Please train the model first.")
 
     sequence_length = model_params.get("sequence_length", 5) # Get from loaded params
     fitted_categories = model_params.get("fitted_categories", {})

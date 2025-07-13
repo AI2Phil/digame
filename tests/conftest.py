@@ -12,7 +12,7 @@ import os
 from app.database import Base
 from app.models.user import User
 from app.models.notifications import Notification
-from app.models.rbac import Role, UserRoleAssignment
+from app.models.rbac import Role, UserRoleAssignment, Permission
 from app.main import app
 
 # Import all models to ensure they're registered
@@ -164,6 +164,26 @@ def test_admin_user(db_session: Session) -> User:
     db_session.add(admin_user)
     db_session.commit()
     
+    # Create permissions for predictive model operations
+    train_permission = Permission(
+        id=1,
+        name="train_own_predictive_model",
+        description="Permission to train own predictive model"
+    )
+    predict_permission = Permission(
+        id=2,
+        name="run_own_prediction",
+        description="Permission to run own predictions"
+    )
+    db_session.add(train_permission)
+    db_session.add(predict_permission)
+    db_session.commit()
+    
+    # Add permissions to admin role
+    admin_role.permissions.append(train_permission)
+    admin_role.permissions.append(predict_permission)
+    db_session.commit()
+    
     # Assign admin role to user
     user_role = UserRoleAssignment(
         user_id=admin_user.id,
@@ -267,12 +287,12 @@ def dummy_model_and_optimizer():
     import torch.nn as nn
     
     class LSTMModel(nn.Module):
-        def __init__(self, input_size=10, hidden_size=20, num_layers=1):
+        def __init__(self, input_size=7, hidden_size=20, num_layers=1):  # Changed to 7 to match feature count
             super().__init__()
             self.hidden_dim = hidden_size  # Add hidden_dim attribute for compatibility
             self.num_layers = num_layers   # Add num_layers attribute for compatibility
             self.lstm = nn.LSTM(input_size, hidden_size, num_layers, batch_first=True)
-            self.fc = nn.Linear(hidden_size, 1)
+            self.fc = nn.Linear(hidden_size, 5)  # Changed to 5 to match activity types count
         
         def forward(self, x):
             lstm_out, _ = self.lstm(x)
@@ -293,7 +313,14 @@ def patched_model_path(tmp_path, monkeypatch):
     """Patch the model path for testing"""
     model_path = tmp_path / "test_model.pth"
     
-    # Patch wherever MODEL_PATH is imported
+    # Patch the DEFAULT_MODEL_PATH_TEMPLATE used in the router
+    try:
+        # Patch the template to use our test path without the user_id formatting
+        monkeypatch.setattr("app.routers.predictive.DEFAULT_MODEL_PATH_TEMPLATE", str(model_path).replace('.pth', ''))
+    except AttributeError:
+        pass  # If the attribute doesn't exist, skip patching
+    
+    # Also try to patch any other model path variables
     try:
         monkeypatch.setattr("app.routers.predictive.MODEL_PATH", str(model_path))
     except AttributeError:
