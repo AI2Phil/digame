@@ -163,6 +163,7 @@ class Streak(Base):
 class Milestone(Base):
     """Goal milestones and checkpoints"""
     __tablename__ = "milestones"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True)
     goal_id = Column(Integer, nullable=True)  # TODO: Add ForeignKey when goals table is created
