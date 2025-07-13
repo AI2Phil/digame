@@ -43,11 +43,20 @@ def fix_database_schema():
 def fix_postgresql_schema(conn):
     """Fix PostgreSQL specific schema issues"""
     
-    # 1. Ensure prerequisite tables exist first
-    logger.info("Ensuring prerequisite tables exist...")
+    # Check if this is a fresh database or if Alembic migrations will handle base tables
+    logger.info("Checking database state...")
     
-    # Create users table if it doesn't exist
-    logger.info("Checking if users table exists...")
+    # Check if Alembic version table exists (indicates migrations are being used)
+    result = conn.execute(text("""
+        SELECT EXISTS (
+            SELECT FROM information_schema.tables
+            WHERE table_schema = 'public'
+            AND table_name = 'alembic_version'
+        );
+    """))
+    alembic_exists = result.scalar()
+    
+    # Check if users table exists
     result = conn.execute(text("""
         SELECT EXISTS (
             SELECT FROM information_schema.tables
@@ -57,78 +66,77 @@ def fix_postgresql_schema(conn):
     """))
     users_table_exists = result.scalar()
     
-    if not users_table_exists:
-        logger.info("Creating users table...")
-        conn.execute(text("""
-            CREATE TABLE IF NOT EXISTS users (
-                id SERIAL PRIMARY KEY,
-                username VARCHAR(255) UNIQUE NOT NULL,
-                email VARCHAR(255) UNIQUE NOT NULL,
-                hashed_password VARCHAR(255) NOT NULL,
-                is_active BOOLEAN DEFAULT TRUE,
-                is_superuser BOOLEAN DEFAULT FALSE,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    if alembic_exists or users_table_exists:
+        logger.info("✓ Base tables exist or will be handled by Alembic migrations")
+        logger.info("✓ Skipping base table creation to avoid conflicts")
+    else:
+        logger.info("Creating minimal prerequisite tables for user_role_assignments...")
+        
+        # Only create minimal tables if they don't exist and Alembic isn't managing them
+        if not users_table_exists:
+            logger.info("Creating minimal users table...")
+            conn.execute(text("""
+                CREATE TABLE IF NOT EXISTS users (
+                    id SERIAL PRIMARY KEY,
+                    username VARCHAR(255) UNIQUE NOT NULL,
+                    email VARCHAR(255) UNIQUE NOT NULL,
+                    hashed_password VARCHAR(255) NOT NULL,
+                    is_active BOOLEAN DEFAULT TRUE,
+                    is_superuser BOOLEAN DEFAULT FALSE,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                );
+            """))
+            logger.info("✓ Created minimal users table")
+        
+        # Create roles table if it doesn't exist
+        result = conn.execute(text("""
+            SELECT EXISTS (
+                SELECT FROM information_schema.tables
+                WHERE table_schema = 'public'
+                AND table_name = 'roles'
             );
         """))
-        logger.info("✓ Created users table")
-    else:
-        logger.info("✓ users table already exists")
-    
-    # Create roles table if it doesn't exist
-    logger.info("Checking if roles table exists...")
-    result = conn.execute(text("""
-        SELECT EXISTS (
-            SELECT FROM information_schema.tables
-            WHERE table_schema = 'public'
-            AND table_name = 'roles'
-        );
-    """))
-    roles_table_exists = result.scalar()
-    
-    if not roles_table_exists:
-        logger.info("Creating roles table...")
-        conn.execute(text("""
-            CREATE TABLE IF NOT EXISTS roles (
-                id SERIAL PRIMARY KEY,
-                name VARCHAR(255) UNIQUE NOT NULL,
-                description TEXT,
-                tenant_id INTEGER,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        roles_table_exists = result.scalar()
+        
+        if not roles_table_exists:
+            logger.info("Creating minimal roles table...")
+            conn.execute(text("""
+                CREATE TABLE IF NOT EXISTS roles (
+                    id SERIAL PRIMARY KEY,
+                    name VARCHAR(255) UNIQUE NOT NULL,
+                    description TEXT,
+                    tenant_id INTEGER,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                );
+            """))
+            logger.info("✓ Created minimal roles table")
+        
+        # Create tenants table if it doesn't exist (optional dependency)
+        result = conn.execute(text("""
+            SELECT EXISTS (
+                SELECT FROM information_schema.tables
+                WHERE table_schema = 'public'
+                AND table_name = 'tenants'
             );
         """))
-        logger.info("✓ Created roles table")
-    else:
-        logger.info("✓ roles table already exists")
+        tenants_table_exists = result.scalar()
+        
+        if not tenants_table_exists:
+            logger.info("Creating minimal tenants table...")
+            conn.execute(text("""
+                CREATE TABLE IF NOT EXISTS tenants (
+                    id SERIAL PRIMARY KEY,
+                    name VARCHAR(255) UNIQUE NOT NULL,
+                    slug VARCHAR(255) UNIQUE NOT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                );
+            """))
+            logger.info("✓ Created minimal tenants table")
     
-    # Create tenants table if it doesn't exist (optional dependency)
-    logger.info("Checking if tenants table exists...")
-    result = conn.execute(text("""
-        SELECT EXISTS (
-            SELECT FROM information_schema.tables
-            WHERE table_schema = 'public'
-            AND table_name = 'tenants'
-        );
-    """))
-    tenants_table_exists = result.scalar()
-    
-    if not tenants_table_exists:
-        logger.info("Creating tenants table...")
-        conn.execute(text("""
-            CREATE TABLE IF NOT EXISTS tenants (
-                id SERIAL PRIMARY KEY,
-                name VARCHAR(255) UNIQUE NOT NULL,
-                slug VARCHAR(255) UNIQUE NOT NULL,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            );
-        """))
-        logger.info("✓ Created tenants table")
-    else:
-        logger.info("✓ tenants table already exists")
-    
-    # 2. Now create user_role_assignments table with proper dependencies
+    # 2. Create user_role_assignments table only if needed and not handled by Alembic
     logger.info("Checking if user_role_assignments table exists...")
     result = conn.execute(text("""
         SELECT EXISTS (
@@ -139,8 +147,8 @@ def fix_postgresql_schema(conn):
     """))
     table_exists = result.scalar()
     
-    if not table_exists:
-        logger.info("Creating user_role_assignments table...")
+    if not table_exists and not alembic_exists:
+        logger.info("Creating user_role_assignments table (Alembic not managing schema)...")
         conn.execute(text("""
             CREATE TABLE IF NOT EXISTS user_role_assignments (
                 id SERIAL PRIMARY KEY,
@@ -154,57 +162,65 @@ def fix_postgresql_schema(conn):
             );
         """))
         logger.info("✓ Created user_role_assignments table")
-    else:
+    elif table_exists:
         logger.info("✓ user_role_assignments table already exists")
-    
-    # 2. Check if unique_user_role_tenant constraint exists
-    logger.info("Checking unique_user_role_tenant constraint...")
-    result = conn.execute(text("""
-        SELECT EXISTS (
-            SELECT FROM information_schema.table_constraints 
-            WHERE constraint_name = 'unique_user_role_tenant'
-            AND table_name = 'user_role_assignments'
-        );
-    """))
-    constraint_exists = result.scalar()
-    
-    if not constraint_exists:
-        logger.info("Adding unique_user_role_tenant constraint...")
-        try:
-            conn.execute(text("""
-                ALTER TABLE user_role_assignments 
-                ADD CONSTRAINT unique_user_role_tenant 
-                UNIQUE (user_id, role_id, tenant_id);
-            """))
-            logger.info("✓ Added unique_user_role_tenant constraint")
-        except ProgrammingError as e:
-            if "already exists" in str(e):
-                logger.info("✓ unique_user_role_tenant constraint already exists")
-            else:
-                raise
     else:
-        logger.info("✓ unique_user_role_tenant constraint already exists")
+        logger.info("✓ user_role_assignments table will be handled by Alembic migration")
     
-    # 3. Create indexes for performance
-    logger.info("Creating indexes...")
-    indexes = [
-        "CREATE INDEX IF NOT EXISTS idx_user_role_assignments_user_id ON user_role_assignments(user_id);",
-        "CREATE INDEX IF NOT EXISTS idx_user_role_assignments_role_id ON user_role_assignments(role_id);",
-        "CREATE INDEX IF NOT EXISTS idx_user_role_assignments_tenant_id ON user_role_assignments(tenant_id);",
-    ]
+    # 3. Check if unique_user_role_tenant constraint exists (only if table exists and not managed by Alembic)
+    if table_exists and not alembic_exists:
+        logger.info("Checking unique_user_role_tenant constraint...")
+        result = conn.execute(text("""
+            SELECT EXISTS (
+                SELECT FROM information_schema.table_constraints
+                WHERE constraint_name = 'unique_user_role_tenant'
+                AND table_name = 'user_role_assignments'
+            );
+        """))
+        constraint_exists = result.scalar()
+        
+        if not constraint_exists:
+            logger.info("Adding unique_user_role_tenant constraint...")
+            try:
+                conn.execute(text("""
+                    ALTER TABLE user_role_assignments
+                    ADD CONSTRAINT unique_user_role_tenant
+                    UNIQUE (user_id, role_id, tenant_id);
+                """))
+                logger.info("✓ Added unique_user_role_tenant constraint")
+            except ProgrammingError as e:
+                if "already exists" in str(e):
+                    logger.info("✓ unique_user_role_tenant constraint already exists")
+                else:
+                    raise
+        else:
+            logger.info("✓ unique_user_role_tenant constraint already exists")
+    elif alembic_exists:
+        logger.info("✓ Constraints will be handled by Alembic migration")
     
-    for index_sql in indexes:
-        try:
-            conn.execute(text(index_sql))
-        except ProgrammingError as e:
-            if "already exists" in str(e):
-                continue
-            else:
-                logger.warning(f"Failed to create index: {e}")
+    # 4. Create indexes for performance (only if we're managing the table)
+    if table_exists and not alembic_exists:
+        logger.info("Creating indexes...")
+        indexes = [
+            "CREATE INDEX IF NOT EXISTS idx_user_role_assignments_user_id ON user_role_assignments(user_id);",
+            "CREATE INDEX IF NOT EXISTS idx_user_role_assignments_role_id ON user_role_assignments(role_id);",
+            "CREATE INDEX IF NOT EXISTS idx_user_role_assignments_tenant_id ON user_role_assignments(tenant_id);",
+        ]
+        
+        for index_sql in indexes:
+            try:
+                conn.execute(text(index_sql))
+            except ProgrammingError as e:
+                if "already exists" in str(e):
+                    continue
+                else:
+                    logger.warning(f"Failed to create index: {e}")
+        
+        logger.info("✓ Indexes created/verified")
+    elif alembic_exists:
+        logger.info("✓ Indexes will be handled by Alembic migration")
     
-    logger.info("✓ Indexes created/verified")
-    
-    # 4. Commit changes
+    # 5. Commit changes
     conn.commit()
     logger.info("✓ All PostgreSQL schema fixes applied")
 
