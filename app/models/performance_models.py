@@ -229,9 +229,9 @@ class GeneralPerformanceMetric(Base):
         {'extend_existing': True}
     )
 
-class PerformanceAlert(Base):
-    """Performance alerts and notifications"""
-    __tablename__ = 'performance_alerts'
+class GeneralPerformanceAlert(Base):
+    """General performance alerts and notifications"""
+    __tablename__ = 'general_performance_alerts'
     
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     alert_type = Column(String, nullable=False)  # performance, error, resource, security

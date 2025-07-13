@@ -530,18 +530,18 @@ async def get_alerts(
 ):
     """Get filtered alerts"""
     try:
-        from app.models.performance_models import PerformanceAlert
+        from app.models.performance_models import GeneralPerformanceAlert
         from sqlalchemy import desc
         
-        query = db.query(PerformanceAlert)
+        query = db.query(GeneralPerformanceAlert)
         
         if severity:
-            query = query.filter(PerformanceAlert.severity == severity)
+            query = query.filter(GeneralPerformanceAlert.severity == severity)
         
         if resolved is not None:
-            query = query.filter(PerformanceAlert.resolved == resolved)
+            query = query.filter(GeneralPerformanceAlert.resolved == resolved)
         
-        alerts = query.order_by(desc(PerformanceAlert.created_at)).limit(limit).all()
+        alerts = query.order_by(desc(GeneralPerformanceAlert.created_at)).limit(limit).all()
         
         formatted_alerts = []
         for alert in alerts:

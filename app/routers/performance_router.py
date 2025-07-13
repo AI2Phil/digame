@@ -266,18 +266,18 @@ async def get_performance_alerts(
 ) -> Dict[str, Any]:
     """Get performance alerts"""
     try:
-        from app.models.performance_models import PerformanceAlert
+        from app.models.performance_models import GeneralPerformanceAlert
         from sqlalchemy import desc
         
-        query = db.query(PerformanceAlert)
+        query = db.query(GeneralPerformanceAlert)
         
         if severity:
-            query = query.filter(PerformanceAlert.severity == severity)
+            query = query.filter(GeneralPerformanceAlert.severity == severity)
         
         if resolved is not None:
-            query = query.filter(PerformanceAlert.resolved == resolved)
+            query = query.filter(GeneralPerformanceAlert.resolved == resolved)
         
-        alerts = query.order_by(desc(PerformanceAlert.created_at)).limit(limit).all()
+        alerts = query.order_by(desc(GeneralPerformanceAlert.created_at)).limit(limit).all()
         
         formatted_alerts = []
         for alert in alerts:
@@ -309,9 +309,9 @@ async def create_performance_alert(
 ):
     """Create a performance alert"""
     try:
-        from app.models.performance_models import PerformanceAlert
+        from app.models.performance_models import GeneralPerformanceAlert
         
-        alert = PerformanceAlert(
+        alert = GeneralPerformanceAlert(
             alert_type=alert_data.get('type'),
             severity=alert_data.get('severity'),
             title=alert_data.get('title'),
@@ -343,9 +343,9 @@ async def resolve_performance_alert(
 ):
     """Resolve a performance alert"""
     try:
-        from app.models.performance_models import PerformanceAlert
+        from app.models.performance_models import GeneralPerformanceAlert
         
-        alert = db.query(PerformanceAlert).filter(PerformanceAlert.id == alert_id).first()
+        alert = db.query(GeneralPerformanceAlert).filter(GeneralPerformanceAlert.id == alert_id).first()
         
         if not alert:
             raise HTTPException(status_code=404, detail="Alert not found")

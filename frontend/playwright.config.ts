@@ -1,4 +1,19 @@
 import { defineConfig, devices } from '@playwright/test';
+import * as fs from 'fs';
+import * as path from 'path';
+
+// Function to get the dynamic port
+function getTestPort(): string {
+  try {
+    const portFile = path.join(__dirname, '.test-port');
+    if (fs.existsSync(portFile)) {
+      return fs.readFileSync(portFile, 'utf8').trim();
+    }
+  } catch (e) {
+    // Fallback to default port
+  }
+  return '3001';
+}
 
 /**
  * @see https://playwright.dev/docs/test-configuration
@@ -32,7 +47,7 @@ export default defineConfig({
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
-    baseURL: process.env.BASE_URL || 'http://localhost:3001',
+    baseURL: process.env.BASE_URL || `http://localhost:${getTestPort()}`,
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'retain-on-failure',
     /* Take screenshot on failure */
@@ -98,8 +113,8 @@ export default defineConfig({
 
   /* Run your local dev server before starting the tests */
   webServer: {
-    command: 'cp next.config.test.js next.config.js && npm run dev -- --port 3001',
-    url: 'http://localhost:3001',
+    command: 'node ../scripts/start-test-server.js',
+    url: `http://localhost:${getTestPort()}`,
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000,
   },

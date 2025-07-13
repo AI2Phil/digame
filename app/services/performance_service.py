@@ -14,7 +14,7 @@ import statistics
 
 from app.models.performance_models import (
     UserSession, PageView, WebVital, DatabaseQuery, QueryOptimization,
-    BundleAsset, AssetOptimization, GeneralPerformanceMetric, PerformanceAlert, SystemHealth
+    BundleAsset, AssetOptimization, GeneralPerformanceMetric, GeneralPerformanceAlert, SystemHealth
 )
 
 class PerformanceService:
@@ -644,9 +644,9 @@ class PerformanceService:
         system_health = self._get_current_system_health()
         
         # Get alerts
-        alerts = self.db.query(PerformanceAlert).filter(
-            PerformanceAlert.created_at >= datetime.utcnow() - timedelta(days=7)
-        ).order_by(desc(PerformanceAlert.created_at)).all()
+        alerts = self.db.query(GeneralPerformanceAlert).filter(
+            GeneralPerformanceAlert.created_at >= datetime.utcnow() - timedelta(days=7)
+        ).order_by(desc(GeneralPerformanceAlert.created_at)).all()
         
         # Get optimizations
         optimizations = self._get_performance_optimizations()
@@ -703,7 +703,7 @@ class PerformanceService:
                 'errorRate': 0.12
             }
     
-    def _format_alert(self, alert: PerformanceAlert) -> Dict[str, Any]:
+    def _format_alert(self, alert: GeneralPerformanceAlert) -> Dict[str, Any]:
         """Format alert for frontend"""
         return {
             'id': alert.id,

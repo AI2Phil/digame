@@ -69,6 +69,10 @@ This directory contains utility scripts for the Digame platform, including devel
 | [`simple_seed.py`](#simple_seedpy) | Simple data seeding utility | `python simple_seed.py` | ✅ Active |
 | [`data-migration/migrate_mock_to_production.py`](#data-migrationmigrate_mock_to_productionpy) | Production migration tool | `python data-migration/migrate_mock_to_production.py` | ✅ Active |
 | [`data-migration/validate_data_integrity.py`](#data-migrationvalidate_data_integritypy) | Data integrity validation | `python data-migration/validate_data_integrity.py` | ✅ Active |
+| [`find-port.js`](#find-portjs) | Dynamic port detection utility | `node find-port.js` | ✅ Active |
+| [`start-test-server.js`](#start-test-serverjs) | Test server startup with dynamic port management | `node start-test-server.js` | ✅ Active |
+| [`fix_database_schema.py`](#fix_database_schemapy) | SQLAlchemy model conflicts and schema fixes | `python fix_database_schema.py` | ✅ Active |
+| [`test_sqlalchemy_fixes.py`](#test_sqlalchemy_fixespy) | SQLAlchemy fixes validation and testing | `python test_sqlalchemy_fixes.py` | ✅ Active |
 | [`start-dev.sh`](#start-devsh-integration) | Frontend-backend development environment startup | `./start-dev.sh` | ✅ Active |
 | [`stop-dev.sh`](#stop-devsh) | Frontend-backend development environment shutdown | `./stop-dev.sh` | ✅ Active |
 | [`setup-test-env.sh`](#setup-test-envsh) | Test environment setup with backend services | `./setup-test-env.sh` | ✅ Active |
@@ -2987,7 +2991,203 @@ python digame/scripts/git-setup.py config 'Your Name' 'your.email@example.com'
 
 ---
 
+## 🔧 E2E Testing & Dynamic Port Management Scripts
+
+### `find-port.js`
+**Purpose**: Dynamic port detection utility for conflict-free testing environments
+
+**Description**:
+- Detects available ports dynamically to prevent conflicts during E2E testing
+- Uses Node.js net module for reliable port availability checking
+- Provides fallback port selection with configurable ranges
+- Essential for parallel test execution and CI/CD environments
+
+**Usage**:
+```bash
+# Find available port starting from 3000
+node scripts/find-port.js
+
+# Find available port with custom start
+node scripts/find-port.js 8000
+
+# Use in scripts for dynamic port allocation
+PORT=$(node scripts/find-port.js 3000)
+```
+
+**Features**:
+- ✅ **Dynamic Detection**: Automatically finds available ports
+- ✅ **Conflict Prevention**: Prevents port conflicts in testing
+- ✅ **Configurable Range**: Supports custom port ranges
+- ✅ **Fast Execution**: Quick port detection for rapid testing
+- ✅ **CI/CD Integration**: Designed for automated testing environments
+- ✅ **Cross-Platform**: Works on all Node.js supported platforms
+
+**Technical Implementation**:
+- Uses Node.js `net.createServer()` for port testing
+- Implements promise-based port checking
+- Provides fallback mechanisms for port selection
+- Returns first available port in specified range
+
+---
+
+### `start-test-server.js`
+**Purpose**: Test server startup script with dynamic port management and configuration copying
+
+**Description**:
+- Starts Next.js test server with dynamic port detection
+- Copies test-specific configuration files for E2E testing
+- Manages test environment setup and teardown
+- Provides health checks and server readiness validation
+
+**Usage**:
+```bash
+# Start test server with dynamic port
+node scripts/start-test-server.js
+
+# Start with custom configuration
+node scripts/start-test-server.js --config test
+
+# Start with specific port range
+node scripts/start-test-server.js --port-start 3000
+
+# Verbose logging for debugging
+node scripts/start-test-server.js --verbose
+```
+
+**Features**:
+- ✅ **Dynamic Port Management**: Uses find-port.js for conflict-free ports
+- ✅ **Configuration Management**: Copies test-specific Next.js config
+- ✅ **Health Monitoring**: Validates server readiness before tests
+- ✅ **Environment Setup**: Configures test environment variables
+- ✅ **Graceful Shutdown**: Handles cleanup on process termination
+- ✅ **Error Handling**: Comprehensive error handling and recovery
+
+**Configuration Management**:
+- Copies `next.config.test.js` to `next.config.js` for testing
+- Restores original configuration after testing
+- Manages environment-specific settings
+- Handles configuration validation and backup
+
+**Integration with E2E Tests**:
+- Used by Playwright configuration for test server startup
+- Provides server URL and port information to tests
+- Ensures server is ready before test execution begins
+- Manages server lifecycle during test runs
+
+---
+
+## 🗄️ Database Schema & SQLAlchemy Management Scripts
+
+### `fix_database_schema.py`
+**Purpose**: SQLAlchemy model conflicts and schema fixes for production readiness
+
+**Description**:
+- Resolves SQLAlchemy model conflicts and duplicate class definitions
+- Fixes table definition issues and constraint conflicts
+- Addresses index conflicts and relationship problems
+- Ensures database schema consistency across environments
+
+**Usage**:
+```bash
+# Fix all SQLAlchemy model conflicts
+python scripts/fix_database_schema.py
+
+# Dry run to see what would be fixed
+python scripts/fix_database_schema.py --dry-run
+
+# Fix specific model conflicts
+python scripts/fix_database_schema.py --model PerformanceAlert
+
+# Verbose output for debugging
+python scripts/fix_database_schema.py --verbose
+```
+
+**Features**:
+- ✅ **Model Conflict Resolution**: Fixes duplicate class definitions
+- ✅ **Index Conflict Fixes**: Resolves index naming conflicts
+- ✅ **Constraint Validation**: Ensures proper foreign key constraints
+- ✅ **Schema Consistency**: Maintains consistent schema across environments
+- ✅ **Backup Creation**: Creates backups before making changes
+- ✅ **Rollback Support**: Provides rollback capabilities for failed fixes
+
+**Common Fixes Applied**:
+- Renames duplicate model classes (e.g., PerformanceAlert → GeneralPerformanceAlert)
+- Updates import statements across affected files
+- Fixes `__table_args__` configuration for proper table extension
+- Resolves foreign key relationship conflicts
+- Corrects index naming and constraint definitions
+
+**Integration Points**:
+- Works with SQLAlchemy models in `app/models/`
+- Updates service files in `app/services/`
+- Fixes test files in `tests/`
+- Ensures compatibility with Alembic migrations
+
+---
+
+### `test_sqlalchemy_fixes.py`
+**Purpose**: SQLAlchemy fixes validation and testing for database integrity
+
+**Description**:
+- Validates SQLAlchemy model fixes and schema integrity
+- Tests database operations after schema modifications
+- Provides comprehensive model relationship testing
+- Ensures fixes don't break existing functionality
+
+**Usage**:
+```bash
+# Test all SQLAlchemy fixes
+python scripts/test_sqlalchemy_fixes.py
+
+# Test specific model fixes
+python scripts/test_sqlalchemy_fixes.py --model GeneralPerformanceAlert
+
+# Run with detailed validation
+python scripts/test_sqlalchemy_fixes.py --detailed
+
+# Generate test report
+python scripts/test_sqlalchemy_fixes.py --report
+```
+
+**Features**:
+- ✅ **Model Validation**: Tests model definitions and relationships
+- ✅ **Schema Testing**: Validates database schema integrity
+- ✅ **Import Testing**: Tests import statements and dependencies
+- ✅ **Relationship Validation**: Ensures foreign key relationships work
+- ✅ **Performance Testing**: Tests query performance after fixes
+- ✅ **Regression Testing**: Ensures fixes don't break existing functionality
+
+**Test Categories**:
+- **Model Import Tests**: Validates all models can be imported without conflicts
+- **Schema Creation Tests**: Tests table creation and schema generation
+- **Relationship Tests**: Validates foreign key relationships and joins
+- **Query Tests**: Tests basic CRUD operations on fixed models
+- **Performance Tests**: Measures query performance and optimization
+- **Integration Tests**: Tests model integration with services and APIs
+
+**Validation Checks**:
+- Confirms no duplicate class definitions exist
+- Validates proper `__table_args__` configuration
+- Tests foreign key constraint integrity
+- Ensures index definitions are correct
+- Validates model relationships and joins
+- Confirms backward compatibility with existing code
+
+---
+
 ## 📝 Recent Updates
+
+**January 13, 2025**: Completed Script Reorganization and Documentation Updates:
+- Moved `fix_database_schema.py` from root to `/scripts/` directory - SQLAlchemy model conflicts and schema fixes
+- Moved `test_sqlalchemy_fixes.py` from root to `/scripts/` directory - SQLAlchemy fixes validation and testing
+- Created `find-port.js` - Dynamic port detection utility for conflict-free E2E testing environments
+- Created `start-test-server.js` - Test server startup script with dynamic port management and configuration copying
+- Updated [`frontend/playwright.config.ts`](../frontend/playwright.config.ts) to use root scripts directory and dynamic port system
+- Updated [`scripts/README.md`](README.md) with comprehensive documentation for all new and moved scripts
+- Added new script categories: "E2E Testing & Dynamic Port Management Scripts" and "Database Schema & SQLAlchemy Management Scripts"
+- Enhanced script organization table with 4 new scripts for better project maintenance and testing infrastructure
+- Implemented dynamic port detection system to prevent port conflicts during parallel E2E test execution
+- Provided complete integration between Playwright E2E tests and backend service management
 
 **January 13, 2025**: Added Frontend-Backend Integration Scripts and CLI Workflow Updates:
 - Added `start-dev.sh` - Enhanced development environment startup with frontend-backend integration support

@@ -20,7 +20,7 @@ def test_train_endpoint_saves_model(client: TestClient, patched_model_path, dumm
     # The path to the model file is patched_model_path (which is a string path here)
     
     # Action: Call the /predictive/train endpoint
-    train_payload = TrainRequest(num_epochs=1, learning_rate=0.01).model_dump()
+    train_payload = TrainRequest(user_id=123, num_epochs=1, learning_rate=0.01).model_dump()
     response = client.post("/predictive/train", json=train_payload)
 
     # Verification:
@@ -88,7 +88,10 @@ def test_predict_endpoint_loads_model(client: TestClient, patched_model_path, du
     # Action: Call the /predictive/predict endpoint
     # The dummy_predict_data in routers.predictive.py is a tensor of shape (1, 5, INPUT_SIZE)
     # For this test, the actual content of PredictRequest might not matter if using global dummy data
-    predict_payload = PredictRequest().model_dump() 
+    predict_payload = PredictRequest(
+        user_id=123,
+        recent_activity_types=["login", "browse", "purchase", "logout", "idle"]
+    ).model_dump()
     response = client.post("/predictive/predict", json=predict_payload)
 
     # Verification:
@@ -117,7 +120,10 @@ def test_predict_endpoint_handles_missing_model(client: TestClient, patched_mode
     assert not os.path.exists(str(patched_model_path)), "Model file should not exist for this test."
 
     # Action: Call the /predictive/predict endpoint
-    predict_payload = PredictRequest().model_dump()
+    predict_payload = PredictRequest(
+        user_id=123,
+        recent_activity_types=["login", "browse", "purchase", "logout", "idle"]
+    ).model_dump()
     response = client.post("/predictive/predict", json=predict_payload)
 
     # Verification:
