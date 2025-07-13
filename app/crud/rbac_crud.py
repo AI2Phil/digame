@@ -3,7 +3,7 @@ from sqlalchemy.exc import IntegrityError
 from typing import List, Optional
 
 from ..models.user import User
-from ..models.rbac import Role, Permission, UserRole
+from ..models.rbac import Role, Permission, UserRoleAssignment
 from ..schemas.rbac_schemas import RoleCreate, RoleUpdate, PermissionCreate, PermissionUpdate
 
 # --- Role CRUD Operations ---
@@ -98,13 +98,13 @@ def assign_role_to_user(db: Session, user_id: int, role_id: int) -> Optional[Use
     role = get_role(db, role_id)
     if user and role:
         # Check if user already has this role
-        existing_user_role = db.query(UserRole).filter(
-            UserRole.user_id == user_id,
-            UserRole.role_id == role_id
+        existing_user_role = db.query(UserRoleAssignment).filter(
+            UserRoleAssignment.user_id == user_id,
+            UserRoleAssignment.role_id == role_id
         ).first()
         
         if not existing_user_role:
-            user_role = UserRole(user_id=user_id, role_id=role_id)
+            user_role = UserRoleAssignment(user_id=user_id, role_id=role_id)
             db.add(user_role)
             db.commit()
             db.refresh(user)
@@ -115,10 +115,10 @@ def remove_role_from_user(db: Session, user_id: int, role_id: int) -> Optional[U
     user = db.query(User).filter(User.id == user_id).first()
     role = get_role(db, role_id) # Fetch the role to ensure it exists
     if user and role:
-        # Find and remove the UserRole entry
-        user_role = db.query(UserRole).filter(
-            UserRole.user_id == user_id,
-            UserRole.role_id == role_id
+        # Find and remove the UserRoleAssignment entry
+        user_role = db.query(UserRoleAssignment).filter(
+            UserRoleAssignment.user_id == user_id,
+            UserRoleAssignment.role_id == role_id
         ).first()
         
         if user_role:
@@ -156,13 +156,13 @@ def assign_role_to_user_by_names(db: Session, user_id: int, role_name: str) -> O
     role = get_role_by_name(db, role_name)
     if user and role:
         # Check if user already has this role
-        existing_user_role = db.query(UserRole).filter(
-            UserRole.user_id == user_id,
-            UserRole.role_id == role.id
+        existing_user_role = db.query(UserRoleAssignment).filter(
+            UserRoleAssignment.user_id == user_id,
+            UserRoleAssignment.role_id == role.id
         ).first()
         
         if not existing_user_role:
-            user_role = UserRole(user_id=user_id, role_id=role.id)
+            user_role = UserRoleAssignment(user_id=user_id, role_id=role.id)
             db.add(user_role)
             db.commit()
             db.refresh(user)
@@ -173,10 +173,10 @@ def remove_role_from_user_by_names(db: Session, user_id: int, role_name: str) ->
     user = db.query(User).filter(User.id == user_id).first()
     role = get_role_by_name(db, role_name)
     if user and role:
-        # Find and remove the UserRole entry
-        user_role = db.query(UserRole).filter(
-            UserRole.user_id == user_id,
-            UserRole.role_id == role.id
+        # Find and remove the UserRoleAssignment entry
+        user_role = db.query(UserRoleAssignment).filter(
+            UserRoleAssignment.user_id == user_id,
+            UserRoleAssignment.role_id == role.id
         ).first()
         
         if user_role:

@@ -308,12 +308,14 @@ class PerformanceBaseline(Base):  # type: ignore
     __table_args__ = (
         Index('idx_baseline_metric_period', 'metric_name', 'time_period', 'valid_from'),
         Index('idx_baseline_component_time', 'component', 'valid_from'),
+        {'extend_existing': True}
     )
 
 
 class PerformanceOptimization(Base):  # type: ignore
     """Performance optimization recommendations and tracking"""
     __tablename__ = "performance_optimizations"
+    __table_args__ = {'extend_existing': True}
     
     id = Column(Integer, primary_key=True, index=True)  # type: ignore
     tenant_id = Column(Integer, nullable=False, index=True)  # type: ignore

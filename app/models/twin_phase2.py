@@ -62,6 +62,7 @@ class TwinConversation(Base):  # type: ignore
     __table_args__ = (
         Index('idx_twin_conversations', 'twin_id', 'conversation_id'),
         Index('idx_conversation_activity', 'user_id', 'last_activity_at'),
+        {'extend_existing': True}
     )
 
     def __repr__(self):
@@ -111,6 +112,7 @@ class TwinConversationMessage(Base):  # type: ignore
         Index('idx_conversation_messages', 'conversation_id', 'timestamp'),
         Index('idx_twin_messages', 'twin_id', 'message_type', 'timestamp'),
         Index('idx_message_intent', 'intent', 'intent_confidence'),
+        {'extend_existing': True}
     )
 
     def __repr__(self):
@@ -164,6 +166,7 @@ class LearningDataItem(Base):  # type: ignore
         Index('idx_learning_queue', 'status', 'priority', 'timestamp'),
         Index('idx_twin_learning_data', 'twin_id', 'data_type', 'status'),
         Index('idx_learning_processing', 'processing_started_at', 'status'),
+        {'extend_existing': True}
     )
 
     def __repr__(self):
@@ -203,6 +206,7 @@ class ModelPerformanceHistory(Base):  # type: ignore
     __table_args__ = (
         Index('idx_model_performance', 'twin_id', 'model_type', 'recorded_at'),
         Index('idx_performance_tracking', 'model_key', 'recorded_at'),
+        {'extend_existing': True}
     )
 
     def __repr__(self):
@@ -253,6 +257,7 @@ class AnalyticsResult(Base):  # type: ignore
         Index('idx_analytics_results', 'twin_id', 'analysis_type', 'analyzed_at'),
         Index('idx_analytics_timerange', 'time_range_start', 'time_range_end'),
         Index('idx_analytics_expiry', 'expires_at'),
+        {'extend_existing': True}
     )
 
     def __repr__(self):
@@ -302,6 +307,7 @@ class AnalyticsInsight(Base):  # type: ignore
         Index('idx_insights_twin', 'twin_id', 'category', 'generated_at'),
         Index('idx_insights_impact', 'impact_score', 'actionable'),
         Index('idx_insights_result', 'analytics_result_id'),
+        {'extend_existing': True}
     )
 
     def __repr__(self):
@@ -348,6 +354,7 @@ class LearningPipelineStats(Base):  # type: ignore
     __table_args__ = (
         Index('idx_pipeline_stats', 'twin_id', 'period_type', 'recorded_at'),
         Index('idx_pipeline_period', 'period_start', 'period_end'),
+        {'extend_existing': True}
     )
 
     def __repr__(self):

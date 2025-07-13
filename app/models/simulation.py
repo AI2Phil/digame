@@ -54,6 +54,7 @@ class Simulation(Base):
     Core simulation model for scenario planning and decision support
     """
     __tablename__ = "simulations"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True)
     tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=False, index=True)
@@ -107,6 +108,7 @@ class Scenario(Base):
     Individual scenarios within a simulation
     """
     __tablename__ = "scenarios"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True)
     simulation_id = Column(Integer, ForeignKey("simulations.id"), nullable=False, index=True)
@@ -148,6 +150,7 @@ class DecisionAnalysis(Base):
     Decision impact analysis and recommendation engine
     """
     __tablename__ = "decision_analyses"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True)
     simulation_id = Column(Integer, ForeignKey("simulations.id"), nullable=False, index=True)
@@ -197,6 +200,7 @@ class RiskAssessment(Base):
     Risk assessment and management for simulations and decisions
     """
     __tablename__ = "risk_assessments"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True)
     simulation_id = Column(Integer, ForeignKey("simulations.id"), nullable=False, index=True)
@@ -246,6 +250,7 @@ class StrategicPlan(Base):
     Strategic planning and goal management
     """
     __tablename__ = "strategic_plans"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True)
     tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=False, index=True)
@@ -303,6 +308,7 @@ class SimulationTemplate(Base):
     Reusable simulation templates for common scenarios
     """
     __tablename__ = "simulation_templates"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True)
     tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=False, index=True)

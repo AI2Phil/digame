@@ -12,7 +12,7 @@ import json # For TenantSettings value handling
 # Updated model imports
 from ..models.tenant import Tenant, TenantSettings, TenantInvitation, TenantAuditLog
 from ..models.user import User
-from ..models.rbac import Role, UserRole  # Now imports the model class
+from ..models.rbac import Role, UserRoleAssignment  # Now imports the model class
 from ..database import get_db
 from passlib.context import CryptContext
 
@@ -307,7 +307,7 @@ class TenantService:
         # User provisioning/linking logic would go here.
         # For example, if user identified by 'accepting_user_id' needs to be formally associated
         # with 'invitation.tenant_id' and assigned 'invitation.role'.
-        # This might involve creating a UserRole entry.
+        # This might involve creating a UserRoleAssignment entry.
         user_to_associate = self.db.query(User).filter(User.id == accepting_user_id).first()
         if user_to_associate:
             if getattr(user_to_associate, 'tenant_id', None) != getattr(invitation, 'tenant_id', None):
@@ -318,14 +318,14 @@ class TenantService:
             # Assign the role from invitation
             role_to_assign = self.db.query(Role).filter(Role.tenant_id == getattr(invitation, 'tenant_id', None), Role.name == getattr(invitation, 'role', None)).first()
             if role_to_assign:
-                existing_user_role = self.db.query(UserRole).filter(UserRole.user_id == accepting_user_id, UserRole.role_id == getattr(role_to_assign, 'id', None)).first()
+                existing_user_role = self.db.query(UserRoleAssignment).filter(UserRoleAssignment.user_id == accepting_user_id, UserRoleAssignment.role_id == getattr(role_to_assign, 'id', None)).first()
                 if not existing_user_role:
                     user_role_data = {
                         "user_id": accepting_user_id,
                         "role_id": getattr(role_to_assign, 'id', None),
                         "assigned_by": getattr(invitation, 'invited_by_user_id', None)
                     }
-                    new_user_role = UserRole()  # type: ignore
+                    new_user_role = UserRoleAssignment()  # type: ignore
                     for key, value in user_role_data.items():
                         setattr(new_user_role, key, value)  # type: ignore
                     self.db.add(new_user_role)
@@ -413,13 +413,13 @@ class TenantService:
                 "role_id": getattr(default_role, 'id', None),
                 "assigned_by": current_admin_id
             }
-            user_role = UserRole()  # type: ignore
+            user_role = UserRoleAssignment()  # type: ignore
             for key, value in user_role_data.items():
                 setattr(user_role, key, value)  # type: ignore
             self.db.add(user_role)
             assigned_role_id_for_log = getattr(default_role, 'id', None)
         
-        # Commit happens after user and potentially UserRole are added
+        # Commit happens after user and potentially UserRoleAssignment are added
         # self.db.commit() # Deferred to allow _create_admin_user to commit once.
 
         self._log_audit_event(
@@ -431,7 +431,7 @@ class TenantService:
         return user
     
     def assign_role(self, user_id: int, role_id: int, assigned_by_user_id: int,
-                    ip_address: Optional[str] = None, user_agent: Optional[str] = None) -> UserRole:
+                    ip_address: Optional[str] = None, user_agent: Optional[str] = None) -> UserRoleAssignment:
         user = self.db.query(User).filter(User.id == user_id).first()
         if not user:
             raise ValueError("User not found.")
@@ -439,8 +439,8 @@ class TenantService:
         if not role_to_assign:
             raise ValueError("Role not found or does not belong to the user's tenant.")
 
-        existing = self.db.query(UserRole).filter(
-            UserRole.user_id == user_id, UserRole.role_id == role_id
+        existing = self.db.query(UserRoleAssignment).filter(
+            UserRoleAssignment.user_id == user_id, UserRoleAssignment.role_id == role_id
         ).first()
         
         if existing:
@@ -451,7 +451,7 @@ class TenantService:
             "role_id": role_id,
             "assigned_by": assigned_by_user_id
         }
-        user_role = UserRole()  # type: ignore
+        user_role = UserRoleAssignment()  # type: ignore
         for key, value in user_role_data.items():
             setattr(user_role, key, value)  # type: ignore
         
@@ -472,7 +472,7 @@ class TenantService:
             return []
 
         permissions = set()
-        user_roles = self.db.query(UserRole).join(Role).filter(UserRole.user_id == user_id).all()
+        user_roles = self.db.query(UserRoleAssignment).join(Role).filter(UserRoleAssignment.user_id == user_id).all()
         
         for ur in user_roles:
             role = getattr(ur, 'role', None)

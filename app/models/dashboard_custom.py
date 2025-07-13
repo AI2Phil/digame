@@ -15,6 +15,7 @@ class ReportDefinition(Base):  # type: ignore
     Stores user-defined report configurations.
     """
     __tablename__ = "report_definitions"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer(), primary_key=True, index=True)  # type: ignore
     definition_uuid = Column(String(36), unique=True, index=True, default=lambda: str(uuid.uuid4()))  # type: ignore

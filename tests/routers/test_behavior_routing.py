@@ -1,50 +1,146 @@
 import pytest
+import os
 from fastapi.testclient import TestClient
-from sqlalchemy.orm import Session # Not used directly, but good for consistency
-from app.main import app
-from app.auth.auth_dependencies import get_current_active_user
-from fastapi import status # For HTTP status codes
+from sqlalchemy.orm import Session
+from fastapi import status
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
 
-# Fixtures test_admin_user, test_non_admin_user from conftest.py
-client = TestClient(app)
+# Disable auth middleware for tests - must be set before importing app
+os.environ["DIGAME_AUTH_AUTH_MIDDLEWARE_ENABLED"] = "false"
+
+from app.main import app
+from app.auth.dependencies import get_current_user, oauth2_scheme
+from app.db import get_db
+from app.models import Base
+from app.models.user import User as SQLAlchemyUser
+
+# Database setup for testing
+DATABASE_URL = "sqlite:///:memory:"
+engine = create_engine(
+    DATABASE_URL,
+    connect_args={"check_same_thread": False},
+    poolclass=StaticPool,
+)
+TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+@pytest.fixture(scope="session", autouse=True)
+def setup_db():
+    Base.metadata.create_all(bind=engine)
+    yield
+    Base.metadata.drop_all(bind=engine)
+
+@pytest.fixture(scope="function")
+def db_session_test():
+    connection = engine.connect()
+    transaction = connection.begin()
+    session = TestingSessionLocal(bind=connection)
+    yield session
+    session.close()
+    transaction.rollback()
+    connection.close()
+
+@pytest.fixture(scope="function")
+def client_behavior(db_session_test):
+    def override_get_db():
+        yield db_session_test
+    app.dependency_overrides[get_db] = override_get_db
+    yield TestClient(app)
+    # Safe cleanup
+    if get_db in app.dependency_overrides:
+        del app.dependency_overrides[get_db]
+
+@pytest.fixture
+def test_admin_user_behavior(db_session_test):
+    user = SQLAlchemyUser(
+        id=1,
+        username="admin_test",
+        email="admin_test@example.com",
+        hashed_password="hashed_password",
+        first_name="Admin",
+        last_name="User",
+        is_active=True,
+        onboarding_completed=True
+    )
+    db_session_test.add(user)
+    db_session_test.commit()
+    db_session_test.refresh(user)
+    return user
+
+@pytest.fixture
+def test_non_admin_user_behavior(db_session_test):
+    user = SQLAlchemyUser(
+        id=2,
+        username="non_admin_test",
+        email="non_admin_test@example.com",
+        hashed_password="hashed_password",
+        first_name="Regular",
+        last_name="User",
+        is_active=True,
+        onboarding_completed=True
+    )
+    db_session_test.add(user)
+    db_session_test.commit()
+    db_session_test.refresh(user)
+    return user
+
+@pytest.fixture
+def test_inactive_user_behavior(db_session_test):
+    user = SQLAlchemyUser(
+        id=3,
+        username="inactive_test",
+        email="inactive_test@example.com",
+        hashed_password="hashed_password",
+        first_name="Inactive",
+        last_name="User",
+        is_active=False,
+        onboarding_completed=True
+    )
+    db_session_test.add(user)
+    db_session_test.commit()
+    db_session_test.refresh(user)
+    return user
 
 # --- Tests for /behavior/train ---
 # Permission: "train_own_behavior_model"
 
-def test_train_behavior_unauthorized(test_non_admin_user):
-    app.dependency_overrides[get_current_active_user] = lambda: test_non_admin_user
-    # Payload matches TrainingRequest schema from behavior.py
-    response = client.post("/behavior/train", json={"data_source": "test_source", "parameters": {"param1": "value1"}}) 
+def test_train_behavior_unauthorized(client_behavior: TestClient, test_inactive_user_behavior: SQLAlchemyUser):
+    # Override both the oauth2_scheme and get_current_user
+    app.dependency_overrides[oauth2_scheme] = lambda: "fake-token"
+    app.dependency_overrides[get_current_user] = lambda: test_inactive_user_behavior
+    
+    response = client_behavior.post("/behavior/train", json={"data_source": "test_source", "parameters": {"param1": "value1"}})
     assert response.status_code == status.HTTP_403_FORBIDDEN
     app.dependency_overrides.clear()
 
-def test_train_behavior_authorized(test_admin_user):
-    # Assuming admin user has 'train_own_behavior_model'
-    app.dependency_overrides[get_current_active_user] = lambda: test_admin_user
-    response = client.post("/behavior/train", json={"data_source": "test_source", "parameters": {"param1": "value1"}})
-    # Endpoint returns 202 if successful
-    # Placeholder endpoint in behavior.py returns 202
-    assert response.status_code == status.HTTP_202_ACCEPTED 
+def test_train_behavior_authorized(client_behavior: TestClient, test_admin_user_behavior: SQLAlchemyUser):
+    # Override both the oauth2_scheme and get_current_user
+    app.dependency_overrides[oauth2_scheme] = lambda: "fake-token"
+    app.dependency_overrides[get_current_user] = lambda: test_admin_user_behavior
+    
+    response = client_behavior.post("/behavior/train", json={"data_source": "test_source", "parameters": {"param1": "value1"}})
+    assert response.status_code == status.HTTP_202_ACCEPTED
     data = response.json()
-    assert data["status"] == "training_started" # As per placeholder in behavior.py
+    assert data["status"] == "training_started"
     app.dependency_overrides.clear()
 
-# --- Tests for /behavior/patterns ---
-# Permission: "view_own_behavior_patterns"
-
-def test_get_patterns_unauthorized(test_non_admin_user):
-    app.dependency_overrides[get_current_active_user] = lambda: test_non_admin_user
-    response = client.get("/behavior/patterns")
+def test_get_patterns_unauthorized(client_behavior: TestClient, test_inactive_user_behavior: SQLAlchemyUser):
+    # Override both the oauth2_scheme and get_current_user
+    app.dependency_overrides[oauth2_scheme] = lambda: "fake-token"
+    app.dependency_overrides[get_current_user] = lambda: test_inactive_user_behavior
+    
+    response = client_behavior.get("/behavior/patterns")
     assert response.status_code == status.HTTP_403_FORBIDDEN
     app.dependency_overrides.clear()
 
-def test_get_patterns_authorized(test_admin_user):
-    # Assuming admin user has 'view_own_behavior_patterns'
-    app.dependency_overrides[get_current_active_user] = lambda: test_admin_user
-    response = client.get("/behavior/patterns")
-    # Endpoint returns 200 if successful
-    # Placeholder endpoint in behavior.py returns 200
-    assert response.status_code == status.HTTP_200_OK 
+def test_get_patterns_authorized(client_behavior: TestClient, test_admin_user_behavior: SQLAlchemyUser):
+    # Override both the oauth2_scheme and get_current_user
+    app.dependency_overrides[oauth2_scheme] = lambda: "fake-token"
+    app.dependency_overrides[get_current_user] = lambda: test_admin_user_behavior
+    
+    response = client_behavior.get("/behavior/patterns")
+    assert response.status_code == status.HTTP_200_OK
     data = response.json()
-    assert isinstance(data, list) # As per placeholder in behavior.py
+    assert "patterns" in data
     app.dependency_overrides.clear()

@@ -42,6 +42,7 @@ class Notification(Base):
     Platform Owner notification model
     """
     __tablename__ = "notifications"
+    __table_args__ = {'extend_existing': True}
     
     id = Column(Integer, primary_key=True, index=True)
     
@@ -91,6 +92,7 @@ class NotificationTemplate(Base):
     Notification templates for consistent messaging
     """
     __tablename__ = "notification_templates"
+    __table_args__ = {'extend_existing': True}
     
     id = Column(Integer, primary_key=True, index=True)
     
@@ -170,6 +172,7 @@ class NotificationLog(Base):
     Log of notification delivery attempts
     """
     __tablename__ = "notification_logs"
+    __table_args__ = {'extend_existing': True}
     
     id = Column(Integer, primary_key=True, index=True)
     notification_id = Column(Integer, ForeignKey("notifications.id"), nullable=False, index=True)

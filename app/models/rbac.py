@@ -5,13 +5,8 @@ from sqlalchemy.ext.associationproxy import association_proxy
 from app.database import Base
 from datetime import datetime
 
-# Association Table: user_roles
-# Connects Users and Roles (Many-to-Many)
-user_roles_table = Table('user_roles', Base.metadata,
-    Column('user_id', Integer(), ForeignKey('users.id'), primary_key=True),
-    Column('role_id', Integer(), ForeignKey('roles.id'), primary_key=True),
-    extend_existing=True
-)
+# Note: The old user_roles table has been replaced by the UserRoleAssignment model
+# for enhanced tenant-aware RBAC functionality
 
 # Association Table: role_permissions
 # Connects Roles and Permissions (Many-to-Many)
@@ -36,11 +31,11 @@ class Role(Base):
     updated_at = Column(DateTime(), default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # Enhanced relationships for tenant-aware RBAC
-    user_roles = relationship("app.models.rbac.UserRole", back_populates="role")
+    user_roles = relationship("app.models.rbac.UserRoleAssignment", back_populates="role")
     users = association_proxy("user_roles", "user")  # Maintains backward compatibility
     
     # Tenant relationship
-    tenant = relationship("Tenant", back_populates="roles")
+    tenant = relationship("app.models.tenant.Tenant", back_populates="roles")
 
     # Many-to-Many relationship with Permission (unchanged)
     permissions = relationship(
@@ -74,7 +69,7 @@ class Permission(Base):
         return f"<Permission(id={self.id}, name='{self.name}')>"
 
 
-class UserRole(Base):
+class UserRoleAssignment(Base):
     """
     Enhanced UserRole model for tenant-aware role assignments
     Replaces the simple many-to-many table approach

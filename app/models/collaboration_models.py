@@ -43,7 +43,7 @@ class UserStatus(enum.Enum):
 class Workspace(Base):
     """Collaboration workspaces for team communication"""
     __tablename__ = 'workspaces'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(255), nullable=False, index=True)
     description = Column(Text)
@@ -74,12 +74,13 @@ class Workspace(Base):
     __table_args__ = (
         Index('idx_workspaces_tenant_active', 'tenant_id', 'is_active'),
         Index('idx_workspaces_created_by', 'created_by'),
+        {'extend_existing': True}
     )
 
 class WorkspaceMember(Base):
     """Workspace membership with roles and permissions"""
     __tablename__ = 'workspace_members'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     workspace_id = Column(Integer, ForeignKey('workspaces.id'), nullable=False, index=True)
     user_id = Column(Integer, ForeignKey('users.id'), nullable=False, index=True)
@@ -112,12 +113,13 @@ class WorkspaceMember(Base):
     __table_args__ = (
         Index('idx_workspace_members_workspace_user', 'workspace_id', 'user_id'),
         Index('idx_workspace_members_role', 'role'),
+        {'extend_existing': True}
     )
 
 class Channel(Base):
     """Communication channels within workspaces"""
     __tablename__ = 'channels'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     workspace_id = Column(Integer, ForeignKey('workspaces.id'), nullable=False, index=True)
     name = Column(String(100), nullable=False, index=True)
@@ -153,12 +155,13 @@ class Channel(Base):
         Index('idx_channels_workspace_type', 'workspace_id', 'type'),
         Index('idx_channels_name', 'name'),
         Index('idx_channels_last_message', 'last_message_at'),
+        {'extend_existing': True}
     )
 
 class Message(Base):
     """Messages within channels"""
     __tablename__ = 'collaboration_messages'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     channel_id = Column(Integer, ForeignKey('channels.id'), nullable=False, index=True)
     user_id = Column(Integer, ForeignKey('users.id'), nullable=False, index=True)
@@ -195,12 +198,13 @@ class Message(Base):
         Index('idx_messages_user_timestamp', 'user_id', 'timestamp'),
         Index('idx_messages_thread', 'thread_id'),
         Index('idx_messages_type', 'type'),
+        {'extend_existing': True}
     )
 
 class MessageReaction(Base):
     """Reactions to messages"""
     __tablename__ = 'message_reactions'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     message_id = Column(Integer, ForeignKey('collaboration_messages.id'), nullable=False, index=True)
     user_id = Column(Integer, ForeignKey('users.id'), nullable=False, index=True)
@@ -219,12 +223,13 @@ class MessageReaction(Base):
     __table_args__ = (
         Index('idx_message_reactions_message_emoji', 'message_id', 'emoji'),
         Index('idx_message_reactions_user_message', 'user_id', 'message_id'),
+        {'extend_existing': True}
     )
 
 class UserPresence(Base):
     """User presence and activity status"""
     __tablename__ = 'user_presence'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey('users.id'), nullable=False, unique=True, index=True)
     workspace_id = Column(Integer, ForeignKey('workspaces.id'), nullable=True, index=True)
@@ -261,12 +266,13 @@ class UserPresence(Base):
         Index('idx_user_presence_status', 'status'),
         Index('idx_user_presence_workspace', 'workspace_id', 'status'),
         Index('idx_user_presence_last_activity', 'last_activity'),
+        {'extend_existing': True}
     )
 
 class CollaborationSession(Base):
     """Active collaboration sessions (calls, screen shares, etc.)"""
     __tablename__ = 'collaboration_sessions'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     workspace_id = Column(Integer, ForeignKey('workspaces.id'), nullable=False, index=True)
     channel_id = Column(Integer, ForeignKey('channels.id'), nullable=True, index=True)
@@ -308,12 +314,13 @@ class CollaborationSession(Base):
         Index('idx_collaboration_sessions_workspace_status', 'workspace_id', 'status'),
         Index('idx_collaboration_sessions_type', 'type'),
         Index('idx_collaboration_sessions_started_at', 'started_at'),
+        {'extend_existing': True}
     )
 
 class MessageAttachment(Base):
     """File attachments for messages"""
     __tablename__ = 'message_attachments'
-    
+
     id = Column(Integer, primary_key=True, index=True)
     message_id = Column(Integer, ForeignKey('collaboration_messages.id'), nullable=False, index=True)
     
@@ -347,4 +354,5 @@ class MessageAttachment(Base):
         Index('idx_message_attachments_message', 'message_id'),
         Index('idx_message_attachments_hash', 'file_hash'),
         Index('idx_message_attachments_uploader', 'uploaded_by'),
+        {'extend_existing': True}
     )

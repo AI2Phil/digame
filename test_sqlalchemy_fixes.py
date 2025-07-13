@@ -17,7 +17,7 @@ def test_model_imports():
         print("✓ Successfully imported centralized Base")
         
         # Import models that were causing issues
-        from app.models.rbac import UserRole, Role, Permission
+        from app.models.rbac import UserRoleAssignment, Role, Permission
         print("✓ Successfully imported RBAC models")
         
         from app.models.user_setting import UserSetting
@@ -39,16 +39,12 @@ def test_table_definitions():
     
     try:
         from app.database import Base
-        from app.models.rbac import UserRole, user_roles_table
+        from app.models.rbac import UserRoleAssignment
         from app.models.user_setting import UserSetting
         
-        # Check that UserRole uses the correct table name
-        assert UserRole.__tablename__ == "user_role_assignments", f"Expected 'user_role_assignments', got '{UserRole.__tablename__}'"
-        print("✓ UserRole uses correct table name: user_role_assignments")
-        
-        # Check that user_roles_table is separate
-        assert user_roles_table.name == "user_roles", f"Expected 'user_roles', got '{user_roles_table.name}'"
-        print("✓ user_roles_table uses correct name: user_roles")
+        # Check that UserRoleAssignment uses the correct table name
+        assert UserRoleAssignment.__tablename__ == "user_role_assignments", f"Expected 'user_role_assignments', got '{UserRoleAssignment.__tablename__}'"
+        print("✓ UserRoleAssignment uses correct table name: user_role_assignments")
         
         # Check that UserSetting has extend_existing
         assert hasattr(UserSetting, '__table_args__'), "UserSetting should have __table_args__"
@@ -94,12 +90,12 @@ def test_base_consistency():
     
     try:
         from app.database import Base as DatabaseBase
-        from app.models.rbac import UserRole
+        from app.models.rbac import UserRoleAssignment
         from app.models.user_setting import UserSetting
         from app.models.user import User
         
         # Check that all models inherit from the same Base
-        assert UserRole.__bases__[0] is DatabaseBase, "UserRole should inherit from centralized Base"
+        assert UserRoleAssignment.__bases__[0] is DatabaseBase, "UserRoleAssignment should inherit from centralized Base"
         assert UserSetting.__bases__[0] is DatabaseBase, "UserSetting should inherit from centralized Base"
         assert User.__bases__[0] is DatabaseBase, "User should inherit from centralized Base"
         

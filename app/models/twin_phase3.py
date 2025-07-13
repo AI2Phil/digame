@@ -73,10 +73,11 @@ class TwinTeam(Base):
     __table_args__ = (
         Index('idx_twin_teams_status', 'status', 'team_type'),
         Index('idx_twin_teams_org', 'organization_id', 'status'),
+        {'extend_existing': True}
     )
 
     def __repr__(self):
-        return f"<TwinTeam(id={self.id}, name={self.name}, members={len(self.members) if self.members else 0})>"
+        return f"<TwinTeam(id={self.id}, name={self.name})>"
 
 class TwinTeamMember(Base):
     """
@@ -125,6 +126,7 @@ class TwinTeamMember(Base):
         Index('idx_team_members', 'team_id', 'status'),
         Index('idx_twin_teams', 'twin_id', 'status'),
         Index('idx_member_availability', 'availability_status', 'workload_capacity'),
+        {'extend_existing': True}
     )
 
     def __repr__(self):
@@ -184,6 +186,7 @@ class TeamCoordination(Base):
         Index('idx_team_coordinations', 'team_id', 'coordination_type', 'status'),
         Index('idx_coordination_progress', 'status', 'progress_percentage'),
         Index('idx_coordination_timeline', 'started_at', 'completed_at'),
+        {'extend_existing': True}
     )
 
     def __repr__(self):
@@ -239,6 +242,7 @@ class CoordinationActivity(Base):
         Index('idx_coordination_activities', 'coordination_id', 'status'),
         Index('idx_activity_twin', 'twin_id', 'activity_type'),
         Index('idx_activity_schedule', 'scheduled_at', 'status'),
+        {'extend_existing': True}
     )
 
     def __repr__(self):
@@ -291,6 +295,7 @@ class TwinCollaboration(Base):
         Index('idx_twin_collaborations', 'twin_a_id', 'twin_b_id'),
         Index('idx_collaboration_team', 'team_id', 'status'),
         Index('idx_collaboration_type', 'collaboration_type', 'status'),
+        {'extend_existing': True}
     )
 
     def __repr__(self):
@@ -342,6 +347,7 @@ class TeamPerformanceMetric(Base):
         Index('idx_team_metrics', 'team_id', 'metric_type', 'measured_at'),
         Index('idx_metric_period', 'period_start', 'period_end'),
         Index('idx_metric_performance', 'metric_value', 'improvement_percentage'),
+        {'extend_existing': True}
     )
 
     def __repr__(self):

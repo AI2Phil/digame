@@ -16,6 +16,7 @@ class MarketTrend(Base):
     Market trends and industry analysis data
     """
     __tablename__ = "market_trends"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True)
     trend_uuid = Column(String(36), unique=True, index=True, default=lambda: str(uuid.uuid4()))
@@ -99,6 +100,7 @@ class CompetitiveAnalysis(Base):
     Competitive intelligence and analysis data
     """
     __tablename__ = "competitive_analyses"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True)
     analysis_uuid = Column(String(36), unique=True, index=True, default=lambda: str(uuid.uuid4()))
@@ -224,6 +226,7 @@ class IntelligenceReport(Base):
     Intelligence reports combining market trends and competitive analysis
     """
     __tablename__ = "intelligence_reports"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True)
     report_uuid = Column(String(36), unique=True, index=True, default=lambda: str(uuid.uuid4()))
@@ -339,6 +342,7 @@ class MarketDataSource(Base):
     External data sources for market intelligence
     """
     __tablename__ = "market_data_sources"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True)
     source_uuid = Column(String(36), unique=True, index=True, default=lambda: str(uuid.uuid4()))

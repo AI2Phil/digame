@@ -2,10 +2,11 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
+from typing import Generator
 from app.database import Base  # Adjust if your Base is elsewhere, e.g. app.models.user or app.db
 from app.models.user import User # Assuming User model is here
 from app.models.notifications import Notification # Import Notification model as well
-from app.models.rbac import Role, UserRole  # Import RBAC models
+from app.models.rbac import Role, UserRoleAssignment  # Import RBAC models
 from app.main import app  # Import the FastAPI app
 
 # In-memory SQLite database for testing
@@ -20,7 +21,7 @@ engine = create_engine(
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 @pytest.fixture(scope="function")
-def db_session() -> Session:
+def db_session() -> Generator[Session, None, None]:
     """
     Pytest fixture to create a new database session for each test function.
     Creates all tables before the test and drops them afterwards.
@@ -87,7 +88,7 @@ def test_admin_user(db_session: Session) -> User:
     db_session.commit()
     
     # Assign admin role to user
-    user_role = UserRole(
+    user_role = UserRoleAssignment(
         user_id=admin_user.id,
         role_id=admin_role.id,
         is_active=True
@@ -126,7 +127,7 @@ def test_non_admin_user(db_session: Session) -> User:
     db_session.commit()
     
     # Assign user role
-    user_role_assignment = UserRole(
+    user_role_assignment = UserRoleAssignment(
         user_id=regular_user.id,
         role_id=user_role.id,
         is_active=True

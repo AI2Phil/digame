@@ -67,7 +67,6 @@ class Course(Base):
 class CourseEnrollment(Base):
     """User enrollments in courses"""
     __tablename__ = "course_enrollments"
-    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
@@ -88,13 +87,13 @@ class CourseEnrollment(Base):
     # Constraints
     __table_args__ = (
         UniqueConstraint('user_id', 'course_id', name='unique_user_course_enrollment'),
+        {'extend_existing': True}
     )
 
 
 class LearningProgress(Base):
     """User progress tracking for skills and competencies"""
     __tablename__ = "learning_progress"
-    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
@@ -115,6 +114,7 @@ class LearningProgress(Base):
     # Constraints
     __table_args__ = (
         UniqueConstraint('user_id', 'skill_name', name='unique_user_skill_progress'),
+        {'extend_existing': True}
     )
 
 

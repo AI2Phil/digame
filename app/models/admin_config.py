@@ -8,6 +8,7 @@ class AdminAPIKeyConfig(Base):
     These keys are used when users haven't configured their own API keys.
     """
     __tablename__ = "admin_api_key_configs"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True)
     service_name = Column(String(100), unique=True, nullable=False, index=True)  # e.g., 'openai', 'anthropic', 'google'
@@ -28,6 +29,7 @@ class APIKeyUsageLog(Base):
     Log of API key usage for monitoring and billing purposes.
     """
     __tablename__ = "api_key_usage_logs"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True)
     config_id = Column(Integer, nullable=False, index=True)  # Reference to AdminAPIKeyConfig
@@ -48,6 +50,7 @@ class AdminSystemConfig(Base):
     General admin system configuration settings.
     """
     __tablename__ = "admin_system_configs"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True)
     config_key = Column(String(100), unique=True, nullable=False, index=True)

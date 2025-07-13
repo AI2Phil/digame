@@ -36,7 +36,14 @@ app = FastAPI(
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=os.getenv("ALLOWED_ORIGINS", "http://localhost:3000").split(","),
+    allow_origins=[
+        "http://localhost:3000",
+        "http://localhost:3001",
+        "http://localhost:3002",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:3001",
+        "http://127.0.0.1:3002"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -92,8 +99,12 @@ async def health_check():
         # Add system metrics if psutil is available
         if PSUTIL_AVAILABLE:
             memory_info = psutil.virtual_memory()
-            cpu_percent = psutil.cpu_percent(interval=1)
+            cpu_percent = psutil.cpu_percent(interval=0.1, percpu=False)
             disk_usage = psutil.disk_usage('/')
+            
+            # Ensure cpu_percent is a float, not a list
+            if isinstance(cpu_percent, list):
+                cpu_percent = sum(cpu_percent) / len(cpu_percent) if cpu_percent else 0.0
             
             health_status["system"] = {
                 "memory": {
@@ -154,6 +165,22 @@ async def api_health():
         "status": "healthy",
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "api_version": "1.0.0"
+    }
+
+@app.get("/api/security/dashboard")
+async def security_dashboard():
+    """Basic security dashboard endpoint for frontend testing"""
+    return {
+        "status": "operational",
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "security_metrics": {
+            "total_users": 0,
+            "active_sessions": 0,
+            "failed_logins_24h": 0,
+            "mfa_enabled_users": 0,
+            "security_alerts": []
+        },
+        "message": "Security dashboard data (demo mode)"
     }
 
 @app.get("/metrics")

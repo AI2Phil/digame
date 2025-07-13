@@ -9,7 +9,7 @@ from sqlalchemy import and_, or_
 from datetime import datetime, timedelta, timezone
 
 from ..models.user import User
-from ..models.rbac import Role, Permission, UserRole
+from ..models.rbac import Role, Permission, UserRoleAssignment
 from ..models.tenant import Tenant
 from ..database import get_db
 
@@ -27,7 +27,7 @@ class RBACService:
         tenant_id: Optional[int] = None,
         assigned_by: Optional[int] = None,
         expires_at: Optional[datetime] = None
-    ) -> UserRole:
+    ) -> UserRoleAssignment:
         """
         Assign role to user with optional tenant scoping
         
@@ -39,7 +39,7 @@ class RBACService:
             expires_at: Optional expiration date for the role assignment
             
         Returns:
-            UserRole: The created user role assignment
+            UserRoleAssignment: The created user role assignment
             
         Raises:
             ValueError: If user or role doesn't exist, or if assignment already exists
@@ -56,12 +56,12 @@ class RBACService:
             raise ValueError(f"Role with ID {role_id} not found")
         
         # Check if assignment already exists
-        existing = self.db.query(UserRole).filter(
+        existing = self.db.query(UserRoleAssignment).filter(
             and_(  # type: ignore
-                UserRole.user_id == user_id,  # type: ignore
-                UserRole.role_id == role_id,  # type: ignore
-                UserRole.tenant_id == tenant_id,  # type: ignore
-                UserRole.is_active == True  # type: ignore
+                UserRoleAssignment.user_id == user_id,  # type: ignore
+                UserRoleAssignment.role_id == role_id,  # type: ignore
+                UserRoleAssignment.tenant_id == tenant_id,  # type: ignore
+                UserRoleAssignment.is_active == True  # type: ignore
             )
         ).first()
         
@@ -69,7 +69,7 @@ class RBACService:
             raise ValueError(f"User {user_id} already has role {role_id} in tenant {tenant_id}")
         
         # Create new role assignment
-        user_role = UserRole()  # type: ignore
+        user_role = UserRoleAssignment()  # type: ignore
         setattr(user_role, 'user_id', user_id)  # type: ignore
         setattr(user_role, 'role_id', role_id)  # type: ignore
         setattr(user_role, 'tenant_id', tenant_id)  # type: ignore
@@ -102,12 +102,12 @@ class RBACService:
             bool: True if role was removed, False if assignment didn't exist
         """
         
-        user_role = self.db.query(UserRole).filter(
+        user_role = self.db.query(UserRoleAssignment).filter(
             and_(  # type: ignore
-                UserRole.user_id == user_id,  # type: ignore
-                UserRole.role_id == role_id,  # type: ignore
-                UserRole.tenant_id == tenant_id,  # type: ignore
-                UserRole.is_active == True  # type: ignore
+                UserRoleAssignment.user_id == user_id,  # type: ignore
+                UserRoleAssignment.role_id == role_id,  # type: ignore
+                UserRoleAssignment.tenant_id == tenant_id,  # type: ignore
+                UserRoleAssignment.is_active == True  # type: ignore
             )
         ).first()
         
@@ -124,7 +124,7 @@ class RBACService:
         user_id: int, 
         tenant_id: Optional[int] = None,
         include_expired: bool = False
-    ) -> List[UserRole]:
+    ) -> List[UserRoleAssignment]:
         """
         Get user roles, optionally filtered by tenant
         
@@ -134,26 +134,26 @@ class RBACService:
             include_expired: Whether to include expired role assignments
             
         Returns:
-            List[UserRole]: List of user role assignments
+            List[UserRoleAssignment]: List of user role assignments
         """
         
-        query = self.db.query(UserRole).filter(
+        query = self.db.query(UserRoleAssignment).filter(
             and_(  # type: ignore
-                UserRole.user_id == user_id,  # type: ignore
-                UserRole.is_active == True  # type: ignore
+                UserRoleAssignment.user_id == user_id,  # type: ignore
+                UserRoleAssignment.is_active == True  # type: ignore
             )
         )
         
         # Filter by tenant if specified
         if tenant_id is not None:
-            query = query.filter(UserRole.tenant_id == tenant_id)
+            query = query.filter(UserRoleAssignment.tenant_id == tenant_id)
         
         # Filter out expired roles unless requested
         if not include_expired:
             query = query.filter(
                 or_(  # type: ignore
-                    UserRole.expires_at == None,  # type: ignore
-                    UserRole.expires_at > datetime.now(timezone.utc)  # type: ignore
+                    UserRoleAssignment.expires_at == None,  # type: ignore
+                    UserRoleAssignment.expires_at > datetime.now(timezone.utc)  # type: ignore
                 )
             )
         
@@ -230,17 +230,17 @@ class RBACService:
         """
         
         users = self.db.query(User).join(
-            UserRole, User.id == UserRole.user_id
+            UserRoleAssignment, User.id == UserRoleAssignment.user_id
         ).join(
-            Role, UserRole.role_id == Role.id
+            Role, UserRoleAssignment.role_id == Role.id
         ).filter(
             and_(  # type: ignore
-                UserRole.tenant_id == tenant_id,  # type: ignore
+                UserRoleAssignment.tenant_id == tenant_id,  # type: ignore
                 Role.name == role_name,  # type: ignore
-                UserRole.is_active == True,  # type: ignore
+                UserRoleAssignment.is_active == True,  # type: ignore
                 or_(  # type: ignore
-                    UserRole.expires_at == None,  # type: ignore
-                    UserRole.expires_at > datetime.now(timezone.utc)  # type: ignore
+                    UserRoleAssignment.expires_at == None,  # type: ignore
+                    UserRoleAssignment.expires_at > datetime.now(timezone.utc)  # type: ignore
                 )
             )
         ).distinct().all()
@@ -310,11 +310,11 @@ class RBACService:
             int: Number of role assignments deactivated
         """
         
-        expired_roles = self.db.query(UserRole).filter(
+        expired_roles = self.db.query(UserRoleAssignment).filter(
             and_(  # type: ignore
-                UserRole.is_active == True,  # type: ignore
-                UserRole.expires_at.isnot(None),  # type: ignore
-                UserRole.expires_at <= datetime.now(timezone.utc)  # type: ignore
+                UserRoleAssignment.is_active == True,  # type: ignore
+                UserRoleAssignment.expires_at.isnot(None),  # type: ignore
+                UserRoleAssignment.expires_at <= datetime.now(timezone.utc)  # type: ignore
             )
         ).all()
         

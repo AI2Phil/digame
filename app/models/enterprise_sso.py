@@ -11,6 +11,7 @@ from ..database import Base
 class SSOProvider(Base):
     """SSO Provider configuration for enterprise authentication"""
     __tablename__ = "sso_providers"
+    __table_args__ = {'extend_existing': True}
     
     id = Column(Integer, primary_key=True, index=True)
     tenant_id = Column(Integer, nullable=False, index=True)
@@ -46,6 +47,7 @@ class SSOProvider(Base):
 class SSOSession(Base):
     """Active SSO sessions for tracking and management"""
     __tablename__ = "sso_sessions"
+    __table_args__ = {'extend_existing': True}
     
     id = Column(Integer, primary_key=True, index=True)
     tenant_id = Column(Integer, nullable=False, index=True)
@@ -78,6 +80,7 @@ class SSOSession(Base):
 class SSOAuditLog(Base):
     """Audit logging for SSO activities"""
     __tablename__ = "sso_audit_logs"
+    __table_args__ = {'extend_existing': True}
     
     id = Column(Integer, primary_key=True, index=True)
     tenant_id = Column(Integer, nullable=False, index=True)
@@ -110,6 +113,7 @@ class SSOAuditLog(Base):
 class TenantSSOConfiguration(Base):
     """Tenant-level SSO configuration and policies"""
     __tablename__ = "tenant_sso_configurations"
+    __table_args__ = {'extend_existing': True}
     
     id = Column(Integer, primary_key=True, index=True)
     tenant_id = Column(Integer, unique=True, nullable=False, index=True)
@@ -179,6 +183,4 @@ class SSOUserMapping(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     # Unique constraint on provider + external user
-    __table_args__ = (
-        {"schema": None}
-    )
+    __table_args__ = {'extend_existing': True}

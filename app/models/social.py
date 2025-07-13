@@ -39,7 +39,8 @@ class UserConnection(Base):
 class PeerMatch(Base):
     """AI-powered peer matching for professional networking"""
     __tablename__ = "peer_matches"
-    
+    __table_args__ = {'extend_existing': True}
+
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     matched_user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
@@ -87,6 +88,7 @@ class SocialMetrics(Base):
 class UserSkill(Base):
     """User skills for peer matching and mentorship"""
     __tablename__ = "user_skills"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)

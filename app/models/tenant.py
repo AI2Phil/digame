@@ -14,6 +14,7 @@ class Tenant(Base):
     Tenant model for multi-tenant architecture
     """
     __tablename__ = "tenants"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True)
     tenant_uuid = Column(String(36), unique=True, nullable=True, index=True)
@@ -63,9 +64,9 @@ class Tenant(Base):
     
     # Relationships to User, Role, and UserRole models
     users = relationship("User", back_populates="tenant", foreign_keys="User.tenant_id")
-    roles = relationship("Role", back_populates="tenant")
-    user_roles = relationship("app.models.rbac.UserRole", back_populates="tenant")
-    creator = relationship("User", foreign_keys=[created_by])
+    roles = relationship("app.models.rbac.Role", back_populates="tenant")
+    user_roles = relationship("app.models.rbac.UserRoleAssignment", back_populates="tenant")
+    creator = relationship("app.models.user.User", foreign_keys=[created_by])
     manager = relationship("User", foreign_keys=[managed_by])
     
     # Other tenant-specific relationships
@@ -86,6 +87,7 @@ class TenantSettings(Base):
     Key-value store for tenant-specific configurations.
     """
     __tablename__ = "tenant_settings"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True)
     tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=False, index=True)
@@ -109,6 +111,7 @@ class TenantInvitation(Base):
     Model for tenant user invitations.
     """
     __tablename__ = "tenant_invitations"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True)
     tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=False, index=True)
@@ -133,6 +136,7 @@ class TenantAuditLog(Base):
     Model for tenant audit logs.
     """
     __tablename__ = "tenant_audit_logs"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True)
     tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=False, index=True)

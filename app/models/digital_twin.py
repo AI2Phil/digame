@@ -20,6 +20,7 @@ class TwinStatus(str, Enum):
 class DigitalTwin(Base):  # type: ignore
     """Core Digital Twin model representing a user's productivity twin"""
     __tablename__ = "digital_twins"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))  # type: ignore
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)  # type: ignore
@@ -65,6 +66,7 @@ class ActivityPattern(Base):  # type: ignore
     # Indexes
     __table_args__ = (
         Index('idx_twin_patterns', 'twin_id', 'pattern_type'),
+        {'extend_existing': True}
     )
 
     def __repr__(self):
@@ -88,6 +90,7 @@ class BehavioralLearning(Base):  # type: ignore
     # Indexes
     __table_args__ = (
         Index('idx_twin_behavior', 'twin_id', 'behavior_category'),
+        {'extend_existing': True}
     )
 
     def __repr__(self):
@@ -113,6 +116,7 @@ class PredictionModel(Base):  # type: ignore
     # Indexes
     __table_args__ = (
         Index('idx_twin_models', 'twin_id', 'model_type', 'is_active'),
+        {'extend_existing': True}
     )
 
     def __repr__(self):
@@ -137,6 +141,7 @@ class SimulationResult(Base):  # type: ignore
     # Indexes
     __table_args__ = (
         Index('idx_twin_simulations', 'twin_id', 'simulation_type'),
+        {'extend_existing': True}
     )
 
     def __repr__(self):
@@ -161,6 +166,7 @@ class TwinInteraction(Base):  # type: ignore
     # Indexes
     __table_args__ = (
         Index('idx_twin_interactions', 'twin_id', 'interaction_type', 'created_at'),
+        {'extend_existing': True}
     )
 
     def __repr__(self):
@@ -183,6 +189,7 @@ class ActivityStream(Base):  # type: ignore
     # Indexes
     __table_args__ = (
         Index('idx_twin_activity_stream', 'twin_id', 'timestamp', 'processed'),
+        {'extend_existing': True}
     )
 
     def __repr__(self):
@@ -207,6 +214,7 @@ class TwinKnowledge(Base):  # type: ignore
     # Indexes
     __table_args__ = (
         Index('idx_twin_knowledge', 'twin_id', 'knowledge_type'),
+        {'extend_existing': True}
     )
 
     def __repr__(self):

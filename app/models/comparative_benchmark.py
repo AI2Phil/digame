@@ -10,6 +10,7 @@ class ComparativeBenchmark(Base):
     Stores industry or peer benchmark data for comparative analytics.
     """
     __tablename__ = "comparative_benchmarks"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer(), primary_key=True, index=True)
     benchmark_uuid = Column(String(36), unique=True, index=True, default=lambda: str(uuid.uuid4()))

@@ -62,6 +62,7 @@ class KubernetesDeployment(Base):  # type: ignore
         Index('idx_k8s_deployment_namespace_name', 'namespace', 'deployment_name'),
         Index('idx_k8s_deployment_status', 'status'),
         Index('idx_k8s_deployment_type', 'deployment_type'),
+        {'extend_existing': True}
     )
 
 class KubernetesPod(Base):  # type: ignore
@@ -112,6 +113,7 @@ class KubernetesPod(Base):  # type: ignore
         Index('idx_k8s_pod_namespace_name', 'namespace', 'pod_name'),
         Index('idx_k8s_pod_status', 'status'),
         Index('idx_k8s_pod_node', 'node_name'),
+        {'extend_existing': True}
     )
 
 class KubernetesService(Base):  # type: ignore
@@ -154,6 +156,7 @@ class KubernetesService(Base):  # type: ignore
         Index('idx_k8s_service_namespace_name', 'namespace', 'service_name'),
         Index('idx_k8s_service_type', 'service_type'),
         Index('idx_k8s_service_health', 'health_status'),
+        {'extend_existing': True}
     )
 
 class KubernetesHPA(Base):  # type: ignore
@@ -197,6 +200,7 @@ class KubernetesHPA(Base):  # type: ignore
         Index('idx_k8s_hpa_namespace_name', 'namespace', 'hpa_name'),
         Index('idx_k8s_hpa_target', 'target_deployment'),
         Index('idx_k8s_hpa_status', 'status'),
+        {'extend_existing': True}
     )
 
 class KubernetesStorage(Base):  # type: ignore
@@ -241,6 +245,7 @@ class KubernetesStorage(Base):  # type: ignore
         Index('idx_k8s_storage_namespace_pvc', 'namespace', 'pvc_name'),
         Index('idx_k8s_storage_class', 'storage_class'),
         Index('idx_k8s_storage_status', 'status'),
+        {'extend_existing': True}
     )
 
 class KubernetesMonitoring(Base):  # type: ignore
@@ -296,6 +301,7 @@ class KubernetesMonitoring(Base):  # type: ignore
         Index('idx_k8s_monitoring_component', 'component_name'),
         Index('idx_k8s_monitoring_type', 'component_type'),
         Index('idx_k8s_monitoring_status', 'status'),
+        {'extend_existing': True}
     )
 
 class KubernetesSecurity(Base):  # type: ignore
@@ -345,6 +351,7 @@ class KubernetesSecurity(Base):  # type: ignore
         Index('idx_k8s_security_namespace', 'namespace'),
         Index('idx_k8s_security_status', 'status'),
         Index('idx_k8s_security_compliance', 'compliance_status'),
+        {'extend_existing': True}
     )
 
 class KubernetesIngress(Base):  # type: ignore
@@ -398,6 +405,7 @@ class KubernetesIngress(Base):  # type: ignore
         Index('idx_k8s_ingress_namespace_name', 'namespace', 'ingress_name'),
         Index('idx_k8s_ingress_status', 'status'),
         Index('idx_k8s_ingress_ssl_status', 'ssl_certificate_status'),
+        {'extend_existing': True}
     )
 
 class ProductionMetrics(Base):  # type: ignore
@@ -438,6 +446,7 @@ class ProductionMetrics(Base):  # type: ignore
         Index('idx_prod_metrics_component', 'component'),
         Index('idx_prod_metrics_status', 'status'),
         Index('idx_prod_metrics_timestamp', 'timestamp'),
+        {'extend_existing': True}
     )
 
 class DeploymentHistory(Base):  # type: ignore
@@ -484,4 +493,5 @@ class DeploymentHistory(Base):  # type: ignore
         Index('idx_deploy_history_name_revision', 'deployment_name', 'revision'),
         Index('idx_deploy_history_status', 'status'),
         Index('idx_deploy_history_started', 'started_at'),
+        {'extend_existing': True}
     )

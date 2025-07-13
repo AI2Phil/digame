@@ -6,7 +6,7 @@
 
 from .user import User
 from app.database import Base # Import Base from the centralized database module
-from .rbac import Role, Permission, UserRole, user_roles_table, role_permissions_table
+from .rbac import Role, Permission, UserRoleAssignment, role_permissions_table
 from .process_notes import ProcessNote
 from .activity import Activity
 from .activity_features import ActivityEnrichedFeature
@@ -76,8 +76,7 @@ __all__ = [
     "Base",
     "Role",
     "Permission",
-    "UserRole",
-    "user_roles_table",
+    "UserRoleAssignment",
     "role_permissions_table",
     "ProcessNote",
     "Activity",

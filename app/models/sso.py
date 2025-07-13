@@ -210,6 +210,7 @@ class SSOAuditLog(Base):
     Audit log for SSO activities
     """
     __tablename__ = "sso_audit_logs"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True)
     tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=False, index=True)
@@ -243,6 +244,7 @@ class SSOConfiguration(Base):
     Global SSO configuration settings
     """
     __tablename__ = "sso_configurations"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True)
     tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=False, index=True)

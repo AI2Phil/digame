@@ -14,10 +14,28 @@ async def train_behavior(
 ):
     """
     Start behavior training for the current user.
-    Requires appropriate permissions.
     """
-    # Implementation here - for now just return success
-    return {"message": "Training started", "user_id": current_user.id}
+    try:
+        # Ensure user is active
+        if not current_user.is_active:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="User account is not active"
+            )
+        
+        # Implementation here - for now just return success
+        return {
+            "message": "Training started",
+            "status": "training_started",
+            "user_id": current_user.id
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to start training"
+        )
 
 @router.get("/patterns")
 async def get_patterns(
@@ -26,7 +44,21 @@ async def get_patterns(
 ) -> Dict[str, List[Dict[str, Any]]]:
     """
     Get behavior patterns for the current user.
-    Requires appropriate permissions.
     """
-    # Implementation here - for now just return empty patterns
-    return {"patterns": []}
+    try:
+        # Ensure user is active
+        if not current_user.is_active:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="User account is not active"
+            )
+        
+        # Implementation here - for now just return empty patterns
+        return {"patterns": []}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to retrieve patterns"
+        )

@@ -75,11 +75,11 @@ export default function Document() {
         <Main id="main-content" />
         <NextScript />
         
-        {/* Service Worker Registration */}
+        {/* Service Worker Registration - Only in production */}
         <script
           dangerouslySetInnerHTML={{
             __html: `
-              if ('serviceWorker' in navigator) {
+              if ('serviceWorker' in navigator && '${process.env.NODE_ENV}' === 'production') {
                 window.addEventListener('load', function() {
                   navigator.serviceWorker.register('/sw.js').then(function(registration) {
                     console.log('SW registered: ', registration);

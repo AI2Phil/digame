@@ -48,6 +48,7 @@ class AuditEvent(Base):
         Index('idx_audit_events_type_category', 'event_type', 'event_category'),
         Index('idx_audit_events_severity_timestamp', 'event_severity', 'timestamp'),
         Index('idx_audit_events_resource', 'resource_type', 'resource_id'),
+        {'extend_existing': True}
     )
 
 class SecurityEvent(Base):
@@ -99,6 +100,7 @@ class SecurityEvent(Base):
         Index('idx_security_events_type_status', 'event_type', 'response_status'),
         Index('idx_security_events_source_ip', 'source_ip'),
         Index('idx_security_events_risk_score', 'risk_score'),
+        {'extend_existing': True}
     )
 
 class ComplianceCheck(Base):
@@ -150,6 +152,7 @@ class ComplianceCheck(Base):
         Index('idx_compliance_checks_type_score', 'check_type', 'score'),
         Index('idx_compliance_checks_checked_at', 'checked_at'),
         Index('idx_compliance_checks_next_due', 'next_check_due'),
+        {'extend_existing': True}
     )
 
 class Vulnerability(Base):
@@ -215,6 +218,7 @@ class Vulnerability(Base):
         Index('idx_vulnerabilities_cvss_score', 'cvss_score'),
         Index('idx_vulnerabilities_discovered_at', 'discovered_at'),
         Index('idx_vulnerabilities_assigned_to', 'assigned_to'),
+        {'extend_existing': True}
     )
 
 class RiskAssessment(Base):
@@ -279,6 +283,7 @@ class RiskAssessment(Base):
         Index('idx_risk_assessments_category', 'risk_category'),
         Index('idx_risk_assessments_assessed_at', 'assessed_at'),
         Index('idx_risk_assessments_review_due', 'review_due_date'),
+        {'extend_existing': True}
     )
 
 class SecurityIncident(Base):
@@ -358,6 +363,7 @@ class SecurityIncident(Base):
         Index('idx_security_incidents_status_priority', 'status', 'priority'),
         Index('idx_security_incidents_detected_at', 'detected_at'),
         Index('idx_security_incidents_assigned_to', 'assigned_to'),
+        {'extend_existing': True}
     )
 
 class SecurityMetric(Base):
@@ -399,4 +405,5 @@ class SecurityMetric(Base):
     __table_args__ = (
         Index('idx_security_metrics_name_date', 'metric_name', 'measurement_date'),
         Index('idx_security_metrics_category_date', 'metric_category', 'measurement_date'),
+        {'extend_existing': True}
     )

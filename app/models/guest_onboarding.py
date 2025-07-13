@@ -11,6 +11,7 @@ from app.database import Base
 class GuestOnboardingProgress(Base):
     """Track guest user onboarding progress through digital twin setup"""
     __tablename__ = "guest_onboarding_progress"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer(), primary_key=True, index=True)
     user_id = Column(Integer(), ForeignKey("users.id"), unique=True, nullable=False)
@@ -52,6 +53,7 @@ class GuestOnboardingProgress(Base):
 class DigitalTwinProfile(Base):
     """Store digital twin profile data built during onboarding"""
     __tablename__ = "digital_twin_profiles"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer(), primary_key=True, index=True)
     user_id = Column(Integer(), ForeignKey("users.id"), unique=True, nullable=False)
@@ -98,6 +100,7 @@ class DigitalTwinProfile(Base):
 class EmailVerification(Base):
     """Track email verification for guest users"""
     __tablename__ = "email_verifications"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer(), primary_key=True, index=True)
     user_id = Column(Integer(), ForeignKey("users.id"), nullable=False)

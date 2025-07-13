@@ -248,6 +248,7 @@ class EnterpriseFeatureUsage(Base):  # type: ignore
     Track usage of enterprise features for analytics and billing
     """
     __tablename__ = "enterprise_feature_usage"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True)  # type: ignore
     tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=False, index=True)  # type: ignore
@@ -294,6 +295,7 @@ class DashboardExport(Base):  # type: ignore
     Dashboard export configurations and history
     """
     __tablename__ = "dashboard_exports"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True)  # type: ignore
     tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=False, index=True)  # type: ignore

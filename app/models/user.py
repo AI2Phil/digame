@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, ForeignKey, JSON, Float # Added ForeignKey, JSON, Float
+from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, ForeignKey, JSON, Float, Index # Added ForeignKey, JSON, Float, Index
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.associationproxy import association_proxy
 from datetime import datetime # Changed to just datetime for consistency, as utcnow is method of datetime
@@ -6,18 +6,23 @@ from app.database import Base
 
 class User(Base):
     __tablename__ = "users"
-    __table_args__ = {'extend_existing': True}
+    __table_args__ = (
+        Index('ix_users_username', 'username', unique=True),
+        Index('ix_users_email', 'email', unique=True),
+        Index('ix_users_tenant_id', 'tenant_id'),
+        {'extend_existing': True}
+    )
 
     id = Column(Integer(), primary_key=True, index=True)
-    username = Column(String(), unique=True, index=True, nullable=False)
-    email = Column(String(), unique=True, index=True, nullable=False)
+    username = Column(String(), unique=True, nullable=False)  # Removed index=True
+    email = Column(String(), unique=True, nullable=False)  # Removed index=True
     hashed_password = Column(String(), nullable=False)
     
     first_name = Column(String(), nullable=True)
     last_name = Column(String(), nullable=True)
     
     # Tenant support
-    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=True, index=True)
+    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=True)
     
     created_at = Column(DateTime(), default=datetime.utcnow)
     updated_at = Column(DateTime(), default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -71,7 +76,7 @@ class User(Base):
     kudos_count = Column(Integer(), default=0)
 
     # Enhanced relationships for tenant-aware RBAC
-    user_roles = relationship("app.models.rbac.UserRole", foreign_keys="app.models.rbac.UserRole.user_id", back_populates="user")
+    user_roles = relationship("app.models.rbac.UserRoleAssignment", foreign_keys="[app.models.rbac.UserRoleAssignment.user_id]", back_populates="user")
     
     def get_roles(self):
         """Get roles through user_roles relationship - safer for serialization"""

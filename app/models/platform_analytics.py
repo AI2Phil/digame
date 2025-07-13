@@ -77,6 +77,7 @@ class TenantAnalyticsSummary(Base):  # type: ignore
     Daily analytics summary for each tenant
     """
     __tablename__ = "tenant_analytics_summary"
+    __table_args__ = {'extend_existing': True}
     
     id = Column(Integer, primary_key=True, index=True)  # type: ignore
     tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=False)  # type: ignore
@@ -117,6 +118,7 @@ class PlatformUsageMetrics(Base):  # type: ignore
     Platform usage metrics for tracking user activity and API usage
     """
     __tablename__ = "platform_usage_tracking"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True)  # type: ignore
     user_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)  # type: ignore

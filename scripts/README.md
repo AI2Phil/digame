@@ -69,6 +69,10 @@ This directory contains utility scripts for the Digame platform, including devel
 | [`simple_seed.py`](#simple_seedpy) | Simple data seeding utility | `python simple_seed.py` | ✅ Active |
 | [`data-migration/migrate_mock_to_production.py`](#data-migrationmigrate_mock_to_productionpy) | Production migration tool | `python data-migration/migrate_mock_to_production.py` | ✅ Active |
 | [`data-migration/validate_data_integrity.py`](#data-migrationvalidate_data_integritypy) | Data integrity validation | `python data-migration/validate_data_integrity.py` | ✅ Active |
+| [`start-dev.sh`](#start-devsh-integration) | Frontend-backend development environment startup | `./start-dev.sh` | ✅ Active |
+| [`stop-dev.sh`](#stop-devsh) | Frontend-backend development environment shutdown | `./stop-dev.sh` | ✅ Active |
+| [`setup-test-env.sh`](#setup-test-envsh) | Test environment setup with backend services | `./setup-test-env.sh` | ✅ Active |
+| [`cleanup-test-env.sh`](#cleanup-test-envsh) | Test environment cleanup and teardown | `./cleanup-test-env.sh` | ✅ Active |
 
 ---
 
@@ -210,6 +214,152 @@ This directory contains utility scripts for the Digame platform, including devel
 - Temporary file processing for safety
 - Detailed remaining issue reporting with line numbers
 - Support for both single and double quote imports
+
+---
+
+## 🔗 Frontend-Backend Integration Scripts
+
+### `start-dev.sh` (Integration)
+**Purpose**: Enhanced development environment startup with frontend-backend integration support
+
+**Description**:
+- Comprehensive development environment orchestration for integrated frontend-backend development
+- Manages both FastAPI backend and Next.js frontend services with proper coordination
+- Includes health checks, dependency validation, and graceful service management
+- Provides enhanced error handling and troubleshooting for integration issues
+
+**Usage**:
+```bash
+# Start integrated development environment
+./scripts/start-dev.sh
+
+# Run from project root
+./start-dev.sh
+```
+
+**Features**:
+- ✅ **Service Orchestration**: Coordinates FastAPI backend and Next.js frontend startup
+- ✅ **Health Monitoring**: Monitors service health and provides status updates
+- ✅ **Dependency Validation**: Ensures all required dependencies are installed
+- ✅ **Port Management**: Manages port allocation (backend: 8000, frontend: 3000)
+- ✅ **Error Recovery**: Provides troubleshooting guidance for common integration issues
+- ✅ **Graceful Shutdown**: Handles SIGINT/SIGTERM for clean service termination
+
+**Integration Features**:
+- Backend health endpoint monitoring at `/health`
+- Frontend-backend API connectivity validation
+- CORS configuration verification
+- Service worker registration handling
+- Environment variable validation
+
+---
+
+### `stop-dev.sh`
+**Purpose**: Clean shutdown of integrated development environment
+
+**Description**:
+- Gracefully stops all development services including backend and frontend
+- Cleans up background processes and temporary files
+- Provides comprehensive service termination with status reporting
+- Ensures clean environment state for next startup
+
+**Usage**:
+```bash
+# Stop all development services
+./scripts/stop-dev.sh
+
+# Run from project root
+./stop-dev.sh
+```
+
+**Features**:
+- ✅ **Process Management**: Identifies and terminates all related processes
+- ✅ **Port Cleanup**: Frees up development ports (3000, 8000)
+- ✅ **Status Reporting**: Reports termination status for each service
+- ✅ **Cleanup Operations**: Removes temporary files and cleanup artifacts
+- ✅ **Error Handling**: Handles stuck processes and provides manual cleanup guidance
+
+**Cleanup Operations**:
+- Terminates FastAPI backend processes
+- Stops Next.js development server
+- Cleans up Node.js and Python background processes
+- Removes temporary log files and artifacts
+
+---
+
+### `setup-test-env.sh`
+**Purpose**: Comprehensive test environment setup with backend service management
+
+**Description**:
+- Sets up isolated test environment with backend services for E2E testing
+- Manages test database creation and seeding
+- Configures environment variables for testing
+- Provides service health validation before test execution
+
+**Usage**:
+```bash
+# Setup test environment
+./scripts/setup-test-env.sh
+
+# Setup with custom configuration
+./scripts/setup-test-env.sh --config test
+
+# Validate test environment
+./scripts/setup-test-env.sh --validate
+```
+
+**Features**:
+- ✅ **Test Database Setup**: Creates isolated SQLite test database
+- ✅ **Service Management**: Starts backend services for testing
+- ✅ **Environment Isolation**: Configures test-specific environment variables
+- ✅ **Health Validation**: Validates all services are ready for testing
+- ✅ **Data Seeding**: Seeds test data for comprehensive E2E testing
+- ✅ **Port Management**: Uses test-specific ports to avoid conflicts
+
+**Test Environment Configuration**:
+- Test database: `test_digame.db`
+- Backend test port: 8001
+- Frontend test port: 3001
+- Test-specific environment variables
+- Isolated test data and configurations
+
+---
+
+### `cleanup-test-env.sh`
+**Purpose**: Test environment cleanup and resource management
+
+**Description**:
+- Comprehensive cleanup of test environment resources
+- Terminates test services and processes
+- Removes test databases and temporary files
+- Ensures clean state for subsequent test runs
+
+**Usage**:
+```bash
+# Cleanup test environment
+./scripts/cleanup-test-env.sh
+
+# Force cleanup (removes all test artifacts)
+./scripts/cleanup-test-env.sh --force
+
+# Cleanup with verification
+./scripts/cleanup-test-env.sh --verify
+```
+
+**Features**:
+- ✅ **Service Termination**: Stops all test-related services and processes
+- ✅ **Database Cleanup**: Removes test databases and data files
+- ✅ **File Management**: Cleans up temporary files and test artifacts
+- ✅ **Port Liberation**: Frees up test ports for reuse
+- ✅ **Verification**: Confirms complete cleanup and resource liberation
+- ✅ **Error Recovery**: Handles stuck processes and resource conflicts
+
+**Cleanup Operations**:
+- Terminates backend test services
+- Removes test database files
+- Cleans up test logs and temporary files
+- Frees test ports (8001, 3001)
+- Removes test environment variables
 
 ---
 
@@ -2332,6 +2482,33 @@ python scripts/data-migration/validate_data_integrity.py --output-file custom_re
 
 ## 🚀 Common Use Cases
 
+### **Frontend-Backend Integration Development Workflow**
+```bash
+# 1. Start integrated development environment
+./scripts/start-dev.sh
+
+# 2. Verify backend health and API connectivity
+curl http://localhost:8000/health
+
+# 3. Test frontend-backend integration
+curl http://localhost:3000/api/health
+
+# 4. Stop development environment cleanly
+./scripts/stop-dev.sh
+```
+
+### **E2E Testing with Backend Services Workflow**
+```bash
+# 1. Setup test environment with backend services
+./scripts/setup-test-env.sh
+
+# 2. Run E2E tests with Playwright
+cd frontend && npm run test:e2e
+
+# 3. Cleanup test environment
+./scripts/cleanup-test-env.sh
+```
+
 ### **Development Environment Setup**
 ```bash
 # 1. Start interactive development environment
@@ -2800,7 +2977,33 @@ python digame/scripts/git-setup.py config 'Your Name' 'your.email@example.com'
 
 ---
 
+## 🔗 Related Documentation
+
+- **CLI Workflow Integration**: `/CLI_WORKFLOW_INTEGRATION.md` - Updated CLI commands and workflow integration
+- **Main Scripts**: `/scripts/README.md` - Root-level utility scripts
+- **Database Migrations**: `/migrations/README.md` - Migration files and history
+- **Deployment Guide**: `/docs/DEPLOYMENT.md` - Production deployment procedures
+- **Development Setup**: `/docs/DEVELOPMENT.md` - Local development environment
+
+---
+
 ## 📝 Recent Updates
+
+**January 13, 2025**: Added Frontend-Backend Integration Scripts and CLI Workflow Updates:
+- Added `start-dev.sh` - Enhanced development environment startup with frontend-backend integration support
+- Added `stop-dev.sh` - Clean shutdown of integrated development environment
+- Added `setup-test-env.sh` - Comprehensive test environment setup with backend service management
+- Added `cleanup-test-env.sh` - Test environment cleanup and resource management
+- **Updated CLI Workflow**: Modified `package.json` scripts to integrate with new scripts
+  - `npm run dev` now uses enhanced `start-dev.sh` with health checks
+  - `npm run dev:stop` for clean environment shutdown
+  - `npm run test:e2e` includes automatic backend service management
+  - Added fallback `npm run dev:legacy` for original workflow
+- Created comprehensive documentation for all integration scripts with usage examples and features
+- Added new workflow sections for Frontend-Backend Integration Development and E2E Testing with Backend Services
+- Enhanced script organization table with integration scripts for better project maintenance
+- Provided complete integration testing capabilities with service orchestration and health monitoring
+- Created `CLI_WORKFLOW_INTEGRATION.md` guide for migration and troubleshooting
 
 **January 6, 2025**: Completed comprehensive script documentation and organization:
 - Added detailed documentation for 34 additional scripts including environment, deployment, setup, code quality, and data seeding scripts
