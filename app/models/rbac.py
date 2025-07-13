@@ -101,10 +101,10 @@ class UserRole(Base):
     is_active = Column(Boolean, default=True)
     
     # Relationships
-    user = relationship("User", foreign_keys=[user_id], back_populates="user_roles")
-    role = relationship("Role", back_populates="user_roles")
-    tenant = relationship("Tenant", back_populates="user_roles")
-    assigner = relationship("User", foreign_keys=[assigned_by])
+    user = relationship("app.models.user.User", foreign_keys=[user_id], back_populates="user_roles")
+    role = relationship("app.models.rbac.Role", back_populates="user_roles")
+    tenant = relationship("app.models.tenant.Tenant", back_populates="user_roles")
+    assigner = relationship("app.models.user.User", foreign_keys=[assigned_by])
     
 
     def __repr__(self):
