@@ -113,11 +113,16 @@ def upgrade() -> None:
                 if dialect_name == 'postgresql':
                     # PostgreSQL requires USING clause for type conversion
                     print("Using PostgreSQL-specific conversion")
-                    op.execute("UPDATE users SET is_active = CASE WHEN is_active = 1 THEN true ELSE false END WHERE is_active IS NOT NULL")
-                    op.alter_column('users', 'is_active',
-                                  type_=sa.Boolean(),
-                                  nullable=True,
-                                  postgresql_using='is_active::boolean')
+                    # Use direct ALTER COLUMN with USING clause to avoid transaction issues
+                    op.execute("""
+                        ALTER TABLE users
+                        ALTER COLUMN is_active TYPE boolean
+                        USING CASE
+                            WHEN is_active = 1 THEN true
+                            WHEN is_active = 0 THEN false
+                            ELSE false
+                        END
+                    """)
                 elif dialect_name == 'sqlite':
                     # For SQLite, we need to use batch operations to change column types
                     print("Using SQLite-specific conversion")
@@ -134,12 +139,8 @@ def upgrade() -> None:
                     
             except Exception as e:
                 print(f"Warning: Could not convert is_active column type: {e}")
-                # Try fallback approach without type conversion
-                try:
-                    op.execute("UPDATE users SET is_active = CASE WHEN is_active = 1 THEN 1 ELSE 0 END WHERE is_active IS NOT NULL")
-                    print("Data normalization completed, but type conversion failed")
-                except Exception as e2:
-                    print(f"Warning: Could not update is_active data: {e2}")
+                # Skip the conversion if it fails - the column will remain as integer
+                print("Skipping is_active column type conversion to avoid transaction errors")
 
 
 def downgrade() -> None:
