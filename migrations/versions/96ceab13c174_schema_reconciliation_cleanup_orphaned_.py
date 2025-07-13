@@ -84,12 +84,24 @@ def index_exists(index_name: str, table_name: str) -> bool:
         return False
 
 
-def drop_table_safe(table_name: str) -> None:
+def drop_table_safe(table_name: str, cascade: bool = False) -> None:
     """Safely drop a table if it exists."""
     if table_exists(table_name):
         try:
-            op.drop_table(table_name)
-            print(f"✅ Dropped orphaned table: {table_name}")
+            if cascade:
+                # Use raw SQL for CASCADE operations
+                connection = op.get_bind()
+                dialect_name = connection.dialect.name
+                if dialect_name == 'postgresql':
+                    connection.execute(text(f"DROP TABLE IF EXISTS {table_name} CASCADE"))
+                    print(f"✅ Dropped orphaned table with CASCADE: {table_name}")
+                else:
+                    # For SQLite and others, just try normal drop
+                    op.drop_table(table_name)
+                    print(f"✅ Dropped orphaned table: {table_name}")
+            else:
+                op.drop_table(table_name)
+                print(f"✅ Dropped orphaned table: {table_name}")
         except Exception as e:
             print(f"⚠️ Failed to drop table {table_name}: {e}")
     else:
@@ -112,23 +124,21 @@ def upgrade() -> None:
     """Clean up orphaned tables and indexes that are no longer defined in current models."""
     print("🧹 Starting schema reconciliation - cleaning up orphaned tables...")
     
-    # Define all orphaned tables that need to be removed
-    orphaned_tables = [
-        # Performance and Analytics Tables
-        'performance_optimizations',
-        'predictive_models', 
-        'user_roles_enhanced',
-        'user_experience_metrics',
-        'mfa_devices',
-        'productivity_metrics',
-        'performance_alerts',
+    # Define orphaned tables in dependency order (dependent tables first)
+    # Tables with foreign key dependencies must be dropped before their referenced tables
+    orphaned_tables_ordered = [
+        # First: Drop dependent tables (those with foreign keys)
+        'user_platform_roles',  # depends on platform_roles
         
-        # Intelligence and Reporting Tables
-        'intelligence_reports',
-        'report_insights', 
-        'competitive_analyses',
+        # Then: Drop tables without dependencies or after their dependents are removed
+        'platform_roles',
+        'platform_usage_metrics',
+        'platform_health_metrics',
+        'platform_usage_tracking',
         
         # Security and Access Tables
+        'user_roles_enhanced',
+        'mfa_devices',
         'security_policies',
         'session_tokens',
         'ip_restrictions',
@@ -141,22 +151,29 @@ def upgrade() -> None:
         'notification_logs',
         'notifications',
         
+        # Performance and Analytics Tables
+        'performance_optimizations',
+        'predictive_models',
+        'user_experience_metrics',
+        'productivity_metrics',
+        'performance_alerts',
+        
+        # Intelligence and Reporting Tables
+        'intelligence_reports',
+        'report_insights',
+        'competitive_analyses',
+        
         # Integration and Data Tables
         'market_data_sources',
         'integration_sync_logs',
-        'integration_analytics', 
+        'integration_analytics',
         'integration_connections',
         'integration_data_mappings',
         'integration_providers',
         'integration_webhooks',
         'data_sources',
         
-        # Platform and System Tables
-        'platform_usage_tracking',
-        'platform_usage_metrics',
-        'platform_health_metrics',
-        'platform_roles',
-        'user_platform_roles',
+        # System and Metrics Tables
         'core_performance_metrics',
         'system_health_checks',
         'performance_incidents',
@@ -165,7 +182,7 @@ def upgrade() -> None:
         # Analytics and Metrics Tables
         'tenant_analytics_summary',
         'activity_categories',
-        'user_activities', 
+        'user_activities',
         'activity_goals',
         'visualization_metrics',
         'query_performance',
@@ -179,13 +196,15 @@ def upgrade() -> None:
         'audit_logs'
     ]
     
-    print(f"🗑️ Found {len(orphaned_tables)} orphaned tables to clean up")
+    print(f"🗑️ Found {len(orphaned_tables_ordered)} orphaned tables to clean up")
     
-    # Clean up tables systematically
+    # Clean up tables systematically in dependency order
     cleaned_count = 0
-    for table_name in orphaned_tables:
+    for table_name in orphaned_tables_ordered:
         if table_exists(table_name):
-            drop_table_safe(table_name)
+            # Use CASCADE for platform_roles in case there are still dependencies
+            use_cascade = table_name == 'platform_roles'
+            drop_table_safe(table_name, cascade=use_cascade)
             cleaned_count += 1
         else:
             print(f"ℹ️ Table {table_name} already removed")
