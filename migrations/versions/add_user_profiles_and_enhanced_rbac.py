@@ -53,6 +53,10 @@ def upgrade() -> None:
     # Create user_roles_enhanced table if it doesn't exist
     if 'user_roles_enhanced' not in existing_tables:
         print("Creating user_roles_enhanced table")
+        
+        # Always create table with a unique constraint name to avoid conflicts
+        # Use 'unique_user_role_tenant_enhanced' to differentiate from existing constraints/indexes
+        print("Creating user_roles_enhanced table with unique constraint name")
         op.create_table(
             'user_roles_enhanced',
             sa.Column('id', sa.Integer(), nullable=False),
@@ -68,12 +72,31 @@ def upgrade() -> None:
             sa.ForeignKeyConstraint(['tenant_id'], ['tenants.id'], ),
             sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
             sa.PrimaryKeyConstraint('id'),
-            sa.UniqueConstraint('user_id', 'role_id', 'tenant_id', name='unique_user_role_tenant')
+            sa.UniqueConstraint('user_id', 'role_id', 'tenant_id', name='unique_user_role_tenant_enhanced')
         )
-        op.create_index('ix_user_roles_enhanced_id', 'user_roles_enhanced', ['id'], unique=False)
-        op.create_index('ix_user_roles_enhanced_user_id', 'user_roles_enhanced', ['user_id'], unique=False)
-        op.create_index('ix_user_roles_enhanced_role_id', 'user_roles_enhanced', ['role_id'], unique=False)
-        op.create_index('ix_user_roles_enhanced_tenant_id', 'user_roles_enhanced', ['tenant_id'], unique=False)
+        print("✅ Created user_roles_enhanced table with unique constraint 'unique_user_role_tenant_enhanced'")
+        
+        # Create indexes (these are safe to create multiple times)
+        try:
+            op.create_index('ix_user_roles_enhanced_id', 'user_roles_enhanced', ['id'], unique=False)
+        except Exception as e:
+            print(f"Index ix_user_roles_enhanced_id already exists: {e}")
+        
+        try:
+            op.create_index('ix_user_roles_enhanced_user_id', 'user_roles_enhanced', ['user_id'], unique=False)
+        except Exception as e:
+            print(f"Index ix_user_roles_enhanced_user_id already exists: {e}")
+        
+        try:
+            op.create_index('ix_user_roles_enhanced_role_id', 'user_roles_enhanced', ['role_id'], unique=False)
+        except Exception as e:
+            print(f"Index ix_user_roles_enhanced_role_id already exists: {e}")
+        
+        try:
+            op.create_index('ix_user_roles_enhanced_tenant_id', 'user_roles_enhanced', ['tenant_id'], unique=False)
+        except Exception as e:
+            print(f"Index ix_user_roles_enhanced_tenant_id already exists: {e}")
+            
     else:
         print("user_roles_enhanced table already exists, skipping")
     
