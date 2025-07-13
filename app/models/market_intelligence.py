@@ -15,6 +15,7 @@ class MarketTrend(Base):
     """
     Market trends and industry analysis data
     """
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "market_trends"
     __table_args__ = {'extend_existing': True}
 
@@ -99,6 +100,7 @@ class CompetitiveAnalysis(Base):
     """
     Competitive intelligence and analysis data
     """
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "competitive_analyses"
     __table_args__ = {'extend_existing': True}
 
@@ -225,6 +227,7 @@ class IntelligenceReport(Base):
     """
     Intelligence reports combining market trends and competitive analysis
     """
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "intelligence_reports"
     __table_args__ = {'extend_existing': True}
 
@@ -341,6 +344,7 @@ class MarketDataSource(Base):
     """
     External data sources for market intelligence
     """
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "market_data_sources"
     __table_args__ = {'extend_existing': True}
 

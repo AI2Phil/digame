@@ -94,6 +94,9 @@ npm run test:e2e
 | `npm run test:e2e` | **Full E2E testing with backend** | Integrated workflow |
 | `npm run test:e2e:setup` | Setup test environment only | `./scripts/setup-test-env.sh` |
 | `npm run test:e2e:cleanup` | Cleanup test environment only | `./scripts/cleanup-test-env.sh` |
+| `npm run type-check` | **TypeScript type checking** | `cd frontend && npm run type-check` |
+| `npm run lint` | **ESLint code linting** | `cd frontend && npm run lint` |
+| `npm run lint:fix` | **ESLint auto-fix** | `cd frontend && npm run lint:fix` |
 
 ### Frontend Package.json Commands
 

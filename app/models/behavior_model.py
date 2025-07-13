@@ -11,6 +11,7 @@ class BehavioralModel(Base):
     Stores trained behavioral models for users.
     This includes clustering models and their parameters.
     """
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "behavioral_models"
     __table_args__ = {'extend_existing': True}
 
@@ -50,6 +51,7 @@ class BehavioralPattern(Base):
     Stores identified behavioral patterns from clustering models.
     Each pattern represents a cluster or a significant grouping of activities.
     """
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "behavioral_patterns"
     __table_args__ = {'extend_existing': True}
 

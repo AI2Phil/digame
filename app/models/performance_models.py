@@ -12,6 +12,7 @@ from ..database import Base
 
 class UserSession(Base):
     """User session tracking for UX analytics"""
+    __table_args__ = {'extend_existing': True}
     __tablename__ = 'user_sessions'
     
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
@@ -46,6 +47,7 @@ class UserSession(Base):
 
 class PageView(Base):
     """Individual page view tracking"""
+    __table_args__ = {'extend_existing': True}
     __tablename__ = 'page_views'
     
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
@@ -71,6 +73,7 @@ class PageView(Base):
 
 class WebVital(Base):
     """Core Web Vitals tracking"""
+    __table_args__ = {'extend_existing': True}
     __tablename__ = 'web_vitals'
     
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
@@ -95,6 +98,7 @@ class WebVital(Base):
 
 class DatabaseQuery(Base):
     """Database query performance tracking"""
+    __table_args__ = {'extend_existing': True}
     __tablename__ = 'database_queries'
     
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
@@ -121,6 +125,7 @@ class DatabaseQuery(Base):
 
 class QueryOptimization(Base):
     """Query optimization recommendations"""
+    __table_args__ = {'extend_existing': True}
     __tablename__ = 'query_optimizations'
     
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
@@ -144,6 +149,7 @@ class QueryOptimization(Base):
 
 class BundleAsset(Base):
     """Bundle asset tracking"""
+    __table_args__ = {'extend_existing': True}
     __tablename__ = 'bundle_assets'
     
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
@@ -172,6 +178,7 @@ class BundleAsset(Base):
 
 class AssetOptimization(Base):
     """Asset optimization recommendations"""
+    __table_args__ = {'extend_existing': True}
     __tablename__ = 'asset_optimizations'
     
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
@@ -200,6 +207,7 @@ class AssetOptimization(Base):
 
 class GeneralPerformanceMetric(Base):
     """General performance metrics tracking"""
+    __table_args__ = {'extend_existing': True}
     __tablename__ = 'general_performance_metrics'
     
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
@@ -223,6 +231,7 @@ class GeneralPerformanceMetric(Base):
 
 class PerformanceAlert(Base):
     """Performance alerts and notifications"""
+    __table_args__ = {'extend_existing': True}
     __tablename__ = 'performance_alerts'
     
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
@@ -251,6 +260,7 @@ class PerformanceAlert(Base):
 
 class SystemHealth(Base):
     """System health metrics"""
+    __table_args__ = {'extend_existing': True}
     __tablename__ = 'system_health'
     
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))

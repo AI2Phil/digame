@@ -41,6 +41,7 @@ class Notification(Base):
     """
     Platform Owner notification model
     """
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "notifications"
     __table_args__ = {'extend_existing': True}
     
@@ -91,6 +92,7 @@ class NotificationTemplate(Base):
     """
     Notification templates for consistent messaging
     """
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "notification_templates"
     __table_args__ = {'extend_existing': True}
     
@@ -125,6 +127,7 @@ class NotificationPreference(Base):
     """
     User notification preferences
     """
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "notification_preferences"
     __table_args__ = {'extend_existing': True}
 
@@ -171,6 +174,7 @@ class NotificationLog(Base):
     """
     Log of notification delivery attempts
     """
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "notification_logs"
     __table_args__ = {'extend_existing': True}
     

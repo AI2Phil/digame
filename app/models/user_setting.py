@@ -5,6 +5,7 @@ from datetime import datetime
 from app.database import Base  # Import Base from user.py
 
 class UserSetting(Base):
+    __table_args__ = {'extend_existing': True}
     __tablename__ = 'user_settings'
     __table_args__ = {'extend_existing': True}
 

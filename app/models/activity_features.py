@@ -7,6 +7,7 @@ from app.database import Base
 # from .activity import Activity # This will be used as a string reference to avoid circular imports if needed
 
 class ActivityEnrichedFeature(Base):
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "activity_enriched_features"
     __table_args__ = {'extend_existing': True}
 

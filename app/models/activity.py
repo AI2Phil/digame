@@ -7,6 +7,7 @@ from app.database import Base
 from .user import User # For establishing relationship
 
 class Activity(Base):
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "digital_activities" # As per problem description context
     __table_args__ = (
         Index('ix_digital_activities_user_id_timestamp', 'user_id', 'timestamp'),

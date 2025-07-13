@@ -11,6 +11,7 @@ from app.models.user import Base
 
 class CourseCategory(Base):
     """Course categories for organizing learning content"""
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "course_categories"
     __table_args__ = {'extend_existing': True}
 
@@ -33,6 +34,7 @@ class CourseCategory(Base):
 
 class Course(Base):
     """Courses for learning and development"""
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "courses"
     __table_args__ = {'extend_existing': True}
 
@@ -66,6 +68,7 @@ class Course(Base):
 
 class CourseEnrollment(Base):
     """User enrollments in courses"""
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "course_enrollments"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -93,6 +96,7 @@ class CourseEnrollment(Base):
 
 class LearningProgress(Base):
     """User progress tracking for skills and competencies"""
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "learning_progress"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -120,6 +124,7 @@ class LearningProgress(Base):
 
 class LearningRecommendation(Base):
     """AI-powered learning recommendations for users"""
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "learning_recommendations"
     __table_args__ = {'extend_existing': True}
 

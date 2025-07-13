@@ -8,6 +8,7 @@ from app.database import Base
 from .user import User # For establishing relationship
 
 class ProcessNote(Base):
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "process_notes"
     __table_args__ = {'extend_existing': True}
 

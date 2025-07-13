@@ -12,6 +12,7 @@ from app.database import Base
 
 class ActivityCategory(Base):
     """Activity categories for organizing user activities"""
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "activity_categories"
     __table_args__ = {'extend_existing': True}
 
@@ -34,6 +35,7 @@ class ActivityCategory(Base):
 
 class UserActivity(Base):
     """Individual user activity records"""
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "user_activities"
     __table_args__ = {'extend_existing': True}
 
@@ -70,6 +72,7 @@ class UserActivity(Base):
 
 class ProductivityMetric(Base):
     """Daily productivity metrics and summaries"""
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "productivity_metrics"
     __table_args__ = {'extend_existing': True}
 
@@ -109,6 +112,7 @@ from .digital_twin import ActivityPattern
 
 class ActivityGoal(Base):
     """User-defined activity and productivity goals"""
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "activity_goals"
     __table_args__ = {'extend_existing': True}
 

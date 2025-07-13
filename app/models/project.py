@@ -5,6 +5,7 @@ from sqlalchemy.types import JSON # Using JSON type for technologiesUsed
 from app.database import Base # Importing Base from user.py
 
 class Project(Base):
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "projects"
     __table_args__ = {'extend_existing': True}
 

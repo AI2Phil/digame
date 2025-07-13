@@ -7,6 +7,7 @@ class AdminAPIKeyConfig(Base):
     Admin configuration for default/fallback API keys for AI services.
     These keys are used when users haven't configured their own API keys.
     """
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "admin_api_key_configs"
     __table_args__ = {'extend_existing': True}
 
@@ -28,6 +29,7 @@ class APIKeyUsageLog(Base):
     """
     Log of API key usage for monitoring and billing purposes.
     """
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "api_key_usage_logs"
     __table_args__ = {'extend_existing': True}
 
@@ -49,6 +51,7 @@ class AdminSystemConfig(Base):
     """
     General admin system configuration settings.
     """
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "admin_system_configs"
     __table_args__ = {'extend_existing': True}
 

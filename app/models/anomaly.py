@@ -8,6 +8,7 @@ from app.database import Base
 from .user import User # Renamed to avoid potential confusion if UserModel was also a Pydantic model
 
 class DetectedAnomaly(Base):
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "detected_anomalies"
     __table_args__ = {'extend_existing': True}
 

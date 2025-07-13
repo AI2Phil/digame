@@ -14,6 +14,7 @@ from ..database import Base
 
 class WebSocketConnection(Base):
     """Track active WebSocket connections"""
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "websocket_connections"
     __table_args__ = {'extend_existing': True}
     
@@ -41,6 +42,7 @@ class WebSocketConnection(Base):
 
 class WebSocketMessage(Base):
     """Store WebSocket messages for debugging and analytics"""
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "websocket_messages"
     __table_args__ = {'extend_existing': True}
     
@@ -67,6 +69,7 @@ class WebSocketMessage(Base):
 
 class WebSocketChannel(Base):
     """Track WebSocket channels and subscriptions"""
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "websocket_channels"
     __table_args__ = {'extend_existing': True}
     
@@ -91,6 +94,7 @@ class WebSocketChannel(Base):
 
 class WebSocketSubscription(Base):
     """Track user subscriptions to WebSocket channels"""
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "websocket_subscriptions"
     __table_args__ = {'extend_existing': True}
     
@@ -112,6 +116,7 @@ class WebSocketSubscription(Base):
 
 class PWAInstallation(Base):
     """Track PWA installations and usage"""
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "pwa_installations"
     __table_args__ = {'extend_existing': True}
     
@@ -145,6 +150,7 @@ class PWAInstallation(Base):
 
 class PWANotification(Base):
     """Track PWA push notifications"""
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "pwa_notifications"
     __table_args__ = {'extend_existing': True}
     
@@ -178,6 +184,7 @@ class PWANotification(Base):
 
 class OfflineAction(Base):
     """Store actions performed while offline for background sync"""
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "offline_actions"
     __table_args__ = {'extend_existing': True}
     
@@ -207,6 +214,7 @@ class OfflineAction(Base):
 
 class RealTimeEvent(Base):
     """Store real-time events for analytics and debugging"""
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "realtime_events"
     __table_args__ = {'extend_existing': True}
     
@@ -234,6 +242,7 @@ class RealTimeEvent(Base):
 
 class ConnectionStatistics(Base):
     """Aggregate WebSocket connection statistics"""
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "connection_statistics"
     __table_args__ = {'extend_existing': True}
     

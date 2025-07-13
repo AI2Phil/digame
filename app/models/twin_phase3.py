@@ -38,6 +38,7 @@ class TwinTeam(Base):
     Digital twin teams for coordinated productivity optimization
     Manages groups of twins working together
     """
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "twin_teams"
 
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
@@ -84,6 +85,7 @@ class TwinTeamMember(Base):
     Individual twin members within a team
     Tracks roles, permissions, and contribution metrics
     """
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "twin_team_members"
 
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
@@ -137,6 +139,7 @@ class TeamCoordination(Base):
     Team coordination sessions and orchestration activities
     Manages multi-twin coordination processes
     """
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "team_coordinations"
 
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
@@ -197,6 +200,7 @@ class CoordinationActivity(Base):
     Individual activities within a team coordination session
     Tracks specific actions and their outcomes
     """
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "coordination_activities"
 
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
@@ -253,6 +257,7 @@ class TwinCollaboration(Base):
     Direct collaboration between pairs of twins
     Tracks peer-to-peer coordination and knowledge sharing
     """
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "twin_collaborations"
 
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
@@ -306,6 +311,7 @@ class TeamPerformanceMetric(Base):
     Performance metrics and analytics for twin teams
     Tracks team productivity, collaboration effectiveness, and optimization opportunities
     """
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "team_performance_metrics"
 
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))

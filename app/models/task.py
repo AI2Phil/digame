@@ -9,6 +9,7 @@ from .user import User # Renamed to avoid potential confusion
 from .process_notes import ProcessNote # Renamed
 
 class Task(Base):
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "tasks"
     __table_args__ = {'extend_existing': True}
 

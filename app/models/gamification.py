@@ -30,6 +30,7 @@ class AchievementRarity(enum.Enum):
 
 class Achievement(Base):
     """Achievement definitions"""
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "achievements"
     __table_args__ = {'extend_existing': True}
 
@@ -72,6 +73,7 @@ class Achievement(Base):
 
 class UserAchievement(Base):
     """User's earned achievements"""
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "user_achievements"
     __table_args__ = {'extend_existing': True}
 
@@ -105,6 +107,7 @@ class UserAchievement(Base):
 
 class Streak(Base):
     """User activity streaks"""
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "streaks"
     __table_args__ = {'extend_existing': True}
 
@@ -162,6 +165,7 @@ class Streak(Base):
 
 class Milestone(Base):
     """Goal milestones and checkpoints"""
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "milestones"
     __table_args__ = {'extend_existing': True}
 
@@ -190,6 +194,7 @@ class Milestone(Base):
 
 class UserPoints(Base):
     """User points and scoring system"""
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "user_points"
     __table_args__ = {'extend_existing': True}
 
@@ -251,6 +256,7 @@ class UserPoints(Base):
 
 class Badge(Base):
     """Special badges and titles"""
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "badges"
     __table_args__ = {'extend_existing': True}
 
@@ -273,6 +279,7 @@ class Badge(Base):
 
 class UserBadge(Base):
     """User's earned badges"""
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "user_badges"
     __table_args__ = {'extend_existing': True}
 
@@ -291,6 +298,7 @@ class UserBadge(Base):
 
 class LeaderboardEntry(Base):
     """Leaderboard rankings"""
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "leaderboard_entries"
     __table_args__ = {'extend_existing': True}
 

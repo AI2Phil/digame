@@ -13,6 +13,7 @@ class MFADevice(Base):
     """
     Multi-Factor Authentication device model
     """
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "mfa_devices"
     __table_args__ = {'extend_existing': True}
     
@@ -52,6 +53,7 @@ class SecurityEvent(Base):
     """
     Security event logging for audit trail
     """
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "security_events"
     __table_args__ = {'extend_existing': True}
     
@@ -95,6 +97,7 @@ class IPRestriction(Base):
     """
     IP address restrictions for enhanced security
     """
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "ip_restrictions"
     __table_args__ = {'extend_existing': True}
     
@@ -128,6 +131,7 @@ class SecurityPolicy(Base):
     """
     Security policies for platform configuration
     """
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "security_policies"
     __table_args__ = {'extend_existing': True}
     
@@ -161,6 +165,7 @@ class SessionToken(Base):
     """
     Active session tokens for enhanced session management
     """
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "session_tokens"
     __table_args__ = {'extend_existing': True}
     
@@ -200,6 +205,7 @@ class ThreatDetection(Base):
     """
     Threat detection and suspicious activity tracking
     """
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "threat_detections"
     __table_args__ = {'extend_existing': True}
     
@@ -243,6 +249,7 @@ class AuditLog(Base):
     """
     Comprehensive audit logging for compliance
     """
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "audit_logs"
     __table_args__ = {'extend_existing': True}
     

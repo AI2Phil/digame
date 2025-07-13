@@ -6,6 +6,7 @@ from datetime import datetime
 from app.database import Base # Assuming Base is defined in user.py or a shared models.base
 
 class Message(Base):
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "messages"
     __table_args__ = {'extend_existing': True}
 

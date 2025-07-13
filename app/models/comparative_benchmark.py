@@ -9,6 +9,7 @@ class ComparativeBenchmark(Base):
     """
     Stores industry or peer benchmark data for comparative analytics.
     """
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "comparative_benchmarks"
     __table_args__ = {'extend_existing': True}
 

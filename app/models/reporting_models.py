@@ -15,6 +15,7 @@ from .reporting import ReportTemplate, ReportExecution
 
 class DataSource(Base):
     """Data sources for report generation"""
+    __table_args__ = {'extend_existing': True}
     __tablename__ = 'data_sources'
     __table_args__ = (
         Index('idx_data_sources_type_status', 'source_type', 'status'),
@@ -48,6 +49,7 @@ class DataSource(Base):
 
 class VisualizationMetric(Base):
     """Visualization engine performance metrics"""
+    __table_args__ = {'extend_existing': True}
     __tablename__ = 'visualization_metrics'
     __table_args__ = (
         Index('idx_visualization_metrics_chart_type_date', 'chart_type', 'date'),
@@ -81,6 +83,7 @@ class VisualizationMetric(Base):
 
 class PredictiveModel(Base):
     """Predictive analytics models"""
+    __table_args__ = {'extend_existing': True}
     __tablename__ = 'predictive_models'
     __table_args__ = (
         Index('idx_predictive_models_type_status', 'model_type', 'status'),
@@ -135,6 +138,7 @@ from .reporting import ReportSchedule
 
 class ReportInsight(Base):
     """AI-generated insights from reports"""
+    __table_args__ = {'extend_existing': True}
     __tablename__ = 'report_insights'
     __table_args__ = {'extend_existing': True}
 

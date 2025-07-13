@@ -33,6 +33,7 @@ class IntegrationProvider(Base):
     """
     Third-party service providers available for integration
     """
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "integration_providers"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -111,6 +112,7 @@ class IntegrationConnection(Base):
     """
     User connections to third-party services
     """
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "integration_connections"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -163,6 +165,7 @@ class IntegrationSyncLog(Base):
     """
     Synchronization history and logs
     """
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "integration_sync_logs"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -210,6 +213,7 @@ class IntegrationWebhook(Base):
     """
     Webhook configurations for real-time data updates
     """
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "integration_webhooks"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -250,6 +254,7 @@ class IntegrationDataMapping(Base):
     """
     Field mappings between external systems and internal data structures
     """
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "integration_data_mappings"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -288,6 +293,7 @@ class IntegrationAnalytics(Base):
     """
     Analytics and metrics for integration usage and performance
     """
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "integration_analytics"
     __table_args__ = {'extend_existing': True}
 

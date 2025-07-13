@@ -13,6 +13,7 @@ class Tenant(Base):
     """
     Tenant model for multi-tenant architecture
     """
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "tenants"
     __table_args__ = {'extend_existing': True}
 
@@ -86,6 +87,7 @@ class TenantSettings(Base):
     """
     Key-value store for tenant-specific configurations.
     """
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "tenant_settings"
     __table_args__ = {'extend_existing': True}
 
@@ -110,6 +112,7 @@ class TenantInvitation(Base):
     """
     Model for tenant user invitations.
     """
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "tenant_invitations"
     __table_args__ = {'extend_existing': True}
 
@@ -135,6 +138,7 @@ class TenantAuditLog(Base):
     """
     Model for tenant audit logs.
     """
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "tenant_audit_logs"
     __table_args__ = {'extend_existing': True}
 

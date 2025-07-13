@@ -36,6 +36,7 @@ class TrainingStatus(str, Enum):
 
 class MLModel(Base):
     """Core ML Model management"""
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "ml_models"
     __table_args__ = {'extend_existing': True}
 
@@ -85,6 +86,7 @@ class MLModel(Base):
 
 class TrainingJob(Base):
     """Model training job tracking"""
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "training_jobs"
     __table_args__ = {'extend_existing': True}
 
@@ -134,6 +136,7 @@ class TrainingJob(Base):
 
 class ModelPrediction(Base):
     """Model prediction tracking"""
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "model_predictions"
     __table_args__ = {'extend_existing': True}
 
@@ -172,6 +175,7 @@ class ModelPrediction(Base):
 
 class ModelEvaluation(Base):
     """Model evaluation and testing results"""
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "model_evaluations"
     __table_args__ = {'extend_existing': True}
 
@@ -212,6 +216,7 @@ class ModelEvaluation(Base):
 
 class ModelDeployment(Base):
     """Model deployment tracking"""
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "model_deployments"
     __table_args__ = {'extend_existing': True}
 
@@ -252,6 +257,7 @@ class ModelDeployment(Base):
 
 class DatasetMetadata(Base):
     """Dataset metadata for ML training"""
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "dataset_metadata"
     __table_args__ = {'extend_existing': True}
 
@@ -287,6 +293,7 @@ class DatasetMetadata(Base):
 
 class ExperimentRun(Base):
     """ML experiment tracking"""
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "experiment_runs"
     __table_args__ = {'extend_existing': True}
 

@@ -11,6 +11,7 @@ class TeamRoleEnum(enum.Enum):
     ADMIN = "admin"
 
 class Team(Base):
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "teams"
     __table_args__ = {'extend_existing': True}
 
@@ -30,6 +31,7 @@ class Team(Base):
 
 
 class TeamMember(Base):
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "team_members"
     __table_args__ = {'extend_existing': True}
 
@@ -45,6 +47,7 @@ class TeamMember(Base):
 
 
 class TeamPerformanceMetric(Base):
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "team_performance_metrics"
     __table_args__ = {'extend_existing': True}
 
@@ -59,6 +62,7 @@ class TeamPerformanceMetric(Base):
 
 
 class TeamSkillGap(Base):
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "team_skill_gaps"
     __table_args__ = {'extend_existing': True}
 
@@ -74,6 +78,7 @@ class TeamSkillGap(Base):
 
 
 class TeamWorkflow(Base):
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "team_workflows"
     __table_args__ = {'extend_existing': True}
 

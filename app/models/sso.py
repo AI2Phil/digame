@@ -16,6 +16,7 @@ class SSOProvider(Base):
     SSO Provider configuration for tenants
     Supports SAML, OAuth2, OpenID Connect, and LDAP
     """
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "sso_providers"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -99,6 +100,7 @@ class SSOSession(Base):
     """
     SSO Session tracking for security and audit purposes
     """
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "sso_sessions"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -169,6 +171,7 @@ class SSOUserMapping(Base):
     """
     Mapping between IdP users and local users
     """
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "sso_user_mappings"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -209,6 +212,7 @@ class SSOAuditLog(Base):
     """
     Audit log for SSO activities
     """
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "sso_audit_logs"
     __table_args__ = {'extend_existing': True}
 
@@ -243,6 +247,7 @@ class SSOConfiguration(Base):
     """
     Global SSO configuration settings
     """
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "sso_configurations"
     __table_args__ = {'extend_existing': True}
 

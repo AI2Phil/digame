@@ -12,6 +12,7 @@ from app.database import Base
 
 class AuditEvent(Base):
     """Comprehensive audit trail for all system activities"""
+    __table_args__ = {'extend_existing': True}
     __tablename__ = 'audit_events'
     
     id = Column(Integer, primary_key=True, index=True)
@@ -53,6 +54,7 @@ class AuditEvent(Base):
 
 class SecurityEvent(Base):
     """Security-specific events and threat detection"""
+    __table_args__ = {'extend_existing': True}
     __tablename__ = 'security_events'
     
     id = Column(Integer, primary_key=True, index=True)
@@ -105,6 +107,7 @@ class SecurityEvent(Base):
 
 class ComplianceCheck(Base):
     """Compliance monitoring and assessment results"""
+    __table_args__ = {'extend_existing': True}
     __tablename__ = 'compliance_checks'
     
     id = Column(Integer, primary_key=True, index=True)
@@ -157,6 +160,7 @@ class ComplianceCheck(Base):
 
 class Vulnerability(Base):
     """Vulnerability tracking and management"""
+    __table_args__ = {'extend_existing': True}
     __tablename__ = 'vulnerabilities'
     
     id = Column(Integer, primary_key=True, index=True)
@@ -223,6 +227,7 @@ class Vulnerability(Base):
 
 class RiskAssessment(Base):
     """Risk assessment and management"""
+    __table_args__ = {'extend_existing': True}
     __tablename__ = 'risk_assessments'
     
     id = Column(Integer, primary_key=True, index=True)
@@ -288,6 +293,7 @@ class RiskAssessment(Base):
 
 class SecurityIncident(Base):
     """Security incident tracking and response management"""
+    __table_args__ = {'extend_existing': True}
     __tablename__ = 'security_incidents'
     
     id = Column(Integer, primary_key=True, index=True)
@@ -368,6 +374,7 @@ class SecurityIncident(Base):
 
 class SecurityMetric(Base):
     """Security metrics and KPIs tracking"""
+    __table_args__ = {'extend_existing': True}
     __tablename__ = 'security_metrics'
     
     id = Column(Integer, primary_key=True, index=True)

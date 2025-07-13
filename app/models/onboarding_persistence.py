@@ -13,6 +13,7 @@ class UserOnboardingProgress(Base):
     """
     Persistent storage for user onboarding progress and preferences
     """
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "user_onboarding_progress"
     __table_args__ = {'extend_existing': True}
 
@@ -74,6 +75,7 @@ class OnboardingAnalytics(Base):
     """
     Analytics and metrics for onboarding performance
     """
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "onboarding_analytics"
     __table_args__ = {'extend_existing': True}
 
@@ -133,6 +135,7 @@ class OnboardingMetrics(Base):
     """
     Aggregated onboarding metrics and KPIs
     """
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "onboarding_metrics"
     __table_args__ = {'extend_existing': True}
 
@@ -220,6 +223,7 @@ class OnboardingFeedback(Base):
     """
     User feedback and satisfaction data for onboarding
     """
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "onboarding_feedback"
     __table_args__ = {'extend_existing': True}
 

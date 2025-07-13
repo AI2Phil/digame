@@ -41,6 +41,7 @@ class PeerConnection(Base):
     """
     Model for peer-to-peer connections between users
     """
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "peer_connections"
     __table_args__ = {'extend_existing': True}
 
@@ -64,6 +65,7 @@ class PeerMessage(Base):
     """
     Model for messages between connected peers
     """
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "peer_messages"
     __table_args__ = {'extend_existing': True}
 
@@ -88,6 +90,7 @@ class CollaborationProject(Base):
     """
     Model for real collaboration projects with enhanced features
     """
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "collaboration_projects"
     __table_args__ = {'extend_existing': True}
 
@@ -134,6 +137,7 @@ class ProjectMember(Base):
     """
     Model for project team members with roles and contributions
     """
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "project_members"
     __table_args__ = {'extend_existing': True}
 
@@ -157,6 +161,7 @@ class ProjectApplication(Base):
     """
     Model for applications to join collaboration projects
     """
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "project_applications"
     __table_args__ = {'extend_existing': True}
 
@@ -184,6 +189,7 @@ class SkillEndorsement(Base):
     """
     Model for peer skill endorsements to improve matching accuracy
     """
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "skill_endorsements"
     __table_args__ = {'extend_existing': True}
 
@@ -207,6 +213,7 @@ class MentorshipConnection(Base):
     """
     Model for formal mentorship relationships
     """
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "mentorship_connections"
     __table_args__ = {'extend_existing': True}
 

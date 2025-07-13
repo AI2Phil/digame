@@ -42,6 +42,7 @@ class UserStatus(enum.Enum):
 
 class Workspace(Base):
     """Collaboration workspaces for team communication"""
+    __table_args__ = {'extend_existing': True}
     __tablename__ = 'workspaces'
 
     id = Column(Integer, primary_key=True, index=True)
@@ -79,6 +80,7 @@ class Workspace(Base):
 
 class WorkspaceMember(Base):
     """Workspace membership with roles and permissions"""
+    __table_args__ = {'extend_existing': True}
     __tablename__ = 'workspace_members'
 
     id = Column(Integer, primary_key=True, index=True)
@@ -118,6 +120,7 @@ class WorkspaceMember(Base):
 
 class Channel(Base):
     """Communication channels within workspaces"""
+    __table_args__ = {'extend_existing': True}
     __tablename__ = 'channels'
 
     id = Column(Integer, primary_key=True, index=True)
@@ -160,6 +163,7 @@ class Channel(Base):
 
 class Message(Base):
     """Messages within channels"""
+    __table_args__ = {'extend_existing': True}
     __tablename__ = 'collaboration_messages'
 
     id = Column(Integer, primary_key=True, index=True)
@@ -203,6 +207,7 @@ class Message(Base):
 
 class MessageReaction(Base):
     """Reactions to messages"""
+    __table_args__ = {'extend_existing': True}
     __tablename__ = 'message_reactions'
 
     id = Column(Integer, primary_key=True, index=True)
@@ -228,6 +233,7 @@ class MessageReaction(Base):
 
 class UserPresence(Base):
     """User presence and activity status"""
+    __table_args__ = {'extend_existing': True}
     __tablename__ = 'user_presence'
 
     id = Column(Integer, primary_key=True, index=True)
@@ -271,6 +277,7 @@ class UserPresence(Base):
 
 class CollaborationSession(Base):
     """Active collaboration sessions (calls, screen shares, etc.)"""
+    __table_args__ = {'extend_existing': True}
     __tablename__ = 'collaboration_sessions'
 
     id = Column(Integer, primary_key=True, index=True)
@@ -319,6 +326,7 @@ class CollaborationSession(Base):
 
 class MessageAttachment(Base):
     """File attachments for messages"""
+    __table_args__ = {'extend_existing': True}
     __tablename__ = 'message_attachments'
 
     id = Column(Integer, primary_key=True, index=True)

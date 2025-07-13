@@ -11,6 +11,7 @@ from app.database import Base
 
 class UserConnection(Base):
     """User connections for professional networking"""
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "user_connections"
     __table_args__ = {'extend_existing': True}
     
@@ -38,6 +39,7 @@ class UserConnection(Base):
 
 class PeerMatch(Base):
     """AI-powered peer matching for professional networking"""
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "peer_matches"
     __table_args__ = {'extend_existing': True}
 
@@ -65,6 +67,7 @@ class PeerMatch(Base):
 
 class SocialMetrics(Base):
     """Social networking metrics and analytics for users"""
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "social_metrics"
     __table_args__ = {'extend_existing': True}
     
@@ -87,6 +90,7 @@ class SocialMetrics(Base):
 
 class UserSkill(Base):
     """User skills for peer matching and mentorship"""
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "user_skills"
     __table_args__ = {'extend_existing': True}
 

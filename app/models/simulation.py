@@ -53,6 +53,7 @@ class Simulation(Base):
     """
     Core simulation model for scenario planning and decision support
     """
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "simulations"
     __table_args__ = {'extend_existing': True}
 
@@ -107,6 +108,7 @@ class Scenario(Base):
     """
     Individual scenarios within a simulation
     """
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "scenarios"
     __table_args__ = {'extend_existing': True}
 
@@ -149,6 +151,7 @@ class DecisionAnalysis(Base):
     """
     Decision impact analysis and recommendation engine
     """
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "decision_analyses"
     __table_args__ = {'extend_existing': True}
 
@@ -199,6 +202,7 @@ class RiskAssessment(Base):
     """
     Risk assessment and management for simulations and decisions
     """
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "risk_assessments"
     __table_args__ = {'extend_existing': True}
 
@@ -249,6 +253,7 @@ class StrategicPlan(Base):
     """
     Strategic planning and goal management
     """
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "strategic_plans"
     __table_args__ = {'extend_existing': True}
 
@@ -307,6 +312,7 @@ class SimulationTemplate(Base):
     """
     Reusable simulation templates for common scenarios
     """
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "simulation_templates"
     __table_args__ = {'extend_existing': True}
 

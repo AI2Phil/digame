@@ -10,6 +10,7 @@ from ..database import Base
 
 class SSOProvider(Base):
     """SSO Provider configuration for enterprise authentication"""
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "sso_providers"
     __table_args__ = {'extend_existing': True}
     
@@ -46,6 +47,7 @@ class SSOProvider(Base):
 
 class SSOSession(Base):
     """Active SSO sessions for tracking and management"""
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "sso_sessions"
     __table_args__ = {'extend_existing': True}
     
@@ -79,6 +81,7 @@ class SSOSession(Base):
 
 class SSOAuditLog(Base):
     """Audit logging for SSO activities"""
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "sso_audit_logs"
     __table_args__ = {'extend_existing': True}
     
@@ -112,6 +115,7 @@ class SSOAuditLog(Base):
 
 class TenantSSOConfiguration(Base):
     """Tenant-level SSO configuration and policies"""
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "tenant_sso_configurations"
     __table_args__ = {'extend_existing': True}
     
@@ -156,6 +160,7 @@ class TenantSSOConfiguration(Base):
 
 class SSOUserMapping(Base):
     """Mapping between SSO users and local users"""
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "sso_user_mappings"
     
     id = Column(Integer, primary_key=True, index=True)

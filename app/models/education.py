@@ -3,6 +3,7 @@ from sqlalchemy.orm import relationship
 from app.database import Base # Importing Base from user.py
 
 class Education(Base):
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "education_entries" # Changed table name to match relationship in User
     __table_args__ = {'extend_existing': True}
 

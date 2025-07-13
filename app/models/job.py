@@ -12,6 +12,7 @@ class Job(Base):
     background tasks such as model training, pattern recognition, and
     visualization data generation.
     """
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "jobs"
     __table_args__ = {'extend_existing': True}
     

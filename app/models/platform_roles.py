@@ -14,6 +14,7 @@ class PlatformRole(Base):
     """
     Platform-level roles for hierarchical Platform Owner management
     """
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "platform_roles"
     __table_args__ = {'extend_existing': True}
     
@@ -40,6 +41,7 @@ class UserPlatformRole(Base):
     """
     Association table for User-PlatformRole relationships
     """
+    __table_args__ = {'extend_existing': True}
     __tablename__ = "user_platform_roles"
     __table_args__ = {'extend_existing': True}
     
