@@ -22,6 +22,7 @@ from .routers import admin_router
 from .routers import analytics_router
 from .routers import process_notes_router
 from .routers import behavior as behavior_router
+from .routers import monitoring_router
 from .routers import pattern_recognition_router
 from .routers import job_router
 from .routers import publish_router
@@ -408,6 +409,7 @@ app.include_router(admin_router.router, prefix="/api", tags=["Admin Dashboard"])
 app.include_router(analytics_router.router, prefix="/api", tags=["Analytics"])
 app.include_router(process_notes_router.router, prefix="/process-notes", tags=["Process Notes"])
 app.include_router(behavior_router.router, prefix="/behavior", tags=["Behavior Recognition"])
+app.include_router(monitoring_router.router, prefix="/monitoring", tags=["Monitoring"])
 app.include_router(pattern_recognition_router.router, prefix="/pattern-recognition", tags=["Pattern Recognition"])
 app.include_router(job_router.router, prefix="/api", tags=["Background Jobs"])
 app.include_router(publish_router.router, prefix="/publish", tags=["Publishing"])

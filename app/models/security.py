@@ -14,6 +14,7 @@ class MFADevice(Base):
     Multi-Factor Authentication device model
     """
     __tablename__ = "mfa_devices"
+    __table_args__ = {'extend_existing': True}
     
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
@@ -52,6 +53,7 @@ class SecurityEvent(Base):
     Security event logging for audit trail
     """
     __tablename__ = "security_events"
+    __table_args__ = {'extend_existing': True}
     
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
@@ -94,6 +96,7 @@ class IPRestriction(Base):
     IP address restrictions for enhanced security
     """
     __tablename__ = "ip_restrictions"
+    __table_args__ = {'extend_existing': True}
     
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
@@ -126,6 +129,7 @@ class SecurityPolicy(Base):
     Security policies for platform configuration
     """
     __tablename__ = "security_policies"
+    __table_args__ = {'extend_existing': True}
     
     id = Column(Integer, primary_key=True, index=True)
     
@@ -158,6 +162,7 @@ class SessionToken(Base):
     Active session tokens for enhanced session management
     """
     __tablename__ = "session_tokens"
+    __table_args__ = {'extend_existing': True}
     
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
@@ -196,6 +201,7 @@ class ThreatDetection(Base):
     Threat detection and suspicious activity tracking
     """
     __tablename__ = "threat_detections"
+    __table_args__ = {'extend_existing': True}
     
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
@@ -238,6 +244,7 @@ class AuditLog(Base):
     Comprehensive audit logging for compliance
     """
     __tablename__ = "audit_logs"
+    __table_args__ = {'extend_existing': True}
     
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)

@@ -430,6 +430,7 @@ class IndustryBenchmark(Base):  # type: ignore
     Industry benchmarks and performance metrics
     """
     __tablename__ = "industry_benchmarks"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True)  # type: ignore
     benchmark_uuid = Column(String(36), unique=True, index=True, default=lambda: str(uuid.uuid4()))  # type: ignore

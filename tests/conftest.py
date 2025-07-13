@@ -184,3 +184,41 @@ def db_session_test(db_session: Session) -> Session:
     Alias for db_session fixture for compatibility with existing tests.
     """
     return db_session
+
+# Predictive model test fixtures
+@pytest.fixture
+def dummy_model_and_optimizer():
+    """Mock PyTorch model and optimizer for testing"""
+    import torch
+    import torch.nn as nn
+    
+    class DummyModel(nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.linear = nn.Linear(10, 1)
+        
+        def forward(self, x):
+            return self.linear(x)
+    
+    model = DummyModel()
+    optimizer = torch.optim.Adam(model.parameters())
+    
+    return model, optimizer
+
+@pytest.fixture
+def temp_model_path(tmp_path):
+    """Temporary path for model files"""
+    return tmp_path / "test_model.pth"
+
+@pytest.fixture
+def patched_model_path(tmp_path, monkeypatch):
+    """Patch the model path for testing"""
+    model_path = tmp_path / "test_model.pth"
+    
+    # Patch wherever MODEL_PATH is imported
+    try:
+        monkeypatch.setattr("app.routers.predictive.MODEL_PATH", str(model_path))
+    except AttributeError:
+        pass  # If the attribute doesn't exist, skip patching
+    
+    return str(model_path)

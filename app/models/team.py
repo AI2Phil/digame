@@ -60,6 +60,7 @@ class TeamPerformanceMetric(Base):
 
 class TeamSkillGap(Base):
     __tablename__ = "team_skill_gaps"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer(), primary_key=True, index=True)
     team_id = Column(Integer(), ForeignKey("teams.id"), nullable=False)
@@ -74,6 +75,7 @@ class TeamSkillGap(Base):
 
 class TeamWorkflow(Base):
     __tablename__ = "team_workflows"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer(), primary_key=True, index=True)
     team_id = Column(Integer(), ForeignKey("teams.id"), nullable=False)

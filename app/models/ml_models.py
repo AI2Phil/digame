@@ -37,6 +37,7 @@ class TrainingStatus(str, Enum):
 class MLModel(Base):
     """Core ML Model management"""
     __tablename__ = "ml_models"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(255), nullable=False, index=True)
@@ -85,6 +86,7 @@ class MLModel(Base):
 class TrainingJob(Base):
     """Model training job tracking"""
     __tablename__ = "training_jobs"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True)
     model_id = Column(Integer, ForeignKey("ml_models.id"), nullable=False, index=True)
@@ -133,6 +135,7 @@ class TrainingJob(Base):
 class ModelPrediction(Base):
     """Model prediction tracking"""
     __tablename__ = "model_predictions"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True)
     model_id = Column(Integer, ForeignKey("ml_models.id"), nullable=False, index=True)
@@ -170,6 +173,7 @@ class ModelPrediction(Base):
 class ModelEvaluation(Base):
     """Model evaluation and testing results"""
     __tablename__ = "model_evaluations"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True)
     model_id = Column(Integer, ForeignKey("ml_models.id"), nullable=False, index=True)
@@ -209,6 +213,7 @@ class ModelEvaluation(Base):
 class ModelDeployment(Base):
     """Model deployment tracking"""
     __tablename__ = "model_deployments"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True)
     model_id = Column(Integer, ForeignKey("ml_models.id"), nullable=False, index=True)
@@ -248,6 +253,7 @@ class ModelDeployment(Base):
 class DatasetMetadata(Base):
     """Dataset metadata for ML training"""
     __tablename__ = "dataset_metadata"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(255), nullable=False, index=True)
@@ -282,6 +288,7 @@ class DatasetMetadata(Base):
 class ExperimentRun(Base):
     """ML experiment tracking"""
     __tablename__ = "experiment_runs"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True)
     experiment_name = Column(String(255), nullable=False, index=True)

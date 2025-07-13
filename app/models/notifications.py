@@ -124,7 +124,8 @@ class NotificationPreference(Base):
     User notification preferences
     """
     __tablename__ = "notification_preferences"
-    
+    __table_args__ = {'extend_existing': True}
+
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     

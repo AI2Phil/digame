@@ -12,7 +12,8 @@ from app.models.user import Base
 class CourseCategory(Base):
     """Course categories for organizing learning content"""
     __tablename__ = "course_categories"
-    
+    __table_args__ = {'extend_existing': True}
+
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(100), nullable=False, unique=True)
     description = Column(Text, nullable=True)
@@ -33,7 +34,8 @@ class CourseCategory(Base):
 class Course(Base):
     """Courses for learning and development"""
     __tablename__ = "courses"
-    
+    __table_args__ = {'extend_existing': True}
+
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String(255), nullable=False)
     description = Column(Text, nullable=True)
@@ -65,7 +67,8 @@ class Course(Base):
 class CourseEnrollment(Base):
     """User enrollments in courses"""
     __tablename__ = "course_enrollments"
-    
+    __table_args__ = {'extend_existing': True}
+
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     course_id = Column(Integer, ForeignKey("courses.id", ondelete="CASCADE"), nullable=False, index=True)
@@ -91,7 +94,8 @@ class CourseEnrollment(Base):
 class LearningProgress(Base):
     """User progress tracking for skills and competencies"""
     __tablename__ = "learning_progress"
-    
+    __table_args__ = {'extend_existing': True}
+
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     skill_name = Column(String(100), nullable=False, index=True)
@@ -117,7 +121,8 @@ class LearningProgress(Base):
 class LearningRecommendation(Base):
     """AI-powered learning recommendations for users"""
     __tablename__ = "learning_recommendations"
-    
+    __table_args__ = {'extend_existing': True}
+
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     course_id = Column(Integer, ForeignKey("courses.id", ondelete="CASCADE"), nullable=True)

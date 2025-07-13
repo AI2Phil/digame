@@ -191,6 +191,7 @@ class Milestone(Base):
 class UserPoints(Base):
     """User points and scoring system"""
     __tablename__ = "user_points"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, unique=True)
@@ -251,6 +252,7 @@ class UserPoints(Base):
 class Badge(Base):
     """Special badges and titles"""
     __tablename__ = "badges"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String(100), nullable=False)
@@ -272,6 +274,7 @@ class Badge(Base):
 class UserBadge(Base):
     """User's earned badges"""
     __tablename__ = "user_badges"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
@@ -289,6 +292,7 @@ class UserBadge(Base):
 class LeaderboardEntry(Base):
     """Leaderboard rankings"""
     __tablename__ = "leaderboard_entries"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)

@@ -289,6 +289,7 @@ class IntegrationAnalytics(Base):
     Analytics and metrics for integration usage and performance
     """
     __tablename__ = "integration_analytics"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True, index=True)
     tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=False, index=True)
