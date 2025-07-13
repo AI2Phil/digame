@@ -1,0 +1,247 @@
+name: Frontend Build Fix
+
+on:
+  push:
+    branches: [ feature/*, fix/*, hotfix/* ]
+    paths:
+      - 'frontend/**'
+      - 'package.json'
+      - '.github/workflows/frontend-build-fix.yml'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'frontend/**'
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '18'
+
+jobs:
+  frontend-build-fix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: frontend/package-lock.json
+
+    - name: Clear node_modules cache (preserve package-lock.json)
+      working-directory: ./frontend
+      run: rm -rf node_modules
+
+    - name: Fresh install with existing package-lock.json
+      working-directory: ./frontend
+      run: npm ci --prefer-offline --no-audit
+
+    - name: Type check
+      working-directory: ./frontend
+      run: npm run type-check
+
+    - name: Lint check
+      working-directory: ./frontend
+      run: npm run lint
+
+    - name: Security lint
+      working-directory: ./frontend
+      run: npm run lint:security
+
+    - name: Build frontend
+      working-directory: ./frontend
+      run: npm run build
+
+    - name: Test frontend startup with port detection
+      working-directory: ./frontend
+      run: |
+        echo "🔍 Testing frontend startup with port detection..."
+        
+        # Function to find available port
+        find_available_port() {
+          local start_port=$1
+          local port=$start_port
+          while [ $port -lt $((start_port + 100)) ]; do
+            if ! netstat -tuln | grep ":$port " > /dev/null 2>&1; then
+              echo $port
+              return 0
+            fi
+            port=$((port + 1))
+          done
+          echo "No available port found starting from $start_port" >&2
+          return 1
+        }
+        
+        # Find available port starting from 3000
+        FRONTEND_PORT=$(find_available_port 3000)
+        if [ $? -ne 0 ]; then
+          echo "❌ Could not find available port for frontend"
+          exit 1
+        fi
+        
+        echo "🚀 Starting frontend on port $FRONTEND_PORT"
+        
+        # Start frontend with custom port
+        PORT=$FRONTEND_PORT npm start &
+        FRONTEND_PID=$!
+        echo "Frontend PID: $FRONTEND_PID"
+        
+        # Wait for frontend to start
+        echo "⏳ Waiting for frontend to start on port $FRONTEND_PORT..."
+        for i in {1..30}; do
+          if curl -f http://localhost:$FRONTEND_PORT 2>/dev/null; then
+            echo "✅ Frontend started successfully on port $FRONTEND_PORT!"
+            break
+          fi
+          echo "Attempt $i/30..."
+          sleep 2
+        done
+        
+        # Verify frontend is responding
+        if curl -f http://localhost:$FRONTEND_PORT 2>/dev/null; then
+          echo "✅ Frontend health check passed"
+        else
+          echo "❌ Frontend health check failed"
+          echo "Process status:"
+          ps aux | grep -E "(node|npm|next)" | head -5
+          echo "Port status:"
+          netstat -tuln | grep ":$FRONTEND_PORT"
+          exit 1
+        fi
+        
+        # Cleanup
+        kill $FRONTEND_PID 2>/dev/null || true
+        echo "🧹 Frontend test completed successfully"
+
+    - name: Run unit tests
+      working-directory: ./frontend
+      run: npm run test
+
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: frontend-build-fix
+        path: frontend/.next/
+        retention-days: 1
+
+  # Test dynamic port allocation script
+  test-dynamic-porting:
+    runs-on: ubuntu-latest
+    needs: frontend-build-fix
+    timeout-minutes: 10
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+
+    - name: Test dynamic port allocation
+      run: |
+        echo "🧪 Testing dynamic port allocation script..."
+        
+        # Make scripts executable
+        chmod +x scripts/*.sh
+        
+        # Test port detection function
+        cat > test-port-detection.sh << 'EOF'
+        #!/bin/bash
+        
+        # Function to check if a port is in use
+        check_port() {
+            local port=$1
+            if lsof -Pi :$port -sTCP:LISTEN -t >/dev/null 2>&1; then
+                return 0  # Port is in use
+            else
+                return 1  # Port is free
+            fi
+        }
+        
+        # Function to find next available port
+        find_available_port() {
+            local start_port=$1
+            local port=$start_port
+            while [ $port -lt $((start_port + 100)) ]; do
+                if ! check_port $port; then
+                    echo $port
+                    return 0
+                fi
+                port=$((port + 1))
+            done
+            echo "No available port found" >&2
+            return 1
+        }
+        
+        # Test the function
+        echo "Testing port detection..."
+        AVAILABLE_PORT=$(find_available_port 3000)
+        if [ $? -eq 0 ]; then
+            echo "✅ Found available port: $AVAILABLE_PORT"
+        else
+            echo "❌ Failed to find available port"
+            exit 1
+        fi
+        
+        # Test with occupied port
+        echo "Testing with occupied port..."
+        python3 -m http.server 8080 &
+        HTTP_PID=$!
+        sleep 2
+        
+        NEXT_PORT=$(find_available_port 8080)
+        if [ $? -eq 0 ] && [ $NEXT_PORT -ne 8080 ]; then
+            echo "✅ Correctly found next available port: $NEXT_PORT"
+        else
+            echo "❌ Failed to find next available port"
+            kill $HTTP_PID 2>/dev/null || true
+            exit 1
+        fi
+        
+        kill $HTTP_PID 2>/dev/null || true
+        echo "🎉 Dynamic port allocation test passed!"
+        EOF
+        
+        chmod +x test-port-detection.sh
+        ./test-port-detection.sh
+
+    - name: Test start-dev script (dry run)
+      run: |
+        echo "🧪 Testing start-dev script components..."
+        
+        # Test script syntax
+        bash -n scripts/start-dev.sh
+        if [ $? -eq 0 ]; then
+            echo "✅ start-dev.sh syntax is valid"
+        else
+            echo "❌ start-dev.sh has syntax errors"
+            exit 1
+        fi
+        
+        # Test prerequisite checks
+        echo "Testing prerequisite checks..."
+        if command -v python3 &> /dev/null; then
+            echo "✅ Python 3 available"
+        else
+            echo "❌ Python 3 not available"
+        fi
+        
+        if command -v node &> /dev/null; then
+            echo "✅ Node.js available"
+        else
+            echo "❌ Node.js not available"
+        fi
+        
+        if command -v npm &> /dev/null; then
+            echo "✅ npm available"
+        else
+            echo "❌ npm not available"
+        fi
+        
+        echo "🎉 Script validation completed!"

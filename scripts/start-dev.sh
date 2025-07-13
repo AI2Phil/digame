@@ -35,11 +35,46 @@ print_error() {
 # Function to check if a port is in use
 check_port() {
     local port=$1
-    if lsof -Pi :$port -sTCP:LISTEN -t >/dev/null 2>&1; then
-        return 0  # Port is in use
+    # Try multiple methods to check port availability
+    if command -v lsof >/dev/null 2>&1; then
+        if lsof -Pi :$port -sTCP:LISTEN -t >/dev/null 2>&1; then
+            return 0  # Port is in use
+        fi
+    elif command -v netstat >/dev/null 2>&1; then
+        if netstat -tuln 2>/dev/null | grep ":$port " >/dev/null; then
+            return 0  # Port is in use
+        fi
+    elif command -v ss >/dev/null 2>&1; then
+        if ss -tuln 2>/dev/null | grep ":$port " >/dev/null; then
+            return 0  # Port is in use
+        fi
     else
-        return 1  # Port is free
+        # Fallback: try to bind to the port
+        if python3 -c "import socket; s=socket.socket(); s.bind(('', $port)); s.close()" 2>/dev/null; then
+            return 1  # Port is free
+        else
+            return 0  # Port is in use
+        fi
     fi
+    return 1  # Port is free
+}
+
+# Function to find next available port
+find_available_port() {
+    local start_port=$1
+    local port=$start_port
+    local max_attempts=100
+    
+    while [ $port -lt $((start_port + max_attempts)) ]; do
+        if ! check_port $port; then
+            echo $port
+            return 0
+        fi
+        port=$((port + 1))
+    done
+    
+    print_error "No available port found starting from $start_port"
+    return 1
 }
 
 # Function to kill processes on specific ports
@@ -103,8 +138,10 @@ cleanup() {
         rm -f .frontend-pid
     fi
     
-    # Kill any remaining processes on our ports
+    # Kill any remaining processes on common ports
     kill_port_processes 8000
+    kill_port_processes 8001
+    kill_port_processes 3000
     kill_port_processes 3001
     
     print_success "Cleanup completed"
@@ -166,17 +203,25 @@ fi
 print_status "Installing Python dependencies..."
 pip install -r requirements.txt > /dev/null 2>&1 || print_warning "Some Python dependencies may have failed to install"
 
+# Find available port for backend
+BACKEND_PORT=$(find_available_port 8000)
+if [ $? -ne 0 ]; then
+    print_error "Could not find available port for backend starting from 8000"
+    exit 1
+fi
+
 # Start backend
-print_status "Launching backend on port 8000..."
-python3 -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload > backend.log 2>&1 &
+print_status "Launching backend on port $BACKEND_PORT..."
+python3 -m uvicorn main:app --host 0.0.0.0 --port $BACKEND_PORT --reload > backend.log 2>&1 &
 BACKEND_PID=$!
 echo $BACKEND_PID > .backend-pid
 
 # Wait for backend to start
-if wait_for_service "http://localhost:8000/health" "Backend"; then
-    print_success "Backend started successfully (PID: $BACKEND_PID)"
+if wait_for_service "http://localhost:$BACKEND_PORT/health" "Backend"; then
+    print_success "Backend started successfully on port $BACKEND_PORT (PID: $BACKEND_PID)"
 else
-    print_error "Backend failed to start. Check backend.log for details."
+    print_error "Backend failed to start on port $BACKEND_PORT. Check backend.log for details."
+    cat backend.log | tail -20
     exit 1
 fi
 
@@ -192,9 +237,16 @@ if [ ! -d "node_modules" ]; then
     npm install
 fi
 
-# Start frontend
-print_status "Launching frontend on port 3001..."
-npm run dev > ../frontend.log 2>&1 &
+# Find available port for frontend
+FRONTEND_PORT=$(find_available_port 3000)
+if [ $? -ne 0 ]; then
+    print_error "Could not find available port for frontend starting from 3000"
+    exit 1
+fi
+
+# Start frontend with custom port
+print_status "Launching frontend on port $FRONTEND_PORT..."
+PORT=$FRONTEND_PORT npm run dev > ../frontend.log 2>&1 &
 FRONTEND_PID=$!
 echo $FRONTEND_PID > ../.frontend-pid
 
@@ -202,10 +254,12 @@ echo $FRONTEND_PID > ../.frontend-pid
 cd ..
 
 # Wait for frontend to start
-if wait_for_service "http://localhost:3001" "Frontend"; then
-    print_success "Frontend started successfully (PID: $FRONTEND_PID)"
+if wait_for_service "http://localhost:$FRONTEND_PORT" "Frontend"; then
+    print_success "Frontend started successfully on port $FRONTEND_PORT (PID: $FRONTEND_PID)"
 else
-    print_error "Frontend failed to start. Check frontend.log for details."
+    print_error "Frontend failed to start on port $FRONTEND_PORT. Check frontend.log for details."
+    print_warning "Recent frontend logs:"
+    tail -20 frontend.log 2>/dev/null || print_warning "No frontend.log available"
     exit 1
 fi
 
@@ -213,21 +267,21 @@ fi
 print_status "Verifying service integration..."
 
 # Test backend health
-if curl -s -f "http://localhost:8000/health" > /dev/null; then
+if curl -s -f "http://localhost:$BACKEND_PORT/health" > /dev/null; then
     print_success "Backend health check passed"
 else
     print_error "Backend health check failed"
 fi
 
 # Test backend API
-if curl -s -f "http://localhost:8000/api/health" > /dev/null; then
+if curl -s -f "http://localhost:$BACKEND_PORT/api/health" > /dev/null; then
     print_success "Backend API health check passed"
 else
     print_error "Backend API health check failed"
 fi
 
 # Test security dashboard endpoint
-if curl -s -f "http://localhost:8000/api/security/dashboard" > /dev/null; then
+if curl -s -f "http://localhost:$BACKEND_PORT/api/security/dashboard" > /dev/null; then
     print_success "Security dashboard endpoint accessible"
 else
     print_warning "Security dashboard endpoint may not be accessible"
@@ -235,7 +289,7 @@ fi
 
 # Test CORS
 print_status "Testing CORS configuration..."
-CORS_TEST=$(curl -s -H "Origin: http://localhost:3001" -H "Access-Control-Request-Method: GET" -H "Access-Control-Request-Headers: Content-Type" -X OPTIONS "http://localhost:8000/api/health" -w "%{http_code}" -o /dev/null)
+CORS_TEST=$(curl -s -H "Origin: http://localhost:$FRONTEND_PORT" -H "Access-Control-Request-Method: GET" -H "Access-Control-Request-Headers: Content-Type" -X OPTIONS "http://localhost:$BACKEND_PORT/api/health" -w "%{http_code}" -o /dev/null)
 if [ "$CORS_TEST" = "200" ]; then
     print_success "CORS configuration working"
 else
@@ -248,14 +302,14 @@ echo "🎉 Development Environment Ready!"
 echo "================================="
 echo ""
 echo "📍 Services:"
-echo "   Frontend: http://localhost:3001"
-echo "   Backend:  http://localhost:8000"
-echo "   API Docs: http://localhost:8000/docs"
+echo "   Frontend: http://localhost:$FRONTEND_PORT"
+echo "   Backend:  http://localhost:$BACKEND_PORT"
+echo "   API Docs: http://localhost:$BACKEND_PORT/docs"
 echo ""
 echo "🔍 Health Checks:"
-echo "   Backend Health: http://localhost:8000/health"
-echo "   API Health:     http://localhost:8000/api/health"
-echo "   Security Dashboard: http://localhost:8000/api/security/dashboard"
+echo "   Backend Health: http://localhost:$BACKEND_PORT/health"
+echo "   API Health:     http://localhost:$BACKEND_PORT/api/health"
+echo "   Security Dashboard: http://localhost:$BACKEND_PORT/api/security/dashboard"
 echo ""
 echo "📊 Logs:"
 echo "   Backend:  tail -f backend.log"

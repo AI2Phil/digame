@@ -269,6 +269,8 @@ def dummy_model_and_optimizer():
     class LSTMModel(nn.Module):
         def __init__(self, input_size=10, hidden_size=20, num_layers=1):
             super().__init__()
+            self.hidden_dim = hidden_size  # Add hidden_dim attribute for compatibility
+            self.num_layers = num_layers   # Add num_layers attribute for compatibility
             self.lstm = nn.LSTM(input_size, hidden_size, num_layers, batch_first=True)
             self.fc = nn.Linear(hidden_size, 1)
         

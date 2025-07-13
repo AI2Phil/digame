@@ -194,12 +194,25 @@ def load_model(model_path_base=PRIMARY_MODEL_PATH):
         
     Returns:
         Tuple of (model, optimizer, encoders, scaler, model_params)
+        
+    Raises:
+        FileNotFoundError: If the model file does not exist
     """
     # Ensure .pth extension is added if not present
     if not model_path_base.endswith('.pth'):
         model_path = model_path_base + '.pth'
     else:
         model_path = model_path_base
+    
+    # Resolve path: if plain filename, use DEFAULT_MODEL_DIR. Otherwise, use as is.
+    if os.path.dirname(model_path) == "" and DEFAULT_MODEL_DIR:
+        resolved_model_path = os.path.join(DEFAULT_MODEL_DIR, model_path)
+    else:
+        resolved_model_path = model_path
+    
+    # Check if file exists and raise FileNotFoundError if not
+    if not os.path.exists(resolved_model_path):
+        raise FileNotFoundError(f"Model file not found at {resolved_model_path}")
         
     return load_model_components(model_path)
 
@@ -264,13 +277,25 @@ def predict_next_action(user_id, current_sequence_df, model_path=PRIMARY_MODEL_P
     scaler = model_assets["scaler"]
     sequence_length = model_assets["sequence_length"]
     processed_sequence_df = current_sequence_df.copy()
-    if 'activity_encoder' in encoders and encoders['activity_encoder'] is not None:
+    
+    # Validate encoders is a dictionary
+    if not isinstance(encoders, dict):
+        logger.error("Encoders must be a dictionary.")
+        return None, None
+    
+    # Handle activity encoder with proper type checking
+    activity_encoder = encoders.get('activity_encoder')
+    if activity_encoder is not None:
         # Check if the encoder is a LabelEncoder or a dictionary
-        if hasattr(encoders['activity_encoder'], 'transform'):
-            processed_sequence_df['activity_type_encoded'] = encoders['activity_encoder'].transform(processed_sequence_df['activity_type'])
-        elif isinstance(encoders['activity_encoder'], dict):
+        if hasattr(activity_encoder, 'transform'):
+            try:
+                processed_sequence_df['activity_type_encoded'] = activity_encoder.transform(processed_sequence_df['activity_type'])
+            except Exception as e:
+                logger.error(f"Error transforming activity types: {e}")
+                return None, None
+        elif isinstance(activity_encoder, dict):
             # If it's a dictionary mapping, use it directly
-            processed_sequence_df['activity_type_encoded'] = processed_sequence_df['activity_type'].map(encoders['activity_encoder'])
+            processed_sequence_df['activity_type_encoded'] = processed_sequence_df['activity_type'].map(activity_encoder)
         else:
             # Fallback to string representation
             logger.warning("Activity encoder is not a LabelEncoder or dictionary. Using string representation.")
@@ -278,20 +303,79 @@ def predict_next_action(user_id, current_sequence_df, model_path=PRIMARY_MODEL_P
     else:
         logger.error("Activity encoder not found or not fitted for prediction.")
         return None, None
-    processed_sequence_df['hour_of_day'] = pd.to_datetime(processed_sequence_df['timestamp']).dt.hour
-    processed_sequence_df['day_of_week'] = pd.to_datetime(processed_sequence_df['timestamp']).dt.dayofweek
+    
+    # Handle timestamp processing with proper validation
+    if 'timestamp' in processed_sequence_df.columns:
+        try:
+            # Use manual extraction to avoid Pyrefly type inference issues
+            timestamp_values = []
+            hour_values = []
+            dayofweek_values = []
+            
+            for idx in processed_sequence_df.index:
+                try:
+                    ts_val = processed_sequence_df.loc[idx, 'timestamp']
+                    if ts_val is not None:
+                        # Convert to pandas Timestamp
+                        dt_val = pd.to_datetime(ts_val)
+                        # Extract attributes manually
+                        hour_val = int(dt_val.hour) if hasattr(dt_val, 'hour') else 0
+                        dow_val = int(dt_val.dayofweek) if hasattr(dt_val, 'dayofweek') else 0
+                    else:
+                        hour_val = 0
+                        dow_val = 0
+                    
+                    hour_values.append(hour_val)
+                    dayofweek_values.append(dow_val)
+                    
+                except Exception as e:
+                    logger.warning(f"Error processing timestamp at index {idx}: {e}")
+                    hour_values.append(0)
+                    dayofweek_values.append(0)
+            
+            # Assign the extracted values
+            processed_sequence_df['hour_of_day'] = hour_values
+            processed_sequence_df['day_of_week'] = dayofweek_values
+                        
+        except Exception as e:
+            logger.error(f"Error processing timestamp: {e}")
+            return None, None
+    else:
+        logger.error("Timestamp column not found for prediction.")
+        return None, None
     features_to_scale = ['hour_of_day']
     if scaler is not None:
         # Check if the scaler is a StandardScaler or a dictionary
-        if hasattr(scaler, 'transform'):
-            processed_sequence_df[features_to_scale] = scaler.transform(processed_sequence_df[features_to_scale])
+        if hasattr(scaler, 'transform') and callable(getattr(scaler, 'transform', None)):
+            try:
+                # Ensure scaler.transform is callable before using it
+                transform_method = getattr(scaler, 'transform')
+                if transform_method is not None:
+                    processed_sequence_df[features_to_scale] = transform_method(processed_sequence_df[features_to_scale])
+                else:
+                    logger.error("Scaler transform method is None.")
+                    return None, None
+            except Exception as e:
+                logger.error(f"Error scaling features: {e}")
+                return None, None
         elif isinstance(scaler, dict):
             # If it's a dictionary with scaling parameters
-            for feature in features_to_scale:
-                if feature in scaler:
-                    mean = scaler[feature].get('mean', 0)
-                    scale = scaler[feature].get('scale', 1)
-                    processed_sequence_df[feature] = (processed_sequence_df[feature] - mean) / scale
+            try:
+                for feature in features_to_scale:
+                    if feature in scaler:
+                        feature_params = scaler[feature]
+                        if isinstance(feature_params, dict):
+                            mean = feature_params.get('mean', 0)
+                            scale = feature_params.get('scale', 1)
+                            if scale != 0:  # Avoid division by zero
+                                processed_sequence_df[feature] = (processed_sequence_df[feature] - mean) / scale
+                            else:
+                                logger.warning(f"Scale for feature {feature} is zero, using raw values.")
+                        else:
+                            logger.warning(f"Feature {feature} scaling parameters are not a dictionary.")
+            except Exception as e:
+                logger.error(f"Error applying dictionary scaling: {e}")
+                return None, None
         else:
             logger.warning("Scaler is not a StandardScaler or dictionary. Using raw values.")
     else:
