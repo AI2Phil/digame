@@ -3,13 +3,16 @@ Enhanced RBAC Service with Tenant Awareness
 Provides tenant-scoped role and permission management
 """
 
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from ..models.rbac import UserRoleAssignment
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, or_
 from datetime import datetime, timedelta, timezone
 
 from ..models.user import User
-from ..models.rbac import Role, Permission, UserRoleAssignment
+from ..models.rbac import Role, Permission
 from ..models.tenant import Tenant
 from ..database import get_db
 
@@ -27,7 +30,7 @@ class RBACService:
         tenant_id: Optional[int] = None,
         assigned_by: Optional[int] = None,
         expires_at: Optional[datetime] = None
-    ) -> UserRoleAssignment:
+    ) -> Any:
         """
         Assign role to user with optional tenant scoping
         
@@ -56,6 +59,7 @@ class RBACService:
             raise ValueError(f"Role with ID {role_id} not found")
         
         # Check if assignment already exists
+        from ..models.rbac import UserRoleAssignment
         existing = self.db.query(UserRoleAssignment).filter(
             and_(  # type: ignore
                 UserRoleAssignment.user_id == user_id,  # type: ignore
@@ -102,6 +106,7 @@ class RBACService:
             bool: True if role was removed, False if assignment didn't exist
         """
         
+        from ..models.rbac import UserRoleAssignment
         user_role = self.db.query(UserRoleAssignment).filter(
             and_(  # type: ignore
                 UserRoleAssignment.user_id == user_id,  # type: ignore
@@ -124,7 +129,7 @@ class RBACService:
         user_id: int, 
         tenant_id: Optional[int] = None,
         include_expired: bool = False
-    ) -> List[UserRoleAssignment]:
+    ) -> List[Any]:
         """
         Get user roles, optionally filtered by tenant
         
@@ -137,6 +142,7 @@ class RBACService:
             List[UserRoleAssignment]: List of user role assignments
         """
         
+        from ..models.rbac import UserRoleAssignment
         query = self.db.query(UserRoleAssignment).filter(
             and_(  # type: ignore
                 UserRoleAssignment.user_id == user_id,  # type: ignore
@@ -229,6 +235,7 @@ class RBACService:
             List[User]: List of users with the role in the tenant
         """
         
+        from ..models.rbac import UserRoleAssignment
         users = self.db.query(User).join(
             UserRoleAssignment, User.id == UserRoleAssignment.user_id
         ).join(
@@ -310,6 +317,7 @@ class RBACService:
             int: Number of role assignments deactivated
         """
         
+        from ..models.rbac import UserRoleAssignment
         expired_roles = self.db.query(UserRoleAssignment).filter(
             and_(  # type: ignore
                 UserRoleAssignment.is_active == True,  # type: ignore

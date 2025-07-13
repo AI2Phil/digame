@@ -6,7 +6,7 @@
 
 from .user import User
 from app.database import Base # Import Base from the centralized database module
-from .rbac import Role, Permission, UserRoleAssignment, role_permissions_table
+from .rbac import Role, Permission, role_permissions_table
 from .process_notes import ProcessNote
 from .activity import Activity
 from .activity_features import ActivityEnrichedFeature
@@ -76,7 +76,6 @@ __all__ = [
     "Base",
     "Role",
     "Permission",
-    "UserRoleAssignment",
     "role_permissions_table",
     "ProcessNote",
     "Activity",
@@ -172,13 +171,28 @@ __all__ = [
     "Workspace",              # Added real-time collaboration models
     "WorkspaceMember",
     "Channel",
-    "Message",
+    # "Message", # Removed duplicate - already defined on line 99
     "MessageReaction",
     "UserPresence",
     "CollaborationSession",
     "MessageAttachment",
     "ChannelType",
-    "MessageType",
+    # "MessageType", # Removed duplicate - already defined on line 112
     "SessionType",
     "UserStatus",
+    "MLModel",                # Added missing ML models
+    "TrainingJob",
+    "ModelPrediction",
+    "ModelEvaluation",
+    "ModelDeployment",
+    "DatasetMetadata",
+    "ExperimentRun",
+    "ModelType",
+    "ModelStatus",
+    "TrainingStatus",
+    "CourseCategory",         # Added missing learning models
+    "Course",
+    "CourseEnrollment",
+    "LearningProgress",
+    "LearningRecommendation",
 ]

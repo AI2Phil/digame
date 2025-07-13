@@ -6,7 +6,7 @@ from app.models.user import User
 from typing import Dict, Any, List
 import logging
 
-router = APIRouter(prefix="/monitoring", tags=["monitoring"])
+router = APIRouter(tags=["monitoring"])
 
 logger = logging.getLogger(__name__)
 

@@ -35,7 +35,7 @@ class Role(Base):
     users = association_proxy("user_roles", "user")  # Maintains backward compatibility
     
     # Tenant relationship
-    tenant = relationship("app.models.tenant.Tenant", back_populates="roles")
+    tenant = relationship("Tenant", back_populates="roles")
 
     # Many-to-Many relationship with Permission (unchanged)
     permissions = relationship(
@@ -79,6 +79,11 @@ class UserRoleAssignment(Base):
         UniqueConstraint('user_id', 'role_id', 'tenant_id', name='unique_user_role_tenant'),
         {'extend_existing': True}
     )
+    
+    # Add a unique registry key to prevent SQLAlchemy conflicts
+    __mapper_args__ = {
+        'polymorphic_identity': 'user_role_assignment'
+    }
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)

@@ -58,10 +58,23 @@ def create_team_member(db: Session, team_id: int, member: schemas.TeamMemberCrea
         # For now, let's just return the existing member to avoid duplicates
         return existing_member
 
+    # Convert Pydantic enum to SQLAlchemy enum
+    role_value = member.role.value if hasattr(member.role, 'value') else member.role
+    
+    # Map role values to SQLAlchemy enum members
+    role_mapping = {
+        "member": models.TeamRoleEnum.MEMBER,
+        "leader": models.TeamRoleEnum.LEADER,
+        "coordinator": models.TeamRoleEnum.COORDINATOR,
+        "admin": models.TeamRoleEnum.ADMIN
+    }
+    
+    sqlalchemy_role = role_mapping.get(role_value, models.TeamRoleEnum.MEMBER)
+
     db_member = models.TeamMember(
         team_id=team_id,
         user_id=member.user_id,
-        role=member.role,
+        role=sqlalchemy_role,
         custom_attributes=member.custom_attributes
     )
     db.add(db_member)
@@ -80,6 +93,16 @@ def update_team_member(db: Session, team_id: int, user_id: int, member_update: s
     if db_member:
         update_data = member_update.dict(exclude_unset=True)
         for key, value in update_data.items():
+            if key == 'role' and value is not None:
+                # Convert Pydantic enum to SQLAlchemy enum for role field
+                role_value = value.value if hasattr(value, 'value') else value
+                role_mapping = {
+                    "member": models.TeamRoleEnum.MEMBER,
+                    "leader": models.TeamRoleEnum.LEADER,
+                    "coordinator": models.TeamRoleEnum.COORDINATOR,
+                    "admin": models.TeamRoleEnum.ADMIN
+                }
+                value = role_mapping.get(role_value, models.TeamRoleEnum.MEMBER)
             setattr(db_member, key, value)
         db.commit()
         db.refresh(db_member)

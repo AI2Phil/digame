@@ -14,6 +14,7 @@ class PlatformUsageMetric(Base):  # type: ignore
     Platform-wide usage metrics for comprehensive analytics
     """
     __tablename__ = "platform_usage_metrics"
+    __table_args__ = {'extend_existing': True}
     
     id = Column(Integer, primary_key=True, index=True)  # type: ignore
     
@@ -51,6 +52,7 @@ class PlatformHealthMetric(Base):  # type: ignore
     Platform health and performance monitoring
     """
     __tablename__ = "platform_health_metrics"
+    __table_args__ = {'extend_existing': True}
     
     id = Column(Integer, primary_key=True, index=True)  # type: ignore
     

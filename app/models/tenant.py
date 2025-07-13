@@ -64,10 +64,10 @@ class Tenant(Base):
     address = Column(Text, nullable=True)
     
     # Relationships to User, Role, and UserRole models
-    users = relationship("User", back_populates="tenant", foreign_keys="User.tenant_id")
+    users = relationship("app.models.user.User", back_populates="tenant", foreign_keys="app.models.user.User.tenant_id")
     roles = relationship("app.models.rbac.Role", back_populates="tenant")
     user_roles = relationship("app.models.rbac.UserRoleAssignment", back_populates="tenant")
-    creator = relationship("app.models.user.User", foreign_keys=[created_by])
+    creator = relationship("User", foreign_keys=[created_by])
     manager = relationship("User", foreign_keys=[managed_by])
     
     # Other tenant-specific relationships

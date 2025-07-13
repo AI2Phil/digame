@@ -399,8 +399,9 @@ class ROICalculation(Base):  # type: ignore
         
         # Simple NPV calculation (more complex NPV would require cash flow projections)
         if getattr(self, 'discount_rate', None) and getattr(self, 'period_days', None):
+            from decimal import Decimal
             years = getattr(self, 'period_days', 365) / 365
-            discount_factor = 1 / ((1 + getattr(self, 'discount_rate', 0.1)) ** years)
+            discount_factor = Decimal(str(1 / ((1 + getattr(self, 'discount_rate', 0.1)) ** years)))
             setattr(self, 'net_present_value', float(getattr(self, 'total_benefits', 0) * discount_factor - getattr(self, 'total_investment', 0)))
 
     def update_totals(self):

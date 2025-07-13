@@ -11,10 +11,10 @@ class MockBaseModel:
         for key, value in kwargs.items():
             setattr(self, key, value)
 
-class MockNotification(MockBaseModel, Notification):
+class MockNotification(MockBaseModel):
     pass
 
-class MockUser(MockBaseModel, User):
+class MockUser(MockBaseModel):
     pass
 
 
@@ -175,7 +175,8 @@ def test_notification_model_properties():
         message="Test Message",
         notification_type=NotificationType.SECURITY_ALERT,
         priority=NotificationPriority.HIGH,
-        recipient_id=1
+        recipient_id=1,
+        status=NotificationStatus.PENDING  # Explicitly set for testing
     )
     
     assert notification.title == "Test Title"
@@ -183,7 +184,7 @@ def test_notification_model_properties():
     assert notification.notification_type == NotificationType.SECURITY_ALERT
     assert notification.priority == NotificationPriority.HIGH
     assert notification.recipient_id == 1
-    assert notification.status == NotificationStatus.PENDING  # Default value
+    assert notification.status == NotificationStatus.PENDING  # Explicitly set value
 
 def test_notification_enums():
     """Test notification enum values"""

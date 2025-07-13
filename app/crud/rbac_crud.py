@@ -3,7 +3,7 @@ from sqlalchemy.exc import IntegrityError
 from typing import List, Optional
 
 from ..models.user import User
-from ..models.rbac import Role, Permission, UserRoleAssignment
+from ..models.rbac import Role, Permission
 from ..schemas.rbac_schemas import RoleCreate, RoleUpdate, PermissionCreate, PermissionUpdate
 
 # --- Role CRUD Operations ---
@@ -98,6 +98,7 @@ def assign_role_to_user(db: Session, user_id: int, role_id: int) -> Optional[Use
     role = get_role(db, role_id)
     if user and role:
         # Check if user already has this role
+        from ..models.rbac import UserRoleAssignment
         existing_user_role = db.query(UserRoleAssignment).filter(
             UserRoleAssignment.user_id == user_id,
             UserRoleAssignment.role_id == role_id
@@ -116,6 +117,7 @@ def remove_role_from_user(db: Session, user_id: int, role_id: int) -> Optional[U
     role = get_role(db, role_id) # Fetch the role to ensure it exists
     if user and role:
         # Find and remove the UserRoleAssignment entry
+        from ..models.rbac import UserRoleAssignment
         user_role = db.query(UserRoleAssignment).filter(
             UserRoleAssignment.user_id == user_id,
             UserRoleAssignment.role_id == role_id
@@ -156,6 +158,7 @@ def assign_role_to_user_by_names(db: Session, user_id: int, role_name: str) -> O
     role = get_role_by_name(db, role_name)
     if user and role:
         # Check if user already has this role
+        from ..models.rbac import UserRoleAssignment
         existing_user_role = db.query(UserRoleAssignment).filter(
             UserRoleAssignment.user_id == user_id,
             UserRoleAssignment.role_id == role.id
@@ -174,6 +177,7 @@ def remove_role_from_user_by_names(db: Session, user_id: int, role_name: str) ->
     role = get_role_by_name(db, role_name)
     if user and role:
         # Find and remove the UserRoleAssignment entry
+        from ..models.rbac import UserRoleAssignment
         user_role = db.query(UserRoleAssignment).filter(
             UserRoleAssignment.user_id == user_id,
             UserRoleAssignment.role_id == role.id
