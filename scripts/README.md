@@ -71,8 +71,8 @@ This directory contains utility scripts for the Digame platform, including devel
 | [`data-migration/validate_data_integrity.py`](#data-migrationvalidate_data_integritypy) | Data integrity validation | `python data-migration/validate_data_integrity.py` | ✅ Active |
 | [`find-port.js`](#find-portjs) | Dynamic port detection utility | `node find-port.js` | ✅ Active |
 | [`start-test-server.js`](#start-test-serverjs) | Test server startup with dynamic port management | `node start-test-server.js` | ✅ Active |
-| [`fix_database_schema.py`](#fix_database_schemapy) | SQLAlchemy model conflicts and schema fixes | `python fix_database_schema.py` | ✅ Active |
-| [`test_sqlalchemy_fixes.py`](#test_sqlalchemy_fixespy) | SQLAlchemy fixes validation and testing | `python test_sqlalchemy_fixes.py` | ✅ Active |
+| [`fix_database_schema.py`](#fix_database_schemapy) | SQLAlchemy model conflicts and schema fixes | `python scripts/fix_database_schema.py` | ✅ Active |
+| [`test_sqlalchemy_fixes.py`](#test_sqlalchemy_fixespy) | SQLAlchemy fixes validation and testing | `python scripts/test_sqlalchemy_fixes.py` | ✅ Active |
 | [`start-dev.sh`](#start-devsh-integration) | Frontend-backend development environment startup | `./start-dev.sh` | ✅ Active |
 | [`stop-dev.sh`](#stop-devsh) | Frontend-backend development environment shutdown | `./stop-dev.sh` | ✅ Active |
 | [`setup-test-env.sh`](#setup-test-envsh) | Test environment setup with backend services | `./setup-test-env.sh` | ✅ Active |

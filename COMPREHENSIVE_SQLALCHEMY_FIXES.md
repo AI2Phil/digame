@@ -98,7 +98,7 @@ Add database schema fix step to `.github/workflows/ci.yml`:
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_db
         run: |
-          python fix_database_schema.py
+          python scripts/fix_database_schema.py
 
       - name: Run database migrations
         env:
@@ -134,10 +134,10 @@ Add database schema fix step to `.github/workflows/ci.yml`:
 ### Local Testing
 ```bash
 # Test SQLAlchemy fixes
-python test_sqlalchemy_fixes.py
+python scripts/test_sqlalchemy_fixes.py
 
 # Test database schema fixes
-python fix_database_schema.py
+python scripts/fix_database_schema.py
 
 # Test model imports
 python -c "from app.database import Base; import app.models; print('✓ All models imported successfully')"

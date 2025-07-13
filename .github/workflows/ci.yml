@@ -149,7 +149,7 @@ jobs:
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_db
         run: |
-          python fix_database_schema.py
+          python scripts/fix_database_schema.py
 
       - name: Run database migrations
         env:
@@ -290,7 +290,7 @@ jobs:
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/e2e_test_db
         run: |
-          python fix_database_schema.py
+          python scripts/fix_database_schema.py
 
       - name: Setup database
         env:
