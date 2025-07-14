@@ -1,4 +1,4 @@
-# 🛠️ Digame Platform CLI User Guide
+# 🛠️ Digame Platform CLI User Guide v1
 
 Welcome to the **Digame Platform CLI Tools** - comprehensive command-line interfaces for database management, intelligent caching, and system administration.
 

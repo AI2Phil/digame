@@ -227,41 +227,116 @@ jobs:
           exit 1
         }
 
-    - name: Debug frontend startup
+    - name: Check system resources
+      run: |
+        echo "🖥️ System Resource Check:"
+        echo "Memory usage:"
+        free -h
+        echo "Disk usage:"
+        df -h
+        echo "CPU info:"
+        nproc
+        echo "Available processes:"
+        ps aux | wc -l
+
+    - name: Pre-flight checks
       working-directory: ./frontend
       run: |
-        echo "🔍 Debugging frontend startup..."
+        echo "🔍 Pre-flight checks..."
         echo "Node version: $(node --version)"
         echo "NPM version: $(npm --version)"
-        echo "Current directory: $(pwd)"
-        echo "Frontend directory contents:"
-        ls -la
+        
+        # Verify all dependencies
+        echo "Checking dependencies..."
+        npm ls --depth=0 || echo "Some dependencies may be missing"
+        
+        # Check Next.js installation
+        echo "Next.js version:"
+        npx next --version
+        
+        # Verify Next.js info
+        echo "Next.js configuration info:"
+        npx next info
+        
+        # Verify build integrity
+        if [ -d ".next" ]; then
+          echo "✅ Build found, verifying..."
+          ls -la .next/
+          # Verify critical files exist
+          if [ -f ".next/BUILD_ID" ]; then
+            echo "✅ BUILD_ID found: $(cat .next/BUILD_ID)"
+          else
+            echo "⚠️ BUILD_ID not found"
+          fi
+          ls .next/static/ 2>/dev/null || echo "⚠️ No static files found"
+        else
+          echo "⚠️ No .next directory found"
+        fi
+        
         echo "Package.json scripts:"
         cat package.json | grep -A 10 '"scripts"'
+        
         echo "Next.js config:"
         if [ -f "next.config.js" ]; then
           cat next.config.js
+        elif [ -f "next.config.mjs" ]; then
+          cat next.config.mjs
         else
-          echo "No next.config.js found"
+          echo "No next.config.js/mjs found"
         fi
-        echo "Environment variables:"
-        env | grep -E "(NODE|NPM|NEXT)" || echo "No Node/NPM/Next env vars"
+
+    - name: Verify build before start
+      working-directory: ./frontend
+      run: |
+        echo "🔧 Verifying build before starting server..."
+        if [ ! -d ".next" ]; then
+          echo "No .next directory, building fresh..."
+          npm run build
+          
+          # Verify build completed successfully
+          if [ ! -d ".next" ]; then
+            echo "❌ Build failed - no .next directory created"
+            exit 1
+          fi
+        fi
+        
+        # Verify critical files exist
+        if [ ! -f ".next/BUILD_ID" ]; then
+          echo "❌ Invalid build - BUILD_ID missing"
+          echo "Rebuilding..."
+          rm -rf .next
+          npm run build
+        fi
+        
+        echo "✅ Build verification complete"
+        ls -la .next/
 
     - name: Start frontend server with debugging
       working-directory: ./frontend
+      env:
+        NODE_ENV: production
+        NEXT_TELEMETRY_DISABLED: 1
+        PORT: 3000
       run: |
         echo "🚀 Starting frontend server..."
         
-        # Start frontend server in background with detailed logging
-        npm run dev &
+        # Kill any existing processes on ports 3000/3001
+        lsof -ti:3000 | xargs kill -9 2>/dev/null || true
+        lsof -ti:3001 | xargs kill -9 2>/dev/null || true
+        
+        # Start frontend server with explicit port and hostname
+        echo "Starting with explicit configuration..."
+        npm run dev -- --port 3000 --hostname 0.0.0.0 > ../frontend.log 2>&1 &
         FRONTEND_PID=$!
         echo $FRONTEND_PID > ../frontend.pid
         echo "Frontend PID: $FRONTEND_PID"
         
-        # Wait for frontend to start with detailed debugging
-        echo "⏳ Waiting for frontend server to start..."
-        for i in {1..60}; do
-          echo "Attempt $i/60 - Checking frontend status..."
+        # Extended wait with faster checks - 240 seconds total
+        echo "⏳ Waiting for frontend server to start (up to 4 minutes)..."
+        for i in {1..120}; do
+          if [ $((i % 20)) -eq 1 ]; then
+            echo "Attempt $i/120 - Checking frontend status..."
+          fi
           
           # Check if process is still running
           if ! ps -p $FRONTEND_PID > /dev/null 2>&1; then
@@ -270,36 +345,43 @@ jobs:
             ps aux | grep -E "(node|npm|next)" || echo "No Node processes found"
             echo "Port usage:"
             netstat -tulpn | grep LISTEN || echo "No listening ports found"
+            echo "Frontend logs:"
+            cat ../frontend.log 2>/dev/null || echo "No frontend.log available"
             exit 1
           fi
           
-          # Check if frontend is responding
+          # Check if frontend is responding on multiple ports
           if curl -f http://localhost:3000 2>/dev/null; then
             echo "✅ Frontend server is ready on port 3000!"
             break
           elif curl -f http://localhost:3001 2>/dev/null; then
             echo "✅ Frontend server is ready on port 3001!"
             break
+          elif curl -f http://127.0.0.1:3000 2>/dev/null; then
+            echo "✅ Frontend server is ready on 127.0.0.1:3000!"
+            break
           fi
           
-          # Show detailed status every 10 attempts
-          if [ $((i % 10)) -eq 0 ]; then
+          # Show detailed status every 20 attempts
+          if [ $((i % 20)) -eq 0 ]; then
             echo "📊 Status check at attempt $i:"
             echo "Process status:"
             ps aux | grep -E "(node|npm|next)" | head -5 || echo "No Node processes"
             echo "Port status:"
             netstat -tulpn | grep LISTEN | grep -E "(3000|3001)" || echo "Ports 3000/3001 not listening"
-            echo "Recent logs (if available):"
-            tail -10 ../frontend.log 2>/dev/null || echo "No frontend.log available"
+            echo "Memory usage:"
+            free -h | head -2
+            echo "Recent logs:"
+            tail -5 ../frontend.log 2>/dev/null || echo "No recent logs"
           fi
           
           sleep 2
         done
         
-        # Final check and error reporting
-        if ! curl -f http://localhost:3000 2>/dev/null && ! curl -f http://localhost:3001 2>/dev/null; then
-          echo "❌ Frontend failed to start after 120 seconds"
-          echo "Final diagnostics:"
+        # Final comprehensive check
+        if ! curl -f http://localhost:3000 2>/dev/null && ! curl -f http://localhost:3001 2>/dev/null && ! curl -f http://127.0.0.1:3000 2>/dev/null; then
+          echo "❌ Frontend failed to start after 240 seconds"
+          echo "🔍 Final diagnostics:"
           echo "Process list:"
           ps aux | grep -E "(node|npm|next)"
           echo "Port usage:"
@@ -310,8 +392,13 @@ jobs:
           else
             echo "Process has died"
           fi
-          echo "Attempting to get logs..."
-          tail -50 ../frontend.log 2>/dev/null || echo "No frontend.log available"
+          echo "System resources:"
+          free -h
+          df -h
+          echo "Complete frontend logs:"
+          cat ../frontend.log 2>/dev/null || echo "No frontend.log available"
+          echo "Next.js build debug:"
+          npx next build --debug 2>&1 || echo "Build debug failed"
           exit 1
         fi
 
