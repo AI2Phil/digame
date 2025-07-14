@@ -8,8 +8,8 @@ from .user import User
 from app.database import Base # Import Base from the centralized database module
 # Import only specific classes from rbac module to avoid UserRoleAssignment conflicts
 from .rbac import Role, Permission, role_permissions_table
-# Note: UserRoleAssignment is intentionally NOT imported here to prevent SQLAlchemy registry conflicts
-# Import UserRoleAssignment through app.models.rbac_imports when needed
+# Import UserRoleAssignment from rbac_imports to resolve registry conflicts
+from .rbac_imports import UserRoleAssignment
 from .process_notes import ProcessNote
 from .activity import Activity
 from .activity_features import ActivityEnrichedFeature
@@ -51,7 +51,9 @@ from .analytics import AnalyticsModel, AnalyticsPrediction, AnalyticsTrainingJob
 from .dashboard_models import ProductivityChartDataPoint, ProductivityChart, ActivityBreakdownItem, ActivityBreakdown, ProductivityMetric, ProductivityMetricsGroup, RecentActivityItem, RecentActivities
 from .reporting import Report, ReportExecution, ReportSchedule, ReportSubscription, ReportTemplate, ReportAuditLog, ReportCache
 # from .dashboard_custom import AnalyticsDashboard, DashboardWidget, ReportDefinition # Added for custom dashboards - temporarily disabled due to tenant dependency
-from .tenant import Tenant, TenantSettings, TenantInvitation, TenantAuditLog # Added tenant models
+# Note: Tenant is intentionally NOT imported here to prevent SQLAlchemy registry conflicts
+# Import Tenant through app.models.tenant when needed
+from .tenant import TenantSettings, TenantInvitation, TenantAuditLog # Added tenant models (excluding Tenant)
 # from .enterprise_sso import TenantSSOConfiguration # Added enterprise SSO models - temporarily disabled
 from .digital_twin import (
     DigitalTwin, ActivityPattern, BehavioralLearning, PredictionModel,
@@ -79,7 +81,7 @@ __all__ = [
     "Base",
     "Role",
     "Permission",
-    # "UserRoleAssignment", # Removed to prevent SQLAlchemy registry conflicts - import directly from rbac module
+    "UserRoleAssignment", # Re-added from rbac_imports to resolve registry conflicts
     "role_permissions_table",
     "ProcessNote",
     "Activity",
@@ -154,7 +156,7 @@ __all__ = [
     # "AnalyticsDashboard", # Added for custom dashboards - temporarily disabled
     # "DashboardWidget",    # Added for custom dashboards - temporarily disabled
     # "ReportDefinition",   # Added for custom dashboards - temporarily disabled
-    "Tenant",             # Added tenant models
+    # "Tenant",             # Removed to prevent SQLAlchemy registry conflicts - import directly from tenant module
     "TenantSettings",
     "TenantInvitation",
     "TenantAuditLog",

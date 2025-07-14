@@ -23,11 +23,10 @@ def mock_communication_style_service():
 
 @pytest.fixture
 def mock_current_active_user_for_comm_style():
-    user = create_mock_model(UserModel, id=2, email="comm_router_user@example.com", full_name="Comm Router Test User", is_active=True)
+    user = create_mock_model(UserModel, id=2, email="comm_router_user@example.com", full_name="Comm Router Test User", is_active=True, tenants=[])
     # Ensure this mock user has `tenants` attribute if service relies on it, even if empty for some tests.
     # For router tests, the service is mocked, so direct user structure might be less critical
     # unless get_current_active_user itself does deep checks.
-    user.tenants = []
     return user
 
 # --- Router Tests ---
@@ -150,7 +149,7 @@ def test_analyze_endpoint_invalid_input_too_short(client, mock_current_active_us
     assert response.status_code == 422 # Unprocessable Entity
     data = response.json()
     assert "detail" in data
-    assert any("ensure this value has at least 10 characters" in err["msg"].lower() for err in data["detail"] if err["loc"] == ["body", "text_input"])
+    assert any("string should have at least 10 characters" in err["msg"].lower() for err in data["detail"] if err["loc"] == ["body", "text_input"])
     app.dependency_overrides.clear()
 
 

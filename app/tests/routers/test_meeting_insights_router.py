@@ -23,8 +23,8 @@ def mock_meeting_insights_service():
 
 @pytest.fixture
 def mock_current_active_user_for_insights(): # Renamed for clarity
-    user = create_mock_model(UserModel, id=4, email="insights_router_user@example.com", full_name="Insights Router Test User", is_active=True)
-    user.tenants = [] # Initialize as empty, can be populated by mock_tenant_user_link if needed by get_current_active_user
+    user = create_mock_model(UserModel, id=4, email="insights_router_user@example.com", full_name="Insights Router Test User", is_active=True, tenants=[])
+    # Initialize as empty, can be populated by mock_tenant_user_link if needed by get_current_active_user
     return user
 
 # --- Router Tests ---
@@ -147,7 +147,7 @@ def test_analyze_endpoint_invalid_input_too_short(client, mock_current_active_us
     assert response.status_code == 422 # Unprocessable Entity
     data = response.json()
     assert "detail" in data
-    assert any("ensure this value has at least 50 characters" in err["msg"].lower() for err in data["detail"] if err["loc"] == ["body", "meeting_text"])
+    assert any("string should have at least 50 characters" in err["msg"].lower() for err in data["detail"] if err["loc"] == ["body", "meeting_text"])
 
 def test_analyze_endpoint_missing_text_input(client, mock_current_active_user_for_insights):
     # Arrange

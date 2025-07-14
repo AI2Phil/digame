@@ -14,6 +14,9 @@ try:
 except ImportError:
     from app.database import Base
 
+# Import for registry cleanup
+from sqlalchemy.orm import clear_mappers
+
 try:
     from app.main import app
 except ImportError:
@@ -70,33 +73,33 @@ try:
 except ImportError:
     pass
 
+# Registry cleanup removed - clear_mappers() breaks model constructors
+# Using database isolation instead to prevent conflicts
+
 @pytest.fixture(scope="function")
 def isolated_engine():
     """
     Create an isolated SQLite engine for each test with proper isolation.
-    Uses a unique temporary file to avoid conflicts between tests.
+    Uses a unique in-memory database to avoid conflicts between tests.
     """
-    # Create a unique temporary database file for each test
-    temp_db = tempfile.NamedTemporaryFile(delete=False, suffix='.db')
-    temp_db.close()
-    
-    database_url = f"sqlite:///{temp_db.name}"
+    # Use unique in-memory database with UUID to ensure complete isolation
+    unique_id = str(uuid.uuid4()).replace('-', '')
+    database_url = f"sqlite:///:memory:?cache=shared&uri=true&database={unique_id}"
     
     engine = create_engine(
         database_url,
-        connect_args={"check_same_thread": False},
+        connect_args={
+            "check_same_thread": False,
+            "isolation_level": None  # Autocommit mode for better isolation
+        },
         poolclass=StaticPool,
         echo=False  # Set to True for debugging
     )
     
     yield engine
     
-    # Clean up: close all connections and remove temp file
+    # Clean up: close all connections
     engine.dispose()
-    try:
-        os.unlink(temp_db.name)
-    except OSError:
-        pass
 
 @pytest.fixture(scope="function")
 def db_session(isolated_engine) -> Generator[Session, None, None]:
@@ -130,6 +133,7 @@ def db_session(isolated_engine) -> Generator[Session, None, None]:
         
         # Create all tables fresh with enhanced error handling for index conflicts
         try:
+            # Create tables without clearing mappers to preserve model constructors
             Base.metadata.create_all(bind=isolated_engine)
         except Exception as create_error:
             # Handle specific SQLite index conflicts more gracefully

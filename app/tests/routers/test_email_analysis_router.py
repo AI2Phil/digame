@@ -24,8 +24,7 @@ def mock_email_analysis_service():
 
 @pytest.fixture
 def mock_current_active_user_for_email_analysis(): # Renamed for clarity
-    user = create_mock_model(UserModel, id=5, email="email_router_user@example.com", full_name="Email Router Test User", is_active=True)
-    user.tenants = [] # Initialize as empty
+    user = create_mock_model(UserModel, id=5, email="email_router_user@example.com", full_name="Email Router Test User", is_active=True, tenants=[])
     return user
 
 @pytest.fixture
@@ -104,10 +103,17 @@ def test_analyze_endpoint_success(client, mock_email_analysis_service, mock_curr
     # The service is typed as List[Dict[str, Any]]. FastAPI/Pydantic might handle this conversion.
     # For the mock, we just care that the data content matches.
     # The `sample_email_request_payload["emails_data"]` is already a list of dicts.
-    mock_email_analysis_service.analyze_email_data.assert_called_once_with(
-        current_user=mock_current_active_user_for_email_analysis,
-        emails_data=sample_email_request_payload["emails_data"]
-    )
+    # The router converts the JSON payload to EmailDataItem objects, so we need to check for those
+    call_args = mock_email_analysis_service.analyze_email_data.call_args
+    assert call_args[1]['current_user'] == mock_current_active_user_for_email_analysis
+    
+    # Check that emails_data contains EmailDataItem objects with the expected content
+    emails_data = call_args[1]['emails_data']
+    assert len(emails_data) == 2
+    assert emails_data[0].subject == "Update on Project X"
+    assert emails_data[0].sender == "manager@example.com"
+    assert emails_data[1].subject == "Quick Question"
+    assert emails_data[1].sender == "colleague@example.com"
 
 def test_analyze_endpoint_service_raises_http_exception(client, mock_email_analysis_service, mock_current_active_user_for_email_analysis, sample_email_request_payload):
     # Arrange
@@ -160,7 +166,8 @@ def test_analyze_endpoint_invalid_input_empty_list(client, mock_current_active_u
     assert response.status_code == 422 # Unprocessable Entity
     data = response.json()
     assert "detail" in data
-    assert any("ensure this value has at least 1 item" in err["msg"].lower() for err in data["detail"] if err["loc"] == ["body", "emails_data"])
+    # Pydantic v2 uses different error messages
+    assert any("list should have at least 1 item" in err["msg"].lower() or "ensure this value has at least 1 item" in err["msg"].lower() for err in data["detail"] if err["loc"] == ["body", "emails_data"])
 
 def test_analyze_endpoint_missing_emails_data_field(client, mock_current_active_user_for_email_analysis):
     # Arrange

@@ -85,166 +85,209 @@ def create_mock_model(model_class, **kwargs):
     return MockModel(**kwargs)
 
 
-def test_get_analysis_success(mock_db_session, mock_ai_integration_service, mock_user_model, mock_tenant_model_comm_style, mock_user_setting_model_comm_style, mock_tenant_user_link_comm_style):
+async def test_get_analysis_success(mock_db_session, mock_ai_integration_service, mock_user_model, mock_tenant_model_comm_style, mock_user_setting_model_comm_style, mock_tenant_user_link_comm_style):
     # Arrange
     mock_tenant_model_comm_style.features = {"communication_style_analysis": True}
+    mock_user_setting_model_comm_style.api_keys = json.dumps({"openai_api_key": "test-key"})
     service = CommunicationStyleService(db=mock_db_session, ai_integration_service=mock_ai_integration_service)
     text_input = "This is a test text, please analyze."
 
-    with patch('digame.app.crud.user_setting_crud.get_user_setting', return_value=mock_user_setting_model_comm_style):
+    # Mock the AI response
+    mock_ai_response = {
+        "choices": [{
+            "message": {
+                "content": json.dumps({
+                    "identified_style": "Professional",
+                    "confidence_score": 0.85,
+                    "explanation": "The text uses formal language and clear structure."
+                })
+            }
+        }]
+    }
+    mock_ai_integration_service.make_request.return_value = mock_ai_response
+
+    with patch('app.crud.user_crud.get_user', return_value=mock_user_model), \
+         patch('app.crud.tenant_crud.get_tenant_by_id', return_value=mock_tenant_model_comm_style), \
+         patch('app.crud.user_setting_crud.get_user_setting', return_value=mock_user_setting_model_comm_style):
         # Action
-        analysis = service.get_communication_style_analysis(current_user=mock_user_model, text_input=text_input)
+        analysis = await service.get_communication_style_analysis(current_user=mock_user_model, text_input=text_input)
 
         # Assertion
         assert isinstance(analysis, dict)
-        assert analysis.get("style") is not None
-        assert analysis.get("model_type") == "premium"
+        assert analysis.get("identified_style") == "Professional"
+        assert analysis.get("confidence_score") == 0.85
         assert analysis.get("raw_text_length") == len(text_input)
+        assert analysis.get("model_provider") == "openai"
 
-def test_get_analysis_feature_disabled(mock_db_session, mock_ai_integration_service, mock_user_model, mock_tenant_model_comm_style, mock_tenant_user_link_comm_style):
+async def test_get_analysis_feature_disabled(mock_db_session, mock_ai_integration_service, mock_user_model, mock_tenant_model_comm_style, mock_tenant_user_link_comm_style):
     # Arrange
     mock_tenant_model_comm_style.features = {"communication_style_analysis": False}
     service = CommunicationStyleService(db=mock_db_session, ai_integration_service=mock_ai_integration_service)
 
-    # Action & Assertion
-    with pytest.raises(HTTPException) as exc_info:
-        service.get_communication_style_analysis(current_user=mock_user_model, text_input="Test")
+    with patch('app.crud.user_crud.get_user', return_value=mock_user_model), \
+         patch('app.crud.tenant_crud.get_tenant_by_id', return_value=mock_tenant_model_comm_style):
+        # Action & Assertion
+        with pytest.raises(HTTPException) as exc_info:
+            await service.get_communication_style_analysis(current_user=mock_user_model, text_input="Test")
 
-    assert exc_info.value.status_code == 403
-    assert "feature is not enabled" in exc_info.value.detail.lower()
+        assert exc_info.value.status_code == 403
+        assert "feature is not enabled" in exc_info.value.detail.lower()
 
-def test_get_analysis_no_user_settings(mock_db_session, mock_ai_integration_service, mock_user_model, mock_tenant_model_comm_style, mock_tenant_user_link_comm_style):
+async def test_get_analysis_no_user_settings(mock_db_session, mock_ai_integration_service, mock_user_model, mock_tenant_model_comm_style, mock_tenant_user_link_comm_style):
     # Arrange
     mock_tenant_model_comm_style.features = {"communication_style_analysis": True}
     service = CommunicationStyleService(db=mock_db_session, ai_integration_service=mock_ai_integration_service)
 
-    with patch('digame.app.crud.user_setting_crud.get_user_setting', return_value=None) as mock_get_settings:
+    with patch('app.crud.user_crud.get_user', return_value=mock_user_model), \
+         patch('app.crud.tenant_crud.get_tenant_by_id', return_value=mock_tenant_model_comm_style), \
+         patch('app.crud.user_setting_crud.get_user_setting', return_value=None) as mock_get_settings:
         # Action & Assertion
         with pytest.raises(HTTPException) as exc_info:
-            service.get_communication_style_analysis(current_user=mock_user_model, text_input="Test")
+            await service.get_communication_style_analysis(current_user=mock_user_model, text_input="Test")
 
         assert exc_info.value.status_code == 402
         assert "api key for communication style analysis not found" in exc_info.value.detail.lower()
         mock_get_settings.assert_called_once_with(mock_db_session, user_id=mock_user_model.id)
 
-def test_get_analysis_no_api_key_in_settings(mock_db_session, mock_ai_integration_service, mock_user_model, mock_tenant_model_comm_style, mock_user_setting_model_comm_style, mock_tenant_user_link_comm_style):
+async def test_get_analysis_no_api_key_in_settings(mock_db_session, mock_ai_integration_service, mock_user_model, mock_tenant_model_comm_style, mock_user_setting_model_comm_style, mock_tenant_user_link_comm_style):
     # Arrange
     mock_tenant_model_comm_style.features = {"communication_style_analysis": True}
     mock_user_setting_model_comm_style.api_keys = json.dumps({}) # No specific key
     service = CommunicationStyleService(db=mock_db_session, ai_integration_service=mock_ai_integration_service)
 
-    with patch('digame.app.crud.user_setting_crud.get_user_setting', return_value=mock_user_setting_model_comm_style):
+    with patch('app.crud.user_crud.get_user', return_value=mock_user_model), \
+         patch('app.crud.tenant_crud.get_tenant_by_id', return_value=mock_tenant_model_comm_style), \
+         patch('app.crud.user_setting_crud.get_user_setting', return_value=mock_user_setting_model_comm_style):
         # Action & Assertion
         with pytest.raises(HTTPException) as exc_info:
-            service.get_communication_style_analysis(current_user=mock_user_model, text_input="Test")
+            await service.get_communication_style_analysis(current_user=mock_user_model, text_input="Test")
 
         assert exc_info.value.status_code == 402
-        assert "'communication_style_service_key' is missing" in exc_info.value.detail.lower()
+        assert "'openai_api_key' for communication style analysis is missing" in exc_info.value.detail.lower()
 
-def test_get_analysis_empty_api_key(mock_db_session, mock_ai_integration_service, mock_user_model, mock_tenant_model_comm_style, mock_user_setting_model_comm_style, mock_tenant_user_link_comm_style):
+async def test_get_analysis_empty_api_key(mock_db_session, mock_ai_integration_service, mock_user_model, mock_tenant_model_comm_style, mock_user_setting_model_comm_style, mock_tenant_user_link_comm_style):
     # Arrange
     mock_tenant_model_comm_style.features = {"communication_style_analysis": True}
     mock_user_setting_model_comm_style.api_keys = json.dumps({"openai_api_key": ""})
     service = CommunicationStyleService(db=mock_db_session, ai_integration_service=mock_ai_integration_service)
 
-    with patch('digame.app.crud.user_setting_crud.get_user_setting', return_value=mock_user_setting_model_comm_style):
+    with patch('app.crud.user_crud.get_user', return_value=mock_user_model), \
+         patch('app.crud.tenant_crud.get_tenant_by_id', return_value=mock_tenant_model_comm_style), \
+         patch('app.crud.user_setting_crud.get_user_setting', return_value=mock_user_setting_model_comm_style):
         # Action & Assertion
         with pytest.raises(HTTPException) as exc_info:
-            service.get_communication_style_analysis(current_user=mock_user_model, text_input="Test")
+            await service.get_communication_style_analysis(current_user=mock_user_model, text_input="Test")
 
-        assert exc_info.value.status_code == 400
-        assert "api key must be provided" in exc_info.value.detail.lower() # From mock client's ValueError
+        assert exc_info.value.status_code == 402
+        assert "'openai_api_key' for communication style analysis is missing" in exc_info.value.detail.lower()
 
-def test_get_analysis_invalid_api_key_external_error(mock_db_session, mock_ai_integration_service, mock_user_model, mock_tenant_model_comm_style, mock_user_setting_model_comm_style, mock_tenant_user_link_comm_style):
+async def test_get_analysis_invalid_api_key_external_error(mock_db_session, mock_ai_integration_service, mock_user_model, mock_tenant_model_comm_style, mock_user_setting_model_comm_style, mock_tenant_user_link_comm_style):
     # Arrange
     mock_tenant_model_comm_style.features = {"communication_style_analysis": True}
     mock_user_setting_model_comm_style.api_keys = json.dumps({"openai_api_key": "invalid_comm_key"})
     service = CommunicationStyleService(db=mock_db_session, ai_integration_service=mock_ai_integration_service)
 
-    with patch('digame.app.crud.user_setting_crud.get_user_setting', return_value=mock_user_setting_model_comm_style):
+    # Mock AI service to raise an exception for invalid key
+    mock_ai_integration_service.make_request.side_effect = Exception("Invalid API key")
+
+    with patch('app.crud.user_crud.get_user', return_value=mock_user_model), \
+         patch('app.crud.tenant_crud.get_tenant_by_id', return_value=mock_tenant_model_comm_style), \
+         patch('app.crud.user_setting_crud.get_user_setting', return_value=mock_user_setting_model_comm_style):
         # Action & Assertion
         with pytest.raises(HTTPException) as exc_info:
-            service.get_communication_style_analysis(current_user=mock_user_model, text_input="Test")
+            await service.get_communication_style_analysis(current_user=mock_user_model, text_input="Test")
 
-        assert exc_info.value.status_code == 400
-        assert "invalid api key provided" in exc_info.value.detail.lower() # From mock client's ValueError
+        assert exc_info.value.status_code == 503
+        assert "communication style analysis request to ai provider failed" in exc_info.value.detail.lower()
 
-def test_get_analysis_user_not_in_tenant(mock_db_session, mock_ai_integration_service, mock_user_model):
+async def test_get_analysis_user_not_in_tenant(mock_db_session, mock_ai_integration_service, mock_user_model):
     # Arrange
     mock_user_model.tenant_id = None  # User not associated with any tenant
     mock_user_model.tenant = None
     service = CommunicationStyleService(db=mock_db_session, ai_integration_service=mock_ai_integration_service)
 
-    # Action & Assertion
-    with pytest.raises(HTTPException) as exc_info:
-        service.get_communication_style_analysis(current_user=mock_user_model, text_input="Test")
+    with patch('app.crud.user_crud.get_user', return_value=mock_user_model):
+        # Action & Assertion
+        with pytest.raises(HTTPException) as exc_info:
+            await service.get_communication_style_analysis(current_user=mock_user_model, text_input="Test")
 
-    assert exc_info.value.status_code == 403
-    assert "user not associated with any tenant" in exc_info.value.detail.lower()
+        assert exc_info.value.status_code == 403
+        assert "user not associated with any tenant" in exc_info.value.detail.lower()
 
-def test_get_analysis_corrupted_tenant_features_json(mock_db_session, mock_ai_integration_service, mock_user_model, mock_tenant_model_comm_style, mock_tenant_user_link_comm_style):
+async def test_get_analysis_corrupted_tenant_features_json(mock_db_session, mock_ai_integration_service, mock_user_model, mock_tenant_model_comm_style, mock_tenant_user_link_comm_style):
     # Arrange
     mock_tenant_model_comm_style.features = '{"communication_style_analysis": True' # Malformed JSON
     service = CommunicationStyleService(db=mock_db_session, ai_integration_service=mock_ai_integration_service)
 
-    # Action & Assertion
-    with pytest.raises(HTTPException) as exc_info:
-        service.get_communication_style_analysis(current_user=mock_user_model, text_input="Test")
+    with patch('app.crud.user_crud.get_user', return_value=mock_user_model), \
+         patch('app.crud.tenant_crud.get_tenant_by_id', return_value=mock_tenant_model_comm_style):
+        # Action & Assertion
+        with pytest.raises(HTTPException) as exc_info:
+            await service.get_communication_style_analysis(current_user=mock_user_model, text_input="Test")
 
-    assert exc_info.value.status_code == 500
-    assert "error reading tenant configuration" in exc_info.value.detail.lower()
+        assert exc_info.value.status_code == 500
+        assert "error parsing tenant features" in exc_info.value.detail.lower()
 
-def test_get_analysis_corrupted_user_settings_api_keys_json(mock_db_session, mock_ai_integration_service, mock_user_model, mock_tenant_model_comm_style, mock_user_setting_model_comm_style, mock_tenant_user_link_comm_style):
+async def test_get_analysis_corrupted_user_settings_api_keys_json(mock_db_session, mock_ai_integration_service, mock_user_model, mock_tenant_model_comm_style, mock_user_setting_model_comm_style, mock_tenant_user_link_comm_style):
     # Arrange
     mock_tenant_model_comm_style.features = {"communication_style_analysis": True}
     mock_user_setting_model_comm_style.api_keys = '{"openai_api_key": "valid"' # Malformed JSON
     service = CommunicationStyleService(db=mock_db_session, ai_integration_service=mock_ai_integration_service)
 
-    with patch('digame.app.crud.user_setting_crud.get_user_setting', return_value=mock_user_setting_model_comm_style):
+    with patch('app.crud.user_crud.get_user', return_value=mock_user_model), \
+         patch('app.crud.tenant_crud.get_tenant_by_id', return_value=mock_tenant_model_comm_style), \
+         patch('app.crud.user_setting_crud.get_user_setting', return_value=mock_user_setting_model_comm_style):
         # Action & Assertion
         with pytest.raises(HTTPException) as exc_info:
-            service.get_communication_style_analysis(current_user=mock_user_model, text_input="Test")
+            await service.get_communication_style_analysis(current_user=mock_user_model, text_input="Test")
 
         assert exc_info.value.status_code == 500
         assert "error parsing your api key settings" in exc_info.value.detail.lower()
 
-def test_get_analysis_tenant_link_missing_tenant_attr(mock_db_session, mock_ai_integration_service, mock_user_model):
+async def test_get_analysis_tenant_link_missing_tenant_attr(mock_db_session, mock_ai_integration_service, mock_user_model):
     # Arrange
     # Simulate a user with tenant_id but no tenant relationship loaded
     mock_user_model.tenant_id = 1
     mock_user_model.tenant = None  # Simulate missing tenant relationship
     service = CommunicationStyleService(db=mock_db_session, ai_integration_service=mock_ai_integration_service)
 
-    # Action & Assertion
-    with pytest.raises(HTTPException) as exc_info:
-        service.get_communication_style_analysis(current_user=mock_user_model, text_input="Test")
+    with patch('app.crud.user_crud.get_user', return_value=mock_user_model), \
+         patch('app.crud.tenant_crud.get_tenant_by_id', return_value=None):  # Tenant not found
+        # Action & Assertion
+        with pytest.raises(HTTPException) as exc_info:
+            await service.get_communication_style_analysis(current_user=mock_user_model, text_input="Test")
 
-    assert exc_info.value.status_code == 500 # Or specific error based on implementation
-    assert "tenant linkage error" in exc_info.value.detail.lower()
+        assert exc_info.value.status_code == 403
+        assert "tenant information not found" in exc_info.value.detail.lower()
 
-def test_get_analysis_tenant_features_none(mock_db_session, mock_ai_integration_service, mock_user_model, mock_tenant_model_comm_style, mock_tenant_user_link_comm_style):
+async def test_get_analysis_tenant_features_none(mock_db_session, mock_ai_integration_service, mock_user_model, mock_tenant_model_comm_style, mock_tenant_user_link_comm_style):
     # Arrange
     mock_tenant_model_comm_style.features = None # Features is None
     service = CommunicationStyleService(db=mock_db_session, ai_integration_service=mock_ai_integration_service)
 
-    # Action & Assertion
-    with pytest.raises(HTTPException) as exc_info:
-        service.get_communication_style_analysis(current_user=mock_user_model, text_input="Test")
+    with patch('app.crud.user_crud.get_user', return_value=mock_user_model), \
+         patch('app.crud.tenant_crud.get_tenant_by_id', return_value=mock_tenant_model_comm_style):
+        # Action & Assertion
+        with pytest.raises(HTTPException) as exc_info:
+            await service.get_communication_style_analysis(current_user=mock_user_model, text_input="Test")
 
-    assert exc_info.value.status_code == 403 # Because .get("communication_style_analysis") on {} will be None
-    assert "feature is not enabled" in exc_info.value.detail.lower()
+        assert exc_info.value.status_code == 403 # Because .get("communication_style_analysis") on {} will be None
+        assert "feature is not enabled" in exc_info.value.detail.lower()
 
-def test_get_analysis_input_text_empty_mock_client_error(mock_db_session, mock_ai_integration_service, mock_user_model, mock_tenant_model_comm_style, mock_user_setting_model_comm_style, mock_tenant_user_link_comm_style):
+async def test_get_analysis_input_text_empty_mock_client_error(mock_db_session, mock_ai_integration_service, mock_user_model, mock_tenant_model_comm_style, mock_user_setting_model_comm_style, mock_tenant_user_link_comm_style):
     # Test how the service handles an error from the mock client if text is empty
     # Arrange
     mock_tenant_model_comm_style.features = {"communication_style_analysis": True}
+    mock_user_setting_model_comm_style.api_keys = json.dumps({"openai_api_key": "test-key"})
     service = CommunicationStyleService(db=mock_db_session, ai_integration_service=mock_ai_integration_service)
     text_input = "" # Empty text
 
-    with patch('digame.app.crud.user_setting_crud.get_user_setting', return_value=mock_user_setting_model_comm_style):
+    with patch('app.crud.user_crud.get_user', return_value=mock_user_model), \
+         patch('app.crud.tenant_crud.get_tenant_by_id', return_value=mock_tenant_model_comm_style), \
+         patch('app.crud.user_setting_crud.get_user_setting', return_value=mock_user_setting_model_comm_style):
         # Action
         with pytest.raises(HTTPException) as exc_info:
-            service.get_communication_style_analysis(current_user=mock_user_model, text_input=text_input)
+            await service.get_communication_style_analysis(current_user=mock_user_model, text_input=text_input)
 
         # Assertion
         assert exc_info.value.status_code == 400 # As per service logic for client error

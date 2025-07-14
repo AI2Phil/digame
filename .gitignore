@@ -314,6 +314,11 @@ logs/
 *.sqlite
 *.sqlite3
 
+# Test database files (SQLite in-memory with cache parameters)
+:memory:*
+*cache=shared*
+*database=*
+
 # Temporary files
 *.tmp
 *.temp

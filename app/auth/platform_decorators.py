@@ -98,7 +98,9 @@ def require_subscription_tier(required_tier: str):
             if current_user.is_founding_member and user_tier == "free":
                 user_tier = "individual_pro"
             
-            user_tier_level = tier_hierarchy.get(user_tier, 0)
+            # Ensure user_tier is a string for dict.get()
+            user_tier_str = str(user_tier) if user_tier else "free"
+            user_tier_level = tier_hierarchy.get(user_tier_str, 0)
             required_tier_level = tier_hierarchy.get(required_tier, 0)
             
             if user_tier_level < required_tier_level:
@@ -126,6 +128,7 @@ async def get_tenant_context(
     db: Session = Depends(get_db)
 ):
     """Get tenant context with access validation"""
+    # Import Tenant locally to avoid registry conflicts
     from ..models.tenant import Tenant
     
     tenant = db.query(Tenant).filter(Tenant.id == tenant_id).first()
@@ -186,7 +189,9 @@ class SubscriptionTierChecker:
         if current_user.is_founding_member and user_tier == "free":
             user_tier = "individual_pro"
         
-        user_tier_level = self.tier_hierarchy.get(user_tier, 0)
+        # Ensure user_tier is a string for dict.get()
+        user_tier_str = str(user_tier) if user_tier else "free"
+        user_tier_level = self.tier_hierarchy.get(user_tier_str, 0)
         required_tier_level = self.tier_hierarchy.get(self.required_tier, 0)
         
         if user_tier_level < required_tier_level:

@@ -7,7 +7,7 @@ from datetime import datetime, timedelta, timezone
 from app.models.tenant import Tenant as TenantModel
 from app.models.user import User as UserModel
 from app.models.rbac import Role as RoleModel
-from app.models.rbac_imports import UserRoleAssignment as TenantUserRoleAssignmentModel
+from app.models.user_role_assignment import UserRoleAssignment as TenantUserRoleAssignmentModel
 from app.models.tenant import TenantSettings as TenantSettingsModel
 from app.models.tenant import TenantInvitation as TenantInvitationModel
 from app.models.tenant import TenantAuditLog as TenantAuditLogModel
@@ -271,7 +271,7 @@ class TestTenantInvitationManagement:
         token = "valid_token"
         accepting_user_id = mock_user_instance.id
         mock_invitation = create_mock_model(TenantInvitationModel, id=1, tenant_id=1, email="test@example.com", role="User",
-            invitation_token=token, expires_at=datetime.now(timezone.utc) + timedelta(days=1),
+            invitation_token=token, expires_at=datetime.now(timezone.utc) + timedelta(days=7),
             invited_by_user_id=2, accepted_at=None
         )
         mock_db_session.query(TenantInvitationModel).filter(TenantInvitationModel.invitation_token == token).first.return_value = mock_invitation
