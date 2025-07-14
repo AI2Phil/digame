@@ -15,9 +15,27 @@ except ImportError:
     from database import Base
 
 try:
+    from app.main import app
+except ImportError:
+    from main import app
+
+# Import only specific models needed for test fixtures
+# CRITICAL: Use explicit imports only, NO wildcards, NO duplicates
+# This prevents SQLAlchemy registry conflicts in comprehensive test runs
+try:
     from app.models.user import User
 except ImportError:
     from models.user import User
+
+try:
+    from app.models.rbac import Role
+except ImportError:
+    from models.rbac import Role
+
+try:
+    from app.models.tenant import Tenant
+except ImportError:
+    from models.tenant import Tenant
 
 try:
     from app.models.notifications import Notification
@@ -29,23 +47,7 @@ except ImportError:
         class Notification:
             pass
 
-try:
-    from app.models.rbac import Role
-except ImportError:
-    from models.rbac import Role
-
-try:
-    from app.main import app
-except ImportError:
-    from main import app
-
-# Import all models to ensure they're registered
-try:
-    from app.models import *
-except ImportError:
-    pass
-
-# Try to import additional models that might exist
+# Import additional models that might exist - with individual try/except blocks
 try:
     from app.models.user_setting import UserSetting
 except ImportError:
@@ -68,16 +70,6 @@ except ImportError:
 
 try:
     from app.models.team import Team
-except ImportError:
-    pass
-
-try:
-    from app.models.tenant import Tenant
-except ImportError:
-    pass
-
-try:
-    from app.models.workflow_automation import *
 except ImportError:
     pass
 

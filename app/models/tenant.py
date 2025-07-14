@@ -9,6 +9,17 @@ from app.database import Base  # Use the same Base as User model
 from typing import Optional, Dict, Any # Keep for type hinting if used elsewhere, though not directly in models
 from datetime import datetime # Keep for type hinting if used elsewhere
 
+# Import UserRoleAssignment to ensure it's available for relationship resolution
+def _ensure_user_role_assignment_imported():
+    try:
+        from app.models.rbac_imports import UserRoleAssignment
+        return UserRoleAssignment
+    except ImportError:
+        return None
+
+# Call the import function to register the class
+_ensure_user_role_assignment_imported()
+
 class Tenant(Base):
     """
     Tenant model for multi-tenant architecture

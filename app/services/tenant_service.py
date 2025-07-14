@@ -318,7 +318,7 @@ class TenantService:
             # Assign the role from invitation
             role_to_assign = self.db.query(Role).filter(Role.tenant_id == getattr(invitation, 'tenant_id', None), Role.name == getattr(invitation, 'role', None)).first()
             if role_to_assign:
-                from ..models.rbac import UserRoleAssignment
+                from ..models.rbac_imports import UserRoleAssignment
                 existing_user_role = self.db.query(UserRoleAssignment).filter(UserRoleAssignment.user_id == accepting_user_id, UserRoleAssignment.role_id == getattr(role_to_assign, 'id', None)).first()
                 if not existing_user_role:
                     user_role_data = {
@@ -414,15 +414,15 @@ class TenantService:
                 "role_id": getattr(default_role, 'id', None),
                 "assigned_by": current_admin_id
             }
-            from ..models.rbac import UserRoleAssignment
+            from ..models.rbac_imports import UserRoleAssignment
             user_role = UserRoleAssignment()  # type: ignore
             for key, value in user_role_data.items():
                 setattr(user_role, key, value)  # type: ignore
             self.db.add(user_role)
             assigned_role_id_for_log = getattr(default_role, 'id', None)
         
-        # Commit happens after user and potentially UserRoleAssignment are added
-        # self.db.commit() # Deferred to allow _create_admin_user to commit once.
+        # Commit the user and role assignment
+        self.db.flush()  # Use flush instead of commit to allow parent method to commit
 
         self._log_audit_event(
             tenant_id=tenant_id, user_id=current_admin_id, action="user_created",
@@ -441,7 +441,7 @@ class TenantService:
         if not role_to_assign:
             raise ValueError("Role not found or does not belong to the user's tenant.")
 
-        from ..models.rbac import UserRoleAssignment
+        from ..models.rbac_imports import UserRoleAssignment
         existing = self.db.query(UserRoleAssignment).filter(
             UserRoleAssignment.user_id == user_id, UserRoleAssignment.role_id == role_id
         ).first()
@@ -475,7 +475,7 @@ class TenantService:
             return []
 
         permissions = set()
-        from ..models.rbac import UserRoleAssignment
+        from ..models.rbac_imports import UserRoleAssignment
         user_roles = self.db.query(UserRoleAssignment).join(Role).filter(UserRoleAssignment.user_id == user_id).all()
         
         for ur in user_roles:
@@ -551,18 +551,16 @@ class TenantService:
     
     def _create_default_roles(self, tenant_id: int):
         default_roles_data = [
-            {"name": "Admin", "description": "Full administrative access", "permissions": ["tenant:manage", "users:manage", "roles:manage", "settings:manage", "billing:manage"]},
-            {"name": "Manager", "description": "Team management and operational oversight", "permissions": ["users:view", "team:manage"]},
-            {"name": "User", "description": "Standard user access", "permissions": ["profile:manage_own", "content:view"]}
+            {"name": "Admin", "description": "Full administrative access"},
+            {"name": "Manager", "description": "Team management and operational oversight"},
+            {"name": "User", "description": "Standard user access"}
         ]
         
         for role_data in default_roles_data:
             role_create_data = {
                 "tenant_id": tenant_id,
                 "name": role_data["name"],
-                "description": role_data["description"],
-                "permissions": role_data["permissions"],
-                "is_system_role": True
+                "description": role_data["description"]
             }
             role = Role(**role_create_data)
             self.db.add(role)

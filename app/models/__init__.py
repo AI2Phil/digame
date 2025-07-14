@@ -6,7 +6,10 @@
 
 from .user import User
 from app.database import Base # Import Base from the centralized database module
-from .rbac import Role, Permission, role_permissions_table, UserRoleAssignment
+# Import only specific classes from rbac module to avoid UserRoleAssignment conflicts
+from .rbac import Role, Permission, role_permissions_table
+# Note: UserRoleAssignment is intentionally NOT imported here to prevent SQLAlchemy registry conflicts
+# Import UserRoleAssignment through app.models.rbac_imports when needed
 from .process_notes import ProcessNote
 from .activity import Activity
 from .activity_features import ActivityEnrichedFeature
@@ -76,7 +79,7 @@ __all__ = [
     "Base",
     "Role",
     "Permission",
-    "UserRoleAssignment",
+    # "UserRoleAssignment", # Removed to prevent SQLAlchemy registry conflicts - import directly from rbac module
     "role_permissions_table",
     "ProcessNote",
     "Activity",

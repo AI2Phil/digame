@@ -4,6 +4,18 @@ from sqlalchemy.ext.associationproxy import association_proxy
 from datetime import datetime # Changed to just datetime for consistency, as utcnow is method of datetime
 from app.database import Base
 
+# Import UserRoleAssignment to ensure it's available for relationship resolution
+# This must be imported after Base is defined to avoid circular imports
+def _ensure_user_role_assignment_imported():
+    try:
+        from app.models.rbac_imports import UserRoleAssignment
+        return UserRoleAssignment
+    except ImportError:
+        return None
+
+# Call the import function to register the class
+_ensure_user_role_assignment_imported()
+
 class User(Base):
     __tablename__ = "users"
     __table_args__ = (

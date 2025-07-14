@@ -6,7 +6,7 @@ Provides tenant-scoped role and permission management
 from typing import List, Optional, Dict, Any, TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from ..models.rbac import UserRoleAssignment
+    from ..models.rbac_imports import UserRoleAssignment
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, or_
 from datetime import datetime, timedelta, timezone
@@ -59,7 +59,7 @@ class RBACService:
             raise ValueError(f"Role with ID {role_id} not found")
         
         # Check if assignment already exists
-        from ..models.rbac import UserRoleAssignment
+        from ..models.rbac_imports import UserRoleAssignment
         existing = self.db.query(UserRoleAssignment).filter(
             and_(  # type: ignore
                 UserRoleAssignment.user_id == user_id,  # type: ignore
@@ -106,7 +106,7 @@ class RBACService:
             bool: True if role was removed, False if assignment didn't exist
         """
         
-        from ..models.rbac import UserRoleAssignment
+        from ..models.rbac_imports import UserRoleAssignment
         user_role = self.db.query(UserRoleAssignment).filter(
             and_(  # type: ignore
                 UserRoleAssignment.user_id == user_id,  # type: ignore
@@ -142,7 +142,7 @@ class RBACService:
             List[UserRoleAssignment]: List of user role assignments
         """
         
-        from ..models.rbac import UserRoleAssignment
+        from ..models.rbac_imports import UserRoleAssignment
         query = self.db.query(UserRoleAssignment).filter(
             and_(  # type: ignore
                 UserRoleAssignment.user_id == user_id,  # type: ignore
@@ -235,7 +235,7 @@ class RBACService:
             List[User]: List of users with the role in the tenant
         """
         
-        from ..models.rbac import UserRoleAssignment
+        from ..models.rbac_imports import UserRoleAssignment
         users = self.db.query(User).join(
             UserRoleAssignment, User.id == UserRoleAssignment.user_id
         ).join(
@@ -317,7 +317,7 @@ class RBACService:
             int: Number of role assignments deactivated
         """
         
-        from ..models.rbac import UserRoleAssignment
+        from ..models.rbac_imports import UserRoleAssignment
         expired_roles = self.db.query(UserRoleAssignment).filter(
             and_(  # type: ignore
                 UserRoleAssignment.is_active == True,  # type: ignore
