@@ -81,7 +81,9 @@ class Tenant(Base):
     # Relationships to User, Role, and UserRole models - optimized for registry resolution
     users = relationship("User", foreign_keys="User.tenant_id")
     roles = relationship("app.models.rbac.Role", back_populates="tenant")
-    user_roles = relationship(UserRoleAssignment, overlaps="tenant")
+    # UserRoleAssignment relationship - temporarily disabled due to registry conflicts
+    # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
+    # user_roles = relationship(UserRoleAssignment, overlaps="tenant")
     creator = relationship("User", foreign_keys=[created_by], overlaps="users")
     manager = relationship("User", foreign_keys=[managed_by], overlaps="users")
     

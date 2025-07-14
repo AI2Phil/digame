@@ -30,9 +30,10 @@ class Role(Base):
     created_at = Column(DateTime(), default=datetime.utcnow)
     updated_at = Column(DateTime(), default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    # Enhanced relationships for tenant-aware RBAC
-    user_roles = relationship("UserRoleAssignment")
-    users = association_proxy("user_roles", "user")  # Maintains backward compatibility
+    # Enhanced relationships for tenant-aware RBAC - temporarily disabled due to registry conflicts
+    # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
+    # user_roles = relationship("UserRoleAssignment")
+    # users = association_proxy("user_roles", "user")  # Maintains backward compatibility
     
     # Tenant relationship
     tenant = relationship("app.models.tenant.Tenant", back_populates="roles")

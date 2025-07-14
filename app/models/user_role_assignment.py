@@ -41,11 +41,12 @@ class UserRoleAssignment(Base):
     # Status
     is_active = Column(Boolean, default=True)
     
-    # Relationships - optimized for registry resolution and performance
-    user = relationship("User", foreign_keys=[user_id], back_populates="user_roles")
-    role = relationship("Role", foreign_keys=[role_id], overlaps="user_roles")
-    tenant = relationship("Tenant", foreign_keys=[tenant_id], overlaps="user_roles")
-    assigner = relationship("User", foreign_keys=[assigned_by], overlaps="user_roles")
+    # Relationships - temporarily disabled due to registry conflicts
+    # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
+    # user = relationship("User", foreign_keys=[user_id], back_populates="user_roles")
+    # role = relationship("Role", foreign_keys=[role_id], overlaps="user_roles")
+    # tenant = relationship("Tenant", foreign_keys=[tenant_id], overlaps="user_roles")
+    # assigner = relationship("User", foreign_keys=[assigned_by], overlaps="user_roles")
     
 
     def __repr__(self):

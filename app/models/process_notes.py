@@ -32,11 +32,12 @@ class ProcessNote(Base):
     # Relationship to User model using string reference to avoid circular imports
     user = relationship("User")
 
-    # Relationship to Task model (one-to-many: one ProcessNote can generate multiple Tasks)
-    generated_tasks = relationship(
-        "Task", # String reference to the Task class
-        cascade="all, delete-orphan" # If a ProcessNote is deleted, related tasks are also deleted.
-    )
+    # Task relationship - temporarily disabled due to registry conflicts
+    # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
+    # generated_tasks = relationship(
+    #     "Task", # String reference to the Task class
+    #     cascade="all, delete-orphan" # If a ProcessNote is deleted, related tasks are also deleted.
+    # )
 
     def __repr__(self):
         return f"<ProcessNote(id={self.id}, user_id={self.user_id}, task_name='{self.inferred_task_name}')>"

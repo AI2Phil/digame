@@ -120,37 +120,44 @@ class User(Base):
     #     back_populates="user",
     #     cascade="all, delete-orphan"
     # )
-    tasks = relationship(
-        lambda: Task,
-        cascade="all, delete-orphan",
-        foreign_keys="[Task.user_id]" # Specify which FK this relationship uses
-    )
-    assigned_tasks = relationship(
-        lambda: Task,
-        cascade="all, delete-orphan",
-        foreign_keys="[Task.assigned_resource_id]" # Specify which FK this relationship uses
-    )
+    # Task relationships - temporarily disabled due to registry conflicts
+    # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
+    # tasks = relationship(
+    #     lambda: Task,
+    #     cascade="all, delete-orphan",
+    #     foreign_keys="[Task.user_id]" # Specify which FK this relationship uses
+    # )
+    # assigned_tasks = relationship(
+    #     lambda: Task,
+    #     cascade="all, delete-orphan",
+    #     foreign_keys="[Task.assigned_resource_id]" # Specify which FK this relationship uses
+    # )
     # behavioral_models = relationship(
     #     "BehavioralModel",
     #     back_populates="user",
     #     cascade="all, delete-orphan"
     # )
-    # Relationships to new models
-    projects = relationship(
-        "Project",
-        foreign_keys="Project.user_id",
-        cascade="all, delete-orphan"
-    )
-    experience_entries = relationship(
-        "Experience",
-        foreign_keys="Experience.user_id",
-        cascade="all, delete-orphan"
-    )
-    education_entries = relationship(
-        "Education",
-        foreign_keys="Education.user_id",
-        cascade="all, delete-orphan"
-    )
+    # Project relationships - temporarily disabled due to registry conflicts
+    # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
+    # projects = relationship(
+    #     "Project",
+    #     foreign_keys="Project.user_id",
+    #     cascade="all, delete-orphan"
+    # )
+    # Experience relationships - temporarily disabled due to registry conflicts
+    # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
+    # experience_entries = relationship(
+    #     "Experience",
+    #     foreign_keys="Experience.user_id",
+    #     cascade="all, delete-orphan"
+    # )
+    # Education relationships - temporarily disabled due to registry conflicts
+    # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
+    # education_entries = relationship(
+    #     "Education",
+    #     foreign_keys="Education.user_id",
+    #     cascade="all, delete-orphan"
+    # )
 
     # Temporarily commented out to resolve SQLAlchemy mapper issues
     # # Relationship to UserSetting model
@@ -162,13 +169,14 @@ class User(Base):
     #     cascade="all, delete-orphan"
     # )
 
-    # New relationship to UserProfile (One-to-One)
-    profile = relationship(
-        "app.models.user_profile.UserProfile",
-        foreign_keys="app.models.user_profile.UserProfile.user_id",
-        uselist=False,
-        cascade="all, delete-orphan"
-    )
+    # UserProfile relationship - temporarily disabled due to registry conflicts
+    # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
+    # profile = relationship(
+    #     "app.models.user_profile.UserProfile",
+    #     foreign_keys="app.models.user_profile.UserProfile.user_id",
+    #     uselist=False,
+    #     cascade="all, delete-orphan"
+    # )
 
     # Relationship to UserOnboardingProgress (One-to-One)
     onboarding_progress = relationship(

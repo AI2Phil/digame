@@ -129,12 +129,13 @@ def ensure_model_registration():
         except Exception as e:
             logging.warning(f"Failed to configure mappers during registration: {e}")
         
-        # Ensure UserRoleAssignment is properly injected into expected module namespace
+        # Ensure models are properly injected into expected module namespaces
         try:
-            from app.models.imports import _inject_user_role_assignment
+            from app.models.imports import _inject_user_role_assignment, _inject_task
             _inject_user_role_assignment()
+            _inject_task()
         except Exception as e:
-            logging.warning(f"Failed to inject UserRoleAssignment into module namespace: {e}")
+            logging.warning(f"Failed to inject models into module namespaces: {e}")
             
     except Exception as e:
         logging.error(f"Failed to register critical models: {e}")
@@ -165,13 +166,15 @@ def multi_layer_isolation():
         from app.models.tenant import Tenant
         from app.models.rbac import Role
         from app.models.imports import UserRoleAssignment
+        from app.models.task import Task
         
         # Ensure core models remain in registry
         core_models = {
             'User': User,
             'Tenant': Tenant,
             'Role': Role,
-            'UserRoleAssignment': UserRoleAssignment
+            'UserRoleAssignment': UserRoleAssignment,
+            'Task': Task
         }
         for name, model_class in core_models.items():
             if name not in Base.registry._class_registry:
@@ -219,7 +222,9 @@ def multi_layer_isolation():
                 model_modules = [
                     'app.models.user_role_assignment',
                     'app.models.team',
-                    'app.models.activity'
+                    'app.models.activity',
+                    'app.models.task',
+                    'app.models.tenant'
                 ]
                 for module_name in model_modules:
                     if module_name in sys.modules:
@@ -245,12 +250,14 @@ def multi_layer_isolation():
         from app.models.tenant import Tenant
         from app.models.rbac import Role
         from app.models.imports import UserRoleAssignment
+        from app.models.task import Task
         
         core_models = {
             'User': User,
             'Tenant': Tenant,
             'Role': Role,
-            'UserRoleAssignment': UserRoleAssignment
+            'UserRoleAssignment': UserRoleAssignment,
+            'Task': Task
         }
         for name, model_class in core_models.items():
             if name not in Base.registry._class_registry:
@@ -323,6 +330,21 @@ def isolated_db():
     from sqlalchemy.orm import sessionmaker
     import uuid
     
+    # CRITICAL: Import all models to ensure they're registered with Base.metadata
+    # This ensures Base.metadata.create_all() creates all necessary tables
+    try:
+        from app.models.user import User
+        from app.models.tenant import Tenant
+        from app.models.rbac import Role
+        from app.models.team import Team, TeamMember, TeamPerformanceMetric, TeamSkillGap, TeamWorkflow
+        from app.models.imports import UserRoleAssignment, Activity, ProcessNote, Task, Project, Experience
+        from app.models.education import Education
+        from app.models.notifications import Notification
+        from app.models.user_setting import UserSetting
+        # Import any other models that might be needed
+    except ImportError as e:
+        logging.warning(f"Could not import some models for isolated_db: {e}")
+    
     # Create unique database per test with enhanced isolation
     db_name = f"test_{uuid.uuid4().hex[:8]}"
     engine = create_engine(
@@ -340,7 +362,7 @@ def isolated_db():
         # First drop any existing tables to ensure clean state
         Base.metadata.drop_all(bind=engine)
         
-        # Create all tables fresh
+        # Create all tables fresh - now all models should be registered
         Base.metadata.create_all(engine)
     except Exception as create_error:
         # Handle specific SQLite index conflicts more gracefully

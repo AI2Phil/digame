@@ -24,8 +24,8 @@ Experience = _Experience
 Education = _Education
 UserProfile = _UserProfile
 
-# CRITICAL: Inject UserRoleAssignment into the expected module namespace
-# This ensures SQLAlchemy's string resolution can find it
+# CRITICAL: Inject models into their expected module namespaces
+# This ensures SQLAlchemy's string resolution can find them
 def _inject_user_role_assignment():
     """Inject UserRoleAssignment into expected module namespace"""
     import sys
@@ -42,8 +42,25 @@ def _inject_user_role_assignment():
     except (ImportError, AttributeError):
         pass  # Module not available yet, will be handled by registry
 
+def _inject_task():
+    """Inject Task into expected module namespace"""
+    import sys
+    try:
+        # Try to get the module from sys.modules first
+        task_module = sys.modules.get('app.models.task')
+        if task_module:
+            setattr(task_module, 'Task', Task)
+        else:
+            # Import and set if not in sys.modules yet
+            import app.models.task
+            setattr(app.models.task, 'Task', Task)
+            setattr(sys.modules['app.models.task'], 'Task', Task)
+    except (ImportError, AttributeError):
+        pass  # Module not available yet, will be handled by registry
+
 # Try immediate injection, but don't fail if it doesn't work
 _inject_user_role_assignment()
+_inject_task()
 
 # Ensure they're properly registered
 __all__ = ['UserRoleAssignment', 'Activity', 'ActivityEnrichedFeature', 'ProcessNote', 'Task', 'Project', 'Experience', 'Education', 'UserProfile']
