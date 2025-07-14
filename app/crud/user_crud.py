@@ -42,12 +42,12 @@ def create_user(db: Session, user: UserCreate) -> User:
         first_name=user.first_name,
         last_name=user.last_name,
         is_active=user.is_active if user.is_active is not None else True, # Ensure default
-        onboarding_completed=user.onboarding_completed if hasattr(user, 'onboarding_completed') else False,
-        onboarding_data=user.onboarding_data if hasattr(user, 'onboarding_data') else None,
+        onboarding_completed=False,  # Default value since not in UserCreate schema
+        onboarding_data=None,  # Default value since not in UserCreate schema
         # New fields
-        detailed_bio=user.detailed_bio if hasattr(user, 'detailed_bio') else None,
-        contact_info=json.dumps(user.contact_info.dict()) if hasattr(user, 'contact_info') and user.contact_info else None,
-        skills_json=json.dumps(user.skills) if hasattr(user, 'skills') and user.skills is not None else None,
+        detailed_bio=user.detailed_bio if user.detailed_bio else None,
+        contact_info=json.dumps(user.contact_info.model_dump()) if user.contact_info else None,
+        skills_json=json.dumps(user.skills) if user.skills is not None else None,
         kudos_count=0 # Initialize kudos_count
     )
     db.add(db_user)
@@ -84,7 +84,7 @@ def update_user(db: Session, user_id: int, user_update: UserUpdate) -> Optional[
         else:
             setattr(db_user, key, value)
     
-    db_user.updated_at = datetime.utcnow() # Manually set updated_at for User model
+    # Don't manually set updated_at - SQLAlchemy handles this with onupdate
     db.commit()
     db.refresh(db_user)
     return db_user
@@ -108,7 +108,7 @@ def authenticate_user(db: Session, username: str, password: str) -> Optional[Use
     user = get_user_by_username(db, username)
     if not user:
         return None
-    if not verify_password(password, user.hashed_password):
+    if not verify_password(password, str(user.hashed_password)):
         return None
     return user
 
@@ -156,7 +156,7 @@ def update_user_profile(db: Session, user_id: int, profile_update: UserProfileUp
     for key, value in update_data.items():
         setattr(db_profile, key, value)
 
-    db_profile.updated_at = datetime.utcnow() # Manually set updated_at
+    # Don't manually set updated_at - SQLAlchemy handles this with onupdate
     db.add(db_profile) # Add to session before commit if it was detached or for clarity
     db.commit()
     db.refresh(db_profile)

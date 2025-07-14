@@ -16,8 +16,9 @@ from sqlalchemy import select, func, text
 from ..database import SessionLocal, engine, Base
 from ..models import (
     AnalyticsModel, AnalyticsPrediction, PerformanceMetric,
-    ROICalculation, User, Activity, Tenant
+    ROICalculation, User, Activity
 )
+from ..models.tenant import Tenant
 from ..models.imports import UserProfile
 from ..models.analytics import AnalyticsDashboard, DashboardWidgetConfig
 
@@ -362,16 +363,16 @@ class AnalyticsDataSeeder:
                     prediction_date = datetime.now(timezone.utc) - timedelta(days=random.randint(0, 30))
                     
                     # Generate realistic prediction values based on model type
-                    if model.model_type == "engagement":
+                    if model and model.model_type == "engagement":
                         predicted_value = random.uniform(0.3, 0.95)
                         confidence = random.uniform(0.70, 0.90)
-                    elif model.model_type == "churn":
+                    elif model and model.model_type == "churn":
                         predicted_value = random.uniform(0.05, 0.40)
                         confidence = random.uniform(0.75, 0.95)
-                    elif model.model_type == "productivity":
+                    elif model and model.model_type == "productivity":
                         predicted_value = random.uniform(60.0, 95.0)
                         confidence = random.uniform(0.65, 0.85)
-                    elif model.model_type == "revenue":
+                    elif model and model.model_type == "revenue":
                         predicted_value = random.uniform(1000.0, 5000.0)
                         confidence = random.uniform(0.60, 0.80)
                     else:
@@ -384,7 +385,7 @@ class AnalyticsDataSeeder:
                         model_id=model_id,
                         entity_type="user",
                         entity_id=user_id,
-                        prediction_type=model.model_type,
+                        prediction_type=model.model_type if model else "unknown",
                         input_features={
                             "feature_1": random.uniform(0, 100),
                             "feature_2": random.uniform(0, 100),

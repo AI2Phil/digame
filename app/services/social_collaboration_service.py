@@ -52,10 +52,15 @@ class SocialCollaborationService:
         candidate_matches = []
 
         for candidate_user in all_users:
-            if candidate_user.id == user_id:
+            candidate_id = getattr(candidate_user, 'id', None)
+            if candidate_id == user_id or candidate_id is None:
                 continue
 
-            candidate_user_skills = self._get_user_skills(candidate_user.id)
+            # Ensure candidate_id is an int
+            if not isinstance(candidate_id, int):
+                continue
+
+            candidate_user_skills = self._get_user_skills(candidate_id)
             if not candidate_user_skills:
                 continue
 
@@ -90,17 +95,22 @@ class SocialCollaborationService:
         recommendations = []
 
         for candidate_user in all_users:
-            if candidate_user.id == user_id:
+            candidate_id = getattr(candidate_user, 'id', None)
+            if candidate_id == user_id or candidate_id is None:
                 continue
 
-            candidate_profile = user_crud.get_user_profile(self.db, candidate_user.id)
+            # Ensure candidate_id is an int
+            if not isinstance(candidate_id, int):
+                continue
+
+            candidate_profile = user_crud.get_user_profile(self.db, candidate_id)
             if not candidate_profile:
                 continue
 
             score = 0
 
             # Criteria 1: Candidate has skills matching target user's learning goals
-            candidate_skills = self._get_user_skills(candidate_user.id)
+            candidate_skills = self._get_user_skills(candidate_id)
             if candidate_skills:
                 matching_goal_skills = target_learning_goals.intersection(candidate_skills)
                 score += len(matching_goal_skills) * 2 # Higher weight for providing skills
@@ -115,7 +125,7 @@ class SocialCollaborationService:
                             score += 3 # Higher weight for mentorship alignment
 
             # Criteria 3: Candidate has similar learning goals (peer learning)
-            candidate_learning_goals = self._get_user_learning_goals(candidate_user.id)
+            candidate_learning_goals = self._get_user_learning_goals(candidate_id)
             if candidate_learning_goals:
                 common_goals = target_learning_goals.intersection(candidate_learning_goals)
                 score += len(common_goals)

@@ -389,22 +389,22 @@ class SocialCollaborationService:
             if last_msg_obj:
                  sender_details = user_crud.get_user(self.db, user_id=getattr(last_msg_obj, 'sender_id', 0))
                  sender_schema = MessageUser.model_validate(sender_details) if sender_details else None
-                 last_message_resp = MessageResponse(**{
-                    'id': getattr(last_msg_obj, 'id', 0),
-                    'sender_id': getattr(last_msg_obj, 'sender_id', 0),
-                    'receiver_id': getattr(last_msg_obj, 'receiver_id', 0),
-                    'content': getattr(last_msg_obj, 'content', ''),
-                    'timestamp': getattr(last_msg_obj, 'timestamp', datetime.now()),
-                    'is_read': getattr(last_msg_obj, 'is_read', False),
-                    'sender': sender_schema
-                })
+                 last_message_resp = MessageResponse(
+                    id=getattr(last_msg_obj, 'id', 0),
+                    sender_id=getattr(last_msg_obj, 'sender_id', 0),
+                    receiver_id=getattr(last_msg_obj, 'receiver_id', 0),
+                    content=getattr(last_msg_obj, 'content', ''),
+                    timestamp=getattr(last_msg_obj, 'timestamp', datetime.now()),
+                    is_read=getattr(last_msg_obj, 'is_read', False),
+                    sender=sender_schema
+                )
 
-            conversation_resp = ConversationResponse(**{
-                'peer_user': peer_user_schema,
-                'messages': [last_message_resp] if last_message_resp else [],
-                'last_message_timestamp': raw_convo.get("last_message_timestamp"),
-                'unread_count': raw_convo.get("unread_count", 0)
-            })
+            conversation_resp = ConversationResponse(
+                peer_user=peer_user_schema,
+                messages=[last_message_resp] if last_message_resp else [],
+                last_message_timestamp=raw_convo.get("last_message_timestamp"),
+                unread_count=raw_convo.get("unread_count", 0)
+            )
             processed_conversations.append(conversation_resp)
             
         return processed_conversations

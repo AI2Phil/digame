@@ -78,8 +78,12 @@ def override_router_dependencies(
     def get_current_active_user_override():
         return mock_auth_user
 
-    app.dependency_overrides[social_router.get_db] = get_mock_db_session_override
-    app.dependency_overrides[social_router.get_current_active_user] = get_current_active_user_override
+    # Import the actual dependency functions to override them
+    from app.database import get_db
+    from app.auth.auth_dependencies import get_current_active_user
+    
+    app.dependency_overrides[get_db] = get_mock_db_session_override
+    app.dependency_overrides[get_current_active_user] = get_current_active_user_override
 
     with patch('digame.app.routers.social_collaboration.user_crud', mock_user_crud_profile):
         yield
@@ -155,8 +159,19 @@ class TestSocialCollaborationRouterProfile:
         assert json_response["bio"] == "Updated bio"
         assert json_response["location"] == "New Location"
         # Check that the mock was called with a UserProfileUpdate instance or compatible dict
+        # Create UserProfileUpdate with proper types to avoid schema validation issues
+        expected_profile_update = UserProfileUpdate(
+            bio=profile_update_data.get("bio"),
+            location=profile_update_data.get("location"),
+            skills=None,
+            learning_goals=None,
+            interests=None,
+            mentorship_preferences=None,
+            linkedin_url=None,
+            github_url=None
+        )
         mock_user_crud_profile.update_user_profile.assert_called_once_with(
-            ANY, user_id=user_id, profile_update=UserProfileUpdate(**profile_update_data)
+            ANY, user_id=user_id, profile_update=expected_profile_update
         )
 
 class TestSocialCollaborationRouterMatching:
@@ -223,7 +238,7 @@ class TestSocialCollaborationNotifications:
 
         response = client.post(
             "/api/v1/social/connections/request",
-            params={"peer_id": peer_id, "message": "Hello there"}
+            params={"peer_id": str(peer_id), "message": "Hello there"}
         )
 
         assert response.status_code == 200
