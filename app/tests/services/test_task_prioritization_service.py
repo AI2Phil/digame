@@ -11,7 +11,7 @@ from fastapi import HTTPException
 from app.models.user import User as UserModel
 from app.models.tenant import Tenant as TenantModel
 # TenantUser model doesn't exist - relationship is direct through User.tenant_id
-from app.models.task import Task as TaskModel # Assuming this is the correct import path
+from app.models.imports import Task as TaskModel # Assuming this is the correct import path
 
 # Service to test
 from app.services.task_prioritization_service import TaskPrioritizationService

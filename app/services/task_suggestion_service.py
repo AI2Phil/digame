@@ -4,7 +4,7 @@ from typing import List
 from datetime import datetime, timedelta
 
 from app.models.process_notes import ProcessNote
-from app.models.task import Task
+from app.models.imports import Task
 # from app.models.user import User # For type hinting user_id if needed
 
 # --- Constants for Task Suggestion Logic ---

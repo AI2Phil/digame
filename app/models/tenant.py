@@ -9,7 +9,10 @@ from app.database import Base  # Use the same Base as User model
 from typing import Optional, Dict, Any # Keep for type hinting if used elsewhere, though not directly in models
 from datetime import datetime # Keep for type hinting if used elsewhere
 
-# Remove circular import - relationships will be resolved by SQLAlchemy registry
+# Import User directly to avoid string resolution issues
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from app.models.user import User
 
 class Tenant(Base):
     """
@@ -73,11 +76,11 @@ class Tenant(Base):
     address = Column(Text, nullable=True)
     
     # Relationships to User, Role, and UserRole models - optimized for registry resolution
-    users = relationship("app.models.user.User", foreign_keys="app.models.user.User.tenant_id", back_populates="tenant")
+    users = relationship("User", foreign_keys="User.tenant_id")
     roles = relationship("app.models.rbac.Role", back_populates="tenant")
     user_roles = relationship("UserRoleAssignment", overlaps="tenant")
-    creator = relationship("app.models.user.User", foreign_keys=[created_by], overlaps="users")
-    manager = relationship("app.models.user.User", foreign_keys=[managed_by], overlaps="users")
+    creator = relationship("User", foreign_keys=[created_by], overlaps="users")
+    manager = relationship("User", foreign_keys=[managed_by], overlaps="users")
     
     # Other tenant-specific relationships
     tenant_configurations = relationship("TenantSettings", back_populates="tenant", cascade="all, delete-orphan")

@@ -21,7 +21,7 @@ class Project(Base):
     required_skills = Column(JSON, nullable=True)  # Additional field from WIP
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=True)  # Additional field from WIP
 
-    user = relationship("User", back_populates="projects", foreign_keys=[user_id])
+    user = relationship("User", foreign_keys=[user_id])
     owner = relationship("User", foreign_keys=[owner_id])  # Additional relationship from WIP
 
     def __repr__(self):

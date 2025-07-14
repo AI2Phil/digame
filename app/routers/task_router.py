@@ -7,7 +7,7 @@ from ..crud import task_crud # Import the new task CRUD functions
 from ..services import task_suggestion_service # For the optional trigger endpoint
 from ..auth.auth_dependencies import PermissionChecker, get_current_active_user
 from ..models.user import User as SQLAlchemyUser # For current_user type hint
-from ..models.task import Task as SQLAlchemyTask # For type hinting
+from ..models.imports import Task as SQLAlchemyTask # For type hinting
 
 # Assuming get_db dependency is available
 from .admin_rbac_router import get_db # Placeholder, replace with actual get_db path

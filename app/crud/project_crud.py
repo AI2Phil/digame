@@ -2,7 +2,7 @@ import json
 from typing import List, Optional
 from sqlalchemy.orm import Session
 
-from ..models.project import Project
+from ..models.imports import Project
 from ..schemas.project_schemas import ProjectCreate, ProjectUpdate
 
 def get_project(db: Session, project_id: int) -> Optional[Project]:

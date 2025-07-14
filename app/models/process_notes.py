@@ -30,12 +30,11 @@ class ProcessNote(Base):
     user_tags = Column(JSON(), nullable=True) # Array of strings
 
     # Relationship to User model using string reference to avoid circular imports
-    user = relationship("User", back_populates="process_notes")
+    user = relationship("User")
 
     # Relationship to Task model (one-to-many: one ProcessNote can generate multiple Tasks)
     generated_tasks = relationship(
         "Task", # String reference to the Task class
-        back_populates="process_note", # Corresponds to the 'process_note' attribute in Task
         cascade="all, delete-orphan" # If a ProcessNote is deleted, related tasks are also deleted.
     )
 

@@ -19,48 +19,19 @@ from app.main import app
 from app.models.imports import UserRoleAssignment, Activity, ActivityEnrichedFeature
 
 @pytest.fixture(autouse=True, scope="function")
-def reset_sqlalchemy_completely():
-    """Nuclear option: completely reset SQLAlchemy state before each test"""
-    import sys
-    import gc
+def reset_sqlalchemy_selectively():
+    """Disabled SQLAlchemy reset to prevent breaking User model constructors
     
-    # Clear all mappers
-    clear_mappers()
-    
-    # Clear the registry
-    if hasattr(Base, 'registry'):
-        Base.registry._class_registry.clear()
-        try:
-            Base.registry.dispose()
-        except Exception:
-            pass
-    
-    # Clear metadata
-    Base.metadata.clear()
-    
-    # Remove all app.models modules from sys.modules to force reimport
-    modules_to_remove = [name for name in sys.modules.keys() if name.startswith('app.models')]
-    for module_name in modules_to_remove:
-        if module_name in sys.modules:
-            del sys.modules[module_name]
-    
-    # Force garbage collection
-    gc.collect()
+    The clear_mappers() call was breaking User model constructors across many tests,
+    causing the pass rate to drop from 85 to 33 tests. Database isolation is used
+    instead to prevent UserRoleAssignment conflicts.
+    """
+    # SQLAlchemy registry reset DISABLED - it breaks User model constructors
+    # Using database isolation and centralized imports instead
     
     yield
     
-    # Clean up after test
-    clear_mappers()
-    if hasattr(Base, 'registry'):
-        Base.registry._class_registry.clear()
-    
-    # Clear modules again after test
-    modules_to_remove = [name for name in sys.modules.keys() if name.startswith('app.models')]
-    for module_name in modules_to_remove:
-        if module_name in sys.modules:
-            del sys.modules[module_name]
-    
-    gc.collect()
+    # No cleanup needed - database isolation handles conflicts
 
 # Import specific models to ensure they're registered (avoid wildcard imports)
 try:

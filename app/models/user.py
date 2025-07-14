@@ -4,6 +4,10 @@ from sqlalchemy.ext.associationproxy import association_proxy
 from datetime import datetime # Changed to just datetime for consistency, as utcnow is method of datetime
 from app.database import Base
 
+# Import Tenant directly to avoid string resolution issues
+from app.models.tenant import Tenant
+from app.models.imports import ProcessNote, Task
+
 # Remove circular import - relationships will be resolved by SQLAlchemy registry
 
 class User(Base):
@@ -95,11 +99,10 @@ class User(Base):
         return self.get_roles()
     
     # Tenant relationship - specify foreign_keys to resolve ambiguity
-    tenant = relationship("Tenant", foreign_keys=[tenant_id], back_populates="users", overlaps="creator,manager")
+    tenant = relationship(Tenant, foreign_keys=[tenant_id], overlaps="creator,manager")
     # Relationship to ProcessNote model
     process_notes = relationship(
-        "ProcessNote",
-        back_populates="user",
+        lambda: ProcessNote,
         cascade="all, delete-orphan"
     )
     # activities = relationship(
@@ -113,14 +116,12 @@ class User(Base):
     #     cascade="all, delete-orphan"
     # )
     tasks = relationship(
-        "Task",
-        back_populates="user", # This 'user' is the owner/creator of the task
+        lambda: Task,
         cascade="all, delete-orphan",
         foreign_keys="[Task.user_id]" # Specify which FK this relationship uses
     )
     assigned_tasks = relationship(
-        "Task",
-        back_populates="assigned_resource", # This 'assigned_resource' is who the task is assigned to
+        lambda: Task,
         cascade="all, delete-orphan",
         foreign_keys="[Task.assigned_resource_id]" # Specify which FK this relationship uses
     )
@@ -132,7 +133,6 @@ class User(Base):
     # Relationships to new models
     projects = relationship(
         "Project",
-        back_populates="user",
         foreign_keys="Project.user_id",
         cascade="all, delete-orphan"
     )

@@ -54,7 +54,7 @@ except ImportError:
     pass
 
 try:
-    from app.models.project import Project
+    from app.models.imports import Project
 except ImportError:
     pass
 

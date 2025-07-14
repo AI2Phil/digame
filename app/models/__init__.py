@@ -9,11 +9,10 @@ from app.database import Base # Import Base from the centralized database module
 # Import only specific classes from rbac module to avoid UserRoleAssignment conflicts
 from .rbac import Role, Permission, role_permissions_table
 # Import UserRoleAssignment from centralized imports to resolve registry conflicts
-from .imports import UserRoleAssignment
+from .imports import UserRoleAssignment, Task
 from .process_notes import ProcessNote
 from .imports import Activity, ActivityEnrichedFeature
 from .anomaly import DetectedAnomaly
-from .task import Task # Added new model
 from .behavior_model import BehavioralModel, BehavioralPattern # Added behavioral models
 from .user_setting import UserSetting # Import the new UserSetting model
 # Import from the comprehensive notifications module instead of the old notification module
@@ -30,7 +29,7 @@ from .workflow_automation import (
     # Note: The WorkflowLogStatus enum was part of the simpler model definition,
     # the existing advanced models use strings for status fields.
 )
-from .project import Project # Import the new Project model
+from .imports import Project # Import from centralized imports to resolve registry conflicts
 from .experience import Experience # Import the new Experience model
 from .education import Education # Import the new Education model
 from .communication import Message # Import the new Message model

@@ -5,7 +5,7 @@ from typing import List, Dict, Any, Optional, cast
 from datetime import datetime, timedelta
 
 # Assuming Task model is correctly imported via models package
-from ..models import Task as TaskModel
+from ..models.imports import Task as TaskModel
 from ..models.user import User as UserModel
 from ..crud import user_setting_crud # For potential future API key use
 from ..crud import task_crud # To fetch tasks for a user

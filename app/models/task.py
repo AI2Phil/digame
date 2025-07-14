@@ -4,9 +4,7 @@ from sqlalchemy.sql import func
 
 # Import Base from user.py to ensure all tables use the same metadata declaration
 from app.database import Base
-# Import User and ProcessNote models for establishing relationships
-from .user import User # Renamed to avoid potential confusion
-from .process_notes import ProcessNote # Renamed
+# Remove imports to avoid circular imports - use string references instead
 
 class Task(Base):
     __table_args__ = {'extend_existing': True}
@@ -32,10 +30,10 @@ class Task(Base):
     updated_at = Column(DateTime(), server_default=func.now(), onupdate=func.now(), nullable=False)
 
     # Relationship to User model
-    user = relationship("User", back_populates="tasks", foreign_keys=[user_id])
+    user = relationship("User", foreign_keys=[user_id])
     
     # Relationship to ProcessNote model (optional)
-    process_note = relationship("ProcessNote", back_populates="generated_tasks")
+    process_note = relationship("ProcessNote")
 
     # New fields for Smart Scheduling & Calendar Management
     estimated_effort_hours = Column(Float(), nullable=True)

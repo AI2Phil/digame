@@ -13,7 +13,7 @@ from ..models.gamification import (
     Badge, UserBadge, LeaderboardEntry, AchievementType, AchievementRarity
 )
 from ..models.user import User
-from ..models.task import Task
+from ..models.imports import Task
 
 logger = logging.getLogger(__name__)
 

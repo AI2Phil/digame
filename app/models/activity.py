@@ -3,8 +3,8 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
 # Import Base from user.py to ensure all tables use the same metadata declaration
-from app.database import Base 
-from .user import User # For establishing relationship
+from app.database import Base
+# Remove User import to avoid circular imports - use string references instead
 
 class Activity(Base):
     __table_args__ = {'extend_existing': True}

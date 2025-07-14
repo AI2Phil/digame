@@ -2,7 +2,7 @@ from sqlalchemy.orm import Session
 from typing import List, Optional, Dict, Any
 from datetime import datetime
 
-from ..models.task import Task
+from ..models.imports import Task
 from ..schemas.task_schemas import TaskCreate, TaskUpdate
 
 def get_task_by_id(db: Session, task_id: int, user_id: Optional[int] = None) -> Optional[Task]:
