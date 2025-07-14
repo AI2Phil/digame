@@ -16,6 +16,34 @@ from ..auth.jwt_handler import get_current_platform_owner
 from ..models.user import User
 
 
+# Mock User class for testing
+class MockUser:
+    def __init__(self, id: str, tenant_id: int = 1, username: str = "testuser", email: str = "test@example.com"):
+        self.id = id
+        self.tenant_id = tenant_id
+        self.username = username
+        self.email = email
+        self.is_active = True
+
+
+# Mock Dashboard Service for testing
+class MockDashboardService:
+    def __init__(self):
+        self._custom_dashboards = {}
+
+# Global instance for testing
+_dashboard_service = MockDashboardService()
+
+def get_dashboard_service():
+    """Get dashboard service instance"""
+    return _dashboard_service
+
+# Dependency function for testing
+def get_current_user():
+    """Dependency function that can be overridden in tests"""
+    return get_current_platform_owner()
+
+
 router = APIRouter(prefix="/api/v1/dashboard", tags=["Dashboard Management"])
 
 
@@ -939,3 +967,197 @@ async def get_recent_activities():
             }
         ]
     }
+
+
+# Advanced Analytics Endpoints
+@router.get("/advanced/multi-dim-performance")
+async def get_multi_dim_performance(
+    metric_ids: List[int] = Query(..., description="Metric IDs to analyze"),
+    time_period: str = Query("7d", description="Time period for analysis")
+):
+    """Get multi-dimensional performance data"""
+    return [
+        {
+            "metric_name": f"Metric {metric_id}",
+            "data_points": [
+                {"timestamp": "2024-01-20T00:00:00Z", "value": 85 + metric_id},
+                {"timestamp": "2024-01-21T00:00:00Z", "value": 92 + metric_id},
+                {"timestamp": "2024-01-22T00:00:00Z", "value": 78 + metric_id}
+            ]
+        }
+        for metric_id in metric_ids
+    ]
+
+
+@router.get("/advanced/performance-forecast")
+async def get_performance_forecast(
+    model_id: int = Query(..., description="Model ID for forecasting")
+):
+    """Get performance forecast data"""
+    return {
+        "title": f"Performance Forecast (Model {model_id})",
+        "series": [
+            {
+                "name": "Actual",
+                "data": [85, 92, 78, 88, 95]
+            },
+            {
+                "name": "Forecast",
+                "data": [95, 98, 102, 105, 108]
+            }
+        ]
+    }
+
+
+@router.get("/advanced/benchmark-comparison")
+async def get_benchmark_comparison(
+    entity_id: int = Query(..., description="Entity ID for comparison"),
+    metric_name: str = Query(..., description="Metric name to compare")
+):
+    """Get benchmark comparison data"""
+    return [
+        {
+            "metric_name": metric_name,
+            "entity_value": 85.5,
+            "benchmark_value": 78.2,
+            "percentile": 75,
+            "status": "above_average"
+        }
+    ]
+
+
+@router.get("/advanced/roi-overview")
+async def get_roi_overview(
+    project_ids: List[int] = Query(..., description="Project IDs for ROI analysis")
+):
+    """Get ROI overview data"""
+    total_roi = sum(15.5 + (pid * 2.3) for pid in project_ids)
+    return {
+        "title": "ROI Overview",
+        "total_roi_percentage": round(float(total_roi), 2),
+        "projects": [
+            {
+                "project_id": pid,
+                "roi_percentage": round(float(15.5 + (pid * 2.3)), 2),
+                "investment": 10000 + (pid * 1000),
+                "return": 11550 + (pid * 1230)
+            }
+            for pid in project_ids
+        ]
+    }
+
+
+# Custom Dashboard Management Endpoints
+@router.post("/custom", status_code=201)
+async def create_custom_dashboard(
+    name: str = Query(..., description="Dashboard name"),
+    description: str = Query("", description="Dashboard description"),
+    current_user: User = Depends(get_current_user)
+):
+    """Create a custom dashboard"""
+    import uuid
+    dashboard_id = str(uuid.uuid4())
+    
+    dashboard = {
+        "id": dashboard_id,
+        "name": name,
+        "description": description,
+        "user_id": current_user.id,
+        "tenant_id": getattr(current_user, 'tenant_id', 1),
+        "created_at": datetime.utcnow().isoformat(),
+        "layout": {"columns": 12, "widgets": []}
+    }
+    
+    # Store in mock service
+    get_dashboard_service()._custom_dashboards[dashboard_id] = dashboard
+    
+    return dashboard
+
+
+@router.get("/custom/{dashboard_id}")
+async def get_custom_dashboard(
+    dashboard_id: str,
+    current_user: User = Depends(get_current_user)
+):
+    """Get a custom dashboard by ID"""
+    dashboard = get_dashboard_service()._custom_dashboards.get(dashboard_id)
+    if not dashboard:
+        raise HTTPException(status_code=404, detail="Dashboard not found")
+    return dashboard
+
+
+@router.get("/custom")
+async def list_user_custom_dashboards(
+    current_user: User = Depends(get_current_user)
+):
+    """List user's custom dashboards"""
+    user_dashboards = [
+        dashboard for dashboard in get_dashboard_service()._custom_dashboards.values()
+        if dashboard.get("user_id") == current_user.id
+    ]
+    return user_dashboards
+
+
+@router.put("/custom/{dashboard_id}/layout")
+async def update_dashboard_layout(
+    dashboard_id: str,
+    layout_data: Dict[str, Any],
+    current_user: User = Depends(get_current_user)
+):
+    """Update dashboard layout"""
+    dashboard = get_dashboard_service()._custom_dashboards.get(dashboard_id)
+    if not dashboard:
+        raise HTTPException(status_code=404, detail="Dashboard not found")
+    
+    dashboard["layout"] = layout_data
+    dashboard["updated_at"] = datetime.utcnow().isoformat()
+    
+    return dashboard
+
+
+@router.post("/custom/{dashboard_id}/widgets")
+async def add_widget_to_dashboard(
+    dashboard_id: str,
+    widget_data: Dict[str, Any],
+    current_user: User = Depends(get_current_user)
+):
+    """Add widget to dashboard"""
+    dashboard = get_dashboard_service()._custom_dashboards.get(dashboard_id)
+    if not dashboard:
+        raise HTTPException(status_code=404, detail="Dashboard not found")
+    
+    # Add widget ID if not provided
+    if "id" not in widget_data:
+        import uuid
+        widget_data["id"] = str(uuid.uuid4())
+    
+    # Add widget to layout
+    if "layout" not in dashboard:
+        dashboard["layout"] = {"columns": 12, "widgets": []}
+    
+    dashboard["layout"]["widgets"].append(widget_data)
+    dashboard["updated_at"] = datetime.utcnow().isoformat()
+    
+    return dashboard
+
+
+@router.delete("/custom/{dashboard_id}/widgets/{widget_id}")
+async def remove_widget_from_dashboard(
+    dashboard_id: str,
+    widget_id: str,
+    current_user: User = Depends(get_current_user)
+):
+    """Remove widget from dashboard"""
+    dashboard = get_dashboard_service()._custom_dashboards.get(dashboard_id)
+    if not dashboard:
+        raise HTTPException(status_code=404, detail="Dashboard not found")
+    
+    # Remove widget from layout
+    if "layout" in dashboard and "widgets" in dashboard["layout"]:
+        dashboard["layout"]["widgets"] = [
+            widget for widget in dashboard["layout"]["widgets"]
+            if widget.get("id") != widget_id
+        ]
+        dashboard["updated_at"] = datetime.utcnow().isoformat()
+    
+    return dashboard

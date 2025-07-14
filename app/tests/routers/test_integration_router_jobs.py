@@ -42,11 +42,14 @@ app.dependency_overrides[get_db] = override_get_db
 
 @pytest.fixture
 def mock_active_connection():
-    connection = MagicMock(spec=IntegrationConnection)
-    connection.id = 1
-    connection.status = "active"
-    connection.provider_id = 1 # Ensure this matches a mock provider if needed
-    return connection
+    # Create a simple object instead of MagicMock to avoid attribute issues
+    class MockConnection:
+        def __init__(self):
+            self.id = 1
+            self.status = "active"
+            self.provider_id = 1
+    
+    return MockConnection()
 
 @pytest.fixture
 def mock_inactive_connection():
@@ -55,7 +58,7 @@ def mock_inactive_connection():
     connection.status = "inactive"
     return connection
 
-@patch("digame.app.routers.integration_router.ThirdPartyAPIService")
+@patch("digame.app.services.third_party_api_service.ThirdPartyAPIService")
 def test_search_jobs_via_connection_success(
     mock_api_service_class,
     mock_active_connection
@@ -81,7 +84,18 @@ def test_search_jobs_via_connection_success(
     with patch("digame.app.routers.integration_router.IntegrationService") as mock_integration_service_class:
         mock_integration_instance = MagicMock()
         mock_integration_service_class.return_value = mock_integration_instance
-        mock_integration_instance.db.query(IntegrationConnection).filter().first.return_value = mock_active_connection
+        
+        # Create a proper mock for the database query chain
+        # The actual code does: integration_service.db.query(IntegrationConnection).filter(...).first()
+        mock_db = MagicMock()
+        mock_integration_instance.db = mock_db
+        
+        # Mock the complete query chain
+        mock_query_result = MagicMock()
+        mock_filter_result = MagicMock()
+        mock_filter_result.first.return_value = mock_active_connection
+        mock_query_result.filter.return_value = mock_filter_result
+        mock_db.query.return_value = mock_query_result
 
         search_payload = {"query": "Python Developer", "location": "Remote"}
 
@@ -90,6 +104,10 @@ def test_search_jobs_via_connection_success(
             f"/api/v1/integrations/connections/{mock_active_connection.id}/jobs/search",
             json=search_payload
         )
+
+    # Debug: Print response details
+    print(f"Response status: {response.status_code}")
+    print(f"Response body: {response.text}")
 
     # Assert
     assert response.status_code == 200
@@ -127,7 +145,7 @@ def test_search_jobs_connection_not_found():
     assert response.json()["detail"] == "Connection not found"
 
 
-@patch("digame.app.routers.integration_router.ThirdPartyAPIService")
+@patch("digame.app.services.third_party_api_service.ThirdPartyAPIService")
 def test_search_jobs_inactive_connection(
     mock_api_service_class, # Not used directly but patches the class
     mock_inactive_connection
@@ -151,7 +169,7 @@ def test_search_jobs_inactive_connection(
     assert response.json()["detail"] == f"Connection is not active. Current status: {mock_inactive_connection.status}"
 
 
-@patch("digame.app.routers.integration_router.ThirdPartyAPIService")
+@patch("digame.app.services.third_party_api_service.ThirdPartyAPIService")
 def test_search_jobs_api_service_value_error(
     mock_api_service_class,
     mock_active_connection
@@ -179,7 +197,7 @@ def test_search_jobs_api_service_value_error(
     assert response.json()["detail"] == "API specific error"
 
 
-@patch("digame.app.routers.integration_router.ThirdPartyAPIService")
+@patch("digame.app.services.third_party_api_service.ThirdPartyAPIService")
 def test_search_jobs_api_service_generic_exception(
     mock_api_service_class,
     mock_active_connection

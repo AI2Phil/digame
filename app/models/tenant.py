@@ -14,6 +14,9 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from app.models.user import User
 
+# Import UserRoleAssignment from centralized imports to avoid registry conflicts
+from app.models.imports import UserRoleAssignment
+
 class Tenant(Base):
     """
     Tenant model for multi-tenant architecture
@@ -78,7 +81,7 @@ class Tenant(Base):
     # Relationships to User, Role, and UserRole models - optimized for registry resolution
     users = relationship("User", foreign_keys="User.tenant_id")
     roles = relationship("app.models.rbac.Role", back_populates="tenant")
-    user_roles = relationship("UserRoleAssignment", overlaps="tenant")
+    user_roles = relationship(UserRoleAssignment, overlaps="tenant")
     creator = relationship("User", foreign_keys=[created_by], overlaps="users")
     manager = relationship("User", foreign_keys=[managed_by], overlaps="users")
     

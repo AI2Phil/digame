@@ -33,7 +33,9 @@ def test_read_productivity_chart(client):
     json_response = response.json()
     assert "title" in json_response
     assert "data" in json_response
-    assert isinstance(json_response["data"], list)
+    assert isinstance(json_response["data"], dict)
+    assert "labels" in json_response["data"]
+    assert "datasets" in json_response["data"]
 
 # --- Test Advanced Analytics Data Endpoints ---
 def test_read_multi_dim_performance(client):

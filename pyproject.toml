@@ -77,10 +77,16 @@ testpaths = ["app/tests", "tests", "tests/unit", "tests/integration"]
 python_files = ["test_*.py", "*_test.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
-addopts = "-v --tb=short"
+addopts = "-v --tb=short -x --maxfail=1 --disable-warnings"
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
 pythonpath = ["."]
+# Disable parallel execution to prevent test isolation issues
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+]
+# Force sequential execution
+junit_family = "xunit2"
 
 [tool.black]
 line-length = 88

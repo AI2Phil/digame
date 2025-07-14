@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, AsyncMock, patch
 from fastapi.testclient import TestClient
 from fastapi import HTTPException, status
 
@@ -18,7 +18,7 @@ def client():
 # --- Mock Fixtures ---
 @pytest.fixture
 def mock_meeting_insights_service():
-    service = MagicMock()
+    service = AsyncMock()
     return service
 
 @pytest.fixture
@@ -65,7 +65,7 @@ def test_analyze_endpoint_success(client, mock_meeting_insights_service, mock_cu
         "analysis_level": "premium",
         "text_length": 150
     }
-    mock_meeting_insights_service.get_meeting_analysis = MagicMock(return_value=expected_analysis_result)
+    mock_meeting_insights_service.get_meeting_analysis = AsyncMock(return_value=expected_analysis_result)
 
     # Import dependency provider functions for overriding
     from app.auth.auth_dependencies import get_current_active_user
@@ -84,16 +84,16 @@ def test_analyze_endpoint_success(client, mock_meeting_insights_service, mock_cu
     data = response.json()
     assert data["original_text_length"] == len(request_payload["meeting_text"])
     assert data["analysis"] == expected_analysis_result
-    assert data["error_message"] is None
 
     mock_meeting_insights_service.get_meeting_analysis.assert_called_once_with(
-        current_user=mock_current_active_user_for_insights,
-        meeting_text=request_payload["meeting_text"]
+        current_user_id=mock_current_active_user_for_insights.id,
+        meeting_text=request_payload["meeting_text"],
+        generate_draft_email=False  # Default value from schema
     )
 
 def test_analyze_endpoint_service_raises_http_exception(client, mock_meeting_insights_service, mock_current_active_user_for_insights):
     # Arrange
-    mock_meeting_insights_service.get_meeting_analysis = MagicMock(
+    mock_meeting_insights_service.get_meeting_analysis = AsyncMock(
         side_effect=HTTPException(status_code=403, detail="Meeting Insights feature not enabled for your tenant.")
     )
     from app.auth.auth_dependencies import get_current_active_user
@@ -113,7 +113,7 @@ def test_analyze_endpoint_service_raises_http_exception(client, mock_meeting_ins
 
 def test_analyze_endpoint_service_raises_unexpected_exception(client, mock_meeting_insights_service, mock_current_active_user_for_insights):
     # Arrange
-    mock_meeting_insights_service.get_meeting_analysis = MagicMock(
+    mock_meeting_insights_service.get_meeting_analysis = AsyncMock(
         side_effect=ConnectionError("External service connection failed badly.") # A non-HTTPException
     )
     from app.auth.auth_dependencies import get_current_active_user

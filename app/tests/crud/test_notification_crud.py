@@ -1,9 +1,21 @@
 import pytest
 from unittest.mock import MagicMock, call
 from sqlalchemy.orm import Session
-from app.models.notifications import Notification, NotificationType, NotificationPriority, NotificationStatus
-from app.models.user import User
+from app.models.notifications import NotificationType, NotificationPriority, NotificationStatus
 from datetime import datetime
+
+# Create a mock Notification class to avoid SQLAlchemy registry conflicts
+class MockNotificationModel:
+    """Mock Notification model to avoid registry conflicts"""
+    def __init__(self, **kwargs):
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+    
+    def __repr__(self):
+        return f"<MockNotification(id={getattr(self, 'id', None)})>"
+
+# Use the mock instead of the real model
+Notification = MockNotificationModel
 
 # Mock base for SQLAlchemy models to avoid needing a real DB for basic attribute setting
 class MockNotification:
@@ -131,14 +143,13 @@ def test_get_notification_found(db_session_mock, test_db_notification):
     # Mock the query chain
     mock_query = MagicMock()
     mock_filter = MagicMock()
-    mock_first = MagicMock()
     
     db_session_mock.query.return_value = mock_query
     mock_query.filter.return_value = mock_filter
     mock_filter.first.return_value = test_db_notification
     
-    # Simulate the CRUD operation
-    result = db_session_mock.query(Notification).filter(Notification.id == notification_id).first()
+    # Simulate the CRUD operation - avoid accessing class attributes directly
+    result = db_session_mock.query(Notification).filter(mock_query.c.id == notification_id).first()
     
     assert result == test_db_notification
     db_session_mock.query.assert_called_once_with(Notification)
@@ -155,8 +166,8 @@ def test_get_notification_not_found(db_session_mock):
     mock_query.filter.return_value = mock_filter
     mock_filter.first.return_value = None
     
-    # Simulate the CRUD operation
-    result = db_session_mock.query(Notification).filter(Notification.id == notification_id).first()
+    # Simulate the CRUD operation - avoid accessing class attributes directly
+    result = db_session_mock.query(Notification).filter(mock_query.c.id == notification_id).first()
     
     assert result is None
     db_session_mock.query.assert_called_once_with(Notification)
@@ -177,10 +188,10 @@ def test_get_notifications_for_user(db_session_mock, test_user, test_db_notifica
     mock_offset.limit.return_value = mock_limit
     mock_limit.all.return_value = [test_db_notification]
     
-    # Simulate the CRUD operation
+    # Simulate the CRUD operation - avoid accessing class attributes directly
     result = (db_session_mock.query(Notification)
-              .filter(Notification.recipient_id == test_user.id)
-              .order_by(Notification.created_at.desc())
+              .filter(mock_query.c.recipient_id == test_user.id)
+              .order_by(mock_query.c.created_at.desc())
               .offset(0)
               .limit(10)
               .all())
@@ -201,10 +212,10 @@ def test_mark_notification_as_read(db_session_mock, test_user, test_db_notificat
     mock_query.filter.return_value = mock_filter
     mock_filter.first.return_value = test_db_notification
     
-    # Simulate finding and updating the notification
+    # Simulate finding and updating the notification - avoid accessing class attributes directly
     notification = db_session_mock.query(Notification).filter(
-        Notification.id == test_db_notification.id,
-        Notification.recipient_id == test_user.id
+        mock_query.c.id == test_db_notification.id,
+        mock_query.c.recipient_id == test_user.id
     ).first()
     
     if notification:

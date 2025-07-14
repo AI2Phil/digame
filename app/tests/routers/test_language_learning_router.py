@@ -24,8 +24,7 @@ def mock_language_learning_service():
 
 @pytest.fixture
 def mock_current_active_user_for_lang_learn(): # Renamed for clarity
-    user = create_mock_model(UserModel, id=6, email="lang_router_user@example.com", full_name="Lang Router Test User", is_active=True)
-    user.tenants = []
+    user = create_mock_model(UserModel, id=6, email="lang_router_user@example.com", full_name="Lang Router Test User", is_active=True, tenants=[])
     return user
 
 # --- Router Tests: /translate ---
@@ -64,7 +63,8 @@ def test_translate_endpoint_success(client, mock_language_learning_service, mock
         "translated_text": "Mock translated 'Hello world' to ES",
         "target_language": "es",
         "source_language": "en",
-        "provider": "MockExternalLanguageProvider"
+        "provider": "MockExternalLanguageProvider",
+        "error_message": None
     }
     mock_language_learning_service.translate_text = MagicMock(return_value=expected_result)
 
@@ -140,7 +140,7 @@ def test_translate_endpoint_invalid_input(client, mock_current_active_user_for_l
 
     # Assertion
     assert response.status_code == 422 # Unprocessable Entity
-    assert any("ensure this value has at least 1 character" in err["msg"].lower() for err in response.json()["detail"] if err["loc"] == ["body", "text"])
+    assert any("string should have at least 1 character" in err["msg"].lower() for err in response.json()["detail"] if err["loc"] == ["body", "text"])
 
 # --- Router Tests: /define ---
 
@@ -151,7 +151,8 @@ def test_define_endpoint_success(client, mock_language_learning_service, mock_cu
         "language": "fr",
         "definition": "Mock definition for 'bonjour' in FR: A common greeting.",
         "example": "Example: 'Bonjour, comment ça va?'",
-        "provider": "MockExternalLanguageProvider"
+        "provider": "MockExternalLanguageProvider",
+        "error_message": None
     }
     mock_language_learning_service.get_vocabulary_definition = MagicMock(return_value=expected_result)
 
@@ -206,7 +207,7 @@ def test_define_endpoint_invalid_input(client, mock_current_active_user_for_lang
 
     # Assertion
     assert response.status_code == 422
-    assert any("ensure this value has at least 1 character" in err["msg"].lower() for err in response.json()["detail"] if err["loc"] == ["body", "word"])
+    assert any("string should have at least 1 character" in err["msg"].lower() for err in response.json()["detail"] if err["loc"] == ["body", "word"])
 
 # --- Router Tests: /health ---
 
