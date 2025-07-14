@@ -84,26 +84,102 @@ except ImportError:
 # Registry cleanup removed - clear_mappers() breaks model constructors
 # Using database isolation instead to prevent conflicts
 
+# Comprehensive model registration system
+@pytest.fixture(autouse=True, scope="session")
+def ensure_model_registration():
+    """Ensure all critical models are properly registered and available during test execution"""
+    
+    # Import all critical models to ensure they're registered
+    try:
+        from app.models.user import User
+        from app.models.tenant import Tenant
+        from app.models.rbac import Role
+        from app.models.imports import UserRoleAssignment, Activity, ProcessNote, Task, Project, Experience
+        from app.models.team import Team, TeamMember
+        
+        # Force registration of all critical models
+        critical_models = {
+            'User': User,
+            'Tenant': Tenant,
+            'Role': Role,
+            'UserRoleAssignment': UserRoleAssignment,
+            'Activity': Activity,
+            'ProcessNote': ProcessNote,
+            'Task': Task,
+            'Project': Project,
+            'Experience': Experience,
+            'Team': Team,
+            'TeamMember': TeamMember
+        }
+        
+        # Ensure all models are in the registry
+        for name, model_class in critical_models.items():
+            if name not in Base.registry._class_registry:
+                Base.registry._class_registry[name] = model_class
+        
+        # Special handling for UserRoleAssignment - register under expected module path
+        # This ensures SQLAlchemy's string resolution can find it
+        if 'app.models.user_role_assignment.UserRoleAssignment' not in Base.registry._class_registry:
+            Base.registry._class_registry['app.models.user_role_assignment.UserRoleAssignment'] = UserRoleAssignment
+        
+        # Force configuration of all mappers to resolve relationships
+        try:
+            from sqlalchemy.orm import configure_mappers
+            configure_mappers()
+        except Exception as e:
+            logging.warning(f"Failed to configure mappers during registration: {e}")
+        
+        # Ensure UserRoleAssignment is properly injected into expected module namespace
+        try:
+            from app.models.imports import _inject_user_role_assignment
+            _inject_user_role_assignment()
+        except Exception as e:
+            logging.warning(f"Failed to inject UserRoleAssignment into module namespace: {e}")
+            
+    except Exception as e:
+        logging.error(f"Failed to register critical models: {e}")
+    
+    yield
+    
+    # Post-session cleanup - ensure models remain registered
+    try:
+        for name, model_class in critical_models.items():
+            if name not in Base.registry._class_registry:
+                Base.registry._class_registry[name] = model_class
+    except Exception as e:
+        logging.warning(f"Failed to restore models after session: {e}")
+
 # Multi-layer isolation fixture implementation
 @pytest.fixture(autouse=True, scope="function")
 def multi_layer_isolation():
-    """Multi-layer test isolation strategy"""
+    """Multi-layer test isolation strategy with registry preservation"""
     
     if ISOLATION_LEVEL >= IsolationLevel.MINIMAL:
         # Layer 1: Basic cleanup
         close_all_sessions()
     
     if ISOLATION_LEVEL >= IsolationLevel.STANDARD:
-        # Layer 2: SQLAlchemy registry reset for problematic classes only
-        if hasattr(Base, 'registry'):
-            # Clear only problematic classes that cause isolation issues
-            registry = Base.registry._class_registry
-            problematic = ['UserRoleAssignment', 'Tenant', 'Experience', 'Team', 'UserSetting', 'Notification']
-            keys_to_clear = [k for k in list(registry.keys())
-                           if any(cls in str(k) for cls in problematic)]
-            for key in keys_to_clear:
-                if key in registry:
-                    del registry[key]
+        # Layer 2: Registry preservation instead of reset
+        # Preserve core models to prevent unmapping during test execution
+        from app.models.user import User
+        from app.models.tenant import Tenant
+        from app.models.rbac import Role
+        from app.models.imports import UserRoleAssignment
+        
+        # Ensure core models remain in registry
+        core_models = {
+            'User': User,
+            'Tenant': Tenant,
+            'Role': Role,
+            'UserRoleAssignment': UserRoleAssignment
+        }
+        for name, model_class in core_models.items():
+            if name not in Base.registry._class_registry:
+                Base.registry._class_registry[name] = model_class
+        
+        # Special handling for UserRoleAssignment - ensure it's registered under expected module path
+        if 'app.models.user_role_assignment.UserRoleAssignment' not in Base.registry._class_registry:
+            Base.registry._class_registry['app.models.user_role_assignment.UserRoleAssignment'] = UserRoleAssignment
     
     if ISOLATION_LEVEL >= IsolationLevel.AGGRESSIVE:
         # Layer 3: Full application state reset
@@ -120,6 +196,37 @@ def multi_layer_isolation():
             if hasattr(sys.modules[module], 'cache'):
                 sys.modules[module].cache.clear()
     
+    if ISOLATION_LEVEL >= IsolationLevel.NUCLEAR:
+        # Layer 4: Nuclear option - complete registry reset with preservation
+        if hasattr(Base, 'registry'):
+            # Store core models before clearing
+            from app.models.user import User
+            from app.models.tenant import Tenant
+            from app.models.rbac import Role
+            core_models = {'User': User, 'Tenant': Tenant, 'Role': Role}
+            
+            # Clear the entire registry
+            Base.registry._class_registry.clear()
+            
+            # Restore core models immediately
+            for name, model_class in core_models.items():
+                Base.registry._class_registry[name] = model_class
+            
+            # Force re-import of other models to re-register them
+            try:
+                import importlib
+                import sys
+                model_modules = [
+                    'app.models.user_role_assignment',
+                    'app.models.team',
+                    'app.models.activity'
+                ]
+                for module_name in model_modules:
+                    if module_name in sys.modules:
+                        importlib.reload(sys.modules[module_name])
+            except Exception as e:
+                logging.warning(f"Nuclear isolation reload failed: {e}")
+    
     yield
     
     # Post-test cleanup (reverse order)
@@ -132,6 +239,26 @@ def multi_layer_isolation():
     
     if ISOLATION_LEVEL >= IsolationLevel.STANDARD:
         close_all_sessions()
+        
+        # Ensure core models are still preserved after cleanup
+        from app.models.user import User
+        from app.models.tenant import Tenant
+        from app.models.rbac import Role
+        from app.models.imports import UserRoleAssignment
+        
+        core_models = {
+            'User': User,
+            'Tenant': Tenant,
+            'Role': Role,
+            'UserRoleAssignment': UserRoleAssignment
+        }
+        for name, model_class in core_models.items():
+            if name not in Base.registry._class_registry:
+                Base.registry._class_registry[name] = model_class
+        
+        # Special handling for UserRoleAssignment - ensure it's registered under expected module path
+        if 'app.models.user_role_assignment.UserRoleAssignment' not in Base.registry._class_registry:
+            Base.registry._class_registry['app.models.user_role_assignment.UserRoleAssignment'] = UserRoleAssignment
 
 # Test state inspector for debugging
 @pytest.fixture(autouse=True)
@@ -188,6 +315,52 @@ def validate_isolation():
     yield
     
     # Post-test validation could go here if needed
+
+@pytest.fixture(scope="function")
+def isolated_db():
+    """Create completely isolated database per test - Advanced Solution"""
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import sessionmaker
+    import uuid
+    
+    # Create unique database per test with enhanced isolation
+    db_name = f"test_{uuid.uuid4().hex[:8]}"
+    engine = create_engine(
+        f"sqlite:///:memory:",
+        echo=False,
+        poolclass=StaticPool,
+        connect_args={
+            'check_same_thread': False,
+            'isolation_level': None  # Autocommit mode
+        }
+    )
+    
+    # Create all tables fresh with proper error handling for index conflicts
+    try:
+        # First drop any existing tables to ensure clean state
+        Base.metadata.drop_all(bind=engine)
+        
+        # Create all tables fresh
+        Base.metadata.create_all(engine)
+    except Exception as create_error:
+        # Handle specific SQLite index conflicts more gracefully
+        error_msg = str(create_error).lower()
+        if any(conflict in error_msg for conflict in ["already exists", "index", "unique constraint"]):
+            # For in-memory databases, this shouldn't happen, but handle gracefully
+            print(f"Warning: Database schema conflicts in isolated_db: {create_error}")
+            # Try to continue with existing schema
+            pass
+        else:
+            raise create_error
+    
+    SessionLocal = sessionmaker(bind=engine)
+    session = SessionLocal()
+    
+    try:
+        yield session
+    finally:
+        session.close()
+        engine.dispose()
 
 @pytest.fixture(scope="function")
 def isolated_engine():

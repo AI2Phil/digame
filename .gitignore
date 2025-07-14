@@ -315,9 +315,11 @@ logs/
 *.sqlite3
 
 # Test database files (SQLite in-memory with cache parameters)
-:memory:*
-*cache=shared*
-*database=*
+# Temporary SQLite in-memory database files created during testing
+:memory:?*
+:memory:?_db_id=*
+:memory:?cache=shared&database=*
+:memory:?cache=shared&id=*
 
 # Temporary files
 *.tmp
