@@ -15,7 +15,7 @@ class User(Base):
         Index('ix_users_platform_owner', 'is_platform_owner'),
         Index('ix_users_subscription_tier', 'subscription_tier'),
         Index('ix_users_active_tenant', 'is_active', 'tenant_id'),
-        {'extend_existing': True, 'keep_existing': True}
+        {'extend_existing': True}
     )
 
     id = Column(Integer(), primary_key=True)
