@@ -9,14 +9,19 @@ from app.models.dashboard_custom import AnalyticsDashboard, DashboardWidget
 from app.schemas import analytics_schemas as schemas
 from app.models.tenant import Tenant
 from app.models.user import User
+from app.services.analytics_service import AnalyticsService
 
 @pytest.fixture
 def mock_db_session():
     return MagicMock(spec=Session)
 
 @pytest.fixture
-def custom_dashboard_service(mock_db_session):
-    return CustomDashboardService(db=mock_db_session)
+def mock_analytics_service():
+    return MagicMock(spec=AnalyticsService)
+
+@pytest.fixture
+def custom_dashboard_service(mock_db_session, mock_analytics_service):
+    return CustomDashboardService(db=mock_db_session, analytics_service=mock_analytics_service)
 
 @pytest.fixture
 def sample_tenant():
@@ -32,8 +37,8 @@ def sample_dashboard_create_data():
         name="My Awesome Dashboard",
         description="Tracks key performance indicators.",
         layout=[
-            {"widget_id": 1, "x": 0, "y": 0, "w": 4, "h": 2},
-            {"widget_id": 2, "x": 4, "y": 0, "w": 4, "h": 2}
+            schemas.DashboardLayoutItem(widget_id=1, x=0, y=0, w=4, h=2),
+            schemas.DashboardLayoutItem(widget_id=2, x=4, y=0, w=4, h=2)
         ],
         tags=["kpi", "performance"]
     )
@@ -43,10 +48,10 @@ def sample_widget_create_data():
     return schemas.DashboardWidgetConfigCreate(
         title="CPU Usage Monitor",
         widget_type="line_chart",
-        data_source_config={
-            "type": "performance_metric_timeseries",
-            "query_params": {"metric_name": "cpu_usage", "entity_type": "server"}
-        },
+        data_source=schemas.DashboardWidgetDataSource(
+            type="performance_metric_timeseries",
+            query_params={"metric_name": "cpu_usage", "entity_type": "server"}
+        ),
         display_options={"color": "green"}
     )
 
@@ -150,22 +155,22 @@ async def test_get_widget_data_performance_metric_value(custom_dashboard_service
         title="CPU Usage",
         widget_type="kpi_card",
         data_source_config={
-            "type": "performance_metric_value",
+            "type": "performance_metric_single",
             "query_params": {"metric_name": "cpu_usage", "entity_id": 101, "entity_type": "server"}
         }
     )
-    metric_record = PerformanceMetric( # Assuming PerformanceMetric is imported
-        current_value=88.0,
-        measurement_unit="%",
-        display_name="CPU Utilization",
-        trend_direction="stable",
-        updated_at=datetime.utcnow()
-    )
+    # Mock the analytics service to return performance metrics
+    mock_metric_record = MagicMock()
+    mock_metric_record.current_value = 88.0
+    mock_metric_record.measurement_unit = "%"
+    mock_metric_record.display_name = "CPU Utilization"
+    mock_metric_record.trend_direction = "stable"
+    mock_metric_record.updated_at = datetime.utcnow()
+    mock_metric_record.id = 1
 
     with patch.object(custom_dashboard_service, 'get_widget', return_value=widget_instance):
-        mock_metric_query = MagicMock()
-        mock_db_session.query(PerformanceMetric).return_value = mock_metric_query
-        mock_metric_query.filter.return_value.order_by.return_value.first.return_value = metric_record
+        # Mock the analytics service method
+        custom_dashboard_service.analytics_service.get_performance_metrics.return_value = [mock_metric_record]
 
         widget_data_response = await custom_dashboard_service.get_widget_data(
             widget_id=1, tenant_id=sample_tenant.id
@@ -182,6 +187,4 @@ async def test_get_widget_data_not_found(custom_dashboard_service, mock_db_sessi
              await custom_dashboard_service.get_widget_data(widget_id=999, tenant_id=sample_tenant.id)
         assert exc_info.value.status_code == 404
 
-# Need to import PerformanceMetric for the test_get_widget_data_...
-from app.models.analytics import PerformanceMetric
 from fastapi import HTTPException # For testing exceptions

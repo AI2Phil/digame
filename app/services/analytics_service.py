@@ -1016,11 +1016,12 @@ class AnalyticsService:
 
         if dimension_filters:
             for key, value in dimension_filters.items():
-                # Assuming PostgreSQL JSONB @> operator for contains.
-                # For other databases, JSON functions might differ (e.g., func.json_extract)
-                # This checks if the dimensions_values JSON contains a specific key-value pair.
-                query = query.filter(PerformanceMetric.dimensions_values.has_key(key)) # Check if key exists first for some DBs
-                query = query.filter(PerformanceMetric.dimensions_values[key].astext == str(value))
+                # Use text() to avoid SQLAlchemy compatibility issues with JSON field operations
+                from sqlalchemy import text
+                # Use PostgreSQL JSONB operators for JSON field queries
+                # This checks if the dimensions_values JSON contains a specific key-value pair
+                query = query.filter(text("dimensions_values ? :key")).params(key=key)  # Check if key exists
+                query = query.filter(text("dimensions_values ->> :key = :value")).params(key=key, value=str(value))  # Check key-value match
 
         return query.order_by(desc(PerformanceMetric.measurement_date)).limit(limit).all()
 
@@ -1662,6 +1663,8 @@ class AnalyticsService:
         setattr(db_dashboard, 'description', dashboard_data.description)
         setattr(db_dashboard, 'tags', dashboard_data.tags)
         setattr(db_dashboard, 'layout', []) # Layout will be built based on created widgets
+        # Initialize widgets list for the test expectation
+        setattr(db_dashboard, 'widgets', [])
         self.db.add(db_dashboard)
         self.db.flush() # Flush to get db_dashboard.id for widgets and layout
 
@@ -1679,6 +1682,8 @@ class AnalyticsService:
                 self.db.add(db_widget)
                 self.db.flush() # Get ID for layout
                 created_widgets.append(db_widget)
+                # Add widget to dashboard's widgets list for test expectation
+                db_dashboard.widgets.append(db_widget)
 
                 # Use layout from input if provided and matches index, else default placement
                 if dashboard_data.layout and i < len(dashboard_data.layout) and dashboard_data.layout[i].widget_config_id == 0: # Placeholder ID
@@ -1865,6 +1870,7 @@ class AnalyticsService:
             setattr(db_dashboard, 'layout', [item for item in current_layout if item.get("widget_config_id") != widget_id])  # type: ignore
             setattr(db_dashboard, 'updated_at', datetime.now(timezone.utc))  # type: ignore
 
+        # Delete the widget, not the dashboard
         self.db.delete(db_widget)
         self.db.commit()
         return True

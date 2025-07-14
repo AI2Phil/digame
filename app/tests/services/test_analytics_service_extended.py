@@ -246,8 +246,18 @@ def test_remove_widget_from_dashboard(analytics_service: AnalyticsService, mock_
     mock_dashboard = AnalyticsDashboard(id=1, name="Dash", tenant_id=tenant_id, user_id=user_id, layout=[{"widget_config_id": 101, "x":0, "y":0, "w":1, "h":1}])
     mock_widget = DashboardWidgetConfig(id=101, dashboard_id=1, title="Widget to Delete", tenant_id=tenant_id, widget_type="kpi", data_source_config={})
 
-    mock_db_session.query(DashboardWidgetConfig).filter().first.return_value = mock_widget
-    mock_db_session.query(AnalyticsDashboard).filter().first.return_value = mock_dashboard
+    # Set up proper mock query chain to distinguish between different model types
+    def mock_query_side_effect(model_class):
+        mock_query = MagicMock()
+        if model_class == DashboardWidgetConfig:
+            mock_query.filter.return_value.first.return_value = mock_widget
+        elif model_class == AnalyticsDashboard:
+            mock_query.filter.return_value.first.return_value = mock_dashboard
+        else:
+            mock_query.filter.return_value.first.return_value = None
+        return mock_query
+    
+    mock_db_session.query.side_effect = mock_query_side_effect
 
     success = analytics_service.remove_widget_from_dashboard(101, tenant_id, user_id)
 

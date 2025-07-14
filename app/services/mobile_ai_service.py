@@ -54,28 +54,35 @@ class MobileAIService:
         user_id: int
     ) -> List[NotificationTrigger]:
         print(f"Generating AI notification triggers for user {user_id}")
-        mock_triggers = []
-        trigger_data = {
-            "trigger_type": "daily_summary",
-            "message_template": "☀️ Here's your AI-powered daily summary to kickstart your day!",
-            "relative_schedule_info": {"type": "daily_at", "time": "08:30"},
-            "presentation_options": {"priority": "default"}
-        }
-        mock_triggers.append(NotificationTrigger(**trigger_data))
-        trigger = NotificationTrigger()  # type: ignore
-        setattr(trigger, 'trigger_type', "task_completion_prompt")  # type: ignore
-        setattr(trigger, 'message_template', "🚀 Great job on completing {task_name}! Ready for the next challenge?")  # type: ignore
-        setattr(trigger, 'condition', {"type": "event_occurred", "event_name": "task_completed", "min_tasks_today_for_prompt": 1})  # type: ignore
-        setattr(trigger, 'presentation_options', {"priority": "high", "sound": "positive_ping.caf"})  # type: ignore
-        mock_triggers.append(trigger)
+        mock_triggers: List[NotificationTrigger] = []
+        
+        # Create first trigger
+        trigger1 = NotificationTrigger(
+            trigger_type="daily_summary",
+            message_template="☀️ Here's your AI-powered daily summary to kickstart your day!",
+            relative_schedule_info={"type": "daily_at", "time": "08:30"},
+            presentation_options={"priority": "default"}
+        )
+        mock_triggers.append(trigger1)
+        
+        # Create second trigger
+        trigger2 = NotificationTrigger(
+            trigger_type="task_completion_prompt",
+            message_template="🚀 Great job on completing {task_name}! Ready for the next challenge?",
+            condition={"type": "event_occurred", "event_name": "task_completed", "min_tasks_today_for_prompt": 1},
+            presentation_options={"priority": "high", "sound": "positive_ping.caf"}
+        )
+        mock_triggers.append(trigger2)
+        
+        # Add personalized trigger for even user IDs
         if user_id % 2 == 0:
-             trigger_data = {
-                "trigger_type": "productivity_tip",
-                "message_template": "Pro Tip: Batch similar tasks together to improve focus!",
-                "relative_schedule_info": {"type": "on_app_open", "frequency_cap_per_day": 1},
-                "presentation_options": {"priority": "low"}
-            }
-             mock_triggers.append(NotificationTrigger(**trigger_data))
+            trigger3 = NotificationTrigger(
+                trigger_type="productivity_tip",
+                message_template="Pro Tip: Batch similar tasks together to improve focus!",
+                relative_schedule_info={"type": "on_app_open", "frequency_cap_per_day": 1},
+                presentation_options={"priority": "low"}
+            )
+            mock_triggers.append(trigger3)
         return mock_triggers
 
     async def interpret_voice_command(
@@ -94,49 +101,49 @@ class MobileAIService:
         # Simple keyword-based intent recognition
         if re.search(r"\b(go to|navigate to|open)\b.*\b(analytics|dashboard)\b", text):
             screen_name = "Analytics" if "analytics" in text else "Dashboard"
-            response_data = {
-                "intent": "navigate_to_screen",
-                "parameters": {"screen_name": screen_name},
-                "responseText": f"Navigating to {screen_name}."
-            }
-            return VoiceCommandResponse(**response_data)
+            return VoiceCommandResponse(
+                intent="navigate_to_screen",
+                parameters={"screen_name": screen_name},
+                responseText=f"Navigating to {screen_name}."
+            )
         elif re.search(r"\b(show|display|what are|find)\b.*\b(my tasks|tasks)\b", text):
-            response_data = {
-                "intent": "query_data",
-                "parameters": {"data_type": "user_tasks", "status_filter": "pending"}, # Example parameter
-                "responseText": "Fetching your pending tasks."
-            }
-            return VoiceCommandResponse(**response_data)
+            return VoiceCommandResponse(
+                intent="query_data",
+                parameters={"data_type": "user_tasks", "status_filter": "pending"},
+                responseText="Fetching your pending tasks."
+            )
         elif re.search(r"\b(create|add|new)\b.*\b(task|to-do|reminder)\b", text):
             # Try to extract task title if possible (very basic)
             task_title_match = re.search(r"\b(task|to-do|reminder)\b\s*(?:called|named|that says|is|for|to)\s*(.+)", text)
-            task_title = task_title_match.group(2) if task_title_match else None
-            response_data = {
-                "intent": "create_item",
-                "parameters": {"item_type": "task", "title": task_title} if task_title else {"item_type": "task"},
-                "responseText": f"OK. Adding a new task." + (f" It's called '{task_title}'." if task_title else " What should it be called?")
-            }
-            return VoiceCommandResponse(**response_data)
+            task_title = task_title_match.group(2).strip() if task_title_match else None
+            
+            # Preserve original capitalization for task titles
+            if task_title:
+                # Capitalize first letter of each word for proper case
+                task_title = ' '.join(word.capitalize() for word in task_title.split())
+            
+            return VoiceCommandResponse(
+                intent="create_item",
+                parameters={"item_type": "task", "title": task_title} if task_title else {"item_type": "task"},
+                responseText=f"Adding a new task." + (f" It's called '{task_title}'" if task_title else " What should it be called?")
+            )
         elif re.search(r"\b(create|add|new)\b.*\b(note|document)\b", text):
-            response_data = {
-                "intent": "create_item",
-                "parameters": {"item_type": "note"},
-                "responseText": "Okay, creating a new note. What would you like the note to say?"
-            }
-            return VoiceCommandResponse(**response_data)
+            return VoiceCommandResponse(
+                intent="create_item",
+                parameters={"item_type": "note"},
+                responseText="Okay, creating a new note. What would you like the note to say?"
+            )
         elif re.search(r"\b(help|what can i say|what can you do)\b", text):
-            response_data = {
-                "intent": "show_help",
-                "responseText": "You can ask me to navigate to screens like Dashboard or Analytics, show your tasks, or create new tasks and notes. For example, say 'Go to Dashboard' or 'Create a new task called Buy Milk'."
-            }
-            return VoiceCommandResponse(**response_data)
+            return VoiceCommandResponse(
+                intent="show_help",
+                responseText="You can ask me to navigate to screens like Dashboard or Analytics, show your tasks, or create new tasks and notes. For example, say 'Go to Dashboard' or 'Create a new task called Buy Milk'."
+            )
         else:
-            response_data = {
-                "intent": "unknown_command",
-                "parameters": {"original_text": getattr(command_request, 'text', '')},  # type: ignore
-                "response_text": "Sorry, I didn't understand that. Can you try rephrasing?"
-            }
-            return VoiceCommandResponse(**response_data)
+            return VoiceCommandResponse(
+                intent="unknown_command",
+                parameters={"original_text": getattr(command_request, 'text', '')},
+                responseText="Sorry, I didn't understand that. Can you try rephrasing?"
+            )
 
     # --- AI Model Management Endpoints ---
 

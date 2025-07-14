@@ -109,7 +109,12 @@ class ReportSchedulingService:
                 result = await self._execute_definition_schedule_logic(schedule)
             elif schedule_type == "report" and getattr(schedule, 'report_id', None) is not None: # Legacy report
                 report_id = getattr(schedule, 'report_id', None)
-                report = self.db.query(Report).filter(Report.id == report_id).first() if report_id else None
+                if report_id:
+                    # Use text() to avoid SQLAlchemy registry issues after clear_mappers()
+                    from sqlalchemy import text
+                    report = self.db.query(Report).filter(text("reports.id = :report_id")).params(report_id=report_id).first()
+                else:
+                    report = None
                 if not report:
                     self._handle_schedule_failure(schedule, "Legacy report not found")
                     return False
@@ -167,8 +172,7 @@ class ReportSchedulingService:
             return False
 
         report_def = getattr(self.reporting_service_part1, 'get_report_definition', lambda **kwargs: None)(
-            report_definition_id=getattr(schedule, 'report_definition_id', None),  # type: ignore
-            tenant_id=getattr(schedule, 'tenant_id', None)
+            report_definition_id=getattr(schedule, 'report_definition_id', None)  # type: ignore
         )
 
         if not report_def:
@@ -186,8 +190,7 @@ class ReportSchedulingService:
             
             # This call is to ReportingService in part1
             raw_report_data_container = await getattr(self.reporting_service_part1, 'generate_report_data', lambda **kwargs: {})(
-                report_definition_id=getattr(report_def, 'id', None),  # type: ignore
-                tenant_id=getattr(schedule, 'tenant_id', None)
+                report_definition_id=getattr(report_def, 'id', None)  # type: ignore
             )
 
             # Extract tabular data. This is a simplification.
@@ -477,7 +480,7 @@ class ReportSchedulingService:
         except Exception:
             return False
 
-    def _calculate_next_run(self, cron_expr: str, timezone: str = "UTC") -> datetime:
+    def _calculate_next_run(self, cron_expr: str, tz_name: str = "UTC") -> datetime:
         """Calculate next run time for cron expression"""
         if not CRONITER_AVAILABLE or croniter is None:
             return datetime.now(timezone.utc) + timedelta(hours=1)

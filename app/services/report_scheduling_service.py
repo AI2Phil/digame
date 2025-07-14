@@ -137,12 +137,13 @@ class ReportSchedulingService:
                 # and update the schedule status.
                 schedule_id = getattr(schedule, 'id', 'unknown')
                 print(f"Unhandled error processing schedule {schedule_id}: {e}")
-                setattr(schedule, 'last_run_status', f"failed: Scheduler error - {str(e)[:200]}")  # type: ignore
-                setattr(schedule, 'last_run_at', datetime.utcnow())  # type: ignore
                 # Safe method access for update_execution_stats
                 update_stats_method = getattr(schedule, 'update_execution_stats', None)
                 if update_stats_method:
                     update_stats_method(success=False)
+                # Set detailed error message after update_execution_stats to avoid overwriting
+                setattr(schedule, 'last_run_status', f"failed: Scheduler error - {str(e)[:200]}")  # type: ignore
+                setattr(schedule, 'last_run_at', datetime.now(timezone.utc))  # type: ignore
                 # self.db.commit() # Commit this failure, then proceed to update next_run_at
 
             finally:

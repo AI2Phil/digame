@@ -101,8 +101,8 @@ def mock_user_4_no_profile():
 
 # --- Tests for SocialCollaborationService ---
 
-@patch('digame.app.crud.user_crud.get_user_profile')
-@patch('digame.app.crud.user_crud.get_users')
+@patch('app.crud.user_crud.get_user_profile')
+@patch('app.crud.user_crud.get_users')
 def test_get_skill_based_matches_success(
     mock_get_users, mock_get_user_profile,
     social_collaboration_service: SocialCollaborationService,
@@ -135,8 +135,8 @@ def test_get_skill_based_matches_success(
     assert mock_get_user_profile.call_count >= 2
 
 
-@patch('digame.app.crud.user_crud.get_user_profile')
-@patch('digame.app.crud.user_crud.get_users')
+@patch('app.crud.user_crud.get_user_profile')
+@patch('app.crud.user_crud.get_users')
 def test_get_skill_based_matches_target_no_skills(
     mock_get_users, mock_get_user_profile,
     social_collaboration_service: SocialCollaborationService,
@@ -153,8 +153,8 @@ def test_get_skill_based_matches_target_no_skills(
     # Assert
     assert len(matches) == 0
 
-@patch('digame.app.crud.user_crud.get_user_profile')
-@patch('digame.app.crud.user_crud.get_users')
+@patch('app.crud.user_crud.get_user_profile')
+@patch('app.crud.user_crud.get_users')
 def test_get_learning_partner_recommendations_success(
     mock_get_users, mock_get_user_profile,
     social_collaboration_service: SocialCollaborationService,
@@ -194,8 +194,8 @@ def test_get_learning_partner_recommendations_success(
     assert len(recommendations) > 0
     assert recommendations[0].id == mock_user_3.id # User 3 should be the top recommendation
 
-@patch('digame.app.crud.user_crud.get_user_profile')
-@patch('digame.app.crud.user_crud.get_users')
+@patch('app.crud.user_crud.get_user_profile')
+@patch('app.crud.user_crud.get_users')
 def test_get_learning_partner_recommendations_target_no_goals(
     mock_get_users, mock_get_user_profile,
     social_collaboration_service: SocialCollaborationService,
