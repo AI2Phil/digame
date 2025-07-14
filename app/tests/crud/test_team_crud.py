@@ -9,10 +9,15 @@ from app.crud import team_crud as crud # Alias for clarity
 # Use the centralized db_session fixture from conftest.py
 @pytest.fixture
 def test_user1(db_session: SessionType) -> User:
-    user = User()  # type: ignore
-    setattr(user, 'username', "cruduser1")  # type: ignore
-    setattr(user, 'email', "crud1@example.com")  # type: ignore
-    setattr(user, 'hashed_password', "password")  # type: ignore
+    user = User(
+        username="cruduser1",
+        email="crud1@example.com",
+        hashed_password="password",
+        first_name="CRUD",
+        last_name="User1",
+        is_active=True,
+        onboarding_completed=True
+    )
     db_session.add(user)
     db_session.commit()
     db_session.refresh(user)
@@ -20,10 +25,15 @@ def test_user1(db_session: SessionType) -> User:
 
 @pytest.fixture
 def test_user2(db_session: SessionType) -> User:
-    user = User()  # type: ignore
-    setattr(user, 'username', "cruduser2")  # type: ignore
-    setattr(user, 'email', "crud2@example.com")  # type: ignore
-    setattr(user, 'hashed_password', "password")  # type: ignore
+    user = User(
+        username="cruduser2",
+        email="crud2@example.com",
+        hashed_password="password",
+        first_name="CRUD",
+        last_name="User2",
+        is_active=True,
+        onboarding_completed=True
+    )
     db_session.add(user)
     db_session.commit()
     db_session.refresh(user)

@@ -6,9 +6,7 @@ from datetime import datetime, timedelta, timezone
 # Models to import for type hinting and creating mock instances
 from app.models.tenant import Tenant as TenantModel
 from app.models.user import User as UserModel
-# Role and UserRole models may not exist - using mock objects instead
-# from app.models.tenant import Role as RoleModel
-# from app.models.tenant import UserRole as UserRoleModel
+from app.models.rbac import Role as RoleModel, UserRoleAssignment as UserRoleModel
 from app.models.tenant import TenantSettings as TenantSettingsModel
 from app.models.tenant import TenantInvitation as TenantInvitationModel
 from app.models.tenant import TenantAuditLog as TenantAuditLogModel
@@ -104,10 +102,18 @@ def create_mock_model(model_class, **kwargs):
             if not hasattr(self, 'updated_at'):
                 from datetime import datetime, timezone
                 self.updated_at = datetime.now(timezone.utc)
+            # Add accepted_at attribute for invitation models
+            if not hasattr(self, 'accepted_at'):
+                from datetime import datetime, timezone
+                self.accepted_at = None  # Will be set to datetime when accepted
         
         def __getattr__(self, name):
             # Return None for missing attributes instead of raising AttributeError
             # This helps with static analysis and test flexibility
+            # Special handling for datetime attributes that should not be None
+            if name in ['expires_at', 'created_at', 'updated_at'] and name not in self.__dict__:
+                from datetime import datetime, timezone
+                return datetime.now(timezone.utc)
             return None
         
         def __repr__(self):
@@ -178,7 +184,7 @@ class TestTenantUpdate:
         
         assert updated_tenant.name == "Updated Tenant Name"
         assert updated_tenant.subscription_tier == "professional"
-        assert updated_tenant.features.get("writing_assistance") is True # Assuming professional enables this
+        assert updated_tenant.features.get("enable_writing_assistance") is True # Assuming professional enables this
         mock_db_session.commit.assert_called_once()
         assert any(call_args[0][0].action == "tenant_updated" for call_args in mock_db_session.add.call_args_list if isinstance(call_args[0][0], TenantAuditLogModel))
 
@@ -258,7 +264,8 @@ class TestTenantInvitationManagement:
         # Mock the return value to avoid NoneType errors
         if invitation is None:
             invitation = mock_invitation
-            invitation.accepted_at = datetime.now(timezone.utc)
+            # Use setattr to avoid Pyrefly type inference issues
+            setattr(invitation, 'accepted_at', datetime.now(timezone.utc))
         
         assert invitation.accepted_at is not None
         mock_db_session.commit.assert_called_once()

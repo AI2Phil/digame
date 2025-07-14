@@ -76,7 +76,7 @@ class User(Base):
     kudos_count = Column(Integer(), default=0)
 
     # Enhanced relationships for tenant-aware RBAC
-    user_roles = relationship("app.models.rbac.UserRoleAssignment", foreign_keys="app.models.rbac.UserRoleAssignment.user_id", back_populates="user")
+    user_roles = relationship("UserRoleAssignment", foreign_keys="UserRoleAssignment.user_id", back_populates="user")
     
     def get_roles(self):
         """Get roles through user_roles relationship - safer for serialization"""
@@ -88,7 +88,7 @@ class User(Base):
         return self.get_roles()
     
     # Tenant relationship - specify foreign_keys to resolve ambiguity
-    tenant = relationship("app.models.tenant.Tenant", foreign_keys=[tenant_id], back_populates="users")
+    tenant = relationship("Tenant", foreign_keys=[tenant_id], back_populates="users")
     # Relationship to ProcessNote model
     process_notes = relationship(
         "ProcessNote",
