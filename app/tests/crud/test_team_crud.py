@@ -1,7 +1,7 @@
 import pytest
 from sqlalchemy.orm import Session as SessionType
 
-from app.models.user import User
+from app.models import User
 from app.models.team import Team, TeamMember, TeamPerformanceMetric, TeamSkillGap, TeamWorkflow, TeamRoleEnum
 from app.schemas import team_schemas as schemas # Alias for clarity
 from app.crud import team_crud as crud # Alias for clarity

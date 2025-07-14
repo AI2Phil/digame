@@ -138,8 +138,10 @@ __all__ = [
     "create_team_performance_metric", "get_team_performance_metric", "get_team_performance_metrics_for_team", "update_team_performance_metric", "delete_team_performance_metric",
     "create_team_skill_gap", "get_team_skill_gap", "get_team_skill_gaps_for_team", "update_team_skill_gap", "delete_team_skill_gap",
     "create_team_workflow", "get_team_workflow", "get_team_workflows_for_team", "update_team_workflow", "delete_team_workflow",
+    "team_crud",
 ]
 
 from . import user_setting_crud # Assuming this was intended to be imported for __all__
 from . import tenant_crud # Assuming this was intended to be imported for __all__
 from . import task_crud
+from . import team_crud # Import team_crud module for test compatibility

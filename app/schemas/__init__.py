@@ -53,6 +53,7 @@ __all__ = [
     "email_analysis_schemas",
     "language_learning_schemas",
     "task_prioritization_schemas",
+    "team_schemas",
     # Team Schemas
     "TeamBase", "TeamCreate", "TeamUpdate", "Team", "TeamWithMembers", "TeamWithFullDetails",
     "TeamMemberBase", "TeamMemberCreate", "TeamMemberUpdate", "TeamMember", "TeamMemberAction",
@@ -74,3 +75,4 @@ from . import email_analysis_schemas
 from . import language_learning_schemas
 from . import task_prioritization_schemas
 from . import document_processing_schemas # Import the new module
+from . import team_schemas # Import team_schemas module for test compatibility

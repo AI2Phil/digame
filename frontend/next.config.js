@@ -1,14 +1,4 @@
 /** @type {import('next').NextConfig} */
-const withPWA = require('next-pwa')({
-  dest: 'public',
-  register: true,
-  skipWaiting: true,
-  disable: true, // Always disable PWA in test environment
-  fallbacks: {
-    document: '/offline.html',
-  },
-});
-
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
@@ -77,4 +67,20 @@ const nextConfig = {
   }
 };
 
-module.exports = withPWA(nextConfig);
+// Conditionally apply PWA wrapper only when PWA is enabled
+const isPWAEnabled = process.env.NODE_ENV === 'production' && process.env.DISABLE_PWA !== 'true';
+
+if (isPWAEnabled) {
+  const withPWA = require('next-pwa')({
+    dest: 'public',
+    register: true,
+    skipWaiting: true,
+    fallbacks: {
+      document: '/offline.html',
+    },
+  });
+  module.exports = withPWA(nextConfig);
+} else {
+  // Export clean Next.js config without PWA wrapper for test/development
+  module.exports = nextConfig;
+}
