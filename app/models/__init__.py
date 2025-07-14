@@ -30,8 +30,8 @@ from .workflow_automation import (
     # the existing advanced models use strings for status fields.
 )
 from .imports import Project # Import from centralized imports to resolve registry conflicts
-from .experience import Experience # Import the new Experience model
-from .education import Education # Import the new Education model
+from .imports import Experience # Import from centralized imports to resolve registry conflicts
+from .imports import Education # Import from centralized imports to resolve registry conflicts
 from .communication import Message # Import the new Message model
 from .social import UserConnection, PeerMatch, SocialMetrics, UserSkill # Import social networking models
 from .social_collaboration import (

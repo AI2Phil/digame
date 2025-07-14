@@ -17,24 +17,35 @@ from app.models.rbac_imports import UserRoleAssignment
 from app.models.tenant import Tenant  # Import Tenant to ensure table is created
 from app.auth.auth_dependencies import get_current_active_admin_user, MANAGE_RBAC_PERMISSION
 
-# Database setup for testing
-DATABASE_URL = "sqlite:///:memory:"
-engine = create_engine(
-    DATABASE_URL,
-    connect_args={"check_same_thread": False},
-    poolclass=StaticPool,
-)
-TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-@pytest.fixture(scope="session", autouse=True)
-def setup_db():
-    Base.metadata.create_all(bind=engine)
-    yield
-    Base.metadata.drop_all(bind=engine)
+# Database setup for testing - use unique database for each test
+def get_test_engine():
+    """Create a unique in-memory database for each test"""
+    import uuid
+    DATABASE_URL = f"sqlite:///:memory:?cache=shared&uri=true&_db_id={uuid.uuid4()}"
+    return create_engine(
+        DATABASE_URL,
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
 
 @pytest.fixture(scope="function")
-def db_session_test():
-    connection = engine.connect()
+def test_engine():
+    """Provide a fresh engine for each test"""
+    return get_test_engine()
+
+@pytest.fixture(scope="function")
+def setup_db(test_engine):
+    """Setup database with proper isolation"""
+    # Create all tables fresh for each test
+    Base.metadata.create_all(bind=test_engine)
+    yield test_engine
+    # Clean up after each test
+    Base.metadata.drop_all(bind=test_engine)
+
+@pytest.fixture(scope="function")
+def db_session_test(setup_db):
+    TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=setup_db)
+    connection = setup_db.connect()
     transaction = connection.begin()
     session = TestingSessionLocal(bind=connection)
     yield session

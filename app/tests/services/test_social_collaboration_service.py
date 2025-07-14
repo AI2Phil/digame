@@ -3,7 +3,8 @@ from unittest.mock import MagicMock, patch
 from sqlalchemy.orm import Session
 
 # Models to import for type hinting and creating mock instances
-from app.models.user import User as UserModel, UserProfile as UserProfileModel
+from app.models.user import User as UserModel
+from app.models.imports import UserProfile as UserProfileModel
 
 # Service to test
 from app.services.social_collaboration_service import SocialCollaborationService

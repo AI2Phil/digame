@@ -18,7 +18,7 @@ from ..models import (
     AnalyticsModel, AnalyticsPrediction, PerformanceMetric,
     ROICalculation, User, Activity, Tenant
 )
-from ..models.user import UserProfile
+from ..models.imports import UserProfile
 from ..models.analytics import AnalyticsDashboard, DashboardWidgetConfig
 
 

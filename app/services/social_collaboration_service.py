@@ -1,7 +1,8 @@
 from sqlalchemy.orm import Session
 from typing import List, Optional, Dict, Any, Set # Added Set for efficient skill comparison
 
-from ..models.user import User, UserProfile
+from ..models.user import User
+from ..models.imports import UserProfile
 # Assuming user_crud contains get_user_profile and get_users
 from ..crud import user_crud # This will provide access to user and user_profile CRUD
 

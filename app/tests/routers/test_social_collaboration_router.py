@@ -11,7 +11,8 @@ from app.schemas.user_profile_schemas import UserProfileUpdate, UserProfileRespo
 from app.schemas.user_schemas import User as UserSchema # For mock user data
 
 # Models (for creating mock return objects from services/crud)
-from app.models.user import User as UserModel, UserProfile as UserProfileModel
+from app.models.user import User as UserModel
+from app.models.imports import UserProfile as UserProfileModel
 
 # Service and CRUD to be mocked
 from app.services.social_collaboration_service import SocialCollaborationService

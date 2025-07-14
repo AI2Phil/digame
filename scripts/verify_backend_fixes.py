@@ -29,7 +29,8 @@ def verify_sqlalchemy_fixes():
         print("📦 Testing model imports...")
         
         # Test a few key models
-        from app.models.user import User, UserProfile
+        from app.models.user import User
+        from app.models.imports import UserProfile
         print("✅ User models imported successfully")
         
         from app.models.team import Team, TeamMember

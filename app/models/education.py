@@ -15,7 +15,7 @@ class Education(Base):
     fieldOfStudy = Column(String(), nullable=True)
     graduationYear = Column(String(), nullable=True) # E.g., "2019" or "Expected 2025"
 
-    user = relationship("User", back_populates="education_entries")
+    user = relationship("User", foreign_keys=[user_id])
 
     def __repr__(self):
         return f"<Education(id={self.id}, institution='{self.institution}', degree='{self.degree}', user_id={self.user_id})>"

@@ -1,7 +1,7 @@
 from typing import List, Optional
 from sqlalchemy.orm import Session
 
-from ..models.experience import Experience
+from ..models.imports import Experience
 from ..schemas.experience_schemas import ExperienceCreate, ExperienceUpdate
 
 def get_experience(db: Session, experience_id: int) -> Optional[Experience]:

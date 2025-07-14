@@ -1,7 +1,7 @@
 from typing import List, Optional
 from sqlalchemy.orm import Session
 
-from ..models.education import Education
+from ..models.imports import Education
 from ..schemas.education_schemas import EducationCreate, EducationUpdate
 
 def get_education_entry(db: Session, education_id: int) -> Optional[Education]:

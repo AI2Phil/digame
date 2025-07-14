@@ -138,12 +138,12 @@ class User(Base):
     )
     experience_entries = relationship(
         "Experience",
-        back_populates="user",
+        foreign_keys="Experience.user_id",
         cascade="all, delete-orphan"
     )
     education_entries = relationship(
         "Education",
-        back_populates="user",
+        foreign_keys="Education.user_id",
         cascade="all, delete-orphan"
     )
 
@@ -159,8 +159,8 @@ class User(Base):
 
     # New relationship to UserProfile (One-to-One)
     profile = relationship(
-        "UserProfile",
-        back_populates="user",
+        "app.models.user_profile.UserProfile",
+        foreign_keys="app.models.user_profile.UserProfile.user_id",
         uselist=False,
         cascade="all, delete-orphan"
     )
@@ -234,31 +234,6 @@ class User(Base):
     def __repr__(self):
         return f"<User(id={self.id}, username='{self.username}', email='{self.email}')>"
 
-
-class UserProfile(Base):
-    __tablename__ = "user_profiles" # Changed table name to plural
-    __table_args__ = {'extend_existing': True}
-
-    id = Column(Integer(), primary_key=True)
-    user_id = Column(Integer(), ForeignKey("users.id"), unique=True, nullable=False)
-
-    skills = Column(JSON, nullable=True)
-    learning_goals = Column(Text(), nullable=True) # Using Text for flexibility
-    interests = Column(JSON, nullable=True)
-    mentorship_preferences = Column(JSON, nullable=True)
-
-    bio = Column(Text(), nullable=True)
-    location = Column(String(255), nullable=True)
-    linkedin_url = Column(String(255), nullable=True)
-    github_url = Column(String(255), nullable=True)
-
-    updated_at = Column(DateTime(), default=datetime.utcnow, onupdate=datetime.utcnow)
-
-    # Relationship back to User (One-to-One)
-    user = relationship("User", back_populates="profile")
-
-    def __repr__(self):
-        return f"<UserProfile(id={self.id}, user_id={self.user_id})>"
 
 # Note: Models for Role, ProcessNote, Activity, DetectedAnomaly, Task, BehavioralModel, UserSetting
 # are assumed to be defined elsewhere and imported if needed for full application run,

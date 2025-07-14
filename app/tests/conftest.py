@@ -64,7 +64,7 @@ except ImportError:
     pass
 
 try:
-    from app.models.experience import Experience
+    from app.models.imports import Experience
 except ImportError:
     pass
 

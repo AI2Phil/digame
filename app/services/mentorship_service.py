@@ -10,7 +10,8 @@ from sqlalchemy import or_, and_, func
 from datetime import datetime, timedelta, timezone
 from enum import Enum
 
-from ..models.user import User, UserProfile
+from ..models.user import User
+from ..models.imports import UserProfile
 from ..models.social_collaboration import MentorshipConnection
 from ..crud import user_crud
 from ..schemas.mentorship_schemas import (

@@ -4,7 +4,8 @@ from typing import List, Optional, Any # Added Any
 from passlib.context import CryptContext
 from datetime import datetime # Added datetime
 
-from ..models.user import User, UserProfile # Added UserProfile model
+from ..models.user import User
+from ..models.imports import UserProfile # Added UserProfile model from centralized imports
 # UserCreate and UserUpdate from user_schemas are expected to have the new fields
 from ..schemas.user_schemas import UserCreate, UserUpdate
 # Import new UserProfile schemas

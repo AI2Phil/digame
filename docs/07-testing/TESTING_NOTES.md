@@ -1,6 +1,9 @@
 # Testing Notes
 
 python -m pytest tests/ app/tests/ -v --tb=short
+cd /Users/philiposhea/Documents/digame && python -m pytest tests/ app/tests/ -v --tb=short -x --disable-warnings | head -50
+
+cd /Users/philiposhea/Documents/digame && python -m pytest tests/ app/tests/ --tb=short --disable-warnings -q
 
 # Test Directory Analysis & Recommendation
 
