@@ -3,7 +3,7 @@ Isolated UserRoleAssignment model to prevent SQLAlchemy registry conflicts.
 This module should only be imported when UserRoleAssignment is explicitly needed.
 """
 
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Boolean, UniqueConstraint
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Boolean, UniqueConstraint, Index
 from sqlalchemy.orm import relationship
 from app.database import Base
 from datetime import datetime
@@ -17,22 +17,21 @@ class UserRoleAssignment(Base):
     __tablename__ = "user_role_assignments"
     __table_args__ = (
         UniqueConstraint('user_id', 'role_id', 'tenant_id', name='unique_user_role_tenant'),
+        Index('ix_user_role_assignments_user_id', 'user_id'),
+        Index('ix_user_role_assignments_role_id', 'role_id'),
+        Index('ix_user_role_assignments_tenant_id', 'tenant_id'),
+        Index('ix_user_role_assignments_active', 'is_active'),
+        Index('ix_user_role_assignments_user_tenant', 'user_id', 'tenant_id'),
+        Index('ix_user_role_assignments_expires_at', 'expires_at'),
         {'extend_existing': True}
     )
-    
-    # Add a unique registry key to prevent SQLAlchemy conflicts
-    __mapper_args__ = {
-        'polymorphic_identity': 'digame_user_role_assignment',  # More unique identifier
-        'confirm_deleted_rows': False,  # Helps with test isolation
-        'eager_defaults': True  # Helps with test isolation
-    }
 
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
-    role_id = Column(Integer, ForeignKey("roles.id"), nullable=False, index=True)
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    role_id = Column(Integer, ForeignKey("roles.id"), nullable=False)
     
     # Tenant support
-    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=True, index=True)
+    tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=True)
     
     # Assignment tracking
     assigned_by = Column(Integer, ForeignKey("users.id"), nullable=True)
@@ -42,11 +41,11 @@ class UserRoleAssignment(Base):
     # Status
     is_active = Column(Boolean, default=True)
     
-    # Relationships - simplified to resolve mapper conflicts
-    user = relationship("app.models.user.User", foreign_keys=[user_id])
-    role = relationship("app.models.rbac.Role")
-    tenant = relationship("app.models.tenant.Tenant")  # Re-enabled without back_populates
-    assigner = relationship("app.models.user.User", foreign_keys=[assigned_by])
+    # Relationships - optimized for registry resolution and performance
+    user = relationship("app.models.user.User", foreign_keys=[user_id], overlaps="user_roles")
+    role = relationship("app.models.rbac.Role", foreign_keys=[role_id], overlaps="user_roles")
+    tenant = relationship("app.models.tenant.Tenant", foreign_keys=[tenant_id], overlaps="user_roles")
+    assigner = relationship("app.models.user.User", foreign_keys=[assigned_by], overlaps="user_roles")
     
 
     def __repr__(self):

@@ -2,38 +2,36 @@
 Multi-tenant architecture models for the Digame platform
 """
 
-from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, JSON, ForeignKey, Float
+from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text, JSON, ForeignKey, Float, Index
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.database import Base  # Use the same Base as User model
 from typing import Optional, Dict, Any # Keep for type hinting if used elsewhere, though not directly in models
 from datetime import datetime # Keep for type hinting if used elsewhere
 
-# Import UserRoleAssignment to ensure it's available for relationship resolution
-def _ensure_user_role_assignment_imported():
-    try:
-        from app.models.rbac_imports import UserRoleAssignment
-        return UserRoleAssignment
-    except ImportError:
-        return None
-
-# Call the import function to register the class
-_ensure_user_role_assignment_imported()
+# Remove circular import - relationships will be resolved by SQLAlchemy registry
 
 class Tenant(Base):
     """
     Tenant model for multi-tenant architecture
     """
-    __table_args__ = {'extend_existing': True}
     __tablename__ = "tenants"
-    __table_args__ = {'extend_existing': True}
+    __table_args__ = (
+        Index('ix_tenants_slug', 'slug', unique=True),
+        Index('ix_tenants_domain', 'domain', unique=True),
+        Index('ix_tenants_subdomain', 'subdomain', unique=True),
+        Index('ix_tenants_active_status', 'is_active', 'subscription_status'),
+        Index('ix_tenants_owner_id', 'owner_id'),
+        Index('ix_tenants_subscription', 'subscription_tier', 'subscription_status'),
+        {'extend_existing': True}
+    )
 
-    id = Column(Integer, primary_key=True, index=True)
-    tenant_uuid = Column(String(36), unique=True, nullable=True, index=True)
-    name = Column(String(255), nullable=False, index=True)
-    slug = Column(String(100), unique=True, nullable=False, index=True)
-    domain = Column(String(255), unique=True, nullable=False, index=True)
-    subdomain = Column(String(100), unique=True, nullable=False, index=True)
+    id = Column(Integer, primary_key=True)
+    tenant_uuid = Column(String(36), unique=True, nullable=True)
+    name = Column(String(255), nullable=False)
+    slug = Column(String(100), unique=True, nullable=False)
+    domain = Column(String(255), unique=True, nullable=False)
+    subdomain = Column(String(100), unique=True, nullable=False)
     
     settings = Column(JSON, default={})
     features = Column(JSON, default={})
@@ -46,7 +44,7 @@ class Tenant(Base):
     billing_email = Column(String(255), nullable=True)
     
     # Platform Owner Management
-    owner_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)  # Tenant owner
+    owner_id = Column(Integer, ForeignKey("users.id"), nullable=True)  # Tenant owner
     created_by = Column(Integer, ForeignKey("users.id"), nullable=True)  # Platform Owner who created
     managed_by = Column(Integer, ForeignKey("users.id"), nullable=True)   # Assigned Platform Owner manager
     
@@ -74,12 +72,12 @@ class Tenant(Base):
     phone = Column(String(50), nullable=True)
     address = Column(Text, nullable=True)
     
-    # Relationships to User, Role, and UserRole models
-    users = relationship("User", back_populates="tenant", foreign_keys="User.tenant_id")
-    roles = relationship("Role", back_populates="tenant")
-    user_roles = relationship("UserRoleAssignment")
-    creator = relationship("User", foreign_keys=[created_by])
-    manager = relationship("User", foreign_keys=[managed_by])
+    # Relationships to User, Role, and UserRole models - optimized for registry resolution
+    users = relationship("app.models.user.User", foreign_keys="app.models.user.User.tenant_id", back_populates="tenant")
+    roles = relationship("app.models.rbac.Role", back_populates="tenant")
+    user_roles = relationship("app.models.user_role_assignment.UserRoleAssignment", overlaps="tenant")
+    creator = relationship("app.models.user.User", foreign_keys=[created_by], overlaps="users")
+    manager = relationship("app.models.user.User", foreign_keys=[managed_by], overlaps="users")
     
     # Other tenant-specific relationships
     tenant_configurations = relationship("TenantSettings", back_populates="tenant", cascade="all, delete-orphan")
@@ -98,7 +96,6 @@ class TenantSettings(Base):
     """
     Key-value store for tenant-specific configurations.
     """
-    __table_args__ = {'extend_existing': True}
     __tablename__ = "tenant_settings"
     __table_args__ = {'extend_existing': True}
 
@@ -123,7 +120,6 @@ class TenantInvitation(Base):
     """
     Model for tenant user invitations.
     """
-    __table_args__ = {'extend_existing': True}
     __tablename__ = "tenant_invitations"
     __table_args__ = {'extend_existing': True}
 
@@ -149,7 +145,6 @@ class TenantAuditLog(Base):
     """
     Model for tenant audit logs.
     """
-    __table_args__ = {'extend_existing': True}
     __tablename__ = "tenant_audit_logs"
     __table_args__ = {'extend_existing': True}
 

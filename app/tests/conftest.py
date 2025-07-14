@@ -12,7 +12,7 @@ import os
 try:
     from app.database import Base
 except ImportError:
-    from database import Base
+    from app.database import Base
 
 try:
     from app.main import app
@@ -25,23 +25,20 @@ except ImportError:
 try:
     from app.models.user import User
 except ImportError:
-    from models.user import User
+    from app.models.user import User
 
 try:
     from app.models.rbac import Role
 except ImportError:
-    from models.rbac import Role
+    from app.models.rbac import Role
 
-try:
-    from app.models.tenant import Tenant
-except ImportError:
-    from models.tenant import Tenant
+from app.models.tenant import Tenant
 
 try:
     from app.models.notifications import Notification
 except ImportError:
     try:
-        from models.notifications import Notification
+        from app.models.notifications import Notification
     except ImportError:
         # Create a mock Notification class if not available
         class Notification:

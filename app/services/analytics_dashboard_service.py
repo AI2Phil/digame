@@ -11,7 +11,7 @@ import logging
 
 from ..models.user import User
 from ..models.tenant import Tenant
-from ..models.platform_analytics import PlatformUsageMetric, PlatformHealthMetric, TenantAnalyticsSummary
+from ..models.platform_analytics import PlatformUsageMetric, PlatformHealthMetric, PlatformTenantAnalyticsSummary
 from ..models.analytics import PerformanceMetric, AnalyticsModel, AnalyticsPrediction
 from ..models.performance_monitoring import UserExperienceMetric, QueryPerformance
 

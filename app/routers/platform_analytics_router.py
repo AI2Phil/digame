@@ -12,7 +12,7 @@ from datetime import datetime, timedelta
 from ..database import get_db
 from ..models.user import User
 from ..models.tenant import Tenant
-from ..models.platform_analytics import PlatformUsageMetric, PlatformHealthMetric, TenantAnalyticsSummary
+from ..models.platform_analytics import PlatformUsageMetric, PlatformHealthMetric, PlatformTenantAnalyticsSummary
 from ..services.platform_auth_service import PlatformAuthService
 from ..auth.auth_dependencies import get_current_user
 

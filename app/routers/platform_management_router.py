@@ -12,7 +12,7 @@ from ..database import get_db
 from ..models.user import User
 from ..models.tenant import Tenant
 from ..models.platform_roles import PlatformRole, UserPlatformRole
-from ..models.platform_analytics import PlatformUsageMetric, PlatformHealthMetric, TenantAnalyticsSummary
+from ..models.platform_analytics import PlatformUsageMetric, PlatformHealthMetric, PlatformTenantAnalyticsSummary
 from ..services.platform_auth_service import PlatformAuthService
 from ..auth.auth_dependencies import get_current_user
 
@@ -175,9 +175,9 @@ async def get_tenant_details(
     tenant_users = db.query(User).filter(User.tenant_id == tenant_id).all()
     
     # Get recent analytics summary
-    recent_summary = db.query(TenantAnalyticsSummary).filter(
-        TenantAnalyticsSummary.tenant_id == tenant_id
-    ).order_by(TenantAnalyticsSummary.summary_date.desc()).first()
+    recent_summary = db.query(PlatformTenantAnalyticsSummary).filter(
+        PlatformTenantAnalyticsSummary.tenant_id == tenant_id
+    ).order_by(PlatformTenantAnalyticsSummary.summary_date.desc()).first()
     
     return {
         "success": True,

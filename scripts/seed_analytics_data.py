@@ -13,109 +13,16 @@ from decimal import Decimal
 project_root = os.path.join(os.path.dirname(__file__), '..')
 sys.path.append(project_root)
 
-# Import our CLI safety utilities
-from cli_utils import (
-    SafeModelImporter,
-    create_safe_model_importer,
-    safe_import_all_models,
-    validate_model_imports
-)
-
+# Direct imports to avoid type confusion
 from sqlalchemy.orm import Session
+from app.database import SessionLocal, engine, Base
+from app.models.user import User
+from app.models.tenant import Tenant
+from app.models.platform_analytics import PlatformUsageMetric, PlatformTenantAnalyticsSummary
+from app.models.analytics import AnalyticsModel, AnalyticsPrediction, ROICalculation, PerformanceMetric
+from app.models.performance_monitoring import UserExperienceMetric, QueryPerformance
 
-def safe_import_required_models():
-    """Safely import all required models for seeding."""
-    print("🔧 Performing safe model imports for seeding...")
-    
-    try:
-        # Import database components
-        from app.database import SessionLocal, engine
-        
-        # Use safe model importer
-        importer = create_safe_model_importer()
-        
-        # Import specific model modules we need
-        required_modules = [
-            "app.models.user",
-            "app.models.tenant",
-            "app.models.platform_analytics",
-            "app.models.analytics",
-            "app.models.performance_monitoring"
-        ]
-        
-        modules = importer.safe_import_models(required_modules)
-        
-        # Extract the classes we need
-        User = getattr(modules["app.models.user"], "User")
-        Base = getattr(modules["app.models.user"], "Base")
-        Tenant = getattr(modules["app.models.tenant"], "Tenant")
-        
-        # Platform analytics models
-        platform_analytics = modules["app.models.platform_analytics"]
-        PlatformUsageMetric = getattr(platform_analytics, "PlatformUsageMetric")
-        PlatformHealthMetric = getattr(platform_analytics, "PlatformHealthMetric", None)
-        TenantAnalyticsSummary = getattr(platform_analytics, "TenantAnalyticsSummary", None)
-        
-        # Analytics models
-        analytics = modules["app.models.analytics"]
-        AnalyticsModel = getattr(analytics, "AnalyticsModel")
-        AnalyticsPrediction = getattr(analytics, "AnalyticsPrediction")
-        ROICalculation = getattr(analytics, "ROICalculation")
-        PerformanceMetric = getattr(analytics, "PerformanceMetric")
-        
-        # Performance monitoring models
-        perf_monitoring = modules["app.models.performance_monitoring"]
-        UserExperienceMetric = getattr(perf_monitoring, "UserExperienceMetric")
-        QueryPerformance = getattr(perf_monitoring, "QueryPerformance")
-        
-        print(f"✅ Successfully imported all required models")
-        
-        # Validate the imports
-        validation_report = validate_model_imports()
-        if validation_report["import_success"]:
-            print(f"✅ Model validation passed: {validation_report['total_models']} models available")
-        else:
-            print("⚠️  Model import validation found issues:")
-            for error in validation_report["import_errors"]:
-                print(f"   - {error}")
-        
-        return {
-            'SessionLocal': SessionLocal,
-            'engine': engine,
-            'User': User,
-            'Base': Base,
-            'Tenant': Tenant,
-            'PlatformUsageMetric': PlatformUsageMetric,
-            'PlatformHealthMetric': PlatformHealthMetric,
-            'TenantAnalyticsSummary': TenantAnalyticsSummary,
-            'AnalyticsModel': AnalyticsModel,
-            'AnalyticsPrediction': AnalyticsPrediction,
-            'ROICalculation': ROICalculation,
-            'PerformanceMetric': PerformanceMetric,
-            'UserExperienceMetric': UserExperienceMetric,
-            'QueryPerformance': QueryPerformance
-        }
-        
-    except Exception as e:
-        print(f"❌ Safe model import failed: {e}")
-        raise
-
-# Perform safe imports and extract models
-models = safe_import_required_models()
-SessionLocal = models['SessionLocal']
-engine = models['engine']
-User = models['User']
-Base = models['Base']
-Tenant = models['Tenant']
-PlatformUsageMetric = models['PlatformUsageMetric']
-PlatformHealthMetric = models['PlatformHealthMetric']
-TenantAnalyticsSummary = models['TenantAnalyticsSummary']
-AnalyticsModel = models['AnalyticsModel']
-AnalyticsPrediction = models['AnalyticsPrediction']
-ROICalculation = models['ROICalculation']
-PerformanceMetric = models['PerformanceMetric']
-UserExperienceMetric = models['UserExperienceMetric']
-QueryPerformance = models['QueryPerformance']
+print("✅ Successfully imported all required models")
 
 def create_tables():
     """Create all tables"""

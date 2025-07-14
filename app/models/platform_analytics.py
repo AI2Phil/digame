@@ -74,7 +74,7 @@ class PlatformHealthMetric(Base):  # type: ignore
         return f"<PlatformHealthMetric(id={self.id}, metric_name='{self.metric_name}', status='{self.status}')>"
 
 
-class TenantAnalyticsSummary(Base):  # type: ignore
+class PlatformTenantAnalyticsSummary(Base):  # type: ignore
     """
     Daily analytics summary for each tenant
     """

@@ -16,33 +16,9 @@ from app.db import get_db
 from app.models import Base, User, BehavioralModel
 from app.schemas.user_schemas import UserCreate # Assuming this schema exists for creating users
 
-# Database setup for testing
-DATABASE_URL = "sqlite:///:memory:"
-engine = create_engine(
-    DATABASE_URL,
-    connect_args={"check_same_thread": False},
-    poolclass=StaticPool,
-)
-TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-@pytest.fixture(scope="session", autouse=True)
-def setup_db():
-    Base.metadata.create_all(bind=engine)
-    yield
-    Base.metadata.drop_all(bind=engine)
-
-@pytest.fixture(scope="function")
-def db_session():
-    connection = engine.connect()
-    transaction = connection.begin()
-    session = TestingSessionLocal(bind=connection)
-    yield session
-    session.close()
-    transaction.rollback()
-    connection.close()
-
 @pytest.fixture(scope="function")
 def client(db_session):
+    """Create test client with database dependency override"""
     def override_get_db():
         yield db_session
     app.dependency_overrides[get_db] = override_get_db

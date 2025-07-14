@@ -4,17 +4,7 @@ from sqlalchemy.ext.associationproxy import association_proxy
 from datetime import datetime # Changed to just datetime for consistency, as utcnow is method of datetime
 from app.database import Base
 
-# Import UserRoleAssignment to ensure it's available for relationship resolution
-# This must be imported after Base is defined to avoid circular imports
-def _ensure_user_role_assignment_imported():
-    try:
-        from app.models.rbac_imports import UserRoleAssignment
-        return UserRoleAssignment
-    except ImportError:
-        return None
-
-# Call the import function to register the class
-_ensure_user_role_assignment_imported()
+# Remove circular import - relationships will be resolved by SQLAlchemy registry
 
 class User(Base):
     __tablename__ = "users"
@@ -22,12 +12,15 @@ class User(Base):
         Index('ix_users_username', 'username', unique=True),
         Index('ix_users_email', 'email', unique=True),
         Index('ix_users_tenant_id', 'tenant_id'),
-        {'extend_existing': True}
+        Index('ix_users_platform_owner', 'is_platform_owner'),
+        Index('ix_users_subscription_tier', 'subscription_tier'),
+        Index('ix_users_active_tenant', 'is_active', 'tenant_id'),
+        {'extend_existing': True, 'keep_existing': True}
     )
 
     id = Column(Integer(), primary_key=True)
-    username = Column(String(), unique=True, nullable=False)  # Removed index=True
-    email = Column(String(), unique=True, nullable=False)  # Removed index=True
+    username = Column(String(), unique=True, nullable=False)
+    email = Column(String(), unique=True, nullable=False)
     hashed_password = Column(String(), nullable=False)
     
     first_name = Column(String(), nullable=True)
@@ -87,11 +80,13 @@ class User(Base):
     skills_json = Column(Text(), nullable=True)  # JSON string for list[str] - renamed to avoid conflict with skills relationship
     kudos_count = Column(Integer(), default=0)
 
-    # Enhanced relationships for tenant-aware RBAC
-    user_roles = relationship("app.models.user_role_assignment.UserRoleAssignment", foreign_keys="app.models.user_role_assignment.UserRoleAssignment.user_id", cascade="all, delete-orphan", overlaps="user")
+    # Enhanced relationships for tenant-aware RBAC - optimized for registry resolution
+    user_roles = relationship("UserRoleAssignment", foreign_keys="UserRoleAssignment.user_id", cascade="all, delete-orphan", overlaps="user")
     
-    def get_roles(self):
+    def get_roles(self, tenant_id=None):
         """Get roles through user_roles relationship - safer for serialization"""
+        if tenant_id:
+            return [ur.role for ur in self.user_roles if ur.role and ur.tenant_id == tenant_id]
         return [ur.role for ur in self.user_roles if ur.role]
     
     @property
@@ -100,7 +95,7 @@ class User(Base):
         return self.get_roles()
     
     # Tenant relationship - specify foreign_keys to resolve ambiguity
-    tenant = relationship("Tenant", foreign_keys=[tenant_id], back_populates="users")
+    tenant = relationship("Tenant", foreign_keys=[tenant_id], back_populates="users", overlaps="creator,manager")
     # Relationship to ProcessNote model
     process_notes = relationship(
         "ProcessNote",

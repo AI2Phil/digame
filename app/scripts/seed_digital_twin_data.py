@@ -15,13 +15,13 @@ from sqlalchemy.orm import Session
 # Add parent directory to path so we can import from app modules
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from database import SessionLocal, engine
-from models.digital_twin import (
+from app.database import SessionLocal, engine
+from app.models.digital_twin import (
     DigitalTwin, ActivityPattern, BehavioralLearning, PredictionModel,
     SimulationResult, TwinInteraction, ActivityStream, TwinKnowledge
 )
-from models.user import User
-from models.tenant import Tenant
+from app.models.user import User
+from app.models.tenant import Tenant
 
 
 class DigitalTwinDataSeeder:

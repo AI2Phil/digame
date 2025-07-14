@@ -81,7 +81,7 @@ class SSOSessionResponse(BaseModel):
     is_active: bool
 
     model_config = {"from_attributes": True}
-class TenantSSOConfigurationBase(BaseModel):
+class EnterpriseTenantSSOConfigurationBase(BaseModel):
     enforce_sso: bool = Field(False, description="Enforce SSO for all users")
     allow_local_login: bool = Field(True, description="Allow local password login")
     require_mfa_for_local: bool = Field(False, description="Require MFA for local login")
@@ -100,12 +100,12 @@ class TenantSSOConfigurationBase(BaseModel):
     custom_logout_redirect_url: Optional[str] = Field(None, description="Custom logout redirect URL")
 
 
-class TenantSSOConfigurationUpdate(TenantSSOConfigurationBase):
+class EnterpriseTenantSSOConfigurationUpdate(EnterpriseTenantSSOConfigurationBase):
     """Schema for updating tenant SSO configuration"""
     pass
 
 
-class TenantSSOConfigurationResponse(TenantSSOConfigurationBase):
+class EnterpriseTenantSSOConfigurationResponse(EnterpriseTenantSSOConfigurationBase):
     """Schema for tenant SSO configuration response"""
     id: int
     tenant_id: int
@@ -205,7 +205,7 @@ class SSOAuditLogFilter(BaseModel):
     user_id: Optional[int] = None
     provider_id: Optional[int] = None
     success: Optional[bool] = None
-    limit: int = Field(100, ge=1, le=1000)
+    limit: int = Field(default=100)
 
 
 # SSO Analytics schemas

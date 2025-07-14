@@ -17,8 +17,8 @@ import jwt
 from cryptography.fernet import Fernet
 
 from ..models.enterprise_sso import (
-    SSOProvider, SSOSession, SSOAuditLog, 
-    TenantSSOConfiguration, SSOUserMapping
+    SSOProvider, SSOSession, SSOAuditLog,
+    EnterpriseTenantSSOConfiguration, SSOUserMapping
 )
 from ..database import get_db
 
@@ -442,23 +442,23 @@ class EnterpriseSSOService:
     
     # Tenant Configuration
     
-    def get_tenant_sso_config(self, tenant_id: int) -> Optional[TenantSSOConfiguration]:
+    def get_tenant_sso_config(self, tenant_id: int) -> Optional[EnterpriseTenantSSOConfiguration]:
         """Get tenant SSO configuration"""
-        return self.db.query(TenantSSOConfiguration).filter(
-            TenantSSOConfiguration.tenant_id == tenant_id
+        return self.db.query(EnterpriseTenantSSOConfiguration).filter(
+            EnterpriseTenantSSOConfiguration.tenant_id == tenant_id
         ).first()
     
     def update_tenant_sso_config(
-        self, 
-        tenant_id: int, 
+        self,
+        tenant_id: int,
         updated_by: int,
         config_data: Dict[str, Any]
-    ) -> TenantSSOConfiguration:
+    ) -> EnterpriseTenantSSOConfiguration:
         """Update tenant SSO configuration"""
         config = self.get_tenant_sso_config(tenant_id)
         
         if not config:
-            config = TenantSSOConfiguration()
+            config = EnterpriseTenantSSOConfiguration()
             setattr(config, 'tenant_id', tenant_id)  # type: ignore
             self.db.add(config)
         

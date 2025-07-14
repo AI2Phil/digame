@@ -93,13 +93,16 @@ def db_session(isolated_engine) -> Generator[Session, None, None]:
     Pytest fixture to create a new database session for each test function.
     Uses isolated engine with proper table creation and cleanup.
     """
-    # Create all tables with proper isolation
+    # Create all tables with proper isolation and error handling
     try:
-        # First drop any existing tables to ensure clean state
-        Base.metadata.drop_all(bind=isolated_engine)
+        # Import database utilities for better error handling
+        from app.utils.database_utils import safe_drop_all_tables, safe_create_all_tables
         
-        # Create all tables fresh with checkfirst=True to avoid conflicts
-        Base.metadata.create_all(bind=isolated_engine, checkfirst=True)
+        # First drop any existing tables to ensure clean state
+        safe_drop_all_tables(Base.metadata, isolated_engine)
+        
+        # Create all tables fresh with better error handling
+        safe_create_all_tables(Base.metadata, isolated_engine, checkfirst=True)
     except Exception as e:
         pytest.skip(f"Could not create test database: {e}")
 
@@ -111,9 +114,10 @@ def db_session(isolated_engine) -> Generator[Session, None, None]:
         yield db
     finally:
         db.close()
-        # Clean up tables after test
+        # Clean up tables after test using database utilities
         try:
-            Base.metadata.drop_all(bind=isolated_engine)
+            from app.utils.database_utils import cleanup_test_database
+            cleanup_test_database(Base.metadata, isolated_engine)
         except Exception:
             pass  # Ignore cleanup errors
 
