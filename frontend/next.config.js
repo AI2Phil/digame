@@ -67,20 +67,6 @@ const nextConfig = {
   }
 };
 
-// Conditionally apply PWA wrapper only when PWA is enabled
-const isPWAEnabled = process.env.NODE_ENV === 'production' && process.env.DISABLE_PWA !== 'true';
-
-if (isPWAEnabled) {
-  const withPWA = require('next-pwa')({
-    dest: 'public',
-    register: true,
-    skipWaiting: true,
-    fallbacks: {
-      document: '/offline.html',
-    },
-  });
-  module.exports = withPWA(nextConfig);
-} else {
-  // Export clean Next.js config without PWA wrapper for test/development
-  module.exports = nextConfig;
-}
+// Disable PWA for CI/test environments - export clean Next.js config
+// PWA should only be enabled in production deployments, not in CI builds
+module.exports = nextConfig;
