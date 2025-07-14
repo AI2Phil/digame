@@ -127,12 +127,12 @@ jobs:
         
     - name: Upload Next.js build artifacts
       uses: actions/upload-artifact@v4
-      if: success() && hashFiles('frontend/.next/BUILD_ID') != ''
+      if: success()
       with:
         name: frontend-build
         path: frontend/.next/
         retention-days: 1
-        if-no-files-found: warn
+        if-no-files-found: ignore
         
     - name: Handle missing build artifacts
       if: success() && hashFiles('frontend/.next/BUILD_ID') == ''

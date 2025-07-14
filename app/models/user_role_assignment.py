@@ -42,11 +42,11 @@ class UserRoleAssignment(Base):
     # Status
     is_active = Column(Boolean, default=True)
     
-    # Relationships - use simple class names for proper mapper resolution
-    user = relationship("User", foreign_keys=[user_id], back_populates="user_roles")
-    role = relationship("Role", back_populates="user_roles")
-    tenant = relationship("Tenant", back_populates="user_roles")
-    assigner = relationship("User", foreign_keys=[assigned_by])
+    # Relationships - simplified to resolve mapper conflicts
+    user = relationship("app.models.user.User", foreign_keys=[user_id])
+    role = relationship("app.models.rbac.Role")
+    tenant = relationship("app.models.tenant.Tenant")  # Re-enabled without back_populates
+    assigner = relationship("app.models.user.User", foreign_keys=[assigned_by])
     
 
     def __repr__(self):

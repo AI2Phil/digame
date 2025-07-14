@@ -24,13 +24,7 @@ except ImportError:
     except ImportError:
         UserRoleAssignment = None
 
-# Import all models to ensure they're registered
-try:
-    from app.models import *
-except ImportError:
-    pass
-
-# Try to import additional models that might exist
+# Import specific models to ensure they're registered (avoid wildcard imports)
 try:
     from app.models.user_setting import UserSetting
 except ImportError:
@@ -56,6 +50,7 @@ try:
 except ImportError:
     pass
 
+# Import tenant model only once to avoid duplicate registration
 try:
     from app.models.tenant import Tenant
 except ImportError:
