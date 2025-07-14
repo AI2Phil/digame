@@ -2,7 +2,7 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session # Not used in these specific tests but good for consistency
 from app.main import app # Assuming your FastAPI app instance is here
-from app.auth.dependencies import get_current_user # For overriding
+from app.auth.auth_service import get_current_user # For overriding
 from fastapi import status # For HTTP status codes
 
 # Fixtures for admin and non-admin users should be available from conftest.py
@@ -11,7 +11,15 @@ from fastapi import status # For HTTP status codes
 
 client = TestClient(app)
 
-def test_log_monitoring_unauthorized(test_non_admin_user):
+def test_log_monitoring_unauthorized():
+    # Test without authentication - should return 401/403
+    # No dependency override means no authentication
+    response = client.post("/api/monitoring/log", json={"timestamp": "2024-01-01T00:00:00Z", "activity": "test activity", "details": {"info": "test"}})
+    # Should return 401 Unauthorized or 403 Forbidden, not 201 Created
+    assert response.status_code in [status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN]
+
+def test_log_monitoring_authorized_non_admin(test_non_admin_user):
+    # Test with non-admin user authentication - should succeed
     app.dependency_overrides[get_current_user] = lambda: test_non_admin_user
     # Payload matches LogEntry schema from monitoring.py
     response = client.post("/api/monitoring/log", json={"timestamp": "2024-01-01T00:00:00Z", "activity": "test activity", "details": {"info": "test"}})
@@ -35,7 +43,15 @@ def test_log_monitoring_authorized(test_admin_user):
     assert "log_id" in data
     app.dependency_overrides.clear()
 
-def test_get_logs_unauthorized(test_non_admin_user):
+def test_get_logs_unauthorized():
+    # Test without authentication - should return 401/403
+    # No dependency override means no authentication
+    response = client.get("/api/monitoring/logs")
+    # Should return 401 Unauthorized or 403 Forbidden, not 200 OK
+    assert response.status_code in [status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN]
+
+def test_get_logs_authorized_non_admin(test_non_admin_user):
+    # Test with non-admin user authentication - should succeed
     app.dependency_overrides[get_current_user] = lambda: test_non_admin_user
     response = client.get("/api/monitoring/logs")
     assert response.status_code == status.HTTP_200_OK
