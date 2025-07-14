@@ -406,7 +406,7 @@ app.include_router(admin_simple_router.router, tags=["Admin Dashboard"])
 app.include_router(predictive_router.router, prefix="/predictive", tags=["Predictive Modeling"])
 app.include_router(admin_rbac_router.router, prefix="/admin/rbac", tags=["Admin RBAC Management"])
 app.include_router(admin_router.router, prefix="/api", tags=["Admin Dashboard"]) # Consider if this duplicates admin_simple_router tag
-app.include_router(analytics_router.router, prefix="/api", tags=["Analytics"])
+app.include_router(analytics_router.router, tags=["Analytics"])
 app.include_router(process_notes_router.router, prefix="/process-notes", tags=["Process Notes"])
 app.include_router(behavior_router.router, prefix="/api/behavior", tags=["Behavior Recognition"])
 app.include_router(monitoring_router.router, prefix="/api/monitoring", tags=["Monitoring"])

@@ -6,7 +6,7 @@ from datetime import datetime, timedelta, timezone
 # Models to import for type hinting and creating mock instances
 from app.models.tenant import Tenant as TenantModel
 from app.models.user import User as UserModel
-from app.models.rbac import Role as RoleModel, UserRoleAssignment as UserRoleModel
+from app.models.rbac import Role as RoleModel, UserRoleAssignment as UserRoleAssignmentModel
 from app.models.tenant import TenantSettings as TenantSettingsModel
 from app.models.tenant import TenantInvitation as TenantInvitationModel
 from app.models.tenant import TenantAuditLog as TenantAuditLogModel
@@ -153,7 +153,7 @@ class TestTenantCreation:
         assert any(call_args[0][0].name == "Admin" for call_args in mock_db_session.add.call_args_list if isinstance(call_args[0][0], RoleModel))
         # Check if admin user was created and UserRole for admin
         assert any(call_args[0][0].email == sample_tenant_data["admin_email"] for call_args in mock_db_session.add.call_args_list if isinstance(call_args[0][0], UserModel))
-        assert any(call_args[0][0].role_id == mock_admin_role_instance.id for call_args in mock_db_session.add.call_args_list if isinstance(call_args[0][0], UserRoleModel))
+        assert any(call_args[0][0].role_id == mock_admin_role_instance.id for call_args in mock_db_session.add.call_args_list if isinstance(call_args[0][0], UserRoleAssignmentModel))
 
         # Check audit log call
         assert any(

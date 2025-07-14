@@ -107,7 +107,9 @@ async def test_translate_success(mock_db_session, mock_ai_integration_service, m
         }]
     }
 
-    with patch('app.crud.user_setting_crud.get_user_setting', return_value=mock_user_setting_model_lang_learn):
+    with patch('app.crud.user_crud.get_user', return_value=mock_user_model_lang_learn), \
+         patch('app.crud.tenant_crud.get_tenant_by_id', return_value=mock_tenant_model_lang_learn), \
+         patch('app.crud.user_setting_crud.get_user_setting', return_value=mock_user_setting_model_lang_learn):
         # Action
         result = await service.translate_text(mock_user_model_lang_learn, text, target_lang, source_lang)
         # Assertion
@@ -122,16 +124,20 @@ async def test_translate_feature_disabled(mock_db_session, mock_ai_integration_s
     mock_tenant_model_lang_learn.features = {"language_learning_support": False}
     service = LanguageLearningService(db=mock_db_session, ai_integration_service=mock_ai_integration_service)
     # Action & Assertion
-    with pytest.raises(HTTPException) as exc:
-        await service.translate_text(mock_user_model_lang_learn, "text", "es")
-    assert exc.value.status_code == 403
-    assert "feature is not enabled" in exc.value.detail.lower()
+    with patch('app.crud.user_crud.get_user', return_value=mock_user_model_lang_learn), \
+         patch('app.crud.tenant_crud.get_tenant_by_id', return_value=mock_tenant_model_lang_learn):
+        with pytest.raises(HTTPException) as exc:
+            await service.translate_text(mock_user_model_lang_learn, "text", "es")
+        assert exc.value.status_code == 403
+        assert "feature is not enabled" in exc.value.detail.lower()
 
 @pytest.mark.asyncio
 async def test_translate_no_user_settings(mock_db_session, mock_ai_integration_service, mock_user_model_lang_learn, mock_tenant_model_lang_learn, mock_tenant_user_link_lang_learn):
     # Arrange
     service = LanguageLearningService(db=mock_db_session, ai_integration_service=mock_ai_integration_service)
-    with patch('app.crud.user_setting_crud.get_user_setting', return_value=None):
+    with patch('app.crud.user_crud.get_user', return_value=mock_user_model_lang_learn), \
+         patch('app.crud.tenant_crud.get_tenant_by_id', return_value=mock_tenant_model_lang_learn), \
+         patch('app.crud.user_setting_crud.get_user_setting', return_value=None):
         # Action & Assertion
         with pytest.raises(HTTPException) as exc:
             await service.translate_text(mock_user_model_lang_learn, "text", "es")
@@ -143,7 +149,9 @@ async def test_translate_no_api_key_in_settings(mock_db_session, mock_ai_integra
     # Arrange
     mock_user_setting_model_lang_learn.api_keys = json.dumps({}) # Empty dict
     service = LanguageLearningService(db=mock_db_session, ai_integration_service=mock_ai_integration_service)
-    with patch('app.crud.user_setting_crud.get_user_setting', return_value=mock_user_setting_model_lang_learn):
+    with patch('app.crud.user_crud.get_user', return_value=mock_user_model_lang_learn), \
+         patch('app.crud.tenant_crud.get_tenant_by_id', return_value=mock_tenant_model_lang_learn), \
+         patch('app.crud.user_setting_crud.get_user_setting', return_value=mock_user_setting_model_lang_learn):
         # Action & Assertion
         with pytest.raises(HTTPException) as exc:
             await service.translate_text(mock_user_model_lang_learn, "text", "es")
@@ -155,7 +163,9 @@ async def test_translate_empty_api_key(mock_db_session, mock_ai_integration_serv
     # Arrange
     mock_user_setting_model_lang_learn.api_keys = json.dumps({"openai_api_key": ""})
     service = LanguageLearningService(db=mock_db_session, ai_integration_service=mock_ai_integration_service)
-    with patch('app.crud.user_setting_crud.get_user_setting', return_value=mock_user_setting_model_lang_learn):
+    with patch('app.crud.user_crud.get_user', return_value=mock_user_model_lang_learn), \
+         patch('app.crud.tenant_crud.get_tenant_by_id', return_value=mock_tenant_model_lang_learn), \
+         patch('app.crud.user_setting_crud.get_user_setting', return_value=mock_user_setting_model_lang_learn):
         # Action & Assertion
         with pytest.raises(HTTPException) as exc:
             await service.translate_text(mock_user_model_lang_learn, "text", "es")
@@ -172,7 +182,9 @@ async def test_translate_invalid_external_api_key(mock_db_session, mock_ai_integ
     # Mock AI service to raise an exception for invalid API key
     mock_ai_integration_service.make_request.side_effect = Exception("Invalid API key")
     
-    with patch('app.crud.user_setting_crud.get_user_setting', return_value=mock_user_setting_model_lang_learn):
+    with patch('app.crud.user_crud.get_user', return_value=mock_user_model_lang_learn), \
+         patch('app.crud.tenant_crud.get_tenant_by_id', return_value=mock_tenant_model_lang_learn), \
+         patch('app.crud.user_setting_crud.get_user_setting', return_value=mock_user_setting_model_lang_learn):
         # Action & Assertion
         with pytest.raises(HTTPException) as exc:
             await service.translate_text(mock_user_model_lang_learn, "text", "es")
@@ -183,12 +195,15 @@ async def test_translate_invalid_external_api_key(mock_db_session, mock_ai_integ
 async def test_translate_external_service_general_failure(mock_db_session, mock_ai_integration_service, mock_user_model_lang_learn, mock_tenant_model_lang_learn, mock_user_setting_model_lang_learn, mock_tenant_user_link_lang_learn):
     # Arrange
     mock_tenant_model_lang_learn.features = {"language_learning_support": True}
+    mock_user_setting_model_lang_learn.api_keys = json.dumps({"openai_api_key": "valid_key"})
     service = LanguageLearningService(db=mock_db_session, ai_integration_service=mock_ai_integration_service)
     
     # Mock AI service to raise a general exception
     mock_ai_integration_service.make_request.side_effect = Exception("Network Timeout")
     
-    with patch('app.crud.user_setting_crud.get_user_setting', return_value=mock_user_setting_model_lang_learn):
+    with patch('app.crud.user_crud.get_user', return_value=mock_user_model_lang_learn), \
+         patch('app.crud.tenant_crud.get_tenant_by_id', return_value=mock_tenant_model_lang_learn), \
+         patch('app.crud.user_setting_crud.get_user_setting', return_value=mock_user_setting_model_lang_learn):
         # Action & Assertion
         with pytest.raises(HTTPException) as exc:
             await service.translate_text(mock_user_model_lang_learn, "text", "es")
@@ -202,20 +217,23 @@ async def test_translate_user_not_in_tenant(mock_db_session, mock_ai_integration
     mock_user_model_lang_learn.tenant = None
     service = LanguageLearningService(db=mock_db_session, ai_integration_service=mock_ai_integration_service)
     # Action & Assertion
-    with pytest.raises(HTTPException) as exc:
-        await service.translate_text(mock_user_model_lang_learn, "text", "es")
-    assert exc.value.status_code == 403
-    assert "user not associated with any tenant" in exc.value.detail.lower()
+    with patch('app.crud.user_crud.get_user', return_value=mock_user_model_lang_learn):
+        with pytest.raises(HTTPException) as exc:
+            await service.translate_text(mock_user_model_lang_learn, "text", "es")
+        assert exc.value.status_code == 403
+        assert "user not associated with any tenant" in exc.value.detail.lower()
 
 @pytest.mark.asyncio
 async def test_translate_corrupted_tenant_features_json(mock_db_session, mock_ai_integration_service, mock_user_model_lang_learn, mock_tenant_model_lang_learn, mock_tenant_user_link_lang_learn):
     # Arrange
     mock_tenant_model_lang_learn.features = '{"language_learning_support": True' # Malformed
     service = LanguageLearningService(db=mock_db_session, ai_integration_service=mock_ai_integration_service)
-    with pytest.raises(HTTPException) as exc:
-        await service.translate_text(mock_user_model_lang_learn, "text", "es")
-    assert exc.value.status_code == 500
-    assert "error parsing tenant features" in exc.value.detail.lower()
+    with patch('app.crud.user_crud.get_user', return_value=mock_user_model_lang_learn), \
+         patch('app.crud.tenant_crud.get_tenant_by_id', return_value=mock_tenant_model_lang_learn):
+        with pytest.raises(HTTPException) as exc:
+            await service.translate_text(mock_user_model_lang_learn, "text", "es")
+        assert exc.value.status_code == 500
+        assert "error parsing tenant features" in exc.value.detail.lower()
 
 @pytest.mark.asyncio
 async def test_translate_corrupted_user_api_keys_json(mock_db_session, mock_ai_integration_service, mock_user_model_lang_learn, mock_tenant_model_lang_learn, mock_user_setting_model_lang_learn, mock_tenant_user_link_lang_learn):
@@ -223,7 +241,9 @@ async def test_translate_corrupted_user_api_keys_json(mock_db_session, mock_ai_i
     mock_tenant_model_lang_learn.features = {"language_learning_support": True}
     mock_user_setting_model_lang_learn.api_keys = '{"openai_api_key": "valid"' # Malformed
     service = LanguageLearningService(db=mock_db_session, ai_integration_service=mock_ai_integration_service)
-    with patch('app.crud.user_setting_crud.get_user_setting', return_value=mock_user_setting_model_lang_learn):
+    with patch('app.crud.user_crud.get_user', return_value=mock_user_model_lang_learn), \
+         patch('app.crud.tenant_crud.get_tenant_by_id', return_value=mock_tenant_model_lang_learn), \
+         patch('app.crud.user_setting_crud.get_user_setting', return_value=mock_user_setting_model_lang_learn):
         with pytest.raises(HTTPException) as exc:
             await service.translate_text(mock_user_model_lang_learn, "text", "es")
         assert exc.value.status_code == 500
@@ -233,8 +253,11 @@ async def test_translate_corrupted_user_api_keys_json(mock_db_session, mock_ai_i
 async def test_translate_invalid_input_to_mock_client(mock_db_session, mock_ai_integration_service, mock_user_model_lang_learn, mock_tenant_model_lang_learn, mock_user_setting_model_lang_learn, mock_tenant_user_link_lang_learn):
     # Arrange
     mock_tenant_model_lang_learn.features = {"language_learning_support": True}
+    mock_user_setting_model_lang_learn.api_keys = json.dumps({"openai_api_key": "valid_key"})
     service = LanguageLearningService(db=mock_db_session, ai_integration_service=mock_ai_integration_service)
-    with patch('app.crud.user_setting_crud.get_user_setting', return_value=mock_user_setting_model_lang_learn):
+    with patch('app.crud.user_crud.get_user', return_value=mock_user_model_lang_learn), \
+         patch('app.crud.tenant_crud.get_tenant_by_id', return_value=mock_tenant_model_lang_learn), \
+         patch('app.crud.user_setting_crud.get_user_setting', return_value=mock_user_setting_model_lang_learn):
         # Action & Assertion
         with pytest.raises(HTTPException) as exc:
             await service.translate_text(mock_user_model_lang_learn, "", "es") # Empty text
@@ -247,6 +270,7 @@ async def test_translate_invalid_input_to_mock_client(mock_db_session, mock_ai_i
 async def test_define_success(mock_db_session, mock_ai_integration_service, mock_user_model_lang_learn, mock_tenant_model_lang_learn, mock_user_setting_model_lang_learn, mock_tenant_user_link_lang_learn):
     # Arrange
     mock_tenant_model_lang_learn.features = {"language_learning_support": True}
+    mock_user_setting_model_lang_learn.api_keys = json.dumps({"openai_api_key": "valid_key"})
     service = LanguageLearningService(db=mock_db_session, ai_integration_service=mock_ai_integration_service)
     word, language = "casa", "es"
     
@@ -264,7 +288,9 @@ async def test_define_success(mock_db_session, mock_ai_integration_service, mock
         }]
     }
     
-    with patch('app.crud.user_setting_crud.get_user_setting', return_value=mock_user_setting_model_lang_learn):
+    with patch('app.crud.user_crud.get_user', return_value=mock_user_model_lang_learn), \
+         patch('app.crud.tenant_crud.get_tenant_by_id', return_value=mock_tenant_model_lang_learn), \
+         patch('app.crud.user_setting_crud.get_user_setting', return_value=mock_user_setting_model_lang_learn):
         # Action
         result = await service.get_vocabulary_definition(mock_user_model_lang_learn, word, language)
         # Assertion
@@ -277,15 +303,19 @@ async def test_define_feature_disabled(mock_db_session, mock_ai_integration_serv
     # Arrange
     mock_tenant_model_lang_learn.features = {"language_learning_support": False}
     service = LanguageLearningService(db=mock_db_session, ai_integration_service=mock_ai_integration_service)
-    with pytest.raises(HTTPException) as exc:
-        await service.get_vocabulary_definition(mock_user_model_lang_learn, "word", "en")
-    assert exc.value.status_code == 403
+    with patch('app.crud.user_crud.get_user', return_value=mock_user_model_lang_learn), \
+         patch('app.crud.tenant_crud.get_tenant_by_id', return_value=mock_tenant_model_lang_learn):
+        with pytest.raises(HTTPException) as exc:
+            await service.get_vocabulary_definition(mock_user_model_lang_learn, "word", "en")
+        assert exc.value.status_code == 403
 
 @pytest.mark.asyncio
 async def test_define_no_user_settings(mock_db_session, mock_ai_integration_service, mock_user_model_lang_learn, mock_tenant_model_lang_learn, mock_tenant_user_link_lang_learn):
     # Arrange
     service = LanguageLearningService(db=mock_db_session, ai_integration_service=mock_ai_integration_service)
-    with patch('app.crud.user_setting_crud.get_user_setting', return_value=None):
+    with patch('app.crud.user_crud.get_user', return_value=mock_user_model_lang_learn), \
+         patch('app.crud.tenant_crud.get_tenant_by_id', return_value=mock_tenant_model_lang_learn), \
+         patch('app.crud.user_setting_crud.get_user_setting', return_value=None):
         with pytest.raises(HTTPException) as exc:
             await service.get_vocabulary_definition(mock_user_model_lang_learn, "word", "en")
         assert exc.value.status_code == 402
@@ -295,7 +325,9 @@ async def test_define_no_api_key_in_settings(mock_db_session, mock_ai_integratio
     # Arrange
     mock_user_setting_model_lang_learn.api_keys = json.dumps({})
     service = LanguageLearningService(db=mock_db_session, ai_integration_service=mock_ai_integration_service)
-    with patch('app.crud.user_setting_crud.get_user_setting', return_value=mock_user_setting_model_lang_learn):
+    with patch('app.crud.user_crud.get_user', return_value=mock_user_model_lang_learn), \
+         patch('app.crud.tenant_crud.get_tenant_by_id', return_value=mock_tenant_model_lang_learn), \
+         patch('app.crud.user_setting_crud.get_user_setting', return_value=mock_user_setting_model_lang_learn):
         with pytest.raises(HTTPException) as exc:
             await service.get_vocabulary_definition(mock_user_model_lang_learn, "word", "en")
         assert exc.value.status_code == 402
@@ -305,60 +337,91 @@ async def test_define_empty_api_key(mock_db_session, mock_ai_integration_service
     # Arrange
     mock_user_setting_model_lang_learn.api_keys = json.dumps({"openai_api_key": ""})
     service = LanguageLearningService(db=mock_db_session, ai_integration_service=mock_ai_integration_service)
-    with patch('app.crud.user_setting_crud.get_user_setting', return_value=mock_user_setting_model_lang_learn):
+    with patch('app.crud.user_crud.get_user', return_value=mock_user_model_lang_learn), \
+         patch('app.crud.tenant_crud.get_tenant_by_id', return_value=mock_tenant_model_lang_learn), \
+         patch('app.crud.user_setting_crud.get_user_setting', return_value=mock_user_setting_model_lang_learn):
         with pytest.raises(HTTPException) as exc:
             await service.get_vocabulary_definition(mock_user_model_lang_learn, "word", "en")
         assert exc.value.status_code == 402
 
-def test_define_invalid_external_api_key(mock_db_session, mock_ai_integration_service, mock_user_model_lang_learn, mock_tenant_model_lang_learn, mock_user_setting_model_lang_learn, mock_tenant_user_link_lang_learn):
+@pytest.mark.asyncio
+async def test_define_invalid_external_api_key(mock_db_session, mock_ai_integration_service, mock_user_model_lang_learn, mock_tenant_model_lang_learn, mock_user_setting_model_lang_learn, mock_tenant_user_link_lang_learn):
     # Arrange
     mock_user_setting_model_lang_learn.api_keys = json.dumps({"openai_api_key": "invalid_lang_key"})
     service = LanguageLearningService(db=mock_db_session, ai_integration_service=mock_ai_integration_service)
-    with patch('digame.app.crud.user_setting_crud.get_user_setting', return_value=mock_user_setting_model_lang_learn):
+    
+    # Mock AI service to raise an exception for invalid API key
+    mock_ai_integration_service.make_request.side_effect = Exception("Invalid API key")
+    
+    with patch('app.crud.user_crud.get_user', return_value=mock_user_model_lang_learn), \
+         patch('app.crud.tenant_crud.get_tenant_by_id', return_value=mock_tenant_model_lang_learn), \
+         patch('app.crud.user_setting_crud.get_user_setting', return_value=mock_user_setting_model_lang_learn):
         with pytest.raises(HTTPException) as exc:
-            service.get_vocabulary_definition(mock_user_model_lang_learn, "word", "en")
-        assert exc.value.status_code == 400
-
-def test_define_external_service_general_failure(mock_db_session, mock_ai_integration_service, mock_user_model_lang_learn, mock_tenant_model_lang_learn, mock_user_setting_model_lang_learn, mock_tenant_user_link_lang_learn):
-    # Arrange
-    service = LanguageLearningService(db=mock_db_session, ai_integration_service=mock_ai_integration_service)
-    with patch('digame.app.crud.user_setting_crud.get_user_setting', return_value=mock_user_setting_model_lang_learn), \
-         patch('digame.app.services.language_learning_service.MockExternalLanguageClient.define_word', side_effect=Exception("Definition service down")):
-        with pytest.raises(HTTPException) as exc:
-            service.get_vocabulary_definition(mock_user_model_lang_learn, "word", "en")
+            await service.get_vocabulary_definition(mock_user_model_lang_learn, "word", "en")
         assert exc.value.status_code == 503
 
-def test_define_user_not_in_tenant(mock_db_session, mock_ai_integration_service, mock_user_model_lang_learn):
+@pytest.mark.asyncio
+async def test_define_external_service_general_failure(mock_db_session, mock_ai_integration_service, mock_user_model_lang_learn, mock_tenant_model_lang_learn, mock_user_setting_model_lang_learn, mock_tenant_user_link_lang_learn):
+    # Arrange
+    mock_tenant_model_lang_learn.features = {"language_learning_support": True}
+    mock_user_setting_model_lang_learn.api_keys = json.dumps({"openai_api_key": "valid_key"})
+    service = LanguageLearningService(db=mock_db_session, ai_integration_service=mock_ai_integration_service)
+    
+    # Mock AI service to raise a general exception
+    mock_ai_integration_service.make_request.side_effect = Exception("Definition service down")
+    
+    with patch('app.crud.user_crud.get_user', return_value=mock_user_model_lang_learn), \
+         patch('app.crud.tenant_crud.get_tenant_by_id', return_value=mock_tenant_model_lang_learn), \
+         patch('app.crud.user_setting_crud.get_user_setting', return_value=mock_user_setting_model_lang_learn):
+        with pytest.raises(HTTPException) as exc:
+            await service.get_vocabulary_definition(mock_user_model_lang_learn, "word", "en")
+        assert exc.value.status_code == 503
+
+@pytest.mark.asyncio
+async def test_define_user_not_in_tenant(mock_db_session, mock_ai_integration_service, mock_user_model_lang_learn):
     # Arrange
     mock_user_model_lang_learn.tenant_id = None  # User not associated with any tenant
     mock_user_model_lang_learn.tenant = None
     service = LanguageLearningService(db=mock_db_session, ai_integration_service=mock_ai_integration_service)
-    with pytest.raises(HTTPException) as exc:
-        service.get_vocabulary_definition(mock_user_model_lang_learn, "word", "en")
-    assert exc.value.status_code == 403
+    with patch('app.crud.user_crud.get_user', return_value=mock_user_model_lang_learn):
+        with pytest.raises(HTTPException) as exc:
+            await service.get_vocabulary_definition(mock_user_model_lang_learn, "word", "en")
+        assert exc.value.status_code == 403
 
-def test_define_corrupted_tenant_features_json(mock_db_session, mock_ai_integration_service, mock_user_model_lang_learn, mock_tenant_model_lang_learn, mock_tenant_user_link_lang_learn):
+@pytest.mark.asyncio
+async def test_define_corrupted_tenant_features_json(mock_db_session, mock_ai_integration_service, mock_user_model_lang_learn, mock_tenant_model_lang_learn, mock_tenant_user_link_lang_learn):
     # Arrange
     mock_tenant_model_lang_learn.features = '{"language_learning_support": True' # Malformed
     service = LanguageLearningService(db=mock_db_session, ai_integration_service=mock_ai_integration_service)
-    with pytest.raises(HTTPException) as exc:
-        service.get_vocabulary_definition(mock_user_model_lang_learn, "word", "en")
-    assert exc.value.status_code == 500
-
-def test_define_corrupted_user_api_keys_json(mock_db_session, mock_ai_integration_service, mock_user_model_lang_learn, mock_tenant_model_lang_learn, mock_user_setting_model_lang_learn, mock_tenant_user_link_lang_learn):
-    # Arrange
-    mock_user_setting_model_lang_learn.api_keys = '{"openai_api_key": "valid"' # Malformed
-    service = LanguageLearningService(db=mock_db_session, ai_integration_service=mock_ai_integration_service)
-    with patch('digame.app.crud.user_setting_crud.get_user_setting', return_value=mock_user_setting_model_lang_learn):
+    with patch('app.crud.user_crud.get_user', return_value=mock_user_model_lang_learn), \
+         patch('app.crud.tenant_crud.get_tenant_by_id', return_value=mock_tenant_model_lang_learn):
         with pytest.raises(HTTPException) as exc:
-            service.get_vocabulary_definition(mock_user_model_lang_learn, "word", "en")
+            await service.get_vocabulary_definition(mock_user_model_lang_learn, "word", "en")
         assert exc.value.status_code == 500
 
-def test_define_invalid_input_to_mock_client(mock_db_session, mock_ai_integration_service, mock_user_model_lang_learn, mock_tenant_model_lang_learn, mock_user_setting_model_lang_learn, mock_tenant_user_link_lang_learn):
+@pytest.mark.asyncio
+async def test_define_corrupted_user_api_keys_json(mock_db_session, mock_ai_integration_service, mock_user_model_lang_learn, mock_tenant_model_lang_learn, mock_user_setting_model_lang_learn, mock_tenant_user_link_lang_learn):
     # Arrange
+    mock_tenant_model_lang_learn.features = {"language_learning_support": True}
+    mock_user_setting_model_lang_learn.api_keys = '{"openai_api_key": "valid"' # Malformed
     service = LanguageLearningService(db=mock_db_session, ai_integration_service=mock_ai_integration_service)
-    with patch('digame.app.crud.user_setting_crud.get_user_setting', return_value=mock_user_setting_model_lang_learn):
+    with patch('app.crud.user_crud.get_user', return_value=mock_user_model_lang_learn), \
+         patch('app.crud.tenant_crud.get_tenant_by_id', return_value=mock_tenant_model_lang_learn), \
+         patch('app.crud.user_setting_crud.get_user_setting', return_value=mock_user_setting_model_lang_learn):
         with pytest.raises(HTTPException) as exc:
-            service.get_vocabulary_definition(mock_user_model_lang_learn, "", "en") # Empty word
+            await service.get_vocabulary_definition(mock_user_model_lang_learn, "word", "en")
+        assert exc.value.status_code == 500
+
+@pytest.mark.asyncio
+async def test_define_invalid_input_to_mock_client(mock_db_session, mock_ai_integration_service, mock_user_model_lang_learn, mock_tenant_model_lang_learn, mock_user_setting_model_lang_learn, mock_tenant_user_link_lang_learn):
+    # Arrange
+    mock_tenant_model_lang_learn.features = {"language_learning_support": True}
+    mock_user_setting_model_lang_learn.api_keys = json.dumps({"openai_api_key": "valid_key"})
+    service = LanguageLearningService(db=mock_db_session, ai_integration_service=mock_ai_integration_service)
+    with patch('app.crud.user_crud.get_user', return_value=mock_user_model_lang_learn), \
+         patch('app.crud.tenant_crud.get_tenant_by_id', return_value=mock_tenant_model_lang_learn), \
+         patch('app.crud.user_setting_crud.get_user_setting', return_value=mock_user_setting_model_lang_learn):
+        with pytest.raises(HTTPException) as exc:
+            await service.get_vocabulary_definition(mock_user_model_lang_learn, "", "en") # Empty word
         assert exc.value.status_code == 400
-        assert "word and language are required" in exc.value.detail.lower()
+        assert "word to define cannot be empty" in exc.value.detail.lower()
