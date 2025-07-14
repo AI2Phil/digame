@@ -42,7 +42,7 @@ class UserRoleAssignment(Base):
     # Status
     is_active = Column(Boolean, default=True)
     
-    # Relationships
+    # Relationships - use simple class names for proper mapper resolution
     user = relationship("User", foreign_keys=[user_id], back_populates="user_roles")
     role = relationship("Role", back_populates="user_roles")
     tenant = relationship("Tenant", back_populates="user_roles")

@@ -103,8 +103,8 @@ def db_session(isolated_engine) -> Generator[Session, None, None]:
         # First drop any existing tables to ensure clean state
         Base.metadata.drop_all(bind=isolated_engine)
         
-        # Create all tables fresh
-        Base.metadata.create_all(bind=isolated_engine)
+        # Create all tables fresh with checkfirst=True to avoid conflicts
+        Base.metadata.create_all(bind=isolated_engine, checkfirst=True)
     except Exception as e:
         pytest.skip(f"Could not create test database: {e}")
 
