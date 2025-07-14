@@ -1,6 +1,3 @@
-// CRITICAL DEBUG: Log at module level
-console.log('🔥🔥🔥 ComprehensiveNavigation MODULE LOADING - THIS SHOULD ALWAYS SHOW! 🔥🔥🔥');
-
 import React, { useState, useMemo } from 'react';
 import { useRouter } from 'next/router';
 import {
@@ -81,15 +78,6 @@ const ComprehensiveNavigation: React.FC<ComprehensiveNavigationProps> = ({
   onToggle = () => {},
   showAllFeatures = true
 }) => {
-  // CRITICAL DEBUG: Log when ComprehensiveNavigation renders
-  console.log('🔥🔥🔥 ComprehensiveNavigation RENDERING - THIS SHOULD SHOW ON EVERY RENDER! 🔥🔥🔥', {
-    isDemoMode,
-    currentUser,
-    isOpen,
-    showAllFeatures,
-    totalSections: 16
-  });
-
   const router = useRouter();
   const [expandedSections, setExpandedSections] = useState<ExpandedSections>({});
   const [searchTerm, setSearchTerm] = useState('');

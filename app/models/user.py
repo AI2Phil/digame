@@ -88,7 +88,7 @@ class User(Base):
     kudos_count = Column(Integer(), default=0)
 
     # Enhanced relationships for tenant-aware RBAC
-    user_roles = relationship("UserRoleAssignment", foreign_keys="UserRoleAssignment.user_id", back_populates="user")
+    user_roles = relationship("UserRoleAssignment", foreign_keys="UserRoleAssignment.user_id", back_populates="user", cascade="all, delete-orphan")
     
     def get_roles(self):
         """Get roles through user_roles relationship - safer for serialization"""

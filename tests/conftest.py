@@ -15,6 +15,15 @@ from app.models.notifications import Notification
 from app.models.rbac import Role, Permission
 from app.main import app
 
+# Import UserRoleAssignment to ensure it's registered
+try:
+    from app.models.rbac_imports import UserRoleAssignment
+except ImportError:
+    try:
+        from app.models.user_role_assignment import UserRoleAssignment
+    except ImportError:
+        UserRoleAssignment = None
+
 # Import all models to ensure they're registered
 try:
     from app.models import *
@@ -61,29 +70,27 @@ except ImportError:
 def isolated_engine():
     """
     Create an isolated SQLite engine for each test with proper isolation.
-    Uses a unique temporary file to avoid conflicts between tests.
+    Uses in-memory database for complete isolation and faster tests.
     """
-    # Create a unique temporary database file for each test
-    temp_db = tempfile.NamedTemporaryFile(delete=False, suffix='.db')
-    temp_db.close()
-    
-    database_url = f"sqlite:///{temp_db.name}"
+    # Use in-memory database with unique connection string for complete isolation
+    unique_id = str(uuid.uuid4())
+    database_url = f"sqlite:///:memory:?cache=shared&uri=true&id={unique_id}"
     
     engine = create_engine(
         database_url,
-        connect_args={"check_same_thread": False},
+        connect_args={
+            "check_same_thread": False,
+            "isolation_level": None  # Autocommit mode for better test isolation
+        },
         poolclass=StaticPool,
-        echo=False  # Set to True for debugging
+        echo=False,  # Set to True for debugging
+        pool_pre_ping=True  # Verify connections before use
     )
     
     yield engine
     
-    # Clean up: close all connections and remove temp file
+    # Clean up: close all connections
     engine.dispose()
-    try:
-        os.unlink(temp_db.name)
-    except OSError:
-        pass
 
 @pytest.fixture(scope="function")
 def db_session(isolated_engine) -> Generator[Session, None, None]:

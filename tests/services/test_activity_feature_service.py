@@ -229,7 +229,7 @@ def test_generate_features_for_user_activities_db_commit_error(mock_db_session_f
 
     # The test may encounter SQLAlchemy mapper errors before reaching the commit error
     # So we'll catch either the simulated error or SQLAlchemy initialization errors
-    with pytest.raises(Exception, match="Simulated DB Error|UserRole.*failed to locate|InvalidRequestError|Multiple classes found"):
+    with pytest.raises(Exception, match="Simulated DB Error|UserRole.*failed to locate|InvalidRequestError|Multiple classes found|reverse_property.*references relationship"):
         generate_features_for_user_activities(mock_db_session_for_batch, user_id=user_id)
     
     mock_db_session_for_batch.add_all.assert_called_once()

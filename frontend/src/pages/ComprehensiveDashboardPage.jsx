@@ -68,44 +68,8 @@ const ComprehensiveDashboardPage = ({
     permissions: currentUser.permissions || []
   } : null;
 
-  // CRITICAL DEBUG: Log user data and decision making
-  console.log('🚨🚨🚨 COMPREHENSIVE DASHBOARD IS RENDERING!!! 🚨🚨🚨');
-  console.log('🔥 ComprehensiveDashboardPage DEBUG:', {
-    isDemoMode,
-    currentUser: currentUser ? {
-      id: currentUser.id,
-      username: currentUser.username,
-      role: currentUser.role,
-      isPlatformOwner: currentUser.isPlatformOwner,
-      subscriptionTier: currentUser.subscriptionTier,
-      fullUserObject: currentUser
-    } : null,
-    adaptedUser: adaptedUser ? {
-      name: adaptedUser.name,
-      role: adaptedUser.role,
-      is_platform_owner: adaptedUser.is_platform_owner,
-      subscription_tier: adaptedUser.subscription_tier,
-      fullAdaptedUser: adaptedUser
-    } : null
-  });
-
   // Platform Owners and Demo Mode should always have access to all features
   const shouldShowAllFeatures = isDemoMode || (adaptedUser?.is_platform_owner === true);
-  
-  console.log('🔥 ComprehensiveDashboardPage DECISION:', {
-    isDemoMode,
-    'adaptedUser?.is_platform_owner': adaptedUser?.is_platform_owner,
-    'typeof adaptedUser?.is_platform_owner': typeof adaptedUser?.is_platform_owner,
-    'currentUser?.isPlatformOwner': currentUser?.isPlatformOwner,
-    'typeof currentUser?.isPlatformOwner': typeof currentUser?.isPlatformOwner,
-    shouldShowAllFeatures
-  });
-
-  console.log('🔥 ComprehensiveDashboardPage RENDERING ComprehensiveNavigation with props:', {
-    isDemoMode,
-    currentUser: adaptedUser,
-    showAllFeatures: shouldShowAllFeatures
-  });
 
   if (isLoading) {
     return (

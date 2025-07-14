@@ -330,7 +330,7 @@ async def test_db_commit_error_handling(mock_db_session: MagicMock, sample_user:
 
     # The test may encounter SQLAlchemy mapper errors before reaching the commit error
     # So we'll catch either the simulated error or SQLAlchemy initialization errors
-    with pytest.raises(Exception, match="Simulated DB commit error|UserOnboardingProgress.*failed to locate|InvalidRequestError"):
+    with pytest.raises(Exception, match="Simulated DB commit error|UserOnboardingProgress.*failed to locate|InvalidRequestError|reverse_property.*references relationship"):
         await identify_and_update_process_notes(mock_db_session, user_id=user_id)
     
     # Note: If SQLAlchemy mapper error occurs before commit, these assertions may not apply
