@@ -11,8 +11,7 @@ from .rbac import Role, Permission, role_permissions_table
 # Import UserRoleAssignment from centralized imports to resolve registry conflicts
 from .imports import UserRoleAssignment
 from .process_notes import ProcessNote
-from .activity import Activity
-from .activity_features import ActivityEnrichedFeature
+from .imports import Activity, ActivityEnrichedFeature
 from .anomaly import DetectedAnomaly
 from .task import Task # Added new model
 from .behavior_model import BehavioralModel, BehavioralPattern # Added behavioral models

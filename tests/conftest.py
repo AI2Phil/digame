@@ -15,21 +15,37 @@ from app.models.notifications import Notification
 from app.models.rbac import Role, Permission
 from app.main import app
 
-# Import UserRoleAssignment ONLY from centralized imports to prevent conflicts
-from app.models.imports import UserRoleAssignment
+# Import models ONLY from centralized imports to prevent conflicts
+from app.models.imports import UserRoleAssignment, Activity, ActivityEnrichedFeature
 
 @pytest.fixture(autouse=True, scope="function")
 def reset_sqlalchemy_completely():
     """Nuclear option: completely reset SQLAlchemy state before each test"""
+    import sys
+    import gc
+    
     # Clear all mappers
     clear_mappers()
     
     # Clear the registry
     if hasattr(Base, 'registry'):
         Base.registry._class_registry.clear()
+        try:
+            Base.registry.dispose()
+        except Exception:
+            pass
     
     # Clear metadata
     Base.metadata.clear()
+    
+    # Remove all app.models modules from sys.modules to force reimport
+    modules_to_remove = [name for name in sys.modules.keys() if name.startswith('app.models')]
+    for module_name in modules_to_remove:
+        if module_name in sys.modules:
+            del sys.modules[module_name]
+    
+    # Force garbage collection
+    gc.collect()
     
     yield
     
@@ -37,6 +53,14 @@ def reset_sqlalchemy_completely():
     clear_mappers()
     if hasattr(Base, 'registry'):
         Base.registry._class_registry.clear()
+    
+    # Clear modules again after test
+    modules_to_remove = [name for name in sys.modules.keys() if name.startswith('app.models')]
+    for module_name in modules_to_remove:
+        if module_name in sys.modules:
+            del sys.modules[module_name]
+    
+    gc.collect()
 
 # Import specific models to ensure they're registered (avoid wildcard imports)
 try:
@@ -142,7 +166,6 @@ def test_user(db_session: Session) -> User:
     Fixture to create and return a test user added to the database session.
     """
     user = User(
-        id=1, # Explicit ID for predictability in tests
         username="testuser",
         email="testuser@example.com",
         hashed_password="fake_hashed_password",
@@ -160,19 +183,10 @@ def test_user(db_session: Session) -> User:
 def test_admin_user(db_session: Session) -> User:
     """
     Fixture to create and return an admin test user.
+    Simplified to avoid Role/Permission creation issues.
     """
-    # First create an admin role
-    admin_role = Role(
-        id=1,
-        name="admin",
-        description="Administrator role"
-    )
-    db_session.add(admin_role)
-    db_session.commit()
-    
-    # Create admin user
+    # Create admin user without role dependencies
     admin_user = User(
-        id=100,
         username="admin",
         email="admin@example.com",
         hashed_password="fake_admin_password",
@@ -183,38 +197,6 @@ def test_admin_user(db_session: Session) -> User:
     )
     db_session.add(admin_user)
     db_session.commit()
-    
-    # Create permissions for predictive model operations
-    train_permission = Permission(
-        id=1,
-        name="train_own_predictive_model",
-        description="Permission to train own predictive model"
-    )
-    predict_permission = Permission(
-        id=2,
-        name="run_own_prediction",
-        description="Permission to run own predictions"
-    )
-    db_session.add(train_permission)
-    db_session.add(predict_permission)
-    db_session.commit()
-    
-    # Add permissions to admin role
-    admin_role.permissions.append(train_permission)
-    admin_role.permissions.append(predict_permission)
-    db_session.commit()
-    
-    # Assign admin role to user - using mock approach to avoid SQLAlchemy conflicts
-    # Create a simple mock object instead of importing UserRoleAssignment
-    class MockUserRoleAssignment:
-        def __init__(self, user_id, role_id, is_active=True):
-            self.user_id = user_id
-            self.role_id = role_id
-            self.is_active = is_active
-    
-    # For testing purposes, we'll skip the actual role assignment
-    # The admin_user object is sufficient for most test scenarios
-    # If specific role testing is needed, it should be done in dedicated RBAC tests
     db_session.refresh(admin_user)
     return admin_user
 
@@ -222,19 +204,10 @@ def test_admin_user(db_session: Session) -> User:
 def test_non_admin_user(db_session: Session) -> User:
     """
     Fixture to create and return a non-admin test user.
+    Simplified to avoid Role creation issues.
     """
-    # First create a regular user role
-    user_role = Role(
-        id=2,
-        name="user",
-        description="Regular user role"
-    )
-    db_session.add(user_role)
-    db_session.commit()
-    
-    # Create regular user
+    # Create regular user without role dependencies
     regular_user = User(
-        id=101,
         username="regularuser",
         email="regular@example.com",
         hashed_password="fake_regular_password",
@@ -245,11 +218,6 @@ def test_non_admin_user(db_session: Session) -> User:
     )
     db_session.add(regular_user)
     db_session.commit()
-    
-    # Assign user role - using mock approach to avoid SQLAlchemy conflicts
-    # For testing purposes, we'll skip the actual role assignment
-    # The regular_user object is sufficient for most test scenarios
-    # If specific role testing is needed, it should be done in dedicated RBAC tests
     db_session.refresh(regular_user)
     return regular_user
 
@@ -266,7 +234,6 @@ def test_user_2(db_session: Session) -> User:
     Fixture to create and return a second test user.
     """
     user = User(
-        id=2,
         username="testuser2",
         email="testuser2@example.com",
         hashed_password="fake_hashed_password2",

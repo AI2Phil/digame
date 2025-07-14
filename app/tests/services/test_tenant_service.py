@@ -270,13 +270,34 @@ class TestTenantInvitationManagement:
     def test_accept_invitation_success(self, tenant_service: TenantService, mock_db_session: MagicMock, mock_user_instance):
         token = "valid_token"
         accepting_user_id = mock_user_instance.id
+        # Set expiration to 30 days in the future to ensure it's not expired
+        future_expiry = datetime.now(timezone.utc) + timedelta(days=30)
         mock_invitation = create_mock_model(TenantInvitationModel, id=1, tenant_id=1, email="test@example.com", role="User",
-            invitation_token=token, expires_at=datetime.now(timezone.utc) + timedelta(days=7),
+            invitation_token=token, expires_at=future_expiry,
             invited_by_user_id=2, accepted_at=None
         )
-        mock_db_session.query(TenantInvitationModel).filter(TenantInvitationModel.invitation_token == token).first.return_value = mock_invitation
-        mock_db_session.query(UserModel).filter(UserModel.id == accepting_user_id).first.return_value = mock_user_instance
-        mock_db_session.query(RoleModel).filter(RoleModel.tenant_id == mock_invitation.tenant_id, RoleModel.name == mock_invitation.role).first.return_value = create_mock_model(RoleModel, id=1, name="User")
+        
+        # Set up proper mock query chain
+        def mock_query_side_effect(model_class):
+            if model_class == TenantInvitationModel:
+                invitation_query_mock = MagicMock()
+                invitation_filter_mock = invitation_query_mock.filter.return_value
+                invitation_filter_mock.first.return_value = mock_invitation
+                return invitation_query_mock
+            elif model_class == UserModel:
+                user_query_mock = MagicMock()
+                user_filter_mock = user_query_mock.filter.return_value
+                user_filter_mock.first.return_value = mock_user_instance
+                return user_query_mock
+            elif model_class == RoleModel:
+                role_query_mock = MagicMock()
+                role_filter_mock = role_query_mock.filter.return_value
+                role_filter_mock.first.return_value = create_mock_model(RoleModel, id=1, name="User")
+                return role_query_mock
+            else:
+                return MagicMock()
+        
+        mock_db_session.query.side_effect = mock_query_side_effect
 
         invitation = tenant_service.accept_invitation(token, accepting_user_id)
 

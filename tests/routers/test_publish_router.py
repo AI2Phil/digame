@@ -2,19 +2,16 @@ import pytest
 import os
 import json
 from unittest.mock import patch, Mock
-from typing import Any, Type, TypeVar, cast
-
-T = TypeVar('T')
+from datetime import datetime, timezone
 
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, Session
-from sqlalchemy.pool import StaticPool
+from sqlalchemy.orm import Session
 
 from app.main import app
-from app.db import get_db
-from app.models import Base, User, BehavioralModel
-from app.schemas.user_schemas import UserCreate # Assuming this schema exists for creating users
+from app.database import get_db
+from app.models.user import User
+from app.models.behavior_model import BehavioralModel
+from app.auth.auth_service import get_current_user, security
 
 @pytest.fixture(scope="function")
 def client(db_session):
@@ -26,75 +23,63 @@ def client(db_session):
     del app.dependency_overrides[get_db]
 
 
-
-
-# --- Test Cases ---
-def create_mock_model(model_class: Type[T], **kwargs: Any) -> T:
-    """Create a mock instance of a SQLAlchemy model with given attributes."""
-    # For testing purposes, we'll create a simple mock object
-    # that behaves like the model but doesn't require database instantiation
-    class MockModel:
-        def __init__(self, **attrs: Any):
-            for key, value in attrs.items():
-                setattr(self, key, value)
-            # Set some default attributes that SQLAlchemy models typically have
-            if not hasattr(self, 'id'):
-                self.id = 1
-            if not hasattr(self, 'created_at'):
-                from datetime import datetime, timezone
-                self.created_at = datetime.now(timezone.utc)
-            # Add common attributes for BehavioralModel
-            if not hasattr(self, 'user_id'):
-                self.user_id = 1
-            if not hasattr(self, 'version'):
-                self.version = "1.0"
-            if not hasattr(self, 'name'):
-                self.name = "DefaultModel"
-        
-        def __repr__(self) -> str:
-            attrs = []
-            for key, value in self.__dict__.items():
-                if not key.startswith('_'):
-                    if isinstance(value, str) and len(value) > 20:
-                        attrs.append(f"{key}='{value[:20]}...'")
-                    else:
-                        attrs.append(f"{key}={repr(value)}")
-            return f"<{model_class.__name__}({', '.join(attrs)})>"
-    
-    return cast(T, MockModel(**kwargs))
-
-
 def test_publish_model_not_found(client: TestClient):
     """
     Test publishing a model that does not exist.
     """
-    non_existent_model_id = 99999
-    response = client.post(f"/publish/model/{non_existent_model_id}")
-    assert response.status_code == 404
-    assert "not found" in response.json()["detail"]
+    # Override authentication
+    mock_user = Mock()
+    mock_user.id = 1
+    app.dependency_overrides[security] = lambda: Mock(credentials="fake-token")
+    app.dependency_overrides[get_current_user] = lambda: mock_user
+    
+    try:
+        non_existent_model_id = 99999
+        response = client.post(f"/publish/model/{non_existent_model_id}")
+        assert response.status_code == 404
+        assert "not found" in response.json()["detail"]
+    finally:
+        # Clean up dependency overrides
+        app.dependency_overrides.clear()
 
-@patch('digame.app.routers.publish_router.subprocess.run')
+@patch('app.routers.publish_router.subprocess.run')
 def test_publish_model_success(mock_subprocess_run, client: TestClient, db_session: Session):
     """
     Test successful publishing of a model.
     """
-    # Arrange: Create a mock user and model
-    test_user = create_mock_model(User, id=1, username="testuser", email="test@example.com", hashed_password="hashedpassword")
+    # Create a real user
+    test_user = User(
+        username="testuser",
+        email="test@example.com",
+        hashed_password="hashedpassword",
+        first_name="Test",
+        last_name="User",
+        is_active=True
+    )
     db_session.add(test_user)
     db_session.commit()
     db_session.refresh(test_user)
 
-    test_model = create_mock_model(BehavioralModel, id=1,
+    # Create a real behavioral model
+    test_model = BehavioralModel(
         user_id=test_user.id,
         name="Test_Model_Name",
         version="1.0.alpha",
-        algorithm="test_algo"
-        # Add other required fields for BehavioralModel if any
+        algorithm="test_algo",
+        parameters={"test": "params"},
+        created_at=datetime.now(timezone.utc),
+        updated_at=datetime.now(timezone.utc)
     )
     db_session.add(test_model)
     db_session.commit()
     db_session.refresh(test_model)
     model_id = test_model.id
+
+    # Override authentication
+    mock_user = Mock()
+    mock_user.id = test_user.id
+    app.dependency_overrides[security] = lambda: Mock(credentials="fake-token")
+    app.dependency_overrides[get_current_user] = lambda: mock_user
 
     # Mock subprocess.run for git operations
     # Configure side_effect to handle multiple calls with different expected commands if needed
@@ -112,67 +97,92 @@ def test_publish_model_success(mock_subprocess_run, client: TestClient, db_sessi
     filename = f"user_{test_model.user_id}_model_{model_id}_version_{version_str}.json"
     expected_filepath = os.path.join(target_dir, filename)
 
-    # Act: Make the POST request
-    response = client.post(f"/publish/model/{model_id}")
+    try:
+        # Act: Make the POST request
+        response = client.post(f"/publish/model/{model_id}")
 
-    # Assert: HTTP response
-    assert response.status_code == 200
-    response_json = response.json()
-    assert "successfully published to Git" in response_json["message"]
-    assert expected_filepath in response_json["message"]
-    
-    # Assert: Git operations were called
-    assert mock_subprocess_run.call_count >= 3 # add, commit, push
+        # Assert: HTTP response
+        assert response.status_code == 200
+        response_json = response.json()
+        assert "successfully published to Git" in response_json["message"]
+        assert expected_filepath in response_json["message"]
+        
+        # Assert: Git operations were called
+        assert mock_subprocess_run.call_count >= 3 # add, commit, push
 
-    # Assert specific git commands (optional, but good for robustness)
-    mock_subprocess_run.assert_any_call(['git', 'add', expected_filepath], capture_output=True, text=True, check=False)
-    
-    expected_commit_message = f"Publish behavioral model: {test_model.name} (ID: {model_id}) User: {test_model.user_id} Version: {version_str}"
-    # Check that a call to commit was made, actual message format might vary slightly
-    commit_call_args = None
-    for call_args in mock_subprocess_run.call_args_list:
-        if call_args[0][0][0:2] == ['git', 'commit']: # Check if it's a commit call
-            commit_call_args = call_args
-            break
-    assert commit_call_args is not None
-    assert commit_call_args[0][0][3] == expected_commit_message # Check message part of the commit command
+        # Assert specific git commands (optional, but good for robustness)
+        mock_subprocess_run.assert_any_call(['git', 'add', expected_filepath], capture_output=True, text=True, check=False)
+        
+        expected_commit_message = f"Publish behavioral model: {test_model.name} (ID: {model_id}) User: {test_model.user_id} Version: {version_str}"
+        # Check that a call to commit was made, actual message format might vary slightly
+        commit_call_args = None
+        for call_args in mock_subprocess_run.call_args_list:
+            if call_args[0][0][0:2] == ['git', 'commit']: # Check if it's a commit call
+                commit_call_args = call_args
+                break
+        assert commit_call_args is not None
+        assert commit_call_args[0][0][3] == expected_commit_message # Check message part of the commit command
 
-    mock_subprocess_run.assert_any_call(['git', 'push'], capture_output=True, text=True, check=False)
+        mock_subprocess_run.assert_any_call(['git', 'push'], capture_output=True, text=True, check=False)
 
-    # Assert: File creation and content
-    assert os.path.exists(expected_filepath)
-    with open(expected_filepath, 'r') as f:
-        data = json.load(f)
-    assert data["model"]["id"] == model_id
-    assert data["model"]["name"] == test_model.name
-    assert data["model"]["user_id"] == test_model.user_id
-    assert data["model"]["version"] == test_model.version
-    assert "patterns" in data # Check for patterns key
+        # Assert: File creation and content
+        assert os.path.exists(expected_filepath)
+        with open(expected_filepath, 'r') as f:
+            data = json.load(f)
+        assert data["model"]["id"] == model_id
+        assert data["model"]["name"] == test_model.name
+        assert data["model"]["user_id"] == test_model.user_id
+        assert data["model"]["version"] == test_model.version
+        assert "patterns" in data # Check for patterns key
 
-    # Cleanup: Remove the created file and directory if empty
-    os.remove(expected_filepath)
-    if os.path.exists(target_dir) and not os.listdir(target_dir):
-        os.rmdir(target_dir)
+        # Cleanup: Remove the created file and directory if empty
+        if os.path.exists(expected_filepath):
+            os.remove(expected_filepath)
+        if os.path.exists(target_dir) and not os.listdir(target_dir):
+            os.rmdir(target_dir)
+    finally:
+        # Clean up dependency overrides
+        app.dependency_overrides.clear()
 
 # Example for git add fails (Optional, as requested)
-@patch('digame.app.routers.publish_router.subprocess.run')
+@patch('app.routers.publish_router.subprocess.run')
 def test_publish_model_git_add_fails(mock_subprocess_run, client: TestClient, db_session: Session):
     """
     Test publishing a model when 'git add' fails.
     """
-    # Arrange: Create user and model
-    test_user = create_mock_model(User, id=2, username="testuser2", email="test2@example.com", hashed_password="hashedpassword")
+    # Create a real user
+    test_user = User(
+        username="testuser2",
+        email="test2@example.com",
+        hashed_password="hashedpassword",
+        first_name="Test",
+        last_name="User2",
+        is_active=True
+    )
     db_session.add(test_user)
     db_session.commit()
+    db_session.refresh(test_user)
 
-    test_model = create_mock_model(BehavioralModel, id=2,
+    # Create a real behavioral model
+    test_model = BehavioralModel(
         user_id=test_user.id,
         name="GitAddFailModel",
         version="0.1",
-        algorithm="test_algo_fail")
+        algorithm="test_algo_fail",
+        parameters={"test": "params"},
+        created_at=datetime.now(timezone.utc),
+        updated_at=datetime.now(timezone.utc)
+    )
     db_session.add(test_model)
     db_session.commit()
+    db_session.refresh(test_model)
     model_id = test_model.id
+
+    # Override authentication
+    mock_user = Mock()
+    mock_user.id = test_user.id
+    app.dependency_overrides[security] = lambda: Mock(credentials="fake-token")
+    app.dependency_overrides[get_current_user] = lambda: mock_user
 
     # Mock subprocess.run for 'git add' failure
     mock_git_add_fail_result = Mock()
@@ -181,24 +191,28 @@ def test_publish_model_git_add_fails(mock_subprocess_run, client: TestClient, db
     mock_git_add_fail_result.stderr = "Simulated git add error"
     mock_subprocess_run.return_value = mock_git_add_fail_result # First call (git add) will use this
 
-    # Act
-    response = client.post(f"/publish/model/{model_id}")
+    try:
+        # Act
+        response = client.post(f"/publish/model/{model_id}")
 
-    # Assert
-    assert response.status_code == 500
-    response_json = response.json()
-    assert "Git add failed" in response_json["detail"]
-    assert "Simulated git add error" in response_json["detail"]
+        # Assert
+        assert response.status_code == 500
+        response_json = response.json()
+        assert "Git add failed" in response_json["detail"]
+        assert "Simulated git add error" in response_json["detail"]
 
-    # Cleanup: Remove created file if it exists (it shouldn't if git add fails before writing)
-    target_dir = "published_models/"
-    version_str = str(test_model.version).replace(" ", "_").replace("/", "_")
-    filename = f"user_{test_model.user_id}_model_{model_id}_version_{version_str}.json"
-    filepath = os.path.join(target_dir, filename)
-    if os.path.exists(filepath):
-        os.remove(filepath)
-    if os.path.exists(target_dir) and not os.listdir(target_dir):
-        os.rmdir(target_dir)
+        # Cleanup: Remove created file if it exists (it shouldn't if git add fails before writing)
+        target_dir = "published_models/"
+        version_str = str(test_model.version).replace(" ", "_").replace("/", "_")
+        filename = f"user_{test_model.user_id}_model_{model_id}_version_{version_str}.json"
+        filepath = os.path.join(target_dir, filename)
+        if os.path.exists(filepath):
+            os.remove(filepath)
+        if os.path.exists(target_dir) and not os.listdir(target_dir):
+            os.rmdir(target_dir)
+    finally:
+        # Clean up dependency overrides
+        app.dependency_overrides.clear()
 
 # Placeholder for UserCreate schema if needed for user creation logic.
 # For this test, direct User model creation is used.
