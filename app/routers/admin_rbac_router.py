@@ -125,7 +125,7 @@ def assign_role_to_user_endpoint(assignment: rbac_schemas.UserRoleAssignRequest,
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Could not assign role to user.")
     
     # Manually query roles to avoid the problematic @property method
-    from ..models.rbac_imports import UserRoleAssignment
+    from ..models.imports import UserRoleAssignment
     user_roles = db.query(UserRoleAssignment).filter(UserRoleAssignment.user_id == user.id).all()
     roles_data = []
     for user_role in user_roles:
@@ -161,7 +161,7 @@ def remove_role_from_user_endpoint(assignment: rbac_schemas.UserRoleRemoveReques
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Could not remove role from user.")
     
     # Manually query roles to avoid the problematic @property method
-    from ..models.rbac_imports import UserRoleAssignment
+    from ..models.imports import UserRoleAssignment
     user_roles = db.query(UserRoleAssignment).filter(UserRoleAssignment.user_id == user.id).all()
     roles_data = []
     for user_role in user_roles:

@@ -42,10 +42,10 @@ class UserRoleAssignment(Base):
     is_active = Column(Boolean, default=True)
     
     # Relationships - optimized for registry resolution and performance
-    user = relationship("app.models.user.User", foreign_keys=[user_id], overlaps="user_roles")
-    role = relationship("app.models.rbac.Role", foreign_keys=[role_id], overlaps="user_roles")
-    tenant = relationship("app.models.tenant.Tenant", foreign_keys=[tenant_id], overlaps="user_roles")
-    assigner = relationship("app.models.user.User", foreign_keys=[assigned_by], overlaps="user_roles")
+    user = relationship("User", foreign_keys=[user_id], back_populates="user_roles")
+    role = relationship("Role", foreign_keys=[role_id], overlaps="user_roles")
+    tenant = relationship("Tenant", foreign_keys=[tenant_id], overlaps="user_roles")
+    assigner = relationship("User", foreign_keys=[assigned_by], overlaps="user_roles")
     
 
     def __repr__(self):

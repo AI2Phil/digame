@@ -8,8 +8,8 @@ from .user import User
 from app.database import Base # Import Base from the centralized database module
 # Import only specific classes from rbac module to avoid UserRoleAssignment conflicts
 from .rbac import Role, Permission, role_permissions_table
-# Import UserRoleAssignment from rbac_imports to resolve registry conflicts
-from .rbac_imports import UserRoleAssignment
+# Import UserRoleAssignment from centralized imports to resolve registry conflicts
+from .imports import UserRoleAssignment
 from .process_notes import ProcessNote
 from .activity import Activity
 from .activity_features import ActivityEnrichedFeature

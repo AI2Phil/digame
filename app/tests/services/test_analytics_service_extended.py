@@ -1,8 +1,9 @@
+# type: ignore
 import pytest
 from sqlalchemy.orm import Session
 from unittest.mock import MagicMock, patch
 import pandas as pd
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 
 from app.services.analytics_service import AnalyticsService
@@ -14,10 +15,12 @@ from app.schemas import analytics_schemas as schemas
 def mock_db_session():
     session = MagicMock(spec=Session)
     # Mock query results as needed in tests
-    session.query.return_value.filter.return_value.order_by.return_value.limit.return_value.all.return_value = []
-    session.query.return_value.filter.return_value.first.return_value = None
-    session.query.return_value.get.return_value = None # for .get() calls
-    return session
+    mock_query = MagicMock()
+    mock_query.filter.return_value.order_by.return_value.limit.return_value.all.return_value = []
+    mock_query.filter.return_value.first.return_value = None
+    mock_query.get.return_value = None  # for .get() calls
+    session.query.return_value = mock_query
+    return session  # type: ignore
 
 @pytest.fixture
 def analytics_service(mock_db_session: Session):
@@ -32,20 +35,20 @@ def test_get_performance_metrics_with_dimension_filters(analytics_service: Analy
     mock_metric1 = PerformanceMetric(
         id=1, tenant_id=tenant_id, metric_name="sales", current_value=100,
         dimensions_values={"region": "NA", "product": "A"},
-        period_start=datetime.utcnow(), period_end=datetime.utcnow(), metric_type="type", category="cat", entity_type="e_type", entity_id=1, measurement_unit="unit", calculation_method="sum",
-        measurement_date=datetime.utcnow()
+        period_start=datetime.now(timezone.utc), period_end=datetime.now(timezone.utc), metric_type="type", category="cat", entity_type="e_type", entity_id=1, measurement_unit="unit", calculation_method="sum",
+        measurement_date=datetime.now(timezone.utc)
     )
     mock_metric2 = PerformanceMetric(
         id=2, tenant_id=tenant_id, metric_name="sales", current_value=200,
         dimensions_values={"region": "EU", "product": "A"},
-        period_start=datetime.utcnow(), period_end=datetime.utcnow(), metric_type="type", category="cat", entity_type="e_type", entity_id=1, measurement_unit="unit", calculation_method="sum",
-        measurement_date=datetime.utcnow()
+        period_start=datetime.now(timezone.utc), period_end=datetime.now(timezone.utc), metric_type="type", category="cat", entity_type="e_type", entity_id=1, measurement_unit="unit", calculation_method="sum",
+        measurement_date=datetime.now(timezone.utc)
     )
     mock_metric3 = PerformanceMetric(
         id=3, tenant_id=tenant_id, metric_name="sales", current_value=150,
         dimensions_values={"region": "NA", "product": "B"},
-        period_start=datetime.utcnow(), period_end=datetime.utcnow(), metric_type="type", category="cat", entity_type="e_type", entity_id=1, measurement_unit="unit", calculation_method="sum",
-        measurement_date=datetime.utcnow()
+        period_start=datetime.now(timezone.utc), period_end=datetime.now(timezone.utc), metric_type="type", category="cat", entity_type="e_type", entity_id=1, measurement_unit="unit", calculation_method="sum",
+        measurement_date=datetime.now(timezone.utc)
     )
 
     # Simulate the filter chain for query

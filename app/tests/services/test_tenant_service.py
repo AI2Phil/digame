@@ -7,7 +7,7 @@ from datetime import datetime, timedelta, timezone
 from app.models.tenant import Tenant as TenantModel
 from app.models.user import User as UserModel
 from app.models.rbac import Role as RoleModel
-from app.models.user_role_assignment import UserRoleAssignment as TenantUserRoleAssignmentModel
+from app.models.imports import UserRoleAssignment as TenantUserRoleAssignmentModel
 from app.models.tenant import TenantSettings as TenantSettingsModel
 from app.models.tenant import TenantInvitation as TenantInvitationModel
 from app.models.tenant import TenantAuditLog as TenantAuditLogModel

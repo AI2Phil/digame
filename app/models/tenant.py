@@ -75,7 +75,7 @@ class Tenant(Base):
     # Relationships to User, Role, and UserRole models - optimized for registry resolution
     users = relationship("app.models.user.User", foreign_keys="app.models.user.User.tenant_id", back_populates="tenant")
     roles = relationship("app.models.rbac.Role", back_populates="tenant")
-    user_roles = relationship("app.models.user_role_assignment.UserRoleAssignment", overlaps="tenant")
+    user_roles = relationship("UserRoleAssignment", overlaps="tenant")
     creator = relationship("app.models.user.User", foreign_keys=[created_by], overlaps="users")
     manager = relationship("app.models.user.User", foreign_keys=[managed_by], overlaps="users")
     

@@ -2,7 +2,7 @@ import pytest
 import uuid
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, MetaData
-from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy.orm import sessionmaker, Session, clear_mappers
 from sqlalchemy.pool import StaticPool
 from typing import Generator
 import tempfile
@@ -15,14 +15,28 @@ from app.models.notifications import Notification
 from app.models.rbac import Role, Permission
 from app.main import app
 
-# Import UserRoleAssignment to ensure it's registered
-try:
-    from app.models.rbac_imports import UserRoleAssignment
-except ImportError:
-    try:
-        from app.models.user_role_assignment import UserRoleAssignment
-    except ImportError:
-        UserRoleAssignment = None
+# Import UserRoleAssignment ONLY from centralized imports to prevent conflicts
+from app.models.imports import UserRoleAssignment
+
+@pytest.fixture(autouse=True, scope="function")
+def reset_sqlalchemy_completely():
+    """Nuclear option: completely reset SQLAlchemy state before each test"""
+    # Clear all mappers
+    clear_mappers()
+    
+    # Clear the registry
+    if hasattr(Base, 'registry'):
+        Base.registry._class_registry.clear()
+    
+    # Clear metadata
+    Base.metadata.clear()
+    
+    yield
+    
+    # Clean up after test
+    clear_mappers()
+    if hasattr(Base, 'registry'):
+        Base.registry._class_registry.clear()
 
 # Import specific models to ensure they're registered (avoid wildcard imports)
 try:

@@ -318,7 +318,7 @@ class TenantService:
             # Assign the role from invitation
             role_to_assign = self.db.query(Role).filter(Role.tenant_id == getattr(invitation, 'tenant_id', None), Role.name == getattr(invitation, 'role', None)).first()
             if role_to_assign:
-                from ..models.rbac_imports import UserRoleAssignment
+                from ..models.imports import UserRoleAssignment
                 existing_user_role = self.db.query(UserRoleAssignment).filter(UserRoleAssignment.user_id == accepting_user_id, UserRoleAssignment.role_id == getattr(role_to_assign, 'id', None)).first()
                 if not existing_user_role:
                     user_role_data = {
@@ -414,7 +414,7 @@ class TenantService:
                 "role_id": getattr(default_role, 'id', None),
                 "assigned_by": current_admin_id
             }
-            from ..models.rbac_imports import UserRoleAssignment
+            from ..models.imports import UserRoleAssignment
             user_role = UserRoleAssignment()  # type: ignore
             for key, value in user_role_data.items():
                 setattr(user_role, key, value)  # type: ignore
@@ -441,7 +441,7 @@ class TenantService:
         if not role_to_assign:
             raise ValueError("Role not found or does not belong to the user's tenant.")
 
-        from ..models.rbac_imports import UserRoleAssignment
+        from ..models.imports import UserRoleAssignment
         existing = self.db.query(UserRoleAssignment).filter(
             UserRoleAssignment.user_id == user_id, UserRoleAssignment.role_id == role_id
         ).first()
@@ -475,7 +475,7 @@ class TenantService:
             return []
 
         permissions = set()
-        from ..models.rbac_imports import UserRoleAssignment
+        from ..models.imports import UserRoleAssignment
         user_roles = self.db.query(UserRoleAssignment).join(Role).filter(UserRoleAssignment.user_id == user_id).all()
         
         for ur in user_roles:
