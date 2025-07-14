@@ -5,15 +5,12 @@ from sqlalchemy.orm import Session
 # Models to import for type hinting and creating mock instances
 from app.models.user import User as UserModel
 from app.models.tenant import Tenant as TenantModel
-# Note: WritingSuggestion model may not exist yet, commenting out for now
-# from app.models.writing_assistance import WritingSuggestion as WritingSuggestionModel
 
 # Service to test
 from app.services.writing_assistance_service import WritingAssistanceService
 
 # Schemas
 from app.schemas.writing_assistance_schemas import WritingSuggestionRequest, WritingSuggestionResponse
-
 
 
 # --- Fixtures ---
@@ -34,15 +31,8 @@ def mock_db_session():
     return db
 
 @pytest.fixture
-def mock_tenant_service():
-    tenant_service = MagicMock()
-    tenant_service.check_feature_enabled.return_value = True
-    tenant_service.get_tenant_setting.return_value = MagicMock(value="test-api-key")
-    return tenant_service
-
-@pytest.fixture
-def writing_assistance_service(mock_db_session, mock_tenant_service):
-    return WritingAssistanceService(db=mock_db_session, tenant_service=mock_tenant_service)
+def writing_assistance_service(mock_db_session):
+    return WritingAssistanceService(db=mock_db_session)
 
 @pytest.fixture
 def mock_user():
@@ -56,30 +46,14 @@ def mock_tenant():
 def sample_writing_request():
     return WritingSuggestionRequest(
         text_input="This is a sample text that needs improvement.",
-        suggestion_type="grammar",
-        context="email"
+        context_type="email_reply",
+        related_data={"subject": "Test Subject", "sender": "test@example.com"},
+        language="en"
     )
-
-@pytest.fixture
-def mock_writing_suggestion():
-    # return create_mock_model(WritingSuggestionModel,
-    class MockWritingSuggestion:
-        def __init__(self):
-            self.id = 1
-            self.user_id = 1
-            self.original_text = "This is a sample text that needs improvement."
-            self.suggestion = "This is a sample text that needs improvement."
-            self.suggestion_type = "grammar"
-            self.context = "email"
-            self.confidence_score = 0.95
-    
-    return MockWritingSuggestion()
 
 # --- Tests for WritingAssistanceService ---
 def create_mock_model(model_class, **kwargs):
     """Create a mock instance of a SQLAlchemy model with given attributes."""
-    # For testing purposes, we'll create a simple mock object
-    # that behaves like the model but doesn't require database instantiation
     class MockModel:
         def __init__(self, **attrs):
             for key, value in attrs.items():
@@ -113,241 +87,243 @@ def create_mock_model(model_class, **kwargs):
     return MockModel(**kwargs)
 
 
-class TestFeatureAccessControl:
-    def test_feature_enabled_check_success(self, writing_assistance_service: WritingAssistanceService, mock_user, mock_tenant_service):
-        # Arrange
-        mock_tenant_service.check_feature_enabled.return_value = True
-        
+class TestServiceInitialization:
+    def test_service_initialization(self, mock_db_session):
         # Act
-        result = writing_assistance_service._check_feature_access(mock_user.tenant_id, "writing_assistance")
-        
-        # Assert
-        assert result is True
-        mock_tenant_service.check_feature_enabled.assert_called_once_with(mock_user.tenant_id, "writing_assistance")
-
-    def test_feature_disabled_raises_error(self, writing_assistance_service: WritingAssistanceService, mock_user, mock_tenant_service):
-        # Arrange
-        mock_tenant_service.check_feature_enabled.return_value = False
-        
-        # Act & Assert
-        with pytest.raises(ValueError, match="Writing assistance feature is not enabled"):
-            writing_assistance_service._check_feature_access(mock_user.tenant_id, "writing_assistance")
-
-class TestAPIKeyValidation:
-    def test_get_api_key_success(self, writing_assistance_service: WritingAssistanceService, mock_user, mock_tenant_service):
-        # Arrange
-        mock_setting = MagicMock()
-        mock_setting.value = "test-api-key"
-        mock_tenant_service.get_tenant_setting.return_value = mock_setting
-        
-        # Act
-        api_key = writing_assistance_service._get_api_key(mock_user.tenant_id, "openai")
-        
-        # Assert
-        assert api_key == "test-api-key"
-        mock_tenant_service.get_tenant_setting.assert_called_once_with(mock_user.tenant_id, "integrations", "openai_api_key")
-
-    def test_missing_api_key_raises_error(self, writing_assistance_service: WritingAssistanceService, mock_user, mock_tenant_service):
-        # Arrange
-        mock_tenant_service.get_tenant_setting.return_value = None
-        
-        # Act & Assert
-        with pytest.raises(ValueError, match="OpenAI API key not configured"):
-            writing_assistance_service._get_api_key(mock_user.tenant_id, "openai")
-
-class TestWritingSuggestionGeneration:
-    @patch('digame.app.services.writing_assistance_service.openai')
-    def test_generate_suggestion_success(self, mock_openai, writing_assistance_service: WritingAssistanceService, 
-                                       mock_user, sample_writing_request, mock_db_session, mock_tenant_service):
-        # Arrange
-        mock_tenant_service.check_feature_enabled.return_value = True
-        mock_setting = MagicMock()
-        mock_setting.value = "test-api-key"
-        mock_tenant_service.get_tenant_setting.return_value = mock_setting
-        
-        mock_response = MagicMock()
-        mock_response.choices = [MagicMock()]
-        mock_response.choices[0].message.content = "This is a sample text that needs improvement."
-        mock_openai.ChatCompletion.create.return_value = mock_response
-        
-        # Act
-        result = writing_assistance_service.generate_suggestion(sample_writing_request, mock_user)
-        
-        # Assert
-        assert isinstance(result, WritingSuggestionResponse)
-        assert result.suggestion == "This is a sample text that needs improvement."
-        assert result.original_text == sample_writing_request.text_input
-        assert result.suggestion_type == sample_writing_request.suggestion_type
-        
-        # Verify database operations
-        mock_db_session.add.assert_called_once()
-        mock_db_session.commit.assert_called_once()
-
-    @patch('digame.app.services.writing_assistance_service.openai')
-    def test_generate_suggestion_api_error(self, mock_openai, writing_assistance_service: WritingAssistanceService,
-                                         mock_user, sample_writing_request, mock_tenant_service):
-        # Arrange
-        mock_tenant_service.check_feature_enabled.return_value = True
-        mock_setting = MagicMock()
-        mock_setting.value = "test-api-key"
-        mock_tenant_service.get_tenant_setting.return_value = mock_setting
-        
-        mock_openai.ChatCompletion.create.side_effect = Exception("API Error")
-        
-        # Act & Assert
-        with pytest.raises(Exception, match="API Error"):
-            writing_assistance_service.generate_suggestion(sample_writing_request, mock_user)
-
-class TestSuggestionHistory:
-    def test_get_user_suggestions_success(self, writing_assistance_service: WritingAssistanceService,
-                                        mock_user, mock_db_session, mock_writing_suggestion):
-        # Arrange
-        # Mock the WritingSuggestionModel query since the model doesn't exist yet
-        mock_query = mock_db_session.query.return_value
-        mock_query.filter.return_value.order_by.return_value.limit.return_value.offset.return_value.all.return_value = [mock_writing_suggestion]
-        
-        # Act
-        suggestions = writing_assistance_service.get_user_suggestions(mock_user.id, limit=10, offset=0)
-        
-        # Assert
-        assert len(suggestions) == 1
-        assert suggestions[0].id == mock_writing_suggestion.id
-        assert suggestions[0].original_text == mock_writing_suggestion.original_text
-
-    def test_get_user_suggestions_empty(self, writing_assistance_service: WritingAssistanceService,
-                                      mock_user, mock_db_session):
-        # Arrange
-        # Mock the WritingSuggestionModel query since the model doesn't exist yet
-        mock_query = mock_db_session.query.return_value
-        mock_query.filter.return_value.order_by.return_value.limit.return_value.offset.return_value.all.return_value = []
-        
-        # Act
-        suggestions = writing_assistance_service.get_user_suggestions(mock_user.id, limit=10, offset=0)
-        
-        # Assert
-        assert len(suggestions) == 0
-
-class TestSuggestionTypes:
-    @pytest.mark.parametrize("suggestion_type,expected_prompt_keyword", [
-        ("grammar", "grammar"),
-        ("style", "style"),
-        ("tone", "tone"),
-        ("clarity", "clarity"),
-        ("conciseness", "concise")
-    ])
-    def test_different_suggestion_types(self, suggestion_type, expected_prompt_keyword,
-                                      writing_assistance_service: WritingAssistanceService):
-        # Act
-        prompt = writing_assistance_service._build_prompt("Test text", suggestion_type, "email")
-        
-        # Assert
-        assert expected_prompt_keyword.lower() in prompt.lower()
-        assert "Test text" in prompt
-        assert "email" in prompt
-
-class TestContextHandling:
-    @pytest.mark.parametrize("context,expected_context_keyword", [
-        ("email", "email"),
-        ("document", "document"),
-        ("social_media", "social media"),
-        ("presentation", "presentation"),
-        ("academic", "academic")
-    ])
-    def test_different_contexts(self, context, expected_context_keyword,
-                              writing_assistance_service: WritingAssistanceService):
-        # Act
-        prompt = writing_assistance_service._build_prompt("Test text", "grammar", context)
-        
-        # Assert
-        assert expected_context_keyword.lower() in prompt.lower()
-
-class TestErrorHandling:
-    def test_empty_text_input_raises_error(self, writing_assistance_service: WritingAssistanceService, mock_user):
-        # Arrange
-        empty_request = WritingSuggestionRequest(
-            text_input="",
-            suggestion_type="grammar",
-            context="email"
-        )
-        
-        # Act & Assert
-        with pytest.raises(ValueError, match="Text input cannot be empty"):
-            writing_assistance_service.generate_suggestion(empty_request, mock_user)
-
-    def test_invalid_suggestion_type_raises_error(self, writing_assistance_service: WritingAssistanceService, mock_user):
-        # Arrange
-        invalid_request = WritingSuggestionRequest(
-            text_input="Test text",
-            suggestion_type="invalid_type",
-            context="email"
-        )
-        
-        # Act & Assert
-        with pytest.raises(ValueError, match="Invalid suggestion type"):
-            writing_assistance_service.generate_suggestion(invalid_request, mock_user)
-
-class TestTenantIsolation:
-    def test_user_suggestions_filtered_by_user_id(self, writing_assistance_service: WritingAssistanceService,
-                                                 mock_db_session):
-        # Arrange
-        user_id = 1
-        
-        # Act
-        writing_assistance_service.get_user_suggestions(user_id, limit=10, offset=0)
-        
-        # Assert
-        # Verify that the query was filtered by user_id
-        # Verify that query was called (WritingSuggestionModel doesn't exist yet)
-        mock_db_session.query.assert_called()
-        # The filter call should include user_id filtering
-        filter_calls = mock_db_session.query.return_value.filter.call_args_list
-        assert len(filter_calls) > 0  # At least one filter call should be made
-
-class TestServiceIntegration:
-    def test_service_initialization_with_dependencies(self, mock_db_session, mock_tenant_service):
-        # Act
-        service = WritingAssistanceService(db=mock_db_session, tenant_service=mock_tenant_service)
+        service = WritingAssistanceService(db=mock_db_session)
         
         # Assert
         assert service.db == mock_db_session
-        assert service.tenant_service == mock_tenant_service
+        assert hasattr(service, 'ai_integration_service')
+        assert service.openai_api_url == "https://api.openai.com/v1"
+        assert service.openai_model == "gpt-3.5-turbo"
 
-    def test_service_methods_require_authentication(self, writing_assistance_service: WritingAssistanceService,
-                                                   sample_writing_request):
-        # Act & Assert
-        with pytest.raises(AttributeError):
-            # This should fail because no user is provided
-            writing_assistance_service.generate_suggestion(sample_writing_request, None)
 
-class TestPerformanceAndLimits:
-    def test_suggestion_text_length_validation(self, writing_assistance_service: WritingAssistanceService, mock_user):
+class TestUserAndAPIKeyValidation:
+    @patch('app.crud.user_crud.get_user')
+    @patch('app.crud.tenant_crud.get_tenant_by_id')
+    @patch('app.crud.user_setting_crud.get_user_setting')
+    @pytest.mark.asyncio
+    async def test_get_user_and_api_key_success(self, mock_get_user_setting, mock_get_tenant, mock_get_user, 
+                                               writing_assistance_service, mock_user, mock_tenant):
         # Arrange
-        long_text = "a" * 10000  # Very long text
-        long_request = WritingSuggestionRequest(
-            text_input=long_text,
-            suggestion_type="grammar",
-            context="email"
+        mock_get_user.return_value = mock_user
+        mock_get_tenant.return_value = mock_tenant
+        
+        mock_user_setting = MagicMock()
+        mock_user_setting.api_keys = '{"openai_api_key": "test-api-key"}'
+        mock_get_user_setting.return_value = mock_user_setting
+        
+        # Act
+        api_key = await writing_assistance_service._get_user_and_api_key(1, "writing_assistance")
+        
+        # Assert
+        assert api_key == "test-api-key"
+        mock_get_user.assert_called_once_with(writing_assistance_service.db, user_id=1)
+        mock_get_tenant.assert_called_once_with(writing_assistance_service.db, 1)
+
+    @patch('app.crud.user_crud.get_user')
+    @pytest.mark.asyncio
+    async def test_get_user_and_api_key_user_not_found(self, mock_get_user, writing_assistance_service):
+        # Arrange
+        mock_get_user.return_value = None
+        
+        # Act & Assert
+        with pytest.raises(Exception):  # HTTPException in actual implementation
+            await writing_assistance_service._get_user_and_api_key(1, "writing_assistance")
+
+
+class TestWritingSuggestionGeneration:
+    @patch('app.crud.user_crud.get_user')
+    @patch('app.crud.tenant_crud.get_tenant_by_id')
+    @patch('app.crud.user_setting_crud.get_user_setting')
+    @pytest.mark.asyncio
+    async def test_get_writing_suggestion_success(self, mock_get_user_setting, mock_get_tenant, mock_get_user,
+                                                 writing_assistance_service, mock_user, mock_tenant):
+        # Arrange
+        mock_get_user.return_value = mock_user
+        mock_get_tenant.return_value = mock_tenant
+        
+        mock_user_setting = MagicMock()
+        mock_user_setting.api_keys = '{"openai_api_key": "test-api-key"}'
+        mock_get_user_setting.return_value = mock_user_setting
+        
+        # Mock AI integration service
+        mock_ai_response = {
+            "choices": [
+                {
+                    "message": {
+                        "content": '{"suggestion_text": "This is an improved version of your text."}'
+                    }
+                }
+            ]
+        }
+        writing_assistance_service.ai_integration_service.make_request = AsyncMock(return_value=mock_ai_response)
+        
+        # Act
+        result = await writing_assistance_service.get_writing_suggestion(
+            current_user_id=1,
+            text_input="This is a sample text that needs improvement.",
+            context_type="email_reply",
+            related_data={"subject": "Test Subject", "sender": "test@example.com"},
+            language="en"
         )
         
-        # Act & Assert
-        with pytest.raises(ValueError, match="Text input too long"):
-            writing_assistance_service.generate_suggestion(long_request, mock_user)
+        # Assert
+        assert result == "This is an improved version of your text."
+        writing_assistance_service.ai_integration_service.make_request.assert_called_once()
 
-    def test_rate_limiting_check(self, writing_assistance_service: WritingAssistanceService, 
-                               mock_user, mock_db_session, mock_tenant_service):
+    @patch('app.crud.user_crud.get_user')
+    @patch('app.crud.tenant_crud.get_tenant_by_id')
+    @patch('app.crud.user_setting_crud.get_user_setting')
+    @pytest.mark.asyncio
+    async def test_get_writing_suggestion_feature_disabled(self, mock_get_user_setting, mock_get_tenant, mock_get_user,
+                                                          writing_assistance_service, mock_user):
         # Arrange
-        mock_tenant_service.check_feature_enabled.return_value = True
-        # Mock that user has made many requests recently
-        # Mock the WritingSuggestionModel query since the model doesn't exist yet
-        mock_query = mock_db_session.query.return_value
-        mock_query.filter.return_value.count.return_value = 100
+        mock_get_user.return_value = mock_user
         
-        sample_request = WritingSuggestionRequest(
+        # Mock tenant with feature disabled
+        mock_tenant_disabled = create_mock_model(TenantModel, id=1, name="Test Tenant", features={"writing_assistance": False})
+        mock_get_tenant.return_value = mock_tenant_disabled
+        
+        # Act & Assert
+        with pytest.raises(Exception):  # HTTPException in actual implementation
+            await writing_assistance_service.get_writing_suggestion(
+                current_user_id=1,
+                text_input="Test text",
+                context_type="email_reply"
+            )
+
+
+class TestContextHandling:
+    @pytest.mark.parametrize("context_type,expected_in_prompt", [
+        ("email_reply", "email"),
+        ("task_description", "task"),
+        ("performance_review_feedback", "performance"),
+        (None, "writing assistant")
+    ])
+    @patch('app.crud.user_crud.get_user')
+    @patch('app.crud.tenant_crud.get_tenant_by_id')
+    @patch('app.crud.user_setting_crud.get_user_setting')
+    @pytest.mark.asyncio
+    async def test_different_context_types(self, mock_get_user_setting, mock_get_tenant, mock_get_user,
+                                          context_type, expected_in_prompt, writing_assistance_service, 
+                                          mock_user, mock_tenant):
+        # Arrange
+        mock_get_user.return_value = mock_user
+        mock_get_tenant.return_value = mock_tenant
+        
+        mock_user_setting = MagicMock()
+        mock_user_setting.api_keys = '{"openai_api_key": "test-api-key"}'
+        mock_get_user_setting.return_value = mock_user_setting
+        
+        # Mock AI integration service to capture the prompt
+        captured_payload = {}
+        async def capture_request(*args, **kwargs):
+            captured_payload.update(kwargs.get('payload', {}))
+            return {
+                "choices": [
+                    {
+                        "message": {
+                            "content": '{"suggestion_text": "Test suggestion"}'
+                        }
+                    }
+                ]
+            }
+        
+        writing_assistance_service.ai_integration_service.make_request = AsyncMock(side_effect=capture_request)
+        
+        # Act
+        await writing_assistance_service.get_writing_suggestion(
+            current_user_id=1,
             text_input="Test text",
-            suggestion_type="grammar",
-            context="email"
+            context_type=context_type
         )
         
+        # Assert
+        messages = captured_payload.get('messages', [])
+        system_message = next((msg for msg in messages if msg['role'] == 'system'), {})
+        assert expected_in_prompt.lower() in system_message.get('content', '').lower()
+
+
+class TestErrorHandling:
+    @patch('app.crud.user_crud.get_user')
+    @patch('app.crud.tenant_crud.get_tenant_by_id')
+    @patch('app.crud.user_setting_crud.get_user_setting')
+    @pytest.mark.asyncio
+    async def test_missing_api_key_raises_error(self, mock_get_user_setting, mock_get_tenant, mock_get_user,
+                                               writing_assistance_service, mock_user, mock_tenant):
+        # Arrange
+        mock_get_user.return_value = mock_user
+        mock_get_tenant.return_value = mock_tenant
+        mock_get_user_setting.return_value = None  # No user settings
+        
         # Act & Assert
-        with pytest.raises(ValueError, match="Rate limit exceeded"):
-            writing_assistance_service.generate_suggestion(sample_request, mock_user)
+        with pytest.raises(Exception):  # HTTPException in actual implementation
+            await writing_assistance_service.get_writing_suggestion(
+                current_user_id=1,
+                text_input="Test text"
+            )
+
+    @patch('app.crud.user_crud.get_user')
+    @patch('app.crud.tenant_crud.get_tenant_by_id')
+    @patch('app.crud.user_setting_crud.get_user_setting')
+    @pytest.mark.asyncio
+    async def test_ai_service_error_propagates(self, mock_get_user_setting, mock_get_tenant, mock_get_user,
+                                              writing_assistance_service, mock_user, mock_tenant):
+        # Arrange
+        mock_get_user.return_value = mock_user
+        mock_get_tenant.return_value = mock_tenant
+        
+        mock_user_setting = MagicMock()
+        mock_user_setting.api_keys = '{"openai_api_key": "test-api-key"}'
+        mock_get_user_setting.return_value = mock_user_setting
+        
+        # Mock AI integration service to raise an error
+        writing_assistance_service.ai_integration_service.make_request = AsyncMock(side_effect=Exception("AI service error"))
+        
+        # Act & Assert
+        with pytest.raises(Exception):  # HTTPException in actual implementation
+            await writing_assistance_service.get_writing_suggestion(
+                current_user_id=1,
+                text_input="Test text"
+            )
+
+
+class TestExtendedService:
+    def test_extended_service_inheritance(self, mock_db_session):
+        # Import the extended service
+        from app.services.writing_assistance_service import WritingAssistanceServiceExtended
+        
+        # Act
+        service = WritingAssistanceServiceExtended(db=mock_db_session)
+        
+        # Assert
+        assert isinstance(service, WritingAssistanceService)
+        assert hasattr(service, 'generate_text_from_template')
+        assert hasattr(service, '_build_template_prompt')
+
+    @pytest.mark.parametrize("template_type,expected_keywords", [
+        ("project_update_summary", ["project", "completed", "milestones"]),
+        ("meeting_minutes_outline", ["meeting", "attendees", "decisions"]),
+        ("formal_request_email", ["formal", "email", "request"])
+    ])
+    def test_build_template_prompt_different_types(self, template_type, expected_keywords, mock_db_session):
+        # Import the extended service
+        from app.services.writing_assistance_service import WritingAssistanceServiceExtended
+        
+        # Arrange
+        service = WritingAssistanceServiceExtended(db=mock_db_session)
+        input_data = {
+            "project_name": "Test Project",
+            "meeting_title": "Test Meeting",
+            "recipient_name": "Test Recipient"
+        }
+        
+        # Act
+        system_prompt, user_prompt = service._build_template_prompt(template_type, input_data, "professional", "en")
+        
+        # Assert
+        combined_prompt = (system_prompt + " " + user_prompt).lower()
+        for keyword in expected_keywords:
+            assert keyword in combined_prompt

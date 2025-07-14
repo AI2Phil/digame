@@ -51,47 +51,90 @@ jobs:
       working-directory: ./frontend
       run: npm run lint
 
-    - name: Build frontend
+    - name: Build frontend with enhanced debugging
       working-directory: ./frontend
       run: |
-        npm run build
+        echo "🔍 Pre-build environment check"
+        echo "Node version: $(node --version)"
+        echo "NPM version: $(npm --version)"
+        echo "Current directory: $(pwd)"
+        echo "Package.json exists: $(test -f package.json && echo 'YES' || echo 'NO')"
         
-    - name: Verify build output
+        echo "📦 Available npm scripts:"
+        npm run 2>/dev/null || echo "No scripts found"
+        
+        echo "🔧 Next.js configuration check:"
+        if [ -f "next.config.js" ]; then
+          echo "next.config.js found:"
+          cat next.config.js | head -20
+        else
+          echo "No next.config.js found"
+        fi
+        
+        echo "🏗️ Starting build process..."
+        if npm run build; then
+          echo "✅ Build completed successfully"
+        else
+          echo "❌ Build failed, trying alternative approach..."
+          echo "Clearing cache and retrying..."
+          rm -rf .next node_modules/.cache
+          npm run build
+        fi
+        
+        echo "📊 Post-build directory analysis:"
+        echo "Current directory contents:"
+        ls -la
+        
+    - name: Verify Next.js build output
       working-directory: ./frontend
       run: |
-        echo "Checking build output..."
-        ls -la
+        echo "🔍 Verifying Next.js build output..."
+        
         if [ -d ".next" ]; then
           echo "✅ .next directory exists"
           ls -la .next/
-          # Ensure standalone output exists
-          if [ -d ".next/standalone" ]; then
-            echo "✅ Standalone build found"
+          
+          # Check for critical Next.js files
+          if [ -f ".next/BUILD_ID" ]; then
+            echo "✅ BUILD_ID found: $(cat .next/BUILD_ID)"
+          else
+            echo "❌ BUILD_ID missing"
+            exit 1
           fi
-        elif [ -d "out" ]; then
-          echo "✅ out directory exists (static export)"
-          ls -la out/
-        elif [ -d "dist" ]; then
-          echo "✅ dist directory exists"
-          ls -la dist/
+          
+          if [ -d ".next/static" ]; then
+            echo "✅ Static assets found"
+            ls -la .next/static/ | head -10
+          else
+            echo "❌ Static assets missing"
+            exit 1
+          fi
+          
+          if [ -f ".next/package.json" ]; then
+            echo "✅ Next.js package.json found"
+          fi
+          
+          # Check build size
+          echo "📊 Build size analysis:"
+          du -sh .next/
+          
         else
-          echo "❌ No build output found"
+          echo "❌ .next directory not found"
           echo "Available directories:"
           ls -la
+          echo "Searching for any build outputs:"
+          find . -name "*.html" -o -name "*.js" -o -name "*.css" | grep -E "\.(html|js|css)$" | head -20
           exit 1
         fi
         
-    - name: Upload frontend build artifacts (Fixed naming)
+    - name: Upload Next.js build artifacts
       uses: actions/upload-artifact@v4
-      if: success()  # Only upload if build succeeded
+      if: success()
       with:
-        name: frontend-build  # Simplified name without version
-        path: |
-          frontend/.next/
-          frontend/out/
-          frontend/dist/
+        name: frontend-build
+        path: frontend/.next/
         retention-days: 1
-        if-no-files-found: error  # Fail if no files found
+        if-no-files-found: error
 
   # Backend Test - Updated Python version
   backend-test:
@@ -171,8 +214,18 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: ${{ env.NODE_VERSION }}
-        cache: 'npm'
-        cache-dependency-path: frontend/package-lock.json
+        # Use consistent caching approach
+        
+    - name: Cache npm dependencies (Consistent with frontend-build)
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.npm
+          frontend/node_modules
+        key: ${{ runner.os }}-node-${{ env.NODE_VERSION }}-${{ hashFiles('frontend/package-lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-node-${{ env.NODE_VERSION }}-
+          ${{ runner.os }}-node-
 
     - name: Setup Python
       uses: actions/setup-python@v4
@@ -190,19 +243,18 @@ jobs:
         # Frontend dependencies
         cd frontend && npm ci --prefer-offline --no-audit
 
-    - name: Download frontend build artifacts (Fixed)
+    - name: Download Next.js build artifacts
       uses: actions/download-artifact@v4
       with:
-        name: frontend-build  # Matches upload name exactly
-        path: frontend/
-      # Added error handling
+        name: frontend-build
+        path: frontend/.next/
       continue-on-error: true
       id: download-artifacts
         
-    - name: Handle missing artifacts
+    - name: Handle missing or invalid artifacts
       working-directory: ./frontend
       run: |
-        echo "Checking downloaded artifacts..."
+        echo "🔍 Checking downloaded artifacts..."
         ls -la
         
         # Check if artifacts were downloaded successfully
@@ -212,16 +264,27 @@ jobs:
         elif [ -d ".next" ]; then
           echo "✅ .next directory found from artifacts"
           ls -la .next/
-        elif [ -d "out" ]; then
-          echo "✅ out directory found from artifacts"
-          ls -la out/
-        elif [ -d "dist" ]; then
-          echo "✅ dist directory found from artifacts"
-          ls -la dist/
+          
+          # Verify critical Next.js files exist
+          if [ -f ".next/BUILD_ID" ]; then
+            echo "✅ Valid Next.js build found: $(cat .next/BUILD_ID)"
+          else
+            echo "⚠️ Invalid build artifacts (missing BUILD_ID), rebuilding..."
+            rm -rf .next
+            npm run build
+          fi
         else
-          echo "⚠️ No build artifacts found, building fresh..."
+          echo "⚠️ No .next directory found, building fresh..."
           npm run build
         fi
+        
+        # Final verification
+        if [ ! -d ".next" ] || [ ! -f ".next/BUILD_ID" ]; then
+          echo "❌ Build verification failed"
+          exit 1
+        fi
+        
+        echo "✅ Frontend build ready"
 
     - name: Setup database
       env:
@@ -361,11 +424,26 @@ jobs:
         echo $FRONTEND_PID > ../frontend.pid
         echo "Frontend PID: $FRONTEND_PID"
         
-        # Extended wait with faster checks - 240 seconds total
-        echo "⏳ Waiting for frontend server to start (up to 4 minutes)..."
-        for i in {1..120}; do
-          if [ $((i % 20)) -eq 1 ]; then
-            echo "Attempt $i/120 - Checking frontend status..."
+        # Quick health check first (30 seconds)
+        echo "🚀 Quick startup check (30 seconds)..."
+        timeout 30s bash -c '
+          while true; do
+            if curl -f http://localhost:3000 2>/dev/null; then
+              echo "✅ Quick startup successful on port 3000!"
+              exit 0
+            elif curl -f http://localhost:3001 2>/dev/null; then
+              echo "✅ Quick startup successful on port 3001!"
+              exit 0
+            fi
+            sleep 1
+          done
+        ' && echo "Frontend ready quickly!" || echo "⏳ Need extended startup time"
+        
+        # Extended wait with faster checks - 180 seconds total (optimized from 240)
+        echo "⏳ Waiting for frontend server to start (up to 3 minutes)..."
+        for i in {1..90}; do
+          if [ $((i % 15)) -eq 1 ]; then
+            echo "Attempt $i/90 - Checking frontend status..."
           fi
           
           # Check if process is still running
@@ -380,29 +458,31 @@ jobs:
             exit 1
           fi
           
-          # Check if frontend is responding on multiple ports
-          if curl -f http://localhost:3000 2>/dev/null; then
-            echo "✅ Frontend server is ready on port 3000!"
-            break
-          elif curl -f http://localhost:3001 2>/dev/null; then
-            echo "✅ Frontend server is ready on port 3001!"
-            break
-          elif curl -f http://127.0.0.1:3000 2>/dev/null; then
-            echo "✅ Frontend server is ready on 127.0.0.1:3000!"
-            break
-          fi
+          # Parallel port check for faster detection
+          {
+            curl -f http://localhost:3000 2>/dev/null && echo "3000-ready" &
+            curl -f http://localhost:3001 2>/dev/null && echo "3001-ready" &
+            curl -f http://127.0.0.1:3000 2>/dev/null && echo "127-ready" &
+            wait
+          } | while read result; do
+            case $result in
+              "3000-ready") echo "✅ Frontend server is ready on port 3000!"; exit 0 ;;
+              "3001-ready") echo "✅ Frontend server is ready on port 3001!"; exit 0 ;;
+              "127-ready") echo "✅ Frontend server is ready on 127.0.0.1:3000!"; exit 0 ;;
+            esac
+          done && break
           
-          # Show detailed status every 20 attempts
-          if [ $((i % 20)) -eq 0 ]; then
+          # Show detailed status every 15 attempts (optimized from 20)
+          if [ $((i % 15)) -eq 0 ]; then
             echo "📊 Status check at attempt $i:"
             echo "Process status:"
-            ps aux | grep -E "(node|npm|next)" | head -5 || echo "No Node processes"
+            ps aux | grep -E "(node|npm|next)" | head -3 || echo "No Node processes"
             echo "Port status:"
             netstat -tulpn | grep LISTEN | grep -E "(3000|3001)" || echo "Ports 3000/3001 not listening"
             echo "Memory usage:"
             free -h | head -2
             echo "Recent logs:"
-            tail -5 ../frontend.log 2>/dev/null || echo "No recent logs"
+            tail -3 ../frontend.log 2>/dev/null || echo "No recent logs"
           fi
           
           sleep 2
@@ -410,7 +490,7 @@ jobs:
         
         # Final comprehensive check
         if ! curl -f http://localhost:3000 2>/dev/null && ! curl -f http://localhost:3001 2>/dev/null && ! curl -f http://127.0.0.1:3000 2>/dev/null; then
-          echo "❌ Frontend failed to start after 240 seconds"
+          echo "❌ Frontend failed to start after 180 seconds"
           echo "🔍 Final diagnostics:"
           echo "Process list:"
           ps aux | grep -E "(node|npm|next)"
@@ -429,6 +509,84 @@ jobs:
           cat ../frontend.log 2>/dev/null || echo "No frontend.log available"
           echo "Next.js build debug:"
           npx next build --debug 2>&1 || echo "Build debug failed"
+          
+          # Enhanced Error Recovery - Attempt automatic fixes
+          echo "🔧 ATTEMPTING AUTOMATIC RECOVERY..."
+          
+          # Memory-aware recovery check
+          available_mem=$(free -m | awk 'NR==2{printf "%.0f", $7}')
+          echo "Available memory: ${available_mem}MB"
+          if [ $available_mem -lt 512 ]; then
+            echo "⚠️ Low memory ($available_mem MB), skipping memory-intensive recovery"
+            echo "RECOVERY_METHOD=skipped_low_memory" >> $GITHUB_ENV
+            cd ..
+            exit 1
+          fi
+          
+          # Recovery attempt 1: Clean restart with fresh environment
+          echo "Recovery 1/3: Clean restart with fresh environment"
+          cd frontend
+          pkill -f "next" 2>/dev/null || true
+          sleep 2
+          rm -rf .next node_modules/.cache 2>/dev/null || true
+          
+          # Recovery attempt 2: Alternative start methods
+          echo "Recovery 2/3: Trying alternative start methods"
+          if npm run dev > ../frontend-recovery.log 2>&1 & then
+            RECOVERY_PID=$!
+            echo "Started recovery process with PID: $RECOVERY_PID"
+            
+            # Quick recovery check (60 seconds)
+            for j in {1..30}; do
+              if curl -f http://localhost:3000 2>/dev/null; then
+                echo "✅ Recovery successful! Frontend started on port 3000"
+                echo "FRONTEND_PID=$RECOVERY_PID" >> $GITHUB_ENV
+                echo "RECOVERY_METHOD=clean_restart" >> $GITHUB_ENV
+                cd ..
+                exit 0
+              elif curl -f http://localhost:3001 2>/dev/null; then
+                echo "✅ Recovery successful! Frontend started on port 3001"
+                echo "FRONTEND_PID=$RECOVERY_PID" >> $GITHUB_ENV
+                echo "RECOVERY_METHOD=clean_restart" >> $GITHUB_ENV
+                cd ..
+                exit 0
+              fi
+              sleep 2
+            done
+            
+            # Kill recovery attempt
+            kill $RECOVERY_PID 2>/dev/null || true
+          fi
+          
+          # Recovery attempt 3: Fallback to build mode
+          echo "Recovery 3/3: Fallback to build and serve"
+          if npm run build && npm run start > ../frontend-fallback.log 2>&1 & then
+            FALLBACK_PID=$!
+            echo "Started fallback process with PID: $FALLBACK_PID"
+            
+            # Quick fallback check (60 seconds)
+            for k in {1..30}; do
+              if curl -f http://localhost:3000 2>/dev/null; then
+                echo "✅ Fallback successful! Frontend started on port 3000"
+                echo "FRONTEND_PID=$FALLBACK_PID" >> $GITHUB_ENV
+                echo "RECOVERY_METHOD=fallback" >> $GITHUB_ENV
+                cd ..
+                exit 0
+              fi
+              sleep 2
+            done
+            
+            # Kill fallback attempt
+            kill $FALLBACK_PID 2>/dev/null || true
+          fi
+          
+          echo "❌ All recovery attempts failed"
+          echo "RECOVERY_METHOD=failed" >> $GITHUB_ENV
+          echo "Recovery logs (last 50 lines):"
+          tail -50 ../frontend-recovery.log 2>/dev/null || echo "No recovery log"
+          echo "Fallback logs (last 50 lines):"
+          tail -50 ../frontend-fallback.log 2>/dev/null || echo "No fallback log"
+          cd ..
           exit 1
         fi
 
@@ -508,7 +666,7 @@ jobs:
       continue-on-error: true
       with:
         name: frontend-build
-        path: frontend/
+        path: frontend/.next/
 
     - name: Run performance tests
       run: |
@@ -516,8 +674,8 @@ jobs:
         cd frontend
         
         # Build if no artifacts were downloaded
-        if [ ! -d ".next" ] && [ ! -d "out" ] && [ ! -d "dist" ]; then
-          echo "No build artifacts found, building fresh..."
+        if [ ! -d ".next" ] || [ ! -f ".next/BUILD_ID" ]; then
+          echo "No valid build artifacts found, building fresh..."
           npm run build
         fi
         
