@@ -365,10 +365,10 @@ def setup_user_and_role_for_assignment(client: TestClient, test_test_db_session:
     app.dependency_overrides[get_current_active_admin_user] = lambda: test_admin_user
     
     # Create a user directly in DB for assignment using UserFactory
-    target_user = test_db_session.query(SQLAlchemyUser).filter_by(email="assign_target@example.com").first()
+    target_user = test_test_db_session.query(SQLAlchemyUser).filter_by(email="assign_target@example.com").first()
     if not target_user:
         target_user = UserFactory.create_user(
-            test_db_session,
+            test_test_db_session,
             username="assign_target",
             email="assign_target@example.com",
             hashed_password="xxx",
@@ -396,7 +396,7 @@ def test_assign_role_to_user_as_admin(client: TestClient, setup_user_and_role_fo
     assert any(role["name"] == role_name for role in data["roles"])
     
     # Verify in DB
-    user_in_db = test_db_session.query(SQLAlchemyUser).filter_by(id=user_id).one()
+    user_in_db = test_test_db_session.query(SQLAlchemyUser).filter_by(id=user_id).one()
     assert any(role.name == role_name for role in user_in_db.roles)
 
 def test_assign_role_to_user_non_existent_role(client: TestClient, test_admin_user: SQLAlchemyUser):
@@ -422,7 +422,7 @@ def test_remove_role_from_user_as_admin(client: TestClient, setup_user_and_role_
     assert not any(role["name"] == role_name for role in data["roles"])
 
     # Verify in DB
-    user_in_db = test_db_session.query(SQLAlchemyUser).filter_by(id=user_id).one()
+    user_in_db = test_test_db_session.query(SQLAlchemyUser).filter_by(id=user_id).one()
     assert not any(role.name == role_name for role in user_in_db.roles)
 
 @pytest.fixture
@@ -449,7 +449,7 @@ def test_add_permission_to_role_as_admin(client: TestClient, setup_role_and_perm
     assert any(perm["name"] == permission_name for perm in data["permissions"])
 
     # Verify in DB
-    role_in_db = test_db_session.query(SQLAlchemyRole).filter_by(name=role_name).one()
+    role_in_db = test_test_db_session.query(SQLAlchemyRole).filter_by(name=role_name).one()
     assert any(perm.name == permission_name for perm in role_in_db.permissions)
 
 def test_remove_permission_from_role_as_admin(client: TestClient, setup_role_and_permission_for_assignment: tuple, test_test_db_session: Session):
@@ -467,7 +467,7 @@ def test_remove_permission_from_role_as_admin(client: TestClient, setup_role_and
     assert not any(perm["name"] == permission_name for perm in data["permissions"])
 
     # Verify in DB
-    role_in_db = test_db_session.query(SQLAlchemyRole).filter_by(name=role_name).one()
+    role_in_db = test_test_db_session.query(SQLAlchemyRole).filter_by(name=role_name).one()
     assert not any(perm.name == permission_name for perm in role_in_db.permissions)
 
 # TODO: Add more tests:
