@@ -90,9 +90,9 @@ class Tenant(Base):
     
     # Other tenant-specific relationships - temporarily disabled back_populates due to registry conflicts
     # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
-    tenant_configurations = relationship("TenantSettings", cascade="all, delete-orphan")
-    invitations = relationship("TenantInvitation", cascade="all, delete-orphan")
-    audit_logs = relationship("TenantAuditLog", cascade="all, delete-orphan")
+    # tenant_configurations = relationship("TenantSettings", cascade="all, delete-orphan")
+    # invitations = relationship("TenantInvitation", cascade="all, delete-orphan")
+    # audit_logs = relationship("TenantAuditLog", cascade="all, delete-orphan")
 
     def __repr__(self):
         return f"<Tenant(id={self.id}, name='{self.name}', domain='{self.domain}')>"

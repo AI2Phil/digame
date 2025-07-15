@@ -84,14 +84,17 @@ class User(Base):
     skills_json = Column(Text(), nullable=True)  # JSON string for list[str] - renamed to avoid conflict with skills relationship
     kudos_count = Column(Integer(), default=0)
 
-    # Enhanced relationships for tenant-aware RBAC - re-enabled for testing
-    user_roles = relationship("UserRoleAssignment", foreign_keys="UserRoleAssignment.user_id", cascade="all, delete-orphan", overlaps="user")
+    # Enhanced relationships for tenant-aware RBAC - temporarily disabled due to registry conflicts
+    # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
+    # user_roles = relationship("UserRoleAssignment", foreign_keys="UserRoleAssignment.user_id", cascade="all, delete-orphan", overlaps="user")
     
     def get_roles(self, tenant_id=None):
-        """Get roles through user_roles relationship"""
-        if tenant_id:
-            return [ur.role for ur in self.user_roles if ur.role and ur.tenant_id == tenant_id]
-        return [ur.role for ur in self.user_roles if ur.role]
+        """Get roles through user_roles relationship - temporarily disabled due to registry conflicts"""
+        # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
+        # if tenant_id:
+        #     return [ur.role for ur in self.user_roles if ur.role and ur.tenant_id == tenant_id]
+        # return [ur.role for ur in self.user_roles if ur.role]
+        return []  # Temporary fallback to prevent registry conflicts
     
     @property
     def roles(self):
