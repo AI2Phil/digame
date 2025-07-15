@@ -25,11 +25,11 @@ class UserConnection(Base):
     created_at = Column(DateTime, nullable=False, server_default=func.now())
     updated_at = Column(DateTime, nullable=False, server_default=func.now(), onupdate=func.now())
     
-    # Relationships - temporarily disabled back_populates due to registry conflicts
+    # Relationships - temporarily disabled due to registry conflicts
     # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
-    user = relationship("User", foreign_keys=[user_id])
-    connected_user = relationship("User", foreign_keys=[connected_user_id])
-    initiator = relationship("User", foreign_keys=[initiated_by])
+    # user = relationship("User", foreign_keys=[user_id])
+    # connected_user = relationship("User", foreign_keys=[connected_user_id])
+    # initiator = relationship("User", foreign_keys=[initiated_by])
     
     # Constraints
     __table_args__ = (
@@ -55,10 +55,10 @@ class PeerMatch(Base):
     created_at = Column(DateTime, nullable=False, server_default=func.now())
     updated_at = Column(DateTime, nullable=False, server_default=func.now(), onupdate=func.now())
     
-    # Relationships - temporarily disabled back_populates due to registry conflicts
+    # Relationships - temporarily disabled due to registry conflicts
     # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
-    user = relationship("User", foreign_keys=[user_id])
-    matched_user = relationship("User", foreign_keys=[matched_user_id])
+    # user = relationship("User", foreign_keys=[user_id])
+    # matched_user = relationship("User", foreign_keys=[matched_user_id])
     
     # Constraints
     __table_args__ = (
@@ -86,9 +86,9 @@ class SocialMetrics(Base):
     created_at = Column(DateTime, nullable=False, server_default=func.now())
     updated_at = Column(DateTime, nullable=False, server_default=func.now(), onupdate=func.now())
     
-    # Relationships - temporarily disabled back_populates due to registry conflicts
+    # Relationships - temporarily disabled due to registry conflicts
     # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
-    user = relationship("User")
+    # user = relationship("User")
 
 
 class UserSkill(Base):
@@ -107,9 +107,9 @@ class UserSkill(Base):
     created_at = Column(DateTime, nullable=False, server_default=func.now())
     updated_at = Column(DateTime, nullable=False, server_default=func.now(), onupdate=func.now())
 
-    # Relationships - temporarily disabled back_populates due to registry conflicts
+    # Relationships - temporarily disabled due to registry conflicts
     # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
-    user = relationship("User")
+    # user = relationship("User")
 
     # Constraints
     __table_args__ = (

@@ -9,10 +9,13 @@ from typing import List, Optional, Dict, Any
 from datetime import datetime, timedelta, timezone
 
 from app.models.collaboration_models import (
-    Workspace, WorkspaceMember, Channel, Message, MessageReaction,
+    Workspace, WorkspaceMember, Channel, CollaborationMessage, MessageReaction,
     UserPresence, CollaborationSession, MessageAttachment,
     ChannelType, MessageType, SessionType, UserStatus
 )
+
+# Alias for backward compatibility in this file
+Message = CollaborationMessage
 from app.models.user import User
 
 # Workspace CRUD Operations

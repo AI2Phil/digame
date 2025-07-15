@@ -48,7 +48,7 @@ class UserUpdate(BaseModel):
 
 
 # Additional properties to return via API
-class User(UserBase): # UserBase already includes detailed_bio, contact_info, skills
+class UserResponse(UserBase): # UserBase already includes detailed_bio, contact_info, skills
     id: int
     created_at: datetime
     updated_at: datetime
@@ -97,7 +97,7 @@ class User(UserBase): # UserBase already includes detailed_bio, contact_info, sk
         return value
 
 # User with roles information
-class UserWithRoles(User):
+class UserWithRoles(UserResponse):
     roles: List[str] = []
 
     model_config = {"from_attributes": True}

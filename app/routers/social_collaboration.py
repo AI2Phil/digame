@@ -16,7 +16,7 @@ from ..models.user import User as UserModel
 # Project model is not directly used here anymore for creating ProjectSchema instances
 # from ..models.project import Project 
 from ..schemas.user_profile_schemas import UserProfileUpdate, UserProfileResponse, UserWithProfileResponse
-from ..schemas.user_schemas import User as UserSchema
+from ..schemas.user_schemas import UserResponse as UserSchema
 from ..services.social_collaboration_service import SocialCollaborationService
 from ..crud import user_crud, notification_crud, project_crud # Added project_crud
 from .. import crud
@@ -27,7 +27,7 @@ from sqlalchemy import or_ # For ORM queries in routes if needed, though logic i
 
 # Import project schemas
 from ..schemas.project_schemas import ProjectMatchResponse, Project as ProjectSchema, ProjectMatch
-from ..schemas.user_schemas import User as UserResponseSchema
+from ..schemas.user_schemas import UserResponse as UserResponseSchema
 from ..schemas.communication_schemas import MessageCreate, MessageResponse, ConversationResponse # Communication schemas
 
 

@@ -3,7 +3,7 @@
 # Optionally, import schemas for easier access, e.g.:
 from .rbac_schemas import RoleCreate, RoleResponse, PermissionCreate, PermissionResponse, UserRoleAssignRequest, RolePermissionAssignRequest # etc.
 # from .user_schemas import UserCreate, UserResponse # Assuming user_schemas.py exists
-from .user_schemas import User, UserCreate, UserUpdate, UserBase, ContactInfoSchema, UserWithRoles
+from .user_schemas import UserResponse, UserCreate, UserUpdate, UserBase, ContactInfoSchema, UserWithRoles
 from .project_schemas import ProjectBase, ProjectCreate, ProjectUpdate, ProjectSchema
 from .experience_schemas import ExperienceBase, ExperienceCreate, ExperienceUpdate, ExperienceSchema
 from .education_schemas import EducationBase, EducationCreate, EducationUpdate, EducationSchema

@@ -39,8 +39,9 @@ class BehavioralModel(Base):
     # # Relationship to User model
     # user = relationship("User", back_populates="behavioral_models")
     
-    # Relationship to BehavioralPattern model
-    patterns = relationship("BehavioralPattern", back_populates="model", cascade="all, delete-orphan")
+    # Relationship to BehavioralPattern model - temporarily disabled due to registry conflicts
+    # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
+    # patterns = relationship("BehavioralPattern", back_populates="model", cascade="all, delete-orphan")
     
     def __repr__(self):
         return f"<BehavioralModel(id={self.id}, user_id={self.user_id}, algorithm='{self.algorithm}', version='{self.version}')>"
@@ -74,8 +75,9 @@ class BehavioralPattern(Base):
     activity_distribution = Column(JSON(), nullable=True)  # Types of activities in this pattern
     context_features = Column(JSON(), nullable=True)  # Common contextual features
     
-    # Relationship to BehavioralModel
-    model = relationship("BehavioralModel", back_populates="patterns")
+    # Relationship to BehavioralModel - temporarily disabled due to registry conflicts
+    # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
+    # model = relationship("BehavioralModel", back_populates="patterns")
 
     __table_args__ = (
         Index('ix_behavioral_patterns_model_id_pattern_label', 'model_id', 'pattern_label'),

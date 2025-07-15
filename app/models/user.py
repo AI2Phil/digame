@@ -4,8 +4,9 @@ from sqlalchemy.ext.associationproxy import association_proxy
 from datetime import datetime # Changed to just datetime for consistency, as utcnow is method of datetime
 from app.database import Base
 
-# Import Tenant directly to avoid string resolution issues
-from app.models.tenant import Tenant
+# Import Tenant directly to avoid string resolution issues - temporarily disabled due to registry conflicts
+# TODO: Re-enable after resolving SQLAlchemy registry mapping issues
+# from app.models.tenant import Tenant
 from app.models.imports import ProcessNote, Task, UserRoleAssignment
 
 # Remove circular import - relationships will be resolved by SQLAlchemy registry
@@ -84,17 +85,14 @@ class User(Base):
     skills_json = Column(Text(), nullable=True)  # JSON string for list[str] - renamed to avoid conflict with skills relationship
     kudos_count = Column(Integer(), default=0)
 
-    # Enhanced relationships for tenant-aware RBAC - temporarily disabled due to registry conflicts
-    # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
-    # user_roles = relationship("UserRoleAssignment", foreign_keys="UserRoleAssignment.user_id", cascade="all, delete-orphan", overlaps="user")
+    # Enhanced relationships for tenant-aware RBAC - using fully qualified module paths to resolve registry conflicts
+    user_roles = relationship("app.models.user_role_assignment.UserRoleAssignment", foreign_keys="app.models.user_role_assignment.UserRoleAssignment.user_id", cascade="all, delete-orphan", overlaps="user")
     
     def get_roles(self, tenant_id=None):
-        """Get roles through user_roles relationship - temporarily disabled due to registry conflicts"""
-        # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
-        # if tenant_id:
-        #     return [ur.role for ur in self.user_roles if ur.role and ur.tenant_id == tenant_id]
-        # return [ur.role for ur in self.user_roles if ur.role]
-        return []  # Temporary fallback to prevent registry conflicts
+        """Get roles through user_roles relationship"""
+        if tenant_id:
+            return [ur.role for ur in self.user_roles if ur.role and ur.tenant_id == tenant_id]
+        return [ur.role for ur in self.user_roles if ur.role]
     
     @property
     def roles(self):

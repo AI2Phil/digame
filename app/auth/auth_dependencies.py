@@ -5,7 +5,7 @@ from jose import JWTError, jwt # For token decoding, if used
 from typing import Optional
 
 from ..models.user import User as SQLAlchemyUser # Renamed to avoid Pydantic model clash
-from ..schemas.user_schemas import User as PydanticUser # Assuming User schema for response
+from ..schemas.user_schemas import UserResponse as PydanticUser # Assuming UserResponse schema for response
 from ..crud import user_crud # Assuming user_crud exists for fetching user by username/id
 from ..services.rbac_service import user_has_permission
 from ..db import get_db # Import get_db from the shared db module

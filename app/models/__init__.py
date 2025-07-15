@@ -32,7 +32,7 @@ from .workflow_automation import (
 from .imports import Project # Import from centralized imports to resolve registry conflicts
 from .imports import Experience # Import from centralized imports to resolve registry conflicts
 from .imports import Education # Import from centralized imports to resolve registry conflicts
-from .communication import Message # Import the new Message model
+from .communication import DirectMessage # Import the renamed DirectMessage model
 from .social import UserConnection, PeerMatch, SocialMetrics, UserSkill # Import social networking models
 from .social_collaboration import (
     PeerConnection, PeerMessage, CollaborationProject, ProjectMember,
@@ -60,7 +60,7 @@ from .digital_twin import (
 from .guest_onboarding import GuestOnboardingProgress, DigitalTwinProfile, EmailVerification # Added guest onboarding models
 from .onboarding_persistence import UserOnboardingProgress # Added user onboarding progress model
 from .collaboration_models import (
-    Workspace, WorkspaceMember, Channel, Message, MessageReaction,
+    Workspace, WorkspaceMember, Channel, CollaborationMessage, MessageReaction,
     UserPresence, CollaborationSession, MessageAttachment,
     ChannelType, MessageType, SessionType, UserStatus
 ) # Added real-time collaboration models
@@ -99,7 +99,7 @@ __all__ = [
     "Project", # Add Project to __all__
     "Experience", # Add Experience to __all__
     "Education", # Add Education to __all__
-    "Message", # Add Message to __all__
+    "DirectMessage", # Add DirectMessage to __all__
     "UserConnection", # Add social networking models to __all__
     "PeerMatch",
     "SocialMetrics",
@@ -175,7 +175,7 @@ __all__ = [
     "Workspace",              # Added real-time collaboration models
     "WorkspaceMember",
     "Channel",
-    # "Message", # Removed duplicate - already defined on line 99
+    "CollaborationMessage", # Add CollaborationMessage to __all__
     "MessageReaction",
     "UserPresence",
     "CollaborationSession",

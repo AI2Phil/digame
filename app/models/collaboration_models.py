@@ -110,7 +110,8 @@ class WorkspaceMember(Base):
     
     # Relationships
     workspace = relationship("Workspace", back_populates="members")
-    user = relationship("User")
+    # User relationship - using fully qualified module paths to resolve registry conflicts
+    user = relationship("app.models.user.User")
     
     __table_args__ = (
         Index('idx_workspace_members_workspace_user', 'workspace_id', 'user_id'),
@@ -151,8 +152,8 @@ class Channel(Base):
     
     # Relationships
     workspace = relationship("Workspace", back_populates="channels")
-    messages = relationship("app.models.collaboration_models.Message", back_populates="channel", cascade="all, delete-orphan", foreign_keys="app.models.collaboration_models.Message.channel_id")
-    last_message = relationship("app.models.collaboration_models.Message", foreign_keys=[last_message_id], post_update=True)
+    messages = relationship("CollaborationMessage", back_populates="channel", cascade="all, delete-orphan", foreign_keys="CollaborationMessage.channel_id")
+    last_message = relationship("CollaborationMessage", foreign_keys=[last_message_id], post_update=True)
     
     __table_args__ = (
         Index('idx_channels_workspace_type', 'workspace_id', 'type'),
@@ -161,7 +162,7 @@ class Channel(Base):
         {'extend_existing': True}
     )
 
-class Message(Base):
+class CollaborationMessage(Base):
     """Messages within channels"""
     __table_args__ = {'extend_existing': True}
     __tablename__ = 'collaboration_messages'
@@ -193,9 +194,10 @@ class Message(Base):
     
     # Relationships
     channel = relationship("Channel", back_populates="messages", foreign_keys=[channel_id])
-    user = relationship("User")
+    # User relationship - using fully qualified module paths to resolve registry conflicts
+    user = relationship("app.models.user.User")
     reactions = relationship("MessageReaction", back_populates="message", cascade="all, delete-orphan")
-    thread_replies = relationship("app.models.collaboration_models.Message", backref="parent_message", remote_side=[id])
+    thread_replies = relationship("CollaborationMessage", backref="parent_message", remote_side=[id])
     
     __table_args__ = (
         Index('idx_messages_channel_timestamp', 'channel_id', 'timestamp'),
@@ -222,8 +224,9 @@ class MessageReaction(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     
     # Relationships
-    message = relationship("app.models.collaboration_models.Message", back_populates="reactions")
-    user = relationship("User")
+    message = relationship("CollaborationMessage", back_populates="reactions")
+    # User relationship - using fully qualified module paths to resolve registry conflicts
+    user = relationship("app.models.user.User")
     
     __table_args__ = (
         Index('idx_message_reactions_message_emoji', 'message_id', 'emoji'),
@@ -263,7 +266,8 @@ class UserPresence(Base):
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     
     # Relationships
-    user = relationship("User")
+    # User relationship - using fully qualified module paths to resolve registry conflicts
+    user = relationship("app.models.user.User")
     workspace = relationship("Workspace")
     current_channel = relationship("Channel", foreign_keys=[current_channel_id])
     typing_channel = relationship("Channel", foreign_keys=[typing_in_channel_id])
@@ -315,7 +319,8 @@ class CollaborationSession(Base):
     # Relationships
     workspace = relationship("Workspace", back_populates="sessions")
     channel = relationship("Channel")
-    creator = relationship("User")
+    # User relationship - using fully qualified module paths to resolve registry conflicts
+    creator = relationship("app.models.user.User")
     
     __table_args__ = (
         Index('idx_collaboration_sessions_workspace_status', 'workspace_id', 'status'),
@@ -355,8 +360,9 @@ class MessageAttachment(Base):
     scan_result = Column(String(50))  # clean, infected, pending
     
     # Relationships
-    message = relationship("app.models.collaboration_models.Message")
-    uploader = relationship("User")
+    message = relationship("CollaborationMessage")
+    # User relationship - using fully qualified module paths to resolve registry conflicts
+    uploader = relationship("app.models.user.User")
     
     __table_args__ = (
         Index('idx_message_attachments_message', 'message_id'),

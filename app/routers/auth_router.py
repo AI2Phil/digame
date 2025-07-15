@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from typing import Dict, Any, Optional
 
 from ..database import get_db
-from ..schemas.user_schemas import UserCreate, User as UserSchema
+from ..schemas.user_schemas import UserCreate, UserResponse as UserSchema
 from ..auth.auth_service import auth_service, get_current_user
 from pydantic import BaseModel
 

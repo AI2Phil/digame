@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from .. import crud
 from ..models.user import User as UserModel
-from ..schemas.user_schemas import User as UserSchema, UserUpdate, ContactInfoSchema # Ensure UserUpdate has all fields
+from ..schemas.user_schemas import UserResponse as UserSchema, UserUpdate, ContactInfoSchema # Ensure UserUpdate has all fields
 from ..schemas.project_schemas import ProjectSchema, ProjectCreate
 from ..schemas.experience_schemas import ExperienceSchema, ExperienceCreate
 from ..schemas.education_schemas import EducationSchema, EducationCreate

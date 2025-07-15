@@ -27,7 +27,7 @@ from ..crud.user_crud import (
     update_user as crud_update_user
 )
 from ..crud.rbac_crud import get_role_by_name, assign_role_to_user
-from ..schemas.user_schemas import UserCreate, User as UserSchema
+from ..schemas.user_schemas import UserCreate, UserResponse as UserSchema
 from ..database import get_db
 
 # Configure logging
