@@ -61,7 +61,7 @@ class Course(Base):
     
     # Relationships
     category = relationship("CourseCategory", back_populates="courses")
-    instructor = relationship("User", foreign_keys=[instructor_id])
+    instructor = relationship("app.models.user.User", foreign_keys=[instructor_id])
     enrollments = relationship("CourseEnrollment", back_populates="course", cascade="all, delete-orphan")
     recommendations = relationship("LearningRecommendation", back_populates="course", cascade="all, delete-orphan")
 
@@ -85,7 +85,7 @@ class CourseEnrollment(Base):
     
     # Relationships - temporarily disabled back_populates due to registry conflicts
     # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
-    user = relationship("User")
+    user = relationship("app.models.user.User")
     course = relationship("Course")
     
     # Constraints
@@ -115,7 +115,7 @@ class LearningProgress(Base):
     
     # Relationships - temporarily disabled back_populates due to registry conflicts
     # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
-    user = relationship("User")
+    user = relationship("app.models.user.User")
     
     # Constraints
     __table_args__ = (
@@ -148,5 +148,5 @@ class LearningRecommendation(Base):
     
     # Relationships - temporarily disabled back_populates due to registry conflicts
     # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
-    user = relationship("User")
+    user = relationship("app.models.user.User")
     course = relationship("Course")

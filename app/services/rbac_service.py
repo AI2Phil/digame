@@ -12,8 +12,14 @@ from sqlalchemy import and_, or_
 from datetime import datetime, timedelta, timezone
 
 from ..models.user import User
-from ..models.rbac import Role, Permission
+from ..models.rbac import Role
 from ..models.tenant import Tenant
+
+# Dynamic import to avoid registry conflicts
+def get_permission_model():
+    """Get Permission model dynamically to avoid registry conflicts"""
+    from ..models.rbac import Permission
+    return Permission
 from ..database import get_db
 
 
@@ -190,6 +196,7 @@ class RBACService:
         # Get all permissions from those roles
         role_ids = [getattr(ur, 'role_id', None) for ur in user_roles]
         
+        Permission = get_permission_model()
         permissions = self.db.query(Permission).join(
             Permission.roles
         ).filter(
@@ -296,6 +303,7 @@ class RBACService:
         
         # Assign permissions if provided
         if permissions:
+            Permission = get_permission_model()
             permission_objects = self.db.query(Permission).filter(
                 Permission.name.in_(permissions)
             ).all()

@@ -51,9 +51,9 @@ class UserPlatformRole(Base):
     assigned_by = Column(Integer, ForeignKey("users.id"), nullable=False)
     assigned_at = Column(DateTime, default=func.now())
     
-    user = relationship("User", foreign_keys=[user_id])
+    user = relationship("app.models.user.User", foreign_keys=[user_id])
     platform_role = relationship("PlatformRole")
-    assigner = relationship("User", foreign_keys=[assigned_by])
+    assigner = relationship("app.models.user.User", foreign_keys=[assigned_by])
 
     def __repr__(self):
         return f"<UserPlatformRole(id={self.id}, user_id={self.user_id}, platform_role_id={self.platform_role_id})>"

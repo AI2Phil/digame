@@ -6,8 +6,14 @@ Provides temporary authorization functionality while relationships are disabled.
 from typing import List, Optional, Dict, Any
 from sqlalchemy.orm import Session
 from app.models.user import User
-from app.models.rbac import Role, Permission
+from app.models.rbac import Role
 from app.models.user_role_assignment import UserRoleAssignment
+
+# Dynamic import to avoid registry conflicts
+def get_permission_model():
+    """Get Permission model dynamically to avoid registry conflicts"""
+    from app.models.rbac import Permission
+    return Permission
 import logging
 
 logger = logging.getLogger(__name__)

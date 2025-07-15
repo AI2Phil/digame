@@ -27,9 +27,9 @@ class UserConnection(Base):
     
     # Relationships - temporarily disabled due to registry conflicts
     # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
-    # user = relationship("User", foreign_keys=[user_id])
-    # connected_user = relationship("User", foreign_keys=[connected_user_id])
-    # initiator = relationship("User", foreign_keys=[initiated_by])
+    # user = relationship("app.models.user.User", foreign_keys=[user_id])
+    # connected_user = relationship("app.models.user.User", foreign_keys=[connected_user_id])
+    # initiator = relationship("app.models.user.User", foreign_keys=[initiated_by])
     
     # Constraints
     __table_args__ = (
@@ -57,8 +57,8 @@ class PeerMatch(Base):
     
     # Relationships - temporarily disabled due to registry conflicts
     # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
-    # user = relationship("User", foreign_keys=[user_id])
-    # matched_user = relationship("User", foreign_keys=[matched_user_id])
+    # user = relationship("app.models.user.User", foreign_keys=[user_id])
+    # matched_user = relationship("app.models.user.User", foreign_keys=[matched_user_id])
     
     # Constraints
     __table_args__ = (
@@ -88,7 +88,7 @@ class SocialMetrics(Base):
     
     # Relationships - temporarily disabled due to registry conflicts
     # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
-    # user = relationship("User")
+    # user = relationship("app.models.user.User")
 
 
 class UserSkill(Base):
@@ -109,7 +109,7 @@ class UserSkill(Base):
 
     # Relationships - temporarily disabled due to registry conflicts
     # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
-    # user = relationship("User")
+    # user = relationship("app.models.user.User")
 
     # Constraints
     __table_args__ = (

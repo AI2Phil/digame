@@ -94,7 +94,8 @@ def ensure_model_registration():
         from app.models.user import User
         from app.models.tenant import Tenant
         from app.models.rbac import Role
-        from app.models.imports import UserRoleAssignment, Activity, ProcessNote, Task, Project, Experience
+        from app.models.imports import UserRoleAssignment, Activity, Task, Project, Experience
+        from app.models.process_notes import ProcessNote
         from app.models.team import Team, TeamMember
         
         # Force registration of all critical models
@@ -337,7 +338,8 @@ def isolated_db():
         from app.models.tenant import Tenant
         from app.models.rbac import Role
         from app.models.team import Team, TeamMember, TeamPerformanceMetric, TeamSkillGap, TeamWorkflow
-        from app.models.imports import UserRoleAssignment, Activity, ProcessNote, Task, Project, Experience
+        from app.models.imports import UserRoleAssignment, Activity, Task, Project, Experience
+        from app.models.process_notes import ProcessNote
         from app.models.education import Education
         from app.models.notifications import Notification
         from app.models.user_setting import UserSetting

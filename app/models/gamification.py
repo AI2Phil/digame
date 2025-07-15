@@ -95,7 +95,7 @@ class UserAchievement(Base):
     
     # Temporarily commented out to resolve SQLAlchemy mapper issues
     # # Relationships
-    # user = relationship("User", back_populates="achievements")
+    # user = relationship("app.models.user.User", back_populates="achievements")
     achievement = relationship("Achievement", back_populates="user_achievements")
 
     @property
@@ -133,7 +133,7 @@ class Streak(Base):
     
     # Temporarily commented out to resolve SQLAlchemy mapper issues
     # # Relationships
-    # user = relationship("User", back_populates="streaks")
+    # user = relationship("app.models.user.User", back_populates="streaks")
 
     @property
     def days_since_last_activity(self):
@@ -189,7 +189,7 @@ class Milestone(Base):
     
     # Temporarily commented out to resolve SQLAlchemy mapper issues
     # # Relationships
-    # user = relationship("User")
+    # user = relationship("app.models.user.User")
     # goal = relationship("Goal", back_populates="milestones")
 
 class UserPoints(Base):
@@ -219,7 +219,7 @@ class UserPoints(Base):
     
     # Temporarily commented out to resolve SQLAlchemy mapper issues
     # # Relationships
-    # user = relationship("User", back_populates="points")
+    # user = relationship("app.models.user.User", back_populates="points")
 
     def add_points(self, points: int, category: str = "general"):
         """Add points and update level"""
@@ -293,7 +293,7 @@ class UserBadge(Base):
     
     # Temporarily commented out to resolve SQLAlchemy mapper issues
     # # Relationships
-    # user = relationship("User", back_populates="badges")
+    # user = relationship("app.models.user.User", back_populates="badges")
     badge = relationship("Badge", back_populates="user_badges")
 
 class LeaderboardEntry(Base):
@@ -318,7 +318,7 @@ class LeaderboardEntry(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     
     # Relationships
-    user = relationship("User")
+    user = relationship("app.models.user.User")
 
 # Update User model to include gamification relationships
 # This would be added to the existing User model in models/user.py:

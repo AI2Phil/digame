@@ -16,4 +16,4 @@ class UserSetting(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # Temporarily commented out to resolve SQLAlchemy mapper issues
-    # user = relationship("User", back_populates="settings")
+    # user = relationship("app.models.user.User", back_populates="settings")

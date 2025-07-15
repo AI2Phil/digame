@@ -28,7 +28,7 @@ class DetectedAnomaly(Base):
     # Temporarily commented out to resolve SQLAlchemy mapper issues
     # # Relationship to User model
     # # This allows accessing the User object from a DetectedAnomaly instance
-    # user = relationship("User", back_populates="anomalies")
+    # user = relationship("app.models.user.User", back_populates="anomalies")
 
     def __repr__(self):
         return f"<DetectedAnomaly(id={self.id}, user_id={self.user_id}, type='{self.anomaly_type}', status='{self.status}')>"

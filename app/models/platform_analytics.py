@@ -41,7 +41,7 @@ class PlatformUsageMetric(Base):  # type: ignore
     
     # Relationships
     # tenant = relationship("Tenant")  # Temporarily disabled due to registry conflicts
-    user = relationship("User")
+    user = relationship("app.models.user.User")
 
     def __repr__(self):
         return f"<PlatformUsageMetric(id={self.id}, metric_type='{self.metric_type}', metric_name='{self.metric_name}')>"

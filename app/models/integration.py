@@ -152,7 +152,7 @@ class IntegrationConnection(Base):
     
     # Relationships
     # tenant = relationship("Tenant")  # Temporarily disabled due to registry conflicts
-    user = relationship("User")
+    user = relationship("app.models.user.User")
     provider = relationship("IntegrationProvider", back_populates="connections")
     sync_logs = relationship("IntegrationSyncLog", back_populates="connection", cascade="all, delete-orphan")
     webhooks = relationship("IntegrationWebhook", back_populates="connection", cascade="all, delete-orphan")

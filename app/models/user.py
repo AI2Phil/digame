@@ -7,7 +7,8 @@ from app.database import Base
 # Import Tenant directly to avoid string resolution issues - temporarily disabled due to registry conflicts
 # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
 # from app.models.tenant import Tenant
-from app.models.imports import ProcessNote, Task, UserRoleAssignment
+# Removed imports from app.models.imports to avoid circular dependency
+# These will be resolved through SQLAlchemy string relationships
 
 # Remove circular import - relationships will be resolved by SQLAlchemy registry
 
@@ -87,6 +88,12 @@ class User(Base):
 
     # Enhanced relationships for tenant-aware RBAC - using fully qualified module paths to resolve registry conflicts
     user_roles = relationship("app.models.user_role_assignment.UserRoleAssignment", foreign_keys="app.models.user_role_assignment.UserRoleAssignment.user_id", cascade="all, delete-orphan", overlaps="user")
+    
+    # Process notes relationship - using simple string reference to resolve registry conflicts
+    process_notes = relationship("ProcessNote", back_populates="user")
+    
+    # Tasks relationship - using simple string reference to resolve registry conflicts
+    tasks = relationship("Task", back_populates="user", foreign_keys="Task.user_id")
     
     def get_roles(self, tenant_id=None):
         """Get roles through user_roles relationship"""

@@ -96,7 +96,7 @@ class WorkflowTemplate(Base):  # type: ignore
     
     # Relationships
     # tenant = relationship("Tenant")  # Temporarily disabled due to registry conflicts
-    creator = relationship("User")
+    creator = relationship("app.models.user.User")
     workflow_instances = relationship("WorkflowInstance", back_populates="template", cascade="all, delete-orphan")
     
     def __repr__(self):
@@ -202,7 +202,7 @@ class WorkflowStepExecution(Base):  # type: ignore
     
     # Relationships
     workflow_instance = relationship("WorkflowInstance", back_populates="step_executions")
-    assignee = relationship("User")
+    assignee = relationship("app.models.user.User")
     
     def __repr__(self):
         return f"<WorkflowStepExecution(id={self.id}, step_name='{self.step_name}', status='{self.status}')>"
@@ -254,7 +254,7 @@ class AutomationRule(Base):  # type: ignore
     # Relationships
     # tenant = relationship("Tenant")  # Temporarily disabled due to registry conflicts
     workflow_template = relationship("WorkflowTemplate")
-    creator = relationship("User")
+    creator = relationship("app.models.user.User")
     
     def __repr__(self):
         return f"<AutomationRule(id={self.id}, name='{self.name}', trigger_type='{self.trigger_type}')>"
@@ -302,7 +302,7 @@ class WorkflowAction(Base):  # type: ignore
     
     # Relationships
     # tenant = relationship("Tenant")  # Temporarily disabled due to registry conflicts
-    creator = relationship("User")
+    creator = relationship("app.models.user.User")
     
     def __repr__(self):
         return f"<WorkflowAction(id={self.id}, name='{self.name}', action_type='{self.action_type}')>"
@@ -350,7 +350,7 @@ class WorkflowIntegration(Base):  # type: ignore
     
     # Relationships
     # tenant = relationship("Tenant")  # Temporarily disabled due to registry conflicts
-    creator = relationship("User")
+    creator = relationship("app.models.user.User")
     
     def __repr__(self):
         return f"<WorkflowIntegration(id={self.id}, name='{self.name}', integration_type='{self.integration_type}')>"
@@ -401,7 +401,7 @@ class WorkflowReportConfig(Base):  # type: ignore
     # report_definition relationship needs to be established carefully if ReportDefinition is in a different model file.
     # Assuming ReportDefinition is imported and Base is shared, SQLAlchemy can handle this.
     # report_definition = relationship("ReportDefinition") # This might need explicit primaryjoin/foreign_keys if ambiguous
-    creator = relationship("User")
+    creator = relationship("app.models.user.User")
 
     def __repr__(self):
         return f"<WorkflowReportConfig(id={self.id}, name='{self.name}', template_id={self.workflow_template_id}, report_def_id={self.report_definition_id})>"
@@ -443,7 +443,7 @@ class OptimizationRecommendation(Base):  # type: ignore
     # tenant = relationship("Tenant")  # Temporarily disabled due to registry conflicts
     workflow_template = relationship("WorkflowTemplate") # Use foreign_keys if multiple FKs to same table exist elsewhere
     workflow_instance = relationship("WorkflowInstance")
-    reviewer = relationship("User") # User who reviewed the recommendation
+    reviewer = relationship("app.models.user.User") # User who reviewed the recommendation
 
     def __repr__(self):
         return f"<OptimizationRecommendation(id={self.id}, type='{self.recommendation_type}', tenant_id={self.tenant_id})>"

@@ -76,7 +76,7 @@ class MLModel(Base):
     
     # Relationships - temporarily disabled back_populates due to registry conflicts
     # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
-    creator = relationship("User")
+    creator = relationship("app.models.user.User")
     training_jobs = relationship("TrainingJob", back_populates="model", cascade="all, delete-orphan")
     predictions = relationship("ModelPrediction", back_populates="model", cascade="all, delete-orphan")
     evaluations = relationship("ModelEvaluation", back_populates="model", cascade="all, delete-orphan")
@@ -131,7 +131,7 @@ class TrainingJob(Base):
     # Relationships - temporarily disabled back_populates due to registry conflicts
     # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
     model = relationship("MLModel")
-    creator = relationship("User")
+    creator = relationship("app.models.user.User")
 
     def __repr__(self):
         return f"<TrainingJob(id={self.id}, model_id={self.model_id}, status='{self.status}')>"
@@ -171,7 +171,7 @@ class ModelPrediction(Base):
     # Relationships - temporarily disabled back_populates due to registry conflicts
     # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
     model = relationship("MLModel")
-    creator = relationship("User")
+    creator = relationship("app.models.user.User")
 
     def __repr__(self):
         return f"<ModelPrediction(id={self.id}, model_id={self.model_id}, prediction_id='{self.prediction_id}')>"
@@ -214,7 +214,7 @@ class ModelEvaluation(Base):
     model = relationship("MLModel")
     # Temporarily disabled back_populates due to registry conflicts
     # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
-    evaluator = relationship("User")
+    evaluator = relationship("app.models.user.User")
 
     def __repr__(self):
         return f"<ModelEvaluation(id={self.id}, model_id={self.model_id}, name='{self.evaluation_name}')>"
@@ -257,7 +257,7 @@ class ModelDeployment(Base):
     model = relationship("MLModel")
     # Temporarily disabled back_populates due to registry conflicts
     # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
-    deployer = relationship("User")
+    deployer = relationship("app.models.user.User")
 
     def __repr__(self):
         return f"<ModelDeployment(id={self.id}, model_id={self.model_id}, name='{self.deployment_name}')>"
@@ -294,7 +294,7 @@ class DatasetMetadata(Base):
     
     # Relationships - temporarily disabled back_populates due to registry conflicts
     # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
-    creator = relationship("User")
+    creator = relationship("app.models.user.User")
 
     def __repr__(self):
         return f"<DatasetMetadata(id={self.id}, name='{self.name}', format='{self.format}')>"
@@ -331,7 +331,7 @@ class ExperimentRun(Base):
     
     # Relationships - temporarily disabled back_populates due to registry conflicts
     # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
-    creator = relationship("User")
+    creator = relationship("app.models.user.User")
 
     def __repr__(self):
         return f"<ExperimentRun(id={self.id}, experiment='{self.experiment_name}', run='{self.run_name}')>"

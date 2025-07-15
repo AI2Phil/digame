@@ -55,7 +55,7 @@ class TwinConversation(Base):  # type: ignore
 
     # Relationships
     twin = relationship("DigitalTwin")
-    user = relationship("User")
+    user = relationship("app.models.user.User")
     messages = relationship("TwinConversationMessage", back_populates="conversation", cascade="all, delete-orphan")
 
     # Indexes

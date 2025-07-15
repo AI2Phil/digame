@@ -37,7 +37,7 @@ class BehavioralModel(Base):
     
     # Temporarily commented out to resolve SQLAlchemy mapper issues
     # # Relationship to User model
-    # user = relationship("User", back_populates="behavioral_models")
+    # user = relationship("app.models.user.User", back_populates="behavioral_models")
     
     # Relationship to BehavioralPattern model - temporarily disabled due to registry conflicts
     # TODO: Re-enable after resolving SQLAlchemy registry mapping issues

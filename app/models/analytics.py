@@ -578,7 +578,7 @@ class AnalyticsDashboard(Base):  # type: ignore
     # Relationship: A dashboard has multiple widget configurations
     # If DashboardWidgetConfig has a dashboard_id FK
     widgets = relationship("DashboardWidgetConfig", back_populates="dashboard", cascade="all, delete-orphan")
-    owner = relationship("User") # Assuming User model is available via from ..models.user import User
+    owner = relationship("app.models.user.User") # Assuming User model is available via from ..models.user import User
 
     def __repr__(self):
         return f"<AnalyticsDashboard(id={self.id}, name='{self.name}')>"

@@ -3,8 +3,14 @@ from sqlalchemy.exc import IntegrityError
 from typing import List, Optional
 
 from ..models.user import User
-from ..models.rbac import Role, Permission
+from ..models.rbac import Role
 from ..schemas.rbac_schemas import RoleCreate, RoleUpdate, PermissionCreate, PermissionUpdate
+
+# Dynamic import to avoid registry conflicts
+def get_permission_model():
+    """Get Permission model dynamically to avoid registry conflicts"""
+    from ..models.rbac import Permission
+    return Permission
 
 # --- Role CRUD Operations ---
 
@@ -53,16 +59,20 @@ def delete_role(db: Session, role_id: int) -> bool:
 
 # --- Permission CRUD Operations ---
 
-def get_permission(db: Session, permission_id: int) -> Optional[Permission]:
+def get_permission(db: Session, permission_id: int):
+    Permission = get_permission_model()
     return db.query(Permission).filter(Permission.id == permission_id).first()
 
-def get_permission_by_name(db: Session, permission_name: str) -> Optional[Permission]:
+def get_permission_by_name(db: Session, permission_name: str):
+    Permission = get_permission_model()
     return db.query(Permission).filter(Permission.name == permission_name).first()
 
-def get_permissions(db: Session, skip: int = 0, limit: int = 100) -> List[Permission]:
+def get_permissions(db: Session, skip: int = 0, limit: int = 100):
+    Permission = get_permission_model()
     return db.query(Permission).offset(skip).limit(limit).all()
 
-def create_permission(db: Session, permission: PermissionCreate) -> Permission:
+def create_permission(db: Session, permission: PermissionCreate):
+    Permission = get_permission_model()
     db_permission = Permission()
     setattr(db_permission, "name", permission.name)
     setattr(db_permission, "description", permission.description)
@@ -71,7 +81,7 @@ def create_permission(db: Session, permission: PermissionCreate) -> Permission:
     db.refresh(db_permission)
     return db_permission
 
-def update_permission(db: Session, permission_id: int, permission_update: PermissionUpdate) -> Optional[Permission]:
+def update_permission(db: Session, permission_id: int, permission_update: PermissionUpdate):
     db_permission = get_permission(db, permission_id)
     if db_permission:
         if permission_update.name is not None:

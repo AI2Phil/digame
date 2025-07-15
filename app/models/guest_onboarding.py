@@ -45,7 +45,7 @@ class GuestOnboardingProgress(Base):
     
     # Relationship back to User
     # Temporarily commented out due to circular import issues
-    # user = relationship("User", back_populates="onboarding_progress")
+    # user = relationship("app.models.user.User", back_populates="onboarding_progress")
 
     def __repr__(self):
         return f"<GuestOnboardingProgress(user_id={self.user_id}, step={self.current_step}/{self.total_steps})>"
@@ -93,7 +93,7 @@ class DigitalTwinProfile(Base):
     
     # Relationship back to User
     # Temporarily commented out due to circular import issues
-    # user = relationship("User", back_populates="digital_twin_profile")
+    # user = relationship("app.models.user.User", back_populates="digital_twin_profile")
 
     def __repr__(self):
         return f"<DigitalTwinProfile(user_id={self.user_id}, completeness={self.profile_completeness_score}%)>"
@@ -123,7 +123,7 @@ class EmailVerification(Base):
     last_resent_at = Column(DateTime(), nullable=True)
     
     # Relationship back to User
-    user = relationship("User")
+    user = relationship("app.models.user.User")
 
     def __repr__(self):
         return f"<EmailVerification(user_id={self.user_id}, verified={self.is_verified})>"

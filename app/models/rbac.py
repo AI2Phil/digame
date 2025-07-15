@@ -39,12 +39,13 @@ class Role(Base):
     # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
     # tenant = relationship("app.models.tenant.Tenant")
 
-    # Many-to-Many relationship with Permission - using fully qualified module paths to resolve registry conflicts
-    permissions = relationship(
-        "app.models.rbac.Permission",
-        secondary=role_permissions_table, # Reference the table object directly
-        back_populates="roles" # Corresponds to the 'roles' attribute in the Permission model
-    )
+    # Many-to-Many relationship with Permission - temporarily disabled due to registry conflicts
+    # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
+    # permissions = relationship(
+    #     "app.models.rbac.Permission",
+    #     secondary=role_permissions_table, # Reference the table object directly
+    #     back_populates="roles" # Corresponds to the 'roles' attribute in the Permission model
+    # )
 
     def __repr__(self):
         return f"<Role(id={self.id}, name='{self.name}', tenant_id={self.tenant_id})>"
@@ -60,12 +61,13 @@ class Permission(Base):
     created_at = Column(DateTime(), default=datetime.utcnow)
     updated_at = Column(DateTime(), default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    # Many-to-Many relationship with Role - using fully qualified module paths to resolve registry conflicts
-    roles = relationship(
-        "app.models.rbac.Role",
-        secondary=role_permissions_table, # Reference the table object directly
-        back_populates="permissions" # Corresponds to the 'permissions' attribute in Role
-    )
+    # Many-to-Many relationship with Role - temporarily disabled due to registry conflicts
+    # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
+    # roles = relationship(
+    #     "app.models.rbac.Role",
+    #     secondary=role_permissions_table, # Reference the table object directly
+    #     back_populates="permissions" # Corresponds to the 'permissions' attribute in Role
+    # )
 
     def __repr__(self):
         return f"<Permission(id={self.id}, name='{self.name}')>"

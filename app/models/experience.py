@@ -15,7 +15,7 @@ class Experience(Base):
     duration = Column(String(), nullable=True) # E.g., "May 2020 - Present" or "2 years"
     description = Column(Text(), nullable=True)
 
-    user = relationship("User", foreign_keys=[user_id])
+    user = relationship("app.models.user.User", foreign_keys=[user_id])
 
     def __repr__(self):
         return f"<Experience(id={self.id}, jobTitle='{self.jobTitle}', company='{self.company}', user_id={self.user_id})>"

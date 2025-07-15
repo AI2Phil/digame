@@ -125,7 +125,7 @@ class CollaborationProject(Base):
     target_completion_date = Column(DateTime, nullable=True)
     
     # Relationships
-    # owner = relationship("User")  # Temporarily disabled to resolve registry conflicts
+    # owner = relationship("app.models.user.User")  # Temporarily disabled to resolve registry conflicts
     members = relationship("ProjectMember", back_populates="project", cascade="all, delete-orphan")
     applications = relationship("ProjectApplication", back_populates="project", cascade="all, delete-orphan")
 
@@ -151,7 +151,7 @@ class ProjectMember(Base):
     
     # Relationships
     project = relationship("CollaborationProject", back_populates="members")
-    # user = relationship("User")  # Temporarily disabled to resolve registry conflicts
+    # user = relationship("app.models.user.User")  # Temporarily disabled to resolve registry conflicts
 
     def __repr__(self):
         return f"<ProjectMember(id={self.id}, project_id={self.project_id}, user_id={self.user_id}, role='{self.role}')>"
@@ -178,8 +178,8 @@ class ProjectApplication(Base):
     
     # Relationships
     project = relationship("CollaborationProject", back_populates="applications")
-    # applicant = relationship("User", foreign_keys=[applicant_id])  # Temporarily disabled to resolve registry conflicts
-    # reviewer = relationship("User", foreign_keys=[reviewed_by])  # Temporarily disabled to resolve registry conflicts
+    # applicant = relationship("app.models.user.User", foreign_keys=[applicant_id])  # Temporarily disabled to resolve registry conflicts
+    # reviewer = relationship("app.models.user.User", foreign_keys=[reviewed_by])  # Temporarily disabled to resolve registry conflicts
 
     def __repr__(self):
         return f"<ProjectApplication(id={self.id}, project_id={self.project_id}, applicant_id={self.applicant_id}, status='{self.status}')>"
@@ -202,8 +202,8 @@ class SkillEndorsement(Base):
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     
     # Relationships
-    # endorser = relationship("User", foreign_keys=[endorser_id])  # Temporarily disabled to resolve registry conflicts
-    # endorsed_user = relationship("User", foreign_keys=[endorsed_user_id])  # Temporarily disabled to resolve registry conflicts
+    # endorser = relationship("app.models.user.User", foreign_keys=[endorser_id])  # Temporarily disabled to resolve registry conflicts
+    # endorsed_user = relationship("app.models.user.User", foreign_keys=[endorsed_user_id])  # Temporarily disabled to resolve registry conflicts
 
     def __repr__(self):
         return f"<SkillEndorsement(id={self.id}, skill='{self.skill_name}', endorser_id={self.endorser_id}, endorsed_user_id={self.endorsed_user_id})>"
@@ -229,8 +229,8 @@ class MentorshipConnection(Base):
     ended_at = Column(DateTime, nullable=True)
     
     # Relationships
-    # mentor = relationship("User", foreign_keys=[mentor_id])  # Temporarily disabled to resolve registry conflicts
-    # mentee = relationship("User", foreign_keys=[mentee_id])  # Temporarily disabled to resolve registry conflicts
+    # mentor = relationship("app.models.user.User", foreign_keys=[mentor_id])  # Temporarily disabled to resolve registry conflicts
+    # mentee = relationship("app.models.user.User", foreign_keys=[mentee_id])  # Temporarily disabled to resolve registry conflicts
 
     def __repr__(self):
         return f"<MentorshipConnection(id={self.id}, mentor_id={self.mentor_id}, mentee_id={self.mentee_id}, status='{self.status}')>"

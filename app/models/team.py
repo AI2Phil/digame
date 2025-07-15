@@ -29,7 +29,7 @@ class Team(Base):
     created_by_user_id = Column(Integer, ForeignKey("users.id"), nullable=True) # Assuming 'users' table
     # Temporarily disabled back_populates due to registry conflicts
     # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
-    creator = relationship("User")
+    creator = relationship("app.models.user.User")
 
 
 class TeamMember(Base):
@@ -47,7 +47,7 @@ class TeamMember(Base):
     team = relationship("Team", back_populates="members")
     # Temporarily disabled back_populates due to registry conflicts
     # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
-    user = relationship("User") # Assuming User model has 'team_memberships'
+    user = relationship("app.models.user.User") # Assuming User model has 'team_memberships'
 
 
 class TeamPerformanceMetric(Base):

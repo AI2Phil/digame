@@ -80,13 +80,13 @@ class Tenant(Base):
     
     # Relationships to User, Role, and UserRole models - temporarily disabled back_populates due to registry conflicts
     # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
-    users = relationship("User", foreign_keys="User.tenant_id")
+    users = relationship("app.models.user.User", foreign_keys="app.models.user.User.tenant_id")
     roles = relationship("app.models.rbac.Role")
     # UserRoleAssignment relationship - temporarily disabled due to registry conflicts
     # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
     # user_roles = relationship(UserRoleAssignment, overlaps="tenant")
-    creator = relationship("User", foreign_keys=[created_by], overlaps="users")
-    manager = relationship("User", foreign_keys=[managed_by], overlaps="users")
+    creator = relationship("app.models.user.User", foreign_keys=[created_by], overlaps="users")
+    manager = relationship("app.models.user.User", foreign_keys=[managed_by], overlaps="users")
     
     # Other tenant-specific relationships - temporarily disabled back_populates due to registry conflicts
     # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
@@ -149,7 +149,7 @@ class TenantInvitation(Base):
     # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
     # tenant = relationship("Tenant")
     # Note: User relationship will be handled in user.py
-    # invited_by = relationship("User", foreign_keys=[invited_by_user_id], back_populates="sent_invitations")
+    # invited_by = relationship("app.models.user.User", foreign_keys=[invited_by_user_id], back_populates="sent_invitations")
 
     def __repr__(self):
         return f"<TenantInvitation(email='{self.email}', tenant_id={self.tenant_id})>"
@@ -177,7 +177,7 @@ class TenantAuditLog(Base):
     # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
     # tenant = relationship("Tenant")
     # Note: User relationship will be handled in user.py
-    # user = relationship("User", foreign_keys=[user_id], back_populates="audit_log_entries")
+    # user = relationship("app.models.user.User", foreign_keys=[user_id], back_populates="audit_log_entries")
 
     def __repr__(self):
         return f"<TenantAuditLog(action='{self.action}', tenant_id={self.tenant_id}, user_id={self.user_id})>"

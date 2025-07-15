@@ -4,12 +4,15 @@
 # and to ensure they are registered with Base.metadata for Alembic discovery
 # if env.py imports this models package.
 
-from .user import User
 from app.database import Base # Import Base from the centralized database module
-# Import only specific classes from rbac module to avoid UserRoleAssignment conflicts
-from .rbac import Role, Permission, role_permissions_table
-# Import UserRoleAssignment from centralized imports to resolve registry conflicts
+
+# Import User directly to avoid centralized import conflicts
+from .user import User
 from .imports import UserRoleAssignment, Task
+# Import only specific classes from rbac module to avoid UserRoleAssignment conflicts
+# Permission removed from direct import to resolve registry conflicts - import via app.models.rbac when needed
+from .rbac import Role, role_permissions_table
+# ProcessNote imported directly to avoid centralized import conflicts
 from .process_notes import ProcessNote
 from .imports import Activity, ActivityEnrichedFeature
 from .anomaly import DetectedAnomaly
@@ -75,10 +78,10 @@ from .learning import (
 
 # Optionally, define __all__ to specify what is exported when 'from .models import *' is used
 __all__ = [
-    "User",
+    "User",  # Centralized User import
     "Base",
     "Role",
-    "Permission",
+    # "Permission", # Removed from direct import to resolve registry conflicts - import via app.models.rbac when needed
     "UserRoleAssignment", # Re-added from rbac_imports to resolve registry conflicts
     "role_permissions_table",
     "ProcessNote",

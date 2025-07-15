@@ -42,7 +42,7 @@ class UserOnboardingProgress(Base):
     
     # Relationship to User - temporarily disabled back_populates due to registry conflicts
     # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
-    user = relationship("User")
+    user = relationship("app.models.user.User")
 
     def __repr__(self):
         return f"<UserOnboardingProgress(user_id={self.user_id}, completed={self.completed_all})>"
@@ -115,7 +115,7 @@ class OnboardingAnalytics(Base):
     created_at = Column(DateTime(), default=datetime.utcnow)
     
     # Relationship to User
-    user = relationship("User")
+    user = relationship("app.models.user.User")
 
     def __repr__(self):
         return f"<OnboardingAnalytics(user_id={self.user_id}, step='{self.step_id}')>"
@@ -253,7 +253,7 @@ class OnboardingFeedback(Base):
     created_at = Column(DateTime(), default=datetime.utcnow)
     
     # Relationship to User
-    user = relationship("User")
+    user = relationship("app.models.user.User")
 
     def __repr__(self):
         return f"<OnboardingFeedback(user_id={self.user_id}, rating={self.rating})>"

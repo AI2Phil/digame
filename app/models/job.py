@@ -28,7 +28,7 @@ class Job(Base):
     
     # Temporarily commented out to resolve SQLAlchemy mapper issues
     # # Relationships
-    # user = relationship("User", back_populates="jobs")
+    # user = relationship("app.models.user.User", back_populates="jobs")
     
     def __repr__(self):
         return f"<Job(id={self.id}, user_id={self.user_id}, job_type={self.job_type}, status={self.status})>"

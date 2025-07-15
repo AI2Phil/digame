@@ -12,8 +12,14 @@ from typing import List, Dict
 import logging
 
 from ..models.user import User
-from ..models.rbac import Role, Permission
+from ..models.rbac import Role
 from ..crud.user_crud import create_user, get_user_by_email
+
+# Dynamic import to avoid registry conflicts
+def get_permission_model():
+    """Get Permission model dynamically to avoid registry conflicts"""
+    from ..models.rbac import Permission
+    return Permission
 from ..crud.rbac_crud import (
     create_role, create_permission, add_permission_to_role,
     assign_role_to_user, get_role_by_name, get_permission_by_name
@@ -25,7 +31,7 @@ from .config import auth_settings, Permissions, Roles
 # Configure logging
 logger = logging.getLogger(__name__)
 
-def create_default_permissions(db: Session) -> Dict[str, Permission]:
+def create_default_permissions(db: Session):
     """
     Create default permissions in the database
     
@@ -106,7 +112,7 @@ def create_default_permissions(db: Session) -> Dict[str, Permission]:
     
     return permissions
 
-def create_default_roles(db: Session, permissions: Dict[str, Permission]) -> Dict[str, Role]:
+def create_default_roles(db: Session, permissions) -> Dict[str, Role]:
     """
     Create default roles and assign permissions
     
@@ -305,6 +311,7 @@ def reset_auth_database(db: Session) -> bool:
         db.query(Role).delete()
         
         # Delete all permissions
+        Permission = get_permission_model()
         db.query(Permission).delete()
         
         db.commit()

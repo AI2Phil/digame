@@ -43,7 +43,7 @@ class MFADevice(Base):
     disabled_at = Column(DateTime, nullable=True)
     
     # Relationships
-    user = relationship("User")
+    user = relationship("app.models.user.User")
     
     def __repr__(self):
         return f"<MFADevice(id={self.id}, user_id={self.user_id}, type='{self.device_type}')>"
@@ -87,7 +87,7 @@ class SecurityEvent(Base):
     created_at = Column(DateTime, default=func.now(), index=True)
     
     # Relationships
-    user = relationship("User")
+    user = relationship("app.models.user.User")
     
     def __repr__(self):
         return f"<SecurityEvent(id={self.id}, type='{self.event_type}', user_id={self.user_id})>"
@@ -121,7 +121,7 @@ class IPRestriction(Base):
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
     
     # Relationships
-    user = relationship("User")
+    user = relationship("app.models.user.User")
     
     def __repr__(self):
         return f"<IPRestriction(id={self.id}, user_id={self.user_id}, ip='{self.ip_address}')>"
@@ -195,7 +195,7 @@ class SessionToken(Base):
     revoked_at = Column(DateTime, nullable=True)
     
     # Relationships
-    user = relationship("User")
+    user = relationship("app.models.user.User")
     
     def __repr__(self):
         return f"<SessionToken(id={self.id}, user_id={self.user_id}, type='{self.token_type}')>"
@@ -239,7 +239,7 @@ class ThreatDetection(Base):
     resolved_at = Column(DateTime, nullable=True)
     
     # Relationships
-    user = relationship("User")
+    user = relationship("app.models.user.User")
     
     def __repr__(self):
         return f"<ThreatDetection(id={self.id}, type='{self.threat_type}', level='{self.threat_level}')>"
@@ -279,7 +279,7 @@ class AuditLog(Base):
     created_at = Column(DateTime, default=func.now(), index=True)
     
     # Relationships
-    user = relationship("User")
+    user = relationship("app.models.user.User")
     
     def __repr__(self):
         return f"<AuditLog(id={self.id}, action='{self.action}', user_id={self.user_id})>"

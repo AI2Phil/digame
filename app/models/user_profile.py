@@ -23,7 +23,7 @@ class UserProfile(Base):
     updated_at = Column(DateTime(), default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # Relationship back to User (One-to-One)
-    user = relationship("User", foreign_keys=[user_id])
+    user = relationship("app.models.user.User", foreign_keys=[user_id])
 
     def __repr__(self):
         return f"<UserProfile(id={self.id}, user_id={self.user_id})>"

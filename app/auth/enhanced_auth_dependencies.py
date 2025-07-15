@@ -18,8 +18,14 @@ import logging
 from .auth_service import auth_service
 from .jwt_handler import get_token_expiry_info
 from ..models.user import User
-from ..models.rbac import Role, Permission
+from ..models.rbac import Role
 from ..schemas.user_schemas import User as UserSchema
+
+# Dynamic import to avoid registry conflicts
+def get_permission_model():
+    """Get Permission model dynamically to avoid registry conflicts"""
+    from ..models.rbac import Permission
+    return Permission
 from ..services.rbac_service import user_has_permission, get_user_permissions
 from ..db import get_db
 

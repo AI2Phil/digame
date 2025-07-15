@@ -80,9 +80,9 @@ class Notification(Base):
     expires_at = Column(DateTime, nullable=True)  # Auto-dismiss after this time
     
     # Relationships
-    recipient = relationship("User", foreign_keys=[recipient_id])
+    recipient = relationship("app.models.user.User", foreign_keys=[recipient_id])
     # tenant = relationship("Tenant")  # Temporarily disabled due to registry conflicts
-    user_context = relationship("User", foreign_keys=[user_context_id])
+    user_context = relationship("app.models.user.User", foreign_keys=[user_context_id])
     
     def __repr__(self):
         return f"<Notification(id={self.id}, type='{self.notification_type}', priority='{self.priority}')>"
@@ -164,7 +164,7 @@ class NotificationPreference(Base):
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
     
     # Relationships
-    user = relationship("User")
+    user = relationship("app.models.user.User")
     
     def __repr__(self):
         return f"<NotificationPreference(id={self.id}, user_id={self.user_id})>"

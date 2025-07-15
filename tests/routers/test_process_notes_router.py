@@ -10,9 +10,16 @@ pytestmark = pytest.mark.forked
 
 from app.main import app # Main FastAPI application
 from app.auth.auth_dependencies import get_current_active_user # For overriding
-from app.models.user import User as SQLAlchemyUser
 from app.models.process_notes import ProcessNote as SQLAlchemyProcessNote
 from app.schemas.process_note_schemas import ProcessNoteResponse, ProcessDiscoveryResponse
+
+# Dynamic import to avoid registry conflicts
+def get_user_model():
+    """Get User model dynamically to avoid registry conflicts"""
+    from app.models.user import User
+    return User
+
+SQLAlchemyUser = get_user_model()
 
 # Fixtures test_admin_user, test_non_admin_user, db_session_test are from conftest.py
 client = TestClient(app)

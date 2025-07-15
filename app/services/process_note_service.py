@@ -283,7 +283,8 @@ async def main_test(): # Made async
     from sqlalchemy.orm import sessionmaker
     # from app.models.user import Base as AppBase # To create tables if needed
     # Need to ensure models are loaded for Base.metadata
-    from ..models import Base as AppBase, User as AppUser, Activity as AppActivity, ProcessNote as AppProcessNote
+    from ..models import Base as AppBase, User as AppUser, Activity as AppActivity
+    from ..models.process_notes import ProcessNote as AppProcessNote
     import json # For user_setting_crud mock or real data
 
     DATABASE_URL_TEST = "sqlite:///:memory:" # Example, use your actual test DB URL

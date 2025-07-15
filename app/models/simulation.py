@@ -95,7 +95,7 @@ class Simulation(Base):
     
     # Relationships
     # tenant = relationship("Tenant")  # Temporarily disabled due to registry conflicts
-    creator = relationship("User")
+    creator = relationship("app.models.user.User")
     scenarios = relationship("Scenario", back_populates="simulation", cascade="all, delete-orphan")
     decisions = relationship("DecisionAnalysis", back_populates="simulation", cascade="all, delete-orphan")
     risk_assessments = relationship("RiskAssessment", back_populates="simulation", cascade="all, delete-orphan")
@@ -302,7 +302,7 @@ class StrategicPlan(Base):
     
     # Relationships
     # tenant = relationship("Tenant")  # Temporarily disabled due to registry conflicts
-    creator = relationship("User")
+    creator = relationship("app.models.user.User")
     
     def __repr__(self):
         return f"<StrategicPlan(id={self.id}, name='{self.plan_name}', status='{self.status}')>"
@@ -347,7 +347,7 @@ class SimulationTemplate(Base):
     
     # Relationships
     # tenant = relationship("Tenant")  # Temporarily disabled due to registry conflicts
-    creator = relationship("User")
+    creator = relationship("app.models.user.User")
     
     def __repr__(self):
         return f"<SimulationTemplate(id={self.id}, name='{self.name}', type='{self.simulation_type}')>"

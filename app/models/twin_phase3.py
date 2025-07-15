@@ -121,7 +121,7 @@ class TwinTeamMember(Base):
     # Relationships
     team = relationship("TwinTeam", back_populates="members")
     twin = relationship("DigitalTwin")
-    user = relationship("User")
+    user = relationship("app.models.user.User")
 
     # Indexes
     __table_args__ = (

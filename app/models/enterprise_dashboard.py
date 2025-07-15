@@ -75,7 +75,7 @@ class EnterpriseDashboard(Base):  # type: ignore
     
     # Relationships
     # tenant = relationship("Tenant")  # Temporarily disabled due to registry conflicts
-    creator = relationship("User")
+    creator = relationship("app.models.user.User")
     widgets = relationship("DashboardWidget", back_populates="dashboard", cascade="all, delete-orphan")
     
     def __repr__(self):
@@ -236,8 +236,8 @@ class DashboardAlert(Base):  # type: ignore
     
     # Relationships
     # tenant = relationship("Tenant")  # Temporarily disabled due to registry conflicts
-    creator = relationship("User", foreign_keys=[created_by])
-    acknowledger = relationship("User", foreign_keys=[acknowledged_by])
+    creator = relationship("app.models.user.User", foreign_keys=[created_by])
+    acknowledger = relationship("app.models.user.User", foreign_keys=[acknowledged_by])
     
     def __repr__(self):
         return f"<DashboardAlert(id={self.id}, name='{self.alert_name}', severity='{self.severity}')>"
@@ -284,7 +284,7 @@ class EnterpriseFeatureUsage(Base):  # type: ignore
     
     # Relationships
     # tenant = relationship("Tenant")  # Temporarily disabled due to registry conflicts
-    user = relationship("User")
+    user = relationship("app.models.user.User")
     
     def __repr__(self):
         return f"<EnterpriseFeatureUsage(id={self.id}, feature='{self.feature_name}', action='{self.action}')>"
@@ -341,7 +341,7 @@ class DashboardExport(Base):  # type: ignore
     # Relationships
     # tenant = relationship("Tenant")  # Temporarily disabled due to registry conflicts
     dashboard = relationship("EnterpriseDashboard")
-    creator = relationship("User")
+    creator = relationship("app.models.user.User")
     
     def __repr__(self):
         return f"<DashboardExport(id={self.id}, name='{self.export_name}', format='{self.export_format}')>"

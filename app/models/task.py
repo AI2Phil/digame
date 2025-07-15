@@ -30,7 +30,7 @@ class Task(Base):
     updated_at = Column(DateTime(), server_default=func.now(), onupdate=func.now(), nullable=False)
 
     # Relationship to User model
-    user = relationship("User", foreign_keys=[user_id])
+    user = relationship("User", foreign_keys=[user_id], back_populates="tasks")
     
     # Relationship to ProcessNote model (optional)
     process_note = relationship("ProcessNote")

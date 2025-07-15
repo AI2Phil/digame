@@ -35,7 +35,7 @@ class DigitalTwin(Base):  # type: ignore
 
     # Relationships - temporarily disabled back_populates due to registry conflicts
     # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
-    user = relationship("User")
+    user = relationship("app.models.user.User")
     activity_patterns = relationship("ActivityPattern", back_populates="twin", cascade="all, delete-orphan")
     behavioral_learning = relationship("BehavioralLearning", back_populates="twin", cascade="all, delete-orphan")
     prediction_models = relationship("PredictionModel", back_populates="twin", cascade="all, delete-orphan")
