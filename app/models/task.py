@@ -29,11 +29,13 @@ class Task(Base):
     created_at = Column(DateTime(), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(), server_default=func.now(), onupdate=func.now(), nullable=False)
 
-    # Relationship to User model
-    user = relationship("User", foreign_keys=[user_id], back_populates="tasks")
+    # Relationship to User model - temporarily disabled due to registry conflicts
+    # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
+    # user = relationship("app.models.user.User", foreign_keys=[user_id], back_populates="tasks")
     
-    # Relationship to ProcessNote model (optional)
-    process_note = relationship("ProcessNote")
+    # Relationship to ProcessNote model (optional) - temporarily disabled due to registry conflicts
+    # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
+    # process_note = relationship("app.models.process_notes.ProcessNote")
 
     # New fields for Smart Scheduling & Calendar Management
     estimated_effort_hours = Column(Float(), nullable=True)
@@ -43,7 +45,7 @@ class Task(Base):
     calendar_event_id = Column(String(255), nullable=True) # External calendar event ID
 
     # Relationship for assigned resource (can be the same as user_id or different if tasks can be assigned by others)
-    assigned_resource = relationship("User", foreign_keys=[assigned_resource_id])
+    assigned_resource = relationship("app.models.user.User", foreign_keys=[assigned_resource_id])
 
 
     def __repr__(self):

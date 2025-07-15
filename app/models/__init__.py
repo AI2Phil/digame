@@ -12,8 +12,7 @@ from .imports import UserRoleAssignment, Task
 # Import only specific classes from rbac module to avoid UserRoleAssignment conflicts
 # Permission removed from direct import to resolve registry conflicts - import via app.models.rbac when needed
 from .rbac import Role, role_permissions_table
-# ProcessNote imported directly to avoid centralized import conflicts
-from .process_notes import ProcessNote
+# ProcessNote removed from centralized imports to avoid registry conflicts - import directly from process_notes module when needed
 from .imports import Activity, ActivityEnrichedFeature
 from .anomaly import DetectedAnomaly
 from .behavior_model import BehavioralModel, BehavioralPattern # Added behavioral models
@@ -84,7 +83,7 @@ __all__ = [
     # "Permission", # Removed from direct import to resolve registry conflicts - import via app.models.rbac when needed
     "UserRoleAssignment", # Re-added from rbac_imports to resolve registry conflicts
     "role_permissions_table",
-    "ProcessNote",
+    # "ProcessNote", # Removed from centralized imports to avoid registry conflicts - import directly from process_notes module when needed
     "Activity",
     "ActivityEnrichedFeature",
     "DetectedAnomaly",

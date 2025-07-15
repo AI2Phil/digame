@@ -89,11 +89,13 @@ class User(Base):
     # Enhanced relationships for tenant-aware RBAC - using fully qualified module paths to resolve registry conflicts
     user_roles = relationship("app.models.user_role_assignment.UserRoleAssignment", foreign_keys="app.models.user_role_assignment.UserRoleAssignment.user_id", cascade="all, delete-orphan", overlaps="user")
     
-    # Process notes relationship - using simple string reference to resolve registry conflicts
-    process_notes = relationship("ProcessNote", back_populates="user")
+    # Process notes relationship - temporarily disabled due to registry conflicts
+    # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
+    # process_notes = relationship("app.models.process_notes.ProcessNote", back_populates="user")
     
-    # Tasks relationship - using simple string reference to resolve registry conflicts
-    tasks = relationship("Task", back_populates="user", foreign_keys="Task.user_id")
+    # Tasks relationship - temporarily disabled due to registry conflicts
+    # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
+    # tasks = relationship("app.models.task.Task", back_populates="user", foreign_keys="app.models.task.Task.user_id")
     
     def get_roles(self, tenant_id=None):
         """Get roles through user_roles relationship"""

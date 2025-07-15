@@ -284,7 +284,7 @@ async def main_test(): # Made async
     # from app.models.user import Base as AppBase # To create tables if needed
     # Need to ensure models are loaded for Base.metadata
     from ..models import Base as AppBase, User as AppUser, Activity as AppActivity
-    from ..models.process_notes import ProcessNote as AppProcessNote
+    # ProcessNote already imported at top of file as ProcessNote
     import json # For user_setting_crud mock or real data
 
     DATABASE_URL_TEST = "sqlite:///:memory:" # Example, use your actual test DB URL
@@ -360,7 +360,7 @@ async def main_test(): # Made async
 
         # Clear existing activities and notes for these test users to ensure clean run
         test_db_session.query(AppActivity).filter(AppActivity.user_id.in_([1,2])).delete(synchronize_session=False)
-        test_db_session.query(AppProcessNote).filter(AppProcessNote.user_id.in_([1,2])).delete(synchronize_session=False)
+        test_db_session.query(ProcessNote).filter(ProcessNote.user_id.in_([1,2])).delete(synchronize_session=False)
         test_db_session.commit()
 
         # Helper function for safe Activity creation
@@ -418,14 +418,14 @@ async def main_test(): # Made async
 
 
     # Query and print results
-    notes_user1 = test_db_session.query(AppProcessNote).filter(AppProcessNote.user_id == 1).all()
+    notes_user1 = test_db_session.query(ProcessNote).filter(ProcessNote.user_id == 1).all()
     logger.info("\n--- Notes for User 1 ---")
     for note in notes_user1:
         logger.info(f"  Note ID: {note.id}, Task Name: '{note.inferred_task_name}', Steps: '{note.process_steps_description}'")
         logger.info(f"    Occurrences: {note.occurrence_count}, Tags: {note.user_tags}")
         logger.info(f"    FirstObs: {note.first_observed_at}, LastObs: {note.last_observed_at}")
 
-    notes_user2 = test_db_session.query(AppProcessNote).filter(AppProcessNote.user_id == 2).all()
+    notes_user2 = test_db_session.query(ProcessNote).filter(ProcessNote.user_id == 2).all()
     logger.info("\n--- Notes for User 2 ---")
     for note in notes_user2:
         logger.info(f"  Note ID: {note.id}, Task Name: '{note.inferred_task_name}', Steps: '{note.process_steps_description}'")

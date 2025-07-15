@@ -29,8 +29,9 @@ class ProcessNote(Base):
     user_feedback = Column(String(), nullable=True) # e.g., "accurate", "inaccurate"
     user_tags = Column(JSON(), nullable=True) # Array of strings
 
-    # Relationship to User model - using simple string reference to resolve registry conflicts
-    user = relationship("User", back_populates="process_notes")
+    # Relationship to User model - temporarily disabled due to registry conflicts
+    # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
+    # user = relationship("app.models.user.User", back_populates="process_notes")
 
     # Task relationship - temporarily disabled due to registry conflicts
     # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
