@@ -151,7 +151,7 @@ class IntegrationConnection(Base):
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     
     # Relationships
-    tenant = relationship("Tenant")
+    # tenant = relationship("Tenant")  # Temporarily disabled due to registry conflicts
     user = relationship("User")
     provider = relationship("IntegrationProvider", back_populates="connections")
     sync_logs = relationship("IntegrationSyncLog", back_populates="connection", cascade="all, delete-orphan")
@@ -330,7 +330,7 @@ class IntegrationAnalytics(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     
     # Relationships
-    tenant = relationship("Tenant")
+    # tenant = relationship("Tenant")  # Temporarily disabled due to registry conflicts
     connection = relationship("IntegrationConnection")
     
     def __repr__(self):

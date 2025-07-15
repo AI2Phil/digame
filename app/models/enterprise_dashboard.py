@@ -74,7 +74,7 @@ class EnterpriseDashboard(Base):  # type: ignore
     created_by = Column(Integer, ForeignKey("users.id"), nullable=False)  # type: ignore
     
     # Relationships
-    tenant = relationship("Tenant")
+    # tenant = relationship("Tenant")  # Temporarily disabled due to registry conflicts
     creator = relationship("User")
     widgets = relationship("DashboardWidget", back_populates="dashboard", cascade="all, delete-orphan")
     
@@ -182,7 +182,7 @@ class EnterpriseMetric(Base):  # type: ignore
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())  # type: ignore
     
     # Relationships
-    tenant = relationship("Tenant")
+    # tenant = relationship("Tenant")  # Temporarily disabled due to registry conflicts
     
     def __repr__(self):
         return f"<EnterpriseMetric(id={self.id}, name='{self.metric_name}', value={self.value})>"
@@ -235,7 +235,7 @@ class DashboardAlert(Base):  # type: ignore
     created_by = Column(Integer, ForeignKey("users.id"), nullable=False)  # type: ignore
     
     # Relationships
-    tenant = relationship("Tenant")
+    # tenant = relationship("Tenant")  # Temporarily disabled due to registry conflicts
     creator = relationship("User", foreign_keys=[created_by])
     acknowledger = relationship("User", foreign_keys=[acknowledged_by])
     
@@ -283,7 +283,7 @@ class EnterpriseFeatureUsage(Base):  # type: ignore
     timestamp = Column(DateTime(timezone=True), server_default=func.now(), index=True)  # type: ignore
     
     # Relationships
-    tenant = relationship("Tenant")
+    # tenant = relationship("Tenant")  # Temporarily disabled due to registry conflicts
     user = relationship("User")
     
     def __repr__(self):
@@ -339,7 +339,7 @@ class DashboardExport(Base):  # type: ignore
     created_by = Column(Integer, ForeignKey("users.id"), nullable=False)  # type: ignore
     
     # Relationships
-    tenant = relationship("Tenant")
+    # tenant = relationship("Tenant")  # Temporarily disabled due to registry conflicts
     dashboard = relationship("EnterpriseDashboard")
     creator = relationship("User")
     

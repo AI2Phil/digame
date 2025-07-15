@@ -40,7 +40,7 @@ class PlatformUsageMetric(Base):  # type: ignore
     period_end = Column(DateTime, nullable=True)  # type: ignore
     
     # Relationships
-    tenant = relationship("Tenant")
+    # tenant = relationship("Tenant")  # Temporarily disabled due to registry conflicts
     user = relationship("User")
 
     def __repr__(self):
@@ -109,7 +109,7 @@ class PlatformTenantAnalyticsSummary(Base):  # type: ignore
     created_at = Column(DateTime, default=func.now())  # type: ignore
     
     # Relationships
-    tenant = relationship("Tenant")
+    # tenant = relationship("Tenant")  # Temporarily disabled due to registry conflicts
 
     def __repr__(self):
         return f"<TenantAnalyticsSummary(id={self.id}, tenant_id={self.tenant_id}, summary_date={self.summary_date})>"

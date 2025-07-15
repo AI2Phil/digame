@@ -35,8 +35,9 @@ class Role(Base):
     # user_roles = relationship("UserRoleAssignment")
     # users = association_proxy("user_roles", "user")  # Maintains backward compatibility
     
-    # Tenant relationship
-    tenant = relationship("app.models.tenant.Tenant", back_populates="roles")
+    # Tenant relationship - temporarily disabled back_populates due to registry conflicts
+    # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
+    tenant = relationship("app.models.tenant.Tenant")
 
     # Many-to-Many relationship with Permission (unchanged)
     permissions = relationship(

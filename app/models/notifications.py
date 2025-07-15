@@ -81,7 +81,7 @@ class Notification(Base):
     
     # Relationships
     recipient = relationship("User", foreign_keys=[recipient_id])
-    tenant = relationship("Tenant")
+    # tenant = relationship("Tenant")  # Temporarily disabled due to registry conflicts
     user_context = relationship("User", foreign_keys=[user_context_id])
     
     def __repr__(self):

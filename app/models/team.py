@@ -27,7 +27,9 @@ class Team(Base):
     workflows = relationship("TeamWorkflow", back_populates="team", cascade="all, delete-orphan")
     # If there's a direct link to User model for created_by or owner
     created_by_user_id = Column(Integer, ForeignKey("users.id"), nullable=True) # Assuming 'users' table
-    creator = relationship("User", back_populates="created_teams")
+    # Temporarily disabled back_populates due to registry conflicts
+    # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
+    creator = relationship("User")
 
 
 class TeamMember(Base):
@@ -43,7 +45,9 @@ class TeamMember(Base):
     custom_attributes = Column(JSON, nullable=True) # For any additional member-specific info
 
     team = relationship("Team", back_populates="members")
-    user = relationship("User", back_populates="team_memberships") # Assuming User model has 'team_memberships'
+    # Temporarily disabled back_populates due to registry conflicts
+    # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
+    user = relationship("User") # Assuming User model has 'team_memberships'
 
 
 class TeamPerformanceMetric(Base):

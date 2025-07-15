@@ -83,9 +83,10 @@ class CourseEnrollment(Base):
     enrolled_at = Column(DateTime, nullable=False, server_default=func.now())
     updated_at = Column(DateTime, nullable=False, server_default=func.now(), onupdate=func.now())
     
-    # Relationships
-    user = relationship("User", back_populates="course_enrollments")
-    course = relationship("Course", back_populates="enrollments")
+    # Relationships - temporarily disabled back_populates due to registry conflicts
+    # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
+    user = relationship("User")
+    course = relationship("Course")
     
     # Constraints
     __table_args__ = (
@@ -112,8 +113,9 @@ class LearningProgress(Base):
     created_at = Column(DateTime, nullable=False, server_default=func.now())
     updated_at = Column(DateTime, nullable=False, server_default=func.now(), onupdate=func.now())
     
-    # Relationships
-    user = relationship("User", back_populates="learning_progress")
+    # Relationships - temporarily disabled back_populates due to registry conflicts
+    # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
+    user = relationship("User")
     
     # Constraints
     __table_args__ = (
@@ -144,6 +146,7 @@ class LearningRecommendation(Base):
     created_at = Column(DateTime, nullable=False, server_default=func.now())
     updated_at = Column(DateTime, nullable=False, server_default=func.now(), onupdate=func.now())
     
-    # Relationships
-    user = relationship("User", back_populates="learning_recommendations")
-    course = relationship("Course", back_populates="recommendations")
+    # Relationships - temporarily disabled back_populates due to registry conflicts
+    # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
+    user = relationship("User")
+    course = relationship("Course")

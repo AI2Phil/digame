@@ -33,8 +33,9 @@ class DigitalTwin(Base):  # type: ignore
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)  # type: ignore
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)  # type: ignore
 
-    # Relationships
-    user = relationship("User", back_populates="digital_twins")
+    # Relationships - temporarily disabled back_populates due to registry conflicts
+    # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
+    user = relationship("User")
     activity_patterns = relationship("ActivityPattern", back_populates="twin", cascade="all, delete-orphan")
     behavioral_learning = relationship("BehavioralLearning", back_populates="twin", cascade="all, delete-orphan")
     prediction_models = relationship("PredictionModel", back_populates="twin", cascade="all, delete-orphan")

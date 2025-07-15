@@ -95,7 +95,7 @@ class WorkflowTemplate(Base):  # type: ignore
     created_by = Column(Integer, ForeignKey("users.id"), nullable=False)  # type: ignore
     
     # Relationships
-    tenant = relationship("Tenant")
+    # tenant = relationship("Tenant")  # Temporarily disabled due to registry conflicts
     creator = relationship("User")
     workflow_instances = relationship("WorkflowInstance", back_populates="template", cascade="all, delete-orphan")
     
@@ -150,7 +150,7 @@ class WorkflowInstance(Base):  # type: ignore
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())  # type: ignore
     
     # Relationships
-    tenant = relationship("Tenant")
+    # tenant = relationship("Tenant")  # Temporarily disabled due to registry conflicts
     template = relationship("WorkflowTemplate", back_populates="workflow_instances")
     step_executions = relationship("WorkflowStepExecution", back_populates="workflow_instance", cascade="all, delete-orphan")
     
@@ -252,7 +252,7 @@ class AutomationRule(Base):  # type: ignore
     created_by = Column(Integer, ForeignKey("users.id"), nullable=False)  # type: ignore
     
     # Relationships
-    tenant = relationship("Tenant")
+    # tenant = relationship("Tenant")  # Temporarily disabled due to registry conflicts
     workflow_template = relationship("WorkflowTemplate")
     creator = relationship("User")
     
@@ -301,7 +301,7 @@ class WorkflowAction(Base):  # type: ignore
     created_by = Column(Integer, ForeignKey("users.id"))  # type: ignore
     
     # Relationships
-    tenant = relationship("Tenant")
+    # tenant = relationship("Tenant")  # Temporarily disabled due to registry conflicts
     creator = relationship("User")
     
     def __repr__(self):
@@ -349,7 +349,7 @@ class WorkflowIntegration(Base):  # type: ignore
     created_by = Column(Integer, ForeignKey("users.id"), nullable=False)  # type: ignore
     
     # Relationships
-    tenant = relationship("Tenant")
+    # tenant = relationship("Tenant")  # Temporarily disabled due to registry conflicts
     creator = relationship("User")
     
     def __repr__(self):
@@ -396,7 +396,7 @@ class WorkflowReportConfig(Base):  # type: ignore
     created_by = Column(Integer, ForeignKey("users.id"), nullable=False)  # type: ignore
 
     # Relationships
-    tenant = relationship("Tenant")
+    # tenant = relationship("Tenant")  # Temporarily disabled due to registry conflicts
     workflow_template = relationship("WorkflowTemplate") # Add backref in WorkflowTemplate if needed
     # report_definition relationship needs to be established carefully if ReportDefinition is in a different model file.
     # Assuming ReportDefinition is imported and Base is shared, SQLAlchemy can handle this.
@@ -440,7 +440,7 @@ class OptimizationRecommendation(Base):  # type: ignore
     reviewed_by = Column(Integer, ForeignKey("users.id"), nullable=True)  # type: ignore
 
     # Relationships
-    tenant = relationship("Tenant")
+    # tenant = relationship("Tenant")  # Temporarily disabled due to registry conflicts
     workflow_template = relationship("WorkflowTemplate") # Use foreign_keys if multiple FKs to same table exist elsewhere
     workflow_instance = relationship("WorkflowInstance")
     reviewer = relationship("User") # User who reviewed the recommendation

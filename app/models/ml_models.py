@@ -74,8 +74,9 @@ class MLModel(Base):
     last_trained_at = Column(DateTime, nullable=True)
     deployed_at = Column(DateTime, nullable=True)
     
-    # Relationships
-    creator = relationship("User", back_populates="ml_models")
+    # Relationships - temporarily disabled back_populates due to registry conflicts
+    # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
+    creator = relationship("User")
     training_jobs = relationship("TrainingJob", back_populates="model", cascade="all, delete-orphan")
     predictions = relationship("ModelPrediction", back_populates="model", cascade="all, delete-orphan")
     evaluations = relationship("ModelEvaluation", back_populates="model", cascade="all, delete-orphan")
@@ -127,9 +128,10 @@ class TrainingJob(Base):
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
     
-    # Relationships
-    model = relationship("MLModel", back_populates="training_jobs")
-    creator = relationship("User", back_populates="training_jobs")
+    # Relationships - temporarily disabled back_populates due to registry conflicts
+    # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
+    model = relationship("MLModel")
+    creator = relationship("User")
 
     def __repr__(self):
         return f"<TrainingJob(id={self.id}, model_id={self.model_id}, status='{self.status}')>"
@@ -166,9 +168,10 @@ class ModelPrediction(Base):
     created_by = Column(Integer, ForeignKey("users.id"), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     
-    # Relationships
-    model = relationship("MLModel", back_populates="predictions")
-    creator = relationship("User", back_populates="predictions")
+    # Relationships - temporarily disabled back_populates due to registry conflicts
+    # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
+    model = relationship("MLModel")
+    creator = relationship("User")
 
     def __repr__(self):
         return f"<ModelPrediction(id={self.id}, model_id={self.model_id}, prediction_id='{self.prediction_id}')>"
@@ -208,8 +211,10 @@ class ModelEvaluation(Base):
     evaluated_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     
     # Relationships
-    model = relationship("MLModel", back_populates="evaluations")
-    evaluator = relationship("User", back_populates="model_evaluations")
+    model = relationship("MLModel")
+    # Temporarily disabled back_populates due to registry conflicts
+    # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
+    evaluator = relationship("User")
 
     def __repr__(self):
         return f"<ModelEvaluation(id={self.id}, model_id={self.model_id}, name='{self.evaluation_name}')>"
@@ -249,8 +254,10 @@ class ModelDeployment(Base):
     last_health_check = Column(DateTime, nullable=True)
     
     # Relationships
-    model = relationship("MLModel", back_populates="deployments")
-    deployer = relationship("User", back_populates="model_deployments")
+    model = relationship("MLModel")
+    # Temporarily disabled back_populates due to registry conflicts
+    # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
+    deployer = relationship("User")
 
     def __repr__(self):
         return f"<ModelDeployment(id={self.id}, model_id={self.model_id}, name='{self.deployment_name}')>"
@@ -285,8 +292,9 @@ class DatasetMetadata(Base):
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
     
-    # Relationships
-    creator = relationship("User", back_populates="datasets")
+    # Relationships - temporarily disabled back_populates due to registry conflicts
+    # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
+    creator = relationship("User")
 
     def __repr__(self):
         return f"<DatasetMetadata(id={self.id}, name='{self.name}', format='{self.format}')>"
@@ -321,8 +329,9 @@ class ExperimentRun(Base):
     tags = Column(JSON, nullable=True)  # For organization and filtering
     notes = Column(Text, nullable=True)
     
-    # Relationships
-    creator = relationship("User", back_populates="experiment_runs")
+    # Relationships - temporarily disabled back_populates due to registry conflicts
+    # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
+    creator = relationship("User")
 
     def __repr__(self):
         return f"<ExperimentRun(id={self.id}, experiment='{self.experiment_name}', run='{self.run_name}')>"

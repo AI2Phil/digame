@@ -40,8 +40,9 @@ class UserOnboardingProgress(Base):
     completed_at = Column(DateTime(), nullable=True)
     last_updated = Column(DateTime(), default=datetime.utcnow, onupdate=datetime.utcnow)
     
-    # Relationship to User
-    user = relationship("User", back_populates="onboarding_progress")
+    # Relationship to User - temporarily disabled back_populates due to registry conflicts
+    # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
+    user = relationship("User")
 
     def __repr__(self):
         return f"<UserOnboardingProgress(user_id={self.user_id}, completed={self.completed_all})>"

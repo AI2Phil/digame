@@ -78,19 +78,21 @@ class Tenant(Base):
     phone = Column(String(50), nullable=True)
     address = Column(Text, nullable=True)
     
-    # Relationships to User, Role, and UserRole models - optimized for registry resolution
+    # Relationships to User, Role, and UserRole models - temporarily disabled back_populates due to registry conflicts
+    # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
     users = relationship("User", foreign_keys="User.tenant_id")
-    roles = relationship("app.models.rbac.Role", back_populates="tenant")
+    roles = relationship("app.models.rbac.Role")
     # UserRoleAssignment relationship - temporarily disabled due to registry conflicts
     # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
     # user_roles = relationship(UserRoleAssignment, overlaps="tenant")
     creator = relationship("User", foreign_keys=[created_by], overlaps="users")
     manager = relationship("User", foreign_keys=[managed_by], overlaps="users")
     
-    # Other tenant-specific relationships
-    tenant_configurations = relationship("TenantSettings", back_populates="tenant", cascade="all, delete-orphan")
-    invitations = relationship("TenantInvitation", back_populates="tenant", cascade="all, delete-orphan")
-    audit_logs = relationship("TenantAuditLog", back_populates="tenant", cascade="all, delete-orphan")
+    # Other tenant-specific relationships - temporarily disabled back_populates due to registry conflicts
+    # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
+    tenant_configurations = relationship("TenantSettings", cascade="all, delete-orphan")
+    invitations = relationship("TenantInvitation", cascade="all, delete-orphan")
+    audit_logs = relationship("TenantAuditLog", cascade="all, delete-orphan")
 
     def __repr__(self):
         return f"<Tenant(id={self.id}, name='{self.name}', domain='{self.domain}')>"
@@ -118,7 +120,9 @@ class TenantSettings(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
-    tenant = relationship("Tenant", back_populates="tenant_configurations")
+    # Relationships - temporarily disabled back_populates due to registry conflicts
+    # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
+    # tenant = relationship("Tenant")
 
     def __repr__(self):
         return f"<TenantSettings(tenant_id={self.tenant_id}, category='{self.category}', key='{self.key}')>"
@@ -141,7 +145,9 @@ class TenantInvitation(Base):
     accepted_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
-    tenant = relationship("Tenant", back_populates="invitations")
+    # Relationships - temporarily disabled back_populates due to registry conflicts
+    # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
+    # tenant = relationship("Tenant")
     # Note: User relationship will be handled in user.py
     # invited_by = relationship("User", foreign_keys=[invited_by_user_id], back_populates="sent_invitations")
 
@@ -167,7 +173,9 @@ class TenantAuditLog(Base):
     user_agent = Column(Text, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), index=True)
 
-    tenant = relationship("Tenant", back_populates="audit_logs")
+    # Relationships - temporarily disabled back_populates due to registry conflicts
+    # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
+    # tenant = relationship("Tenant")
     # Note: User relationship will be handled in user.py
     # user = relationship("User", foreign_keys=[user_id], back_populates="audit_log_entries")
 

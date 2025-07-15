@@ -175,13 +175,14 @@ class User(Base):
     #     cascade="all, delete-orphan"
     # )
 
-    # Relationship to UserOnboardingProgress (One-to-One)
-    onboarding_progress = relationship(
-        "UserOnboardingProgress",
-        back_populates="user",
-        uselist=False,
-        cascade="all, delete-orphan"
-    )
+    # Relationship to UserOnboardingProgress (One-to-One) - temporarily disabled due to registry conflicts
+    # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
+    # onboarding_progress = relationship(
+    #     "UserOnboardingProgress",
+    #     back_populates="user",
+    #     uselist=False,
+    #     cascade="all, delete-orphan"
+    # )
     
     # Relationship to DigitalTwinProfile (One-to-One)
     # Temporarily commented out due to import issues
@@ -192,12 +193,13 @@ class User(Base):
     #     cascade="all, delete-orphan"
     # )
 
-    # Digital Twin relationship (One-to-Many)
-    digital_twins = relationship(
-        "DigitalTwin",
-        back_populates="user",
-        cascade="all, delete-orphan"
-    )
+    # Digital Twin relationship (One-to-Many) - temporarily disabled due to registry conflicts
+    # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
+    # digital_twins = relationship(
+    #     "DigitalTwin",
+    #     back_populates="user",
+    #     cascade="all, delete-orphan"
+    # )
 
     # Temporarily commented out to resolve SQLAlchemy mapper issues
     # # Relationships for messages
@@ -214,32 +216,37 @@ class User(Base):
     #     cascade="all, delete-orphan"
     # )
 
-    # Relationships for Team Collaboration
-    team_memberships = relationship("TeamMember", back_populates="user", cascade="all, delete-orphan")
-    # If User can create teams (e.g. created_by_user_id in Team model)
-    created_teams = relationship("Team", back_populates="creator", cascade="all, delete-orphan")
+    # Relationships for Team Collaboration - temporarily disabled due to registry conflicts
+    # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
+    # team_memberships = relationship("TeamMember", back_populates="user", cascade="all, delete-orphan")
+    # If User can create teams (e.g. created_by_user_id in Team model) - temporarily disabled due to registry conflicts
+    # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
+    # created_teams = relationship("Team", back_populates="creator", cascade="all, delete-orphan")
 
-    # ML Model relationships
-    ml_models = relationship("MLModel", back_populates="creator", cascade="all, delete-orphan")
-    training_jobs = relationship("TrainingJob", back_populates="creator", cascade="all, delete-orphan")
-    predictions = relationship("ModelPrediction", back_populates="creator", cascade="all, delete-orphan")
-    model_evaluations = relationship("ModelEvaluation", back_populates="evaluator", cascade="all, delete-orphan")
-    model_deployments = relationship("ModelDeployment", back_populates="deployer", cascade="all, delete-orphan")
-    datasets = relationship("DatasetMetadata", back_populates="creator", cascade="all, delete-orphan")
-    experiment_runs = relationship("ExperimentRun", back_populates="creator", cascade="all, delete-orphan")
+    # ML Model relationships - temporarily disabled due to registry conflicts
+    # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
+    # ml_models = relationship("MLModel", back_populates="creator", cascade="all, delete-orphan")
+    # training_jobs = relationship("TrainingJob", back_populates="creator", cascade="all, delete-orphan")
+    # predictions = relationship("ModelPrediction", back_populates="creator", cascade="all, delete-orphan")
+    # model_evaluations = relationship("ModelEvaluation", back_populates="evaluator", cascade="all, delete-orphan")
+    # model_deployments = relationship("ModelDeployment", back_populates="deployer", cascade="all, delete-orphan")
+    # datasets = relationship("DatasetMetadata", back_populates="creator", cascade="all, delete-orphan")
+    # experiment_runs = relationship("ExperimentRun", back_populates="creator", cascade="all, delete-orphan")
 
-    # Social Networking relationships
-    connections_initiated = relationship("UserConnection", foreign_keys="UserConnection.user_id", back_populates="user", cascade="all, delete-orphan")
-    connections_received = relationship("UserConnection", foreign_keys="UserConnection.connected_user_id", back_populates="connected_user", cascade="all, delete-orphan")
-    peer_matches_initiated = relationship("PeerMatch", foreign_keys="PeerMatch.user_id", back_populates="user", cascade="all, delete-orphan")
-    peer_matches_received = relationship("PeerMatch", foreign_keys="PeerMatch.matched_user_id", back_populates="matched_user", cascade="all, delete-orphan")
-    social_metrics = relationship("SocialMetrics", back_populates="user", uselist=False, cascade="all, delete-orphan")
-    skills = relationship("UserSkill", back_populates="user", cascade="all, delete-orphan")
+    # Social Networking relationships - temporarily disabled entirely due to registry conflicts
+    # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
+    # connections_initiated = relationship("UserConnection", foreign_keys="UserConnection.user_id", cascade="all, delete-orphan")
+    # connections_received = relationship("UserConnection", foreign_keys="UserConnection.connected_user_id", cascade="all, delete-orphan")
+    # peer_matches_initiated = relationship("PeerMatch", foreign_keys="PeerMatch.user_id", cascade="all, delete-orphan")
+    # peer_matches_received = relationship("PeerMatch", foreign_keys="PeerMatch.matched_user_id", cascade="all, delete-orphan")
+    # social_metrics = relationship("SocialMetrics", uselist=False, cascade="all, delete-orphan")
+    # skills = relationship("UserSkill", cascade="all, delete-orphan")
 
-    # Learning & Development relationships
-    course_enrollments = relationship("CourseEnrollment", back_populates="user", cascade="all, delete-orphan")
-    learning_progress = relationship("LearningProgress", back_populates="user", cascade="all, delete-orphan")
-    learning_recommendations = relationship("LearningRecommendation", back_populates="user", cascade="all, delete-orphan")
+    # Learning & Development relationships - temporarily disabled due to registry conflicts
+    # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
+    # course_enrollments = relationship("CourseEnrollment", back_populates="user", cascade="all, delete-orphan")
+    # learning_progress = relationship("LearningProgress", back_populates="user", cascade="all, delete-orphan")
+    # learning_recommendations = relationship("LearningRecommendation", back_populates="user", cascade="all, delete-orphan")
 
     def __repr__(self):
         return f"<User(id={self.id}, username='{self.username}', email='{self.email}')>"

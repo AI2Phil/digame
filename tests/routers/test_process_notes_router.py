@@ -4,6 +4,10 @@ from sqlalchemy.orm import Session
 from unittest.mock import patch, MagicMock
 from fastapi import status
 
+# Apply process isolation for process notes router tests to prevent registry conflicts
+# This ensures each test runs in a separate process, preventing UserOnboardingProgress mapping issues
+pytestmark = pytest.mark.forked
+
 from app.main import app # Main FastAPI application
 from app.auth.auth_dependencies import get_current_active_user # For overriding
 from app.models.user import User as SQLAlchemyUser

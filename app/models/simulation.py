@@ -94,7 +94,7 @@ class Simulation(Base):
     created_by = Column(Integer, ForeignKey("users.id"), nullable=False)
     
     # Relationships
-    tenant = relationship("Tenant")
+    # tenant = relationship("Tenant")  # Temporarily disabled due to registry conflicts
     creator = relationship("User")
     scenarios = relationship("Scenario", back_populates="simulation", cascade="all, delete-orphan")
     decisions = relationship("DecisionAnalysis", back_populates="simulation", cascade="all, delete-orphan")
@@ -301,7 +301,7 @@ class StrategicPlan(Base):
     created_by = Column(Integer, ForeignKey("users.id"), nullable=False)
     
     # Relationships
-    tenant = relationship("Tenant")
+    # tenant = relationship("Tenant")  # Temporarily disabled due to registry conflicts
     creator = relationship("User")
     
     def __repr__(self):
@@ -346,7 +346,7 @@ class SimulationTemplate(Base):
     created_by = Column(Integer, ForeignKey("users.id"), nullable=False)
     
     # Relationships
-    tenant = relationship("Tenant")
+    # tenant = relationship("Tenant")  # Temporarily disabled due to registry conflicts
     creator = relationship("User")
     
     def __repr__(self):
