@@ -45,8 +45,9 @@ def test_db_engine():
         echo=False,  # Set to True for SQL debugging
     )
     
-    # Create all tables from fresh metadata
-    Base.metadata.create_all(engine)
+    # Create all tables using safe utilities to handle index conflicts
+    from app.utils.database_utils import safe_create_all_tables
+    safe_create_all_tables(Base.metadata, engine, checkfirst=True)
     
     yield engine
     
@@ -54,7 +55,7 @@ def test_db_engine():
     engine.dispose()
 
 @pytest.fixture(scope="function")
-def test_db_session(test_db_engine):
+def test_test_db_session(test_db_engine):
     """Create a fresh database session for each test"""
     SessionLocal = scoped_session(sessionmaker(bind=test_db_engine))
     session = SessionLocal()
@@ -66,13 +67,13 @@ def test_db_session(test_db_engine):
         SessionLocal.remove()
 
 @pytest.fixture(scope="function")
-def client(test_db_session):
+def client(test_test_db_session):
     """Create FastAPI test client with isolated database"""
     def override_get_db():
         try:
-            yield test_db_session
+            yield test_test_db_session
         finally:
-            pass  # Session cleanup handled by test_db_session fixture
+            pass  # Session cleanup handled by test_test_db_session fixture
     
     app.dependency_overrides[get_db] = override_get_db
     
@@ -124,10 +125,10 @@ class UserFactory:
         return user
 
 @pytest.fixture
-def test_admin_user(db_session):
-    """Create admin user using UserFactory to bypass registry conflicts"""
+def test_admin_user(test_test_db_session):
+    """Create admin user using UserFactory with database-level isolation"""
     user = UserFactory.create_user(
-        db_session,
+        test_test_db_session,
         username="admin_test",
         email="admin_test@example.com",
         hashed_password="hashed_password",
@@ -151,10 +152,10 @@ def test_admin_user(db_session):
     return user
 
 @pytest.fixture
-def test_non_admin_user(db_session):
-    """Create non-admin user using UserFactory to bypass registry conflicts"""
+def test_non_admin_user(test_test_db_session):
+    """Create non-admin user using UserFactory with database-level isolation"""
     user = UserFactory.create_user(
-        db_session,
+        test_test_db_session,
         username="non_admin_test",
         email="non_admin_test@example.com",
         hashed_password="hashed_password",
@@ -214,7 +215,7 @@ def get_non_admin_auth_headers(client: TestClient, user_email: str = "non_admin_
 
 # --- Role Endpoint Tests ---
 
-def test_create_role_as_admin(client: TestClient, db_session: Session, test_admin_user: SQLAlchemyUser):
+def test_create_role_as_admin(client: TestClient, test_test_db_session: Session, test_admin_user: SQLAlchemyUser):
     # Override the dependency to simulate an admin user
     # This ensures the test_admin_user from conftest (which has the perm) is "logged in"
     def override_get_admin():
@@ -233,7 +234,7 @@ def test_create_role_as_admin(client: TestClient, db_session: Session, test_admi
     # Clean up override
     app.dependency_overrides.clear()
 
-def test_create_role_duplicate_name(client: TestClient, db_session: Session, test_admin_user: SQLAlchemyUser):
+def test_create_role_duplicate_name(client: TestClient, test_test_db_session: Session, test_admin_user: SQLAlchemyUser):
     app.dependency_overrides[get_current_active_admin_user] = lambda: test_admin_user
     
     client.post("/admin/rbac/roles/", json={"name": "Unique Role 1", "description": "First role"}) # Create first
@@ -270,7 +271,7 @@ def test_create_role_as_non_admin(client: TestClient, test_non_admin_user: SQLAl
     assert response.status_code == status.HTTP_403_FORBIDDEN # Expect Forbidden
     app.dependency_overrides.clear()
 
-def test_read_roles_as_admin(client: TestClient, db_session: Session, test_admin_user: SQLAlchemyUser):
+def test_read_roles_as_admin(client: TestClient, test_test_db_session: Session, test_admin_user: SQLAlchemyUser):
     app.dependency_overrides[get_current_active_admin_user] = lambda: test_admin_user
     # Create a role first to ensure there's data
     client.post("/admin/rbac/roles/", json={"name": "RoleForReadTest", "description": "Test role for reading"})
@@ -282,7 +283,7 @@ def test_read_roles_as_admin(client: TestClient, db_session: Session, test_admin
     assert any(item["name"] == "RoleForReadTest" for item in data)
     app.dependency_overrides.clear()
 
-def test_read_single_role_as_admin(client: TestClient, db_session: Session, test_admin_user: SQLAlchemyUser):
+def test_read_single_role_as_admin(client: TestClient, test_test_db_session: Session, test_admin_user: SQLAlchemyUser):
     app.dependency_overrides[get_current_active_admin_user] = lambda: test_admin_user
     
     create_response = client.post("/admin/rbac/roles/", json={"name": "Specific Role", "description": "Details here"})
@@ -295,7 +296,7 @@ def test_read_single_role_as_admin(client: TestClient, db_session: Session, test
     assert data["id"] == role_id
     app.dependency_overrides.clear()
 
-def test_update_role_as_admin(client: TestClient, db_session: Session, test_admin_user: SQLAlchemyUser):
+def test_update_role_as_admin(client: TestClient, test_test_db_session: Session, test_admin_user: SQLAlchemyUser):
     app.dependency_overrides[get_current_active_admin_user] = lambda: test_admin_user
     
     create_response = client.post("/admin/rbac/roles/", json={"name": "RoleToUpdate", "description": "Initial desc"})
@@ -310,7 +311,7 @@ def test_update_role_as_admin(client: TestClient, db_session: Session, test_admi
     assert data["description"] == update_data["description"]
     app.dependency_overrides.clear()
 
-def test_delete_role_as_admin(client: TestClient, db_session: Session, test_admin_user: SQLAlchemyUser):
+def test_delete_role_as_admin(client: TestClient, test_test_db_session: Session, test_admin_user: SQLAlchemyUser):
     app.dependency_overrides[get_current_active_admin_user] = lambda: test_admin_user
     
     create_response = client.post("/admin/rbac/roles/", json={"name": "RoleToDelete", "description": "Delete me"})
@@ -360,14 +361,14 @@ def test_create_permission_as_non_admin(client: TestClient, test_non_admin_user:
 # --- Assignment Endpoint Tests ---
 
 @pytest.fixture
-def setup_user_and_role_for_assignment(client: TestClient, db_session: Session, test_admin_user: SQLAlchemyUser):
+def setup_user_and_role_for_assignment(client: TestClient, test_test_db_session: Session, test_admin_user: SQLAlchemyUser):
     app.dependency_overrides[get_current_active_admin_user] = lambda: test_admin_user
     
     # Create a user directly in DB for assignment using UserFactory
-    target_user = db_session.query(SQLAlchemyUser).filter_by(email="assign_target@example.com").first()
+    target_user = test_db_session.query(SQLAlchemyUser).filter_by(email="assign_target@example.com").first()
     if not target_user:
         target_user = UserFactory.create_user(
-            db_session,
+            test_db_session,
             username="assign_target",
             email="assign_target@example.com",
             hashed_password="xxx",
@@ -384,7 +385,7 @@ def setup_user_and_role_for_assignment(client: TestClient, db_session: Session, 
     
     app.dependency_overrides.clear() # Clean up after yield
 
-def test_assign_role_to_user_as_admin(client: TestClient, setup_user_and_role_for_assignment: tuple, db_session: Session):
+def test_assign_role_to_user_as_admin(client: TestClient, setup_user_and_role_for_assignment: tuple, test_test_db_session: Session):
     user_id, role_name = setup_user_and_role_for_assignment
     
     assignment_data = {"user_id": user_id, "role_name": role_name}
@@ -395,7 +396,7 @@ def test_assign_role_to_user_as_admin(client: TestClient, setup_user_and_role_fo
     assert any(role["name"] == role_name for role in data["roles"])
     
     # Verify in DB
-    user_in_db = db_session.query(SQLAlchemyUser).filter_by(id=user_id).one()
+    user_in_db = test_db_session.query(SQLAlchemyUser).filter_by(id=user_id).one()
     assert any(role.name == role_name for role in user_in_db.roles)
 
 def test_assign_role_to_user_non_existent_role(client: TestClient, test_admin_user: SQLAlchemyUser):
@@ -406,7 +407,7 @@ def test_assign_role_to_user_non_existent_role(client: TestClient, test_admin_us
     assert response.status_code == status.HTTP_404_NOT_FOUND # Role not found
     app.dependency_overrides.clear()
 
-def test_remove_role_from_user_as_admin(client: TestClient, setup_user_and_role_for_assignment: tuple, db_session: Session):
+def test_remove_role_from_user_as_admin(client: TestClient, setup_user_and_role_for_assignment: tuple, test_test_db_session: Session):
     user_id, role_name = setup_user_and_role_for_assignment
     
     # First, assign the role
@@ -421,7 +422,7 @@ def test_remove_role_from_user_as_admin(client: TestClient, setup_user_and_role_
     assert not any(role["name"] == role_name for role in data["roles"])
 
     # Verify in DB
-    user_in_db = db_session.query(SQLAlchemyUser).filter_by(id=user_id).one()
+    user_in_db = test_db_session.query(SQLAlchemyUser).filter_by(id=user_id).one()
     assert not any(role.name == role_name for role in user_in_db.roles)
 
 @pytest.fixture
@@ -437,7 +438,7 @@ def setup_role_and_permission_for_assignment(client: TestClient, test_admin_user
     yield role_name, permission_name
     app.dependency_overrides.clear()
 
-def test_add_permission_to_role_as_admin(client: TestClient, setup_role_and_permission_for_assignment: tuple, db_session: Session):
+def test_add_permission_to_role_as_admin(client: TestClient, setup_role_and_permission_for_assignment: tuple, test_test_db_session: Session):
     role_name, permission_name = setup_role_and_permission_for_assignment
     
     assignment_data = {"role_name": role_name, "permission_name": permission_name}
@@ -448,10 +449,10 @@ def test_add_permission_to_role_as_admin(client: TestClient, setup_role_and_perm
     assert any(perm["name"] == permission_name for perm in data["permissions"])
 
     # Verify in DB
-    role_in_db = db_session.query(SQLAlchemyRole).filter_by(name=role_name).one()
+    role_in_db = test_db_session.query(SQLAlchemyRole).filter_by(name=role_name).one()
     assert any(perm.name == permission_name for perm in role_in_db.permissions)
 
-def test_remove_permission_from_role_as_admin(client: TestClient, setup_role_and_permission_for_assignment: tuple, db_session: Session):
+def test_remove_permission_from_role_as_admin(client: TestClient, setup_role_and_permission_for_assignment: tuple, test_test_db_session: Session):
     role_name, permission_name = setup_role_and_permission_for_assignment
     
     # First, add permission to role
@@ -466,7 +467,7 @@ def test_remove_permission_from_role_as_admin(client: TestClient, setup_role_and
     assert not any(perm["name"] == permission_name for perm in data["permissions"])
 
     # Verify in DB
-    role_in_db = db_session.query(SQLAlchemyRole).filter_by(name=role_name).one()
+    role_in_db = test_db_session.query(SQLAlchemyRole).filter_by(name=role_name).one()
     assert not any(perm.name == permission_name for perm in role_in_db.permissions)
 
 # TODO: Add more tests:
