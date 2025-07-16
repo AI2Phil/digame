@@ -41,7 +41,7 @@ export const PieChart: React.FC<PieChartProps> = ({
   isLoading = false
 }) => {
   // Color schemes for pie charts
-  const colorSchemes = {
+  const colorSchemes = useMemo(() => ({
     blue: ['#3B82F6', '#60A5FA', '#93C5FD', '#DBEAFE', '#1E40AF', '#2563EB'],
     green: ['#10B981', '#34D399', '#6EE7B7', '#D1FAE5', '#047857', '#059669'],
     red: ['#EF4444', '#F87171', '#FCA5A5', '#FEE2E2', '#B91C1C', '#DC2626'],
@@ -49,7 +49,7 @@ export const PieChart: React.FC<PieChartProps> = ({
     orange: ['#F59E0B', '#FBBF24', '#FCD34D', '#FEF3C7', '#B45309', '#D97706'],
     multi: ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#06B6D4', '#84CC16', '#F97316'],
     pastel: ['#FECACA', '#FED7AA', '#FEF3C7', '#D1FAE5', '#DBEAFE', '#E0E7FF', '#F3E8FF', '#FCE7F3']
-  };
+  }), []);
 
   // Process and enhance data
   const processedData = useMemo(() => {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
@@ -112,11 +112,7 @@ export const RevenueAnalyticsDashboard: React.FC = () => {
   const [timeframe, setTimeframe] = useState('3m');
   const [activeTab, setActiveTab] = useState<'overview' | 'predictions' | 'churn' | 'anomalies'>('overview');
 
-  useEffect(() => {
-    fetchAnalyticsData();
-  }, [timeframe]);
-
-  const fetchAnalyticsData = async () => {
+  const fetchAnalyticsData = useCallback(async () => {
     try {
       setLoading(true);
       
@@ -161,7 +157,11 @@ export const RevenueAnalyticsDashboard: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [timeframe]);
+
+  useEffect(() => {
+    fetchAnalyticsData();
+  }, [fetchAnalyticsData]);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-US', {

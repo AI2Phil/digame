@@ -56,7 +56,7 @@ export const LineChart: React.FC<LineChartProps> = ({
   isLoading = false
 }) => {
   // Color schemes with gradients for area fills
-  const colorSchemes = {
+  const colorSchemes = useMemo(() => ({
     blue: {
       primary: '#3B82F6',
       gradient: 'rgba(59, 130, 246, 0.1)',
@@ -89,7 +89,7 @@ export const LineChart: React.FC<LineChartProps> = ({
       { primary: '#EF4444', gradient: 'rgba(239, 68, 68, 0.1)', hover: '#DC2626' },
       { primary: '#8B5CF6', gradient: 'rgba(139, 92, 246, 0.1)', hover: '#7C3AED' }
     ]
-  };
+  }), []);
 
   // Process and enhance data with time series patterns
   const processedData = useMemo(() => {

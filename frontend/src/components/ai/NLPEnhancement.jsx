@@ -370,7 +370,7 @@ const NLPEnhancement = () => {
     loadNLPData();
   }, [loadNLPData]);
 
-  const loadNLPData = async () => {
+  const loadNLPData = useCallback(async () => {
     setLoading(true);
     setError(null);
     
@@ -439,7 +439,7 @@ const NLPEnhancement = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
   const loadFallbackData = () => {
     setConversations(conversationData);

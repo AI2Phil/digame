@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Smartphone, Monitor, Tablet, Users,
   TrendingUp, Clock, Download, Star,
@@ -49,7 +49,7 @@ const MobileAnalyticsSection = () => {
   }, []);
 
   // Fetch mobile analytics data from API
-  const fetchMobileAnalytics = async () => {
+  const fetchMobileAnalytics = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -85,7 +85,7 @@ const MobileAnalyticsSection = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [timeRange, toast]);
 
   // Generate enhanced sample data as fallback
   const generateEnhancedSampleData = () => {
@@ -190,7 +190,7 @@ const MobileAnalyticsSection = () => {
   // Load data on component mount and when time range changes
   useEffect(() => {
     fetchMobileAnalytics();
-  }, [timeRange]);
+  }, [fetchMobileAnalytics]);
 
   const handleRefresh = async () => {
     setRefreshing(true);

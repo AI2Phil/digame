@@ -50,14 +50,14 @@ export const BarChart: React.FC<BarChartProps> = ({
   isLoading = false
 }) => {
   // Color schemes
-  const colorSchemes = {
+  const colorSchemes = useMemo(() => ({
     blue: ['#3B82F6', '#60A5FA', '#93C5FD', '#DBEAFE'],
     green: ['#10B981', '#34D399', '#6EE7B7', '#D1FAE5'],
     red: ['#EF4444', '#F87171', '#FCA5A5', '#FEE2E2'],
     purple: ['#8B5CF6', '#A78BFA', '#C4B5FD', '#EDE9FE'],
     orange: ['#F59E0B', '#FBBF24', '#FCD34D', '#FEF3C7'],
     multi: ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#06B6D4']
-  };
+  }), []);
 
   // Process and enhance data with database-driven patterns
   const processedData = useMemo(() => {

@@ -51,6 +51,28 @@ const SystemAnalyticsSection = () => {
     avgSessionDuration: '0m', bounceRate: '0%', diskUsage: 0, networkIO: '0%'
   };
 
+  // Generate enhanced sample data as fallback
+  const generateEnhancedSampleData = useCallback(() => {
+    // Generate realistic system metrics
+    const enhancedSystemStats = {
+      cpuUsage: Math.round(Math.random() * 30 + 40), // 40-70%
+      memoryUsage: Math.round(Math.random() * 25 + 55), // 55-80%
+      diskUsage: Math.round(Math.random() * 20 + 25), // 25-45%
+      networkIO: `${Math.round(Math.random() * 30 + 15)}%`, // 15-45%
+      avgResponseTime: Math.round(Math.random() * 50 + 100), // 100-150ms
+      dbQueryTime: Math.round(Math.random() * 30 + 30), // 30-60ms
+      totalRequests: Math.round(Math.random() * 5000 + 15000), // 15k-20k
+      activeUsers24h: Math.round(Math.random() * 200 + 300), // 300-500
+      newRegistrations: Math.round(Math.random() * 20 + 10), // 10-30
+      avgSessionDuration: `${Math.round(Math.random() * 20 + 15)}m`, // 15-35m
+      bounceRate: `${Math.round(Math.random() * 10 + 20)}%` // 20-30%
+    };
+    
+    setSystemStats(enhancedSystemStats);
+    generateEnhancedApiEndpoints();
+    generateEnhancedErrorLogs();
+  }, []);
+
   // Fetch system analytics data from API
   const fetchSystemAnalytics = useCallback(async () => {
     try {
@@ -95,29 +117,7 @@ const SystemAnalyticsSection = () => {
     } finally {
       setLoading(false);
     }
-  }, [timeRange, toast]);
-
-  // Generate enhanced sample data as fallback
-  const generateEnhancedSampleData = () => {
-    // Generate realistic system metrics
-    const enhancedSystemStats = {
-      cpuUsage: Math.round(Math.random() * 30 + 40), // 40-70%
-      memoryUsage: Math.round(Math.random() * 25 + 55), // 55-80%
-      diskUsage: Math.round(Math.random() * 20 + 25), // 25-45%
-      networkIO: `${Math.round(Math.random() * 30 + 15)}%`, // 15-45%
-      avgResponseTime: Math.round(Math.random() * 50 + 100), // 100-150ms
-      dbQueryTime: Math.round(Math.random() * 30 + 30), // 30-60ms
-      totalRequests: Math.round(Math.random() * 5000 + 15000), // 15k-20k
-      activeUsers24h: Math.round(Math.random() * 200 + 300), // 300-500
-      newRegistrations: Math.round(Math.random() * 20 + 10), // 10-30
-      avgSessionDuration: `${Math.round(Math.random() * 20 + 15)}m`, // 15-35m
-      bounceRate: `${Math.round(Math.random() * 10 + 20)}%` // 20-30%
-    };
-    
-    setSystemStats(enhancedSystemStats);
-    generateEnhancedApiEndpoints();
-    generateEnhancedErrorLogs();
-  };
+  }, [timeRange, toast, generateEnhancedSampleData]);
 
   // Generate enhanced API endpoints data
   const generateEnhancedApiEndpoints = () => {

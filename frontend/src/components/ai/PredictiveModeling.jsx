@@ -262,9 +262,9 @@ const PredictiveModeling = () => {
 
   useEffect(() => {
     loadAnalyticsData();
-  }, [selectedModel, timeHorizon]);
+  }, [loadAnalyticsData]);
 
-  const loadAnalyticsData = async () => {
+  const loadAnalyticsData = useCallback(async () => {
     setLoading(true);
     setError(null);
     
@@ -284,7 +284,7 @@ const PredictiveModeling = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedModel, timeHorizon, fallbackPredictiveModels]);
 
   const loadModels = async () => {
     try {
@@ -369,7 +369,7 @@ const PredictiveModeling = () => {
     }
   };
 
-  const loadModelPerformance = async () => {
+  const loadModelPerformance = useCallback(async () => {
     try {
       const response = await fetch('/api/analytics/dashboard?days=30');
       if (!response.ok) throw new Error('Failed to fetch dashboard data');
@@ -397,7 +397,7 @@ const PredictiveModeling = () => {
         lastUpdate: new Date().toISOString()
       });
     }
-  };
+  }, [models]);
 
   const loadRecommendations = async () => {
     try {

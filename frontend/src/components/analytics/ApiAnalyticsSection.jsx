@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   BarChart3, Zap, Clock, AlertTriangle,
   CheckCircle, TrendingUp, Activity, Database,
@@ -49,7 +49,7 @@ const ApiAnalyticsSection = () => {
   }, []);
 
   // Fetch API analytics data from backend
-  const fetchApiAnalytics = async () => {
+  const fetchApiAnalytics = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -85,7 +85,7 @@ const ApiAnalyticsSection = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [timeRange, toast]);
 
   // Generate enhanced sample data as fallback
   const generateEnhancedSampleData = () => {
@@ -172,7 +172,7 @@ const ApiAnalyticsSection = () => {
   // Initial data fetch
   useEffect(() => {
     fetchApiAnalytics();
-  }, [timeRange]);
+  }, [fetchApiAnalytics]);
 
   // Refresh data function
   const handleRefresh = async () => {
