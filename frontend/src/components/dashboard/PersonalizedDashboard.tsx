@@ -19,7 +19,8 @@ const PersonalizedDashboard: React.FC<PersonalizedDashboardProps> = ({ className
   const [isLoading, setIsLoading] = useState(true);
 
   const generatePersonalizedWidgets = useCallback(() => {
-    if (!user?.onboardingData) {
+    // SSR Safety: Ensure user exists and has onboarding data
+    if (!user || !user.onboardingData) {
       setIsLoading(false);
       return;
     }
@@ -263,7 +264,8 @@ const PersonalizedDashboard: React.FC<PersonalizedDashboardProps> = ({ className
   }, [user]);
 
   useEffect(() => {
-    if (user) {
+    // SSR Safety: Only run on client side when user is available
+    if (typeof window !== 'undefined' && user) {
       generatePersonalizedWidgets();
     }
   }, [user, generatePersonalizedWidgets]);
