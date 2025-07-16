@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
@@ -32,11 +32,7 @@ export const TwinPatternsPanel: React.FC<TwinPatternsPanelProps> = ({ twinId }) 
   const [usingFallbackData, setUsingFallbackData] = useState(false);
   const toast = useToastHelpers();
 
-  useEffect(() => {
-    loadPatterns();
-  }, [twinId, selectedType, limit]);
-
-  const loadPatterns = async () => {
+  const loadPatterns = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -63,7 +59,11 @@ export const TwinPatternsPanel: React.FC<TwinPatternsPanelProps> = ({ twinId }) 
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedType, limit]);
+
+  useEffect(() => {
+    loadPatterns();
+  }, [loadPatterns]);
 
   const loadFallbackPatterns = () => {
     // Enhanced fallback patterns with realistic data

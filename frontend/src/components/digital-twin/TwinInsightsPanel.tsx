@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
@@ -33,11 +33,7 @@ export const TwinInsightsPanel: React.FC<TwinInsightsPanelProps> = ({ twinId }) 
   const [usingFallbackData, setUsingFallbackData] = useState(false);
   const toast = useToastHelpers();
 
-  useEffect(() => {
-    loadInsights();
-  }, [twinId]);
-
-  const loadInsights = async () => {
+  const loadInsights = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -144,7 +140,11 @@ export const TwinInsightsPanel: React.FC<TwinInsightsPanelProps> = ({ twinId }) 
     } finally {
       setLoading(false);
     }
-  };
+  }, [twinId, refreshing, toast]);
+
+  useEffect(() => {
+    loadInsights();
+  }, [loadInsights]);
 
   const refreshInsights = async () => {
     try {

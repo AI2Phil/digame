@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
@@ -40,19 +40,11 @@ export const TwinInteractionPanel: React.FC<TwinInteractionPanelProps> = ({ twin
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const toast = useToastHelpers();
 
-  useEffect(() => {
-    loadInteractionHistory();
-  }, [twinId]);
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const loadInteractionHistory = async () => {
+  const loadInteractionHistory = useCallback(async () => {
     try {
       setLoadingHistory(true);
       setError(null);
@@ -93,7 +85,15 @@ export const TwinInteractionPanel: React.FC<TwinInteractionPanelProps> = ({ twin
     } finally {
       setLoadingHistory(false);
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    loadInteractionHistory();
+  }, [loadInteractionHistory]);
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
   const loadFallbackInteractionHistory = () => {
     // Enhanced fallback interaction history with realistic conversation

@@ -441,7 +441,7 @@ const NLPEnhancement = () => {
     }
   }, [toast, loadFallbackData]);
 
-  const loadFallbackData = () => {
+  const loadFallbackData = useCallback(() => {
     setConversations(conversationData);
     setLanguageModels(nlpModels);
     setTextAnalysis(textAnalysisResults);
@@ -455,7 +455,7 @@ const NLPEnhancement = () => {
       modelsActive: 5,
       dailyProcessing: 12847
     });
-  };
+  }, []);
 
   const processText = useCallback(async (text) => {
     if (!text.trim()) {

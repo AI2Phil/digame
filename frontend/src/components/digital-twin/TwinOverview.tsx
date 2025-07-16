@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
@@ -68,11 +68,7 @@ export const TwinOverview: React.FC<TwinOverviewProps> = ({
   const [usingFallbackData, setUsingFallbackData] = useState(false);
   const toast = useToastHelpers();
 
-  useEffect(() => {
-    fetchTwinOverview();
-  }, [twinId]);
-
-  const fetchTwinOverview = async () => {
+  const fetchTwinOverview = useCallback(async () => {
     setLoading(true);
     
     // If twin data is passed as prop, use it directly
@@ -156,7 +152,11 @@ export const TwinOverview: React.FC<TwinOverviewProps> = ({
     setUsingFallbackData(true);
     toast.info('Using demonstration data - database unavailable');
     setLoading(false);
-  };
+  }, [twinId, propTwin, onRefresh]);
+
+  useEffect(() => {
+    fetchTwinOverview();
+  }, [fetchTwinOverview]);
 
   const generateFallbackOverview = () => {
     const now = new Date();

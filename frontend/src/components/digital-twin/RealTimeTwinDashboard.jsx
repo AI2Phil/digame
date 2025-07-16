@@ -288,7 +288,7 @@ const RealTimeTwinDashboard = ({ twinId, userId }) => {
     } finally {
       setIsLoading(false);
     }
-  }, [generateEnhancedFallbackData]);
+  }, [generateEnhancedFallbackData, showToast]);
 
   // Initial data fetch and periodic updates
   useEffect(() => {
