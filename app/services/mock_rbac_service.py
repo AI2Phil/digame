@@ -43,6 +43,9 @@ class MockRBACService:
                 query = query.filter(UserRoleAssignment.tenant_id == tenant_id)
             
             user_role_assignments = query.all()
+            logger.info(f"Found {len(user_role_assignments)} role assignments for user {user_id}")
+            for assignment in user_role_assignments:
+                logger.info(f"  Assignment: user_id={assignment.user_id}, role_id={assignment.role_id}, is_active={assignment.is_active}")
             
             # Get roles from assignments
             roles = []
@@ -53,6 +56,8 @@ class MockRBACService:
                         roles.append(role)
             
             logger.info(f"Retrieved {len(roles)} roles for user {user_id}")
+            for role in roles:
+                logger.info(f"  Role: {role.name} (id: {role.id})")
             return roles
             
         except Exception as e:

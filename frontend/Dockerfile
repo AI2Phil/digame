@@ -1,4 +1,5 @@
-FROM node:20.18.1-alpine
+# First stage: build
+FROM node:20.18.1-alpine AS builder
 
 WORKDIR /app
 
@@ -11,11 +12,19 @@ RUN npm ci
 # Copy source code
 COPY . .
 
-# Build the application
+# Build the application with standalone output
 RUN npm run build
 
-# Remove devDependencies to reduce image size
-RUN npm prune --production
+# Second stage: production image
+FROM node:20.18.1-alpine
+
+WORKDIR /app
+
+# Copy only what we need for production
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
+COPY --from=builder /app/package.json ./package.json
 
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs
@@ -32,4 +41,4 @@ EXPOSE 3000
 ENV NODE_ENV=production
 
 # Start the production server
-CMD ["node", ".next/standalone/server.js"]
+CMD ["node", "server.js"]

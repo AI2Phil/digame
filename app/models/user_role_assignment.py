@@ -22,7 +22,6 @@ class UserRoleAssignment(Base):
         Index('ix_user_role_assignments_tenant_id', 'tenant_id'),
         Index('ix_user_role_assignments_active', 'is_active'),
         Index('ix_user_role_assignments_user_tenant', 'user_id', 'tenant_id'),
-        Index('ix_user_role_assignments_expires_at', 'expires_at'),
         {'extend_existing': True}
     )
 
@@ -36,14 +35,13 @@ class UserRoleAssignment(Base):
     # Assignment tracking
     assigned_by = Column(Integer, ForeignKey("users.id"), nullable=True)
     assigned_at = Column(DateTime, default=datetime.utcnow)
-    expires_at = Column(DateTime, nullable=True)
     
     # Status
     is_active = Column(Boolean, default=True)
     
     # Relationships - re-enabled as part of REENABLE.md plan
     user = relationship("app.models.user.User", foreign_keys=[user_id], back_populates="user_roles")
-    role = relationship("app.models.rbac.Role", foreign_keys=[role_id])
+    role = relationship("app.models.rbac.Role", foreign_keys=[role_id], back_populates="user_roles")
     tenant = relationship("app.models.tenant.Tenant", foreign_keys=[tenant_id], overlaps="user_roles")
     assigner = relationship("app.models.user.User", foreign_keys=[assigned_by], overlaps="user_roles")
     

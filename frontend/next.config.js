@@ -4,6 +4,7 @@ const nextConfig = {
   swcMinify: true,
   distDir: '.next',
   trailingSlash: false,
+  output: 'standalone',
   
   // Environment variables for testing
   env: {

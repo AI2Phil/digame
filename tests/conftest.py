@@ -153,10 +153,9 @@ def test_user(db_session: Session) -> User:
 @pytest.fixture(scope="function")
 def test_admin_user(db_session: Session) -> User:
     """
-    Fixture to create and return an admin test user.
-    Simplified to avoid Role/Permission creation issues.
+    Fixture to create and return an admin test user with proper role assignment.
     """
-    # Create admin user without role dependencies
+    # Create admin user
     admin_user = User(
         username="admin",
         email="admin@example.com",
@@ -169,6 +168,17 @@ def test_admin_user(db_session: Session) -> User:
     db_session.add(admin_user)
     db_session.commit()
     db_session.refresh(admin_user)
+    
+    # Use MockRBACService to ensure admin role assignment
+    from app.services.mock_rbac_service import MockRBACService
+    mock_rbac_service = MockRBACService(db_session)
+    
+    # This will create admin role and assign it to the first active user (our admin_user)
+    mock_rbac_service.ensure_admin_user_exists()
+    
+    # Attach the database session to the user object for permission checking
+    setattr(admin_user, '_db_session', db_session)
+    
     return admin_user
 
 @pytest.fixture(scope="function")

@@ -121,7 +121,7 @@ class PermissionChecker:
     def __init__(self, required_permission: str):
         self.required_permission = required_permission
 
-    async def __call__(self, current_user: MockDBUser = Depends(get_current_active_user)) -> MockDBUser:
+    async def __call__(self, current_user = Depends(get_current_active_user)):
         if not user_has_permission(user=current_user, permission_name=self.required_permission):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,

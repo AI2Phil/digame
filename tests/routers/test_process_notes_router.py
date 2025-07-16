@@ -202,7 +202,11 @@ def test_update_process_note_feedback_only_tags(client: TestClient, test_admin_u
     app.dependency_overrides.clear()
 
 def test_update_process_note_feedback_only_feedback_text(client: TestClient, test_admin_user: SQLAlchemyUser, db_session_test: Session):
+    from app.db import get_db
+    
     app.dependency_overrides[get_current_active_user] = lambda: test_admin_user
+    app.dependency_overrides[get_db] = lambda: db_session_test
+    
     note = create_db_process_note(db_session_test, user_id=test_admin_user.id, task_name="Feedback Text Only Test")
     # Set initial tags using proper SQLAlchemy assignment
     note.user_tags = ["initial_tag"]  # type: ignore
