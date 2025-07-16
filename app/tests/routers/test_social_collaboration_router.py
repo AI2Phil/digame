@@ -8,7 +8,7 @@ from fastapi import FastAPI
 
 # Schemas for request/response validation
 from app.schemas.user_profile_schemas import UserProfileUpdate, UserProfileResponse, UserWithProfileResponse
-from app.schemas.user_schemas import User as UserSchema # For mock user data
+from app.schemas.user_schemas import UserResponse as UserSchema # For mock user data
 
 # Models (for creating mock return objects from services/crud)
 from app.models.user import User as UserModel

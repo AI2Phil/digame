@@ -240,6 +240,21 @@ digame_status 1
         logger.error(f"Metrics collection failed: {str(e)}")
         raise HTTPException(status_code=500, detail="Metrics collection failed")
 
+# Import and include routers
+try:
+    from app.routers.workflow_automation_router import router as workflow_automation_router
+    app.include_router(workflow_automation_router)
+    logger.info("Workflow automation router included")
+except ImportError as e:
+    logger.warning(f"Could not import workflow automation router: {e}")
+
+try:
+    from app.routers.security_router import router as security_router
+    app.include_router(security_router)
+    logger.info("Security router included")
+except ImportError as e:
+    logger.warning(f"Could not import security router: {e}")
+
 # Additional API endpoints would be added here
 # For now, we have the essential health and monitoring endpoints
 

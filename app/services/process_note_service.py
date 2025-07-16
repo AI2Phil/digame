@@ -283,7 +283,8 @@ async def main_test(): # Made async
     from sqlalchemy.orm import sessionmaker
     # from app.models.user import Base as AppBase # To create tables if needed
     # Need to ensure models are loaded for Base.metadata
-    from ..models import Base as AppBase, User as AppUser, Activity as AppActivity
+    from ..models import Base as AppBase, Activity as AppActivity
+    from ..models.user import User as AppUser  # Direct import to avoid registry conflicts
     # ProcessNote already imported at top of file as ProcessNote
     import json # For user_setting_crud mock or real data
 

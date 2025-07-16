@@ -65,9 +65,9 @@ test.describe('Integration Verification & Testing Suite', () => {
       await page.waitForLoadState('networkidle');
 
       // Check for security dashboard elements
-      const securityScore = page.locator('text*="Security Score", text*="security score"');
-      const threatMetrics = page.locator('text*="threat", text*="Threat"');
-      const securityModules = page.locator('text*="Security Modules", text*="security modules"');
+      const securityScore = page.locator('text="Security Score"').or(page.locator('text="security score"'));
+      const threatMetrics = page.locator('text="threat"').or(page.locator('text="Threat"'));
+      const securityModules = page.locator('text="Security Modules"').or(page.locator('text="security modules"'));
 
       if (await securityScore.isVisible()) {
         console.log('✅ Security score display is functional');
@@ -80,7 +80,7 @@ test.describe('Integration Verification & Testing Suite', () => {
       }
 
       // Check for quick actions
-      const quickActions = page.locator('text*="Quick Actions", text*="quick actions"');
+      const quickActions = page.locator('text="Quick Actions"').or(page.locator('text="quick actions"'));
       if (await quickActions.isVisible()) {
         console.log('✅ Security quick actions are available');
       }
@@ -96,7 +96,7 @@ test.describe('Integration Verification & Testing Suite', () => {
       await page.waitForLoadState('networkidle');
 
       // Look for MFA-related elements
-      const mfaElements = page.locator('text*="MFA", text*="Multi-Factor", text*="authentication"');
+      const mfaElements = page.locator('text="MFA"').or(page.locator('text="Multi-Factor"')).or(page.locator('text="authentication"'));
       if (await mfaElements.isVisible()) {
         console.log('✅ MFA elements are present in security dashboard');
       }
@@ -183,7 +183,7 @@ test.describe('Integration Verification & Testing Suite', () => {
           await page.goto(`${BASE_URL}${pagePath}`);
           await page.waitForLoadState('networkidle');
           
-          const workflowElements = page.locator('text*="workflow", text*="automation", text*="process"');
+          const workflowElements = page.locator('text="workflow"').or(page.locator('text="automation"')).or(page.locator('text="process"'));
           if (await workflowElements.isVisible()) {
             console.log(`✅ Workflow page ${pagePath} is accessible`);
           }
@@ -311,7 +311,7 @@ test.describe('Integration Verification & Testing Suite', () => {
           await page.goto(`${BASE_URL}${pagePath}`);
           await page.waitForLoadState('networkidle');
           
-          const reportElements = page.locator('text*="report", text*="generate", text*="custom", text*="analytics"');
+          const reportElements = page.locator('text="report"').or(page.locator('text="generate"')).or(page.locator('text="custom"')).or(page.locator('text="analytics"'));
           if (await reportElements.isVisible()) {
             console.log(`✅ Report page ${pagePath} is accessible`);
             
@@ -335,11 +335,11 @@ test.describe('Integration Verification & Testing Suite', () => {
 
       // Check for report builder elements
       const builderElements = [
-        'text*="chart"',
-        'text*="filter"',
-        'text*="export"',
-        'text*="dashboard"',
-        'text*="widget"'
+        'text="chart"',
+        'text="filter"',
+        'text="export"',
+        'text="dashboard"',
+        'text="widget"'
       ];
 
       let foundElements = 0;

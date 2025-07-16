@@ -122,8 +122,9 @@ class EmailVerification(Base):
     resent_count = Column(Integer(), default=0)
     last_resent_at = Column(DateTime(), nullable=True)
     
-    # Relationship back to User
-    user = relationship("app.models.user.User")
+    # Relationship back to User - temporarily disabled due to registry conflicts
+    # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
+    # user = relationship("app.models.user.User")
 
     def __repr__(self):
         return f"<EmailVerification(user_id={self.user_id}, verified={self.is_verified})>"

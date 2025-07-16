@@ -38,8 +38,9 @@ class ReportDefinition(Base):  # type: ignore
     created_at = Column(DateTime(), default=datetime.utcnow)  # type: ignore
     updated_at = Column(DateTime(), default=datetime.utcnow, onupdate=datetime.utcnow)  # type: ignore
 
-    # Relationships
-    owner = relationship("app.models.user.User") # Relationship to the User model for user_id
+    # Relationships - temporarily disabled due to registry conflicts
+    # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
+    # owner = relationship("app.models.user.User") # Relationship to the User model for user_id
     # schedules = relationship("ReportSchedule", back_populates="report_definition") # If ReportSchedule links back
 
     def __repr__(self):

@@ -22,11 +22,29 @@ def analytics_service(mock_db_session):
 
 @pytest.fixture
 def sample_tenant():
-    return Tenant(id=1, name="Test Tenant")
+    # Use a mock object to avoid registry conflicts
+    from unittest.mock import MagicMock
+    tenant = MagicMock()
+    tenant.id = 1
+    tenant.name = "Test Tenant"
+    tenant.slug = "test-tenant"
+    tenant.domain = "test-tenant.example.com"
+    tenant.subdomain = "test-tenant"
+    tenant.admin_email = "admin@test-tenant.com"
+    tenant.admin_name = "Test Admin"
+    return tenant
 
 @pytest.fixture
 def sample_user():
-    return User(id=1, email="test@example.com", tenant_id=1)
+    # Use a mock object to avoid registry conflicts
+    from unittest.mock import MagicMock
+    user = MagicMock()
+    user.id = 1
+    user.username = "testuser"
+    user.email = "test@example.com"
+    user.hashed_password = "hashed_password_here"
+    user.tenant_id = 1
+    return user
 
 @pytest.fixture
 def sample_analytics_model_data():
@@ -82,7 +100,12 @@ def test_add_benchmark_data(analytics_service, mock_db_session, sample_benchmark
 
 @patch('app.services.analytics_service.AnalyticsService.get_benchmarks')
 def test_get_benchmarks(mock_get_benchmarks, analytics_service, mock_db_session):
-    mock_benchmark = ComparativeBenchmark(metric_name="performance_score", benchmark_value=80.0, is_active=True)
+    # Use a mock object to avoid registry conflicts
+    from unittest.mock import MagicMock
+    mock_benchmark = MagicMock()
+    mock_benchmark.metric_name = "performance_score"
+    mock_benchmark.benchmark_value = 80.0
+    mock_benchmark.is_active = True
     
     # Directly mock the method to return our expected result
     mock_get_benchmarks.return_value = [mock_benchmark]

@@ -4,6 +4,7 @@
  */
 
 import { test, expect } from '@playwright/test';
+import { setupTestAuth, getTestAuthHeaders } from '../helpers/auth-helper.js';
 
 // Test configuration
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3001';
@@ -58,6 +59,9 @@ test.describe('Workflow Execution End-to-End Testing', () => {
     context = await browser.newContext();
     page = await context.newPage();
     
+    // Setup test authentication
+    await setupTestAuth(page, 'user');
+    
     // Enable console logging for debugging
     page.on('console', msg => console.log('PAGE LOG:', msg.text()));
     page.on('pageerror', error => console.log('PAGE ERROR:', error.message));
@@ -78,7 +82,7 @@ test.describe('Workflow Execution End-to-End Testing', () => {
           tenant_id: 1
         },
         headers: {
-          'Content-Type': 'application/json'
+          ...getTestAuthHeaders()
         }
       });
 
@@ -94,7 +98,9 @@ test.describe('Workflow Execution End-to-End Testing', () => {
     });
 
     test('should list workflow templates via API', async () => {
-      const response = await page.request.get(`${API_BASE_URL}/api/workflow-automation/templates?tenant_id=1`);
+      const response = await page.request.get(`${API_BASE_URL}/api/workflow-automation/templates?tenant_id=1`, {
+        headers: getTestAuthHeaders()
+      });
       
       if (response.status() === 200) {
         const templates = await response.json();
@@ -110,7 +116,7 @@ test.describe('Workflow Execution End-to-End Testing', () => {
       await page.waitForLoadState('networkidle');
 
       // Check for workflow templates section
-      const workflowSection = page.locator('text*="workflow", text*="template", text*="automation"');
+      const workflowSection = page.locator('text="workflow", text="template", text="automation"').first();
       if (await workflowSection.isVisible()) {
         console.log('✅ Workflow templates section is accessible via frontend');
       } else {
@@ -138,7 +144,7 @@ test.describe('Workflow Execution End-to-End Testing', () => {
         {
           data: instanceData,
           headers: {
-            'Content-Type': 'application/json'
+            ...getTestAuthHeaders()
           }
         }
       );
@@ -161,7 +167,10 @@ test.describe('Workflow Execution End-to-End Testing', () => {
       }
 
       const response = await page.request.post(
-        `${API_BASE_URL}/api/workflow-automation/instances/${createdInstanceId}/execute?tenant_id=1`
+        `${API_BASE_URL}/api/workflow-automation/instances/${createdInstanceId}/execute?tenant_id=1`,
+        {
+          headers: getTestAuthHeaders()
+        }
       );
 
       if (response.status() === 200) {
@@ -183,7 +192,10 @@ test.describe('Workflow Execution End-to-End Testing', () => {
       await page.waitForTimeout(2000);
 
       const response = await page.request.get(
-        `${API_BASE_URL}/api/workflow-automation/instances/${createdInstanceId}/steps?tenant_id=1`
+        `${API_BASE_URL}/api/workflow-automation/instances/${createdInstanceId}/steps?tenant_id=1`,
+        {
+          headers: getTestAuthHeaders()
+        }
       );
 
       if (response.status() === 200) {
@@ -354,7 +366,10 @@ test.describe('Workflow Execution End-to-End Testing', () => {
   test.describe('Workflow Analytics and Monitoring', () => {
     test('should retrieve workflow analytics via API', async () => {
       const response = await page.request.get(
-        `${API_BASE_URL}/api/workflow-automation/analytics?tenant_id=1`
+        `${API_BASE_URL}/api/workflow-automation/analytics?tenant_id=1`,
+        {
+          headers: getTestAuthHeaders()
+        }
       );
 
       if (response.status() === 200) {
@@ -372,7 +387,7 @@ test.describe('Workflow Execution End-to-End Testing', () => {
       await page.waitForLoadState('networkidle');
 
       // Check for monitoring elements
-      const monitoringElements = page.locator('text*="monitor", text*="status", text*="execution"');
+      const monitoringElements = page.locator('text="monitor", text="status", text="execution"').first();
       if (await monitoringElements.isVisible()) {
         console.log('✅ Workflow monitoring dashboard is accessible');
       } else {
@@ -409,7 +424,7 @@ test.describe('Workflow Execution End-to-End Testing', () => {
         {
           data: ruleData,
           headers: {
-            'Content-Type': 'application/json'
+            ...getTestAuthHeaders()
           }
         }
       );
@@ -426,7 +441,10 @@ test.describe('Workflow Execution End-to-End Testing', () => {
 
     test('should list automation rules via API', async () => {
       const response = await page.request.get(
-        `${API_BASE_URL}/api/workflow-automation/automation-rules?tenant_id=1`
+        `${API_BASE_URL}/api/workflow-automation/automation-rules?tenant_id=1`,
+        {
+          headers: getTestAuthHeaders()
+        }
       );
 
       if (response.status() === 200) {
@@ -441,7 +459,9 @@ test.describe('Workflow Execution End-to-End Testing', () => {
 
   test.describe('Workflow Health and Status', () => {
     test('should check workflow automation service health', async () => {
-      const response = await page.request.get(`${API_BASE_URL}/api/workflow-automation/health`);
+      const response = await page.request.get(`${API_BASE_URL}/api/workflow-automation/health`, {
+        headers: getTestAuthHeaders()
+      });
       expect(response.status()).toBe(200);
 
       const healthData = await response.json();
@@ -454,7 +474,9 @@ test.describe('Workflow Execution End-to-End Testing', () => {
     });
 
     test('should check advanced workflow automation health', async () => {
-      const response = await page.request.get(`${API_BASE_URL}/api/advanced-workflow/health`);
+      const response = await page.request.get(`${API_BASE_URL}/api/advanced-workflow/health`, {
+        headers: getTestAuthHeaders()
+      });
       
       if (response.status() === 200) {
         const healthData = await response.json();
@@ -483,7 +505,7 @@ test.describe('Workflow Execution End-to-End Testing', () => {
         {
           data: invalidWorkflow,
           headers: {
-            'Content-Type': 'application/json'
+            ...getTestAuthHeaders()
           }
         }
       );

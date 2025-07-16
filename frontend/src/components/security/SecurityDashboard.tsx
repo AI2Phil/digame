@@ -190,7 +190,14 @@ export const SecurityDashboard: React.FC = () => {
     );
   }
 
-  const { security_metrics } = dashboardData;
+  // Safely extract security_metrics with fallback
+  const security_metrics = dashboardData?.security_metrics || {
+    total_users: 0,
+    active_sessions: 0,
+    failed_logins_24h: 0,
+    mfa_enabled_users: 0,
+    security_alerts: []
+  };
 
   return (
     <div className="space-y-6">
@@ -199,7 +206,7 @@ export const SecurityDashboard: React.FC = () => {
           <h2 className="text-lg font-medium text-gray-900">Security Dashboard</h2>
           <div className="flex items-center space-x-2">
             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-              {dashboardData.status}
+              {dashboardData?.status || 'unknown'}
             </span>
             <button
               onClick={handleRetry}
@@ -213,35 +220,45 @@ export const SecurityDashboard: React.FC = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="bg-blue-50 p-4 rounded-lg">
-            <div className="text-2xl font-bold text-blue-600">
+            <div className="text-2xl font-bold text-blue-600" data-testid="total-users">
               {security_metrics.total_users}
             </div>
             <div className="text-sm text-blue-600">Total Users</div>
           </div>
 
           <div className="bg-green-50 p-4 rounded-lg">
-            <div className="text-2xl font-bold text-green-600">
+            <div className="text-2xl font-bold text-green-600" data-testid="active-sessions">
               {security_metrics.active_sessions}
             </div>
             <div className="text-sm text-green-600">Active Sessions</div>
           </div>
 
           <div className="bg-yellow-50 p-4 rounded-lg">
-            <div className="text-2xl font-bold text-yellow-600">
+            <div className="text-2xl font-bold text-yellow-600" data-testid="failed-logins">
               {security_metrics.failed_logins_24h}
             </div>
             <div className="text-sm text-yellow-600">Failed Logins (24h)</div>
           </div>
 
           <div className="bg-purple-50 p-4 rounded-lg">
-            <div className="text-2xl font-bold text-purple-600">
+            <div className="text-2xl font-bold text-purple-600" data-testid="mfa-enabled">
               {security_metrics.mfa_enabled_users}
             </div>
             <div className="text-sm text-purple-600">MFA Enabled</div>
           </div>
         </div>
 
-        {security_metrics.security_alerts.length > 0 && (
+        {/* Security Score Display for E2E Tests */}
+        <div className="mt-6">
+          <div className="bg-gray-50 p-4 rounded-lg">
+            <div className="text-lg font-medium text-gray-900" data-testid="security-score">
+              Security Score: {Math.round((security_metrics.mfa_enabled_users / Math.max(1, security_metrics.total_users)) * 100)}%
+            </div>
+            <div className="text-sm text-gray-600">Based on MFA adoption rate</div>
+          </div>
+        </div>
+
+        {security_metrics.security_alerts && security_metrics.security_alerts.length > 0 && (
           <div className="mt-6">
             <h3 className="text-md font-medium text-gray-900 mb-2">Security Alerts</h3>
             <div className="space-y-2">
@@ -255,8 +272,8 @@ export const SecurityDashboard: React.FC = () => {
         )}
 
         <div className="mt-4 text-xs text-gray-500">
-          Last updated: {new Date(dashboardData.timestamp).toLocaleString()}
-          {dashboardData.message && (
+          Last updated: {dashboardData?.timestamp ? new Date(dashboardData.timestamp).toLocaleString() : 'Unknown'}
+          {dashboardData?.message && (
             <span className="ml-2">• {dashboardData.message}</span>
           )}
         </div>

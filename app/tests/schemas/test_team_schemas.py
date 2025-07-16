@@ -195,22 +195,15 @@ def test_team_workflow_is_optimized_conversion():
     workflow_false = TeamWorkflowBase(**data_false)
     assert workflow_false.is_optimized is False
 
-    # Check if it accepts 0/1 if that was the model's original intent (though schema uses bool)
-    # data_int_false = {"workflow_name": "Test Flow", "is_optimized": 0}
-    # workflow_int_false = TeamWorkflowBase(**data_int_false)
-    # assert workflow_int_false.is_optimized is False # Pydantic bool field usually requires True/False
+    # Pydantic converts truthy/falsy values to boolean by default
+    # 0 should convert to False, 1 should convert to True
+    data_int_false = {"workflow_name": "Test Flow", "is_optimized": 0}
+    workflow_int_false = TeamWorkflowBase(**data_int_false)
+    assert workflow_int_false.is_optimized is False
 
-    # data_int_true = {"workflow_name": "Test Flow", "is_optimized": 1}
-    # workflow_int_true = TeamWorkflowBase(**data_int_true)
-    # assert workflow_int_true.is_optimized is True
+    data_int_true = {"workflow_name": "Test Flow", "is_optimized": 1}
+    workflow_int_true = TeamWorkflowBase(**data_int_true)
+    assert workflow_int_true.is_optimized is True
 
-    # The above 0/1 might fail if strict bool is enforced by Pydantic.
-    # The schema defines `is_optimized: Optional[bool] = False`, so it expects boolean.
-    # If the model stores it as int, conversion happens at DB layer or when mapping model to schema.
-    # Schema validation itself will expect bool.
-    with pytest.raises(ValidationError):
-        TeamWorkflowBase(workflow_name="Test Flow", is_optimized=0)
-    with pytest.raises(ValidationError):
-        TeamWorkflowBase(workflow_name="Test Flow", is_optimized=1)
-
+    # Test default value
     assert TeamWorkflowBase(workflow_name="Test Flow").is_optimized is False # Default

@@ -1,4 +1,14 @@
 /** @type {import('next').NextConfig} */
+const withPWA = require('next-pwa')({
+  dest: 'public',
+  register: true,
+  skipWaiting: true,
+  disable: true, // Always disable PWA in test environment
+  fallbacks: {
+    document: '/offline.html',
+  },
+});
+
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
@@ -67,6 +77,4 @@ const nextConfig = {
   }
 };
 
-// Disable PWA for CI/test environments - export clean Next.js config
-// PWA should only be enabled in production deployments, not in CI builds
-module.exports = nextConfig;
+module.exports = withPWA(nextConfig);

@@ -243,6 +243,7 @@ export const MFASetup: React.FC<MFASetupProps> = ({ onSetupComplete }) => {
         <button
           onClick={handleSetupMFA}
           disabled={loading}
+          data-testid="setup-mfa-button"
           style={{
             ...buttonStyle,
             width: '100%',
@@ -271,9 +272,10 @@ export const MFASetup: React.FC<MFASetupProps> = ({ onSetupComplete }) => {
             <p style={{ marginBottom: '16px', fontSize: '14px', color: '#6b7280' }}>
               Scan this QR code with your authenticator app:
             </p>
-            <img 
-              src={setupData.qr_code_url} 
-              alt="MFA QR Code" 
+            <img
+              src={setupData.qr_code_url}
+              alt="MFA QR Code"
+              data-testid="mfa-qr-code"
               style={{ border: '1px solid #d1d5db', borderRadius: '8px' }}
             />
             {setupData.secret_key && (
@@ -296,6 +298,7 @@ export const MFASetup: React.FC<MFASetupProps> = ({ onSetupComplete }) => {
             value={verificationCode}
             onChange={(e) => setVerificationCode(e.target.value)}
             maxLength={6}
+            data-testid="mfa-verification-code"
             style={inputStyle}
           />
         </div>
@@ -320,6 +323,7 @@ export const MFASetup: React.FC<MFASetupProps> = ({ onSetupComplete }) => {
           <button
             onClick={handleVerifyMFA}
             disabled={loading}
+            data-testid="verify-mfa-button"
             style={{
               ...buttonStyle,
               flex: 1,

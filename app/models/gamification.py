@@ -56,8 +56,9 @@ class Achievement(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     is_active = Column(Boolean, default=True)
     
-    # Relationships
-    user_achievements = relationship("UserAchievement", back_populates="achievement")
+    # Relationships - temporarily disabled due to registry conflicts
+    # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
+    # user_achievements = relationship("UserAchievement", back_populates="achievement")
 
     @property
     def difficulty_score(self):
@@ -93,17 +94,16 @@ class UserAchievement(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
-    # Temporarily commented out to resolve SQLAlchemy mapper issues
-    # # Relationships
+    # Relationships - temporarily disabled due to registry conflicts
+    # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
     # user = relationship("app.models.user.User", back_populates="achievements")
-    achievement = relationship("Achievement", back_populates="user_achievements")
+    # achievement = relationship("Achievement", back_populates="user_achievements")
 
     @property
     def progress_percentage(self):
-        """Calculate progress percentage"""
-        if self.achievement.max_progress == 0:
-            return 100 if self.earned else 0
-        return min((self.current_progress / self.achievement.max_progress) * 100, 100)
+        """Calculate progress percentage - temporarily disabled due to registry conflicts"""
+        # TODO: Re-implement after resolving SQLAlchemy registry mapping issues
+        return 100 if self.earned else 0
 
 class Streak(Base):
     """User activity streaks"""
@@ -274,8 +274,9 @@ class Badge(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     is_active = Column(Boolean, default=True)
     
-    # Relationships
-    user_badges = relationship("UserBadge", back_populates="badge")
+    # Relationships - temporarily disabled due to registry conflicts
+    # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
+    # user_badges = relationship("UserBadge", back_populates="badge")
 
 class UserBadge(Base):
     """User's earned badges"""
@@ -291,10 +292,10 @@ class UserBadge(Base):
     earned_at = Column(DateTime, default=datetime.utcnow)
     is_displayed = Column(Boolean, default=True)  # Show on profile
     
-    # Temporarily commented out to resolve SQLAlchemy mapper issues
-    # # Relationships
+    # Relationships - temporarily disabled due to registry conflicts
+    # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
     # user = relationship("app.models.user.User", back_populates="badges")
-    badge = relationship("Badge", back_populates="user_badges")
+    # badge = relationship("Badge", back_populates="user_badges")
 
 class LeaderboardEntry(Base):
     """Leaderboard rankings"""
@@ -317,8 +318,9 @@ class LeaderboardEntry(Base):
     # Metadata
     created_at = Column(DateTime, default=datetime.utcnow)
     
-    # Relationships
-    user = relationship("app.models.user.User")
+    # Relationships - temporarily disabled due to registry conflicts
+    # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
+    # user = relationship("app.models.user.User")
 
 # Update User model to include gamification relationships
 # This would be added to the existing User model in models/user.py:

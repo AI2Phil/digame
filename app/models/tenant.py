@@ -78,15 +78,15 @@ class Tenant(Base):
     phone = Column(String(50), nullable=True)
     address = Column(Text, nullable=True)
     
-    # Relationships to User, Role, and UserRole models - temporarily disabled back_populates due to registry conflicts
+    # Relationships - temporarily disabled due to registry conflicts
     # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
-    users = relationship("app.models.user.User", foreign_keys="app.models.user.User.tenant_id")
-    roles = relationship("app.models.rbac.Role")
+    # users = relationship("app.models.user.User", foreign_keys="app.models.user.User.tenant_id")
+    # roles = relationship("app.models.rbac.Role")
     # UserRoleAssignment relationship - temporarily disabled due to registry conflicts
     # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
     # user_roles = relationship(UserRoleAssignment, overlaps="tenant")
-    creator = relationship("app.models.user.User", foreign_keys=[created_by], overlaps="users")
-    manager = relationship("app.models.user.User", foreign_keys=[managed_by], overlaps="users")
+    # creator = relationship("app.models.user.User", foreign_keys=[created_by], overlaps="users")
+    # manager = relationship("app.models.user.User", foreign_keys=[managed_by], overlaps="users")
     
     # Other tenant-specific relationships - temporarily disabled back_populates due to registry conflicts
     # TODO: Re-enable after resolving SQLAlchemy registry mapping issues

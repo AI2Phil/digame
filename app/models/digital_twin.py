@@ -33,16 +33,16 @@ class DigitalTwin(Base):  # type: ignore
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)  # type: ignore
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)  # type: ignore
 
-    # Relationships - temporarily disabled back_populates due to registry conflicts
+    # Relationships - temporarily disabled due to registry conflicts
     # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
-    user = relationship("app.models.user.User")
-    activity_patterns = relationship("ActivityPattern", back_populates="twin", cascade="all, delete-orphan")
-    behavioral_learning = relationship("BehavioralLearning", back_populates="twin", cascade="all, delete-orphan")
-    prediction_models = relationship("PredictionModel", back_populates="twin", cascade="all, delete-orphan")
-    simulation_results = relationship("SimulationResult", back_populates="twin", cascade="all, delete-orphan")
-    twin_interactions = relationship("TwinInteraction", back_populates="twin", cascade="all, delete-orphan")
-    activity_stream = relationship("ActivityStream", back_populates="twin", cascade="all, delete-orphan")
-    twin_knowledge = relationship("TwinKnowledge", back_populates="twin", cascade="all, delete-orphan")
+    # user = relationship("app.models.user.User")
+    # activity_patterns = relationship("ActivityPattern", back_populates="twin", cascade="all, delete-orphan")
+    # behavioral_learning = relationship("BehavioralLearning", back_populates="twin", cascade="all, delete-orphan")
+    # prediction_models = relationship("PredictionModel", back_populates="twin", cascade="all, delete-orphan")
+    # simulation_results = relationship("SimulationResult", back_populates="twin", cascade="all, delete-orphan")
+    # twin_interactions = relationship("TwinInteraction", back_populates="twin", cascade="all, delete-orphan")
+    # activity_stream = relationship("ActivityStream", back_populates="twin", cascade="all, delete-orphan")
+    # twin_knowledge = relationship("TwinKnowledge", back_populates="twin", cascade="all, delete-orphan")
 
     def __repr__(self):
         return f"<DigitalTwin(id={self.id}, user_id={self.user_id}, name='{self.name}', status='{self.status}')>"
@@ -61,8 +61,9 @@ class ActivityPattern(Base):  # type: ignore
     discovered_at = Column(DateTime, default=datetime.utcnow, nullable=False)  # type: ignore
     validated_at = Column(DateTime, nullable=True)  # type: ignore
 
-    # Relationships
-    twin = relationship("DigitalTwin", back_populates="activity_patterns")
+    # Relationships - temporarily disabled due to registry conflicts
+    # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
+    # twin = relationship("DigitalTwin", back_populates="activity_patterns")
 
     # Indexes
     __table_args__ = (
@@ -85,8 +86,9 @@ class BehavioralLearning(Base):  # type: ignore
     learning_iteration = Column(Integer, nullable=True)  # type: ignore
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)  # type: ignore
 
-    # Relationships
-    twin = relationship("DigitalTwin", back_populates="behavioral_learning")
+    # Relationships - temporarily disabled due to registry conflicts
+    # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
+    # twin = relationship("DigitalTwin", back_populates="behavioral_learning")
 
     # Indexes
     __table_args__ = (
@@ -111,8 +113,9 @@ class PredictionModel(Base):  # type: ignore
     is_active = Column(Boolean, default=False, nullable=False)  # type: ignore
     trained_at = Column(DateTime, default=datetime.utcnow, nullable=False)  # type: ignore
 
-    # Relationships
-    twin = relationship("DigitalTwin", back_populates="prediction_models")
+    # Relationships - temporarily disabled due to registry conflicts
+    # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
+    # twin = relationship("DigitalTwin", back_populates="prediction_models")
 
     # Indexes
     __table_args__ = (
@@ -136,8 +139,9 @@ class SimulationResult(Base):  # type: ignore
     execution_time_ms = Column(Integer, nullable=True)  # type: ignore
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)  # type: ignore
 
-    # Relationships
-    twin = relationship("DigitalTwin", back_populates="simulation_results")
+    # Relationships - temporarily disabled due to registry conflicts
+    # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
+    # twin = relationship("DigitalTwin", back_populates="simulation_results")
 
     # Indexes
     __table_args__ = (
@@ -161,8 +165,9 @@ class TwinInteraction(Base):  # type: ignore
     user_feedback = Column(Integer, nullable=True)  # type: ignore  # 1-5 rating
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)  # type: ignore
 
-    # Relationships
-    twin = relationship("DigitalTwin", back_populates="twin_interactions")
+    # Relationships - temporarily disabled due to registry conflicts
+    # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
+    # twin = relationship("DigitalTwin", back_populates="twin_interactions")
 
     # Indexes
     __table_args__ = (
@@ -184,8 +189,9 @@ class ActivityStream(Base):  # type: ignore
     timestamp = Column(DateTime, default=datetime.utcnow, nullable=False)  # type: ignore
     processed = Column(Boolean, default=False, nullable=False)  # type: ignore
 
-    # Relationships
-    twin = relationship("DigitalTwin", back_populates="activity_stream")
+    # Relationships - temporarily disabled due to registry conflicts
+    # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
+    # twin = relationship("DigitalTwin", back_populates="activity_stream")
 
     # Indexes
     __table_args__ = (
@@ -209,8 +215,9 @@ class TwinKnowledge(Base):  # type: ignore
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)  # type: ignore
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)  # type: ignore
 
-    # Relationships
-    twin = relationship("DigitalTwin", back_populates="twin_knowledge")
+    # Relationships - temporarily disabled due to registry conflicts
+    # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
+    # twin = relationship("DigitalTwin", back_populates="twin_knowledge")
 
     # Indexes
     __table_args__ = (

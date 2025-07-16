@@ -5,7 +5,7 @@ from typing import List
 
 from ..crud import rbac_crud
 from ..schemas import rbac_schemas
-from ..models import user as user_model_sqla # SQLAlchemy model for User
+from ..models.user import User as user_model_sqla # Direct import to avoid registry conflicts
 from ..models.rbac import Role
 from ..db import get_db # Import get_db from the new db module
 # For now, we won't have current_user dependency as we are not protecting routes yet.
@@ -115,7 +115,7 @@ def assign_role_to_user_endpoint(assignment: rbac_schemas.UserRoleAssignRequest,
     user = rbac_crud.assign_role_to_user_by_names(db, user_id=assignment.user_id, role_name=assignment.role_name)
     if user is None:
         # More specific error: user not found or role not found
-        db_user = db.query(user_model_sqla.User).filter(user_model_sqla.User.id == assignment.user_id).first()
+        db_user = db.query(user_model_sqla).filter(user_model_sqla.id == assignment.user_id).first()
         if not db_user:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"User with ID {assignment.user_id} not found.")
         db_role = rbac_crud.get_role_by_name(db, role_name=assignment.role_name)
@@ -152,7 +152,7 @@ def assign_role_to_user_endpoint(assignment: rbac_schemas.UserRoleAssignRequest,
 def remove_role_from_user_endpoint(assignment: rbac_schemas.UserRoleRemoveRequest, db: Session = Depends(get_db)):
     user = rbac_crud.remove_role_from_user_by_names(db, user_id=assignment.user_id, role_name=assignment.role_name)
     if user is None:
-        db_user = db.query(user_model_sqla.User).filter(user_model_sqla.User.id == assignment.user_id).first()
+        db_user = db.query(user_model_sqla).filter(user_model_sqla.id == assignment.user_id).first()
         if not db_user:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"User with ID {assignment.user_id} not found.")
         db_role = rbac_crud.get_role_by_name(db, role_name=assignment.role_name)

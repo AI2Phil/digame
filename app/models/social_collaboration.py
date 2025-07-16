@@ -53,9 +53,10 @@ class PeerConnection(Base):
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
     
-    # Relationships - using fully qualified module paths to resolve registry conflicts
-    requester = relationship("app.models.user.User", foreign_keys=[requester_id])
-    recipient = relationship("app.models.user.User", foreign_keys=[recipient_id])
+    # Relationships - temporarily disabled due to registry conflicts
+    # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
+    # requester = relationship("app.models.user.User", foreign_keys=[requester_id])
+    # recipient = relationship("app.models.user.User", foreign_keys=[recipient_id])
 
     def __repr__(self):
         return f"<PeerConnection(id={self.id}, requester_id={self.requester_id}, recipient_id={self.recipient_id}, status='{self.status}')>"
@@ -78,9 +79,10 @@ class PeerMessage(Base):
     is_read = Column(Boolean, default=False, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     
-    # Relationships - using fully qualified module paths to resolve registry conflicts
-    connection = relationship("app.models.social_collaboration.PeerConnection")
-    sender = relationship("app.models.user.User")
+    # Relationships - temporarily disabled due to registry conflicts
+    # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
+    # connection = relationship("app.models.social_collaboration.PeerConnection")
+    # sender = relationship("app.models.user.User")
 
     def __repr__(self):
         return f"<PeerMessage(id={self.id}, sender_id={self.sender_id}, type='{self.message_type}')>"
@@ -124,10 +126,11 @@ class CollaborationProject(Base):
     start_date = Column(DateTime, nullable=True)
     target_completion_date = Column(DateTime, nullable=True)
     
-    # Relationships
+    # Relationships - temporarily disabled due to registry conflicts
+    # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
     # owner = relationship("app.models.user.User")  # Temporarily disabled to resolve registry conflicts
-    members = relationship("ProjectMember", back_populates="project", cascade="all, delete-orphan")
-    applications = relationship("ProjectApplication", back_populates="project", cascade="all, delete-orphan")
+    # members = relationship("ProjectMember", back_populates="project", cascade="all, delete-orphan")
+    # applications = relationship("ProjectApplication", back_populates="project", cascade="all, delete-orphan")
 
     def __repr__(self):
         return f"<CollaborationProject(id={self.id}, name='{self.name}', status='{self.status}')>"
@@ -149,8 +152,9 @@ class ProjectMember(Base):
     joined_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     is_active = Column(Boolean, default=True, nullable=False)
     
-    # Relationships
-    project = relationship("CollaborationProject", back_populates="members")
+    # Relationships - temporarily disabled due to registry conflicts
+    # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
+    # project = relationship("CollaborationProject", back_populates="members")
     # user = relationship("app.models.user.User")  # Temporarily disabled to resolve registry conflicts
 
     def __repr__(self):
@@ -176,8 +180,9 @@ class ProjectApplication(Base):
     reviewed_at = Column(DateTime, nullable=True)
     reviewed_by = Column(Integer, ForeignKey("users.id"), nullable=True)
     
-    # Relationships
-    project = relationship("CollaborationProject", back_populates="applications")
+    # Relationships - temporarily disabled due to registry conflicts
+    # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
+    # project = relationship("CollaborationProject", back_populates="applications")
     # applicant = relationship("app.models.user.User", foreign_keys=[applicant_id])  # Temporarily disabled to resolve registry conflicts
     # reviewer = relationship("app.models.user.User", foreign_keys=[reviewed_by])  # Temporarily disabled to resolve registry conflicts
 

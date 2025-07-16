@@ -1749,44 +1749,45 @@ async def get_security_dashboard(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_admin)
 ):
-    """Get security dashboard metrics"""
+    """Get security dashboard metrics - Frontend compatible format"""
     try:
-        # In a real implementation, this would query security tables
-        # For now, we'll generate enhanced realistic security data
-        
         # Calculate realistic security metrics
         total_users = db.query(User).count()
         users_with_mfa = int(total_users * random.uniform(0.85, 0.95))  # 85-95% MFA adoption
-        mfa_adoption_rate = round((users_with_mfa / total_users * 100), 1) if total_users > 0 else 0
+        active_sessions = random.randint(50, 150)
+        failed_logins_24h = random.randint(15, 35)
         
-        # Generate realistic threat and incident counts
-        active_threats = random.randint(1, 5)
-        resolved_threats_today = random.randint(8, 15)
-        open_incidents = random.randint(0, 3)
-        critical_incidents = random.randint(0, 1)
-        failed_login_attempts_today = random.randint(15, 35)
+        # Calculate security score based on MFA adoption and other factors
+        mfa_adoption_rate = (users_with_mfa / max(1, total_users)) * 100
+        base_score = 75
+        mfa_bonus = min(20.0, mfa_adoption_rate * 0.2)  # Up to 20 points for MFA
+        alert_penalty = random.randint(0, 5)  # Random penalty for demo
+        security_score = max(0, min(100, int(base_score + mfa_bonus - alert_penalty)))
         
-        # Calculate security score based on various factors
-        base_score = 85
-        mfa_bonus = min(10.0, mfa_adoption_rate / 10.0)  # Up to 10 points for MFA
-        threat_penalty = active_threats * 2  # -2 points per active threat
-        incident_penalty = critical_incidents * 5  # -5 points per critical incident
+        # Generate security alerts
+        security_alerts = []
+        if random.random() < 0.3:  # 30% chance of alerts
+            alerts = [
+                "Suspicious login attempt detected",
+                "Multiple failed authentication attempts",
+                "Unusual API access pattern",
+                "High privilege escalation attempts"
+            ]
+            security_alerts = random.sample(alerts, random.randint(1, 2))
         
-        security_score = max(0, min(100, int(base_score + mfa_bonus - threat_penalty - incident_penalty)))
-        
+        # Return format expected by frontend SecurityDashboard component AND E2E tests
         return {
-            "success": True,
-            "data": {
-                "total_users_with_mfa": users_with_mfa,
-                "mfa_adoption_rate": mfa_adoption_rate,
-                "active_threats": active_threats,
-                "resolved_threats_today": resolved_threats_today,
-                "open_incidents": open_incidents,
-                "critical_incidents": critical_incidents,
-                "failed_login_attempts_today": failed_login_attempts_today,
-                "security_score": security_score
-            },
-            "timestamp": datetime.utcnow().isoformat()
+            "message": "Security dashboard data (demo mode)",
+            "status": "operational",
+            "timestamp": datetime.utcnow().isoformat(),
+            "security_score": security_score,  # Added for E2E test compatibility
+            "security_metrics": {
+                "total_users": total_users,
+                "active_sessions": active_sessions,
+                "failed_logins_24h": failed_logins_24h,
+                "mfa_enabled_users": users_with_mfa,
+                "security_alerts": security_alerts
+            }
         }
         
     except Exception as e:

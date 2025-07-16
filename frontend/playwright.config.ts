@@ -96,14 +96,24 @@ export default defineConfig({
         launchOptions: {
           args: [
             '--no-sandbox',
+            '--disable-setuid-sandbox',
             '--disable-dev-shm-usage',
             '--disable-web-security',
-            '--allow-running-insecure-content'
+            '--allow-running-insecure-content',
+            '--disable-extensions',
+            '--disable-gpu',
+            '--no-first-run',
+            '--disable-default-apps',
+            '--disable-background-timer-throttling',
+            '--disable-backgrounding-occluded-windows',
+            '--disable-renderer-backgrounding',
+            '--disable-features=TranslateUI',
+            '--disable-ipc-flooding-protection'
           ]
         }
       },
-      retries: 2, // Extra retries for Edge
-      timeout: 90000, // Longer timeout for Edge
+      retries: 3, // Extra retries for Edge
+      timeout: 120000, // Longer timeout for Edge (2 minutes)
     },
     {
       name: 'Google Chrome',

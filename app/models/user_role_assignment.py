@@ -41,11 +41,11 @@ class UserRoleAssignment(Base):
     # Status
     is_active = Column(Boolean, default=True)
     
-    # Relationships - using fully qualified module paths to resolve registry conflicts
-    user = relationship("app.models.user.User", foreign_keys=[user_id])
+    # Relationships - re-enabled as part of REENABLE.md plan
+    user = relationship("app.models.user.User", foreign_keys=[user_id], back_populates="user_roles")
     role = relationship("app.models.rbac.Role", foreign_keys=[role_id])
     tenant = relationship("app.models.tenant.Tenant", foreign_keys=[tenant_id], overlaps="user_roles")
-    assigner = relationship("app.models.user.User", foreign_keys=[assigned_by])
+    assigner = relationship("app.models.user.User", foreign_keys=[assigned_by], overlaps="user_roles")
     
 
     def __repr__(self):

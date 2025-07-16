@@ -30,22 +30,19 @@ class Role(Base):
     created_at = Column(DateTime(), default=datetime.utcnow)
     updated_at = Column(DateTime(), default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    # Enhanced relationships for tenant-aware RBAC - temporarily disabled due to registry conflicts
-    # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
-    # user_roles = relationship("UserRoleAssignment")
-    # users = association_proxy("user_roles", "user")  # Maintains backward compatibility
+    # Enhanced relationships for tenant-aware RBAC - re-enabled as part of REENABLE.md plan
+    user_roles = relationship("app.models.user_role_assignment.UserRoleAssignment", back_populates="role")
+    users = association_proxy("user_roles", "user")  # Maintains backward compatibility
     
-    # Tenant relationship - temporarily disabled back_populates due to registry conflicts
-    # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
-    # tenant = relationship("app.models.tenant.Tenant")
+    # Tenant relationship - re-enabled as part of REENABLE.md plan
+    tenant = relationship("app.models.tenant.Tenant")
 
-    # Many-to-Many relationship with Permission - temporarily disabled due to registry conflicts
-    # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
-    # permissions = relationship(
-    #     "app.models.rbac.Permission",
-    #     secondary=role_permissions_table, # Reference the table object directly
-    #     back_populates="roles" # Corresponds to the 'roles' attribute in the Permission model
-    # )
+    # Many-to-Many relationship with Permission - re-enabled as part of REENABLE.md plan
+    permissions = relationship(
+        "Permission",
+        secondary=role_permissions_table, # Reference the table object directly
+        back_populates="roles" # Corresponds to the 'roles' attribute in the Permission model
+    )
 
     def __repr__(self):
         return f"<Role(id={self.id}, name='{self.name}', tenant_id={self.tenant_id})>"
@@ -61,13 +58,12 @@ class Permission(Base):
     created_at = Column(DateTime(), default=datetime.utcnow)
     updated_at = Column(DateTime(), default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    # Many-to-Many relationship with Role - temporarily disabled due to registry conflicts
-    # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
-    # roles = relationship(
-    #     "app.models.rbac.Role",
-    #     secondary=role_permissions_table, # Reference the table object directly
-    #     back_populates="permissions" # Corresponds to the 'permissions' attribute in Role
-    # )
+    # Many-to-Many relationship with Role - re-enabled as part of REENABLE.md plan
+    roles = relationship(
+        "Role",
+        secondary=role_permissions_table, # Reference the table object directly
+        back_populates="permissions" # Corresponds to the 'permissions' attribute in Role
+    )
 
     def __repr__(self):
         return f"<Permission(id={self.id}, name='{self.name}')>"

@@ -21,15 +21,15 @@ class Team(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
+    # Relationships - re-enabled as part of REENABLE.md plan
     members = relationship("TeamMember", back_populates="team", cascade="all, delete-orphan")
     performance_metrics = relationship("TeamPerformanceMetric", back_populates="team", cascade="all, delete-orphan")
     skill_gaps = relationship("TeamSkillGap", back_populates="team", cascade="all, delete-orphan")
     workflows = relationship("TeamWorkflow", back_populates="team", cascade="all, delete-orphan")
     # If there's a direct link to User model for created_by or owner
     created_by_user_id = Column(Integer, ForeignKey("users.id"), nullable=True) # Assuming 'users' table
-    # Temporarily disabled back_populates due to registry conflicts
-    # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
-    creator = relationship("app.models.user.User")
+    # Creator relationship - re-enabled as part of REENABLE.md plan
+    creator = relationship("app.models.user.User", foreign_keys=[created_by_user_id])
 
 
 class TeamMember(Base):
@@ -44,10 +44,9 @@ class TeamMember(Base):
     joined_at = Column(DateTime, default=datetime.utcnow)
     custom_attributes = Column(JSON, nullable=True) # For any additional member-specific info
 
+    # Relationships - re-enabled as part of REENABLE.md plan
     team = relationship("Team", back_populates="members")
-    # Temporarily disabled back_populates due to registry conflicts
-    # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
-    user = relationship("app.models.user.User") # Assuming User model has 'team_memberships'
+    user = relationship("app.models.user.User", foreign_keys=[user_id]) # Assuming User model has 'team_memberships'
 
 
 class TeamPerformanceMetric(Base):
@@ -62,6 +61,7 @@ class TeamPerformanceMetric(Base):
     recorded_at = Column(DateTime, default=datetime.utcnow)
     notes = Column(String(), nullable=True)
 
+    # Relationships - re-enabled as part of REENABLE.md plan
     team = relationship("Team", back_populates="performance_metrics")
 
 
@@ -78,6 +78,7 @@ class TeamSkillGap(Base):
     priority = Column(Integer(), default=0) # e.g., 0-low, 1-medium, 2-high
     suggested_development_plan = Column(String(), nullable=True)
 
+    # Relationships - re-enabled as part of REENABLE.md plan
     team = relationship("Team", back_populates="skill_gaps")
 
 
@@ -96,6 +97,7 @@ class TeamWorkflow(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
+    # Relationships - re-enabled as part of REENABLE.md plan
     team = relationship("Team", back_populates="workflows")
 
 # To make these models usable, they need to be imported in digame/app/models/__init__.py

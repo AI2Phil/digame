@@ -136,29 +136,37 @@ def test_notification_repr(db_session: Session, test_user: User):
     """
     Test the __repr__ method of the Notification model.
     """
-    message = "A short message for repr"
-    notification = create_mock_model(Notification, user_id=test_user.id,
-        message=message,
-        type="repr_test",
-        is_read=True,
-        scheduled_at=datetime.now(timezone.utc)
+    from app.models.notifications import NotificationType, NotificationPriority
+    
+    # Create a real Notification instance
+    notification = Notification(
+        title="Test Notification",
+        recipient_id=test_user.id,
+        message="A short message for repr",
+        notification_type=NotificationType.USER_ACTIVITY,
+        priority=NotificationPriority.MEDIUM
     )
     db_session.add(notification)
     db_session.commit()
     db_session.refresh(notification)
 
-    expected_repr = f"<Notification(id={notification.id}, user_id={test_user.id}, message='{message[:20]}...', is_read=True, scheduled_at={notification.scheduled_at})>"
+    # Test the actual __repr__ method from the model
+    expected_repr = f"<Notification(id={notification.id}, type='{notification.notification_type}', priority='{notification.priority}')>"
     assert repr(notification) == expected_repr
 
-    message_long = "This is a very long message that should be truncated in the representation for brevity."
-    notification_long_msg = create_mock_model(Notification, user_id=test_user.id,
-        message=message_long,
-        type="long_message_test")
+    # Test with different type and priority
+    notification_long_msg = Notification(
+        title="Long Message Test",
+        recipient_id=test_user.id,
+        message="This is a very long message that should be truncated in the representation for brevity.",
+        notification_type=NotificationType.SYSTEM_HEALTH,
+        priority=NotificationPriority.HIGH
+    )
     db_session.add(notification_long_msg)
     db_session.commit()
     db_session.refresh(notification_long_msg)
 
-    expected_repr_long = f"<create_mock_model(Notification, id={notification_long_msg.id}, user_id={test_user.id}, message='{message_long[:20]}...', is_read=False, scheduled_at=None)>"
+    expected_repr_long = f"<Notification(id={notification_long_msg.id}, type='{notification_long_msg.notification_type}', priority='{notification_long_msg.priority}')>"
     assert repr(notification_long_msg) == expected_repr_long
 
 # Keep the unittest version as well for compatibility
@@ -166,28 +174,25 @@ class TestNotificationModel(unittest.TestCase):
 
     def test_create_notification_instance(self):
         """Test creating a Notification model instance."""
-        notification_data = {
-            "user_id": 1,
-            "message": "Test notification message",
-            "type": "test_type",
-            "scheduled_at": datetime.utcnow(),
-            "is_read": False
-        }
+        from app.models.notifications import NotificationType, NotificationPriority
+        
+        # Test basic notification creation with proper model attributes
+        notification = Notification(
+            title="Test Notification",
+            recipient_id=1,
+            message="Test notification message",
+            notification_type=NotificationType.USER_ACTIVITY,
+            priority=NotificationPriority.MEDIUM
+        )
 
-        notification = create_mock_model(Notification, user_id=notification_data["user_id"],
-            message=notification_data["message"],
-            type=notification_data["type"],
-            scheduled_at=notification_data["scheduled_at"],
-            is_read=notification_data["is_read"])
-            # created_at will have a default value
-
+        # Test that the notification has the expected attributes
         self.assertTrue(hasattr(notification, "__class__"))
-        self.assertEqual(notification.user_id, notification_data["user_id"])
-        self.assertEqual(notification.message, notification_data["message"])
-        self.assertEqual(notification.type, notification_data["type"])
-        self.assertEqual(notification.scheduled_at, notification_data["scheduled_at"])
-        self.assertEqual(notification.is_read, notification_data["is_read"])
-        self.assertIsNotNone(notification.created_at)
+        self.assertEqual(notification.recipient_id, 1)
+        self.assertEqual(notification.message, "Test notification message")
+        self.assertEqual(notification.notification_type, NotificationType.USER_ACTIVITY)
+        self.assertEqual(notification.priority, NotificationPriority.MEDIUM)
+        # created_at is set by SQLAlchemy default, but won't be populated until database commit
+        self.assertTrue(hasattr(notification, "created_at"))
 
 if __name__ == '__main__':
     unittest.main

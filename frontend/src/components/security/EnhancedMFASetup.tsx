@@ -313,7 +313,7 @@ export const EnhancedMFASetup: React.FC = () => {
           </div>
 
           <div className="mt-6 flex justify-center">
-            <Button onClick={() => setCurrentStep('setup')} className="px-8">
+            <Button onClick={() => setCurrentStep('setup')} className="px-8" data-testid="setup-mfa-button">
               <Shield className="mr-2 h-4 w-4" />
               Set Up MFA
             </Button>

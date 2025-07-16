@@ -86,7 +86,7 @@ class User(Base):
     skills_json = Column(Text(), nullable=True)  # JSON string for list[str] - renamed to avoid conflict with skills relationship
     kudos_count = Column(Integer(), default=0)
 
-    # Enhanced relationships for tenant-aware RBAC - using fully qualified module paths to resolve registry conflicts
+    # Enhanced relationships for tenant-aware RBAC - re-enabled as part of REENABLE.md plan
     user_roles = relationship("app.models.user_role_assignment.UserRoleAssignment", foreign_keys="app.models.user_role_assignment.UserRoleAssignment.user_id", cascade="all, delete-orphan", overlaps="user")
     
     # Process notes relationship - temporarily disabled due to registry conflicts
@@ -100,8 +100,8 @@ class User(Base):
     def get_roles(self, tenant_id=None):
         """Get roles through user_roles relationship"""
         if tenant_id:
-            return [ur.role for ur in self.user_roles if ur.role and ur.tenant_id == tenant_id]
-        return [ur.role for ur in self.user_roles if ur.role]
+            return [ur.role for ur in self.user_roles if ur.tenant_id == tenant_id]
+        return [ur.role for ur in self.user_roles]
     
     @property
     def roles(self):
@@ -226,12 +226,10 @@ class User(Base):
     #     cascade="all, delete-orphan"
     # )
 
-    # Relationships for Team Collaboration - temporarily disabled due to registry conflicts
-    # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
-    # team_memberships = relationship("TeamMember", back_populates="user", cascade="all, delete-orphan")
-    # If User can create teams (e.g. created_by_user_id in Team model) - temporarily disabled due to registry conflicts
-    # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
-    # created_teams = relationship("Team", back_populates="creator", cascade="all, delete-orphan")
+    # Relationships for Team Collaboration - re-enabled as part of REENABLE.md plan
+    team_memberships = relationship("app.models.team.TeamMember", foreign_keys="app.models.team.TeamMember.user_id", cascade="all, delete-orphan")
+    # If User can create teams (e.g. created_by_user_id in Team model) - re-enabled as part of REENABLE.md plan
+    created_teams = relationship("app.models.team.Team", foreign_keys="app.models.team.Team.created_by_user_id", cascade="all, delete-orphan")
 
     # ML Model relationships - temporarily disabled due to registry conflicts
     # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
@@ -243,14 +241,13 @@ class User(Base):
     # datasets = relationship("DatasetMetadata", back_populates="creator", cascade="all, delete-orphan")
     # experiment_runs = relationship("ExperimentRun", back_populates="creator", cascade="all, delete-orphan")
 
-    # Social Networking relationships - temporarily disabled entirely due to registry conflicts
-    # TODO: Re-enable after resolving SQLAlchemy registry mapping issues
-    # connections_initiated = relationship("UserConnection", foreign_keys="UserConnection.user_id", cascade="all, delete-orphan")
-    # connections_received = relationship("UserConnection", foreign_keys="UserConnection.connected_user_id", cascade="all, delete-orphan")
-    # peer_matches_initiated = relationship("PeerMatch", foreign_keys="PeerMatch.user_id", cascade="all, delete-orphan")
-    # peer_matches_received = relationship("PeerMatch", foreign_keys="PeerMatch.matched_user_id", cascade="all, delete-orphan")
-    # social_metrics = relationship("SocialMetrics", uselist=False, cascade="all, delete-orphan")
-    # skills = relationship("UserSkill", cascade="all, delete-orphan")
+    # Social Networking relationships - re-enabled as part of REENABLE.md plan
+    connections_initiated = relationship("UserConnection", foreign_keys="UserConnection.user_id", cascade="all, delete-orphan")
+    connections_received = relationship("UserConnection", foreign_keys="UserConnection.connected_user_id", cascade="all, delete-orphan")
+    peer_matches_initiated = relationship("PeerMatch", foreign_keys="PeerMatch.user_id", cascade="all, delete-orphan")
+    peer_matches_received = relationship("PeerMatch", foreign_keys="PeerMatch.matched_user_id", cascade="all, delete-orphan")
+    social_metrics = relationship("SocialMetrics", uselist=False, cascade="all, delete-orphan")
+    skills = relationship("UserSkill", cascade="all, delete-orphan")
 
     # Learning & Development relationships - temporarily disabled due to registry conflicts
     # TODO: Re-enable after resolving SQLAlchemy registry mapping issues

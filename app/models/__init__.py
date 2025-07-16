@@ -6,8 +6,7 @@
 
 from app.database import Base # Import Base from the centralized database module
 
-# Import User directly to avoid centralized import conflicts
-from .user import User
+# User removed from centralized imports to avoid registry conflicts - import directly from user module when needed
 from .imports import UserRoleAssignment, Task
 # Import only specific classes from rbac module to avoid UserRoleAssignment conflicts
 # Permission removed from direct import to resolve registry conflicts - import via app.models.rbac when needed
@@ -77,7 +76,7 @@ from .learning import (
 
 # Optionally, define __all__ to specify what is exported when 'from .models import *' is used
 __all__ = [
-    "User",  # Centralized User import
+    # "User",  # Removed from centralized imports to avoid registry conflicts - import directly from user module when needed
     "Base",
     "Role",
     # "Permission", # Removed from direct import to resolve registry conflicts - import via app.models.rbac when needed
