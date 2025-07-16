@@ -1,7 +1,7 @@
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ToastProvider } from '../../src/components/ui/Toast';
-import CollaborationOptimization from '../../src/components/team/CollaborationOptimization';
+import CollaborationOptimization from '../../src/components/team/CollaborationOptimization.jsx';
 
 // Create a client
 const queryClient = new QueryClient({
