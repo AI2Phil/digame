@@ -172,7 +172,7 @@ const SystemAnalyticsSection = () => {
   // Load data on component mount and when time range changes
   useEffect(() => {
     fetchSystemAnalytics();
-  }, [timeRange]);
+  }, [timeRange, fetchSystemAnalytics]);
 
   const handleRefresh = async () => {
     setRefreshing(true);

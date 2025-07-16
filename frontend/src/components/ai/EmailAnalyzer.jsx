@@ -62,7 +62,7 @@ const EmailAnalyzer = () => {
       setIsUsingFallbackData(true);
       warning('Feature check failed - using demo data');
     }
-  }, [success, info, warning]);
+  }, [info, warning]);
 
   const loadAnalysisHistory = useCallback(async () => {
     try {

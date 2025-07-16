@@ -371,7 +371,7 @@ const AIPoweredAutomation = () => {
       setExecutionLogs(recentExecutions);
       loadFallbackPerformanceData();
     }
-  }, []);
+  }, [aiAutomations, automationActions, automationTriggers, loadFallbackPerformanceData, recentExecutions]);
 
   useEffect(() => {
     loadAutomationData();

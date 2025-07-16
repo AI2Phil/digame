@@ -201,7 +201,7 @@ const OnboardingAnalyticsSection = () => {
   // Initial data fetch
   useEffect(() => {
     fetchOnboardingAnalytics();
-  }, [timeRange]);
+  }, [timeRange, fetchOnboardingAnalytics]);
 
   // Refresh data function
   const handleRefresh = async () => {

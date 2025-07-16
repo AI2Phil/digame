@@ -21,7 +21,7 @@ const MeetingSummarizer = () => {
   useEffect(() => {
     checkFeatureAvailability();
     loadSummaryHistory();
-  }, []);
+  }, [checkFeatureAvailability]);
 
   const checkFeatureAvailability = async () => {
     try {

@@ -260,7 +260,7 @@ const WorkflowAutomation: React.FC = () => {
     
     setWorkflows(mockWorkflows);
     setLoading(false);
-  }, []);
+  }, [workflowTemplates]);
 
   const loadExecutions = useCallback(async () => {
     // Generate mock execution history

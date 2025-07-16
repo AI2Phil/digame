@@ -47,7 +47,7 @@ const PredictiveAnalyticsEngine = ({
   useEffect(() => {
     loadPredictiveAnalytics();
     setupRealTimeUpdates();
-  }, [dataSource, timeHorizon]);
+  }, [dataSource, timeHorizon, loadPredictiveAnalytics]);
 
   const loadPredictiveAnalytics = async () => {
     setLoading(true);

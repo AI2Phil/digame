@@ -368,7 +368,7 @@ const NLPEnhancement = () => {
 
   useEffect(() => {
     loadNLPData();
-  }, []);
+  }, [loadNLPData]);
 
   const loadNLPData = async () => {
     setLoading(true);

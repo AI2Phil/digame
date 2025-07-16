@@ -56,7 +56,7 @@ const UserDetailsDialog = ({ user, onAction, onClose }) => {
     } finally {
       setLoading(false);
     }
-  }, [user.id]);
+  }, [user]);
 
   // Fetch user details on component mount
   React.useEffect(() => {
