@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
@@ -44,11 +44,7 @@ export const TwinDashboard: React.FC<TwinDashboardProps> = ({ twinId, userId }) 
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('overview');
 
-  useEffect(() => {
-    fetchTwinData();
-  }, [twinId]);
-
-  const fetchTwinData = async () => {
+  const fetchTwinData = useCallback(async () => {
     try {
       setLoading(true);
       const response = await fetch(`http://localhost:8001/api/digital-twin/status`, {
@@ -96,7 +92,11 @@ export const TwinDashboard: React.FC<TwinDashboardProps> = ({ twinId, userId }) 
     } finally {
       setLoading(false);
     }
-  };
+  }, [twinId]);
+
+  useEffect(() => {
+    fetchTwinData();
+  }, [twinId, fetchTwinData]);
 
   const getStatusColor = (status: string) => {
     switch (status) {

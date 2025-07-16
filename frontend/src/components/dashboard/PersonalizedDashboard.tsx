@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 
 interface DashboardWidget {
@@ -18,13 +18,7 @@ const PersonalizedDashboard: React.FC<PersonalizedDashboardProps> = ({ className
   const [widgets, setWidgets] = useState<DashboardWidget[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    if (user) {
-      generatePersonalizedWidgets();
-    }
-  }, [user]);
-
-  const generatePersonalizedWidgets = () => {
+  const generatePersonalizedWidgets = useCallback(() => {
     if (!user?.onboardingData) {
       setIsLoading(false);
       return;
@@ -266,7 +260,13 @@ const PersonalizedDashboard: React.FC<PersonalizedDashboardProps> = ({ className
     generatedWidgets.sort((a, b) => a.priority - b.priority);
     setWidgets(generatedWidgets);
     setIsLoading(false);
-  };
+  }, [user]);
+
+  useEffect(() => {
+    if (user) {
+      generatePersonalizedWidgets();
+    }
+  }, [user, generatePersonalizedWidgets]);
 
   if (isLoading) {
     return (

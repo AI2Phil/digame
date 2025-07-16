@@ -439,7 +439,7 @@ const NLPEnhancement = () => {
     } finally {
       setLoading(false);
     }
-  }, [toast]);
+  }, [toast, loadFallbackData]);
 
   const loadFallbackData = () => {
     setConversations(conversationData);

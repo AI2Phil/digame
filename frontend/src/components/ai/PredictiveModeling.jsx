@@ -284,7 +284,7 @@ const PredictiveModeling = () => {
     } finally {
       setLoading(false);
     }
-  }, [selectedModel, timeHorizon, fallbackPredictiveModels]);
+  }, [selectedModel, timeHorizon, loadModels, loadPredictions, loadModelPerformance, loadRecommendations, loadFallbackData]);
 
   const loadModels = async () => {
     try {

@@ -114,7 +114,7 @@ export const PieChart: React.FC<PieChartProps> = ({
         hoverOffset: 8
       }))
     };
-  }, [processedData, options.color_scheme]);
+  }, [processedData, options.color_scheme, colorSchemes]);
 
   const chartOptions: ChartOptions<'pie'> = useMemo(() => ({
     responsive: options.responsive !== false,

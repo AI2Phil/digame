@@ -190,7 +190,7 @@ export const LineChart: React.FC<LineChartProps> = ({
         };
       })
     };
-  }, [processedData, options]);
+  }, [processedData, options, colorSchemes]);
 
   const chartOptions: ChartOptions<'line'> = useMemo(() => ({
     responsive: options.responsive !== false,

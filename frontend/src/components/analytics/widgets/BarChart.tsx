@@ -133,7 +133,7 @@ export const BarChart: React.FC<BarChartProps> = ({
         hoverBorderWidth: 3
       }))
     };
-  }, [processedData, options.color_scheme]);
+  }, [processedData, options.color_scheme, colorSchemes]);
 
   const chartOptions: ChartOptions<'bar'> = useMemo(() => ({
     responsive: options.responsive !== false,

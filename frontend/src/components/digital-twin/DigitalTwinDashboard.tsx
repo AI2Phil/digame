@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
@@ -172,11 +172,7 @@ export const DigitalTwinDashboard: React.FC = () => {
   const [usingFallbackData, setUsingFallbackData] = useState(false);
   const toast = useToastHelpers();
 
-  useEffect(() => {
-    loadTwinStatus();
-  }, []);
-
-  const loadTwinStatus = async () => {
+  const loadTwinStatus = useCallback(async () => {
     try {
       setLoading(true);
       setUsingFallbackData(false);
@@ -203,7 +199,11 @@ export const DigitalTwinDashboard: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    loadTwinStatus();
+  }, [loadTwinStatus]);
 
   const loadTwinHealth = async () => {
     try {

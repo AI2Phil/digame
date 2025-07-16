@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
@@ -41,10 +41,6 @@ export const TwinAnalytics: React.FC<TwinAnalyticsProps> = ({ twinId, twin }) =>
   const [timeRange, setTimeRange] = useState('7'); // days
   const [error, setError] = useState<string | null>(null);
   const toast = useToastActions();
-
-  useEffect(() => {
-    fetchAnalytics();
-  }, [twinId, timeRange]);
 
   const generateFallbackData = () => {
     const timeRangeNum = parseInt(timeRange);
@@ -99,7 +95,7 @@ export const TwinAnalytics: React.FC<TwinAnalyticsProps> = ({ twinId, twin }) =>
     };
   };
 
-  const fetchAnalytics = async () => {
+  const fetchAnalytics = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -133,7 +129,11 @@ export const TwinAnalytics: React.FC<TwinAnalyticsProps> = ({ twinId, twin }) =>
     } finally {
       setLoading(false);
     }
-  };
+  }, [twinId, timeRange]);
+
+  useEffect(() => {
+    fetchAnalytics();
+  }, [fetchAnalytics]);
 
   const getPatternTypeColor = (type: string) => {
     switch (type) {
