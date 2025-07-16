@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { 
   User, Mail, Calendar, Shield, Activity, 
   Key, Settings, Edit, Save, X
@@ -26,7 +26,7 @@ const UserDetailsDialog = ({ user, onAction, onClose }) => {
   });
 
   // Fetch detailed user information from database
-  const fetchUserDetails = async () => {
+  const fetchUserDetails = useCallback(async () => {
     try {
       setLoading(true);
       const response = await fetch(`http://localhost:8001/api/admin/users/${user.id}`, {
@@ -56,12 +56,12 @@ const UserDetailsDialog = ({ user, onAction, onClose }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user.id]);
 
   // Fetch user details on component mount
   React.useEffect(() => {
     fetchUserDetails();
-  }, [user.id]);
+  }, [fetchUserDetails]);
 
   const handleSave = async () => {
     try {

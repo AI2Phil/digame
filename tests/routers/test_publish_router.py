@@ -8,7 +8,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
 from app.main import app
-from app.database import get_db
+from app.db import get_db  # Import from app.db instead of app.database
 from app.models.user import User
 from app.models.behavior_model import BehavioralModel
 from app.auth.auth_service import get_current_user, security
@@ -20,7 +20,9 @@ def client(db_session):
         yield db_session
     app.dependency_overrides[get_db] = override_get_db
     yield TestClient(app)
-    del app.dependency_overrides[get_db]
+    # Safe cleanup - only delete if it exists
+    if get_db in app.dependency_overrides:
+        del app.dependency_overrides[get_db]
 
 
 def test_publish_model_not_found(client: TestClient):
@@ -39,8 +41,11 @@ def test_publish_model_not_found(client: TestClient):
         assert response.status_code == 404
         assert "not found" in response.json()["detail"]
     finally:
-        # Clean up dependency overrides
-        app.dependency_overrides.clear()
+        # Clean up dependency overrides (but not get_db as it's managed by the client fixture)
+        if security in app.dependency_overrides:
+            del app.dependency_overrides[security]
+        if get_current_user in app.dependency_overrides:
+            del app.dependency_overrides[get_current_user]
 
 @patch('app.routers.publish_router.subprocess.run')
 def test_publish_model_success(mock_subprocess_run, client: TestClient, db_session: Session):

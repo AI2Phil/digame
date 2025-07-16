@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Search, Filter, Download, MoreHorizontal,
   UserCheck, UserX, Shield, Key, Mail,
@@ -56,7 +56,7 @@ const UserManagementSection = () => {
   }, []);
 
   // Fetch users data from API
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -97,10 +97,10 @@ const UserManagementSection = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [pagination.page, pagination.limit, searchTerm, currentFilterRole, currentFilterStatus, toast]);
 
   // Fetch user statistics
-  const fetchUserStats = async () => {
+  const fetchUserStats = useCallback(async () => {
     try {
       const response = await fetch('http://localhost:8001/api/admin/users/stats', {
         headers: {
@@ -128,7 +128,7 @@ const UserManagementSection = () => {
         growthRate: 8.3
       });
     }
-  };
+  }, []);
 
   // Generate enhanced sample data as fallback
   const generateEnhancedSampleData = () => {
@@ -181,7 +181,7 @@ const UserManagementSection = () => {
   useEffect(() => {
     fetchUsers();
     fetchUserStats();
-  }, [pagination.page, pagination.limit, searchTerm, currentFilterRole, currentFilterStatus]);
+  }, [fetchUsers, fetchUserStats]);
 
   const handleRefresh = async () => {
     setRefreshing(true);

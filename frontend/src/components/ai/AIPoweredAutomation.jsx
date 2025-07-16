@@ -353,11 +353,7 @@ const AIPoweredAutomation = () => {
     }
   ];
 
-  useEffect(() => {
-    loadAutomationData();
-  }, []);
-
-  const loadAutomationData = async () => {
+  const loadAutomationData = useCallback(async () => {
     try {
       await Promise.all([
         loadWorkflowTemplates(),
@@ -375,7 +371,11 @@ const AIPoweredAutomation = () => {
       setExecutionLogs(recentExecutions);
       loadFallbackPerformanceData();
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    loadAutomationData();
+  }, [loadAutomationData]);
 
   const loadWorkflowTemplates = async () => {
     try {

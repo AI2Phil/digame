@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Card,
@@ -241,12 +241,7 @@ const WorkflowAutomation: React.FC = () => {
     },
   ];
 
-  useEffect(() => {
-    loadWorkflows();
-    loadExecutions();
-  }, []);
-
-  const loadWorkflows = async () => {
+  const loadWorkflows = useCallback(async () => {
     setLoading(true);
     
     // Simulate API call
@@ -265,9 +260,9 @@ const WorkflowAutomation: React.FC = () => {
     
     setWorkflows(mockWorkflows);
     setLoading(false);
-  };
+  }, []);
 
-  const loadExecutions = async () => {
+  const loadExecutions = useCallback(async () => {
     // Generate mock execution history
     const mockExecutions: WorkflowExecution[] = [];
     
@@ -304,7 +299,12 @@ const WorkflowAutomation: React.FC = () => {
     });
     
     setExecutions(mockExecutions.sort((a, b) => b.startTime.getTime() - a.startTime.getTime()));
-  };
+  }, [workflows]);
+
+  useEffect(() => {
+    loadWorkflows();
+    loadExecutions();
+  }, [loadWorkflows, loadExecutions]);
 
   const executeWorkflow = async (workflowId: string) => {
     const workflow = workflows.find(w => w.id === workflowId);

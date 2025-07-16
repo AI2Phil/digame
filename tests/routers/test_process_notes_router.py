@@ -303,13 +303,18 @@ def test_get_single_process_note_authorized_owner(client: TestClient, test_admin
     assert data["user_id"] == test_admin_user.id
     app.dependency_overrides.clear()
 
-def test_get_single_process_note_not_found(client: TestClient, test_admin_user: SQLAlchemyUser):
+def test_get_single_process_note_not_found(client: TestClient, test_admin_user: SQLAlchemyUser, db_session_test: Session):
+    from app.db import get_db
+    
     app.dependency_overrides[get_current_active_user] = lambda: test_admin_user
+    app.dependency_overrides[get_db] = lambda: db_session_test
     response = client.get("/process-notes/99999") # Non-existent note ID
     assert response.status_code == status.HTTP_404_NOT_FOUND
     app.dependency_overrides.clear()
 
 def test_get_single_process_note_unauthorized_not_owner(client: TestClient, test_admin_user: SQLAlchemyUser, test_non_admin_user: SQLAlchemyUser, db_session_test: Session):
+    from app.db import get_db
+    
     # Note belongs to non_admin_user, but admin_user (who has view_own_process_notes) is trying to access it.
     # The endpoint logic should prevent this specific case due to user_id check.
     note_owner = test_non_admin_user # The actual owner
@@ -322,6 +327,7 @@ def test_get_single_process_note_unauthorized_not_owner(client: TestClient, test
     note = create_db_process_note(db_session_test, user_id=note_owner.id, task_name="Other User's Note")
     
     app.dependency_overrides[get_current_active_user] = lambda: note_accessor
+    app.dependency_overrides[get_db] = lambda: db_session_test
     response = client.get(f"/process-notes/{note.id}")
     
     assert response.status_code == status.HTTP_403_FORBIDDEN
@@ -329,11 +335,14 @@ def test_get_single_process_note_unauthorized_not_owner(client: TestClient, test
     app.dependency_overrides.clear()
 
 def test_get_single_process_note_no_general_permission(client: TestClient, test_non_admin_user: SQLAlchemyUser, db_session_test: Session):
+    from app.db import get_db
+    
     # User does not even have 'view_own_process_notes'
     # Create a note for this user first
     note = create_db_process_note(db_session_test, user_id=test_non_admin_user.id, task_name="NonAdminOwned Note")
     
     app.dependency_overrides[get_current_active_user] = lambda: test_non_admin_user
+    app.dependency_overrides[get_db] = lambda: db_session_test
     response = client.get(f"/process-notes/{note.id}")
     
     assert response.status_code == status.HTTP_403_FORBIDDEN

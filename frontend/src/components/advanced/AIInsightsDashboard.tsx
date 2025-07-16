@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Card,
@@ -316,16 +316,7 @@ const AIInsightsDashboard: React.FC = () => {
     ];
   };
 
-  useEffect(() => {
-    loadInsights();
-    
-    if (autoRefresh) {
-      const interval = setInterval(loadInsights, 30000); // Refresh every 30 seconds
-      return () => clearInterval(interval);
-    }
-  }, [autoRefresh]);
-
-  const loadInsights = async () => {
+  const loadInsights = useCallback(async () => {
     setLoading(true);
     
     // Simulate API call
@@ -337,7 +328,16 @@ const AIInsightsDashboard: React.FC = () => {
     setBusinessInsights(generateBusinessInsights());
     
     setLoading(false);
-  };
+  }, []);
+
+  useEffect(() => {
+    loadInsights();
+    
+    if (autoRefresh) {
+      const interval = setInterval(loadInsights, 30000); // Refresh every 30 seconds
+      return () => clearInterval(interval);
+    }
+  }, [loadInsights, autoRefresh]);
 
   const filteredInsights = insights.filter(insight => {
     if (insightFilter === 'all') return insight.confidence >= confidenceThreshold;

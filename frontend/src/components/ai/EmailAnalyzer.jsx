@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Textarea } from '../ui/Textarea';
@@ -23,12 +23,7 @@ const EmailAnalyzer = () => {
   { "subject": "Project Update", "sender": "colleague@example.com", "timestamp": "2023-10-02T14:30:00Z" }
 ]`;
 
-  useEffect(() => {
-    checkFeatureAvailability();
-    loadAnalysisHistory();
-  }, []);
-
-  const checkFeatureAvailability = async () => {
+  const checkFeatureAvailability = useCallback(async () => {
     try {
       const token = localStorage.getItem('access_token');
       if (!token) {
@@ -67,9 +62,9 @@ const EmailAnalyzer = () => {
       setIsUsingFallbackData(true);
       warning('Feature check failed - using demo data');
     }
-  };
+  }, [success, info, warning]);
 
-  const loadAnalysisHistory = async () => {
+  const loadAnalysisHistory = useCallback(async () => {
     try {
       const token = localStorage.getItem('access_token');
       if (!token) return;
@@ -127,7 +122,12 @@ const EmailAnalyzer = () => {
         }
       ]);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    checkFeatureAvailability();
+    loadAnalysisHistory();
+  }, [checkFeatureAvailability, loadAnalysisHistory]);
 
   const handleAnalyzeEmails = async () => {
     if (!inputText.trim()) {
