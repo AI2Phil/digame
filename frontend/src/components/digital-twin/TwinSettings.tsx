@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
@@ -109,7 +109,7 @@ export const TwinSettings: React.FC<TwinSettingsProps> = ({ twin, onUpdate }) =>
   };
 
   // Load twin settings from database
-  const loadTwinSettings = async () => {
+  const loadTwinSettings = useCallback(async () => {
     try {
       setLoading(true);
       
@@ -166,7 +166,7 @@ export const TwinSettings: React.FC<TwinSettingsProps> = ({ twin, onUpdate }) =>
     } finally {
       setLoading(false);
     }
-  };
+  }, [success, info]);
 
   // Handle online/offline status
   useEffect(() => {
@@ -191,7 +191,7 @@ export const TwinSettings: React.FC<TwinSettingsProps> = ({ twin, onUpdate }) =>
   // Load settings on component mount
   useEffect(() => {
     loadTwinSettings();
-  }, []);
+  }, [loadTwinSettings]);
 
   const handleSave = async () => {
     if (!editedName.trim() || !settings) return;

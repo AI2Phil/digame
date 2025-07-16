@@ -73,13 +73,9 @@ export const TwinPredictionsPanel: React.FC<TwinPredictionsPanelProps> = ({ twin
     } finally {
       setLoading(false);
     }
-  }, [twinId]);
+  }, [twinId, toast]);
 
-  useEffect(() => {
-    loadPredictions();
-  }, [loadPredictions]);
-
-  const loadFallbackPredictions = () => {
+  const loadFallbackPredictions = useCallback(() => {
     // Enhanced fallback predictions with realistic data
     const fallbackPredictions: Prediction[] = [
       {
@@ -143,7 +139,11 @@ export const TwinPredictionsPanel: React.FC<TwinPredictionsPanelProps> = ({ twin
     setPredictions(fallbackPredictions);
     setUsingFallbackData(true);
     toast.info("Using demo predictions - Digital Twin API currently unavailable");
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    loadPredictions();
+  }, [loadPredictions]);
 
   const storePredictions = (newPredictions: Prediction[]) => {
     localStorage.setItem(`predictions_${twinId}`, JSON.stringify(newPredictions));

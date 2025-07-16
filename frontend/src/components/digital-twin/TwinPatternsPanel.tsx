@@ -59,13 +59,9 @@ export const TwinPatternsPanel: React.FC<TwinPatternsPanelProps> = ({ twinId }) 
     } finally {
       setLoading(false);
     }
-  }, [selectedType, limit]);
+  }, [selectedType, limit, toast]);
 
-  useEffect(() => {
-    loadPatterns();
-  }, [loadPatterns]);
-
-  const loadFallbackPatterns = () => {
+  const loadFallbackPatterns = useCallback(() => {
     // Enhanced fallback patterns with realistic data
     const fallbackPatterns: TwinPattern[] = [
       {
@@ -155,7 +151,11 @@ export const TwinPatternsPanel: React.FC<TwinPatternsPanelProps> = ({ twinId }) 
     
     setPatterns(limitedPatterns);
     setUsingFallbackData(true);
-  };
+  }, [selectedType, limit]);
+
+  useEffect(() => {
+    loadPatterns();
+  }, [loadPatterns]);
 
   const refreshPatterns = async () => {
     try {

@@ -201,11 +201,7 @@ export const DigitalTwinDashboard: React.FC = () => {
     }
   }, [toast]);
 
-  useEffect(() => {
-    loadTwinStatus();
-  }, [loadTwinStatus]);
-
-  const loadTwinHealth = async () => {
+  const loadTwinHealth = useCallback(async () => {
     try {
       const response = await digitalTwinApi.getTwinHealth();
       if (response.success && response.data) {
@@ -218,7 +214,11 @@ export const DigitalTwinDashboard: React.FC = () => {
         setTwinHealth(getEnhancedFallbackTwinHealth());
       }
     }
-  };
+  }, [usingFallbackData]);
+
+  useEffect(() => {
+    loadTwinStatus();
+  }, [loadTwinStatus]);
 
   const initializeTwin = async () => {
     try {

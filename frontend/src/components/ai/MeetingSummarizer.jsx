@@ -18,11 +18,6 @@ const MeetingSummarizer = () => {
 
   const { success, error: showError, warning, info } = useToastHelpers();
 
-  useEffect(() => {
-    checkFeatureAvailability();
-    loadSummaryHistory();
-  }, [checkFeatureAvailability]);
-
   const checkFeatureAvailability = useCallback(async () => {
     try {
       const token = localStorage.getItem('access_token');
@@ -63,6 +58,11 @@ const MeetingSummarizer = () => {
       warning('Feature check failed - using demo data');
     }
   }, [info, warning]);
+
+  useEffect(() => {
+    checkFeatureAvailability();
+    loadSummaryHistory();
+  }, [checkFeatureAvailability]);
 
   const loadSummaryHistory = async () => {
     try {

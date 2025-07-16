@@ -6,6 +6,22 @@ const ToastContext = createContext({});
 
 export const useToast = () => {
   const context = useContext(ToastContext);
+  
+  // SSR-safe: Return fallback during server-side rendering
+  if (typeof window === 'undefined') {
+    return {
+      toast: {
+        success: () => {},
+        error: () => {},
+        warning: () => {},
+        info: () => {},
+        custom: () => {}
+      },
+      removeToast: () => {},
+      clearAllToasts: () => {}
+    };
+  }
+  
   if (!context) {
     throw new Error('useToast must be used within a ToastProvider');
   }
@@ -221,7 +237,7 @@ export const ToastProvider = (
   return (
     <ToastContext.Provider value={{ toast, removeToast, clearAllToasts }}>
       {children}
-      {toasts.length > 0 && createPortal(toastContainer, document.body)}
+      {typeof window !== 'undefined' && toasts.length > 0 && createPortal(toastContainer, document.body)}
     </ToastContext.Provider>
   );
 };

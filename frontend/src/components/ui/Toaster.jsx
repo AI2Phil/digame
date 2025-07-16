@@ -77,6 +77,18 @@ export const ToastProvider = ({ children, limit = 5, duration = 4000 }) => {
 
 export const useToast = () => {
   const context = React.useContext(ToastContext);
+  
+  // SSR-safe: Return fallback during server-side rendering
+  if (typeof window === 'undefined') {
+    return {
+      toasts: [],
+      addToast: () => '',
+      removeToast: () => {},
+      removeAllToasts: () => {},
+      updateToast: () => {}
+    };
+  }
+  
   if (!context) {
     throw new Error('useToast must be used within ToastProvider');
   }
@@ -193,6 +205,11 @@ const Toaster = forwardRef(/** @param {{className?: string, position?: 'top-left
   ...props
 }, ref) => {
   const { toasts, removeToast } = useToast();
+
+  // Don't render during SSR
+  if (typeof window === 'undefined') {
+    return null;
+  }
 
   const positionClasses = {
     'top-left': 'top-0 left-0',
@@ -340,6 +357,19 @@ export const ToastVariants = {
  */
 export const useToastHelpers = () => {
   const { addToast, updateToast } = useToast();
+
+  // SSR-safe: Return no-op functions during server-side rendering
+  if (typeof window === 'undefined') {
+    return {
+      success: () => '',
+      error: () => '',
+      warning: () => '',
+      info: () => '',
+      loading: () => '',
+      promise: (promise) => promise,
+      custom: () => ''
+    };
+  }
 
   return {
     success: (message, options = {}) => addToast(ToastVariants.success(message, options)),

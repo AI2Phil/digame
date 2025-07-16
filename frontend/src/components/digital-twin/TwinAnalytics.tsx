@@ -129,7 +129,7 @@ export const TwinAnalytics: React.FC<TwinAnalyticsProps> = ({ twinId, twin }) =>
     } finally {
       setLoading(false);
     }
-  }, [twinId, timeRange, generateFallbackData]);
+  }, [timeRange, generateFallbackData]);
 
   useEffect(() => {
     fetchAnalytics();

@@ -36,9 +36,9 @@ const RealTimeTwinDashboard = ({ twinId, userId }) => {
   const { toast } = useToast();
   
   // Toast helper function
-  const showToast = (message, type = 'info') => {
+  const showToast = useCallback((message, type = 'info') => {
     toast[type](type === 'info' ? 'Information' : 'Notice', message);
-  };
+  }, [toast]);
 
   // WebSocket connection for real-time updates
   const {

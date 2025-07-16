@@ -353,6 +353,18 @@ const AIPoweredAutomation = () => {
     }
   ], []);
 
+  const loadFallbackPerformanceData = useCallback(() => {
+    setPerformance({
+      totalAutomations: aiAutomations.length,
+      activeAutomations: aiAutomations.filter(a => a.status === 'active').length,
+      totalExecutions: 8927,
+      successRate: 91.4,
+      avgExecutionTime: 2.2,
+      aiEnhancedActions: 67,
+      timeSaved: 1247
+    });
+  }, [aiAutomations]);
+
   const loadAutomationData = useCallback(async () => {
     try {
       await Promise.all([
@@ -555,18 +567,6 @@ const AIPoweredAutomation = () => {
       throw error;
     }
   };
-
-  const loadFallbackPerformanceData = useCallback(() => {
-    setPerformance({
-      totalAutomations: aiAutomations.length,
-      activeAutomations: aiAutomations.filter(a => a.status === 'active').length,
-      totalExecutions: 8927,
-      successRate: 91.4,
-      avgExecutionTime: 2.2,
-      aiEnhancedActions: 67,
-      timeSaved: 1247
-    });
-  }, [aiAutomations]);
 
   const toggleAutomation = useCallback(async (automationId) => {
     try {

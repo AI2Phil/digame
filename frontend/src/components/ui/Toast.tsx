@@ -68,6 +68,17 @@ export const ToastProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 // Hook to use toast
 export const useToast = () => {
   const context = useContext(ToastContext);
+  
+  // SSR-safe: Return fallback during server-side rendering
+  if (typeof window === 'undefined') {
+    return {
+      toasts: [],
+      addToast: () => {},
+      removeToast: () => {},
+      clearAllToasts: () => {}
+    };
+  }
+  
   if (context === undefined) {
     throw new Error('useToast must be used within a ToastProvider');
   }
@@ -77,6 +88,11 @@ export const useToast = () => {
 // Toast container component
 const ToastContainer: React.FC = () => {
   const { toasts } = useToast();
+
+  // Don't render during SSR
+  if (typeof window === 'undefined') {
+    return null;
+  }
 
   return (
     <div className="fixed top-4 right-4 z-50 space-y-2 max-w-sm w-full">
@@ -94,6 +110,9 @@ const ToastItem: React.FC<{ toast: Toast }> = ({ toast }) => {
   const [isLeaving, setIsLeaving] = useState(false);
 
   useEffect(() => {
+    // Don't run effects during SSR
+    if (typeof window === 'undefined') return;
+    
     // Trigger entrance animation
     const timer = setTimeout(() => setIsVisible(true), 10);
     return () => clearTimeout(timer);
@@ -221,6 +240,17 @@ export const toast = {
 // Hook for toast convenience functions
 export const useToastActions = () => {
   const { addToast } = useToast();
+  
+  // SSR-safe: Return no-op functions during server-side rendering
+  if (typeof window === 'undefined') {
+    return {
+      success: () => {},
+      error: () => {},
+      warning: () => {},
+      info: () => {},
+      custom: () => {}
+    };
+  }
   
   return {
     success: (title: string, message?: string, options?: Partial<Toast>) => {

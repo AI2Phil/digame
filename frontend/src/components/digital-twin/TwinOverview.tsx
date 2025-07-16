@@ -152,7 +152,7 @@ export const TwinOverview: React.FC<TwinOverviewProps> = ({
     setUsingFallbackData(true);
     toast.info('Using demonstration data - database unavailable');
     setLoading(false);
-  }, [twinId, propTwin, onRefresh]);
+  }, [twinId, propTwin, onRefresh, toast]);
 
   useEffect(() => {
     fetchTwinOverview();

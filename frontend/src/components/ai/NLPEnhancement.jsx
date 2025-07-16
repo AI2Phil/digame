@@ -366,9 +366,21 @@ const NLPEnhancement = () => {
     }
   ];
 
-  useEffect(() => {
-    loadNLPData();
-  }, [loadNLPData]);
+  const loadFallbackData = useCallback(() => {
+    setConversations(conversationData);
+    setLanguageModels(nlpModels);
+    setTextAnalysis(textAnalysisResults);
+    setSentimentData(sentimentTrends);
+    setPerformance({
+      totalConversations: 8927,
+      averageSentiment: 0.72,
+      languagesSupported: 95,
+      processingAccuracy: 92.4,
+      avgResponseTime: 0.8,
+      modelsActive: 5,
+      dailyProcessing: 12847
+    });
+  }, []);
 
   const loadNLPData = useCallback(async () => {
     setLoading(true);
@@ -441,21 +453,9 @@ const NLPEnhancement = () => {
     }
   }, [toast, loadFallbackData]);
 
-  const loadFallbackData = useCallback(() => {
-    setConversations(conversationData);
-    setLanguageModels(nlpModels);
-    setTextAnalysis(textAnalysisResults);
-    setSentimentData(sentimentTrends);
-    setPerformance({
-      totalConversations: 8927,
-      averageSentiment: 0.72,
-      languagesSupported: 95,
-      processingAccuracy: 92.4,
-      avgResponseTime: 0.8,
-      modelsActive: 5,
-      dailyProcessing: 12847
-    });
-  }, []);
+  useEffect(() => {
+    loadNLPData();
+  }, [loadNLPData]);
 
   const processText = useCallback(async (text) => {
     if (!text.trim()) {
