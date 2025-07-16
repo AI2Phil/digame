@@ -87,7 +87,7 @@ jobs:
       env:
         NODE_ENV: production
         NEXT_TELEMETRY_DISABLED: 1
-        NODE_OPTIONS: "--max-old-space-size=4096"
+        CI: true
       run: |
         echo "🔍 Pre-build environment check"
         echo "Node version: $(node --version)"
@@ -105,12 +105,12 @@ jobs:
           echo "No next.config.js found"
         fi
         
-        echo "🏗️ Starting build process..."
+        echo "🏗️ Starting memory-optimized build process..."
         # Clear any existing build artifacts
         rm -rf .next node_modules/.cache
         
-        # Build with reduced logging to prevent memory issues
-        NODE_ENV=production npm run build
+        # Use memory-optimized build command with increased memory allocation
+        npm run build:ci
         
         echo "📊 Post-build directory analysis:"
         echo "Current directory contents:"
@@ -306,7 +306,7 @@ jobs:
         # Check if artifacts were downloaded successfully
         if [ "${{ steps.download-artifacts.outcome }}" = "failure" ]; then
           echo "⚠️ Artifact download failed, building fresh..."
-          npm run build
+          npm run build:ci
         elif [ -d ".next" ]; then
           echo "✅ .next directory found from artifacts"
           ls -la .next/
@@ -317,11 +317,11 @@ jobs:
           else
             echo "⚠️ Invalid build artifacts (missing BUILD_ID), rebuilding..."
             rm -rf .next
-            npm run build
+            npm run build:ci
           fi
         else
           echo "⚠️ No .next directory found, building fresh..."
-          npm run build
+          npm run build:ci
         fi
         
         # Final verification
@@ -430,7 +430,7 @@ jobs:
         echo "🔧 Verifying build before starting server..."
         if [ ! -d ".next" ]; then
           echo "No .next directory, building fresh..."
-          npm run build
+          npm run build:ci
           
           # Verify build completed successfully
           if [ ! -d ".next" ]; then
@@ -444,7 +444,7 @@ jobs:
           echo "❌ Invalid build - BUILD_ID missing"
           echo "Rebuilding..."
           rm -rf .next
-          npm run build
+          npm run build:ci
         fi
         
         echo "✅ Build verification complete"
@@ -770,7 +770,7 @@ jobs:
         # Build if no artifacts were downloaded
         if [ ! -d ".next" ] || [ ! -f ".next/BUILD_ID" ]; then
           echo "No valid build artifacts found, building fresh..."
-          npm run build
+          npm run build:ci
         fi
         
         npm start &

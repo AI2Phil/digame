@@ -5,6 +5,11 @@ from sqlalchemy.ext.associationproxy import association_proxy
 from app.database import Base
 from datetime import datetime
 
+# Import Tenant directly to avoid string resolution issues
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from app.models.tenant import Tenant
+
 # Note: The old user_roles table has been replaced by the UserRoleAssignment model
 # for enhanced tenant-aware RBAC functionality
 
@@ -31,11 +36,11 @@ class Role(Base):
     updated_at = Column(DateTime(), default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # Enhanced relationships for tenant-aware RBAC - re-enabled as part of REENABLE.md plan
-    user_roles = relationship("app.models.user_role_assignment.UserRoleAssignment", back_populates="role")
+    user_roles = relationship("app.models.user_role_assignment.UserRoleAssignment", foreign_keys="app.models.user_role_assignment.UserRoleAssignment.role_id", overlaps="role")
     users = association_proxy("user_roles", "user")  # Maintains backward compatibility
     
-    # Tenant relationship - re-enabled as part of REENABLE.md plan
-    tenant = relationship("app.models.tenant.Tenant")
+    # Tenant relationship - using fully qualified path to avoid registry conflicts
+    tenant = relationship("app.models.tenant.Tenant", lazy="select")
 
     # Many-to-Many relationship with Permission - re-enabled as part of REENABLE.md plan
     permissions = relationship(

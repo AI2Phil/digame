@@ -8,6 +8,11 @@ from sqlalchemy.orm import relationship
 from app.database import Base
 from datetime import datetime
 
+# Import Tenant directly to avoid string resolution issues
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from app.models.tenant import Tenant
+
 
 class UserRoleAssignment(Base):
     """
@@ -41,8 +46,9 @@ class UserRoleAssignment(Base):
     
     # Relationships - re-enabled as part of REENABLE.md plan
     user = relationship("app.models.user.User", foreign_keys=[user_id], back_populates="user_roles")
-    role = relationship("app.models.rbac.Role", foreign_keys=[role_id], back_populates="user_roles")
-    tenant = relationship("app.models.tenant.Tenant", foreign_keys=[tenant_id], overlaps="user_roles")
+    role = relationship("app.models.rbac.Role", overlaps="user_roles")
+    # Tenant relationship - using fully qualified path to avoid registry conflicts
+    tenant = relationship("app.models.tenant.Tenant", foreign_keys=[tenant_id], overlaps="user_roles", lazy="select")
     assigner = relationship("app.models.user.User", foreign_keys=[assigned_by], overlaps="user_roles")
     
 

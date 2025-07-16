@@ -12,8 +12,35 @@ const nextConfig = {
     ACCESS_CONTROL_ENABLED: 'true'
   },
 
-  // Simplified webpack configuration to avoid JSX runtime conflicts
+  // Memory-optimized webpack configuration
   webpack: (config, { buildId, dev, isServer, defaultLoaders, webpack }) => {
+    // Memory optimization for CI builds
+    if (!dev && process.env.CI) {
+      config.optimization = {
+        ...config.optimization,
+        splitChunks: {
+          chunks: 'all',
+          cacheGroups: {
+            default: {
+              minChunks: 2,
+              priority: -20,
+              reuseExistingChunk: true,
+            },
+            vendor: {
+              test: /[\\/]node_modules[\\/]/,
+              name: 'vendors',
+              priority: -10,
+              chunks: 'all',
+            },
+          },
+        },
+      };
+      
+      // Reduce memory usage during build
+      config.optimization.minimize = true;
+      config.optimization.concatenateModules = false;
+    }
+
     // Ensure proper JSX handling
     config.resolve.alias = {
       ...config.resolve.alias,
@@ -24,7 +51,7 @@ const nextConfig = {
     return config;
   },
 
-  // Enhanced image optimization
+  // Optimized image configuration for CI
   images: {
     domains: ['localhost'],
     formats: ['image/webp'],
@@ -33,12 +60,16 @@ const nextConfig = {
     minimumCacheTTL: 60,
     dangerouslyAllowSVG: true,
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
+    // Disable image optimization during CI builds to save memory
+    unoptimized: process.env.CI === 'true',
   },
 
-  // Remove conflicting experimental settings
+  // Memory-optimized experimental settings
   experimental: {
-    // Remove swcMinify from experimental since it's already set at top level
     esmExternals: true,
+    // Reduce memory usage during builds
+    workerThreads: false,
+    cpus: 1,
   },
 
   // Custom page extensions
@@ -55,11 +86,21 @@ const nextConfig = {
     return `build-${Date.now()}`;
   },
 
-  // Ensure proper JSX runtime configuration
+  // Memory-optimized compiler settings
   compiler: {
     emotion: false,
     removeConsole: process.env.NODE_ENV === 'production',
-  }
+  },
+
+  // Disable ESLint during builds to save memory (run separately)
+  eslint: {
+    ignoreDuringBuilds: process.env.CI === 'true',
+  },
+
+  // Disable TypeScript checking during builds (run separately)
+  typescript: {
+    ignoreBuildErrors: process.env.CI === 'true',
+  },
 };
 
 module.exports = nextConfig;

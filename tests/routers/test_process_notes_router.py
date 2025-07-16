@@ -222,36 +222,48 @@ def test_update_process_note_feedback_only_feedback_text(client: TestClient, tes
     app.dependency_overrides.clear()
     
 def test_update_process_note_feedback_empty_payload(client: TestClient, test_admin_user: SQLAlchemyUser, db_session_test: Session):
-    from app.database import get_db
+    from app.db import get_db
     
     app.dependency_overrides[get_current_active_user] = lambda: test_admin_user
     app.dependency_overrides[get_db] = lambda: db_session_test
-    note = create_db_process_note(db_session_test, user_id=test_admin_user.id)
     
+    # Create a process note for the test user
+    note = create_db_process_note(db_session_test, user_id=test_admin_user.id, task_name="Empty Payload Test")
+    
+    # Make the PATCH request with empty payload using the actual note ID
     response = client.patch(f"/process-notes/{note.id}/feedback", json={}) # Empty payload
+    
     # The router has a check for this, relying on Pydantic model validation or explicit check
     assert response.status_code == status.HTTP_400_BAD_REQUEST
     assert "At least one field (user_feedback or user_tags) must be provided for update." in response.json()["detail"]
     app.dependency_overrides.clear()
 
-def test_update_process_note_feedback_not_found(client: TestClient, test_admin_user: SQLAlchemyUser):
+def test_update_process_note_feedback_not_found(client: TestClient, test_admin_user: SQLAlchemyUser, db_session_test: Session):
+    from app.db import get_db
+    
     app.dependency_overrides[get_current_active_user] = lambda: test_admin_user
+    app.dependency_overrides[get_db] = lambda: db_session_test
+    
     feedback_payload = {"user_feedback": "Does not matter"}
     response = client.patch("/process-notes/99999/feedback", json=feedback_payload) # Non-existent note
     assert response.status_code == status.HTTP_404_NOT_FOUND
     app.dependency_overrides.clear()
 
 def test_update_process_note_feedback_unauthorized_not_owner(client: TestClient, test_admin_user: SQLAlchemyUser, test_non_admin_user: SQLAlchemyUser, db_session_test: Session):
+    from app.db import get_db
+    
     # Note belongs to non_admin_user (note_owner). test_admin_user (note_accessor) tries to update.
     # test_admin_user has the permission "add_feedback_own_process_notes", but is not the owner.
     note_owner = test_non_admin_user
     note_accessor = test_admin_user
     
+    app.dependency_overrides[get_current_active_user] = lambda: note_accessor
+    app.dependency_overrides[get_db] = lambda: db_session_test
+    
     db_session_test.merge(note_owner) # Ensure owner is in session
     db_session_test.commit()
     note = create_db_process_note(db_session_test, user_id=note_owner.id)
 
-    app.dependency_overrides[get_current_active_user] = lambda: note_accessor
     feedback_payload = {"user_feedback": "Attempt by non-owner"}
     response = client.patch(f"/process-notes/{note.id}/feedback", json=feedback_payload)
     
@@ -276,7 +288,11 @@ def test_update_process_note_feedback_no_general_permission(client: TestClient, 
 # Permission: "view_own_process_notes" (and user must own the note)
 
 def test_get_single_process_note_authorized_owner(client: TestClient, test_admin_user: SQLAlchemyUser, db_session_test: Session):
+    from app.db import get_db
+    
     app.dependency_overrides[get_current_active_user] = lambda: test_admin_user
+    app.dependency_overrides[get_db] = lambda: db_session_test
+    
     note = create_db_process_note(db_session_test, user_id=test_admin_user.id, task_name="Owned Note")
 
     response = client.get(f"/process-notes/{note.id}")
