@@ -42,7 +42,7 @@ export const TwinAnalytics: React.FC<TwinAnalyticsProps> = ({ twinId, twin }) =>
   const [error, setError] = useState<string | null>(null);
   const toast = useToastActions();
 
-  const generateFallbackData = () => {
+  const generateFallbackData = useCallback(() => {
     const timeRangeNum = parseInt(timeRange);
     const basePatterns = Math.max(3, Math.floor(timeRangeNum / 2));
     const baseInteractions = Math.max(10, timeRangeNum * 2);
@@ -93,7 +93,7 @@ export const TwinAnalytics: React.FC<TwinAnalyticsProps> = ({ twinId, twin }) =>
         insights_generated: Math.floor(Math.random() * 5) + 3
       }
     };
-  };
+  }, [timeRange, twin.learning_progress, twin.accuracy_score]);
 
   const fetchAnalytics = useCallback(async () => {
     try {

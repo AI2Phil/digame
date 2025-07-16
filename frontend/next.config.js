@@ -12,14 +12,20 @@ const nextConfig = {
     ACCESS_CONTROL_ENABLED: 'true'
   },
 
-  // Memory-optimized webpack configuration
+  // Enhanced memory-optimized webpack configuration
   webpack: (config, { buildId, dev, isServer, defaultLoaders, webpack }) => {
-    // Memory optimization for CI builds
+    // Aggressive memory optimization for CI builds
     if (!dev && process.env.CI) {
+      // Reduce memory usage during build
       config.optimization = {
         ...config.optimization,
+        minimize: true,
+        concatenateModules: false,
+        // More aggressive chunk splitting for CI
         splitChunks: {
           chunks: 'all',
+          minSize: 20000,
+          maxSize: 200000, // Smaller chunks to reduce memory pressure
           cacheGroups: {
             default: {
               minChunks: 2,
@@ -31,14 +37,28 @@ const nextConfig = {
               name: 'vendors',
               priority: -10,
               chunks: 'all',
+              maxSize: 150000, // Limit vendor chunk size
             },
+            // Split large pages into separate chunks
+            pages: {
+              test: /[\\/]pages[\\/]/,
+              name: 'pages',
+              priority: -5,
+              chunks: 'all',
+              maxSize: 100000,
+            }
           },
         },
+        // Reduce memory usage
+        moduleIds: 'deterministic',
+        chunkIds: 'deterministic',
       };
-      
-      // Reduce memory usage during build
-      config.optimization.minimize = true;
-      config.optimization.concatenateModules = false;
+
+      // Suppress verbose webpack output in CI
+      config.stats = 'errors-warnings';
+      config.infrastructureLogging = {
+        level: 'error',
+      };
     }
 
     // Ensure proper JSX handling
@@ -64,12 +84,14 @@ const nextConfig = {
     unoptimized: process.env.CI === 'true',
   },
 
-  // Memory-optimized experimental settings
+  // Enhanced experimental settings for CI
   experimental: {
     esmExternals: true,
-    // Reduce memory usage during builds
+    // Optimize for CI environment
     workerThreads: false,
-    cpus: 1,
+    cpus: process.env.CI ? 1 : undefined, // Single CPU for CI, auto for local
+    // Reduce memory usage during static generation
+    isrMemoryCacheSize: process.env.CI ? 0 : 50 * 1024 * 1024, // Disable ISR cache in CI
   },
 
   // Custom page extensions
@@ -86,10 +108,12 @@ const nextConfig = {
     return `build-${Date.now()}`;
   },
 
-  // Memory-optimized compiler settings
+  // Enhanced compiler settings for CI
   compiler: {
     emotion: false,
     removeConsole: process.env.NODE_ENV === 'production',
+    // Remove debug info in CI builds
+    reactRemoveProperties: process.env.CI ? true : false,
   },
 
   // Disable ESLint during builds to save memory (run separately)
@@ -101,6 +125,22 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: process.env.CI === 'true',
   },
+
+  // Reduce build output verbosity in CI
+  onDemandEntries: {
+    maxInactiveAge: process.env.CI ? 25 * 1000 : 60 * 1000,
+    pagesBufferLength: process.env.CI ? 2 : 5,
+  },
+
+  // CI-specific optimizations
+  ...(process.env.CI && {
+    // Reduce static generation concurrency in CI
+    staticPageGenerationTimeout: 120, // 2 minutes timeout
+    // Optimize for CI memory constraints
+    generateEtags: false,
+    // Reduce build output
+    productionBrowserSourceMaps: false,
+  }),
 };
 
 module.exports = nextConfig;

@@ -172,6 +172,21 @@ export const DigitalTwinDashboard: React.FC = () => {
   const [usingFallbackData, setUsingFallbackData] = useState(false);
   const toast = useToastHelpers();
 
+  const loadTwinHealth = useCallback(async () => {
+    try {
+      const response = await digitalTwinApi.getTwinHealth();
+      if (response.success && response.data) {
+        setTwinHealth(response.data);
+      }
+    } catch (error) {
+      console.warn('Failed to load twin health, using fallback data:', error);
+      // Fallback data is already set in loadTwinStatus when API is unavailable
+      if (!usingFallbackData) {
+        setTwinHealth(getEnhancedFallbackTwinHealth());
+      }
+    }
+  }, [usingFallbackData]);
+
   const loadTwinStatus = useCallback(async () => {
     try {
       setLoading(true);
@@ -199,22 +214,7 @@ export const DigitalTwinDashboard: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [toast]);
-
-  const loadTwinHealth = useCallback(async () => {
-    try {
-      const response = await digitalTwinApi.getTwinHealth();
-      if (response.success && response.data) {
-        setTwinHealth(response.data);
-      }
-    } catch (error) {
-      console.warn('Failed to load twin health, using fallback data:', error);
-      // Fallback data is already set in loadTwinStatus when API is unavailable
-      if (!usingFallbackData) {
-        setTwinHealth(getEnhancedFallbackTwinHealth());
-      }
-    }
-  }, [usingFallbackData]);
+  }, [toast, loadTwinHealth]);
 
   useEffect(() => {
     loadTwinStatus();

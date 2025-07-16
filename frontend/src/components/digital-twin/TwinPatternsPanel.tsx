@@ -32,35 +32,6 @@ export const TwinPatternsPanel: React.FC<TwinPatternsPanelProps> = ({ twinId }) 
   const [usingFallbackData, setUsingFallbackData] = useState(false);
   const toast = useToastHelpers();
 
-  const loadPatterns = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const response = await digitalTwinApi.getTwinPatterns(
-        selectedType === 'all' ? undefined : selectedType,
-        limit
-      );
-      
-      if (response.success && response.data) {
-        setPatterns(response.data.patterns);
-        setUsingFallbackData(false);
-        toast.success("Patterns loaded successfully");
-      } else {
-        throw new Error(response.message || 'Failed to load patterns');
-      }
-    } catch (error: any) {
-      console.error('Failed to load patterns:', error);
-      setError(error.message || "Failed to load twin patterns");
-      
-      // Load enhanced fallback patterns
-      loadFallbackPatterns();
-      toast.warning("Using demo patterns - Digital Twin API currently unavailable");
-    } finally {
-      setLoading(false);
-    }
-  }, [selectedType, limit, toast]);
-
   const loadFallbackPatterns = useCallback(() => {
     // Enhanced fallback patterns with realistic data
     const fallbackPatterns: TwinPattern[] = [
@@ -152,6 +123,35 @@ export const TwinPatternsPanel: React.FC<TwinPatternsPanelProps> = ({ twinId }) 
     setPatterns(limitedPatterns);
     setUsingFallbackData(true);
   }, [selectedType, limit]);
+
+  const loadPatterns = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const response = await digitalTwinApi.getTwinPatterns(
+        selectedType === 'all' ? undefined : selectedType,
+        limit
+      );
+      
+      if (response.success && response.data) {
+        setPatterns(response.data.patterns);
+        setUsingFallbackData(false);
+        toast.success("Patterns loaded successfully");
+      } else {
+        throw new Error(response.message || 'Failed to load patterns');
+      }
+    } catch (error: any) {
+      console.error('Failed to load patterns:', error);
+      setError(error.message || "Failed to load twin patterns");
+      
+      // Load enhanced fallback patterns
+      loadFallbackPatterns();
+      toast.warning("Using demo patterns - Digital Twin API currently unavailable");
+    } finally {
+      setLoading(false);
+    }
+  }, [selectedType, limit, toast, loadFallbackPatterns]);
 
   useEffect(() => {
     loadPatterns();

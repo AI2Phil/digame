@@ -166,7 +166,7 @@ export const TwinSettings: React.FC<TwinSettingsProps> = ({ twin, onUpdate }) =>
     } finally {
       setLoading(false);
     }
-  }, [success, info]);
+  }, [success, info, generateFallbackSettings]);
 
   // Handle online/offline status
   useEffect(() => {

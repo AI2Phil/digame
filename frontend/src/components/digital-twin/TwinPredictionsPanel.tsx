@@ -47,34 +47,6 @@ export const TwinPredictionsPanel: React.FC<TwinPredictionsPanelProps> = ({ twin
   const [usingFallbackData, setUsingFallbackData] = useState(false);
   const toast = useToastHelpers();
 
-  const loadPredictions = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      // Try to load existing predictions from API or localStorage
-      const stored = localStorage.getItem(`predictions_${twinId}`);
-      if (stored) {
-        try {
-          const storedPredictions = JSON.parse(stored);
-          setPredictions(storedPredictions);
-          setUsingFallbackData(false);
-        } catch (error) {
-          console.error('Failed to parse stored predictions:', error);
-          loadFallbackPredictions();
-        }
-      } else {
-        loadFallbackPredictions();
-      }
-    } catch (error: any) {
-      console.error('Failed to load predictions:', error);
-      setError(error.message || "Failed to load predictions");
-      loadFallbackPredictions();
-    } finally {
-      setLoading(false);
-    }
-  }, [twinId, toast]);
-
   const loadFallbackPredictions = useCallback(() => {
     // Enhanced fallback predictions with realistic data
     const fallbackPredictions: Prediction[] = [
@@ -140,6 +112,34 @@ export const TwinPredictionsPanel: React.FC<TwinPredictionsPanelProps> = ({ twin
     setUsingFallbackData(true);
     toast.info("Using demo predictions - Digital Twin API currently unavailable");
   }, [toast]);
+
+  const loadPredictions = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // Try to load existing predictions from API or localStorage
+      const stored = localStorage.getItem(`predictions_${twinId}`);
+      if (stored) {
+        try {
+          const storedPredictions = JSON.parse(stored);
+          setPredictions(storedPredictions);
+          setUsingFallbackData(false);
+        } catch (error) {
+          console.error('Failed to parse stored predictions:', error);
+          loadFallbackPredictions();
+        }
+      } else {
+        loadFallbackPredictions();
+      }
+    } catch (error: any) {
+      console.error('Failed to load predictions:', error);
+      setError(error.message || "Failed to load predictions");
+      loadFallbackPredictions();
+    } finally {
+      setLoading(false);
+    }
+  }, [twinId, toast, loadFallbackPredictions]);
 
   useEffect(() => {
     loadPredictions();

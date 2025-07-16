@@ -56,15 +56,6 @@ export const TwinWorkspace: React.FC<TwinWorkspaceProps> = ({ twinId }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const toast = useToastHelpers();
 
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
-  useEffect(() => {
-    // Load conversation history
-    loadConversationHistory();
-  }, [twinId]);
-
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -103,6 +94,15 @@ export const TwinWorkspace: React.FC<TwinWorkspaceProps> = ({ twinId }) => {
       toast.warning("Using demo workspace conversation - Digital Twin API currently unavailable");
     }
   };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  useEffect(() => {
+    // Load conversation history
+    loadConversationHistory();
+  }, [twinId, loadConversationHistory]);
 
   const loadFallbackWorkspaceConversation = () => {
     // Enhanced fallback workspace conversation with intent classification

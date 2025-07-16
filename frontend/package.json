@@ -7,7 +7,7 @@
     "dev": "next dev",
     "dev:test": "NEXT_CONFIG=next.config.test.js next dev",
     "build": "next build",
-    "build:ci": "NODE_OPTIONS=\"--max-old-space-size=6144\" next build",
+    "build:ci": "NODE_OPTIONS=\"--max-old-space-size=4096 --max-semi-space-size=128\" NEXT_TELEMETRY_DISABLED=1 next build",
     "build:analyze": "ANALYZE=true next build",
     "start": "next start",
     "lint": "next lint",
@@ -37,7 +37,9 @@
     "clean": "rm -rf .next out node_modules/.cache",
     "reinstall": "npm run clean && npm install",
     "generate:icons": "node scripts/generate-icons.js",
-    "pwa:build": "npm run generate:icons && npm run build"
+    "pwa:build": "npm run generate:icons && npm run build",
+    "build:verbose": "DEBUG=next:* next build",
+    "build:silent": "NODE_OPTIONS=\"--max-old-space-size=4096\" NEXT_TELEMETRY_DISABLED=1 next build --quiet"
   },
   "dependencies": {
     "@emotion/react": "^11.11.1",

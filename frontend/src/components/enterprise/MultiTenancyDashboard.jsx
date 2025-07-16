@@ -28,7 +28,7 @@ const MultiTenancyDashboard = ({ currentTenant, userRole, onTenantSwitch }) => {
   // Load dashboard data on component mount
   useEffect(() => {
     loadDashboardData();
-  }, []);
+  }, [loadDashboardData]);
 
   // Update configurable settings when tenantData changes
   useEffect(() => {
