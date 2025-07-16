@@ -7,6 +7,11 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
 env:
   NODE_VERSION: '22.x'  # Single version instead of matrix (from evolution analysis)
   PYTHON_VERSION: '3.11'  # Downgraded from 3.13 for compatibility
@@ -136,9 +141,9 @@ jobs:
         
         # Use memory-optimized build command
         if [ "$VERBOSE" = "true" ]; then
-          npm run build:ci
+          npm run build
         else
-          npm run build:ci --silent 2>&1 | grep -E "(Error|Warning|✓|✗|Failed)" || true
+          npm run build --silent 2>&1 | grep -E "(Error|Warning|✓|✗|Failed)" || true
         fi
         
         if [ "$VERBOSE" = "true" ]; then
@@ -173,7 +178,7 @@ jobs:
       uses: actions/upload-artifact@v4
       if: success()
       with:
-        name: frontend-build
+        name: frontend-build-${{ github.run_id }}
         path: frontend/.next/
         retention-days: 1
         if-no-files-found: ignore
@@ -303,7 +308,7 @@ jobs:
     - name: Download Next.js build artifacts
       uses: actions/download-artifact@v4
       with:
-        name: frontend-build
+        name: frontend-build-${{ github.run_id }}
         path: frontend/.next/
       continue-on-error: true
       id: download-artifacts
@@ -317,7 +322,7 @@ jobs:
         # Check if artifacts were downloaded successfully
         if [ "${{ steps.download-artifacts.outcome }}" = "failure" ]; then
           echo "⚠️ Artifact download failed, building fresh..."
-          npm run build:ci
+          npm run build
         elif [ -d ".next" ]; then
           echo "✅ .next directory found from artifacts"
           ls -la .next/
@@ -328,11 +333,11 @@ jobs:
           else
             echo "⚠️ Invalid build artifacts (missing BUILD_ID), rebuilding..."
             rm -rf .next
-            npm run build:ci
+            npm run build
           fi
         else
           echo "⚠️ No .next directory found, building fresh..."
-          npm run build:ci
+          npm run build
         fi
         
         # Final verification
@@ -446,7 +451,7 @@ jobs:
         echo "🔧 Verifying build before starting server..."
         if [ ! -d ".next" ]; then
           echo "No .next directory, building fresh..."
-          npm run build:ci
+          npm run build
           
           # Verify build completed successfully
           if [ ! -d ".next" ]; then
@@ -460,7 +465,7 @@ jobs:
           echo "❌ Invalid build - BUILD_ID missing"
           echo "Rebuilding..."
           rm -rf .next
-          npm run build:ci
+          npm run build
         fi
         
         echo "✅ Build verification complete"
@@ -543,7 +548,7 @@ jobs:
       if: failure()
       uses: actions/upload-artifact@v4
       with:
-        name: debug-log
+        name: debug-log-${{ matrix.browser }}-${{ github.run_id }}
         path: |
           frontend.log
           frontend-recovery.log
@@ -673,7 +678,7 @@ jobs:
       uses: actions/download-artifact@v4
       continue-on-error: true
       with:
-        name: frontend-build
+        name: frontend-build-${{ github.run_id }}
         path: frontend/.next/
 
     - name: Run performance tests
@@ -684,7 +689,7 @@ jobs:
         # Build if no artifacts were downloaded
         if [ ! -d ".next" ] || [ ! -f ".next/BUILD_ID" ]; then
           echo "No valid build artifacts found, building fresh..."
-          npm run build:ci
+          npm run build
         fi
         
         npm start &
