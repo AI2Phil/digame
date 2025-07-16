@@ -235,12 +235,6 @@ export const AccessibilityFirstDesign: React.FC = () => {
     }
   }, []);
 
-  // Save preferences to localStorage
-  useEffect(() => {
-    localStorage.setItem('accessibility-preferences', JSON.stringify(preferences));
-    applyAccessibilitySettings(preferences);
-  }, [preferences]);
-
   // Apply accessibility settings to DOM
   const applyAccessibilitySettings = useCallback((prefs: AccessibilityPreferences) => {
     const root = document.documentElement;
@@ -285,6 +279,13 @@ export const AccessibilityFirstDesign: React.FC = () => {
       root.classList.remove('enhanced-focus');
     }
   }, []);
+
+  // Save preferences to localStorage
+  useEffect(() => {
+    localStorage.setItem('accessibility-preferences', JSON.stringify(preferences));
+    applyAccessibilitySettings(preferences);
+  }, [preferences, applyAccessibilitySettings]);
+
 
   // Screen reader announcement
   const announce = useCallback((message: string, priority: 'polite' | 'assertive' | 'off' = 'polite') => {
