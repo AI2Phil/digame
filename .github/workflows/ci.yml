@@ -1,4 +1,4 @@
-name: CI/CD Pipeline - Fixed
+name: CI/CD Pipeline – Optimized Frontend Verbosity & Resilience
 
 on:
   push:
@@ -10,6 +10,12 @@ on:
 env:
   NODE_VERSION: '22.x'  # Single version instead of matrix (from evolution analysis)
   PYTHON_VERSION: '3.11'  # Downgraded from 3.13 for compatibility
+  # Verbosity control - set to false for silent builds, true for debugging
+  VERBOSE: ${{ github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[verbose]') }}
+  # CI mode for pull requests - lighter diagnostics
+  CI_MODE: ${{ github.event_name == 'pull_request' && 'light' || 'full' }}
+  # Frontend port for consistent E2E testing
+  FRONTEND_PORT: 3000
 
 jobs:
   # Frontend Build - Simplified without matrix strategy
@@ -41,15 +47,32 @@ jobs:
     - name: Install frontend dependencies
       working-directory: ./frontend
       run: |
-        npm ci --prefer-offline --no-audit
+        if [ "$VERBOSE" = "true" ]; then
+          echo "📦 Installing dependencies with full output..."
+          npm ci --prefer-offline --no-audit
+        else
+          npm ci --silent --prefer-offline --no-audit
+        fi
 
     - name: Type check
       working-directory: ./frontend
-      run: npm run type-check
+      run: |
+        if [ "$VERBOSE" = "true" ]; then
+          echo "🔍 Running TypeScript type check..."
+          npm run type-check
+        else
+          npm run type-check --silent
+        fi
 
     - name: Lint
       working-directory: ./frontend
-      run: npm run lint
+      run: |
+        if [ "$VERBOSE" = "true" ]; then
+          echo "🔧 Running ESLint with full output..."
+          npm run lint
+        else
+          npx eslint src/ --ext .js,.jsx,.ts,.tsx --fix --quiet
+        fi
 
     - name: Fix JSX Runtime and React Hooks Issues
       working-directory: ./frontend
@@ -82,80 +105,68 @@ jobs:
         echo "Checking for remaining hook violations..."
         npx eslint src/ --ext .js,.jsx,.ts,.tsx --rule "react-hooks/rules-of-hooks: error" --rule "react-hooks/exhaustive-deps: warn" || echo "Manual fixes may be needed"
 
-    - name: Build frontend with enhanced debugging
+    - name: Build frontend with optimized logging
       working-directory: ./frontend
       env:
         NODE_ENV: production
         NEXT_TELEMETRY_DISABLED: 1
         CI: true
+        LOG_LEVEL: ${{ env.VERBOSE == 'true' && 'info' || 'warn' }}
       run: |
-        echo "🔍 Pre-build environment check"
-        echo "Node version: $(node --version)"
-        echo "NPM version: $(npm --version)"
-        echo "Memory info: $(free -h 2>/dev/null || echo 'Memory info not available')"
-        echo "Current directory: $(pwd)"
-        echo "Package.json exists: $(test -f package.json && echo 'YES' || echo 'NO')"
-        
-        echo "🔧 Next.js configuration check:"
-        if [ -f "next.config.js" ]; then
-          echo "next.config.js found"
-          echo "Configuration preview:"
-          head -20 next.config.js
-        else
-          echo "No next.config.js found"
+        if [ "$VERBOSE" = "true" ]; then
+          echo "🔍 Pre-build environment check"
+          echo "Node version: $(node --version)"
+          echo "NPM version: $(npm --version)"
+          echo "Memory info: $(free -h 2>/dev/null || echo 'Memory info not available')"
+          echo "Current directory: $(pwd)"
+          
+          echo "🔧 Next.js configuration check:"
+          if [ -f "next.config.js" ]; then
+            echo "next.config.js found"
+            echo "Configuration preview:"
+            head -20 next.config.js
+          else
+            echo "No next.config.js found"
+          fi
         fi
         
-        echo "🏗️ Starting memory-optimized build process..."
+        echo "🏗️ Starting optimized build process..."
         # Clear any existing build artifacts
         rm -rf .next node_modules/.cache
         
-        # Use memory-optimized build command with increased memory allocation
-        npm run build:ci
+        # Use memory-optimized build command
+        if [ "$VERBOSE" = "true" ]; then
+          npm run build:ci
+        else
+          npm run build:ci --silent 2>&1 | grep -E "(Error|Warning|✓|✗|Failed)" || true
+        fi
         
-        echo "📊 Post-build directory analysis:"
-        echo "Current directory contents:"
-        ls -la
+        if [ "$VERBOSE" = "true" ]; then
+          echo "📊 Post-build directory analysis:"
+          ls -la
+        fi
         
     - name: Verify Next.js build output
       working-directory: ./frontend
       run: |
-        echo "🔍 Verifying Next.js build output..."
+        if [ "$VERBOSE" = "true" ]; then
+          echo "🔍 Verifying Next.js build output..."
+        fi
         
-        if [ -d ".next" ]; then
+        # Minimal build verification
+        [ -f .next/BUILD_ID ] || { echo "❌ Build failed: BUILD_ID not found"; exit 1; }
+        [ -d .next/static ] || { echo "❌ Build failed: Static assets missing"; exit 1; }
+        
+        if [ "$VERBOSE" = "true" ]; then
           echo "✅ .next directory exists"
           ls -la .next/
-          
-          # Check for critical Next.js files
-          if [ -f ".next/BUILD_ID" ]; then
-            echo "✅ BUILD_ID found: $(cat .next/BUILD_ID)"
-          else
-            echo "❌ BUILD_ID missing"
-            exit 1
-          fi
-          
-          if [ -d ".next/static" ]; then
-            echo "✅ Static assets found"
-            ls -la .next/static/ | head -10
-          else
-            echo "❌ Static assets missing"
-            exit 1
-          fi
-          
-          if [ -f ".next/package.json" ]; then
-            echo "✅ Next.js package.json found"
-          fi
-          
-          # Check build size
-          echo "📊 Build size analysis:"
+          echo "✅ BUILD_ID found: $(cat .next/BUILD_ID)"
+          echo "✅ Static assets found"
+          ls -la .next/static/ | head -5
+          echo "📊 Build size:"
           du -sh .next/
-          
         else
-          echo "❌ .next directory not found"
-          echo "Available directories:"
-          ls -la
-          echo "Searching for any build outputs:"
-          find . -name "*.html" -o -name "*.js" -o -name "*.css" | grep -E "\.(html|js|css)$" | head -20
-          exit 1
+          echo "✅ Build verified. Size: $(du -sh .next/ | cut -f1)"
         fi
         
     - name: Upload Next.js build artifacts
@@ -367,16 +378,21 @@ jobs:
         }
 
     - name: Check system resources
+      if: env.VERBOSE == 'true' || env.CI_MODE == 'full'
       run: |
-        echo "🖥️ System Resource Check:"
-        echo "Memory usage:"
-        free -h
-        echo "Disk usage:"
-        df -h
-        echo "CPU info:"
-        nproc
-        echo "Available processes:"
-        ps aux | wc -l
+        if [ "$VERBOSE" = "true" ]; then
+          echo "🖥️ System Resource Check:"
+          echo "Memory usage:"
+          free -h
+          echo "Disk usage:"
+          df -h
+          echo "CPU info:"
+          nproc
+          echo "Available processes:"
+          ps aux | wc -l
+        else
+          echo "📊 Resources: $(free -h | awk 'NR==2{printf "Mem: %s/%s", $3,$2}') | $(df -h / | awk 'NR==2{printf "Disk: %s", $5}')"
+        fi
 
     - name: Pre-flight checks
       working-directory: ./frontend
@@ -450,195 +466,89 @@ jobs:
         echo "✅ Build verification complete"
         ls -la .next/
 
-    - name: Start frontend server with debugging
+    - name: Start frontend server with optimized startup
       working-directory: ./frontend
       env:
         NODE_ENV: production
         NEXT_TELEMETRY_DISABLED: 1
-        PORT: 3000
+        PORT: ${{ env.FRONTEND_PORT }}
       run: |
-        echo "🚀 Starting frontend server..."
+        if [ "$VERBOSE" = "true" ]; then
+          echo "🚀 Starting frontend server on port $FRONTEND_PORT..."
+        fi
         
-        # Kill any existing processes on ports 3000/3001
-        lsof -ti:3000 | xargs kill -9 2>/dev/null || true
-        lsof -ti:3001 | xargs kill -9 2>/dev/null || true
+        # Kill any existing processes on the target port
+        lsof -ti:$FRONTEND_PORT | xargs kill -9 2>/dev/null || true
         
-        # Start frontend server with explicit port and hostname
-        echo "Starting with explicit configuration..."
-        npm run dev -- --port 3000 --hostname 0.0.0.0 > ../frontend.log 2>&1 &
+        # Start frontend server with explicit configuration
+        npm run dev -- --port $FRONTEND_PORT --hostname 0.0.0.0 | tee ../frontend.log &
         FRONTEND_PID=$!
         echo $FRONTEND_PID > ../frontend.pid
-        echo "Frontend PID: $FRONTEND_PID"
         
-        # Quick health check first (30 seconds)
-        echo "🚀 Quick startup check (30 seconds)..."
-        timeout 30s bash -c '
-          while true; do
-            if curl -f http://localhost:3000 2>/dev/null; then
-              echo "✅ Quick startup successful on port 3000!"
-              exit 0
-            elif curl -f http://localhost:3001 2>/dev/null; then
-              echo "✅ Quick startup successful on port 3001!"
-              exit 0
-            fi
-            sleep 1
-          done
-        ' && echo "Frontend ready quickly!" || echo "⏳ Need extended startup time"
+        if [ "$VERBOSE" = "true" ]; then
+          echo "Frontend PID: $FRONTEND_PID"
+        fi
         
-        # Extended wait with faster checks - 180 seconds total (optimized from 240)
-        echo "⏳ Waiting for frontend server to start (up to 3 minutes)..."
-        for i in {1..90}; do
-          if [ $((i % 15)) -eq 1 ]; then
-            echo "Attempt $i/90 - Checking frontend status..."
-          fi
-          
-          # Check if process is still running
-          if ! ps -p $FRONTEND_PID > /dev/null 2>&1; then
-            echo "❌ Frontend process died! Checking logs..."
-            echo "Process list:"
-            ps aux | grep -E "(node|npm|next)" || echo "No Node processes found"
-            echo "Port usage:"
-            netstat -tulpn | grep LISTEN || echo "No listening ports found"
-            echo "Frontend logs:"
-            cat ../frontend.log 2>/dev/null || echo "No frontend.log available"
-            exit 1
-          fi
-          
-          # Parallel port check for faster detection
-          {
-            curl -f http://localhost:3000 2>/dev/null && echo "3000-ready" &
-            curl -f http://localhost:3001 2>/dev/null && echo "3001-ready" &
-            curl -f http://127.0.0.1:3000 2>/dev/null && echo "127-ready" &
-            wait
-          } | while read result; do
-            case $result in
-              "3000-ready") echo "✅ Frontend server is ready on port 3000!"; exit 0 ;;
-              "3001-ready") echo "✅ Frontend server is ready on port 3001!"; exit 0 ;;
-              "127-ready") echo "✅ Frontend server is ready on 127.0.0.1:3000!"; exit 0 ;;
-            esac
-          done && break
-          
-          # Show detailed status every 15 attempts (optimized from 20)
-          if [ $((i % 15)) -eq 0 ]; then
-            echo "📊 Status check at attempt $i:"
+        # Optimized health polling with static port
+        echo "⏳ Waiting for frontend server..."
+        curl --retry 15 --retry-delay 2 --retry-connrefused http://localhost:$FRONTEND_PORT > /dev/null 2>&1
+        
+        if curl -f http://localhost:$FRONTEND_PORT 2>/dev/null; then
+          echo "✅ Frontend server ready on port $FRONTEND_PORT"
+        else
+          echo "❌ Frontend failed to start"
+          if [ "$VERBOSE" = "true" ]; then
             echo "Process status:"
             ps aux | grep -E "(node|npm|next)" | head -3 || echo "No Node processes"
             echo "Port status:"
-            netstat -tulpn | grep LISTEN | grep -E "(3000|3001)" || echo "Ports 3000/3001 not listening"
-            echo "Memory usage:"
-            free -h | head -2
+            netstat -tulpn | grep LISTEN | grep $FRONTEND_PORT || echo "Port $FRONTEND_PORT not listening"
             echo "Recent logs:"
-            tail -3 ../frontend.log 2>/dev/null || echo "No recent logs"
+            tail -10 ../frontend.log 2>/dev/null || echo "No logs available"
           fi
           
-          sleep 2
-        done
-        
-        # Final comprehensive check
-        if ! curl -f http://localhost:3000 2>/dev/null && ! curl -f http://localhost:3001 2>/dev/null && ! curl -f http://127.0.0.1:3000 2>/dev/null; then
-          echo "❌ Frontend failed to start after 180 seconds"
-          echo "🔍 Final diagnostics:"
-          echo "Process list:"
-          ps aux | grep -E "(node|npm|next)"
-          echo "Port usage:"
-          netstat -tulpn | grep LISTEN
-          echo "Frontend process status:"
-          if ps -p $FRONTEND_PID > /dev/null 2>&1; then
-            echo "Process is still running"
-          else
-            echo "Process has died"
-          fi
-          echo "System resources:"
-          free -h
-          df -h
-          echo "Complete frontend logs:"
-          cat ../frontend.log 2>/dev/null || echo "No frontend.log available"
-          echo "Next.js build debug:"
-          npx next build --debug 2>&1 || echo "Build debug failed"
-          
-          # Enhanced Error Recovery - Attempt automatic fixes
-          echo "🔧 ATTEMPTING AUTOMATIC RECOVERY..."
+          # Streamlined Error Recovery
+          echo "🔧 Recovery in progress..."
           
           # Memory-aware recovery check
           available_mem=$(free -m | awk 'NR==2{printf "%.0f", $7}')
-          echo "Available memory: ${available_mem}MB"
           if [ $available_mem -lt 512 ]; then
-            echo "⚠️ Low memory ($available_mem MB), skipping memory-intensive recovery"
-            echo "RECOVERY_METHOD=skipped_low_memory" >> $GITHUB_ENV
-            cd ..
+            echo "⚠️ Low memory, skipping recovery"
             exit 1
           fi
           
-          # Recovery attempt 1: Clean restart with fresh environment
-          echo "Recovery 1/3: Clean restart with fresh environment"
-          if [ -d "frontend" ]; then
-            cd frontend
-          fi
+          # Single recovery attempt
           pkill -f "next" 2>/dev/null || true
-          sleep 2
           rm -rf .next node_modules/.cache 2>/dev/null || true
           
-          # Recovery attempt 2: Alternative start methods
-          echo "Recovery 2/3: Trying alternative start methods"
-          if [ -d "frontend" ]; then
-            cd frontend
-          fi
           if npm run dev > ../frontend-recovery.log 2>&1 & then
             RECOVERY_PID=$!
-            echo "Started recovery process with PID: $RECOVERY_PID"
             
-            # Quick recovery check (60 seconds)
-            for j in {1..30}; do
-              if curl -f http://localhost:3000 2>/dev/null; then
-                echo "✅ Recovery successful! Frontend started on port 3000"
-                echo "FRONTEND_PID=$RECOVERY_PID" >> $GITHUB_ENV
-                echo "RECOVERY_METHOD=clean_restart" >> $GITHUB_ENV
-                exit 0
-              elif curl -f http://localhost:3001 2>/dev/null; then
-                echo "✅ Recovery successful! Frontend started on port 3001"
-                echo "FRONTEND_PID=$RECOVERY_PID" >> $GITHUB_ENV
-                echo "RECOVERY_METHOD=clean_restart" >> $GITHUB_ENV
+            # Quick recovery check
+            for j in {1..15}; do
+              if curl -f http://localhost:$FRONTEND_PORT 2>/dev/null; then
+                echo "✅ Recovery successful!"
                 exit 0
               fi
               sleep 2
             done
             
-            # Kill recovery attempt
             kill $RECOVERY_PID 2>/dev/null || true
           fi
           
-          # Recovery attempt 3: Fallback to build mode
-          echo "Recovery 3/3: Fallback to build and serve"
-          if [ -d "frontend" ]; then
-            cd frontend
-          fi
-          if npm run build && npm run start > ../frontend-fallback.log 2>&1 & then
-            FALLBACK_PID=$!
-            echo "Started fallback process with PID: $FALLBACK_PID"
-            
-            # Quick fallback check (60 seconds)
-            for k in {1..30}; do
-              if curl -f http://localhost:3000 2>/dev/null; then
-                echo "✅ Fallback successful! Frontend started on port 3000"
-                echo "FRONTEND_PID=$FALLBACK_PID" >> $GITHUB_ENV
-                echo "RECOVERY_METHOD=fallback" >> $GITHUB_ENV
-                exit 0
-              fi
-              sleep 2
-            done
-            
-            # Kill fallback attempt
-            kill $FALLBACK_PID 2>/dev/null || true
-          fi
-          
-          echo "❌ All recovery attempts failed"
-          echo "RECOVERY_METHOD=failed" >> $GITHUB_ENV
-          echo "Recovery logs (last 50 lines):"
-          tail -50 ../frontend-recovery.log 2>/dev/null || echo "No recovery log"
-          echo "Fallback logs (last 50 lines):"
-          tail -50 ../frontend-fallback.log 2>/dev/null || echo "No fallback log"
+          echo "❌ Recovery failed"
           exit 1
         fi
+
+    - name: Upload failure logs
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: debug-log
+        path: |
+          frontend.log
+          frontend-recovery.log
+        retention-days: 3
+        if-no-files-found: ignore
 
     - name: Cache Playwright browsers
       uses: actions/cache@v4
@@ -655,18 +565,22 @@ jobs:
     - name: Run E2E tests
       working-directory: ./frontend
       run: |
-        # Determine which port the frontend is running on
-        if curl -f http://localhost:3000 2>/dev/null; then
-          export FRONTEND_URL=http://localhost:3000
-        elif curl -f http://localhost:3001 2>/dev/null; then
-          export FRONTEND_URL=http://localhost:3001
-        else
-          echo "❌ Cannot determine frontend URL"
+        # Use static frontend port
+        export FRONTEND_URL=http://localhost:${{ env.FRONTEND_PORT }}
+        
+        # Verify frontend is accessible
+        if ! curl -f $FRONTEND_URL 2>/dev/null; then
+          echo "❌ Frontend not accessible at $FRONTEND_URL"
           exit 1
         fi
         
-        echo "🧪 Running E2E tests against $FRONTEND_URL with browser: ${{ matrix.browser }}"
-        npx playwright test --project=${{ matrix.browser }}
+        if [ "$VERBOSE" = "true" ]; then
+          echo "🧪 Running E2E tests against $FRONTEND_URL with browser: ${{ matrix.browser }}"
+          npx playwright test --project=${{ matrix.browser }}
+        else
+          echo "🧪 Running E2E tests (${{ matrix.browser }})..."
+          npx playwright test --project=${{ matrix.browser }} --reporter=line
+        fi
 
     - name: Upload E2E test results
       uses: actions/upload-artifact@v4

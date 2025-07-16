@@ -91,7 +91,7 @@ const nextConfig = {
     workerThreads: false,
     cpus: process.env.CI ? 1 : undefined, // Single CPU for CI, auto for local
     // Reduce memory usage during static generation
-    isrMemoryCacheSize: process.env.CI ? 0 : 50 * 1024 * 1024, // Disable ISR cache in CI
+    // Note: Removed deprecated isrMemoryCacheSize option for Next.js 14.2.30 compatibility
   },
 
   // Custom page extensions

@@ -27,9 +27,15 @@ eps)" | head -20
 - cd frontend && npm run lint 2>&1 | grep -E "(error|warning)" | hea
 d -10
 
+npm run lint 2>&1 | grep -E "(React Hook|exhaustive-deps)" | head 
+-10
+
+npm run lint
 
 ✔ Find Typescript warnings or errors
 npx tsc --noEmit 2>&1 | head -10
+
+npx tsc --noEmit
 
 ### Fastest Start
 ```bash

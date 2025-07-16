@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Building, Users, Settings, Shield, Crown, Calendar,
   UserPlus, Mail, Key, BarChart3, Activity, AlertTriangle,
@@ -40,7 +40,7 @@ const MultiTenancyDashboard = ({ currentTenant, userRole, onTenantSwitch }) => {
     }
   }, [tenantData]);
 
-  const loadDashboardData = async () => {
+  const loadDashboardData = useCallback(async () => {
     try {
       setLoading(true);
       const response = await fetch('http://localhost:8001/api/multi-tenancy/dashboard', {
@@ -158,7 +158,7 @@ const MultiTenancyDashboard = ({ currentTenant, userRole, onTenantSwitch }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [success, error, warning, info]);
 
   const calculateDaysRemaining = (endDate) => {
     if (!endDate) return 0;

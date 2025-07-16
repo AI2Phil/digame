@@ -5,7 +5,7 @@
  * Step-by-step wizard for configuring new integrations with guided setup
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Stepper,
@@ -130,7 +130,7 @@ const IntegrationConfigurationWizard: React.FC<Props> = ({
   const [helpDialogOpen, setHelpDialogOpen] = useState(false);
 
   // Fetch wizard configuration
-  const fetchWizardConfig = async () => {
+  const fetchWizardConfig = useCallback(async () => {
     try {
       setLoading(true);
       const response = await fetch(`/api/v1/integrations/marketplace/integrations/${integrationId}/wizard`, {
@@ -163,7 +163,7 @@ const IntegrationConfigurationWizard: React.FC<Props> = ({
     } finally {
       setLoading(false);
     }
-  };
+  }, [integrationId]);
 
   // Validate field
   const validateField = (field: WizardField, value: any): string | null => {
@@ -483,7 +483,7 @@ const IntegrationConfigurationWizard: React.FC<Props> = ({
 
   useEffect(() => {
     fetchWizardConfig();
-  }, [integrationId]);
+  }, [integrationId, fetchWizardConfig]);
 
   if (loading) {
     return (

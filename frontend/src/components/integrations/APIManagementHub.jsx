@@ -286,9 +286,9 @@ const APIManagementHub = () => {
     setEndpoints(apiEndpoints);
     setWebhooks(webhookConfigs);
     setMarketplaceItems(marketplaceIntegrations);
-  }, []);
+  }, [apiEndpoints, loadAPIMetrics, marketplaceIntegrations, webhookConfigs]);
 
-  const loadAPIMetrics = async () => {
+  const loadAPIMetrics = useCallback(async () => {
     setApiMetrics({
       totalEndpoints: apiEndpoints.length,
       totalCalls: 50270,
@@ -297,9 +297,9 @@ const APIManagementHub = () => {
       activeWebhooks: webhookConfigs.filter(w => w.status === 'active').length,
       totalWebhookCalls: 4790
     });
-  };
+  }, [apiEndpoints, webhookConfigs]);
 
-  const loadWebhookLogs = async () => {
+  const loadWebhookLogs = useCallback(async () => {
     const logs = [
       {
         id: '1',
@@ -330,7 +330,7 @@ const APIManagementHub = () => {
       }
     ];
     setWebhookLogs(logs);
-  };
+  }, []);
 
   const filteredMarketplace = useMemo(() => {
     return marketplaceItems.filter(item => {

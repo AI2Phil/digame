@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/Card';
 import { Badge } from '../ui/Badge';
 import { Progress } from '../ui/Progress';
@@ -27,9 +27,9 @@ const HealthMonitoringDashboard = ({ connections = [] }) => {
     fetchHealthData();
     const interval = setInterval(fetchHealthData, 30000); // Refresh every 30 seconds
     return () => clearInterval(interval);
-  }, [connections]);
+  }, [connections, fetchHealthData]);
 
-  const fetchHealthData = async () => {
+  const fetchHealthData = useCallback(async () => {
     try {
       setLoading(true);
       
@@ -92,7 +92,7 @@ const HealthMonitoringDashboard = ({ connections = [] }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [connections]);
 
   const getHealthIcon = (status) => {
     switch (status) {

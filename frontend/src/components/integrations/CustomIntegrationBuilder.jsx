@@ -279,7 +279,7 @@ const CustomIntegrationBuilder = () => {
     setWorkflows(existingWorkflows);
     setTemplates(workflowTemplates);
     setAvailableConnectors(connectorTypes);
-  }, []);
+  }, [connectorTypes, existingWorkflows, workflowTemplates]);
 
   const handleCreateWorkflow = useCallback((template = null) => {
     if (template) {
