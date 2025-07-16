@@ -17,6 +17,20 @@ Welcome to **Digame** - the Digital Professional Twin Platform! This guide will 
 - **npm**: 8.0+
 - **Python**: 3.8+ (for Python backend)
 
+### Check for Lint or Typescript errors
+
+✔ Find ESLint warnings or errors
+- npm run lint 2>&1 | grep -E "(error|warning)" | head -10
+
+- cd frontend && npm run lint 2>&1 | grep -E "(React Hook|exhaustive-d
+eps)" | head -20
+- cd frontend && npm run lint 2>&1 | grep -E "(error|warning)" | hea
+d -10
+
+
+✔ Find Typescript warnings or errors
+npx tsc --noEmit 2>&1 | head -10
+
 ### Fastest Start
 ```bash
 # Clone and navigate
