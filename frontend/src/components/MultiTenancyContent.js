@@ -1,27 +1,16 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/router';
-import dynamic from 'next/dynamic';
-
-// Prevent Next.js from attempting to prerender this page during build
-export const dynamic = 'force-dynamic';
-export const revalidate = 0; // Disable ISR
 
 /**
- * Enterprise Multi-Tenancy Management Page
- *
- * Client-side only implementation to avoid SSR issues
+ * Enterprise Multi-Tenancy Management Page Content
+ * 
+ * Client-side only component to avoid SSR issues
  */
-function MultiTenancyPage() {
+function MultiTenancyContent() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const [tenantData, setTenantData] = useState(null);
   const [error, setError] = useState(null);
-  const [isMounted, setIsMounted] = useState(false);
-
-  // Ensure component is mounted before rendering
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
 
   // SSR-safe data fetching with proper error handling
   const fetchTenantData = useCallback(async () => {
@@ -73,11 +62,6 @@ function MultiTenancyPage() {
   useEffect(() => {
     fetchTenantData();
   }, [fetchTenantData]);
-
-  // Client-side only rendering to avoid SSR issues
-  if (!isMounted) {
-    return null; // Prevent SSR rendering
-  }
 
   if (isLoading) {
     return (
@@ -204,15 +188,4 @@ function MultiTenancyPage() {
   );
 }
 
-// Export with SSR disabled to prevent prerendering issues
-export default dynamic(() => Promise.resolve(MultiTenancyPage), {
-  ssr: false,
-  loading: () => (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-      <div className="text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-        <p className="mt-4 text-gray-600">Loading multi-tenancy dashboard...</p>
-      </div>
-    </div>
-  )
-});
+export default MultiTenancyContent;

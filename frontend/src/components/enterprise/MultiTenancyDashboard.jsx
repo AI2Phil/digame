@@ -25,21 +25,6 @@ const MultiTenancyDashboard = ({ currentTenant, userRole, onTenantSwitch }) => {
   const [dataSource, setDataSource] = useState('loading');
   const { success, error, warning, info } = useToastHelpers();
 
-  // Load dashboard data on component mount
-  useEffect(() => {
-    loadDashboardData();
-  }, [loadDashboardData]);
-
-  // Update configurable settings when tenantData changes
-  useEffect(() => {
-    if (tenantData?.name) {
-      setTenantConfigurableSettings(prev => ({
-        ...prev,
-        orgName: tenantData.name
-      }));
-    }
-  }, [tenantData]);
-
   const loadDashboardData = useCallback(async () => {
     try {
       setLoading(true);
@@ -159,6 +144,21 @@ const MultiTenancyDashboard = ({ currentTenant, userRole, onTenantSwitch }) => {
       setLoading(false);
     }
   }, [success, error, warning, info]);
+
+  // Load dashboard data on component mount
+  useEffect(() => {
+    loadDashboardData();
+  }, [loadDashboardData]);
+
+  // Update configurable settings when tenantData changes
+  useEffect(() => {
+    if (tenantData?.name) {
+      setTenantConfigurableSettings(prev => ({
+        ...prev,
+        orgName: tenantData.name
+      }));
+    }
+  }, [tenantData]);
 
   const calculateDaysRemaining = (endDate) => {
     if (!endDate) return 0;

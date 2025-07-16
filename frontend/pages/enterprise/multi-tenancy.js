@@ -3,6 +3,10 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ToastProvider } from '../../src/components/ui/Toaster';
 import MultiTenancyDashboard from '../../src/components/enterprise/MultiTenancyDashboard';
 
+// Prevent static generation and SSR issues
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 // Create a client
 const queryClient = new QueryClient({
   defaultOptions: {

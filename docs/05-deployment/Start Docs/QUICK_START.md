@@ -37,6 +37,9 @@ npx tsc --noEmit 2>&1 | head -10
 
 npx tsc --noEmit
 
+npm run ci:quick
+
+
 ### Fastest Start
 ```bash
 # Clone and navigate
