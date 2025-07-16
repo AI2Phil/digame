@@ -48,7 +48,8 @@ import {
   Eye,
   AlertCircle,
   Target,
-  Gauge
+  Gauge,
+  FileText
 } from 'lucide-react';
 import { 
   LineChart as RechartsLineChart, 

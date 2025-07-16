@@ -53,7 +53,7 @@ def create_team(db: Session, team: schemas.TeamCreate, created_by_user_id: Optio
             # For nuclear fallback teams, skip session operations and set minimal ID
             if not hasattr(db_team, 'id') or getattr(db_team, 'id', None) is None:
                 try:
-                    db_team.id = 1
+                    db_team.id = 1  # type: ignore
                 except (AttributeError, TypeError):
                     # If even attribute access fails, use direct dictionary assignment
                     db_team.__dict__['id'] = 1

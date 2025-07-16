@@ -19,7 +19,7 @@ from .auth_service import auth_service
 from .jwt_handler import get_token_expiry_info
 from ..models.user import User
 from ..models.rbac import Role
-from ..schemas.user_schemas import User as UserSchema
+# Removed problematic import - User schema not needed here
 
 # Dynamic import to avoid registry conflicts
 def get_permission_model():

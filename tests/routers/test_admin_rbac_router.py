@@ -112,11 +112,11 @@ class UserFactory:
                     setattr(user, key, value)
             # Set defaults for required fields
             if not hasattr(user, 'username') or not user.username:
-                user.username = 'test_user'
+                user.username = 'test_user'  # type: ignore
             if not hasattr(user, 'email') or not user.email:
-                user.email = 'test@example.com'
+                user.email = 'test@example.com'  # type: ignore
             if not hasattr(user, 'is_active'):
-                user.is_active = True
+                user.is_active = True  # type: ignore
         
         session.add(user)
         session.commit()
@@ -147,7 +147,7 @@ def test_admin_user(test_test_db_session):
             self.role = role
     
     # Use a custom attribute to avoid SQLAlchemy relationship issues
-    user._mock_user_roles = [MockUserRole(role_admin)]
+    user._mock_user_roles = [MockUserRole(role_admin)]  # type: ignore
     
     return user
 
@@ -174,7 +174,7 @@ def test_non_admin_user(test_test_db_session):
             self.role = role
     
     # Use a custom attribute to avoid SQLAlchemy relationship issues
-    user._mock_user_roles = [MockUserRole(role_viewer)]
+    user._mock_user_roles = [MockUserRole(role_viewer)]  # type: ignore
     
     return user
 

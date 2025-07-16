@@ -29,7 +29,7 @@ def shared_db(isolated_db: SessionType) -> SessionType:
 @pytest.fixture
 def test_user1(shared_db: SessionType) -> User:
     # Use UserFactory to create user with database-level isolation
-    return UserFactory.create_user(
+    return UserFactory.create_user(  # type: ignore
         shared_db,
         username="cruduser1",
         email="crud1@example.com",
@@ -41,7 +41,7 @@ def test_user1(shared_db: SessionType) -> User:
 @pytest.fixture
 def test_user2(shared_db: SessionType) -> User:
     # Use UserFactory to create user with database-level isolation
-    return UserFactory.create_user(
+    return UserFactory.create_user(  # type: ignore
         shared_db,
         username="cruduser2",
         email="crud2@example.com",

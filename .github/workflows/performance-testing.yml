@@ -32,6 +32,7 @@ on:
 env:
   COMPOSE_FILE: docker-compose.performance.yml
   PROJECT_NAME: digame-performance-ci
+  PERFORMANCE_ENDPOINT: ${{ secrets.PERFORMANCE_ENDPOINT }}
 
 jobs:
   performance-test:
@@ -46,7 +47,10 @@ jobs:
       uses: docker/setup-buildx-action@v3
 
     - name: Create performance reports directory
-      run: mkdir -p performance-reports
+      run: |
+        mkdir -p performance-reports
+        mkdir -p performance-trends
+        mkdir -p resource-monitoring
 
     - name: Build Docker images
       run: |
@@ -65,6 +69,26 @@ jobs:
         timeout 120 bash -c 'until curl -f http://localhost:3000/api/health; do sleep 2; done'
         
         echo "All services are healthy!"
+
+    - name: Start resource monitoring
+      run: |
+        # Start system resource monitoring in background
+        echo "Starting resource monitoring..."
+        (
+          while true; do
+            timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+            cpu_usage=$(top -bn1 | grep "Cpu(s)" | awk '{print $2}' | sed 's/%us,//')
+            memory_usage=$(free | grep Mem | awk '{printf "%.1f", ($3/$2) * 100.0}')
+            disk_io=$(iostat -d 1 1 | tail -n +4 | awk '{print $4","$5}' | head -1)
+            
+            echo "$timestamp,$cpu_usage,$memory_usage,$disk_io" >> resource-monitoring/system-metrics.csv
+            sleep 5
+          done
+        ) &
+        echo $! > resource-monitoring/monitor.pid
+        
+        # Initialize CSV header
+        echo "timestamp,cpu_percent,memory_percent,disk_read_kb,disk_write_kb" > resource-monitoring/system-metrics.csv
 
     - name: Run Core Web Vitals Performance Tests
       if: github.event.inputs.test_type == 'core-web-vitals' || github.event.inputs.test_type == ''
@@ -122,10 +146,175 @@ jobs:
         # List generated reports
         ls -la performance-reports/ || true
 
+    - name: Stop resource monitoring
+      if: always()
+      run: |
+        # Stop resource monitoring
+        if [ -f "resource-monitoring/monitor.pid" ]; then
+          kill $(cat resource-monitoring/monitor.pid) 2>/dev/null || true
+          rm resource-monitoring/monitor.pid
+        fi
+        
+        # Generate resource usage summary
+        if [ -f "resource-monitoring/system-metrics.csv" ]; then
+          echo "## Resource Usage Summary" > resource-monitoring/summary.md
+          echo "### Peak Resource Usage" >> resource-monitoring/summary.md
+          
+          # Calculate peak CPU usage
+          peak_cpu=$(tail -n +2 resource-monitoring/system-metrics.csv | cut -d',' -f2 | sort -nr | head -1)
+          echo "- **Peak CPU**: ${peak_cpu}%" >> resource-monitoring/summary.md
+          
+          # Calculate peak memory usage
+          peak_memory=$(tail -n +2 resource-monitoring/system-metrics.csv | cut -d',' -f3 | sort -nr | head -1)
+          echo "- **Peak Memory**: ${peak_memory}%" >> resource-monitoring/summary.md
+          
+          # Calculate average resource usage
+          avg_cpu=$(tail -n +2 resource-monitoring/system-metrics.csv | cut -d',' -f2 | awk '{sum+=$1; count++} END {if(count>0) printf "%.1f", sum/count; else print "0"}')
+          avg_memory=$(tail -n +2 resource-monitoring/system-metrics.csv | cut -d',' -f3 | awk '{sum+=$1; count++} END {if(count>0) printf "%.1f", sum/count; else print "0"}')
+          echo "- **Average CPU**: ${avg_cpu}%" >> resource-monitoring/summary.md
+          echo "- **Average Memory**: ${avg_memory}%" >> resource-monitoring/summary.md
+        fi
+
+    - name: Compare with baseline
+      if: always()
+      run: |
+        if [ -f "baseline-metrics.json" ]; then
+          echo "Comparing current results with baseline..."
+          
+          # Extract current metrics from CSV files
+          current_metrics="{}"
+          if ls performance-reports/*_stats.csv 1> /dev/null 2>&1; then
+            for csv_file in performance-reports/*_stats.csv; do
+              if [ -f "$csv_file" ]; then
+                avg_response_time=$(awk -F',' 'NR>1 && $1!="Aggregated" {sum+=$6; count++} END {if(count>0) print int(sum/count); else print 0}' "$csv_file")
+                error_rate=$(awk -F',' 'NR>1 && $1!="Aggregated" {if($4>0) errors+=$5; requests+=$4} END {if(requests>0) print int((errors/requests)*100); else print 0}' "$csv_file")
+                rps=$(awk -F',' 'NR>1 && $1!="Aggregated" {sum+=$7; count++} END {if(count>0) printf "%.2f", sum/count; else print 0}' "$csv_file")
+                
+                current_metrics=$(echo "$current_metrics" | jq --arg file "$(basename "$csv_file")" --argjson rt "$avg_response_time" --argjson er "$error_rate" --argjson rps "$rps" '. + {($file): {response_time: $rt, error_rate: $er, rps: $rps}}')
+              fi
+            done
+          fi
+          
+          # Save current metrics
+          echo "$current_metrics" > current-metrics.json
+          
+          # Compare with baseline and flag significant changes
+          echo "## Baseline Comparison" > baseline-comparison.md
+          
+          # Check for performance regressions (>10% increase in response time or error rate)
+          baseline_rt=$(jq -r '.response_time // 0' baseline-metrics.json)
+          current_rt=$(jq -r '.response_time // 0' current-metrics.json)
+          
+          if [ "$baseline_rt" -gt 0 ] && [ "$current_rt" -gt 0 ]; then
+            rt_change=$(echo "scale=2; (($current_rt - $baseline_rt) / $baseline_rt) * 100" | bc -l)
+            if (( $(echo "$rt_change > 10" | bc -l) )); then
+              echo "⚠️ **PERFORMANCE REGRESSION**: Response time increased by ${rt_change}%" >> baseline-comparison.md
+            elif (( $(echo "$rt_change < -10" | bc -l) )); then
+              echo "✅ **PERFORMANCE IMPROVEMENT**: Response time decreased by ${rt_change#-}%" >> baseline-comparison.md
+            else
+              echo "✅ Response time within acceptable range (${rt_change}% change)" >> baseline-comparison.md
+            fi
+          fi
+        else
+          echo "No baseline metrics found. Current run will establish baseline."
+          
+          # Create baseline from current run
+          if ls performance-reports/*_stats.csv 1> /dev/null 2>&1; then
+            for csv_file in performance-reports/*_stats.csv; do
+              if [ -f "$csv_file" ]; then
+                avg_response_time=$(awk -F',' 'NR>1 && $1!="Aggregated" {sum+=$6; count++} END {if(count>0) print int(sum/count); else print 0}' "$csv_file")
+                error_rate=$(awk -F',' 'NR>1 && $1!="Aggregated" {if($4>0) errors+=$5; requests+=$4} END {if(requests>0) print int((errors/requests)*100); else print 0}' "$csv_file")
+                rps=$(awk -F',' 'NR>1 && $1!="Aggregated" {sum+=$7; count++} END {if(count>0) printf "%.2f", sum/count; else print 0}' "$csv_file")
+                
+                echo "{\"response_time\": $avg_response_time, \"error_rate\": $error_rate, \"rps\": $rps, \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}" > baseline-metrics.json
+                break
+              fi
+            done
+          fi
+        fi
+
+    - name: Store metrics for trending
+      if: always()
+      run: |
+        # Store key metrics in time-series format for trend analysis
+        timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+        run_number="${{ github.run_number }}"
+        commit_sha="${{ github.sha }}"
+        branch="${{ github.ref_name }}"
+        
+        # Initialize trends file if it doesn't exist
+        if [ ! -f "performance-trends/metrics-history.jsonl" ]; then
+          touch performance-trends/metrics-history.jsonl
+        fi
+        
+        # Extract and store metrics from current run
+        if ls performance-reports/*_stats.csv 1> /dev/null 2>&1; then
+          for csv_file in performance-reports/*_stats.csv; do
+            if [ -f "$csv_file" ]; then
+              avg_response_time=$(awk -F',' 'NR>1 && $1!="Aggregated" {sum+=$6; count++} END {if(count>0) print int(sum/count); else print 0}' "$csv_file")
+              error_rate=$(awk -F',' 'NR>1 && $1!="Aggregated" {if($4>0) errors+=$5; requests+=$4} END {if(requests>0) print int((errors/requests)*100); else print 0}' "$csv_file")
+              rps=$(awk -F',' 'NR>1 && $1!="Aggregated" {sum+=$7; count++} END {if(count>0) printf "%.2f", sum/count; else print 0}' "$csv_file")
+              p95_response_time=$(awk -F',' 'NR>1 && $1!="Aggregated" {sum+=$8; count++} END {if(count>0) print int(sum/count); else print 0}' "$csv_file")
+              
+              # Create trend entry
+              trend_entry=$(jq -n \
+                --arg timestamp "$timestamp" \
+                --arg run_number "$run_number" \
+                --arg commit_sha "$commit_sha" \
+                --arg branch "$branch" \
+                --arg test_type "${{ github.event.inputs.test_type || 'core-web-vitals' }}" \
+                --arg users "${{ github.event.inputs.users || '50' }}" \
+                --argjson response_time "$avg_response_time" \
+                --argjson error_rate "$error_rate" \
+                --argjson rps "$rps" \
+                --argjson p95_response_time "$p95_response_time" \
+                '{
+                  timestamp: $timestamp,
+                  run_number: $run_number,
+                  commit_sha: $commit_sha,
+                  branch: $branch,
+                  test_type: $test_type,
+                  users: $users,
+                  metrics: {
+                    avg_response_time: $response_time,
+                    error_rate: $error_rate,
+                    requests_per_second: $rps,
+                    p95_response_time: $p95_response_time
+                  }
+                }')
+              
+              echo "$trend_entry" >> performance-trends/metrics-history.jsonl
+              break
+            fi
+          done
+        fi
+        
+        # Generate trend analysis for last 10 runs
+        if [ -f "performance-trends/metrics-history.jsonl" ]; then
+          echo "## Performance Trends (Last 10 Runs)" > performance-trends/trend-analysis.md
+          
+          # Get last 10 entries
+          tail -10 performance-trends/metrics-history.jsonl > performance-trends/recent-trends.jsonl
+          
+          # Calculate trend direction for response time
+          first_rt=$(head -1 performance-trends/recent-trends.jsonl | jq -r '.metrics.avg_response_time')
+          last_rt=$(tail -1 performance-trends/recent-trends.jsonl | jq -r '.metrics.avg_response_time')
+          
+          if [ "$first_rt" -gt 0 ] && [ "$last_rt" -gt 0 ]; then
+            if [ "$last_rt" -lt "$first_rt" ]; then
+              echo "📈 **Trending Better**: Response time improving over last 10 runs" >> performance-trends/trend-analysis.md
+            elif [ "$last_rt" -gt "$first_rt" ]; then
+              echo "📉 **Trending Worse**: Response time degrading over last 10 runs" >> performance-trends/trend-analysis.md
+            else
+              echo "➡️ **Stable**: Response time stable over last 10 runs" >> performance-trends/trend-analysis.md
+            fi
+          fi
+        fi
+
     - name: Analyze performance results
       if: always()
       run: |
-        # Create performance summary
+        # Create comprehensive performance summary
         echo "# Performance Test Summary" > performance-summary.md
         echo "- **Test Run**: #${{ github.run_number }}" >> performance-summary.md
         echo "- **Commit**: ${{ github.sha }}" >> performance-summary.md
@@ -133,7 +322,26 @@ jobs:
         echo "- **Test Type**: ${{ github.event.inputs.test_type || 'core-web-vitals' }}" >> performance-summary.md
         echo "- **Users**: ${{ github.event.inputs.users || '50' }}" >> performance-summary.md
         echo "- **Duration**: ${{ github.event.inputs.run_time || '180s' }}" >> performance-summary.md
+        echo "- **Timestamp**: $(date -u +"%Y-%m-%d %H:%M:%S UTC")" >> performance-summary.md
         echo "" >> performance-summary.md
+        
+        # Include resource monitoring summary
+        if [ -f "resource-monitoring/summary.md" ]; then
+          cat resource-monitoring/summary.md >> performance-summary.md
+          echo "" >> performance-summary.md
+        fi
+        
+        # Include baseline comparison
+        if [ -f "baseline-comparison.md" ]; then
+          cat baseline-comparison.md >> performance-summary.md
+          echo "" >> performance-summary.md
+        fi
+        
+        # Include trend analysis
+        if [ -f "performance-trends/trend-analysis.md" ]; then
+          cat performance-trends/trend-analysis.md >> performance-summary.md
+          echo "" >> performance-summary.md
+        fi
         
         # Check for CSV files and extract key metrics
         if ls performance-reports/*.csv 1> /dev/null 2>&1; then
@@ -157,6 +365,11 @@ jobs:
           performance-reports/
           performance-summary.md
           service-logs.txt
+          resource-monitoring/
+          performance-trends/
+          baseline-metrics.json
+          current-metrics.json
+          baseline-comparison.md
         retention-days: 30
 
     - name: Comment PR with performance results
@@ -174,6 +387,24 @@ jobs:
               summary += content;
             } else {
               summary += '⚠️ Performance summary not available\n';
+            }
+            
+            // Add resource monitoring summary if available
+            if (fs.existsSync('resource-monitoring/summary.md')) {
+              const resourceSummary = fs.readFileSync('resource-monitoring/summary.md', 'utf8');
+              summary += '\n' + resourceSummary + '\n';
+            }
+            
+            // Add baseline comparison if available
+            if (fs.existsSync('baseline-comparison.md')) {
+              const baselineComparison = fs.readFileSync('baseline-comparison.md', 'utf8');
+              summary += '\n' + baselineComparison + '\n';
+            }
+            
+            // Add trend analysis if available
+            if (fs.existsSync('performance-trends/trend-analysis.md')) {
+              const trendAnalysis = fs.readFileSync('performance-trends/trend-analysis.md', 'utf8');
+              summary += '\n' + trendAnalysis + '\n';
             }
             
             summary += '\n📊 [View detailed reports in artifacts](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})\n';

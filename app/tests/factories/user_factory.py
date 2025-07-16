@@ -84,7 +84,7 @@ class UserFactory:
                         from sqlalchemy.orm import class_mapper
                         try:
                             mapper = class_mapper(UserClass)
-                            user._sa_instance_state = InstanceState(user, mapper)
+                            user._sa_instance_state = InstanceState(user, mapper)  # type: ignore
                         except Exception:
                             # If even this fails, just set basic attributes without SQLAlchemy state
                             pass
@@ -105,7 +105,7 @@ class UserFactory:
                 # Set a minimal ID for testing purposes using direct dictionary assignment
                 try:
                     if not hasattr(user, 'id') or getattr(user, 'id', None) is None:
-                        user.id = 1
+                        user.id = 1  # type: ignore
                 except (AttributeError, TypeError):
                     # If even attribute access fails, use direct dictionary assignment
                     user.__dict__['id'] = 1

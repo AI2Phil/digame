@@ -129,6 +129,9 @@ export const Radio = forwardRef((/** @type {{className?: string, label?: string,
   size = 'default',
   ...props
 }, ref) => {
+  // Move useRadioGroup to component level to follow Rules of Hooks
+  const { onValueChange } = useRadioGroup();
+  
   const RadioComponent = (
     <RadioGroupItem
       ref={ref}
@@ -145,6 +148,13 @@ export const Radio = forwardRef((/** @type {{className?: string, label?: string,
     return RadioComponent;
   }
 
+  // Handle label click
+  const handleLabelClick = () => {
+    if (!disabled) {
+      onValueChange?.(value);
+    }
+  };
+
   // Return radio with label and description
   return (
     <div className="flex items-start space-x-2">
@@ -159,12 +169,7 @@ export const Radio = forwardRef((/** @type {{className?: string, label?: string,
               error && "text-destructive",
               disabled && "opacity-50 cursor-not-allowed"
             )}
-            onClick={() => {
-              if (!disabled) {
-                const { onValueChange } = useRadioGroup();
-                onValueChange?.(value);
-              }
-            }}
+            onClick={handleLabelClick}
           >
             {label}
           </label>
@@ -283,41 +288,50 @@ export const RadioGroupVariants = {
 
   // Button-style radio group
   Buttons: forwardRef((/** @type {{className?: string, children?: any, options?: Array}} */ { className, children, options = [], ...props }, ref) => {
-    const { value, onValueChange, disabled } = useRadioGroup() || {};
-    
     return (
-      <div className={cn("flex rounded-md border", className)} role="radiogroup">
-        {options.map((option, index) => {
-          const isSelected = value === option.value;
-          const isDisabled = disabled || option.disabled;
-          
-          return (
-            <button
-              key={option.value}
-              type="button"
-              role="radio"
-              aria-checked={isSelected}
-              onClick={() => !isDisabled && onValueChange?.(option.value)}
-              disabled={isDisabled}
-              className={cn(
-                "flex-1 px-3 py-2 text-sm font-medium transition-colors",
-                "focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
-                "disabled:cursor-not-allowed disabled:opacity-50",
-                index === 0 && "rounded-l-md",
-                index === options.length - 1 && "rounded-r-md",
-                index > 0 && "border-l",
-                isSelected 
-                  ? "bg-primary text-primary-foreground" 
-                  : "bg-background hover:bg-accent hover:text-accent-foreground"
-              )}
-            >
-              {option.label}
-            </button>
-          );
-        })}
-      </div>
+      <RadioGroupProvider value={props}>
+        <ButtonRadioGroup className={className} options={options} {...props} />
+      </RadioGroupProvider>
     );
   })
+};
+
+// Separate component for button radio group to avoid hook violations
+const ButtonRadioGroup = ({ className, options = [], ...props }) => {
+  const { value, onValueChange, disabled } = useRadioGroup() || {};
+  
+  return (
+    <div className={cn("flex rounded-md border", className)} role="radiogroup">
+      {options.map((option, index) => {
+        const isSelected = value === option.value;
+        const isDisabled = disabled || option.disabled;
+        
+        return (
+          <button
+            key={option.value}
+            type="button"
+            role="radio"
+            aria-checked={isSelected}
+            onClick={() => !isDisabled && onValueChange?.(option.value)}
+            disabled={isDisabled}
+            className={cn(
+              "flex-1 px-3 py-2 text-sm font-medium transition-colors",
+              "focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+              "disabled:cursor-not-allowed disabled:opacity-50",
+              index === 0 && "rounded-l-md",
+              index === options.length - 1 && "rounded-r-md",
+              index > 0 && "border-l",
+              isSelected
+                ? "bg-primary text-primary-foreground"
+                : "bg-background hover:bg-accent hover:text-accent-foreground"
+            )}
+          >
+            {option.label}
+          </button>
+        );
+      })}
+    </div>
+  );
 };
 
 // Hook for radio group state

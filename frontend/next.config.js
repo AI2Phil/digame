@@ -1,20 +1,9 @@
 /** @type {import('next').NextConfig} */
-const withPWA = require('next-pwa')({
-  dest: 'public',
-  register: true,
-  skipWaiting: true,
-  disable: true, // Always disable PWA in test environment
-  fallbacks: {
-    document: '/offline.html',
-  },
-});
-
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
-  // No output export for test environment - enables dev server with API routes
-  distDir: '.next', // Use default .next directory for dev server
-  trailingSlash: false, // Disable trailing slash for dev server
+  distDir: '.next',
+  trailingSlash: false,
   
   // Environment variables for testing
   env: {
@@ -22,24 +11,13 @@ const nextConfig = {
     ACCESS_CONTROL_ENABLED: 'true'
   },
 
-  // Enhanced webpack configuration
+  // Simplified webpack configuration to avoid JSX runtime conflicts
   webpack: (config, { buildId, dev, isServer, defaultLoaders, webpack }) => {
-    // Optimize for test environment
-    config.optimization.splitChunks = {
-      chunks: 'all',
-      cacheGroups: {
-        default: {
-          minChunks: 2,
-          priority: -20,
-          reuseExistingChunk: true
-        },
-        vendor: {
-          test: /[\\/]node_modules[\\/]/,
-          name: 'vendors',
-          priority: -10,
-          chunks: 'all'
-        }
-      }
+    // Ensure proper JSX handling
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      'react/jsx-dev-runtime': 'react/jsx-dev-runtime',
+      'react/jsx-runtime': 'react/jsx-runtime',
     };
 
     return config;
@@ -56,9 +34,9 @@ const nextConfig = {
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
 
-  // Experimental features for performance
+  // Remove conflicting experimental settings
   experimental: {
-    swcMinify: true,
+    // Remove swcMinify from experimental since it's already set at top level
     esmExternals: true,
   },
 
@@ -73,8 +51,14 @@ const nextConfig = {
 
   // Generate build ID
   generateBuildId: async () => {
-    return `test-${Date.now()}`;
+    return `build-${Date.now()}`;
+  },
+
+  // Ensure proper JSX runtime configuration
+  compiler: {
+    emotion: false,
+    removeConsole: process.env.NODE_ENV === 'production',
   }
 };
 
-module.exports = withPWA(nextConfig);
+module.exports = nextConfig;

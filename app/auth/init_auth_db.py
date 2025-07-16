@@ -278,7 +278,9 @@ def verify_auth_setup(db: Session) -> Dict[str, bool]:
         # Check role-permission assignments (simplified check)
         admin_role = get_role_by_name(db, Roles.SUPER_ADMIN)
         if admin_role and hasattr(admin_role, 'permissions'):
-            results["role_permissions_assigned"] = len(admin_role.permissions) > 0
+            # Use getattr to safely access permissions and handle SQLAlchemy relationships
+            permissions = getattr(admin_role, 'permissions', [])
+            results["role_permissions_assigned"] = len(list(permissions)) > 0  # type: ignore
         
         logger.info(f"Authentication setup verification: {results}")
         return results

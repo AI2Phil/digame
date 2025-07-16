@@ -70,7 +70,7 @@ class Achievement(Base):
             AchievementRarity.EPIC: 4,
             AchievementRarity.LEGENDARY: 5
         }
-        return self.points * rarity_multiplier.get(self.rarity, 1)
+        return self.points * rarity_multiplier.get(self.rarity, 1)  # type: ignore
 
 class UserAchievement(Base):
     """User's earned achievements"""
@@ -148,8 +148,8 @@ class Streak(Base):
     def update_streak(self):
         """Update streak based on current activity"""
         if self.is_broken:
-            self.is_active = False
-            self.end_date = datetime.utcnow()
+            self.is_active = False  # type: ignore
+            self.end_date = datetime.utcnow()  # type: ignore
             return False
         
         # Update current count if activity is today
@@ -160,7 +160,7 @@ class Streak(Base):
         # Increment streak
         self.current_count += 1
         self.longest_count = max(self.longest_count, self.current_count)
-        self.last_activity_date = datetime.utcnow()
+        self.last_activity_date = datetime.utcnow()  # type: ignore
         return True
 
 class Milestone(Base):
@@ -245,7 +245,7 @@ class UserPoints(Base):
             self.experience_points -= self.points_to_next_level
             self.level += 1
             # Exponential level progression
-            self.points_to_next_level = int(100 * (1.5 ** (self.level - 1)))
+            self.points_to_next_level = int(100 * (1.5 ** (self.level - 1)))  # type: ignore
 
     @property
     def level_progress_percentage(self):

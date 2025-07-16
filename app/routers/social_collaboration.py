@@ -481,14 +481,14 @@ async def get_project_matches(
                 "matching_skills": matching_skills,
                 "missing_skills": missing_skills
             }
-            project_match = ProjectMatch(**match_data)
+            project_match = ProjectMatch(**match_data)  # type: ignore
             matches.append(project_match)
 
     response_data = {
         "matches": matches,
         "total": len(matches)
     }
-    return ProjectMatchResponse(**response_data)
+    return ProjectMatchResponse(**response_data)  # type: ignore
 
 
 @router.get("/users/{user_id}/team-analytics")
