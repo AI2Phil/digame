@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { 
   Brain, TrendingUp, AlertTriangle, Target, Zap, Eye, 
   Calendar, BarChart3, LineChart, Activity, Users, DollarSign,
@@ -49,7 +49,7 @@ const PredictiveAnalyticsEngine = ({
     setupRealTimeUpdates();
   }, [dataSource, timeHorizon, loadPredictiveAnalytics]);
 
-  const loadPredictiveAnalytics = async () => {
+  const loadPredictiveAnalytics = useCallback(async () => {
     setLoading(true);
     try {
       const [
@@ -89,7 +89,7 @@ const PredictiveAnalyticsEngine = ({
     } finally {
       setLoading(false);
     }
-  };
+  }, [dataSource, timeHorizon, onPredictionUpdate, toast]);
 
   const setupRealTimeUpdates = () => {
     const interval = setInterval(async () => {

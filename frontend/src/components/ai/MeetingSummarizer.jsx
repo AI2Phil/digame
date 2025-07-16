@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Textarea } from '../ui/Textarea';
@@ -23,7 +23,7 @@ const MeetingSummarizer = () => {
     loadSummaryHistory();
   }, [checkFeatureAvailability]);
 
-  const checkFeatureAvailability = async () => {
+  const checkFeatureAvailability = useCallback(async () => {
     try {
       const token = localStorage.getItem('access_token');
       if (!token) {
@@ -62,7 +62,7 @@ const MeetingSummarizer = () => {
       setIsUsingFallbackData(true);
       warning('Feature check failed - using demo data');
     }
-  };
+  }, [info, warning]);
 
   const loadSummaryHistory = async () => {
     try {

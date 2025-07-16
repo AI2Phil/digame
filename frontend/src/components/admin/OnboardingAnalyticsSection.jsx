@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   UserCheck, TrendingUp, Clock, Target,
   BarChart3, Users, CheckCircle, XCircle,
@@ -51,7 +51,7 @@ const OnboardingAnalyticsSection = () => {
   }, []);
 
   // Fetch onboarding analytics data from backend
-  const fetchOnboardingAnalytics = async () => {
+  const fetchOnboardingAnalytics = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -88,7 +88,7 @@ const OnboardingAnalyticsSection = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [timeRange, toast]);
 
   // Generate enhanced sample data as fallback
   const generateEnhancedSampleData = () => {

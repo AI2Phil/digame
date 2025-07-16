@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   BarChart3, TrendingUp, Activity, Database,
   Clock, Users, Zap, AlertTriangle, CheckCircle,
@@ -52,7 +52,7 @@ const SystemAnalyticsSection = () => {
   };
 
   // Fetch system analytics data from API
-  const fetchSystemAnalytics = async () => {
+  const fetchSystemAnalytics = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -95,7 +95,7 @@ const SystemAnalyticsSection = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [timeRange, toast]);
 
   // Generate enhanced sample data as fallback
   const generateEnhancedSampleData = () => {

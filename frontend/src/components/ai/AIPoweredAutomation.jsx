@@ -117,7 +117,7 @@ const AIPoweredAutomation = () => {
   const [isCreating, setIsCreating] = useState(false);
 
   // Mock automation data
-  const aiAutomations = [
+  const aiAutomations = useMemo(() => [
     {
       id: 'smart-onboarding',
       name: 'Smart User Onboarding',
@@ -223,9 +223,9 @@ const AIPoweredAutomation = () => {
         'Track engagement metrics'
       ]
     }
-  ];
+  ], []);
 
-  const automationTriggers = [
+  const automationTriggers = useMemo(() => [
     {
       id: 'user-behavior',
       name: 'User Behavior Triggers',
@@ -258,9 +258,9 @@ const AIPoweredAutomation = () => {
       aiEnhanced: true,
       count: 6
     }
-  ];
+  ], []);
 
-  const automationActions = [
+  const automationActions = useMemo(() => [
     {
       id: 'communication',
       name: 'Communication Actions',
@@ -293,7 +293,7 @@ const AIPoweredAutomation = () => {
       aiFeatures: ['Error Prediction', 'Retry Logic', 'Data Mapping'],
       count: 16
     }
-  ];
+  ], []);
 
   const executionMetrics = [
     { name: 'Mon', executions: 1240, success: 1156, errors: 84, avgTime: 2.3 },
@@ -305,7 +305,7 @@ const AIPoweredAutomation = () => {
     { name: 'Sun', executions: 780, success: 742, errors: 38, avgTime: 1.8 }
   ];
 
-  const recentExecutions = [
+  const recentExecutions = useMemo(() => [
     {
       id: 'exec-001',
       automation: 'Smart User Onboarding',
@@ -351,7 +351,7 @@ const AIPoweredAutomation = () => {
       timestamp: '2025-01-07T10:15:00Z',
       aiDecision: 'Optimal send time predicted: 2:30 PM based on user activity'
     }
-  ];
+  ], []);
 
   const loadAutomationData = useCallback(async () => {
     try {
@@ -556,7 +556,7 @@ const AIPoweredAutomation = () => {
     }
   };
 
-  const loadFallbackPerformanceData = () => {
+  const loadFallbackPerformanceData = useCallback(() => {
     setPerformance({
       totalAutomations: aiAutomations.length,
       activeAutomations: aiAutomations.filter(a => a.status === 'active').length,
@@ -566,7 +566,7 @@ const AIPoweredAutomation = () => {
       aiEnhancedActions: 67,
       timeSaved: 1247
     });
-  };
+  }, [aiAutomations]);
 
   const toggleAutomation = useCallback(async (automationId) => {
     try {

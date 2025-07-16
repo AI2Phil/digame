@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Box,
   Card,
@@ -117,7 +117,7 @@ const WorkflowAutomation: React.FC = () => {
   const [activeStep, setActiveStep] = useState(0);
 
   // Predefined workflow templates
-  const workflowTemplates = [
+  const workflowTemplates = useMemo(() => [
     {
       name: 'Performance Optimization',
       description: 'Automatically optimize performance when metrics exceed thresholds',
@@ -239,7 +239,7 @@ const WorkflowAutomation: React.FC = () => {
         },
       ],
     },
-  ];
+  ], []);
 
   const loadWorkflows = useCallback(async () => {
     setLoading(true);
