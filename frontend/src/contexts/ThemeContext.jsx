@@ -37,10 +37,29 @@ const ThemeContext = createContext(/** @type {ThemeContextType} */ ({
 
 export const useTheme = () => {
   const context = useContext(ThemeContext);
+  
+  // Return safe defaults if context is null (during SSR or missing provider)
   if (!context) {
-    throw new Error('useTheme must be used within a ThemeProvider');
+    return {
+      theme: 'light',
+      setTheme: () => {},
+      customTheme: null,
+      setCustomThemeColors: () => {},
+      animations: true,
+      setAnimations: () => {},
+      highContrast: false,
+      setHighContrast: () => {},
+      fontSize: 'medium',
+      setFontSize: () => {},
+      toggleTheme: () => {},
+      resetTheme: () => {},
+      isDark: false,
+      isCustom: false,
+      isSSR: true
+    };
   }
-  return context;
+  
+  return { ...context, isSSR: false };
 };
 
 export const ThemeProvider = ({ children }) => {
@@ -49,9 +68,16 @@ export const ThemeProvider = ({ children }) => {
   const [animations, setAnimations] = useState(true);
   const [highContrast, setHighContrast] = useState(false);
   const [fontSize, setFontSize] = useState('medium');
+  const [isSSR, setIsSSR] = useState(true);
 
   // Initialize theme from localStorage or system preference
   useEffect(() => {
+    // Mark as client-side
+    setIsSSR(false);
+    
+    // Only access browser APIs on client side
+    if (typeof window === 'undefined') return;
+    
     const savedTheme = localStorage.getItem('digame-theme');
     const savedCustomTheme = localStorage.getItem('digame-custom-theme');
     const savedAnimations = localStorage.getItem('digame-animations');
@@ -85,6 +111,9 @@ export const ThemeProvider = ({ children }) => {
 
   // Apply theme to document
   useEffect(() => {
+    // Only run on client side
+    if (typeof window === 'undefined' || typeof document === 'undefined') return;
+    
     const root = document.documentElement;
     
     // Remove existing theme classes
@@ -118,6 +147,9 @@ export const ThemeProvider = ({ children }) => {
 
   // Listen for system theme changes
   useEffect(() => {
+    // Only run on client side
+    if (typeof window === 'undefined') return;
+    
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
     const handleChange = (e) => {
       if (!localStorage.getItem('digame-theme')) {
@@ -179,7 +211,8 @@ export const ThemeProvider = ({ children }) => {
     toggleTheme,
     resetTheme,
     isDark: theme === 'dark',
-    isCustom: theme === 'custom'
+    isCustom: theme === 'custom',
+    isSSR
   };
 
   return (
