@@ -1,7 +1,7 @@
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ToastProvider } from '../../src/components/ui/Toast';
-import AdvancedTeamAnalytics from '../../src/components/team/AdvancedTeamAnalytics.jsx';
+import AdvancedTeamAnalytics from '../../src/components/team/AdvancedTeamAnalytics';
 
 // Create a client
 const queryClient = new QueryClient({

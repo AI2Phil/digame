@@ -11,15 +11,9 @@ import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
 import { Progress } from '../ui/Progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/Tabs';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '../ui/Select';
+import Select from '../ui/Select';
 import { Input } from '../ui/Input';
-import { Label } from '../ui/Label';
+import Label from '../ui/Label';
 import { Switch } from '../ui/Switch';
 import {
   Users,
@@ -116,6 +110,8 @@ import {
 } from 'recharts';
 
 const CollaborationOptimization = () => {
+  // SSR Safety: Add isMounted state to prevent SSR issues
+  const [isMounted, setIsMounted] = useState(false);
   const [activeTab, setActiveTab] = useState('workflow');
   const [selectedTeam, setSelectedTeam] = useState('all');
   const [optimizationMode, setOptimizationMode] = useState('automatic');
@@ -124,6 +120,11 @@ const CollaborationOptimization = () => {
   const [recommendations, setRecommendations] = useState([]);
   const [aiInsights, setAiInsights] = useState([]);
   const [isOptimizing, setIsOptimizing] = useState(false);
+
+  // SSR Safety: Set mounted state on client
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   // Mock workflow optimization data
   const workflowData = [
@@ -331,8 +332,11 @@ const CollaborationOptimization = () => {
   ];
 
   useEffect(() => {
-    loadOptimizationData();
-  }, [selectedTeam]);
+    // SSR Safety: Only load data when component is mounted on client
+    if (isMounted) {
+      loadOptimizationData();
+    }
+  }, [selectedTeam, isMounted]);
 
   const loadOptimizationData = async () => {
     setIsOptimizing(true);
@@ -392,6 +396,11 @@ const CollaborationOptimization = () => {
   };
 
   const runOptimization = useCallback(async () => {
+    // SSR Safety: Only execute if mounted and in browser
+    if (!isMounted || typeof window === 'undefined') {
+      return;
+    }
+    
     setIsOptimizing(true);
     try {
       // Run optimization for each workflow
@@ -424,7 +433,7 @@ const CollaborationOptimization = () => {
     } finally {
       setIsOptimizing(false);
     }
-  }, [workflows, selectedTeam]);
+  }, [workflows, selectedTeam, isMounted]);
 
   const renderWorkflowTab = () => (
     <div className="space-y-6">
@@ -567,7 +576,7 @@ const CollaborationOptimization = () => {
                       <span>Effort: {workflow.implementation_effort}</span>
                     </div>
                     <Button 
-                      variant={workflow.status === 'optimized' ? 'outline' : 'default'} 
+                      variant={workflow.status === 'optimized' ? 'outline' : 'primary'}
                       size="sm"
                       disabled={workflow.status === 'optimized' || isOptimizing}
                     >
@@ -757,7 +766,7 @@ const CollaborationOptimization = () => {
                       </Button>
                     </div>
                     <Button 
-                      variant={rec.status === 'recommended' ? 'default' : 'outline'} 
+                      variant={rec.status === 'recommended' ? 'primary' : 'outline'}
                       size="sm"
                       disabled={rec.status !== 'recommended'}
                     >
@@ -1025,7 +1034,7 @@ const CollaborationOptimization = () => {
                 <div className="flex items-center justify-between">
                   <span className="text-sm">Time Saved: <span className="font-medium text-green-600">{automation.time_saved}</span></span>
                   <Button
-                    variant={automation.status === 'available' ? 'default' : 'outline'}
+                    variant={automation.status === 'available' ? 'primary' : 'outline'}
                     size="sm"
                     disabled={automation.status !== 'available'}
                   >
@@ -1055,6 +1064,17 @@ const CollaborationOptimization = () => {
     </div>
   );
 
+  // SSR Safety: Return loading state during SSR
+  if (!isMounted) {
+    return (
+      <div className="container mx-auto p-6">
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto p-6">
       <div className="mb-8">
@@ -1068,29 +1088,31 @@ const CollaborationOptimization = () => {
       <Card className="mb-6">
         <CardContent className="p-6">
           <div className="flex items-center space-x-4">
-            <Select value={selectedTeam} onValueChange={setSelectedTeam}>
-              <SelectTrigger className="w-64">
-                <SelectValue placeholder="Select team" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Teams</SelectItem>
-                <SelectItem value="product">Product Development</SelectItem>
-                <SelectItem value="design">Design</SelectItem>
-                <SelectItem value="marketing">Marketing</SelectItem>
-                <SelectItem value="data">Data Science</SelectItem>
-              </SelectContent>
-            </Select>
+            <Select
+              value={selectedTeam}
+              onChange={setSelectedTeam}
+              placeholder="Select team"
+              className="w-64"
+              options={[
+                { value: 'all', label: 'All Teams' },
+                { value: 'product', label: 'Product Development' },
+                { value: 'design', label: 'Design' },
+                { value: 'marketing', label: 'Marketing' },
+                { value: 'data', label: 'Data Science' }
+              ]}
+            />
             
-            <Select value={optimizationMode} onValueChange={setOptimizationMode}>
-              <SelectTrigger className="w-48">
-                <SelectValue placeholder="Optimization mode" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="automatic">Automatic</SelectItem>
-                <SelectItem value="manual">Manual Review</SelectItem>
-                <SelectItem value="hybrid">Hybrid</SelectItem>
-              </SelectContent>
-            </Select>
+            <Select
+              value={optimizationMode}
+              onChange={setOptimizationMode}
+              placeholder="Optimization mode"
+              className="w-48"
+              options={[
+                { value: 'automatic', label: 'Automatic' },
+                { value: 'manual', label: 'Manual Review' },
+                { value: 'hybrid', label: 'Hybrid' }
+              ]}
+            />
             
             <Button onClick={runOptimization} disabled={isOptimizing}>
               {isOptimizing ? (

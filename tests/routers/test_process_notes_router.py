@@ -222,12 +222,15 @@ def test_update_process_note_feedback_only_feedback_text(client: TestClient, tes
     app.dependency_overrides.clear()
     
 def test_update_process_note_feedback_empty_payload(client: TestClient, test_admin_user: SQLAlchemyUser, db_session_test: Session):
+    from app.database import get_db
+    
     app.dependency_overrides[get_current_active_user] = lambda: test_admin_user
+    app.dependency_overrides[get_db] = lambda: db_session_test
     note = create_db_process_note(db_session_test, user_id=test_admin_user.id)
     
     response = client.patch(f"/process-notes/{note.id}/feedback", json={}) # Empty payload
     # The router has a check for this, relying on Pydantic model validation or explicit check
-    assert response.status_code == status.HTTP_400_BAD_REQUEST 
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
     assert "At least one field (user_feedback or user_tags) must be provided for update." in response.json()["detail"]
     app.dependency_overrides.clear()
 

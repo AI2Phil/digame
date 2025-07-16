@@ -11,15 +11,9 @@ import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
 import { Progress } from '../ui/Progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/Tabs';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '../ui/Select';
+import Select from '../ui/Select';
 import { Input } from '../ui/Input';
-import { Label } from '../ui/Label';
+import Label from '../ui/Label';
 import { Switch } from '../ui/Switch';
 import {
   Users,
@@ -74,7 +68,7 @@ import {
   Ship,
   Truck,
   Bike,
-  Walk
+  Navigation
 } from 'lucide-react';
 import { 
   LineChart as RechartsLineChart, 
@@ -103,6 +97,8 @@ import {
 } from 'recharts';
 
 const AdvancedTeamAnalytics = () => {
+  // SSR Safety: Add isMounted state to prevent SSR issues
+  const [isMounted, setIsMounted] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
   const [selectedTeam, setSelectedTeam] = useState('all');
   const [timeRange, setTimeRange] = useState('30d');
@@ -111,6 +107,11 @@ const AdvancedTeamAnalytics = () => {
   const [collaborationData, setCollaborationData] = useState([]);
   const [performanceInsights, setPerformanceInsights] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+
+  // SSR Safety: Set mounted state on client
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   // Mock team data
   const teamData = [
@@ -283,8 +284,11 @@ const AdvancedTeamAnalytics = () => {
   ];
 
   useEffect(() => {
-    loadAnalyticsData();
-  }, [selectedTeam]);
+    // SSR Safety: Only load data when component is mounted on client
+    if (isMounted) {
+      loadAnalyticsData();
+    }
+  }, [selectedTeam, isMounted]);
 
   const loadAnalyticsData = async () => {
     setIsLoading(true);
@@ -339,8 +343,11 @@ const AdvancedTeamAnalytics = () => {
   };
 
   const refreshData = useCallback(() => {
-    loadAnalyticsData();
-  }, []);
+    // SSR Safety: Only execute if mounted and in browser
+    if (isMounted && typeof window !== 'undefined') {
+      loadAnalyticsData();
+    }
+  }, [isMounted]);
 
   const renderOverviewTab = () => (
     <div className="space-y-6">
@@ -902,6 +909,17 @@ const AdvancedTeamAnalytics = () => {
     </div>
   );
 
+  // SSR Safety: Return loading state during SSR
+  if (!isMounted) {
+    return (
+      <div className="container mx-auto p-6">
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto p-6">
       <div className="mb-8">
@@ -915,31 +933,29 @@ const AdvancedTeamAnalytics = () => {
       <Card className="mb-6">
         <CardContent className="p-6">
           <div className="flex items-center space-x-4">
-            <Select value={selectedTeam} onValueChange={setSelectedTeam}>
-              <SelectTrigger className="w-64">
-                <SelectValue placeholder="Select team" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Teams</SelectItem>
-                {teams.map(team => (
-                  <SelectItem key={team.id} value={team.id}>
-                    {team.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Select
+              value={selectedTeam}
+              onChange={setSelectedTeam}
+              placeholder="Select team"
+              className="w-64"
+              options={[
+                { value: 'all', label: 'All Teams' },
+                ...teams.map(team => ({ value: team.id, label: team.name }))
+              ]}
+            />
             
-            <Select value={timeRange} onValueChange={setTimeRange}>
-              <SelectTrigger className="w-48">
-                <SelectValue placeholder="Time range" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="7d">Last 7 days</SelectItem>
-                <SelectItem value="30d">Last 30 days</SelectItem>
-                <SelectItem value="90d">Last 90 days</SelectItem>
-                <SelectItem value="1y">Last year</SelectItem>
-              </SelectContent>
-            </Select>
+            <Select
+              value={timeRange}
+              onChange={setTimeRange}
+              placeholder="Time range"
+              className="w-48"
+              options={[
+                { value: '7d', label: 'Last 7 days' },
+                { value: '30d', label: 'Last 30 days' },
+                { value: '90d', label: 'Last 90 days' },
+                { value: '1y', label: 'Last year' }
+              ]}
+            />
             
             <Button onClick={refreshData} disabled={isLoading}>
               <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
