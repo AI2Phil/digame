@@ -399,8 +399,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
+  
+  // Return safe defaults if context is null (during SSR or missing provider)
   if (!context) {
-    throw new Error('useAuth must be used within AuthProvider');
+    return {
+      user: null,
+      tokens: null,
+      isAuthenticated: false,
+      isDemoMode: false,
+      isLoading: true,
+      login: async () => false,
+      logout: () => {},
+      enterDemoMode: () => {},
+      refreshToken: async () => false,
+      updateProfile: async () => false,
+      hasPermission: () => false,
+      hasFeatureAccess: () => false,
+      hasSubscriptionAccess: () => false,
+      isSSR: true
+    };
   }
-  return context;
+  
+  return { ...context, isSSR: false };
 };

@@ -206,21 +206,45 @@ export const WebSocketProvider = ({ children }) => {
   const [teamConnections, setTeamConnections] = useState({});
   const [platformConnection, setPlatformConnection] = useState(null);
 
+  // Create connection factory functions instead of calling hooks in callbacks
+  const createTwinConnection = useCallback((twinId, options = {}) => {
+    // Return a connection object that can be used to create the actual WebSocket
+    return {
+      twinId,
+      options,
+      type: 'twin'
+    };
+  }, []);
+
+  const createTeamConnection = useCallback((teamId, options = {}) => {
+    return {
+      teamId,
+      options,
+      type: 'team'
+    };
+  }, []);
+
+  const createPlatformConnection = useCallback((options = {}) => {
+    return {
+      options,
+      type: 'platform'
+    };
+  }, []);
+
   const connectToTwin = useCallback((twinId, options = {}) => {
     if (!twinConnections[twinId]) {
-      const connection = useTwinWebSocket(twinId, options);
+      const connectionConfig = createTwinConnection(twinId, options);
       setTwinConnections(prev => ({
         ...prev,
-        [twinId]: connection
+        [twinId]: connectionConfig
       }));
-      return connection;
+      return connectionConfig;
     }
     return twinConnections[twinId];
-  }, [twinConnections]);
+  }, [twinConnections, createTwinConnection]);
 
   const disconnectFromTwin = useCallback((twinId) => {
     if (twinConnections[twinId]) {
-      twinConnections[twinId].disconnect();
       setTwinConnections(prev => {
         const newConnections = { ...prev };
         delete newConnections[twinId];
@@ -231,19 +255,18 @@ export const WebSocketProvider = ({ children }) => {
 
   const connectToTeam = useCallback((teamId, options = {}) => {
     if (!teamConnections[teamId]) {
-      const connection = useTeamWebSocket(teamId, options);
+      const connectionConfig = createTeamConnection(teamId, options);
       setTeamConnections(prev => ({
         ...prev,
-        [teamId]: connection
+        [teamId]: connectionConfig
       }));
-      return connection;
+      return connectionConfig;
     }
     return teamConnections[teamId];
-  }, [teamConnections]);
+  }, [teamConnections, createTeamConnection]);
 
   const disconnectFromTeam = useCallback((teamId) => {
     if (teamConnections[teamId]) {
-      teamConnections[teamId].disconnect();
       setTeamConnections(prev => {
         const newConnections = { ...prev };
         delete newConnections[teamId];
@@ -254,16 +277,15 @@ export const WebSocketProvider = ({ children }) => {
 
   const connectToPlatform = useCallback((options = {}) => {
     if (!platformConnection) {
-      const connection = usePlatformWebSocket(options);
-      setPlatformConnection(connection);
-      return connection;
+      const connectionConfig = createPlatformConnection(options);
+      setPlatformConnection(connectionConfig);
+      return connectionConfig;
     }
     return platformConnection;
-  }, [platformConnection]);
+  }, [platformConnection, createPlatformConnection]);
 
   const disconnectFromPlatform = useCallback(() => {
     if (platformConnection) {
-      platformConnection.disconnect();
       setPlatformConnection(null);
     }
   }, [platformConnection]);

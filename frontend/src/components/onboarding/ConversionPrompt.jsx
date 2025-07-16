@@ -4,7 +4,7 @@ import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
 import {
   Sparkles, TrendingUp, Users, Clock, Star, ArrowRight,
-  CheckCircle, Zap, Target, Heart, Crown, Gift
+  CheckCircle, Zap, Target, Heart, Crown, Gift, Shield
 } from 'lucide-react';
 
 const ConversionPrompt = ({ 

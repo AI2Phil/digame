@@ -131,8 +131,9 @@ const ResizablePanel = forwardRef(
     children,
     ...props
   }, ref) => {
+  const generatedId = React.useId();
   const { direction, panels, registerPanel, updatePanelConstraints } = useResizable();
-  const panelId = id || React.useId();
+  const panelId = id || generatedId;
 
   React.useEffect(() => {
     registerPanel(panelId, defaultSize);

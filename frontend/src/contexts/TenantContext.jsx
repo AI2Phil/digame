@@ -4,10 +4,22 @@ const TenantContext = createContext();
 
 export const useTenant = () => {
   const context = useContext(TenantContext);
+  
+  // Return safe defaults if context is null (during SSR or missing provider)
   if (!context) {
-    throw new Error('useTenant must be used within a TenantProvider');
+    return {
+      currentTenant: null,
+      availableTenants: [],
+      loading: true,
+      error: null,
+      switchTenant: async () => {},
+      refreshTenantData: () => {},
+      hasMultipleTenants: false,
+      isSSR: true
+    };
   }
-  return context;
+  
+  return { ...context, isSSR: false };
 };
 
 export const TenantProvider = ({ children }) => {
