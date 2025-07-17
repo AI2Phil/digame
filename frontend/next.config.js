@@ -12,8 +12,6 @@ const withPWA = require('next-pwa')({
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
-  // Enable static export for performance testing
-  output: 'export',
   distDir: '.next',
   trailingSlash: false,
   

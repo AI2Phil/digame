@@ -2,17 +2,18 @@ module.exports = {
   extends: 'lighthouse:default',
   settings: {
     // Increase timeouts to allow React hydration to complete
-    maxWaitForFcp: 20 * 1000,
-    maxWaitForLoad: 45 * 1000,
+    maxWaitForFcp: 15 * 1000,
+    maxWaitForLoad: 30 * 1000,
     
     // Add pause after load to ensure React hydration is complete
-    pauseAfterFcpMs: 2000,
-    pauseAfterLoadMs: 3000,
+    pauseAfterFcpMs: 1000,
+    pauseAfterLoadMs: 2000,
     
-    // Skip audits that are prone to DOM access issues
+    // Skip audits that are prone to DOM access issues and timeouts
     skipAudits: [
       'unused-css-rules', // Can cause DOM access issues with dynamic CSS
       'unsized-images', // Can cause DOM measurement issues
+      'full-page-screenshot', // Can cause protocol timeouts
     ],
     
     // Use provided throttling for more stable results
@@ -27,6 +28,9 @@ module.exports = {
       deviceScaleFactor: 1,
       disabled: false,
     },
+    
+    // Add protocol timeout settings
+    protocolTimeout: 30000,
     
     // Additional Chrome flags for stability and DOM access
     chromeFlags: [

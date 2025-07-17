@@ -1,105 +1,86 @@
 
 # SUMMARY
 
-The backend failure in CI is caused by a runtime error during Next.js's prerendering step for several pages. The error is:
+The primary cause of the failing job is the error “FATAL: role 'root' does not exist” from PostgreSQL, which prevents the backend from starting. This leads to the frontend and health checks failing, resulting in the entire job failing.
 
-> TypeError: Cannot read properties of null (reading 'useCallback')
+**Solution Steps:**
 
-This typically means that a React hook (like `useCallback`) is being called inside a component/function when the React context is not available—often because a component is being rendered outside a proper provider, or a custom hook is called outside a component, or during SSR where some dependencies are missing.
+1. **Fix Database User Configuration**:
+   - Your backend is trying to connect to PostgreSQL using the `root` user, but PostgreSQL does not have a role named `root` by default.
+   - Update your database configuration to use a valid PostgreSQL user (e.g., `postgres`), or create the `root` role in your setup scripts.
 
-### Solution Steps
-
-1. **Audit your usage of hooks**: Search for any custom React hooks or direct usage of `useCallback` in your page components, especially those under `/social`, `/tasks`, `/team`, `/workflow`, etc.
-
-2. **Check for SSR incompatibilities**: Make sure that hooks are only called inside React function components and not outside or in plain functions used during SSR.
-
-3. **Guard against null values**: If you have any code like:
-   ```js
-   const something = useContext(SomeContext);
-   const memoized = useCallback(() => { /* ... */ }, []);
+   **Example: Update `.env` or config file**
+   ```env
+   DB_USER=postgres
+   DB_PASSWORD=your_password
+   DB_NAME=your_db
    ```
-   Make sure `something` is not `null` before calling hooks dependent on it.
+   Or, if you need a `root` user, create it in your database init scripts:
+   ```sql
+   CREATE ROLE root WITH LOGIN PASSWORD 'your_password';
+   ```
 
-### Example Fix
+2. **Check Your Workflow Secrets/Environment Variables**:
+   - Make sure the CI environment sets the correct database credentials and user.
+   - If you use Docker Compose, update the service environment variables accordingly.
 
-If you have something like:
-```js
-const context = useContext(SomeContext);
-const handler = useCallback(() => {
-  // uses context
-}, [context]);
-```
-Change it to:
-```js
-const context = useContext(SomeContext);
-const handler = useCallback(() => {
-  if (!context) return;
-  // uses context
-}, [context]);
-```
-Or ensure that your component is always rendered inside the required provider.
+   **Example:**
+   ```yaml
+   environment:
+     POSTGRES_USER: postgres
+     POSTGRES_PASSWORD: your_password
+     POSTGRES_DB: your_db
+   ```
 
-### Next Steps
+3. **Verify Connection String in Application Code**:
+   - Make sure your backend uses the correct connection string, matching the credentials above.
 
-- Check files related to the failing routes (`/social`, `/tasks`, `/team`, `/workflow`).
-- Specifically look for hook usage in SSR-related code (e.g., in `getStaticProps`, `getServerSideProps`, or outside component functions).
-- Refactor any invalid hook usage as described above.
+   **Example:**
+   ```python
+   DATABASE_URL = "postgresql://postgres:your_password@localhost:5432/your_db"
+   ```
+
+4. **Re-run the CI/CD Workflow**:
+   - After correcting the configuration, commit the changes and re-run the workflow. The backend should start and respond to health checks, allowing the frontend to build and start properly.
+
+---
+
+**Summary of Code Changes:**
+- Replace all instances of `root` database user with `postgres` or create `root` role in PostgreSQL setup.
+- Ensure environment variables and secrets match the intended database user.
+- Update Docker Compose or other orchestration configs if used.
+
+---
+
+**Reference:**  
+- [Workflow file (.github/workflows/ci.yml)](https://github.com/AI2Phil/digame/blob/34392f712e1ef854b790d5a6a05df0b77664a3eb/.github/workflows/ci.yml)
+
+Apply these fixes, and your job should pass. If you need guidance on a specific config file, let me know the file path or share its contents.
 
 
 # DETAILED LOG
+Run if [ "$VERBOSE" = "true" ]; then
+⏳ Waiting for frontend server...
 
-Run echo "🔍 Pre-build environment check"
-Node version: v22.17.0
-NPM version: 10.9.2
-Memory info:                total        used        free      shared  buff/cache   available
-Mem:           7.8Gi       868Mi       4.0Gi        46Mi       3.3Gi       6.9Gi
-Swap:          3.0Gi          0B       3.0Gi
-Current directory: /home/runner/work/digame/digame/frontend
-Package.json exists: YES
-🔧 Next.js configuration check:
-next.config.js found
-Configuration preview:
-/** @type {import('next').NextConfig} */
-const nextConfig = {
-  reactStrictMode: true,
-  swcMinify: true,
-  distDir: '.next',
-  trailingSlash: false,
-  output: 'standalone',
-  
-  // Environment variables for testing
-  env: {
-    PLATFORM_OWNER_ACCESS_REQUIRED: 'true',
-    ACCESS_CONTROL_ENABLED: 'true'
-  },
+> digame-frontend@1.0.0 dev
+> next dev --port 3000 --hostname 0.0.0.0
 
-  // Enhanced memory-optimized webpack configuration
-  webpack: (config, { buildId, dev, isServer, defaultLoaders, webpack }) => {
-    // Aggressive memory optimization for CI builds
-    if (!dev && process.env.CI) {
-      // Reduce memory usage during build
-      config.optimization = {
-🏗️ Starting memory-optimized build process...
-
-> digame-frontend@1.0.0 build:ci
-> NODE_OPTIONS="--max-old-space-size=4096 --max-semi-space-size=128" NEXT_TELEMETRY_DISABLED=1 next build
-
- ⚠ Invalid next.config.js options detected: 
-⚠ No build cache found. Please configure build caching for faster rebuilds. Read more: https://nextjs.org/docs/messages/no-cache
- ⚠     Unrecognized key(s) in object: 'isrMemoryCacheSize' at "experimental"
- ⚠ See more info here: https://nextjs.org/docs/messages/invalid-next-config
+ ⚠ You are using a non-standard "NODE_ENV" value in your environment. This creates inconsistencies in the project and is strongly advised against. Read more: https://nextjs.org/docs/messages/non-standard-node-env
   ▲ Next.js 14.2.30
+  - Local:        http://localhost:3000
+  - Network:      http://0.0.0.0:3000
+  - Environments: .env.development
 
-   Skipping validation of types
-   Skipping linting
-   Creating an optimized production build ...
- ✓ Compiled successfully
-   Collecting page data ...
-   Generating static pages (0/208) ...
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
+ ✓ Starting...
+> [PWA] PWA support is disabled
+> [PWA] PWA support is disabled
+ ⨯ API Routes cannot be used with "output: export". See more info here: https://nextjs.org/docs/advanced-features/static-html-export
+ ⨯ API Routes cannot be used with "output: export". See more info here: https://nextjs.org/docs/advanced-features/static-html-export
+ ✓ Ready in 1545ms
+ ○ Compiling / ...
+ ✓ Compiled / in 4.6s (439 modules)
+TypeError: (0 , react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV) is not a function
+    at AppWithPerformance (webpack-internal:///./pages/_app.js:51:100)
     at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
@@ -107,49 +88,49 @@ TypeError: Cannot read properties of null (reading 'useCallback')
     at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/404". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
     at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
     at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+ ✓ Compiled /_error in 431ms (441 modules)
+TypeError: (0 , react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV) is not a function
+    at Document (webpack-internal:///./pages/_document.js:17:96)
     at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/500". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Uc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:84:218)
+    at /home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:96:272
+    at new Promise (<anonymous>)
+    at exports.renderToReadableStream (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:95:53)
+    at e0 (/home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:8:21476)
+    at /home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:26:4814
+    at NextTracerImpl.trace (/home/runner/work/digame/digame/node_modules/next/dist/server/lib/trace/tracer.js:105:20)
+ ⨯ TypeError: (0 , react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV) is not a function
+    at Document (webpack-internal:///./pages/_document.js:17:96)
     at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Uc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:84:218)
+    at /home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:96:272
+    at new Promise (<anonymous>)
+    at exports.renderToReadableStream (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:95:53)
+    at e0 (/home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:8:21476)
+    at /home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:26:4814
+    at NextTracerImpl.trace (/home/runner/work/digame/digame/node_modules/next/dist/server/lib/trace/tracer.js:105:20)
+ ⨯ pages/_app.js (59:14) @ WebVitalsReporter
+ ⨯ TypeError: (0 , react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV) is not a function
+    at AppWithPerformance (webpack-internal:///./pages/_app.js:51:100)
     at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
@@ -157,49 +138,57 @@ TypeError: Cannot read properties of null (reading 'useCallback')
     at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/admin". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
     at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
     at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209) {
+  page: '/'
+}
+  57 |         <ToastProvider position="top-right">
+  58 |           <div className="App">
+> 59 |             <WebVitalsReporter />
+     |              ^
+  60 |             <Component {...pageProps} />
+  61 |           </div>
+  62 |         </ToastProvider>
+TypeError: (0 , react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV) is not a function
+    at Document (webpack-internal:///./pages/_document.js:17:96)
     at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/admin/api_keys". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Uc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:84:218)
+    at /home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:96:272
+    at new Promise (<anonymous>)
+    at exports.renderToReadableStream (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:95:53)
+    at e0 (/home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:8:21476)
+    at /home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:26:4814
+    at NextTracerImpl.trace (/home/runner/work/digame/digame/node_modules/next/dist/server/lib/trace/tracer.js:105:20)
+ ⨯ TypeError: (0 , react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV) is not a function
+    at Document (webpack-internal:///./pages/_document.js:17:96)
     at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Uc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:84:218)
+    at /home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:96:272
+    at new Promise (<anonymous>)
+    at exports.renderToReadableStream (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:95:53)
+    at e0 (/home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:8:21476)
+    at /home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:26:4814
+    at NextTracerImpl.trace (/home/runner/work/digame/digame/node_modules/next/dist/server/lib/trace/tracer.js:105:20)
+ GET / 500 in 6501ms
+TypeError: (0 , react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV) is not a function
+    at AppWithPerformance (webpack-internal:///./pages/_app.js:51:100)
     at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
@@ -207,49 +196,48 @@ TypeError: Cannot read properties of null (reading 'useCallback')
     at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/admin/config/api". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
     at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
     at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+TypeError: (0 , react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV) is not a function
+    at Document (webpack-internal:///./pages/_document.js:17:96)
     at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/admin/config/audit". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Uc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:84:218)
+    at /home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:96:272
+    at new Promise (<anonymous>)
+    at exports.renderToReadableStream (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:95:53)
+    at e0 (/home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:8:21476)
+    at /home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:26:4814
+    at NextTracerImpl.trace (/home/runner/work/digame/digame/node_modules/next/dist/server/lib/trace/tracer.js:105:20)
+ ⨯ TypeError: (0 , react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV) is not a function
+    at Document (webpack-internal:///./pages/_document.js:17:96)
     at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Uc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:84:218)
+    at /home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:96:272
+    at new Promise (<anonymous>)
+    at exports.renderToReadableStream (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:95:53)
+    at e0 (/home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:8:21476)
+    at /home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:26:4814
+    at NextTracerImpl.trace (/home/runner/work/digame/digame/node_modules/next/dist/server/lib/trace/tracer.js:105:20)
+ ⨯ pages/_app.js (59:14) @ WebVitalsReporter
+ ⨯ TypeError: (0 , react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV) is not a function
+    at AppWithPerformance (webpack-internal:///./pages/_app.js:51:100)
     at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
@@ -257,49 +245,57 @@ TypeError: Cannot read properties of null (reading 'useCallback')
     at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/admin/config/backups". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
     at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
     at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209) {
+  page: '/'
+}
+  57 |         <ToastProvider position="top-right">
+  58 |           <div className="App">
+> 59 |             <WebVitalsReporter />
+     |              ^
+  60 |             <Component {...pageProps} />
+  61 |           </div>
+  62 |         </ToastProvider>
+TypeError: (0 , react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV) is not a function
+    at Document (webpack-internal:///./pages/_document.js:17:96)
     at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/admin/config/categories". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Uc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:84:218)
+    at /home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:96:272
+    at new Promise (<anonymous>)
+    at exports.renderToReadableStream (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:95:53)
+    at e0 (/home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:8:21476)
+    at /home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:26:4814
+    at NextTracerImpl.trace (/home/runner/work/digame/digame/node_modules/next/dist/server/lib/trace/tracer.js:105:20)
+ ⨯ TypeError: (0 , react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV) is not a function
+    at Document (webpack-internal:///./pages/_document.js:17:96)
     at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Uc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:84:218)
+    at /home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:96:272
+    at new Promise (<anonymous>)
+    at exports.renderToReadableStream (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:95:53)
+    at e0 (/home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:8:21476)
+    at /home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:26:4814
+    at NextTracerImpl.trace (/home/runner/work/digame/digame/node_modules/next/dist/server/lib/trace/tracer.js:105:20)
+ GET / 500 in 76ms
+TypeError: (0 , react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV) is not a function
+    at AppWithPerformance (webpack-internal:///./pages/_app.js:51:100)
     at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
@@ -307,49 +303,48 @@ TypeError: Cannot read properties of null (reading 'useCallback')
     at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/admin/config/environments". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
     at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
     at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+TypeError: (0 , react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV) is not a function
+    at Document (webpack-internal:///./pages/_document.js:17:96)
     at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/admin/config". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Uc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:84:218)
+    at /home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:96:272
+    at new Promise (<anonymous>)
+    at exports.renderToReadableStream (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:95:53)
+    at e0 (/home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:8:21476)
+    at /home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:26:4814
+    at NextTracerImpl.trace (/home/runner/work/digame/digame/node_modules/next/dist/server/lib/trace/tracer.js:105:20)
+ ⨯ TypeError: (0 , react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV) is not a function
+    at Document (webpack-internal:///./pages/_document.js:17:96)
     at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Uc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:84:218)
+    at /home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:96:272
+    at new Promise (<anonymous>)
+    at exports.renderToReadableStream (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:95:53)
+    at e0 (/home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:8:21476)
+    at /home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:26:4814
+    at NextTracerImpl.trace (/home/runner/work/digame/digame/node_modules/next/dist/server/lib/trace/tracer.js:105:20)
+ ⨯ pages/_app.js (59:14) @ WebVitalsReporter
+ ⨯ TypeError: (0 , react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV) is not a function
+    at AppWithPerformance (webpack-internal:///./pages/_app.js:51:100)
     at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
@@ -357,49 +352,57 @@ TypeError: Cannot read properties of null (reading 'useCallback')
     at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/admin/config/monitoring". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
     at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
     at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209) {
+  page: '/'
+}
+  57 |         <ToastProvider position="top-right">
+  58 |           <div className="App">
+> 59 |             <WebVitalsReporter />
+     |              ^
+  60 |             <Component {...pageProps} />
+  61 |           </div>
+  62 |         </ToastProvider>
+TypeError: (0 , react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV) is not a function
+    at Document (webpack-internal:///./pages/_document.js:17:96)
     at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/admin/config/templates". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Uc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:84:218)
+    at /home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:96:272
+    at new Promise (<anonymous>)
+    at exports.renderToReadableStream (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:95:53)
+    at e0 (/home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:8:21476)
+    at /home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:26:4814
+    at NextTracerImpl.trace (/home/runner/work/digame/digame/node_modules/next/dist/server/lib/trace/tracer.js:105:20)
+ ⨯ TypeError: (0 , react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV) is not a function
+    at Document (webpack-internal:///./pages/_document.js:17:96)
     at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Uc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:84:218)
+    at /home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:96:272
+    at new Promise (<anonymous>)
+    at exports.renderToReadableStream (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:95:53)
+    at e0 (/home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:8:21476)
+    at /home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:26:4814
+    at NextTracerImpl.trace (/home/runner/work/digame/digame/node_modules/next/dist/server/lib/trace/tracer.js:105:20)
+ GET / 500 in 57ms
+TypeError: (0 , react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV) is not a function
+    at AppWithPerformance (webpack-internal:///./pages/_app.js:51:100)
     at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
@@ -407,49 +410,48 @@ TypeError: Cannot read properties of null (reading 'useCallback')
     at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/admin/dashboard". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
     at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
     at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+TypeError: (0 , react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV) is not a function
+    at Document (webpack-internal:///./pages/_document.js:17:96)
     at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/admin/monitoring". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Uc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:84:218)
+    at /home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:96:272
+    at new Promise (<anonymous>)
+    at exports.renderToReadableStream (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:95:53)
+    at e0 (/home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:8:21476)
+    at /home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:26:4814
+    at NextTracerImpl.trace (/home/runner/work/digame/digame/node_modules/next/dist/server/lib/trace/tracer.js:105:20)
+ ⨯ TypeError: (0 , react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV) is not a function
+    at Document (webpack-internal:///./pages/_document.js:17:96)
     at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Uc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:84:218)
+    at /home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:96:272
+    at new Promise (<anonymous>)
+    at exports.renderToReadableStream (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:95:53)
+    at e0 (/home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:8:21476)
+    at /home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:26:4814
+    at NextTracerImpl.trace (/home/runner/work/digame/digame/node_modules/next/dist/server/lib/trace/tracer.js:105:20)
+ ⨯ pages/_app.js (59:14) @ WebVitalsReporter
+ ⨯ TypeError: (0 , react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV) is not a function
+    at AppWithPerformance (webpack-internal:///./pages/_app.js:51:100)
     at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
@@ -457,49 +459,57 @@ TypeError: Cannot read properties of null (reading 'useCallback')
     at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/admin/rbac". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
     at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
     at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209) {
+  page: '/'
+}
+  57 |         <ToastProvider position="top-right">
+  58 |           <div className="App">
+> 59 |             <WebVitalsReporter />
+     |              ^
+  60 |             <Component {...pageProps} />
+  61 |           </div>
+  62 |         </ToastProvider>
+TypeError: (0 , react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV) is not a function
+    at Document (webpack-internal:///./pages/_document.js:17:96)
     at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/admin/system-analytics". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Uc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:84:218)
+    at /home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:96:272
+    at new Promise (<anonymous>)
+    at exports.renderToReadableStream (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:95:53)
+    at e0 (/home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:8:21476)
+    at /home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:26:4814
+    at NextTracerImpl.trace (/home/runner/work/digame/digame/node_modules/next/dist/server/lib/trace/tracer.js:105:20)
+ ⨯ TypeError: (0 , react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV) is not a function
+    at Document (webpack-internal:///./pages/_document.js:17:96)
     at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Uc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:84:218)
+    at /home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:96:272
+    at new Promise (<anonymous>)
+    at exports.renderToReadableStream (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:95:53)
+    at e0 (/home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:8:21476)
+    at /home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:26:4814
+    at NextTracerImpl.trace (/home/runner/work/digame/digame/node_modules/next/dist/server/lib/trace/tracer.js:105:20)
+ GET / 500 in 38ms
+TypeError: (0 , react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV) is not a function
+    at AppWithPerformance (webpack-internal:///./pages/_app.js:51:100)
     at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
@@ -507,49 +517,48 @@ TypeError: Cannot read properties of null (reading 'useCallback')
     at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/admin/users". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
     at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
     at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+TypeError: (0 , react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV) is not a function
+    at Document (webpack-internal:///./pages/_document.js:17:96)
     at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/ai-tools/communication". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Uc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:84:218)
+    at /home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:96:272
+    at new Promise (<anonymous>)
+    at exports.renderToReadableStream (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:95:53)
+    at e0 (/home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:8:21476)
+    at /home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:26:4814
+    at NextTracerImpl.trace (/home/runner/work/digame/digame/node_modules/next/dist/server/lib/trace/tracer.js:105:20)
+ ⨯ TypeError: (0 , react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV) is not a function
+    at Document (webpack-internal:///./pages/_document.js:17:96)
     at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Uc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:84:218)
+    at /home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:96:272
+    at new Promise (<anonymous>)
+    at exports.renderToReadableStream (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:95:53)
+    at e0 (/home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:8:21476)
+    at /home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:26:4814
+    at NextTracerImpl.trace (/home/runner/work/digame/digame/node_modules/next/dist/server/lib/trace/tracer.js:105:20)
+ ⨯ pages/_app.js (59:14) @ WebVitalsReporter
+ ⨯ TypeError: (0 , react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV) is not a function
+    at AppWithPerformance (webpack-internal:///./pages/_app.js:51:100)
     at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
@@ -557,49 +566,57 @@ TypeError: Cannot read properties of null (reading 'useCallback')
     at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/ai-tools/documents". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
     at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
     at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209) {
+  page: '/'
+}
+  57 |         <ToastProvider position="top-right">
+  58 |           <div className="App">
+> 59 |             <WebVitalsReporter />
+     |              ^
+  60 |             <Component {...pageProps} />
+  61 |           </div>
+  62 |         </ToastProvider>
+TypeError: (0 , react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV) is not a function
+    at Document (webpack-internal:///./pages/_document.js:17:96)
     at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/ai-tools/email". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Uc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:84:218)
+    at /home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:96:272
+    at new Promise (<anonymous>)
+    at exports.renderToReadableStream (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:95:53)
+    at e0 (/home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:8:21476)
+    at /home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:26:4814
+    at NextTracerImpl.trace (/home/runner/work/digame/digame/node_modules/next/dist/server/lib/trace/tracer.js:105:20)
+ ⨯ TypeError: (0 , react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV) is not a function
+    at Document (webpack-internal:///./pages/_document.js:17:96)
     at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Uc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:84:218)
+    at /home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:96:272
+    at new Promise (<anonymous>)
+    at exports.renderToReadableStream (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:95:53)
+    at e0 (/home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:8:21476)
+    at /home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:26:4814
+    at NextTracerImpl.trace (/home/runner/work/digame/digame/node_modules/next/dist/server/lib/trace/tracer.js:105:20)
+ GET / 500 in 21ms
+TypeError: (0 , react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV) is not a function
+    at AppWithPerformance (webpack-internal:///./pages/_app.js:51:100)
     at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
@@ -607,49 +624,48 @@ TypeError: Cannot read properties of null (reading 'useCallback')
     at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/ai-tools". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
     at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
     at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+TypeError: (0 , react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV) is not a function
+    at Document (webpack-internal:///./pages/_document.js:17:96)
     at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/ai-tools/language". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Uc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:84:218)
+    at /home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:96:272
+    at new Promise (<anonymous>)
+    at exports.renderToReadableStream (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:95:53)
+    at e0 (/home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:8:21476)
+    at /home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:26:4814
+    at NextTracerImpl.trace (/home/runner/work/digame/digame/node_modules/next/dist/server/lib/trace/tracer.js:105:20)
+ ⨯ TypeError: (0 , react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV) is not a function
+    at Document (webpack-internal:///./pages/_document.js:17:96)
     at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Uc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:84:218)
+    at /home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:96:272
+    at new Promise (<anonymous>)
+    at exports.renderToReadableStream (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:95:53)
+    at e0 (/home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:8:21476)
+    at /home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:26:4814
+    at NextTracerImpl.trace (/home/runner/work/digame/digame/node_modules/next/dist/server/lib/trace/tracer.js:105:20)
+ ⨯ pages/_app.js (59:14) @ WebVitalsReporter
+ ⨯ TypeError: (0 , react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV) is not a function
+    at AppWithPerformance (webpack-internal:///./pages/_app.js:51:100)
     at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
@@ -657,49 +673,57 @@ TypeError: Cannot read properties of null (reading 'useCallback')
     at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/ai-tools/meetings". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
     at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
     at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209) {
+  page: '/'
+}
+  57 |         <ToastProvider position="top-right">
+  58 |           <div className="App">
+> 59 |             <WebVitalsReporter />
+     |              ^
+  60 |             <Component {...pageProps} />
+  61 |           </div>
+  62 |         </ToastProvider>
+TypeError: (0 , react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV) is not a function
+    at Document (webpack-internal:///./pages/_document.js:17:96)
     at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/ai-tools/mobile". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Uc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:84:218)
+    at /home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:96:272
+    at new Promise (<anonymous>)
+    at exports.renderToReadableStream (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:95:53)
+    at e0 (/home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:8:21476)
+    at /home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:26:4814
+    at NextTracerImpl.trace (/home/runner/work/digame/digame/node_modules/next/dist/server/lib/trace/tracer.js:105:20)
+ ⨯ TypeError: (0 , react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV) is not a function
+    at Document (webpack-internal:///./pages/_document.js:17:96)
     at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Uc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:84:218)
+    at /home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:96:272
+    at new Promise (<anonymous>)
+    at exports.renderToReadableStream (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:95:53)
+    at e0 (/home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:8:21476)
+    at /home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:26:4814
+    at NextTracerImpl.trace (/home/runner/work/digame/digame/node_modules/next/dist/server/lib/trace/tracer.js:105:20)
+ GET / 500 in 20ms
+TypeError: (0 , react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV) is not a function
+    at AppWithPerformance (webpack-internal:///./pages/_app.js:51:100)
     at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
@@ -707,49 +731,48 @@ TypeError: Cannot read properties of null (reading 'useCallback')
     at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/ai-tools/nlp". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
     at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
     at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+TypeError: (0 , react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV) is not a function
+    at Document (webpack-internal:///./pages/_document.js:17:96)
     at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/ai-tools/voice". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Uc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:84:218)
+    at /home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:96:272
+    at new Promise (<anonymous>)
+    at exports.renderToReadableStream (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:95:53)
+    at e0 (/home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:8:21476)
+    at /home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:26:4814
+    at NextTracerImpl.trace (/home/runner/work/digame/digame/node_modules/next/dist/server/lib/trace/tracer.js:105:20)
+ ⨯ TypeError: (0 , react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV) is not a function
+    at Document (webpack-internal:///./pages/_document.js:17:96)
     at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Uc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:84:218)
+    at /home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:96:272
+    at new Promise (<anonymous>)
+    at exports.renderToReadableStream (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:95:53)
+    at e0 (/home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:8:21476)
+    at /home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:26:4814
+    at NextTracerImpl.trace (/home/runner/work/digame/digame/node_modules/next/dist/server/lib/trace/tracer.js:105:20)
+ ⨯ pages/_app.js (59:14) @ WebVitalsReporter
+ ⨯ TypeError: (0 , react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV) is not a function
+    at AppWithPerformance (webpack-internal:///./pages/_app.js:51:100)
     at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
@@ -757,49 +780,57 @@ TypeError: Cannot read properties of null (reading 'useCallback')
     at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/ai-tools/writing". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
     at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
     at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209) {
+  page: '/'
+}
+  57 |         <ToastProvider position="top-right">
+  58 |           <div className="App">
+> 59 |             <WebVitalsReporter />
+     |              ^
+  60 |             <Component {...pageProps} />
+  61 |           </div>
+  62 |         </ToastProvider>
+TypeError: (0 , react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV) is not a function
+    at Document (webpack-internal:///./pages/_document.js:17:96)
     at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/ai/ai-automation". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Uc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:84:218)
+    at /home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:96:272
+    at new Promise (<anonymous>)
+    at exports.renderToReadableStream (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:95:53)
+    at e0 (/home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:8:21476)
+    at /home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:26:4814
+    at NextTracerImpl.trace (/home/runner/work/digame/digame/node_modules/next/dist/server/lib/trace/tracer.js:105:20)
+ ⨯ TypeError: (0 , react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV) is not a function
+    at Document (webpack-internal:///./pages/_document.js:17:96)
     at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Uc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:84:218)
+    at /home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:96:272
+    at new Promise (<anonymous>)
+    at exports.renderToReadableStream (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:95:53)
+    at e0 (/home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:8:21476)
+    at /home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:26:4814
+    at NextTracerImpl.trace (/home/runner/work/digame/digame/node_modules/next/dist/server/lib/trace/tracer.js:105:20)
+ GET / 500 in 19ms
+TypeError: (0 , react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV) is not a function
+    at AppWithPerformance (webpack-internal:///./pages/_app.js:51:100)
     at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
@@ -807,49 +838,48 @@ TypeError: Cannot read properties of null (reading 'useCallback')
     at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/ai". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
     at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
     at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+TypeError: (0 , react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV) is not a function
+    at Document (webpack-internal:///./pages/_document.js:17:96)
     at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/analytics". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Uc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:84:218)
+    at /home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:96:272
+    at new Promise (<anonymous>)
+    at exports.renderToReadableStream (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:95:53)
+    at e0 (/home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:8:21476)
+    at /home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:26:4814
+    at NextTracerImpl.trace (/home/runner/work/digame/digame/node_modules/next/dist/server/lib/trace/tracer.js:105:20)
+ ⨯ TypeError: (0 , react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV) is not a function
+    at Document (webpack-internal:///./pages/_document.js:17:96)
     at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Uc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:84:218)
+    at /home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:96:272
+    at new Promise (<anonymous>)
+    at exports.renderToReadableStream (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:95:53)
+    at e0 (/home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:8:21476)
+    at /home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:26:4814
+    at NextTracerImpl.trace (/home/runner/work/digame/digame/node_modules/next/dist/server/lib/trace/tracer.js:105:20)
+ ⨯ pages/_app.js (59:14) @ WebVitalsReporter
+ ⨯ TypeError: (0 , react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV) is not a function
+    at AppWithPerformance (webpack-internal:///./pages/_app.js:51:100)
     at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
@@ -857,49 +887,57 @@ TypeError: Cannot read properties of null (reading 'useCallback')
     at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/analytics/advanced". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
     at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
     at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209) {
+  page: '/'
+}
+  57 |         <ToastProvider position="top-right">
+  58 |           <div className="App">
+> 59 |             <WebVitalsReporter />
+     |              ^
+  60 |             <Component {...pageProps} />
+  61 |           </div>
+  62 |         </ToastProvider>
+TypeError: (0 , react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV) is not a function
+    at Document (webpack-internal:///./pages/_document.js:17:96)
     at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/analytics/anomalies". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Uc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:84:218)
+    at /home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:96:272
+    at new Promise (<anonymous>)
+    at exports.renderToReadableStream (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:95:53)
+    at e0 (/home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:8:21476)
+    at /home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:26:4814
+    at NextTracerImpl.trace (/home/runner/work/digame/digame/node_modules/next/dist/server/lib/trace/tracer.js:105:20)
+ ⨯ TypeError: (0 , react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV) is not a function
+    at Document (webpack-internal:///./pages/_document.js:17:96)
     at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Uc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:84:218)
+    at /home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:96:272
+    at new Promise (<anonymous>)
+    at exports.renderToReadableStream (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:95:53)
+    at e0 (/home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:8:21476)
+    at /home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:26:4814
+    at NextTracerImpl.trace (/home/runner/work/digame/digame/node_modules/next/dist/server/lib/trace/tracer.js:105:20)
+ GET / 500 in 19ms
+TypeError: (0 , react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV) is not a function
+    at AppWithPerformance (webpack-internal:///./pages/_app.js:51:100)
     at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
@@ -907,49 +945,48 @@ TypeError: Cannot read properties of null (reading 'useCallback')
     at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/analytics/api". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
     at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
     at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+TypeError: (0 , react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV) is not a function
+    at Document (webpack-internal:///./pages/_document.js:17:96)
     at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/analytics/behavioral". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Uc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:84:218)
+    at /home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:96:272
+    at new Promise (<anonymous>)
+    at exports.renderToReadableStream (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:95:53)
+    at e0 (/home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:8:21476)
+    at /home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:26:4814
+    at NextTracerImpl.trace (/home/runner/work/digame/digame/node_modules/next/dist/server/lib/trace/tracer.js:105:20)
+ ⨯ TypeError: (0 , react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV) is not a function
+    at Document (webpack-internal:///./pages/_document.js:17:96)
     at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Uc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:84:218)
+    at /home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:96:272
+    at new Promise (<anonymous>)
+    at exports.renderToReadableStream (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:95:53)
+    at e0 (/home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:8:21476)
+    at /home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:26:4814
+    at NextTracerImpl.trace (/home/runner/work/digame/digame/node_modules/next/dist/server/lib/trace/tracer.js:105:20)
+ ⨯ pages/_app.js (59:14) @ WebVitalsReporter
+ ⨯ TypeError: (0 , react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV) is not a function
+    at AppWithPerformance (webpack-internal:///./pages/_app.js:51:100)
     at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
@@ -957,49 +994,57 @@ TypeError: Cannot read properties of null (reading 'useCallback')
     at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/analytics/dashboard-builder". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
     at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
     at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209) {
+  page: '/'
+}
+  57 |         <ToastProvider position="top-right">
+  58 |           <div className="App">
+> 59 |             <WebVitalsReporter />
+     |              ^
+  60 |             <Component {...pageProps} />
+  61 |           </div>
+  62 |         </ToastProvider>
+TypeError: (0 , react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV) is not a function
+    at Document (webpack-internal:///./pages/_document.js:17:96)
     at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/analytics/kpi-test". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Uc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:84:218)
+    at /home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:96:272
+    at new Promise (<anonymous>)
+    at exports.renderToReadableStream (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:95:53)
+    at e0 (/home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:8:21476)
+    at /home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:26:4814
+    at NextTracerImpl.trace (/home/runner/work/digame/digame/node_modules/next/dist/server/lib/trace/tracer.js:105:20)
+ ⨯ TypeError: (0 , react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV) is not a function
+    at Document (webpack-internal:///./pages/_document.js:17:96)
     at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Uc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:84:218)
+    at /home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:96:272
+    at new Promise (<anonymous>)
+    at exports.renderToReadableStream (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:95:53)
+    at e0 (/home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:8:21476)
+    at /home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:26:4814
+    at NextTracerImpl.trace (/home/runner/work/digame/digame/node_modules/next/dist/server/lib/trace/tracer.js:105:20)
+ GET / 500 in 22ms
+TypeError: (0 , react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV) is not a function
+    at AppWithPerformance (webpack-internal:///./pages/_app.js:51:100)
     at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
@@ -1007,49 +1052,48 @@ TypeError: Cannot read properties of null (reading 'useCallback')
     at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/analytics/mobile". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
     at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
     at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+TypeError: (0 , react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV) is not a function
+    at Document (webpack-internal:///./pages/_document.js:17:96)
     at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/analytics/patterns". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Uc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:84:218)
+    at /home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:96:272
+    at new Promise (<anonymous>)
+    at exports.renderToReadableStream (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:95:53)
+    at e0 (/home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:8:21476)
+    at /home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:26:4814
+    at NextTracerImpl.trace (/home/runner/work/digame/digame/node_modules/next/dist/server/lib/trace/tracer.js:105:20)
+ ⨯ TypeError: (0 , react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV) is not a function
+    at Document (webpack-internal:///./pages/_document.js:17:96)
     at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Uc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:84:218)
+    at /home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:96:272
+    at new Promise (<anonymous>)
+    at exports.renderToReadableStream (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:95:53)
+    at e0 (/home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:8:21476)
+    at /home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:26:4814
+    at NextTracerImpl.trace (/home/runner/work/digame/digame/node_modules/next/dist/server/lib/trace/tracer.js:105:20)
+ ⨯ pages/_app.js (59:14) @ WebVitalsReporter
+ ⨯ TypeError: (0 , react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV) is not a function
+    at AppWithPerformance (webpack-internal:///./pages/_app.js:51:100)
     at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
@@ -1057,49 +1101,57 @@ TypeError: Cannot read properties of null (reading 'useCallback')
     at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/analytics/performance". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
     at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
     at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209) {
+  page: '/'
+}
+  57 |         <ToastProvider position="top-right">
+  58 |           <div className="App">
+> 59 |             <WebVitalsReporter />
+     |              ^
+  60 |             <Component {...pageProps} />
+  61 |           </div>
+  62 |         </ToastProvider>
+TypeError: (0 , react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV) is not a function
+    at Document (webpack-internal:///./pages/_document.js:17:96)
     at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/analytics/platform". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Uc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:84:218)
+    at /home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:96:272
+    at new Promise (<anonymous>)
+    at exports.renderToReadableStream (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:95:53)
+    at e0 (/home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:8:21476)
+    at /home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:26:4814
+    at NextTracerImpl.trace (/home/runner/work/digame/digame/node_modules/next/dist/server/lib/trace/tracer.js:105:20)
+ ⨯ TypeError: (0 , react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV) is not a function
+    at Document (webpack-internal:///./pages/_document.js:17:96)
     at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Uc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:84:218)
+    at /home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:96:272
+    at new Promise (<anonymous>)
+    at exports.renderToReadableStream (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:95:53)
+    at e0 (/home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:8:21476)
+    at /home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:26:4814
+    at NextTracerImpl.trace (/home/runner/work/digame/digame/node_modules/next/dist/server/lib/trace/tracer.js:105:20)
+ GET / 500 in 18ms
+TypeError: (0 , react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV) is not a function
+    at AppWithPerformance (webpack-internal:///./pages/_app.js:51:100)
     at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
@@ -1107,49 +1159,48 @@ TypeError: Cannot read properties of null (reading 'useCallback')
     at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/analytics/predictive". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
     at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
     at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+TypeError: (0 , react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV) is not a function
+    at Document (webpack-internal:///./pages/_document.js:17:96)
     at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/analytics/revenue". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Uc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:84:218)
+    at /home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:96:272
+    at new Promise (<anonymous>)
+    at exports.renderToReadableStream (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:95:53)
+    at e0 (/home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:8:21476)
+    at /home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:26:4814
+    at NextTracerImpl.trace (/home/runner/work/digame/digame/node_modules/next/dist/server/lib/trace/tracer.js:105:20)
+ ⨯ TypeError: (0 , react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV) is not a function
+    at Document (webpack-internal:///./pages/_document.js:17:96)
     at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Uc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:84:218)
+    at /home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:96:272
+    at new Promise (<anonymous>)
+    at exports.renderToReadableStream (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:95:53)
+    at e0 (/home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:8:21476)
+    at /home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:26:4814
+    at NextTracerImpl.trace (/home/runner/work/digame/digame/node_modules/next/dist/server/lib/trace/tracer.js:105:20)
+ ⨯ pages/_app.js (59:14) @ WebVitalsReporter
+ ⨯ TypeError: (0 , react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV) is not a function
+    at AppWithPerformance (webpack-internal:///./pages/_app.js:51:100)
     at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
@@ -1157,49 +1208,57 @@ TypeError: Cannot read properties of null (reading 'useCallback')
     at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/analytics/user-behavior". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
     at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
     at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209) {
+  page: '/'
+}
+  57 |         <ToastProvider position="top-right">
+  58 |           <div className="App">
+> 59 |             <WebVitalsReporter />
+     |              ^
+  60 |             <Component {...pageProps} />
+  61 |           </div>
+  62 |         </ToastProvider>
+TypeError: (0 , react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV) is not a function
+    at Document (webpack-internal:///./pages/_document.js:17:96)
     at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/analytics/web". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Uc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:84:218)
+    at /home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:96:272
+    at new Promise (<anonymous>)
+    at exports.renderToReadableStream (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:95:53)
+    at e0 (/home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:8:21476)
+    at /home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:26:4814
+    at NextTracerImpl.trace (/home/runner/work/digame/digame/node_modules/next/dist/server/lib/trace/tracer.js:105:20)
+ ⨯ TypeError: (0 , react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV) is not a function
+    at Document (webpack-internal:///./pages/_document.js:17:96)
     at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Uc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:84:218)
+    at /home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:96:272
+    at new Promise (<anonymous>)
+    at exports.renderToReadableStream (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:95:53)
+    at e0 (/home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:8:21476)
+    at /home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:26:4814
+    at NextTracerImpl.trace (/home/runner/work/digame/digame/node_modules/next/dist/server/lib/trace/tracer.js:105:20)
+ GET / 500 in 22ms
+TypeError: (0 , react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV) is not a function
+    at AppWithPerformance (webpack-internal:///./pages/_app.js:51:100)
     at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
@@ -1207,49 +1266,48 @@ TypeError: Cannot read properties of null (reading 'useCallback')
     at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/analytics/widgets-test". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
     at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
     at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+TypeError: (0 , react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV) is not a function
+    at Document (webpack-internal:///./pages/_document.js:17:96)
     at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/auth". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Uc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:84:218)
+    at /home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:96:272
+    at new Promise (<anonymous>)
+    at exports.renderToReadableStream (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:95:53)
+    at e0 (/home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:8:21476)
+    at /home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:26:4814
+    at NextTracerImpl.trace (/home/runner/work/digame/digame/node_modules/next/dist/server/lib/trace/tracer.js:105:20)
+ ⨯ TypeError: (0 , react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV) is not a function
+    at Document (webpack-internal:///./pages/_document.js:17:96)
     at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Uc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:84:218)
+    at /home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:96:272
+    at new Promise (<anonymous>)
+    at exports.renderToReadableStream (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:95:53)
+    at e0 (/home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:8:21476)
+    at /home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:26:4814
+    at NextTracerImpl.trace (/home/runner/work/digame/digame/node_modules/next/dist/server/lib/trace/tracer.js:105:20)
+ ⨯ pages/_app.js (59:14) @ WebVitalsReporter
+ ⨯ TypeError: (0 , react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV) is not a function
+    at AppWithPerformance (webpack-internal:///./pages/_app.js:51:100)
     at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
@@ -1257,49 +1315,57 @@ TypeError: Cannot read properties of null (reading 'useCallback')
     at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/career". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
     at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
     at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209) {
+  page: '/'
+}
+  57 |         <ToastProvider position="top-right">
+  58 |           <div className="App">
+> 59 |             <WebVitalsReporter />
+     |              ^
+  60 |             <Component {...pageProps} />
+  61 |           </div>
+  62 |         </ToastProvider>
+TypeError: (0 , react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV) is not a function
+    at Document (webpack-internal:///./pages/_document.js:17:96)
     at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/career/jobs". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Uc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:84:218)
+    at /home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:96:272
+    at new Promise (<anonymous>)
+    at exports.renderToReadableStream (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:95:53)
+    at e0 (/home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:8:21476)
+    at /home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:26:4814
+    at NextTracerImpl.trace (/home/runner/work/digame/digame/node_modules/next/dist/server/lib/trace/tracer.js:105:20)
+ ⨯ TypeError: (0 , react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV) is not a function
+    at Document (webpack-internal:///./pages/_document.js:17:96)
     at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Uc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:84:218)
+    at /home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:96:272
+    at new Promise (<anonymous>)
+    at exports.renderToReadableStream (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:95:53)
+    at e0 (/home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:8:21476)
+    at /home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:26:4814
+    at NextTracerImpl.trace (/home/runner/work/digame/digame/node_modules/next/dist/server/lib/trace/tracer.js:105:20)
+ GET / 500 in 16ms
+TypeError: (0 , react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV) is not a function
+    at AppWithPerformance (webpack-internal:///./pages/_app.js:51:100)
     at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
@@ -1307,49 +1373,48 @@ TypeError: Cannot read properties of null (reading 'useCallback')
     at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/career/learning". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
     at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
     at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+TypeError: (0 , react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV) is not a function
+    at Document (webpack-internal:///./pages/_document.js:17:96)
     at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/career/modeling". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Uc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:84:218)
+    at /home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:96:272
+    at new Promise (<anonymous>)
+    at exports.renderToReadableStream (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:95:53)
+    at e0 (/home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:8:21476)
+    at /home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:26:4814
+    at NextTracerImpl.trace (/home/runner/work/digame/digame/node_modules/next/dist/server/lib/trace/tracer.js:105:20)
+ ⨯ TypeError: (0 , react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV) is not a function
+    at Document (webpack-internal:///./pages/_document.js:17:96)
     at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Uc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:84:218)
+    at /home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:96:272
+    at new Promise (<anonymous>)
+    at exports.renderToReadableStream (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:95:53)
+    at e0 (/home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:8:21476)
+    at /home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:26:4814
+    at NextTracerImpl.trace (/home/runner/work/digame/digame/node_modules/next/dist/server/lib/trace/tracer.js:105:20)
+ ⨯ pages/_app.js (59:14) @ WebVitalsReporter
+ ⨯ TypeError: (0 , react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV) is not a function
+    at AppWithPerformance (webpack-internal:///./pages/_app.js:51:100)
     at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
@@ -1357,49 +1422,57 @@ TypeError: Cannot read properties of null (reading 'useCallback')
     at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/career/network". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
     at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
     at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209) {
+  page: '/'
+}
+  57 |         <ToastProvider position="top-right">
+  58 |           <div className="App">
+> 59 |             <WebVitalsReporter />
+     |              ^
+  60 |             <Component {...pageProps} />
+  61 |           </div>
+  62 |         </ToastProvider>
+TypeError: (0 , react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV) is not a function
+    at Document (webpack-internal:///./pages/_document.js:17:96)
     at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/career/skills". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Uc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:84:218)
+    at /home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:96:272
+    at new Promise (<anonymous>)
+    at exports.renderToReadableStream (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:95:53)
+    at e0 (/home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:8:21476)
+    at /home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:26:4814
+    at NextTracerImpl.trace (/home/runner/work/digame/digame/node_modules/next/dist/server/lib/trace/tracer.js:105:20)
+ ⨯ TypeError: (0 , react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV) is not a function
+    at Document (webpack-internal:///./pages/_document.js:17:96)
     at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Uc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:84:218)
+    at /home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:96:272
+    at new Promise (<anonymous>)
+    at exports.renderToReadableStream (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:95:53)
+    at e0 (/home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:8:21476)
+    at /home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:26:4814
+    at NextTracerImpl.trace (/home/runner/work/digame/digame/node_modules/next/dist/server/lib/trace/tracer.js:105:20)
+ GET / 500 in 189ms
+TypeError: (0 , react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV) is not a function
+    at AppWithPerformance (webpack-internal:///./pages/_app.js:51:100)
     at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
@@ -1407,39 +1480,48 @@ TypeError: Cannot read properties of null (reading 'useCallback')
     at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/collaboration/real-time". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
     at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
     at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-   Generating static pages (52/208) 
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+TypeError: (0 , react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV) is not a function
+    at Document (webpack-internal:///./pages/_document.js:17:96)
     at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/config/api". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Uc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:84:218)
+    at /home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:96:272
+    at new Promise (<anonymous>)
+    at exports.renderToReadableStream (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:95:53)
+    at e0 (/home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:8:21476)
+    at /home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:26:4814
+    at NextTracerImpl.trace (/home/runner/work/digame/digame/node_modules/next/dist/server/lib/trace/tracer.js:105:20)
+ ⨯ TypeError: (0 , react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV) is not a function
+    at Document (webpack-internal:///./pages/_document.js:17:96)
+    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
+    at Uc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:84:218)
+    at /home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:96:272
+    at new Promise (<anonymous>)
+    at exports.renderToReadableStream (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:95:53)
+    at e0 (/home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:8:21476)
+    at /home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:26:4814
+    at NextTracerImpl.trace (/home/runner/work/digame/digame/node_modules/next/dist/server/lib/trace/tracer.js:105:20)
+ ⨯ pages/_app.js (59:14) @ WebVitalsReporter
+ ⨯ TypeError: (0 , react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV) is not a function
+    at AppWithPerformance (webpack-internal:///./pages/_app.js:51:100)
     at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
@@ -1447,3412 +1529,57 @@ TypeError: Cannot read properties of null (reading 'useCallback')
     at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
     at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
     at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/config/audit". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/config/backups". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/config/categories". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/config/environments". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/config". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/config/monitoring". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/dashboard". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/demo". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/digital-twin". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/digital-twin/analytics". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/digital-twin/behavior". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/digital-twin/dashboard". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/digital-twin/insights". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/digital-twin/interaction". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/digital-twin/intelligence". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/digital-twin/my-twin". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/digital-twin/overview". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/digital-twin/onboarding". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/digital-twin/patterns". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/digital-twin/real-time". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/digital-twin/predictions". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/digital-twin/simulation". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/digital-twin/settings". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/digital-twin/workspace". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/enterprise/advanced-analytics". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/enterprise". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/enterprise/integrations". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/enterprise/market-intel". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/enterprise/multi-tenancy". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/enterprise/multi-tenant". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/enterprise/tenants". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/features". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/guest/analytics". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/guest/auth". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/guest/experience". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/guest". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/how-it-works". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/integration/api". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/integration/dashboard". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/integration/data". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/integration/guest". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/integration". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/integration/webhooks". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/intelligence/insights". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/learning/ai-assistant". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/integration/sso". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/learning/certifications". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/learning/courses". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/learning". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/learning/analytics". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/learning/language". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-   Generating static pages (104/208) 
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/learning/paths". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/learning/skill-tracking". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/learning/skills-assessment". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/learning/tracking". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/login". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/monitoring/advanced". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/navigation-test". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/notifications". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/onboarding-wizard". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/onboarding/enhanced". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/onboarding/getting-started". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/onboarding". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/onboarding/wizard". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/performance/bundle-analyzer". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/performance". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/performance/monitoring-dashboard". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/performance/query-optimization". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/performance/real-time-monitor". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/platform-owner/ai-model-observatory". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/performance/user-experience". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/platform-owner/audit-analytics". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/platform-owner/competitive-intelligence". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/platform-owner/capacity-planning". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/platform-owner/compliance-dashboard". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/platform-owner/console". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/platform-owner/data-management". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/platform-owner/data-quality". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/platform-owner/developer-portal". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/platform-owner/enterprise". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/platform-owner/feature-flags". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/platform-owner/go-live-checklist". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/platform-owner/health-scoring". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/platform-owner/health". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/platform-owner/incident-management". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/platform-owner". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/platform-owner/integrations". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/platform-owner/marketplace-management". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/platform-owner/partner-integrations". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/platform-owner/performance-overview". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/platform-owner/revenue". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/platform-owner/roi-analytics". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/platform-owner/security". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/platform-owner/risk-management". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/platform-owner/settings". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/platform-owner/system-orchestration". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/platform-owner/tenants". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/platform-owner/strategic-planning". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/platform-owner/test-zone". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/platform-owner/user-journey-analytics". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/platform-owner/users". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/pricing". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-   Generating static pages (156/208) 
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/reports/analytics". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/profile". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/reports/builder". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/reports/custom". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/reports". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/reports/predictive". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/reports/publish". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/reports/scheduled". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/reports/visualization". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/security/access". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/security/advanced-dashboard". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/security/audit-trail". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/security/audit". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/security/compliance". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/security". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/security/mfa". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/security/risk-assessment". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/service-test". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/settings/api-keys". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/signup". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/settings". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/social/collaboration". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/social/analytics". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/social/events". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/social/forums". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/social". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/social/learning-partners". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/social/mentorship". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/social/network". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/social/peer-matching". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209) {
+  page: '/'
+}
+  57 |         <ToastProvider position="top-right">
+  58 |           <div className="App">
+> 59 |             <WebVitalsReporter />
+     |              ^
+  60 |             <Component {...pageProps} />
+  61 |           </div>
+  62 |         </ToastProvider>
+TypeError: (0 , react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV) is not a function
+    at Document (webpack-internal:///./pages/_document.js:17:96)
     at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/tasks/ai-suggestions". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/tasks/analytics". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
+    at Uc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:84:218)
+    at /home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:96:272
+    at new Promise (<anonymous>)
+    at exports.renderToReadableStream (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:95:53)
+    at e0 (/home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:8:21476)
+    at /home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:26:4814
+    at NextTracerImpl.trace (/home/runner/work/digame/digame/node_modules/next/dist/server/lib/trace/tracer.js:105:20)
+ ⨯ TypeError: (0 , react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV) is not a function
+    at Document (webpack-internal:///./pages/_document.js:17:96)
     at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/tasks". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
+    at Uc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:84:218)
+    at /home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:96:272
+    at new Promise (<anonymous>)
+    at exports.renderToReadableStream (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:95:53)
+    at e0 (/home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:8:21476)
+    at /home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:26:4814
+    at NextTracerImpl.trace (/home/runner/work/digame/digame/node_modules/next/dist/server/lib/trace/tracer.js:105:20)
+ GET / 500 in 19ms
+TypeError: (0 , react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV) is not a function
+    at AppWithPerformance (webpack-internal:///./pages/_app.js:51:100)
     at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
@@ -4860,113 +1587,48 @@ TypeError: Cannot read properties of null (reading 'useCallback')
     at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/tasks/projects". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
     at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
     at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/team/analytics". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+TypeError: (0 , react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV) is not a function
+    at Document (webpack-internal:///./pages/_document.js:17:96)
     at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/team/collaboration". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
+    at Uc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:84:218)
+    at /home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:96:272
+    at new Promise (<anonymous>)
+    at exports.renderToReadableStream (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:95:53)
+    at e0 (/home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:8:21476)
+    at /home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:26:4814
+    at NextTracerImpl.trace (/home/runner/work/digame/digame/node_modules/next/dist/server/lib/trace/tracer.js:105:20)
+ ⨯ TypeError: (0 , react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV) is not a function
+    at Document (webpack-internal:///./pages/_document.js:17:96)
     at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/team/dashboard". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/team". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
+    at Uc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:84:218)
+    at /home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:96:272
+    at new Promise (<anonymous>)
+    at exports.renderToReadableStream (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:95:53)
+    at e0 (/home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:8:21476)
+    at /home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:26:4814
+    at NextTracerImpl.trace (/home/runner/work/digame/digame/node_modules/next/dist/server/lib/trace/tracer.js:105:20)
+ ⨯ pages/_app.js (59:14) @ WebVitalsReporter
+ ⨯ TypeError: (0 , react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV) is not a function
+    at AppWithPerformance (webpack-internal:///./pages/_app.js:51:100)
     at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
@@ -4974,110 +1636,57 @@ TypeError: Cannot read properties of null (reading 'useCallback')
     at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
     at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
     at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/team/mentorship". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209) {
+  page: '/'
+}
+  57 |         <ToastProvider position="top-right">
+  58 |           <div className="App">
+> 59 |             <WebVitalsReporter />
+     |              ^
+  60 |             <Component {...pageProps} />
+  61 |           </div>
+  62 |         </ToastProvider>
+TypeError: (0 , react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV) is not a function
+    at Document (webpack-internal:///./pages/_document.js:17:96)
     at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/team/skills". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/team/social". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
+    at Uc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:84:218)
+    at /home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:96:272
+    at new Promise (<anonymous>)
+    at exports.renderToReadableStream (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:95:53)
+    at e0 (/home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:8:21476)
+    at /home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:26:4814
+    at NextTracerImpl.trace (/home/runner/work/digame/digame/node_modules/next/dist/server/lib/trace/tracer.js:105:20)
+ ⨯ TypeError: (0 , react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV) is not a function
+    at Document (webpack-internal:///./pages/_document.js:17:96)
     at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/team/workflows". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
+    at Uc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:84:218)
+    at /home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:96:272
+    at new Promise (<anonymous>)
+    at exports.renderToReadableStream (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:95:53)
+    at e0 (/home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:8:21476)
+    at /home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:26:4814
+    at NextTracerImpl.trace (/home/runner/work/digame/digame/node_modules/next/dist/server/lib/trace/tracer.js:105:20)
+ GET / 500 in 16ms
+TypeError: (0 , react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV) is not a function
+    at AppWithPerformance (webpack-internal:///./pages/_app.js:51:100)
     at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
@@ -5085,113 +1694,48 @@ TypeError: Cannot read properties of null (reading 'useCallback')
     at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/workflow/advanced". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
     at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
     at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/workflow/automation". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
+TypeError: (0 , react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV) is not a function
+    at Document (webpack-internal:///./pages/_document.js:17:96)
     at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/workflow/calendar". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
+    at Uc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:84:218)
+    at /home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:96:272
+    at new Promise (<anonymous>)
+    at exports.renderToReadableStream (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:95:53)
+    at e0 (/home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:8:21476)
+    at /home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:26:4814
+    at NextTracerImpl.trace (/home/runner/work/digame/digame/node_modules/next/dist/server/lib/trace/tracer.js:105:20)
+ ⨯ TypeError: (0 , react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV) is not a function
+    at Document (webpack-internal:///./pages/_document.js:17:96)
     at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/workflow". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/workflow/notes". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
+    at Uc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:84:218)
+    at /home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:96:272
+    at new Promise (<anonymous>)
+    at exports.renderToReadableStream (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:95:53)
+    at e0 (/home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:8:21476)
+    at /home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:26:4814
+    at NextTracerImpl.trace (/home/runner/work/digame/digame/node_modules/next/dist/server/lib/trace/tracer.js:105:20)
+ ⨯ pages/_app.js (59:14) @ WebVitalsReporter
+ ⨯ TypeError: (0 , react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV) is not a function
+    at AppWithPerformance (webpack-internal:///./pages/_app.js:51:100)
     at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
@@ -5199,322 +1743,57 @@ TypeError: Cannot read properties of null (reading 'useCallback')
     at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
     at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
     at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/workflow/optimization". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209) {
+  page: '/'
+}
+  57 |         <ToastProvider position="top-right">
+  58 |           <div className="App">
+> 59 |             <WebVitalsReporter />
+     |              ^
+  60 |             <Component {...pageProps} />
+  61 |           </div>
+  62 |         </ToastProvider>
+TypeError: (0 , react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV) is not a function
+    at Document (webpack-internal:///./pages/_document.js:17:96)
     at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/workflow/prioritization". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/workflow/marketplace". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
+    at Uc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:84:218)
+    at /home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:96:272
+    at new Promise (<anonymous>)
+    at exports.renderToReadableStream (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:95:53)
+    at e0 (/home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:8:21476)
+    at /home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:26:4814
+    at NextTracerImpl.trace (/home/runner/work/digame/digame/node_modules/next/dist/server/lib/trace/tracer.js:105:20)
+ ⨯ TypeError: (0 , react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_0__.jsxDEV) is not a function
+    at Document (webpack-internal:///./pages/_document.js:17:96)
     at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
     at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-Error occurred prerendering page "/digital-twin/team-coordination". Read more: https://nextjs.org/docs/messages/prerender-error
-
-TypeError: Cannot read properties of null (reading 'useCallback')
-    at exports.useCallback (/home/runner/work/digame/digame/frontend/node_modules/react/cjs/react.production.min.js:24:52)
-    at a (/home/runner/work/digame/digame/frontend/.next/server/8890.js:1:8717)
-    at x (/home/runner/work/digame/digame/frontend/.next/server/pages-224c3397.js:1:2864)
-    at Wc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:68:44)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:70:253)
+    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:74:209)
     at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:89)
-    at $c (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:78:98)
-    at bd (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:77:404)
-    at Z (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:76:217)
-    at Zc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:71:479)
-
-> Export encountered errors on following paths:
-	/
-	/404
-	/500
-	/admin
-	/admin/api_keys
-	/admin/config
-	/admin/config/api
-	/admin/config/audit
-	/admin/config/backups
-	/admin/config/categories
-	/admin/config/environments
-	/admin/config/monitoring
-	/admin/config/templates
-	/admin/dashboard
-	/admin/monitoring
-	/admin/rbac
-	/admin/system-analytics
-	/admin/users
-	/ai
-	/ai-tools
-	/ai-tools/communication
-	/ai-tools/documents
-	/ai-tools/email
-	/ai-tools/language
-	/ai-tools/meetings
-	/ai-tools/mobile
-	/ai-tools/nlp
-	/ai-tools/voice
-	/ai-tools/writing
-	/ai/ai-automation
-	/analytics
-	/analytics/advanced
-	/analytics/anomalies
-	/analytics/api
-	/analytics/behavioral
-	/analytics/dashboard-builder
-	/analytics/kpi-test
-	/analytics/mobile
-	/analytics/patterns
-	/analytics/performance
-	/analytics/platform
-	/analytics/predictive
-	/analytics/revenue
-	/analytics/user-behavior
-	/analytics/web
-	/analytics/widgets-test
-	/auth
-	/career
-	/career/jobs
-	/career/learning
-	/career/modeling
-	/career/network
-	/career/skills
-	/collaboration/real-time
-	/config
-	/config/api
-	/config/audit
-	/config/backups
-	/config/categories
-	/config/environments
-	/config/monitoring
-	/dashboard
-	/demo
-	/digital-twin
-	/digital-twin/analytics
-	/digital-twin/behavior
-	/digital-twin/dashboard
-	/digital-twin/insights
-	/digital-twin/intelligence
-	/digital-twin/interaction
-	/digital-twin/my-twin
-	/digital-twin/onboarding
-	/digital-twin/overview
-	/digital-twin/patterns
-	/digital-twin/predictions
-	/digital-twin/real-time
-	/digital-twin/settings
-	/digital-twin/simulation
-	/digital-twin/team-coordination
-	/digital-twin/workspace
-	/enterprise
-	/enterprise/advanced-analytics
-	/enterprise/integrations
-	/enterprise/market-intel
-	/enterprise/multi-tenancy
-	/enterprise/multi-tenant
-	/enterprise/tenants
-	/features
-	/guest
-	/guest/analytics
-	/guest/auth
-	/guest/experience
-	/how-it-works
-	/integration
-	/integration/api
-	/integration/dashboard
-	/integration/data
-	/integration/guest
-	/integration/sso
-	/integration/webhooks
-	/intelligence/insights
-	/learning
-	/learning/ai-assistant
-	/learning/analytics
-	/learning/certifications
-	/learning/courses
-	/learning/language
-	/learning/paths
-	/learning/skill-tracking
-	/learning/skills-assessment
-	/learning/tracking
-	/login
-	/monitoring/advanced
-	/navigation-test
-	/notifications
-	/onboarding
-	/onboarding-wizard
-	/onboarding/enhanced
-	/onboarding/getting-started
-	/onboarding/wizard
-	/performance
-	/performance/bundle-analyzer
-	/performance/monitoring-dashboard
-	/performance/query-optimization
-	/performance/real-time-monitor
-	/performance/user-experience
-	/platform-owner
-	/platform-owner/ai-model-observatory
-	/platform-owner/audit-analytics
-	/platform-owner/capacity-planning
-	/platform-owner/competitive-intelligence
-	/platform-owner/compliance-dashboard
-	/platform-owner/console
-	/platform-owner/data-management
-	/platform-owner/data-quality
-	/platform-owner/developer-portal
-	/platform-owner/enterprise
-	/platform-owner/feature-flags
-	/platform-owner/go-live-checklist
-	/platform-owner/health
-	/platform-owner/health-scoring
-	/platform-owner/incident-management
-	/platform-owner/integrations
-	/platform-owner/marketplace-management
-	/platform-owner/partner-integrations
-	/platform-owner/performance-overview
-	/platform-owner/revenue
-	/platform-owner/risk-management
-	/platform-owner/roi-analytics
-	/platform-owner/security
-	/platform-owner/settings
-	/platform-owner/strategic-planning
-	/platform-owner/system-orchestration
-	/platform-owner/tenants
-	/platform-owner/test-zone
-	/platform-owner/user-journey-analytics
-	/platform-owner/users
-	/pricing
-	/profile
-	/reports
-	/reports/analytics
-	/reports/builder
-	/reports/custom
-	/reports/predictive
-	/reports/publish
-	/reports/scheduled
-	/reports/visualization
-	/security
-	/security/access
-	/security/advanced-dashboard
-	/security/audit
-	/security/audit-trail
-	/security/compliance
-	/security/mfa
-	/security/risk-assessment
-	/service-test
-	/settings
-	/settings/api-keys
-	/signup
-	/social
-	/social/analytics
-	/social/collaboration
-	/social/events
-	/social/forums
-	/social/learning-partners
-	/social/mentorship
-	/social/network
-	/social/peer-matching
-	/tasks
-	/tasks/ai-suggestions
-	/tasks/analytics
-	/tasks/projects
-	/team
-	/team/analytics
-	/team/collaboration
-	/team/dashboard
-	/team/mentorship
-	/team/skills
-	/team/social
-	/team/workflows
-	/workflow
-	/workflow/advanced
-	/workflow/automation
-	/workflow/calendar
-	/workflow/marketplace
-	/workflow/notes
-	/workflow/optimization
-	/workflow/prioritization
- ✓ Generating static pages (208/208)
-npm error Lifecycle script `build:ci` failed with error:
-npm error code 1
-npm error path /home/runner/work/digame/digame/frontend
-npm error workspace digame-frontend@1.0.0
-npm error location /home/runner/work/digame/digame/frontend
-npm error command failed
-npm error command sh -c NODE_OPTIONS="--max-old-space-size=4096 --max-semi-space-size=128" NEXT_TELEMETRY_DISABLED=1 next build
+    at Uc (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:84:218)
+    at /home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:96:272
+    at new Promise (<anonymous>)
+    at exports.renderToReadableStream (/home/runner/work/digame/digame/node_modules/react-dom/cjs/react-dom-server.browser.production.min.js:95:53)
+    at e0 (/home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:8:21476)
+    at /home/runner/work/digame/digame/node_modules/next/dist/compiled/next-server/pages.runtime.dev.js:26:4814
+    at NextTracerImpl.trace (/home/runner/work/digame/digame/node_modules/next/dist/server/lib/trace/tracer.js:105:20)
+ GET / 500 in 17ms
+❌ Frontend failed to start
+🔧 Recovery in progress...
+25h
+❌ Recovery failed
 Error: Process completed with exit code 1.
