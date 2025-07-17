@@ -33,7 +33,7 @@
     "build-storybook": "storybook build",
     "lighthouse": "lighthouse http://localhost:3000 --output=html --output-path=./lighthouse-report.html --chrome-flags='--headless'",
     "lighthouse:ci": "npm run serve:background && sleep 5 && npm run lighthouse:run && npm run serve:stop",
-    "lighthouse:run": "lighthouse http://localhost:3000 --output=html --output-path=./lighthouse-report.html --chrome-flags='--headless --no-sandbox --disable-dev-shm-usage'",
+    "lighthouse:run": "lighthouse http://localhost:3000 --config-path=./lighthouse.config.js --output=html --output-path=./lighthouse-report.html",
     "serve:background": "npx serve out -p 3000 > /dev/null 2>&1 & echo $! > .serve.pid",
     "serve:stop": "if [ -f .serve.pid ]; then kill $(cat .serve.pid) && rm .serve.pid; fi",
     "performance:audit": "npm run build:analyze && npm run lighthouse:ci",
