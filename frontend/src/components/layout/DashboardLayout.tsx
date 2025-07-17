@@ -33,44 +33,18 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
     permissions: currentUser.permissions || []
   } : null;
 
-  // CRITICAL DEBUG: Log user data and decision making
-  console.log('🚨🚨🚨 DASHBOARDLAYOUT IS RENDERING!!! 🚨🚨🚨');
-  console.log('� DashboardLayout DEBUG:', {
-    isDemoMode,
-    currentUser: currentUser ? {
-      id: currentUser.id,
-      username: currentUser.username,
-      role: currentUser.role,
-      isPlatformOwner: currentUser.isPlatformOwner,
-      subscriptionTier: currentUser.subscriptionTier,
-      fullUserObject: currentUser
-    } : null,
-    adaptedUser: adaptedUser ? {
-      name: adaptedUser.name,
-      role: adaptedUser.role,
-      is_platform_owner: adaptedUser.is_platform_owner,
-      subscription_tier: adaptedUser.subscription_tier,
-      fullAdaptedUser: adaptedUser
-    } : null
-  });
-
   // Platform Owners should always have access to all features
   const shouldShowAllFeatures = isDemoMode || (adaptedUser?.is_platform_owner === true);
   
-  console.log('🔥 DashboardLayout DECISION:', {
-    isDemoMode,
-    'adaptedUser?.is_platform_owner': adaptedUser?.is_platform_owner,
-    'typeof adaptedUser?.is_platform_owner': typeof adaptedUser?.is_platform_owner,
-    'currentUser?.isPlatformOwner': currentUser?.isPlatformOwner,
-    'typeof currentUser?.isPlatformOwner': typeof currentUser?.isPlatformOwner,
-    shouldShowAllFeatures
-  });
-
-  console.log('🔥 DashboardLayout RENDERING ComprehensiveNavigation with props:', {
-    isDemoMode,
-    currentUser: adaptedUser,
-    showAllFeatures: shouldShowAllFeatures
-  });
+  // Debug logging only in development
+  if (process.env.NODE_ENV === 'development') {
+    console.log('DashboardLayout DEBUG:', {
+      isDemoMode,
+      shouldShowAllFeatures,
+      userRole: adaptedUser?.role,
+      isPlatformOwner: adaptedUser?.is_platform_owner
+    });
+  }
 
   return (
     <div className="flex h-screen bg-gray-100">

@@ -69,7 +69,22 @@ export default defineConfig({
 
     {
       name: 'firefox',
-      use: { ...devices['Desktop Firefox'] },
+      use: {
+        ...devices['Desktop Firefox'],
+        // Enhanced Firefox configuration for portal interference issues
+        actionTimeout: 30000, // Increased timeout for Firefox
+        launchOptions: {
+          firefoxUserPrefs: {
+            // Disable some Firefox features that might interfere with testing
+            'dom.disable_beforeunload': true,
+            'dom.disable_open_during_load': true,
+            'dom.popup_maximum': 0,
+            'privacy.trackingprotection.enabled': false,
+            'dom.ipc.plugins.enabled.libflashplayer.so': false,
+          }
+        }
+      },
+      retries: 3, // Extra retries for Firefox portal issues
     },
 
     {

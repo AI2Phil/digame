@@ -178,7 +178,7 @@ jobs:
       uses: actions/upload-artifact@v4
       if: success()
       with:
-        name: frontend-build-${{ github.run_id }}
+        name: frontend-build
         path: frontend/.next/
         retention-days: 1
         if-no-files-found: ignore
@@ -308,7 +308,7 @@ jobs:
     - name: Download Next.js build artifacts
       uses: actions/download-artifact@v4
       with:
-        name: frontend-build-${{ github.run_id }}
+        name: frontend-build
         path: frontend/.next/
       continue-on-error: true
       id: download-artifacts
@@ -548,7 +548,7 @@ jobs:
       if: failure()
       uses: actions/upload-artifact@v4
       with:
-        name: debug-log-${{ matrix.browser }}-${{ github.run_id }}
+        name: debug-log-${{ matrix.browser }}
         path: |
           frontend.log
           frontend-recovery.log
@@ -678,7 +678,7 @@ jobs:
       uses: actions/download-artifact@v4
       continue-on-error: true
       with:
-        name: frontend-build-${{ github.run_id }}
+        name: frontend-build
         path: frontend/.next/
 
     - name: Run performance tests

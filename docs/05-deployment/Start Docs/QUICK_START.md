@@ -39,6 +39,67 @@ npx tsc --noEmit
 
 npm run ci:quick
 
+Perfect! I can see the E2E test commands available. Here are the commands to run the full E2E test suite:
+
+## **E2E Test Commands Available:**
+
+### **🚀 Full E2E Test Suite (Recommended)**
+```bash
+cd frontend
+npm run test:e2e:full
+```
+This command:
+- Runs the setup script (`../scripts/setup-test-env.sh`)
+- Executes all Playwright tests across all browsers
+- Runs cleanup script (`../scripts/cleanup-test-env.sh`)
+
+### **⚡ Quick E2E Tests (No Setup/Cleanup)**
+```bash
+cd frontend
+npm run test:e2e
+```
+This runs `playwright test` directly without environment setup.
+
+### **🔍 Other E2E Test Options:**
+```bash
+# Run with browser UI visible
+cd frontend
+npm run test:e2e:headed
+
+# Run in debug mode (step-by-step)
+cd frontend
+npm run test:e2e:debug
+
+# Manual setup and cleanup
+cd frontend
+npm run test:e2e:setup    # Setup test environment
+npm run test:e2e          # Run tests
+npm run test:e2e:cleanup  # Cleanup test environment
+```
+
+### **🏗️ Root Level CI Command (Full Pipeline)**
+```bash
+# From project root
+npm run ci                # Full CI: lint + type-check + build + test
+npm run ci:frontend       # Frontend-only CI pipeline
+npm run ci:quick          # Quick CI: lint + build only
+```
+
+## **💡 Recommended Workflow:**
+
+1. **For local development testing:**
+   ```bash
+   cd frontend
+   npm run test:e2e:full
+   ```
+
+2. **For CI/CD pipeline testing:**
+   ```bash
+   npm run ci
+   ```
+
+The `test:e2e:full` command is the most comprehensive as it includes proper environment setup and cleanup, which matches what the CI pipeline does.
+
 
 ### Fastest Start
 ```bash
