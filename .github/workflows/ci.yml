@@ -190,20 +190,34 @@ jobs:
       uses: actions/upload-artifact@v4
       if: success()
       with:
-        name: frontend-build
+        name: frontend-build-${{ github.run_id }}
         path: frontend/.next/
         retention-days: 1
-        if-no-files-found: ignore
+        if-no-files-found: warn
         
-    - name: Handle missing build artifacts
-      if: success() && hashFiles('frontend/.next/BUILD_ID') == ''
+    - name: Verify and upload build artifacts
+      if: success()
+      working-directory: ./frontend
       run: |
-        echo "⚠️ Frontend build artifacts not found, but build step succeeded"
-        echo "This might indicate a build configuration issue"
-        echo "Checking for any build outputs:"
-        find frontend -name "*.html" -o -name "*.js" -o -name "*.css" | head -10
-        echo "Directory contents:"
-        ls -la frontend/
+        echo "🔍 Verifying build artifacts before upload..."
+        if [ ! -d ".next" ]; then
+          echo "❌ No .next directory found"
+          exit 1
+        fi
+        
+        if [ ! -f ".next/BUILD_ID" ]; then
+          echo "❌ No BUILD_ID found"
+          exit 1
+        fi
+        
+        echo "✅ Build artifacts verified:"
+        echo "BUILD_ID: $(cat .next/BUILD_ID)"
+        echo "Directory size: $(du -sh .next/)"
+        echo "Key files:"
+        find .next -name "*.js" -o -name "*.html" -o -name "*.css" | head -5
+        
+        # Create a build info file for debugging
+        echo "{\"build_id\": \"$(cat .next/BUILD_ID)\", \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\", \"run_id\": \"${{ github.run_id }}\"}" > .next/build-info.json
 
   # Backend Test - Updated Python version
   backend-test:
@@ -343,10 +357,25 @@ jobs:
     - name: Download Next.js build artifacts
       uses: actions/download-artifact@v4
       with:
-        name: frontend-build
+        name: frontend-build-${{ github.run_id }}
         path: frontend/.next/
       continue-on-error: true
       id: download-artifacts
+      
+    - name: Debug artifact download
+      run: |
+        echo "🔍 Artifact download status: ${{ steps.download-artifacts.outcome }}"
+        echo "Available artifacts in this run:"
+        # List available artifacts (this is for debugging)
+        echo "Run ID: ${{ github.run_id }}"
+        echo "Checking frontend directory:"
+        ls -la frontend/ || echo "Frontend directory not found"
+        if [ -d "frontend/.next" ]; then
+          echo "✅ .next directory found"
+          ls -la frontend/.next/
+        else
+          echo "❌ .next directory not found"
+        fi
         
     - name: Handle missing or invalid artifacts
       working-directory: ./frontend
@@ -721,7 +750,7 @@ jobs:
       uses: actions/download-artifact@v4
       continue-on-error: true
       with:
-        name: frontend-build
+        name: frontend-build-${{ github.run_id }}
         path: frontend/.next/
 
     - name: Run performance tests
