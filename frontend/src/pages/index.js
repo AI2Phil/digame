@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Head from 'next/head';
+import dynamic from 'next/dynamic';
 // import Button from '../components/ui/Button';
 
 // Temporary Button component
@@ -33,8 +34,13 @@ import { Badge } from '../components/ui/Badge';
 import { Progress } from '../components/ui/Progress';
 import { useTranslation } from 'next-i18next';
 import { Avatar } from '../components/ui/Avatar';
-import AuthForm from '../components/auth/AuthForm';
 import { Card, CardContent } from '../components/ui/Card';
+
+// Dynamically import AuthForm to avoid SSR issues
+const AuthForm = dynamic(() => import('../components/auth/AuthForm'), {
+  ssr: false,
+  loading: () => <div>Loading...</div>
+});
 
 export default function HomePage({ onDemoAccess, onLogin }) {
   const { t } = useTranslation('common');
@@ -480,9 +486,9 @@ export default function HomePage({ onDemoAccess, onLogin }) {
   );
 }
 
+import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
+
 export async function getStaticProps({ locale }) {
-  const { serverSideTranslations } = await import('next-i18next/serverSideTranslations');
-  
   return {
     props: {
       ...(await serverSideTranslations(locale, ['common'])),

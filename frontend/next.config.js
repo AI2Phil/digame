@@ -1,4 +1,6 @@
 /** @type {import('next').NextConfig} */
+const { i18n } = require('./next-i18next.config');
+
 const withPWA = require('next-pwa')({
   dest: 'public',
   register: true,
@@ -14,6 +16,7 @@ const nextConfig = {
   swcMinify: true,
   distDir: '.next',
   trailingSlash: false,
+  i18n,
   
   // Environment variables for testing
   env: {
