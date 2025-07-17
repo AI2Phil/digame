@@ -186,17 +186,7 @@ jobs:
           echo "✅ Build verified. Size: $(du -sh .next/ | cut -f1)"
         fi
         
-    - name: Upload Next.js build artifacts
-      uses: actions/upload-artifact@v4
-      if: success()
-      with:
-        name: frontend-build-${{ github.run_id }}
-        path: frontend/.next/
-        retention-days: 1
-        if-no-files-found: warn
-        
-    - name: Verify and upload build artifacts
-      if: success()
+    - name: Verify and prepare build artifacts
       working-directory: ./frontend
       run: |
         echo "🔍 Verifying build artifacts before upload..."
@@ -218,6 +208,26 @@ jobs:
         
         # Create a build info file for debugging
         echo "{\"build_id\": \"$(cat .next/BUILD_ID)\", \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\", \"run_id\": \"${{ github.run_id }}\"}" > .next/build-info.json
+        
+        echo "📦 Preparing artifact for upload..."
+        ls -la .next/
+
+    - name: Upload Next.js build artifacts
+      uses: actions/upload-artifact@v4
+      if: success()
+      with:
+        name: frontend-build-${{ github.run_id }}
+        path: frontend/.next/
+        retention-days: 1
+        if-no-files-found: error
+        compression-level: 6
+        
+    - name: Confirm artifact upload
+      if: success()
+      run: |
+        echo "✅ Build artifacts uploaded successfully"
+        echo "Artifact name: frontend-build-${{ github.run_id }}"
+        echo "Upload completed at: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
   # Backend Test - Updated Python version
   backend-test:
