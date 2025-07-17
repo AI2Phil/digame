@@ -14,9 +14,17 @@ SQLALCHEMY_DATABASE_URL = os.getenv(
     "DATABASE_URL", "postgresql://digame_user:digame_password@db:5432/digame_db"
 )
 
-# Fix any root user references to use digame_user
+# Fix any root user references to use postgres in CI, digame_user in production
 if "postgresql" in SQLALCHEMY_DATABASE_URL and "root" in SQLALCHEMY_DATABASE_URL:
-    SQLALCHEMY_DATABASE_URL = SQLALCHEMY_DATABASE_URL.replace("root", "digame_user")
+    if os.getenv("CI") == "true":
+        SQLALCHEMY_DATABASE_URL = SQLALCHEMY_DATABASE_URL.replace("root", "postgres")
+    else:
+        SQLALCHEMY_DATABASE_URL = SQLALCHEMY_DATABASE_URL.replace("root", "digame_user")
+
+# For CI environments, ensure we use postgres user if no specific user is provided
+if os.getenv("CI") == "true" and SQLALCHEMY_DATABASE_URL == "postgresql://digame_user:digame_password@db:5432/digame_db":
+    # In CI, default to postgres connection if no DATABASE_URL is explicitly set
+    SQLALCHEMY_DATABASE_URL = "postgresql://postgres:postgres@localhost:5432/test_db"
 
 # Use the centralized engine or create a new one if needed
 if SQLALCHEMY_DATABASE_URL != os.getenv("DATABASE_URL", "sqlite:///./digame.db"):

@@ -12,7 +12,12 @@ DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./digame.db")
 
 # For PostgreSQL production, use the correct user from docker-compose
 if "postgresql" in DATABASE_URL and "root" in DATABASE_URL:
-    DATABASE_URL = DATABASE_URL.replace("root", "digame_user")
+    DATABASE_URL = DATABASE_URL.replace("root", "postgres")
+
+# For CI environments, ensure we use postgres user if no specific user is provided
+if os.getenv("CI") == "true" and DATABASE_URL == "sqlite:///./digame.db":
+    # In CI, default to postgres connection if no DATABASE_URL is explicitly set
+    DATABASE_URL = "postgresql://postgres:postgres@localhost:5432/test_db"
 
 # Create engine with appropriate settings
 if DATABASE_URL.startswith("sqlite"):

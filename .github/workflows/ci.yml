@@ -36,7 +36,10 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: ${{ env.NODE_VERSION }}
-        # Removed cache-dependency-path to fix caching issue
+        cache: 'npm'
+        cache-dependency-path: |
+          frontend/package-lock.json
+          package-lock.json
         
     - name: Cache npm dependencies (Fixed Implementation)
       uses: actions/cache@v4
@@ -49,11 +52,20 @@ jobs:
           ${{ runner.os }}-node-${{ env.NODE_VERSION }}-
           ${{ runner.os }}-node-
 
+    - name: Install root dependencies (workspaces)
+      run: |
+        if [ "$VERBOSE" = "true" ]; then
+          echo "📦 Installing root workspace dependencies..."
+          npm ci --prefer-offline --no-audit
+        else
+          npm ci --silent --prefer-offline --no-audit
+        fi
+
     - name: Install frontend dependencies
       working-directory: ./frontend
       run: |
         if [ "$VERBOSE" = "true" ]; then
-          echo "📦 Installing dependencies with full output..."
+          echo "📦 Installing frontend dependencies..."
           npm ci --prefer-offline --no-audit
         else
           npm ci --silent --prefer-offline --no-audit
@@ -228,6 +240,19 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install -r requirements-dev.txt
+        
+    - name: Install PostgreSQL client
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y postgresql-client
+
+    - name: Setup database with root user
+      env:
+        PGPASSWORD: postgres
+      run: |
+        # Create root user if it doesn't exist
+        psql -h localhost -U postgres -d test_db -c "CREATE USER root WITH PASSWORD 'postgres' SUPERUSER;" || echo "Root user already exists or creation failed"
+        psql -h localhost -U postgres -d test_db -c "GRANT ALL PRIVILEGES ON DATABASE test_db TO root;" || echo "Grant privileges failed"
 
     - name: Run database migrations
       env:
@@ -276,7 +301,10 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: ${{ env.NODE_VERSION }}
-        # Use consistent caching approach
+        cache: 'npm'
+        cache-dependency-path: |
+          frontend/package-lock.json
+          package-lock.json
         
     - name: Cache npm dependencies (Consistent with frontend-build)
       uses: actions/cache@v4
@@ -301,6 +329,13 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install -r requirements-dev.txt
+        
+        # Install PostgreSQL client
+        sudo apt-get update
+        sudo apt-get install -y postgresql-client
+        
+        # Root workspace dependencies
+        npm ci --prefer-offline --no-audit
         
         # Frontend dependencies
         cd frontend && npm ci --prefer-offline --no-audit
@@ -347,6 +382,14 @@ jobs:
         fi
         
         echo "✅ Frontend build ready"
+
+    - name: Setup database with root user
+      env:
+        PGPASSWORD: postgres
+      run: |
+        # Create root user if it doesn't exist
+        psql -h localhost -U postgres -d e2e_test_db -c "CREATE USER root WITH PASSWORD 'postgres' SUPERUSER;" || echo "Root user already exists or creation failed"
+        psql -h localhost -U postgres -d e2e_test_db -c "GRANT ALL PRIVILEGES ON DATABASE e2e_test_db TO root;" || echo "Grant privileges failed"
 
     - name: Setup database
       env:
