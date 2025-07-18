@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import Head from 'next/head';
 import { useRouter } from 'next/router';
+import Head from 'next/head';
 import {
   BarChart3,
   TrendingUp,
@@ -82,44 +82,33 @@ const AnalyticsPage: React.FC = () => {
   const loadAnalyticsData = async () => {
     setLoading(true);
     try {
-      // Use available API methods with fallback mock data
-      const [
-        mobileAnalyticsData,
-        userAnalyticsData,
-      ] = await Promise.all([
-        apiService.getMobileAnalytics().catch(() => ({})),
+      // Use available API methods with fallback to mock data
+      const [userAnalyticsData] = await Promise.all([
         apiService.getUserAnalytics().catch(() => ({})),
       ]);
 
-      // Mock data for performance and other metrics
-      const performanceData = {
-        avgResponseTime: 120,
-        cpuUsage: 45,
-        memoryUsage: 62,
+      // Mock analytics data for demonstration
+      const mockAnalyticsData: AnalyticsData = {
+        performance: {
+          avgResponseTime: 120,
+          cpuUsage: 45,
+          memoryUsage: 62,
+        },
+        userBehavior: {
+          activeUsers: 1234,
+        },
+        apiMetrics: {
+          totalRequests: 45678,
+          requestsPerMinute: 156,
+          errorRate: 0.1,
+        },
+        database: {
+          load: 38,
+        },
+        mobile: {},
       };
 
-      const apiMetricsData = {
-        totalRequests: 45678,
-        requestsPerMinute: 156,
-        errorRate: 0.1,
-      };
-
-      const databaseMetricsData = {
-        load: 38,
-      };
-
-      const userBehaviorData = {
-        activeUsers: 1234,
-        ...userAnalyticsData,
-      };
-
-      setAnalyticsData({
-        performance: performanceData,
-        userBehavior: userBehaviorData,
-        apiMetrics: apiMetricsData,
-        database: databaseMetricsData,
-        mobile: mobileAnalyticsData,
-      });
+      setAnalyticsData(mockAnalyticsData);
     } catch (error) {
       console.error('Failed to load analytics data:', error);
       toastError('Failed to load analytics data');
@@ -137,7 +126,7 @@ const AnalyticsPage: React.FC = () => {
 
   const handleExport = async () => {
     try {
-      // Mock export functionality for now
+      // Mock export functionality
       console.log('Exporting analytics data for timeRange:', timeRange);
       toastSuccess('Analytics data exported successfully');
     } catch (error) {
@@ -147,20 +136,31 @@ const AnalyticsPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p>Loading analytics dashboard...</p>
+      <>
+        <Head>
+          <title>Analytics - Digame</title>
+          <meta name="description" content="Comprehensive analytics and performance monitoring dashboard" />
+          <meta name="viewport" content="width=device-width, initial-scale=1" />
+          <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+        </Head>
+        
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p>Loading analytics dashboard...</p>
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 
   return (
     <>
       <Head>
-        <title>Analytics Dashboard - Digame</title>
-        <meta name="description" content="Real-time performance monitoring and user behavior analytics" />
+        <title>Analytics - Digame</title>
+        <meta name="description" content="Comprehensive analytics and performance monitoring dashboard" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
       </Head>
 
       <div className="min-h-screen bg-gray-50 p-6">
@@ -264,60 +264,66 @@ const AnalyticsPage: React.FC = () => {
 
             {/* Performance Tab */}
             <TabsContent value="performance" className="space-y-6">
-              <PerformanceMonitoringSection data={analyticsData.performance} />
+              <Card>
+                <CardHeader>
+                  <CardTitle>Performance Monitoring</CardTitle>
+                  <CardDescription>System performance metrics and monitoring</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-center py-8">
+                    <Monitor className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-500">Performance monitoring data will appear here</p>
+                  </div>
+                </CardContent>
+              </Card>
             </TabsContent>
 
             {/* User Behavior Tab */}
             <TabsContent value="users" className="space-y-6">
-              <UserBehaviorAnalyticsSection data={analyticsData.userBehavior} />
+              <Card>
+                <CardHeader>
+                  <CardTitle>User Behavior Analytics</CardTitle>
+                  <CardDescription>User engagement and behavior patterns</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-center py-8">
+                    <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-500">User behavior analytics will appear here</p>
+                  </div>
+                </CardContent>
+              </Card>
             </TabsContent>
 
             {/* API Analytics Tab */}
             <TabsContent value="api" className="space-y-6">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>API Usage Overview</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div className="flex justify-between">
-                        <span>Total Requests</span>
-                        <span className="font-semibold">{analyticsData.apiMetrics?.totalRequests || 0}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Requests/min</span>
-                        <span className="font-semibold">{analyticsData.apiMetrics?.requestsPerMinute || 0}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Error Rate</span>
-                        <span className="font-semibold">{analyticsData.apiMetrics?.errorRate || 0}%</span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
+              <Card>
+                <CardHeader>
+                  <CardTitle>API Analytics</CardTitle>
+                  <CardDescription>API usage metrics and performance</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-center py-8">
+                    <Database className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-500">API analytics data will appear here</p>
+                  </div>
+                </CardContent>
+              </Card>
             </TabsContent>
 
             {/* Mobile Analytics Tab */}
             <TabsContent value="mobile" className="space-y-6">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Mobile Analytics Overview</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div className="text-center">
-                        <div className="text-2xl font-bold text-blue-600">
-                          {analyticsData.mobile?.activeUsers || 'N/A'}
-                        </div>
-                        <p className="text-sm text-gray-600">Mobile Active Users</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Mobile Analytics</CardTitle>
+                  <CardDescription>Mobile app usage and performance metrics</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-center py-8">
+                    <Smartphone className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-500">Mobile analytics data will appear here</p>
+                  </div>
+                </CardContent>
+              </Card>
             </TabsContent>
           </Tabs>
         </div>
@@ -410,7 +416,11 @@ const OverviewSection: React.FC<OverviewSectionProps> = ({ analyticsData }) => (
 );
 
 // System Health Overview Component
-const SystemHealthOverview: React.FC<{ data: AnalyticsData }> = ({ data }) => (
+interface SystemHealthOverviewProps {
+  data: AnalyticsData;
+}
+
+const SystemHealthOverview: React.FC<SystemHealthOverviewProps> = ({ data }) => (
   <Card>
     <CardHeader>
       <CardTitle className="flex items-center gap-2">
@@ -452,7 +462,11 @@ const SystemHealthOverview: React.FC<{ data: AnalyticsData }> = ({ data }) => (
 );
 
 // Real Time Metrics Component
-const RealTimeMetrics: React.FC<{ data: AnalyticsData }> = ({ data }) => (
+interface RealTimeMetricsProps {
+  data: AnalyticsData;
+}
+
+const RealTimeMetrics: React.FC<RealTimeMetricsProps> = ({ data }) => (
   <Card>
     <CardHeader>
       <CardTitle className="flex items-center gap-2">

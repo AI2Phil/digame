@@ -1,17 +1,65 @@
 import React, { useState, useEffect } from 'react';
+import Head from 'next/head';
 import { useRouter } from 'next/router';
 import OnboardingWizard from '../../components/onboarding/OnboardingWizard';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToastActions } from '../../components/ui/Toast';
 import { Button } from '../../components/ui/Button';
-import { Alert, AlertDescription } from '../../components/ui/Alert';
+import Alert, { AlertDescription } from '../../components/ui/Alert';
 
-const OnboardingPage = () => {
+interface OnboardingData {
+  learning_interests?: string[];
+  short_term_goals?: string[];
+  experience_level?: string;
+  industry?: string;
+  professional_title?: string;
+  personality_type?: string;
+  communication_style?: string;
+  collaboration_preference?: string;
+  meeting_preferences?: string;
+  career_aspirations?: string;
+  technical_skills?: string[];
+  soft_skills?: string[];
+  skill_confidence_scores?: Record<string, number>;
+  work_style_preferences?: Record<string, any>;
+  long_term_goals?: string[];
+}
+
+interface ProfileUpdates {
+  onboardingCompleted: boolean;
+  onboardingData: {
+    interests: string[];
+    goals: string[];
+    experienceLevel: string;
+    industry: string;
+    professionalTitle: string;
+    personalityType: string;
+    communicationStyle: string;
+    collaborationPreference: string;
+    meetingPreferences: string;
+    careerAspirations: string;
+    technicalSkills: string[];
+    softSkills: string[];
+    skillConfidenceScores: Record<string, number>;
+    workStylePreferences: Record<string, any>;
+    longTermGoals: string[];
+  };
+  unlockedFeatures: string[];
+  preferences: {
+    emailNotifications: boolean;
+    pushNotifications: boolean;
+    marketingEmails: boolean;
+    theme: string;
+    dashboardView: string;
+  };
+}
+
+const OnboardingPage: React.FC = () => {
   const toast = useToastActions();
   const router = useRouter();
   const { user, updateProfile, isDemoMode } = useAuth();
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     initializeOnboarding();
@@ -39,7 +87,7 @@ const OnboardingPage = () => {
     }
   };
 
-  const handleOnboardingComplete = async onboardingData => {
+  const handleOnboardingComplete = async (onboardingData: OnboardingData) => {
     try {
       setLoading(true);
       setError(null);
@@ -47,7 +95,7 @@ const OnboardingPage = () => {
       console.log('Starting onboarding completion with data:', onboardingData);
 
       // Convert onboarding wizard data to the format expected by updateProfile
-      const profileUpdates = {
+      const profileUpdates: ProfileUpdates = {
         onboardingCompleted: true,
         onboardingData: {
           interests: onboardingData.learning_interests || [],
@@ -135,7 +183,7 @@ const OnboardingPage = () => {
 
         // Navigate to dashboard with a small delay to ensure state updates
         setTimeout(() => {
-          router.push('/dashboard', { replace: true });
+          router.replace('/dashboard');
         }, 1000);
       } else {
         // If all approaches fail, still allow navigation but show warning
@@ -143,7 +191,7 @@ const OnboardingPage = () => {
         toast.success('Welcome to Digame! Setup completed with default settings.');
 
         setTimeout(() => {
-          router.push('/dashboard', { replace: true });
+          router.replace('/dashboard');
         }, 1000);
       }
     } catch (error) {
@@ -152,7 +200,7 @@ const OnboardingPage = () => {
 
       // Even if there's an error, redirect to dashboard after a delay
       setTimeout(() => {
-        router.push('/dashboard', { replace: true });
+        router.replace('/dashboard');
       }, 3000);
     } finally {
       setLoading(false);
@@ -164,7 +212,7 @@ const OnboardingPage = () => {
     try {
       setLoading(true);
 
-      const defaultProfileUpdates = {
+      const defaultProfileUpdates: ProfileUpdates = {
         onboardingCompleted: true,
         onboardingData: {
           interests: ['productivity'],
@@ -197,7 +245,7 @@ const OnboardingPage = () => {
 
       if (success) {
         toast.success('Welcome to Digame! Default setup completed.');
-        router.push('/dashboard', { replace: true });
+        router.replace('/dashboard');
       } else {
         throw new Error('Failed to save default settings');
       }
@@ -210,48 +258,75 @@ const OnboardingPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading your onboarding experience...</p>
+      <>
+        <Head>
+          <title>Welcome to Digame - Setup</title>
+          <meta name="description" content="Complete your Digame account setup" />
+          <meta name="viewport" content="width=device-width, initial-scale=1" />
+          <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+        </Head>
+        
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading your onboarding experience...</p>
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
-        <div className="text-center max-w-md mx-auto p-6">
-          <Alert variant="destructive" className="mb-4">
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-          <Button onClick={() => window.location.reload()} variant="default" className="mr-2">
-            Try Again
-          </Button>
-          <Button onClick={handleSkipOnboarding} variant="secondary">
-            Skip Setup
-          </Button>
+      <>
+        <Head>
+          <title>Setup Error - Digame</title>
+          <meta name="description" content="Error during account setup" />
+          <meta name="viewport" content="width=device-width, initial-scale=1" />
+          <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+        </Head>
+        
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
+          <div className="text-center max-w-md mx-auto p-6">
+            <Alert variant="destructive" className="mb-4">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+            <Button onClick={() => window.location.reload()} variant="primary" className="mr-2">
+              Try Again
+            </Button>
+            <Button onClick={handleSkipOnboarding} variant="secondary">
+              Skip Setup
+            </Button>
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 
   return (
-    <div className="onboarding-page">
-      <OnboardingWizard onComplete={handleOnboardingComplete} user={user} />
+    <>
+      <Head>
+        <title>Welcome to Digame - Setup</title>
+        <meta name="description" content="Complete your Digame account setup and personalization" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+      </Head>
 
-      {/* Skip option */}
-      <div className="fixed bottom-4 right-4">
-        <Button
-          variant="link"
-          onClick={handleSkipOnboarding}
-          className="text-sm text-gray-500 hover:text-gray-700 underline"
-        >
-          Skip setup for now
-        </Button>
+      <div className="onboarding-page">
+        <OnboardingWizard onComplete={handleOnboardingComplete} user={user} />
+
+        {/* Skip option */}
+        <div className="fixed bottom-4 right-4">
+          <Button
+            variant="link"
+            onClick={handleSkipOnboarding}
+            className="text-sm text-gray-500 hover:text-gray-700 underline"
+          >
+            Skip setup for now
+          </Button>
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 

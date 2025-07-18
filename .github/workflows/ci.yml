@@ -153,9 +153,10 @@ jobs:
         
         # Use memory-optimized build command
         if [ "$VERBOSE" = "true" ]; then
-          npm run build
+          npm run build:ci
         else
-          npm run build --silent 2>&1 | grep -E "(Error|Warning|✓|✗|Failed)" || true
+          # Use CI-optimized build script with proper error handling
+          npm run build:ci
         fi
         
         if [ "$VERBOSE" = "true" ]; then
