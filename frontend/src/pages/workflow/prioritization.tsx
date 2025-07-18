@@ -107,6 +107,12 @@ const WorkflowPrioritization = () => {
   const [selectedFilter, setSelectedFilter] = useState('all');
   const [currentData, setCurrentData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [mounted, setMounted] = useState(false);
+
+  // Handle client-side mounting
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Mock data
   const mockData = {
@@ -278,12 +284,15 @@ const WorkflowPrioritization = () => {
   };
 
   useEffect(() => {
+    // Only run on client side after mounting
+    if (!mounted) return;
+    
     // Simulate API call
     setTimeout(() => {
       setCurrentData(mockData);
       setLoading(false);
     }, 1000);
-  }, []);
+  }, [mounted]);
 
   const handleTaskAction = (taskId, action) => {
     console.log(`${action} task:`, taskId);
@@ -355,10 +364,23 @@ const WorkflowPrioritization = () => {
     }
   };
 
-  if (loading) {
+  // Show loading during SSR and initial client load
+  if (!mounted || loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  // Ensure currentData is available before rendering
+  if (!currentData) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="text-lg font-medium text-gray-900">Loading workflow data...</div>
+          <div className="text-sm text-gray-500 mt-2">Please wait while we prepare your prioritization dashboard</div>
+        </div>
       </div>
     );
   }

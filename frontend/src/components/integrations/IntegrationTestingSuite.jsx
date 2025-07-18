@@ -144,7 +144,7 @@ const IntegrationTestingSuite = () => {
     loadTestResults();
     loadPerformanceMetrics();
     loadOptimizationResults();
-  }, []);
+  }, [loadTestResults]);
 
   const loadTestResults = async () => {
     // Simulate loading test results
@@ -210,7 +210,7 @@ const IntegrationTestingSuite = () => {
     }
     
     await loadTestResults();
-  }, [selectedProvider]);
+  }, [selectedProvider, integrationProviders, loadTestResults]);
 
   const runOptimization = useCallback(async () => {
     setTestProgress(0);
@@ -223,7 +223,7 @@ const IntegrationTestingSuite = () => {
     
     await loadOptimizationResults();
     await loadPerformanceMetrics();
-  }, []);
+  }, [loadOptimizationResults, loadPerformanceMetrics]);
 
   const filteredProviders = useMemo(() => {
     return integrationProviders.filter(provider => {
@@ -246,7 +246,7 @@ const IntegrationTestingSuite = () => {
       totalFailed,
       successRate: (totalPassed / totalTests) * 100
     };
-  }, []);
+  }, [integrationProviders]);
 
   const renderOverviewTab = () => (
     <div className="space-y-6">
