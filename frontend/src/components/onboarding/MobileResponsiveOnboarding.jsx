@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { ChevronLeftIcon, ChevronRightIcon, CheckIcon } from '@heroicons/react/24/outline';
 
 const MobileResponsiveOnboarding = ({ userId }) => {
@@ -11,7 +11,7 @@ const MobileResponsiveOnboarding = ({ userId }) => {
   useEffect(() => {
     detectDeviceType();
     fetchMobileConfig();
-  }, [userId]);
+  }, [userId, fetchMobileConfig]);
 
   const detectDeviceType = () => {
     const width = window.innerWidth;
@@ -24,7 +24,7 @@ const MobileResponsiveOnboarding = ({ userId }) => {
     }
   };
 
-  const fetchMobileConfig = async () => {
+  const fetchMobileConfig = useCallback(async () => {
     try {
       setLoading(true);
       const response = await fetch(`/api/v1/integrations/mobile-onboarding/${userId}`, {
@@ -45,7 +45,7 @@ const MobileResponsiveOnboarding = ({ userId }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [userId]);
 
   const handleStepChange = (stepIndex) => {
     setCurrentStep(stepIndex);

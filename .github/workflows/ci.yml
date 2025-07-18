@@ -319,12 +319,20 @@ jobs:
           npm test --silent || echo "⚠️ Some backend tests failed but continuing"
         fi
 
+    - name: Ensure SQLite directory exists
+      working-directory: ./backend
+      run: |
+        echo "📁 Creating SQLite database directory..."
+        mkdir -p ./data
+        ls -la ./data || echo "Directory created successfully"
+
     - name: Verify backend server can start
       working-directory: ./backend
       env:
         NODE_ENV: production
         PORT: ${{ env.BACKEND_PORT }}
         NODE_OPTIONS: ${{ env.NODE_OPTIONS }}
+        DATABASE_URL: sqlite:./data/test.db
       run: |
         echo "🚀 Verifying backend server can start on port $BACKEND_PORT..."
         timeout 10s npm start &
@@ -462,10 +470,13 @@ jobs:
         
         echo "✅ Frontend build ready"
 
-    - name: Setup database (if needed)
+    - name: Setup SQLite database for backend
+      working-directory: ./backend
       run: |
-        echo "🗄️ Database setup skipped for Node.js backend (using in-memory or file-based storage)"
-        # Note: If the Node.js backend requires database setup, add it here
+        echo "🗄️ Setting up SQLite database directory..."
+        mkdir -p ./data
+        echo "✅ SQLite directory created: $(pwd)/data"
+        ls -la ./data || echo "Directory ready for database files"
 
     - name: Start backend server
       env:
@@ -473,6 +484,7 @@ jobs:
         PORT: ${{ env.BACKEND_PORT }}
         TESTING: true
         NODE_OPTIONS: ${{ env.NODE_OPTIONS }}
+        DATABASE_URL: sqlite:./data/e2e_test.db
       run: |
         # Use Node.js Express backend instead of Python FastAPI
         echo "🚀 Starting Node.js Express backend server on port $BACKEND_PORT..."
@@ -811,12 +823,20 @@ jobs:
         name: frontend-build-${{ github.run_id }}
         path: frontend/.next/
 
+    - name: Setup SQLite database for performance testing
+      working-directory: ./backend
+      run: |
+        echo "🗄️ Setting up SQLite database for performance testing..."
+        mkdir -p ./data
+        echo "✅ SQLite directory created for performance tests"
+
     - name: Run performance tests
       env:
         NODE_ENV: production
         FRONTEND_PORT: ${{ env.FRONTEND_PORT }}
         BACKEND_PORT: ${{ env.BACKEND_PORT }}
         NODE_OPTIONS: ${{ env.NODE_OPTIONS }}
+        DATABASE_URL: sqlite:./data/performance_test.db
       run: |
         # Start services for performance testing
         cd frontend

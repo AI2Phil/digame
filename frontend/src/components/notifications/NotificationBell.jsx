@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Bell, BellRing } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
@@ -30,9 +30,9 @@ const NotificationBell = ({ className = '' }) => {
     return () => {
       unsubscribers.forEach(unsub => unsub());
     };
-  }, []);
+  }, [initializeNotifications, handleNewNotification, updateUnreadCount]);
 
-  const initializeNotifications = async () => {
+  const initializeNotifications = useCallback(async () => {
     try {
       await notificationService.initialize();
       updateUnreadCount();
@@ -47,9 +47,9 @@ const NotificationBell = ({ className = '' }) => {
     } catch (error) {
       console.error('Failed to initialize notifications:', error);
     }
-  };
+  }, [updateUnreadCount]);
 
-  const handleNewNotification = (notification) => {
+  const handleNewNotification = useCallback((notification) => {
     setHasNewNotification(true);
     updateUnreadCount();
 
@@ -60,12 +60,12 @@ const NotificationBell = ({ className = '' }) => {
     setTimeout(() => {
       setHasNewNotification(false);
     }, 3000);
-  };
+  }, [toast, updateUnreadCount]);
 
-  const updateUnreadCount = () => {
+  const updateUnreadCount = useCallback(() => {
     const stats = notificationService.getStats();
     setUnreadCount(stats.unread);
-  };
+  }, []);
 
   const handleWebSocketConnected = () => {
     setIsConnected(true);

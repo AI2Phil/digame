@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Trophy, Star, X, Share2, Eye } from 'lucide-react';
 import { Card, CardContent } from '../ui/Card';
 import { Button } from '../ui/Button';
@@ -42,12 +42,12 @@ const AchievementNotification = ({
     }
   }, [isVisible, autoHide, duration, handleAutoClose]);
 
-  const handleAutoClose = () => {
+  const handleAutoClose = useCallback(() => {
     setIsAnimating(false);
     setTimeout(() => {
       onClose();
     }, 300);
-  };
+  }, [onClose]);
 
   const handleManualClose = () => {
     setIsAnimating(false);
@@ -228,9 +228,9 @@ export const AchievementNotificationManager = () => {
     });
 
     return unsubscribe;
-  }, []);
+  }, [showAchievementNotification]);
 
-  const showAchievementNotification = (achievement) => {
+  const showAchievementNotification = useCallback((achievement) => {
     const id = `achievement_${Date.now()}`;
     const newNotification = {
       id,
@@ -244,7 +244,7 @@ export const AchievementNotificationManager = () => {
     setTimeout(() => {
       removeNotification(id);
     }, 10000);
-  };
+  }, []);
 
   const removeNotification = (id) => {
     setNotifications(prev => prev.filter(n => n.id !== id));

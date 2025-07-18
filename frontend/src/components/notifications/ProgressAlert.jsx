@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Target, TrendingUp, CheckCircle, X, Eye, Edit } from 'lucide-react';
 import { Card, CardContent } from '../ui/Card';
 import { Button } from '../ui/Button';
@@ -42,14 +42,14 @@ const ProgressAlert = ({
       setIsAnimating(false);
       setTimeRemaining(100);
     }
-  }, [isVisible, autoHide, duration]);
+  }, [isVisible, autoHide, duration, handleAutoClose]);
 
-  const handleAutoClose = () => {
+  const handleAutoClose = useCallback(() => {
     setIsAnimating(false);
     setTimeout(() => {
       onClose();
     }, 300);
-  };
+  }, [onClose]);
 
   const handleManualClose = () => {
     setIsAnimating(false);
@@ -274,9 +274,9 @@ export const ProgressAlertManager = () => {
     });
 
     return unsubscribe;
-  }, []);
+  }, [showProgressAlert]);
 
-  const showProgressAlert = (data) => {
+  const showProgressAlert = useCallback((data) => {
     const { goal, progress, milestone } = data;
     const id = `progress_${goal.id}_${Date.now()}`;
     
@@ -294,7 +294,7 @@ export const ProgressAlertManager = () => {
     setTimeout(() => {
       removeAlert(id);
     }, 8000);
-  };
+  }, []);
 
   const removeAlert = (id) => {
     setAlerts(prev => prev.filter(a => a.id !== id));

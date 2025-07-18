@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Bell, BellRing, X, Check, Settings, 
   Trophy, Target, AlertTriangle, Users,
@@ -36,35 +36,35 @@ const NotificationCenter = ({ isOpen, onClose }) => {
     return () => {
       unsubscribers.forEach(unsub => unsub());
     };
-  }, [isOpen, filter]);
+  }, [isOpen, filter, loadNotifications, updateStats, handleNotificationAdded, handleNotificationRead, handleNotificationsCleared]);
 
-  const loadNotifications = () => {
-    const filterOptions = filter === 'unread' ? { unreadOnly: true } : 
+  const loadNotifications = useCallback(() => {
+    const filterOptions = filter === 'unread' ? { unreadOnly: true } :
                          filter !== 'all' ? { type: filter } : {};
     
     const notifs = notificationService.getNotifications(filterOptions);
     setNotifications(notifs);
-  };
+  }, [filter]);
 
-  const updateStats = () => {
+  const updateStats = useCallback(() => {
     const newStats = notificationService.getStats();
     setStats(newStats);
-  };
+  }, []);
 
-  const handleNotificationAdded = (notification) => {
+  const handleNotificationAdded = useCallback((notification) => {
     loadNotifications();
     updateStats();
-  };
+  }, [loadNotifications, updateStats]);
 
-  const handleNotificationRead = (notification) => {
+  const handleNotificationRead = useCallback((notification) => {
     loadNotifications();
     updateStats();
-  };
+  }, [loadNotifications, updateStats]);
 
-  const handleNotificationsCleared = () => {
+  const handleNotificationsCleared = useCallback(() => {
     loadNotifications();
     updateStats();
-  };
+  }, [loadNotifications, updateStats]);
 
   const handleMarkAsRead = (notificationId) => {
     notificationService.markAsRead(notificationId);

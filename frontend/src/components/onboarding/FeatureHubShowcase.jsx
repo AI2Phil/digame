@@ -403,7 +403,7 @@ const FeatureHubShowcase = ({
     
     setFeatures(categoryFeatures);
     setLoading(false);
-  }, [activeCategory, selectedRole]);
+  }, [activeCategory, selectedRole, allFeatures]);
 
   const handleFeatureClick = (feature) => {
     onFeatureExplored(feature);

@@ -138,7 +138,7 @@ const ConversionPrompt = ({
     // Show urgency after some time
     const urgencyTimer = setTimeout(() => setShowUrgency(true), 10000);
     return () => clearTimeout(urgencyTimer);
-  }, [step, exploredFeatures]);
+  }, [step, exploredFeatures, conversionPrompts]);
 
   if (!currentPrompt) return null;
 
