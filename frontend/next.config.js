@@ -16,7 +16,7 @@ const nextConfig = {
   
   // Internationalization
   i18n: {
-    locales: ['en', 'es', 'ar'],
+    locales: ['en', 'es'], // Removed 'ar', Portuguese 'pt' can be added later
     defaultLocale: 'en',
   },
 

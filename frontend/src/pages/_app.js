@@ -8,6 +8,7 @@ import { AuthProvider } from '../contexts/AuthContext';
 import WebVitalsReporter from '../components/performance/WebVitalsReporter';
 import { usePerformanceOptimization } from '../hooks/usePerformanceOptimization';
 import { useEffect } from 'react';
+import { appWithTranslation } from 'next-i18next';
 
 function AppWithPerformance({ Component, pageProps }) {
   // Initialize performance optimizations
@@ -66,4 +67,4 @@ function AppWithPerformance({ Component, pageProps }) {
   );
 }
 
-export default AppWithPerformance;
+export default appWithTranslation(AppWithPerformance);

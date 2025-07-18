@@ -22,7 +22,7 @@ const LanguageSwitcher = () => {
   // Supported locales from next-i18next.config.js (passed via serverSideProps or context if needed,
   // or hardcoded here if they are static and known at build time)
   // For simplicity, directly using what's in next-i18next.config.js
-  const supportedLocales = ['en', 'es', 'ar'];
+  const supportedLocales = ['en', 'es']; // Removed 'ar', Portuguese 'pt' can be added later
   // A more robust way would be to get this from i18n.options.locales if populated by the config
 
   const { t: tCommon } = useTranslation('common'); // Ensure you have 'common' or your desired namespace
