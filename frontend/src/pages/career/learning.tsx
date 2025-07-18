@@ -315,11 +315,11 @@ const CareerLearning: React.FC = () => {
             </p>
           </div>
           <div className="flex items-center gap-4">
-            <Button variant="outline">
+            <Button variant="outline" onClick={() => {}} disabled={false}>
               <Download className="h-4 w-4 mr-2" />
               Export Progress
             </Button>
-            <Button>
+            <Button onClick={() => {}} disabled={false}>
               <BookOpen className="h-4 w-4 mr-2" />
               Browse Catalog
             </Button>
@@ -498,29 +498,28 @@ const CareerLearning: React.FC = () => {
                   <div className="flex flex-col items-end gap-2 ml-4">
                     <div className="text-lg font-bold text-blue-600">{course.price}</div>
                     <div className="flex gap-2">
-                      <Button
-                        size="sm"
+                      <Button size="sm"
                         variant="ghost"
-                        onClick={() => handleBookmarkCourse(course.id)}
+                        onClick={() => handleBookmarkCourse(course.id)} disabled={false}
                       >
                         <Bookmark className="h-4 w-4" />
                       </Button>
-                      <Button size="sm" variant="ghost">
+                      <Button size="sm" variant="ghost" onClick={() => {}} disabled={false}>
                         <Share2 className="h-4 w-4" />
                       </Button>
                     </div>
                     {course.status === 'in-progress' ? (
-                      <Button size="sm" onClick={() => handleContinueCourse(course.id)}>
+                      <Button size="sm" onClick={() => handleContinueCourse(course.id)} disabled={false}>
                         <Play className="h-4 w-4 mr-2" />
                         Continue
                       </Button>
                     ) : course.status === 'completed' ? (
-                      <Button size="sm" variant="outline">
+                      <Button size="sm" variant="outline" onClick={() => {}} disabled={false}>
                         <CheckCircle className="h-4 w-4 mr-2" />
                         Completed
                       </Button>
                     ) : (
-                      <Button size="sm" onClick={() => handleStartCourse(course.id)}>
+                      <Button size="sm" onClick={() => handleStartCourse(course.id)} disabled={false}>
                         <Play className="h-4 w-4 mr-2" />
                         Start Course
                       </Button>
@@ -591,7 +590,7 @@ const CareerLearning: React.FC = () => {
                     </div>
                   )}
 
-                  <Button className="w-full">
+                  <Button className="w-full" onClick={() => {}} disabled={false}>
                     {path.progress > 0 ? 'Continue Path' : 'Start Learning Path'}
                   </Button>
                 </div>
@@ -660,11 +659,11 @@ const CareerLearning: React.FC = () => {
                   </div>
 
                   <div className="flex gap-2">
-                    <Button size="sm" variant="outline">
+                    <Button size="sm" variant="outline" onClick={() => {}} disabled={false}>
                       <Download className="h-4 w-4 mr-2" />
                       Download
                     </Button>
-                    <Button size="sm" variant="outline">
+                    <Button size="sm" variant="outline" onClick={() => {}} disabled={false}>
                       <Share2 className="h-4 w-4 mr-2" />
                       Share
                     </Button>

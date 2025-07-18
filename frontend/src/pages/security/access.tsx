@@ -413,11 +413,11 @@ const AccessControl: React.FC = () => {
             </p>
           </div>
           <div className="flex items-center gap-4">
-            <Button variant="outline">
+            <Button variant="outline" onClick={() => {}} disabled={false}>
               <Download className="h-4 w-4 mr-2" />
               Export Report
             </Button>
-            <Button onClick={handleCreateRole}>
+            <Button onClick={handleCreateRole} disabled={false}>
               <Plus className="h-4 w-4 mr-2" />
               Create Role
             </Button>
@@ -653,27 +653,24 @@ const AccessControl: React.FC = () => {
                       </div>
 
                       <div className="flex gap-2">
-                        <Button
-                          size="sm"
+                        <Button size="sm"
                           variant="outline"
-                          onClick={() => handleRoleAction(role.id, 'edit')}
+                          onClick={() => handleRoleAction(role.id, 'edit')} disabled={false}
                         >
                           <Edit3 className="h-4 w-4 mr-2" />
                           Edit
                         </Button>
-                        <Button
-                          size="sm"
+                        <Button size="sm"
                           variant="outline"
-                          onClick={() => handleRoleAction(role.id, 'view')}
+                          onClick={() => handleRoleAction(role.id, 'view')} disabled={false}
                         >
                           <Eye className="h-4 w-4 mr-2" />
                           View
                         </Button>
                         {role.level !== 'system' && (
-                          <Button
-                            size="sm"
+                          <Button size="sm"
                             variant="destructive"
-                            onClick={() => handleRoleAction(role.id, 'delete')}
+                            onClick={() => handleRoleAction(role.id, 'delete')} disabled={false}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -724,11 +721,11 @@ const AccessControl: React.FC = () => {
                   </div>
 
                   <div className="flex gap-2 ml-4">
-                    <Button size="sm" variant="outline">
+                    <Button size="sm" variant="outline" onClick={() => {}} disabled={false}>
                       <Edit3 className="h-4 w-4 mr-2" />
                       Edit
                     </Button>
-                    <Button size="sm" variant="outline">
+                    <Button size="sm" variant="outline" onClick={() => {}} disabled={false}>
                       <Eye className="h-4 w-4 mr-2" />
                       Usage
                     </Button>
@@ -773,14 +770,13 @@ const AccessControl: React.FC = () => {
 
                   {request.status === 'pending' && (
                     <div className="flex gap-2 ml-4">
-                      <Button size="sm" onClick={() => handleAccessRequest(request.id, 'approve')}>
+                      <Button size="sm" onClick={() => handleAccessRequest(request.id, 'approve')} disabled={false}>
                         <CheckCircle className="h-4 w-4 mr-2" />
                         Approve
                       </Button>
-                      <Button
-                        size="sm"
+                      <Button size="sm"
                         variant="destructive"
-                        onClick={() => handleAccessRequest(request.id, 'deny')}
+                        onClick={() => handleAccessRequest(request.id, 'deny')} disabled={false}
                       >
                         <UserX className="h-4 w-4 mr-2" />
                         Deny

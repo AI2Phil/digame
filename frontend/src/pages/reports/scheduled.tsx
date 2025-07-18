@@ -138,7 +138,7 @@ const ScheduledReports: React.FC = () => {
             <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
             <textarea
               className="w-full border border-gray-300 rounded-lg px-3 py-2"
-              rows="3"
+              rows={3}
               placeholder="Enter report description"
             />
           </div>
@@ -211,8 +211,7 @@ const ScheduledReports: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <PageHeader
-        title="Scheduled Reports"
+      <PageHeader title="Scheduled Reports"
         subtitle="Automated report generation and delivery management"
         breadcrumbs={[
           { label: 'Reports', href: '/reports' },

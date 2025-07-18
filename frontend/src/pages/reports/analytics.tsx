@@ -135,8 +135,7 @@ const ReportAnalytics: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <PageHeader
-        title="Report Analytics"
+      <PageHeader title="Report Analytics"
         subtitle="Comprehensive analytics for report usage and performance"
         breadcrumbs={[
           { label: 'Reports', href: '/reports' },

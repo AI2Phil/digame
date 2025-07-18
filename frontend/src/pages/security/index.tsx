@@ -1,6 +1,6 @@
 import React from 'react';
-import { ToastProvider } from '../../src/components/ui/Toaster';
-import { SecurityDashboard } from '../../src/components/security/SecurityDashboard';
+import { ToastProvider } from '../../components/ui/Toaster';
+import { SecurityDashboard } from '../../components/security/SecurityDashboard';
 
 const SecurityPage: React.FC = () => {
   return (

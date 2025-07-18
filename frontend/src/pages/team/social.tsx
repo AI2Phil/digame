@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import PageHeader from '../../../components/PageHeader';
-import { Card, CardContent, CardHeader, CardTitle } from '../../src/components/ui/Card';
-import { Button } from '../../src/components/ui/Button';
-import { Badge } from '../../src/components/ui/Badge';
-import { Avatar, AvatarFallback, AvatarImage } from '../../src/components/ui/Avatar';
+import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
+import { Button } from '../../components/ui/Button';
+import { Badge } from '../../components/ui/Badge';
+import { Avatar, AvatarFallback, AvatarImage } from '../../components/ui/Avatar';
 import {
   Users,
   MessageSquare,
@@ -408,8 +408,7 @@ const TeamSocial: React.FC = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <PageHeader
-        title="Team Social"
+      <PageHeader title="Team Social"
         subtitle="Connect, collaborate, and celebrate with your team"
         icon={<Users className="h-8 w-8" />}
         breadcrumb={[
@@ -418,11 +417,11 @@ const TeamSocial: React.FC = () => {
         ]}
         actions={
           <div className="flex gap-2">
-            <Button variant="outline">
+            <Button variant="outline" onClick={() => {}} disabled={false}>
               <Bell className="h-4 w-4 mr-2" />
               Notifications
             </Button>
-            <Button variant="outline">
+            <Button variant="outline" onClick={() => {}} disabled={false}>
               <Settings className="h-4 w-4 mr-2" />
               Settings
             </Button>
@@ -500,13 +499,13 @@ const TeamSocial: React.FC = () => {
                       />
                       <div className="flex items-center justify-between">
                         <div className="flex gap-2">
-                          <Button variant="ghost" size="sm">
+                          <Button variant="ghost" size="sm" onClick={() => {}} disabled={false}>
                             <Image className="h-4 w-4" />
                           </Button>
-                          <Button variant="ghost" size="sm">
+                          <Button variant="ghost" size="sm" onClick={() => {}} disabled={false}>
                             <Paperclip className="h-4 w-4" />
                           </Button>
-                          <Button variant="ghost" size="sm">
+                          <Button variant="ghost" size="sm" onClick={() => {}} disabled={false}>
                             <Smile className="h-4 w-4" />
                           </Button>
                         </div>
@@ -541,7 +540,7 @@ const TeamSocial: React.FC = () => {
                             </p>
                           </div>
                         </div>
-                        <Button variant="ghost" size="sm">
+                        <Button variant="ghost" size="sm" onClick={() => {}} disabled={false}>
                           <MoreHorizontal className="h-4 w-4" />
                         </Button>
                       </div>
@@ -580,37 +579,34 @@ const TeamSocial: React.FC = () => {
                       {/* Post Actions */}
                       <div className="flex items-center justify-between pt-3 border-t">
                         <div className="flex items-center gap-4">
-                          <Button
-                            variant="ghost"
+                          <Button variant="ghost"
                             size="sm"
-                            onClick={() => handleLike(post.id)}
+                            onClick={() => handleLike(post.id)} disabled={false}
                             className="text-gray-600 hover:text-blue-600"
                           >
                             <ThumbsUp className="h-4 w-4 mr-1" />
                             {post.likes}
                           </Button>
-                          <Button
-                            variant="ghost"
+                          <Button variant="ghost"
                             size="sm"
                             className="text-gray-600 hover:text-green-600"
-                          >
+                           onClick={() => {}} disabled={false}>
                             <MessageCircle className="h-4 w-4 mr-1" />
                             {post.comments}
                           </Button>
-                          <Button
-                            variant="ghost"
+                          <Button variant="ghost"
                             size="sm"
                             className="text-gray-600 hover:text-purple-600"
-                          >
+                           onClick={() => {}} disabled={false}>
                             <Share2 className="h-4 w-4 mr-1" />
                             {post.shares}
                           </Button>
                         </div>
                         <div className="flex items-center gap-2">
-                          <Button variant="ghost" size="sm">
+                          <Button variant="ghost" size="sm" onClick={() => {}} disabled={false}>
                             <Bookmark className="h-4 w-4" />
                           </Button>
-                          <Button variant="ghost" size="sm">
+                          <Button variant="ghost" size="sm" onClick={() => {}} disabled={false}>
                             <Flag className="h-4 w-4" />
                           </Button>
                         </div>
@@ -797,15 +793,15 @@ const TeamSocial: React.FC = () => {
               <CardTitle className="text-lg">Quick Actions</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
-              <Button variant="outline" className="w-full justify-start">
+              <Button variant="outline" className="w-full justify-start" onClick={() => {}} disabled={false}>
                 <Plus className="h-4 w-4 mr-2" />
                 Create Event
               </Button>
-              <Button variant="outline" className="w-full justify-start">
+              <Button variant="outline" className="w-full justify-start" onClick={() => {}} disabled={false}>
                 <Users className="h-4 w-4 mr-2" />
                 Invite Members
               </Button>
-              <Button variant="outline" className="w-full justify-start">
+              <Button variant="outline" className="w-full justify-start" onClick={() => {}} disabled={false}>
                 <Hash className="h-4 w-4 mr-2" />
                 Create Channel
               </Button>

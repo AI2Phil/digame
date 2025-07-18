@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import PageHeader from '../../../components/PageHeader';
-import { Card, CardContent, CardHeader, CardTitle } from '../../src/components/ui/Card';
-import { Button } from '../../src/components/ui/Button';
-import { Badge } from '../../src/components/ui/Badge';
-import { Avatar, AvatarFallback, AvatarImage } from '../../src/components/ui/Avatar';
-import { Progress } from '../../src/components/ui/Progress';
+import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
+import { Button } from '../../components/ui/Button';
+import { Badge } from '../../components/ui/Badge';
+import { Avatar, AvatarFallback, AvatarImage } from '../../components/ui/Avatar';
+import { Progress } from '../../components/ui/Progress';
 import {
   Brain,
   Target,
@@ -396,8 +396,7 @@ const TeamSkills: React.FC = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <PageHeader
-        title="Team Skills"
+      <PageHeader title="Team Skills"
         subtitle="Track, develop, and optimize team capabilities and expertise"
         icon={<Brain className="h-8 w-8" />}
         breadcrumb={[
@@ -406,7 +405,7 @@ const TeamSkills: React.FC = () => {
         ]}
         actions={
           <div className="flex gap-2">
-            <Button variant="outline">
+            <Button variant="outline" onClick={() => {}} disabled={false}>
               <Plus className="h-4 w-4 mr-2" />
               Add Skill
             </Button>
@@ -711,11 +710,11 @@ const TeamSkills: React.FC = () => {
 
                   {/* Actions */}
                   <div className="flex gap-2 pt-2 border-t">
-                    <Button variant="outline" size="sm" className="flex-1">
+                    <Button variant="outline" size="sm" className="flex-1" onClick={() => {}} disabled={false}>
                       <Eye className="h-4 w-4 mr-2" />
                       View Profile
                     </Button>
-                    <Button variant="outline" size="sm" className="flex-1">
+                    <Button variant="outline" size="sm" className="flex-1" onClick={() => {}} disabled={false}>
                       <Edit className="h-4 w-4 mr-2" />
                       Update Skills
                     </Button>
@@ -860,7 +859,7 @@ const TeamSkills: React.FC = () => {
                   </div>
                 </div>
 
-                <Button className="w-full">
+                <Button className="w-full" onClick={() => {}} disabled={false}>
                   <BookOpen className="h-4 w-4 mr-2" />
                   Start Learning
                 </Button>
@@ -903,11 +902,11 @@ const TeamSkills: React.FC = () => {
                   </div>
 
                   <div className="flex gap-2">
-                    <Button size="sm">
+                    <Button size="sm" onClick={() => {}} disabled={false}>
                       <CheckCircle className="h-4 w-4 mr-2" />
                       Implement
                     </Button>
-                    <Button variant="outline" size="sm">
+                    <Button variant="outline" size="sm" onClick={() => {}} disabled={false}>
                       <Eye className="h-4 w-4" />
                     </Button>
                   </div>

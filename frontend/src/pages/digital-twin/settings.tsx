@@ -14,9 +14,6 @@ const queryClient = new QueryClient({
 
 const TwinSettingsPage: React.FC = () => {
   return (
-
-const TwinSettingsPage: React.FC = () => {
-
     <QueryClientProvider client={queryClient}>
       <ToastProvider>
         <div className="min-h-screen bg-gray-50">
@@ -27,6 +24,6 @@ const TwinSettingsPage: React.FC = () => {
       </ToastProvider>
     </QueryClientProvider>
   );
-}
+};
 
 export default TwinSettingsPage;

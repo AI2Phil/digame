@@ -144,8 +144,7 @@ const OAuthCallback: React.FC<OAuthCallbackProps> = ({ code, state, error, error
                 <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
                   You can close this window and try again.
                 </Typography>
-                <Button
-                  variant="contained"
+                <Button variant="contained"
                   onClick={() => {
                     if (window.opener) {
                       window.close();
@@ -153,6 +152,7 @@ const OAuthCallback: React.FC<OAuthCallbackProps> = ({ code, state, error, error
                       router.push('/integrations');
                     }
                   }}
+                  disabled={false}
                 >
                   {window.opener ? 'Close Window' : 'Back to Integrations'}
                 </Button>

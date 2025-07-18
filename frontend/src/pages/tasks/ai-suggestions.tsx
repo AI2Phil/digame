@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import PageHeader from '../../../components/PageHeader';
-import { Card, CardContent, CardHeader, CardTitle } from '../../src/components/ui/Card';
-import { Button } from '../../src/components/ui/Button';
-import { Badge } from '../../src/components/ui/Badge';
-import { Input } from '../../src/components/ui/Input';
-import { Textarea } from '../../src/components/ui/Textarea';
-import { Progress } from '../../src/components/ui/Progress';
+import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
+import { Button } from '../../components/ui/Button';
+import { Badge } from '../../components/ui/Badge';
+import { Input } from '../../components/ui/Input';
+import { Textarea } from '../../components/ui/Textarea';
+import { Progress } from '../../components/ui/Progress';
 import {
   Brain,
   Lightbulb,
@@ -214,8 +214,7 @@ const AITaskSuggestions: React.FC = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <PageHeader
-        title="AI Task Suggestions"
+      <PageHeader title="AI Task Suggestions"
         subtitle="Intelligent recommendations to optimize your productivity and workflow"
         icon={<Brain className="h-8 w-8" />}
         breadcrumb={[
@@ -224,7 +223,7 @@ const AITaskSuggestions: React.FC = () => {
         ]}
         actions={
           <div className="flex gap-2">
-            <Button variant="outline">
+            <Button variant="outline" onClick={() => {}} disabled={false}>
               <Star className="h-4 w-4 mr-2" />
               Favorites
             </Button>
@@ -449,21 +448,20 @@ const AITaskSuggestions: React.FC = () => {
                     </div>
 
                     <div className="flex gap-2 ml-4">
-                      <Button
-                        variant="outline"
+                      <Button variant="outline"
                         size="sm"
-                        onClick={() => acceptSuggestion(suggestion.id)}
+                        onClick={() => acceptSuggestion(suggestion.id)} disabled={false}
                       >
                         <CheckCircle className="h-4 w-4 mr-1" />
                         Accept
                       </Button>
-                      <Button variant="outline" size="sm">
+                      <Button variant="outline" size="sm" onClick={() => {}} disabled={false}>
                         <Bookmark className="h-4 w-4" />
                       </Button>
-                      <Button variant="outline" size="sm">
+                      <Button variant="outline" size="sm" onClick={() => {}} disabled={false}>
                         <ThumbsUp className="h-4 w-4" />
                       </Button>
-                      <Button variant="outline" size="sm">
+                      <Button variant="outline" size="sm" onClick={() => {}} disabled={false}>
                         <ThumbsDown className="h-4 w-4" />
                       </Button>
                     </div>
@@ -553,7 +551,7 @@ const AITaskSuggestions: React.FC = () => {
                     total: 0,
                     avgTime: 0,
                   };
-                  const acceptanceRate = data.total > 0 ? (data.accepted / data.total) * 100 : 0;
+                  const acceptanceRate = (data as any).total > 0 ? (data.accepted / (data as any).total) * 100 : 0;
 
                   return (
                     <div key={category.value} className="space-y-2">
@@ -562,13 +560,13 @@ const AITaskSuggestions: React.FC = () => {
                         <div className="text-right">
                           <span className="text-sm font-bold">{acceptanceRate.toFixed(0)}%</span>
                           <span className="text-xs text-gray-500 ml-2">
-                            ({data.total} suggestions)
+                            ({(data as any).total} suggestions)
                           </span>
                         </div>
                       </div>
                       <Progress value={acceptanceRate} className="h-2" />
                       <div className="text-xs text-gray-500">
-                        Avg time saved: {data.avgTime} minutes per suggestion
+                        Avg time saved: {(data as any).avgTime} minutes per suggestion
                       </div>
                     </div>
                   );

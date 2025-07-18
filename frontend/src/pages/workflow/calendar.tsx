@@ -346,7 +346,7 @@ const WorkflowCalendar = () => {
   const formatDuration = (startTime, endTime) => {
     const start = new Date(startTime);
     const end = new Date(endTime);
-    const diffMs = end - start;
+    const diffMs = end.getTime() - start.getTime();
     const diffMins = Math.floor(diffMs / 60000);
     const hours = Math.floor(diffMins / 60);
     const minutes = diffMins % 60;
@@ -375,11 +375,11 @@ const WorkflowCalendar = () => {
             <p className="text-gray-600 mt-2">Manage your time and optimize your schedule</p>
           </div>
           <div className="flex items-center gap-4">
-            <Button variant="outline">
+            <Button variant="outline" onClick={() => {}} disabled={false}>
               <Settings className="h-4 w-4 mr-2" />
               Calendar Settings
             </Button>
-            <Button onClick={handleCreateEvent}>
+            <Button onClick={handleCreateEvent} disabled={false}>
               <Plus className="h-4 w-4 mr-2" />
               New Event
             </Button>
@@ -432,28 +432,27 @@ const WorkflowCalendar = () => {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
-              <Button size="sm" variant="ghost" onClick={() => handleDateNavigation('prev')}>
+              <Button size="sm" variant="ghost" onClick={() => handleDateNavigation('prev')} disabled={false}>
                 <ChevronLeft className="h-4 w-4" />
               </Button>
               <h2 className="text-xl font-semibold">
                 {currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
               </h2>
-              <Button size="sm" variant="ghost" onClick={() => handleDateNavigation('next')}>
+              <Button size="sm" variant="ghost" onClick={() => handleDateNavigation('next')} disabled={false}>
                 <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
-            <Button size="sm" variant="outline" onClick={() => setCurrentDate(new Date())}>
+            <Button size="sm" variant="outline" onClick={() => setCurrentDate(new Date())} disabled={false}>
               Today
             </Button>
           </div>
 
           <div className="flex items-center gap-2">
             {['day', 'week', 'month'].map(view => (
-              <Button
-                key={view}
+              <Button key={view}
                 size="sm"
                 variant={activeView === view ? 'default' : 'outline'}
-                onClick={() => handleViewChange(view)}
+                onClick={() => handleViewChange(view)} disabled={false}
               >
                 {view.charAt(0).toUpperCase() + view.slice(1)}
               </Button>
@@ -483,7 +482,7 @@ const WorkflowCalendar = () => {
                       event =>
                         new Date(event.startTime).toDateString() === selectedDate.toDateString()
                     )
-                    .sort((a, b) => new Date(a.startTime) - new Date(b.startTime))
+                    .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
                     .map(event => (
                       <div
                         key={event.id}
@@ -519,18 +518,17 @@ const WorkflowCalendar = () => {
                           </div>
                           <div className="flex gap-1 ml-4">
                             {event.meetingLink && (
-                              <Button size="sm" variant="ghost">
+                              <Button size="sm" variant="ghost" onClick={() => {}} disabled={false}>
                                 <Video className="h-3 w-3" />
                               </Button>
                             )}
-                            <Button
-                              size="sm"
+                            <Button size="sm"
                               variant="ghost"
-                              onClick={() => handleEventAction(event.id, 'edit')}
+                              onClick={() => handleEventAction(event.id, 'edit')} disabled={false}
                             >
                               <Edit3 className="h-3 w-3" />
                             </Button>
-                            <Button size="sm" variant="ghost">
+                            <Button size="sm" variant="ghost" onClick={() => {}} disabled={false}>
                               <MoreHorizontal className="h-3 w-3" />
                             </Button>
                           </div>
@@ -580,7 +578,7 @@ const WorkflowCalendar = () => {
                         <p className="text-xs text-blue-700 mt-1">{suggestion.description}</p>
                         <div className="flex items-center justify-between mt-2">
                           <span className="text-xs text-blue-600">{suggestion.impact}</span>
-                          <Button size="sm" className="h-6 text-xs">
+                          <Button size="sm" className="h-6 text-xs" onClick={() => {}} disabled={false}>
                             Apply
                           </Button>
                         </div>
@@ -637,19 +635,19 @@ const WorkflowCalendar = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
-                <Button className="w-full justify-start" variant="outline" size="sm">
+                <Button className="w-full justify-start" variant="outline" size="sm" onClick={() => {}} disabled={false}>
                   <Plus className="h-4 w-4 mr-2" />
                   Schedule Focus Time
                 </Button>
-                <Button className="w-full justify-start" variant="outline" size="sm">
+                <Button className="w-full justify-start" variant="outline" size="sm" onClick={() => {}} disabled={false}>
                   <Users className="h-4 w-4 mr-2" />
                   Find Meeting Time
                 </Button>
-                <Button className="w-full justify-start" variant="outline" size="sm">
+                <Button className="w-full justify-start" variant="outline" size="sm" onClick={() => {}} disabled={false}>
                   <Bell className="h-4 w-4 mr-2" />
                   Set Reminder
                 </Button>
-                <Button className="w-full justify-start" variant="outline" size="sm">
+                <Button className="w-full justify-start" variant="outline" size="sm" onClick={() => {}} disabled={false}>
                   <Download className="h-4 w-4 mr-2" />
                   Export Calendar
                 </Button>

@@ -14,9 +14,6 @@ const queryClient = new QueryClient({
 
 const RealTimeTwinPage: React.FC = () => {
   return (
-
-const RealTimeTwinPage: React.FC = () => {
-
     <QueryClientProvider client={queryClient}>
       <ToastProvider>
         <div className="page-container">
@@ -25,6 +22,6 @@ const RealTimeTwinPage: React.FC = () => {
       </ToastProvider>
     </QueryClientProvider>
   );
-}
+};
 
 export default RealTimeTwinPage;

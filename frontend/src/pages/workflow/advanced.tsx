@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import PageHeader from '../../components/PageHeader';
+import PageHeader from '../../components/navigation/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
@@ -217,8 +217,7 @@ const AdvancedWorkflows = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <PageHeader
-        title="Advanced Workflows"
+      <PageHeader title="Advanced Workflows"
         subtitle="Build complex, AI-powered workflows with conditional logic and integrations"
         icon={<Brain className="h-8 w-8" />}
         breadcrumb={[
@@ -227,7 +226,7 @@ const AdvancedWorkflows = () => {
         ]}
         actions={
           <div className="flex gap-2">
-            <Button variant="outline">
+            <Button variant="outline" onClick={() => {}} disabled={false}>
               <Copy className="h-4 w-4 mr-2" />
               Import
             </Button>
@@ -307,10 +306,10 @@ const AdvancedWorkflows = () => {
               <CardTitle className="flex items-center justify-between">
                 <span className="text-sm">Workflow Canvas</span>
                 <div className="flex gap-2">
-                  <Button variant="outline" size="sm">
+                  <Button variant="outline" size="sm" onClick={() => {}} disabled={false}>
                     <Play className="h-4 w-4" />
                   </Button>
-                  <Button variant="outline" size="sm">
+                  <Button variant="outline" size="sm" onClick={() => {}} disabled={false}>
                     <Settings className="h-4 w-4" />
                   </Button>
                 </div>
@@ -469,17 +468,16 @@ const AdvancedWorkflows = () => {
                     </div>
 
                     <div className="flex gap-2 ml-4">
-                      <Button
-                        variant="outline"
+                      <Button variant="outline"
                         size="sm"
-                        onClick={() => setSelectedWorkflow(workflow)}
+                        onClick={() => setSelectedWorkflow(workflow)} disabled={false}
                       >
                         <Edit className="h-4 w-4" />
                       </Button>
-                      <Button variant="outline" size="sm">
+                      <Button variant="outline" size="sm" onClick={() => {}} disabled={false}>
                         <Copy className="h-4 w-4" />
                       </Button>
-                      <Button variant="outline" size="sm">
+                      <Button variant="outline" size="sm" onClick={() => {}} disabled={false}>
                         <Play className="h-4 w-4" />
                       </Button>
                     </div>

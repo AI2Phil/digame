@@ -1,10 +1,22 @@
 import Head from 'next/head';
 import React, { useState } from 'react';
-import Head from 'next/head';
-import { Share2, Globe, Lock, Users, Mail, Link, Download, Eye, Calendar, Settings, Plus, Trash2 } from 'lucide-react';
+import {
+  Share2,
+  Globe,
+  Lock,
+  Users,
+  Mail,
+  Link,
+  Download,
+  Eye,
+  Calendar,
+  Settings,
+  Plus,
+  Trash2,
+} from 'lucide-react';
 import PageHeader from '../../../components/PageHeader';
 
-export default const PublishingCenter: React.FC = () => {
+const PublishingCenter: React.FC = () => {
   const [activeTab, setActiveTab] = useState('published');
   const [selectedReport, setSelectedReport] = useState(null);
   const [shareSettings, setShareSettings] = useState({
@@ -13,7 +25,7 @@ export default const PublishingCenter: React.FC = () => {
     allowComments: false,
     expiresAt: '',
     password: '',
-    recipients: []
+    recipients: [],
   });
 
   const publishedReports = [
@@ -34,7 +46,7 @@ export default const PublishingCenter: React.FC = () => {
       tags: ['quarterly', 'performance', 'analytics'],
       author: 'John Admin',
       size: '4.2 MB',
-      format: 'PDF'
+      format: 'PDF',
     },
     {
       id: 2,
@@ -53,7 +65,7 @@ export default const PublishingCenter: React.FC = () => {
       tags: ['security', 'audit', 'compliance'],
       author: 'Security Team',
       size: '2.8 MB',
-      format: 'PDF'
+      format: 'PDF',
     },
     {
       id: 3,
@@ -72,8 +84,8 @@ export default const PublishingCenter: React.FC = () => {
       tags: ['productivity', 'team', 'dashboard'],
       author: 'HR Department',
       size: '1.5 MB',
-      format: 'HTML'
-    }
+      format: 'HTML',
+    },
   ];
 
   const sharedLinks = [
@@ -86,7 +98,7 @@ export default const PublishingCenter: React.FC = () => {
       views: 23,
       maxViews: 100,
       password: true,
-      status: 'active'
+      status: 'active',
     },
     {
       id: 2,
@@ -97,7 +109,7 @@ export default const PublishingCenter: React.FC = () => {
       views: 67,
       maxViews: 50,
       password: false,
-      status: 'expired'
+      status: 'expired',
     },
     {
       id: 3,
@@ -108,8 +120,8 @@ export default const PublishingCenter: React.FC = () => {
       views: 5,
       maxViews: 25,
       password: true,
-      status: 'active'
-    }
+      status: 'active',
+    },
   ];
 
   const distributionChannels = [
@@ -122,8 +134,8 @@ export default const PublishingCenter: React.FC = () => {
       settings: {
         smtpConfigured: true,
         defaultSender: 'reports@digame.com',
-        maxRecipients: 100
-      }
+        maxRecipients: 100,
+      },
     },
     {
       id: 'slack',
@@ -133,8 +145,8 @@ export default const PublishingCenter: React.FC = () => {
       enabled: false,
       settings: {
         webhookUrl: '',
-        defaultChannel: '#reports'
-      }
+        defaultChannel: '#reports',
+      },
     },
     {
       id: 'teams',
@@ -144,8 +156,8 @@ export default const PublishingCenter: React.FC = () => {
       enabled: false,
       settings: {
         webhookUrl: '',
-        defaultTeam: 'General'
-      }
+        defaultTeam: 'General',
+      },
     },
     {
       id: 'webhook',
@@ -155,36 +167,45 @@ export default const PublishingCenter: React.FC = () => {
       enabled: true,
       settings: {
         endpoints: ['https://api.company.com/reports'],
-        authentication: 'bearer'
-      }
-    }
+        authentication: 'bearer',
+      },
+    },
   ];
 
-  const getVisibilityIcon = (visibility) => {
+  const getVisibilityIcon = visibility => {
     switch (visibility) {
-      case 'public': return <Globe className="w-4 h-4 text-green-600" />;
-      case 'internal': return <Users className="w-4 h-4 text-blue-600" />;
-      case 'restricted': return <Lock className="w-4 h-4 text-orange-600" />;
-      case 'private': return <Lock className="w-4 h-4 text-red-600" />;
-      default: return <Lock className="w-4 h-4 text-gray-600" />;
+      case 'public':
+        return <Globe className="w-4 h-4 text-green-600" />;
+      case 'internal':
+        return <Users className="w-4 h-4 text-blue-600" />;
+      case 'restricted':
+        return <Lock className="w-4 h-4 text-orange-600" />;
+      case 'private':
+        return <Lock className="w-4 h-4 text-red-600" />;
+      default:
+        return <Lock className="w-4 h-4 text-gray-600" />;
     }
   };
 
-  const getStatusColor = (status) => {
+  const getStatusColor = status => {
     switch (status) {
-      case 'active': return 'text-green-600 bg-green-100';
-      case 'expired': return 'text-red-600 bg-red-100';
-      case 'paused': return 'text-yellow-600 bg-yellow-100';
-      default: return 'text-gray-600 bg-gray-100';
+      case 'active':
+        return 'text-green-600 bg-green-100';
+      case 'expired':
+        return 'text-red-600 bg-red-100';
+      case 'paused':
+        return 'text-yellow-600 bg-yellow-100';
+      default:
+        return 'text-gray-600 bg-gray-100';
     }
   };
 
-  const copyToClipboard = (text) => {
+  const copyToClipboard = text => {
     navigator.clipboard.writeText(text);
     // You could add a toast notification here
   };
 
-  const createShareLink = (reportId) => {
+  const createShareLink = reportId => {
     // Simulate creating a share link
     const newLink = {
       id: Date.now(),
@@ -195,9 +216,9 @@ export default const PublishingCenter: React.FC = () => {
       views: 0,
       maxViews: 100,
       password: shareSettings.password !== '',
-      status: 'active'
+      status: 'active',
     };
-    
+
     alert(`Share link created: ${newLink.url}`);
   };
 
@@ -205,14 +226,16 @@ export default const PublishingCenter: React.FC = () => {
     <>
       <Head>
         <title>Publishing Center - Reports - Digame</title>
-        <meta name="description" content="Publish and share reports with advanced distribution options" />
+        <meta
+          name="description"
+          content="Publish and share reports with advanced distribution options"
+        />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
       </Head>
 
       <div className="min-h-screen bg-gray-50">
-        <PageHeader 
-          title="Publishing Center"
+        <PageHeader title="Publishing Center"
           subtitle="Publish and share reports with advanced distribution options"
           icon={<Share2 className="w-6 h-6 text-purple-600" />}
         />
@@ -226,8 +249,8 @@ export default const PublishingCenter: React.FC = () => {
                   { id: 'published', label: 'Published Reports', icon: Globe },
                   { id: 'shares', label: 'Shared Links', icon: Link },
                   { id: 'distribution', label: 'Distribution Channels', icon: Mail },
-                  { id: 'analytics', label: 'Publishing Analytics', icon: Eye }
-                ].map((tab) => (
+                  { id: 'analytics', label: 'Publishing Analytics', icon: Eye },
+                ].map(tab => (
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
@@ -256,7 +279,7 @@ export default const PublishingCenter: React.FC = () => {
                   </button>
                 </div>
                 <div className="divide-y divide-gray-200">
-                  {publishedReports.map((report) => (
+                  {publishedReports.map(report => (
                     <div key={report.id} className="p-6">
                       <div className="flex items-start justify-between mb-4">
                         <div className="flex items-start space-x-3">
@@ -266,8 +289,12 @@ export default const PublishingCenter: React.FC = () => {
                             <p className="text-sm text-gray-600 mt-1">{report.description}</p>
                             <div className="flex items-center space-x-4 mt-2 text-xs text-gray-500">
                               <span>By {report.author}</span>
-                              <span>Published {new Date(report.publishedAt).toLocaleDateString()}</span>
-                              <span>{report.format} • {report.size}</span>
+                              <span>
+                                Published {new Date(report.publishedAt).toLocaleDateString()}
+                              </span>
+                              <span>
+                                {report.format} • {report.size}
+                              </span>
                             </div>
                           </div>
                         </div>
@@ -286,15 +313,21 @@ export default const PublishingCenter: React.FC = () => {
 
                       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
                         <div className="text-center">
-                          <div className="text-lg font-semibold text-blue-600">{report.views.toLocaleString()}</div>
+                          <div className="text-lg font-semibold text-blue-600">
+                            {report.views.toLocaleString()}
+                          </div>
                           <div className="text-xs text-gray-600">Views</div>
                         </div>
                         <div className="text-center">
-                          <div className="text-lg font-semibold text-green-600">{report.downloads.toLocaleString()}</div>
+                          <div className="text-lg font-semibold text-green-600">
+                            {report.downloads.toLocaleString()}
+                          </div>
                           <div className="text-xs text-gray-600">Downloads</div>
                         </div>
                         <div className="text-center">
-                          <div className="text-lg font-semibold text-purple-600">{report.shares}</div>
+                          <div className="text-lg font-semibold text-purple-600">
+                            {report.shares}
+                          </div>
                           <div className="text-xs text-gray-600">Shares</div>
                         </div>
                         <div className="text-center">
@@ -322,14 +355,18 @@ export default const PublishingCenter: React.FC = () => {
                           )}
                         </div>
                         <div className="text-xs text-gray-500">
-                          {report.expiresAt && `Expires ${new Date(report.expiresAt).toLocaleDateString()}`}
+                          {report.expiresAt &&
+                            `Expires ${new Date(report.expiresAt).toLocaleDateString()}`}
                         </div>
                       </div>
 
                       <div className="mt-3">
                         <div className="flex flex-wrap gap-1">
-                          {report.tags.map((tag) => (
-                            <span key={tag} className="inline-block bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs">
+                          {report.tags.map(tag => (
+                            <span
+                              key={tag}
+                              className="inline-block bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs"
+                            >
                               {tag}
                             </span>
                           ))}
@@ -353,13 +390,15 @@ export default const PublishingCenter: React.FC = () => {
                   </button>
                 </div>
                 <div className="divide-y divide-gray-200">
-                  {sharedLinks.map((link) => (
+                  {sharedLinks.map(link => (
                     <div key={link.id} className="p-6">
                       <div className="flex items-start justify-between mb-3">
                         <div>
                           <h4 className="font-medium text-gray-900">{link.reportName}</h4>
                           <div className="flex items-center space-x-2 mt-1">
-                            <code className="text-sm bg-gray-100 px-2 py-1 rounded">{link.url}</code>
+                            <code className="text-sm bg-gray-100 px-2 py-1 rounded">
+                              {link.url}
+                            </code>
                             <button
                               onClick={() => copyToClipboard(link.url)}
                               className="text-blue-600 hover:text-blue-700"
@@ -369,7 +408,9 @@ export default const PublishingCenter: React.FC = () => {
                           </div>
                         </div>
                         <div className="flex items-center space-x-2">
-                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(link.status)}`}>
+                          <span
+                            className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(link.status)}`}
+                          >
                             {link.status}
                           </span>
                           <button className="text-red-400 hover:text-red-600">
@@ -381,15 +422,21 @@ export default const PublishingCenter: React.FC = () => {
                       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
                         <div>
                           <span className="text-gray-600">Views:</span>
-                          <span className="ml-2 font-medium">{link.views} / {link.maxViews}</span>
+                          <span className="ml-2 font-medium">
+                            {link.views} / {link.maxViews}
+                          </span>
                         </div>
                         <div>
                           <span className="text-gray-600">Created:</span>
-                          <span className="ml-2 font-medium">{new Date(link.createdAt).toLocaleDateString()}</span>
+                          <span className="ml-2 font-medium">
+                            {new Date(link.createdAt).toLocaleDateString()}
+                          </span>
                         </div>
                         <div>
                           <span className="text-gray-600">Expires:</span>
-                          <span className="ml-2 font-medium">{new Date(link.expiresAt).toLocaleDateString()}</span>
+                          <span className="ml-2 font-medium">
+                            {new Date(link.expiresAt).toLocaleDateString()}
+                          </span>
                         </div>
                         <div>
                           <span className="text-gray-600">Protected:</span>
@@ -407,7 +454,7 @@ export default const PublishingCenter: React.FC = () => {
           {activeTab === 'distribution' && (
             <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {distributionChannels.map((channel) => (
+                {distributionChannels.map(channel => (
                   <div key={channel.id} className="bg-white rounded-lg shadow-sm p-6">
                     <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center space-x-3">
@@ -431,8 +478,12 @@ export default const PublishingCenter: React.FC = () => {
                       <div className="space-y-2 text-sm">
                         {Object.entries(channel.settings).map(([key, value]) => (
                           <div key={key} className="flex justify-between">
-                            <span className="text-gray-600 capitalize">{key.replace(/([A-Z])/g, ' $1')}:</span>
-                            <span className="font-medium">{typeof value === 'boolean' ? (value ? 'Yes' : 'No') : value}</span>
+                            <span className="text-gray-600 capitalize">
+                              {key.replace(/([A-Z])/g, ' $1')}:
+                            </span>
+                            <span className="font-medium">
+                              {typeof value === 'boolean' ? (value ? 'Yes' : 'No') : value}
+                            </span>
                           </div>
                         ))}
                       </div>
@@ -493,7 +544,9 @@ export default const PublishingCenter: React.FC = () => {
                 <div className="text-center py-12 text-gray-500">
                   <Eye className="w-16 h-16 mx-auto mb-4 text-gray-300" />
                   <p>Publishing analytics visualization would be displayed here</p>
-                  <p className="text-sm">Charts showing views, downloads, and engagement over time</p>
+                  <p className="text-sm">
+                    Charts showing views, downloads, and engagement over time
+                  </p>
                 </div>
               </div>
             </div>
@@ -502,4 +555,6 @@ export default const PublishingCenter: React.FC = () => {
       </div>
     </>
   );
-}
+};
+
+export default PublishingCenter;

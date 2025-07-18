@@ -362,11 +362,11 @@ const CareerNetwork: React.FC = () => {
             </p>
           </div>
           <div className="flex items-center gap-4">
-            <Button variant="outline">
+            <Button variant="outline" onClick={() => {}} disabled={false}>
               <Share2 className="h-4 w-4 mr-2" />
               Share Profile
             </Button>
-            <Button>
+            <Button onClick={() => {}} disabled={false}>
               <UserPlus className="h-4 w-4 mr-2" />
               Find Connections
             </Button>
@@ -531,22 +531,22 @@ const CareerNetwork: React.FC = () => {
                   <div className="flex flex-col gap-2">
                     {connection.status === 'connected' ? (
                       <>
-                        <Button size="sm" onClick={() => handleMessage(connection.id)}>
+                        <Button size="sm" onClick={() => handleMessage(connection.id)} disabled={false}>
                           <MessageCircle className="h-4 w-4 mr-2" />
                           Message
                         </Button>
-                        <Button size="sm" variant="outline">
+                        <Button size="sm" variant="outline" onClick={() => {}} disabled={false}>
                           <Eye className="h-4 w-4 mr-2" />
                           View Profile
                         </Button>
                       </>
                     ) : connection.status === 'pending' ? (
-                      <Button size="sm" variant="outline" disabled>
+                      <Button size="sm" variant="outline" disabled onClick={() => {}} disabled={false}>
                         <Clock className="h-4 w-4 mr-2" />
                         Pending
                       </Button>
                     ) : (
-                      <Button size="sm" onClick={() => handleConnect(connection.id)}>
+                      <Button size="sm" onClick={() => handleConnect(connection.id)} disabled={false}>
                         <UserPlus className="h-4 w-4 mr-2" />
                         Connect
                       </Button>
@@ -614,17 +614,17 @@ const CareerNetwork: React.FC = () => {
 
                   <div className="flex flex-col gap-2 ml-4">
                     {event.registered ? (
-                      <Button size="sm" variant="outline">
+                      <Button size="sm" variant="outline" onClick={() => {}} disabled={false}>
                         <CheckCircle className="h-4 w-4 mr-2" />
                         Registered
                       </Button>
                     ) : (
-                      <Button size="sm" onClick={() => handleRegisterEvent(event.id)}>
+                      <Button size="sm" onClick={() => handleRegisterEvent(event.id)} disabled={false}>
                         <Calendar className="h-4 w-4 mr-2" />
                         Register
                       </Button>
                     )}
-                    <Button size="sm" variant="ghost">
+                    <Button size="sm" variant="ghost" onClick={() => {}} disabled={false}>
                       <Share2 className="h-4 w-4 mr-2" />
                       Share
                     </Button>
@@ -699,15 +699,14 @@ const CareerNetwork: React.FC = () => {
                   </div>
 
                   <div className="flex gap-2">
-                    <Button
-                      className="flex-1"
-                      onClick={() => handleBookMentor(mentor.id)}
+                    <Button className="flex-1"
+                      onClick={() => handleBookMentor(mentor.id)} disabled={false}
                       disabled={mentor.availability !== 'Available'}
                     >
                       <Calendar className="h-4 w-4 mr-2" />
                       Book Session
                     </Button>
-                    <Button variant="outline">
+                    <Button variant="outline" onClick={() => {}} disabled={false}>
                       <MessageCircle className="h-4 w-4 mr-2" />
                       Message
                     </Button>
@@ -778,24 +777,24 @@ const CareerNetwork: React.FC = () => {
 
                   <div className="flex gap-2">
                     {rec.type === 'connection' && (
-                      <Button size="sm">
+                      <Button size="sm" onClick={() => {}} disabled={false}>
                         <UserPlus className="h-4 w-4 mr-2" />
                         Connect
                       </Button>
                     )}
                     {rec.type === 'event' && (
-                      <Button size="sm">
+                      <Button size="sm" onClick={() => {}} disabled={false}>
                         <Calendar className="h-4 w-4 mr-2" />
                         Register
                       </Button>
                     )}
                     {rec.type === 'mentor' && (
-                      <Button size="sm">
+                      <Button size="sm" onClick={() => {}} disabled={false}>
                         <MessageCircle className="h-4 w-4 mr-2" />
                         Contact
                       </Button>
                     )}
-                    <Button size="sm" variant="ghost">
+                    <Button size="sm" variant="ghost" onClick={() => {}} disabled={false}>
                       <X className="h-4 w-4" />
                     </Button>
                   </div>

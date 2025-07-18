@@ -1,9 +1,8 @@
 import Head from 'next/head';
 import React from 'react';
-import Head from 'next/head';
 import { CheckCircle, Plus, Calendar, Flag, Clock, User, BarChart3, Lightbulb } from 'lucide-react';
 
-export default const TaskManagement: React.FC = () => {
+const TaskManagement: React.FC = () => {
   const tasks = [
     {
       id: 1,
@@ -13,7 +12,7 @@ export default const TaskManagement: React.FC = () => {
       dueDate: '2025-01-15',
       status: 'in-progress',
       assignee: 'You',
-      progress: 75
+      progress: 75,
     },
     {
       id: 2,
@@ -23,7 +22,7 @@ export default const TaskManagement: React.FC = () => {
       dueDate: '2025-01-18',
       status: 'pending',
       assignee: 'You',
-      progress: 0
+      progress: 0,
     },
     {
       id: 3,
@@ -33,25 +32,33 @@ export default const TaskManagement: React.FC = () => {
       dueDate: '2025-01-22',
       status: 'completed',
       assignee: 'You',
-      progress: 100
-    }
+      progress: 100,
+    },
   ];
 
-  const getPriorityColor = (priority) => {
+  const getPriorityColor = priority => {
     switch (priority) {
-      case 'high': return 'bg-red-100 text-red-800';
-      case 'medium': return 'bg-yellow-100 text-yellow-800';
-      case 'low': return 'bg-green-100 text-green-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'high':
+        return 'bg-red-100 text-red-800';
+      case 'medium':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'low':
+        return 'bg-green-100 text-green-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
-  const getStatusColor = (status) => {
+  const getStatusColor = status => {
     switch (status) {
-      case 'completed': return 'bg-green-100 text-green-800';
-      case 'in-progress': return 'bg-blue-100 text-blue-800';
-      case 'pending': return 'bg-gray-100 text-gray-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'completed':
+        return 'bg-green-100 text-green-800';
+      case 'in-progress':
+        return 'bg-blue-100 text-blue-800';
+      case 'pending':
+        return 'bg-gray-100 text-gray-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
@@ -169,8 +176,11 @@ export default const TaskManagement: React.FC = () => {
             </div>
 
             <div className="space-y-4">
-              {tasks.map((task) => (
-                <div key={task.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow">
+              {(tasks as any).map(task => (
+                <div
+                  key={task.id}
+                  className="border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow"
+                >
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex-1">
                       <h4 className="font-medium text-gray-900 mb-1">{task.title}</h4>
@@ -188,10 +198,14 @@ export default const TaskManagement: React.FC = () => {
                     </div>
                     <div className="flex flex-col items-end space-y-2">
                       <div className="flex space-x-2">
-                        <span className={`px-2 py-1 text-xs font-medium rounded-full ${getPriorityColor(task.priority)}`}>
+                        <span
+                          className={`px-2 py-1 text-xs font-medium rounded-full ${getPriorityColor(task.priority)}`}
+                        >
                           {task.priority}
                         </span>
-                        <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(task.status)}`}>
+                        <span
+                          className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(task.status)}`}
+                        >
                           {task.status}
                         </span>
                       </div>
@@ -199,8 +213,8 @@ export default const TaskManagement: React.FC = () => {
                     </div>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div 
-                      className="bg-blue-600 h-2 rounded-full transition-all duration-300" 
+                    <div
+                      className="bg-blue-600 h-2 rounded-full transition-all duration-300"
                       style={{ width: `${task.progress}%` }}
                     ></div>
                   </div>
@@ -212,4 +226,6 @@ export default const TaskManagement: React.FC = () => {
       </div>
     </>
   );
-}
+};
+
+export default TaskManagement;

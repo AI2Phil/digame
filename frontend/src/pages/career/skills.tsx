@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import PageHeader from '../../../components/PageHeader';
-import { Card, CardContent, CardHeader, CardTitle } from '../../src/components/ui/Card';
-import { Button } from '../../src/components/ui/Button';
-import { Badge } from '../../src/components/ui/Badge';
-import { Progress } from '../../src/components/ui/Progress';
+import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
+import { Button } from '../../components/ui/Button';
+import { Badge } from '../../components/ui/Badge';
+import { Progress } from '../../components/ui/Progress';
 import {
   Brain,
   Target,
@@ -442,8 +442,7 @@ const CareerSkills: React.FC = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <PageHeader
-        title="Skills Development"
+      <PageHeader title="Skills Development"
         subtitle="Track, develop, and optimize your professional skills"
         icon={<Brain className="h-8 w-8" />}
         breadcrumb={[
@@ -452,7 +451,7 @@ const CareerSkills: React.FC = () => {
         ]}
         actions={
           <div className="flex gap-2">
-            <Button variant="outline">
+            <Button variant="outline" onClick={() => {}} disabled={false}>
               <Upload className="h-4 w-4 mr-2" />
               Import Skills
             </Button>
@@ -795,14 +794,14 @@ const CareerSkills: React.FC = () => {
 
                   {/* Actions */}
                   <div className="flex gap-2 pt-2 border-t">
-                    <Button size="sm" className="flex-1">
+                    <Button size="sm" className="flex-1" onClick={() => {}} disabled={false}>
                       <BookOpen className="h-4 w-4 mr-2" />
                       Improve
                     </Button>
-                    <Button variant="outline" size="sm">
+                    <Button variant="outline" size="sm" onClick={() => {}} disabled={false}>
                       <Eye className="h-4 w-4" />
                     </Button>
-                    <Button variant="outline" size="sm">
+                    <Button variant="outline" size="sm" onClick={() => {}} disabled={false}>
                       <Share2 className="h-4 w-4" />
                     </Button>
                   </div>
@@ -863,7 +862,7 @@ const CareerSkills: React.FC = () => {
                       Priority #{gap.priority}
                     </Badge>
                     <Badge variant="outline">{gap.difficulty}</Badge>
-                    <Button size="sm" onClick={() => handleStartLearning(gap.id)}>
+                    <Button size="sm" onClick={() => handleStartLearning(gap.id)} disabled={false}>
                       <Rocket className="h-4 w-4 mr-2" />
                       Start Learning
                     </Button>
@@ -904,7 +903,7 @@ const CareerSkills: React.FC = () => {
                     </div>
                   </div>
 
-                  <Button size="sm">{rec.action}</Button>
+                  <Button size="sm" onClick={() => {}} disabled={false}>{rec.action}</Button>
                 </div>
               </CardContent>
             </Card>

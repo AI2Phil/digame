@@ -291,7 +291,7 @@ const SocialForumsPage: React.FC = () => {
                     Connect, learn, and share knowledge with the Digame community
                   </p>
                 </div>
-                <Button onClick={handleCreatePost} className="flex items-center gap-2">
+                <Button onClick={handleCreatePost} className="flex items-center gap-2" disabled={false}>
                   <Plus className="w-4 h-4" />
                   New Post
                 </Button>
@@ -467,7 +467,7 @@ const SocialForumsPage: React.FC = () => {
                             ? 'Try adjusting your search or filter criteria.'
                             : 'Be the first to start a discussion in this community!'}
                         </p>
-                        <Button onClick={handleCreatePost}>
+                        <Button onClick={handleCreatePost} disabled={false}>
                           <Plus className="w-4 h-4 mr-2" />
                           Create First Post
                         </Button>

@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import PageHeader from '../../../components/PageHeader';
-import { Card, CardContent, CardHeader, CardTitle } from '../../src/components/ui/Card';
-import { Button } from '../../src/components/ui/Button';
-import { Badge } from '../../src/components/ui/Badge';
-import { Input } from '../../src/components/ui/Input';
-import { Progress } from '../../src/components/ui/Progress';
+import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
+import { Button } from '../../components/ui/Button';
+import { Badge } from '../../components/ui/Badge';
+import { Input } from '../../components/ui/Input';
+import { Progress } from '../../components/ui/Progress';
 import {
   FolderOpen,
   Plus,
@@ -304,8 +304,7 @@ const TaskProjects: React.FC = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <PageHeader
-        title="Project Management"
+      <PageHeader title="Project Management"
         subtitle="Manage and track project progress, team collaboration, and deliverables"
         icon={<FolderOpen className="h-8 w-8" />}
         breadcrumb={[
@@ -314,7 +313,7 @@ const TaskProjects: React.FC = () => {
         ]}
         actions={
           <div className="flex gap-2">
-            <Button variant="outline">
+            <Button variant="outline" onClick={() => {}} disabled={false}>
               <BarChart3 className="h-4 w-4 mr-2" />
               Analytics
             </Button>
@@ -364,7 +363,7 @@ const TaskProjects: React.FC = () => {
             className="pl-10"
           />
         </div>
-        <Button variant="outline">
+        <Button variant="outline" onClick={() => {}} disabled={false}>
           <Filter className="h-4 w-4 mr-2" />
           Filter
         </Button>
@@ -450,13 +449,13 @@ const TaskProjects: React.FC = () => {
                   <p className="text-gray-600 text-sm">{project.description}</p>
                 </div>
                 <div className="flex gap-1">
-                  <Button variant="outline" size="sm">
+                  <Button variant="outline" size="sm" onClick={() => {}} disabled={false}>
                     <Eye className="h-3 w-3" />
                   </Button>
-                  <Button variant="outline" size="sm">
+                  <Button variant="outline" size="sm" onClick={() => {}} disabled={false}>
                     <Edit className="h-3 w-3" />
                   </Button>
-                  <Button variant="outline" size="sm">
+                  <Button variant="outline" size="sm" onClick={() => {}} disabled={false}>
                     <Settings className="h-3 w-3" />
                   </Button>
                 </div>

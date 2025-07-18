@@ -14,9 +14,6 @@ const queryClient = new QueryClient({
 
 const TwinWorkspacePage: React.FC = () => {
   return (
-
-const TwinWorkspacePage: React.FC = () => {
-
     <QueryClientProvider client={queryClient}>
       <ToastProvider>
         <div className="min-h-screen bg-gray-50">
@@ -25,6 +22,6 @@ const TwinWorkspacePage: React.FC = () => {
       </ToastProvider>
     </QueryClientProvider>
   );
-}
+};
 
 export default TwinWorkspacePage;

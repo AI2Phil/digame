@@ -1,7 +1,7 @@
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ToastProvider } from '../../src/components/ui/Toaster';
-import BundleAnalyzer from '../../src/components/performance/BundleAnalyzer';
+import { ToastProvider } from '../../components/ui/Toaster';
+import BundleAnalyzer from '../../components/performance/BundleAnalyzer';
 
 // Create a client
 const queryClient = new QueryClient({

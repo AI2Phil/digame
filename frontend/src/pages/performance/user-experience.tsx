@@ -1,7 +1,7 @@
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ToastProvider } from '../../src/components/ui/Toaster';
-import UserExperienceTracking from '../../src/components/performance/UserExperienceTracking';
+import { ToastProvider } from '../../components/ui/Toaster';
+import UserExperienceTracking from '../../components/performance/UserExperienceTracking';
 
 // Create a client
 const queryClient = new QueryClient({

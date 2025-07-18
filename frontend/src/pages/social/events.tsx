@@ -1,15 +1,28 @@
 import Head from 'next/head';
 import React, { useState, useEffect } from 'react';
-import Head from 'next/head';
 import Link from 'next/link';
-import { ArrowLeft, Calendar, MapPin, Users, Clock, Plus, Search, Filter, Star, Share2, Bell, Video, Globe } from 'lucide-react';
+import {
+  ArrowLeft,
+  Calendar,
+  MapPin,
+  Users,
+  Clock,
+  Plus,
+  Search,
+  Filter,
+  Star,
+  Share2,
+  Bell,
+  Video,
+  Globe,
+} from 'lucide-react';
 
-export default const NetworkingEvents: React.FC = () => {
+const NetworkingEvents: React.FC = () => {
   const [events, setEvents] = useState([]);
   const [filters, setFilters] = useState({
     type: 'all',
     location: 'all',
-    date: 'all'
+    date: 'all',
   });
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -23,10 +36,10 @@ export default const NetworkingEvents: React.FC = () => {
     try {
       const response = await fetch('/api/social/events', {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token') || 'demo-token'}`
-        }
+          Authorization: `Bearer ${localStorage.getItem('token') || 'demo-token'}`,
+        },
       });
-      
+
       if (response.ok) {
         const result = await response.json();
         setEvents(result.data);
@@ -45,7 +58,8 @@ export default const NetworkingEvents: React.FC = () => {
     {
       id: 1,
       title: 'Tech Leaders Summit 2024',
-      description: 'Join industry leaders for insights on emerging technologies and digital transformation strategies.',
+      description:
+        'Join industry leaders for insights on emerging technologies and digital transformation strategies.',
       date: '2024-02-15T09:00:00Z',
       endDate: '2024-02-15T17:00:00Z',
       location: 'San Francisco Convention Center',
@@ -59,12 +73,13 @@ export default const NetworkingEvents: React.FC = () => {
       tags: ['technology', 'leadership', 'innovation'],
       image: '/events/tech-summit.jpg',
       featured: true,
-      registered: false
+      registered: false,
     },
     {
       id: 2,
       title: 'Remote Work Best Practices Workshop',
-      description: 'Learn effective strategies for managing remote teams and maintaining productivity in distributed work environments.',
+      description:
+        'Learn effective strategies for managing remote teams and maintaining productivity in distributed work environments.',
       date: '2024-02-08T14:00:00Z',
       endDate: '2024-02-08T16:00:00Z',
       location: 'Virtual Event',
@@ -78,12 +93,13 @@ export default const NetworkingEvents: React.FC = () => {
       tags: ['remote-work', 'management', 'productivity'],
       image: '/events/remote-workshop.jpg',
       featured: false,
-      registered: true
+      registered: true,
     },
     {
       id: 3,
       title: 'AI & Machine Learning Meetup',
-      description: 'Monthly meetup for AI enthusiasts to share projects, discuss latest developments, and network with peers.',
+      description:
+        'Monthly meetup for AI enthusiasts to share projects, discuss latest developments, and network with peers.',
       date: '2024-02-12T18:30:00Z',
       endDate: '2024-02-12T21:00:00Z',
       location: 'Innovation Hub, Austin',
@@ -97,12 +113,13 @@ export default const NetworkingEvents: React.FC = () => {
       tags: ['ai', 'machine-learning', 'networking'],
       image: '/events/ai-meetup.jpg',
       featured: false,
-      registered: false
+      registered: false,
     },
     {
       id: 4,
       title: 'Product Management Masterclass',
-      description: 'Comprehensive workshop covering product strategy, user research, and agile methodologies.',
+      description:
+        'Comprehensive workshop covering product strategy, user research, and agile methodologies.',
       date: '2024-02-20T10:00:00Z',
       endDate: '2024-02-20T16:00:00Z',
       location: 'New York Business Center',
@@ -116,7 +133,7 @@ export default const NetworkingEvents: React.FC = () => {
       tags: ['product-management', 'strategy', 'agile'],
       image: '/events/pm-masterclass.jpg',
       featured: true,
-      registered: false
+      registered: false,
     },
     {
       id: 5,
@@ -135,12 +152,13 @@ export default const NetworkingEvents: React.FC = () => {
       tags: ['startups', 'investing', 'entrepreneurship'],
       image: '/events/pitch-night.jpg',
       featured: false,
-      registered: true
+      registered: true,
     },
     {
       id: 6,
       title: 'Women in Tech Panel Discussion',
-      description: 'Inspiring panel discussion featuring successful women leaders in technology sharing their journeys and insights.',
+      description:
+        'Inspiring panel discussion featuring successful women leaders in technology sharing their journeys and insights.',
       date: '2024-02-18T15:00:00Z',
       endDate: '2024-02-18T17:00:00Z',
       location: 'Virtual Event',
@@ -154,72 +172,77 @@ export default const NetworkingEvents: React.FC = () => {
       tags: ['diversity', 'leadership', 'career-development'],
       image: '/events/women-tech.jpg',
       featured: true,
-      registered: false
-    }
+      registered: false,
+    },
   ];
 
-  const getEventTypeColor = (type) => {
+  const getEventTypeColor = type => {
     const colors = {
-      'conference': 'bg-blue-100 text-blue-600',
-      'workshop': 'bg-green-100 text-green-600',
-      'meetup': 'bg-purple-100 text-purple-600',
-      'networking': 'bg-orange-100 text-orange-600',
-      'panel': 'bg-red-100 text-red-600'
+      conference: 'bg-blue-100 text-blue-600',
+      workshop: 'bg-green-100 text-green-600',
+      meetup: 'bg-purple-100 text-purple-600',
+      networking: 'bg-orange-100 text-orange-600',
+      panel: 'bg-red-100 text-red-600',
     };
     return colors[type] || colors.meetup;
   };
 
-  const getFormatIcon = (format) => {
+  const getFormatIcon = format => {
     switch (format) {
-      case 'virtual': return <Video className="w-4 h-4" />;
-      case 'hybrid': return <Globe className="w-4 h-4" />;
-      default: return <MapPin className="w-4 h-4" />;
+      case 'virtual':
+        return <Video className="w-4 h-4" />;
+      case 'hybrid':
+        return <Globe className="w-4 h-4" />;
+      default:
+        return <MapPin className="w-4 h-4" />;
     }
   };
 
-  const formatDate = (dateString) => {
+  const formatDate = dateString => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
       weekday: 'short',
       month: 'short',
       day: 'numeric',
-      year: 'numeric'
+      year: 'numeric',
     });
   };
 
-  const formatTime = (dateString) => {
+  const formatTime = dateString => {
     const date = new Date(dateString);
     return date.toLocaleTimeString('en-US', {
       hour: 'numeric',
       minute: '2-digit',
-      hour12: true
+      hour12: true,
     });
   };
 
-  const registerForEvent = (eventId) => {
+  const registerForEvent = eventId => {
     console.log(`Registering for event ${eventId}`);
-    setEvents(events.map(event => 
-      event.id === eventId 
-        ? { ...event, registered: true, attendees: event.attendees + 1 }
-        : event
-    ));
+    setEvents(
+      events.map(event =>
+        event.id === eventId
+          ? { ...event, registered: true, attendees: event.attendees + 1 }
+          : event
+      )
+    );
     alert('Successfully registered for event!');
   };
 
-  const shareEvent = (event) => {
+  const shareEvent = event => {
     const shareUrl = `${window.location.origin}/social/events/${event.id}`;
     navigator.clipboard.writeText(shareUrl);
     alert('Event link copied to clipboard!');
   };
 
-  const setReminder = (eventId) => {
+  const setReminder = eventId => {
     console.log(`Setting reminder for event ${eventId}`);
-    alert('Reminder set! You\'ll be notified before the event starts.');
+    alert("Reminder set! You'll be notified before the event starts.");
   };
 
   const filteredEvents = events.filter(event => {
     if (filters.type !== 'all' && event.type !== filters.type) return false;
-    if (filters.format !== 'all' && event.format !== filters.format) return false;
+    if ((filters as any).format !== 'all' && (event as any).format !== (filters as any).format) return false;
     if (searchQuery && !event.title.toLowerCase().includes(searchQuery.toLowerCase())) return false;
     return true;
   });
@@ -245,7 +268,10 @@ export default const NetworkingEvents: React.FC = () => {
         {/* Navigation */}
         <div className="bg-white border-b border-gray-200">
           <div className="container mx-auto px-4 py-3">
-            <Link href="/social" className="inline-flex items-center text-blue-600 hover:text-blue-700 transition-colors">
+            <Link
+              href="/social"
+              className="inline-flex items-center text-blue-600 hover:text-blue-700 transition-colors"
+            >
               <ArrowLeft className="w-4 h-4 mr-2" />
               <span className="text-sm font-medium">Back to Social Hub</span>
             </Link>
@@ -342,7 +368,7 @@ export default const NetworkingEvents: React.FC = () => {
                   <input
                     type="text"
                     value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onChange={e => setSearchQuery(e.target.value)}
                     placeholder="Search events..."
                     className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
@@ -351,7 +377,7 @@ export default const NetworkingEvents: React.FC = () => {
               <div className="flex gap-3">
                 <select
                   value={filters.type}
-                  onChange={(e) => setFilters({...filters, type: e.target.value})}
+                  onChange={e => setFilters({ ...filters, type: e.target.value })}
                   className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
                   <option value="all">All Types</option>
@@ -362,8 +388,8 @@ export default const NetworkingEvents: React.FC = () => {
                   <option value="panel">Panels</option>
                 </select>
                 <select
-                  value={filters.format}
-                  onChange={(e) => setFilters({...filters, format: e.target.value})}
+                  value={(filters as any).format}
+                  onChange={e => setFilters({ ...filters, format: e.target.value })}
                   className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
                   <option value="all">All Formats</option>
@@ -381,8 +407,11 @@ export default const NetworkingEvents: React.FC = () => {
 
           {/* Events Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredEvents.map((event) => (
-              <div key={event.id} className={`bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow ${event.featured ? 'ring-2 ring-blue-200' : ''}`}>
+            {filteredEvents.map(event => (
+              <div
+                key={event.id}
+                className={`bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow ${event.featured ? 'ring-2 ring-blue-200' : ''}`}
+              >
                 {/* Event Image */}
                 <div className="relative">
                   <div className="h-48 bg-gray-200 rounded-t-lg flex items-center justify-center">
@@ -407,12 +436,14 @@ export default const NetworkingEvents: React.FC = () => {
                 {/* Event Details */}
                 <div className="p-6">
                   <div className="flex items-start justify-between mb-3">
-                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${getEventTypeColor(event.type)}`}>
+                    <span
+                      className={`px-2 py-1 text-xs font-medium rounded-full ${getEventTypeColor(event.type)}`}
+                    >
                       {event.type}
                     </span>
                     <div className="flex items-center space-x-1 text-xs text-gray-500">
-                      {getFormatIcon(event.format)}
-                      <span>{event.format}</span>
+                      {getFormatIcon((event as any).format)}
+                      <span>{(event as any).format}</span>
                     </div>
                   </div>
 
@@ -426,7 +457,9 @@ export default const NetworkingEvents: React.FC = () => {
                     </div>
                     <div className="flex items-center space-x-2 text-sm text-gray-600">
                       <Clock className="w-4 h-4" />
-                      <span>{formatTime(event.date)} - {formatTime(event.endDate)}</span>
+                      <span>
+                        {formatTime(event.date)} - {formatTime(event.endDate)}
+                      </span>
                     </div>
                     <div className="flex items-center space-x-2 text-sm text-gray-600">
                       <MapPin className="w-4 h-4" />
@@ -434,13 +467,18 @@ export default const NetworkingEvents: React.FC = () => {
                     </div>
                     <div className="flex items-center space-x-2 text-sm text-gray-600">
                       <Users className="w-4 h-4" />
-                      <span>{event.attendees}/{event.maxAttendees} attendees</span>
+                      <span>
+                        {event.attendees}/{event.maxAttendees} attendees
+                      </span>
                     </div>
                   </div>
 
                   <div className="flex flex-wrap gap-1 mb-4">
                     {event.tags.slice(0, 3).map((tag, index) => (
-                      <span key={index} className="px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded">
+                      <span
+                        key={index}
+                        className="px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded"
+                      >
                         #{tag}
                       </span>
                     ))}
@@ -450,9 +488,7 @@ export default const NetworkingEvents: React.FC = () => {
                     <div className="text-lg font-bold text-gray-900">
                       {event.price === 0 ? 'Free' : `$${event.price}`}
                     </div>
-                    <div className="text-sm text-gray-500">
-                      by {event.organizer}
-                    </div>
+                    <div className="text-sm text-gray-500">by {event.organizer}</div>
                   </div>
 
                   {/* Action Buttons */}
@@ -462,20 +498,20 @@ export default const NetworkingEvents: React.FC = () => {
                         Registered
                       </button>
                     ) : (
-                      <button 
+                      <button
                         onClick={() => registerForEvent(event.id)}
                         className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
                       >
                         Register
                       </button>
                     )}
-                    <button 
+                    <button
                       onClick={() => setReminder(event.id)}
                       className="p-2 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200"
                     >
                       <Bell className="w-4 h-4" />
                     </button>
-                    <button 
+                    <button
                       onClick={() => shareEvent(event)}
                       className="p-2 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200"
                     >
@@ -490,4 +526,6 @@ export default const NetworkingEvents: React.FC = () => {
       </div>
     </>
   );
-}
+};
+
+export default NetworkingEvents;

@@ -1,17 +1,17 @@
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import AdvancedSecurityDashboard from '../../src/components/security/AdvancedSecurityDashboard';
+import AdvancedSecurityDashboard from '../../components/security/AdvancedSecurityDashboard';
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 5 * 60 * 1000, // 5 minutes
-      cacheTime: 10 * 60 * 1000, // 10 minutes
+      gcTime: 10 * 60 * 1000, // 10 minutes
     },
   },
 });
 
-export default const AdvancedSecurityDashboardPage: React.FC = () => {
+const AdvancedSecurityDashboardPage: React.FC = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <div className="min-h-screen bg-gray-50">
@@ -21,4 +21,6 @@ export default const AdvancedSecurityDashboardPage: React.FC = () => {
       </div>
     </QueryClientProvider>
   );
-}
+};
+
+export default AdvancedSecurityDashboardPage;

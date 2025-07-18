@@ -308,7 +308,7 @@ const AuthPage: React.FC = () => {
               )}
 
               {/* Submit Button */}
-              <Button type="submit" className="w-full" disabled={isSubmitting}>
+              <Button type="submit" className="w-full" disabled={isSubmitting} onClick={() => {}}>
                 {isSubmitting ? (
                   <div className="flex items-center justify-center space-x-2">
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
@@ -326,8 +326,7 @@ const AuthPage: React.FC = () => {
             <div className="text-center">
               <p className="text-gray-600">
                 {isLoginMode ? "Don't have an account?" : 'Already have an account?'}
-                <Button
-                  type="button"
+                <Button type="button"
                   variant="link"
                   onClick={toggleMode}
                   className="ml-2 font-medium"

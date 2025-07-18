@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import PageHeader from '../../../components/PageHeader';
-import { Card, CardContent, CardHeader, CardTitle } from '../../src/components/ui/Card';
-import { Button } from '../../src/components/ui/Button';
-import { Badge } from '../../src/components/ui/Badge';
-import { Avatar, AvatarFallback, AvatarImage } from '../../src/components/ui/Avatar';
-import { Progress } from '../../src/components/ui/Progress';
+import PageHeader from '../../components/navigation/PageHeader';
+import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
+import { Button } from '../../components/ui/Button';
+import { Badge } from '../../components/ui/Badge';
+import { Avatar, AvatarFallback, AvatarImage } from '../../components/ui/Avatar';
+import { Progress } from '../../components/ui/Progress';
 import {
   Briefcase,
   MapPin,
@@ -357,7 +357,7 @@ const CareerJobs: React.FC = () => {
       });
 
       if (response.ok) {
-        setSavedJobs(prev => new Set([...prev, jobId]));
+        setSavedJobs(prev => new Set(Array.from(prev).concat([jobId])));
       }
     } catch (error) {
       console.error('Error saving job:', error);
@@ -395,26 +395,8 @@ const CareerJobs: React.FC = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <PageHeader
-        title="Job Opportunities"
+      <PageHeader title="Job Opportunities"
         subtitle="AI-powered job matching and career opportunities"
-        icon={<Briefcase className="h-8 w-8" />}
-        breadcrumb={[
-          { label: 'Career', href: '/career' },
-          { label: 'Jobs', href: '/career/jobs' },
-        ]}
-        actions={
-          <div className="flex gap-2">
-            <Button variant="outline">
-              <FileText className="h-4 w-4 mr-2" />
-              Upload Resume
-            </Button>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Job Alert
-            </Button>
-          </div>
-        }
       />
 
       {/* Tab Navigation */}
@@ -505,7 +487,7 @@ const CareerJobs: React.FC = () => {
                 </option>
               ))}
             </select>
-            <Button variant="outline">
+            <Button variant="outline" onClick={() => {}} disabled={false}>
               <SlidersHorizontal className="h-4 w-4 mr-2" />
               More Filters
             </Button>
@@ -518,9 +500,10 @@ const CareerJobs: React.FC = () => {
                 <CardContent className="p-6">
                   <div className="flex items-start justify-between">
                     <div className="flex items-start gap-4 flex-1">
-                      <Avatar className="h-12 w-12">
-                        <AvatarFallback>{job.logo}</AvatarFallback>
-                      </Avatar>
+                      <Avatar
+                        className="h-12 w-12"
+                        fallback={job.logo}
+                      />
                       <div className="space-y-2 flex-1">
                         <div>
                           <h3 className="font-medium text-lg">{job.title}</h3>
@@ -580,36 +563,34 @@ const CareerJobs: React.FC = () => {
                       </div>
 
                       <div className="flex gap-2">
-                        <Button
-                          variant="outline"
+                        <Button variant="outline"
                           size="sm"
-                          onClick={() => handleSaveJob(job.id)}
+                          onClick={() => handleSaveJob(job.id)} disabled={false}
                           disabled={job.saved || savedJobs.has(job.id)}
                         >
                           <Bookmark
                             className={`h-4 w-4 ${job.saved || savedJobs.has(job.id) ? 'fill-current' : ''}`}
                           />
                         </Button>
-                        <Button variant="outline" size="sm">
+                        <Button variant="outline" size="sm" onClick={() => {}} disabled={false}>
                           <Share2 className="h-4 w-4" />
                         </Button>
-                        <Button variant="outline" size="sm">
+                        <Button variant="outline" size="sm" onClick={() => {}} disabled={false}>
                           <Eye className="h-4 w-4" />
                         </Button>
                       </div>
 
                       <div className="flex gap-2">
                         {job.quickApply ? (
-                          <Button
-                            size="sm"
-                            onClick={() => handleApplyJob(job.id)}
+                          <Button size="sm"
+                            onClick={() => handleApplyJob(job.id)} disabled={false}
                             disabled={job.applied}
                           >
                             <Zap className="h-4 w-4 mr-2" />
                             {job.applied ? 'Applied' : 'Quick Apply'}
                           </Button>
                         ) : (
-                          <Button variant="outline" size="sm">
+                          <Button variant="outline" size="sm" onClick={() => {}} disabled={false}>
                             <ExternalLink className="h-4 w-4 mr-2" />
                             Apply
                           </Button>
@@ -678,7 +659,7 @@ const CareerJobs: React.FC = () => {
                     <div className="text-sm text-gray-600">
                       Response: {application.estimatedResponse}
                     </div>
-                    <Button variant="outline" size="sm">
+                    <Button variant="outline" size="sm" onClick={() => {}} disabled={false}>
                       <MessageSquare className="h-4 w-4 mr-2" />
                       Contact
                     </Button>
@@ -716,11 +697,11 @@ const CareerJobs: React.FC = () => {
                   </div>
 
                   <div className="flex gap-2">
-                    <Button variant="outline" size="sm">
+                    <Button variant="outline" size="sm" onClick={() => {}} disabled={false}>
                       <Eye className="h-4 w-4 mr-2" />
                       View
                     </Button>
-                    <Button size="sm">
+                    <Button size="sm" onClick={() => {}} disabled={false}>
                       <Send className="h-4 w-4 mr-2" />
                       Apply
                     </Button>
@@ -871,7 +852,7 @@ const CareerJobs: React.FC = () => {
                         </div>
                         <p className="text-sm text-gray-700">{rec.message}</p>
                       </div>
-                      <Button size="sm" variant="outline">
+                      <Button size="sm" variant="outline" onClick={() => {}} disabled={false}>
                         {rec.action}
                       </Button>
                     </div>

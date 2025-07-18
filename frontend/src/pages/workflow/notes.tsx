@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import PageHeader from '../../components/PageHeader';
+import PageHeader from '../../components/navigation/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
@@ -217,8 +217,7 @@ const WorkflowNotes = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <PageHeader
-        title="Workflow Notes"
+      <PageHeader title="Workflow Notes"
         subtitle="Document processes, troubleshooting guides, and best practices"
         icon={<FileText className="h-8 w-8" />}
         breadcrumb={[
@@ -227,11 +226,11 @@ const WorkflowNotes = () => {
         ]}
         actions={
           <div className="flex gap-2">
-            <Button variant="outline">
+            <Button variant="outline" onClick={() => {}} disabled={false}>
               <Upload className="h-4 w-4 mr-2" />
               Import
             </Button>
-            <Button onClick={() => setShowCreateModal(true)}>
+            <Button onClick={() => setShowCreateModal(true)} disabled={false}>
               <Plus className="h-4 w-4 mr-2" />
               New Note
             </Button>
@@ -316,7 +315,7 @@ const WorkflowNotes = () => {
                 className="pl-10"
               />
             </div>
-            <Button variant="outline">
+            <Button variant="outline" onClick={() => {}} disabled={false}>
               <Filter className="h-4 w-4 mr-2" />
               Filter
             </Button>
@@ -401,17 +400,17 @@ const WorkflowNotes = () => {
 
                     {/* Actions */}
                     <div className="flex gap-2 pt-2 border-t">
-                      <Button variant="outline" size="sm" className="flex-1">
+                      <Button variant="outline" size="sm" className="flex-1" onClick={() => {}} disabled={false}>
                         <Eye className="h-3 w-3 mr-1" />
                         View
                       </Button>
-                      <Button variant="outline" size="sm">
+                      <Button variant="outline" size="sm" onClick={() => {}} disabled={false}>
                         <Edit className="h-3 w-3" />
                       </Button>
-                      <Button variant="outline" size="sm">
+                      <Button variant="outline" size="sm" onClick={() => {}} disabled={false}>
                         <Share className="h-3 w-3" />
                       </Button>
-                      <Button variant="outline" size="sm">
+                      <Button variant="outline" size="sm" onClick={() => {}} disabled={false}>
                         <Bookmark className="h-3 w-3" />
                       </Button>
                     </div>
@@ -430,7 +429,7 @@ const WorkflowNotes = () => {
                   ? 'Try adjusting your search terms'
                   : 'Create your first workflow note to get started'}
               </p>
-              <Button onClick={() => setShowCreateModal(true)}>
+              <Button onClick={() => setShowCreateModal(true)} disabled={false}>
                 <Plus className="h-4 w-4 mr-2" />
                 Create Note
               </Button>
@@ -459,10 +458,10 @@ const WorkflowNotes = () => {
               <Textarea placeholder="Note content" rows={10} />
               <Input placeholder="Tags (comma separated)" />
               <div className="flex gap-2">
-                <Button onClick={() => setShowCreateModal(false)} variant="outline">
+                <Button onClick={() => setShowCreateModal(false)} disabled={false} variant="outline">
                   Cancel
                 </Button>
-                <Button onClick={() => createNote({})}>Create Note</Button>
+                <Button onClick={() => createNote({})} disabled={false}>Create Note</Button>
               </div>
             </CardContent>
           </Card>

@@ -14,9 +14,6 @@ const queryClient = new QueryClient({
 
 const TwinInteractionPage: React.FC = () => {
   return (
-
-const TwinInteractionPage: React.FC = () => {
-
     <QueryClientProvider client={queryClient}>
       <ToastProvider>
         <div className="min-h-screen bg-gray-50 p-6">
@@ -27,6 +24,6 @@ const TwinInteractionPage: React.FC = () => {
       </ToastProvider>
     </QueryClientProvider>
   );
-}
+};
 
 export default TwinInteractionPage;

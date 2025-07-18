@@ -1,16 +1,27 @@
 import Head from 'next/head';
 import React, { useState, useEffect } from 'react';
-import Head from 'next/head';
 import Link from 'next/link';
-import { ArrowLeft, BookOpen, Play, Clock, Users, Star, Filter, Search, Award, CheckCircle, BarChart3 } from 'lucide-react';
+import {
+  ArrowLeft,
+  BookOpen,
+  Play,
+  Clock,
+  Users,
+  Star,
+  Filter,
+  Search,
+  Award,
+  CheckCircle,
+  BarChart3,
+} from 'lucide-react';
 
-export default const CourseCatalog: React.FC = () => {
+const CourseCatalog: React.FC = () => {
   const [courses, setCourses] = useState([]);
   const [filters, setFilters] = useState({
     category: 'all',
     level: 'all',
     duration: 'all',
-    price: 'all'
+    price: 'all',
   });
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -24,10 +35,10 @@ export default const CourseCatalog: React.FC = () => {
     try {
       const response = await fetch('/api/learning/courses', {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token') || 'demo-token'}`
-        }
+          Authorization: `Bearer ${localStorage.getItem('token') || 'demo-token'}`,
+        },
       });
-      
+
       if (response.ok) {
         const result = await response.json();
         setCourses(result.data);
@@ -46,7 +57,8 @@ export default const CourseCatalog: React.FC = () => {
     {
       id: 1,
       title: 'Advanced React Development',
-      description: 'Master advanced React concepts including hooks, context, performance optimization, and testing.',
+      description:
+        'Master advanced React concepts including hooks, context, performance optimization, and testing.',
       instructor: 'Sarah Chen',
       instructorAvatar: '/avatars/sarah.jpg',
       category: 'Programming',
@@ -64,12 +76,13 @@ export default const CourseCatalog: React.FC = () => {
       completed: false,
       progress: 0,
       featured: true,
-      lastUpdated: '2024-01-05T10:30:00Z'
+      lastUpdated: '2024-01-05T10:30:00Z',
     },
     {
       id: 2,
       title: 'Data Science Fundamentals',
-      description: 'Learn the basics of data science including Python, statistics, and machine learning.',
+      description:
+        'Learn the basics of data science including Python, statistics, and machine learning.',
       instructor: 'David Kim',
       instructorAvatar: '/avatars/david.jpg',
       category: 'Data Science',
@@ -87,7 +100,7 @@ export default const CourseCatalog: React.FC = () => {
       completed: false,
       progress: 45,
       featured: false,
-      lastUpdated: '2024-01-04T14:20:00Z'
+      lastUpdated: '2024-01-04T14:20:00Z',
     },
     {
       id: 3,
@@ -110,7 +123,7 @@ export default const CourseCatalog: React.FC = () => {
       completed: false,
       progress: 0,
       featured: true,
-      lastUpdated: '2024-01-03T09:15:00Z'
+      lastUpdated: '2024-01-03T09:15:00Z',
     },
     {
       id: 4,
@@ -133,12 +146,13 @@ export default const CourseCatalog: React.FC = () => {
       completed: true,
       progress: 100,
       featured: false,
-      lastUpdated: '2024-01-02T16:45:00Z'
+      lastUpdated: '2024-01-02T16:45:00Z',
     },
     {
       id: 5,
       title: 'Project Management Essentials',
-      description: 'Master project management methodologies and tools for successful project delivery.',
+      description:
+        'Master project management methodologies and tools for successful project delivery.',
       instructor: 'Marcus Johnson',
       instructorAvatar: '/avatars/marcus.jpg',
       category: 'Business',
@@ -156,7 +170,7 @@ export default const CourseCatalog: React.FC = () => {
       completed: false,
       progress: 0,
       featured: false,
-      lastUpdated: '2024-01-01T11:30:00Z'
+      lastUpdated: '2024-01-01T11:30:00Z',
     },
     {
       id: 6,
@@ -179,46 +193,48 @@ export default const CourseCatalog: React.FC = () => {
       completed: false,
       progress: 25,
       featured: true,
-      lastUpdated: '2023-12-28T08:20:00Z'
-    }
+      lastUpdated: '2023-12-28T08:20:00Z',
+    },
   ];
 
-  const getLevelColor = (level) => {
+  const getLevelColor = level => {
     const colors = {
-      'Beginner': 'bg-green-100 text-green-600',
-      'Intermediate': 'bg-yellow-100 text-yellow-600',
-      'Advanced': 'bg-red-100 text-red-600'
+      Beginner: 'bg-green-100 text-green-600',
+      Intermediate: 'bg-yellow-100 text-yellow-600',
+      Advanced: 'bg-red-100 text-red-600',
     };
     return colors[level] || colors.Beginner;
   };
 
-  const getCategoryColor = (category) => {
+  const getCategoryColor = category => {
     const colors = {
-      'Programming': 'bg-blue-100 text-blue-600',
+      Programming: 'bg-blue-100 text-blue-600',
       'Data Science': 'bg-purple-100 text-purple-600',
-      'Design': 'bg-pink-100 text-pink-600',
-      'Marketing': 'bg-orange-100 text-orange-600',
-      'Business': 'bg-indigo-100 text-indigo-600',
-      'Technology': 'bg-gray-100 text-gray-600'
+      Design: 'bg-pink-100 text-pink-600',
+      Marketing: 'bg-orange-100 text-orange-600',
+      Business: 'bg-indigo-100 text-indigo-600',
+      Technology: 'bg-gray-100 text-gray-600',
     };
     return colors[category] || colors.Technology;
   };
 
-  const formatDuration = (duration) => {
+  const formatDuration = duration => {
     return duration;
   };
 
-  const enrollInCourse = (courseId) => {
+  const enrollInCourse = courseId => {
     console.log(`Enrolling in course ${courseId}`);
-    setCourses(courses.map(course => 
-      course.id === courseId 
-        ? { ...course, enrolled: true, students: course.students + 1 }
-        : course
-    ));
+    setCourses(
+      courses.map(course =>
+        course.id === courseId
+          ? { ...course, enrolled: true, students: course.students + 1 }
+          : course
+      )
+    );
     alert('Successfully enrolled in course!');
   };
 
-  const continueCourse = (courseId) => {
+  const continueCourse = courseId => {
     console.log(`Continuing course ${courseId}`);
     // Navigate to course content
     alert('Redirecting to course content...');
@@ -231,7 +247,8 @@ export default const CourseCatalog: React.FC = () => {
       if (filters.price === 'free' && course.price > 0) return false;
       if (filters.price === 'paid' && course.price === 0) return false;
     }
-    if (searchQuery && !course.title.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+    if (searchQuery && !course.title.toLowerCase().includes(searchQuery.toLowerCase()))
+      return false;
     return true;
   });
 
@@ -247,7 +264,10 @@ export default const CourseCatalog: React.FC = () => {
     <>
       <Head>
         <title>Course Catalog - Learning - Digame</title>
-        <meta name="description" content="Explore our comprehensive course catalog and enhance your skills" />
+        <meta
+          name="description"
+          content="Explore our comprehensive course catalog and enhance your skills"
+        />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
       </Head>
@@ -256,7 +276,10 @@ export default const CourseCatalog: React.FC = () => {
         {/* Navigation */}
         <div className="bg-white border-b border-gray-200">
           <div className="container mx-auto px-4 py-3">
-            <Link href="/learning" className="inline-flex items-center text-blue-600 hover:text-blue-700 transition-colors">
+            <Link
+              href="/learning"
+              className="inline-flex items-center text-blue-600 hover:text-blue-700 transition-colors"
+            >
               <ArrowLeft className="w-4 h-4 mr-2" />
               <span className="text-sm font-medium">Back to Learning Hub</span>
             </Link>
@@ -271,7 +294,9 @@ export default const CourseCatalog: React.FC = () => {
             </div>
             <div>
               <h1 className="text-3xl font-bold text-gray-900">Course Catalog</h1>
-              <p className="text-gray-600">Explore our comprehensive course catalog and enhance your skills</p>
+              <p className="text-gray-600">
+                Explore our comprehensive course catalog and enhance your skills
+              </p>
             </div>
           </div>
 
@@ -341,7 +366,7 @@ export default const CourseCatalog: React.FC = () => {
                   <input
                     type="text"
                     value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onChange={e => setSearchQuery(e.target.value)}
                     placeholder="Search courses..."
                     className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
@@ -350,7 +375,7 @@ export default const CourseCatalog: React.FC = () => {
               <div className="flex gap-3">
                 <select
                   value={filters.category}
-                  onChange={(e) => setFilters({...filters, category: e.target.value})}
+                  onChange={e => setFilters({ ...filters, category: e.target.value })}
                   className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
                   <option value="all">All Categories</option>
@@ -363,7 +388,7 @@ export default const CourseCatalog: React.FC = () => {
                 </select>
                 <select
                   value={filters.level}
-                  onChange={(e) => setFilters({...filters, level: e.target.value})}
+                  onChange={e => setFilters({ ...filters, level: e.target.value })}
                   className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
                   <option value="all">All Levels</option>
@@ -373,7 +398,7 @@ export default const CourseCatalog: React.FC = () => {
                 </select>
                 <select
                   value={filters.price}
-                  onChange={(e) => setFilters({...filters, price: e.target.value})}
+                  onChange={e => setFilters({ ...filters, price: e.target.value })}
                   className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
                   <option value="all">All Prices</option>
@@ -382,7 +407,7 @@ export default const CourseCatalog: React.FC = () => {
                 </select>
                 <select
                   value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
+                  onChange={e => setSortBy(e.target.value)}
                   className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
                   <option value="popular">Most Popular</option>
@@ -396,8 +421,11 @@ export default const CourseCatalog: React.FC = () => {
 
           {/* Courses Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredCourses.map((course) => (
-              <div key={course.id} className={`bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow ${course.featured ? 'ring-2 ring-blue-200' : ''}`}>
+            {filteredCourses.map(course => (
+              <div
+                key={course.id}
+                className={`bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow ${course.featured ? 'ring-2 ring-blue-200' : ''}`}
+              >
                 {/* Course Thumbnail */}
                 <div className="relative">
                   <div className="h-48 bg-gray-200 rounded-t-lg flex items-center justify-center">
@@ -426,10 +454,14 @@ export default const CourseCatalog: React.FC = () => {
                 {/* Course Details */}
                 <div className="p-6">
                   <div className="flex items-start justify-between mb-3">
-                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${getCategoryColor(course.category)}`}>
+                    <span
+                      className={`px-2 py-1 text-xs font-medium rounded-full ${getCategoryColor(course.category)}`}
+                    >
                       {course.category}
                     </span>
-                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${getLevelColor(course.level)}`}>
+                    <span
+                      className={`px-2 py-1 text-xs font-medium rounded-full ${getLevelColor(course.level)}`}
+                    >
                       {course.level}
                     </span>
                   </div>
@@ -459,7 +491,9 @@ export default const CourseCatalog: React.FC = () => {
                     </div>
                     <div className="flex items-center space-x-1">
                       <Star className="w-4 h-4 text-yellow-500" />
-                      <span>{course.rating} ({course.reviews})</span>
+                      <span>
+                        {course.rating} ({course.reviews})
+                      </span>
                     </div>
                   </div>
 
@@ -470,8 +504,8 @@ export default const CourseCatalog: React.FC = () => {
                         <span className="font-medium text-gray-900">{course.progress}%</span>
                       </div>
                       <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div 
-                          className="bg-blue-600 h-2 rounded-full" 
+                        <div
+                          className="bg-blue-600 h-2 rounded-full"
                           style={{ width: `${course.progress}%` }}
                         ></div>
                       </div>
@@ -480,7 +514,10 @@ export default const CourseCatalog: React.FC = () => {
 
                   <div className="flex flex-wrap gap-1 mb-4">
                     {course.tags.slice(0, 3).map((tag, index) => (
-                      <span key={index} className="px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded">
+                      <span
+                        key={index}
+                        className="px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded"
+                      >
                         {tag}
                       </span>
                     ))}
@@ -499,7 +536,7 @@ export default const CourseCatalog: React.FC = () => {
                         Completed
                       </button>
                     ) : (
-                      <button 
+                      <button
                         onClick={() => continueCourse(course.id)}
                         className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
                       >
@@ -507,7 +544,7 @@ export default const CourseCatalog: React.FC = () => {
                       </button>
                     )
                   ) : (
-                    <button 
+                    <button
                       onClick={() => enrollInCourse(course.id)}
                       className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
                     >
@@ -522,4 +559,6 @@ export default const CourseCatalog: React.FC = () => {
       </div>
     </>
   );
-}
+};
+
+export default CourseCatalog;

@@ -1,11 +1,13 @@
 import React from 'react';
 import { Container } from '@mui/material';
-import MentorshipHub from '../../src/components/social/MentorshipHub';
+import MentorshipHub from '../../components/social/MentorshipHub';
 
-export default const MentorshipPage: React.FC = () => {
+const MentorshipPage: React.FC = () => {
   return (
     <Container maxWidth="xl">
       <MentorshipHub />
     </Container>
   );
-}
+};
+
+export default MentorshipPage;

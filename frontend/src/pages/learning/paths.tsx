@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 import { useEffect } from 'react';
 
 // Redirect to existing career learning page
-export default const LearningPaths: React.FC = () => {
+const LearningPaths: React.FC = () => {
   const router = useRouter();
 
   useEffect(() => {
@@ -19,4 +19,6 @@ export default const LearningPaths: React.FC = () => {
       </div>
     </div>
   );
-}
+};
+
+export default LearningPaths;

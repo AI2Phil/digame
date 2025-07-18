@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import PageHeader from '../../../components/PageHeader';
-import { Card, CardContent, CardHeader, CardTitle } from '../../src/components/ui/Card';
-import { Button } from '../../src/components/ui/Button';
-import { Badge } from '../../src/components/ui/Badge';
-import { Progress } from '../../src/components/ui/Progress';
+import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
+import { Button } from '../../components/ui/Button';
+import { Badge } from '../../components/ui/Badge';
+import { Progress } from '../../components/ui/Progress';
 import {
   BarChart3,
   TrendingUp,
@@ -211,8 +211,7 @@ const TaskAnalytics: React.FC = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <PageHeader
-        title="Task Analytics"
+      <PageHeader title="Task Analytics"
         subtitle="Comprehensive insights into your task performance and productivity patterns"
         icon={<BarChart3 className="h-8 w-8" />}
         breadcrumb={[
@@ -231,11 +230,11 @@ const TaskAnalytics: React.FC = () => {
               <option value="90d">Last 90 Days</option>
               <option value="1y">Last Year</option>
             </select>
-            <Button variant="outline" onClick={fetchTaskAnalytics}>
+            <Button variant="outline" onClick={fetchTaskAnalytics} disabled={false}>
               <RefreshCw className="h-4 w-4 mr-2" />
               Refresh
             </Button>
-            <Button variant="outline">
+            <Button variant="outline" onClick={() => {}} disabled={false}>
               <Download className="h-4 w-4 mr-2" />
               Export
             </Button>
@@ -453,16 +452,16 @@ const TaskAnalytics: React.FC = () => {
                     <div className="space-y-2">
                       <div>
                         <div className="text-2xl font-bold">
-                          {data.completed}/{data.total}
+                          {(data as any).completed}/{(data as any).total}
                         </div>
                         <div className="text-sm text-gray-600">Completed</div>
                       </div>
                       <div>
-                        <div className="text-lg font-medium text-red-600">{data.overdue}</div>
+                        <div className="text-lg font-medium text-red-600">{(data as any).overdue}</div>
                         <div className="text-sm text-gray-600">Overdue</div>
                       </div>
                       <div>
-                        <div className="text-sm font-medium">{data.avgTime}d</div>
+                        <div className="text-sm font-medium">{(data as any).avgTime}d</div>
                         <div className="text-xs text-gray-500">Avg Time</div>
                       </div>
                     </div>

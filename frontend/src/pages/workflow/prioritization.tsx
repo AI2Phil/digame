@@ -375,7 +375,7 @@ const WorkflowPrioritization = () => {
             </p>
           </div>
           <div className="flex items-center gap-4">
-            <Button variant="outline">
+            <Button variant="outline" onClick={() => {}} disabled={false}>
               <Settings className="h-4 w-4 mr-2" />
               Configure Framework
             </Button>
@@ -465,13 +465,13 @@ const WorkflowPrioritization = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {tasks.length === 0 ? (
+                  {(tasks as any).length === 0 ? (
                     <div className="text-center text-gray-500 py-8">
                       <Circle className="h-8 w-8 mx-auto mb-2 opacity-50" />
                       <p>No tasks in this quadrant</p>
                     </div>
                   ) : (
-                    tasks.map(task => (
+                    (tasks as any).map(task => (
                       <div key={task.id} className="bg-white rounded-lg p-4 border shadow-sm">
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
@@ -504,21 +504,19 @@ const WorkflowPrioritization = () => {
                           </div>
 
                           <div className="flex flex-col gap-1 ml-2">
-                            <Button
-                              size="sm"
+                            <Button size="sm"
                               variant="ghost"
-                              onClick={() => handleTaskAction(task.id, 'view')}
+                              onClick={() => handleTaskAction(task.id, 'view')} disabled={false}
                             >
                               <Eye className="h-3 w-3" />
                             </Button>
-                            <Button
-                              size="sm"
+                            <Button size="sm"
                               variant="ghost"
-                              onClick={() => handleTaskAction(task.id, 'edit')}
+                              onClick={() => handleTaskAction(task.id, 'edit')} disabled={false}
                             >
                               <Edit3 className="h-3 w-3" />
                             </Button>
-                            <Button size="sm" variant="ghost">
+                            <Button size="sm" variant="ghost" onClick={() => {}} disabled={false}>
                               <MoreHorizontal className="h-3 w-3" />
                             </Button>
                           </div>
@@ -569,11 +567,11 @@ const WorkflowPrioritization = () => {
                   </div>
 
                   <div className="flex gap-2">
-                    <Button size="sm" onClick={() => handleApplySuggestion(suggestion.id)}>
+                    <Button size="sm" onClick={() => handleApplySuggestion(suggestion.id)} disabled={false}>
                       <CheckCircle className="h-4 w-4 mr-2" />
                       Apply
                     </Button>
-                    <Button size="sm" variant="outline">
+                    <Button size="sm" variant="outline" onClick={() => {}} disabled={false}>
                       <Eye className="h-4 w-4 mr-2" />
                       Review
                     </Button>
@@ -773,10 +771,9 @@ const WorkflowPrioritization = () => {
                     <span className="font-medium">{framework.tasks}</span>
                   </div>
 
-                  <Button
-                    className="w-full"
+                  <Button className="w-full"
                     variant={framework.active ? 'outline' : 'default'}
-                    onClick={() => handleFrameworkChange(framework.id)}
+                    onClick={() => handleFrameworkChange(framework.id)} disabled={false}
                     disabled={framework.active}
                   >
                     {framework.active ? 'Currently Active' : 'Switch to This Framework'}

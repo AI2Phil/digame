@@ -13,9 +13,6 @@ const queryClient = new QueryClient({
 
 const TeamCoordinationPage: React.FC = () => {
   return (
-
-const TeamCoordinationPage: React.FC = () => {
-
     <QueryClientProvider client={queryClient}>
       <div className="min-h-screen bg-gray-50">
         <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
@@ -25,13 +22,13 @@ const TeamCoordinationPage: React.FC = () => {
               Orchestrate multi-twin optimization and collaboration across your team
             </p>
           </div>
-          
+
           <TeamCoordination teamId="default" />
         </div>
       </div>
     </QueryClientProvider>
   );
-}
+};
 
 export async function getStaticProps() {
   return {

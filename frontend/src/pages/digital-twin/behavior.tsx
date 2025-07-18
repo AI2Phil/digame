@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import PageHeader from '../../components/PageHeader';
+import PageHeader from '../../components/navigation/PageHeader';
 
 const BehaviorModeling = () => {
   const router = useRouter();
@@ -126,8 +126,7 @@ const BehaviorModeling = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <PageHeader
-        title="Behavior Modeling"
+      <PageHeader title="Behavior Modeling"
         subtitle="AI-powered behavioral pattern analysis and optimization"
         breadcrumbs={[
           { label: 'Digital Twin', href: '/digital-twin/my-twin' },

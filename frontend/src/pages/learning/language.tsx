@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 import { useEffect } from 'react';
 
 // Redirect to existing AI tools language learning page
-export default const LanguageLearning: React.FC = () => {
+const LanguageLearning: React.FC = () => {
   const router = useRouter();
 
   useEffect(() => {
@@ -19,4 +19,6 @@ export default const LanguageLearning: React.FC = () => {
       </div>
     </div>
   );
-}
+};
+
+export default LanguageLearning;

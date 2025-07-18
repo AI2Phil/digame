@@ -1,11 +1,13 @@
 import React from 'react';
-import DashboardLayout from '../../src/components/layout/DashboardLayout';
-import SocialDashboard from '../../src/components/social/SocialDashboard.tsx';
+import DashboardLayout from '../../components/layout/DashboardLayout';
+import SocialDashboard from '../../components/social/SocialDashboard';
 
-export default const SocialIndex: React.FC = () => {
+const SocialIndex: React.FC = () => {
   return (
     <DashboardLayout>
       <SocialDashboard />
     </DashboardLayout>
   );
-}
+};
+
+export default SocialIndex;

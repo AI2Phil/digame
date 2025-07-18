@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import PageHeader from '../../components/PageHeader';
+import PageHeader from '../../components/navigation/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
@@ -251,8 +251,7 @@ const WorkflowOptimization = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <PageHeader
-        title="Workflow Optimization"
+      <PageHeader title="Workflow Optimization"
         subtitle="AI-powered suggestions to improve workflow performance, reliability, and efficiency"
         icon={<Target className="h-8 w-8" />}
         breadcrumb={[
@@ -261,11 +260,11 @@ const WorkflowOptimization = () => {
         ]}
         actions={
           <div className="flex gap-2">
-            <Button variant="outline" onClick={fetchOptimizations}>
+            <Button variant="outline" onClick={fetchOptimizations} disabled={false}>
               <RefreshCw className="h-4 w-4 mr-2" />
               Refresh
             </Button>
-            <Button variant="outline">
+            <Button variant="outline" onClick={() => {}} disabled={false}>
               <Download className="h-4 w-4 mr-2" />
               Export Report
             </Button>
@@ -493,21 +492,20 @@ const WorkflowOptimization = () => {
                     </div>
 
                     <div className="flex gap-2 ml-4">
-                      <Button
-                        variant="outline"
+                      <Button variant="outline"
                         size="sm"
-                        onClick={() => applyOptimization(optimization.id)}
+                        onClick={() => applyOptimization(optimization.id)} disabled={false}
                       >
                         <Play className="h-4 w-4 mr-1" />
                         Apply
                       </Button>
-                      <Button variant="outline" size="sm">
+                      <Button variant="outline" size="sm" onClick={() => {}} disabled={false}>
                         <Star className="h-4 w-4" />
                       </Button>
-                      <Button variant="outline" size="sm">
+                      <Button variant="outline" size="sm" onClick={() => {}} disabled={false}>
                         <ThumbsUp className="h-4 w-4" />
                       </Button>
-                      <Button variant="outline" size="sm">
+                      <Button variant="outline" size="sm" onClick={() => {}} disabled={false}>
                         <ThumbsDown className="h-4 w-4" />
                       </Button>
                     </div>

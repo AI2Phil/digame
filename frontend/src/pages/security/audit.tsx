@@ -370,11 +370,11 @@ const AuditLogs: React.FC = () => {
             </p>
           </div>
           <div className="flex items-center gap-4">
-            <Button variant="outline" onClick={handleRefreshLogs}>
+            <Button variant="outline" onClick={handleRefreshLogs} disabled={false}>
               <RefreshCw className="h-4 w-4 mr-2" />
               Refresh
             </Button>
-            <Button onClick={handleExportLogs}>
+            <Button onClick={handleExportLogs} disabled={false}>
               <Download className="h-4 w-4 mr-2" />
               Export Logs
             </Button>
@@ -570,7 +570,7 @@ const AuditLogs: React.FC = () => {
                     </div>
                   </div>
 
-                  <Button size="sm" variant="outline" onClick={() => handleViewDetails(log.id)}>
+                  <Button size="sm" variant="outline" onClick={() => handleViewDetails(log.id)} disabled={false}>
                     <Eye className="h-4 w-4 mr-2" />
                     Details
                   </Button>
@@ -731,11 +731,11 @@ const AuditLogs: React.FC = () => {
                   </div>
 
                   <div className="flex gap-2">
-                    <Button size="sm" variant="outline">
+                    <Button size="sm" variant="outline" onClick={() => {}} disabled={false}>
                       <Eye className="h-4 w-4 mr-2" />
                       Investigate
                     </Button>
-                    <Button size="sm">Resolve</Button>
+                    <Button size="sm" onClick={() => {}} disabled={false}>Resolve</Button>
                   </div>
                 </div>
               </CardContent>
@@ -836,7 +836,7 @@ const AuditLogs: React.FC = () => {
               <div className="mt-6 pt-6 border-t">
                 <div className="flex gap-4">
                   <Button>Save Configuration</Button>
-                  <Button variant="outline">Test Settings</Button>
+                  <Button variant="outline" onClick={() => {}} disabled={false}>Test Settings</Button>
                 </div>
               </div>
             </CardContent>
@@ -876,7 +876,7 @@ const AuditLogs: React.FC = () => {
                   <textarea
                     placeholder="admin@company.com, security@company.com"
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    rows="3"
+                    rows={3}
                   />
                 </div>
               </div>

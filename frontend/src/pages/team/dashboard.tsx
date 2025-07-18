@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import PageHeader from '../../../components/PageHeader';
-import { Card, CardContent, CardHeader, CardTitle } from '../../src/components/ui/Card';
-import { Button } from '../../src/components/ui/Button';
-import { Badge } from '../../src/components/ui/Badge';
-import { Progress } from '../../src/components/ui/Progress';
+import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
+import { Button } from '../../components/ui/Button';
+import { Badge } from '../../components/ui/Badge';
+import { Progress } from '../../components/ui/Progress';
 import {
   Users,
   TrendingUp,
@@ -318,8 +318,7 @@ const TeamDashboard: React.FC = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <PageHeader
-        title="Team Dashboard"
+      <PageHeader title="Team Dashboard"
         subtitle="Monitor team performance, collaboration, and project progress"
         icon={<Users className="h-8 w-8" />}
         breadcrumb={[
@@ -337,11 +336,11 @@ const TeamDashboard: React.FC = () => {
               <option value="30d">Last 30 Days</option>
               <option value="90d">Last 90 Days</option>
             </select>
-            <Button variant="outline" onClick={fetchTeamData}>
+            <Button variant="outline" onClick={fetchTeamData} disabled={false}>
               <RefreshCw className="h-4 w-4 mr-2" />
               Refresh
             </Button>
-            <Button variant="outline">
+            <Button variant="outline" onClick={() => {}} disabled={false}>
               <Download className="h-4 w-4 mr-2" />
               Export
             </Button>

@@ -141,15 +141,14 @@ export const WorkflowAutomationPage: React.FC<WorkflowAutomationPageProps> = () 
           platform. Create templates, set up rules, and track performance all in one place.
         </p>
         <div className="flex justify-center space-x-4">
-          <Button
-            size="lg"
-            onClick={() => handleFeatureSelect('templates')}
+          <Button size="lg"
+            onClick={() => handleFeatureSelect('templates')} disabled={false}
             className="bg-blue-600 hover:bg-blue-700"
           >
             <Plus className="mr-2 h-5 w-5" />
             Create Workflow
           </Button>
-          <Button variant="outline" size="lg" onClick={() => handleFeatureSelect('monitoring')}>
+          <Button variant="outline" size="lg" onClick={() => handleFeatureSelect('monitoring')} disabled={false}>
             <BarChart3 className="mr-2 h-5 w-5" />
             View Analytics
           </Button>
@@ -230,13 +229,12 @@ export const WorkflowAutomationPage: React.FC<WorkflowAutomationPageProps> = () 
                       </Badge>
                     ))}
                   </div>
-                  <Button
-                    variant="outline"
+                  <Button variant="outline"
                     className="w-full mt-4"
-                    onClick={e => {
+                    onClick={(e) => {  
                       e.stopPropagation();
                       handleFeatureSelect(feature.id);
-                    }}
+                      }} disabled={false}
                   >
                     <Eye className="mr-2 h-4 w-4" />
                     Explore Feature

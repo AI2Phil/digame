@@ -1,31 +1,76 @@
 import React, { useState, useRef } from 'react';
 import Head from 'next/head';
-import { Mic, MicOff, Play, Pause, Download, Upload, Volume2, FileAudio, BarChart3 } from 'lucide-react';
-import PageHeader from '../../components/PageHeader';
+import Link from 'next/link';
+import {
+  Mic,
+  MicOff,
+  Play,
+  Pause,
+  Download,
+  Upload,
+  Volume2,
+  FileAudio,
+  BarChart3,
+  ArrowLeft,
+} from 'lucide-react';
+
+interface AudioFile {
+  name: string;
+  size?: number;
+}
+
+interface Emotion {
+  emotion: string;
+  score: number;
+}
+
+interface Sentiment {
+  overall: string;
+  confidence: number;
+  emotions: Emotion[];
+}
+
+interface VoiceCharacteristics {
+  pitch: string;
+  pace: string;
+  clarity: string;
+  energy: string;
+}
+
+interface SpeakingPatterns {
+  words_per_minute: number;
+  pause_frequency: string;
+  filler_words: number;
+  pronunciation_accuracy: number;
+}
+
+interface Analysis {
+  sentiment: Sentiment;
+  voice_characteristics: VoiceCharacteristics;
+  speaking_patterns: SpeakingPatterns;
+  recommendations: string[];
+}
 
 const VoiceProcessing: React.FC = () => {
   const [isRecording, setIsRecording] = useState(false);
-
-const VoiceProcessing: React.FC = () => {
-
   const [isPlaying, setIsPlaying] = useState(false);
-  const [audioFile, setAudioFile] = useState(null);
+  const [audioFile, setAudioFile] = useState<AudioFile | null>(null);
   const [transcription, setTranscription] = useState('');
-  const [analysis, setAnalysis] = useState(null);
+  const [analysis, setAnalysis] = useState<Analysis | null>(null);
   const [processingType, setProcessingType] = useState('transcribe');
   const [isProcessing, setIsProcessing] = useState(false);
-  const fileInputRef = useRef(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const processingOptions = [
     { id: 'transcribe', label: 'Speech to Text', icon: <FileAudio className="w-4 h-4" /> },
     { id: 'analyze', label: 'Voice Analysis', icon: <BarChart3 className="w-4 h-4" /> },
     { id: 'enhance', label: 'Audio Enhancement', icon: <Volume2 className="w-4 h-4" /> },
-    { id: 'translate', label: 'Voice Translation', icon: <Volume2 className="w-4 h-4" /> }
+    { id: 'translate', label: 'Voice Translation', icon: <Volume2 className="w-4 h-4" /> },
   ];
 
   const mockTranscription = `Hello, this is a sample transcription of your audio. The AI has successfully converted your speech to text with high accuracy. This technology can be used for meeting notes, content creation, accessibility features, and much more. The system also provides confidence scores and timestamps for each segment.`;
 
-  const mockAnalysis = {
+  const mockAnalysis: Analysis = {
     sentiment: {
       overall: 'positive',
       confidence: 0.87,
@@ -33,31 +78,31 @@ const VoiceProcessing: React.FC = () => {
         { emotion: 'confident', score: 0.82 },
         { emotion: 'enthusiastic', score: 0.76 },
         { emotion: 'calm', score: 0.68 },
-        { emotion: 'professional', score: 0.91 }
-      ]
+        { emotion: 'professional', score: 0.91 },
+      ],
     },
     voice_characteristics: {
       pitch: 'medium',
       pace: 'moderate',
       clarity: 'high',
-      energy: 'medium-high'
+      energy: 'medium-high',
     },
     speaking_patterns: {
       words_per_minute: 145,
       pause_frequency: 'normal',
       filler_words: 3,
-      pronunciation_accuracy: 0.94
+      pronunciation_accuracy: 0.94,
     },
     recommendations: [
       'Consider slightly slower pace for better comprehension',
       'Excellent clarity and pronunciation',
       'Good energy level for engagement',
-      'Professional tone maintained throughout'
-    ]
+      'Professional tone maintained throughout',
+    ],
   };
 
-  const handleFileUpload = (event) => {
-    const file = event.target.files[0];
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
     if (file && file.type.startsWith('audio/')) {
       setAudioFile(file);
       setTranscription('');
@@ -80,9 +125,9 @@ const VoiceProcessing: React.FC = () => {
 
   const processAudio = async () => {
     if (!audioFile) return;
-    
+
     setIsProcessing(true);
-    
+
     // Simulate processing time
     setTimeout(() => {
       switch (processingType) {
@@ -93,22 +138,30 @@ const VoiceProcessing: React.FC = () => {
           setAnalysis(mockAnalysis);
           break;
         case 'enhance':
-          setTranscription('Audio enhancement completed. Noise reduced by 85%, clarity improved by 40%.');
+          setTranscription(
+            'Audio enhancement completed. Noise reduced by 85%, clarity improved by 40%.'
+          );
           break;
         case 'translate':
-          setTranscription('Translated text: Hola, esta es una transcripción de muestra de su audio...');
+          setTranscription(
+            'Translated text: Hola, esta es una transcripción de muestra de su audio...'
+          );
           break;
       }
       setIsProcessing(false);
     }, 2000);
   };
 
-  const getSentimentColor = (sentiment) => {
+  const getSentimentColor = (sentiment: string) => {
     switch (sentiment) {
-      case 'positive': return 'text-green-600 bg-green-100';
-      case 'negative': return 'text-red-600 bg-red-100';
-      case 'neutral': return 'text-gray-600 bg-gray-100';
-      default: return 'text-gray-600 bg-gray-100';
+      case 'positive':
+        return 'text-green-600 bg-green-100';
+      case 'negative':
+        return 'text-red-600 bg-red-100';
+      case 'neutral':
+        return 'text-gray-600 bg-gray-100';
+      default:
+        return 'text-gray-600 bg-gray-100';
     }
   };
 
@@ -122,12 +175,40 @@ const VoiceProcessing: React.FC = () => {
       </Head>
 
       <div className="min-h-screen bg-gray-50">
-        <PageHeader 
-          title="Voice Processing"
-          subtitle="Advanced speech-to-text, voice analysis, and audio enhancement"
-          icon={<Mic className="w-6 h-6 text-purple-600" />}
-          badge="AI VOICE"
-        />
+        {/* Return to AI Tools Navigation */}
+        <div className="bg-white border-b border-gray-200">
+          <div className="container mx-auto px-4 py-3">
+            <Link
+              href="/ai-tools"
+              className="inline-flex items-center text-blue-600 hover:text-blue-700 transition-colors"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              <span className="text-sm font-medium">Return to AI Tools</span>
+            </Link>
+          </div>
+        </div>
+
+        {/* Header */}
+        <div className="bg-white border-b border-gray-200">
+          <div className="container mx-auto px-4 py-6">
+            <div className="flex items-center space-x-3">
+              <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                <Mic className="w-6 h-6 text-purple-600" />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900">Voice Processing</h1>
+                <p className="text-gray-600">
+                  Advanced speech-to-text, voice analysis, and audio enhancement
+                </p>
+              </div>
+              <div className="ml-auto">
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                  ✨ AI VOICE
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
 
         <div className="container mx-auto px-4 py-8">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -135,7 +216,7 @@ const VoiceProcessing: React.FC = () => {
             <div className="lg:col-span-1">
               <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Audio Input</h3>
-                
+
                 {/* Recording Controls */}
                 <div className="mb-6">
                   <h4 className="font-medium text-gray-700 mb-3">Record Audio</h4>
@@ -143,8 +224,8 @@ const VoiceProcessing: React.FC = () => {
                     <button
                       onClick={isRecording ? stopRecording : startRecording}
                       className={`p-4 rounded-full transition-all ${
-                        isRecording 
-                          ? 'bg-red-500 hover:bg-red-600 animate-pulse' 
+                        isRecording
+                          ? 'bg-red-500 hover:bg-red-600 animate-pulse'
                           : 'bg-blue-500 hover:bg-blue-600'
                       } text-white`}
                     >
@@ -162,7 +243,7 @@ const VoiceProcessing: React.FC = () => {
                               className="w-1 bg-red-500 rounded-full animate-pulse"
                               style={{
                                 height: `${Math.random() * 20 + 10}px`,
-                                animationDelay: `${i * 0.1}s`
+                                animationDelay: `${i * 0.1}s`,
                               }}
                             ></div>
                           ))}
@@ -215,14 +296,17 @@ const VoiceProcessing: React.FC = () => {
                 <div className="mb-6">
                   <h4 className="font-medium text-gray-700 mb-3">Processing Type</h4>
                   <div className="space-y-2">
-                    {processingOptions.map((option) => (
-                      <label key={option.id} className="flex items-center space-x-3 cursor-pointer">
+                    {processingOptions.map(option => (
+                      <label
+                        key={option.id}
+                        className="flex items-center space-x-3 cursor-pointer"
+                      >
                         <input
                           type="radio"
                           name="processingType"
                           value={option.id}
                           checked={processingType === option.id}
-                          onChange={(e) => setProcessingType(e.target.value)}
+                          onChange={e => setProcessingType(e.target.value)}
                           className="text-blue-600 focus:ring-blue-500"
                         />
                         <div className="flex items-center space-x-2">
@@ -259,11 +343,13 @@ const VoiceProcessing: React.FC = () => {
             <div className="lg:col-span-2">
               <div className="bg-white rounded-lg shadow-sm p-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Results</h3>
-                
+
                 {!transcription && !analysis ? (
                   <div className="text-center py-12">
                     <BarChart3 className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                    <p className="text-gray-500">Upload or record audio and select processing type to see results</p>
+                    <p className="text-gray-500">
+                      Upload or record audio and select processing type to see results
+                    </p>
                   </div>
                 ) : (
                   <div className="space-y-6">
@@ -271,8 +357,11 @@ const VoiceProcessing: React.FC = () => {
                     {transcription && (
                       <div>
                         <h4 className="font-medium text-gray-900 mb-3">
-                          {processingType === 'transcribe' ? 'Transcription' : 
-                           processingType === 'translate' ? 'Translation' : 'Processing Result'}
+                          {processingType === 'transcribe'
+                            ? 'Transcription'
+                            : processingType === 'translate'
+                              ? 'Translation'
+                              : 'Processing Result'}
                         </h4>
                         <div className="bg-gray-50 rounded-lg p-4">
                           <p className="text-gray-700 leading-relaxed">{transcription}</p>
@@ -295,18 +384,22 @@ const VoiceProcessing: React.FC = () => {
                           <div className="bg-gray-50 rounded-lg p-4">
                             <div className="flex items-center justify-between mb-4">
                               <span className="text-sm text-gray-600">Overall Sentiment</span>
-                              <span className={`px-3 py-1 text-sm font-medium rounded-full ${getSentimentColor(analysis.sentiment.overall)}`}>
+                              <span
+                                className={`px-3 py-1 text-sm font-medium rounded-full ${getSentimentColor(analysis.sentiment.overall)}`}
+                              >
                                 {analysis.sentiment.overall}
                               </span>
                             </div>
                             <div className="space-y-2">
                               {analysis.sentiment.emotions.map((emotion, index) => (
                                 <div key={index} className="flex items-center justify-between">
-                                  <span className="text-sm text-gray-700 capitalize">{emotion.emotion}</span>
+                                  <span className="text-sm text-gray-700 capitalize">
+                                    {emotion.emotion}
+                                  </span>
                                   <div className="flex items-center space-x-2">
                                     <div className="w-24 bg-gray-200 rounded-full h-2">
-                                      <div 
-                                        className="bg-purple-600 h-2 rounded-full" 
+                                      <div
+                                        className="bg-purple-600 h-2 rounded-full"
                                         style={{ width: `${emotion.score * 100}%` }}
                                       ></div>
                                     </div>
@@ -322,15 +415,23 @@ const VoiceProcessing: React.FC = () => {
 
                         {/* Voice Characteristics */}
                         <div>
-                          <h4 className="font-medium text-gray-900 mb-3">Voice Characteristics</h4>
+                          <h4 className="font-medium text-gray-900 mb-3">
+                            Voice Characteristics
+                          </h4>
                           <div className="bg-gray-50 rounded-lg p-4">
                             <div className="grid grid-cols-2 gap-4">
-                              {Object.entries(analysis.voice_characteristics).map(([key, value]) => (
-                                <div key={key} className="flex justify-between">
-                                  <span className="text-sm text-gray-600 capitalize">{key.replace('_', ' ')}</span>
-                                  <span className="text-sm font-medium text-gray-900 capitalize">{value}</span>
-                                </div>
-                              ))}
+                              {Object.entries(analysis.voice_characteristics).map(
+                                ([key, value]) => (
+                                  <div key={key} className="flex justify-between">
+                                    <span className="text-sm text-gray-600 capitalize">
+                                      {key.replace('_', ' ')}
+                                    </span>
+                                    <span className="text-sm font-medium text-gray-900 capitalize">
+                                      {value}
+                                    </span>
+                                  </div>
+                                )
+                              )}
                             </div>
                           </div>
                         </div>
@@ -342,9 +443,13 @@ const VoiceProcessing: React.FC = () => {
                             <div className="grid grid-cols-2 gap-4">
                               {Object.entries(analysis.speaking_patterns).map(([key, value]) => (
                                 <div key={key} className="flex justify-between">
-                                  <span className="text-sm text-gray-600 capitalize">{key.replace('_', ' ')}</span>
+                                  <span className="text-sm text-gray-600 capitalize">
+                                    {key.replace('_', ' ')}
+                                  </span>
                                   <span className="text-sm font-medium text-gray-900">
-                                    {typeof value === 'number' && value < 1 ? `${Math.round(value * 100)}%` : value}
+                                    {typeof value === 'number' && value < 1
+                                      ? `${Math.round(value * 100)}%`
+                                      : value}
                                   </span>
                                 </div>
                               ))}
@@ -377,6 +482,6 @@ const VoiceProcessing: React.FC = () => {
       </div>
     </>
   );
-}
+};
 
 export default VoiceProcessing;

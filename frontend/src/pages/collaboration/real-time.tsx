@@ -1,6 +1,6 @@
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { RealTimeCollaborationDashboard } from '../../src/components/collaboration/RealTimeCollaborationDashboard';
+import { RealTimeCollaborationDashboard } from '../../components/collaboration/RealTimeCollaborationDashboard';
 
 // Create a client
 const queryClient = new QueryClient({
@@ -12,7 +12,7 @@ const queryClient = new QueryClient({
   },
 });
 
-export default const RealTimeCollaborationPage: React.FC = () => {
+const RealTimeCollaborationPage: React.FC = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <div className="min-h-screen bg-gray-50">
@@ -27,14 +27,12 @@ export default const RealTimeCollaborationPage: React.FC = () => {
                   </p>
                 </div>
                 <div className="flex items-center gap-3">
-                  <div className="text-sm text-gray-500">
-                    Connected to collaboration workspace
-                  </div>
+                  <div className="text-sm text-gray-500">Connected to collaboration workspace</div>
                 </div>
               </div>
             </div>
           </header>
-          
+
           <main>
             <RealTimeCollaborationDashboard />
           </main>
@@ -42,4 +40,6 @@ export default const RealTimeCollaborationPage: React.FC = () => {
       </div>
     </QueryClientProvider>
   );
-}
+};
+
+export default RealTimeCollaborationPage;
