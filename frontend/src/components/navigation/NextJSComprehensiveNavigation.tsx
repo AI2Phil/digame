@@ -311,13 +311,13 @@ const NextJSComprehensiveNavigation: React.FC<NextJSComprehensiveNavigationProps
       icon: <Puzzle className="w-5 h-5" />,
       description: 'System integrations and API management',
       items: [
-        { label: 'Integration Hub', icon: <Puzzle className="w-4 h-4" />, path: '/integration', description: 'Integration overview' },
-        { label: 'Integration Dashboard', icon: <BarChart3 className="w-4 h-4" />, path: '/integration/dashboard', subtitle: 'INTEGRATION MANAGEMENT', description: 'Monitor and manage integration connections, sync analytics, and third-party service management' },
-        { label: 'API Management', icon: <Code className="w-4 h-4" />, path: '/integration/api', subtitle: 'API TOOLS' },
-        { label: 'Data Integration', icon: <Database className="w-4 h-4" />, path: '/integration/data', subtitle: 'DATA SYNC' },
-        { label: 'SSO Integration', icon: <Shield className="w-4 h-4" />, path: '/integration/sso', subtitle: 'SINGLE SIGN-ON' },
-        { label: 'Webhooks', icon: <Link className="w-4 h-4" />, path: '/integration/webhooks', subtitle: 'WEBHOOKS' },
-        { label: 'Guest Integration', icon: <Users className="w-4 h-4" />, path: '/integration/guest', description: 'Guest user tools' }
+        { label: 'Integration Hub', icon: <Puzzle className="w-4 h-4" />, path: '/integrations', description: 'Comprehensive integration management and marketplace' },
+        { label: 'Integration Management', icon: <BarChart3 className="w-4 h-4" />, path: '/integrations/management', subtitle: 'INTEGRATION MANAGEMENT', description: 'Monitor and manage integration connections, sync analytics, and third-party service management' },
+        { label: 'Integration Marketplace', icon: <Store className="w-4 h-4" />, path: '/integrations/marketplace', subtitle: 'MARKETPLACE', description: 'Discover and install new integrations for your platform' },
+        { label: 'OAuth Configuration', icon: <Shield className="w-4 h-4" />, path: '/integrations/configure', subtitle: 'OAUTH SETUP', description: 'Configure OAuth settings for third-party integrations' },
+        { label: 'Webhook Management', icon: <Link className="w-4 h-4" />, path: '/integrations', subtitle: 'WEBHOOKS', description: 'Manage webhooks from the main integrations dashboard' },
+        { label: 'API Keys & Settings', icon: <Key className="w-4 h-4" />, path: '/integrations', subtitle: 'API MANAGEMENT', description: 'Manage API keys and integration settings' },
+        { label: 'Integration Analytics', icon: <BarChart3 className="w-4 h-4" />, path: '/integrations', subtitle: 'ANALYTICS', description: 'View integration performance and analytics' }
       ]
     },
     {

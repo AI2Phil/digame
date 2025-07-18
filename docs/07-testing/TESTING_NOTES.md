@@ -1078,7 +1078,6 @@ The suite covers multiple browsers and platforms:
 
 The 21 failed tests represent about 6% of the total suite, which is quite reasonable for a comprehensive integration test suite. The fact that there are no flaky tests is particularly good - it suggests the test suite is stable and reliable.
 
-
 ## Here are several ways to get the accurate total:
 1. Check the Test Runner Output
 Look for the summary line in your test runner output:
