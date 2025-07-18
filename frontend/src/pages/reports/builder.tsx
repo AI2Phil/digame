@@ -18,13 +18,16 @@ const ReportBuilderPage: React.FC<ReportBuilderPageProps> = ({ user }) => {
     <>
       <Head>
         <title>Custom Report Builder - Digame</title>
-        <meta name="description" content="Create custom reports with advanced visualization and filtering" />
+        <meta
+          name="description"
+          content="Create custom reports with advanced visualization and filtering"
+        />
       </Head>
-      
+
       <div className="min-h-screen bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <CustomReportBuilder
-            onSave={(report) => {
+            onSave={report => {
               console.log('Report saved:', report);
               // Handle report save - could redirect or show success message
             }}
@@ -39,24 +42,24 @@ const ReportBuilderPage: React.FC<ReportBuilderPageProps> = ({ user }) => {
   );
 };
 
-export const getServerSideProps: GetServerSideProps = async (context) => {
+export const getServerSideProps: GetServerSideProps = async context => {
   // In a real application, you would:
   // 1. Check authentication status
   // 2. Verify user permissions
   // 3. Fetch user data from your authentication system
-  
+
   // For demo purposes, we'll simulate an authenticated user
   const user = {
     id: 1,
     name: 'Demo User',
     email: 'demo@example.com',
     subscription_tier: 'enterprise',
-    is_platform_owner: false
+    is_platform_owner: false,
   };
 
   // Check if user has access to report builder
   const hasAccess = user.subscription_tier === 'enterprise' || user.subscription_tier === 'team';
-  
+
   if (!hasAccess) {
     return {
       redirect: {

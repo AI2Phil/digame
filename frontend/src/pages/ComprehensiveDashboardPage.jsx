@@ -20,22 +20,22 @@ import {
   Star,
   Menu,
   X,
-  Home
+  Home,
 } from 'lucide-react';
 
-const ComprehensiveDashboardPage = ({ 
-  isDemoMode: propIsDemoMode, 
-  onLogout: propOnLogout, 
-  isNewUser 
+const ComprehensiveDashboardPage = ({
+  isDemoMode: propIsDemoMode,
+  onLogout: propOnLogout,
+  isNewUser,
 }) => {
   const router = useRouter();
   const { user, isAuthenticated, isDemoMode: authIsDemoMode, logout, isLoading } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  
+
   // Use AuthContext values or fallback to props
   const isDemoMode = authIsDemoMode || propIsDemoMode || false;
   const currentUser = user;
-  
+
   const handleLogout = () => {
     if (propOnLogout) {
       propOnLogout();
@@ -57,18 +57,21 @@ const ComprehensiveDashboardPage = ({
   }, [isAuthenticated, isLoading, router]);
 
   // Transform AuthContext user to match ComprehensiveNavigation expected format
-  const adaptedUser = currentUser ? {
-    name: currentUser.name || currentUser.fullName || currentUser.firstName || currentUser.username,
-    role: currentUser.role,
-    is_platform_owner: currentUser.isPlatformOwner, // Convert camelCase to snake_case
-    subscription_tier: currentUser.subscriptionTier, // Convert camelCase to snake_case
-    tenant_id: currentUser.tenant_id || 1, // Provide default if missing
-    tenant_name: currentUser.tenant_name || 'Digame Platform', // Provide default if missing
-    permissions: currentUser.permissions || []
-  } : null;
+  const adaptedUser = currentUser
+    ? {
+        name:
+          currentUser.name || currentUser.fullName || currentUser.firstName || currentUser.username,
+        role: currentUser.role,
+        is_platform_owner: currentUser.isPlatformOwner, // Convert camelCase to snake_case
+        subscription_tier: currentUser.subscriptionTier, // Convert camelCase to snake_case
+        tenant_id: currentUser.tenant_id || 1, // Provide default if missing
+        tenant_name: currentUser.tenant_name || 'Digame Platform', // Provide default if missing
+        permissions: currentUser.permissions || [],
+      }
+    : null;
 
   // Platform Owners and Demo Mode should always have access to all features
-  const shouldShowAllFeatures = isDemoMode || (adaptedUser?.is_platform_owner === true);
+  const shouldShowAllFeatures = isDemoMode || adaptedUser?.is_platform_owner === true;
 
   if (isLoading) {
     return (
@@ -76,7 +79,9 @@ const ComprehensiveDashboardPage = ({
         <div className="text-center space-y-4">
           <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
           <div className="space-y-2">
-            <h2 className="text-lg font-semibold text-gray-900">Loading Comprehensive Dashboard...</h2>
+            <h2 className="text-lg font-semibold text-gray-900">
+              Loading Comprehensive Dashboard...
+            </h2>
             <p className="text-gray-600">Preparing your complete platform access</p>
           </div>
         </div>
@@ -105,7 +110,7 @@ const ComprehensiveDashboardPage = ({
         onToggle={toggleSidebar}
         showAllFeatures={shouldShowAllFeatures}
       />
-      
+
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
@@ -144,16 +149,12 @@ const ComprehensiveDashboardPage = ({
                 <Home className="w-4 h-4" />
                 Home
               </Button>
-              <div className="text-sm text-gray-600">
-                16 Sections • 80+ Features Available
-              </div>
-              <div className="text-sm text-gray-500">
-                Complete Backend Access
-              </div>
+              <div className="text-sm text-gray-600">16 Sections • 80+ Features Available</div>
+              <div className="text-sm text-gray-500">Complete Backend Access</div>
             </div>
           </div>
         </header>
-        
+
         {/* Dashboard Content */}
         <main className="flex-1 overflow-y-auto">
           {/* Welcome Banner for Platform Owners */}
@@ -166,7 +167,8 @@ const ComprehensiveDashboardPage = ({
                     Welcome, Platform Owner!
                   </h2>
                   <p className="text-yellow-100">
-                    You have complete access to all 16 sections and 80+ features across the entire platform.
+                    You have complete access to all 16 sections and 80+ features across the entire
+                    platform.
                   </p>
                 </div>
                 <div className="text-right">

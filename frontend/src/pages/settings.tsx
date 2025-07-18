@@ -1,24 +1,24 @@
 /**
  * User Settings Page
  * Route: /settings
- * 
+ *
  * Comprehensive user settings management including API keys, preferences, and account settings
  */
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import { 
-  Settings as SettingsIcon, 
-  Key, 
-  User, 
-  Bell, 
-  Shield, 
+import {
+  Settings as SettingsIcon,
+  Key,
+  User,
+  Bell,
+  Shield,
   Palette,
   Save,
   AlertCircle,
   CheckCircle,
   Eye,
-  EyeOff
+  EyeOff,
 } from 'lucide-react';
 
 // Import components
@@ -58,36 +58,36 @@ const SettingsPage: React.FC = () => {
       label: 'API Keys',
       icon: <Key className="w-5 h-5" />,
       component: APIKeySettings,
-      description: 'Manage your AI service API keys'
+      description: 'Manage your AI service API keys',
     },
     {
       id: 'profile',
       label: 'Profile',
       icon: <User className="w-5 h-5" />,
       component: UserProfileSettings,
-      description: 'Update your profile information'
+      description: 'Update your profile information',
     },
     {
       id: 'notifications',
       label: 'Notifications',
       icon: <Bell className="w-5 h-5" />,
       component: NotificationSettings,
-      description: 'Configure notification preferences'
+      description: 'Configure notification preferences',
     },
     {
       id: 'security',
       label: 'Security',
       icon: <Shield className="w-5 h-5" />,
       component: SecuritySettings,
-      description: 'Security and privacy settings'
+      description: 'Security and privacy settings',
     },
     {
       id: 'appearance',
       label: 'Appearance',
       icon: <Palette className="w-5 h-5" />,
       component: AppearanceSettings,
-      description: 'Customize your interface'
-    }
+      description: 'Customize your interface',
+    },
   ];
 
   // Get active tab from URL or default to api-keys
@@ -134,11 +134,15 @@ const SettingsPage: React.FC = () => {
 
       {/* Message Banner */}
       {message && (
-        <div className={`border-l-4 p-4 ${
-          message.type === 'success' ? 'bg-green-50 border-green-400' :
-          message.type === 'error' ? 'bg-red-50 border-red-400' :
-          'bg-blue-50 border-blue-400'
-        }`}>
+        <div
+          className={`border-l-4 p-4 ${
+            message.type === 'success'
+              ? 'bg-green-50 border-green-400'
+              : message.type === 'error'
+                ? 'bg-red-50 border-red-400'
+                : 'bg-blue-50 border-blue-400'
+          }`}
+        >
           <div className="flex items-center">
             {message.type === 'success' ? (
               <CheckCircle className="w-5 h-5 text-green-400 mr-2" />
@@ -147,11 +151,15 @@ const SettingsPage: React.FC = () => {
             ) : (
               <AlertCircle className="w-5 h-5 text-blue-400 mr-2" />
             )}
-            <p className={`text-sm ${
-              message.type === 'success' ? 'text-green-700' :
-              message.type === 'error' ? 'text-red-700' :
-              'text-blue-700'
-            }`}>
+            <p
+              className={`text-sm ${
+                message.type === 'success'
+                  ? 'text-green-700'
+                  : message.type === 'error'
+                    ? 'text-red-700'
+                    : 'text-blue-700'
+              }`}
+            >
               {message.text}
             </p>
           </div>
@@ -169,7 +177,7 @@ const SettingsPage: React.FC = () => {
                 </h2>
               </div>
               <div className="space-y-1">
-                {settingsTabs.map((tab) => (
+                {settingsTabs.map(tab => (
                   <button
                     key={tab.id}
                     onClick={() => handleTabChange(tab.id)}
@@ -182,9 +190,7 @@ const SettingsPage: React.FC = () => {
                     <span className="mr-3">{tab.icon}</span>
                     <div>
                       <div>{tab.label}</div>
-                      <div className="text-xs text-gray-500 mt-1">
-                        {tab.description}
-                      </div>
+                      <div className="text-xs text-gray-500 mt-1">{tab.description}</div>
                     </div>
                   </button>
                 ))}
@@ -216,12 +222,8 @@ const SettingsPage: React.FC = () => {
                 <div className="flex items-center space-x-3">
                   {activeTabConfig?.icon}
                   <div>
-                    <h2 className="text-lg font-medium text-gray-900">
-                      {activeTabConfig?.label}
-                    </h2>
-                    <p className="text-sm text-gray-600">
-                      {activeTabConfig?.description}
-                    </p>
+                    <h2 className="text-lg font-medium text-gray-900">{activeTabConfig?.label}</h2>
+                    <p className="text-sm text-gray-600">{activeTabConfig?.description}</p>
                   </div>
                 </div>
               </div>
@@ -234,10 +236,7 @@ const SettingsPage: React.FC = () => {
                     <span className="ml-2 text-gray-600">Loading...</span>
                   </div>
                 ) : (
-                  <ActiveComponent 
-                    onMessage={setMessage}
-                    onLoading={setLoading}
-                  />
+                  <ActiveComponent onMessage={setMessage} onLoading={setLoading} />
                 )}
               </div>
             </div>

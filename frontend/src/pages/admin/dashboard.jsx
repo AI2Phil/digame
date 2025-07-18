@@ -1,12 +1,36 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import {
-  Users, Settings, BarChart3, Key, UserCheck,
-  Activity, Shield, Database, AlertTriangle,
-  TrendingUp, Clock, CheckCircle, XCircle,
-  Search, Filter, Download, RefreshCw, Home,
-  Globe, Server, Cpu, HardDrive, Network, Zap,
-  Edit, Trash2, Plus, Eye, Lock, Unlock
+  Users,
+  Settings,
+  BarChart3,
+  Key,
+  UserCheck,
+  Activity,
+  Shield,
+  Database,
+  AlertTriangle,
+  TrendingUp,
+  Clock,
+  CheckCircle,
+  XCircle,
+  Search,
+  Filter,
+  Download,
+  RefreshCw,
+  Home,
+  Globe,
+  Server,
+  Cpu,
+  HardDrive,
+  Network,
+  Zap,
+  Edit,
+  Trash2,
+  Plus,
+  Eye,
+  Lock,
+  Unlock,
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -16,7 +40,14 @@ import { Progress } from '../components/ui/Progress';
 import { Avatar } from '../components/ui/Avatar';
 import { Badge } from '../components/ui/Badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/Tabs';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/Dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '../components/ui/Dialog';
 import { useToast } from '../components/ui/Toast';
 import enhancedApiService from '../services/enhancedApiService';
 import UserManagementSection from '../components/admin/UserManagementSection';
@@ -48,24 +79,29 @@ const AdminDashboardPage = () => {
   const loadDashboardData = async () => {
     setLoading(true);
     try {
-      const [usersData, statsData, keysData, onboardingData, configData, healthData] = await Promise.all([
-        enhancedApiService.getUsers(),
-        enhancedApiService.getSystemStats(),
-        enhancedApiService.getAdminApiKeys(),
-        enhancedApiService.getOnboardingAnalytics(),
-        fetch('/api/v1/admin/config/system', {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-            'Content-Type': 'application/json'
-          }
-        }).then(res => res.ok ? res.json() : {}).catch(() => ({})),
-        fetch('/api/v1/platform/health', {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-            'Content-Type': 'application/json'
-          }
-        }).then(res => res.ok ? res.json() : {}).catch(() => ({}))
-      ]);
+      const [usersData, statsData, keysData, onboardingData, configData, healthData] =
+        await Promise.all([
+          enhancedApiService.getUsers(),
+          enhancedApiService.getSystemStats(),
+          enhancedApiService.getAdminApiKeys(),
+          enhancedApiService.getOnboardingAnalytics(),
+          fetch('/api/v1/admin/config/system', {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem('token')}`,
+              'Content-Type': 'application/json',
+            },
+          })
+            .then(res => (res.ok ? res.json() : {}))
+            .catch(() => ({})),
+          fetch('/api/v1/platform/health', {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem('token')}`,
+              'Content-Type': 'application/json',
+            },
+          })
+            .then(res => (res.ok ? res.json() : {}))
+            .catch(() => ({})),
+        ]);
 
       // Handle the case where getUsers returns an object with users array
       setUsers(usersData.users || usersData || []);
@@ -93,9 +129,10 @@ const AdminDashboardPage = () => {
     }
   };
 
-  const filteredUsers = users.filter(user =>
-    user.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email?.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredUsers = users.filter(
+    user =>
+      user.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.email?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   if (loading) {
@@ -117,9 +154,11 @@ const AdminDashboardPage = () => {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-gray-900 mb-2">Admin Dashboard</h1>
-              <p className="text-gray-600">Manage users, monitor system performance, and track platform analytics</p>
+              <p className="text-gray-600">
+                Manage users, monitor system performance, and track platform analytics
+              </p>
             </div>
-            
+
             {/* Home Button */}
             <Button
               variant="outline"
@@ -199,7 +238,7 @@ const AdminDashboardPage = () => {
               searchTerm={searchTerm}
               setSearchTerm={setSearchTerm}
               onUserAction={handleUserAction}
-              onUserSelect={(user) => {
+              onUserSelect={user => {
                 setSelectedUser(user);
                 setShowUserDialog(true);
               }}
@@ -246,13 +285,11 @@ const AdminDashboardPage = () => {
           <DialogContent className="max-w-2xl">
             <DialogHeader>
               <DialogTitle>User Details</DialogTitle>
-              <DialogDescription>
-                Manage user account and permissions
-              </DialogDescription>
+              <DialogDescription>Manage user account and permissions</DialogDescription>
             </DialogHeader>
             {selectedUser && (
-              <UserDetailsDialog 
-                user={selectedUser} 
+              <UserDetailsDialog
+                user={selectedUser}
                 onAction={handleUserAction}
                 onClose={() => setShowUserDialog(false)}
               />
@@ -265,9 +302,7 @@ const AdminDashboardPage = () => {
           <DialogContent className="max-w-4xl">
             <DialogHeader>
               <DialogTitle>System Configuration</DialogTitle>
-              <DialogDescription>
-                Manage platform-wide configuration settings
-              </DialogDescription>
+              <DialogDescription>Manage platform-wide configuration settings</DialogDescription>
             </DialogHeader>
             <SystemConfigDialog
               systemConfig={systemConfig}
@@ -287,7 +322,7 @@ const StatsCard = ({ title, value, change, icon: Icon, color }) => {
     blue: 'text-blue-600 bg-blue-100',
     green: 'text-green-600 bg-green-100',
     purple: 'text-purple-600 bg-purple-100',
-    emerald: 'text-emerald-600 bg-emerald-100'
+    emerald: 'text-emerald-600 bg-emerald-100',
   };
 
   return (
@@ -362,19 +397,46 @@ const RecentActivityCard = () => (
     <CardContent>
       <div className="space-y-4">
         {[
-          { action: 'New user registration', user: 'john.doe@example.com', time: '2 minutes ago', type: 'success' },
-          { action: 'API key created', user: 'admin@company.com', time: '5 minutes ago', type: 'info' },
-          { action: 'Failed login attempt', user: 'suspicious@email.com', time: '10 minutes ago', type: 'warning' },
-          { action: 'System backup completed', user: 'System', time: '1 hour ago', type: 'success' }
+          {
+            action: 'New user registration',
+            user: 'john.doe@example.com',
+            time: '2 minutes ago',
+            type: 'success',
+          },
+          {
+            action: 'API key created',
+            user: 'admin@company.com',
+            time: '5 minutes ago',
+            type: 'info',
+          },
+          {
+            action: 'Failed login attempt',
+            user: 'suspicious@email.com',
+            time: '10 minutes ago',
+            type: 'warning',
+          },
+          {
+            action: 'System backup completed',
+            user: 'System',
+            time: '1 hour ago',
+            type: 'success',
+          },
         ].map((activity, index) => (
           <div key={index} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-            <div className={`w-2 h-2 rounded-full ${
-              activity.type === 'success' ? 'bg-green-500' :
-              activity.type === 'warning' ? 'bg-yellow-500' : 'bg-blue-500'
-            }`} />
+            <div
+              className={`w-2 h-2 rounded-full ${
+                activity.type === 'success'
+                  ? 'bg-green-500'
+                  : activity.type === 'warning'
+                    ? 'bg-yellow-500'
+                    : 'bg-blue-500'
+              }`}
+            />
             <div className="flex-1">
               <p className="text-sm font-medium">{activity.action}</p>
-              <p className="text-xs text-gray-500">{activity.user} • {activity.time}</p>
+              <p className="text-xs text-gray-500">
+                {activity.user} • {activity.time}
+              </p>
             </div>
           </div>
         ))}
@@ -682,7 +744,7 @@ const SecurityManagementSection = ({ platformHealth, users, onRefresh }) => (
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {users.slice(0, 5).map((user) => (
+              {users.slice(0, 5).map(user => (
                 <tr key={user.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
@@ -749,7 +811,9 @@ const SystemConfigDialog = ({ systemConfig, onClose, onRefresh }) => {
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Platform Name</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Platform Name
+                </label>
                 <input
                   type="text"
                   defaultValue="Digame Platform"
@@ -757,7 +821,9 @@ const SystemConfigDialog = ({ systemConfig, onClose, onRefresh }) => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Default Language</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Default Language
+                </label>
                 <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                   <option value="en">English</option>
                   <option value="es">Spanish</option>
@@ -797,7 +863,9 @@ const SystemConfigDialog = ({ systemConfig, onClose, onRefresh }) => {
                 <input type="checkbox" defaultChecked className="rounded" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Session Timeout (minutes)</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Session Timeout (minutes)
+                </label>
                 <input
                   type="number"
                   defaultValue="30"
@@ -822,7 +890,9 @@ const SystemConfigDialog = ({ systemConfig, onClose, onRefresh }) => {
                 <input type="checkbox" defaultChecked className="rounded" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Cache TTL (seconds)</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Cache TTL (seconds)
+                </label>
                 <input
                   type="number"
                   defaultValue="300"
@@ -830,7 +900,9 @@ const SystemConfigDialog = ({ systemConfig, onClose, onRefresh }) => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Rate Limit (requests/minute)</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Rate Limit (requests/minute)
+                </label>
                 <input
                   type="number"
                   defaultValue="1000"
@@ -862,7 +934,9 @@ const SystemConfigDialog = ({ systemConfig, onClose, onRefresh }) => {
                 <input type="checkbox" defaultChecked className="rounded" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Webhook Timeout (seconds)</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Webhook Timeout (seconds)
+                </label>
                 <input
                   type="number"
                   defaultValue="30"
@@ -878,7 +952,12 @@ const SystemConfigDialog = ({ systemConfig, onClose, onRefresh }) => {
         <Button variant="outline" onClick={onClose}>
           Cancel
         </Button>
-        <Button onClick={() => { onRefresh(); onClose(); }}>
+        <Button
+          onClick={() => {
+            onRefresh();
+            onClose();
+          }}
+        >
           Save Configuration
         </Button>
       </div>

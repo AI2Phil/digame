@@ -17,7 +17,10 @@ const MarketplacePage: React.FC<MarketplacePageProps> = () => {
     <>
       <Head>
         <title>Integration Marketplace - Digame</title>
-        <meta name="description" content="Discover and install integrations for your Digame platform" />
+        <meta
+          name="description"
+          content="Discover and install integrations for your Digame platform"
+        />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
       <IntegrationMarketplace />
@@ -25,10 +28,10 @@ const MarketplacePage: React.FC<MarketplacePageProps> = () => {
   );
 };
 
-export const getServerSideProps: GetServerSideProps = async (context) => {
+export const getServerSideProps: GetServerSideProps = async context => {
   // Add any server-side logic here if needed
   // For example, authentication checks, data fetching, etc.
-  
+
   return {
     props: {
       // Pass any props to the component

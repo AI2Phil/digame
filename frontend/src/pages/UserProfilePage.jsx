@@ -1,9 +1,26 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  User, Settings, Target, Trophy, Calendar, 
-  Edit, Save, X, Camera, Mail, Phone, MapPin,
-  Briefcase, GraduationCap, Star, Award,
-  Key, Bell, Shield, Palette, Globe
+import {
+  User,
+  Settings,
+  Target,
+  Trophy,
+  Calendar,
+  Edit,
+  Save,
+  X,
+  Camera,
+  Mail,
+  Phone,
+  MapPin,
+  Briefcase,
+  GraduationCap,
+  Star,
+  Award,
+  Key,
+  Bell,
+  Shield,
+  Palette,
+  Globe,
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -13,7 +30,16 @@ import { Avatar } from '../components/ui/Avatar';
 import { Badge } from '../components/ui/Badge';
 import { Progress } from '../components/ui/Progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/Tabs';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from '../components/ui/Dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+  DialogClose,
+} from '../components/ui/Dialog';
 import { useToast } from '../components/ui/Toast';
 import apiService from '../services/apiService';
 import GoalsManagementSection from '../components/profile/GoalsManagementSection';
@@ -63,7 +89,7 @@ const UserProfilePage = () => {
         apiService.getCurrentUser(),
         apiService.getUserGoals(),
         apiService.getUserAchievements(),
-        apiService.getApiKeys()
+        apiService.getApiKeys(),
       ]);
 
       setUser(userData);
@@ -103,7 +129,10 @@ const UserProfilePage = () => {
     try {
       const payload = {
         ...editData,
-        skills: editData.skills_input.split(',').map(s => s.trim()).filter(s => s),
+        skills: editData.skills_input
+          .split(',')
+          .map(s => s.trim())
+          .filter(s => s),
       };
       delete payload.skills_input;
 
@@ -127,7 +156,11 @@ const UserProfilePage = () => {
         industry: updatedUser.industry || '',
         experience_level: updatedUser.experience_level || '',
         detailedBio: updatedUser.detailed_bio || '',
-        contactInfo: updatedUser.contact_info || { linkedin: '', website: '', professionalEmail: '' },
+        contactInfo: updatedUser.contact_info || {
+          linkedin: '',
+          website: '',
+          professionalEmail: '',
+        },
         skills: updatedUser.skills || [],
         skills_input: (updatedUser.skills || []).join(', '),
         projects: updatedUser.projects || [],
@@ -167,7 +200,7 @@ const UserProfilePage = () => {
     setIsEditing(false);
   };
 
-  const handleAvatarUpload = async (event) => {
+  const handleAvatarUpload = async event => {
     const file = event.target.files[0];
     if (file) {
       try {
@@ -197,7 +230,7 @@ const UserProfilePage = () => {
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-6xl mx-auto">
         {/* Profile Header */}
-        <ProfileHeader 
+        <ProfileHeader
           user={user}
           isEditing={isEditing}
           editData={editData}
@@ -221,13 +254,13 @@ const UserProfilePage = () => {
           {/* Profile Tab */}
           <TabsContent value="profile" className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <PersonalInfoCard 
+              <PersonalInfoCard
                 user={user}
                 isEditing={isEditing}
                 editData={editData}
                 setEditData={setEditData}
               />
-              <ProfessionalInfoCard 
+              <ProfessionalInfoCard
                 user={user}
                 isEditing={isEditing}
                 editData={editData}
@@ -263,15 +296,15 @@ const UserProfilePage = () => {
 };
 
 // Profile Header Component
-const ProfileHeader = ({ 
-  user, 
-  isEditing, 
-  editData, 
-  setEditData, 
-  onEdit, 
-  onSave, 
-  onCancel, 
-  onAvatarUpload 
+const ProfileHeader = ({
+  user,
+  isEditing,
+  editData,
+  setEditData,
+  onEdit,
+  onSave,
+  onCancel,
+  onAvatarUpload,
 }) => (
   <Card>
     <CardContent className="p-8">
@@ -288,12 +321,7 @@ const ProfileHeader = ({
           {isEditing && (
             <label className="absolute bottom-0 right-0 bg-blue-600 text-white p-2 rounded-full cursor-pointer hover:bg-blue-700">
               <Camera className="w-4 h-4" />
-              <input
-                type="file"
-                accept="image/*"
-                onChange={onAvatarUpload}
-                className="hidden"
-              />
+              <input type="file" accept="image/*" onChange={onAvatarUpload} className="hidden" />
             </label>
           )}
         </div>
@@ -305,19 +333,19 @@ const ProfileHeader = ({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Input
                   value={editData.username || ''}
-                  onChange={(e) => setEditData(prev => ({ ...prev, username: e.target.value }))}
+                  onChange={e => setEditData(prev => ({ ...prev, username: e.target.value }))}
                   placeholder="Username"
                 />
                 <Input
                   value={editData.email || ''}
-                  onChange={(e) => setEditData(prev => ({ ...prev, email: e.target.value }))}
+                  onChange={e => setEditData(prev => ({ ...prev, email: e.target.value }))}
                   placeholder="Email"
                   type="email"
                 />
               </div>
               <Input
                 value={editData.bio || ''}
-                onChange={(e) => setEditData(prev => ({ ...prev, bio: e.target.value }))}
+                onChange={e => setEditData(prev => ({ ...prev, bio: e.target.value }))}
                 placeholder="Bio"
               />
             </div>
@@ -378,33 +406,33 @@ const PersonalInfoCard = ({ user, isEditing, editData, setEditData }) => (
           <div className="grid grid-cols-2 gap-4">
             <Input
               value={editData.first_name || ''}
-              onChange={(e) => setEditData(prev => ({ ...prev, first_name: e.target.value }))}
+              onChange={e => setEditData(prev => ({ ...prev, first_name: e.target.value }))}
               placeholder="First Name"
             />
             <Input
               value={editData.last_name || ''}
-              onChange={(e) => setEditData(prev => ({ ...prev, last_name: e.target.value }))}
+              onChange={e => setEditData(prev => ({ ...prev, last_name: e.target.value }))}
               placeholder="Last Name"
             />
           </div>
           <Input
             value={editData.phone || ''}
-            onChange={(e) => setEditData(prev => ({ ...prev, phone: e.target.value }))}
+            onChange={e => setEditData(prev => ({ ...prev, phone: e.target.value }))}
             placeholder="Phone Number"
           />
           <Input
             value={editData.location || ''}
-            onChange={(e) => setEditData(prev => ({ ...prev, location: e.target.value }))}
+            onChange={e => setEditData(prev => ({ ...prev, location: e.target.value }))}
             placeholder="Location"
           />
           <Input
             value={editData.timezone || ''}
-            onChange={(e) => setEditData(prev => ({ ...prev, timezone: e.target.value }))}
+            onChange={e => setEditData(prev => ({ ...prev, timezone: e.target.value }))}
             placeholder="Timezone"
           />
           <Textarea
             value={editData.detailedBio || ''}
-            onChange={(e) => setEditData(prev => ({ ...prev, detailedBio: e.target.value }))}
+            onChange={e => setEditData(prev => ({ ...prev, detailedBio: e.target.value }))}
             placeholder="Detailed Bio"
             rows={4}
           />
@@ -412,19 +440,34 @@ const PersonalInfoCard = ({ user, isEditing, editData, setEditData }) => (
             <label className="block text-sm font-medium text-gray-700 mb-1">Contact Info</label>
             <Input
               value={editData.contactInfo?.linkedin || ''}
-              onChange={(e) => setEditData(prev => ({ ...prev, contactInfo: { ...prev.contactInfo, linkedin: e.target.value } }))}
+              onChange={e =>
+                setEditData(prev => ({
+                  ...prev,
+                  contactInfo: { ...prev.contactInfo, linkedin: e.target.value },
+                }))
+              }
               placeholder="LinkedIn Profile URL"
               className="mb-2"
             />
             <Input
               value={editData.contactInfo?.website || ''}
-              onChange={(e) => setEditData(prev => ({ ...prev, contactInfo: { ...prev.contactInfo, website: e.target.value } }))}
+              onChange={e =>
+                setEditData(prev => ({
+                  ...prev,
+                  contactInfo: { ...prev.contactInfo, website: e.target.value },
+                }))
+              }
               placeholder="Website URL"
               className="mb-2"
             />
             <Input
               value={editData.contactInfo?.professionalEmail || ''}
-              onChange={(e) => setEditData(prev => ({ ...prev, contactInfo: { ...prev.contactInfo, professionalEmail: e.target.value } }))}
+              onChange={e =>
+                setEditData(prev => ({
+                  ...prev,
+                  contactInfo: { ...prev.contactInfo, professionalEmail: e.target.value },
+                }))
+              }
               placeholder="Professional Email"
               type="email"
             />
@@ -432,17 +475,41 @@ const PersonalInfoCard = ({ user, isEditing, editData, setEditData }) => (
         </>
       ) : (
         <>
-          <InfoItem icon={User} label="Full Name" value={`${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Not provided'} />
+          <InfoItem
+            icon={User}
+            label="Full Name"
+            value={`${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Not provided'}
+          />
           <InfoItem icon={Phone} label="Phone" value={user.phone || 'Not provided'} />
-          <InfoItem icon={Mail} label="Professional Email" value={user.contact_info?.professionalEmail || 'Not provided'} />
+          <InfoItem
+            icon={Mail}
+            label="Professional Email"
+            value={user.contact_info?.professionalEmail || 'Not provided'}
+          />
           <InfoItem icon={MapPin} label="Location" value={user.location || 'Not provided'} />
           <InfoItem icon={Globe} label="Timezone" value={user.timezone || 'Not provided'} />
-          <InfoItem icon={Calendar} label="Member Since" value={new Date(user.created_at).toLocaleDateString()} />
+          <InfoItem
+            icon={Calendar}
+            label="Member Since"
+            value={new Date(user.created_at).toLocaleDateString()}
+          />
           <InfoItem icon={User} label="Detailed Bio" value={user.detailed_bio || 'Not provided'} />
           <h4 className="text-sm font-medium text-gray-700 mt-3 mb-1">Contact Info:</h4>
-          <InfoItem icon={Mail} label="LinkedIn" value={user.contact_info?.linkedin || 'Not provided'} />
-          <InfoItem icon={Globe} label="Website" value={user.contact_info?.website || 'Not provided'} />
-          <InfoItem icon={Mail} label="Professional Email" value={user.contact_info?.professionalEmail || 'Not provided'} />
+          <InfoItem
+            icon={Mail}
+            label="LinkedIn"
+            value={user.contact_info?.linkedin || 'Not provided'}
+          />
+          <InfoItem
+            icon={Globe}
+            label="Website"
+            value={user.contact_info?.website || 'Not provided'}
+          />
+          <InfoItem
+            icon={Mail}
+            label="Professional Email"
+            value={user.contact_info?.professionalEmail || 'Not provided'}
+          />
         </>
       )}
     </CardContent>
@@ -463,30 +530,32 @@ const ProfessionalInfoCard = ({ user, isEditing, editData, setEditData }) => (
         <>
           <Input
             value={editData.job_title || ''}
-            onChange={(e) => setEditData(prev => ({ ...prev, job_title: e.target.value }))}
+            onChange={e => setEditData(prev => ({ ...prev, job_title: e.target.value }))}
             placeholder="Job Title"
           />
           <Input
             value={editData.company || ''}
-            onChange={(e) => setEditData(prev => ({ ...prev, company: e.target.value }))}
+            onChange={e => setEditData(prev => ({ ...prev, company: e.target.value }))}
             placeholder="Company"
           />
           <Input
             value={editData.industry || ''}
-            onChange={(e) => setEditData(prev => ({ ...prev, industry: e.target.value }))}
+            onChange={e => setEditData(prev => ({ ...prev, industry: e.target.value }))}
             placeholder="Industry"
           />
           <Input
             value={editData.experience_level || ''}
-            onChange={(e) => setEditData(prev => ({ ...prev, experience_level: e.target.value }))}
+            onChange={e => setEditData(prev => ({ ...prev, experience_level: e.target.value }))}
             placeholder="Experience Level"
           />
           <div>
-            <label htmlFor="skills_input" className="block text-sm font-medium text-gray-700">Skills (comma-separated)</label>
+            <label htmlFor="skills_input" className="block text-sm font-medium text-gray-700">
+              Skills (comma-separated)
+            </label>
             <Textarea
               id="skills_input"
               value={editData.skills_input || ''}
-              onChange={(e) => setEditData(prev => ({ ...prev, skills_input: e.target.value }))}
+              onChange={e => setEditData(prev => ({ ...prev, skills_input: e.target.value }))}
               placeholder="e.g., React, Node.js, Python"
               rows={3}
             />
@@ -497,13 +566,25 @@ const ProfessionalInfoCard = ({ user, isEditing, editData, setEditData }) => (
           <InfoItem icon={Briefcase} label="Job Title" value={user.job_title || 'Not provided'} />
           <InfoItem icon={Briefcase} label="Company" value={user.company || 'Not provided'} />
           <InfoItem icon={Briefcase} label="Industry" value={user.industry || 'Not provided'} />
-          <InfoItem icon={GraduationCap} label="Experience" value={user.experience_level || 'Not provided'} />
+          <InfoItem
+            icon={GraduationCap}
+            label="Experience"
+            value={user.experience_level || 'Not provided'}
+          />
           <div>
-            <p className="text-sm text-gray-600 flex items-center gap-3"><Star className="w-4 h-4 text-gray-500" /> Skills</p>
+            <p className="text-sm text-gray-600 flex items-center gap-3">
+              <Star className="w-4 h-4 text-gray-500" /> Skills
+            </p>
             <div className="flex flex-wrap gap-2 mt-1">
-              {(user.skills && user.skills.length > 0) ? user.skills.map((skill, index) => (
-                <Badge key={index} variant="secondary">{skill}</Badge>
-              )) : <p className="font-medium">Not provided</p>}
+              {user.skills && user.skills.length > 0 ? (
+                user.skills.map((skill, index) => (
+                  <Badge key={index} variant="secondary">
+                    {skill}
+                  </Badge>
+                ))
+              ) : (
+                <p className="font-medium">Not provided</p>
+              )}
             </div>
           </div>
         </>
@@ -521,15 +602,11 @@ const ActivitySummaryCard = ({ user }) => (
     <CardContent>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
         <div className="text-center">
-          <div className="text-2xl font-bold text-blue-600">
-            {user.kudos_count || 0}
-          </div>
+          <div className="text-2xl font-bold text-blue-600">{user.kudos_count || 0}</div>
           <p className="text-sm text-gray-600">Kudos Received</p>
         </div>
         <div className="text-center">
-          <div className="text-2xl font-bold text-blue-600">
-            {user.stats?.total_sessions || 0}
-          </div>
+          <div className="text-2xl font-bold text-blue-600">{user.stats?.total_sessions || 0}</div>
           <p className="text-sm text-gray-600">Total Sessions</p>
         </div>
         <div className="text-center">

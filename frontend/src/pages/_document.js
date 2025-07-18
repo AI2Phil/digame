@@ -1,4 +1,4 @@
-import { Html, Head, Main, NextScript } from 'next/document'
+import { Html, Head, Main, NextScript } from 'next/document';
 
 export default function Document() {
   return (
@@ -9,7 +9,10 @@ export default function Document() {
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="Digame" />
-        <meta name="description" content="Enterprise-grade analytics platform with AI-powered insights, real-time monitoring, and comprehensive business intelligence tools." />
+        <meta
+          name="description"
+          content="Enterprise-grade analytics platform with AI-powered insights, real-time monitoring, and comprehensive business intelligence tools."
+        />
         <meta name="format-detection" content="telephone=no" />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="msapplication-config" content="/icons/browserconfig.xml" />
@@ -49,7 +52,10 @@ export default function Document() {
         {/* Open Graph / Social Media */}
         <meta property="og:type" content="website" />
         <meta property="og:title" content="Digame - Advanced Analytics Platform" />
-        <meta property="og:description" content="Enterprise-grade analytics platform with AI-powered insights, real-time monitoring, and comprehensive business intelligence tools." />
+        <meta
+          property="og:description"
+          content="Enterprise-grade analytics platform with AI-powered insights, real-time monitoring, and comprehensive business intelligence tools."
+        />
         <meta property="og:site_name" content="Digame" />
         <meta property="og:url" content="https://digame.app" />
         <meta property="og:image" content="/icons/icon-512x512.png" />
@@ -57,22 +63,31 @@ export default function Document() {
         {/* Twitter Card */}
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="Digame - Advanced Analytics Platform" />
-        <meta name="twitter:description" content="Enterprise-grade analytics platform with AI-powered insights, real-time monitoring, and comprehensive business intelligence tools." />
+        <meta
+          name="twitter:description"
+          content="Enterprise-grade analytics platform with AI-powered insights, real-time monitoring, and comprehensive business intelligence tools."
+        />
         <meta name="twitter:image" content="/icons/icon-512x512.png" />
 
         {/* Google Fonts - Inter font family */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+          rel="stylesheet"
+        />
       </Head>
       <body>
         {/* Skip to main content for accessibility */}
-        <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-0 focus:left-0 bg-blue-600 text-white p-2 z-50">
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:absolute focus:top-0 focus:left-0 bg-blue-600 text-white p-2 z-50"
+        >
           Skip to main content
         </a>
         <Main id="main-content" />
         <NextScript />
-        
+
         {/* Service Worker Registration - Only in production */}
         <script
           dangerouslySetInnerHTML={{
@@ -91,5 +106,5 @@ export default function Document() {
         />
       </body>
     </Html>
-  )
+  );
 }

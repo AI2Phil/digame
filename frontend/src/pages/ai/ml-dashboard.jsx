@@ -4,11 +4,7 @@ import DashboardLayout from '../components/layout/DashboardLayout';
 
 const AIMLDashboardPage = ({ isDemoMode = false, onLogout }) => {
   return (
-    <DashboardLayout 
-      isDemoMode={isDemoMode} 
-      onLogout={onLogout}
-      title="AI & ML Dashboard"
-    >
+    <DashboardLayout isDemoMode={isDemoMode} onLogout={onLogout} title="AI & ML Dashboard">
       <AIMLDashboard />
     </DashboardLayout>
   );

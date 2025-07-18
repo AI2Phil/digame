@@ -18,7 +18,10 @@ const CommunicationAnalysis = () => {
     <>
       <Head>
         <title>Communication Style Analyzer - Digame AI Tools</title>
-        <meta name="description" content="AI-powered communication style analysis and optimization" />
+        <meta
+          name="description"
+          content="AI-powered communication style analysis and optimization"
+        />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
       </Head>

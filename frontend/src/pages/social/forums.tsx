@@ -26,7 +26,7 @@ import {
   HelpCircle,
   Briefcase,
   Code,
-  Zap
+  Zap,
 } from 'lucide-react';
 
 interface ForumPost {
@@ -77,7 +77,7 @@ const SocialForumsPage: React.FC = () => {
       description: 'General topics and community discussions',
       icon: <MessageCircle className="w-5 h-5" />,
       postCount: 245,
-      color: 'blue'
+      color: 'blue',
     },
     {
       id: 'career',
@@ -85,7 +85,7 @@ const SocialForumsPage: React.FC = () => {
       description: 'Career advice, job opportunities, and professional growth',
       icon: <Briefcase className="w-5 h-5" />,
       postCount: 189,
-      color: 'green'
+      color: 'green',
     },
     {
       id: 'technical',
@@ -93,7 +93,7 @@ const SocialForumsPage: React.FC = () => {
       description: 'Technical questions and troubleshooting',
       icon: <Code className="w-5 h-5" />,
       postCount: 156,
-      color: 'purple'
+      color: 'purple',
     },
     {
       id: 'learning',
@@ -101,7 +101,7 @@ const SocialForumsPage: React.FC = () => {
       description: 'Learning resources, courses, and educational content',
       icon: <BookOpen className="w-5 h-5" />,
       postCount: 134,
-      color: 'orange'
+      color: 'orange',
     },
     {
       id: 'innovation',
@@ -109,7 +109,7 @@ const SocialForumsPage: React.FC = () => {
       description: 'Share innovative ideas and creative solutions',
       icon: <Lightbulb className="w-5 h-5" />,
       postCount: 98,
-      color: 'yellow'
+      color: 'yellow',
     },
     {
       id: 'qa',
@@ -117,19 +117,20 @@ const SocialForumsPage: React.FC = () => {
       description: 'Questions and answers from the community',
       icon: <HelpCircle className="w-5 h-5" />,
       postCount: 267,
-      color: 'red'
-    }
+      color: 'red',
+    },
   ];
 
   const mockPosts: ForumPost[] = [
     {
       id: '1',
       title: 'Best practices for AI-powered workflow automation',
-      content: 'I\'ve been experimenting with AI-powered workflow automation and wanted to share some insights...',
+      content:
+        "I've been experimenting with AI-powered workflow automation and wanted to share some insights...",
       author: {
         name: 'Sarah Chen',
         role: 'Senior Developer',
-        reputation: 1250
+        reputation: 1250,
       },
       category: 'technical',
       tags: ['AI', 'Automation', 'Workflow'],
@@ -138,16 +139,17 @@ const SocialForumsPage: React.FC = () => {
       views: 342,
       replies: 23,
       likes: 45,
-      isSticky: true
+      isSticky: true,
     },
     {
       id: '2',
       title: 'Career transition from traditional roles to AI-focused positions',
-      content: 'Looking for advice on transitioning from a traditional business analyst role to AI/ML...',
+      content:
+        'Looking for advice on transitioning from a traditional business analyst role to AI/ML...',
       author: {
         name: 'Michael Rodriguez',
         role: 'Business Analyst',
-        reputation: 890
+        reputation: 890,
       },
       category: 'career',
       tags: ['Career', 'AI', 'Transition'],
@@ -155,16 +157,17 @@ const SocialForumsPage: React.FC = () => {
       updatedAt: '2025-01-15T13:45:00Z',
       views: 156,
       replies: 12,
-      likes: 28
+      likes: 28,
     },
     {
       id: '3',
       title: 'How to effectively use digital twins for process optimization?',
-      content: 'I\'m new to digital twin technology and would love to learn from experienced users...',
+      content:
+        "I'm new to digital twin technology and would love to learn from experienced users...",
       author: {
         name: 'Emma Thompson',
         role: 'Process Engineer',
-        reputation: 675
+        reputation: 675,
       },
       category: 'learning',
       tags: ['Digital Twin', 'Process Optimization', 'Learning'],
@@ -173,8 +176,8 @@ const SocialForumsPage: React.FC = () => {
       views: 89,
       replies: 8,
       likes: 15,
-      isSolved: true
-    }
+      isSolved: true,
+    },
   ];
 
   useEffect(() => {
@@ -201,22 +204,21 @@ const SocialForumsPage: React.FC = () => {
   };
 
   const handleLikePost = (postId: string) => {
-    setPosts(prev => prev.map(post => 
-      post.id === postId 
-        ? { ...post, likes: post.likes + 1 }
-        : post
-    ));
+    setPosts(prev =>
+      prev.map(post => (post.id === postId ? { ...post, likes: post.likes + 1 } : post))
+    );
     toast.success('Post liked!');
   };
 
   const filteredPosts = posts.filter(post => {
-    const matchesSearch = searchTerm === '' || 
+    const matchesSearch =
+      searchTerm === '' ||
       post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       post.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
       post.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
-    
+
     const matchesCategory = selectedCategory === 'all' || post.category === selectedCategory;
-    
+
     return matchesSearch && matchesCategory;
   });
 
@@ -229,7 +231,7 @@ const SocialForumsPage: React.FC = () => {
     const date = new Date(dateString);
     const now = new Date();
     const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
-    
+
     if (diffInHours < 1) return 'Just now';
     if (diffInHours < 24) return `${diffInHours}h ago`;
     return `${Math.floor(diffInHours / 24)}d ago`;
@@ -249,7 +251,9 @@ const SocialForumsPage: React.FC = () => {
         <div className="max-w-md w-full bg-white rounded-lg shadow-md p-6 text-center">
           <MessageCircle className="w-16 h-16 text-indigo-600 mx-auto mb-4" />
           <h2 className="text-2xl font-bold text-gray-900 mb-4">Join the Community</h2>
-          <p className="text-gray-600 mb-6">Please log in to access community forums and participate in discussions.</p>
+          <p className="text-gray-600 mb-6">
+            Please log in to access community forums and participate in discussions.
+          </p>
           <a
             href="/auth/login"
             className="bg-indigo-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-indigo-700 transition-colors"
@@ -266,7 +270,10 @@ const SocialForumsPage: React.FC = () => {
       <div className="min-h-screen bg-gray-50">
         <Head>
           <title>Community Forums - Digame</title>
-          <meta name="description" content="Join the Digame community forums to discuss AI, automation, career development, and more." />
+          <meta
+            name="description"
+            content="Join the Digame community forums to discuss AI, automation, career development, and more."
+          />
           <meta name="viewport" content="width=device-width, initial-scale=1" />
         </Head>
 
@@ -293,16 +300,18 @@ const SocialForumsPage: React.FC = () => {
 
             {/* Categories Overview */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-              {categories.map((category) => (
-                <Card 
-                  key={category.id} 
+              {categories.map(category => (
+                <Card
+                  key={category.id}
                   className={`cursor-pointer hover:shadow-lg transition-shadow border-l-4 border-l-${category.color}-500`}
                   onClick={() => setSelectedCategory(category.id)}
                 >
                   <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div className={`p-2 rounded-lg bg-${category.color}-100 text-${category.color}-600`}>
+                        <div
+                          className={`p-2 rounded-lg bg-${category.color}-100 text-${category.color}-600`}
+                        >
                           {category.icon}
                         </div>
                         <div>
@@ -333,7 +342,7 @@ const SocialForumsPage: React.FC = () => {
                   placeholder="Search posts, topics, or tags..."
                   className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={e => setSearchTerm(e.target.value)}
                 />
               </div>
               <div className="flex items-center gap-2">
@@ -341,10 +350,10 @@ const SocialForumsPage: React.FC = () => {
                 <select
                   className="border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                   value={selectedCategory}
-                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  onChange={e => setSelectedCategory(e.target.value)}
                 >
                   <option value="all">All Categories</option>
-                  {categories.map((category) => (
+                  {categories.map(category => (
                     <option key={category.id} value={category.id}>
                       {category.name}
                     </option>
@@ -376,23 +385,26 @@ const SocialForumsPage: React.FC = () => {
 
               <TabsContent value={activeTab} className="mt-6">
                 <div className="space-y-4">
-                  {filteredPosts.map((post) => (
+                  {filteredPosts.map(post => (
                     <Card key={post.id} className="hover:shadow-md transition-shadow">
                       <CardContent className="p-6">
                         <div className="flex items-start gap-4">
-                          <Avatar
-                            className="w-12 h-12"
-                            name={post.author.name}
-                            size="lg"
-                          />
-                          
+                          <Avatar className="w-12 h-12" name={post.author.name} size="lg" />
+
                           <div className="flex-1">
                             <div className="flex items-start justify-between mb-2">
                               <div>
                                 <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
                                   {post.isSticky && <Zap className="w-4 h-4 text-yellow-500" />}
                                   {post.title}
-                                  {post.isSolved && <Badge variant="outline" className="text-green-600 border-green-600">Solved</Badge>}
+                                  {post.isSolved && (
+                                    <Badge
+                                      variant="outline"
+                                      className="text-green-600 border-green-600"
+                                    >
+                                      Solved
+                                    </Badge>
+                                  )}
                                 </h3>
                                 <div className="flex items-center gap-2 text-sm text-gray-600 mt-1">
                                   <span className="font-medium">{post.author.name}</span>
@@ -402,16 +414,16 @@ const SocialForumsPage: React.FC = () => {
                                   <span>{formatTimeAgo(post.createdAt)}</span>
                                 </div>
                               </div>
-                              <Badge 
-                                variant="outline" 
+                              <Badge
+                                variant="outline"
                                 className={`text-${getCategoryColor(post.category)}-600 border-${getCategoryColor(post.category)}-600`}
                               >
                                 {categories.find(cat => cat.id === post.category)?.name}
                               </Badge>
                             </div>
-                            
+
                             <p className="text-gray-700 mb-3 line-clamp-2">{post.content}</p>
-                            
+
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-4 text-sm text-gray-500">
                                 <div className="flex items-center gap-1">
@@ -422,7 +434,7 @@ const SocialForumsPage: React.FC = () => {
                                   <MessageSquare className="w-4 h-4" />
                                   {post.replies}
                                 </div>
-                                <button 
+                                <button
                                   onClick={() => handleLikePost(post.id)}
                                   className="flex items-center gap-1 hover:text-red-500 transition-colors"
                                 >
@@ -430,7 +442,7 @@ const SocialForumsPage: React.FC = () => {
                                   {post.likes}
                                 </button>
                               </div>
-                              
+
                               <div className="flex flex-wrap gap-1">
                                 {post.tags.map((tag, index) => (
                                   <Badge key={index} variant="secondary" className="text-xs">
@@ -444,17 +456,16 @@ const SocialForumsPage: React.FC = () => {
                       </CardContent>
                     </Card>
                   ))}
-                  
+
                   {filteredPosts.length === 0 && (
                     <Card>
                       <CardContent className="text-center py-12">
                         <MessageCircle className="w-16 h-16 text-gray-400 mx-auto mb-4" />
                         <h3 className="text-lg font-medium text-gray-900 mb-2">No posts found</h3>
                         <p className="text-gray-600 mb-4">
-                          {searchTerm || selectedCategory !== 'all' 
-                            ? "Try adjusting your search or filter criteria."
-                            : "Be the first to start a discussion in this community!"
-                          }
+                          {searchTerm || selectedCategory !== 'all'
+                            ? 'Try adjusting your search or filter criteria.'
+                            : 'Be the first to start a discussion in this community!'}
                         </p>
                         <Button onClick={handleCreatePost}>
                           <Plus className="w-4 h-4 mr-2" />
@@ -473,12 +484,12 @@ const SocialForumsPage: React.FC = () => {
   );
 };
 
-export const getServerSideProps: GetServerSideProps = async (context) => {
+export const getServerSideProps: GetServerSideProps = async context => {
   // You can fetch initial forum data here if needed
   // For now, we'll let the component handle data fetching
-  
+
   return {
-    props: {}
+    props: {},
   };
 };
 

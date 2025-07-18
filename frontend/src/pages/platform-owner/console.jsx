@@ -1,8 +1,30 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Crown, Users, Building, DollarSign, Activity, AlertTriangle, TrendingUp, Server,
-  Shield, Database, Settings, BarChart3, Globe, Clock, CheckCircle, XCircle,
-  Cpu, HardDrive, Network, Zap, Eye, Edit, Trash2, Plus, RefreshCw
+  Crown,
+  Users,
+  Building,
+  DollarSign,
+  Activity,
+  AlertTriangle,
+  TrendingUp,
+  Server,
+  Shield,
+  Database,
+  Settings,
+  BarChart3,
+  Globe,
+  Clock,
+  CheckCircle,
+  XCircle,
+  Cpu,
+  HardDrive,
+  Network,
+  Zap,
+  Eye,
+  Edit,
+  Trash2,
+  Plus,
+  RefreshCw,
 } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
@@ -27,38 +49,39 @@ const PlatformOwnerConsolePage = () => {
   const fetchPlatformOverview = async () => {
     try {
       setLoading(true);
-      const [overviewResponse, healthResponse, revenueResponse, tenantsResponse, usersResponse] = await Promise.all([
-        fetch('/api/v1/platform/overview', {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-            'Content-Type': 'application/json'
-          }
-        }),
-        fetch('/api/v1/platform/health', {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-            'Content-Type': 'application/json'
-          }
-        }).catch(() => ({ ok: false })),
-        fetch('/api/v1/platform/analytics/revenue', {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-            'Content-Type': 'application/json'
-          }
-        }).catch(() => ({ ok: false })),
-        fetch('/api/v1/platform/tenants?limit=10', {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-            'Content-Type': 'application/json'
-          }
-        }).catch(() => ({ ok: false })),
-        fetch('/api/v1/platform/users?limit=10', {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-            'Content-Type': 'application/json'
-          }
-        }).catch(() => ({ ok: false }))
-      ]);
+      const [overviewResponse, healthResponse, revenueResponse, tenantsResponse, usersResponse] =
+        await Promise.all([
+          fetch('/api/v1/platform/overview', {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem('token')}`,
+              'Content-Type': 'application/json',
+            },
+          }),
+          fetch('/api/v1/platform/health', {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem('token')}`,
+              'Content-Type': 'application/json',
+            },
+          }).catch(() => ({ ok: false })),
+          fetch('/api/v1/platform/analytics/revenue', {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem('token')}`,
+              'Content-Type': 'application/json',
+            },
+          }).catch(() => ({ ok: false })),
+          fetch('/api/v1/platform/tenants?limit=10', {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem('token')}`,
+              'Content-Type': 'application/json',
+            },
+          }).catch(() => ({ ok: false })),
+          fetch('/api/v1/platform/users?limit=10', {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem('token')}`,
+              'Content-Type': 'application/json',
+            },
+          }).catch(() => ({ ok: false })),
+        ]);
 
       if (!overviewResponse.ok) {
         throw new Error('Failed to fetch platform overview');
@@ -131,7 +154,9 @@ const PlatformOwnerConsolePage = () => {
               <Crown className="h-8 w-8 text-yellow-500 mr-3" />
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">Platform Owner Console</h1>
-                <p className="text-sm text-gray-500">Comprehensive platform management and analytics</p>
+                <p className="text-sm text-gray-500">
+                  Comprehensive platform management and analytics
+                </p>
               </div>
             </div>
             <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
@@ -208,7 +233,10 @@ const PlatformOwnerConsolePage = () => {
 
           {/* Revenue Analytics Tab */}
           <TabsContent value="revenue" className="space-y-6">
-            <RevenueAnalyticsSection revenueData={revenueData} subscriptionBreakdown={subscriptionBreakdown} />
+            <RevenueAnalyticsSection
+              revenueData={revenueData}
+              subscriptionBreakdown={subscriptionBreakdown}
+            />
           </TabsContent>
 
           {/* System Health Tab */}
@@ -234,7 +262,7 @@ const MetricCard = ({ title, value, subtitle, icon: Icon, color }) => {
     blue: 'text-blue-600',
     green: 'text-green-600',
     purple: 'text-purple-600',
-    orange: 'text-orange-600'
+    orange: 'text-orange-600',
   };
 
   return (
@@ -266,12 +294,17 @@ const SubscriptionBreakdownCard = ({ subscriptionBreakdown }) => (
         {Object.entries(subscriptionBreakdown || {}).map(([tier, count]) => (
           <div key={tier} className="flex items-center justify-between">
             <div className="flex items-center">
-              <div className={`w-3 h-3 rounded-full mr-3 ${
-                tier === 'free' ? 'bg-gray-400' :
-                tier === 'individual_pro' ? 'bg-blue-500' :
-                tier === 'team' ? 'bg-green-500' :
-                'bg-purple-500'
-              }`}></div>
+              <div
+                className={`w-3 h-3 rounded-full mr-3 ${
+                  tier === 'free'
+                    ? 'bg-gray-400'
+                    : tier === 'individual_pro'
+                      ? 'bg-blue-500'
+                      : tier === 'team'
+                        ? 'bg-green-500'
+                        : 'bg-purple-500'
+                }`}
+              ></div>
               <span className="text-sm font-medium text-gray-900 capitalize">
                 {tier.replace('_', ' ')}
               </span>
@@ -295,34 +328,34 @@ const QuickActionsCard = () => (
         <Button
           variant="outline"
           className="h-20 flex flex-col items-center justify-center"
-          onClick={() => window.location.href = '/platform-owner/tenants'}
+          onClick={() => (window.location.href = '/platform-owner/tenants')}
         >
           <Building className="h-6 w-6 mb-2" />
           <span className="text-sm">Manage Tenants</span>
         </Button>
-        
+
         <Button
           variant="outline"
           className="h-20 flex flex-col items-center justify-center"
-          onClick={() => window.location.href = '/platform-owner/users'}
+          onClick={() => (window.location.href = '/platform-owner/users')}
         >
           <Users className="h-6 w-6 mb-2" />
           <span className="text-sm">Manage Users</span>
         </Button>
-        
+
         <Button
           variant="outline"
           className="h-20 flex flex-col items-center justify-center"
-          onClick={() => window.location.href = '/platform-owner/revenue'}
+          onClick={() => (window.location.href = '/platform-owner/revenue')}
         >
           <TrendingUp className="h-6 w-6 mb-2" />
           <span className="text-sm">Revenue Analytics</span>
         </Button>
-        
+
         <Button
           variant="outline"
           className="h-20 flex flex-col items-center justify-center"
-          onClick={() => window.location.href = '/platform-owner/health'}
+          onClick={() => (window.location.href = '/platform-owner/health')}
         >
           <Server className="h-6 w-6 mb-2" />
           <span className="text-sm">System Health</span>
@@ -346,10 +379,12 @@ const PlatformStatusCard = ({ platformHealth }) => (
           </div>
           <h4 className="text-sm font-medium text-gray-900">System Health</h4>
           <p className="text-xs text-gray-500">
-            {platformHealth.overall_status === 'healthy' ? 'All systems operational' : 'Issues detected'}
+            {platformHealth.overall_status === 'healthy'
+              ? 'All systems operational'
+              : 'Issues detected'}
           </p>
         </div>
-        
+
         <div className="text-center">
           <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
             <Activity className="w-6 h-6 text-blue-600" />
@@ -357,7 +392,7 @@ const PlatformStatusCard = ({ platformHealth }) => (
           <h4 className="text-sm font-medium text-gray-900">API Performance</h4>
           <p className="text-xs text-gray-500">Average response: 245ms</p>
         </div>
-        
+
         <div className="text-center">
           <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3">
             <Server className="w-6 h-6 text-purple-600" />
@@ -380,13 +415,13 @@ const TenantManagementSection = ({ tenants, onRefresh }) => (
           <RefreshCw className="w-4 h-4 mr-2" />
           Refresh
         </Button>
-        <Button onClick={() => window.location.href = '/platform-owner/tenants'}>
+        <Button onClick={() => (window.location.href = '/platform-owner/tenants')}>
           <Plus className="w-4 h-4 mr-2" />
           Create Tenant
         </Button>
       </div>
     </div>
-    
+
     <Card>
       <CardContent className="p-0">
         <div className="overflow-x-auto">
@@ -411,7 +446,7 @@ const TenantManagementSection = ({ tenants, onRefresh }) => (
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {tenants.map((tenant) => (
+              {tenants.map(tenant => (
                 <tr key={tenant.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
@@ -467,7 +502,7 @@ const UserManagementSection = ({ users, onRefresh }) => (
         Refresh
       </Button>
     </div>
-    
+
     <Card>
       <CardContent className="p-0">
         <div className="overflow-x-auto">
@@ -492,7 +527,7 @@ const UserManagementSection = ({ users, onRefresh }) => (
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {users.map((user) => (
+              {users.map(user => (
                 <tr key={user.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
@@ -515,9 +550,11 @@ const UserManagementSection = ({ users, onRefresh }) => (
                     </Badge>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <Badge className={`${
-                      user.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                    }`}>
+                    <Badge
+                      className={`${
+                        user.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                      }`}
+                    >
                       {user.is_active ? 'Active' : 'Inactive'}
                     </Badge>
                   </td>
@@ -557,7 +594,9 @@ const RevenueAnalyticsSection = ({ revenueData, subscriptionBreakdown }) => (
       <CardContent>
         <div className="space-y-4">
           <div className="text-center">
-            <p className="text-3xl font-bold text-green-600">${revenueData.summary?.total_mrr || 0}</p>
+            <p className="text-3xl font-bold text-green-600">
+              ${revenueData.summary?.total_mrr || 0}
+            </p>
             <p className="text-sm text-gray-500">Monthly Recurring Revenue</p>
           </div>
           <div className="space-y-2">
@@ -587,7 +626,7 @@ const RevenueAnalyticsSection = ({ revenueData, subscriptionBreakdown }) => (
       </CardHeader>
       <CardContent>
         <div className="space-y-3">
-          {(revenueData.mrr_by_tier || []).map((tier) => (
+          {(revenueData.mrr_by_tier || []).map(tier => (
             <div key={tier.tier}>
               <div className="flex justify-between text-sm mb-1">
                 <span className="capitalize">{tier.tier.replace('_', ' ')}</span>
@@ -615,9 +654,11 @@ const SystemHealthSection = ({ platformHealth }) => (
       <CardContent>
         <div className="space-y-4">
           <div className="text-center">
-            <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3 ${
-              platformHealth.overall_status === 'healthy' ? 'bg-green-100' : 'bg-red-100'
-            }`}>
+            <div
+              className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3 ${
+                platformHealth.overall_status === 'healthy' ? 'bg-green-100' : 'bg-red-100'
+              }`}
+            >
               {platformHealth.overall_status === 'healthy' ? (
                 <CheckCircle className="w-8 h-8 text-green-600" />
               ) : (
@@ -636,7 +677,9 @@ const SystemHealthSection = ({ platformHealth }) => (
             </div>
             <div className="flex justify-between text-sm">
               <span>Warning Services</span>
-              <span className="text-yellow-600">{platformHealth.metrics_summary?.warning || 0}</span>
+              <span className="text-yellow-600">
+                {platformHealth.metrics_summary?.warning || 0}
+              </span>
             </div>
             <div className="flex justify-between text-sm">
               <span>Critical Services</span>

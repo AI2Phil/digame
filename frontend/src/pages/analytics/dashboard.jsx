@@ -1,12 +1,33 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import {
-  BarChart3, TrendingUp, Activity, Database,
-  Clock, Users, Zap, AlertTriangle, CheckCircle,
-  Monitor, Smartphone, Globe, RefreshCw,
-  Download, Filter, Calendar, Eye, Target, Home
+  BarChart3,
+  TrendingUp,
+  Activity,
+  Database,
+  Clock,
+  Users,
+  Zap,
+  AlertTriangle,
+  CheckCircle,
+  Monitor,
+  Smartphone,
+  Globe,
+  RefreshCw,
+  Download,
+  Filter,
+  Calendar,
+  Eye,
+  Target,
+  Home,
 } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/Card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { Progress } from '../../components/ui/Progress';
@@ -18,7 +39,11 @@ import PerformanceMonitoringSection from '../../components/analytics/Performance
 import UserBehaviorAnalyticsSection from '../../components/analytics/UserBehaviorAnalyticsSection';
 import ApiAnalyticsSection from '../../components/analytics/ApiAnalyticsSection';
 import MobileAnalyticsSection from '../../components/analytics/MobileAnalyticsSection';
-import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '../../components/ui/Resizable'; // Import Resizable components
+import {
+  ResizablePanelGroup,
+  ResizablePanel,
+  ResizableHandle,
+} from '../../components/ui/Resizable'; // Import Resizable components
 
 const AnalyticsDashboardPage = () => {
   const router = useRouter();
@@ -40,13 +65,13 @@ const AnalyticsDashboardPage = () => {
         userBehaviorData,
         apiMetricsData,
         databaseMetricsData,
-        mobileAnalyticsData
+        mobileAnalyticsData,
       ] = await Promise.all([
         apiService.getPerformanceMetrics(timeRange),
         apiService.getUserBehaviorAnalytics(timeRange),
         apiService.getApiUsageMetrics(timeRange),
         apiService.getDatabaseMetrics(timeRange),
-        apiService.getMobileAnalytics(timeRange)
+        apiService.getMobileAnalytics(timeRange),
       ]);
 
       setAnalyticsData({
@@ -54,7 +79,7 @@ const AnalyticsDashboardPage = () => {
         userBehavior: userBehaviorData,
         apiMetrics: apiMetricsData,
         database: databaseMetricsData,
-        mobile: mobileAnalyticsData
+        mobile: mobileAnalyticsData,
       });
     } catch (error) {
       console.error('Failed to load analytics data:', error);
@@ -99,7 +124,9 @@ const AnalyticsDashboardPage = () => {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-gray-900 mb-2">Analytics Dashboard</h1>
-              <p className="text-gray-600">Real-time performance monitoring and user behavior analytics</p>
+              <p className="text-gray-600">
+                Real-time performance monitoring and user behavior analytics
+              </p>
             </div>
             <div className="flex items-center gap-3">
               {/* Home Button */}
@@ -126,11 +153,7 @@ const AnalyticsDashboardPage = () => {
                 ]}
                 className="text-sm min-w-[150px]" // Added min-w for better default appearance
               />
-              <Button
-                variant="outline"
-                onClick={handleRefresh}
-                disabled={refreshing}
-              >
+              <Button variant="outline" onClick={handleRefresh} disabled={refreshing}>
                 <RefreshCw className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
                 Refresh
               </Button>
@@ -224,7 +247,7 @@ const MetricCard = ({ title, value, change, trend, icon: Icon, color }) => {
     blue: 'text-blue-600 bg-blue-100',
     green: 'text-green-600 bg-green-100',
     purple: 'text-purple-600 bg-purple-100',
-    emerald: 'text-emerald-600 bg-emerald-100'
+    emerald: 'text-emerald-600 bg-emerald-100',
   };
 
   const getTrendIcon = () => {
@@ -248,9 +271,7 @@ const MetricCard = ({ title, value, change, trend, icon: Icon, color }) => {
             <p className="text-2xl font-bold text-gray-900">{value}</p>
             <div className="flex items-center gap-1 mt-1">
               {getTrendIcon()}
-              <span className={`text-sm ${getTrendColor()}`}>
-                {change} from last period
-              </span>
+              <span className={`text-sm ${getTrendColor()}`}>{change} from last period</span>
             </div>
           </div>
           <div className={`p-3 rounded-full ${colorClasses[color]}`}>
@@ -270,13 +291,17 @@ const OverviewSection = ({ analyticsData }) => (
       className="rounded-lg border min-h-[300px] md:min-h-[400px]" // Added min-height for better UX
     >
       <ResizablePanel defaultSize={50}>
-        <div className="p-4 h-full overflow-auto"> {/* Added padding and overflow */}
+        <div className="p-4 h-full overflow-auto">
+          {' '}
+          {/* Added padding and overflow */}
           <SystemHealthOverview data={analyticsData} />
         </div>
       </ResizablePanel>
       <ResizableHandle withHandle />
       <ResizablePanel defaultSize={50}>
-        <div className="p-4 h-full overflow-auto"> {/* Added padding and overflow */}
+        <div className="p-4 h-full overflow-auto">
+          {' '}
+          {/* Added padding and overflow */}
           <RealTimeMetrics data={analyticsData} />
         </div>
       </ResizablePanel>
@@ -388,13 +413,15 @@ const TopPagesCard = () => (
           { page: '/dashboard', views: 1234, change: '+12%' },
           { page: '/profile', views: 856, change: '+8%' },
           { page: '/analytics', views: 432, change: '+15%' },
-          { page: '/settings', views: 298, change: '+5%' }
+          { page: '/settings', views: 298, change: '+5%' },
         ].map((item, index) => (
           <div key={index} className="flex items-center justify-between">
             <span className="text-sm font-medium">{item.page}</span>
             <div className="flex items-center gap-2">
               <span className="text-sm text-gray-600">{item.views}</span>
-              <Badge variant="success" className="text-xs">{item.change}</Badge>
+              <Badge variant="success" className="text-xs">
+                {item.change}
+              </Badge>
             </div>
           </div>
         ))}

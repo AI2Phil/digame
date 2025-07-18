@@ -38,9 +38,10 @@ const TeamAnalyticsPage: React.FC<TeamAnalyticsPageProps> = ({ initialData }) =>
   }
 
   // Check if user has access to team analytics
-  const hasAnalyticsAccess = user.subscriptionTier === 'team' || 
-                            user.subscriptionTier === 'enterprise' || 
-                            user.subscriptionTier === 'platform_owner';
+  const hasAnalyticsAccess =
+    user.subscriptionTier === 'team' ||
+    user.subscriptionTier === 'enterprise' ||
+    user.subscriptionTier === 'platform_owner';
 
   if (!hasAnalyticsAccess) {
     return (
@@ -67,7 +68,10 @@ const TeamAnalyticsPage: React.FC<TeamAnalyticsPageProps> = ({ initialData }) =>
       <div className="min-h-screen bg-gray-50">
         <Head>
           <title>Team Analytics - Digame</title>
-          <meta name="description" content="Advanced team analytics and performance insights with AI-powered recommendations." />
+          <meta
+            name="description"
+            content="Advanced team analytics and performance insights with AI-powered recommendations."
+          />
           <meta name="viewport" content="width=device-width, initial-scale=1" />
         </Head>
 
@@ -81,14 +85,14 @@ const TeamAnalyticsPage: React.FC<TeamAnalyticsPageProps> = ({ initialData }) =>
   );
 };
 
-export const getServerSideProps: GetServerSideProps = async (context) => {
+export const getServerSideProps: GetServerSideProps = async context => {
   // You can fetch initial analytics data here if needed
   // For now, we'll let the component handle data fetching
-  
+
   return {
     props: {
-      initialData: null
-    }
+      initialData: null,
+    },
   };
 };
 

@@ -49,17 +49,15 @@ export default function HomePage({ onDemoAccess, onLogin }) {
               </div>
               <span className="text-xl font-bold text-gray-900">Digame</span>
             </div>
-          <Button variant="link" onClick={() => setShowOnboarding(false)}>
+            <Button variant="link" onClick={() => setShowOnboarding(false)}>
               ← Back
-          </Button>
+            </Button>
           </div>
 
           {/* Onboarding Content */}
           <div className="max-w-4xl mx-auto">
             <div className="text-center mb-12">
-              <h1 className="text-4xl font-bold text-gray-900 mb-4">
-                Choose Your Experience
-              </h1>
+              <h1 className="text-4xl font-bold text-gray-900 mb-4">Choose Your Experience</h1>
               <p className="text-xl text-gray-600">
                 Explore Digame with our interactive demo or create your personal digital twin
               </p>
@@ -118,111 +116,108 @@ export default function HomePage({ onDemoAccess, onLogin }) {
               </Card>
 
               {/* Demo Option */}
-            <Card className="rounded-2xl shadow-xl border border-gray-100 hover:shadow-2xl transition-shadow">
-              <CardContent className="p-8">
-                <div className="text-center mb-6">
-                  <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <span className="text-2xl">🚀</span>
+              <Card className="rounded-2xl shadow-xl border border-gray-100 hover:shadow-2xl transition-shadow">
+                <CardContent className="p-8">
+                  <div className="text-center mb-6">
+                    <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <span className="text-2xl">🚀</span>
+                    </div>
+                    <h3 className="text-2xl font-bold text-gray-900 mb-2">Try the Demo</h3>
+                    <p className="text-gray-600">
+                      Experience the full platform with sample data and see how your digital twin
+                      works
+                    </p>
                   </div>
-                  <h3 className="text-2xl font-bold text-gray-900 mb-2">Try the Demo</h3>
-                  <p className="text-gray-600">
-                    Experience the full platform with sample data and see how your digital twin works
+
+                  <div className="space-y-4 mb-8">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center">
+                        <span className="text-green-600 text-xs">✓</span>
+                      </div>
+                      <span className="text-gray-700">Interactive productivity dashboard</span>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <div className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center">
+                        <span className="text-green-600 text-xs">✓</span>
+                      </div>
+                      <span className="text-gray-700">Behavioral pattern analysis</span>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <div className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center">
+                        <span className="text-green-600 text-xs">✓</span>
+                      </div>
+                      <span className="text-gray-700">Predictive insights and recommendations</span>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <div className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center">
+                        <span className="text-green-600 text-xs">✓</span>
+                      </div>
+                      <span className="text-gray-700">No registration required</span>
+                    </div>
+                  </div>
+
+                  <Button onClick={handleDemoClick} variant="primary" size="lg" className="w-full">
+                    🚀 Launch Demo Dashboard
+                  </Button>
+                </CardContent>
+              </Card>
+
+              {/* Sign Up Option */}
+              <Card className="rounded-2xl shadow-xl border border-gray-100 hover:shadow-2xl transition-shadow">
+                <CardContent className="p-8">
+                  <div className="text-center mb-6">
+                    <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <span className="text-2xl">🎯</span>
+                    </div>
+                    <h3 className="text-2xl font-bold text-gray-900 mb-2">Create Your Account</h3>
+                    <p className="text-gray-600">
+                      Start building your personal digital twin with real data and personalized
+                      insights
+                    </p>
+                  </div>
+
+                  <div className="space-y-4 mb-8">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center">
+                        <span className="text-green-600 text-xs">✓</span>
+                      </div>
+                      <span className="text-gray-700">Personalized digital twin</span>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <div className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center">
+                        <span className="text-green-600 text-xs">✓</span>
+                      </div>
+                      <span className="text-gray-700">Real-time productivity tracking</span>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <div className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center">
+                        <span className="text-green-600 text-xs">✓</span>
+                      </div>
+                      <span className="text-gray-700">AI-powered career coaching</span>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <div className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center">
+                        <span className="text-green-600 text-xs">✓</span>
+                      </div>
+                      <span className="text-gray-700">30-day free trial</span>
+                    </div>
+                  </div>
+
+                  <Button
+                    onClick={() => router.push('/auth')}
+                    variant="primary"
+                    size="lg"
+                    className="w-full"
+                  >
+                    🎯 Create Account
+                  </Button>
+                  <p className="text-center text-sm text-gray-500 mt-3">
+                    Free 30-day trial • No credit card required
                   </p>
-                </div>
-
-                <div className="space-y-4 mb-8">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center">
-                      <span className="text-green-600 text-xs">✓</span>
-                    </div>
-                    <span className="text-gray-700">Interactive productivity dashboard</span>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <div className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center">
-                      <span className="text-green-600 text-xs">✓</span>
-                    </div>
-                    <span className="text-gray-700">Behavioral pattern analysis</span>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <div className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center">
-                      <span className="text-green-600 text-xs">✓</span>
-                    </div>
-                    <span className="text-gray-700">Predictive insights and recommendations</span>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <div className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center">
-                      <span className="text-green-600 text-xs">✓</span>
-                    </div>
-                    <span className="text-gray-700">No registration required</span>
-                  </div>
-                </div>
-
-                <Button
-                  onClick={handleDemoClick}
-                  variant="primary"
-                  size="lg"
-                  className="w-full"
-                >
-                  🚀 Launch Demo Dashboard
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Sign Up Option */}
-            <Card className="rounded-2xl shadow-xl border border-gray-100 hover:shadow-2xl transition-shadow">
-              <CardContent className="p-8">
-                <div className="text-center mb-6">
-                  <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <span className="text-2xl">🎯</span>
-                  </div>
-                  <h3 className="text-2xl font-bold text-gray-900 mb-2">Create Your Account</h3>
-                  <p className="text-gray-600">
-                    Start building your personal digital twin with real data and personalized insights
-                  </p>
-                </div>
-
-                <div className="space-y-4 mb-8">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center">
-                      <span className="text-green-600 text-xs">✓</span>
-                    </div>
-                    <span className="text-gray-700">Personalized digital twin</span>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <div className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center">
-                      <span className="text-green-600 text-xs">✓</span>
-                    </div>
-                    <span className="text-gray-700">Real-time productivity tracking</span>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <div className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center">
-                      <span className="text-green-600 text-xs">✓</span>
-                    </div>
-                    <span className="text-gray-700">AI-powered career coaching</span>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <div className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center">
-                      <span className="text-green-600 text-xs">✓</span>
-                    </div>
-                    <span className="text-gray-700">30-day free trial</span>
-                  </div>
-                </div>
-
-                <Button
-                  onClick={() => router.push('/auth')}
-                  variant="primary"
-                  size="lg"
-                  className="w-full"
-                >
-                  🎯 Create Account
-                </Button>
-                <p className="text-center text-sm text-gray-500 mt-3">
-                  Free 30-day trial • No credit card required
-                </p>
-              </CardContent>
-            </Card>
-              </div>
+                </CardContent>
+              </Card>
             </div>
+          </div>
         </div>
       </div>
     );
@@ -240,9 +235,15 @@ export default function HomePage({ onDemoAccess, onLogin }) {
             <span className="text-xl font-bold text-gray-900">Digame</span>
           </div>
           <div className="hidden md:flex space-x-8">
-            <Link href="/features" className="text-gray-600 hover:text-gray-900">Features</Link>
-            <Link href="/how-it-works" className="text-gray-600 hover:text-gray-900">How it Works</Link>
-            <Link href="/pricing" className="text-gray-600 hover:text-gray-900">Pricing</Link>
+            <Link href="/features" className="text-gray-600 hover:text-gray-900">
+              Features
+            </Link>
+            <Link href="/how-it-works" className="text-gray-600 hover:text-gray-900">
+              How it Works
+            </Link>
+            <Link href="/pricing" className="text-gray-600 hover:text-gray-900">
+              Pricing
+            </Link>
           </div>
           <div className="flex items-center space-x-2 sm:space-x-3">
             <button
@@ -259,7 +260,7 @@ export default function HomePage({ onDemoAccess, onLogin }) {
                 display: 'block',
                 visibility: 'visible',
                 opacity: '1',
-                zIndex: '10'
+                zIndex: '10',
               }}
               className="hover:bg-blue-50 transition-colors"
             >
@@ -286,16 +287,14 @@ export default function HomePage({ onDemoAccess, onLogin }) {
             <span className="text-blue-600"> {t('heroTitlePart2', 'Professional Twin')}</span>
           </h1>
           <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-            {t('heroSubtitle', 'Unlock your professional potential with AI-powered behavioral analysis, predictive insights, and personalized career development recommendations.')}
+            {t(
+              'heroSubtitle',
+              'Unlock your professional potential with AI-powered behavioral analysis, predictive insights, and personalized career development recommendations.'
+            )}
           </p>
-          
+
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-            <Button
-              onClick={handleGetStarted}
-              variant="primary"
-              size="xl"
-              className="text-lg"
-            >
+            <Button onClick={handleGetStarted} variant="primary" size="xl" className="text-lg">
               🎯 Start Your Journey
             </Button>
             <Button
@@ -306,12 +305,7 @@ export default function HomePage({ onDemoAccess, onLogin }) {
             >
               ✨ Explore Features
             </Button>
-            <Button
-              onClick={handleDemoClick}
-              variant="outline"
-              size="xl"
-              className="text-lg"
-            >
+            <Button onClick={handleDemoClick} variant="outline" size="xl" className="text-lg">
               🚀 Try Demo
             </Button>
           </div>
@@ -322,43 +316,49 @@ export default function HomePage({ onDemoAccess, onLogin }) {
               <div className="bg-gray-50 rounded-lg p-6">
                 <div className="flex items-center space-x-2 mb-4">
                   <div className="w-3 h-3 bg-red-400 rounded-full"></div>
-                <div className="w-3 h-3 bg-yellow-400 rounded-full"></div>
-                <div className="w-3 h-3 bg-green-400 rounded-full"></div>
-                <span className="text-sm text-gray-500 ml-4">Digame Dashboard Preview</span>
-              </div>
-              <div className="bg-white rounded-lg p-6 shadow-sm">
-                <div className="grid grid-cols-3 gap-4 mb-6">
-                  <div className="bg-blue-50 p-4 rounded-lg">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="text-2xl font-bold text-blue-600">87%</div>
-                      <Badge variant="info" size="sm">High</Badge>
+                  <div className="w-3 h-3 bg-yellow-400 rounded-full"></div>
+                  <div className="w-3 h-3 bg-green-400 rounded-full"></div>
+                  <span className="text-sm text-gray-500 ml-4">Digame Dashboard Preview</span>
+                </div>
+                <div className="bg-white rounded-lg p-6 shadow-sm">
+                  <div className="grid grid-cols-3 gap-4 mb-6">
+                    <div className="bg-blue-50 p-4 rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="text-2xl font-bold text-blue-600">87%</div>
+                        <Badge variant="info" size="sm">
+                          High
+                        </Badge>
+                      </div>
+                      <div className="text-sm text-gray-600 mb-2">Productivity Score</div>
+                      <Progress value={87} variant="default" size="sm" />
                     </div>
-                    <div className="text-sm text-gray-600 mb-2">Productivity Score</div>
-                    <Progress value={87} variant="default" size="sm" />
+                    <div className="bg-green-50 p-4 rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="text-2xl font-bold text-green-600">6.2h</div>
+                        <Badge variant="success" size="sm">
+                          +15%
+                        </Badge>
+                      </div>
+                      <div className="text-sm text-gray-600 mb-2">Focus Time</div>
+                      <Progress value={75} variant="success" size="sm" />
+                    </div>
+                    <div className="bg-purple-50 p-4 rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="text-2xl font-bold text-purple-600">+12%</div>
+                        <Badge variant="warning" size="sm">
+                          Trending
+                        </Badge>
+                      </div>
+                      <div className="text-sm text-gray-600 mb-2">Growth</div>
+                      <Progress value={62} variant="info" size="sm" />
+                    </div>
                   </div>
-                  <div className="bg-green-50 p-4 rounded-lg">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="text-2xl font-bold text-green-600">6.2h</div>
-                      <Badge variant="success" size="sm">+15%</Badge>
-                    </div>
-                    <div className="text-sm text-gray-600 mb-2">Focus Time</div>
-                    <Progress value={75} variant="success" size="sm" />
-                  </div>
-                  <div className="bg-purple-50 p-4 rounded-lg">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="text-2xl font-bold text-purple-600">+12%</div>
-                      <Badge variant="warning" size="sm">Trending</Badge>
-                    </div>
-                    <div className="text-sm text-gray-600 mb-2">Growth</div>
-                    <Progress value={62} variant="info" size="sm" />
+                  <div className="bg-gray-100 h-32 rounded-lg flex flex-col items-center justify-center">
+                    <span className="text-gray-500 mb-2">📊 Interactive Productivity Chart</span>
+                    <Progress value={45} className="w-3/4" showValue animated />
                   </div>
                 </div>
-                <div className="bg-gray-100 h-32 rounded-lg flex flex-col items-center justify-center">
-                  <span className="text-gray-500 mb-2">📊 Interactive Productivity Chart</span>
-                  <Progress value={45} className="w-3/4" showValue animated />
-                </div>
               </div>
-            </div>
             </CardContent>
           </Card>
         </div>
@@ -381,9 +381,14 @@ export default function HomePage({ onDemoAccess, onLogin }) {
               <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <span className="text-2xl">🧠</span>
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">{t('featureBehavioralAnalysisTitle', 'Behavioral Analysis')}</h3>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                {t('featureBehavioralAnalysisTitle', 'Behavioral Analysis')}
+              </h3>
               <p className="text-gray-600">
-                {t('featureBehavioralAnalysisText', 'Advanced ML algorithms analyze your work patterns and identify optimization opportunities')}
+                {t(
+                  'featureBehavioralAnalysisText',
+                  'Advanced ML algorithms analyze your work patterns and identify optimization opportunities'
+                )}
               </p>
             </div>
 
@@ -391,9 +396,14 @@ export default function HomePage({ onDemoAccess, onLogin }) {
               <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <span className="text-2xl">🔮</span>
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">{t('featurePredictiveInsightsTitle', 'Predictive Insights')}</h3>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                {t('featurePredictiveInsightsTitle', 'Predictive Insights')}
+              </h3>
               <p className="text-gray-600">
-                {t('featurePredictiveInsightsText', 'Get personalized predictions about your career trajectory and skill development')}
+                {t(
+                  'featurePredictiveInsightsText',
+                  'Get personalized predictions about your career trajectory and skill development'
+                )}
               </p>
             </div>
 
@@ -401,9 +411,14 @@ export default function HomePage({ onDemoAccess, onLogin }) {
               <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <span className="text-2xl">🎯</span>
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">{t('featureGoalAchievementTitle', 'Goal Achievement')}</h3>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                {t('featureGoalAchievementTitle', 'Goal Achievement')}
+              </h3>
               <p className="text-gray-600">
-                {t('featureGoalAchievementText', 'Set and track professional goals with AI-powered recommendations and progress monitoring')}
+                {t(
+                  'featureGoalAchievementText',
+                  'Set and track professional goals with AI-powered recommendations and progress monitoring'
+                )}
               </p>
             </div>
           </div>
@@ -417,62 +432,54 @@ export default function HomePage({ onDemoAccess, onLogin }) {
             <h2 className="text-3xl font-bold text-gray-900 mb-4">
               Trusted by Professionals Worldwide
             </h2>
-            <p className="text-xl text-gray-600">
-              See how digital twins are transforming careers
-            </p>
+            <p className="text-xl text-gray-600">See how digital twins are transforming careers</p>
           </div>
-          
+
           <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
             <Card className="rounded-lg shadow-sm">
               <CardContent className="p-6">
                 <div className="flex items-center mb-4">
-                  <Avatar
-                    name="Sarah Chen"
-                  />
+                  <Avatar name="Sarah Chen" />
                   <div>
                     <div className="font-semibold text-gray-900">Sarah Chen</div>
                     <div className="text-sm text-gray-600">Product Manager</div>
                   </div>
                 </div>
                 <p className="text-gray-700 italic">
-                  "Digame helped me identify productivity patterns I never knew existed.
-                  I've increased my efficiency by 40% in just 3 months."
+                  "Digame helped me identify productivity patterns I never knew existed. I've
+                  increased my efficiency by 40% in just 3 months."
                 </p>
               </CardContent>
             </Card>
-            
+
             <Card className="rounded-lg shadow-sm">
               <CardContent className="p-6">
                 <div className="flex items-center mb-4">
-                  <Avatar
-                    name="Marcus Rodriguez"
-                  />
+                  <Avatar name="Marcus Rodriguez" />
                   <div>
                     <div className="font-semibold text-gray-900">Marcus Rodriguez</div>
                     <div className="text-sm text-gray-600">Software Engineer</div>
                   </div>
                 </div>
                 <p className="text-gray-700 italic">
-                  "The predictive insights are incredible. Digame predicted my promotion
-                  6 months before it happened and helped me prepare perfectly."
+                  "The predictive insights are incredible. Digame predicted my promotion 6 months
+                  before it happened and helped me prepare perfectly."
                 </p>
               </CardContent>
             </Card>
-            
+
             <Card className="rounded-lg shadow-sm">
               <CardContent className="p-6">
                 <div className="flex items-center mb-4">
-                  <Avatar
-                    name="Emily Watson"
-                  />
+                  <Avatar name="Emily Watson" />
                   <div>
                     <div className="font-semibold text-gray-900">Emily Watson</div>
                     <div className="text-sm text-gray-600">Marketing Director</div>
                   </div>
                 </div>
                 <p className="text-gray-700 italic">
-                  "My digital twin became my career coach. The personalized recommendations
-                  led to a 60% salary increase within a year."
+                  "My digital twin became my career coach. The personalized recommendations led to a
+                  60% salary increase within a year."
                 </p>
               </CardContent>
             </Card>
@@ -487,7 +494,8 @@ export default function HomePage({ onDemoAccess, onLogin }) {
             Ready to Transform Your Professional Life?
           </h2>
           <p className="text-xl text-blue-100 mb-8">
-            Join thousands of professionals who are already using their digital twins to accelerate their careers
+            Join thousands of professionals who are already using their digital twins to accelerate
+            their careers
           </p>
           <Button
             onClick={handleGetStarted}
@@ -516,12 +524,7 @@ export default function HomePage({ onDemoAccess, onLogin }) {
       </footer>
 
       {/* Authentication Modal */}
-      {showAuthForm && (
-        <AuthForm
-          onLogin={handleAuthSuccess}
-          onClose={handleAuthClose}
-        />
-      )}
+      {showAuthForm && <AuthForm onLogin={handleAuthSuccess} onClose={handleAuthClose} />}
     </div>
   );
 }

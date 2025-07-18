@@ -1,11 +1,37 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import {
-  Users, UserPlus, MessageCircle, Target, Award, TrendingUp,
-  Network, Brain, Handshake, BookOpen, Calendar, MapPin,
-  Search, Filter, Star, Heart, Share2, Eye, Clock,
-  Building, Briefcase, GraduationCap, Coffee, Video,
-  BarChart3, PieChart, Activity, Zap, Globe, Shield, Home
+  Users,
+  UserPlus,
+  MessageCircle,
+  Target,
+  Award,
+  TrendingUp,
+  Network,
+  Brain,
+  Handshake,
+  BookOpen,
+  Calendar,
+  MapPin,
+  Search,
+  Filter,
+  Star,
+  Heart,
+  Share2,
+  Eye,
+  Clock,
+  Building,
+  Briefcase,
+  GraduationCap,
+  Coffee,
+  Video,
+  BarChart3,
+  PieChart,
+  Activity,
+  Zap,
+  Globe,
+  Shield,
+  Home,
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -37,24 +63,17 @@ const EnhancedSocialCollaborationDashboard = () => {
     setLoading(true);
     try {
       const userId = localStorage.getItem('userId');
-      
-      const [
-        profile,
-        matches,
-        mentorship,
-        projects,
-        analytics,
-        industry,
-        skillMatches
-      ] = await Promise.all([
-        socialService.getUserProfile(userId),
-        socialService.findPeerMatches({ userId, limit: 10 }),
-        socialService.getMentorshipPrograms(userId),
-        socialService.getCollaborationProjects(userId),
-        socialService.getTeamAnalytics(userId),
-        socialService.getIndustryConnections(userId),
-        socialService.getSkillBasedMatches(userId)
-      ]);
+
+      const [profile, matches, mentorship, projects, analytics, industry, skillMatches] =
+        await Promise.all([
+          socialService.getUserProfile(userId),
+          socialService.findPeerMatches({ userId, limit: 10 }),
+          socialService.getMentorshipPrograms(userId),
+          socialService.getCollaborationProjects(userId),
+          socialService.getTeamAnalytics(userId),
+          socialService.getIndustryConnections(userId),
+          socialService.getSkillBasedMatches(userId),
+        ]);
 
       setUserProfile(profile || {});
       setPeerMatches(matches || []);
@@ -63,7 +82,6 @@ const EnhancedSocialCollaborationDashboard = () => {
       setTeamAnalytics(analytics || {});
       setIndustryConnections(industry || []);
       setSkillBasedMatches(skillMatches || []);
-
     } catch (error) {
       console.error('Failed to load social collaboration data:', error);
       toast.error('Failed to load social collaboration data');
@@ -72,7 +90,7 @@ const EnhancedSocialCollaborationDashboard = () => {
     }
   };
 
-  const handleConnectPeer = async (peerId) => {
+  const handleConnectPeer = async peerId => {
     try {
       await socialService.sendConnectionRequest(peerId);
       toast.success('Connection request sent successfully');
@@ -82,7 +100,7 @@ const EnhancedSocialCollaborationDashboard = () => {
     }
   };
 
-  const handleJoinProject = async (projectId) => {
+  const handleJoinProject = async projectId => {
     try {
       await socialService.joinCollaborationProject(projectId);
       toast.success('Successfully joined collaboration project');
@@ -115,10 +133,12 @@ const EnhancedSocialCollaborationDashboard = () => {
               </div>
               <div>
                 <h1 className="text-3xl font-bold text-gray-900">Enhanced Social Collaboration</h1>
-                <p className="text-gray-600">Advanced peer matching, networking, and team collaboration platform</p>
+                <p className="text-gray-600">
+                  Advanced peer matching, networking, and team collaboration platform
+                </p>
               </div>
             </div>
-            
+
             {/* Home Button */}
             <Button
               variant="outline"
@@ -132,7 +152,7 @@ const EnhancedSocialCollaborationDashboard = () => {
               Home
             </Button>
           </div>
-          
+
           {/* Quick Stats */}
           <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
             <SocialMetricCard
@@ -186,7 +206,7 @@ const EnhancedSocialCollaborationDashboard = () => {
 
           {/* Overview Tab */}
           <TabsContent value="overview" className="space-y-6">
-            <SocialOverviewSection 
+            <SocialOverviewSection
               userProfile={userProfile}
               peerMatches={peerMatches}
               projects={collaborationProjects}
@@ -197,7 +217,7 @@ const EnhancedSocialCollaborationDashboard = () => {
 
           {/* Peer Matching Tab */}
           <TabsContent value="peer-matching" className="space-y-6">
-            <PeerMatchingSection 
+            <PeerMatchingSection
               peerMatches={peerMatches}
               skillMatches={skillBasedMatches}
               onConnect={handleConnectPeer}
@@ -206,14 +226,12 @@ const EnhancedSocialCollaborationDashboard = () => {
 
           {/* Mentorship Tab */}
           <TabsContent value="mentorship" className="space-y-6">
-            <MentorshipSection 
-              mentorshipPrograms={mentorshipPrograms}
-            />
+            <MentorshipSection mentorshipPrograms={mentorshipPrograms} />
           </TabsContent>
 
           {/* Projects Tab */}
           <TabsContent value="projects" className="space-y-6">
-            <CollaborationProjectsSection 
+            <CollaborationProjectsSection
               projects={collaborationProjects}
               onJoinProject={handleJoinProject}
             />
@@ -221,16 +239,12 @@ const EnhancedSocialCollaborationDashboard = () => {
 
           {/* Team Analytics Tab */}
           <TabsContent value="teams" className="space-y-6">
-            <TeamAnalyticsSection 
-              teamAnalytics={teamAnalytics}
-            />
+            <TeamAnalyticsSection teamAnalytics={teamAnalytics} />
           </TabsContent>
 
           {/* Industry Tab */}
           <TabsContent value="industry" className="space-y-6">
-            <IndustryNetworkingSection 
-              industryConnections={industryConnections}
-            />
+            <IndustryNetworkingSection industryConnections={industryConnections} />
           </TabsContent>
         </Tabs>
       </div>
@@ -245,7 +259,7 @@ const SocialMetricCard = ({ title, value, icon: Icon, color, trend }) => {
     purple: 'text-purple-600 bg-purple-100',
     green: 'text-green-600 bg-green-100',
     orange: 'text-orange-600 bg-orange-100',
-    emerald: 'text-emerald-600 bg-emerald-100'
+    emerald: 'text-emerald-600 bg-emerald-100',
   };
 
   return (
@@ -267,7 +281,13 @@ const SocialMetricCard = ({ title, value, icon: Icon, color, trend }) => {
 };
 
 // Social Overview Section Component
-const SocialOverviewSection = ({ userProfile, peerMatches, projects, mentorship, teamAnalytics }) => (
+const SocialOverviewSection = ({
+  userProfile,
+  peerMatches,
+  projects,
+  mentorship,
+  teamAnalytics,
+}) => (
   <div className="space-y-6">
     {/* Professional Profile Summary */}
     <Card>
@@ -285,9 +305,13 @@ const SocialOverviewSection = ({ userProfile, peerMatches, projects, mentorship,
                 <span className="text-white font-bold text-xl">{userProfile.initials || 'JD'}</span>
               </div>
               <div className="flex-1">
-                <h3 className="text-xl font-bold text-gray-900">{userProfile.name || 'John Doe'}</h3>
+                <h3 className="text-xl font-bold text-gray-900">
+                  {userProfile.name || 'John Doe'}
+                </h3>
                 <p className="text-gray-600">{userProfile.title || 'Senior Software Engineer'}</p>
-                <p className="text-sm text-gray-500">{userProfile.company || 'Tech Innovation Corp'}</p>
+                <p className="text-sm text-gray-500">
+                  {userProfile.company || 'Tech Innovation Corp'}
+                </p>
                 <div className="flex items-center gap-4 mt-3">
                   <Badge variant="secondary">{userProfile.experience || '5+ years'}</Badge>
                   <Badge variant="secondary">{userProfile.location || 'San Francisco, CA'}</Badge>
@@ -298,7 +322,15 @@ const SocialOverviewSection = ({ userProfile, peerMatches, projects, mentorship,
             <div className="mt-6">
               <h4 className="font-medium mb-3">Core Skills & Expertise</h4>
               <div className="flex flex-wrap gap-2">
-                {(userProfile.skills || ['React', 'Node.js', 'Python', 'Machine Learning', 'Team Leadership']).map((skill, index) => (
+                {(
+                  userProfile.skills || [
+                    'React',
+                    'Node.js',
+                    'Python',
+                    'Machine Learning',
+                    'Team Leadership',
+                  ]
+                ).map((skill, index) => (
                   <Badge key={index} variant="outline" className="text-xs">
                     {skill}
                   </Badge>
@@ -334,7 +366,9 @@ const SocialOverviewSection = ({ userProfile, peerMatches, projects, mentorship,
     {/* Quick Actions & Recommendations */}
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <RecommendedConnectionsCard peerMatches={peerMatches.slice(0, 3)} />
-      <ActiveCollaborationsCard projects={projects.filter(p => p.status === 'active').slice(0, 3)} />
+      <ActiveCollaborationsCard
+        projects={projects.filter(p => p.status === 'active').slice(0, 3)}
+      />
     </div>
 
     {/* Network Growth & Engagement */}
@@ -416,11 +450,7 @@ const PeerMatchCard = ({ match, onConnect }) => (
             {match.sharedSkills || 5} shared skills
           </Badge>
         </div>
-        <Button 
-          size="sm" 
-          className="mt-3"
-          onClick={() => onConnect(match.id)}
-        >
+        <Button size="sm" className="mt-3" onClick={() => onConnect(match.id)}>
           Connect
         </Button>
       </div>
@@ -486,40 +516,40 @@ const MentorshipSection = ({ mentorshipPrograms }) => {
   const [availablePrograms, setAvailablePrograms] = useState([
     {
       id: 1,
-      title: "Senior Developer Mentorship",
-      type: "mentor",
-      description: "Guide junior developers in advanced programming concepts",
-      duration: "6 months",
-      commitment: "2 hours/week",
+      title: 'Senior Developer Mentorship',
+      type: 'mentor',
+      description: 'Guide junior developers in advanced programming concepts',
+      duration: '6 months',
+      commitment: '2 hours/week',
       participants: 3,
-      skills: ["React", "Node.js", "System Design"],
-      status: "active"
+      skills: ['React', 'Node.js', 'System Design'],
+      status: 'active',
     },
     {
       id: 2,
-      title: "AI/ML Learning Circle",
-      type: "peer",
-      description: "Collaborative learning group for machine learning enthusiasts",
-      duration: "3 months",
-      commitment: "3 hours/week",
+      title: 'AI/ML Learning Circle',
+      type: 'peer',
+      description: 'Collaborative learning group for machine learning enthusiasts',
+      duration: '3 months',
+      commitment: '3 hours/week',
       participants: 8,
-      skills: ["Python", "TensorFlow", "Data Science"],
-      status: "recruiting"
+      skills: ['Python', 'TensorFlow', 'Data Science'],
+      status: 'recruiting',
     },
     {
       id: 3,
-      title: "Leadership Development Program",
-      type: "mentee",
-      description: "Learn leadership skills from experienced tech leaders",
-      duration: "4 months",
-      commitment: "1.5 hours/week",
+      title: 'Leadership Development Program',
+      type: 'mentee',
+      description: 'Learn leadership skills from experienced tech leaders',
+      duration: '4 months',
+      commitment: '1.5 hours/week',
       participants: 12,
-      skills: ["Leadership", "Team Management", "Strategy"],
-      status: "available"
-    }
+      skills: ['Leadership', 'Team Management', 'Strategy'],
+      status: 'available',
+    },
   ]);
 
-  const handleJoinProgram = async (programId) => {
+  const handleJoinProgram = async programId => {
     try {
       await socialService.joinMentorshipProgram(programId);
       toast.success('Successfully joined mentorship program');
@@ -603,54 +633,56 @@ const CollaborationProjectsSection = ({ projects, onJoinProject }) => {
   const [availableProjects, setAvailableProjects] = useState([
     {
       id: 1,
-      name: "Open Source AI Assistant",
-      description: "Building an intelligent coding assistant for developers",
-      category: "Open Source",
-      skills: ["Python", "NLP", "React"],
+      name: 'Open Source AI Assistant',
+      description: 'Building an intelligent coding assistant for developers',
+      category: 'Open Source',
+      skills: ['Python', 'NLP', 'React'],
       team: 8,
       progress: 65,
-      duration: "4 months",
-      commitment: "10 hours/week",
-      difficulty: "Advanced",
-      status: "recruiting"
+      duration: '4 months',
+      commitment: '10 hours/week',
+      difficulty: 'Advanced',
+      status: 'recruiting',
     },
     {
       id: 2,
-      name: "Sustainability Tracker App",
-      description: "Mobile app to track and gamify sustainable living practices",
-      category: "Social Impact",
-      skills: ["React Native", "Node.js", "MongoDB"],
+      name: 'Sustainability Tracker App',
+      description: 'Mobile app to track and gamify sustainable living practices',
+      category: 'Social Impact',
+      skills: ['React Native', 'Node.js', 'MongoDB'],
       team: 5,
       progress: 30,
-      duration: "3 months",
-      commitment: "6 hours/week",
-      difficulty: "Intermediate",
-      status: "starting"
+      duration: '3 months',
+      commitment: '6 hours/week',
+      difficulty: 'Intermediate',
+      status: 'starting',
     },
     {
       id: 3,
-      name: "Blockchain Learning Platform",
-      description: "Educational platform for blockchain and cryptocurrency concepts",
-      category: "Education",
-      skills: ["Solidity", "Web3", "React"],
+      name: 'Blockchain Learning Platform',
+      description: 'Educational platform for blockchain and cryptocurrency concepts',
+      category: 'Education',
+      skills: ['Solidity', 'Web3', 'React'],
       team: 6,
       progress: 80,
-      duration: "2 months",
-      commitment: "8 hours/week",
-      difficulty: "Advanced",
-      status: "active"
-    }
+      duration: '2 months',
+      commitment: '8 hours/week',
+      difficulty: 'Advanced',
+      status: 'active',
+    },
   ]);
 
   const [projectFilters, setProjectFilters] = useState({
     category: 'all',
     difficulty: 'all',
-    commitment: 'all'
+    commitment: 'all',
   });
 
   const filteredProjects = availableProjects.filter(project => {
-    return (projectFilters.category === 'all' || project.category === projectFilters.category) &&
-           (projectFilters.difficulty === 'all' || project.difficulty === projectFilters.difficulty);
+    return (
+      (projectFilters.category === 'all' || project.category === projectFilters.category) &&
+      (projectFilters.difficulty === 'all' || project.difficulty === projectFilters.difficulty)
+    );
   });
 
   return (
@@ -673,7 +705,7 @@ const CollaborationProjectsSection = ({ projects, onJoinProject }) => {
               <select
                 className="ml-2 border rounded px-3 py-1"
                 value={projectFilters.category}
-                onChange={(e) => setProjectFilters({...projectFilters, category: e.target.value})}
+                onChange={e => setProjectFilters({ ...projectFilters, category: e.target.value })}
               >
                 <option value="all">All Categories</option>
                 <option value="Open Source">Open Source</option>
@@ -686,7 +718,7 @@ const CollaborationProjectsSection = ({ projects, onJoinProject }) => {
               <select
                 className="ml-2 border rounded px-3 py-1"
                 value={projectFilters.difficulty}
-                onChange={(e) => setProjectFilters({...projectFilters, difficulty: e.target.value})}
+                onChange={e => setProjectFilters({ ...projectFilters, difficulty: e.target.value })}
               >
                 <option value="all">All Levels</option>
                 <option value="Beginner">Beginner</option>
@@ -716,19 +748,19 @@ const CollaborationProjectsSection = ({ projects, onJoinProject }) => {
 const TeamAnalyticsSection = ({ teamAnalytics }) => {
   const [selectedTeam, setSelectedTeam] = useState('all');
   const [timeRange, setTimeRange] = useState('month');
-  
+
   const teamData = teamAnalytics || {
     teams: [
-      { id: 1, name: "Frontend Development", members: 8, efficiency: 92, projects: 3 },
-      { id: 2, name: "AI Research Group", members: 5, efficiency: 87, projects: 2 },
-      { id: 3, name: "Mobile Development", members: 6, efficiency: 89, projects: 4 }
+      { id: 1, name: 'Frontend Development', members: 8, efficiency: 92, projects: 3 },
+      { id: 2, name: 'AI Research Group', members: 5, efficiency: 87, projects: 2 },
+      { id: 3, name: 'Mobile Development', members: 6, efficiency: 89, projects: 4 },
     ],
     collaborationMetrics: {
       totalCollaborations: 156,
       successfulProjects: 23,
       averageTeamSize: 6.3,
-      crossTeamProjects: 8
-    }
+      crossTeamProjects: 8,
+    },
   };
 
   return (
@@ -739,9 +771,7 @@ const TeamAnalyticsSection = ({ teamAnalytics }) => {
             <BarChart3 className="w-5 h-5" />
             Team Collaboration Analytics
           </CardTitle>
-          <CardDescription>
-            Shared dashboards and team performance insights
-          </CardDescription>
+          <CardDescription>Shared dashboards and team performance insights</CardDescription>
         </CardHeader>
         <CardContent>
           {/* Analytics Controls */}
@@ -750,17 +780,19 @@ const TeamAnalyticsSection = ({ teamAnalytics }) => {
               <select
                 className="border rounded px-3 py-2"
                 value={selectedTeam}
-                onChange={(e) => setSelectedTeam(e.target.value)}
+                onChange={e => setSelectedTeam(e.target.value)}
               >
                 <option value="all">All Teams</option>
                 {teamData.teams.map(team => (
-                  <option key={team.id} value={team.id}>{team.name}</option>
+                  <option key={team.id} value={team.id}>
+                    {team.name}
+                  </option>
                 ))}
               </select>
               <select
                 className="border rounded px-3 py-2"
                 value={timeRange}
-                onChange={(e) => setTimeRange(e.target.value)}
+                onChange={e => setTimeRange(e.target.value)}
               >
                 <option value="week">This Week</option>
                 <option value="month">This Month</option>
@@ -779,17 +811,23 @@ const TeamAnalyticsSection = ({ teamAnalytics }) => {
             <div className="text-center p-4 bg-green-50 rounded-lg">
               <Target className="w-8 h-8 mx-auto mb-2 text-green-600" />
               <p className="font-semibold">Projects</p>
-              <p className="text-2xl font-bold text-green-600">{teamData.collaborationMetrics.successfulProjects}</p>
+              <p className="text-2xl font-bold text-green-600">
+                {teamData.collaborationMetrics.successfulProjects}
+              </p>
             </div>
             <div className="text-center p-4 bg-purple-50 rounded-lg">
               <Activity className="w-8 h-8 mx-auto mb-2 text-purple-600" />
               <p className="font-semibold">Collaborations</p>
-              <p className="text-2xl font-bold text-purple-600">{teamData.collaborationMetrics.totalCollaborations}</p>
+              <p className="text-2xl font-bold text-purple-600">
+                {teamData.collaborationMetrics.totalCollaborations}
+              </p>
             </div>
             <div className="text-center p-4 bg-orange-50 rounded-lg">
               <TrendingUp className="w-8 h-8 mx-auto mb-2 text-orange-600" />
               <p className="font-semibold">Avg Team Size</p>
-              <p className="text-2xl font-bold text-orange-600">{teamData.collaborationMetrics.averageTeamSize}</p>
+              <p className="text-2xl font-bold text-orange-600">
+                {teamData.collaborationMetrics.averageTeamSize}
+              </p>
             </div>
           </div>
 
@@ -812,34 +850,34 @@ const IndustryNetworkingSection = ({ industryConnections }) => {
   const [networkingEvents, setNetworkingEvents] = useState([
     {
       id: 1,
-      title: "Tech Leaders Summit 2025",
-      date: "2025-06-15",
-      type: "Conference",
-      industry: "Technology",
+      title: 'Tech Leaders Summit 2025',
+      date: '2025-06-15',
+      type: 'Conference',
+      industry: 'Technology',
       attendees: 500,
-      location: "San Francisco, CA",
-      virtual: false
+      location: 'San Francisco, CA',
+      virtual: false,
     },
     {
       id: 2,
-      title: "AI Innovation Meetup",
-      date: "2025-06-01",
-      type: "Meetup",
-      industry: "Technology",
+      title: 'AI Innovation Meetup',
+      date: '2025-06-01',
+      type: 'Meetup',
+      industry: 'Technology',
       attendees: 150,
-      location: "Virtual",
-      virtual: true
+      location: 'Virtual',
+      virtual: true,
     },
     {
       id: 3,
-      title: "Startup Founders Circle",
-      date: "2025-05-28",
-      type: "Networking",
-      industry: "Entrepreneurship",
+      title: 'Startup Founders Circle',
+      date: '2025-05-28',
+      type: 'Networking',
+      industry: 'Entrepreneurship',
       attendees: 75,
-      location: "New York, NY",
-      virtual: false
-    }
+      location: 'New York, NY',
+      virtual: false,
+    },
   ]);
 
   const industryStats = {
@@ -847,8 +885,8 @@ const IndustryNetworkingSection = ({ industryConnections }) => {
       connections: 247,
       influencers: 12,
       companies: 45,
-      events: 8
-    }
+      events: 8,
+    },
   };
 
   return (
@@ -870,7 +908,7 @@ const IndustryNetworkingSection = ({ industryConnections }) => {
             <select
               className="ml-2 border rounded px-3 py-2"
               value={selectedIndustry}
-              onChange={(e) => setSelectedIndustry(e.target.value)}
+              onChange={e => setSelectedIndustry(e.target.value)}
             >
               <option value="technology">Technology</option>
               <option value="finance">Finance</option>
@@ -884,22 +922,30 @@ const IndustryNetworkingSection = ({ industryConnections }) => {
             <div className="text-center p-4 bg-blue-50 rounded-lg">
               <Network className="w-8 h-8 mx-auto mb-2 text-blue-600" />
               <p className="font-semibold">Connections</p>
-              <p className="text-2xl font-bold text-blue-600">{industryStats[selectedIndustry]?.connections || 0}</p>
+              <p className="text-2xl font-bold text-blue-600">
+                {industryStats[selectedIndustry]?.connections || 0}
+              </p>
             </div>
             <div className="text-center p-4 bg-green-50 rounded-lg">
               <Star className="w-8 h-8 mx-auto mb-2 text-green-600" />
               <p className="font-semibold">Influencers</p>
-              <p className="text-2xl font-bold text-green-600">{industryStats[selectedIndustry]?.influencers || 0}</p>
+              <p className="text-2xl font-bold text-green-600">
+                {industryStats[selectedIndustry]?.influencers || 0}
+              </p>
             </div>
             <div className="text-center p-4 bg-purple-50 rounded-lg">
               <Building className="w-8 h-8 mx-auto mb-2 text-purple-600" />
               <p className="font-semibold">Companies</p>
-              <p className="text-2xl font-bold text-purple-600">{industryStats[selectedIndustry]?.companies || 0}</p>
+              <p className="text-2xl font-bold text-purple-600">
+                {industryStats[selectedIndustry]?.companies || 0}
+              </p>
             </div>
             <div className="text-center p-4 bg-orange-50 rounded-lg">
               <Calendar className="w-8 h-8 mx-auto mb-2 text-orange-600" />
               <p className="font-semibold">Events</p>
-              <p className="text-2xl font-bold text-orange-600">{industryStats[selectedIndustry]?.events || 0}</p>
+              <p className="text-2xl font-bold text-orange-600">
+                {industryStats[selectedIndustry]?.events || 0}
+              </p>
             </div>
           </div>
 
@@ -987,17 +1033,27 @@ const TeamPerformanceCard = ({ teamAnalytics }) => (
 // Helper Components for Enhanced Sections
 
 const MentorshipProgramCard = ({ program, isActive, onJoin }) => (
-  <div className={`p-4 border rounded-lg ${isActive ? 'bg-blue-50 border-blue-200' : 'hover:shadow-md'} transition-shadow`}>
+  <div
+    className={`p-4 border rounded-lg ${isActive ? 'bg-blue-50 border-blue-200' : 'hover:shadow-md'} transition-shadow`}
+  >
     <div className="flex justify-between items-start mb-3">
       <div>
         <h5 className="font-medium">{program.title}</h5>
         <p className="text-sm text-gray-600">{program.description}</p>
       </div>
-      <Badge variant={program.type === 'mentor' ? 'success' : program.type === 'mentee' ? 'warning' : 'secondary'}>
+      <Badge
+        variant={
+          program.type === 'mentor'
+            ? 'success'
+            : program.type === 'mentee'
+              ? 'warning'
+              : 'secondary'
+        }
+      >
         {program.type}
       </Badge>
     </div>
-    
+
     <div className="grid grid-cols-2 gap-4 mb-3">
       <div>
         <p className="text-xs text-gray-500">Duration</p>
@@ -1008,7 +1064,7 @@ const MentorshipProgramCard = ({ program, isActive, onJoin }) => (
         <p className="text-sm font-medium">{program.commitment}</p>
       </div>
     </div>
-    
+
     <div className="flex flex-wrap gap-1 mb-3">
       {program.skills.map((skill, index) => (
         <Badge key={index} variant="outline" className="text-xs">
@@ -1016,7 +1072,7 @@ const MentorshipProgramCard = ({ program, isActive, onJoin }) => (
         </Badge>
       ))}
     </div>
-    
+
     <div className="flex justify-between items-center">
       <span className="text-sm text-gray-500">{program.participants} participants</span>
       {!isActive && onJoin && (
@@ -1024,9 +1080,7 @@ const MentorshipProgramCard = ({ program, isActive, onJoin }) => (
           Join Program
         </Button>
       )}
-      {isActive && (
-        <Badge variant="success">Active</Badge>
-      )}
+      {isActive && <Badge variant="success">Active</Badge>}
     </div>
   </div>
 );
@@ -1040,7 +1094,7 @@ const CollaborationProjectCard = ({ project, onJoin }) => (
       </div>
       <Badge variant="outline">{project.category}</Badge>
     </div>
-    
+
     <div className="grid grid-cols-2 gap-4 mb-3">
       <div>
         <p className="text-xs text-gray-500">Team Size</p>
@@ -1056,12 +1110,21 @@ const CollaborationProjectCard = ({ project, onJoin }) => (
       </div>
       <div>
         <p className="text-xs text-gray-500">Difficulty</p>
-        <Badge variant={project.difficulty === 'Advanced' ? 'destructive' : project.difficulty === 'Intermediate' ? 'warning' : 'success'} className="text-xs">
+        <Badge
+          variant={
+            project.difficulty === 'Advanced'
+              ? 'destructive'
+              : project.difficulty === 'Intermediate'
+                ? 'warning'
+                : 'success'
+          }
+          className="text-xs"
+        >
           {project.difficulty}
         </Badge>
       </div>
     </div>
-    
+
     <div className="mb-3">
       <div className="flex justify-between text-sm mb-1">
         <span>Progress</span>
@@ -1069,7 +1132,7 @@ const CollaborationProjectCard = ({ project, onJoin }) => (
       </div>
       <Progress value={project.progress} className="h-2" />
     </div>
-    
+
     <div className="flex flex-wrap gap-1 mb-3">
       {project.skills.map((skill, index) => (
         <Badge key={index} variant="outline" className="text-xs">
@@ -1077,9 +1140,17 @@ const CollaborationProjectCard = ({ project, onJoin }) => (
         </Badge>
       ))}
     </div>
-    
+
     <div className="flex justify-between items-center">
-      <Badge variant={project.status === 'recruiting' ? 'success' : project.status === 'active' ? 'warning' : 'secondary'}>
+      <Badge
+        variant={
+          project.status === 'recruiting'
+            ? 'success'
+            : project.status === 'active'
+              ? 'warning'
+              : 'secondary'
+        }
+      >
         {project.status}
       </Badge>
       <Button size="sm" onClick={onJoin}>
@@ -1094,11 +1165,13 @@ const TeamPerformanceRow = ({ team }) => (
     <div className="flex justify-between items-center mb-3">
       <div>
         <h5 className="font-medium">{team.name}</h5>
-        <p className="text-sm text-gray-600">{team.members} members • {team.projects} active projects</p>
+        <p className="text-sm text-gray-600">
+          {team.members} members • {team.projects} active projects
+        </p>
       </div>
       <Badge variant="success">{team.efficiency}% efficiency</Badge>
     </div>
-    
+
     <div className="grid grid-cols-3 gap-4">
       <div>
         <p className="text-xs text-gray-500">Team Efficiency</p>
@@ -1121,13 +1194,15 @@ const NetworkingEventCard = ({ event }) => (
     <div className="flex justify-between items-start mb-3">
       <div>
         <h5 className="font-medium">{event.title}</h5>
-        <p className="text-sm text-gray-600">{event.type} • {event.industry}</p>
+        <p className="text-sm text-gray-600">
+          {event.type} • {event.industry}
+        </p>
       </div>
       <Badge variant={event.virtual ? 'secondary' : 'outline'}>
         {event.virtual ? 'Virtual' : 'In-Person'}
       </Badge>
     </div>
-    
+
     <div className="grid grid-cols-2 gap-4 mb-3">
       <div className="flex items-center gap-2">
         <Calendar className="w-4 h-4 text-gray-500" />
@@ -1138,12 +1213,10 @@ const NetworkingEventCard = ({ event }) => (
         <span className="text-sm">{event.location}</span>
       </div>
     </div>
-    
+
     <div className="flex justify-between items-center">
       <span className="text-sm text-gray-500">{event.attendees} attendees</span>
-      <Button size="sm">
-        Register
-      </Button>
+      <Button size="sm">Register</Button>
     </div>
   </div>
 );

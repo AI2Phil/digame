@@ -16,7 +16,7 @@ import {
   Switch,
   FormControlLabel,
   Breadcrumbs,
-  Link
+  Link,
 } from '@mui/material';
 import {
   Speed as SpeedIcon,
@@ -29,7 +29,7 @@ import {
   Refresh as RefreshIcon,
   Settings as SettingsIcon,
   Home as HomeIcon,
-  NavigateNext as NavigateNextIcon
+  NavigateNext as NavigateNextIcon,
 } from '@mui/icons-material';
 import { useRouter } from 'next/router';
 
@@ -56,11 +56,7 @@ function TabPanel(props) {
       aria-labelledby={`performance-tab-${index}`}
       {...other}
     >
-      {value === index && (
-        <Box sx={{ py: 3 }}>
-          {children}
-        </Box>
-      )}
+      {value === index && <Box sx={{ py: 3 }}>{children}</Box>}
     </div>
   );
 }
@@ -88,60 +84,60 @@ const AdvancedPerformancePage = () => {
       label: 'Overview',
       icon: <SpeedIcon />,
       component: <PerformanceDashboard />,
-      description: 'Comprehensive performance overview and system health'
+      description: 'Comprehensive performance overview and system health',
     },
     {
       id: 'realtime',
       label: 'Real-Time Monitor',
       icon: <TimelineIcon />,
       component: <RealTimePerformanceMonitor />,
-      description: 'Live performance monitoring with automated optimizations'
+      description: 'Live performance monitoring with automated optimizations',
     },
     {
       id: 'bundle',
       label: 'Bundle Analysis',
       icon: <StorageIcon />,
       component: <BundleAnalyzer />,
-      description: 'Analyze and optimize JavaScript bundle size and composition'
+      description: 'Analyze and optimize JavaScript bundle size and composition',
     },
     {
       id: 'queries',
       label: 'Query Optimization',
       icon: <AssessmentIcon />,
       component: <QueryOptimization />,
-      description: 'Database query performance analysis and recommendations'
+      description: 'Database query performance analysis and recommendations',
     },
     {
       id: 'ux',
       label: 'User Experience',
       icon: <AnalyticsIcon />,
       component: <UserExperienceTracking />,
-      description: 'User experience metrics and behavior analysis'
+      description: 'User experience metrics and behavior analysis',
     },
     {
       id: 'ai',
       label: 'AI Insights',
       icon: <AutoAwesomeIcon />,
       component: <AIInsightsDashboard />,
-      description: 'AI-powered performance insights and recommendations'
+      description: 'AI-powered performance insights and recommendations',
     },
     {
       id: 'automation',
       label: 'Automation',
       icon: <SettingsIcon />,
       component: <WorkflowAutomation />,
-      description: 'Automated performance optimization workflows'
-    }
+      description: 'Automated performance optimization workflows',
+    },
   ];
 
   useEffect(() => {
     setIsClient(true);
-    
+
     // Initialize performance monitoring only on client
     if (typeof window !== 'undefined') {
       initializePerformanceMonitoring();
     }
-    
+
     // Set tab from URL parameter
     const tab = router.query.tab;
     if (tab && Array.isArray(tabs)) {
@@ -155,9 +151,9 @@ const AdvancedPerformancePage = () => {
   const initializePerformanceMonitoring = async () => {
     try {
       if (typeof window === 'undefined') return;
-      
+
       await performanceOptimizationService.initialize();
-      
+
       // Get current metrics
       const metrics = performanceOptimizationService.getCurrentMetrics();
       if (metrics) {
@@ -166,7 +162,7 @@ const AdvancedPerformancePage = () => {
         setPerformanceScore(score);
         setSystemStatus(score > 80 ? 'healthy' : score > 60 ? 'warning' : 'critical');
       }
-      
+
       // Get active optimizations
       const optimizations = performanceOptimizationService.getOptimizations();
       if (Array.isArray(optimizations)) {
@@ -177,26 +173,26 @@ const AdvancedPerformancePage = () => {
     }
   };
 
-  const calculatePerformanceScore = (metrics) => {
+  const calculatePerformanceScore = metrics => {
     if (!metrics || typeof metrics !== 'object') return 85; // Default score
-    
+
     // Simplified performance score calculation
     let score = 100;
-    
+
     // Penalize for slow load times
     if (metrics.firstContentfulPaint > 2000) score -= 20;
     if (metrics.largestContentfulPaint > 3000) score -= 20;
-    
+
     // Penalize for high memory usage
     if (metrics.memoryUsage > 100000000) score -= 15; // 100MB
-    
+
     // Penalize for large bundle size
     if (metrics.bundleSize > 1000000) score -= 15; // 1MB
-    
+
     // Penalize for poor interactivity
     if (metrics.firstInputDelay > 100) score -= 10;
     if (metrics.cumulativeLayoutShift > 0.1) score -= 10;
-    
+
     return Math.max(0, score);
   };
 
@@ -208,7 +204,7 @@ const AdvancedPerformancePage = () => {
     }
   };
 
-  const getStatusColor = (status) => {
+  const getStatusColor = status => {
     switch (status) {
       case 'healthy':
         return 'success';
@@ -246,7 +242,7 @@ const AdvancedPerformancePage = () => {
         <Link
           color="inherit"
           href="/"
-          onClick={(e) => {
+          onClick={e => {
             e.preventDefault();
             router.push('/');
           }}
@@ -274,10 +270,7 @@ const AdvancedPerformancePage = () => {
         <Box display="flex" alignItems="center" gap={2}>
           <FormControlLabel
             control={
-              <Switch
-                checked={realTimeMode}
-                onChange={(e) => setRealTimeMode(e.target.checked)}
-              />
+              <Switch checked={realTimeMode} onChange={e => setRealTimeMode(e.target.checked)} />
             }
             label="Real-Time Mode"
           />
@@ -337,9 +330,7 @@ const AdvancedPerformancePage = () => {
               <Box display="flex" alignItems="center" gap={2}>
                 <AutoAwesomeIcon color="primary" fontSize="large" />
                 <Box>
-                  <Typography variant="h4">
-                    {activeOptimizations}
-                  </Typography>
+                  <Typography variant="h4">{activeOptimizations}</Typography>
                   <Typography variant="body2" color="text.secondary">
                     Pending Optimizations
                   </Typography>
@@ -370,8 +361,8 @@ const AdvancedPerformancePage = () => {
 
       {/* Status Alert */}
       {systemStatus !== 'healthy' && (
-        <Alert 
-          severity={systemStatus === 'warning' ? 'warning' : 'error'} 
+        <Alert
+          severity={systemStatus === 'warning' ? 'warning' : 'error'}
           sx={{ mb: 3 }}
           action={
             <Button color="inherit" size="small" onClick={() => setTabValue(1)}>
@@ -379,10 +370,9 @@ const AdvancedPerformancePage = () => {
             </Button>
           }
         >
-          {systemStatus === 'warning' 
+          {systemStatus === 'warning'
             ? 'Performance issues detected. Consider reviewing optimization recommendations.'
-            : 'Critical performance issues detected. Immediate attention required.'
-          }
+            : 'Critical performance issues detected. Immediate attention required.'}
         </Alert>
       )}
 
@@ -396,15 +386,16 @@ const AdvancedPerformancePage = () => {
             scrollButtons="auto"
             aria-label="performance tabs"
           >
-            {Array.isArray(tabs) && tabs.map((tab, index) => (
-              <Tab
-                key={tab.id}
-                icon={tab.icon}
-                label={tab.label}
-                {...a11yProps(index)}
-                sx={{ minHeight: 72 }}
-              />
-            ))}
+            {Array.isArray(tabs) &&
+              tabs.map((tab, index) => (
+                <Tab
+                  key={tab.id}
+                  icon={tab.icon}
+                  label={tab.label}
+                  {...a11yProps(index)}
+                  sx={{ minHeight: 72 }}
+                />
+              ))}
           </Tabs>
         </Box>
 
@@ -416,11 +407,12 @@ const AdvancedPerformancePage = () => {
         </Box>
 
         {/* Tab Panels */}
-        {Array.isArray(tabs) && tabs.map((tab, index) => (
-          <TabPanel key={tab.id} value={tabValue} index={index}>
-            {tab.component}
-          </TabPanel>
-        ))}
+        {Array.isArray(tabs) &&
+          tabs.map((tab, index) => (
+            <TabPanel key={tab.id} value={tabValue} index={index}>
+              {tab.component}
+            </TabPanel>
+          ))}
       </Card>
 
       {/* Footer Info */}

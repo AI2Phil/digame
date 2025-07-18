@@ -1,11 +1,31 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/router';
 import {
-  Users, UserPlus, Mail, MoreHorizontal, Crown,
-  Shield, Eye, Edit, Trash2, Search, Filter,
-  Calendar, Clock, Target, TrendingUp, Award,
-  Settings, Download, Share2, MessageSquare,
-  Activity, BarChart3, Zap, CheckCircle, Home
+  Users,
+  UserPlus,
+  Mail,
+  MoreHorizontal,
+  Crown,
+  Shield,
+  Eye,
+  Edit,
+  Trash2,
+  Search,
+  Filter,
+  Calendar,
+  Clock,
+  Target,
+  TrendingUp,
+  Award,
+  Settings,
+  Download,
+  Share2,
+  MessageSquare,
+  Activity,
+  BarChart3,
+  Zap,
+  CheckCircle,
+  Home,
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -15,14 +35,34 @@ import { Select } from '../components/ui/Select';
 import { Badge } from '../components/ui/Badge';
 import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/Avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/Tabs';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/Table';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../components/ui/DropdownMenu';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/Dialog';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '../components/ui/Table';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '../components/ui/DropdownMenu';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '../components/ui/Dialog';
 import { Separator } from '../components/ui/Separator';
 import { Progress } from '../components/ui/Progress';
 import { Chart } from '../components/ui/Chart';
 import { Textarea } from '../components/ui/Textarea'; // Added
-import { Switch } from '../components/ui/Switch';   // Added
+import { Switch } from '../components/ui/Switch'; // Added
 
 const TeamsPage = ({ isDemoMode = false, onLogout }) => {
   const router = useRouter();
@@ -31,7 +71,8 @@ const TeamsPage = ({ isDemoMode = false, onLogout }) => {
   const [statusFilter, setStatusFilter] = useState('all');
 
   // Use prop if provided, otherwise fallback to localStorage (client-side only)
-  const isDemo = isDemoMode || (typeof window !== 'undefined' && localStorage.getItem('demo_mode') === 'true');
+  const isDemo =
+    isDemoMode || (typeof window !== 'undefined' && localStorage.getItem('demo_mode') === 'true');
 
   const handleHomeClick = () => {
     router.push(isDemo ? '/dashboard' : '/');
@@ -41,34 +82,33 @@ const TeamsPage = ({ isDemoMode = false, onLogout }) => {
   const [inviteData, setInviteData] = useState({
     email: '',
     role: 'member', // Default role
-    message: ''
+    message: '',
   });
 
-  const handleInviteChange = (e) => {
+  const handleInviteChange = e => {
     const { name, value } = e.target;
     setInviteData(prev => ({ ...prev, [name]: value }));
   };
-  
-  const handleInviteRoleChange = (value) => {
+
+  const handleInviteRoleChange = value => {
     setInviteData(prev => ({ ...prev, role: value }));
   };
 
-
   // State for Team Settings
   const [teamSettings, setTeamSettings] = useState({
-    teamName: "Product Development Team",
-    teamDescription: "A collaborative team focused on building innovative productivity solutions.",
-    defaultRole: "member",
+    teamName: 'Product Development Team',
+    teamDescription: 'A collaborative team focused on building innovative productivity solutions.',
+    defaultRole: 'member',
     publicProfile: false,
-    shareAnalytics: true
+    shareAnalytics: true,
   });
 
   const handleTeamSettingsChange = (key, value) => {
     setTeamSettings(prev => ({ ...prev, [key]: value }));
   };
-  
-  const handleTeamDescriptionChange = (e) => {
-     setTeamSettings(prev => ({ ...prev, teamDescription: e.target.value }));
+
+  const handleTeamDescriptionChange = e => {
+    setTeamSettings(prev => ({ ...prev, teamDescription: e.target.value }));
   };
 
   // Sample team data
@@ -79,13 +119,15 @@ const TeamsPage = ({ isDemoMode = false, onLogout }) => {
       email: 'sarah.johnson@company.com',
       role: 'Team Lead',
       status: 'active',
-      avatar: isDemo ? 'https://via.placeholder.com/40x40/3B82F6/FFFFFF?text=SJ' : '/api/placeholder/40/40',
+      avatar: isDemo
+        ? 'https://via.placeholder.com/40x40/3B82F6/FFFFFF?text=SJ'
+        : '/api/placeholder/40/40',
       joinDate: '2023-01-15',
       lastActive: '2 hours ago',
       productivity: 92,
       goalsCompleted: 15,
       hoursTracked: 168,
-      permissions: ['admin', 'reports', 'team_management']
+      permissions: ['admin', 'reports', 'team_management'],
     },
     {
       id: '2',
@@ -93,13 +135,15 @@ const TeamsPage = ({ isDemoMode = false, onLogout }) => {
       email: 'michael.chen@company.com',
       role: 'Senior Developer',
       status: 'active',
-      avatar: isDemo ? 'https://via.placeholder.com/40x40/10B981/FFFFFF?text=MC' : '/api/placeholder/40/40',
+      avatar: isDemo
+        ? 'https://via.placeholder.com/40x40/10B981/FFFFFF?text=MC'
+        : '/api/placeholder/40/40',
       joinDate: '2023-02-20',
       lastActive: '1 hour ago',
       productivity: 88,
       goalsCompleted: 12,
       hoursTracked: 152,
-      permissions: ['reports', 'goals']
+      permissions: ['reports', 'goals'],
     },
     {
       id: '3',
@@ -107,13 +151,15 @@ const TeamsPage = ({ isDemoMode = false, onLogout }) => {
       email: 'emily.rodriguez@company.com',
       role: 'Product Manager',
       status: 'active',
-      avatar: isDemo ? 'https://via.placeholder.com/40x40/8B5CF6/FFFFFF?text=ER' : '/api/placeholder/40/40',
+      avatar: isDemo
+        ? 'https://via.placeholder.com/40x40/8B5CF6/FFFFFF?text=ER'
+        : '/api/placeholder/40/40',
       joinDate: '2023-03-10',
       lastActive: '30 minutes ago',
       productivity: 95,
       goalsCompleted: 18,
       hoursTracked: 175,
-      permissions: ['reports', 'goals', 'analytics']
+      permissions: ['reports', 'goals', 'analytics'],
     },
     {
       id: '4',
@@ -121,13 +167,15 @@ const TeamsPage = ({ isDemoMode = false, onLogout }) => {
       email: 'david.kim@company.com',
       role: 'Designer',
       status: 'inactive',
-      avatar: isDemo ? 'https://via.placeholder.com/40x40/F59E0B/FFFFFF?text=DK' : '/api/placeholder/40/40',
+      avatar: isDemo
+        ? 'https://via.placeholder.com/40x40/F59E0B/FFFFFF?text=DK'
+        : '/api/placeholder/40/40',
       joinDate: '2023-04-05',
       lastActive: '2 days ago',
       productivity: 76,
       goalsCompleted: 8,
       hoursTracked: 98,
-      permissions: ['goals']
+      permissions: ['goals'],
     },
     {
       id: '5',
@@ -135,23 +183,27 @@ const TeamsPage = ({ isDemoMode = false, onLogout }) => {
       email: 'lisa.wang@company.com',
       role: 'Developer',
       status: 'active',
-      avatar: isDemo ? 'https://via.placeholder.com/40x40/EF4444/FFFFFF?text=LW' : '/api/placeholder/40/40',
+      avatar: isDemo
+        ? 'https://via.placeholder.com/40x40/EF4444/FFFFFF?text=LW'
+        : '/api/placeholder/40/40',
       joinDate: '2023-05-12',
       lastActive: '15 minutes ago',
       productivity: 85,
       goalsCompleted: 11,
       hoursTracked: 134,
-      permissions: ['reports', 'goals']
-    }
+      permissions: ['reports', 'goals'],
+    },
   ];
 
   // Team analytics data
   const teamAnalytics = {
     totalMembers: teamMembers.length,
     activeMembers: teamMembers.filter(m => m.status === 'active').length,
-    avgProductivity: Math.round(teamMembers.reduce((sum, m) => sum + m.productivity, 0) / teamMembers.length),
+    avgProductivity: Math.round(
+      teamMembers.reduce((sum, m) => sum + m.productivity, 0) / teamMembers.length
+    ),
     totalGoalsCompleted: teamMembers.reduce((sum, m) => sum + m.goalsCompleted, 0),
-    totalHoursTracked: teamMembers.reduce((sum, m) => sum + m.hoursTracked, 0)
+    totalHoursTracked: teamMembers.reduce((sum, m) => sum + m.hoursTracked, 0),
   };
 
   // Chart data for team productivity
@@ -162,45 +214,64 @@ const TeamsPage = ({ isDemoMode = false, onLogout }) => {
     { name: 'Thu', team: 87, individual: 84 },
     { name: 'Fri', team: 90, individual: 88 },
     { name: 'Sat', team: 78, individual: 75 },
-    { name: 'Sun', team: 72, individual: 70 }
+    { name: 'Sun', team: 72, individual: 70 },
   ];
 
   const filteredMembers = teamMembers.filter(member => {
-    const matchesSearch = member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         member.email.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesRole = roleFilter === 'all' || member.role.toLowerCase().includes(roleFilter.toLowerCase());
+    const matchesSearch =
+      member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      member.email.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesRole =
+      roleFilter === 'all' || member.role.toLowerCase().includes(roleFilter.toLowerCase());
     const matchesStatus = statusFilter === 'all' || member.status === statusFilter;
     return matchesSearch && matchesRole && matchesStatus;
   });
 
-  const getRoleBadge = (role) => {
+  const getRoleBadge = role => {
     switch (role) {
       case 'Team Lead':
-        return <Badge variant="default" className="bg-purple-100 text-purple-800"><Crown className="mr-1 h-3 w-3" />{role}</Badge>;
+        return (
+          <Badge variant="default" className="bg-purple-100 text-purple-800">
+            <Crown className="mr-1 h-3 w-3" />
+            {role}
+          </Badge>
+        );
       case 'Senior Developer':
-        return <Badge variant="secondary"><Shield className="mr-1 h-3 w-3" />{role}</Badge>;
+        return (
+          <Badge variant="secondary">
+            <Shield className="mr-1 h-3 w-3" />
+            {role}
+          </Badge>
+        );
       case 'Product Manager':
-        return <Badge variant="outline"><Target className="mr-1 h-3 w-3" />{role}</Badge>;
+        return (
+          <Badge variant="outline">
+            <Target className="mr-1 h-3 w-3" />
+            {role}
+          </Badge>
+        );
       default:
         return <Badge variant="secondary">{role}</Badge>;
     }
   };
 
-  const getStatusBadge = (status) => {
-    return status === 'active' 
-      ? <Badge variant="success">Active</Badge>
-      : <Badge variant="secondary">Inactive</Badge>;
+  const getStatusBadge = status => {
+    return status === 'active' ? (
+      <Badge variant="success">Active</Badge>
+    ) : (
+      <Badge variant="secondary">Inactive</Badge>
+    );
   };
 
   const handleInviteMember = () => {
     alert('Invite member functionality would be implemented here');
   };
 
-  const handleEditMember = (memberId) => {
+  const handleEditMember = memberId => {
     alert(`Edit member ${memberId} functionality would be implemented here`);
   };
 
-  const handleRemoveMember = (memberId) => {
+  const handleRemoveMember = memberId => {
     alert(`Remove member ${memberId} functionality would be implemented here`);
   };
 
@@ -214,20 +285,22 @@ const TeamsPage = ({ isDemoMode = false, onLogout }) => {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-3xl font-bold">Team Management</h1>
-          <p className="text-muted-foreground">Manage your team members and track collaborative productivity</p>
+          <p className="text-muted-foreground">
+            Manage your team members and track collaborative productivity
+          </p>
         </div>
-        
+
         <div className="flex items-center space-x-2">
           <Button variant="outline" onClick={handleHomeClick}>
             <Home className="mr-2 h-4 w-4" />
             {isDemo ? 'Back to Dashboard' : 'Home'}
           </Button>
-          
+
           <Button variant="outline" onClick={handleExportTeamData}>
             <Download className="mr-2 h-4 w-4" />
             Export Data
           </Button>
-          
+
           <Dialog>
             <DialogTrigger asChild>
               <Button>
@@ -242,26 +315,26 @@ const TeamsPage = ({ isDemoMode = false, onLogout }) => {
                   Send an invitation to join your team workspace
                 </DialogDescription>
               </DialogHeader>
-              
+
               <div className="space-y-4 py-4">
                 <div className="space-y-2">
                   <Label htmlFor="inviteEmail">Email Address</Label>
-                  <Input 
-                    id="inviteEmail" 
+                  <Input
+                    id="inviteEmail"
                     name="email"
-                    placeholder="colleague@company.com" 
-                    type="email" 
+                    placeholder="colleague@company.com"
+                    type="email"
                     value={inviteData.email}
                     onChange={handleInviteChange}
                   />
                 </div>
-                
+
                 <div className="space-y-2">
                   <Label htmlFor="inviteRole">Role</Label>
-                  <Select 
+                  <Select
                     id="inviteRole"
                     value={inviteData.role}
-                    onChange={handleInviteRoleChange} 
+                    onChange={handleInviteRoleChange}
                     options={[
                       { value: 'admin', label: 'Admin' },
                       { value: 'team_lead', label: 'Team Lead' },
@@ -270,7 +343,7 @@ const TeamsPage = ({ isDemoMode = false, onLogout }) => {
                     ]}
                   />
                 </div>
-                
+
                 <div className="space-y-2">
                   <Label htmlFor="inviteMessage">Personal Message (Optional)</Label>
                   <Textarea
@@ -283,7 +356,7 @@ const TeamsPage = ({ isDemoMode = false, onLogout }) => {
                   />
                 </div>
               </div>
-              
+
               <DialogFooter>
                 <Button variant="outline">Cancel</Button>
                 <Button onClick={handleInviteMember}>
@@ -309,7 +382,7 @@ const TeamsPage = ({ isDemoMode = false, onLogout }) => {
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
@@ -321,7 +394,7 @@ const TeamsPage = ({ isDemoMode = false, onLogout }) => {
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
@@ -333,7 +406,7 @@ const TeamsPage = ({ isDemoMode = false, onLogout }) => {
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
@@ -345,7 +418,7 @@ const TeamsPage = ({ isDemoMode = false, onLogout }) => {
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
@@ -380,15 +453,15 @@ const TeamsPage = ({ isDemoMode = false, onLogout }) => {
                     <Input
                       placeholder="Search team members..."
                       value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
+                      onChange={e => setSearchTerm(e.target.value)}
                       className="pl-10"
                     />
                   </div>
                 </div>
-                
+
                 <div className="w-full md:w-48">
-                  <Select 
-                    value={roleFilter} 
+                  <Select
+                    value={roleFilter}
                     onChange={setRoleFilter}
                     options={[
                       { value: 'all', label: 'All Roles' },
@@ -400,10 +473,10 @@ const TeamsPage = ({ isDemoMode = false, onLogout }) => {
                     ]}
                   />
                 </div>
-                
+
                 <div className="w-full md:w-48">
-                  <Select 
-                    value={statusFilter} 
+                  <Select
+                    value={statusFilter}
                     onChange={setStatusFilter}
                     options={[
                       { value: 'all', label: 'All Statuses' },
@@ -420,9 +493,7 @@ const TeamsPage = ({ isDemoMode = false, onLogout }) => {
           <Card>
             <CardHeader>
               <CardTitle>Team Members ({filteredMembers.length})</CardTitle>
-              <CardDescription>
-                Manage your team members, roles, and permissions
-              </CardDescription>
+              <CardDescription>Manage your team members, roles, and permissions</CardDescription>
             </CardHeader>
             <CardContent>
               <Table>
@@ -438,14 +509,17 @@ const TeamsPage = ({ isDemoMode = false, onLogout }) => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredMembers.map((member) => (
+                  {filteredMembers.map(member => (
                     <TableRow key={member.id}>
                       <TableCell>
                         <div className="flex items-center space-x-3">
                           <Avatar>
                             <AvatarImage src={member.avatar} />
                             <AvatarFallback>
-                              {member.name.split(' ').map(n => n[0]).join('')}
+                              {member.name
+                                .split(' ')
+                                .map(n => n[0])
+                                .join('')}
                             </AvatarFallback>
                           </Avatar>
                           <div>
@@ -479,7 +553,9 @@ const TeamsPage = ({ isDemoMode = false, onLogout }) => {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => alert(`View ${member.name}'s profile`)}>
+                            <DropdownMenuItem
+                              onClick={() => alert(`View ${member.name}'s profile`)}
+                            >
                               <Eye className="mr-2 h-4 w-4" />
                               View Profile
                             </DropdownMenuItem>
@@ -491,7 +567,7 @@ const TeamsPage = ({ isDemoMode = false, onLogout }) => {
                               <MessageSquare className="mr-2 h-4 w-4" />
                               Send Message
                             </DropdownMenuItem>
-                            <DropdownMenuItem 
+                            <DropdownMenuItem
                               onClick={() => handleRemoveMember(member.id)}
                               className="text-destructive"
                             >
@@ -525,7 +601,7 @@ const TeamsPage = ({ isDemoMode = false, onLogout }) => {
                 data={productivityData}
                 config={{
                   team: { label: 'Team Average', color: '#3b82f6' },
-                  individual: { label: 'Individual Average', color: '#10b981' }
+                  individual: { label: 'Individual Average', color: '#10b981' },
                 }}
                 className="h-80"
               />
@@ -536,19 +612,23 @@ const TeamsPage = ({ isDemoMode = false, onLogout }) => {
           <Card>
             <CardHeader>
               <CardTitle>Member Performance Overview</CardTitle>
-              <CardDescription>
-                Individual productivity metrics and achievements
-              </CardDescription>
+              <CardDescription>Individual productivity metrics and achievements</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {teamMembers.map((member) => (
-                  <div key={member.id} className="flex items-center justify-between p-4 border rounded-lg">
+                {teamMembers.map(member => (
+                  <div
+                    key={member.id}
+                    className="flex items-center justify-between p-4 border rounded-lg"
+                  >
                     <div className="flex items-center space-x-4">
                       <Avatar>
                         <AvatarImage src={member.avatar} />
                         <AvatarFallback>
-                          {member.name.split(' ').map(n => n[0]).join('')}
+                          {member.name
+                            .split(' ')
+                            .map(n => n[0])
+                            .join('')}
                         </AvatarFallback>
                       </Avatar>
                       <div>
@@ -556,7 +636,7 @@ const TeamsPage = ({ isDemoMode = false, onLogout }) => {
                         <div className="text-sm text-muted-foreground">{member.role}</div>
                       </div>
                     </div>
-                    
+
                     <div className="flex items-center space-x-6">
                       <div className="text-center">
                         <div className="text-sm text-muted-foreground">Productivity</div>
@@ -589,14 +669,17 @@ const TeamsPage = ({ isDemoMode = false, onLogout }) => {
             </CardHeader>
             <CardContent>
               <div className="space-y-6">
-                {teamMembers.map((member) => (
+                {teamMembers.map(member => (
                   <div key={member.id} className="border rounded-lg p-4">
                     <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center space-x-3">
                         <Avatar>
                           <AvatarImage src={member.avatar} />
                           <AvatarFallback>
-                            {member.name.split(' ').map(n => n[0]).join('')}
+                            {member.name
+                              .split(' ')
+                              .map(n => n[0])
+                              .join('')}
                           </AvatarFallback>
                         </Avatar>
                         <div>
@@ -609,12 +692,21 @@ const TeamsPage = ({ isDemoMode = false, onLogout }) => {
                         Edit Permissions
                       </Button>
                     </div>
-                    
+
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                      {['admin', 'reports', 'team_management', 'analytics', 'goals', 'settings'].map((permission) => (
+                      {[
+                        'admin',
+                        'reports',
+                        'team_management',
+                        'analytics',
+                        'goals',
+                        'settings',
+                      ].map(permission => (
                         <Badge
                           key={permission}
-                          variant={member.permissions.includes(permission) ? 'default' : 'secondary'}
+                          variant={
+                            member.permissions.includes(permission) ? 'default' : 'secondary'
+                          }
                           className="justify-center"
                         >
                           {permission.replace('_', ' ')}
@@ -633,24 +725,26 @@ const TeamsPage = ({ isDemoMode = false, onLogout }) => {
           <Card>
             <CardHeader>
               <CardTitle>Team Settings</CardTitle>
-              <CardDescription>
-                Configure team-wide settings and preferences
-              </CardDescription>
+              <CardDescription>Configure team-wide settings and preferences</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-4">
                 <div>
-                  <Label htmlFor="teamName" className="text-base font-medium">Team Name</Label>
-                  <Input 
+                  <Label htmlFor="teamName" className="text-base font-medium">
+                    Team Name
+                  </Label>
+                  <Input
                     id="teamName"
-                    value={teamSettings.teamName} 
-                    onChange={(e) => handleTeamSettingsChange('teamName', e.target.value)} 
-                    className="mt-2" 
+                    value={teamSettings.teamName}
+                    onChange={e => handleTeamSettingsChange('teamName', e.target.value)}
+                    className="mt-2"
                   />
                 </div>
-                
+
                 <div>
-                  <Label htmlFor="teamDescription" className="text-base font-medium">Team Description</Label>
+                  <Label htmlFor="teamDescription" className="text-base font-medium">
+                    Team Description
+                  </Label>
                   <Textarea
                     id="teamDescription"
                     className="w-full min-h-[80px] mt-2"
@@ -658,13 +752,15 @@ const TeamsPage = ({ isDemoMode = false, onLogout }) => {
                     onChange={handleTeamDescriptionChange} // Corrected to use specific handler if Textarea provides event
                   />
                 </div>
-                
+
                 <div>
-                  <Label htmlFor="defaultRoleSettings" className="text-base font-medium">Default Role for New Members</Label>
-                  <Select 
+                  <Label htmlFor="defaultRoleSettings" className="text-base font-medium">
+                    Default Role for New Members
+                  </Label>
+                  <Select
                     id="defaultRoleSettings"
-                    value={teamSettings.defaultRole} 
-                    onChange={(value) => handleTeamSettingsChange('defaultRole', value)} 
+                    value={teamSettings.defaultRole}
+                    onChange={value => handleTeamSettingsChange('defaultRole', value)}
                     className="mt-2"
                     options={[
                       { value: 'admin', label: 'Admin' },
@@ -684,24 +780,32 @@ const TeamsPage = ({ isDemoMode = false, onLogout }) => {
                   <div className="flex items-center justify-between">
                     <div>
                       <Label htmlFor="publicProfileSwitch">Public Team Profile</Label>
-                      <p className="text-sm text-muted-foreground">Allow others to discover your team</p>
+                      <p className="text-sm text-muted-foreground">
+                        Allow others to discover your team
+                      </p>
                     </div>
-                    <Switch 
+                    <Switch
                       id="publicProfileSwitch"
                       checked={teamSettings.publicProfile}
-                      onCheckedChange={(isChecked) => handleTeamSettingsChange('publicProfile', isChecked)}
+                      onCheckedChange={isChecked =>
+                        handleTeamSettingsChange('publicProfile', isChecked)
+                      }
                     />
                   </div>
-                  
+
                   <div className="flex items-center justify-between">
                     <div>
                       <Label htmlFor="shareAnalyticsSwitch">Share Team Analytics</Label>
-                      <p className="text-sm text-muted-foreground">Share productivity insights with team members</p>
+                      <p className="text-sm text-muted-foreground">
+                        Share productivity insights with team members
+                      </p>
                     </div>
-                    <Switch 
+                    <Switch
                       id="shareAnalyticsSwitch"
                       checked={teamSettings.shareAnalytics}
-                      onCheckedChange={(isChecked) => handleTeamSettingsChange('shareAnalytics', isChecked)}
+                      onCheckedChange={isChecked =>
+                        handleTeamSettingsChange('shareAnalytics', isChecked)
+                      }
                     />
                   </div>
                 </div>

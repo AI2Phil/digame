@@ -5,21 +5,30 @@ import dynamic from 'next/dynamic';
 // import Button from '../components/ui/Button';
 
 // Temporary Button component
-const Button = ({ children, onClick, variant = 'primary', size = 'md', className = '', ...props }) => {
-  const baseClasses = 'inline-flex items-center justify-center font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2';
+const Button = ({
+  children,
+  onClick,
+  variant = 'primary',
+  size = 'md',
+  className = '',
+  ...props
+}) => {
+  const baseClasses =
+    'inline-flex items-center justify-center font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2';
   const variantClasses = {
     primary: 'bg-blue-600 hover:bg-blue-700 text-white focus:ring-blue-500',
     secondary: 'bg-gray-100 hover:bg-gray-200 text-gray-900 focus:ring-gray-500',
-    outline: 'border border-gray-300 bg-transparent hover:bg-gray-50 text-gray-700 focus:ring-blue-500',
-    ghost: 'bg-transparent hover:bg-gray-100 text-gray-700 focus:ring-gray-500'
+    outline:
+      'border border-gray-300 bg-transparent hover:bg-gray-50 text-gray-700 focus:ring-blue-500',
+    ghost: 'bg-transparent hover:bg-gray-100 text-gray-700 focus:ring-gray-500',
   };
   const sizeClasses = {
     sm: 'px-3 py-1.5 text-sm',
     md: 'px-4 py-2 text-sm',
     lg: 'px-6 py-3 text-base',
-    xl: 'px-8 py-4 text-lg'
+    xl: 'px-8 py-4 text-lg',
   };
-  
+
   return (
     <button
       className={`${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
@@ -39,7 +48,7 @@ import { Card, CardContent } from '../components/ui/Card';
 // Dynamically import AuthForm to avoid SSR issues
 const AuthForm = dynamic(() => import('../components/auth/AuthForm'), {
   ssr: false,
-  loading: () => <div>Loading...</div>
+  loading: () => <div>Loading...</div>,
 });
 
 export default function HomePage({ onDemoAccess, onLogin }) {
@@ -73,11 +82,14 @@ export default function HomePage({ onDemoAccess, onLogin }) {
       <>
         <Head>
           <title>Get Started - Digame</title>
-          <meta name="description" content="Choose your Digame experience - try our demo or create your personal digital twin." />
+          <meta
+            name="description"
+            content="Choose your Digame experience - try our demo or create your personal digital twin."
+          />
           <meta name="viewport" content="width=device-width, initial-scale=1" />
           <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
         </Head>
-        
+
         <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
           <div className="container mx-auto px-4 py-8">
             {/* Header */}
@@ -96,9 +108,7 @@ export default function HomePage({ onDemoAccess, onLogin }) {
             {/* Onboarding Content */}
             <div className="max-w-4xl mx-auto">
               <div className="text-center mb-12">
-                <h1 className="text-4xl font-bold text-gray-900 mb-4">
-                  Choose Your Experience
-                </h1>
+                <h1 className="text-4xl font-bold text-gray-900 mb-4">Choose Your Experience</h1>
                 <p className="text-xl text-gray-600">
                   Explore Digame with our interactive demo or create your personal digital twin
                 </p>
@@ -114,7 +124,8 @@ export default function HomePage({ onDemoAccess, onLogin }) {
                       </div>
                       <h3 className="text-2xl font-bold text-gray-900 mb-2">Try the Demo</h3>
                       <p className="text-gray-600">
-                        Experience the full platform with sample data and see how your digital twin works
+                        Experience the full platform with sample data and see how your digital twin
+                        works
                       </p>
                     </div>
 
@@ -135,7 +146,9 @@ export default function HomePage({ onDemoAccess, onLogin }) {
                         <div className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center">
                           <span className="text-green-600 text-xs">✓</span>
                         </div>
-                        <span className="text-gray-700">Predictive insights and recommendations</span>
+                        <span className="text-gray-700">
+                          Predictive insights and recommendations
+                        </span>
                       </div>
                       <div className="flex items-center space-x-3">
                         <div className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center">
@@ -165,7 +178,8 @@ export default function HomePage({ onDemoAccess, onLogin }) {
                       </div>
                       <h3 className="text-2xl font-bold text-gray-900 mb-2">Create Your Account</h3>
                       <p className="text-gray-600">
-                        Start building your personal digital twin with real data and personalized insights
+                        Start building your personal digital twin with real data and personalized
+                        insights
                       </p>
                     </div>
 
@@ -196,12 +210,7 @@ export default function HomePage({ onDemoAccess, onLogin }) {
                       </div>
                     </div>
 
-                    <Button
-                      onClick={handleSignUp}
-                      variant="primary"
-                      size="lg"
-                      className="w-full"
-                    >
+                    <Button onClick={handleSignUp} variant="primary" size="lg" className="w-full">
                       🎯 Create Account
                     </Button>
                     <p className="text-center text-sm text-gray-500 mt-3">
@@ -221,7 +230,10 @@ export default function HomePage({ onDemoAccess, onLogin }) {
     <>
       <Head>
         <title>Digame - Your Digital Professional Twin</title>
-        <meta name="description" content="Unlock your professional potential with AI-powered behavioral analysis, predictive insights, and personalized career development recommendations." />
+        <meta
+          name="description"
+          content="Unlock your professional potential with AI-powered behavioral analysis, predictive insights, and personalized career development recommendations."
+        />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
       </Head>
@@ -237,9 +249,21 @@ export default function HomePage({ onDemoAccess, onLogin }) {
               <span className="text-xl font-bold text-gray-900">Digame</span>
             </Link>
             <div className="hidden md:flex space-x-8">
-              <Link href="/features" className="text-gray-600 hover:text-gray-900 transition-colors">Features</Link>
-              <Link href="/how-it-works" className="text-gray-600 hover:text-gray-900 transition-colors">How it Works</Link>
-              <Link href="/pricing" className="text-gray-600 hover:text-gray-900 transition-colors">Pricing</Link>
+              <Link
+                href="/features"
+                className="text-gray-600 hover:text-gray-900 transition-colors"
+              >
+                Features
+              </Link>
+              <Link
+                href="/how-it-works"
+                className="text-gray-600 hover:text-gray-900 transition-colors"
+              >
+                How it Works
+              </Link>
+              <Link href="/pricing" className="text-gray-600 hover:text-gray-900 transition-colors">
+                Pricing
+              </Link>
             </div>
             <div className="flex items-center space-x-2 sm:space-x-3">
               <Link href="/LoginPage">
@@ -251,11 +275,7 @@ export default function HomePage({ onDemoAccess, onLogin }) {
                   Sign In
                 </Button>
               </Link>
-              <Button
-                onClick={handleGetStarted}
-                variant="primary"
-                size="md"
-              >
+              <Button onClick={handleGetStarted} variant="primary" size="md">
                 🚀 {t('getStarted', 'Get Started')}
               </Button>
             </div>
@@ -270,24 +290,17 @@ export default function HomePage({ onDemoAccess, onLogin }) {
               <span className="text-blue-600"> {t('heroTitlePart2', 'Professional Twin')}</span>
             </h1>
             <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-              {t('heroSubtitle', 'Unlock your professional potential with AI-powered behavioral analysis, predictive insights, and personalized career development recommendations.')}
+              {t(
+                'heroSubtitle',
+                'Unlock your professional potential with AI-powered behavioral analysis, predictive insights, and personalized career development recommendations.'
+              )}
             </p>
-            
+
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-              <Button
-                onClick={handleGetStarted}
-                variant="primary"
-                size="xl"
-                className="text-lg"
-              >
+              <Button onClick={handleGetStarted} variant="primary" size="xl" className="text-lg">
                 🎯 Start Your Journey
               </Button>
-              <Button
-                onClick={handleDemoClick}
-                variant="outline"
-                size="xl"
-                className="text-lg"
-              >
+              <Button onClick={handleDemoClick} variant="outline" size="xl" className="text-lg">
                 🚀 Try Demo
               </Button>
             </div>
@@ -307,7 +320,9 @@ export default function HomePage({ onDemoAccess, onLogin }) {
                       <div className="bg-blue-50 p-4 rounded-lg">
                         <div className="flex items-center justify-between mb-2">
                           <div className="text-2xl font-bold text-blue-600">87%</div>
-                          <Badge variant="default" size="sm">High</Badge>
+                          <Badge variant="default" size="sm">
+                            High
+                          </Badge>
                         </div>
                         <div className="text-sm text-gray-600 mb-2">Productivity Score</div>
                         <Progress value={87} className="h-2" />
@@ -315,7 +330,9 @@ export default function HomePage({ onDemoAccess, onLogin }) {
                       <div className="bg-green-50 p-4 rounded-lg">
                         <div className="flex items-center justify-between mb-2">
                           <div className="text-2xl font-bold text-green-600">6.2h</div>
-                          <Badge variant="secondary" size="sm">+15%</Badge>
+                          <Badge variant="secondary" size="sm">
+                            +15%
+                          </Badge>
                         </div>
                         <div className="text-sm text-gray-600 mb-2">Focus Time</div>
                         <Progress value={75} className="h-2" />
@@ -323,7 +340,9 @@ export default function HomePage({ onDemoAccess, onLogin }) {
                       <div className="bg-purple-50 p-4 rounded-lg">
                         <div className="flex items-center justify-between mb-2">
                           <div className="text-2xl font-bold text-purple-600">+12%</div>
-                          <Badge variant="outline" size="sm">Trending</Badge>
+                          <Badge variant="outline" size="sm">
+                            Trending
+                          </Badge>
                         </div>
                         <div className="text-sm text-gray-600 mb-2">Growth</div>
                         <Progress value={62} className="h-2" />
@@ -357,9 +376,14 @@ export default function HomePage({ onDemoAccess, onLogin }) {
                 <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
                   <span className="text-2xl">🧠</span>
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">{t('featureBehavioralAnalysisTitle', 'Behavioral Analysis')}</h3>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                  {t('featureBehavioralAnalysisTitle', 'Behavioral Analysis')}
+                </h3>
                 <p className="text-gray-600">
-                  {t('featureBehavioralAnalysisText', 'Advanced ML algorithms analyze your work patterns and identify optimization opportunities')}
+                  {t(
+                    'featureBehavioralAnalysisText',
+                    'Advanced ML algorithms analyze your work patterns and identify optimization opportunities'
+                  )}
                 </p>
               </div>
 
@@ -367,9 +391,14 @@ export default function HomePage({ onDemoAccess, onLogin }) {
                 <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                   <span className="text-2xl">🔮</span>
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">{t('featurePredictiveInsightsTitle', 'Predictive Insights')}</h3>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                  {t('featurePredictiveInsightsTitle', 'Predictive Insights')}
+                </h3>
                 <p className="text-gray-600">
-                  {t('featurePredictiveInsightsText', 'Get personalized predictions about your career trajectory and skill development')}
+                  {t(
+                    'featurePredictiveInsightsText',
+                    'Get personalized predictions about your career trajectory and skill development'
+                  )}
                 </p>
               </div>
 
@@ -377,9 +406,14 @@ export default function HomePage({ onDemoAccess, onLogin }) {
                 <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
                   <span className="text-2xl">🎯</span>
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">{t('featureGoalAchievementTitle', 'Goal Achievement')}</h3>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                  {t('featureGoalAchievementTitle', 'Goal Achievement')}
+                </h3>
                 <p className="text-gray-600">
-                  {t('featureGoalAchievementText', 'Set and track professional goals with AI-powered recommendations and progress monitoring')}
+                  {t(
+                    'featureGoalAchievementText',
+                    'Set and track professional goals with AI-powered recommendations and progress monitoring'
+                  )}
                 </p>
               </div>
             </div>
@@ -397,7 +431,7 @@ export default function HomePage({ onDemoAccess, onLogin }) {
                 See how digital twins are transforming careers
               </p>
             </div>
-            
+
             <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
               <Card className="rounded-lg shadow-sm">
                 <CardContent className="p-6">
@@ -409,12 +443,12 @@ export default function HomePage({ onDemoAccess, onLogin }) {
                     </div>
                   </div>
                   <p className="text-gray-700 italic">
-                    "Digame helped me identify productivity patterns I never knew existed.
-                    I've increased my efficiency by 40% in just 3 months."
+                    "Digame helped me identify productivity patterns I never knew existed. I've
+                    increased my efficiency by 40% in just 3 months."
                   </p>
                 </CardContent>
               </Card>
-              
+
               <Card className="rounded-lg shadow-sm">
                 <CardContent className="p-6">
                   <div className="flex items-center mb-4">
@@ -425,12 +459,12 @@ export default function HomePage({ onDemoAccess, onLogin }) {
                     </div>
                   </div>
                   <p className="text-gray-700 italic">
-                    "The predictive insights are incredible. Digame predicted my promotion
-                    6 months before it happened and helped me prepare perfectly."
+                    "The predictive insights are incredible. Digame predicted my promotion 6 months
+                    before it happened and helped me prepare perfectly."
                   </p>
                 </CardContent>
               </Card>
-              
+
               <Card className="rounded-lg shadow-sm">
                 <CardContent className="p-6">
                   <div className="flex items-center mb-4">
@@ -441,8 +475,8 @@ export default function HomePage({ onDemoAccess, onLogin }) {
                     </div>
                   </div>
                   <p className="text-gray-700 italic">
-                    "My digital twin became my career coach. The personalized recommendations
-                    led to a 60% salary increase within a year."
+                    "My digital twin became my career coach. The personalized recommendations led to
+                    a 60% salary increase within a year."
                   </p>
                 </CardContent>
               </Card>
@@ -457,7 +491,8 @@ export default function HomePage({ onDemoAccess, onLogin }) {
               Ready to Transform Your Professional Life?
             </h2>
             <p className="text-xl text-blue-100 mb-8">
-              Join thousands of professionals who are already using their digital twins to accelerate their careers
+              Join thousands of professionals who are already using their digital twins to
+              accelerate their careers
             </p>
             <Button
               onClick={handleGetStarted}
@@ -486,12 +521,7 @@ export default function HomePage({ onDemoAccess, onLogin }) {
         </footer>
 
         {/* Authentication Modal */}
-        {showAuthForm && (
-          <AuthForm
-            onLogin={handleAuthSuccess}
-            onClose={handleAuthClose}
-          />
-        )}
+        {showAuthForm && <AuthForm onLogin={handleAuthSuccess} onClose={handleAuthClose} />}
       </div>
     </>
   );

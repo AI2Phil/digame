@@ -6,11 +6,11 @@ import { Button } from '../../src/components/ui/Button';
 import { Badge } from '../../src/components/ui/Badge';
 import { Avatar, AvatarFallback, AvatarImage } from '../../src/components/ui/Avatar';
 import { Progress } from '../../src/components/ui/Progress';
-import { 
-  Briefcase, 
-  MapPin, 
-  DollarSign, 
-  Clock, 
+import {
+  Briefcase,
+  MapPin,
+  DollarSign,
+  Clock,
   Users,
   Star,
   Heart,
@@ -44,7 +44,7 @@ import {
   Shield,
   Rocket,
   Brain,
-  Lightbulb
+  Lightbulb,
 } from 'lucide-react';
 
 const CareerJobs: React.FC = () => {
@@ -57,7 +57,7 @@ const CareerJobs: React.FC = () => {
     salary: 'all',
     experience: 'all',
     remote: 'all',
-    company: 'all'
+    company: 'all',
   });
   const [searchTerm, setSearchTerm] = useState('');
   const [savedJobs, setSavedJobs] = useState(new Set());
@@ -73,11 +73,11 @@ const CareerJobs: React.FC = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
         },
-        body: JSON.stringify({ filters, search: searchTerm })
+        body: JSON.stringify({ filters, search: searchTerm }),
       });
-      
+
       if (response.ok) {
         const data = await response.json();
         setJobsData(data);
@@ -101,7 +101,8 @@ const CareerJobs: React.FC = () => {
         salary: '$120,000 - $160,000',
         posted: '2 days ago',
         matchScore: 95,
-        description: 'Join our engineering team to build scalable web applications using React, Node.js, and AWS.',
+        description:
+          'Join our engineering team to build scalable web applications using React, Node.js, and AWS.',
         requirements: ['5+ years experience', 'React/Node.js', 'AWS', 'Team leadership'],
         benefits: ['Health insurance', 'Stock options', 'Flexible hours', '401k'],
         companySize: '500-1000',
@@ -116,7 +117,7 @@ const CareerJobs: React.FC = () => {
         companyRating: 4.5,
         workLifeBalance: 4.2,
         careerGrowth: 4.6,
-        compensation: 4.4
+        compensation: 4.4,
       },
       {
         id: 2,
@@ -129,7 +130,12 @@ const CareerJobs: React.FC = () => {
         posted: '1 week ago',
         matchScore: 88,
         description: 'Lead a team of engineers in developing cutting-edge AI-powered applications.',
-        requirements: ['7+ years experience', 'Team leadership', 'System design', 'AI/ML knowledge'],
+        requirements: [
+          '7+ years experience',
+          'Team leadership',
+          'System design',
+          'AI/ML knowledge',
+        ],
         benefits: ['Remote work', 'Unlimited PTO', 'Learning budget', 'Health insurance'],
         companySize: '100-500',
         industry: 'AI/ML',
@@ -143,7 +149,7 @@ const CareerJobs: React.FC = () => {
         companyRating: 4.7,
         workLifeBalance: 4.8,
         careerGrowth: 4.5,
-        compensation: 4.3
+        compensation: 4.3,
       },
       {
         id: 3,
@@ -155,9 +161,20 @@ const CareerJobs: React.FC = () => {
         salary: '$150,000 - $200,000',
         posted: '3 days ago',
         matchScore: 82,
-        description: 'Drive technical strategy and architecture for our cloud infrastructure platform.',
-        requirements: ['10+ years experience', 'Cloud architecture', 'Distributed systems', 'Technical leadership'],
-        benefits: ['Stock options', 'Health insurance', 'Relocation assistance', 'Professional development'],
+        description:
+          'Drive technical strategy and architecture for our cloud infrastructure platform.',
+        requirements: [
+          '10+ years experience',
+          'Cloud architecture',
+          'Distributed systems',
+          'Technical leadership',
+        ],
+        benefits: [
+          'Stock options',
+          'Health insurance',
+          'Relocation assistance',
+          'Professional development',
+        ],
         companySize: '1000+',
         industry: 'Cloud Computing',
         type: 'Full-time',
@@ -170,7 +187,7 @@ const CareerJobs: React.FC = () => {
         companyRating: 4.3,
         workLifeBalance: 4.0,
         careerGrowth: 4.7,
-        compensation: 4.8
+        compensation: 4.8,
       },
       {
         id: 4,
@@ -183,7 +200,12 @@ const CareerJobs: React.FC = () => {
         posted: '5 days ago',
         matchScore: 75,
         description: 'Manage and grow our engineering team while contributing to product strategy.',
-        requirements: ['Management experience', 'Technical background', 'Product mindset', 'Team building'],
+        requirements: [
+          'Management experience',
+          'Technical background',
+          'Product mindset',
+          'Team building',
+        ],
         benefits: ['Equity package', 'Health insurance', 'Flexible schedule', 'Team events'],
         companySize: '50-100',
         industry: 'Fintech',
@@ -197,8 +219,8 @@ const CareerJobs: React.FC = () => {
         companyRating: 4.1,
         workLifeBalance: 4.4,
         careerGrowth: 4.2,
-        compensation: 4.0
-      }
+        compensation: 4.0,
+      },
     ],
     applied: [
       {
@@ -211,7 +233,7 @@ const CareerJobs: React.FC = () => {
         stage: 'Initial Review',
         nextStep: 'Phone Screen',
         estimatedResponse: '3-5 days',
-        recruiterContact: 'sarah.recruiter@startupx.com'
+        recruiterContact: 'sarah.recruiter@startupx.com',
       },
       {
         id: 5,
@@ -223,7 +245,7 @@ const CareerJobs: React.FC = () => {
         stage: 'Technical Interview',
         nextStep: 'Technical Interview on Jan 18',
         estimatedResponse: 'Scheduled',
-        recruiterContact: 'mike.hr@webflow.com'
+        recruiterContact: 'mike.hr@webflow.com',
       },
       {
         id: 6,
@@ -235,8 +257,8 @@ const CareerJobs: React.FC = () => {
         stage: 'Final Decision',
         nextStep: 'None',
         estimatedResponse: 'Complete',
-        feedback: 'Strong technical skills, but looking for more experience with data pipelines.'
-      }
+        feedback: 'Strong technical skills, but looking for more experience with data pipelines.',
+      },
     ],
     saved: [
       {
@@ -245,7 +267,7 @@ const CareerJobs: React.FC = () => {
         company: 'InnovateLabs',
         savedDate: '2024-01-12',
         expiresIn: '18 days',
-        notes: 'Great remote culture, interesting AI projects'
+        notes: 'Great remote culture, interesting AI projects',
       },
       {
         id: 7,
@@ -253,8 +275,8 @@ const CareerJobs: React.FC = () => {
         company: 'CloudTech',
         savedDate: '2024-01-10',
         expiresIn: '20 days',
-        notes: 'Good compensation, need to research company culture'
-      }
+        notes: 'Good compensation, need to research company culture',
+      },
     ],
     insights: {
       marketTrends: {
@@ -262,71 +284,76 @@ const CareerJobs: React.FC = () => {
         salaryGrowth: '+8.5%',
         demandGrowth: '+15%',
         topSkills: ['React', 'AWS', 'Python', 'Leadership', 'System Design'],
-        hotLocations: ['San Francisco', 'Seattle', 'Austin', 'New York', 'Remote']
+        hotLocations: ['San Francisco', 'Seattle', 'Austin', 'New York', 'Remote'],
       },
       personalStats: {
         profileViews: 156,
         applicationsSent: 12,
         responseRate: '25%',
         interviewRate: '15%',
-        avgMatchScore: 78
+        avgMatchScore: 78,
       },
       recommendations: [
         {
           type: 'Skill Gap',
           message: 'Learning Kubernetes could increase your match score by 12%',
           action: 'Start Learning',
-          priority: 'High'
+          priority: 'High',
         },
         {
           type: 'Application Strategy',
           message: 'Apply to 3-5 jobs per week for optimal results',
           action: 'Set Reminder',
-          priority: 'Medium'
+          priority: 'Medium',
         },
         {
           type: 'Profile Optimization',
           message: 'Add portfolio projects to increase profile views',
           action: 'Update Profile',
-          priority: 'Medium'
-        }
-      ]
+          priority: 'Medium',
+        },
+      ],
     },
     filters: {
       locations: ['San Francisco', 'Seattle', 'Austin', 'New York', 'Remote', 'Los Angeles'],
       salaryRanges: ['$80k-$100k', '$100k-$120k', '$120k-$150k', '$150k+'],
       experienceLevels: ['Junior', 'Mid-level', 'Senior', 'Lead', 'Principal'],
       remoteOptions: ['On-site', 'Remote', 'Hybrid'],
-      companies: ['TechCorp', 'InnovateLabs', 'CloudScale', 'StartupX', 'WebFlow Inc']
-    }
+      companies: ['TechCorp', 'InnovateLabs', 'CloudScale', 'StartupX', 'WebFlow Inc'],
+    },
   };
 
   const currentData = jobsData || mockJobsData;
 
-  const getMatchScoreColor = (score) => {
+  const getMatchScoreColor = score => {
     if (score >= 90) return 'text-green-600 bg-green-100';
     if (score >= 80) return 'text-blue-600 bg-blue-100';
     if (score >= 70) return 'text-yellow-600 bg-yellow-100';
     return 'text-red-600 bg-red-100';
   };
 
-  const getStatusColor = (status) => {
+  const getStatusColor = status => {
     switch (status) {
-      case 'Under Review': return 'bg-blue-100 text-blue-800';
-      case 'Interview Scheduled': return 'bg-green-100 text-green-800';
-      case 'Rejected': return 'bg-red-100 text-red-800';
-      case 'Offer': return 'bg-purple-100 text-purple-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'Under Review':
+        return 'bg-blue-100 text-blue-800';
+      case 'Interview Scheduled':
+        return 'bg-green-100 text-green-800';
+      case 'Rejected':
+        return 'bg-red-100 text-red-800';
+      case 'Offer':
+        return 'bg-purple-100 text-purple-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
-  const handleSaveJob = async (jobId) => {
+  const handleSaveJob = async jobId => {
     try {
       const response = await fetch(`/api/career/jobs/${jobId}/save`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
       });
 
       if (response.ok) {
@@ -337,13 +364,13 @@ const CareerJobs: React.FC = () => {
     }
   };
 
-  const handleApplyJob = async (jobId) => {
+  const handleApplyJob = async jobId => {
     try {
       const response = await fetch(`/api/career/jobs/${jobId}/apply`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
       });
 
       if (response.ok) {
@@ -356,12 +383,13 @@ const CareerJobs: React.FC = () => {
   };
 
   const filteredJobs = currentData.recommended.filter(job => {
-    const matchesSearch = job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         job.company.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch =
+      job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      job.company.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesLocation = filters.location === 'all' || job.location.includes(filters.location);
     const matchesRemote = filters.remote === 'all' || job.remote === filters.remote;
     const matchesExperience = filters.experience === 'all' || job.experience === filters.experience;
-    
+
     return matchesSearch && matchesLocation && matchesRemote && matchesExperience;
   });
 
@@ -373,7 +401,7 @@ const CareerJobs: React.FC = () => {
         icon={<Briefcase className="h-8 w-8" />}
         breadcrumb={[
           { label: 'Career', href: '/career' },
-          { label: 'Jobs', href: '/career/jobs' }
+          { label: 'Jobs', href: '/career/jobs' },
         ]}
         actions={
           <div className="flex gap-2">
@@ -448,29 +476,33 @@ const CareerJobs: React.FC = () => {
                   type="text"
                   placeholder="Search jobs, companies, or skills..."
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={e => setSearchTerm(e.target.value)}
                   className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
             </div>
             <select
               value={filters.location}
-              onChange={(e) => setFilters(prev => ({ ...prev, location: e.target.value }))}
+              onChange={e => setFilters(prev => ({ ...prev, location: e.target.value }))}
               className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="all">All Locations</option>
-              {currentData.filters.locations.map((location) => (
-                <option key={location} value={location}>{location}</option>
+              {currentData.filters.locations.map(location => (
+                <option key={location} value={location}>
+                  {location}
+                </option>
               ))}
             </select>
             <select
               value={filters.remote}
-              onChange={(e) => setFilters(prev => ({ ...prev, remote: e.target.value }))}
+              onChange={e => setFilters(prev => ({ ...prev, remote: e.target.value }))}
               className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="all">All Types</option>
-              {currentData.filters.remoteOptions.map((option) => (
-                <option key={option} value={option}>{option}</option>
+              {currentData.filters.remoteOptions.map(option => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
               ))}
             </select>
             <Button variant="outline">
@@ -481,7 +513,7 @@ const CareerJobs: React.FC = () => {
 
           {/* Job Listings */}
           <div className="space-y-4">
-            {filteredJobs.map((job) => (
+            {filteredJobs.map(job => (
               <Card key={job.id} className="hover:shadow-lg transition-shadow">
                 <CardContent className="p-6">
                   <div className="flex items-start justify-between">
@@ -494,7 +526,7 @@ const CareerJobs: React.FC = () => {
                           <h3 className="font-medium text-lg">{job.title}</h3>
                           <p className="text-gray-600">{job.company}</p>
                         </div>
-                        
+
                         <div className="flex items-center gap-4 text-sm text-gray-600">
                           <div className="flex items-center gap-1">
                             <MapPin className="h-4 w-4" />
@@ -534,21 +566,19 @@ const CareerJobs: React.FC = () => {
                             <Star className="h-4 w-4 text-yellow-500 fill-current" />
                             <span className="text-sm">{job.companyRating}</span>
                           </div>
-                          <div className="text-sm text-gray-600">
-                            {job.companySize} employees
-                          </div>
-                          <div className="text-sm text-gray-600">
-                            {job.industry}
-                          </div>
+                          <div className="text-sm text-gray-600">{job.companySize} employees</div>
+                          <div className="text-sm text-gray-600">{job.industry}</div>
                         </div>
                       </div>
                     </div>
-                    
+
                     <div className="flex flex-col items-end gap-3">
-                      <div className={`px-3 py-1 rounded-full text-sm font-medium ${getMatchScoreColor(job.matchScore)}`}>
+                      <div
+                        className={`px-3 py-1 rounded-full text-sm font-medium ${getMatchScoreColor(job.matchScore)}`}
+                      >
                         {job.matchScore}% match
                       </div>
-                      
+
                       <div className="flex gap-2">
                         <Button
                           variant="outline"
@@ -556,7 +586,9 @@ const CareerJobs: React.FC = () => {
                           onClick={() => handleSaveJob(job.id)}
                           disabled={job.saved || savedJobs.has(job.id)}
                         >
-                          <Bookmark className={`h-4 w-4 ${job.saved || savedJobs.has(job.id) ? 'fill-current' : ''}`} />
+                          <Bookmark
+                            className={`h-4 w-4 ${job.saved || savedJobs.has(job.id) ? 'fill-current' : ''}`}
+                          />
                         </Button>
                         <Button variant="outline" size="sm">
                           <Share2 className="h-4 w-4" />
@@ -565,10 +597,10 @@ const CareerJobs: React.FC = () => {
                           <Eye className="h-4 w-4" />
                         </Button>
                       </div>
-                      
+
                       <div className="flex gap-2">
                         {job.quickApply ? (
-                          <Button 
+                          <Button
                             size="sm"
                             onClick={() => handleApplyJob(job.id)}
                             disabled={job.applied}
@@ -594,7 +626,7 @@ const CareerJobs: React.FC = () => {
 
       {activeTab === 'applied' && (
         <div className="space-y-4">
-          {currentData.applied.map((application) => (
+          {currentData.applied.map(application => (
             <Card key={application.id} className="hover:shadow-md transition-shadow">
               <CardContent className="p-6">
                 <div className="flex items-start justify-between">
@@ -603,15 +635,19 @@ const CareerJobs: React.FC = () => {
                       <h3 className="font-medium text-lg">{application.title}</h3>
                       <p className="text-gray-600">{application.company}</p>
                     </div>
-                    
+
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                       <div>
                         <div className="text-gray-600">Applied</div>
-                        <div className="font-medium">{new Date(application.appliedDate).toLocaleDateString()}</div>
+                        <div className="font-medium">
+                          {new Date(application.appliedDate).toLocaleDateString()}
+                        </div>
                       </div>
                       <div>
                         <div className="text-gray-600">Last Update</div>
-                        <div className="font-medium">{new Date(application.lastUpdate).toLocaleDateString()}</div>
+                        <div className="font-medium">
+                          {new Date(application.lastUpdate).toLocaleDateString()}
+                        </div>
                       </div>
                       <div>
                         <div className="text-gray-600">Current Stage</div>
@@ -634,7 +670,7 @@ const CareerJobs: React.FC = () => {
                       Contact: {application.recruiterContact}
                     </div>
                   </div>
-                  
+
                   <div className="flex flex-col items-end gap-2">
                     <Badge className={getStatusColor(application.status)}>
                       {application.status}
@@ -656,7 +692,7 @@ const CareerJobs: React.FC = () => {
 
       {activeTab === 'saved' && (
         <div className="space-y-4">
-          {currentData.saved.map((job) => (
+          {currentData.saved.map(job => (
             <Card key={job.id} className="hover:shadow-md transition-shadow">
               <CardContent className="p-6">
                 <div className="flex items-start justify-between">
@@ -665,7 +701,7 @@ const CareerJobs: React.FC = () => {
                       <h3 className="font-medium text-lg">{job.title}</h3>
                       <p className="text-gray-600">{job.company}</p>
                     </div>
-                    
+
                     <div className="flex items-center gap-4 text-sm text-gray-600">
                       <div>Saved: {new Date(job.savedDate).toLocaleDateString()}</div>
                       <div>Expires in: {job.expiresIn}</div>
@@ -678,7 +714,7 @@ const CareerJobs: React.FC = () => {
                       </div>
                     )}
                   </div>
-                  
+
                   <div className="flex gap-2">
                     <Button variant="outline" size="sm">
                       <Eye className="h-4 w-4 mr-2" />
@@ -709,19 +745,27 @@ const CareerJobs: React.FC = () => {
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-green-600">{currentData.insights.marketTrends.averageSalary}</div>
+                  <div className="text-2xl font-bold text-green-600">
+                    {currentData.insights.marketTrends.averageSalary}
+                  </div>
                   <div className="text-sm text-gray-600">Average Salary</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-blue-600">{currentData.insights.marketTrends.salaryGrowth}</div>
+                  <div className="text-2xl font-bold text-blue-600">
+                    {currentData.insights.marketTrends.salaryGrowth}
+                  </div>
                   <div className="text-sm text-gray-600">Salary Growth</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-purple-600">{currentData.insights.marketTrends.demandGrowth}</div>
+                  <div className="text-2xl font-bold text-purple-600">
+                    {currentData.insights.marketTrends.demandGrowth}
+                  </div>
                   <div className="text-sm text-gray-600">Demand Growth</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-orange-600">{currentData.insights.personalStats.avgMatchScore}%</div>
+                  <div className="text-2xl font-bold text-orange-600">
+                    {currentData.insights.personalStats.avgMatchScore}%
+                  </div>
                   <div className="text-sm text-gray-600">Avg Match Score</div>
                 </div>
               </div>
@@ -734,8 +778,8 @@ const CareerJobs: React.FC = () => {
                       <div key={index} className="flex items-center justify-between">
                         <span className="text-sm">{skill}</span>
                         <div className="flex items-center gap-2">
-                          <Progress value={90 - (index * 10)} className="h-2 w-20" />
-                          <span className="text-xs text-gray-600">{90 - (index * 10)}%</span>
+                          <Progress value={90 - index * 10} className="h-2 w-20" />
+                          <span className="text-xs text-gray-600">{90 - index * 10}%</span>
                         </div>
                       </div>
                     ))}
@@ -749,8 +793,8 @@ const CareerJobs: React.FC = () => {
                       <div key={index} className="flex items-center justify-between">
                         <span className="text-sm">{location}</span>
                         <div className="flex items-center gap-2">
-                          <Progress value={85 - (index * 15)} className="h-2 w-20" />
-                          <span className="text-xs text-gray-600">{85 - (index * 15)}%</span>
+                          <Progress value={85 - index * 15} className="h-2 w-20" />
+                          <span className="text-xs text-gray-600">{85 - index * 15}%</span>
                         </div>
                       </div>
                     ))}
@@ -771,23 +815,33 @@ const CareerJobs: React.FC = () => {
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-blue-600">{currentData.insights.personalStats.profileViews}</div>
+                  <div className="text-2xl font-bold text-blue-600">
+                    {currentData.insights.personalStats.profileViews}
+                  </div>
                   <div className="text-sm text-gray-600">Profile Views</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-green-600">{currentData.insights.personalStats.applicationsSent}</div>
+                  <div className="text-2xl font-bold text-green-600">
+                    {currentData.insights.personalStats.applicationsSent}
+                  </div>
                   <div className="text-sm text-gray-600">Applications Sent</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-purple-600">{currentData.insights.personalStats.responseRate}</div>
+                  <div className="text-2xl font-bold text-purple-600">
+                    {currentData.insights.personalStats.responseRate}
+                  </div>
                   <div className="text-sm text-gray-600">Response Rate</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-orange-600">{currentData.insights.personalStats.interviewRate}</div>
+                  <div className="text-2xl font-bold text-orange-600">
+                    {currentData.insights.personalStats.interviewRate}
+                  </div>
                   <div className="text-sm text-gray-600">Interview Rate</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-red-600">{currentData.insights.personalStats.avgMatchScore}%</div>
+                  <div className="text-2xl font-bold text-red-600">
+                    {currentData.insights.personalStats.avgMatchScore}%
+                  </div>
                   <div className="text-sm text-gray-600">Avg Match Score</div>
                 </div>
               </div>

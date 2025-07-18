@@ -6,13 +6,13 @@ import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { Input } from '../../components/ui/Input';
 import { Progress } from '../../components/ui/Progress';
-import { 
-  Smartphone, 
-  Camera, 
-  Mic, 
-  MapPin, 
-  Battery, 
-  Wifi, 
+import {
+  Smartphone,
+  Camera,
+  Mic,
+  MapPin,
+  Battery,
+  Wifi,
   Bell,
   MessageSquare,
   Calendar,
@@ -27,7 +27,7 @@ import {
   Scan,
   QrCode,
   Navigation,
-  Heart
+  Heart,
 } from 'lucide-react';
 
 const MobileAITools = () => {
@@ -46,10 +46,10 @@ const MobileAITools = () => {
       setLoading(true);
       const response = await fetch('/api/ai-tools/mobile', {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
       });
-      
+
       if (response.ok) {
         const data = await response.json();
         setMobileData(data);
@@ -68,7 +68,7 @@ const MobileAITools = () => {
       model: 'iPhone 15 Pro',
       batteryLevel: 78,
       networkType: '5G',
-      location: 'San Francisco, CA'
+      location: 'San Francisco, CA',
     },
     aiCapabilities: {
       voiceRecognition: { available: true, accuracy: 96.5 },
@@ -76,14 +76,14 @@ const MobileAITools = () => {
       textAnalysis: { available: true, accuracy: 98.1 },
       translation: { available: true, languages: 47 },
       ocr: { available: true, accuracy: 92.8 },
-      faceDetection: { available: true, accuracy: 97.3 }
+      faceDetection: { available: true, accuracy: 97.3 },
     },
     usage: {
       dailyInteractions: 127,
       weeklyTrend: 15.3,
       mostUsedFeature: 'Voice Assistant',
       totalProcessingTime: 45.2,
-      dataUsage: 2.3
+      dataUsage: 2.3,
     },
     tools: [
       {
@@ -93,7 +93,7 @@ const MobileAITools = () => {
         icon: <Mic className="h-6 w-6" />,
         usage: 89,
         accuracy: 96.5,
-        status: 'active'
+        status: 'active',
       },
       {
         id: 'smart-camera',
@@ -102,7 +102,7 @@ const MobileAITools = () => {
         icon: <Camera className="h-6 w-6" />,
         usage: 67,
         accuracy: 94.2,
-        status: 'active'
+        status: 'active',
       },
       {
         id: 'location-ai',
@@ -111,7 +111,7 @@ const MobileAITools = () => {
         icon: <MapPin className="h-6 w-6" />,
         usage: 54,
         accuracy: 91.7,
-        status: 'active'
+        status: 'active',
       },
       {
         id: 'text-scanner',
@@ -120,7 +120,7 @@ const MobileAITools = () => {
         icon: <Scan className="h-6 w-6" />,
         usage: 43,
         accuracy: 92.8,
-        status: 'active'
+        status: 'active',
       },
       {
         id: 'smart-notifications',
@@ -129,7 +129,7 @@ const MobileAITools = () => {
         icon: <Bell className="h-6 w-6" />,
         usage: 78,
         accuracy: 88.4,
-        status: 'active'
+        status: 'active',
       },
       {
         id: 'health-monitor',
@@ -138,41 +138,45 @@ const MobileAITools = () => {
         icon: <Heart className="h-6 w-6" />,
         usage: 32,
         accuracy: 89.6,
-        status: 'beta'
-      }
+        status: 'beta',
+      },
     ],
     insights: [
       'Voice Assistant usage increased 23% this week',
       'Smart Camera performs best in outdoor lighting',
       'Location AI accuracy improves with GPS enabled',
-      'Text Scanner works optimally with high-contrast documents'
+      'Text Scanner works optimally with high-contrast documents',
     ],
     recommendations: [
       'Enable background processing for better performance',
       'Update to latest AI models for improved accuracy',
       'Consider upgrading storage for offline capabilities',
-      'Optimize battery usage by adjusting AI processing frequency'
-    ]
+      'Optimize battery usage by adjusting AI processing frequency',
+    ],
   };
 
   const currentData = mobileData || mockMobileData;
 
-  const getStatusColor = (status) => {
+  const getStatusColor = status => {
     switch (status) {
-      case 'active': return 'default';
-      case 'beta': return 'secondary';
-      case 'inactive': return 'destructive';
-      default: return 'outline';
+      case 'active':
+        return 'default';
+      case 'beta':
+        return 'secondary';
+      case 'inactive':
+        return 'destructive';
+      default:
+        return 'outline';
     }
   };
 
-  const getAccuracyColor = (accuracy) => {
+  const getAccuracyColor = accuracy => {
     if (accuracy >= 95) return 'text-green-600';
     if (accuracy >= 90) return 'text-yellow-600';
     return 'text-red-600';
   };
 
-  const getBatteryColor = (level) => {
+  const getBatteryColor = level => {
     if (level >= 50) return 'text-green-600';
     if (level >= 20) return 'text-yellow-600';
     return 'text-red-600';
@@ -186,7 +190,7 @@ const MobileAITools = () => {
         icon={<Smartphone className="h-8 w-8" />}
         breadcrumb={[
           { label: 'AI Tools', href: '/ai-tools' },
-          { label: 'Mobile', href: '/ai-tools/mobile' }
+          { label: 'Mobile', href: '/ai-tools/mobile' },
         ]}
         actions={
           <div className="flex gap-2">
@@ -256,7 +260,9 @@ const MobileAITools = () => {
                   <div>
                     <p className="text-sm font-medium text-gray-600">Device</p>
                     <p className="text-lg font-bold">{currentData.deviceInfo.model}</p>
-                    <p className="text-xs text-gray-500">{currentData.deviceInfo.platform} {currentData.deviceInfo.version}</p>
+                    <p className="text-xs text-gray-500">
+                      {currentData.deviceInfo.platform} {currentData.deviceInfo.version}
+                    </p>
                   </div>
                   <Smartphone className="h-8 w-8 text-blue-600" />
                 </div>
@@ -268,11 +274,15 @@ const MobileAITools = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-600">Battery</p>
-                    <p className={`text-2xl font-bold ${getBatteryColor(currentData.deviceInfo.batteryLevel)}`}>
+                    <p
+                      className={`text-2xl font-bold ${getBatteryColor(currentData.deviceInfo.batteryLevel)}`}
+                    >
                       {currentData.deviceInfo.batteryLevel}%
                     </p>
                   </div>
-                  <Battery className={`h-8 w-8 ${getBatteryColor(currentData.deviceInfo.batteryLevel)}`} />
+                  <Battery
+                    className={`h-8 w-8 ${getBatteryColor(currentData.deviceInfo.batteryLevel)}`}
+                  />
                 </div>
               </CardContent>
             </Card>
@@ -282,7 +292,9 @@ const MobileAITools = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-600">Network</p>
-                    <p className="text-2xl font-bold text-green-600">{currentData.deviceInfo.networkType}</p>
+                    <p className="text-2xl font-bold text-green-600">
+                      {currentData.deviceInfo.networkType}
+                    </p>
                   </div>
                   <Wifi className="h-8 w-8 text-green-600" />
                 </div>
@@ -327,7 +339,11 @@ const MobileAITools = () => {
                         <div className="flex justify-between text-xs">
                           <span>Accuracy</span>
                           <span className={getAccuracyColor(data.accuracy || 0)}>
-                            {data.accuracy ? `${data.accuracy}%` : data.languages ? `${data.languages} languages` : 'N/A'}
+                            {data.accuracy
+                              ? `${data.accuracy}%`
+                              : data.languages
+                                ? `${data.languages} languages`
+                                : 'N/A'}
                           </span>
                         </div>
                         {data.accuracy && <Progress value={data.accuracy} className="h-1" />}
@@ -358,7 +374,9 @@ const MobileAITools = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-600">Weekly Growth</p>
-                    <p className="text-2xl font-bold text-green-600">+{currentData.usage.weeklyTrend}%</p>
+                    <p className="text-2xl font-bold text-green-600">
+                      +{currentData.usage.weeklyTrend}%
+                    </p>
                   </div>
                   <TrendingUp className="h-8 w-8 text-green-600" />
                 </div>
@@ -394,13 +412,11 @@ const MobileAITools = () => {
 
       {activeTab === 'tools' && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {currentData.tools.map((tool) => (
+          {currentData.tools.map(tool => (
             <Card key={tool.id} className="hover:shadow-lg transition-shadow cursor-pointer">
               <CardHeader>
                 <CardTitle className="flex items-center gap-3">
-                  <div className="p-2 bg-blue-50 rounded-lg">
-                    {tool.icon}
-                  </div>
+                  <div className="p-2 bg-blue-50 rounded-lg">{tool.icon}</div>
                   <div>
                     <h3 className="font-medium">{tool.name}</h3>
                     <Badge variant={getStatusColor(tool.status)} className="mt-1">
@@ -411,7 +427,7 @@ const MobileAITools = () => {
               </CardHeader>
               <CardContent className="space-y-4">
                 <p className="text-sm text-gray-600">{tool.description}</p>
-                
+
                 <div className="space-y-3">
                   <div className="space-y-1">
                     <div className="flex justify-between text-sm">
@@ -420,7 +436,7 @@ const MobileAITools = () => {
                     </div>
                     <Progress value={tool.usage} className="h-2" />
                   </div>
-                  
+
                   <div className="space-y-1">
                     <div className="flex justify-between text-sm">
                       <span>Accuracy</span>
@@ -473,20 +489,25 @@ const MobileAITools = () => {
                       ))}
                   </div>
                 </div>
-                
+
                 <div>
                   <h4 className="font-medium mb-4">Performance Metrics</h4>
                   <div className="space-y-3">
                     <div className="flex justify-between">
                       <span className="text-sm">Average Accuracy</span>
                       <span className="text-sm font-bold text-green-600">
-                        {(currentData.tools.reduce((acc, tool) => acc + tool.accuracy, 0) / currentData.tools.length).toFixed(1)}%
+                        {(
+                          currentData.tools.reduce((acc, tool) => acc + tool.accuracy, 0) /
+                          currentData.tools.length
+                        ).toFixed(1)}
+                        %
                       </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-sm">Active Tools</span>
                       <span className="text-sm font-bold">
-                        {currentData.tools.filter(tool => tool.status === 'active').length}/{currentData.tools.length}
+                        {currentData.tools.filter(tool => tool.status === 'active').length}/
+                        {currentData.tools.length}
                       </span>
                     </div>
                     <div className="flex justify-between">
@@ -620,7 +641,9 @@ const MobileAITools = () => {
 
               <div className="flex gap-2">
                 <Button className="flex-1">Save Settings</Button>
-                <Button variant="outline" className="flex-1">Reset to Default</Button>
+                <Button variant="outline" className="flex-1">
+                  Reset to Default
+                </Button>
               </div>
             </CardContent>
           </Card>

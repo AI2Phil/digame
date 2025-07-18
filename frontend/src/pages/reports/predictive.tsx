@@ -20,14 +20,14 @@ const PredictivePage: React.FC<PredictivePageProps> = ({ user }) => {
         <title>Predictive Analytics Engine - Digame</title>
         <meta name="description" content="AI-powered forecasting and machine learning platform" />
       </Head>
-      
+
       <div className="min-h-screen bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <PredictiveAnalyticsEngine
             dataSource="comprehensive"
             timeHorizon="30d"
             confidenceThreshold={0.7}
-            onPredictionUpdate={(predictions) => {
+            onPredictionUpdate={predictions => {
               console.log('Predictions updated:', predictions);
             }}
           />
@@ -37,24 +37,24 @@ const PredictivePage: React.FC<PredictivePageProps> = ({ user }) => {
   );
 };
 
-export const getServerSideProps: GetServerSideProps = async (context) => {
+export const getServerSideProps: GetServerSideProps = async context => {
   // In a real application, you would:
   // 1. Check authentication status
   // 2. Verify user permissions
   // 3. Fetch user data from your authentication system
-  
+
   // For demo purposes, we'll simulate an authenticated user
   const user = {
     id: 1,
     name: 'Demo User',
     email: 'demo@example.com',
     subscription_tier: 'enterprise',
-    is_platform_owner: false
+    is_platform_owner: false,
   };
 
   // Check if user has access to predictive analytics
   const hasAccess = user.subscription_tier === 'enterprise' || user.is_platform_owner;
-  
+
   if (!hasAccess) {
     return {
       redirect: {

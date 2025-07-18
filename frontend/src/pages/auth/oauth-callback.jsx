@@ -3,15 +3,11 @@ import { useRouter } from 'next/router';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card';
 import { Alert, AlertDescription } from '../components/ui/Alert';
 import { Progress } from '../components/ui/Progress';
-import { 
-  CheckCircle, 
-  AlertCircle, 
-  RefreshCw,
-  ExternalLink
-} from 'lucide-react';
+import { CheckCircle, AlertCircle, RefreshCw, ExternalLink } from 'lucide-react';
 
 const OAuthCallbackPage = () => {
-  const router = useRouter(); const searchParams = router.query;
+  const router = useRouter();
+  const searchParams = router.query;
   const [status, setStatus] = useState('processing'); // processing, success, error
   const [message, setMessage] = useState('Processing authorization...');
   const [progress, setProgress] = useState(0);
@@ -29,13 +25,16 @@ const OAuthCallbackPage = () => {
         if (error) {
           setStatus('error');
           setMessage(errorDescription || `OAuth error: ${error}`);
-          
+
           // Send error message to parent window
           if (window.opener) {
-            window.opener.postMessage({
-              type: 'oauth_error',
-              error: errorDescription || error
-            }, window.location.origin);
+            window.opener.postMessage(
+              {
+                type: 'oauth_error',
+                error: errorDescription || error,
+              },
+              window.location.origin
+            );
           }
           return;
         }
@@ -44,12 +43,15 @@ const OAuthCallbackPage = () => {
         if (!code || !state) {
           setStatus('error');
           setMessage('Missing required authorization parameters');
-          
+
           if (window.opener) {
-            window.opener.postMessage({
-              type: 'oauth_error',
-              error: 'Missing authorization parameters'
-            }, window.location.origin);
+            window.opener.postMessage(
+              {
+                type: 'oauth_error',
+                error: 'Missing authorization parameters',
+              },
+              window.location.origin
+            );
           }
           return;
         }
@@ -69,12 +71,15 @@ const OAuthCallbackPage = () => {
         if (state !== storedState) {
           setStatus('error');
           setMessage('Invalid state parameter. Possible security issue.');
-          
+
           if (window.opener) {
-            window.opener.postMessage({
-              type: 'oauth_error',
-              error: 'Invalid state parameter'
-            }, window.location.origin);
+            window.opener.postMessage(
+              {
+                type: 'oauth_error',
+                error: 'Invalid state parameter',
+              },
+              window.location.origin
+            );
           }
           return;
         }
@@ -91,11 +96,14 @@ const OAuthCallbackPage = () => {
 
         // Send success message to parent window
         if (window.opener) {
-          window.opener.postMessage({
-            type: 'oauth_success',
-            code: code,
-            state: state
-          }, window.location.origin);
+          window.opener.postMessage(
+            {
+              type: 'oauth_success',
+              code: code,
+              state: state,
+            },
+            window.location.origin
+          );
         }
 
         // Close popup after a short delay
@@ -107,16 +115,18 @@ const OAuthCallbackPage = () => {
             router.push('/integrations');
           }
         }, 2000);
-
       } catch (err) {
         setStatus('error');
         setMessage(`Unexpected error: ${err.message}`);
-        
+
         if (window.opener) {
-          window.opener.postMessage({
-            type: 'oauth_error',
-            error: err.message
-          }, window.location.origin);
+          window.opener.postMessage(
+            {
+              type: 'oauth_error',
+              error: err.message,
+            },
+            window.location.origin
+          );
         }
       }
     };
@@ -155,9 +165,7 @@ const OAuthCallbackPage = () => {
       <div className="max-w-md w-full">
         <Card>
           <CardHeader className="text-center">
-            <div className="flex justify-center mb-4">
-              {getStatusIcon()}
-            </div>
+            <div className="flex justify-center mb-4">{getStatusIcon()}</div>
             <CardTitle className={getStatusColor()}>
               {status === 'processing' && 'Processing Authorization'}
               {status === 'success' && 'Authorization Successful'}
@@ -179,11 +187,9 @@ const OAuthCallbackPage = () => {
                 <Progress value={progress} className="w-full" />
               </div>
             )}
-            
+
             <div className="text-center">
-              <p className={`text-sm ${getStatusColor()}`}>
-                {message}
-              </p>
+              <p className={`text-sm ${getStatusColor()}`}>{message}</p>
             </div>
 
             {status === 'success' && (
@@ -198,9 +204,7 @@ const OAuthCallbackPage = () => {
             {status === 'error' && (
               <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />
-                <AlertDescription>
-                  {message}
-                </AlertDescription>
+                <AlertDescription>{message}</AlertDescription>
               </Alert>
             )}
 

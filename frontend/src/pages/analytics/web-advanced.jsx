@@ -1,11 +1,43 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  BarChart3, TrendingUp, Activity, Database, Clock, Users, Zap, AlertTriangle, 
-  CheckCircle, Monitor, Globe, RefreshCw, Download, Filter, Calendar, Eye, 
-  Target, Cpu, HardDrive, Network, Server, Shield, Brain, Layers,
-  MousePointer, Timer, FileText, Search, Settings, Bell
+import {
+  BarChart3,
+  TrendingUp,
+  Activity,
+  Database,
+  Clock,
+  Users,
+  Zap,
+  AlertTriangle,
+  CheckCircle,
+  Monitor,
+  Globe,
+  RefreshCw,
+  Download,
+  Filter,
+  Calendar,
+  Eye,
+  Target,
+  Cpu,
+  HardDrive,
+  Network,
+  Server,
+  Shield,
+  Brain,
+  Layers,
+  MousePointer,
+  Timer,
+  FileText,
+  Search,
+  Settings,
+  Bell,
 } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/Card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { Progress } from '../../components/ui/Progress';
@@ -37,21 +69,15 @@ const AdvancedWebAnalyticsDashboard = () => {
   const loadAdvancedAnalytics = async () => {
     setLoading(true);
     try {
-      const [
-        analytics,
-        performance,
-        userBehavior,
-        systemHealth,
-        security,
-        aiInsights
-      ] = await Promise.all([
-        enhancedApiService.getAnalytics({ timeRange }),
-        enhancedApiService.getPerformanceMetrics(),
-        enhancedApiService.getUserBehaviorAnalytics(timeRange),
-        enhancedApiService.getAdvancedAnalytics(),
-        enhancedApiService.getAdvancedAnalytics(),
-        enhancedApiService.getAIInsights()
-      ]);
+      const [analytics, performance, userBehavior, systemHealth, security, aiInsights] =
+        await Promise.all([
+          enhancedApiService.getAnalytics({ timeRange }),
+          enhancedApiService.getPerformanceMetrics(),
+          enhancedApiService.getUserBehaviorAnalytics(timeRange),
+          enhancedApiService.getAdvancedAnalytics(),
+          enhancedApiService.getAdvancedAnalytics(),
+          enhancedApiService.getAIInsights(),
+        ]);
 
       setAnalyticsData(analytics || {});
       setPerformanceData(performance || {});
@@ -59,7 +85,6 @@ const AdvancedWebAnalyticsDashboard = () => {
       setSystemHealthData(systemHealth || {});
       setSecurityData(security || {});
       setAiInsightsData(aiInsights || {});
-
     } catch (error) {
       console.error('Failed to load advanced analytics:', error);
       toast.error('Failed to load analytics data');
@@ -97,9 +122,9 @@ const AdvancedWebAnalyticsDashboard = () => {
         userBehavior: userBehaviorData,
         systemHealth: systemHealthData,
         security: securityData,
-        exportedAt: new Date().toISOString()
+        exportedAt: new Date().toISOString(),
       };
-      
+
       const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -107,7 +132,7 @@ const AdvancedWebAnalyticsDashboard = () => {
       a.download = `analytics-${timeRange}-${Date.now()}.json`;
       a.click();
       URL.revokeObjectURL(url);
-      
+
       toast.success('Analytics data exported successfully');
     } catch (error) {
       toast.error('Failed to export analytics data');
@@ -148,7 +173,8 @@ const AdvancedWebAnalyticsDashboard = () => {
                 variant="ghost"
                 onClick={() => {
                   // Check if we're in demo mode (only on client side)
-                  const isDemoMode = typeof window !== 'undefined' && localStorage.getItem('demo_mode') === 'true';
+                  const isDemoMode =
+                    typeof window !== 'undefined' && localStorage.getItem('demo_mode') === 'true';
                   router.push(isDemoMode ? '/dashboard' : '/');
                 }}
                 className="mr-2 text-gray-600 hover:text-gray-900"
@@ -160,14 +186,16 @@ const AdvancedWebAnalyticsDashboard = () => {
               </div>
               <div>
                 <h1 className="text-3xl font-bold text-gray-900">Advanced Web Analytics</h1>
-                <p className="text-gray-600">Comprehensive platform insights and performance monitoring</p>
+                <p className="text-gray-600">
+                  Comprehensive platform insights and performance monitoring
+                </p>
               </div>
             </div>
-            
+
             <div className="flex items-center gap-4">
-              <select 
-                value={timeRange} 
-                onChange={(e) => setTimeRange(e.target.value)}
+              <select
+                value={timeRange}
+                onChange={e => setTimeRange(e.target.value)}
                 className="px-3 py-2 border rounded-lg"
               >
                 <option value="1h">Last Hour</option>
@@ -176,22 +204,30 @@ const AdvancedWebAnalyticsDashboard = () => {
                 <option value="30d">Last 30 Days</option>
                 <option value="90d">Last 90 Days</option>
               </select>
-              
-              <Button onClick={handleRefresh} disabled={refreshing} className="flex items-center gap-2">
+
+              <Button
+                onClick={handleRefresh}
+                disabled={refreshing}
+                className="flex items-center gap-2"
+              >
                 <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
                 Refresh
               </Button>
-              
-              <Button variant="outline" onClick={handleExportData} className="flex items-center gap-2">
+
+              <Button
+                variant="outline"
+                onClick={handleExportData}
+                className="flex items-center gap-2"
+              >
                 <Download className="w-4 h-4" />
                 Export
               </Button>
             </div>
           </div>
-          
+
           {/* Real-time Status Bar */}
           <RealTimeStatusBar realTimeMetrics={realTimeMetrics} />
-          
+
           {/* Quick Actions */}
           <div className="flex gap-4 mt-4">
             <Button onClick={handleOptimizeSystem} className="flex items-center gap-2">
@@ -223,7 +259,7 @@ const AdvancedWebAnalyticsDashboard = () => {
 
           {/* Overview Tab */}
           <TabsContent value="overview" className="space-y-6">
-            <WebOverviewSection 
+            <WebOverviewSection
               analytics={analyticsData}
               performance={performanceData}
               userBehavior={userBehaviorData}
@@ -234,7 +270,7 @@ const AdvancedWebAnalyticsDashboard = () => {
 
           {/* Performance Tab */}
           <TabsContent value="performance" className="space-y-6">
-            <PerformanceAnalyticsSection 
+            <PerformanceAnalyticsSection
               performanceData={performanceData}
               realTimeMetrics={realTimeMetrics}
             />
@@ -242,14 +278,12 @@ const AdvancedWebAnalyticsDashboard = () => {
 
           {/* Users Tab */}
           <TabsContent value="users" className="space-y-6">
-            <UserAnalyticsSection 
-              userBehaviorData={userBehaviorData}
-            />
+            <UserAnalyticsSection userBehaviorData={userBehaviorData} />
           </TabsContent>
 
           {/* System Tab */}
           <TabsContent value="system" className="space-y-6">
-            <SystemHealthSection 
+            <SystemHealthSection
               systemHealthData={systemHealthData}
               realTimeMetrics={realTimeMetrics}
             />
@@ -257,24 +291,17 @@ const AdvancedWebAnalyticsDashboard = () => {
 
           {/* Security Tab */}
           <TabsContent value="security" className="space-y-6">
-            <SecurityAnalyticsSection 
-              securityData={securityData}
-            />
+            <SecurityAnalyticsSection securityData={securityData} />
           </TabsContent>
 
           {/* AI Insights Tab */}
           <TabsContent value="ai-insights" className="space-y-6">
-            <AiInsightsSection 
-              aiInsightsData={aiInsightsData}
-            />
+            <AiInsightsSection aiInsightsData={aiInsightsData} />
           </TabsContent>
 
           {/* Reports Tab */}
           <TabsContent value="reports" className="space-y-6">
-            <ReportsSection 
-              analyticsData={analyticsData}
-              timeRange={timeRange}
-            />
+            <ReportsSection analyticsData={analyticsData} timeRange={timeRange} />
           </TabsContent>
         </Tabs>
       </div>
@@ -341,7 +368,7 @@ const WebOverviewSection = ({ analytics, performance, userBehavior, systemHealth
         icon={Users}
         color="blue"
         trend="up"
-        change={analytics.userSessions?.change ? `+${analytics.userSessions.change}%` : "+12.5%"}
+        change={analytics.userSessions?.change ? `+${analytics.userSessions.change}%` : '+12.5%'}
       />
       <KPICard
         title="Page Views"
@@ -349,7 +376,7 @@ const WebOverviewSection = ({ analytics, performance, userBehavior, systemHealth
         icon={Eye}
         color="green"
         trend="up"
-        change={analytics.pageViews?.change ? `+${analytics.pageViews.change}%` : "+8.3%"}
+        change={analytics.pageViews?.change ? `+${analytics.pageViews.change}%` : '+8.3%'}
       />
       <KPICard
         title="Avg Response Time"
@@ -390,7 +417,7 @@ const KPICard = ({ title, value, icon: Icon, color, trend, change }) => {
     blue: 'text-blue-600 bg-blue-100',
     green: 'text-green-600 bg-green-100',
     purple: 'text-purple-600 bg-purple-100',
-    emerald: 'text-emerald-600 bg-emerald-100'
+    emerald: 'text-emerald-600 bg-emerald-100',
   };
 
   return (
@@ -540,8 +567,12 @@ const ReportsSection = ({ analyticsData, timeRange }) => (
     <CardContent>
       <div className="space-y-4">
         <Button className="w-full">Generate Performance Report</Button>
-        <Button variant="outline" className="w-full">Export User Analytics</Button>
-        <Button variant="outline" className="w-full">Security Audit Report</Button>
+        <Button variant="outline" className="w-full">
+          Export User Analytics
+        </Button>
+        <Button variant="outline" className="w-full">
+          Security Audit Report
+        </Button>
       </div>
     </CardContent>
   </Card>
@@ -584,7 +615,7 @@ const TopPagesCard = ({ analytics }) => (
         {[
           { page: '/dashboard', views: 12847 },
           { page: '/analytics', views: 8956 },
-          { page: '/profile', views: 6432 }
+          { page: '/profile', views: 6432 },
         ].map((item, index) => (
           <div key={index} className="flex justify-between">
             <span className="text-sm">{item.page}</span>

@@ -23,7 +23,7 @@ const UserBehaviorAnalyticsPage = () => {
               Comprehensive insights into user engagement, behavior patterns, and conversion metrics
             </p>
           </div>
-          
+
           <UserBehaviorAnalyticsSection data={{}} />
         </div>
       </div>

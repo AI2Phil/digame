@@ -1,8 +1,17 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/router';
 import {
-  Brain, TrendingUp, Target, Users, BookOpen, Award,
-  AlertTriangle, CheckCircle, Home, Download, Filter
+  Brain,
+  TrendingUp,
+  Target,
+  Users,
+  BookOpen,
+  Award,
+  AlertTriangle,
+  CheckCircle,
+  Home,
+  Download,
+  Filter,
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -16,7 +25,8 @@ const SkillGapAnalysisPage = ({ isDemoMode = false, onLogout }) => {
   const [selectedCategory, setSelectedCategory] = useState('all');
 
   // Use prop if provided, otherwise fallback to localStorage (client-side only)
-  const isDemo = isDemoMode || (typeof window !== 'undefined' && localStorage.getItem('demo_mode') === 'true');
+  const isDemo =
+    isDemoMode || (typeof window !== 'undefined' && localStorage.getItem('demo_mode') === 'true');
 
   const handleHomeClick = () => {
     router.push(isDemo ? '/dashboard' : '/');
@@ -27,7 +37,7 @@ const SkillGapAnalysisPage = ({ isDemoMode = false, onLogout }) => {
     { id: 'technical', name: 'Technical Skills', color: '#3b82f6' },
     { id: 'soft', name: 'Soft Skills', color: '#10b981' },
     { id: 'leadership', name: 'Leadership', color: '#8b5cf6' },
-    { id: 'domain', name: 'Domain Knowledge', color: '#f59e0b' }
+    { id: 'domain', name: 'Domain Knowledge', color: '#f59e0b' },
   ];
 
   // Mock team skill assessment data
@@ -36,7 +46,7 @@ const SkillGapAnalysisPage = ({ isDemoMode = false, onLogout }) => {
     criticalGaps: 5,
     improvingSkills: 8,
     strongSkills: 11,
-    averageSkillLevel: 72
+    averageSkillLevel: 72,
   };
 
   // Mock skill gap data by category
@@ -44,7 +54,7 @@ const SkillGapAnalysisPage = ({ isDemoMode = false, onLogout }) => {
     { category: 'Technical', current: 75, target: 90, gap: 15 },
     { category: 'Soft Skills', current: 82, target: 85, gap: 3 },
     { category: 'Leadership', current: 65, target: 80, gap: 15 },
-    { category: 'Domain', current: 78, target: 85, gap: 7 }
+    { category: 'Domain', current: 78, target: 85, gap: 7 },
   ];
 
   // Mock individual skill assessments
@@ -58,11 +68,23 @@ const SkillGapAnalysisPage = ({ isDemoMode = false, onLogout }) => {
       gap: 5,
       priority: 'medium',
       teamMembers: [
-        { name: 'Sarah Johnson', level: 90, avatar: 'https://via.placeholder.com/32x32/3B82F6/FFFFFF?text=SJ' },
-        { name: 'Michael Chen', level: 95, avatar: 'https://via.placeholder.com/32x32/10B981/FFFFFF?text=MC' },
-        { name: 'Lisa Wang', level: 70, avatar: 'https://via.placeholder.com/32x32/EF4444/FFFFFF?text=LW' }
+        {
+          name: 'Sarah Johnson',
+          level: 90,
+          avatar: 'https://via.placeholder.com/32x32/3B82F6/FFFFFF?text=SJ',
+        },
+        {
+          name: 'Michael Chen',
+          level: 95,
+          avatar: 'https://via.placeholder.com/32x32/10B981/FFFFFF?text=MC',
+        },
+        {
+          name: 'Lisa Wang',
+          level: 70,
+          avatar: 'https://via.placeholder.com/32x32/EF4444/FFFFFF?text=LW',
+        },
       ],
-      recommendedActions: ['Advanced React patterns workshop', 'Code review sessions']
+      recommendedActions: ['Advanced React patterns workshop', 'Code review sessions'],
     },
     {
       id: 2,
@@ -73,11 +95,23 @@ const SkillGapAnalysisPage = ({ isDemoMode = false, onLogout }) => {
       gap: 20,
       priority: 'high',
       teamMembers: [
-        { name: 'Emily Rodriguez', level: 85, avatar: 'https://via.placeholder.com/32x32/8B5CF6/FFFFFF?text=ER' },
-        { name: 'Sarah Johnson', level: 70, avatar: 'https://via.placeholder.com/32x32/3B82F6/FFFFFF?text=SJ' },
-        { name: 'David Kim', level: 25, avatar: 'https://via.placeholder.com/32x32/F59E0B/FFFFFF?text=DK' }
+        {
+          name: 'Emily Rodriguez',
+          level: 85,
+          avatar: 'https://via.placeholder.com/32x32/8B5CF6/FFFFFF?text=ER',
+        },
+        {
+          name: 'Sarah Johnson',
+          level: 70,
+          avatar: 'https://via.placeholder.com/32x32/3B82F6/FFFFFF?text=SJ',
+        },
+        {
+          name: 'David Kim',
+          level: 25,
+          avatar: 'https://via.placeholder.com/32x32/F59E0B/FFFFFF?text=DK',
+        },
       ],
-      recommendedActions: ['PMP certification', 'Agile methodology training']
+      recommendedActions: ['PMP certification', 'Agile methodology training'],
     },
     {
       id: 3,
@@ -88,11 +122,23 @@ const SkillGapAnalysisPage = ({ isDemoMode = false, onLogout }) => {
       gap: 7,
       priority: 'medium',
       teamMembers: [
-        { name: 'Emily Rodriguez', level: 90, avatar: 'https://via.placeholder.com/32x32/8B5CF6/FFFFFF?text=ER' },
-        { name: 'Michael Chen', level: 80, avatar: 'https://via.placeholder.com/32x32/10B981/FFFFFF?text=MC' },
-        { name: 'David Kim', level: 65, avatar: 'https://via.placeholder.com/32x32/F59E0B/FFFFFF?text=DK' }
+        {
+          name: 'Emily Rodriguez',
+          level: 90,
+          avatar: 'https://via.placeholder.com/32x32/8B5CF6/FFFFFF?text=ER',
+        },
+        {
+          name: 'Michael Chen',
+          level: 80,
+          avatar: 'https://via.placeholder.com/32x32/10B981/FFFFFF?text=MC',
+        },
+        {
+          name: 'David Kim',
+          level: 65,
+          avatar: 'https://via.placeholder.com/32x32/F59E0B/FFFFFF?text=DK',
+        },
       ],
-      recommendedActions: ['Public speaking workshop', 'Cross-team collaboration']
+      recommendedActions: ['Public speaking workshop', 'Cross-team collaboration'],
     },
     {
       id: 4,
@@ -103,11 +149,23 @@ const SkillGapAnalysisPage = ({ isDemoMode = false, onLogout }) => {
       gap: 30,
       priority: 'high',
       teamMembers: [
-        { name: 'Michael Chen', level: 60, avatar: 'https://via.placeholder.com/32x32/10B981/FFFFFF?text=MC' },
-        { name: 'Lisa Wang', level: 40, avatar: 'https://via.placeholder.com/32x32/EF4444/FFFFFF?text=LW' },
-        { name: 'Sarah Johnson', level: 35, avatar: 'https://via.placeholder.com/32x32/3B82F6/FFFFFF?text=SJ' }
+        {
+          name: 'Michael Chen',
+          level: 60,
+          avatar: 'https://via.placeholder.com/32x32/10B981/FFFFFF?text=MC',
+        },
+        {
+          name: 'Lisa Wang',
+          level: 40,
+          avatar: 'https://via.placeholder.com/32x32/EF4444/FFFFFF?text=LW',
+        },
+        {
+          name: 'Sarah Johnson',
+          level: 35,
+          avatar: 'https://via.placeholder.com/32x32/3B82F6/FFFFFF?text=SJ',
+        },
       ],
-      recommendedActions: ['AWS certification', 'Cloud architecture bootcamp']
+      recommendedActions: ['AWS certification', 'Cloud architecture bootcamp'],
     },
     {
       id: 5,
@@ -118,12 +176,24 @@ const SkillGapAnalysisPage = ({ isDemoMode = false, onLogout }) => {
       gap: 10,
       priority: 'low',
       teamMembers: [
-        { name: 'David Kim', level: 85, avatar: 'https://via.placeholder.com/32x32/F59E0B/FFFFFF?text=DK' },
-        { name: 'Emily Rodriguez', level: 65, avatar: 'https://via.placeholder.com/32x32/8B5CF6/FFFFFF?text=ER' },
-        { name: 'Sarah Johnson', level: 60, avatar: 'https://via.placeholder.com/32x32/3B82F6/FFFFFF?text=SJ' }
+        {
+          name: 'David Kim',
+          level: 85,
+          avatar: 'https://via.placeholder.com/32x32/F59E0B/FFFFFF?text=DK',
+        },
+        {
+          name: 'Emily Rodriguez',
+          level: 65,
+          avatar: 'https://via.placeholder.com/32x32/8B5CF6/FFFFFF?text=ER',
+        },
+        {
+          name: 'Sarah Johnson',
+          level: 60,
+          avatar: 'https://via.placeholder.com/32x32/3B82F6/FFFFFF?text=SJ',
+        },
       ],
-      recommendedActions: ['Design thinking workshop', 'User research training']
-    }
+      recommendedActions: ['Design thinking workshop', 'User research training'],
+    },
   ];
 
   // Mock learning recommendations
@@ -135,7 +205,7 @@ const SkillGapAnalysisPage = ({ isDemoMode = false, onLogout }) => {
       duration: '40 hours',
       priority: 'high',
       skillsAddressed: ['Cloud Architecture', 'DevOps'],
-      estimatedImpact: 85
+      estimatedImpact: 85,
     },
     {
       id: 2,
@@ -144,7 +214,7 @@ const SkillGapAnalysisPage = ({ isDemoMode = false, onLogout }) => {
       duration: '60 hours',
       priority: 'high',
       skillsAddressed: ['Project Management', 'Leadership'],
-      estimatedImpact: 75
+      estimatedImpact: 75,
     },
     {
       id: 3,
@@ -153,11 +223,11 @@ const SkillGapAnalysisPage = ({ isDemoMode = false, onLogout }) => {
       duration: '20 hours',
       priority: 'medium',
       skillsAddressed: ['React Development', 'JavaScript'],
-      estimatedImpact: 60
-    }
+      estimatedImpact: 60,
+    },
   ];
 
-  const getPriorityBadge = (priority) => {
+  const getPriorityBadge = priority => {
     switch (priority) {
       case 'high':
         return <Badge variant="destructive">High Priority</Badge>;
@@ -170,15 +240,16 @@ const SkillGapAnalysisPage = ({ isDemoMode = false, onLogout }) => {
     }
   };
 
-  const getGapSeverity = (gap) => {
+  const getGapSeverity = gap => {
     if (gap >= 20) return { color: 'text-red-600', icon: AlertTriangle, severity: 'Critical' };
     if (gap >= 10) return { color: 'text-yellow-600', icon: AlertTriangle, severity: 'Moderate' };
     return { color: 'text-green-600', icon: CheckCircle, severity: 'Minor' };
   };
 
-  const filteredSkills = selectedCategory === 'all' 
-    ? skillAssessments 
-    : skillAssessments.filter(skill => skill.category === selectedCategory);
+  const filteredSkills =
+    selectedCategory === 'all'
+      ? skillAssessments
+      : skillAssessments.filter(skill => skill.category === selectedCategory);
 
   return (
     <div className="container mx-auto p-6 max-w-7xl">
@@ -188,13 +259,13 @@ const SkillGapAnalysisPage = ({ isDemoMode = false, onLogout }) => {
           <h1 className="text-3xl font-bold">Skill Gap Analysis</h1>
           <p className="text-muted-foreground">Identify and address team skill gaps</p>
         </div>
-        
+
         <div className="flex items-center space-x-2">
           <Button variant="outline" onClick={handleHomeClick}>
             <Home className="mr-2 h-4 w-4" />
             {isDemo ? 'Back to Dashboard' : 'Home'}
           </Button>
-          
+
           <Button variant="outline">
             <Download className="mr-2 h-4 w-4" />
             Export Analysis
@@ -215,7 +286,7 @@ const SkillGapAnalysisPage = ({ isDemoMode = false, onLogout }) => {
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
@@ -227,31 +298,35 @@ const SkillGapAnalysisPage = ({ isDemoMode = false, onLogout }) => {
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Improving</p>
-                <p className="text-2xl font-bold text-yellow-600">{teamSkillOverview.improvingSkills}</p>
+                <p className="text-2xl font-bold text-yellow-600">
+                  {teamSkillOverview.improvingSkills}
+                </p>
               </div>
               <TrendingUp className="h-8 w-8 text-yellow-600" />
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Strong Skills</p>
-                <p className="text-2xl font-bold text-green-600">{teamSkillOverview.strongSkills}</p>
+                <p className="text-2xl font-bold text-green-600">
+                  {teamSkillOverview.strongSkills}
+                </p>
               </div>
               <CheckCircle className="h-8 w-8 text-green-600" />
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
@@ -270,9 +345,7 @@ const SkillGapAnalysisPage = ({ isDemoMode = false, onLogout }) => {
         <Card>
           <CardHeader>
             <CardTitle>Skill Gap Overview</CardTitle>
-            <CardDescription>
-              Current vs target skill levels by category
-            </CardDescription>
+            <CardDescription>Current vs target skill levels by category</CardDescription>
           </CardHeader>
           <CardContent>
             <Chart
@@ -290,32 +363,32 @@ const SkillGapAnalysisPage = ({ isDemoMode = false, onLogout }) => {
         <Card>
           <CardHeader>
             <CardTitle>Recommended Training</CardTitle>
-            <CardDescription>
-              Prioritized learning opportunities
-            </CardDescription>
+            <CardDescription>Prioritized learning opportunities</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {learningRecommendations.map((recommendation) => (
+              {learningRecommendations.map(recommendation => (
                 <div key={recommendation.id} className="border rounded-lg p-4">
                   <div className="flex items-center justify-between mb-2">
                     <h4 className="font-medium">{recommendation.title}</h4>
                     {getPriorityBadge(recommendation.priority)}
                   </div>
-                  
+
                   <div className="text-sm text-gray-600 mb-2">
-                    <span className="font-medium">{recommendation.provider}</span> • {recommendation.duration}
+                    <span className="font-medium">{recommendation.provider}</span> •{' '}
+                    {recommendation.duration}
                   </div>
-                  
+
                   <div className="flex items-center justify-between mb-2">
                     <div className="text-sm">
-                      <span className="font-medium">Skills:</span> {recommendation.skillsAddressed.join(', ')}
+                      <span className="font-medium">Skills:</span>{' '}
+                      {recommendation.skillsAddressed.join(', ')}
                     </div>
                     <div className="text-sm font-medium text-green-600">
                       {recommendation.estimatedImpact}% impact
                     </div>
                   </div>
-                  
+
                   <Button size="sm" className="w-full">
                     <BookOpen className="mr-2 h-4 w-4" />
                     Start Learning
@@ -337,16 +410,16 @@ const SkillGapAnalysisPage = ({ isDemoMode = false, onLogout }) => {
                 Individual skill assessments and team member proficiency
               </CardDescription>
             </div>
-            
+
             <div className="flex items-center space-x-2">
               <Filter className="h-4 w-4" />
               <select
                 value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
+                onChange={e => setSelectedCategory(e.target.value)}
                 className="border rounded px-3 py-1"
               >
                 <option value="all">All Categories</option>
-                {skillCategories.map((category) => (
+                {skillCategories.map(category => (
                   <option key={category.id} value={category.id}>
                     {category.name}
                   </option>
@@ -357,10 +430,10 @@ const SkillGapAnalysisPage = ({ isDemoMode = false, onLogout }) => {
         </CardHeader>
         <CardContent>
           <div className="space-y-6">
-            {filteredSkills.map((skill) => {
+            {filteredSkills.map(skill => {
               const gapInfo = getGapSeverity(skill.gap);
               const GapIcon = gapInfo.icon;
-              
+
               return (
                 <div key={skill.id} className="border rounded-lg p-6">
                   <div className="flex items-center justify-between mb-4">
@@ -370,7 +443,7 @@ const SkillGapAnalysisPage = ({ isDemoMode = false, onLogout }) => {
                         {skillCategories.find(c => c.id === skill.category)?.name}
                       </Badge>
                     </div>
-                    
+
                     <div className="flex items-center space-x-4">
                       <div className={`flex items-center space-x-1 ${gapInfo.color}`}>
                         <GapIcon className="h-4 w-4" />
@@ -379,7 +452,7 @@ const SkillGapAnalysisPage = ({ isDemoMode = false, onLogout }) => {
                       {getPriorityBadge(skill.priority)}
                     </div>
                   </div>
-                  
+
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                     <div>
                       <div className="text-sm text-gray-600 mb-1">Current Level</div>
@@ -388,7 +461,7 @@ const SkillGapAnalysisPage = ({ isDemoMode = false, onLogout }) => {
                         <span className="text-sm font-medium">{skill.currentLevel}%</span>
                       </div>
                     </div>
-                    
+
                     <div>
                       <div className="text-sm text-gray-600 mb-1">Target Level</div>
                       <div className="flex items-center space-x-2">
@@ -396,15 +469,13 @@ const SkillGapAnalysisPage = ({ isDemoMode = false, onLogout }) => {
                         <span className="text-sm font-medium">{skill.targetLevel}%</span>
                       </div>
                     </div>
-                    
+
                     <div>
                       <div className="text-sm text-gray-600 mb-1">Gap</div>
-                      <div className={`text-lg font-bold ${gapInfo.color}`}>
-                        {skill.gap} points
-                      </div>
+                      <div className={`text-lg font-bold ${gapInfo.color}`}>{skill.gap} points</div>
                     </div>
                   </div>
-                  
+
                   <div className="mb-4">
                     <div className="text-sm text-gray-600 mb-2">Team Member Proficiency</div>
                     <div className="flex items-center space-x-4">
@@ -413,7 +484,10 @@ const SkillGapAnalysisPage = ({ isDemoMode = false, onLogout }) => {
                           <Avatar className="w-8 h-8">
                             <AvatarImage src={isDemo ? member.avatar : '/api/placeholder/32/32'} />
                             <AvatarFallback>
-                              {member.name.split(' ').map(n => n[0]).join('')}
+                              {member.name
+                                .split(' ')
+                                .map(n => n[0])
+                                .join('')}
                             </AvatarFallback>
                           </Avatar>
                           <div>
@@ -424,7 +498,7 @@ const SkillGapAnalysisPage = ({ isDemoMode = false, onLogout }) => {
                       ))}
                     </div>
                   </div>
-                  
+
                   <div>
                     <div className="text-sm text-gray-600 mb-2">Recommended Actions</div>
                     <div className="flex flex-wrap gap-2">

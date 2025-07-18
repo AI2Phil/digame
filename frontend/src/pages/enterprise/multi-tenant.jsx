@@ -1,8 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Building, Users, Settings, Globe, ArrowRightLeft, Plus, Eye, Edit,
-  BarChart3, Shield, Database, Activity, AlertTriangle, TrendingUp,
-  Server, Clock, CheckCircle, XCircle, Cpu, HardDrive, Network
+  Building,
+  Users,
+  Settings,
+  Globe,
+  ArrowRightLeft,
+  Plus,
+  Eye,
+  Edit,
+  BarChart3,
+  Shield,
+  Database,
+  Activity,
+  AlertTriangle,
+  TrendingUp,
+  Server,
+  Clock,
+  CheckCircle,
+  XCircle,
+  Cpu,
+  HardDrive,
+  Network,
 } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
@@ -32,28 +50,28 @@ const MultiTenantConsolePage = () => {
       const [tenantResponse, usersResponse, metricsResponse, settingsResponse] = await Promise.all([
         fetch('/api/v1/enterprise/multi-tenant/current', {
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-            'Content-Type': 'application/json'
-          }
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
+            'Content-Type': 'application/json',
+          },
         }),
         fetch('/api/v1/enterprise/multi-tenant/users', {
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-            'Content-Type': 'application/json'
-          }
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
+            'Content-Type': 'application/json',
+          },
         }),
         fetch('/api/v1/platform/health', {
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-            'Content-Type': 'application/json'
-          }
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
+            'Content-Type': 'application/json',
+          },
         }).catch(() => ({ ok: false })),
         fetch(`/api/v1/tenants/${currentTenant?.id}/settings/general`, {
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-            'Content-Type': 'application/json'
-          }
-        }).catch(() => ({ ok: false }))
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
+            'Content-Type': 'application/json',
+          },
+        }).catch(() => ({ ok: false })),
       ]);
 
       if (!tenantResponse.ok || !usersResponse.ok) {
@@ -84,15 +102,15 @@ const MultiTenantConsolePage = () => {
     }
   };
 
-  const switchTenant = async (tenantId) => {
+  const switchTenant = async tenantId => {
     try {
       const response = await fetch('/api/v1/enterprise/multi-tenant/switch', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ tenant_id: tenantId })
+        body: JSON.stringify({ tenant_id: tenantId }),
       });
 
       if (!response.ok) {
@@ -106,12 +124,16 @@ const MultiTenantConsolePage = () => {
     }
   };
 
-  const getTierBadgeColor = (tier) => {
+  const getTierBadgeColor = tier => {
     switch (tier) {
-      case 'free': return 'bg-gray-100 text-gray-800';
-      case 'team': return 'bg-green-100 text-green-800';
-      case 'enterprise': return 'bg-purple-100 text-purple-800';
-      default: return 'bg-blue-100 text-blue-800';
+      case 'free':
+        return 'bg-gray-100 text-gray-800';
+      case 'team':
+        return 'bg-green-100 text-green-800';
+      case 'enterprise':
+        return 'bg-purple-100 text-purple-800';
+      default:
+        return 'bg-blue-100 text-blue-800';
     }
   };
 
@@ -175,10 +197,7 @@ const MultiTenantConsolePage = () => {
               </div>
             </div>
             <div className="flex items-center space-x-4">
-              <Button
-                variant="outline"
-                onClick={() => setShowTenantSwitcher(!showTenantSwitcher)}
-              >
+              <Button variant="outline" onClick={() => setShowTenantSwitcher(!showTenantSwitcher)}>
                 <ArrowRightLeft className="w-4 h-4 mr-2" />
                 Switch Tenant
               </Button>
@@ -194,11 +213,13 @@ const MultiTenantConsolePage = () => {
             <div className="mt-4 border-t border-gray-200 pt-4">
               <h3 className="text-sm font-medium text-gray-900 mb-3">Available Tenants</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                {availableTenants.map((tenant) => (
+                {availableTenants.map(tenant => (
                   <div
                     key={tenant.id}
                     className={`p-3 border rounded-lg cursor-pointer hover:bg-gray-50 ${
-                      currentTenant?.id === tenant.id ? 'border-purple-200 bg-purple-50' : 'border-gray-200'
+                      currentTenant?.id === tenant.id
+                        ? 'border-purple-200 bg-purple-50'
+                        : 'border-gray-200'
                     }`}
                     onClick={() => switchTenant(tenant.id)}
                   >
@@ -230,9 +251,7 @@ const MultiTenantConsolePage = () => {
                 <p className="text-2xl font-semibold text-gray-900">
                   {currentTenant?.current_users || 0}
                 </p>
-                <p className="text-sm text-gray-500">
-                  of {currentTenant?.max_users || 0} allowed
-                </p>
+                <p className="text-sm text-gray-500">of {currentTenant?.max_users || 0} allowed</p>
               </div>
             </div>
           </div>
@@ -298,7 +317,10 @@ const MultiTenantConsolePage = () => {
 
           {/* Resource Monitoring Tab */}
           <TabsContent value="resources" className="space-y-6">
-            <ResourceMonitoringSection currentTenant={currentTenant} resourceMetrics={resourceMetrics} />
+            <ResourceMonitoringSection
+              currentTenant={currentTenant}
+              resourceMetrics={resourceMetrics}
+            />
           </TabsContent>
 
           {/* Tenant Settings Tab */}
@@ -332,24 +354,64 @@ const TenantHealthCard = ({ currentTenant, resourceMetrics }) => (
         <div className="space-y-2">
           <div className="flex justify-between text-sm">
             <span>User Utilization</span>
-            <span>{currentTenant ? Math.round((currentTenant.current_users / currentTenant.max_users) * 100) : 0}%</span>
+            <span>
+              {currentTenant
+                ? Math.round((currentTenant.current_users / currentTenant.max_users) * 100)
+                : 0}
+              %
+            </span>
           </div>
-          <Progress value={currentTenant ? (currentTenant.current_users / currentTenant.max_users) * 100 : 0} className="h-2" />
+          <Progress
+            value={
+              currentTenant ? (currentTenant.current_users / currentTenant.max_users) * 100 : 0
+            }
+            className="h-2"
+          />
         </div>
         <div className="space-y-2">
           <div className="flex justify-between text-sm">
             <span>Storage Usage</span>
-            <span>{currentTenant ? Math.round((currentTenant.current_storage_gb / currentTenant.max_storage_gb) * 100) : 0}%</span>
+            <span>
+              {currentTenant
+                ? Math.round(
+                    (currentTenant.current_storage_gb / currentTenant.max_storage_gb) * 100
+                  )
+                : 0}
+              %
+            </span>
           </div>
-          <Progress value={currentTenant ? (currentTenant.current_storage_gb / currentTenant.max_storage_gb) * 100 : 0} className="h-2" />
+          <Progress
+            value={
+              currentTenant
+                ? (currentTenant.current_storage_gb / currentTenant.max_storage_gb) * 100
+                : 0
+            }
+            className="h-2"
+          />
         </div>
       </div>
       <div className="space-y-2">
         <div className="flex justify-between text-sm">
           <span>API Usage</span>
-          <span>{currentTenant ? Math.round((currentTenant.current_api_calls_monthly / currentTenant.max_api_calls_monthly) * 100) : 0}%</span>
+          <span>
+            {currentTenant
+              ? Math.round(
+                  (currentTenant.current_api_calls_monthly / currentTenant.max_api_calls_monthly) *
+                    100
+                )
+              : 0}
+            %
+          </span>
         </div>
-        <Progress value={currentTenant ? (currentTenant.current_api_calls_monthly / currentTenant.max_api_calls_monthly) * 100 : 0} className="h-2" />
+        <Progress
+          value={
+            currentTenant
+              ? (currentTenant.current_api_calls_monthly / currentTenant.max_api_calls_monthly) *
+                100
+              : 0
+          }
+          className="h-2"
+        />
       </div>
       <div className="flex items-center justify-between pt-2">
         <span className="text-sm font-medium">Overall Health</span>
@@ -371,18 +433,32 @@ const TenantActivityCard = () => (
     <CardContent>
       <div className="space-y-4">
         {[
-          { action: 'User invited', user: 'john.doe@company.com', time: '5 minutes ago', type: 'success' },
-          { action: 'Settings updated', user: 'admin@company.com', time: '1 hour ago', type: 'info' },
+          {
+            action: 'User invited',
+            user: 'john.doe@company.com',
+            time: '5 minutes ago',
+            type: 'success',
+          },
+          {
+            action: 'Settings updated',
+            user: 'admin@company.com',
+            time: '1 hour ago',
+            type: 'info',
+          },
           { action: 'API key created', user: 'dev@company.com', time: '2 hours ago', type: 'info' },
-          { action: 'Storage limit increased', user: 'System', time: '1 day ago', type: 'success' }
+          { action: 'Storage limit increased', user: 'System', time: '1 day ago', type: 'success' },
         ].map((activity, index) => (
           <div key={index} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-            <div className={`w-2 h-2 rounded-full ${
-              activity.type === 'success' ? 'bg-green-500' : 'bg-blue-500'
-            }`} />
+            <div
+              className={`w-2 h-2 rounded-full ${
+                activity.type === 'success' ? 'bg-green-500' : 'bg-blue-500'
+              }`}
+            />
             <div className="flex-1">
               <p className="text-sm font-medium">{activity.action}</p>
-              <p className="text-xs text-gray-500">{activity.user} • {activity.time}</p>
+              <p className="text-xs text-gray-500">
+                {activity.user} • {activity.time}
+              </p>
             </div>
           </div>
         ))}
@@ -398,17 +474,17 @@ const QuickActionsGrid = () => (
       <Settings className="h-6 w-6 mb-2" />
       <span className="text-sm">Tenant Settings</span>
     </Button>
-    
+
     <Button variant="outline" className="h-20 flex flex-col items-center justify-center">
       <Users className="h-6 w-6 mb-2" />
       <span className="text-sm">User Management</span>
     </Button>
-    
+
     <Button variant="outline" className="h-20 flex flex-col items-center justify-center">
       <Globe className="h-6 w-6 mb-2" />
       <span className="text-sm">Domain Settings</span>
     </Button>
-    
+
     <Button variant="outline" className="h-20 flex flex-col items-center justify-center">
       <Building className="h-6 w-6 mb-2" />
       <span className="text-sm">Billing & Usage</span>
@@ -451,7 +527,7 @@ const TenantUsersSection = ({ tenantUsers, currentTenant }) => (
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {tenantUsers.map((user) => (
+            {tenantUsers.map(user => (
               <tr key={user.id} className="hover:bg-gray-50">
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center">
@@ -469,14 +545,14 @@ const TenantUsersSection = ({ tenantUsers, currentTenant }) => (
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <Badge className="text-xs bg-blue-100 text-blue-800">
-                    {user.role || 'User'}
-                  </Badge>
+                  <Badge className="text-xs bg-blue-100 text-blue-800">{user.role || 'User'}</Badge>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <Badge className={`text-xs ${
-                    user.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                  }`}>
+                  <Badge
+                    className={`text-xs ${
+                      user.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                    }`}
+                  >
                     {user.is_active ? 'Active' : 'Inactive'}
                   </Badge>
                 </td>
@@ -517,23 +593,49 @@ const ResourceMonitoringSection = ({ currentTenant, resourceMetrics }) => (
           <div>
             <div className="flex justify-between text-sm mb-1">
               <span>Users</span>
-              <span>{currentTenant?.current_users || 0} / {currentTenant?.max_users || 0}</span>
+              <span>
+                {currentTenant?.current_users || 0} / {currentTenant?.max_users || 0}
+              </span>
             </div>
-            <Progress value={currentTenant ? (currentTenant.current_users / currentTenant.max_users) * 100 : 0} />
+            <Progress
+              value={
+                currentTenant ? (currentTenant.current_users / currentTenant.max_users) * 100 : 0
+              }
+            />
           </div>
           <div>
             <div className="flex justify-between text-sm mb-1">
               <span>Storage</span>
-              <span>{currentTenant?.current_storage_gb || 0} GB / {currentTenant?.max_storage_gb || 0} GB</span>
+              <span>
+                {currentTenant?.current_storage_gb || 0} GB / {currentTenant?.max_storage_gb || 0}{' '}
+                GB
+              </span>
             </div>
-            <Progress value={currentTenant ? (currentTenant.current_storage_gb / currentTenant.max_storage_gb) * 100 : 0} />
+            <Progress
+              value={
+                currentTenant
+                  ? (currentTenant.current_storage_gb / currentTenant.max_storage_gb) * 100
+                  : 0
+              }
+            />
           </div>
           <div>
             <div className="flex justify-between text-sm mb-1">
               <span>API Calls (Monthly)</span>
-              <span>{currentTenant?.current_api_calls_monthly || 0} / {currentTenant?.max_api_calls_monthly || 0}</span>
+              <span>
+                {currentTenant?.current_api_calls_monthly || 0} /{' '}
+                {currentTenant?.max_api_calls_monthly || 0}
+              </span>
             </div>
-            <Progress value={currentTenant ? (currentTenant.current_api_calls_monthly / currentTenant.max_api_calls_monthly) * 100 : 0} />
+            <Progress
+              value={
+                currentTenant
+                  ? (currentTenant.current_api_calls_monthly /
+                      currentTenant.max_api_calls_monthly) *
+                    100
+                  : 0
+              }
+            />
           </div>
         </div>
       </CardContent>

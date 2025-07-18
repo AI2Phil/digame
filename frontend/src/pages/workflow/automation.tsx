@@ -16,7 +16,7 @@ const WorkflowAutomation = () => {
         icon={<Zap className="h-8 w-8" />}
         breadcrumb={[
           { label: 'Workflow', href: '/workflow' },
-          { label: 'Automation', href: '/workflow/automation' }
+          { label: 'Automation', href: '/workflow/automation' },
         ]}
         actions={
           <div className="flex gap-2">

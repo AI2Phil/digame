@@ -33,7 +33,7 @@ export default function DashboardBuilderPage() {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <QueryClientProvider client={queryClient}>
-        <SnackbarProvider 
+        <SnackbarProvider
           maxSnack={3}
           anchorOrigin={{
             vertical: 'top',

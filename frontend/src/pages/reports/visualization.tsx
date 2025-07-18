@@ -18,9 +18,12 @@ const VisualizationPage: React.FC<VisualizationPageProps> = ({ user }) => {
     <>
       <Head>
         <title>Data Visualization Engine - Digame</title>
-        <meta name="description" content="Advanced visualization rendering and optimization platform" />
+        <meta
+          name="description"
+          content="Advanced visualization rendering and optimization platform"
+        />
       </Head>
-      
+
       <div className="min-h-screen bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <DataVisualizationEngine
@@ -30,7 +33,7 @@ const VisualizationPage: React.FC<VisualizationPageProps> = ({ user }) => {
               { name: 'Mar', value1: 2000, value2: 9800, value3: 2290 },
               { name: 'Apr', value1: 2780, value2: 3908, value3: 2000 },
               { name: 'May', value1: 1890, value2: 4800, value3: 2181 },
-              { name: 'Jun', value1: 2390, value2: 3800, value3: 2500 }
+              { name: 'Jun', value1: 2390, value2: 3800, value3: 2500 },
             ]}
             chartType="line"
             title="Data Visualization Engine"
@@ -44,24 +47,24 @@ const VisualizationPage: React.FC<VisualizationPageProps> = ({ user }) => {
   );
 };
 
-export const getServerSideProps: GetServerSideProps = async (context) => {
+export const getServerSideProps: GetServerSideProps = async context => {
   // In a real application, you would:
   // 1. Check authentication status
   // 2. Verify user permissions
   // 3. Fetch user data from your authentication system
-  
+
   // For demo purposes, we'll simulate an authenticated user
   const user = {
     id: 1,
     name: 'Demo User',
     email: 'demo@example.com',
     subscription_tier: 'enterprise',
-    is_platform_owner: false
+    is_platform_owner: false,
   };
 
   // Check if user has access to visualization engine
   const hasAccess = user.subscription_tier === 'enterprise' || user.subscription_tier === 'team';
-  
+
   if (!hasAccess) {
     return {
       redirect: {

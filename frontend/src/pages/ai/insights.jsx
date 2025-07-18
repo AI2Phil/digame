@@ -1,10 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import {
-  Brain, TrendingUp, Target, Lightbulb,
-  BookOpen, Award, Clock, BarChart3,
-  Zap, Users, Calendar, ArrowRight,
-  CheckCircle, AlertTriangle, Star, Home
+  Brain,
+  TrendingUp,
+  Target,
+  Lightbulb,
+  BookOpen,
+  Award,
+  Clock,
+  BarChart3,
+  Zap,
+  Users,
+  Calendar,
+  ArrowRight,
+  CheckCircle,
+  AlertTriangle,
+  Star,
+  Home,
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -35,27 +47,22 @@ const AiInsightsDashboard = () => {
     setLoading(true);
     try {
       const userId = localStorage.getItem('userId');
-      
+
       // Initialize AI services
       await Promise.all([
         recommendationEngine.initialize(userId),
-        coachingService.initialize(userId)
+        coachingService.initialize(userId),
       ]);
 
       // Load all AI insights
-      const [
-        skillAnalysis,
-        learningRecs,
-        coachingInsights,
-        performanceCoaching,
-        behaviorAnalysis
-      ] = await Promise.all([
-        recommendationEngine.analyzeSkillGaps(),
-        recommendationEngine.generateLearningRecommendations(),
-        coachingService.generateCoachingInsights(),
-        coachingService.generatePerformanceCoaching(),
-        coachingService.analyzeBehavioralPatterns()
-      ]);
+      const [skillAnalysis, learningRecs, coachingInsights, performanceCoaching, behaviorAnalysis] =
+        await Promise.all([
+          recommendationEngine.analyzeSkillGaps(),
+          recommendationEngine.generateLearningRecommendations(),
+          coachingService.generateCoachingInsights(),
+          coachingService.generatePerformanceCoaching(),
+          coachingService.analyzeBehavioralPatterns(),
+        ]);
 
       setSkillGaps(skillAnalysis.gaps);
       setRecommendations(learningRecs.recommendations);
@@ -66,9 +73,8 @@ const AiInsightsDashboard = () => {
         learningRecommendations: learningRecs,
         coachingInsights,
         performanceCoaching,
-        behaviorAnalysis
+        behaviorAnalysis,
       });
-
     } catch (error) {
       console.error('Failed to load AI insights:', error);
       toast.error('Failed to load AI insights');
@@ -77,7 +83,7 @@ const AiInsightsDashboard = () => {
     }
   };
 
-  const handleAcceptRecommendation = async (recommendationId) => {
+  const handleAcceptRecommendation = async recommendationId => {
     try {
       await apiService.acceptRecommendation(recommendationId);
       toast.success('Recommendation accepted and added to your learning plan');
@@ -90,7 +96,7 @@ const AiInsightsDashboard = () => {
   const handleStartCoachingPlan = async () => {
     try {
       await apiService.startCoachingPlan(coachingPlan.id);
-      toast.success('Coaching plan started! You\'ll receive daily guidance.');
+      toast.success("Coaching plan started! You'll receive daily guidance.");
     } catch (error) {
       toast.error('Failed to start coaching plan');
     }
@@ -119,10 +125,12 @@ const AiInsightsDashboard = () => {
               </div>
               <div>
                 <h1 className="text-3xl font-bold text-gray-900">AI Insights Dashboard</h1>
-                <p className="text-gray-600">Personalized recommendations and intelligent coaching</p>
+                <p className="text-gray-600">
+                  Personalized recommendations and intelligent coaching
+                </p>
               </div>
             </div>
-            
+
             {/* Home Button */}
             <Button
               variant="outline"
@@ -136,7 +144,7 @@ const AiInsightsDashboard = () => {
               Home
             </Button>
           </div>
-          
+
           {/* Quick Stats */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <InsightCard
@@ -165,7 +173,9 @@ const AiInsightsDashboard = () => {
               value={`${Math.round((insights.performanceCoaching?.currentPerformance?.overallScore || 0) * 100)}%`}
               icon={TrendingUp}
               color="orange"
-              trend={insights.performanceCoaching?.currentPerformance?.productivity?.trend || 'stable'}
+              trend={
+                insights.performanceCoaching?.currentPerformance?.productivity?.trend || 'stable'
+              }
             />
           </div>
         </div>
@@ -182,23 +192,17 @@ const AiInsightsDashboard = () => {
 
           {/* Overview Tab */}
           <TabsContent value="overview" className="space-y-6">
-            <OverviewSection 
-              insights={insights}
-              onStartCoaching={handleStartCoachingPlan}
-            />
+            <OverviewSection insights={insights} onStartCoaching={handleStartCoachingPlan} />
           </TabsContent>
 
           {/* Skills Analysis Tab */}
           <TabsContent value="skills" className="space-y-6">
-            <SkillAnalysisSection 
-              skillGaps={skillGaps}
-              skillAnalysis={insights.skillAnalysis}
-            />
+            <SkillAnalysisSection skillGaps={skillGaps} skillAnalysis={insights.skillAnalysis} />
           </TabsContent>
 
           {/* Learning Path Tab */}
           <TabsContent value="learning" className="space-y-6">
-            <LearningPathSection 
+            <LearningPathSection
               recommendations={recommendations}
               learningPaths={learningPaths}
               onAcceptRecommendation={handleAcceptRecommendation}
@@ -207,7 +211,7 @@ const AiInsightsDashboard = () => {
 
           {/* AI Coaching Tab */}
           <TabsContent value="coaching" className="space-y-6">
-            <CoachingSection 
+            <CoachingSection
               coachingPlan={coachingPlan}
               performanceCoaching={insights.performanceCoaching}
               onStartPlan={handleStartCoachingPlan}
@@ -216,7 +220,7 @@ const AiInsightsDashboard = () => {
 
           {/* Behavioral Insights Tab */}
           <TabsContent value="insights" className="space-y-6">
-            <BehavioralInsightsSection 
+            <BehavioralInsightsSection
               behaviorAnalysis={insights.behaviorAnalysis}
               coachingInsights={insights.coachingInsights}
             />
@@ -233,7 +237,7 @@ const InsightCard = ({ title, value, icon: Icon, color, trend }) => {
     blue: 'text-blue-600 bg-blue-100',
     green: 'text-green-600 bg-green-100',
     purple: 'text-purple-600 bg-purple-100',
-    orange: 'text-orange-600 bg-orange-100'
+    orange: 'text-orange-600 bg-orange-100',
   };
 
   return (
@@ -274,7 +278,9 @@ const OverviewSection = ({ insights, onStartCoaching }) => (
                 <CheckCircle className="w-5 h-5 text-green-600 mt-0.5" />
                 <div>
                   <p className="font-medium">Strong Performance Areas</p>
-                  <p className="text-sm text-gray-600">Your goal completion rate is above average</p>
+                  <p className="text-sm text-gray-600">
+                    Your goal completion rate is above average
+                  </p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
@@ -288,12 +294,14 @@ const OverviewSection = ({ insights, onStartCoaching }) => (
                 <Star className="w-5 h-5 text-purple-600 mt-0.5" />
                 <div>
                   <p className="font-medium">Growth Potential</p>
-                  <p className="text-sm text-gray-600">High potential in technical skills development</p>
+                  <p className="text-sm text-gray-600">
+                    High potential in technical skills development
+                  </p>
                 </div>
               </div>
             </div>
           </div>
-          
+
           <div className="space-y-4">
             <h4 className="font-medium text-gray-900">Recommended Actions</h4>
             <div className="space-y-2">
@@ -357,12 +365,8 @@ const QuickWinCard = ({ title, description, impact, effort, time }) => (
     <p className="text-sm text-gray-600 mb-3">{description}</p>
     <div className="flex items-center justify-between text-xs">
       <div className="flex gap-2">
-        <Badge variant={impact === 'High' ? 'success' : 'secondary'}>
-          {impact} Impact
-        </Badge>
-        <Badge variant={effort === 'Low' ? 'success' : 'warning'}>
-          {effort} Effort
-        </Badge>
+        <Badge variant={impact === 'High' ? 'success' : 'secondary'}>{impact} Impact</Badge>
+        <Badge variant={effort === 'Low' ? 'success' : 'warning'}>{effort} Effort</Badge>
       </div>
       <span className="text-gray-500">{time}</span>
     </div>
@@ -399,7 +403,9 @@ const SkillAnalysisSection = ({ skillGaps, skillAnalysis }) => (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <span>Overall Skill Score</span>
-            <span className="font-bold">{Math.round((skillAnalysis?.overallScore || 0) * 20)}/100</span>
+            <span className="font-bold">
+              {Math.round((skillAnalysis?.overallScore || 0) * 20)}/100
+            </span>
           </div>
           <Progress value={(skillAnalysis?.overallScore || 0) * 20} className="h-3" />
           <p className="text-sm text-gray-600">
@@ -419,25 +425,33 @@ const SkillGapCard = ({ gap }) => (
         <h4 className="font-medium text-gray-900">{gap.skill}</h4>
         <p className="text-sm text-gray-600">{gap.category}</p>
       </div>
-      <Badge variant={gap.priority === 'high' ? 'destructive' : gap.priority === 'medium' ? 'warning' : 'secondary'}>
+      <Badge
+        variant={
+          gap.priority === 'high'
+            ? 'destructive'
+            : gap.priority === 'medium'
+              ? 'warning'
+              : 'secondary'
+        }
+      >
         {gap.priority} priority
       </Badge>
     </div>
-    
+
     <div className="space-y-2">
       <div className="flex justify-between text-sm">
         <span>Current Level</span>
         <span>{gap.currentLevel}/5</span>
       </div>
       <Progress value={(gap.currentLevel / 5) * 100} className="h-2" />
-      
+
       <div className="flex justify-between text-sm">
         <span>Target Level</span>
         <span>{gap.requiredLevel}/5</span>
       </div>
       <Progress value={(gap.requiredLevel / 5) * 100} className="h-2" />
     </div>
-    
+
     <div className="mt-3 flex items-center justify-between text-sm">
       <span className="text-gray-600">Est. Time: {gap.timeEstimate}h</span>
       <Button size="sm" variant="outline">
@@ -461,8 +475,8 @@ const LearningPathSection = ({ recommendations, learningPaths, onAcceptRecommend
       <CardContent>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {recommendations.slice(0, 6).map((rec, index) => (
-            <RecommendationCard 
-              key={index} 
+            <RecommendationCard
+              key={index}
               recommendation={rec}
               onAccept={() => onAcceptRecommendation(rec.id)}
             />
@@ -494,11 +508,9 @@ const RecommendationCard = ({ recommendation, onAccept }) => (
         <h4 className="font-medium text-gray-900">{recommendation.title}</h4>
         <p className="text-sm text-gray-600 mt-1">{recommendation.description}</p>
       </div>
-      <Badge variant="success">
-        {Math.round(recommendation.relevanceScore * 100)}% match
-      </Badge>
+      <Badge variant="success">{Math.round(recommendation.relevanceScore * 100)}% match</Badge>
     </div>
-    
+
     <div className="space-y-2 mb-3">
       <div className="flex items-center gap-2 text-sm">
         <Clock className="w-4 h-4 text-gray-500" />
@@ -509,9 +521,9 @@ const RecommendationCard = ({ recommendation, onAccept }) => (
         <span>Difficulty: {recommendation.difficulty}/5</span>
       </div>
     </div>
-    
+
     <p className="text-xs text-gray-600 mb-3">{recommendation.personalizedReason}</p>
-    
+
     <Button size="sm" onClick={onAccept} className="w-full">
       Add to Learning Plan
     </Button>
@@ -551,7 +563,9 @@ const CoachingSection = ({ coachingPlan, performanceCoaching, onStartPlan }) => 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {coachingPlan.phases?.map((phase, index) => (
                 <div key={index} className="p-4 border rounded-lg">
-                  <h4 className="font-medium">Phase {phase.phase}: {phase.title}</h4>
+                  <h4 className="font-medium">
+                    Phase {phase.phase}: {phase.title}
+                  </h4>
                   <p className="text-sm text-gray-600 mt-1">{phase.focus}</p>
                   <p className="text-xs text-gray-500 mt-2">{phase.duration}</p>
                 </div>

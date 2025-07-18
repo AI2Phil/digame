@@ -16,9 +16,15 @@ export default function HowItWorksPage() {
             <span className="text-xl font-bold text-gray-900">Digame</span>
           </Link>
           <div className="hidden md:flex space-x-8">
-            <Link href="/FeaturesPage" className="text-gray-600 hover:text-gray-900">Features</Link>
-            <Link href="/HowItWorksPage" className="text-blue-600 font-semibold">How it Works</Link>
-            <Link href="/PricingPage" className="text-gray-600 hover:text-gray-900">Pricing</Link>
+            <Link href="/FeaturesPage" className="text-gray-600 hover:text-gray-900">
+              Features
+            </Link>
+            <Link href="/HowItWorksPage" className="text-blue-600 font-semibold">
+              How it Works
+            </Link>
+            <Link href="/PricingPage" className="text-gray-600 hover:text-gray-900">
+              Pricing
+            </Link>
           </div>
           <Link href="/">
             <Button variant="primary" size="md" icon="🚀">
@@ -56,8 +62,8 @@ export default function HowItWorksPage() {
                 </div>
                 <h3 className="text-2xl font-bold text-gray-900 mb-4">Data Collection</h3>
                 <p className="text-gray-600 mb-6">
-                  Connect your productivity tools and let Digame securely analyze your work patterns, 
-                  communication style, and professional behaviors.
+                  Connect your productivity tools and let Digame securely analyze your work
+                  patterns, communication style, and professional behaviors.
                 </p>
                 <ul className="text-left space-y-2 text-gray-700">
                   <li className="flex items-center">
@@ -93,7 +99,7 @@ export default function HowItWorksPage() {
                 </div>
                 <h3 className="text-2xl font-bold text-gray-900 mb-4">AI Analysis</h3>
                 <p className="text-gray-600 mb-6">
-                  Our advanced machine learning algorithms process your data to identify patterns, 
+                  Our advanced machine learning algorithms process your data to identify patterns,
                   strengths, and opportunities for professional growth.
                 </p>
                 <ul className="text-left space-y-2 text-gray-700">
@@ -130,7 +136,7 @@ export default function HowItWorksPage() {
                 </div>
                 <h3 className="text-2xl font-bold text-gray-900 mb-4">Personalized Insights</h3>
                 <p className="text-gray-600 mb-6">
-                  Receive actionable recommendations, predictive insights, and personalized coaching 
+                  Receive actionable recommendations, predictive insights, and personalized coaching
                   to accelerate your professional development.
                 </p>
                 <ul className="text-left space-y-2 text-gray-700">
@@ -167,7 +173,9 @@ export default function HowItWorksPage() {
                 <span className="text-2xl">🤖</span>
               </div>
               <h4 className="font-semibold text-gray-900 mb-2">Machine Learning</h4>
-              <p className="text-sm text-gray-600">Advanced ML algorithms for pattern recognition and prediction</p>
+              <p className="text-sm text-gray-600">
+                Advanced ML algorithms for pattern recognition and prediction
+              </p>
             </div>
             <div className="text-center">
               <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -188,7 +196,9 @@ export default function HowItWorksPage() {
                 <span className="text-2xl">🔗</span>
               </div>
               <h4 className="font-semibold text-gray-900 mb-2">Seamless Integration</h4>
-              <p className="text-sm text-gray-600">Works with 100+ productivity and collaboration tools</p>
+              <p className="text-sm text-gray-600">
+                Works with 100+ productivity and collaboration tools
+              </p>
             </div>
           </div>
         </div>
@@ -204,11 +214,15 @@ export default function HowItWorksPage() {
               <ul className="space-y-3">
                 <li className="flex items-start">
                   <span className="text-green-500 mr-3 mt-1">✓</span>
-                  <span className="text-gray-700">Identify and develop key skills for career advancement</span>
+                  <span className="text-gray-700">
+                    Identify and develop key skills for career advancement
+                  </span>
                 </li>
                 <li className="flex items-start">
                   <span className="text-green-500 mr-3 mt-1">✓</span>
-                  <span className="text-gray-700">Receive personalized coaching recommendations</span>
+                  <span className="text-gray-700">
+                    Receive personalized coaching recommendations
+                  </span>
                 </li>
                 <li className="flex items-start">
                   <span className="text-green-500 mr-3 mt-1">✓</span>
@@ -216,16 +230,22 @@ export default function HowItWorksPage() {
                 </li>
                 <li className="flex items-start">
                   <span className="text-green-500 mr-3 mt-1">✓</span>
-                  <span className="text-gray-700">Predict and prepare for career opportunities</span>
+                  <span className="text-gray-700">
+                    Predict and prepare for career opportunities
+                  </span>
                 </li>
               </ul>
             </div>
             <div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-4">Productivity Optimization</h3>
+              <h3 className="text-xl font-semibold text-gray-900 mb-4">
+                Productivity Optimization
+              </h3>
               <ul className="space-y-3">
                 <li className="flex items-start">
                   <span className="text-blue-500 mr-3 mt-1">✓</span>
-                  <span className="text-gray-700">Optimize your daily work patterns and habits</span>
+                  <span className="text-gray-700">
+                    Optimize your daily work patterns and habits
+                  </span>
                 </li>
                 <li className="flex items-start">
                   <span className="text-blue-500 mr-3 mt-1">✓</span>
@@ -251,40 +271,69 @@ export default function HowItWorksPage() {
           </h2>
           <div className="max-w-4xl mx-auto space-y-8">
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">How long does it take to create my digital twin?</h3>
-              <p className="text-gray-600">Your initial digital twin is created within 24-48 hours of connecting your first data source. It continues to learn and improve as you use the platform.</p>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                How long does it take to create my digital twin?
+              </h3>
+              <p className="text-gray-600">
+                Your initial digital twin is created within 24-48 hours of connecting your first
+                data source. It continues to learn and improve as you use the platform.
+              </p>
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Is my data secure and private?</h3>
-              <p className="text-gray-600">Absolutely. We use bank-level encryption, comply with GDPR and SOC 2 standards, and never share your personal data with third parties. You maintain full control over your information.</p>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                Is my data secure and private?
+              </h3>
+              <p className="text-gray-600">
+                Absolutely. We use bank-level encryption, comply with GDPR and SOC 2 standards, and
+                never share your personal data with third parties. You maintain full control over
+                your information.
+              </p>
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Which tools and platforms does Digame integrate with?</h3>
-              <p className="text-gray-600">Digame integrates with 100+ popular tools including Google Workspace, Microsoft 365, Slack, Zoom, Asana, Trello, and many more. We're constantly adding new integrations.</p>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                Which tools and platforms does Digame integrate with?
+              </h3>
+              <p className="text-gray-600">
+                Digame integrates with 100+ popular tools including Google Workspace, Microsoft 365,
+                Slack, Zoom, Asana, Trello, and many more. We're constantly adding new integrations.
+              </p>
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Can I customize the insights and recommendations?</h3>
-              <p className="text-gray-600">Yes! You can set your professional goals, preferences, and focus areas. The AI adapts its recommendations based on your specific objectives and career aspirations.</p>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                Can I customize the insights and recommendations?
+              </h3>
+              <p className="text-gray-600">
+                Yes! You can set your professional goals, preferences, and focus areas. The AI
+                adapts its recommendations based on your specific objectives and career aspirations.
+              </p>
             </div>
           </div>
         </div>
 
         {/* CTA Section */}
         <div className="bg-blue-600 rounded-2xl p-12 text-center">
-          <h2 className="text-3xl font-bold text-white mb-4">
-            Ready to Create Your Digital Twin?
-          </h2>
+          <h2 className="text-3xl font-bold text-white mb-4">Ready to Create Your Digital Twin?</h2>
           <p className="text-xl text-blue-100 mb-8">
             Start your journey to professional excellence with AI-powered insights
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/DemoPage">
-              <Button variant="secondary" size="xl" icon="🚀" className="bg-white text-blue-600 hover:bg-gray-50">
+              <Button
+                variant="secondary"
+                size="xl"
+                icon="🚀"
+                className="bg-white text-blue-600 hover:bg-gray-50"
+              >
                 Try Demo
               </Button>
             </Link>
             <Link href="/">
-              <Button variant="outline" size="xl" icon="⚡" className="border-white text-white hover:bg-white hover:text-blue-600">
+              <Button
+                variant="outline"
+                size="xl"
+                icon="⚡"
+                className="border-white text-white hover:bg-white hover:text-blue-600"
+              >
                 Get Started Free
               </Button>
             </Link>
@@ -301,9 +350,7 @@ export default function HowItWorksPage() {
             </div>
             <span className="text-lg font-bold">Digame</span>
           </div>
-          <p className="text-gray-400">
-            © 2025 Digame. Your Digital Professional Twin Platform.
-          </p>
+          <p className="text-gray-400">© 2025 Digame. Your Digital Professional Twin Platform.</p>
         </div>
       </footer>
     </div>

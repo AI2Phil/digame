@@ -1,12 +1,43 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import {
-  Smartphone, Battery, Wifi, Clock, TrendingUp, Activity, Zap, Volume2,
-  Settings, Bell, Eye, BarChart3, Mic, RefreshCw, Brain, Target,
-  Users, Globe, Download, Upload, Signal, Cpu, HardDrive,
-  Timer, AlertTriangle, CheckCircle, XCircle, Info, Home
+  Smartphone,
+  Battery,
+  Wifi,
+  Clock,
+  TrendingUp,
+  Activity,
+  Zap,
+  Volume2,
+  Settings,
+  Bell,
+  Eye,
+  BarChart3,
+  Mic,
+  RefreshCw,
+  Brain,
+  Target,
+  Users,
+  Globe,
+  Download,
+  Upload,
+  Signal,
+  Cpu,
+  HardDrive,
+  Timer,
+  AlertTriangle,
+  CheckCircle,
+  XCircle,
+  Info,
+  Home,
 } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/Card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { Progress } from '../../components/ui/Progress';
@@ -36,21 +67,15 @@ const AdvancedMobileAnalyticsDashboard = () => {
     setLoading(true);
     try {
       // Load comprehensive analytics using enhanced API service
-      const [
-        mobileData,
-        performanceData,
-        networkData,
-        offlineData,
-        behaviorData,
-        securityData
-      ] = await Promise.all([
-        enhancedApiService.getAdvancedMobileAnalytics(),
-        enhancedApiService.getAdvancedPerformanceMetrics(),
-        enhancedApiService.getAdvancedNetworkAnalytics(),
-        enhancedApiService.getAdvancedOfflineAnalytics(),
-        enhancedApiService.getAdvancedUserBehaviorAnalytics(),
-        enhancedApiService.getAdvancedSecurityAnalytics()
-      ]);
+      const [mobileData, performanceData, networkData, offlineData, behaviorData, securityData] =
+        await Promise.all([
+          enhancedApiService.getAdvancedMobileAnalytics(),
+          enhancedApiService.getAdvancedPerformanceMetrics(),
+          enhancedApiService.getAdvancedNetworkAnalytics(),
+          enhancedApiService.getAdvancedOfflineAnalytics(),
+          enhancedApiService.getAdvancedUserBehaviorAnalytics(),
+          enhancedApiService.getAdvancedSecurityAnalytics(),
+        ]);
 
       setMobileAnalytics(mobileData || {});
       setPerformanceMetrics(performanceData || {});
@@ -62,7 +87,6 @@ const AdvancedMobileAnalyticsDashboard = () => {
       // Also load real-time metrics
       const realTimeData = await enhancedApiService.getAdvancedRealTimeMetrics();
       setRealTimeMetrics(realTimeData || {});
-
     } catch (error) {
       console.error('Failed to load advanced mobile analytics:', error);
       toast.error('Failed to load mobile analytics');
@@ -81,7 +105,7 @@ const AdvancedMobileAnalyticsDashboard = () => {
           networkStatus: await getCurrentNetworkStatus(),
           batteryLevel: await getCurrentBatteryLevel(),
           activeConnections: await getActiveConnections(),
-          syncStatus: { syncInProgress: false, pendingSyncItems: 0, isOnline: true }
+          syncStatus: { syncInProgress: false, pendingSyncItems: 0, isOnline: true },
         };
         setRealTimeMetrics(realTime);
       } catch (error) {
@@ -98,7 +122,7 @@ const AdvancedMobileAnalyticsDashboard = () => {
       return {
         used: Math.round(memory.usedJSHeapSize / 1024 / 1024),
         total: Math.round(memory.totalJSHeapSize / 1024 / 1024),
-        limit: Math.round(memory.jsHeapSizeLimit / 1024 / 1024)
+        limit: Math.round(memory.jsHeapSizeLimit / 1024 / 1024),
       };
     }
     return { used: 0, total: 0, limit: 0 };
@@ -109,7 +133,7 @@ const AdvancedMobileAnalyticsDashboard = () => {
       type: 'wifi', // Would be detected from NetInfo
       speed: 'fast',
       latency: Math.floor(Math.random() * 50) + 10,
-      bandwidth: Math.floor(Math.random() * 100) + 50
+      bandwidth: Math.floor(Math.random() * 100) + 50,
     };
   };
 
@@ -179,10 +203,12 @@ const AdvancedMobileAnalyticsDashboard = () => {
               </div>
               <div>
                 <h1 className="text-3xl font-bold text-gray-900">Advanced Mobile Analytics</h1>
-                <p className="text-gray-600">Comprehensive mobile performance insights and optimization</p>
+                <p className="text-gray-600">
+                  Comprehensive mobile performance insights and optimization
+                </p>
               </div>
             </div>
-            
+
             {/* Home Button */}
             <Button
               variant="outline"
@@ -196,17 +222,21 @@ const AdvancedMobileAnalyticsDashboard = () => {
               Home
             </Button>
           </div>
-          
+
           {/* Real-time Status Bar */}
           <RealTimeStatusBar realTimeMetrics={realTimeMetrics} />
-          
+
           {/* Quick Actions */}
           <div className="flex gap-4 mt-4">
             <Button onClick={handleOptimizePerformance} className="flex items-center gap-2">
               <Zap className="w-4 h-4" />
               Optimize Performance
             </Button>
-            <Button variant="outline" onClick={handleClearCache} className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              onClick={handleClearCache}
+              className="flex items-center gap-2"
+            >
               <RefreshCw className="w-4 h-4" />
               Clear Cache
             </Button>
@@ -230,7 +260,7 @@ const AdvancedMobileAnalyticsDashboard = () => {
 
           {/* Overview Tab */}
           <TabsContent value="overview" className="space-y-6">
-            <MobileOverviewSection 
+            <MobileOverviewSection
               analytics={mobileAnalytics}
               performance={performanceMetrics}
               network={networkAnalytics}
@@ -241,7 +271,7 @@ const AdvancedMobileAnalyticsDashboard = () => {
 
           {/* Performance Tab */}
           <TabsContent value="performance" className="space-y-6">
-            <PerformanceAnalyticsSection 
+            <PerformanceAnalyticsSection
               performanceData={performanceMetrics}
               realTimeMetrics={realTimeMetrics}
             />
@@ -249,7 +279,7 @@ const AdvancedMobileAnalyticsDashboard = () => {
 
           {/* Network Tab */}
           <TabsContent value="network" className="space-y-6">
-            <NetworkAnalyticsSection 
+            <NetworkAnalyticsSection
               networkData={networkAnalytics}
               realTimeMetrics={realTimeMetrics}
             />
@@ -257,23 +287,17 @@ const AdvancedMobileAnalyticsDashboard = () => {
 
           {/* Offline Tab */}
           <TabsContent value="offline" className="space-y-6">
-            <OfflineAnalyticsSection 
-              offlineData={offlineAnalytics}
-            />
+            <OfflineAnalyticsSection offlineData={offlineAnalytics} />
           </TabsContent>
 
           {/* User Behavior Tab */}
           <TabsContent value="behavior" className="space-y-6">
-            <UserBehaviorAnalyticsSection 
-              behaviorData={userBehaviorAnalytics}
-            />
+            <UserBehaviorAnalyticsSection behaviorData={userBehaviorAnalytics} />
           </TabsContent>
 
           {/* Security Tab */}
           <TabsContent value="security" className="space-y-6">
-            <SecurityAnalyticsSection 
-              securityData={securityAnalytics}
-            />
+            <SecurityAnalyticsSection securityData={securityAnalytics} />
           </TabsContent>
         </Tabs>
       </div>
@@ -316,7 +340,9 @@ const RealTimeStatusBar = ({ realTimeMetrics }) => (
       <RefreshCw className="w-4 h-4 text-orange-600" />
       <div>
         <p className="text-xs text-gray-500">Sync Status</p>
-        <p className="font-semibold">{realTimeMetrics.syncStatus?.syncInProgress ? 'Syncing' : 'Idle'}</p>
+        <p className="font-semibold">
+          {realTimeMetrics.syncStatus?.syncInProgress ? 'Syncing' : 'Idle'}
+        </p>
       </div>
     </div>
   </div>
@@ -381,7 +407,7 @@ const KPICard = ({ title, value, icon: Icon, color, trend }) => {
     green: 'text-green-600 bg-green-100',
     blue: 'text-blue-600 bg-blue-100',
     purple: 'text-purple-600 bg-purple-100',
-    orange: 'text-orange-600 bg-orange-100'
+    orange: 'text-orange-600 bg-orange-100',
   };
 
   return (
@@ -515,7 +541,7 @@ const PerformanceMetricCard = ({ title, value, target, status }) => {
     excellent: 'text-green-600 bg-green-100',
     good: 'text-blue-600 bg-blue-100',
     warning: 'text-yellow-600 bg-yellow-100',
-    poor: 'text-red-600 bg-red-100'
+    poor: 'text-red-600 bg-red-100',
   };
 
   return (
@@ -557,9 +583,7 @@ const UsageAnalyticsCard = ({ analytics }) => (
         </div>
         <div className="flex justify-between">
           <span>Actions Performed</span>
-          <span className="font-semibold">
-            {analytics.sessionData?.actions?.length || 0}
-          </span>
+          <span className="font-semibold">{analytics.sessionData?.actions?.length || 0}</span>
         </div>
       </div>
     </CardContent>

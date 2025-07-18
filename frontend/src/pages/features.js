@@ -7,7 +7,10 @@ export default function Features() {
     <>
       <Head>
         <title>Features - Digame</title>
-        <meta name="description" content="Discover the powerful features of Digame's digital professional twin platform." />
+        <meta
+          name="description"
+          content="Discover the powerful features of Digame's digital professional twin platform."
+        />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
       </Head>
@@ -23,11 +26,20 @@ export default function Features() {
               <span className="text-xl font-bold text-gray-900">Digame</span>
             </Link>
             <div className="hidden md:flex space-x-8">
-              <Link href="/features" className="text-blue-600 font-medium">Features</Link>
-              <Link href="/how-it-works" className="text-gray-600 hover:text-gray-900">How it Works</Link>
-              <Link href="/pricing" className="text-gray-600 hover:text-gray-900">Pricing</Link>
+              <Link href="/features" className="text-blue-600 font-medium">
+                Features
+              </Link>
+              <Link href="/how-it-works" className="text-gray-600 hover:text-gray-900">
+                How it Works
+              </Link>
+              <Link href="/pricing" className="text-gray-600 hover:text-gray-900">
+                Pricing
+              </Link>
             </div>
-            <Link href="/" className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+            <Link
+              href="/"
+              className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+            >
               🚀 Get Started
             </Link>
           </div>
@@ -41,7 +53,8 @@ export default function Features() {
               <span className="text-blue-600"> Professional Growth</span>
             </h1>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Discover how Digame's AI-powered platform transforms your professional development with cutting-edge behavioral analysis and predictive insights.
+              Discover how Digame's AI-powered platform transforms your professional development
+              with cutting-edge behavioral analysis and predictive insights.
             </p>
           </div>
 
@@ -54,12 +67,19 @@ export default function Features() {
               </div>
               <h3 className="text-2xl font-bold text-gray-900 mb-4">Behavioral Analysis</h3>
               <p className="text-gray-600 mb-6">
-                Advanced machine learning algorithms analyze your work patterns, communication styles, and productivity habits to identify optimization opportunities.
+                Advanced machine learning algorithms analyze your work patterns, communication
+                styles, and productivity habits to identify optimization opportunities.
               </p>
               <ul className="space-y-2 text-sm text-gray-600">
-                <li className="flex items-center"><span className="text-green-500 mr-2">✓</span>Work pattern recognition</li>
-                <li className="flex items-center"><span className="text-green-500 mr-2">✓</span>Communication analysis</li>
-                <li className="flex items-center"><span className="text-green-500 mr-2">✓</span>Productivity tracking</li>
+                <li className="flex items-center">
+                  <span className="text-green-500 mr-2">✓</span>Work pattern recognition
+                </li>
+                <li className="flex items-center">
+                  <span className="text-green-500 mr-2">✓</span>Communication analysis
+                </li>
+                <li className="flex items-center">
+                  <span className="text-green-500 mr-2">✓</span>Productivity tracking
+                </li>
               </ul>
             </div>
 
@@ -70,12 +90,19 @@ export default function Features() {
               </div>
               <h3 className="text-2xl font-bold text-gray-900 mb-4">Predictive Insights</h3>
               <p className="text-gray-600 mb-6">
-                Get personalized predictions about your career trajectory, skill development needs, and optimal career moves based on your digital twin.
+                Get personalized predictions about your career trajectory, skill development needs,
+                and optimal career moves based on your digital twin.
               </p>
               <ul className="space-y-2 text-sm text-gray-600">
-                <li className="flex items-center"><span className="text-green-500 mr-2">✓</span>Career trajectory forecasting</li>
-                <li className="flex items-center"><span className="text-green-500 mr-2">✓</span>Skill gap identification</li>
-                <li className="flex items-center"><span className="text-green-500 mr-2">✓</span>Opportunity recommendations</li>
+                <li className="flex items-center">
+                  <span className="text-green-500 mr-2">✓</span>Career trajectory forecasting
+                </li>
+                <li className="flex items-center">
+                  <span className="text-green-500 mr-2">✓</span>Skill gap identification
+                </li>
+                <li className="flex items-center">
+                  <span className="text-green-500 mr-2">✓</span>Opportunity recommendations
+                </li>
               </ul>
             </div>
 
@@ -86,12 +113,19 @@ export default function Features() {
               </div>
               <h3 className="text-2xl font-bold text-gray-900 mb-4">Goal Achievement</h3>
               <p className="text-gray-600 mb-6">
-                Set and track professional goals with AI-powered recommendations, progress monitoring, and adaptive strategies for success.
+                Set and track professional goals with AI-powered recommendations, progress
+                monitoring, and adaptive strategies for success.
               </p>
               <ul className="space-y-2 text-sm text-gray-600">
-                <li className="flex items-center"><span className="text-green-500 mr-2">✓</span>Smart goal setting</li>
-                <li className="flex items-center"><span className="text-green-500 mr-2">✓</span>Progress tracking</li>
-                <li className="flex items-center"><span className="text-green-500 mr-2">✓</span>Adaptive strategies</li>
+                <li className="flex items-center">
+                  <span className="text-green-500 mr-2">✓</span>Smart goal setting
+                </li>
+                <li className="flex items-center">
+                  <span className="text-green-500 mr-2">✓</span>Progress tracking
+                </li>
+                <li className="flex items-center">
+                  <span className="text-green-500 mr-2">✓</span>Adaptive strategies
+                </li>
               </ul>
             </div>
 
@@ -102,12 +136,19 @@ export default function Features() {
               </div>
               <h3 className="text-2xl font-bold text-gray-900 mb-4">Real-time Analytics</h3>
               <p className="text-gray-600 mb-6">
-                Monitor your professional performance with real-time dashboards, detailed reports, and actionable insights.
+                Monitor your professional performance with real-time dashboards, detailed reports,
+                and actionable insights.
               </p>
               <ul className="space-y-2 text-sm text-gray-600">
-                <li className="flex items-center"><span className="text-green-500 mr-2">✓</span>Live performance dashboards</li>
-                <li className="flex items-center"><span className="text-green-500 mr-2">✓</span>Detailed analytics reports</li>
-                <li className="flex items-center"><span className="text-green-500 mr-2">✓</span>Custom metrics tracking</li>
+                <li className="flex items-center">
+                  <span className="text-green-500 mr-2">✓</span>Live performance dashboards
+                </li>
+                <li className="flex items-center">
+                  <span className="text-green-500 mr-2">✓</span>Detailed analytics reports
+                </li>
+                <li className="flex items-center">
+                  <span className="text-green-500 mr-2">✓</span>Custom metrics tracking
+                </li>
               </ul>
             </div>
 
@@ -118,12 +159,19 @@ export default function Features() {
               </div>
               <h3 className="text-2xl font-bold text-gray-900 mb-4">AI Coaching</h3>
               <p className="text-gray-600 mb-6">
-                Receive personalized coaching recommendations, skill development plans, and career guidance from your AI coach.
+                Receive personalized coaching recommendations, skill development plans, and career
+                guidance from your AI coach.
               </p>
               <ul className="space-y-2 text-sm text-gray-600">
-                <li className="flex items-center"><span className="text-green-500 mr-2">✓</span>Personalized coaching</li>
-                <li className="flex items-center"><span className="text-green-500 mr-2">✓</span>Skill development plans</li>
-                <li className="flex items-center"><span className="text-green-500 mr-2">✓</span>Career guidance</li>
+                <li className="flex items-center">
+                  <span className="text-green-500 mr-2">✓</span>Personalized coaching
+                </li>
+                <li className="flex items-center">
+                  <span className="text-green-500 mr-2">✓</span>Skill development plans
+                </li>
+                <li className="flex items-center">
+                  <span className="text-green-500 mr-2">✓</span>Career guidance
+                </li>
               </ul>
             </div>
 
@@ -134,12 +182,19 @@ export default function Features() {
               </div>
               <h3 className="text-2xl font-bold text-gray-900 mb-4">Team Collaboration</h3>
               <p className="text-gray-600 mb-6">
-                Enhance team dynamics with collaborative features, shared insights, and team performance analytics.
+                Enhance team dynamics with collaborative features, shared insights, and team
+                performance analytics.
               </p>
               <ul className="space-y-2 text-sm text-gray-600">
-                <li className="flex items-center"><span className="text-green-500 mr-2">✓</span>Team performance tracking</li>
-                <li className="flex items-center"><span className="text-green-500 mr-2">✓</span>Collaborative insights</li>
-                <li className="flex items-center"><span className="text-green-500 mr-2">✓</span>Shared goal management</li>
+                <li className="flex items-center">
+                  <span className="text-green-500 mr-2">✓</span>Team performance tracking
+                </li>
+                <li className="flex items-center">
+                  <span className="text-green-500 mr-2">✓</span>Collaborative insights
+                </li>
+                <li className="flex items-center">
+                  <span className="text-green-500 mr-2">✓</span>Shared goal management
+                </li>
               </ul>
             </div>
           </div>
@@ -152,7 +207,10 @@ export default function Features() {
             <p className="text-xl text-gray-600 mb-8">
               Start your journey with Digame today and unlock your professional potential.
             </p>
-            <Link href="/" className="bg-blue-600 text-white px-8 py-4 rounded-lg hover:bg-blue-700 transition-colors text-lg inline-block">
+            <Link
+              href="/"
+              className="bg-blue-600 text-white px-8 py-4 rounded-lg hover:bg-blue-700 transition-colors text-lg inline-block"
+            >
               🚀 Get Started Now
             </Link>
           </div>

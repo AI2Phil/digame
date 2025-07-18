@@ -9,7 +9,7 @@ const NavigationTestPage = () => {
     subscription_tier: 'enterprise',
     tenant_id: 1,
     tenant_name: 'Demo Tenant',
-    permissions: ['read', 'write', 'admin', 'platform_owner']
+    permissions: ['read', 'write', 'admin', 'platform_owner'],
   };
 
   const handleLogout = () => {
@@ -26,26 +26,22 @@ const NavigationTestPage = () => {
         onToggle={() => {}}
         showAllFeatures={true}
       />
-      
+
       <div className="flex-1 flex flex-col overflow-hidden">
         <header className="bg-white shadow-sm border-b border-gray-200">
           <div className="flex items-center justify-between px-6 py-4">
-            <h1 className="text-xl font-semibold text-gray-900">
-              Comprehensive Navigation Demo
-            </h1>
-            <div className="text-sm text-gray-600">
-              Complete Backend Feature Access
-            </div>
+            <h1 className="text-xl font-semibold text-gray-900">Comprehensive Navigation Demo</h1>
+            <div className="text-sm text-gray-600">Complete Backend Feature Access</div>
           </div>
         </header>
-        
+
         <main className="flex-1 overflow-y-auto p-6">
           <div className="max-w-4xl mx-auto">
             <div className="bg-white rounded-lg shadow-sm p-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-6">
                 🎯 Complete Backend Feature Coverage
               </h2>
-              
+
               <div className="grid md:grid-cols-2 gap-6 mb-8">
                 <div className="bg-blue-50 p-6 rounded-lg">
                   <h3 className="text-lg font-semibold text-blue-900 mb-3">
@@ -58,7 +54,7 @@ const NavigationTestPage = () => {
                     <li>• Performance Monitoring</li>
                   </ul>
                 </div>
-                
+
                 <div className="bg-green-50 p-6 rounded-lg">
                   <h3 className="text-lg font-semibold text-green-900 mb-3">
                     🤖 AI Tools & Automation
@@ -70,7 +66,7 @@ const NavigationTestPage = () => {
                     <li>• Language Learning AI</li>
                   </ul>
                 </div>
-                
+
                 <div className="bg-purple-50 p-6 rounded-lg">
                   <h3 className="text-lg font-semibold text-purple-900 mb-3">
                     🧠 Digital Twin & Intelligence
@@ -82,7 +78,7 @@ const NavigationTestPage = () => {
                     <li>• Intelligence API Access</li>
                   </ul>
                 </div>
-                
+
                 <div className="bg-orange-50 p-6 rounded-lg">
                   <h3 className="text-lg font-semibold text-orange-900 mb-3">
                     ⚡ Workflow & Task Management
@@ -94,7 +90,7 @@ const NavigationTestPage = () => {
                     <li>• Calendar Integration</li>
                   </ul>
                 </div>
-                
+
                 <div className="bg-indigo-50 p-6 rounded-lg">
                   <h3 className="text-lg font-semibold text-indigo-900 mb-3">
                     👥 Team Collaboration
@@ -106,7 +102,7 @@ const NavigationTestPage = () => {
                     <li>• Workflow Optimization</li>
                   </ul>
                 </div>
-                
+
                 <div className="bg-red-50 p-6 rounded-lg">
                   <h3 className="text-lg font-semibold text-red-900 mb-3">
                     🏢 Enterprise & Platform Owner
@@ -119,14 +115,13 @@ const NavigationTestPage = () => {
                   </ul>
                 </div>
               </div>
-              
+
               <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6 rounded-lg">
-                <h3 className="text-xl font-bold mb-3">
-                  ✅ Complete Backend Integration
-                </h3>
+                <h3 className="text-xl font-bold mb-3">✅ Complete Backend Integration</h3>
                 <p className="text-blue-100 mb-4">
-                  This comprehensive navigation component provides genuine access to ALL backend features and functionality. 
-                  Every menu item maps directly to backend routers and endpoints, ensuring complete platform coverage.
+                  This comprehensive navigation component provides genuine access to ALL backend
+                  features and functionality. Every menu item maps directly to backend routers and
+                  endpoints, ensuring complete platform coverage.
                 </p>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                   <div>

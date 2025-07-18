@@ -3,19 +3,33 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../co
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/Tabs';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/Dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '../components/ui/Dialog';
 import { Input } from '../components/ui/Input';
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '../components/ui/Sheet';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '../components/ui/Sheet';
 import { Progress } from '../components/ui/Progress';
 import Alert, { AlertDescription } from '../components/ui/Alert';
-import { 
-  Settings, 
-  Plus, 
-  ExternalLink, 
-  Activity, 
-  AlertCircle, 
-  CheckCircle, 
-  Clock, 
+import {
+  Settings,
+  Plus,
+  ExternalLink,
+  Activity,
+  AlertCircle,
+  CheckCircle,
+  Clock,
   Zap,
   Globe,
   Shield,
@@ -26,7 +40,7 @@ import {
   Trash2,
   Edit,
   Eye,
-  Download
+  Download,
 } from 'lucide-react';
 
 /**
@@ -37,7 +51,8 @@ const IntegrationsPage = () => {
   const [connections, setConnections] = useState([]);
   const [providers, setProviders] = useState([]);
   const [webhooks, setWebhooks] = useState([]);
-  const [analytics, setAnalytics] = useState(/** @type {{
+  const [analytics, setAnalytics] = useState(
+    /** @type {{
     total_connections: number,
     active_connections: number,
     total_syncs: number,
@@ -47,7 +62,8 @@ const IntegrationsPage = () => {
     avg_response_time_ms: number,
     success_rate: number,
     uptime_percentage: number
-  }} */ ({}));
+  }} */ {}
+  );
   const [loading, setLoading] = useState(true);
   const [selectedConnection, setSelectedConnection] = useState(null);
 
@@ -63,7 +79,7 @@ const IntegrationsPage = () => {
         auth_type: 'oauth2',
         is_active: true,
         supported_operations: ['read', 'write', 'webhook'],
-        logo_url: '/api/placeholder/32/32'
+        logo_url: '/api/placeholder/32/32',
       },
       {
         id: 2,
@@ -74,7 +90,7 @@ const IntegrationsPage = () => {
         auth_type: 'oauth2',
         is_active: true,
         supported_operations: ['read', 'write', 'webhook'],
-        logo_url: '/api/placeholder/32/32'
+        logo_url: '/api/placeholder/32/32',
       },
       {
         id: 3,
@@ -85,7 +101,7 @@ const IntegrationsPage = () => {
         auth_type: 'oauth2',
         is_active: true,
         supported_operations: ['read', 'write', 'webhook'],
-        logo_url: '/api/placeholder/32/32'
+        logo_url: '/api/placeholder/32/32',
       },
       {
         id: 4,
@@ -96,7 +112,7 @@ const IntegrationsPage = () => {
         auth_type: 'oauth2',
         is_active: true,
         supported_operations: ['read', 'write', 'webhook'],
-        logo_url: '/api/placeholder/32/32'
+        logo_url: '/api/placeholder/32/32',
       },
       {
         id: 5,
@@ -107,8 +123,8 @@ const IntegrationsPage = () => {
         auth_type: 'oauth2',
         is_active: true,
         supported_operations: ['read', 'write', 'webhook'],
-        logo_url: '/api/placeholder/32/32'
-      }
+        logo_url: '/api/placeholder/32/32',
+      },
     ];
 
     const mockConnections = [
@@ -124,7 +140,7 @@ const IntegrationsPage = () => {
         sync_frequency: 'real_time',
         health_status: 'healthy',
         error_count: 0,
-        total_syncs: 1247
+        total_syncs: 1247,
       },
       {
         id: 2,
@@ -138,7 +154,7 @@ const IntegrationsPage = () => {
         sync_frequency: 'hourly',
         health_status: 'healthy',
         error_count: 2,
-        total_syncs: 892
+        total_syncs: 892,
       },
       {
         id: 3,
@@ -152,8 +168,8 @@ const IntegrationsPage = () => {
         sync_frequency: 'daily',
         health_status: 'degraded',
         error_count: 5,
-        total_syncs: 234
-      }
+        total_syncs: 234,
+      },
     ];
 
     const mockWebhooks = [
@@ -166,7 +182,7 @@ const IntegrationsPage = () => {
         total_triggers: 1847,
         successful_triggers: 1832,
         failed_triggers: 15,
-        last_triggered_at: '2024-06-24T06:30:00Z'
+        last_triggered_at: '2024-06-24T06:30:00Z',
       },
       {
         id: 2,
@@ -177,8 +193,8 @@ const IntegrationsPage = () => {
         total_triggers: 623,
         successful_triggers: 618,
         failed_triggers: 5,
-        last_triggered_at: '2024-06-24T06:25:00Z'
-      }
+        last_triggered_at: '2024-06-24T06:25:00Z',
+      },
     ];
 
     const mockAnalytics = {
@@ -190,7 +206,7 @@ const IntegrationsPage = () => {
       webhook_triggers: 2470,
       avg_response_time_ms: 245,
       success_rate: 99.1,
-      uptime_percentage: 99.8
+      uptime_percentage: 99.8,
     };
 
     setProviders(mockProviders);
@@ -204,13 +220,18 @@ const IntegrationsPage = () => {
    * @param {string} status - Connection status
    * @returns {string} CSS classes for status color
    */
-  const getStatusColor = (status) => {
+  const getStatusColor = status => {
     switch (status) {
-      case 'active': return 'bg-green-100 text-green-800';
-      case 'warning': return 'bg-yellow-100 text-yellow-800';
-      case 'error': return 'bg-red-100 text-red-800';
-      case 'inactive': return 'bg-gray-100 text-gray-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'active':
+        return 'bg-green-100 text-green-800';
+      case 'warning':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'error':
+        return 'bg-red-100 text-red-800';
+      case 'inactive':
+        return 'bg-gray-100 text-gray-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
@@ -218,12 +239,16 @@ const IntegrationsPage = () => {
    * @param {string} health - Health status
    * @returns {React.ReactElement} Health icon component
    */
-  const getHealthIcon = (health) => {
+  const getHealthIcon = health => {
     switch (health) {
-      case 'healthy': return <CheckCircle className="h-4 w-4 text-green-500" />;
-      case 'degraded': return <AlertCircle className="h-4 w-4 text-yellow-500" />;
-      case 'unhealthy': return <AlertCircle className="h-4 w-4 text-red-500" />;
-      default: return <Clock className="h-4 w-4 text-gray-500" />;
+      case 'healthy':
+        return <CheckCircle className="h-4 w-4 text-green-500" />;
+      case 'degraded':
+        return <AlertCircle className="h-4 w-4 text-yellow-500" />;
+      case 'unhealthy':
+        return <AlertCircle className="h-4 w-4 text-red-500" />;
+      default:
+        return <Clock className="h-4 w-4 text-gray-500" />;
     }
   };
 
@@ -231,7 +256,7 @@ const IntegrationsPage = () => {
    * @param {string} dateString - ISO date string
    * @returns {string} Formatted date string
    */
-  const formatDate = (dateString) => {
+  const formatDate = dateString => {
     return new Date(dateString).toLocaleString();
   };
 
@@ -239,7 +264,7 @@ const IntegrationsPage = () => {
    * @param {Object} provider - Provider configuration object
    * @param {string} provider.name - Provider name
    */
-  const initiateOAuthFlow = (provider) => {
+  const initiateOAuthFlow = provider => {
     // Mock OAuth flow initiation - using Next.js router for callback
     const authUrl = `https://oauth.${provider.name.toLowerCase()}.com/authorize?client_id=demo&redirect_uri=${encodeURIComponent(typeof window !== 'undefined' ? window.location.origin : '')}/integrations/oauth/callback&scope=read+write`;
     if (typeof window !== 'undefined') {
@@ -251,7 +276,7 @@ const IntegrationsPage = () => {
    * @param {number} connectionId - Connection ID to test
    * @returns {Promise<void>}
    */
-  const testConnection = async (connectionId) => {
+  const testConnection = async connectionId => {
     // Mock connection test
     console.log(`Testing connection ${connectionId}`);
     // Show success/failure feedback
@@ -261,7 +286,7 @@ const IntegrationsPage = () => {
    * @param {number} connectionId - Connection ID to sync
    * @returns {Promise<void>}
    */
-  const syncConnection = async (connectionId) => {
+  const syncConnection = async connectionId => {
     // Mock manual sync
     console.log(`Syncing connection ${connectionId}`);
     // Update UI with sync status
@@ -297,12 +322,15 @@ const IntegrationsPage = () => {
               </DialogDescription>
             </DialogHeader>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
-              {providers.map((provider) => (
-                <Card key={provider.id} className="cursor-pointer hover:shadow-md transition-shadow">
+              {providers.map(provider => (
+                <Card
+                  key={provider.id}
+                  className="cursor-pointer hover:shadow-md transition-shadow"
+                >
                   <CardContent className="p-4">
                     <div className="flex items-center space-x-3 mb-3">
-                      <img 
-                        src={provider.logo_url} 
+                      <img
+                        src={provider.logo_url}
                         alt={provider.name}
                         className="w-8 h-8 rounded"
                       />
@@ -315,16 +343,13 @@ const IntegrationsPage = () => {
                     </div>
                     <p className="text-sm text-gray-600 mb-3">{provider.description}</p>
                     <div className="flex flex-wrap gap-1 mb-3">
-                      {provider.supported_operations.map((op) => (
+                      {provider.supported_operations.map(op => (
                         <Badge key={op} variant="secondary" className="text-xs">
                           {op}
                         </Badge>
                       ))}
                     </div>
-                    <Button 
-                      className="w-full" 
-                      onClick={() => initiateOAuthFlow(provider)}
-                    >
+                    <Button className="w-full" onClick={() => initiateOAuthFlow(provider)}>
                       <ExternalLink className="h-4 w-4 mr-2" />
                       Connect
                     </Button>
@@ -376,7 +401,9 @@ const IntegrationsPage = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-600">Webhook Triggers</p>
-                    <p className="text-2xl font-bold">{analytics.webhook_triggers.toLocaleString()}</p>
+                    <p className="text-2xl font-bold">
+                      {analytics.webhook_triggers.toLocaleString()}
+                    </p>
                   </div>
                   <Webhook className="h-8 w-8 text-purple-500" />
                 </div>
@@ -404,11 +431,12 @@ const IntegrationsPage = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {connections.slice(0, 3).map((connection) => (
-                    <div key={connection.id} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-                      <div className="flex-shrink-0">
-                        {getHealthIcon(connection.health_status)}
-                      </div>
+                  {connections.slice(0, 3).map(connection => (
+                    <div
+                      key={connection.id}
+                      className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg"
+                    >
+                      <div className="flex-shrink-0">{getHealthIcon(connection.health_status)}</div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-gray-900 truncate">
                           {connection.display_name}
@@ -471,14 +499,12 @@ const IntegrationsPage = () => {
           </div>
 
           <div className="grid gap-4">
-            {connections.map((connection) => (
+            {connections.map(connection => (
               <Card key={connection.id}>
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-4">
-                      <div className="flex-shrink-0">
-                        {getHealthIcon(connection.health_status)}
-                      </div>
+                      <div className="flex-shrink-0">{getHealthIcon(connection.health_status)}</div>
                       <div>
                         <h3 className="text-lg font-semibold">{connection.display_name}</h3>
                         <p className="text-sm text-gray-600">{connection.provider_name}</p>
@@ -536,17 +562,17 @@ const IntegrationsPage = () => {
                                 </div>
                               </div>
                             </div>
-                            
+
                             <div className="space-y-2">
-                              <Button 
-                                className="w-full" 
+                              <Button
+                                className="w-full"
                                 onClick={() => testConnection(connection.id)}
                               >
                                 <Activity className="h-4 w-4 mr-2" />
                                 Test Connection
                               </Button>
-                              <Button 
-                                variant="outline" 
+                              <Button
+                                variant="outline"
                                 className="w-full"
                                 onClick={() => syncConnection(connection.id)}
                               >
@@ -583,21 +609,26 @@ const IntegrationsPage = () => {
           </div>
 
           <div className="grid gap-4">
-            {webhooks.map((webhook) => {
+            {webhooks.map(webhook => {
               const connection = connections.find(c => c.id === webhook.connection_id);
-              const successRate = ((webhook.successful_triggers / webhook.total_triggers) * 100).toFixed(1);
-              
+              const successRate = (
+                (webhook.successful_triggers / webhook.total_triggers) *
+                100
+              ).toFixed(1);
+
               return (
                 <Card key={webhook.id}>
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between mb-4">
                       <div>
-                        <h3 className="text-lg font-semibold">{connection?.display_name} Webhook</h3>
+                        <h3 className="text-lg font-semibold">
+                          {connection?.display_name} Webhook
+                        </h3>
                         <p className="text-sm text-gray-600">{webhook.webhook_url}</p>
                       </div>
                       <div className="flex items-center space-x-2">
-                        <Badge variant={webhook.is_active ? "default" : "secondary"}>
-                          {webhook.is_active ? "Active" : "Inactive"}
+                        <Badge variant={webhook.is_active ? 'default' : 'secondary'}>
+                          {webhook.is_active ? 'Active' : 'Inactive'}
                         </Badge>
                         <Button variant="outline" size="sm">
                           <Eye className="h-4 w-4" />
@@ -607,11 +638,13 @@ const IntegrationsPage = () => {
                         </Button>
                       </div>
                     </div>
-                    
+
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                       <div>
                         <p className="text-sm font-medium text-gray-600">Total Triggers</p>
-                        <p className="text-xl font-bold">{webhook.total_triggers.toLocaleString()}</p>
+                        <p className="text-xl font-bold">
+                          {webhook.total_triggers.toLocaleString()}
+                        </p>
                       </div>
                       <div>
                         <p className="text-sm font-medium text-gray-600">Success Rate</p>
@@ -622,11 +655,11 @@ const IntegrationsPage = () => {
                         <p className="text-sm">{formatDate(webhook.last_triggered_at)}</p>
                       </div>
                     </div>
-                    
+
                     <div>
                       <p className="text-sm font-medium text-gray-600 mb-2">Events</p>
                       <div className="flex flex-wrap gap-1">
-                        {webhook.events.map((event) => (
+                        {webhook.events.map(event => (
                           <Badge key={event} variant="outline" className="text-xs">
                             {event}
                           </Badge>
@@ -649,8 +682,11 @@ const IntegrationsPage = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {connections.map((connection) => (
-                    <div key={connection.id} className="flex items-center justify-between p-3 border rounded-lg">
+                  {connections.map(connection => (
+                    <div
+                      key={connection.id}
+                      className="flex items-center justify-between p-3 border rounded-lg"
+                    >
                       <div className="flex items-center space-x-3">
                         {getHealthIcon(connection.health_status)}
                         <div>
@@ -660,9 +696,7 @@ const IntegrationsPage = () => {
                       </div>
                       <div className="text-right">
                         <p className="text-sm font-medium">{connection.health_status}</p>
-                        <p className="text-xs text-gray-500">
-                          {connection.error_count} errors
-                        </p>
+                        <p className="text-xs text-gray-500">{connection.error_count} errors</p>
                       </div>
                     </div>
                   ))}
@@ -713,13 +747,15 @@ const IntegrationsPage = () => {
                 <Alert>
                   <AlertCircle className="h-4 w-4" />
                   <AlertDescription>
-                    GitHub connection experiencing intermittent failures. Last error: Rate limit exceeded.
+                    GitHub connection experiencing intermittent failures. Last error: Rate limit
+                    exceeded.
                   </AlertDescription>
                 </Alert>
                 <Alert>
                   <CheckCircle className="h-4 w-4" />
                   <AlertDescription>
-                    All Slack webhooks are operating normally. 99.8% success rate in the last 24 hours.
+                    All Slack webhooks are operating normally. 99.8% success rate in the last 24
+                    hours.
                   </AlertDescription>
                 </Alert>
               </div>
@@ -814,7 +850,7 @@ const IntegrationsPage = () => {
                     </Button>
                   </div>
                 </div>
-                
+
                 <div className="flex items-center justify-between p-4 border rounded-lg">
                   <div className="flex items-center space-x-3">
                     <Key className="h-5 w-5 text-gray-400" />

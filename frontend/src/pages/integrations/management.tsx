@@ -17,7 +17,10 @@ const ManagementPage: React.FC<ManagementPageProps> = () => {
     <>
       <Head>
         <title>Integration Management - Digame</title>
-        <meta name="description" content="Manage your installed integrations and monitor their performance" />
+        <meta
+          name="description"
+          content="Manage your installed integrations and monitor their performance"
+        />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
       <IntegrationManagementDashboard />
@@ -25,10 +28,10 @@ const ManagementPage: React.FC<ManagementPageProps> = () => {
   );
 };
 
-export const getServerSideProps: GetServerSideProps = async (context) => {
+export const getServerSideProps: GetServerSideProps = async context => {
   // Add any server-side logic here if needed
   // For example, authentication checks, data fetching, etc.
-  
+
   return {
     props: {
       // Pass any props to the component

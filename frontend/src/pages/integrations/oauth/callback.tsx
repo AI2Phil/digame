@@ -16,12 +16,7 @@ interface OAuthCallbackProps {
   error_description?: string;
 }
 
-const OAuthCallback: React.FC<OAuthCallbackProps> = ({ 
-  code, 
-  state, 
-  error, 
-  error_description 
-}) => {
+const OAuthCallback: React.FC<OAuthCallbackProps> = ({ code, state, error, error_description }) => {
   const router = useRouter();
   const [processing, setProcessing] = useState(true);
   const [result, setResult] = useState<{
@@ -35,7 +30,7 @@ const OAuthCallback: React.FC<OAuthCallbackProps> = ({
         if (error) {
           setResult({
             success: false,
-            message: error_description || error
+            message: error_description || error,
           });
           setProcessing(false);
           return;
@@ -44,7 +39,7 @@ const OAuthCallback: React.FC<OAuthCallbackProps> = ({
         if (!code) {
           setResult({
             success: false,
-            message: 'No authorization code received'
+            message: 'No authorization code received',
           });
           setProcessing(false);
           return;
@@ -55,12 +50,12 @@ const OAuthCallback: React.FC<OAuthCallbackProps> = ({
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
           },
           body: JSON.stringify({
             code,
-            state
-          })
+            state,
+          }),
         });
 
         const data = await response.json();
@@ -68,15 +63,18 @@ const OAuthCallback: React.FC<OAuthCallbackProps> = ({
         if (response.ok && data.success) {
           setResult({
             success: true,
-            message: 'Integration connected successfully!'
+            message: 'Integration connected successfully!',
           });
-          
+
           // Close the popup window and redirect parent
           if (window.opener) {
-            window.opener.postMessage({
-              type: 'oauth_success',
-              data: data.data
-            }, window.location.origin);
+            window.opener.postMessage(
+              {
+                type: 'oauth_success',
+                data: data.data,
+              },
+              window.location.origin
+            );
             window.close();
           } else {
             // If not in popup, redirect to integrations page
@@ -87,13 +85,13 @@ const OAuthCallback: React.FC<OAuthCallbackProps> = ({
         } else {
           setResult({
             success: false,
-            message: data.message || 'Failed to connect integration'
+            message: data.message || 'Failed to connect integration',
           });
         }
       } catch (err) {
         setResult({
           success: false,
-          message: 'Network error occurred while processing OAuth callback'
+          message: 'Network error occurred while processing OAuth callback',
         });
       } finally {
         setProcessing(false);
@@ -110,12 +108,12 @@ const OAuthCallback: React.FC<OAuthCallbackProps> = ({
         <meta name="description" content="Processing OAuth authentication" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
-      
-      <Box 
-        display="flex" 
-        flexDirection="column" 
-        alignItems="center" 
-        justifyContent="center" 
+
+      <Box
+        display="flex"
+        flexDirection="column"
+        alignItems="center"
+        justifyContent="center"
         minHeight="100vh"
         p={3}
       >
@@ -131,27 +129,23 @@ const OAuthCallback: React.FC<OAuthCallbackProps> = ({
           </>
         ) : result ? (
           <>
-            <Alert 
-              severity={result.success ? 'success' : 'error'} 
-              sx={{ mb: 3, minWidth: 300 }}
-            >
+            <Alert severity={result.success ? 'success' : 'error'} sx={{ mb: 3, minWidth: 300 }}>
               {result.message}
             </Alert>
-            
+
             {result.success ? (
               <Typography variant="body2" color="textSecondary" textAlign="center">
-                {window.opener ? 
-                  'This window will close automatically.' : 
-                  'Redirecting to integrations page...'
-                }
+                {window.opener
+                  ? 'This window will close automatically.'
+                  : 'Redirecting to integrations page...'}
               </Typography>
             ) : (
               <Box textAlign="center">
                 <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
                   You can close this window and try again.
                 </Typography>
-                <Button 
-                  variant="contained" 
+                <Button
+                  variant="contained"
                   onClick={() => {
                     if (window.opener) {
                       window.close();
@@ -171,7 +165,7 @@ const OAuthCallback: React.FC<OAuthCallbackProps> = ({
   );
 };
 
-export const getServerSideProps: GetServerSideProps = async (context) => {
+export const getServerSideProps: GetServerSideProps = async context => {
   const { code, state, error, error_description } = context.query;
 
   return {

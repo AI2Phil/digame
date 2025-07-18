@@ -32,7 +32,7 @@ const ReportAnalytics: React.FC = () => {
       viewed: 3891,
       shared: 234,
       avgViewTime: '4m 32s',
-      engagement: 87
+      engagement: 87,
     },
     {
       reportType: 'Analytics Dashboards',
@@ -40,7 +40,7 @@ const ReportAnalytics: React.FC = () => {
       viewed: 2156,
       shared: 178,
       avgViewTime: '6m 18s',
-      engagement: 92
+      engagement: 92,
     },
     {
       reportType: 'Custom Reports',
@@ -48,7 +48,7 @@ const ReportAnalytics: React.FC = () => {
       viewed: 1543,
       shared: 89,
       avgViewTime: '3m 45s',
-      engagement: 78
+      engagement: 78,
     },
     {
       reportType: 'Scheduled Reports',
@@ -56,8 +56,8 @@ const ReportAnalytics: React.FC = () => {
       viewed: 4567,
       shared: 456,
       avgViewTime: '2m 12s',
-      engagement: 65
-    }
+      engagement: 65,
+    },
   ];
 
   const topReports = [
@@ -68,7 +68,7 @@ const ReportAnalytics: React.FC = () => {
       views: 2341,
       shares: 156,
       rating: 4.8,
-      lastGenerated: '2 hours ago'
+      lastGenerated: '2 hours ago',
     },
     {
       id: 2,
@@ -77,7 +77,7 @@ const ReportAnalytics: React.FC = () => {
       views: 1987,
       shares: 134,
       rating: 4.6,
-      lastGenerated: '5 hours ago'
+      lastGenerated: '5 hours ago',
     },
     {
       id: 3,
@@ -86,7 +86,7 @@ const ReportAnalytics: React.FC = () => {
       views: 1654,
       shares: 98,
       rating: 4.9,
-      lastGenerated: '1 day ago'
+      lastGenerated: '1 day ago',
     },
     {
       id: 4,
@@ -95,7 +95,7 @@ const ReportAnalytics: React.FC = () => {
       views: 1432,
       shares: 87,
       rating: 4.5,
-      lastGenerated: '3 hours ago'
+      lastGenerated: '3 hours ago',
     },
     {
       id: 5,
@@ -104,15 +104,15 @@ const ReportAnalytics: React.FC = () => {
       views: 1298,
       shares: 76,
       rating: 4.7,
-      lastGenerated: '6 hours ago'
-    }
+      lastGenerated: '6 hours ago',
+    },
   ];
 
   const performanceMetrics = [
     { metric: 'Average Generation Time', value: '2.3s', change: '-15%', trend: 'down' },
     { metric: 'Report Accuracy', value: '98.7%', change: '+2.1%', trend: 'up' },
     { metric: 'User Satisfaction', value: '4.6/5', change: '+0.3', trend: 'up' },
-    { metric: 'Error Rate', value: '0.8%', change: '-0.4%', trend: 'down' }
+    { metric: 'Error Rate', value: '0.8%', change: '-0.4%', trend: 'down' },
   ];
 
   const engagementTrends = [
@@ -122,7 +122,7 @@ const ReportAnalytics: React.FC = () => {
     { date: '2024-01-04', views: 1420, shares: 61, downloads: 34 },
     { date: '2024-01-05', views: 1580, shares: 73, downloads: 41 },
     { date: '2024-01-06', views: 1340, shares: 48, downloads: 26 },
-    { date: '2024-01-07', views: 1650, shares: 82, downloads: 47 }
+    { date: '2024-01-07', views: 1650, shares: 82, downloads: 47 },
   ];
 
   if (loading) {
@@ -135,12 +135,12 @@ const ReportAnalytics: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <PageHeader 
+      <PageHeader
         title="Report Analytics"
         subtitle="Comprehensive analytics for report usage and performance"
         breadcrumbs={[
           { label: 'Reports', href: '/reports' },
-          { label: 'Analytics', href: '/reports/analytics' }
+          { label: 'Analytics', href: '/reports/analytics' },
         ]}
       />
 
@@ -150,7 +150,7 @@ const ReportAnalytics: React.FC = () => {
           <div className="flex items-center space-x-4">
             <select
               value={timeRange}
-              onChange={(e) => setTimeRange(e.target.value)}
+              onChange={e => setTimeRange(e.target.value)}
               className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
             >
               <option value="7d">Last 7 days</option>
@@ -171,8 +171,8 @@ const ReportAnalytics: React.FC = () => {
               { id: 'usage', label: 'Usage Analytics' },
               { id: 'performance', label: 'Performance' },
               { id: 'engagement', label: 'Engagement' },
-              { id: 'insights', label: 'Insights' }
-            ].map((tab) => (
+              { id: 'insights', label: 'Insights' },
+            ].map(tab => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
@@ -265,8 +265,8 @@ const ReportAnalytics: React.FC = () => {
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
                             <div className="w-16 bg-gray-200 rounded-full h-2 mr-2">
-                              <div 
-                                className="bg-blue-600 h-2 rounded-full" 
+                              <div
+                                className="bg-blue-600 h-2 rounded-full"
                                 style={{ width: `${stat.engagement}%` }}
                               ></div>
                             </div>
@@ -290,9 +290,11 @@ const ReportAnalytics: React.FC = () => {
                 <div key={index} className="bg-white rounded-lg shadow p-6">
                   <h3 className="text-sm font-medium text-gray-500">{metric.metric}</h3>
                   <div className="text-3xl font-bold text-gray-900 mt-2">{metric.value}</div>
-                  <div className={`text-sm mt-1 ${
-                    metric.trend === 'up' ? 'text-green-600' : 'text-red-600'
-                  }`}>
+                  <div
+                    className={`text-sm mt-1 ${
+                      metric.trend === 'up' ? 'text-green-600' : 'text-red-600'
+                    }`}
+                  >
                     {metric.change} from last period
                   </div>
                 </div>
@@ -305,7 +307,9 @@ const ReportAnalytics: React.FC = () => {
                 <div className="text-center">
                   <div className="text-4xl mb-2">📊</div>
                   <p className="text-gray-600">Performance metrics visualization</p>
-                  <p className="text-sm text-gray-500">Chart showing generation time, accuracy, and satisfaction trends</p>
+                  <p className="text-sm text-gray-500">
+                    Chart showing generation time, accuracy, and satisfaction trends
+                  </p>
                 </div>
               </div>
             </div>
@@ -321,20 +325,23 @@ const ReportAnalytics: React.FC = () => {
               </div>
               <div className="p-6">
                 <div className="space-y-4">
-                  {topReports.map((report) => (
-                    <div key={report.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+                  {topReports.map(report => (
+                    <div
+                      key={report.id}
+                      className="flex items-center justify-between p-4 border border-gray-200 rounded-lg"
+                    >
                       <div className="flex-1">
                         <h4 className="font-medium text-gray-900">{report.title}</h4>
                         <div className="flex items-center mt-1 space-x-4 text-sm text-gray-500">
-                          <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded">{report.category}</span>
+                          <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded">
+                            {report.category}
+                          </span>
                           <span>{report.views.toLocaleString()} views</span>
                           <span>{report.shares} shares</span>
                           <span>★ {report.rating}</span>
                         </div>
                       </div>
-                      <div className="text-sm text-gray-500">
-                        {report.lastGenerated}
-                      </div>
+                      <div className="text-sm text-gray-500">{report.lastGenerated}</div>
                     </div>
                   ))}
                 </div>
@@ -347,7 +354,9 @@ const ReportAnalytics: React.FC = () => {
                 <div className="text-center">
                   <div className="text-4xl mb-2">📈</div>
                   <p className="text-gray-600">Engagement trends visualization</p>
-                  <p className="text-sm text-gray-500">Chart showing views, shares, and downloads over time</p>
+                  <p className="text-sm text-gray-500">
+                    Chart showing views, shares, and downloads over time
+                  </p>
                 </div>
               </div>
             </div>
@@ -394,7 +403,8 @@ const ReportAnalytics: React.FC = () => {
                   <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                     <h4 className="font-medium text-yellow-900 mb-2">📱 Mobile Optimization</h4>
                     <p className="text-yellow-800 text-sm">
-                      Create mobile-optimized report formats to improve engagement on smaller screens.
+                      Create mobile-optimized report formats to improve engagement on smaller
+                      screens.
                     </p>
                   </div>
                   <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4">

@@ -28,13 +28,13 @@ const AuthPage: React.FC = () => {
     if (isAuthenticated && user) {
       // Determine redirect based on user role and platform owner status
       let redirectPath = '/dashboard';
-      
+
       if (user.isPlatformOwner) {
         redirectPath = '/platform-owner/console';
       } else if (user.role === 'admin') {
         redirectPath = '/admin/dashboard';
       }
-      
+
       console.log('AuthPage: User authenticated, redirecting to:', redirectPath);
       router.push(redirectPath);
     }
@@ -85,7 +85,11 @@ const AuthPage: React.FC = () => {
 
     try {
       if (isLoginMode) {
-        const success = await login({ username: formData.username, password: formData.password, rememberMe });
+        const success = await login({
+          username: formData.username,
+          password: formData.password,
+          rememberMe,
+        });
         if (success) {
           // The useEffect will handle the redirect based on user role
           // No need to manually navigate here since the user state will update
@@ -150,10 +154,9 @@ const AuthPage: React.FC = () => {
             {isLoginMode ? 'Welcome Back' : 'Create Account'}
           </h1>
           <p className="text-gray-600">
-            {isLoginMode 
-              ? 'Sign in to access your team collaboration platform' 
-              : 'Join the future of team collaboration'
-            }
+            {isLoginMode
+              ? 'Sign in to access your team collaboration platform'
+              : 'Join the future of team collaboration'}
           </p>
         </div>
 
@@ -294,7 +297,7 @@ const AuthPage: React.FC = () => {
                     id="rememberMe"
                     type="checkbox"
                     checked={rememberMe}
-                    onChange={(e) => setRememberMe(e.target.checked)}
+                    onChange={e => setRememberMe(e.target.checked)}
                     className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                     disabled={isSubmitting}
                   />
@@ -305,18 +308,16 @@ const AuthPage: React.FC = () => {
               )}
 
               {/* Submit Button */}
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={isSubmitting}
-              >
+              <Button type="submit" className="w-full" disabled={isSubmitting}>
                 {isSubmitting ? (
                   <div className="flex items-center justify-center space-x-2">
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                     <span>{isLoginMode ? 'Signing In...' : 'Creating Account...'}</span>
                   </div>
+                ) : isLoginMode ? (
+                  'Sign In'
                 ) : (
-                  isLoginMode ? 'Sign In' : 'Create Account'
+                  'Create Account'
                 )}
               </Button>
             </form>
@@ -324,7 +325,7 @@ const AuthPage: React.FC = () => {
             {/* Toggle Mode */}
             <div className="text-center">
               <p className="text-gray-600">
-                {isLoginMode ? "Don't have an account?" : "Already have an account?"}
+                {isLoginMode ? "Don't have an account?" : 'Already have an account?'}
                 <Button
                   type="button"
                   variant="link"
@@ -340,7 +341,8 @@ const AuthPage: React.FC = () => {
             {/* Demo Note */}
             <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
               <p className="text-sm text-blue-700">
-                <strong>Demo:</strong> Create a test account or use existing credentials to explore the team collaboration platform.
+                <strong>Demo:</strong> Create a test account or use existing credentials to explore
+                the team collaboration platform.
               </p>
             </div>
           </CardContent>

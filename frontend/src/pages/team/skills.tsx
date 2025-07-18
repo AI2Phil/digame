@@ -6,11 +6,11 @@ import { Button } from '../../src/components/ui/Button';
 import { Badge } from '../../src/components/ui/Badge';
 import { Avatar, AvatarFallback, AvatarImage } from '../../src/components/ui/Avatar';
 import { Progress } from '../../src/components/ui/Progress';
-import { 
-  Brain, 
-  Target, 
-  TrendingUp, 
-  Users, 
+import {
+  Brain,
+  Target,
+  TrendingUp,
+  Users,
   Star,
   Award,
   BookOpen,
@@ -47,7 +47,7 @@ import {
   Plane,
   Car,
   Home,
-  TreePine
+  TreePine,
 } from 'lucide-react';
 
 const TeamSkills: React.FC = () => {
@@ -67,10 +67,10 @@ const TeamSkills: React.FC = () => {
       setLoading(true);
       const response = await fetch('/api/team/skills', {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
       });
-      
+
       if (response.ok) {
         const data = await response.json();
         setSkillsData(data);
@@ -91,7 +91,7 @@ const TeamSkills: React.FC = () => {
       topSkills: 25,
       skillGaps: 8,
       learningPaths: 15,
-      completedTraining: 89
+      completedTraining: 89,
     },
     categories: [
       {
@@ -101,7 +101,7 @@ const TeamSkills: React.FC = () => {
         color: 'blue',
         skillCount: 45,
         avgLevel: 3.6,
-        topSkills: ['JavaScript', 'React', 'Node.js', 'Python', 'SQL']
+        topSkills: ['JavaScript', 'React', 'Node.js', 'Python', 'SQL'],
       },
       {
         id: 'design',
@@ -110,7 +110,7 @@ const TeamSkills: React.FC = () => {
         color: 'purple',
         skillCount: 18,
         avgLevel: 3.2,
-        topSkills: ['UI/UX Design', 'Figma', 'Adobe Creative Suite', 'Prototyping']
+        topSkills: ['UI/UX Design', 'Figma', 'Adobe Creative Suite', 'Prototyping'],
       },
       {
         id: 'communication',
@@ -119,7 +119,7 @@ const TeamSkills: React.FC = () => {
         color: 'green',
         skillCount: 12,
         avgLevel: 3.8,
-        topSkills: ['Public Speaking', 'Writing', 'Presentation', 'Negotiation']
+        topSkills: ['Public Speaking', 'Writing', 'Presentation', 'Negotiation'],
       },
       {
         id: 'leadership',
@@ -128,7 +128,7 @@ const TeamSkills: React.FC = () => {
         color: 'orange',
         skillCount: 15,
         avgLevel: 3.1,
-        topSkills: ['Team Management', 'Strategic Planning', 'Decision Making']
+        topSkills: ['Team Management', 'Strategic Planning', 'Decision Making'],
       },
       {
         id: 'project-management',
@@ -137,7 +137,7 @@ const TeamSkills: React.FC = () => {
         color: 'red',
         skillCount: 10,
         avgLevel: 3.5,
-        topSkills: ['Agile', 'Scrum', 'Risk Management', 'Resource Planning']
+        topSkills: ['Agile', 'Scrum', 'Risk Management', 'Resource Planning'],
       },
       {
         id: 'data-analysis',
@@ -146,8 +146,8 @@ const TeamSkills: React.FC = () => {
         color: 'indigo',
         skillCount: 8,
         avgLevel: 2.9,
-        topSkills: ['Excel', 'SQL', 'Tableau', 'Statistics']
-      }
+        topSkills: ['Excel', 'SQL', 'Tableau', 'Statistics'],
+      },
     ],
     teamSkills: [
       {
@@ -162,11 +162,11 @@ const TeamSkills: React.FC = () => {
           { name: 'Project Management', level: 5, category: 'project-management' },
           { name: 'Strategic Planning', level: 4, category: 'leadership' },
           { name: 'Team Building', level: 5, category: 'leadership' },
-          { name: 'JavaScript', level: 4, category: 'technical' }
+          { name: 'JavaScript', level: 4, category: 'technical' },
         ],
         skillGaps: ['Data Analysis', 'Machine Learning'],
         learningGoals: ['Advanced Analytics', 'AI/ML Fundamentals'],
-        lastUpdated: '2024-01-15'
+        lastUpdated: '2024-01-15',
       },
       {
         id: 2,
@@ -180,11 +180,11 @@ const TeamSkills: React.FC = () => {
           { name: 'React', level: 5, category: 'technical' },
           { name: 'Node.js', level: 5, category: 'technical' },
           { name: 'System Design', level: 4, category: 'technical' },
-          { name: 'Code Review', level: 4, category: 'technical' }
+          { name: 'Code Review', level: 4, category: 'technical' },
         ],
         skillGaps: ['Leadership', 'Public Speaking'],
         learningGoals: ['Technical Leadership', 'Mentoring'],
-        lastUpdated: '2024-01-14'
+        lastUpdated: '2024-01-14',
       },
       {
         id: 3,
@@ -198,11 +198,11 @@ const TeamSkills: React.FC = () => {
           { name: 'Figma', level: 5, category: 'design' },
           { name: 'User Research', level: 4, category: 'design' },
           { name: 'Prototyping', level: 4, category: 'design' },
-          { name: 'Design Systems', level: 4, category: 'design' }
+          { name: 'Design Systems', level: 4, category: 'design' },
         ],
         skillGaps: ['Frontend Development', 'Data Visualization'],
         learningGoals: ['React Basics', 'D3.js'],
-        lastUpdated: '2024-01-13'
+        lastUpdated: '2024-01-13',
       },
       {
         id: 4,
@@ -216,12 +216,12 @@ const TeamSkills: React.FC = () => {
           { name: 'Quality Assurance', level: 5, category: 'technical' },
           { name: 'Selenium', level: 4, category: 'technical' },
           { name: 'API Testing', level: 4, category: 'technical' },
-          { name: 'Bug Tracking', level: 5, category: 'technical' }
+          { name: 'Bug Tracking', level: 5, category: 'technical' },
         ],
         skillGaps: ['Performance Testing', 'Security Testing'],
         learningGoals: ['Load Testing', 'Penetration Testing'],
-        lastUpdated: '2024-01-12'
-      }
+        lastUpdated: '2024-01-12',
+      },
     ],
     skillMatrix: [
       {
@@ -234,8 +234,8 @@ const TeamSkills: React.FC = () => {
           { name: 'Sarah Johnson', level: 4 },
           { name: 'Mike Chen', level: 5 },
           { name: 'Alex Rodriguez', level: 3 },
-          { name: 'Tom Wilson', level: 4 }
-        ]
+          { name: 'Tom Wilson', level: 4 },
+        ],
       },
       {
         skill: 'React',
@@ -247,8 +247,8 @@ const TeamSkills: React.FC = () => {
           { name: 'Mike Chen', level: 5 },
           { name: 'Alex Rodriguez', level: 3 },
           { name: 'Tom Wilson', level: 4 },
-          { name: 'Emma Garcia', level: 3 }
-        ]
+          { name: 'Emma Garcia', level: 3 },
+        ],
       },
       {
         skill: 'Leadership',
@@ -260,8 +260,8 @@ const TeamSkills: React.FC = () => {
           { name: 'Sarah Johnson', level: 5 },
           { name: 'Mike Chen', level: 2 },
           { name: 'Lisa Brown', level: 3 },
-          { name: 'David Wilson', level: 2 }
-        ]
+          { name: 'David Wilson', level: 2 },
+        ],
       },
       {
         skill: 'UI/UX Design',
@@ -272,9 +272,9 @@ const TeamSkills: React.FC = () => {
         members: [
           { name: 'Lisa Brown', level: 5 },
           { name: 'Tom Wilson', level: 4 },
-          { name: 'Emma Garcia', level: 2 }
-        ]
-      }
+          { name: 'Emma Garcia', level: 2 },
+        ],
+      },
     ],
     learningPaths: [
       {
@@ -287,7 +287,7 @@ const TeamSkills: React.FC = () => {
         enrolled: 5,
         completed: 2,
         rating: 4.7,
-        category: 'technical'
+        category: 'technical',
       },
       {
         id: 2,
@@ -299,7 +299,7 @@ const TeamSkills: React.FC = () => {
         enrolled: 3,
         completed: 1,
         rating: 4.9,
-        category: 'leadership'
+        category: 'leadership',
       },
       {
         id: 3,
@@ -311,8 +311,8 @@ const TeamSkills: React.FC = () => {
         enrolled: 4,
         completed: 2,
         rating: 4.5,
-        category: 'design'
-      }
+        category: 'design',
+      },
     ],
     recommendations: [
       {
@@ -323,7 +323,7 @@ const TeamSkills: React.FC = () => {
         priority: 'high',
         affectedMembers: 3,
         suggestedAction: 'Enroll in React training program',
-        timeline: '2 weeks'
+        timeline: '2 weeks',
       },
       {
         id: 2,
@@ -333,7 +333,7 @@ const TeamSkills: React.FC = () => {
         priority: 'medium',
         affectedMembers: 2,
         suggestedAction: 'Start leadership mentorship program',
-        timeline: '1 month'
+        timeline: '1 month',
       },
       {
         id: 3,
@@ -343,50 +343,55 @@ const TeamSkills: React.FC = () => {
         priority: 'low',
         affectedMembers: 5,
         suggestedAction: 'Organize design system workshop',
-        timeline: '1 week'
-      }
-    ]
+        timeline: '1 week',
+      },
+    ],
   };
 
   const currentData = skillsData || mockSkillsData;
 
-  const getCategoryColor = (color) => {
+  const getCategoryColor = color => {
     const colors = {
       blue: 'bg-blue-100 text-blue-800',
       purple: 'bg-purple-100 text-purple-800',
       green: 'bg-green-100 text-green-800',
       orange: 'bg-orange-100 text-orange-800',
       red: 'bg-red-100 text-red-800',
-      indigo: 'bg-indigo-100 text-indigo-800'
+      indigo: 'bg-indigo-100 text-indigo-800',
     };
     return colors[color] || 'bg-gray-100 text-gray-800';
   };
 
-  const getSkillLevelColor = (level) => {
+  const getSkillLevelColor = level => {
     if (level >= 4.5) return 'text-green-600';
     if (level >= 3.5) return 'text-blue-600';
     if (level >= 2.5) return 'text-yellow-600';
     return 'text-red-600';
   };
 
-  const getGapColor = (gap) => {
+  const getGapColor = gap => {
     if (gap > 0) return 'text-red-600';
     if (gap < 0) return 'text-green-600';
     return 'text-gray-600';
   };
 
-  const getPriorityColor = (priority) => {
+  const getPriorityColor = priority => {
     switch (priority) {
-      case 'high': return 'bg-red-100 text-red-800';
-      case 'medium': return 'bg-yellow-100 text-yellow-800';
-      case 'low': return 'bg-green-100 text-green-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'high':
+        return 'bg-red-100 text-red-800';
+      case 'medium':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'low':
+        return 'bg-green-100 text-green-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
-  const filteredSkills = currentData.teamSkills.filter(member =>
-    member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    member.role.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredSkills = currentData.teamSkills.filter(
+    member =>
+      member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      member.role.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -397,7 +402,7 @@ const TeamSkills: React.FC = () => {
         icon={<Brain className="h-8 w-8" />}
         breadcrumb={[
           { label: 'Team', href: '/team' },
-          { label: 'Skills', href: '/team/skills' }
+          { label: 'Skills', href: '/team/skills' },
         ]}
         actions={
           <div className="flex gap-2">
@@ -481,7 +486,9 @@ const TeamSkills: React.FC = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-600">Total Skills</p>
-                    <p className="text-2xl font-bold text-blue-600">{currentData.overview.totalSkills}</p>
+                    <p className="text-2xl font-bold text-blue-600">
+                      {currentData.overview.totalSkills}
+                    </p>
                   </div>
                   <Brain className="h-8 w-8 text-blue-600" />
                 </div>
@@ -493,7 +500,9 @@ const TeamSkills: React.FC = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-600">Team Members</p>
-                    <p className="text-2xl font-bold text-green-600">{currentData.overview.teamMembers}</p>
+                    <p className="text-2xl font-bold text-green-600">
+                      {currentData.overview.teamMembers}
+                    </p>
                   </div>
                   <Users className="h-8 w-8 text-green-600" />
                 </div>
@@ -505,7 +514,9 @@ const TeamSkills: React.FC = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-600">Avg Skill Level</p>
-                    <p className="text-2xl font-bold text-purple-600">{currentData.overview.averageSkillLevel}/5</p>
+                    <p className="text-2xl font-bold text-purple-600">
+                      {currentData.overview.averageSkillLevel}/5
+                    </p>
                   </div>
                   <Star className="h-8 w-8 text-purple-600" />
                 </div>
@@ -517,7 +528,9 @@ const TeamSkills: React.FC = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-600">Skill Gaps</p>
-                    <p className="text-2xl font-bold text-orange-600">{currentData.overview.skillGaps}</p>
+                    <p className="text-2xl font-bold text-orange-600">
+                      {currentData.overview.skillGaps}
+                    </p>
                   </div>
                   <AlertTriangle className="h-8 w-8 text-orange-600" />
                 </div>
@@ -532,8 +545,11 @@ const TeamSkills: React.FC = () => {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {currentData.categories.map((category) => (
-                  <div key={category.id} className="p-4 border rounded-lg hover:shadow-md transition-shadow">
+                {currentData.categories.map(category => (
+                  <div
+                    key={category.id}
+                    className="p-4 border rounded-lg hover:shadow-md transition-shadow"
+                  >
                     <div className="flex items-center gap-3 mb-3">
                       <div className={`p-2 rounded ${getCategoryColor(category.color)}`}>
                         {category.icon}
@@ -543,7 +559,7 @@ const TeamSkills: React.FC = () => {
                         <p className="text-sm text-gray-600">{category.skillCount} skills</p>
                       </div>
                     </div>
-                    
+
                     <div className="space-y-2">
                       <div className="flex justify-between text-sm">
                         <span>Average Level</span>
@@ -588,18 +604,18 @@ const TeamSkills: React.FC = () => {
                   type="text"
                   placeholder="Search team members..."
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={e => setSearchTerm(e.target.value)}
                   className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
             </div>
             <select
               value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
+              onChange={e => setSelectedCategory(e.target.value)}
               className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="all">All Categories</option>
-              {currentData.categories.map((category) => (
+              {currentData.categories.map(category => (
                 <option key={category.id} value={category.id}>
                   {category.name}
                 </option>
@@ -609,7 +625,7 @@ const TeamSkills: React.FC = () => {
 
           {/* Team Skills Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {filteredSkills.map((member) => (
+            {filteredSkills.map(member => (
               <Card key={member.id} className="hover:shadow-lg transition-shadow">
                 <CardHeader>
                   <div className="flex items-center gap-3">
@@ -631,7 +647,9 @@ const TeamSkills: React.FC = () => {
                       <div className="text-xs text-gray-600">Total Skills</div>
                     </div>
                     <div className="bg-green-50 p-2 rounded">
-                      <div className="text-lg font-bold text-green-600">{member.topSkills.length}</div>
+                      <div className="text-lg font-bold text-green-600">
+                        {member.topSkills.length}
+                      </div>
                       <div className="text-xs text-gray-600">Top Skills</div>
                     </div>
                   </div>
@@ -645,7 +663,7 @@ const TeamSkills: React.FC = () => {
                           <span className="text-sm">{skill.name}</span>
                           <div className="flex items-center gap-2">
                             <div className="flex">
-                              {[1, 2, 3, 4, 5].map((star) => (
+                              {[1, 2, 3, 4, 5].map(star => (
                                 <Star
                                   key={star}
                                   className={`h-3 w-3 ${
@@ -747,7 +765,8 @@ const TeamSkills: React.FC = () => {
                         <div className="flex items-center gap-2">
                           <span className="text-sm text-gray-600">Gap:</span>
                           <span className={`font-medium ${getGapColor(skill.gap)}`}>
-                            {skill.gap > 0 ? '+' : ''}{skill.gap}
+                            {skill.gap > 0 ? '+' : ''}
+                            {skill.gap}
                           </span>
                         </div>
                       </div>
@@ -765,10 +784,13 @@ const TeamSkills: React.FC = () => {
                       <p className="text-sm font-medium mb-2">Team Members</p>
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                         {skill.members.map((member, memberIndex) => (
-                          <div key={memberIndex} className="flex items-center justify-between text-xs p-2 bg-gray-50 rounded">
+                          <div
+                            key={memberIndex}
+                            className="flex items-center justify-between text-xs p-2 bg-gray-50 rounded"
+                          >
                             <span>{member.name}</span>
                             <div className="flex">
-                              {[1, 2, 3, 4, 5].map((star) => (
+                              {[1, 2, 3, 4, 5].map(star => (
                                 <Star
                                   key={star}
                                   className={`h-2 w-2 ${
@@ -793,7 +815,7 @@ const TeamSkills: React.FC = () => {
 
       {activeTab === 'learning' && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {currentData.learningPaths.map((path) => (
+          {currentData.learningPaths.map(path => (
             <Card key={path.id} className="hover:shadow-lg transition-shadow">
               <CardHeader>
                 <div className="flex items-start justify-between">
@@ -850,7 +872,7 @@ const TeamSkills: React.FC = () => {
 
       {activeTab === 'recommendations' && (
         <div className="space-y-4">
-          {currentData.recommendations.map((rec) => (
+          {currentData.recommendations.map(rec => (
             <Card key={rec.id} className="hover:shadow-md transition-shadow">
               <CardContent className="p-6">
                 <div className="flex items-start justify-between">
@@ -862,7 +884,7 @@ const TeamSkills: React.FC = () => {
                       </Badge>
                     </div>
                     <p className="text-sm text-gray-600">{rec.description}</p>
-                    
+
                     <div className="flex items-center gap-4 text-sm text-gray-600">
                       <div className="flex items-center gap-1">
                         <Users className="h-4 w-4" />
@@ -879,7 +901,7 @@ const TeamSkills: React.FC = () => {
                       <p className="text-sm text-blue-700">{rec.suggestedAction}</p>
                     </div>
                   </div>
-                  
+
                   <div className="flex gap-2">
                     <Button size="sm">
                       <CheckCircle className="h-4 w-4 mr-2" />

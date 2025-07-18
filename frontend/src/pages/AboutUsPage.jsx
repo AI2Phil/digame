@@ -1,9 +1,23 @@
 import React from 'react';
-import { 
-  Award, Users, Target, Zap, Heart, Globe, 
-  Linkedin, Twitter, Mail, ExternalLink,
-  TrendingUp, Shield, Clock, Lightbulb,
-  Code, Database, Smartphone, BarChart3
+import {
+  Award,
+  Users,
+  Target,
+  Zap,
+  Heart,
+  Globe,
+  Linkedin,
+  Twitter,
+  Mail,
+  ExternalLink,
+  TrendingUp,
+  Shield,
+  Clock,
+  Lightbulb,
+  Code,
+  Database,
+  Smartphone,
+  BarChart3,
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -17,63 +31,71 @@ const AboutUsPage = () => {
     { label: 'Active Users', value: '50K+', icon: Users },
     { label: 'Goals Achieved', value: '2.5M+', icon: Target },
     { label: 'Hours Tracked', value: '10M+', icon: Clock },
-    { label: 'Countries', value: '120+', icon: Globe }
+    { label: 'Countries', value: '120+', icon: Globe },
   ];
 
   const values = [
     {
       icon: Target,
       title: 'Purpose-Driven',
-      description: 'We believe everyone deserves to reach their full potential through better productivity habits.'
+      description:
+        'We believe everyone deserves to reach their full potential through better productivity habits.',
     },
     {
       icon: Shield,
       title: 'Privacy First',
-      description: 'Your data is yours. We prioritize security and transparency in everything we build.'
+      description:
+        'Your data is yours. We prioritize security and transparency in everything we build.',
     },
     {
       icon: Lightbulb,
       title: 'Innovation',
-      description: 'We continuously push the boundaries of what productivity software can achieve.'
+      description: 'We continuously push the boundaries of what productivity software can achieve.',
     },
     {
       icon: Heart,
       title: 'User-Centric',
-      description: 'Every feature is designed with our users\' needs and feedback at the center.'
-    }
+      description: "Every feature is designed with our users' needs and feedback at the center.",
+    },
   ];
 
   const timeline = [
     {
       year: '2020',
       title: 'The Vision',
-      description: 'Phil O\'Shea conceptualized Digame after recognizing the need for intelligent productivity tracking.'
+      description:
+        "Phil O'Shea conceptualized Digame after recognizing the need for intelligent productivity tracking.",
     },
     {
       year: '2021',
       title: 'Foundation',
-      description: 'Development began with a focus on creating an intuitive, data-driven productivity platform.'
+      description:
+        'Development began with a focus on creating an intuitive, data-driven productivity platform.',
     },
     {
       year: '2022',
       title: 'Beta Launch',
-      description: 'First beta version released to a select group of productivity enthusiasts and early adopters.'
+      description:
+        'First beta version released to a select group of productivity enthusiasts and early adopters.',
     },
     {
       year: '2023',
       title: 'Public Release',
-      description: 'Digame officially launched to the public with core features and mobile applications.'
+      description:
+        'Digame officially launched to the public with core features and mobile applications.',
     },
     {
       year: '2024',
       title: 'AI Integration',
-      description: 'Advanced AI-powered insights and recommendations were integrated into the platform.'
+      description:
+        'Advanced AI-powered insights and recommendations were integrated into the platform.',
     },
     {
       year: '2025',
       title: 'Global Expansion',
-      description: 'Reaching users worldwide with enhanced team collaboration and enterprise features.'
-    }
+      description:
+        'Reaching users worldwide with enhanced team collaboration and enterprise features.',
+    },
   ];
 
   const technologies = [
@@ -82,7 +104,7 @@ const AboutUsPage = () => {
     { name: 'FastAPI', category: 'API', icon: Zap },
     { name: 'PostgreSQL', category: 'Database', icon: Database },
     { name: 'React Native', category: 'Mobile', icon: Smartphone },
-    { name: 'Machine Learning', category: 'AI/ML', icon: BarChart3 }
+    { name: 'Machine Learning', category: 'AI/ML', icon: BarChart3 },
   ];
 
   return (
@@ -92,8 +114,8 @@ const AboutUsPage = () => {
         <div className="container mx-auto px-6 text-center">
           <h1 className="text-5xl font-bold mb-6">About Digame</h1>
           <p className="text-xl text-muted-foreground mb-8 max-w-3xl mx-auto">
-            Empowering individuals and teams to achieve their highest potential through 
-            intelligent productivity tracking and data-driven insights.
+            Empowering individuals and teams to achieve their highest potential through intelligent
+            productivity tracking and data-driven insights.
           </p>
           <div className="flex justify-center space-x-4">
             <Button size="lg">
@@ -147,30 +169,36 @@ const AboutUsPage = () => {
                     <AvatarFallback className="text-2xl">PO</AvatarFallback>
                   </Avatar>
                 </div>
-                
+
                 <div className="flex-1 text-center md:text-left">
                   <div className="mb-4">
                     <h3 className="text-2xl font-bold mb-2">Phil O'Shea</h3>
                     <div className="flex flex-wrap justify-center md:justify-start gap-2 mb-3">
-                      <Badge variant="primary" className="px-3 py-1">Founder</Badge>
-                      <Badge variant="secondary" className="px-3 py-1">Software Pioneer</Badge>
-                      <Badge variant="outline" className="px-3 py-1">C.E.O.</Badge>
+                      <Badge variant="primary" className="px-3 py-1">
+                        Founder
+                      </Badge>
+                      <Badge variant="secondary" className="px-3 py-1">
+                        Software Pioneer
+                      </Badge>
+                      <Badge variant="outline" className="px-3 py-1">
+                        C.E.O.
+                      </Badge>
                     </div>
                   </div>
-                  
+
                   <p className="text-muted-foreground mb-6 leading-relaxed">
-                    Phil O'Shea is a visionary software pioneer and the founder and CEO of Digame. 
-                    With over two decades of experience in software development and product innovation, 
-                    Phil recognized the critical need for intelligent productivity solutions in our 
-                    increasingly complex digital world.
+                    Phil O'Shea is a visionary software pioneer and the founder and CEO of Digame.
+                    With over two decades of experience in software development and product
+                    innovation, Phil recognized the critical need for intelligent productivity
+                    solutions in our increasingly complex digital world.
                   </p>
-                  
+
                   <p className="text-muted-foreground mb-6 leading-relaxed">
-                    His passion for helping individuals and teams unlock their potential led to the 
-                    creation of Digame - a platform that combines cutting-edge technology with 
+                    His passion for helping individuals and teams unlock their potential led to the
+                    creation of Digame - a platform that combines cutting-edge technology with
                     human-centered design to deliver actionable productivity insights.
                   </p>
-                  
+
                   <div className="flex justify-center md:justify-start space-x-4">
                     <Button variant="outline" size="sm">
                       <Linkedin className="mr-2 h-4 w-4" />
@@ -205,10 +233,10 @@ const AboutUsPage = () => {
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground leading-relaxed">
-                  To empower individuals and teams worldwide with intelligent productivity tools 
-                  that transform how they work, learn, and achieve their goals. We believe that 
-                  everyone deserves access to data-driven insights that help them reach their 
-                  full potential.
+                  To empower individuals and teams worldwide with intelligent productivity tools
+                  that transform how they work, learn, and achieve their goals. We believe that
+                  everyone deserves access to data-driven insights that help them reach their full
+                  potential.
                 </p>
               </CardContent>
             </Card>
@@ -224,8 +252,8 @@ const AboutUsPage = () => {
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground leading-relaxed">
-                  To create a world where productivity is not about working harder, but working 
-                  smarter. We envision a future where technology seamlessly integrates with human 
+                  To create a world where productivity is not about working harder, but working
+                  smarter. We envision a future where technology seamlessly integrates with human
                   potential to create meaningful, sustainable, and fulfilling work experiences.
                 </p>
               </CardContent>
@@ -272,19 +300,22 @@ const AboutUsPage = () => {
           <div className="relative">
             {/* Timeline line */}
             <div className="absolute left-4 md:left-1/2 top-0 bottom-0 w-0.5 bg-border transform md:-translate-x-0.5"></div>
-            
+
             <div className="space-y-8">
               {timeline.map((item, index) => (
-                <div key={index} className={`relative flex items-center ${
-                  index % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'
-                }`}>
+                <div
+                  key={index}
+                  className={`relative flex items-center ${
+                    index % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'
+                  }`}
+                >
                   {/* Timeline dot */}
                   <div className="absolute left-4 md:left-1/2 w-3 h-3 bg-primary rounded-full transform -translate-x-1.5 md:-translate-x-1.5 z-10"></div>
-                  
+
                   {/* Content */}
-                  <div className={`flex-1 ml-12 md:ml-0 ${
-                    index % 2 === 0 ? 'md:pr-8' : 'md:pl-8'
-                  }`}>
+                  <div
+                    className={`flex-1 ml-12 md:ml-0 ${index % 2 === 0 ? 'md:pr-8' : 'md:pl-8'}`}
+                  >
                     <Card>
                       <CardContent className="pt-4">
                         <div className="flex items-center space-x-3 mb-2">
@@ -342,18 +373,18 @@ const AboutUsPage = () => {
               {
                 title: 'Best Productivity App 2024',
                 organization: 'TechCrunch Awards',
-                description: 'Recognized for innovation in productivity software'
+                description: 'Recognized for innovation in productivity software',
               },
               {
                 title: 'User Choice Award',
                 organization: 'Product Hunt',
-                description: 'Voted by users as the top productivity tool'
+                description: 'Voted by users as the top productivity tool',
               },
               {
                 title: 'Innovation Excellence',
                 organization: 'SaaS Awards',
-                description: 'Outstanding achievement in software innovation'
-              }
+                description: 'Outstanding achievement in software innovation',
+              },
             ].map((award, index) => (
               <Card key={index} className="text-center">
                 <CardContent className="pt-6">
@@ -375,13 +406,11 @@ const AboutUsPage = () => {
             <CardContent className="pt-8 pb-8">
               <h2 className="text-2xl font-bold mb-4">Ready to Transform Your Productivity?</h2>
               <p className="text-muted-foreground mb-6 max-w-2xl mx-auto">
-                Join thousands of users who have already discovered the power of intelligent 
+                Join thousands of users who have already discovered the power of intelligent
                 productivity tracking with Digame.
               </p>
               <div className="flex justify-center space-x-4">
-                <Button size="lg">
-                  Get Started Free
-                </Button>
+                <Button size="lg">Get Started Free</Button>
                 <Button variant="outline" size="lg">
                   <Mail className="mr-2 h-5 w-5" />
                   Contact Sales

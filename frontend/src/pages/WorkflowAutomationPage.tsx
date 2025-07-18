@@ -4,9 +4,19 @@ import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/Tabs';
 import {
-  Workflow, Settings, Activity, Zap, Plus,
-  FileText, Eye, BarChart3, Users, Clock,
-  CheckCircle, AlertTriangle, TrendingUp
+  Workflow,
+  Settings,
+  Activity,
+  Zap,
+  Plus,
+  FileText,
+  Eye,
+  BarChart3,
+  Users,
+  Clock,
+  CheckCircle,
+  AlertTriangle,
+  TrendingUp,
 } from 'lucide-react';
 import TemplateBuilder from '../components/workflow/TemplateBuilder';
 import WorkflowVisualDesigner from '../components/workflow/WorkflowVisualDesigner';
@@ -25,7 +35,7 @@ const FEATURE_CARDS = [
     color: 'text-blue-600',
     bgColor: 'bg-blue-50',
     borderColor: 'border-blue-200',
-    features: ['Visual Designer', 'Template Library', 'Version Control', 'Collaboration']
+    features: ['Visual Designer', 'Template Library', 'Version Control', 'Collaboration'],
   },
   {
     id: 'automation',
@@ -35,7 +45,7 @@ const FEATURE_CARDS = [
     color: 'text-yellow-600',
     bgColor: 'bg-yellow-50',
     borderColor: 'border-yellow-200',
-    features: ['Event Triggers', 'Conditional Logic', 'Rate Limiting', 'Priority Management']
+    features: ['Event Triggers', 'Conditional Logic', 'Rate Limiting', 'Priority Management'],
   },
   {
     id: 'monitoring',
@@ -45,7 +55,7 @@ const FEATURE_CARDS = [
     color: 'text-green-600',
     bgColor: 'bg-green-50',
     borderColor: 'border-green-200',
-    features: ['Live Dashboard', 'Performance Metrics', 'Error Tracking', 'Success Analytics']
+    features: ['Live Dashboard', 'Performance Metrics', 'Error Tracking', 'Success Analytics'],
   },
   {
     id: 'designer',
@@ -55,8 +65,8 @@ const FEATURE_CARDS = [
     color: 'text-purple-600',
     bgColor: 'bg-purple-50',
     borderColor: 'border-purple-200',
-    features: ['Drag & Drop', 'Step Configuration', 'Connection Management', 'Real-time Preview']
-  }
+    features: ['Drag & Drop', 'Step Configuration', 'Connection Management', 'Real-time Preview'],
+  },
 ];
 
 const QUICK_STATS = [
@@ -65,29 +75,29 @@ const QUICK_STATS = [
     value: '24',
     change: '+12%',
     trend: 'up',
-    icon: <Workflow className="h-5 w-5" />
+    icon: <Workflow className="h-5 w-5" />,
   },
   {
     label: 'Automation Rules',
     value: '18',
     change: '+5%',
     trend: 'up',
-    icon: <Zap className="h-5 w-5" />
+    icon: <Zap className="h-5 w-5" />,
   },
   {
     label: 'Success Rate',
     value: '94.2%',
     change: '+2.1%',
     trend: 'up',
-    icon: <CheckCircle className="h-5 w-5" />
+    icon: <CheckCircle className="h-5 w-5" />,
   },
   {
     label: 'Avg Duration',
     value: '3.2m',
     change: '-15%',
     trend: 'down',
-    icon: <Clock className="h-5 w-5" />
-  }
+    icon: <Clock className="h-5 w-5" />,
+  },
 ];
 
 export const WorkflowAutomationPage: React.FC<WorkflowAutomationPageProps> = () => {
@@ -97,7 +107,7 @@ export const WorkflowAutomationPage: React.FC<WorkflowAutomationPageProps> = () 
     start_step: '',
     steps: [],
     variables: {},
-    settings: {}
+    settings: {},
   });
 
   const handleFeatureSelect = (featureId: string) => {
@@ -125,28 +135,21 @@ export const WorkflowAutomationPage: React.FC<WorkflowAutomationPageProps> = () 
       {/* Hero Section */}
       <div className="text-center py-12 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg">
         <Workflow className="h-16 w-16 text-blue-600 mx-auto mb-4" />
-        <h1 className="text-4xl font-bold text-gray-900 mb-4">
-          Workflow Automation Platform
-        </h1>
+        <h1 className="text-4xl font-bold text-gray-900 mb-4">Workflow Automation Platform</h1>
         <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8">
-          Design, automate, and monitor business workflows with our comprehensive 
-          automation platform. Create templates, set up rules, and track performance 
-          all in one place.
+          Design, automate, and monitor business workflows with our comprehensive automation
+          platform. Create templates, set up rules, and track performance all in one place.
         </p>
         <div className="flex justify-center space-x-4">
-          <Button 
-            size="lg" 
+          <Button
+            size="lg"
             onClick={() => handleFeatureSelect('templates')}
             className="bg-blue-600 hover:bg-blue-700"
           >
             <Plus className="mr-2 h-5 w-5" />
             Create Workflow
           </Button>
-          <Button 
-            variant="outline" 
-            size="lg"
-            onClick={() => handleFeatureSelect('monitoring')}
-          >
+          <Button variant="outline" size="lg" onClick={() => handleFeatureSelect('monitoring')}>
             <BarChart3 className="mr-2 h-5 w-5" />
             View Analytics
           </Button>
@@ -163,19 +166,25 @@ export const WorkflowAutomationPage: React.FC<WorkflowAutomationPageProps> = () 
                   <p className="text-sm font-medium text-gray-600">{stat.label}</p>
                   <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
                 </div>
-                <div className={`p-3 rounded-full ${
-                  stat.trend === 'up' ? 'bg-green-100' : 'bg-red-100'
-                }`}>
+                <div
+                  className={`p-3 rounded-full ${
+                    stat.trend === 'up' ? 'bg-green-100' : 'bg-red-100'
+                  }`}
+                >
                   {stat.icon}
                 </div>
               </div>
               <div className="mt-2 flex items-center">
-                <TrendingUp className={`h-4 w-4 mr-1 ${
-                  stat.trend === 'up' ? 'text-green-600' : 'text-red-600 rotate-180'
-                }`} />
-                <span className={`text-sm font-medium ${
-                  stat.trend === 'up' ? 'text-green-600' : 'text-red-600'
-                }`}>
+                <TrendingUp
+                  className={`h-4 w-4 mr-1 ${
+                    stat.trend === 'up' ? 'text-green-600' : 'text-red-600 rotate-180'
+                  }`}
+                />
+                <span
+                  className={`text-sm font-medium ${
+                    stat.trend === 'up' ? 'text-green-600' : 'text-red-600'
+                  }`}
+                >
                   {stat.change}
                 </span>
                 <span className="text-sm text-gray-600 ml-1">vs last month</span>
@@ -189,9 +198,9 @@ export const WorkflowAutomationPage: React.FC<WorkflowAutomationPageProps> = () 
       <div>
         <h2 className="text-2xl font-bold text-gray-900 mb-6">Platform Features</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {FEATURE_CARDS.map((feature) => (
-            <Card 
-              key={feature.id} 
+          {FEATURE_CARDS.map(feature => (
+            <Card
+              key={feature.id}
               className={`cursor-pointer transition-all duration-200 hover:shadow-lg border-2 ${feature.borderColor} ${feature.bgColor}`}
               onClick={() => handleFeatureSelect(feature.id)}
             >
@@ -210,9 +219,9 @@ export const WorkflowAutomationPage: React.FC<WorkflowAutomationPageProps> = () 
                 <div className="space-y-3">
                   <div className="flex flex-wrap gap-2">
                     {feature.features.map((item, index) => (
-                      <Badge 
-                        key={index} 
-                        variant="outline" 
+                      <Badge
+                        key={index}
+                        variant="outline"
                         className="text-xs"
                         icon={<CheckCircle className="h-3 w-3" />}
                         onRemove={() => {}}
@@ -221,10 +230,10 @@ export const WorkflowAutomationPage: React.FC<WorkflowAutomationPageProps> = () 
                       </Badge>
                     ))}
                   </div>
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     className="w-full mt-4"
-                    onClick={(e) => {
+                    onClick={e => {
                       e.stopPropagation();
                       handleFeatureSelect(feature.id);
                     }}
@@ -308,9 +317,7 @@ export const WorkflowAutomationPage: React.FC<WorkflowAutomationPageProps> = () 
             </TabsList>
           </div>
 
-          <TabsContent value="overview">
-            {renderOverview()}
-          </TabsContent>
+          <TabsContent value="overview">{renderOverview()}</TabsContent>
 
           <TabsContent value="templates">
             <div className="bg-white rounded-lg shadow-sm">

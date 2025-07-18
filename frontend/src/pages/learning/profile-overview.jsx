@@ -1,7 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import {
-  User, Mail, Briefcase, GraduationCap, Star, Globe, Linkedin, ExternalLink, ThumbsUp, Info, Code
+  User,
+  Mail,
+  Briefcase,
+  GraduationCap,
+  Star,
+  Globe,
+  Linkedin,
+  ExternalLink,
+  ThumbsUp,
+  Info,
+  Code,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
 import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/Avatar';
@@ -36,7 +46,7 @@ const UserProfileOverviewPage = () => {
       try {
         console.log(`Fetching profile for userId: ${userId}`);
         const data = await apiService.getUserProfile(userId);
-        console.log("Fetched profile data:", data);
+        console.log('Fetched profile data:', data);
         setProfileData(data);
       } catch (err) {
         console.error('Failed to load user profile:', err);
@@ -58,7 +68,7 @@ const UserProfileOverviewPage = () => {
       if (response && response.kudos_count !== undefined) {
         setProfileData(prevData => ({
           ...prevData,
-          kudos_count: response.kudos_count
+          kudos_count: response.kudos_count,
         }));
         toast.success(response.message || 'Kudos given successfully!');
       } else {
@@ -118,7 +128,7 @@ const UserProfileOverviewPage = () => {
     role,
     is_active,
     verified,
-    skills
+    skills,
   } = profileData;
 
   return (
@@ -180,7 +190,7 @@ const UserProfileOverviewPage = () => {
         )}
 
         {/* Contact Info Card */}
-        {contact_info && (Object.values(contact_info).some(val => val)) && (
+        {contact_info && Object.values(contact_info).some(val => val) && (
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -189,27 +199,31 @@ const UserProfileOverviewPage = () => {
             </CardHeader>
             <CardContent className="space-y-3">
               {contact_info.professionalEmail && (
-                <InfoItem 
-                  icon={Mail} 
-                  label="Email" 
-                  value={contact_info.professionalEmail} 
-                  isLink={`mailto:${contact_info.professionalEmail}`} 
+                <InfoItem
+                  icon={Mail}
+                  label="Email"
+                  value={contact_info.professionalEmail}
+                  isLink={`mailto:${contact_info.professionalEmail}`}
                 />
               )}
               {contact_info.website && (
-                <InfoItem 
-                  icon={Globe} 
-                  label="Website" 
-                  value={contact_info.website} 
-                  isLink={contact_info.website} 
+                <InfoItem
+                  icon={Globe}
+                  label="Website"
+                  value={contact_info.website}
+                  isLink={contact_info.website}
                 />
               )}
               {contact_info.linkedin && (
-                <InfoItem 
-                  icon={Linkedin} 
-                  label="LinkedIn" 
-                  value={contact_info.linkedin} 
-                  isLink={contact_info.linkedin.startsWith('http') ? contact_info.linkedin : `https://${contact_info.linkedin}`} 
+                <InfoItem
+                  icon={Linkedin}
+                  label="LinkedIn"
+                  value={contact_info.linkedin}
+                  isLink={
+                    contact_info.linkedin.startsWith('http')
+                      ? contact_info.linkedin
+                      : `https://${contact_info.linkedin}`
+                  }
                 />
               )}
             </CardContent>
@@ -226,7 +240,9 @@ const UserProfileOverviewPage = () => {
             </CardHeader>
             <CardContent className="flex flex-wrap gap-2">
               {skills.map((skill, index) => (
-                <Badge key={index} variant="outline">{skill}</Badge>
+                <Badge key={index} variant="outline">
+                  {skill}
+                </Badge>
               ))}
             </CardContent>
           </Card>
@@ -246,10 +262,10 @@ const UserProfileOverviewPage = () => {
                   <h3 className="font-semibold text-lg">{proj.title}</h3>
                   <p className="text-sm text-gray-600 mt-1">{proj.description}</p>
                   {proj.url && (
-                    <a 
-                      href={proj.url.startsWith('http') ? proj.url : `https://${proj.url}`} 
-                      target="_blank" 
-                      rel="noopener noreferrer" 
+                    <a
+                      href={proj.url.startsWith('http') ? proj.url : `https://${proj.url}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
                       className="text-sm text-blue-500 hover:underline flex items-center gap-1 mt-1"
                     >
                       <ExternalLink className="w-3 h-3" /> View Project
@@ -257,7 +273,8 @@ const UserProfileOverviewPage = () => {
                   )}
                   {proj.technologies_used && proj.technologies_used.length > 0 && (
                     <p className="text-xs text-gray-500 mt-2">
-                      <span className="font-semibold">Technologies:</span> {proj.technologies_used.join(', ')}
+                      <span className="font-semibold">Technologies:</span>{' '}
+                      {proj.technologies_used.join(', ')}
                     </p>
                   )}
                 </div>
@@ -280,7 +297,9 @@ const UserProfileOverviewPage = () => {
                   <h3 className="font-semibold text-lg">{exp.job_title}</h3>
                   <p className="text-md text-gray-700">{exp.company}</p>
                   <p className="text-sm text-gray-500">{exp.duration}</p>
-                  <p className="text-sm text-gray-600 mt-1 whitespace-pre-wrap">{exp.description}</p>
+                  <p className="text-sm text-gray-600 mt-1 whitespace-pre-wrap">
+                    {exp.description}
+                  </p>
                 </div>
               ))}
             </CardContent>
@@ -299,7 +318,9 @@ const UserProfileOverviewPage = () => {
               {education_entries.map(edu => (
                 <div key={edu.id || edu.institution} className="p-3 border rounded-md">
                   <h3 className="font-semibold text-lg">{edu.institution}</h3>
-                  <p className="text-md text-gray-700">{edu.degree} in {edu.field_of_study}</p>
+                  <p className="text-md text-gray-700">
+                    {edu.degree} in {edu.field_of_study}
+                  </p>
                   <p className="text-sm text-gray-500">Graduation Year: {edu.graduation_year}</p>
                 </div>
               ))}
@@ -319,7 +340,9 @@ const InfoItem = ({ icon: Icon, label, value, isLink }) => (
       <p className="text-sm text-gray-600">{label}</p>
       {isLink ? (
         <a
-          href={isLink.startsWith('http') || isLink.startsWith('mailto:') ? isLink : `https://${isLink}`}
+          href={
+            isLink.startsWith('http') || isLink.startsWith('mailto:') ? isLink : `https://${isLink}`
+          }
           target="_blank"
           rel="noopener noreferrer"
           className="font-medium text-blue-600 hover:underline break-all"

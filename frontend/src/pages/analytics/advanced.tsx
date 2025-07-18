@@ -105,7 +105,9 @@ export default function AdvancedAnalytics() {
                     <td className="py-3 px-4 text-green-600 font-medium">96.8%</td>
                     <td className="py-3 px-4 text-gray-600">1.2ms</td>
                     <td className="py-3 px-4">
-                      <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">Active</span>
+                      <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
+                        Active
+                      </span>
                     </td>
                   </tr>
                   <tr className="border-b border-gray-100">
@@ -113,7 +115,9 @@ export default function AdvancedAnalytics() {
                     <td className="py-3 px-4 text-green-600 font-medium">94.2%</td>
                     <td className="py-3 px-4 text-gray-600">2.1ms</td>
                     <td className="py-3 px-4">
-                      <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">Active</span>
+                      <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
+                        Active
+                      </span>
                     </td>
                   </tr>
                   <tr className="border-b border-gray-100">
@@ -121,7 +125,9 @@ export default function AdvancedAnalytics() {
                     <td className="py-3 px-4 text-green-600 font-medium">92.5%</td>
                     <td className="py-3 px-4 text-gray-600">3.4ms</td>
                     <td className="py-3 px-4">
-                      <span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full">Training</span>
+                      <span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full">
+                        Training
+                      </span>
                     </td>
                   </tr>
                 </tbody>

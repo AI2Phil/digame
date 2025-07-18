@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import { 
-  BookOpen, 
-  Play, 
-  Clock, 
-  Award, 
-  TrendingUp, 
-  Users, 
-  Star, 
-  CheckCircle, 
-  Target, 
+import {
+  BookOpen,
+  Play,
+  Clock,
+  Award,
+  TrendingUp,
+  Users,
+  Star,
+  CheckCircle,
+  Target,
   Calendar,
   Filter,
   Search,
@@ -18,49 +18,49 @@ import {
   Share2,
   BarChart3,
   Lightbulb,
-  Zap
+  Zap,
 } from 'lucide-react';
 
 // UI Components
-const Card = ({ children, className = "" }) => (
-  <div className={`bg-white rounded-lg border shadow-sm ${className}`}>
-    {children}
-  </div>
+const Card = ({ children, className = '' }) => (
+  <div className={`bg-white rounded-lg border shadow-sm ${className}`}>{children}</div>
 );
 
-const CardHeader = ({ children, className = "" }) => (
-  <div className={`p-6 pb-4 ${className}`}>
-    {children}
-  </div>
+const CardHeader = ({ children, className = '' }) => (
+  <div className={`p-6 pb-4 ${className}`}>{children}</div>
 );
 
-const CardTitle = ({ children, className = "" }) => (
-  <h3 className={`text-lg font-semibold ${className}`}>
-    {children}
-  </h3>
+const CardTitle = ({ children, className = '' }) => (
+  <h3 className={`text-lg font-semibold ${className}`}>{children}</h3>
 );
 
-const CardContent = ({ children, className = "" }) => (
-  <div className={`p-6 pt-0 ${className}`}>
-    {children}
-  </div>
+const CardContent = ({ children, className = '' }) => (
+  <div className={`p-6 pt-0 ${className}`}>{children}</div>
 );
 
-const Button = ({ children, className = "", size = "default", variant = "default", onClick, disabled }) => {
-  const baseClasses = "inline-flex items-center justify-center rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none";
+const Button = ({
+  children,
+  className = '',
+  size = 'default',
+  variant = 'default',
+  onClick,
+  disabled,
+}) => {
+  const baseClasses =
+    'inline-flex items-center justify-center rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none';
   const sizeClasses = {
-    default: "h-10 py-2 px-4",
-    sm: "h-9 px-3 text-sm",
-    lg: "h-11 px-8"
+    default: 'h-10 py-2 px-4',
+    sm: 'h-9 px-3 text-sm',
+    lg: 'h-11 px-8',
   };
   const variantClasses = {
-    default: "bg-blue-600 text-white hover:bg-blue-700",
-    outline: "border border-gray-300 bg-white hover:bg-gray-50",
-    ghost: "hover:bg-gray-100"
+    default: 'bg-blue-600 text-white hover:bg-blue-700',
+    outline: 'border border-gray-300 bg-white hover:bg-gray-50',
+    ghost: 'hover:bg-gray-100',
   };
-  
+
   return (
-    <button 
+    <button
       className={`${baseClasses} ${sizeClasses[size]} ${variantClasses[variant]} ${className}`}
       onClick={onClick}
       disabled={disabled}
@@ -70,25 +70,27 @@ const Button = ({ children, className = "", size = "default", variant = "default
   );
 };
 
-const Badge = ({ children, className = "", variant = "default" }) => {
+const Badge = ({ children, className = '', variant = 'default' }) => {
   const variantClasses = {
-    default: "bg-blue-100 text-blue-800",
-    secondary: "bg-gray-100 text-gray-800",
-    outline: "border border-gray-300 bg-white text-gray-700",
-    destructive: "bg-red-100 text-red-800"
+    default: 'bg-blue-100 text-blue-800',
+    secondary: 'bg-gray-100 text-gray-800',
+    outline: 'border border-gray-300 bg-white text-gray-700',
+    destructive: 'bg-red-100 text-red-800',
   };
-  
+
   return (
-    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${variantClasses[variant]} ${className}`}>
+    <span
+      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${variantClasses[variant]} ${className}`}
+    >
       {children}
     </span>
   );
 };
 
-const Progress = ({ value, className = "" }) => (
+const Progress = ({ value, className = '' }) => (
   <div className={`w-full bg-gray-200 rounded-full h-2 ${className}`}>
-    <div 
-      className="bg-blue-600 h-2 rounded-full transition-all duration-300" 
+    <div
+      className="bg-blue-600 h-2 rounded-full transition-all duration-300"
       style={{ width: `${value}%` }}
     />
   </div>
@@ -111,140 +113,140 @@ const CareerLearning: React.FC = () => {
       inProgress: 5,
       certificates: 12,
       learningHours: 247,
-      currentStreak: 15
+      currentStreak: 15,
     },
     courses: [
       {
         id: 1,
-        title: "Advanced React Development",
-        provider: "TechAcademy",
-        category: "Frontend Development",
-        level: "Advanced",
-        duration: "8 weeks",
+        title: 'Advanced React Development',
+        provider: 'TechAcademy',
+        category: 'Frontend Development',
+        level: 'Advanced',
+        duration: '8 weeks',
         rating: 4.8,
         students: 12500,
-        price: "$199",
+        price: '$199',
         progress: 65,
-        status: "in-progress",
-        skills: ["React", "Redux", "TypeScript"],
-        description: "Master advanced React patterns and build scalable applications",
-        instructor: "Sarah Johnson",
-        lastAccessed: "2 hours ago",
-        nextLesson: "Context API Deep Dive"
+        status: 'in-progress',
+        skills: ['React', 'Redux', 'TypeScript'],
+        description: 'Master advanced React patterns and build scalable applications',
+        instructor: 'Sarah Johnson',
+        lastAccessed: '2 hours ago',
+        nextLesson: 'Context API Deep Dive',
       },
       {
         id: 2,
-        title: "Machine Learning Fundamentals",
-        provider: "DataScience Pro",
-        category: "Data Science",
-        level: "Intermediate",
-        duration: "12 weeks",
+        title: 'Machine Learning Fundamentals',
+        provider: 'DataScience Pro',
+        category: 'Data Science',
+        level: 'Intermediate',
+        duration: '12 weeks',
         rating: 4.9,
         students: 8900,
-        price: "$299",
+        price: '$299',
         progress: 0,
-        status: "recommended",
-        skills: ["Python", "TensorFlow", "Statistics"],
-        description: "Learn the foundations of machine learning and AI",
-        instructor: "Dr. Michael Chen",
-        estimatedTime: "6-8 hours/week"
+        status: 'recommended',
+        skills: ['Python', 'TensorFlow', 'Statistics'],
+        description: 'Learn the foundations of machine learning and AI',
+        instructor: 'Dr. Michael Chen',
+        estimatedTime: '6-8 hours/week',
       },
       {
         id: 3,
-        title: "Cloud Architecture Patterns",
-        provider: "CloudMasters",
-        category: "Cloud Computing",
-        level: "Advanced",
-        duration: "6 weeks",
+        title: 'Cloud Architecture Patterns',
+        provider: 'CloudMasters',
+        category: 'Cloud Computing',
+        level: 'Advanced',
+        duration: '6 weeks',
         rating: 4.7,
         students: 5600,
-        price: "$249",
+        price: '$249',
         progress: 100,
-        status: "completed",
-        skills: ["AWS", "Kubernetes", "Microservices"],
-        description: "Design and implement scalable cloud architectures",
-        instructor: "Alex Rodriguez",
-        completedDate: "Last week",
-        certificate: true
-      }
+        status: 'completed',
+        skills: ['AWS', 'Kubernetes', 'Microservices'],
+        description: 'Design and implement scalable cloud architectures',
+        instructor: 'Alex Rodriguez',
+        completedDate: 'Last week',
+        certificate: true,
+      },
     ],
     learningPaths: [
       {
         id: 1,
-        title: "Full Stack Developer",
-        description: "Complete path from frontend to backend development",
+        title: 'Full Stack Developer',
+        description: 'Complete path from frontend to backend development',
         courses: 8,
-        duration: "6 months",
-        level: "Beginner to Advanced",
+        duration: '6 months',
+        level: 'Beginner to Advanced',
         progress: 37,
-        skills: ["React", "Node.js", "MongoDB", "AWS"],
+        skills: ['React', 'Node.js', 'MongoDB', 'AWS'],
         students: 15000,
-        rating: 4.8
+        rating: 4.8,
       },
       {
         id: 2,
-        title: "Data Science Specialist",
-        description: "Master data analysis, machine learning, and AI",
+        title: 'Data Science Specialist',
+        description: 'Master data analysis, machine learning, and AI',
         courses: 12,
-        duration: "8 months",
-        level: "Intermediate to Advanced",
+        duration: '8 months',
+        level: 'Intermediate to Advanced',
         progress: 0,
-        skills: ["Python", "R", "TensorFlow", "SQL"],
+        skills: ['Python', 'R', 'TensorFlow', 'SQL'],
         students: 9500,
-        rating: 4.9
+        rating: 4.9,
       },
       {
         id: 3,
-        title: "DevOps Engineer",
-        description: "Learn modern DevOps practices and tools",
+        title: 'DevOps Engineer',
+        description: 'Learn modern DevOps practices and tools',
         courses: 10,
-        duration: "5 months",
-        level: "Intermediate",
+        duration: '5 months',
+        level: 'Intermediate',
         progress: 80,
-        skills: ["Docker", "Kubernetes", "Jenkins", "Terraform"],
+        skills: ['Docker', 'Kubernetes', 'Jenkins', 'Terraform'],
         students: 7200,
-        rating: 4.7
-      }
+        rating: 4.7,
+      },
     ],
     certificates: [
       {
         id: 1,
-        title: "AWS Solutions Architect",
-        issuer: "Amazon Web Services",
-        earnedDate: "2024-02-15",
-        expiryDate: "2027-02-15",
-        credentialId: "AWS-SA-2024-001",
-        skills: ["AWS", "Cloud Architecture", "Security"],
-        verified: true
+        title: 'AWS Solutions Architect',
+        issuer: 'Amazon Web Services',
+        earnedDate: '2024-02-15',
+        expiryDate: '2027-02-15',
+        credentialId: 'AWS-SA-2024-001',
+        skills: ['AWS', 'Cloud Architecture', 'Security'],
+        verified: true,
       },
       {
         id: 2,
-        title: "React Developer Certification",
-        issuer: "Meta",
-        earnedDate: "2024-01-20",
-        expiryDate: "2026-01-20",
-        credentialId: "META-REACT-2024-045",
-        skills: ["React", "JavaScript", "Frontend"],
-        verified: true
-      }
+        title: 'React Developer Certification',
+        issuer: 'Meta',
+        earnedDate: '2024-01-20',
+        expiryDate: '2026-01-20',
+        credentialId: 'META-REACT-2024-045',
+        skills: ['React', 'JavaScript', 'Frontend'],
+        verified: true,
+      },
     ],
     analytics: {
       learningTime: {
         thisWeek: 12,
         lastWeek: 8,
         thisMonth: 45,
-        lastMonth: 38
+        lastMonth: 38,
       },
       skillProgress: [
-        { skill: "React", current: 85, target: 95, trend: "up" },
-        { skill: "Python", current: 70, target: 85, trend: "up" },
-        { skill: "AWS", current: 60, target: 80, trend: "stable" },
-        { skill: "Machine Learning", current: 40, target: 70, trend: "up" }
+        { skill: 'React', current: 85, target: 95, trend: 'up' },
+        { skill: 'Python', current: 70, target: 85, trend: 'up' },
+        { skill: 'AWS', current: 60, target: 80, trend: 'stable' },
+        { skill: 'Machine Learning', current: 40, target: 70, trend: 'up' },
       ],
       completionRate: 78,
       averageRating: 4.6,
-      streakDays: 15
-    }
+      streakDays: 15,
+    },
   };
 
   useEffect(() => {
@@ -255,33 +257,41 @@ const CareerLearning: React.FC = () => {
     }, 1000);
   }, []);
 
-  const handleStartCourse = (courseId) => {
+  const handleStartCourse = courseId => {
     console.log('Starting course:', courseId);
   };
 
-  const handleContinueCourse = (courseId) => {
+  const handleContinueCourse = courseId => {
     console.log('Continuing course:', courseId);
   };
 
-  const handleBookmarkCourse = (courseId) => {
+  const handleBookmarkCourse = courseId => {
     console.log('Bookmarking course:', courseId);
   };
 
-  const getStatusColor = (status) => {
+  const getStatusColor = status => {
     switch (status) {
-      case 'completed': return 'bg-green-100 text-green-800';
-      case 'in-progress': return 'bg-blue-100 text-blue-800';
-      case 'recommended': return 'bg-yellow-100 text-yellow-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'completed':
+        return 'bg-green-100 text-green-800';
+      case 'in-progress':
+        return 'bg-blue-100 text-blue-800';
+      case 'recommended':
+        return 'bg-yellow-100 text-yellow-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
-  const getLevelColor = (level) => {
+  const getLevelColor = level => {
     switch (level) {
-      case 'Beginner': return 'bg-green-100 text-green-800';
-      case 'Intermediate': return 'bg-yellow-100 text-yellow-800';
-      case 'Advanced': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'Beginner':
+        return 'bg-green-100 text-green-800';
+      case 'Intermediate':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'Advanced':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
@@ -300,7 +310,9 @@ const CareerLearning: React.FC = () => {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Learning & Development</h1>
-            <p className="text-gray-600 mt-2">Advance your career with personalized learning paths</p>
+            <p className="text-gray-600 mt-2">
+              Advance your career with personalized learning paths
+            </p>
           </div>
           <div className="flex items-center gap-4">
             <Button variant="outline">
@@ -317,27 +329,39 @@ const CareerLearning: React.FC = () => {
         {/* Quick Stats */}
         <div className="grid grid-cols-2 md:grid-cols-6 gap-4 mt-6">
           <Card className="p-4 text-center">
-            <div className="text-2xl font-bold text-blue-600">{currentData.overview.totalCourses}</div>
+            <div className="text-2xl font-bold text-blue-600">
+              {currentData.overview.totalCourses}
+            </div>
             <div className="text-sm text-gray-600">Available Courses</div>
           </Card>
           <Card className="p-4 text-center">
-            <div className="text-2xl font-bold text-green-600">{currentData.overview.completedCourses}</div>
+            <div className="text-2xl font-bold text-green-600">
+              {currentData.overview.completedCourses}
+            </div>
             <div className="text-sm text-gray-600">Completed</div>
           </Card>
           <Card className="p-4 text-center">
-            <div className="text-2xl font-bold text-orange-600">{currentData.overview.inProgress}</div>
+            <div className="text-2xl font-bold text-orange-600">
+              {currentData.overview.inProgress}
+            </div>
             <div className="text-sm text-gray-600">In Progress</div>
           </Card>
           <Card className="p-4 text-center">
-            <div className="text-2xl font-bold text-purple-600">{currentData.overview.certificates}</div>
+            <div className="text-2xl font-bold text-purple-600">
+              {currentData.overview.certificates}
+            </div>
             <div className="text-sm text-gray-600">Certificates</div>
           </Card>
           <Card className="p-4 text-center">
-            <div className="text-2xl font-bold text-indigo-600">{currentData.overview.learningHours}</div>
+            <div className="text-2xl font-bold text-indigo-600">
+              {currentData.overview.learningHours}
+            </div>
             <div className="text-sm text-gray-600">Learning Hours</div>
           </Card>
           <Card className="p-4 text-center">
-            <div className="text-2xl font-bold text-red-600">{currentData.overview.currentStreak}</div>
+            <div className="text-2xl font-bold text-red-600">
+              {currentData.overview.currentStreak}
+            </div>
             <div className="text-sm text-gray-600">Day Streak</div>
           </Card>
         </div>
@@ -350,8 +374,8 @@ const CareerLearning: React.FC = () => {
             { id: 'courses', label: 'My Courses', icon: BookOpen },
             { id: 'paths', label: 'Learning Paths', icon: Target },
             { id: 'certificates', label: 'Certificates', icon: Award },
-            { id: 'analytics', label: 'Analytics', icon: BarChart3 }
-          ].map((tab) => {
+            { id: 'analytics', label: 'Analytics', icon: BarChart3 },
+          ].map(tab => {
             const Icon = tab.icon;
             return (
               <button
@@ -380,13 +404,13 @@ const CareerLearning: React.FC = () => {
               type="text"
               placeholder="Search courses..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={e => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
           <select
             value={selectedCategory}
-            onChange={(e) => setSelectedCategory(e.target.value)}
+            onChange={e => setSelectedCategory(e.target.value)}
             className="px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           >
             <option value="all">All Categories</option>
@@ -397,7 +421,7 @@ const CareerLearning: React.FC = () => {
           </select>
           <select
             value={selectedLevel}
-            onChange={(e) => setSelectedLevel(e.target.value)}
+            onChange={e => setSelectedLevel(e.target.value)}
             className="px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           >
             <option value="all">All Levels</option>
@@ -411,7 +435,7 @@ const CareerLearning: React.FC = () => {
       {/* Content */}
       {activeTab === 'courses' && (
         <div className="space-y-4">
-          {currentData.courses.map((course) => (
+          {currentData.courses.map(course => (
             <Card key={course.id} className="hover:shadow-md transition-shadow">
               <CardContent className="p-6">
                 <div className="flex items-start justify-between">
@@ -420,19 +444,19 @@ const CareerLearning: React.FC = () => {
                       <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
                         <BookOpen className="h-8 w-8 text-white" />
                       </div>
-                      
+
                       <div className="flex-1 space-y-3">
                         <div>
                           <h3 className="font-semibold text-lg">{course.title}</h3>
-                          <p className="text-sm text-gray-600">by {course.instructor} • {course.provider}</p>
+                          <p className="text-sm text-gray-600">
+                            by {course.instructor} • {course.provider}
+                          </p>
                         </div>
-                        
+
                         <p className="text-sm text-gray-700">{course.description}</p>
-                        
+
                         <div className="flex items-center gap-4 text-sm">
-                          <Badge className={getLevelColor(course.level)}>
-                            {course.level}
-                          </Badge>
+                          <Badge className={getLevelColor(course.level)}>{course.level}</Badge>
                           <Badge className={getStatusColor(course.status)}>
                             {course.status.replace('-', ' ')}
                           </Badge>
@@ -449,7 +473,7 @@ const CareerLearning: React.FC = () => {
                             <span>{course.students.toLocaleString()}</span>
                           </div>
                         </div>
-                        
+
                         <div className="flex flex-wrap gap-1">
                           {course.skills.map((skill, index) => (
                             <Badge key={index} variant="outline" className="text-xs">
@@ -457,7 +481,7 @@ const CareerLearning: React.FC = () => {
                             </Badge>
                           ))}
                         </div>
-                        
+
                         {course.status === 'in-progress' && (
                           <div>
                             <div className="flex items-center justify-between text-sm mb-1">
@@ -470,11 +494,15 @@ const CareerLearning: React.FC = () => {
                       </div>
                     </div>
                   </div>
-                  
+
                   <div className="flex flex-col items-end gap-2 ml-4">
                     <div className="text-lg font-bold text-blue-600">{course.price}</div>
                     <div className="flex gap-2">
-                      <Button size="sm" variant="ghost" onClick={() => handleBookmarkCourse(course.id)}>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => handleBookmarkCourse(course.id)}
+                      >
                         <Bookmark className="h-4 w-4" />
                       </Button>
                       <Button size="sm" variant="ghost">
@@ -507,7 +535,7 @@ const CareerLearning: React.FC = () => {
 
       {activeTab === 'paths' && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {currentData.learningPaths.map((path) => (
+          {currentData.learningPaths.map(path => (
             <Card key={path.id} className="hover:shadow-md transition-shadow">
               <CardHeader>
                 <div className="flex items-start justify-between">
@@ -541,7 +569,7 @@ const CareerLearning: React.FC = () => {
                       </div>
                     </div>
                   </div>
-                  
+
                   <div>
                     <div className="text-sm font-medium mb-2">Skills You'll Learn</div>
                     <div className="flex flex-wrap gap-1">
@@ -552,7 +580,7 @@ const CareerLearning: React.FC = () => {
                       ))}
                     </div>
                   </div>
-                  
+
                   {path.progress > 0 && (
                     <div>
                       <div className="flex items-center justify-between text-sm mb-1">
@@ -562,7 +590,7 @@ const CareerLearning: React.FC = () => {
                       <Progress value={path.progress} />
                     </div>
                   )}
-                  
+
                   <Button className="w-full">
                     {path.progress > 0 ? 'Continue Path' : 'Start Learning Path'}
                   </Button>
@@ -575,7 +603,7 @@ const CareerLearning: React.FC = () => {
 
       {activeTab === 'certificates' && (
         <div className="space-y-4">
-          {currentData.certificates.map((cert) => (
+          {currentData.certificates.map(cert => (
             <Card key={cert.id} className="hover:shadow-md transition-shadow">
               <CardContent className="p-6">
                 <div className="flex items-start justify-between">
@@ -583,21 +611,25 @@ const CareerLearning: React.FC = () => {
                     <div className="w-16 h-16 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-lg flex items-center justify-center">
                       <Award className="h-8 w-8 text-white" />
                     </div>
-                    
+
                     <div className="space-y-3">
                       <div>
                         <h3 className="font-semibold text-lg">{cert.title}</h3>
                         <p className="text-sm text-gray-600">Issued by {cert.issuer}</p>
                       </div>
-                      
+
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                         <div>
                           <div className="text-gray-600">Earned</div>
-                          <div className="font-medium">{new Date(cert.earnedDate).toLocaleDateString()}</div>
+                          <div className="font-medium">
+                            {new Date(cert.earnedDate).toLocaleDateString()}
+                          </div>
                         </div>
                         <div>
                           <div className="text-gray-600">Expires</div>
-                          <div className="font-medium">{new Date(cert.expiryDate).toLocaleDateString()}</div>
+                          <div className="font-medium">
+                            {new Date(cert.expiryDate).toLocaleDateString()}
+                          </div>
                         </div>
                         <div>
                           <div className="text-gray-600">Credential ID</div>
@@ -605,12 +637,18 @@ const CareerLearning: React.FC = () => {
                         </div>
                         <div>
                           <div className="text-gray-600">Status</div>
-                          <Badge className={cert.verified ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}>
+                          <Badge
+                            className={
+                              cert.verified
+                                ? 'bg-green-100 text-green-800'
+                                : 'bg-yellow-100 text-yellow-800'
+                            }
+                          >
                             {cert.verified ? 'Verified' : 'Pending'}
                           </Badge>
                         </div>
                       </div>
-                      
+
                       <div className="flex flex-wrap gap-1">
                         {cert.skills.map((skill, index) => (
                           <Badge key={index} variant="outline" className="text-xs">
@@ -620,7 +658,7 @@ const CareerLearning: React.FC = () => {
                       </div>
                     </div>
                   </div>
-                  
+
                   <div className="flex gap-2">
                     <Button size="sm" variant="outline">
                       <Download className="h-4 w-4 mr-2" />
@@ -651,19 +689,27 @@ const CareerLearning: React.FC = () => {
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-blue-600">{currentData.analytics.learningTime.thisWeek}h</div>
+                  <div className="text-2xl font-bold text-blue-600">
+                    {currentData.analytics.learningTime.thisWeek}h
+                  </div>
                   <div className="text-sm text-gray-600">This Week</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-gray-600">{currentData.analytics.learningTime.lastWeek}h</div>
+                  <div className="text-2xl font-bold text-gray-600">
+                    {currentData.analytics.learningTime.lastWeek}h
+                  </div>
                   <div className="text-sm text-gray-600">Last Week</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-green-600">{currentData.analytics.learningTime.thisMonth}h</div>
+                  <div className="text-2xl font-bold text-green-600">
+                    {currentData.analytics.learningTime.thisMonth}h
+                  </div>
                   <div className="text-sm text-gray-600">This Month</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-gray-600">{currentData.analytics.learningTime.lastMonth}h</div>
+                  <div className="text-2xl font-bold text-gray-600">
+                    {currentData.analytics.learningTime.lastMonth}h
+                  </div>
                   <div className="text-sm text-gray-600">Last Month</div>
                 </div>
               </div>
@@ -685,14 +731,16 @@ const CareerLearning: React.FC = () => {
                     <div className="flex items-center justify-between">
                       <span className="font-medium">{skill.skill}</span>
                       <div className="flex items-center gap-2">
-                        <span className="text-sm text-gray-600">{skill.current}% / {skill.target}%</span>
+                        <span className="text-sm text-gray-600">
+                          {skill.current}% / {skill.target}%
+                        </span>
                         {skill.trend === 'up' && <TrendingUp className="h-4 w-4 text-green-600" />}
                         {skill.trend === 'stable' && <Zap className="h-4 w-4 text-blue-600" />}
                       </div>
                     </div>
                     <div className="relative">
                       <Progress value={skill.current} />
-                      <div 
+                      <div
                         className="absolute top-0 h-2 w-1 bg-red-500 rounded-full"
                         style={{ left: `${skill.target}%` }}
                       />
@@ -711,7 +759,9 @@ const CareerLearning: React.FC = () => {
               </CardHeader>
               <CardContent>
                 <div className="text-center">
-                  <div className="text-3xl font-bold text-green-600">{currentData.analytics.completionRate}%</div>
+                  <div className="text-3xl font-bold text-green-600">
+                    {currentData.analytics.completionRate}%
+                  </div>
                   <div className="text-sm text-gray-600 mt-2">Above average</div>
                 </div>
               </CardContent>
@@ -723,7 +773,9 @@ const CareerLearning: React.FC = () => {
               </CardHeader>
               <CardContent>
                 <div className="text-center">
-                  <div className="text-3xl font-bold text-yellow-600">{currentData.analytics.averageRating}</div>
+                  <div className="text-3xl font-bold text-yellow-600">
+                    {currentData.analytics.averageRating}
+                  </div>
                   <div className="text-sm text-gray-600 mt-2">Course ratings</div>
                 </div>
               </CardContent>
@@ -735,7 +787,9 @@ const CareerLearning: React.FC = () => {
               </CardHeader>
               <CardContent>
                 <div className="text-center">
-                  <div className="text-3xl font-bold text-orange-600">{currentData.analytics.streakDays}</div>
+                  <div className="text-3xl font-bold text-orange-600">
+                    {currentData.analytics.streakDays}
+                  </div>
                   <div className="text-sm text-gray-600 mt-2">Days in a row</div>
                 </div>
               </CardContent>

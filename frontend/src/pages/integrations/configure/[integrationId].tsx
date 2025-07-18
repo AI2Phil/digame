@@ -44,7 +44,7 @@ const ConfigurePage: React.FC<ConfigurePageProps> = ({ integrationId }) => {
   );
 };
 
-export const getServerSideProps: GetServerSideProps = async (context) => {
+export const getServerSideProps: GetServerSideProps = async context => {
   const { integrationId } = context.params!;
 
   // Validate integrationId

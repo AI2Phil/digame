@@ -5,10 +5,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '../../src/components/u
 import { Button } from '../../src/components/ui/Button';
 import { Badge } from '../../src/components/ui/Badge';
 import { Progress } from '../../src/components/ui/Progress';
-import { 
-  Brain, 
-  Target, 
-  TrendingUp, 
+import {
+  Brain,
+  Target,
+  TrendingUp,
   Star,
   Award,
   BookOpen,
@@ -48,7 +48,7 @@ import {
   Download,
   Upload,
   Share2,
-  RefreshCw
+  RefreshCw,
 } from 'lucide-react';
 
 const CareerSkills: React.FC = () => {
@@ -68,10 +68,10 @@ const CareerSkills: React.FC = () => {
       setLoading(true);
       const response = await fetch('/api/career/skills', {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
       });
-      
+
       if (response.ok) {
         const data = await response.json();
         setSkillsData(data);
@@ -92,7 +92,7 @@ const CareerSkills: React.FC = () => {
       averageLevel: 3.4,
       skillScore: 78,
       marketValue: '$95,000',
-      growthPotential: '+25%'
+      growthPotential: '+25%',
     },
     categories: [
       {
@@ -103,7 +103,7 @@ const CareerSkills: React.FC = () => {
         skillCount: 18,
         avgLevel: 3.8,
         marketDemand: 'High',
-        growth: '+15%'
+        growth: '+15%',
       },
       {
         id: 'design',
@@ -113,7 +113,7 @@ const CareerSkills: React.FC = () => {
         skillCount: 8,
         avgLevel: 3.2,
         marketDemand: 'Medium',
-        growth: '+8%'
+        growth: '+8%',
       },
       {
         id: 'communication',
@@ -123,7 +123,7 @@ const CareerSkills: React.FC = () => {
         skillCount: 6,
         avgLevel: 4.1,
         marketDemand: 'High',
-        growth: '+12%'
+        growth: '+12%',
       },
       {
         id: 'leadership',
@@ -133,7 +133,7 @@ const CareerSkills: React.FC = () => {
         skillCount: 5,
         avgLevel: 2.9,
         marketDemand: 'Very High',
-        growth: '+20%'
+        growth: '+20%',
       },
       {
         id: 'data',
@@ -143,7 +143,7 @@ const CareerSkills: React.FC = () => {
         skillCount: 4,
         avgLevel: 2.5,
         marketDemand: 'Very High',
-        growth: '+30%'
+        growth: '+30%',
       },
       {
         id: 'security',
@@ -153,8 +153,8 @@ const CareerSkills: React.FC = () => {
         skillCount: 4,
         avgLevel: 2.8,
         marketDemand: 'High',
-        growth: '+25%'
-      }
+        growth: '+25%',
+      },
     ],
     skills: [
       {
@@ -173,7 +173,8 @@ const CareerSkills: React.FC = () => {
         learningResources: ['Advanced JavaScript Course', 'ES6+ Masterclass'],
         relatedSkills: ['React', 'Node.js', 'TypeScript'],
         jobMatches: 156,
-        description: 'Proficient in modern JavaScript including ES6+, async/await, and functional programming'
+        description:
+          'Proficient in modern JavaScript including ES6+, async/await, and functional programming',
       },
       {
         id: 2,
@@ -191,7 +192,7 @@ const CareerSkills: React.FC = () => {
         learningResources: ['React Hooks Deep Dive', 'Advanced React Patterns'],
         relatedSkills: ['JavaScript', 'Redux', 'Next.js'],
         jobMatches: 142,
-        description: 'Experienced with React hooks, context API, and component optimization'
+        description: 'Experienced with React hooks, context API, and component optimization',
       },
       {
         id: 3,
@@ -209,7 +210,7 @@ const CareerSkills: React.FC = () => {
         learningResources: ['Python for Data Science', 'Django Framework'],
         relatedSkills: ['Data Analysis', 'Machine Learning', 'Django'],
         jobMatches: 98,
-        description: 'Comfortable with Python for web development and basic data analysis'
+        description: 'Comfortable with Python for web development and basic data analysis',
       },
       {
         id: 4,
@@ -227,7 +228,7 @@ const CareerSkills: React.FC = () => {
         learningResources: ['Advanced Leadership Course', 'Team Management'],
         relatedSkills: ['Communication', 'Project Management', 'Mentoring'],
         jobMatches: 89,
-        description: 'Experience leading small teams and mentoring junior developers'
+        description: 'Experience leading small teams and mentoring junior developers',
       },
       {
         id: 5,
@@ -245,7 +246,7 @@ const CareerSkills: React.FC = () => {
         learningResources: ['SQL Fundamentals', 'Excel Advanced', 'Tableau Basics'],
         relatedSkills: ['SQL', 'Excel', 'Statistics'],
         jobMatches: 76,
-        description: 'Basic data analysis skills with Excel and some SQL experience'
+        description: 'Basic data analysis skills with Excel and some SQL experience',
       },
       {
         id: 6,
@@ -263,8 +264,8 @@ const CareerSkills: React.FC = () => {
         learningResources: ['ML Fundamentals', 'Python for ML', 'TensorFlow Basics'],
         relatedSkills: ['Python', 'Statistics', 'Data Analysis'],
         jobMatches: 45,
-        description: 'Learning machine learning fundamentals and basic algorithms'
-      }
+        description: 'Learning machine learning fundamentals and basic algorithms',
+      },
     ],
     gaps: [
       {
@@ -278,7 +279,7 @@ const CareerSkills: React.FC = () => {
         difficulty: 'Medium',
         relatedJobs: 89,
         learningPath: ['AWS Fundamentals', 'Cloud Design Patterns', 'Microservices'],
-        priority: 1
+        priority: 1,
       },
       {
         id: 2,
@@ -291,7 +292,7 @@ const CareerSkills: React.FC = () => {
         difficulty: 'Medium',
         relatedJobs: 67,
         learningPath: ['Product Strategy', 'User Research', 'Agile Methodologies'],
-        priority: 2
+        priority: 2,
       },
       {
         id: 3,
@@ -304,19 +305,20 @@ const CareerSkills: React.FC = () => {
         difficulty: 'High',
         relatedJobs: 54,
         learningPath: ['Docker', 'Kubernetes', 'CI/CD Pipelines'],
-        priority: 3
-      }
+        priority: 3,
+      },
     ],
     recommendations: [
       {
         id: 1,
         type: 'Skill Development',
         title: 'Focus on Cloud Architecture',
-        description: 'High market demand with significant salary impact. Builds on your existing technical skills.',
+        description:
+          'High market demand with significant salary impact. Builds on your existing technical skills.',
         action: 'Start Learning',
         timeframe: '6 months',
         impact: 'High',
-        difficulty: 'Medium'
+        difficulty: 'Medium',
       },
       {
         id: 2,
@@ -326,7 +328,7 @@ const CareerSkills: React.FC = () => {
         action: 'Schedule Exam',
         timeframe: '3 months',
         impact: 'High',
-        difficulty: 'Medium'
+        difficulty: 'Medium',
       },
       {
         id: 3,
@@ -336,72 +338,81 @@ const CareerSkills: React.FC = () => {
         action: 'Volunteer',
         timeframe: '3-6 months',
         impact: 'Medium',
-        difficulty: 'Low'
-      }
+        difficulty: 'Low',
+      },
     ],
     analytics: {
       skillTrends: {
         growing: ['Machine Learning', 'Cloud Architecture', 'DevOps', 'Data Science'],
         stable: ['JavaScript', 'Leadership', 'Communication'],
-        declining: ['jQuery', 'Flash', 'Perl']
+        declining: ['jQuery', 'Flash', 'Perl'],
       },
       marketComparison: {
         yourLevel: 3.4,
         industryAverage: 3.1,
         topPercentile: 4.2,
-        targetLevel: 3.8
+        targetLevel: 3.8,
       },
       salaryProjection: {
         current: '$95,000',
         withGaps: '$118,000',
         topTier: '$145,000',
-        timeline: '2 years'
-      }
-    }
+        timeline: '2 years',
+      },
+    },
   };
 
   const currentData = skillsData || mockSkillsData;
 
-  const getSkillLevelColor = (level) => {
+  const getSkillLevelColor = level => {
     if (level >= 4.5) return 'text-green-600 bg-green-100';
     if (level >= 3.5) return 'text-blue-600 bg-blue-100';
     if (level >= 2.5) return 'text-yellow-600 bg-yellow-100';
     return 'text-red-600 bg-red-100';
   };
 
-  const getTrendIcon = (trend) => {
+  const getTrendIcon = trend => {
     switch (trend) {
-      case 'growing': return <TrendingUp className="h-4 w-4 text-green-600" />;
-      case 'stable': return <Activity className="h-4 w-4 text-blue-600" />;
-      case 'declining': return <TrendingDown className="h-4 w-4 text-red-600" />;
-      default: return <Activity className="h-4 w-4 text-gray-600" />;
+      case 'growing':
+        return <TrendingUp className="h-4 w-4 text-green-600" />;
+      case 'stable':
+        return <Activity className="h-4 w-4 text-blue-600" />;
+      case 'declining':
+        return <TrendingDown className="h-4 w-4 text-red-600" />;
+      default:
+        return <Activity className="h-4 w-4 text-gray-600" />;
     }
   };
 
-  const getDemandColor = (demand) => {
+  const getDemandColor = demand => {
     switch (demand) {
-      case 'Very High': return 'bg-green-100 text-green-800';
-      case 'High': return 'bg-blue-100 text-blue-800';
-      case 'Medium': return 'bg-yellow-100 text-yellow-800';
-      case 'Low': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'Very High':
+        return 'bg-green-100 text-green-800';
+      case 'High':
+        return 'bg-blue-100 text-blue-800';
+      case 'Medium':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'Low':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
-  const getPriorityColor = (priority) => {
+  const getPriorityColor = priority => {
     if (priority <= 2) return 'bg-red-100 text-red-800';
     if (priority <= 4) return 'bg-yellow-100 text-yellow-800';
     return 'bg-green-100 text-green-800';
   };
 
-  const getCategoryColor = (color) => {
+  const getCategoryColor = color => {
     const colors = {
       blue: 'bg-blue-100 text-blue-800',
       purple: 'bg-purple-100 text-purple-800',
       green: 'bg-green-100 text-green-800',
       orange: 'bg-orange-100 text-orange-800',
       indigo: 'bg-indigo-100 text-indigo-800',
-      red: 'bg-red-100 text-red-800'
+      red: 'bg-red-100 text-red-800',
     };
     return colors[color] || 'bg-gray-100 text-gray-800';
   };
@@ -412,13 +423,13 @@ const CareerSkills: React.FC = () => {
     return matchesSearch && matchesCategory;
   });
 
-  const handleStartLearning = async (skillId) => {
+  const handleStartLearning = async skillId => {
     try {
       const response = await fetch(`/api/career/skills/${skillId}/start-learning`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
       });
 
       if (response.ok) {
@@ -437,7 +448,7 @@ const CareerSkills: React.FC = () => {
         icon={<Brain className="h-8 w-8" />}
         breadcrumb={[
           { label: 'Career', href: '/career' },
-          { label: 'Skills', href: '/career/skills' }
+          { label: 'Skills', href: '/career/skills' },
         ]}
         actions={
           <div className="flex gap-2">
@@ -521,7 +532,9 @@ const CareerSkills: React.FC = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-600">Total Skills</p>
-                    <p className="text-2xl font-bold text-blue-600">{currentData.overview.totalSkills}</p>
+                    <p className="text-2xl font-bold text-blue-600">
+                      {currentData.overview.totalSkills}
+                    </p>
                   </div>
                   <Brain className="h-8 w-8 text-blue-600" />
                 </div>
@@ -533,7 +546,9 @@ const CareerSkills: React.FC = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-600">Skill Score</p>
-                    <p className="text-2xl font-bold text-green-600">{currentData.overview.skillScore}/100</p>
+                    <p className="text-2xl font-bold text-green-600">
+                      {currentData.overview.skillScore}/100
+                    </p>
                   </div>
                   <Star className="h-8 w-8 text-green-600" />
                 </div>
@@ -545,7 +560,9 @@ const CareerSkills: React.FC = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-600">Market Value</p>
-                    <p className="text-2xl font-bold text-purple-600">{currentData.overview.marketValue}</p>
+                    <p className="text-2xl font-bold text-purple-600">
+                      {currentData.overview.marketValue}
+                    </p>
                   </div>
                   <TrendingUp className="h-8 w-8 text-purple-600" />
                 </div>
@@ -557,7 +574,9 @@ const CareerSkills: React.FC = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-600">Growth Potential</p>
-                    <p className="text-2xl font-bold text-orange-600">{currentData.overview.growthPotential}</p>
+                    <p className="text-2xl font-bold text-orange-600">
+                      {currentData.overview.growthPotential}
+                    </p>
                   </div>
                   <Rocket className="h-8 w-8 text-orange-600" />
                 </div>
@@ -572,8 +591,11 @@ const CareerSkills: React.FC = () => {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {currentData.categories.map((category) => (
-                  <div key={category.id} className="p-4 border rounded-lg hover:shadow-md transition-shadow">
+                {currentData.categories.map(category => (
+                  <div
+                    key={category.id}
+                    className="p-4 border rounded-lg hover:shadow-md transition-shadow"
+                  >
                     <div className="flex items-center gap-3 mb-3">
                       <div className={`p-2 rounded ${getCategoryColor(category.color)}`}>
                         {category.icon}
@@ -583,7 +605,7 @@ const CareerSkills: React.FC = () => {
                         <p className="text-sm text-gray-600">{category.skillCount} skills</p>
                       </div>
                     </div>
-                    
+
                     <div className="space-y-2">
                       <div className="flex justify-between text-sm">
                         <span>Average Level</span>
@@ -614,7 +636,9 @@ const CareerSkills: React.FC = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-600">Mastered Skills</p>
-                    <p className="text-2xl font-bold text-green-600">{currentData.overview.masteredSkills}</p>
+                    <p className="text-2xl font-bold text-green-600">
+                      {currentData.overview.masteredSkills}
+                    </p>
                   </div>
                   <CheckCircle className="h-8 w-8 text-green-600" />
                 </div>
@@ -626,7 +650,9 @@ const CareerSkills: React.FC = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-600">Learning</p>
-                    <p className="text-2xl font-bold text-blue-600">{currentData.overview.learningSkills}</p>
+                    <p className="text-2xl font-bold text-blue-600">
+                      {currentData.overview.learningSkills}
+                    </p>
                   </div>
                   <BookOpen className="h-8 w-8 text-blue-600" />
                 </div>
@@ -638,7 +664,9 @@ const CareerSkills: React.FC = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-600">Planned</p>
-                    <p className="text-2xl font-bold text-orange-600">{currentData.overview.plannedSkills}</p>
+                    <p className="text-2xl font-bold text-orange-600">
+                      {currentData.overview.plannedSkills}
+                    </p>
                   </div>
                   <Flag className="h-8 w-8 text-orange-600" />
                 </div>
@@ -659,18 +687,18 @@ const CareerSkills: React.FC = () => {
                   type="text"
                   placeholder="Search skills..."
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={e => setSearchTerm(e.target.value)}
                   className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
             </div>
             <select
               value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
+              onChange={e => setSelectedCategory(e.target.value)}
               className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="all">All Categories</option>
-              {currentData.categories.map((category) => (
+              {currentData.categories.map(category => (
                 <option key={category.id} value={category.id}>
                   {category.name}
                 </option>
@@ -680,7 +708,7 @@ const CareerSkills: React.FC = () => {
 
           {/* Skills Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {filteredSkills.map((skill) => (
+            {filteredSkills.map(skill => (
               <Card key={skill.id} className="hover:shadow-lg transition-shadow">
                 <CardHeader>
                   <div className="flex items-start justify-between">
@@ -705,13 +733,11 @@ const CareerSkills: React.FC = () => {
                     </div>
                     <Progress value={(skill.level / 5) * 100} className="h-2" />
                     <div className="flex">
-                      {[1, 2, 3, 4, 5].map((star) => (
+                      {[1, 2, 3, 4, 5].map(star => (
                         <Star
                           key={star}
                           className={`h-4 w-4 ${
-                            star <= skill.level
-                              ? 'text-yellow-500 fill-current'
-                              : 'text-gray-300'
+                            star <= skill.level ? 'text-yellow-500 fill-current' : 'text-gray-300'
                           }`}
                         />
                       ))}
@@ -746,7 +772,9 @@ const CareerSkills: React.FC = () => {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">Last Used:</span>
-                      <span className="font-medium">{new Date(skill.lastUsed).toLocaleDateString()}</span>
+                      <span className="font-medium">
+                        {new Date(skill.lastUsed).toLocaleDateString()}
+                      </span>
                     </div>
                   </div>
 
@@ -787,7 +815,7 @@ const CareerSkills: React.FC = () => {
 
       {activeTab === 'gaps' && (
         <div className="space-y-4">
-          {currentData.gaps.map((gap) => (
+          {currentData.gaps.map(gap => (
             <Card key={gap.id} className="hover:shadow-md transition-shadow">
               <CardContent className="p-6">
                 <div className="flex items-start justify-between">
@@ -796,7 +824,7 @@ const CareerSkills: React.FC = () => {
                       <h4 className="font-medium text-lg">{gap.skill}</h4>
                       <p className="text-sm text-gray-600 capitalize">{gap.category}</p>
                     </div>
-                    
+
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                       <div>
                         <div className="text-gray-600">Market Demand</div>
@@ -829,18 +857,13 @@ const CareerSkills: React.FC = () => {
                       </div>
                     </div>
                   </div>
-                  
+
                   <div className="flex flex-col items-end gap-2">
                     <Badge className={getPriorityColor(gap.priority)}>
                       Priority #{gap.priority}
                     </Badge>
-                    <Badge variant="outline">
-                      {gap.difficulty}
-                    </Badge>
-                    <Button
-                      size="sm"
-                      onClick={() => handleStartLearning(gap.id)}
-                    >
+                    <Badge variant="outline">{gap.difficulty}</Badge>
+                    <Button size="sm" onClick={() => handleStartLearning(gap.id)}>
                       <Rocket className="h-4 w-4 mr-2" />
                       Start Learning
                     </Button>
@@ -854,7 +877,7 @@ const CareerSkills: React.FC = () => {
 
       {activeTab === 'recommendations' && (
         <div className="space-y-4">
-          {currentData.recommendations.map((rec) => (
+          {currentData.recommendations.map(rec => (
             <Card key={rec.id} className="hover:shadow-md transition-shadow">
               <CardContent className="p-6">
                 <div className="flex items-start justify-between">
@@ -866,9 +889,9 @@ const CareerSkills: React.FC = () => {
                       </div>
                       <h4 className="font-medium text-lg">{rec.title}</h4>
                     </div>
-                    
+
                     <p className="text-sm text-gray-700">{rec.description}</p>
-                    
+
                     <div className="flex items-center gap-4 text-sm">
                       <div className="flex items-center gap-1">
                         <Clock className="h-4 w-4 text-gray-400" />
@@ -877,15 +900,11 @@ const CareerSkills: React.FC = () => {
                       <Badge variant={rec.impact === 'High' ? 'destructive' : 'secondary'}>
                         {rec.impact} Impact
                       </Badge>
-                      <Badge variant="outline">
-                        {rec.difficulty} Difficulty
-                      </Badge>
+                      <Badge variant="outline">{rec.difficulty} Difficulty</Badge>
                     </div>
                   </div>
-                  
-                  <Button size="sm">
-                    {rec.action}
-                  </Button>
+
+                  <Button size="sm">{rec.action}</Button>
                 </div>
               </CardContent>
             </Card>
@@ -906,19 +925,27 @@ const CareerSkills: React.FC = () => {
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-blue-600">{currentData.analytics.marketComparison.yourLevel}</div>
+                  <div className="text-2xl font-bold text-blue-600">
+                    {currentData.analytics.marketComparison.yourLevel}
+                  </div>
                   <div className="text-sm text-gray-600">Your Level</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-gray-600">{currentData.analytics.marketComparison.industryAverage}</div>
+                  <div className="text-2xl font-bold text-gray-600">
+                    {currentData.analytics.marketComparison.industryAverage}
+                  </div>
                   <div className="text-sm text-gray-600">Industry Average</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-green-600">{currentData.analytics.marketComparison.topPercentile}</div>
+                  <div className="text-2xl font-bold text-green-600">
+                    {currentData.analytics.marketComparison.topPercentile}
+                  </div>
                   <div className="text-sm text-gray-600">Top 10%</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-orange-600">{currentData.analytics.marketComparison.targetLevel}</div>
+                  <div className="text-2xl font-bold text-orange-600">
+                    {currentData.analytics.marketComparison.targetLevel}
+                  </div>
                   <div className="text-sm text-gray-600">Target Level</div>
                 </div>
               </div>
@@ -983,19 +1010,27 @@ const CareerSkills: React.FC = () => {
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-blue-600">{currentData.analytics.salaryProjection.current}</div>
+                  <div className="text-2xl font-bold text-blue-600">
+                    {currentData.analytics.salaryProjection.current}
+                  </div>
                   <div className="text-sm text-gray-600">Current</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-green-600">{currentData.analytics.salaryProjection.withGaps}</div>
+                  <div className="text-2xl font-bold text-green-600">
+                    {currentData.analytics.salaryProjection.withGaps}
+                  </div>
                   <div className="text-sm text-gray-600">With Skill Gaps Filled</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-purple-600">{currentData.analytics.salaryProjection.topTier}</div>
+                  <div className="text-2xl font-bold text-purple-600">
+                    {currentData.analytics.salaryProjection.topTier}
+                  </div>
                   <div className="text-sm text-gray-600">Top Tier</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-orange-600">{currentData.analytics.salaryProjection.timeline}</div>
+                  <div className="text-2xl font-bold text-orange-600">
+                    {currentData.analytics.salaryProjection.timeline}
+                  </div>
                   <div className="text-sm text-gray-600">Timeline</div>
                 </div>
               </div>

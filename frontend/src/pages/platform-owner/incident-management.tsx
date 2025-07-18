@@ -11,34 +11,39 @@ const IncidentCommandCenterPage: React.FC<IncidentCommandCenterPageProps> = () =
     <>
       <Head>
         <title>Incident Command Center - Digame Platform Owner</title>
-        <meta name="description" content="Centralized incident response, real-time alerts, escalation workflows, and post-mortem analysis" />
+        <meta
+          name="description"
+          content="Centralized incident response, real-time alerts, escalation workflows, and post-mortem analysis"
+        />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
-      
+
       <div className="min-h-screen bg-gray-50">
         <div className="container mx-auto px-4 py-8">
           <div className="flex items-center mb-6">
             <div className="bg-yellow-100 p-2 rounded-lg mr-3">
               <span className="text-yellow-600 text-xl">👑</span>
             </div>
-            <h1 className="text-3xl font-bold text-gray-900">
-              Incident Command Center
-            </h1>
+            <h1 className="text-3xl font-bold text-gray-900">Incident Command Center</h1>
           </div>
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <p className="text-gray-600 mb-4">
-              Centralized incident response, real-time alerts, escalation workflows, and post-mortem analysis
+              Centralized incident response, real-time alerts, escalation workflows, and post-mortem
+              analysis
             </p>
             <div className="space-y-4">
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                <h3 className="text-lg font-semibold text-yellow-900 mb-2">Platform Owner Dashboard</h3>
+                <h3 className="text-lg font-semibold text-yellow-900 mb-2">
+                  Platform Owner Dashboard
+                </h3>
                 <p className="text-yellow-700">
-                  This page has been restored from the archived implementation with enhanced Next.js compatibility.
-                  All Platform Owner features and functionality have been preserved.
+                  This page has been restored from the archived implementation with enhanced Next.js
+                  compatibility. All Platform Owner features and functionality have been preserved.
                 </p>
               </div>
               <div className="text-sm text-gray-500 bg-gray-50 p-3 rounded">
-                <strong>Note:</strong> This page was successfully restored from archived content (18384 characters) and converted to TypeScript with Next.js compatibility.
+                <strong>Note:</strong> This page was successfully restored from archived content
+                (18384 characters) and converted to TypeScript with Next.js compatibility.
               </div>
             </div>
           </div>
@@ -48,10 +53,10 @@ const IncidentCommandCenterPage: React.FC<IncidentCommandCenterPageProps> = () =
   );
 };
 
-export const getServerSideProps: GetServerSideProps = async (context) => {
+export const getServerSideProps: GetServerSideProps = async context => {
   // Add any server-side logic here if needed
   // For example, authentication checks, data fetching, etc.
-  
+
   return {
     props: {
       // Pass any props to the component

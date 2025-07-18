@@ -2,15 +2,15 @@ import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { 
-  TrendingUp, 
-  Users, 
-  Target, 
-  BookOpen, 
-  Award, 
-  Clock, 
-  Lightbulb, 
-  ChevronRight, 
+import {
+  TrendingUp,
+  Users,
+  Target,
+  BookOpen,
+  Award,
+  Clock,
+  Lightbulb,
+  ChevronRight,
   Star,
   Menu,
   X,
@@ -21,7 +21,7 @@ import {
   BarChart3,
   Bot,
   CheckCircle,
-  Activity
+  Activity,
 } from 'lucide-react';
 import NextJSComprehensiveNavigation from '../../components/navigation/NextJSComprehensiveNavigation';
 import NavigationHubFooter from '../../components/layout/NavigationHubFooter';
@@ -34,10 +34,10 @@ interface DashboardPageProps {
   isNewUser?: boolean;
 }
 
-const DashboardPage: React.FC<DashboardPageProps> = ({ 
-  isDemoMode: propIsDemoMode, 
-  onLogout: propOnLogout, 
-  isNewUser 
+const DashboardPage: React.FC<DashboardPageProps> = ({
+  isDemoMode: propIsDemoMode,
+  onLogout: propOnLogout,
+  isNewUser,
 }) => {
   const router = useRouter();
   const { user, logout, isAuthenticated, isLoading } = useAuth();
@@ -64,15 +64,26 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
   };
 
   // Transform user data to match navigation component expectations
-  const adaptedUser = user ? {
-    name: user.fullName || user.name || `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.username,
-    role: user.role,
-    is_platform_owner: user.isPlatformOwner,
-    subscription_tier: user.subscriptionTier,
-    tenant_id: typeof user.teamId === 'number' ? user.teamId : (user.teamId ? parseInt(user.teamId.toString()) : 1),
-    tenant_name: user.teamId ? `Team ${user.teamId}` : 'Individual',
-    permissions: user.permissions || []
-  } : null;
+  const adaptedUser = user
+    ? {
+        name:
+          user.fullName ||
+          user.name ||
+          `${user.firstName || ''} ${user.lastName || ''}`.trim() ||
+          user.username,
+        role: user.role,
+        is_platform_owner: user.isPlatformOwner,
+        subscription_tier: user.subscriptionTier,
+        tenant_id:
+          typeof user.teamId === 'number'
+            ? user.teamId
+            : user.teamId
+              ? parseInt(user.teamId.toString())
+              : 1,
+        tenant_name: user.teamId ? `Team ${user.teamId}` : 'Individual',
+        permissions: user.permissions || [],
+      }
+    : null;
 
   // Platform Owners and Demo Mode should always have access to all features
   const shouldShowAllFeatures = user?.isDemoMode || user?.isPlatformOwner;
@@ -117,12 +128,13 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
         <title>
           {user?.isPlatformOwner ? 'Platform Owner Dashboard - Digame' : 'Dashboard - Digame'}
         </title>
-        <meta 
-          name="description" 
-          content={user?.isPlatformOwner 
-            ? "Platform Owner comprehensive dashboard with full feature access" 
-            : "Your personal productivity dashboard"
-          } 
+        <meta
+          name="description"
+          content={
+            user?.isPlatformOwner
+              ? 'Platform Owner comprehensive dashboard with full feature access'
+              : 'Your personal productivity dashboard'
+          }
         />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
@@ -140,9 +152,11 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
         />
 
         {/* Main Content Area */}
-        <div className={`flex-1 flex flex-col transition-all duration-300 ease-in-out ${
-          isNavigationOpen ? 'ml-0' : 'ml-0'
-        }`}>
+        <div
+          className={`flex-1 flex flex-col transition-all duration-300 ease-in-out ${
+            isNavigationOpen ? 'ml-0' : 'ml-0'
+          }`}
+        >
           {/* Top Header */}
           <header className="bg-white shadow-sm border-b border-gray-200">
             <div className="flex items-center justify-between px-6 py-4">
@@ -161,14 +175,16 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
                   <p className="text-sm text-gray-600">
                     {user?.isPlatformOwner
                       ? 'Complete access to all 14 sections with 95+ features'
-                      : 'Your personal productivity dashboard'
-                    }
+                      : 'Your personal productivity dashboard'}
                   </p>
                 </div>
               </div>
               <div className="flex items-center space-x-3">
                 <Link href="/">
-                  <button className="p-2 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow" title="Return to Home">
+                  <button
+                    className="p-2 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow"
+                    title="Return to Home"
+                  >
                     <Home className="w-5 h-5 text-gray-600" />
                   </button>
                 </Link>
@@ -229,8 +245,12 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
                 </h2>
                 <p className="text-purple-100">
                   Your personalized dashboard is ready with widgets tailored to your interests in{' '}
-                  {user?.onboardingData?.interests?.join(', ') || 'analytics, ai, productivity, team_management'} and goals for{' '}
-                  {user?.onboardingData?.goals?.join(', ') || 'productivity, data_insights, team_optimization'}.
+                  {user?.onboardingData?.interests?.join(', ') ||
+                    'analytics, ai, productivity, team_management'}{' '}
+                  and goals for{' '}
+                  {user?.onboardingData?.goals?.join(', ') ||
+                    'productivity, data_insights, team_optimization'}
+                  .
                 </p>
               </div>
 

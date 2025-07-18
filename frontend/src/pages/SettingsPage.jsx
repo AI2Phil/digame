@@ -1,7 +1,22 @@
 import React, { useState } from 'react';
 import {
-  User, Bell, Shield, Palette, Globe, Database, Key,
-  Download, Trash2, Save, RotateCcw, Eye, Moon, Sun, Plus, Copy, EyeOff
+  User,
+  Bell,
+  Shield,
+  Palette,
+  Globe,
+  Database,
+  Key,
+  Download,
+  Trash2,
+  Save,
+  RotateCcw,
+  Eye,
+  Moon,
+  Sun,
+  Plus,
+  Copy,
+  EyeOff,
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -14,7 +29,17 @@ import { Slider } from '../components/ui/Slider';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/Tabs';
 import { Separator } from '../components/ui/Separator';
 import { ToggleGroup, ToggleGroupItem } from '../components/ui/ToggleGroup'; // Import ToggleGroup
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '../components/ui/AlertDialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '../components/ui/AlertDialog';
 import { Badge } from '../components/ui/Badge';
 import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/Avatar';
 import { Progress } from '../components/ui/Progress';
@@ -30,9 +55,9 @@ const SettingsPage = () => {
       lastName: 'Doe',
       email: 'john.doe@example.com',
       avatar: '',
-      bio: 'Software developer passionate about productivity tools'
+      bio: 'Software developer passionate about productivity tools',
     },
-    
+
     // Notification Settings
     notifications: {
       emailNotifications: true,
@@ -41,43 +66,43 @@ const SettingsPage = () => {
       goalReminders: true,
       breakReminders: false,
       soundEnabled: true,
-      notificationFrequency: 'normal'
+      notificationFrequency: 'normal',
     },
-    
+
     // Privacy & Security
     privacy: {
       profileVisibility: 'private',
       dataSharing: false,
       analyticsTracking: true,
       twoFactorAuth: false,
-      sessionTimeout: 30
+      sessionTimeout: 30,
     },
-    
+
     // Appearance
     appearance: {
       theme: 'system',
       fontSize: 16,
       compactMode: false,
       animations: true,
-      colorScheme: 'blue'
+      colorScheme: 'blue',
     },
-    
+
     // Language & Region
     localization: {
       language: 'en',
       timezone: 'UTC-5',
       dateFormat: 'MM/DD/YYYY',
       timeFormat: '12h',
-      currency: 'USD'
+      currency: 'USD',
     },
-    
+
     // API Keys Settings
-    apiKeys: {}
+    apiKeys: {},
   });
 
   const [hasChanges, setHasChanges] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  
+
   // API Key Management State
   const [apiKeys, setApiKeys] = useState({});
   const [newApiKey, setNewApiKey] = useState({ name: '', value: '' });
@@ -89,8 +114,8 @@ const SettingsPage = () => {
       ...prev,
       [category]: {
         ...prev[category],
-        [key]: value
-      }
+        [key]: value,
+      },
     }));
     setHasChanges(true);
   };
@@ -145,7 +170,7 @@ const SettingsPage = () => {
 
   const addApiKey = async () => {
     if (!newApiKey.name || !newApiKey.value) return;
-    
+
     setIsLoadingApiKeys(true);
     try {
       const result = await apiService.addApiKey(newApiKey.name, newApiKey.value);
@@ -163,7 +188,7 @@ const SettingsPage = () => {
     }
   };
 
-  const deleteApiKey = async (keyName) => {
+  const deleteApiKey = async keyName => {
     setIsLoadingApiKeys(true);
     try {
       const result = await apiService.deleteApiKey(keyName);
@@ -181,19 +206,19 @@ const SettingsPage = () => {
     }
   };
 
-  const toggleApiKeyVisibility = (keyName) => {
+  const toggleApiKeyVisibility = keyName => {
     setShowApiKey(prev => ({
       ...prev,
-      [keyName]: !prev[keyName]
+      [keyName]: !prev[keyName],
     }));
   };
 
-  const copyApiKey = (value) => {
+  const copyApiKey = value => {
     navigator.clipboard.writeText(value);
     toast.success('API key copied to clipboard');
   };
 
-  const maskApiKey = (key) => {
+  const maskApiKey = key => {
     if (key.length <= 8) return '••••••••';
     return key.substring(0, 4) + '••••••••' + key.substring(key.length - 4);
   };
@@ -211,24 +236,15 @@ const SettingsPage = () => {
           <h1 className="text-3xl font-bold">Settings</h1>
           <p className="text-muted-foreground">Manage your account preferences and settings</p>
         </div>
-        
+
         {/* Action Buttons */}
         <div className="flex items-center space-x-2">
-          {hasChanges && (
-            <Badge variant="secondary">Unsaved changes</Badge>
-          )}
-          <Button
-            variant="outline"
-            onClick={handleReset}
-            disabled={!hasChanges || isLoading}
-          >
+          {hasChanges && <Badge variant="secondary">Unsaved changes</Badge>}
+          <Button variant="outline" onClick={handleReset} disabled={!hasChanges || isLoading}>
             <RotateCcw className="mr-2 h-4 w-4" />
             Reset
           </Button>
-          <Button
-            onClick={handleSave}
-            disabled={!hasChanges || isLoading}
-          >
+          <Button onClick={handleSave} disabled={!hasChanges || isLoading}>
             <Save className="mr-2 h-4 w-4" />
             {isLoading ? 'Saving...' : 'Save Changes'}
           </Button>
@@ -279,7 +295,8 @@ const SettingsPage = () => {
                 <Avatar className="h-20 w-20">
                   <AvatarImage src={settings.profile.avatar} />
                   <AvatarFallback className="text-lg">
-                    {settings.profile.firstName[0]}{settings.profile.lastName[0]}
+                    {settings.profile.firstName[0]}
+                    {settings.profile.lastName[0]}
                   </AvatarFallback>
                 </Avatar>
                 <div className="space-y-2">
@@ -301,7 +318,7 @@ const SettingsPage = () => {
                   <Input
                     id="firstName"
                     value={settings.profile.firstName}
-                    onChange={(e) => updateSetting('profile', 'firstName', e.target.value)}
+                    onChange={e => updateSetting('profile', 'firstName', e.target.value)}
                   />
                 </div>
                 <div className="space-y-2">
@@ -309,7 +326,7 @@ const SettingsPage = () => {
                   <Input
                     id="lastName"
                     value={settings.profile.lastName}
-                    onChange={(e) => updateSetting('profile', 'lastName', e.target.value)}
+                    onChange={e => updateSetting('profile', 'lastName', e.target.value)}
                   />
                 </div>
               </div>
@@ -321,7 +338,7 @@ const SettingsPage = () => {
                   id="email"
                   type="email"
                   value={settings.profile.email}
-                  onChange={(e) => updateSetting('profile', 'email', e.target.value)}
+                  onChange={e => updateSetting('profile', 'email', e.target.value)}
                 />
               </div>
 
@@ -332,7 +349,7 @@ const SettingsPage = () => {
                   id="bio"
                   className="w-full min-h-[100px] px-3 py-2 border border-input rounded-md"
                   value={settings.profile.bio}
-                  onChange={(e) => updateSetting('profile', 'bio', e.target.value)}
+                  onChange={e => updateSetting('profile', 'bio', e.target.value)}
                   placeholder="Tell us about yourself..."
                 />
               </div>
@@ -345,9 +362,7 @@ const SettingsPage = () => {
           <Card>
             <CardHeader>
               <CardTitle>Notification Preferences</CardTitle>
-              <CardDescription>
-                Configure how and when you receive notifications
-              </CardDescription>
+              <CardDescription>Configure how and when you receive notifications</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               {/* Notification Types */}
@@ -359,40 +374,54 @@ const SettingsPage = () => {
                   </div>
                   <Switch
                     checked={settings.notifications.emailNotifications}
-                    onCheckedChange={(checked) => updateSetting('notifications', 'emailNotifications', checked)}
+                    onCheckedChange={checked =>
+                      updateSetting('notifications', 'emailNotifications', checked)
+                    }
                   />
                 </div>
 
                 <div className="flex items-center justify-between">
                   <div>
                     <Label>Push Notifications</Label>
-                    <p className="text-sm text-muted-foreground">Receive browser push notifications</p>
+                    <p className="text-sm text-muted-foreground">
+                      Receive browser push notifications
+                    </p>
                   </div>
                   <Switch
                     checked={settings.notifications.pushNotifications}
-                    onCheckedChange={(checked) => updateSetting('notifications', 'pushNotifications', checked)}
+                    onCheckedChange={checked =>
+                      updateSetting('notifications', 'pushNotifications', checked)
+                    }
                   />
                 </div>
 
                 <div className="flex items-center justify-between">
                   <div>
                     <Label>Weekly Reports</Label>
-                    <p className="text-sm text-muted-foreground">Get weekly productivity summaries</p>
+                    <p className="text-sm text-muted-foreground">
+                      Get weekly productivity summaries
+                    </p>
                   </div>
                   <Switch
                     checked={settings.notifications.weeklyReports}
-                    onCheckedChange={(checked) => updateSetting('notifications', 'weeklyReports', checked)}
+                    onCheckedChange={checked =>
+                      updateSetting('notifications', 'weeklyReports', checked)
+                    }
                   />
                 </div>
 
                 <div className="flex items-center justify-between">
                   <div>
                     <Label>Goal Reminders</Label>
-                    <p className="text-sm text-muted-foreground">Reminders for your productivity goals</p>
+                    <p className="text-sm text-muted-foreground">
+                      Reminders for your productivity goals
+                    </p>
                   </div>
                   <Switch
                     checked={settings.notifications.goalReminders}
-                    onCheckedChange={(checked) => updateSetting('notifications', 'goalReminders', checked)}
+                    onCheckedChange={checked =>
+                      updateSetting('notifications', 'goalReminders', checked)
+                    }
                   />
                 </div>
 
@@ -403,7 +432,9 @@ const SettingsPage = () => {
                   </div>
                   <Switch
                     checked={settings.notifications.breakReminders}
-                    onCheckedChange={(checked) => updateSetting('notifications', 'breakReminders', checked)}
+                    onCheckedChange={checked =>
+                      updateSetting('notifications', 'breakReminders', checked)
+                    }
                   />
                 </div>
               </div>
@@ -415,11 +446,11 @@ const SettingsPage = () => {
                 <Label>Notification Frequency</Label>
                 <Select
                   value={settings.notifications.notificationFrequency}
-                  onChange={(value) => updateSetting('notifications', 'notificationFrequency', value)}
+                  onChange={value => updateSetting('notifications', 'notificationFrequency', value)}
                   options={[
-                    { value: "minimal", label: "Minimal" },
-                    { value: "normal", label: "Normal" },
-                    { value: "frequent", label: "Frequent" },
+                    { value: 'minimal', label: 'Minimal' },
+                    { value: 'normal', label: 'Normal' },
+                    { value: 'frequent', label: 'Frequent' },
                   ]}
                   placeholder="Select frequency..."
                 />
@@ -433,9 +464,7 @@ const SettingsPage = () => {
           <Card>
             <CardHeader>
               <CardTitle>Privacy & Security</CardTitle>
-              <CardDescription>
-                Manage your privacy settings and account security
-              </CardDescription>
+              <CardDescription>Manage your privacy settings and account security</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               {/* Privacy Settings */}
@@ -444,11 +473,11 @@ const SettingsPage = () => {
                   <Label>Profile Visibility</Label>
                   <Select
                     value={settings.privacy.profileVisibility}
-                    onChange={(value) => updateSetting('privacy', 'profileVisibility', value)}
+                    onChange={value => updateSetting('privacy', 'profileVisibility', value)}
                     options={[
-                      { value: "public", label: "Public" },
-                      { value: "private", label: "Private" },
-                      { value: "team", label: "Team Only" },
+                      { value: 'public', label: 'Public' },
+                      { value: 'private', label: 'Private' },
+                      { value: 'team', label: 'Team Only' },
                     ]}
                     placeholder="Select visibility..."
                   />
@@ -457,22 +486,28 @@ const SettingsPage = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <Label>Data Sharing</Label>
-                    <p className="text-sm text-muted-foreground">Share anonymized data for product improvement</p>
+                    <p className="text-sm text-muted-foreground">
+                      Share anonymized data for product improvement
+                    </p>
                   </div>
                   <Switch
                     checked={settings.privacy.dataSharing}
-                    onCheckedChange={(checked) => updateSetting('privacy', 'dataSharing', checked)}
+                    onCheckedChange={checked => updateSetting('privacy', 'dataSharing', checked)}
                   />
                 </div>
 
                 <div className="flex items-center justify-between">
                   <div>
                     <Label>Analytics Tracking</Label>
-                    <p className="text-sm text-muted-foreground">Allow usage analytics collection</p>
+                    <p className="text-sm text-muted-foreground">
+                      Allow usage analytics collection
+                    </p>
                   </div>
                   <Switch
                     checked={settings.privacy.analyticsTracking}
-                    onCheckedChange={(checked) => updateSetting('privacy', 'analyticsTracking', checked)}
+                    onCheckedChange={checked =>
+                      updateSetting('privacy', 'analyticsTracking', checked)
+                    }
                   />
                 </div>
 
@@ -483,7 +518,7 @@ const SettingsPage = () => {
                   </div>
                   <Switch
                     checked={settings.privacy.twoFactorAuth}
-                    onCheckedChange={(checked) => updateSetting('privacy', 'twoFactorAuth', checked)}
+                    onCheckedChange={checked => updateSetting('privacy', 'twoFactorAuth', checked)}
                   />
                 </div>
               </div>
@@ -518,7 +553,7 @@ const SettingsPage = () => {
                     <Download className="mr-2 h-4 w-4" />
                     Export Data
                   </Button>
-                  
+
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
                       <Button variant="destructive">
@@ -530,12 +565,16 @@ const SettingsPage = () => {
                       <AlertDialogHeader>
                         <AlertDialogTitle>Delete Account</AlertDialogTitle>
                         <AlertDialogDescription>
-                          This action cannot be undone. This will permanently delete your account and remove all your data from our servers.
+                          This action cannot be undone. This will permanently delete your account
+                          and remove all your data from our servers.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleDeleteAccount} className="bg-destructive text-destructive-foreground">
+                        <AlertDialogAction
+                          onClick={handleDeleteAccount}
+                          className="bg-destructive text-destructive-foreground"
+                        >
                           Delete Account
                         </AlertDialogAction>
                       </AlertDialogFooter>
@@ -552,9 +591,7 @@ const SettingsPage = () => {
           <Card>
             <CardHeader>
               <CardTitle>Appearance</CardTitle>
-              <CardDescription>
-                Customize the look and feel of your interface
-              </CardDescription>
+              <CardDescription>Customize the look and feel of your interface</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               {/* Theme Selection */}
@@ -563,7 +600,7 @@ const SettingsPage = () => {
                 <ToggleGroup
                   type="single"
                   value={settings.appearance.theme}
-                  onValueChange={(value) => {
+                  onValueChange={value => {
                     if (value) updateSetting('appearance', 'theme', value);
                   }}
                   className="grid grid-cols-3 gap-3"
@@ -607,22 +644,26 @@ const SettingsPage = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <Label>Compact Mode</Label>
-                    <p className="text-sm text-muted-foreground">Use a more compact interface layout</p>
+                    <p className="text-sm text-muted-foreground">
+                      Use a more compact interface layout
+                    </p>
                   </div>
                   <Switch
                     checked={settings.appearance.compactMode}
-                    onCheckedChange={(checked) => updateSetting('appearance', 'compactMode', checked)}
+                    onCheckedChange={checked => updateSetting('appearance', 'compactMode', checked)}
                   />
                 </div>
 
                 <div className="flex items-center justify-between">
                   <div>
                     <Label>Animations</Label>
-                    <p className="text-sm text-muted-foreground">Enable interface animations and transitions</p>
+                    <p className="text-sm text-muted-foreground">
+                      Enable interface animations and transitions
+                    </p>
                   </div>
                   <Switch
                     checked={settings.appearance.animations}
-                    onCheckedChange={(checked) => updateSetting('appearance', 'animations', checked)}
+                    onCheckedChange={checked => updateSetting('appearance', 'animations', checked)}
                   />
                 </div>
               </div>
@@ -645,12 +686,12 @@ const SettingsPage = () => {
                   <Label>Language</Label>
                   <Select
                     value={settings.localization.language}
-                    onChange={(value) => updateSetting('localization', 'language', value)}
+                    onChange={value => updateSetting('localization', 'language', value)}
                     options={[
-                      { value: "en", label: "English" },
-                      { value: "es", label: "Español" },
-                      { value: "fr", label: "Français" },
-                      { value: "de", label: "Deutsch" },
+                      { value: 'en', label: 'English' },
+                      { value: 'es', label: 'Español' },
+                      { value: 'fr', label: 'Français' },
+                      { value: 'de', label: 'Deutsch' },
                     ]}
                     placeholder="Select language..."
                   />
@@ -660,12 +701,12 @@ const SettingsPage = () => {
                   <Label>Timezone</Label>
                   <Select
                     value={settings.localization.timezone}
-                    onChange={(value) => updateSetting('localization', 'timezone', value)}
+                    onChange={value => updateSetting('localization', 'timezone', value)}
                     options={[
-                      { value: "UTC-8", label: "Pacific Time (UTC-8)" },
-                      { value: "UTC-5", label: "Eastern Time (UTC-5)" },
-                      { value: "UTC+0", label: "UTC" },
-                      { value: "UTC+1", label: "Central European Time (UTC+1)" },
+                      { value: 'UTC-8', label: 'Pacific Time (UTC-8)' },
+                      { value: 'UTC-5', label: 'Eastern Time (UTC-5)' },
+                      { value: 'UTC+0', label: 'UTC' },
+                      { value: 'UTC+1', label: 'Central European Time (UTC+1)' },
                     ]}
                     placeholder="Select timezone..."
                   />
@@ -675,11 +716,11 @@ const SettingsPage = () => {
                   <Label>Date Format</Label>
                   <Select
                     value={settings.localization.dateFormat}
-                    onChange={(value) => updateSetting('localization', 'dateFormat', value)}
+                    onChange={value => updateSetting('localization', 'dateFormat', value)}
                     options={[
-                      { value: "MM/DD/YYYY", label: "MM/DD/YYYY" },
-                      { value: "DD/MM/YYYY", label: "DD/MM/YYYY" },
-                      { value: "YYYY-MM-DD", label: "YYYY-MM-DD" },
+                      { value: 'MM/DD/YYYY', label: 'MM/DD/YYYY' },
+                      { value: 'DD/MM/YYYY', label: 'DD/MM/YYYY' },
+                      { value: 'YYYY-MM-DD', label: 'YYYY-MM-DD' },
                     ]}
                     placeholder="Select date format..."
                   />
@@ -689,10 +730,10 @@ const SettingsPage = () => {
                   <Label>Time Format</Label>
                   <Select
                     value={settings.localization.timeFormat}
-                    onChange={(value) => updateSetting('localization', 'timeFormat', value)}
+                    onChange={value => updateSetting('localization', 'timeFormat', value)}
                     options={[
-                      { value: "12h", label: "12 Hour" },
-                      { value: "24h", label: "24 Hour" },
+                      { value: '12h', label: '12 Hour' },
+                      { value: '24h', label: '24 Hour' },
                     ]}
                     placeholder="Select time format..."
                   />
@@ -722,7 +763,7 @@ const SettingsPage = () => {
                       id="api-key-name"
                       placeholder="e.g., OpenAI, Google, AWS"
                       value={newApiKey.name}
-                      onChange={(e) => setNewApiKey(prev => ({ ...prev, name: e.target.value }))}
+                      onChange={e => setNewApiKey(prev => ({ ...prev, name: e.target.value }))}
                     />
                   </div>
                   <div className="space-y-2">
@@ -732,7 +773,7 @@ const SettingsPage = () => {
                       type="password"
                       placeholder="Enter your API key"
                       value={newApiKey.value}
-                      onChange={(e) => setNewApiKey(prev => ({ ...prev, value: e.target.value }))}
+                      onChange={e => setNewApiKey(prev => ({ ...prev, value: e.target.value }))}
                     />
                   </div>
                   <div className="flex items-end">
@@ -768,7 +809,10 @@ const SettingsPage = () => {
                 ) : (
                   <div className="space-y-3">
                     {Object.entries(apiKeys).map(([keyName, keyValue]) => (
-                      <div key={keyName} className="flex items-center justify-between p-4 border rounded-lg">
+                      <div
+                        key={keyName}
+                        className="flex items-center justify-between p-4 border rounded-lg"
+                      >
                         <div className="flex-1">
                           <div className="flex items-center space-x-3">
                             <Key className="h-4 w-4 text-muted-foreground" />
@@ -792,11 +836,7 @@ const SettingsPage = () => {
                               <Eye className="h-4 w-4" />
                             )}
                           </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => copyApiKey(keyValue)}
-                          >
+                          <Button variant="ghost" size="sm" onClick={() => copyApiKey(keyValue)}>
                             <Copy className="h-4 w-4" />
                           </Button>
                           <AlertDialog>
@@ -809,8 +849,8 @@ const SettingsPage = () => {
                               <AlertDialogHeader>
                                 <AlertDialogTitle>Delete API Key</AlertDialogTitle>
                                 <AlertDialogDescription>
-                                  Are you sure you want to delete the API key for "{keyName}"?
-                                  This action cannot be undone.
+                                  Are you sure you want to delete the API key for "{keyName}"? This
+                                  action cannot be undone.
                                 </AlertDialogDescription>
                               </AlertDialogHeader>
                               <AlertDialogFooter>
@@ -838,8 +878,9 @@ const SettingsPage = () => {
                   <div className="space-y-1">
                     <p className="text-sm font-medium">Security Notice</p>
                     <p className="text-sm text-muted-foreground">
-                      API keys are stored securely and encrypted. Only you can view and manage your keys.
-                      Never share your API keys with others or include them in public repositories.
+                      API keys are stored securely and encrypted. Only you can view and manage your
+                      keys. Never share your API keys with others or include them in public
+                      repositories.
                     </p>
                   </div>
                 </div>

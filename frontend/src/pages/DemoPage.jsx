@@ -9,7 +9,7 @@ export default function DemoPage({ onDemoAccess }) {
   const [selectedDemo, setSelectedDemo] = useState(null);
   const router = useRouter();
   const { enterDemoMode, isSSR } = useAuth();
-  
+
   // SSR safety check
   if (isSSR) {
     return (
@@ -23,14 +23,14 @@ export default function DemoPage({ onDemoAccess }) {
     );
   }
 
-  const handleDemoSelect = (demoType) => {
+  const handleDemoSelect = demoType => {
     setSelectedDemo(demoType);
     // Enable demo mode using auth context
     enterDemoMode();
     if (onDemoAccess) {
       onDemoAccess();
     }
-    
+
     if (demoType === 'guided') {
       // For guided tour, router to onboarding wizard
       router.push('/onboarding-wizard');
@@ -52,9 +52,15 @@ export default function DemoPage({ onDemoAccess }) {
             <span className="text-xl font-bold text-gray-900">Digame</span>
           </Link>
           <div className="hidden md:flex space-x-8">
-            <Link href="/features" className="text-gray-600 hover:text-gray-900">Features</Link>
-            <Link href="/how-it-works" className="text-gray-600 hover:text-gray-900">How it Works</Link>
-            <Link href="/pricing" className="text-gray-600 hover:text-gray-900">Pricing</Link>
+            <Link href="/features" className="text-gray-600 hover:text-gray-900">
+              Features
+            </Link>
+            <Link href="/how-it-works" className="text-gray-600 hover:text-gray-900">
+              How it Works
+            </Link>
+            <Link href="/pricing" className="text-gray-600 hover:text-gray-900">
+              Pricing
+            </Link>
           </div>
           <Link href="/">
             <Button variant="primary" size="md">
@@ -203,21 +209,27 @@ export default function DemoPage({ onDemoAccess }) {
                 <span className="text-2xl">📊</span>
               </div>
               <h4 className="font-semibold text-gray-900 mb-2">Live Analytics</h4>
-              <p className="text-sm text-gray-600">See real-time productivity metrics and behavioral insights</p>
+              <p className="text-sm text-gray-600">
+                See real-time productivity metrics and behavioral insights
+              </p>
             </div>
             <div className="text-center">
               <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <span className="text-2xl">🤖</span>
               </div>
               <h4 className="font-semibold text-gray-900 mb-2">AI Recommendations</h4>
-              <p className="text-sm text-gray-600">Experience personalized AI coaching and suggestions</p>
+              <p className="text-sm text-gray-600">
+                Experience personalized AI coaching and suggestions
+              </p>
             </div>
             <div className="text-center">
               <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <span className="text-2xl">🎯</span>
               </div>
               <h4 className="font-semibold text-gray-900 mb-2">Goal Tracking</h4>
-              <p className="text-sm text-gray-600">See how goal setting and progress tracking works</p>
+              <p className="text-sm text-gray-600">
+                See how goal setting and progress tracking works
+              </p>
             </div>
           </div>
         </div>
@@ -232,12 +244,20 @@ export default function DemoPage({ onDemoAccess }) {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/">
-              <Button variant="secondary" size="xl" className="bg-white text-blue-600 hover:bg-gray-50">
+              <Button
+                variant="secondary"
+                size="xl"
+                className="bg-white text-blue-600 hover:bg-gray-50"
+              >
                 ⚡ Sign Up Free
               </Button>
             </Link>
             <Link href="/pricing">
-              <Button variant="outline" size="xl" className="border-white text-white hover:bg-white hover:text-blue-600">
+              <Button
+                variant="outline"
+                size="xl"
+                className="border-white text-white hover:bg-white hover:text-blue-600"
+              >
                 💎 View Pricing
               </Button>
             </Link>
@@ -254,9 +274,7 @@ export default function DemoPage({ onDemoAccess }) {
             </div>
             <span className="text-lg font-bold">Digame</span>
           </div>
-          <p className="text-gray-400">
-            © 2025 Digame. Your Digital Professional Twin Platform.
-          </p>
+          <p className="text-gray-400">© 2025 Digame. Your Digital Professional Twin Platform.</p>
         </div>
       </footer>
     </div>

@@ -7,13 +7,13 @@ import { Badge } from '../../src/components/ui/Badge';
 import { Input } from '../../src/components/ui/Input';
 import { Textarea } from '../../src/components/ui/Textarea';
 import { Progress } from '../../src/components/ui/Progress';
-import { 
-  Brain, 
-  Lightbulb, 
-  Target, 
-  Clock, 
-  CheckCircle, 
-  Plus, 
+import {
+  Brain,
+  Lightbulb,
+  Target,
+  Clock,
+  CheckCircle,
+  Plus,
   Star,
   TrendingUp,
   Users,
@@ -26,7 +26,7 @@ import {
   ArrowRight,
   ThumbsUp,
   ThumbsDown,
-  Bookmark
+  Bookmark,
 } from 'lucide-react';
 
 const AITaskSuggestions: React.FC = () => {
@@ -46,10 +46,10 @@ const AITaskSuggestions: React.FC = () => {
       setLoading(true);
       const response = await fetch(`/api/tasks/ai-suggestions?filter=${filter}`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
       });
-      
+
       if (response.ok) {
         const data = await response.json();
         setSuggestions(data.suggestions || []);
@@ -61,15 +61,15 @@ const AITaskSuggestions: React.FC = () => {
     }
   };
 
-  const acceptSuggestion = async (suggestionId) => {
+  const acceptSuggestion = async suggestionId => {
     try {
       const response = await fetch(`/api/tasks/ai-suggestions/${suggestionId}/accept`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
       });
-      
+
       if (response.ok) {
         fetchAISuggestions(); // Refresh suggestions
       }
@@ -83,22 +83,26 @@ const AITaskSuggestions: React.FC = () => {
       id: 1,
       type: 'task_creation',
       title: 'Review Q1 Performance Metrics',
-      description: 'Based on your calendar, you have a performance review meeting next week. Consider creating a task to prepare the Q1 metrics analysis.',
+      description:
+        'Based on your calendar, you have a performance review meeting next week. Consider creating a task to prepare the Q1 metrics analysis.',
       priority: 'high',
       estimatedTime: 120,
       confidence: 0.92,
-      reasoning: 'Detected upcoming meeting in calendar and historical pattern of preparation tasks',
+      reasoning:
+        'Detected upcoming meeting in calendar and historical pattern of preparation tasks',
       category: 'productivity',
       suggestedDueDate: '2024-01-15',
       tags: ['review', 'metrics', 'Q1'],
       relatedTasks: ['Prepare presentation slides', 'Gather team feedback'],
-      aiInsight: 'Users who prepare for performance reviews 3 days in advance report 40% higher satisfaction scores'
+      aiInsight:
+        'Users who prepare for performance reviews 3 days in advance report 40% higher satisfaction scores',
     },
     {
       id: 2,
       type: 'task_optimization',
       title: 'Batch Email Responses',
-      description: 'You typically respond to emails throughout the day. Batching responses into 2-3 focused sessions could save 45 minutes daily.',
+      description:
+        'You typically respond to emails throughout the day. Batching responses into 2-3 focused sessions could save 45 minutes daily.',
       priority: 'medium',
       estimatedTime: 30,
       confidence: 0.87,
@@ -107,13 +111,14 @@ const AITaskSuggestions: React.FC = () => {
       suggestedDueDate: '2024-01-12',
       tags: ['email', 'batching', 'productivity'],
       relatedTasks: ['Set email schedule', 'Configure notifications'],
-      aiInsight: 'Email batching reduces cognitive load and improves focus by 35%'
+      aiInsight: 'Email batching reduces cognitive load and improves focus by 35%',
     },
     {
       id: 3,
       type: 'deadline_optimization',
       title: 'Move Project Deadline Forward',
-      description: 'Your "Website Redesign" project could be completed 3 days earlier based on current progress velocity.',
+      description:
+        'Your "Website Redesign" project could be completed 3 days earlier based on current progress velocity.',
       priority: 'low',
       estimatedTime: 15,
       confidence: 0.78,
@@ -122,13 +127,14 @@ const AITaskSuggestions: React.FC = () => {
       suggestedDueDate: '2024-01-18',
       tags: ['deadline', 'project', 'optimization'],
       relatedTasks: ['Update project timeline', 'Notify stakeholders'],
-      aiInsight: 'Early project completion allows for better quality review and reduces stress'
+      aiInsight: 'Early project completion allows for better quality review and reduces stress',
     },
     {
       id: 4,
       type: 'skill_development',
       title: 'Learn Advanced Analytics',
-      description: 'Based on your recent tasks, learning advanced analytics could help automate 60% of your data analysis work.',
+      description:
+        'Based on your recent tasks, learning advanced analytics could help automate 60% of your data analysis work.',
       priority: 'medium',
       estimatedTime: 300,
       confidence: 0.85,
@@ -137,13 +143,14 @@ const AITaskSuggestions: React.FC = () => {
       suggestedDueDate: '2024-02-01',
       tags: ['learning', 'analytics', 'automation'],
       relatedTasks: ['Find online course', 'Schedule learning time', 'Practice with real data'],
-      aiInsight: 'Professionals with advanced analytics skills report 50% faster decision-making'
+      aiInsight: 'Professionals with advanced analytics skills report 50% faster decision-making',
     },
     {
       id: 5,
       type: 'collaboration',
       title: 'Schedule Team Sync',
-      description: 'Your team hasn\'t had a sync meeting in 2 weeks. Consider scheduling a brief check-in to maintain alignment.',
+      description:
+        "Your team hasn't had a sync meeting in 2 weeks. Consider scheduling a brief check-in to maintain alignment.",
       priority: 'medium',
       estimatedTime: 60,
       confidence: 0.81,
@@ -152,36 +159,47 @@ const AITaskSuggestions: React.FC = () => {
       suggestedDueDate: '2024-01-13',
       tags: ['team', 'sync', 'communication'],
       relatedTasks: ['Prepare agenda', 'Send calendar invite', 'Gather updates'],
-      aiInsight: 'Regular team syncs improve project success rate by 25%'
-    }
+      aiInsight: 'Regular team syncs improve project success rate by 25%',
+    },
   ];
 
   const currentSuggestions = suggestions.length > 0 ? suggestions : mockSuggestions;
 
   const filteredSuggestions = currentSuggestions.filter(suggestion => {
     const matchesFilter = filter === 'all' || suggestion.category === filter;
-    const matchesSearch = suggestion.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         suggestion.description.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch =
+      suggestion.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      suggestion.description.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesFilter && matchesSearch;
   });
 
-  const getPriorityColor = (priority) => {
+  const getPriorityColor = priority => {
     switch (priority) {
-      case 'high': return 'destructive';
-      case 'medium': return 'secondary';
-      case 'low': return 'outline';
-      default: return 'default';
+      case 'high':
+        return 'destructive';
+      case 'medium':
+        return 'secondary';
+      case 'low':
+        return 'outline';
+      default:
+        return 'default';
     }
   };
 
-  const getTypeIcon = (type) => {
+  const getTypeIcon = type => {
     switch (type) {
-      case 'task_creation': return <Plus className="h-4 w-4" />;
-      case 'task_optimization': return <Zap className="h-4 w-4" />;
-      case 'deadline_optimization': return <Clock className="h-4 w-4" />;
-      case 'skill_development': return <Target className="h-4 w-4" />;
-      case 'collaboration': return <Users className="h-4 w-4" />;
-      default: return <Lightbulb className="h-4 w-4" />;
+      case 'task_creation':
+        return <Plus className="h-4 w-4" />;
+      case 'task_optimization':
+        return <Zap className="h-4 w-4" />;
+      case 'deadline_optimization':
+        return <Clock className="h-4 w-4" />;
+      case 'skill_development':
+        return <Target className="h-4 w-4" />;
+      case 'collaboration':
+        return <Users className="h-4 w-4" />;
+      default:
+        return <Lightbulb className="h-4 w-4" />;
     }
   };
 
@@ -191,7 +209,7 @@ const AITaskSuggestions: React.FC = () => {
     { value: 'efficiency', label: 'Efficiency' },
     { value: 'planning', label: 'Planning' },
     { value: 'learning', label: 'Learning' },
-    { value: 'teamwork', label: 'Teamwork' }
+    { value: 'teamwork', label: 'Teamwork' },
   ];
 
   return (
@@ -202,7 +220,7 @@ const AITaskSuggestions: React.FC = () => {
         icon={<Brain className="h-8 w-8" />}
         breadcrumb={[
           { label: 'Tasks', href: '/tasks' },
-          { label: 'AI Suggestions', href: '/tasks/ai-suggestions' }
+          { label: 'AI Suggestions', href: '/tasks/ai-suggestions' },
         ]}
         actions={
           <div className="flex gap-2">
@@ -265,17 +283,17 @@ const AITaskSuggestions: React.FC = () => {
                 <Input
                   placeholder="Search suggestions..."
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={e => setSearchTerm(e.target.value)}
                   className="pl-10"
                 />
               </div>
             </div>
             <select
               value={filter}
-              onChange={(e) => setFilter(e.target.value)}
+              onChange={e => setFilter(e.target.value)}
               className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              {suggestionCategories.map((category) => (
+              {suggestionCategories.map(category => (
                 <option key={category.value} value={category.value}>
                   {category.label}
                 </option>
@@ -317,7 +335,12 @@ const AITaskSuggestions: React.FC = () => {
                   <div>
                     <p className="text-sm font-medium text-gray-600">Avg Confidence</p>
                     <p className="text-2xl font-bold text-green-600">
-                      {(filteredSuggestions.reduce((acc, s) => acc + s.confidence, 0) / filteredSuggestions.length * 100).toFixed(0)}%
+                      {(
+                        (filteredSuggestions.reduce((acc, s) => acc + s.confidence, 0) /
+                          filteredSuggestions.length) *
+                        100
+                      ).toFixed(0)}
+                      %
                     </p>
                   </div>
                   <TrendingUp className="h-8 w-8 text-green-600" />
@@ -331,7 +354,10 @@ const AITaskSuggestions: React.FC = () => {
                   <div>
                     <p className="text-sm font-medium text-gray-600">Time Savings</p>
                     <p className="text-2xl font-bold text-purple-600">
-                      {Math.round(filteredSuggestions.reduce((acc, s) => acc + (s.estimatedTime || 0), 0) / 60)}h
+                      {Math.round(
+                        filteredSuggestions.reduce((acc, s) => acc + (s.estimatedTime || 0), 0) / 60
+                      )}
+                      h
                     </p>
                   </div>
                   <Clock className="h-8 w-8 text-purple-600" />
@@ -342,7 +368,7 @@ const AITaskSuggestions: React.FC = () => {
 
           {/* Suggestions List */}
           <div className="space-y-4">
-            {filteredSuggestions.map((suggestion) => (
+            {filteredSuggestions.map(suggestion => (
               <Card key={suggestion.id} className="hover:shadow-lg transition-shadow">
                 <CardContent className="p-6">
                   <div className="flex items-start justify-between mb-4">
@@ -361,7 +387,7 @@ const AITaskSuggestions: React.FC = () => {
                           </Badge>
                         </div>
                         <p className="text-gray-600 mb-3">{suggestion.description}</p>
-                        
+
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm mb-4">
                           <div>
                             <span className="text-gray-500">Estimated Time:</span>
@@ -403,7 +429,10 @@ const AITaskSuggestions: React.FC = () => {
                             <p className="text-sm font-medium text-gray-700 mb-2">Related Tasks:</p>
                             <div className="space-y-1">
                               {suggestion.relatedTasks.map((task, index) => (
-                                <div key={index} className="flex items-center gap-2 text-sm text-gray-600">
+                                <div
+                                  key={index}
+                                  className="flex items-center gap-2 text-sm text-gray-600"
+                                >
                                   <ArrowRight className="h-3 w-3" />
                                   <span>{task}</span>
                                 </div>
@@ -510,25 +539,31 @@ const AITaskSuggestions: React.FC = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {suggestionCategories.slice(1).map((category) => {
+                {suggestionCategories.slice(1).map(category => {
                   const categoryData = {
                     productivity: { accepted: 92, total: 15, avgTime: 45 },
                     efficiency: { accepted: 85, total: 12, avgTime: 30 },
                     planning: { accepted: 78, total: 8, avgTime: 60 },
                     learning: { accepted: 67, total: 5, avgTime: 180 },
-                    teamwork: { accepted: 89, total: 10, avgTime: 90 }
+                    teamwork: { accepted: 89, total: 10, avgTime: 90 },
                   };
-                  
-                  const data = categoryData[category.value] || { accepted: 0, total: 0, avgTime: 0 };
+
+                  const data = categoryData[category.value] || {
+                    accepted: 0,
+                    total: 0,
+                    avgTime: 0,
+                  };
                   const acceptanceRate = data.total > 0 ? (data.accepted / data.total) * 100 : 0;
-                  
+
                   return (
                     <div key={category.value} className="space-y-2">
                       <div className="flex justify-between items-center">
                         <span className="font-medium capitalize">{category.label}</span>
                         <div className="text-right">
                           <span className="text-sm font-bold">{acceptanceRate.toFixed(0)}%</span>
-                          <span className="text-xs text-gray-500 ml-2">({data.total} suggestions)</span>
+                          <span className="text-xs text-gray-500 ml-2">
+                            ({data.total} suggestions)
+                          </span>
                         </div>
                       </div>
                       <Progress value={acceptanceRate} className="h-2" />
@@ -555,12 +590,35 @@ const AITaskSuggestions: React.FC = () => {
           <CardContent>
             <div className="space-y-4">
               {[
-                { title: 'Schedule team retrospective', action: 'Accepted', date: '2 hours ago', impact: '+15 min saved' },
-                { title: 'Optimize email workflow', action: 'Accepted', date: '1 day ago', impact: '+45 min saved' },
-                { title: 'Learn new project management tool', action: 'Dismissed', date: '3 days ago', impact: 'N/A' },
-                { title: 'Batch similar tasks together', action: 'Accepted', date: '1 week ago', impact: '+30 min saved' }
+                {
+                  title: 'Schedule team retrospective',
+                  action: 'Accepted',
+                  date: '2 hours ago',
+                  impact: '+15 min saved',
+                },
+                {
+                  title: 'Optimize email workflow',
+                  action: 'Accepted',
+                  date: '1 day ago',
+                  impact: '+45 min saved',
+                },
+                {
+                  title: 'Learn new project management tool',
+                  action: 'Dismissed',
+                  date: '3 days ago',
+                  impact: 'N/A',
+                },
+                {
+                  title: 'Batch similar tasks together',
+                  action: 'Accepted',
+                  date: '1 week ago',
+                  impact: '+30 min saved',
+                },
               ].map((item, index) => (
-                <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div
+                  key={index}
+                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                >
                   <div>
                     <h4 className="font-medium">{item.title}</h4>
                     <p className="text-sm text-gray-600">{item.date}</p>

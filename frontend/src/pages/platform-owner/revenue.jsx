@@ -18,9 +18,9 @@ const PlatformOwnerRevenuePage = () => {
       setLoading(true);
       const response = await fetch(`/api/v1/platform/analytics/revenue?period=${selectedPeriod}`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        }
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json',
+        },
       });
 
       if (!response.ok) {
@@ -36,20 +36,25 @@ const PlatformOwnerRevenuePage = () => {
     }
   };
 
-  const getTierColor = (tier) => {
+  const getTierColor = tier => {
     switch (tier) {
-      case 'free': return 'bg-gray-100 text-gray-800';
-      case 'individual_pro': return 'bg-blue-100 text-blue-800';
-      case 'team': return 'bg-green-100 text-green-800';
-      case 'enterprise': return 'bg-purple-100 text-purple-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'free':
+        return 'bg-gray-100 text-gray-800';
+      case 'individual_pro':
+        return 'bg-blue-100 text-blue-800';
+      case 'team':
+        return 'bg-green-100 text-green-800';
+      case 'enterprise':
+        return 'bg-purple-100 text-purple-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
-  const formatCurrency = (amount) => {
+  const formatCurrency = amount => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'USD'
+      currency: 'USD',
     }).format(amount);
   };
 
@@ -95,7 +100,7 @@ const PlatformOwnerRevenuePage = () => {
               <select
                 className="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 value={selectedPeriod}
-                onChange={(e) => setSelectedPeriod(e.target.value)}
+                onChange={e => setSelectedPeriod(e.target.value)}
               >
                 <option value="7d">Last 7 days</option>
                 <option value="30d">Last 30 days</option>
@@ -178,8 +183,11 @@ const PlatformOwnerRevenuePage = () => {
             </div>
             <div className="p-6">
               <div className="space-y-4">
-                {mrrByTier.map((tier) => (
-                  <div key={tier.tier} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                {mrrByTier.map(tier => (
+                  <div
+                    key={tier.tier}
+                    className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
+                  >
                     <div className="flex items-center">
                       <Badge className={`mr-3 ${getTierColor(tier.tier)}`}>
                         {tier.tier.replace('_', ' ')}
@@ -214,13 +222,13 @@ const PlatformOwnerRevenuePage = () => {
             <div className="p-6">
               <div className="space-y-6">
                 <div className="text-center p-6 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg">
-                  <h4 className="text-lg font-semibold text-gray-900 mb-2">Projected Annual Revenue</h4>
+                  <h4 className="text-lg font-semibold text-gray-900 mb-2">
+                    Projected Annual Revenue
+                  </h4>
                   <p className="text-3xl font-bold text-green-600">
                     {formatCurrency((summary.total_mrr || 0) * 12)}
                   </p>
-                  <p className="text-sm text-gray-600 mt-2">
-                    Based on current MRR growth trends
-                  </p>
+                  <p className="text-sm text-gray-600 mt-2">Based on current MRR growth trends</p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">

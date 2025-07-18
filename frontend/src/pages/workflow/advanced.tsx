@@ -7,13 +7,13 @@ import { Badge } from '../../components/ui/Badge';
 import { Input } from '../../components/ui/Input';
 import { Textarea } from '../../components/ui/Textarea';
 import { Progress } from '../../components/ui/Progress';
-import { 
-  Brain, 
-  GitBranch, 
-  Layers, 
-  Code, 
-  Database, 
-  Webhook, 
+import {
+  Brain,
+  GitBranch,
+  Layers,
+  Code,
+  Database,
+  Webhook,
   Settings,
   Play,
   Pause,
@@ -33,7 +33,7 @@ import {
   Users,
   Calendar,
   Target,
-  TrendingUp
+  TrendingUp,
 } from 'lucide-react';
 
 const AdvancedWorkflows = () => {
@@ -53,10 +53,10 @@ const AdvancedWorkflows = () => {
       setLoading(true);
       const response = await fetch('/api/workflow/advanced', {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
       });
-      
+
       if (response.ok) {
         const data = await response.json();
         setWorkflows(data.workflows || []);
@@ -83,15 +83,15 @@ const AdvancedWorkflows = () => {
       performance: {
         successRate: 94.2,
         avgExecutionTime: 180,
-        totalExecutions: 1247
+        totalExecutions: 1247,
       },
       flowNodes: [
         { id: 'start', type: 'trigger', label: 'New Lead', x: 100, y: 100 },
         { id: 'ai_score', type: 'ai', label: 'AI Lead Scoring', x: 300, y: 100 },
         { id: 'decision', type: 'condition', label: 'Score > 80?', x: 500, y: 100 },
         { id: 'high_priority', type: 'action', label: 'High Priority Path', x: 700, y: 50 },
-        { id: 'standard', type: 'action', label: 'Standard Path', x: 700, y: 150 }
-      ]
+        { id: 'standard', type: 'action', label: 'Standard Path', x: 700, y: 150 },
+      ],
     },
     {
       id: 2,
@@ -107,8 +107,8 @@ const AdvancedWorkflows = () => {
       performance: {
         successRate: 89.7,
         avgExecutionTime: 320,
-        totalExecutions: 856
-      }
+        totalExecutions: 856,
+      },
     },
     {
       id: 3,
@@ -124,9 +124,9 @@ const AdvancedWorkflows = () => {
       performance: {
         successRate: 0,
         avgExecutionTime: 0,
-        totalExecutions: 0
-      }
-    }
+        totalExecutions: 0,
+      },
+    },
   ];
 
   const nodeTypes = [
@@ -135,70 +135,78 @@ const AdvancedWorkflows = () => {
       label: 'Trigger',
       icon: <Zap className="h-4 w-4" />,
       color: 'bg-green-100 border-green-300',
-      description: 'Start point for workflow execution'
+      description: 'Start point for workflow execution',
     },
     {
       type: 'action',
       label: 'Action',
       icon: <Settings className="h-4 w-4" />,
       color: 'bg-blue-100 border-blue-300',
-      description: 'Perform an operation or task'
+      description: 'Perform an operation or task',
     },
     {
       type: 'condition',
       label: 'Condition',
       icon: <GitBranch className="h-4 w-4" />,
       color: 'bg-yellow-100 border-yellow-300',
-      description: 'Decision point with multiple paths'
+      description: 'Decision point with multiple paths',
     },
     {
       type: 'ai',
       label: 'AI Processing',
       icon: <Brain className="h-4 w-4" />,
       color: 'bg-purple-100 border-purple-300',
-      description: 'AI-powered analysis or decision'
+      description: 'AI-powered analysis or decision',
     },
     {
       type: 'integration',
       label: 'Integration',
       icon: <Webhook className="h-4 w-4" />,
       color: 'bg-orange-100 border-orange-300',
-      description: 'Connect to external services'
+      description: 'Connect to external services',
     },
     {
       type: 'data',
       label: 'Data Operation',
       icon: <Database className="h-4 w-4" />,
       color: 'bg-gray-100 border-gray-300',
-      description: 'Database or data manipulation'
-    }
+      description: 'Database or data manipulation',
+    },
   ];
 
   const currentWorkflows = workflows.length > 0 ? workflows : mockWorkflows;
 
-  const getComplexityColor = (complexity) => {
+  const getComplexityColor = complexity => {
     switch (complexity) {
-      case 'high': return 'destructive';
-      case 'medium': return 'secondary';
-      case 'low': return 'default';
-      default: return 'outline';
+      case 'high':
+        return 'destructive';
+      case 'medium':
+        return 'secondary';
+      case 'low':
+        return 'default';
+      default:
+        return 'outline';
     }
   };
 
-  const getStatusColor = (status) => {
+  const getStatusColor = status => {
     switch (status) {
-      case 'active': return 'default';
-      case 'draft': return 'secondary';
-      case 'paused': return 'outline';
-      default: return 'destructive';
+      case 'active':
+        return 'default';
+      case 'draft':
+        return 'secondary';
+      case 'paused':
+        return 'outline';
+      default:
+        return 'destructive';
     }
   };
 
-  const handleNodeDrag = (nodeType) => {
+  const handleNodeDrag = nodeType => {
     setDraggedNode(nodeType);
   };
 
-  const handleCanvasDrop = (e) => {
+  const handleCanvasDrop = e => {
     e.preventDefault();
     if (draggedNode) {
       // Add node to canvas at drop position
@@ -215,7 +223,7 @@ const AdvancedWorkflows = () => {
         icon={<Brain className="h-8 w-8" />}
         breadcrumb={[
           { label: 'Workflow', href: '/workflow' },
-          { label: 'Advanced', href: '/workflow/advanced' }
+          { label: 'Advanced', href: '/workflow/advanced' },
         ]}
         actions={
           <div className="flex gap-2">
@@ -276,7 +284,7 @@ const AdvancedWorkflows = () => {
               <CardTitle className="text-sm">Node Palette</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              {nodeTypes.map((nodeType) => (
+              {nodeTypes.map(nodeType => (
                 <div
                   key={nodeType.type}
                   draggable
@@ -312,14 +320,14 @@ const AdvancedWorkflows = () => {
               <div
                 className="w-full h-[500px] bg-gray-50 relative overflow-hidden"
                 onDrop={handleCanvasDrop}
-                onDragOver={(e) => e.preventDefault()}
+                onDragOver={e => e.preventDefault()}
               >
                 {/* Grid Background */}
                 <div className="absolute inset-0 opacity-20">
                   <svg width="100%" height="100%">
                     <defs>
                       <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
-                        <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#e5e7eb" strokeWidth="1"/>
+                        <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#e5e7eb" strokeWidth="1" />
                       </pattern>
                     </defs>
                     <rect width="100%" height="100%" fill="url(#grid)" />
@@ -327,18 +335,19 @@ const AdvancedWorkflows = () => {
                 </div>
 
                 {/* Sample Workflow Nodes */}
-                {selectedWorkflow?.flowNodes && selectedWorkflow.flowNodes.map((node) => (
-                  <div
-                    key={node.id}
-                    className="absolute bg-white border-2 border-blue-300 rounded-lg p-3 shadow-md cursor-move"
-                    style={{ left: node.x, top: node.y }}
-                  >
-                    <div className="flex items-center gap-2">
-                      {nodeTypes.find(t => t.type === node.type)?.icon}
-                      <span className="text-sm font-medium">{node.label}</span>
+                {selectedWorkflow?.flowNodes &&
+                  selectedWorkflow.flowNodes.map(node => (
+                    <div
+                      key={node.id}
+                      className="absolute bg-white border-2 border-blue-300 rounded-lg p-3 shadow-md cursor-move"
+                      style={{ left: node.x, top: node.y }}
+                    >
+                      <div className="flex items-center gap-2">
+                        {nodeTypes.find(t => t.type === node.type)?.icon}
+                        <span className="text-sm font-medium">{node.label}</span>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
 
                 {/* Placeholder when no workflow selected */}
                 {!selectedWorkflow && (
@@ -392,7 +401,11 @@ const AdvancedWorkflows = () => {
                   <div>
                     <p className="text-sm font-medium text-gray-600">Avg Success Rate</p>
                     <p className="text-2xl font-bold text-purple-600">
-                      {(currentWorkflows.reduce((acc, w) => acc + w.performance.successRate, 0) / currentWorkflows.length).toFixed(1)}%
+                      {(
+                        currentWorkflows.reduce((acc, w) => acc + w.performance.successRate, 0) /
+                        currentWorkflows.length
+                      ).toFixed(1)}
+                      %
                     </p>
                   </div>
                   <Target className="h-8 w-8 text-purple-600" />
@@ -406,7 +419,9 @@ const AdvancedWorkflows = () => {
                   <div>
                     <p className="text-sm font-medium text-gray-600">Total Executions</p>
                     <p className="text-2xl font-bold text-orange-600">
-                      {currentWorkflows.reduce((acc, w) => acc + w.performance.totalExecutions, 0).toLocaleString()}
+                      {currentWorkflows
+                        .reduce((acc, w) => acc + w.performance.totalExecutions, 0)
+                        .toLocaleString()}
                     </p>
                   </div>
                   <TrendingUp className="h-8 w-8 text-orange-600" />
@@ -417,22 +432,20 @@ const AdvancedWorkflows = () => {
 
           {/* Workflows List */}
           <div className="space-y-4">
-            {currentWorkflows.map((workflow) => (
+            {currentWorkflows.map(workflow => (
               <Card key={workflow.id} className="hover:shadow-lg transition-shadow cursor-pointer">
                 <CardContent className="p-6">
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
                         <h3 className="text-lg font-medium">{workflow.name}</h3>
-                        <Badge variant={getStatusColor(workflow.status)}>
-                          {workflow.status}
-                        </Badge>
+                        <Badge variant={getStatusColor(workflow.status)}>{workflow.status}</Badge>
                         <Badge variant={getComplexityColor(workflow.complexity)}>
                           {workflow.complexity} complexity
                         </Badge>
                       </div>
                       <p className="text-gray-600 mb-3">{workflow.description}</p>
-                      
+
                       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
                         <div>
                           <span className="text-gray-500">Nodes:</span>
@@ -444,7 +457,9 @@ const AdvancedWorkflows = () => {
                         </div>
                         <div>
                           <span className="text-gray-500">Success Rate:</span>
-                          <p className="font-medium text-green-600">{workflow.performance.successRate}%</p>
+                          <p className="font-medium text-green-600">
+                            {workflow.performance.successRate}%
+                          </p>
                         </div>
                         <div>
                           <span className="text-gray-500">Avg Duration:</span>
@@ -486,15 +501,21 @@ const AdvancedWorkflows = () => {
                   <div className="border-t pt-4 mt-4">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div className="text-center p-3 bg-green-50 rounded-lg">
-                        <div className="text-2xl font-bold text-green-600">{workflow.performance.successRate}%</div>
+                        <div className="text-2xl font-bold text-green-600">
+                          {workflow.performance.successRate}%
+                        </div>
                         <div className="text-sm text-gray-600">Success Rate</div>
                       </div>
                       <div className="text-center p-3 bg-blue-50 rounded-lg">
-                        <div className="text-2xl font-bold text-blue-600">{workflow.performance.avgExecutionTime}s</div>
+                        <div className="text-2xl font-bold text-blue-600">
+                          {workflow.performance.avgExecutionTime}s
+                        </div>
                         <div className="text-sm text-gray-600">Avg Duration</div>
                       </div>
                       <div className="text-center p-3 bg-purple-50 rounded-lg">
-                        <div className="text-2xl font-bold text-purple-600">{workflow.performance.totalExecutions}</div>
+                        <div className="text-2xl font-bold text-purple-600">
+                          {workflow.performance.totalExecutions}
+                        </div>
                         <div className="text-sm text-gray-600">Total Runs</div>
                       </div>
                     </div>
@@ -608,20 +629,31 @@ const AdvancedWorkflows = () => {
                   .filter(w => w.complexity === 'high')
                   .sort((a, b) => b.performance.successRate - a.performance.successRate)
                   .map((workflow, index) => (
-                    <div key={workflow.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                    <div
+                      key={workflow.id}
+                      className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
+                    >
                       <div className="flex items-center gap-4">
                         <span className="text-sm font-medium text-gray-500">#{index + 1}</span>
                         <div>
                           <h4 className="font-medium">{workflow.name}</h4>
                           <div className="flex items-center gap-2 mt-1">
-                            <Badge variant="outline" className="text-xs">{workflow.nodes} nodes</Badge>
-                            <Badge variant="outline" className="text-xs">{workflow.branches} branches</Badge>
+                            <Badge variant="outline" className="text-xs">
+                              {workflow.nodes} nodes
+                            </Badge>
+                            <Badge variant="outline" className="text-xs">
+                              {workflow.branches} branches
+                            </Badge>
                           </div>
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className="text-lg font-bold text-green-600">{workflow.performance.successRate}%</div>
-                        <div className="text-sm text-gray-500">{workflow.performance.totalExecutions} runs</div>
+                        <div className="text-lg font-bold text-green-600">
+                          {workflow.performance.successRate}%
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          {workflow.performance.totalExecutions} runs
+                        </div>
                       </div>
                     </div>
                   ))}

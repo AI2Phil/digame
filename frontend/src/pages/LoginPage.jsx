@@ -1,7 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { Eye, EyeOff, Mail, Lock, Github, Chrome } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../components/ui/Card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { useAuth } from '../contexts/AuthContext';
@@ -13,7 +20,7 @@ const LoginPage = () => {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
-    rememberMe: false
+    rememberMe: false,
   });
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -31,15 +38,15 @@ const LoginPage = () => {
     }
   }, [isAuthenticated, router]);
 
-  const handleInputChange = (e) => {
+  const handleInputChange = e => {
     const { name, value, type, checked } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: type === 'checkbox' ? checked : value,
     }));
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async e => {
     e.preventDefault();
     setIsLoading(true);
     setError('');
@@ -48,36 +55,37 @@ const LoginPage = () => {
       // Platform owner credentials
       const platformOwner = {
         email: 'philip.a.oshea@gmail.com',
-        password: 'Dalk3y1306'
+        password: 'Dalk3y1306',
       };
-      
+
       // Demo user credentials validation
       const demoCredentials = [
         { username: 'demo', password: 'demo' },
         { username: 'sarah_demo', password: 'demo123' },
         { username: 'alex_demo', password: 'demo123' },
-        { username: 'guest', password: 'guest' }
+        { username: 'guest', password: 'guest' },
       ];
-      
+
       // Check platform owner credentials first
-      const isPlatformOwner = formData.email === platformOwner.email &&
-                             formData.password === platformOwner.password;
-      
+      const isPlatformOwner =
+        formData.email === platformOwner.email && formData.password === platformOwner.password;
+
       // Check if credentials match any demo user (using username or email)
-      const isValidDemo = demoCredentials.some(cred =>
-        (formData.email === cred.username ||
-         formData.email === `${cred.username}@digame.com` ||
-         formData.email === `${cred.username}@example.com`) &&
-        formData.password === cred.password
+      const isValidDemo = demoCredentials.some(
+        cred =>
+          (formData.email === cred.username ||
+            formData.email === `${cred.username}@digame.com` ||
+            formData.email === `${cred.username}@example.com`) &&
+          formData.password === cred.password
       );
-      
+
       if (isPlatformOwner || isValidDemo) {
         // Use AuthContext login function
         const loginSuccess = await login({
           username: formData.email,
           email: formData.email,
           password: formData.password,
-          rememberMe: formData.rememberMe
+          rememberMe: formData.rememberMe,
         });
 
         if (loginSuccess) {
@@ -92,8 +100,13 @@ const LoginPage = () => {
           setError('Login failed. Please check your credentials and try again.');
         }
       } else {
-        console.log('Login failed - credentials:', { email: formData.email, password: formData.password });
-        setError('Invalid credentials. Please use your platform owner account or one of the demo accounts shown above.');
+        console.log('Login failed - credentials:', {
+          email: formData.email,
+          password: formData.password,
+        });
+        setError(
+          'Invalid credentials. Please use your platform owner account or one of the demo accounts shown above.'
+        );
       }
     } catch (err) {
       console.error('Login error:', err);
@@ -104,18 +117,18 @@ const LoginPage = () => {
   };
 
   // Handle direct demo user login using AuthContext
-  const handleDemoLogin = async (demoUser) => {
+  const handleDemoLogin = async demoUser => {
     if (!isClient) return;
     setIsLoading(true);
-    
+
     try {
       console.log('Demo login initiated for:', demoUser);
-      
+
       // Use AuthContext enterDemoMode function
       await enterDemoMode();
-      
+
       console.log('Demo mode activated successfully');
-      
+
       // Navigate to dashboard
       router.push('/dashboard');
     } catch (err) {
@@ -126,7 +139,7 @@ const LoginPage = () => {
     }
   };
 
-  const handleSocialLogin = (provider) => {
+  const handleSocialLogin = provider => {
     if (!isClient) return;
     setIsLoading(true);
     // Simulate social login
@@ -169,7 +182,9 @@ const LoginPage = () => {
                     <span className="font-medium text-gray-900">demo</span>
                     <span className="text-gray-500 ml-2">/ demo</span>
                   </div>
-                  <Badge variant="success" className="text-xs">Fully Onboarded</Badge>
+                  <Badge variant="success" className="text-xs">
+                    Fully Onboarded
+                  </Badge>
                 </button>
                 <button
                   onClick={() => handleDemoLogin('sarah_demo')}
@@ -180,7 +195,9 @@ const LoginPage = () => {
                     <span className="font-medium text-gray-900">sarah_demo</span>
                     <span className="text-gray-500 ml-2">/ demo123</span>
                   </div>
-                  <Badge variant="default" className="text-xs">Product Manager</Badge>
+                  <Badge variant="default" className="text-xs">
+                    Product Manager
+                  </Badge>
                 </button>
                 <button
                   onClick={() => handleDemoLogin('alex_demo')}
@@ -191,7 +208,9 @@ const LoginPage = () => {
                     <span className="font-medium text-gray-900">alex_demo</span>
                     <span className="text-gray-500 ml-2">/ demo123</span>
                   </div>
-                  <Badge variant="secondary" className="text-xs">New User</Badge>
+                  <Badge variant="secondary" className="text-xs">
+                    New User
+                  </Badge>
                 </button>
                 <button
                   onClick={() => handleDemoLogin('guest')}
@@ -202,7 +221,9 @@ const LoginPage = () => {
                     <span className="font-medium text-gray-900">guest</span>
                     <span className="text-gray-500 ml-2">/ No Auth Required</span>
                   </div>
-                  <Badge variant="outline" className="text-xs">Guest Access</Badge>
+                  <Badge variant="outline" className="text-xs">
+                    Guest Access
+                  </Badge>
                 </button>
               </div>
               <div className="text-center text-xs text-blue-600 mt-2">
@@ -217,8 +238,11 @@ const LoginPage = () => {
           <CardHeader className="space-y-1">
             <CardTitle className="text-2xl text-center">Sign In</CardTitle>
             <CardDescription className="text-center">
-              Enter your credentials to access your account<br/>
-              <span className="text-sm text-blue-600">Or use demo accounts above for instant access</span>
+              Enter your credentials to access your account
+              <br />
+              <span className="text-sm text-blue-600">
+                Or use demo accounts above for instant access
+              </span>
             </CardDescription>
           </CardHeader>
 
@@ -234,7 +258,9 @@ const LoginPage = () => {
             <form onSubmit={handleSubmit} className="space-y-4">
               {/* Email Field */}
               <div className="space-y-2">
-                <label htmlFor="email" className="text-sm font-medium text-gray-700">Email Address</label>
+                <label htmlFor="email" className="text-sm font-medium text-gray-700">
+                  Email Address
+                </label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                   <input
@@ -253,7 +279,9 @@ const LoginPage = () => {
 
               {/* Password Field */}
               <div className="space-y-2">
-                <label htmlFor="password" className="text-sm font-medium text-gray-700">Password</label>
+                <label htmlFor="password" className="text-sm font-medium text-gray-700">
+                  Password
+                </label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                   <input
@@ -292,7 +320,9 @@ const LoginPage = () => {
                     disabled={isLoading}
                     className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                   />
-                  <label htmlFor="rememberMe" className="text-sm text-gray-700">Remember me</label>
+                  <label htmlFor="rememberMe" className="text-sm text-gray-700">
+                    Remember me
+                  </label>
                 </div>
                 <button
                   type="button"
@@ -310,7 +340,7 @@ const LoginPage = () => {
                 className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={isLoading || authLoading}
               >
-                {(isLoading || authLoading) ? 'Signing in...' : 'Sign In'}
+                {isLoading || authLoading ? 'Signing in...' : 'Sign In'}
               </button>
             </form>
 
@@ -366,9 +396,7 @@ const LoginPage = () => {
               Terms of Service
             </button>{' '}
             and{' '}
-            <button className="text-blue-600 hover:text-blue-500 underline">
-              Privacy Policy
-            </button>
+            <button className="text-blue-600 hover:text-blue-500 underline">Privacy Policy</button>
           </p>
         </div>
       </div>

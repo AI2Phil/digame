@@ -5,13 +5,37 @@ import { useRouter } from 'next/router';
 const mockApiService = {
   getUsers: async ({ page, ...filters }) => {
     console.log('Fetching users with params:', { page, ...filters });
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
       setTimeout(() => {
         const mockUsers = [
-          { id: '1', username: 'JohnDoe', avatar: 'https://i.pravatar.cc/150?u=a042581f4e29026024d', role: 'Developer', bio: 'Loves coding and building awesome things.' },
-          { id: '2', username: 'JaneSmith', avatar: 'https://i.pravatar.cc/150?u=a042581f4e29026704d', role: 'Designer', bio: 'Passionate about creating beautiful and intuitive user experiences.' },
-          { id: '3', username: 'AliceBrown', avatar: 'https://i.pravatar.cc/150?u=a04258114e29026702d', role: 'Product Manager', bio: 'Bridging the gap between users and technology.' },
-          { id: '4', username: 'BobGreen', avatar: 'https://i.pravatar.cc/150?u=a04258114e29026708c', role: 'QA Engineer', bio: 'Ensuring software quality and reliability.' },
+          {
+            id: '1',
+            username: 'JohnDoe',
+            avatar: 'https://i.pravatar.cc/150?u=a042581f4e29026024d',
+            role: 'Developer',
+            bio: 'Loves coding and building awesome things.',
+          },
+          {
+            id: '2',
+            username: 'JaneSmith',
+            avatar: 'https://i.pravatar.cc/150?u=a042581f4e29026704d',
+            role: 'Designer',
+            bio: 'Passionate about creating beautiful and intuitive user experiences.',
+          },
+          {
+            id: '3',
+            username: 'AliceBrown',
+            avatar: 'https://i.pravatar.cc/150?u=a04258114e29026702d',
+            role: 'Product Manager',
+            bio: 'Bridging the gap between users and technology.',
+          },
+          {
+            id: '4',
+            username: 'BobGreen',
+            avatar: 'https://i.pravatar.cc/150?u=a04258114e29026708c',
+            role: 'QA Engineer',
+            bio: 'Ensuring software quality and reliability.',
+          },
         ];
         const totalUsers = 20; // Simulate a larger dataset for pagination
         const usersOnPage = mockUsers.slice(0, 10); // Simulate returning a page of users
@@ -36,7 +60,11 @@ const UserListPage = () => {
       setLoading(true);
       setError(null);
       try {
-        const response = await mockApiService.getUsers({ page: currentPage, ...filters, sort: sortBy });
+        const response = await mockApiService.getUsers({
+          page: currentPage,
+          ...filters,
+          sort: sortBy,
+        });
         setUsers(response.users);
         setTotalPages(response.totalPages);
       } catch (err) {
@@ -50,18 +78,18 @@ const UserListPage = () => {
     fetchUsers();
   }, [currentPage, filters, sortBy]);
 
-  const handleFilterChange = (e) => {
+  const handleFilterChange = e => {
     const { name, value } = e.target;
     setFilters(prevFilters => ({ ...prevFilters, [name]: value }));
     setCurrentPage(1);
   };
 
-  const handleSortChange = (value) => {
+  const handleSortChange = value => {
     setSortBy(value);
     setCurrentPage(1);
   };
 
-  const getUniqueRoles = (userList) => {
+  const getUniqueRoles = userList => {
     if (!Array.isArray(userList)) return [];
     const roles = userList.map(user => user.role);
     return [...new Set(roles)];
@@ -94,9 +122,12 @@ const UserListPage = () => {
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">All Roles</option>
-              {Array.isArray(users) && getUniqueRoles(users).map(role => (
-                <option key={role} value={role}>{role}</option>
-              ))}
+              {Array.isArray(users) &&
+                getUniqueRoles(users).map(role => (
+                  <option key={role} value={role}>
+                    {role}
+                  </option>
+                ))}
               <option value="Developer">Developer</option>
               <option value="Designer">Designer</option>
               <option value="Product Manager">Product Manager</option>
@@ -107,7 +138,7 @@ const UserListPage = () => {
             <label className="block text-sm font-medium text-gray-700 mb-2">Sort by</label>
             <select
               value={sortBy}
-              onChange={(e) => handleSortChange(e.target.value)}
+              onChange={e => handleSortChange(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="username">Name (A-Z)</option>
@@ -124,7 +155,7 @@ const UserListPage = () => {
           <p className="ml-2">Loading users...</p>
         </div>
       )}
-      
+
       {error && <p className="text-red-500 text-center">{error}</p>}
 
       {!loading && !error && users.length === 0 && (
@@ -134,28 +165,33 @@ const UserListPage = () => {
       {!loading && !error && users.length > 0 && (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {Array.isArray(users) && users.map(user => (
-              <div key={user.id} className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-4">
-                <div className="text-center">
-                  <img
-                    src={user.avatar}
-                    alt={`${user.username}'s avatar`}
-                    className="w-16 h-16 rounded-full mx-auto mb-3 border-2 border-blue-200"
-                  />
-                  <h3 className="text-xl font-semibold mb-1">{user.username}</h3>
-                  <p className="text-sm text-gray-600 mb-2">{user.role}</p>
-                  <p className="text-xs text-gray-500 mb-3 h-10 overflow-hidden">
-                    {user.bio.substring(0, 50)}{user.bio.length > 50 ? '...' : ''}
-                  </p>
-                  <button
-                    onClick={() => router.push(`/users/${user.id}/profile_overview`)}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm"
-                  >
-                    View Profile
-                  </button>
+            {Array.isArray(users) &&
+              users.map(user => (
+                <div
+                  key={user.id}
+                  className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-4"
+                >
+                  <div className="text-center">
+                    <img
+                      src={user.avatar}
+                      alt={`${user.username}'s avatar`}
+                      className="w-16 h-16 rounded-full mx-auto mb-3 border-2 border-blue-200"
+                    />
+                    <h3 className="text-xl font-semibold mb-1">{user.username}</h3>
+                    <p className="text-sm text-gray-600 mb-2">{user.role}</p>
+                    <p className="text-xs text-gray-500 mb-3 h-10 overflow-hidden">
+                      {user.bio.substring(0, 50)}
+                      {user.bio.length > 50 ? '...' : ''}
+                    </p>
+                    <button
+                      onClick={() => router.push(`/users/${user.id}/profile_overview`)}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm"
+                    >
+                      View Profile
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
           </div>
 
           {totalPages > 1 && (

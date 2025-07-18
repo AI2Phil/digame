@@ -42,7 +42,10 @@ const TeamPage: React.FC<TeamPageProps> = ({ initialData }) => {
       <div className="min-h-screen bg-gray-50">
         <Head>
           <title>Team Management - Digame</title>
-          <meta name="description" content="Manage your teams, invite members, and collaborate effectively with Digame's team management tools." />
+          <meta
+            name="description"
+            content="Manage your teams, invite members, and collaborate effectively with Digame's team management tools."
+          />
           <meta name="viewport" content="width=device-width, initial-scale=1" />
         </Head>
 
@@ -56,14 +59,14 @@ const TeamPage: React.FC<TeamPageProps> = ({ initialData }) => {
   );
 };
 
-export const getServerSideProps: GetServerSideProps = async (context) => {
+export const getServerSideProps: GetServerSideProps = async context => {
   // You can fetch initial data here if needed
   // For now, we'll let the component handle data fetching
-  
+
   return {
     props: {
-      initialData: null
-    }
+      initialData: null,
+    },
   };
 };
 

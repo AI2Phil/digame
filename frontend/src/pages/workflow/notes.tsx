@@ -6,13 +6,13 @@ import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { Input } from '../../components/ui/Input';
 import { Textarea } from '../../components/ui/Textarea';
-import { 
-  FileText, 
-  Plus, 
-  Search, 
-  Filter, 
-  Edit, 
-  Trash2, 
+import {
+  FileText,
+  Plus,
+  Search,
+  Filter,
+  Edit,
+  Trash2,
   Star,
   Clock,
   Tag,
@@ -24,7 +24,7 @@ import {
   Eye,
   MessageSquare,
   Link,
-  Archive
+  Archive,
 } from 'lucide-react';
 
 const WorkflowNotes = () => {
@@ -45,10 +45,10 @@ const WorkflowNotes = () => {
       setLoading(true);
       const response = await fetch(`/api/workflow/notes?category=${activeTab}`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
       });
-      
+
       if (response.ok) {
         const data = await response.json();
         setNotes(data.notes || []);
@@ -60,17 +60,17 @@ const WorkflowNotes = () => {
     }
   };
 
-  const createNote = async (noteData) => {
+  const createNote = async noteData => {
     try {
       const response = await fetch('/api/workflow/notes', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
         },
-        body: JSON.stringify(noteData)
+        body: JSON.stringify(noteData),
       });
-      
+
       if (response.ok) {
         fetchNotes(); // Refresh notes
         setShowCreateModal(false);
@@ -84,7 +84,8 @@ const WorkflowNotes = () => {
     {
       id: 1,
       title: 'Daily Report Automation Setup',
-      content: 'Detailed notes on configuring the daily report automation workflow. Key steps include:\n\n1. Data source configuration\n2. Report template setup\n3. Email distribution list\n4. Scheduling parameters\n\nImportant: Remember to test with sample data before going live.',
+      content:
+        'Detailed notes on configuring the daily report automation workflow. Key steps include:\n\n1. Data source configuration\n2. Report template setup\n3. Email distribution list\n4. Scheduling parameters\n\nImportant: Remember to test with sample data before going live.',
       category: 'documentation',
       tags: ['automation', 'reports', 'setup'],
       workflowId: 1,
@@ -96,12 +97,13 @@ const WorkflowNotes = () => {
       isShared: false,
       attachments: ['report_template.xlsx', 'config_guide.pdf'],
       comments: 3,
-      views: 15
+      views: 15,
     },
     {
       id: 2,
       title: 'Troubleshooting Email Delivery Issues',
-      content: 'Common issues and solutions for email delivery problems in workflows:\n\n**Issue 1: Emails not sending**\n- Check SMTP configuration\n- Verify authentication credentials\n- Test with simple email first\n\n**Issue 2: Emails going to spam**\n- Review email content for spam triggers\n- Check sender reputation\n- Implement SPF/DKIM records',
+      content:
+        'Common issues and solutions for email delivery problems in workflows:\n\n**Issue 1: Emails not sending**\n- Check SMTP configuration\n- Verify authentication credentials\n- Test with simple email first\n\n**Issue 2: Emails going to spam**\n- Review email content for spam triggers\n- Check sender reputation\n- Implement SPF/DKIM records',
       category: 'troubleshooting',
       tags: ['email', 'troubleshooting', 'smtp'],
       workflowId: 2,
@@ -113,12 +115,13 @@ const WorkflowNotes = () => {
       isShared: true,
       attachments: ['smtp_config.txt'],
       comments: 7,
-      views: 28
+      views: 28,
     },
     {
       id: 3,
       title: 'Performance Optimization Best Practices',
-      content: 'Best practices for optimizing workflow performance:\n\n• Use parallel processing where possible\n• Implement proper error handling\n• Cache frequently accessed data\n• Monitor execution times\n• Set appropriate timeouts\n\nMeasured improvements:\n- 45% faster execution with parallel processing\n- 30% reduction in errors with better handling',
+      content:
+        'Best practices for optimizing workflow performance:\n\n• Use parallel processing where possible\n• Implement proper error handling\n• Cache frequently accessed data\n• Monitor execution times\n• Set appropriate timeouts\n\nMeasured improvements:\n- 45% faster execution with parallel processing\n- 30% reduction in errors with better handling',
       category: 'best_practices',
       tags: ['performance', 'optimization', 'best-practices'],
       workflowId: null,
@@ -130,12 +133,13 @@ const WorkflowNotes = () => {
       isShared: true,
       attachments: ['performance_metrics.png'],
       comments: 12,
-      views: 45
+      views: 45,
     },
     {
       id: 4,
       title: 'API Integration Notes',
-      content: 'Notes on integrating external APIs into workflows:\n\n**Salesforce Integration:**\n- API endpoint: https://api.salesforce.com/v1/\n- Authentication: OAuth 2.0\n- Rate limits: 1000 calls/hour\n- Required fields: account_id, contact_name\n\n**Slack Integration:**\n- Webhook URL: https://hooks.slack.com/...\n- Channel: #notifications\n- Message format: JSON with text and attachments',
+      content:
+        'Notes on integrating external APIs into workflows:\n\n**Salesforce Integration:**\n- API endpoint: https://api.salesforce.com/v1/\n- Authentication: OAuth 2.0\n- Rate limits: 1000 calls/hour\n- Required fields: account_id, contact_name\n\n**Slack Integration:**\n- Webhook URL: https://hooks.slack.com/...\n- Channel: #notifications\n- Message format: JSON with text and attachments',
       category: 'integration',
       tags: ['api', 'salesforce', 'slack', 'integration'],
       workflowId: 3,
@@ -147,12 +151,13 @@ const WorkflowNotes = () => {
       isShared: false,
       attachments: ['api_docs.pdf', 'integration_diagram.png'],
       comments: 5,
-      views: 22
+      views: 22,
     },
     {
       id: 5,
       title: 'Meeting Notes: Workflow Review Session',
-      content: 'Meeting notes from the weekly workflow review session:\n\n**Attendees:** John, Sarah, Mike, Lisa\n**Date:** January 5, 2024\n\n**Key Decisions:**\n- Implement new error handling for email workflows\n- Upgrade to latest API version for Salesforce integration\n- Schedule performance optimization review\n\n**Action Items:**\n- John: Update error handling by Jan 15\n- Sarah: Test new email templates\n- Mike: Prepare performance report',
+      content:
+        'Meeting notes from the weekly workflow review session:\n\n**Attendees:** John, Sarah, Mike, Lisa\n**Date:** January 5, 2024\n\n**Key Decisions:**\n- Implement new error handling for email workflows\n- Upgrade to latest API version for Salesforce integration\n- Schedule performance optimization review\n\n**Action Items:**\n- John: Update error handling by Jan 15\n- Sarah: Test new email templates\n- Mike: Prepare performance report',
       category: 'meeting_notes',
       tags: ['meeting', 'review', 'decisions', 'action-items'],
       workflowId: null,
@@ -164,22 +169,24 @@ const WorkflowNotes = () => {
       isShared: true,
       attachments: ['meeting_agenda.pdf'],
       comments: 8,
-      views: 18
-    }
+      views: 18,
+    },
   ];
 
   const currentNotes = notes.length > 0 ? notes : mockNotes;
 
   const filteredNotes = currentNotes.filter(note => {
-    const matchesSearch = note.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         note.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         note.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
-    
-    const matchesTab = activeTab === 'all' || 
-                      (activeTab === 'starred' && note.isStarred) ||
-                      (activeTab === 'shared' && note.isShared) ||
-                      note.category === activeTab;
-    
+    const matchesSearch =
+      note.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      note.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      note.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
+
+    const matchesTab =
+      activeTab === 'all' ||
+      (activeTab === 'starred' && note.isStarred) ||
+      (activeTab === 'shared' && note.isShared) ||
+      note.category === activeTab;
+
     return matchesSearch && matchesTab;
   });
 
@@ -188,19 +195,23 @@ const WorkflowNotes = () => {
     { value: 'starred', label: 'Starred', icon: <Star className="h-4 w-4" /> },
     { value: 'shared', label: 'Shared', icon: <Share className="h-4 w-4" /> },
     { value: 'documentation', label: 'Documentation', icon: <FileText className="h-4 w-4" /> },
-    { value: 'troubleshooting', label: 'Troubleshooting', icon: <MessageSquare className="h-4 w-4" /> },
+    {
+      value: 'troubleshooting',
+      label: 'Troubleshooting',
+      icon: <MessageSquare className="h-4 w-4" />,
+    },
     { value: 'best_practices', label: 'Best Practices', icon: <Star className="h-4 w-4" /> },
     { value: 'integration', label: 'Integration', icon: <Link className="h-4 w-4" /> },
-    { value: 'meeting_notes', label: 'Meeting Notes', icon: <User className="h-4 w-4" /> }
+    { value: 'meeting_notes', label: 'Meeting Notes', icon: <User className="h-4 w-4" /> },
   ];
 
-  const formatDate = (dateString) => {
+  const formatDate = dateString => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
     });
   };
 
@@ -212,7 +223,7 @@ const WorkflowNotes = () => {
         icon={<FileText className="h-8 w-8" />}
         breadcrumb={[
           { label: 'Workflow', href: '/workflow' },
-          { label: 'Notes', href: '/workflow/notes' }
+          { label: 'Notes', href: '/workflow/notes' },
         ]}
         actions={
           <div className="flex gap-2">
@@ -237,21 +248,26 @@ const WorkflowNotes = () => {
             </CardHeader>
             <CardContent className="p-0">
               <div className="space-y-1">
-                {noteCategories.map((category) => (
+                {noteCategories.map(category => (
                   <button
                     key={category.value}
                     onClick={() => setActiveTab(category.value)}
                     className={`w-full flex items-center gap-2 px-4 py-2 text-left text-sm hover:bg-gray-50 ${
-                      activeTab === category.value ? 'bg-blue-50 text-blue-600 border-r-2 border-blue-600' : ''
+                      activeTab === category.value
+                        ? 'bg-blue-50 text-blue-600 border-r-2 border-blue-600'
+                        : ''
                     }`}
                   >
                     {category.icon}
                     <span>{category.label}</span>
                     <span className="ml-auto text-xs text-gray-500">
-                      {category.value === 'all' ? currentNotes.length :
-                       category.value === 'starred' ? currentNotes.filter(n => n.isStarred).length :
-                       category.value === 'shared' ? currentNotes.filter(n => n.isShared).length :
-                       currentNotes.filter(n => n.category === category.value).length}
+                      {category.value === 'all'
+                        ? currentNotes.length
+                        : category.value === 'starred'
+                          ? currentNotes.filter(n => n.isStarred).length
+                          : category.value === 'shared'
+                            ? currentNotes.filter(n => n.isShared).length
+                            : currentNotes.filter(n => n.category === category.value).length}
                     </span>
                   </button>
                 ))}
@@ -279,7 +295,9 @@ const WorkflowNotes = () => {
               </div>
               <div className="flex justify-between text-sm">
                 <span>Total Views</span>
-                <span className="font-medium">{currentNotes.reduce((acc, n) => acc + n.views, 0)}</span>
+                <span className="font-medium">
+                  {currentNotes.reduce((acc, n) => acc + n.views, 0)}
+                </span>
               </div>
             </CardContent>
           </Card>
@@ -294,7 +312,7 @@ const WorkflowNotes = () => {
               <Input
                 placeholder="Search notes..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={e => setSearchTerm(e.target.value)}
                 className="pl-10"
               />
             </div>
@@ -306,7 +324,7 @@ const WorkflowNotes = () => {
 
           {/* Notes Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {filteredNotes.map((note) => (
+            {filteredNotes.map(note => (
               <Card key={note.id} className="hover:shadow-lg transition-shadow cursor-pointer">
                 <CardHeader>
                   <div className="flex items-start justify-between">
@@ -357,7 +375,10 @@ const WorkflowNotes = () => {
                     {note.attachments.length > 0 && (
                       <div className="flex items-center gap-2 text-sm text-gray-600">
                         <FileText className="h-3 w-3" />
-                        <span>{note.attachments.length} attachment{note.attachments.length > 1 ? 's' : ''}</span>
+                        <span>
+                          {note.attachments.length} attachment
+                          {note.attachments.length > 1 ? 's' : ''}
+                        </span>
                       </div>
                     )}
 
@@ -405,7 +426,9 @@ const WorkflowNotes = () => {
               <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">No notes found</h3>
               <p className="text-gray-600 mb-4">
-                {searchTerm ? 'Try adjusting your search terms' : 'Create your first workflow note to get started'}
+                {searchTerm
+                  ? 'Try adjusting your search terms'
+                  : 'Create your first workflow note to get started'}
               </p>
               <Button onClick={() => setShowCreateModal(true)}>
                 <Plus className="h-4 w-4 mr-2" />
@@ -427,7 +450,7 @@ const WorkflowNotes = () => {
               <Input placeholder="Note title" />
               <select className="w-full px-3 py-2 border border-gray-300 rounded-md">
                 <option value="">Select category</option>
-                {noteCategories.slice(3).map((cat) => (
+                {noteCategories.slice(3).map(cat => (
                   <option key={cat.value} value={cat.value}>
                     {cat.label}
                   </option>
@@ -439,9 +462,7 @@ const WorkflowNotes = () => {
                 <Button onClick={() => setShowCreateModal(false)} variant="outline">
                   Cancel
                 </Button>
-                <Button onClick={() => createNote({})}>
-                  Create Note
-                </Button>
+                <Button onClick={() => createNote({})}>Create Note</Button>
               </div>
             </CardContent>
           </Card>

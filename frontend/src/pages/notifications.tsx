@@ -1,16 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
-import { 
-  Bell, 
-  Check, 
-  Trash2, 
+import {
+  Bell,
+  Check,
+  Trash2,
   Settings as SettingsIcon,
   AlertCircle,
   CheckCircle,
   Info,
   X,
-  Clock
+  Clock,
 } from 'lucide-react';
 
 const NotificationsPage = () => {
@@ -28,8 +28,8 @@ const NotificationsPage = () => {
     quietHours: {
       enabled: false,
       start: '22:00',
-      end: '08:00'
-    }
+      end: '08:00',
+    },
   });
 
   useEffect(() => {
@@ -59,51 +59,45 @@ const NotificationsPage = () => {
     }
   };
 
-  const markAsRead = async (notificationIds) => {
+  const markAsRead = async notificationIds => {
     try {
       await fetch('/api/notifications/mark-read', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ notificationIds })
+        body: JSON.stringify({ notificationIds }),
       });
-      
-      setNotifications(prev => 
-        prev.map(notif => 
-          notificationIds.includes(notif.id) 
-            ? { ...notif, read: true }
-            : notif
-        )
+
+      setNotifications(prev =>
+        prev.map(notif => (notificationIds.includes(notif.id) ? { ...notif, read: true } : notif))
       );
     } catch (error) {
       console.error('Error marking notifications as read:', error);
     }
   };
 
-  const deleteNotifications = async (notificationIds) => {
+  const deleteNotifications = async notificationIds => {
     try {
       await fetch('/api/notifications/delete', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ notificationIds })
+        body: JSON.stringify({ notificationIds }),
       });
-      
-      setNotifications(prev => 
-        prev.filter(notif => !notificationIds.includes(notif.id))
-      );
+
+      setNotifications(prev => prev.filter(notif => !notificationIds.includes(notif.id)));
       setSelectedNotifications([]);
     } catch (error) {
       console.error('Error deleting notifications:', error);
     }
   };
 
-  const updateSettings = async (newSettings) => {
+  const updateSettings = async newSettings => {
     try {
       await fetch('/api/notifications/settings', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ settings: newSettings })
+        body: JSON.stringify({ settings: newSettings }),
       });
-      
+
       setSettings(newSettings);
     } catch (error) {
       console.error('Error updating notification settings:', error);
@@ -119,8 +113,8 @@ const NotificationsPage = () => {
     }
   };
 
-  const handleSelectNotification = (notificationId) => {
-    setSelectedNotifications(prev => 
+  const handleSelectNotification = notificationId => {
+    setSelectedNotifications(prev =>
       prev.includes(notificationId)
         ? prev.filter(id => id !== notificationId)
         : [...prev, notificationId]
@@ -161,7 +155,7 @@ const NotificationsPage = () => {
 
   const getNotificationColor = (priority, read) => {
     if (read) return 'bg-gray-50 border-gray-200';
-    
+
     switch (priority) {
       case 'urgent':
         return 'bg-red-50 border-red-200';
@@ -178,7 +172,7 @@ const NotificationsPage = () => {
     const now = new Date();
     const time = new Date(timestamp);
     const diffInMinutes = Math.floor((now.getTime() - time.getTime()) / (1000 * 60));
-    
+
     if (diffInMinutes < 1) return 'Just now';
     if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
     if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h ago`;
@@ -200,7 +194,10 @@ const NotificationsPage = () => {
     <>
       <Head>
         <title>Notifications - Digame</title>
-        <meta name="description" content={`Manage your notifications and preferences${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`} />
+        <meta
+          name="description"
+          content={`Manage your notifications and preferences${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
+        />
       </Head>
 
       <div className="min-h-screen bg-gray-50">
@@ -213,7 +210,8 @@ const NotificationsPage = () => {
                 <div>
                   <h1 className="text-2xl font-bold text-gray-900">Notifications</h1>
                   <p className="text-gray-600">
-                    Manage your notifications and preferences{unreadCount > 0 ? ` (${unreadCount} unread)` : ''}
+                    Manage your notifications and preferences
+                    {unreadCount > 0 ? ` (${unreadCount} unread)` : ''}
                   </p>
                 </div>
               </div>
@@ -248,7 +246,10 @@ const NotificationsPage = () => {
                 <div>
                   <p className="text-sm font-medium text-gray-600">Important</p>
                   <p className="text-2xl font-bold text-orange-600">
-                    {notifications.filter(n => n.priority === 'high' || n.priority === 'urgent').length}
+                    {
+                      notifications.filter(n => n.priority === 'high' || n.priority === 'urgent')
+                        .length
+                    }
                   </p>
                 </div>
               </div>
@@ -276,10 +277,24 @@ const NotificationsPage = () => {
                     {[
                       { id: 'all', label: 'All', count: notifications.length },
                       { id: 'unread', label: 'Unread', count: unreadCount },
-                      { id: 'important', label: 'Important', count: notifications.filter(n => n.priority === 'high' || n.priority === 'urgent').length },
-                      { id: 'system', label: 'System', count: notifications.filter(n => n.category === 'system').length },
-                      { id: 'team', label: 'Team', count: notifications.filter(n => n.category === 'team').length }
-                    ].map((tab) => (
+                      {
+                        id: 'important',
+                        label: 'Important',
+                        count: notifications.filter(
+                          n => n.priority === 'high' || n.priority === 'urgent'
+                        ).length,
+                      },
+                      {
+                        id: 'system',
+                        label: 'System',
+                        count: notifications.filter(n => n.category === 'system').length,
+                      },
+                      {
+                        id: 'team',
+                        label: 'Team',
+                        count: notifications.filter(n => n.category === 'team').length,
+                      },
+                    ].map(tab => (
                       <button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id)}
@@ -291,9 +306,13 @@ const NotificationsPage = () => {
                       >
                         {tab.label}
                         {tab.count > 0 && (
-                          <span className={`ml-2 py-0.5 px-2 rounded-full text-xs ${
-                            activeTab === tab.id ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-600'
-                          }`}>
+                          <span
+                            className={`ml-2 py-0.5 px-2 rounded-full text-xs ${
+                              activeTab === tab.id
+                                ? 'bg-blue-100 text-blue-600'
+                                : 'bg-gray-100 text-gray-600'
+                            }`}
+                          >
                             {tab.count}
                           </span>
                         )}
@@ -315,14 +334,13 @@ const NotificationsPage = () => {
                             className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                           />
                           <span className="ml-2 text-sm text-gray-700">
-                            {selectedNotifications.length > 0 
+                            {selectedNotifications.length > 0
                               ? `${selectedNotifications.length} selected`
-                              : 'Select all'
-                            }
+                              : 'Select all'}
                           </span>
                         </label>
                       </div>
-                      
+
                       {selectedNotifications.length > 0 && (
                         <div className="flex items-center space-x-2">
                           <button
@@ -352,14 +370,13 @@ const NotificationsPage = () => {
                       <Bell className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                       <h3 className="text-lg font-medium text-gray-900 mb-2">No notifications</h3>
                       <p className="text-gray-500">
-                        {activeTab === 'all' 
+                        {activeTab === 'all'
                           ? "You're all caught up! No notifications to show."
-                          : `No ${activeTab} notifications at the moment.`
-                        }
+                          : `No ${activeTab} notifications at the moment.`}
                       </p>
                     </div>
                   ) : (
-                    filteredNotifications.map((notification) => (
+                    filteredNotifications.map(notification => (
                       <div
                         key={notification.id}
                         className={`p-6 hover:bg-gray-50 transition-colors border-l-4 ${getNotificationColor(notification.priority, notification.read)}`}
@@ -371,14 +388,16 @@ const NotificationsPage = () => {
                             onChange={() => handleSelectNotification(notification.id)}
                             className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                           />
-                          
+
                           <div className="mt-1">
                             {getNotificationIcon(notification.type, notification.category)}
                           </div>
-                          
+
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between mb-1">
-                              <h4 className={`text-sm font-medium ${notification.read ? 'text-gray-600' : 'text-gray-900'}`}>
+                              <h4
+                                className={`text-sm font-medium ${notification.read ? 'text-gray-600' : 'text-gray-900'}`}
+                              >
                                 {notification.title}
                               </h4>
                               <div className="flex items-center space-x-2">
@@ -398,11 +417,13 @@ const NotificationsPage = () => {
                                 </span>
                               </div>
                             </div>
-                            
-                            <p className={`text-sm ${notification.read ? 'text-gray-500' : 'text-gray-700'} mb-2`}>
+
+                            <p
+                              className={`text-sm ${notification.read ? 'text-gray-500' : 'text-gray-700'} mb-2`}
+                            >
                               {notification.message}
                             </p>
-                            
+
                             <div className="flex items-center justify-between">
                               <div className="flex items-center space-x-4">
                                 <span className="text-xs text-gray-500">
@@ -417,7 +438,7 @@ const NotificationsPage = () => {
                                   </button>
                                 )}
                               </div>
-                              
+
                               <div className="flex items-center space-x-2">
                                 {!notification.read && (
                                   <button
@@ -448,79 +469,91 @@ const NotificationsPage = () => {
             <div className="lg:col-span-1">
               <div className="bg-white rounded-lg shadow p-6">
                 <h3 className="text-lg font-medium text-gray-900 mb-4">Notification Settings</h3>
-                
+
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <label className="text-sm font-medium text-gray-700">Email Notifications</label>
                     <input
                       type="checkbox"
                       checked={settings.emailNotifications}
-                      onChange={(e) => updateSettings({
-                        ...settings,
-                        emailNotifications: e.target.checked
-                      })}
+                      onChange={e =>
+                        updateSettings({
+                          ...settings,
+                          emailNotifications: e.target.checked,
+                        })
+                      }
                       className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                     />
                   </div>
-                  
+
                   <div className="flex items-center justify-between">
                     <label className="text-sm font-medium text-gray-700">Push Notifications</label>
                     <input
                       type="checkbox"
                       checked={settings.pushNotifications}
-                      onChange={(e) => updateSettings({
-                        ...settings,
-                        pushNotifications: e.target.checked
-                      })}
+                      onChange={e =>
+                        updateSettings({
+                          ...settings,
+                          pushNotifications: e.target.checked,
+                        })
+                      }
                       className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                     />
                   </div>
-                  
+
                   <div className="flex items-center justify-between">
-                    <label className="text-sm font-medium text-gray-700">In-App Notifications</label>
+                    <label className="text-sm font-medium text-gray-700">
+                      In-App Notifications
+                    </label>
                     <input
                       type="checkbox"
                       checked={settings.inAppNotifications}
-                      onChange={(e) => updateSettings({
-                        ...settings,
-                        inAppNotifications: e.target.checked
-                      })}
+                      onChange={e =>
+                        updateSettings({
+                          ...settings,
+                          inAppNotifications: e.target.checked,
+                        })
+                      }
                       className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                     />
                   </div>
-                  
+
                   <div className="flex items-center justify-between">
                     <label className="text-sm font-medium text-gray-700">Weekly Digest</label>
                     <input
                       type="checkbox"
                       checked={settings.weeklyDigest}
-                      onChange={(e) => updateSettings({
-                        ...settings,
-                        weeklyDigest: e.target.checked
-                      })}
+                      onChange={e =>
+                        updateSettings({
+                          ...settings,
+                          weeklyDigest: e.target.checked,
+                        })
+                      }
                       className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                     />
                   </div>
-                  
+
                   <hr className="my-4" />
-                  
+
                   <div>
                     <div className="flex items-center justify-between mb-2">
                       <label className="text-sm font-medium text-gray-700">Quiet Hours</label>
                       <input
                         type="checkbox"
                         checked={settings.quietHours.enabled}
-                        onChange={(e) => updateSettings({
-                          ...settings,
-                          quietHours: {
-                            ...settings.quietHours,
-                            enabled: e.target.checked
-                          }
-                        })}
+                        onChange={e =>
+                          updateSettings({
+                            ...settings,
+                            quietHours: {
+                              ...settings.quietHours,
+                              enabled: e.target.checked,
+                            },
+                          })
+                        }
                         className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                       />
                     </div>
-                    
+
                     {settings.quietHours.enabled && (
                       <div className="space-y-2">
                         <div>
@@ -528,13 +561,15 @@ const NotificationsPage = () => {
                           <input
                             type="time"
                             value={settings.quietHours.start}
-                            onChange={(e) => updateSettings({
-                              ...settings,
-                              quietHours: {
-                                ...settings.quietHours,
-                                start: e.target.value
-                              }
-                            })}
+                            onChange={e =>
+                              updateSettings({
+                                ...settings,
+                                quietHours: {
+                                  ...settings.quietHours,
+                                  start: e.target.value,
+                                },
+                              })
+                            }
                             className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
                           />
                         </div>
@@ -543,13 +578,15 @@ const NotificationsPage = () => {
                           <input
                             type="time"
                             value={settings.quietHours.end}
-                            onChange={(e) => updateSettings({
-                              ...settings,
-                              quietHours: {
-                                ...settings.quietHours,
-                                end: e.target.value
-                              }
-                            })}
+                            onChange={e =>
+                              updateSettings({
+                                ...settings,
+                                quietHours: {
+                                  ...settings.quietHours,
+                                  end: e.target.value,
+                                },
+                              })
+                            }
                             className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
                           />
                         </div>
@@ -557,7 +594,7 @@ const NotificationsPage = () => {
                     )}
                   </div>
                 </div>
-                
+
                 <div className="mt-6 pt-4 border-t border-gray-200">
                   <button
                     onClick={() => markAsRead(notifications.filter(n => !n.read).map(n => n.id))}

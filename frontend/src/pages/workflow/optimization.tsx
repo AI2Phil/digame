@@ -5,13 +5,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Ca
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { Progress } from '../../components/ui/Progress';
-import { 
-  Zap, 
-  TrendingUp, 
-  Target, 
-  Clock, 
-  DollarSign, 
-  CheckCircle, 
+import {
+  Zap,
+  TrendingUp,
+  Target,
+  Clock,
+  DollarSign,
+  CheckCircle,
   AlertTriangle,
   Lightbulb,
   BarChart3,
@@ -25,7 +25,7 @@ import {
   ArrowRight,
   Star,
   ThumbsUp,
-  ThumbsDown
+  ThumbsDown,
 } from 'lucide-react';
 
 const WorkflowOptimization = () => {
@@ -44,10 +44,10 @@ const WorkflowOptimization = () => {
       setLoading(true);
       const response = await fetch(`/api/workflow/optimization?filter=${filter}`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
       });
-      
+
       if (response.ok) {
         const data = await response.json();
         setOptimizations(data.suggestions || []);
@@ -59,15 +59,15 @@ const WorkflowOptimization = () => {
     }
   };
 
-  const applyOptimization = async (optimizationId) => {
+  const applyOptimization = async optimizationId => {
     try {
       const response = await fetch(`/api/workflow/optimization/${optimizationId}/apply`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
       });
-      
+
       if (response.ok) {
         fetchOptimizations(); // Refresh suggestions
       }
@@ -83,7 +83,8 @@ const WorkflowOptimization = () => {
       workflowName: 'Daily Report Generation',
       type: 'performance',
       title: 'Parallel Data Processing',
-      description: 'Process analytics data in parallel instead of sequentially to reduce execution time by 45%',
+      description:
+        'Process analytics data in parallel instead of sequentially to reduce execution time by 45%',
       impact: 'high',
       effort: 'medium',
       category: 'performance',
@@ -96,14 +97,14 @@ const WorkflowOptimization = () => {
         complexity: 'medium',
         estimatedTime: '4 hours',
         requirements: ['Database optimization', 'Code refactoring'],
-        risks: ['Temporary performance impact during deployment']
+        risks: ['Temporary performance impact during deployment'],
       },
       benefits: [
         'Faster report generation',
         'Reduced server load',
         'Better user experience',
-        'Cost savings on compute resources'
-      ]
+        'Cost savings on compute resources',
+      ],
     },
     {
       id: 2,
@@ -111,7 +112,8 @@ const WorkflowOptimization = () => {
       workflowName: 'User Onboarding',
       type: 'reliability',
       title: 'Enhanced Error Handling',
-      description: 'Add comprehensive error handling and retry logic to improve success rate from 94% to 98%',
+      description:
+        'Add comprehensive error handling and retry logic to improve success rate from 94% to 98%',
       impact: 'medium',
       effort: 'low',
       category: 'reliability',
@@ -124,14 +126,14 @@ const WorkflowOptimization = () => {
         complexity: 'low',
         estimatedTime: '2 hours',
         requirements: ['Error logging enhancement', 'Retry mechanism'],
-        risks: ['Minimal risk']
+        risks: ['Minimal risk'],
       },
       benefits: [
         'Higher success rate',
         'Better user experience',
         'Reduced support tickets',
-        'Improved reliability'
-      ]
+        'Improved reliability',
+      ],
     },
     {
       id: 3,
@@ -139,7 +141,8 @@ const WorkflowOptimization = () => {
       workflowName: 'Email Campaign',
       type: 'efficiency',
       title: 'Smart Batching',
-      description: 'Implement intelligent batching to group similar operations and reduce API calls by 60%',
+      description:
+        'Implement intelligent batching to group similar operations and reduce API calls by 60%',
       impact: 'high',
       effort: 'high',
       category: 'efficiency',
@@ -152,14 +155,14 @@ const WorkflowOptimization = () => {
         complexity: 'high',
         estimatedTime: '8 hours',
         requirements: ['API redesign', 'Batch processing logic'],
-        risks: ['Complexity increase', 'Testing requirements']
+        risks: ['Complexity increase', 'Testing requirements'],
       },
       benefits: [
         'Reduced API costs',
         'Faster execution',
         'Better rate limit management',
-        'Improved scalability'
-      ]
+        'Improved scalability',
+      ],
     },
     {
       id: 4,
@@ -180,44 +183,57 @@ const WorkflowOptimization = () => {
         complexity: 'medium',
         estimatedTime: '6 hours',
         requirements: ['Compression algorithms', 'Deduplication logic'],
-        risks: ['Initial migration effort']
+        risks: ['Initial migration effort'],
       },
       benefits: [
         'Reduced storage costs',
         'Faster backup times',
         'Better space utilization',
-        'Environmental impact reduction'
-      ]
-    }
+        'Environmental impact reduction',
+      ],
+    },
   ];
 
   const currentOptimizations = optimizations.length > 0 ? optimizations : mockOptimizations;
 
-  const getImpactColor = (impact) => {
+  const getImpactColor = impact => {
     switch (impact) {
-      case 'high': return 'destructive';
-      case 'medium': return 'secondary';
-      case 'low': return 'outline';
-      default: return 'default';
+      case 'high':
+        return 'destructive';
+      case 'medium':
+        return 'secondary';
+      case 'low':
+        return 'outline';
+      default:
+        return 'default';
     }
   };
 
-  const getEffortColor = (effort) => {
+  const getEffortColor = effort => {
     switch (effort) {
-      case 'high': return 'destructive';
-      case 'medium': return 'secondary';
-      case 'low': return 'default';
-      default: return 'outline';
+      case 'high':
+        return 'destructive';
+      case 'medium':
+        return 'secondary';
+      case 'low':
+        return 'default';
+      default:
+        return 'outline';
     }
   };
 
-  const getTypeIcon = (type) => {
+  const getTypeIcon = type => {
     switch (type) {
-      case 'performance': return <Zap className="h-4 w-4" />;
-      case 'reliability': return <CheckCircle className="h-4 w-4" />;
-      case 'efficiency': return <Target className="h-4 w-4" />;
-      case 'cost': return <DollarSign className="h-4 w-4" />;
-      default: return <Lightbulb className="h-4 w-4" />;
+      case 'performance':
+        return <Zap className="h-4 w-4" />;
+      case 'reliability':
+        return <CheckCircle className="h-4 w-4" />;
+      case 'efficiency':
+        return <Target className="h-4 w-4" />;
+      case 'cost':
+        return <DollarSign className="h-4 w-4" />;
+      default:
+        return <Lightbulb className="h-4 w-4" />;
     }
   };
 
@@ -226,11 +242,11 @@ const WorkflowOptimization = () => {
     { value: 'performance', label: 'Performance' },
     { value: 'reliability', label: 'Reliability' },
     { value: 'efficiency', label: 'Efficiency' },
-    { value: 'cost', label: 'Cost' }
+    { value: 'cost', label: 'Cost' },
   ];
 
-  const filteredOptimizations = currentOptimizations.filter(opt => 
-    filter === 'all' || opt.category === filter
+  const filteredOptimizations = currentOptimizations.filter(
+    opt => filter === 'all' || opt.category === filter
   );
 
   return (
@@ -241,7 +257,7 @@ const WorkflowOptimization = () => {
         icon={<Target className="h-8 w-8" />}
         breadcrumb={[
           { label: 'Workflow', href: '/workflow' },
-          { label: 'Optimization', href: '/workflow/optimization' }
+          { label: 'Optimization', href: '/workflow/optimization' },
         ]}
         actions={
           <div className="flex gap-2">
@@ -300,10 +316,10 @@ const WorkflowOptimization = () => {
           <div className="flex gap-4">
             <select
               value={filter}
-              onChange={(e) => setFilter(e.target.value)}
+              onChange={e => setFilter(e.target.value)}
               className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              {optimizationCategories.map((category) => (
+              {optimizationCategories.map(category => (
                 <option key={category.value} value={category.value}>
                   {category.label}
                 </option>
@@ -358,7 +374,12 @@ const WorkflowOptimization = () => {
                   <div>
                     <p className="text-sm font-medium text-gray-600">Avg Confidence</p>
                     <p className="text-2xl font-bold text-purple-600">
-                      {(filteredOptimizations.reduce((acc, o) => acc + o.confidence, 0) / filteredOptimizations.length * 100).toFixed(0)}%
+                      {(
+                        (filteredOptimizations.reduce((acc, o) => acc + o.confidence, 0) /
+                          filteredOptimizations.length) *
+                        100
+                      ).toFixed(0)}
+                      %
                     </p>
                   </div>
                   <Target className="h-8 w-8 text-purple-600" />
@@ -369,7 +390,7 @@ const WorkflowOptimization = () => {
 
           {/* Optimization Suggestions */}
           <div className="space-y-4">
-            {filteredOptimizations.map((optimization) => (
+            {filteredOptimizations.map(optimization => (
               <Card key={optimization.id} className="hover:shadow-lg transition-shadow">
                 <CardContent className="p-6">
                   <div className="flex items-start justify-between mb-4">
@@ -390,9 +411,9 @@ const WorkflowOptimization = () => {
                             {(optimization.confidence * 100).toFixed(0)}% confidence
                           </Badge>
                         </div>
-                        
+
                         <p className="text-gray-600 mb-3">{optimization.description}</p>
-                        
+
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm mb-4">
                           <div>
                             <span className="text-gray-500">Workflow:</span>
@@ -404,7 +425,9 @@ const WorkflowOptimization = () => {
                           </div>
                           <div>
                             <span className="text-gray-500">Optimized:</span>
-                            <p className="font-medium text-green-600">{optimization.optimizedMetric}</p>
+                            <p className="font-medium text-green-600">
+                              {optimization.optimizedMetric}
+                            </p>
                           </div>
                         </div>
 
@@ -427,14 +450,18 @@ const WorkflowOptimization = () => {
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                             <div>
                               <span className="text-gray-500">Complexity:</span>
-                              <span className="ml-2 font-medium capitalize">{optimization.implementation.complexity}</span>
+                              <span className="ml-2 font-medium capitalize">
+                                {optimization.implementation.complexity}
+                              </span>
                             </div>
                             <div>
                               <span className="text-gray-500">Estimated Time:</span>
-                              <span className="ml-2 font-medium">{optimization.implementation.estimatedTime}</span>
+                              <span className="ml-2 font-medium">
+                                {optimization.implementation.estimatedTime}
+                              </span>
                             </div>
                           </div>
-                          
+
                           <div className="mt-2">
                             <span className="text-gray-500">Requirements:</span>
                             <div className="flex flex-wrap gap-1 mt-1">
@@ -456,7 +483,9 @@ const WorkflowOptimization = () => {
                             </div>
                             <div className="text-right">
                               <span className="text-green-800 font-medium">Potential Value:</span>
-                              <p className="text-green-700 font-bold">{optimization.potentialSavings}</p>
+                              <p className="text-green-700 font-bold">
+                                {optimization.potentialSavings}
+                              </p>
                             </div>
                           </div>
                         </div>
@@ -554,16 +583,20 @@ const WorkflowOptimization = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {optimizationCategories.slice(1).map((category) => {
+                {optimizationCategories.slice(1).map(category => {
                   const categoryData = {
                     performance: { applied: 8, savings: 1200, impact: 45 },
                     reliability: { applied: 6, savings: 800, impact: 25 },
                     efficiency: { applied: 5, savings: 1500, impact: 35 },
-                    cost: { applied: 4, savings: 700, impact: 20 }
+                    cost: { applied: 4, savings: 700, impact: 20 },
                   };
-                  
-                  const data = categoryData[category.value] || { applied: 0, savings: 0, impact: 0 };
-                  
+
+                  const data = categoryData[category.value] || {
+                    applied: 0,
+                    savings: 0,
+                    impact: 0,
+                  };
+
                   return (
                     <div key={category.value} className="space-y-2">
                       <div className="flex justify-between items-center">
@@ -597,15 +630,40 @@ const WorkflowOptimization = () => {
           <CardContent>
             <div className="space-y-4">
               {[
-                { title: 'Parallel Data Processing', workflow: 'Daily Reports', applied: '2 hours ago', savings: '$150/month' },
-                { title: 'Enhanced Error Handling', workflow: 'User Onboarding', applied: '1 day ago', savings: '4% reliability' },
-                { title: 'API Call Batching', workflow: 'Email Campaign', applied: '3 days ago', savings: '$200/month' },
-                { title: 'Database Query Optimization', workflow: 'Analytics', applied: '1 week ago', savings: '50% faster' }
+                {
+                  title: 'Parallel Data Processing',
+                  workflow: 'Daily Reports',
+                  applied: '2 hours ago',
+                  savings: '$150/month',
+                },
+                {
+                  title: 'Enhanced Error Handling',
+                  workflow: 'User Onboarding',
+                  applied: '1 day ago',
+                  savings: '4% reliability',
+                },
+                {
+                  title: 'API Call Batching',
+                  workflow: 'Email Campaign',
+                  applied: '3 days ago',
+                  savings: '$200/month',
+                },
+                {
+                  title: 'Database Query Optimization',
+                  workflow: 'Analytics',
+                  applied: '1 week ago',
+                  savings: '50% faster',
+                },
               ].map((item, index) => (
-                <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div
+                  key={index}
+                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                >
                   <div>
                     <h4 className="font-medium">{item.title}</h4>
-                    <p className="text-sm text-gray-600">{item.workflow} • {item.applied}</p>
+                    <p className="text-sm text-gray-600">
+                      {item.workflow} • {item.applied}
+                    </p>
                   </div>
                   <div className="text-right">
                     <Badge variant="default">Applied</Badge>

@@ -17,7 +17,7 @@ const ComprehensiveNavigationDemo = () => {
       subscription_tier: 'enterprise',
       tenant_id: 1,
       tenant_name: 'Digame Platform',
-      permissions: ['all_access', 'platform_management', 'tenant_management', 'user_management']
+      permissions: ['all_access', 'platform_management', 'tenant_management', 'user_management'],
     },
     enterpriseAdmin: {
       name: 'Enterprise Admin',
@@ -26,7 +26,7 @@ const ComprehensiveNavigationDemo = () => {
       subscription_tier: 'enterprise',
       tenant_id: 2,
       tenant_name: 'Enterprise Corp',
-      permissions: ['admin_access', 'tenant_management', 'user_management', 'analytics_access']
+      permissions: ['admin_access', 'tenant_management', 'user_management', 'analytics_access'],
     },
     teamLead: {
       name: 'Team Lead',
@@ -35,7 +35,7 @@ const ComprehensiveNavigationDemo = () => {
       subscription_tier: 'team',
       tenant_id: 3,
       tenant_name: 'Team Workspace',
-      permissions: ['team_management', 'analytics_access', 'reporting_access']
+      permissions: ['team_management', 'analytics_access', 'reporting_access'],
     },
     regularUser: {
       name: 'Regular User',
@@ -44,7 +44,7 @@ const ComprehensiveNavigationDemo = () => {
       subscription_tier: 'individual_pro',
       tenant_id: 4,
       tenant_name: 'Personal Workspace',
-      permissions: ['basic_access', 'profile_management']
+      permissions: ['basic_access', 'profile_management'],
     },
     freeUser: {
       name: 'Free User',
@@ -53,31 +53,43 @@ const ComprehensiveNavigationDemo = () => {
       subscription_tier: 'free',
       tenant_id: 5,
       tenant_name: 'Free Workspace',
-      permissions: ['basic_access']
-    }
+      permissions: ['basic_access'],
+    },
   };
 
   const currentUser = userProfiles[selectedUser];
 
-  const getUserBadgeColor = (userType) => {
+  const getUserBadgeColor = userType => {
     switch (userType) {
-      case 'platformOwner': return 'bg-yellow-100 text-yellow-800 border-yellow-300';
-      case 'enterpriseAdmin': return 'bg-purple-100 text-purple-800 border-purple-300';
-      case 'teamLead': return 'bg-green-100 text-green-800 border-green-300';
-      case 'regularUser': return 'bg-blue-100 text-blue-800 border-blue-300';
-      case 'freeUser': return 'bg-gray-100 text-gray-800 border-gray-300';
-      default: return 'bg-gray-100 text-gray-800 border-gray-300';
+      case 'platformOwner':
+        return 'bg-yellow-100 text-yellow-800 border-yellow-300';
+      case 'enterpriseAdmin':
+        return 'bg-purple-100 text-purple-800 border-purple-300';
+      case 'teamLead':
+        return 'bg-green-100 text-green-800 border-green-300';
+      case 'regularUser':
+        return 'bg-blue-100 text-blue-800 border-blue-300';
+      case 'freeUser':
+        return 'bg-gray-100 text-gray-800 border-gray-300';
+      default:
+        return 'bg-gray-100 text-gray-800 border-gray-300';
     }
   };
 
-  const getUserIcon = (userType) => {
+  const getUserIcon = userType => {
     switch (userType) {
-      case 'platformOwner': return <Crown className="w-4 h-4" />;
-      case 'enterpriseAdmin': return <Building className="w-4 h-4" />;
-      case 'teamLead': return <Users className="w-4 h-4" />;
-      case 'regularUser': return <Users className="w-4 h-4" />;
-      case 'freeUser': return <Users className="w-4 h-4" />;
-      default: return <Users className="w-4 h-4" />;
+      case 'platformOwner':
+        return <Crown className="w-4 h-4" />;
+      case 'enterpriseAdmin':
+        return <Building className="w-4 h-4" />;
+      case 'teamLead':
+        return <Users className="w-4 h-4" />;
+      case 'regularUser':
+        return <Users className="w-4 h-4" />;
+      case 'freeUser':
+        return <Users className="w-4 h-4" />;
+      default:
+        return <Users className="w-4 h-4" />;
     }
   };
 
@@ -108,10 +120,7 @@ const ComprehensiveNavigationDemo = () => {
                 Complete mapping of all backend features and functionality to frontend navigation
               </p>
             </div>
-            <Button
-              variant="outline"
-              onClick={() => setIsNavOpen(!isNavOpen)}
-            >
+            <Button variant="outline" onClick={() => setIsNavOpen(!isNavOpen)}>
               {isNavOpen ? 'Hide' : 'Show'} Navigation
             </Button>
           </div>
@@ -126,8 +135,8 @@ const ComprehensiveNavigationDemo = () => {
                 <button
                   key={key}
                   className={`p-4 border-2 rounded-lg text-left transition-all ${
-                    selectedUser === key 
-                      ? 'border-blue-500 bg-blue-50' 
+                    selectedUser === key
+                      ? 'border-blue-500 bg-blue-50'
                       : 'border-gray-200 hover:border-gray-300'
                   }`}
                   onClick={() => setSelectedUser(key)}
@@ -158,11 +167,22 @@ const ComprehensiveNavigationDemo = () => {
             <div>
               <h3 className="font-medium text-gray-900 mb-2">User Information</h3>
               <div className="space-y-2 text-sm">
-                <div><span className="font-medium">Name:</span> {currentUser.name}</div>
-                <div><span className="font-medium">Role:</span> {currentUser.role}</div>
-                <div><span className="font-medium">Subscription:</span> {currentUser.subscription_tier}</div>
-                <div><span className="font-medium">Tenant:</span> {currentUser.tenant_name}</div>
-                <div><span className="font-medium">Platform Owner:</span> {currentUser.is_platform_owner ? 'Yes' : 'No'}</div>
+                <div>
+                  <span className="font-medium">Name:</span> {currentUser.name}
+                </div>
+                <div>
+                  <span className="font-medium">Role:</span> {currentUser.role}
+                </div>
+                <div>
+                  <span className="font-medium">Subscription:</span> {currentUser.subscription_tier}
+                </div>
+                <div>
+                  <span className="font-medium">Tenant:</span> {currentUser.tenant_name}
+                </div>
+                <div>
+                  <span className="font-medium">Platform Owner:</span>{' '}
+                  {currentUser.is_platform_owner ? 'Yes' : 'No'}
+                </div>
               </div>
             </div>
             <div>
@@ -253,9 +273,9 @@ const ComprehensiveNavigationDemo = () => {
           <div className="mt-6 p-4 bg-green-50 rounded-lg">
             <h3 className="font-medium text-green-900 mb-2">✅ Complete Backend Coverage</h3>
             <p className="text-sm text-green-700">
-              All {Object.keys({}/* removed router require */).length - 1} backend routers are mapped to frontend navigation items, 
-              providing complete access to every backend feature and functionality through an intuitive, 
-              role-based navigation interface.
+              All {Object.keys({} /* removed router require */).length - 1} backend routers are
+              mapped to frontend navigation items, providing complete access to every backend
+              feature and functionality through an intuitive, role-based navigation interface.
             </p>
           </div>
         </div>

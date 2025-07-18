@@ -1,12 +1,50 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { 
-  BarChart3, TrendingUp, Activity, Database, Clock, Users, Zap, AlertTriangle, 
-  CheckCircle, Monitor, Globe, RefreshCw, Download, Filter, Calendar, Eye, 
-  Target, Cpu, HardDrive, Network, Server, Shield, Brain, Layers,
-  MousePointer, Timer, FileText, Search, Settings, Bell, DollarSign,
-  PieChart, LineChart, BarChart, TrendingDown, ArrowUpRight, ArrowDownRight
+import {
+  BarChart3,
+  TrendingUp,
+  Activity,
+  Database,
+  Clock,
+  Users,
+  Zap,
+  AlertTriangle,
+  CheckCircle,
+  Monitor,
+  Globe,
+  RefreshCw,
+  Download,
+  Filter,
+  Calendar,
+  Eye,
+  Target,
+  Cpu,
+  HardDrive,
+  Network,
+  Server,
+  Shield,
+  Brain,
+  Layers,
+  MousePointer,
+  Timer,
+  FileText,
+  Search,
+  Settings,
+  Bell,
+  DollarSign,
+  PieChart,
+  LineChart,
+  BarChart,
+  TrendingDown,
+  ArrowUpRight,
+  ArrowDownRight,
 } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/Card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { Progress } from '../../components/ui/Progress';
@@ -32,7 +70,7 @@ import {
   Legend,
   ComposedChart,
   Scatter,
-  ScatterChart
+  ScatterChart,
 } from 'recharts';
 
 const BusinessIntelligenceDashboard = () => {
@@ -57,21 +95,15 @@ const BusinessIntelligenceDashboard = () => {
   const loadBusinessIntelligence = async () => {
     setLoading(true);
     try {
-      const [
-        businessData,
-        revenue,
-        userGrowth,
-        performance,
-        predictions,
-        reports
-      ] = await Promise.all([
-        enhancedApiService.getBusinessIntelligence({ timeRange }),
-        enhancedApiService.getRevenueAnalytics(timeRange),
-        enhancedApiService.getUserGrowthAnalytics(timeRange),
-        enhancedApiService.getPerformanceMetrics(),
-        enhancedApiService.getPredictiveInsights(),
-        enhancedApiService.getCustomReports()
-      ]);
+      const [businessData, revenue, userGrowth, performance, predictions, reports] =
+        await Promise.all([
+          enhancedApiService.getBusinessIntelligence({ timeRange }),
+          enhancedApiService.getRevenueAnalytics(timeRange),
+          enhancedApiService.getUserGrowthAnalytics(timeRange),
+          enhancedApiService.getPerformanceMetrics(),
+          enhancedApiService.getPredictiveInsights(),
+          enhancedApiService.getCustomReports(),
+        ]);
 
       setBiData(businessData || generateMockBIData());
       setRevenueData(revenue || generateMockRevenueData());
@@ -79,7 +111,6 @@ const BusinessIntelligenceDashboard = () => {
       setPerformanceMetrics(performance || generateMockPerformanceData());
       setPredictiveInsights(predictions || generateMockPredictiveData());
       setCustomReports(reports || generateMockReportsData());
-
     } catch (error) {
       console.error('Failed to load business intelligence:', error);
       toast.error('Failed to load BI data');
@@ -115,7 +146,7 @@ const BusinessIntelligenceDashboard = () => {
     toast.success('Business intelligence data refreshed');
   };
 
-  const handleExportReport = async (reportType) => {
+  const handleExportReport = async reportType => {
     try {
       const exportData = {
         reportType,
@@ -126,10 +157,10 @@ const BusinessIntelligenceDashboard = () => {
           revenue: revenueData,
           userGrowth: userGrowthData,
           performance: performanceMetrics,
-          predictions: predictiveInsights
-        }
+          predictions: predictiveInsights,
+        },
       };
-      
+
       const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -137,14 +168,14 @@ const BusinessIntelligenceDashboard = () => {
       a.download = `bi-report-${reportType}-${timeRange}-${Date.now()}.json`;
       a.click();
       URL.revokeObjectURL(url);
-      
+
       toast.success(`${reportType} report exported successfully`);
     } catch (error) {
       toast.error('Failed to export report');
     }
   };
 
-  const generateCustomReport = async (reportConfig) => {
+  const generateCustomReport = async reportConfig => {
     try {
       toast.info('Generating custom report...');
       const report = await enhancedApiService.generateCustomReport(reportConfig);
@@ -165,28 +196,28 @@ const BusinessIntelligenceDashboard = () => {
       churnRate: 3.4,
       ltv: 4250,
       cac: 180,
-      mrr: 234567
+      mrr: 234567,
     },
     segments: {
       userTypes: [
         { name: 'Enterprise', value: 35, revenue: 1200000 },
         { name: 'Team', value: 45, revenue: 980000 },
         { name: 'Individual Pro', value: 15, revenue: 450000 },
-        { name: 'Free', value: 5, revenue: 0 }
+        { name: 'Free', value: 5, revenue: 0 },
       ],
       regions: [
         { name: 'North America', value: 45, revenue: 1280000 },
         { name: 'Europe', value: 30, revenue: 854000 },
         { name: 'Asia Pacific', value: 20, revenue: 568000 },
-        { name: 'Other', value: 5, revenue: 145000 }
-      ]
+        { name: 'Other', value: 5, revenue: 145000 },
+      ],
     },
     trends: {
       conversionRate: 12.8,
       avgSessionDuration: 485,
       pageViewsPerSession: 4.2,
-      bounceRate: 23.4
-    }
+      bounceRate: 23.4,
+    },
   });
 
   const generateMockRevenueData = () => [
@@ -195,7 +226,7 @@ const BusinessIntelligenceDashboard = () => {
     { month: 'Mar', revenue: 210000, target: 200000, growth: 22.1 },
     { month: 'Apr', revenue: 225000, target: 215000, growth: 25.4 },
     { month: 'May', revenue: 240000, target: 230000, growth: 28.7 },
-    { month: 'Jun', revenue: 255000, target: 245000, growth: 31.2 }
+    { month: 'Jun', revenue: 255000, target: 245000, growth: 31.2 },
   ];
 
   const generateMockUserGrowthData = () => [
@@ -204,7 +235,7 @@ const BusinessIntelligenceDashboard = () => {
     { month: 'Mar', users: 10100, newUsers: 1050, churn: 145 },
     { month: 'Apr', users: 11200, newUsers: 1180, churn: 160 },
     { month: 'May', users: 12100, newUsers: 1250, churn: 175 },
-    { month: 'Jun', users: 12847, newUsers: 1320, churn: 185 }
+    { month: 'Jun', users: 12847, newUsers: 1320, churn: 185 },
   ];
 
   const generateMockPerformanceData = () => ({
@@ -213,25 +244,25 @@ const BusinessIntelligenceDashboard = () => {
     uptime: 99.95,
     errorRate: 0.02,
     throughput: 1250,
-    satisfaction: 4.7
+    satisfaction: 4.7,
   });
 
   const generateMockPredictiveData = () => ({
     revenueForcast: {
       nextMonth: 270000,
       confidence: 87,
-      factors: ['Seasonal trends', 'New feature adoption', 'Market expansion']
+      factors: ['Seasonal trends', 'New feature adoption', 'Market expansion'],
     },
     userGrowth: {
       nextMonth: 1450,
       confidence: 82,
-      factors: ['Marketing campaigns', 'Product improvements', 'Referral program']
+      factors: ['Marketing campaigns', 'Product improvements', 'Referral program'],
     },
     churnRisk: {
       highRisk: 45,
       mediumRisk: 120,
-      lowRisk: 890
-    }
+      lowRisk: 890,
+    },
   });
 
   const generateMockReportsData = () => [
@@ -240,22 +271,22 @@ const BusinessIntelligenceDashboard = () => {
       name: 'Monthly Revenue Analysis',
       type: 'revenue',
       createdAt: '2025-01-05',
-      status: 'completed'
+      status: 'completed',
     },
     {
       id: 2,
       name: 'User Engagement Report',
       type: 'engagement',
       createdAt: '2025-01-04',
-      status: 'completed'
+      status: 'completed',
     },
     {
       id: 3,
       name: 'Performance Metrics',
       type: 'performance',
       createdAt: '2025-01-03',
-      status: 'completed'
-    }
+      status: 'completed',
+    },
   ];
 
   const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#06B6D4'];
@@ -293,11 +324,11 @@ const BusinessIntelligenceDashboard = () => {
                 <p className="text-gray-600">Advanced analytics and predictive insights</p>
               </div>
             </div>
-            
+
             <div className="flex items-center gap-4">
-              <select 
-                value={timeRange} 
-                onChange={(e) => setTimeRange(e.target.value)}
+              <select
+                value={timeRange}
+                onChange={e => setTimeRange(e.target.value)}
                 className="px-3 py-2 border rounded-lg"
               >
                 <option value="7d">Last 7 Days</option>
@@ -305,19 +336,27 @@ const BusinessIntelligenceDashboard = () => {
                 <option value="90d">Last 90 Days</option>
                 <option value="1y">Last Year</option>
               </select>
-              
-              <Button onClick={handleRefresh} disabled={refreshing} className="flex items-center gap-2">
+
+              <Button
+                onClick={handleRefresh}
+                disabled={refreshing}
+                className="flex items-center gap-2"
+              >
                 <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
                 Refresh
               </Button>
-              
-              <Button variant="outline" onClick={() => handleExportReport('comprehensive')} className="flex items-center gap-2">
+
+              <Button
+                variant="outline"
+                onClick={() => handleExportReport('comprehensive')}
+                className="flex items-center gap-2"
+              >
                 <Download className="w-4 h-4" />
                 Export
               </Button>
             </div>
           </div>
-          
+
           {/* KPI Overview */}
           <KPIOverview kpis={biData.kpis} />
         </div>
@@ -335,7 +374,7 @@ const BusinessIntelligenceDashboard = () => {
 
           {/* Overview Tab */}
           <TabsContent value="overview" className="space-y-6">
-            <BusinessOverviewSection 
+            <BusinessOverviewSection
               biData={biData}
               revenueData={revenueData}
               userGrowthData={userGrowthData}
@@ -344,37 +383,27 @@ const BusinessIntelligenceDashboard = () => {
 
           {/* Revenue Tab */}
           <TabsContent value="revenue" className="space-y-6">
-            <RevenueAnalyticsSection 
-              revenueData={revenueData}
-              biData={biData}
-            />
+            <RevenueAnalyticsSection revenueData={revenueData} biData={biData} />
           </TabsContent>
 
           {/* Users Tab */}
           <TabsContent value="users" className="space-y-6">
-            <UserAnalyticsSection 
-              userGrowthData={userGrowthData}
-              biData={biData}
-            />
+            <UserAnalyticsSection userGrowthData={userGrowthData} biData={biData} />
           </TabsContent>
 
           {/* Performance Tab */}
           <TabsContent value="performance" className="space-y-6">
-            <PerformanceSection 
-              performanceMetrics={performanceMetrics}
-            />
+            <PerformanceSection performanceMetrics={performanceMetrics} />
           </TabsContent>
 
           {/* Predictions Tab */}
           <TabsContent value="predictions" className="space-y-6">
-            <PredictiveAnalyticsSection 
-              predictiveInsights={predictiveInsights}
-            />
+            <PredictiveAnalyticsSection predictiveInsights={predictiveInsights} />
           </TabsContent>
 
           {/* Reports Tab */}
           <TabsContent value="reports" className="space-y-6">
-            <CustomReportsSection 
+            <CustomReportsSection
               customReports={customReports}
               onGenerateReport={generateCustomReport}
               onExportReport={handleExportReport}
@@ -464,7 +493,7 @@ const KPICard = ({ title, value, icon: Icon, color, trend, change }) => {
     purple: 'text-purple-600 bg-purple-100',
     emerald: 'text-emerald-600 bg-emerald-100',
     orange: 'text-orange-600 bg-orange-100',
-    red: 'text-red-600 bg-red-100'
+    red: 'text-red-600 bg-red-100',
   };
 
   const trendIcon = trend === 'up' ? ArrowUpRight : trend === 'down' ? ArrowDownRight : CheckCircle;
@@ -478,7 +507,9 @@ const KPICard = ({ title, value, icon: Icon, color, trend, change }) => {
       <p className="text-xs text-gray-500 mb-1">{title}</p>
       <p className="font-bold text-gray-900 text-sm">{value}</p>
       <div className="flex items-center justify-center gap-1 mt-1">
-        <TrendIcon className={`w-3 h-3 ${trend === 'up' ? 'text-green-500' : trend === 'down' ? 'text-red-500' : 'text-gray-500'}`} />
+        <TrendIcon
+          className={`w-3 h-3 ${trend === 'up' ? 'text-green-500' : trend === 'down' ? 'text-red-500' : 'text-gray-500'}`}
+        />
         <span className="text-xs text-gray-600">{change}</span>
       </div>
     </div>
@@ -502,10 +533,16 @@ const BusinessOverviewSection = ({ biData, revenueData, userGrowthData }) => (
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="month" />
                 <YAxis />
-                <Tooltip formatter={(value) => [`$${value.toLocaleString()}`, '']} />
+                <Tooltip formatter={value => [`$${value.toLocaleString()}`, '']} />
                 <Legend />
                 <Bar dataKey="target" fill="#E5E7EB" name="Target" />
-                <Line type="monotone" dataKey="revenue" stroke="#3B82F6" strokeWidth={3} name="Actual Revenue" />
+                <Line
+                  type="monotone"
+                  dataKey="revenue"
+                  stroke="#3B82F6"
+                  strokeWidth={3}
+                  name="Actual Revenue"
+                />
               </ComposedChart>
             </ResponsiveContainer>
           </div>
@@ -526,9 +563,22 @@ const BusinessOverviewSection = ({ biData, revenueData, userGrowthData }) => (
                 <YAxis />
                 <Tooltip />
                 <Legend />
-                <Area type="monotone" dataKey="users" fill="#10B981" fillOpacity={0.3} stroke="#10B981" name="Total Users" />
+                <Area
+                  type="monotone"
+                  dataKey="users"
+                  fill="#10B981"
+                  fillOpacity={0.3}
+                  stroke="#10B981"
+                  name="Total Users"
+                />
                 <Bar dataKey="newUsers" fill="#3B82F6" name="New Users" />
-                <Line type="monotone" dataKey="churn" stroke="#EF4444" strokeWidth={2} name="Churn" />
+                <Line
+                  type="monotone"
+                  dataKey="churn"
+                  stroke="#EF4444"
+                  strokeWidth={2}
+                  name="Churn"
+                />
               </ComposedChart>
             </ResponsiveContainer>
           </div>
@@ -579,7 +629,7 @@ const BusinessOverviewSection = ({ biData, revenueData, userGrowthData }) => (
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="name" />
                 <YAxis />
-                <Tooltip formatter={(value) => [`$${value.toLocaleString()}`, 'Revenue']} />
+                <Tooltip formatter={value => [`$${value.toLocaleString()}`, 'Revenue']} />
                 <Bar dataKey="revenue" fill="#3B82F6" />
               </RechartsBarChart>
             </ResponsiveContainer>

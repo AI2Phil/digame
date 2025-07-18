@@ -1,6 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
-import { AlertTriangle, Shield, TrendingUp, Clock, Zap, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import {
+  AlertTriangle,
+  Shield,
+  TrendingUp,
+  Clock,
+  Zap,
+  CheckCircle,
+  XCircle,
+  AlertCircle,
+} from 'lucide-react';
 
 export default function AnomalyDetection() {
   const [anomalies, setAnomalies] = useState(null);
@@ -17,7 +26,7 @@ export default function AnomalyDetection() {
     try {
       setLoading(true);
       const response = await fetch('/api/analytics/anomalies');
-      
+
       if (response.ok) {
         const data = await response.json();
         setAnomalies(data.data);
@@ -29,37 +38,48 @@ export default function AnomalyDetection() {
     }
   };
 
-  const getSeverityColor = (severity) => {
+  const getSeverityColor = severity => {
     switch (severity) {
-      case 'high': return 'bg-red-100 text-red-800 border-red-200';
-      case 'medium': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'low': return 'bg-blue-100 text-blue-800 border-blue-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+      case 'high':
+        return 'bg-red-100 text-red-800 border-red-200';
+      case 'medium':
+        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'low':
+        return 'bg-blue-100 text-blue-800 border-blue-200';
+      default:
+        return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
 
-  const getSeverityIcon = (severity) => {
+  const getSeverityIcon = severity => {
     switch (severity) {
-      case 'high': return <XCircle className="w-4 h-4" />;
-      case 'medium': return <AlertCircle className="w-4 h-4" />;
-      case 'low': return <AlertTriangle className="w-4 h-4" />;
-      default: return <CheckCircle className="w-4 h-4" />;
+      case 'high':
+        return <XCircle className="w-4 h-4" />;
+      case 'medium':
+        return <AlertCircle className="w-4 h-4" />;
+      case 'low':
+        return <AlertTriangle className="w-4 h-4" />;
+      default:
+        return <CheckCircle className="w-4 h-4" />;
     }
   };
 
-  const getTypeIcon = (type) => {
+  const getTypeIcon = type => {
     switch (type) {
-      case 'traffic_spike': return <TrendingUp className="w-5 h-5" />;
-      case 'performance_drop': return <Clock className="w-5 h-5" />;
-      default: return <AlertTriangle className="w-5 h-5" />;
+      case 'traffic_spike':
+        return <TrendingUp className="w-5 h-5" />;
+      case 'performance_drop':
+        return <Clock className="w-5 h-5" />;
+      default:
+        return <AlertTriangle className="w-5 h-5" />;
     }
   };
 
-  const formatTimestamp = (timestamp) => {
+  const formatTimestamp = timestamp => {
     return new Date(timestamp).toLocaleString();
   };
 
-  const getDeviationColor = (deviation) => {
+  const getDeviationColor = deviation => {
     if (deviation > 150) return 'text-red-600';
     if (deviation > 100) return 'text-yellow-600';
     return 'text-blue-600';
@@ -94,7 +114,7 @@ export default function AnomalyDetection() {
                   </span>
                 </div>
               </div>
-              
+
               <div className="flex items-center space-x-4">
                 <div className="flex items-center space-x-2">
                   <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
@@ -124,7 +144,9 @@ export default function AnomalyDetection() {
                       <AlertTriangle className="w-5 h-5 text-gray-600" />
                     </div>
                   </div>
-                  <h3 className="text-2xl font-bold text-gray-900 mb-1">{anomalies.summary.total}</h3>
+                  <h3 className="text-2xl font-bold text-gray-900 mb-1">
+                    {anomalies.summary.total}
+                  </h3>
                   <p className="text-gray-600 text-sm">Total Anomalies</p>
                 </div>
 
@@ -144,7 +166,9 @@ export default function AnomalyDetection() {
                       <AlertCircle className="w-5 h-5 text-yellow-600" />
                     </div>
                   </div>
-                  <h3 className="text-2xl font-bold text-yellow-600 mb-1">{anomalies.summary.medium}</h3>
+                  <h3 className="text-2xl font-bold text-yellow-600 mb-1">
+                    {anomalies.summary.medium}
+                  </h3>
                   <p className="text-gray-600 text-sm">Medium Severity</p>
                 </div>
 
@@ -154,7 +178,9 @@ export default function AnomalyDetection() {
                       <CheckCircle className="w-5 h-5 text-green-600" />
                     </div>
                   </div>
-                  <h3 className="text-2xl font-bold text-green-600 mb-1">{anomalies.summary.resolved}</h3>
+                  <h3 className="text-2xl font-bold text-green-600 mb-1">
+                    {anomalies.summary.resolved}
+                  </h3>
                   <p className="text-gray-600 text-sm">Resolved</p>
                 </div>
               </div>
@@ -164,20 +190,30 @@ export default function AnomalyDetection() {
                 <h3 className="text-lg font-semibold text-gray-900 mb-6">Active Anomalies</h3>
                 {anomalies.detected.length > 0 ? (
                   <div className="space-y-4">
-                    {anomalies.detected.map((anomaly) => (
-                      <div key={anomaly.id} className={`border rounded-lg p-4 ${getSeverityColor(anomaly.severity)}`}>
+                    {anomalies.detected.map(anomaly => (
+                      <div
+                        key={anomaly.id}
+                        className={`border rounded-lg p-4 ${getSeverityColor(anomaly.severity)}`}
+                      >
                         <div className="flex items-start justify-between">
                           <div className="flex items-start space-x-4">
-                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                              anomaly.severity === 'high' ? 'bg-red-200' :
-                              anomaly.severity === 'medium' ? 'bg-yellow-200' : 'bg-blue-200'
-                            }`}>
+                            <div
+                              className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                                anomaly.severity === 'high'
+                                  ? 'bg-red-200'
+                                  : anomaly.severity === 'medium'
+                                    ? 'bg-yellow-200'
+                                    : 'bg-blue-200'
+                              }`}
+                            >
                               {getTypeIcon(anomaly.type)}
                             </div>
                             <div className="flex-1">
                               <div className="flex items-center space-x-2 mb-2">
                                 <h4 className="font-semibold">{anomaly.description}</h4>
-                                <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getSeverityColor(anomaly.severity)}`}>
+                                <span
+                                  className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getSeverityColor(anomaly.severity)}`}
+                                >
                                   {getSeverityIcon(anomaly.severity)}
                                   <span className="ml-1">{anomaly.severity.toUpperCase()}</span>
                                 </span>
@@ -197,7 +233,9 @@ export default function AnomalyDetection() {
                                 </div>
                                 <div>
                                   <span className="text-gray-600">Deviation:</span>
-                                  <div className={`font-medium ${getDeviationColor(anomaly.deviation)}`}>
+                                  <div
+                                    className={`font-medium ${getDeviationColor(anomaly.deviation)}`}
+                                  >
                                     +{anomaly.deviation}%
                                   </div>
                                 </div>
@@ -240,11 +278,15 @@ export default function AnomalyDetection() {
                     <div className="space-y-2 text-sm">
                       <div className="flex justify-between">
                         <span className="text-gray-600">Warning:</span>
-                        <span className="font-medium">{anomalies.thresholds.traffic.warning}% above normal</span>
+                        <span className="font-medium">
+                          {anomalies.thresholds.traffic.warning}% above normal
+                        </span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-600">Critical:</span>
-                        <span className="font-medium text-red-600">{anomalies.thresholds.traffic.critical}% above normal</span>
+                        <span className="font-medium text-red-600">
+                          {anomalies.thresholds.traffic.critical}% above normal
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -257,11 +299,15 @@ export default function AnomalyDetection() {
                     <div className="space-y-2 text-sm">
                       <div className="flex justify-between">
                         <span className="text-gray-600">Warning:</span>
-                        <span className="font-medium">{anomalies.thresholds.performance.warning}% slower</span>
+                        <span className="font-medium">
+                          {anomalies.thresholds.performance.warning}% slower
+                        </span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-600">Critical:</span>
-                        <span className="font-medium text-red-600">{anomalies.thresholds.performance.critical}% slower</span>
+                        <span className="font-medium text-red-600">
+                          {anomalies.thresholds.performance.critical}% slower
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -274,11 +320,15 @@ export default function AnomalyDetection() {
                     <div className="space-y-2 text-sm">
                       <div className="flex justify-between">
                         <span className="text-gray-600">Warning:</span>
-                        <span className="font-medium">{anomalies.thresholds.errors.warning}% above baseline</span>
+                        <span className="font-medium">
+                          {anomalies.thresholds.errors.warning}% above baseline
+                        </span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-600">Critical:</span>
-                        <span className="font-medium text-red-600">{anomalies.thresholds.errors.critical}% above baseline</span>
+                        <span className="font-medium text-red-600">
+                          {anomalies.thresholds.errors.critical}% above baseline
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -289,7 +339,9 @@ export default function AnomalyDetection() {
               <div className="bg-white rounded-lg shadow-sm p-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Anomaly Timeline</h3>
                 <div className="h-64 bg-gray-100 rounded-lg flex items-center justify-center">
-                  <p className="text-gray-500">Real-time anomaly detection timeline will be rendered here</p>
+                  <p className="text-gray-500">
+                    Real-time anomaly detection timeline will be rendered here
+                  </p>
                 </div>
               </div>
             </>

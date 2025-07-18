@@ -1,8 +1,17 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/router';
 import {
-  Users, TrendingUp, Target, Clock, Award, BarChart3,
-  Activity, Calendar, Home, Download, Settings
+  Users,
+  TrendingUp,
+  Target,
+  Clock,
+  Award,
+  BarChart3,
+  Activity,
+  Calendar,
+  Home,
+  Download,
+  Settings,
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -15,7 +24,8 @@ const TeamDashboardPage = ({ isDemoMode = false, onLogout }) => {
   const router = useRouter();
 
   // Use prop if provided, otherwise fallback to localStorage (client-side only)
-  const isDemo = isDemoMode || (typeof window !== 'undefined' && localStorage.getItem('demo_mode') === 'true');
+  const isDemo =
+    isDemoMode || (typeof window !== 'undefined' && localStorage.getItem('demo_mode') === 'true');
 
   const handleHomeClick = () => {
     router.push(isDemo ? '/dashboard' : '/');
@@ -29,7 +39,7 @@ const TeamDashboardPage = ({ isDemoMode = false, onLogout }) => {
     completedProjects: 12,
     ongoingProjects: 3,
     totalHours: 1247,
-    teamEfficiency: 92
+    teamEfficiency: 92,
   };
 
   // Mock team performance over time
@@ -39,7 +49,7 @@ const TeamDashboardPage = ({ isDemoMode = false, onLogout }) => {
     { name: 'Week 3', productivity: 88, efficiency: 85, collaboration: 90 },
     { name: 'Week 4', productivity: 87, efficiency: 92, collaboration: 89 },
     { name: 'Week 5', productivity: 90, efficiency: 89, collaboration: 92 },
-    { name: 'Week 6', productivity: 89, efficiency: 91, collaboration: 94 }
+    { name: 'Week 6', productivity: 89, efficiency: 91, collaboration: 94 },
   ];
 
   // Mock project data
@@ -51,7 +61,7 @@ const TeamDashboardPage = ({ isDemoMode = false, onLogout }) => {
       dueDate: '2025-01-15',
       team: ['SJ', 'MC', 'ER'],
       status: 'on-track',
-      priority: 'high'
+      priority: 'high',
     },
     {
       id: 2,
@@ -60,7 +70,7 @@ const TeamDashboardPage = ({ isDemoMode = false, onLogout }) => {
       dueDate: '2025-01-30',
       team: ['MC', 'LW'],
       status: 'at-risk',
-      priority: 'medium'
+      priority: 'medium',
     },
     {
       id: 3,
@@ -69,8 +79,8 @@ const TeamDashboardPage = ({ isDemoMode = false, onLogout }) => {
       dueDate: '2025-01-10',
       team: ['ER', 'DK'],
       status: 'ahead',
-      priority: 'high'
-    }
+      priority: 'high',
+    },
   ];
 
   // Mock team members with recent activity
@@ -79,55 +89,65 @@ const TeamDashboardPage = ({ isDemoMode = false, onLogout }) => {
       id: '1',
       name: 'Sarah Johnson',
       role: 'Team Lead',
-      avatar: isDemo ? 'https://via.placeholder.com/40x40/3B82F6/FFFFFF?text=SJ' : '/api/placeholder/40/40',
+      avatar: isDemo
+        ? 'https://via.placeholder.com/40x40/3B82F6/FFFFFF?text=SJ'
+        : '/api/placeholder/40/40',
       productivity: 92,
       hoursThisWeek: 38,
       tasksCompleted: 8,
-      status: 'active'
+      status: 'active',
     },
     {
       id: '2',
       name: 'Michael Chen',
       role: 'Senior Developer',
-      avatar: isDemo ? 'https://via.placeholder.com/40x40/10B981/FFFFFF?text=MC' : '/api/placeholder/40/40',
+      avatar: isDemo
+        ? 'https://via.placeholder.com/40x40/10B981/FFFFFF?text=MC'
+        : '/api/placeholder/40/40',
       productivity: 88,
       hoursThisWeek: 42,
       tasksCompleted: 12,
-      status: 'active'
+      status: 'active',
     },
     {
       id: '3',
       name: 'Emily Rodriguez',
       role: 'Product Manager',
-      avatar: isDemo ? 'https://via.placeholder.com/40x40/8B5CF6/FFFFFF?text=ER' : '/api/placeholder/40/40',
+      avatar: isDemo
+        ? 'https://via.placeholder.com/40x40/8B5CF6/FFFFFF?text=ER'
+        : '/api/placeholder/40/40',
       productivity: 95,
       hoursThisWeek: 35,
       tasksCompleted: 6,
-      status: 'active'
+      status: 'active',
     },
     {
       id: '4',
       name: 'David Kim',
       role: 'Designer',
-      avatar: isDemo ? 'https://via.placeholder.com/40x40/F59E0B/FFFFFF?text=DK' : '/api/placeholder/40/40',
+      avatar: isDemo
+        ? 'https://via.placeholder.com/40x40/F59E0B/FFFFFF?text=DK'
+        : '/api/placeholder/40/40',
       productivity: 76,
       hoursThisWeek: 20,
       tasksCompleted: 3,
-      status: 'inactive'
+      status: 'inactive',
     },
     {
       id: '5',
       name: 'Lisa Wang',
       role: 'Developer',
-      avatar: isDemo ? 'https://via.placeholder.com/40x40/EF4444/FFFFFF?text=LW' : '/api/placeholder/40/40',
+      avatar: isDemo
+        ? 'https://via.placeholder.com/40x40/EF4444/FFFFFF?text=LW'
+        : '/api/placeholder/40/40',
       productivity: 85,
       hoursThisWeek: 40,
       tasksCompleted: 9,
-      status: 'active'
-    }
+      status: 'active',
+    },
   ];
 
-  const getStatusBadge = (status) => {
+  const getStatusBadge = status => {
     switch (status) {
       case 'on-track':
         return <Badge variant="success">On Track</Badge>;
@@ -140,7 +160,7 @@ const TeamDashboardPage = ({ isDemoMode = false, onLogout }) => {
     }
   };
 
-  const getPriorityBadge = (priority) => {
+  const getPriorityBadge = priority => {
     switch (priority) {
       case 'high':
         return <Badge variant="destructive">High</Badge>;
@@ -161,18 +181,18 @@ const TeamDashboardPage = ({ isDemoMode = false, onLogout }) => {
           <h1 className="text-3xl font-bold">Team Dashboard</h1>
           <p className="text-muted-foreground">Monitor team performance and project progress</p>
         </div>
-        
+
         <div className="flex items-center space-x-2">
           <Button variant="outline" onClick={handleHomeClick}>
             <Home className="mr-2 h-4 w-4" />
             {isDemo ? 'Back to Dashboard' : 'Home'}
           </Button>
-          
+
           <Button variant="outline">
             <Download className="mr-2 h-4 w-4" />
             Export Report
           </Button>
-          
+
           <Button variant="outline">
             <Settings className="mr-2 h-4 w-4" />
             Settings
@@ -194,7 +214,7 @@ const TeamDashboardPage = ({ isDemoMode = false, onLogout }) => {
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
@@ -207,7 +227,7 @@ const TeamDashboardPage = ({ isDemoMode = false, onLogout }) => {
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
@@ -220,7 +240,7 @@ const TeamDashboardPage = ({ isDemoMode = false, onLogout }) => {
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
@@ -260,13 +280,11 @@ const TeamDashboardPage = ({ isDemoMode = false, onLogout }) => {
         <Card>
           <CardHeader>
             <CardTitle>Active Projects</CardTitle>
-            <CardDescription>
-              Current project status and progress
-            </CardDescription>
+            <CardDescription>Current project status and progress</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {activeProjects.map((project) => (
+              {activeProjects.map(project => (
                 <div key={project.id} className="border rounded-lg p-4">
                   <div className="flex items-center justify-between mb-2">
                     <h4 className="font-medium">{project.name}</h4>
@@ -275,7 +293,7 @@ const TeamDashboardPage = ({ isDemoMode = false, onLogout }) => {
                       {getStatusBadge(project.status)}
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center space-x-2">
                       <Calendar className="h-4 w-4 text-gray-500" />
@@ -283,12 +301,15 @@ const TeamDashboardPage = ({ isDemoMode = false, onLogout }) => {
                     </div>
                     <span className="text-sm font-medium">{project.progress}%</span>
                   </div>
-                  
+
                   <Progress value={project.progress} className="mb-2" />
-                  
+
                   <div className="flex items-center space-x-1">
                     {project.team.map((member, index) => (
-                      <div key={index} className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
+                      <div
+                        key={index}
+                        className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center"
+                      >
                         <span className="text-xs font-medium text-blue-600">{member}</span>
                       </div>
                     ))}
@@ -304,19 +325,23 @@ const TeamDashboardPage = ({ isDemoMode = false, onLogout }) => {
       <Card>
         <CardHeader>
           <CardTitle>Team Member Performance</CardTitle>
-          <CardDescription>
-            Individual productivity and activity metrics
-          </CardDescription>
+          <CardDescription>Individual productivity and activity metrics</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {teamMembers.map((member) => (
-              <div key={member.id} className="flex items-center justify-between p-4 border rounded-lg">
+            {teamMembers.map(member => (
+              <div
+                key={member.id}
+                className="flex items-center justify-between p-4 border rounded-lg"
+              >
                 <div className="flex items-center space-x-4">
                   <Avatar>
                     <AvatarImage src={member.avatar} />
                     <AvatarFallback>
-                      {member.name.split(' ').map(n => n[0]).join('')}
+                      {member.name
+                        .split(' ')
+                        .map(n => n[0])
+                        .join('')}
                     </AvatarFallback>
                   </Avatar>
                   <div>
@@ -324,7 +349,7 @@ const TeamDashboardPage = ({ isDemoMode = false, onLogout }) => {
                     <div className="text-sm text-muted-foreground">{member.role}</div>
                   </div>
                 </div>
-                
+
                 <div className="flex items-center space-x-6">
                   <div className="text-center">
                     <div className="text-sm text-muted-foreground">Productivity</div>

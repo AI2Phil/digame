@@ -1,12 +1,21 @@
 import React, { useEffect, useState } from 'react';
-import Link from 'next/link'; import { useRouter } from 'next/router';
+import Link from 'next/link';
+import { useRouter } from 'next/router';
 import Button from '../components/ui/Button';
 import { Card, CardContent } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui/Table';
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from '../components/ui/Table';
 
 export default function PricingPage() {
-  const router = useRouter(); const searchParams = router.query;
+  const router = useRouter();
+  const searchParams = router.query;
   const [showDemoCompletedMessage, setShowDemoCompletedMessage] = useState(false);
 
   useEffect(() => {
@@ -28,9 +37,15 @@ export default function PricingPage() {
             <span className="text-xl font-bold text-gray-900">Digame</span>
           </Link>
           <div className="hidden md:flex space-x-8">
-            <Link href="/FeaturesPage" className="text-gray-600 hover:text-gray-900">Features</Link>
-            <Link href="/HowItWorksPage" className="text-gray-600 hover:text-gray-900">How it Works</Link>
-            <Link href="/PricingPage" className="text-blue-600 font-semibold">Pricing</Link>
+            <Link href="/FeaturesPage" className="text-gray-600 hover:text-gray-900">
+              Features
+            </Link>
+            <Link href="/HowItWorksPage" className="text-gray-600 hover:text-gray-900">
+              How it Works
+            </Link>
+            <Link href="/PricingPage" className="text-blue-600 font-semibold">
+              Pricing
+            </Link>
           </div>
           <Link href="/">
             <Button variant="primary" size="md" icon="🚀">
@@ -50,15 +65,25 @@ export default function PricingPage() {
               Congratulations! You've completed the Digame demo
             </h2>
             <p className="text-green-700 mb-6">
-              You've experienced the power of your digital professional twin. Ready to unlock your full potential?
+              You've experienced the power of your digital professional twin. Ready to unlock your
+              full potential?
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link href="/LoginPage">
-                <Button variant="primary" size="lg" icon="🚀" className="bg-green-600 hover:bg-green-700">
+                <Button
+                  variant="primary"
+                  size="lg"
+                  icon="🚀"
+                  className="bg-green-600 hover:bg-green-700"
+                >
                   Create Your Account
                 </Button>
               </Link>
-              <Button variant="outline" size="lg" className="border-green-600 text-green-600 hover:bg-green-50">
+              <Button
+                variant="outline"
+                size="lg"
+                className="border-green-600 text-green-600 hover:bg-green-50"
+              >
                 Continue Exploring
               </Button>
             </div>
@@ -81,7 +106,9 @@ export default function PricingPage() {
                 </button>
                 <button className="px-4 py-2 rounded-md text-gray-600 font-medium">
                   Annual
-                  <Badge variant="success" size="sm" className="ml-2">Save 20%</Badge>
+                  <Badge variant="success" size="sm" className="ml-2">
+                    Save 20%
+                  </Badge>
                 </button>
               </div>
             </div>
@@ -104,7 +131,7 @@ export default function PricingPage() {
                   Get Started Free
                 </Button>
               </div>
-              
+
               <div className="space-y-4">
                 <div className="flex items-center">
                   <span className="text-green-500 mr-3">✓</span>
@@ -149,7 +176,7 @@ export default function PricingPage() {
                   Start Free Trial
                 </Button>
               </div>
-              
+
               <div className="space-y-4">
                 <div className="flex items-center">
                   <span className="text-green-500 mr-3">✓</span>
@@ -197,7 +224,7 @@ export default function PricingPage() {
                   Contact Sales
                 </Button>
               </div>
-              
+
               <div className="space-y-4">
                 <div className="flex items-center">
                   <span className="text-green-500 mr-3">✓</span>
@@ -234,16 +261,22 @@ export default function PricingPage() {
 
         {/* Feature Comparison */}
         <div className="bg-white rounded-2xl shadow-xl p-8 mb-16">
-          <h2 className="text-3xl font-bold text-gray-900 text-center mb-12">
-            Compare Plans
-          </h2>
+          <h2 className="text-3xl font-bold text-gray-900 text-center mb-12">Compare Plans</h2>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead align="left" className="font-semibold text-gray-900">Features</TableHead>
-                <TableHead align="center" className="font-semibold text-gray-900">Starter</TableHead>
-                <TableHead align="center" className="font-semibold text-gray-900">Professional</TableHead>
-                <TableHead align="center" className="font-semibold text-gray-900">Enterprise</TableHead>
+                <TableHead align="left" className="font-semibold text-gray-900">
+                  Features
+                </TableHead>
+                <TableHead align="center" className="font-semibold text-gray-900">
+                  Starter
+                </TableHead>
+                <TableHead align="center" className="font-semibold text-gray-900">
+                  Professional
+                </TableHead>
+                <TableHead align="center" className="font-semibold text-gray-900">
+                  Enterprise
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -255,37 +288,51 @@ export default function PricingPage() {
               </TableRow>
               <TableRow>
                 <TableCell className="text-gray-700">AI Insights</TableCell>
-                <TableCell align="center" className="text-gray-400">Basic</TableCell>
+                <TableCell align="center" className="text-gray-400">
+                  Basic
+                </TableCell>
                 <TableCell align="center">✓</TableCell>
                 <TableCell align="center">✓</TableCell>
               </TableRow>
               <TableRow>
                 <TableCell className="text-gray-700">Predictive Analytics</TableCell>
-                <TableCell align="center" className="text-gray-400">—</TableCell>
+                <TableCell align="center" className="text-gray-400">
+                  —
+                </TableCell>
                 <TableCell align="center">✓</TableCell>
                 <TableCell align="center">✓</TableCell>
               </TableRow>
               <TableRow>
                 <TableCell className="text-gray-700">Goal Tracking</TableCell>
-                <TableCell align="center" className="text-gray-400">3 goals</TableCell>
+                <TableCell align="center" className="text-gray-400">
+                  3 goals
+                </TableCell>
                 <TableCell align="center">Unlimited</TableCell>
                 <TableCell align="center">Unlimited</TableCell>
               </TableRow>
               <TableRow>
                 <TableCell className="text-gray-700">Integrations</TableCell>
-                <TableCell align="center" className="text-gray-400">5</TableCell>
+                <TableCell align="center" className="text-gray-400">
+                  5
+                </TableCell>
                 <TableCell align="center">50+</TableCell>
                 <TableCell align="center">Custom</TableCell>
               </TableRow>
               <TableRow>
                 <TableCell className="text-gray-700">Team Analytics</TableCell>
-                <TableCell align="center" className="text-gray-400">—</TableCell>
-                <TableCell align="center" className="text-gray-400">—</TableCell>
+                <TableCell align="center" className="text-gray-400">
+                  —
+                </TableCell>
+                <TableCell align="center" className="text-gray-400">
+                  —
+                </TableCell>
                 <TableCell align="center">✓</TableCell>
               </TableRow>
               <TableRow>
                 <TableCell className="text-gray-700">Support</TableCell>
-                <TableCell align="center" className="text-gray-400">Community</TableCell>
+                <TableCell align="center" className="text-gray-400">
+                  Community
+                </TableCell>
                 <TableCell align="center">Priority</TableCell>
                 <TableCell align="center">24/7 Premium</TableCell>
               </TableRow>
@@ -300,24 +347,48 @@ export default function PricingPage() {
           </h2>
           <div className="max-w-4xl mx-auto grid md:grid-cols-2 gap-8">
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Can I change plans anytime?</h3>
-              <p className="text-gray-600 mb-6">Yes, you can upgrade or downgrade your plan at any time. Changes take effect immediately, and we'll prorate any billing differences.</p>
-              
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                Can I change plans anytime?
+              </h3>
+              <p className="text-gray-600 mb-6">
+                Yes, you can upgrade or downgrade your plan at any time. Changes take effect
+                immediately, and we'll prorate any billing differences.
+              </p>
+
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Is there a free trial?</h3>
-              <p className="text-gray-600 mb-6">Yes! Professional and Enterprise plans come with a 30-day free trial. No credit card required to start.</p>
-              
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">What payment methods do you accept?</h3>
-              <p className="text-gray-600">We accept all major credit cards, PayPal, and bank transfers for Enterprise customers.</p>
+              <p className="text-gray-600 mb-6">
+                Yes! Professional and Enterprise plans come with a 30-day free trial. No credit card
+                required to start.
+              </p>
+
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                What payment methods do you accept?
+              </h3>
+              <p className="text-gray-600">
+                We accept all major credit cards, PayPal, and bank transfers for Enterprise
+                customers.
+              </p>
             </div>
             <div>
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Can I cancel anytime?</h3>
-              <p className="text-gray-600 mb-6">Absolutely. You can cancel your subscription at any time with no cancellation fees. Your access continues until the end of your billing period.</p>
-              
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Do you offer discounts for students?</h3>
-              <p className="text-gray-600 mb-6">Yes! Students and educators get 50% off Professional plans. Contact us with your academic email for verification.</p>
-              
+              <p className="text-gray-600 mb-6">
+                Absolutely. You can cancel your subscription at any time with no cancellation fees.
+                Your access continues until the end of your billing period.
+              </p>
+
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                Do you offer discounts for students?
+              </h3>
+              <p className="text-gray-600 mb-6">
+                Yes! Students and educators get 50% off Professional plans. Contact us with your
+                academic email for verification.
+              </p>
+
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Is my data secure?</h3>
-              <p className="text-gray-600">Yes, we use bank-level encryption and comply with GDPR, SOC 2, and other security standards to protect your data.</p>
+              <p className="text-gray-600">
+                Yes, we use bank-level encryption and comply with GDPR, SOC 2, and other security
+                standards to protect your data.
+              </p>
             </div>
           </div>
         </div>
@@ -349,20 +420,28 @@ export default function PricingPage() {
 
         {/* CTA Section */}
         <div className="bg-blue-600 rounded-2xl p-12 text-center">
-          <h2 className="text-3xl font-bold text-white mb-4">
-            Ready to Transform Your Career?
-          </h2>
+          <h2 className="text-3xl font-bold text-white mb-4">Ready to Transform Your Career?</h2>
           <p className="text-xl text-blue-100 mb-8">
             Start your free trial today and discover the power of your digital twin
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/DemoPage">
-              <Button variant="secondary" size="xl" icon="🚀" className="bg-white text-blue-600 hover:bg-gray-50">
+              <Button
+                variant="secondary"
+                size="xl"
+                icon="🚀"
+                className="bg-white text-blue-600 hover:bg-gray-50"
+              >
                 Try Demo
               </Button>
             </Link>
             <Link href="/">
-              <Button variant="outline" size="xl" icon="⚡" className="border-white text-white hover:bg-white hover:text-blue-600">
+              <Button
+                variant="outline"
+                size="xl"
+                icon="⚡"
+                className="border-white text-white hover:bg-white hover:text-blue-600"
+              >
                 Start Free Trial
               </Button>
             </Link>
@@ -379,9 +458,7 @@ export default function PricingPage() {
             </div>
             <span className="text-lg font-bold">Digame</span>
           </div>
-          <p className="text-gray-400">
-            © 2025 Digame. Your Digital Professional Twin Platform.
-          </p>
+          <p className="text-gray-400">© 2025 Digame. Your Digital Professional Twin Platform.</p>
         </div>
       </footer>
     </div>

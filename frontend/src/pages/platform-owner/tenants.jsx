@@ -1,15 +1,43 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Building, Users, DollarSign, Settings, Search, Filter, Plus, Eye, Edit, Trash2,
-  BarChart3, Activity, Clock, CheckCircle, XCircle, AlertTriangle, TrendingUp,
-  Server, Database, Globe, Shield, RefreshCw, Download, Upload
+  Building,
+  Users,
+  DollarSign,
+  Settings,
+  Search,
+  Filter,
+  Plus,
+  Eye,
+  Edit,
+  Trash2,
+  BarChart3,
+  Activity,
+  Clock,
+  CheckCircle,
+  XCircle,
+  AlertTriangle,
+  TrendingUp,
+  Server,
+  Database,
+  Globe,
+  Shield,
+  RefreshCw,
+  Download,
+  Upload,
 } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card';
 import { Progress } from '../components/ui/Progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/Tabs';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/Dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '../components/ui/Dialog';
 
 const PlatformOwnerTenantsPage = () => {
   const [tenants, setTenants] = useState([]);
@@ -38,16 +66,16 @@ const PlatformOwnerTenantsPage = () => {
       const [tenantsResponse, metricsResponse] = await Promise.all([
         fetch(`/api/v1/platform/tenants?${params}`, {
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-            'Content-Type': 'application/json'
-          }
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
+            'Content-Type': 'application/json',
+          },
         }),
         fetch('/api/v1/platform/overview', {
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-            'Content-Type': 'application/json'
-          }
-        }).catch(() => ({ ok: false }))
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
+            'Content-Type': 'application/json',
+          },
+        }).catch(() => ({ ok: false })),
       ]);
 
       if (!tenantsResponse.ok) {
@@ -68,26 +96,35 @@ const PlatformOwnerTenantsPage = () => {
     }
   };
 
-  const filteredTenants = tenants.filter(tenant =>
-    tenant.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    tenant.slug.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredTenants = tenants.filter(
+    tenant =>
+      tenant.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      tenant.slug.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const getTierBadgeColor = (tier) => {
+  const getTierBadgeColor = tier => {
     switch (tier) {
-      case 'free': return 'bg-gray-100 text-gray-800';
-      case 'team': return 'bg-green-100 text-green-800';
-      case 'enterprise': return 'bg-purple-100 text-purple-800';
-      default: return 'bg-blue-100 text-blue-800';
+      case 'free':
+        return 'bg-gray-100 text-gray-800';
+      case 'team':
+        return 'bg-green-100 text-green-800';
+      case 'enterprise':
+        return 'bg-purple-100 text-purple-800';
+      default:
+        return 'bg-blue-100 text-blue-800';
     }
   };
 
-  const getStatusBadgeColor = (status) => {
+  const getStatusBadgeColor = status => {
     switch (status) {
-      case 'active': return 'bg-green-100 text-green-800';
-      case 'suspended': return 'bg-red-100 text-red-800';
-      case 'trial': return 'bg-yellow-100 text-yellow-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'active':
+        return 'bg-green-100 text-green-800';
+      case 'suspended':
+        return 'bg-red-100 text-red-800';
+      case 'trial':
+        return 'bg-yellow-100 text-yellow-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
@@ -96,9 +133,9 @@ const PlatformOwnerTenantsPage = () => {
       const response = await fetch(`/api/v1/platform/tenants/${tenantId}/${action}`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        }
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json',
+        },
       });
 
       if (!response.ok) {
@@ -111,13 +148,13 @@ const PlatformOwnerTenantsPage = () => {
     }
   };
 
-  const viewTenantDetails = async (tenant) => {
+  const viewTenantDetails = async tenant => {
     try {
       const response = await fetch(`/api/v1/platform/tenants/${tenant.id}`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        }
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json',
+        },
       });
 
       if (response.ok) {
@@ -140,7 +177,9 @@ const PlatformOwnerTenantsPage = () => {
               <Building className="h-8 w-8 text-blue-600 mr-3" />
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">Tenant Management</h1>
-                <p className="text-sm text-gray-500">Manage all platform tenants and organizations</p>
+                <p className="text-sm text-gray-500">
+                  Manage all platform tenants and organizations
+                </p>
               </div>
             </div>
             <Button onClick={() => setShowCreateModal(true)}>
@@ -162,14 +201,14 @@ const PlatformOwnerTenantsPage = () => {
                 placeholder="Search tenants..."
                 className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={e => setSearchTerm(e.target.value)}
               />
             </div>
-            
+
             <select
               className="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               value={filterTier}
-              onChange={(e) => setFilterTier(e.target.value)}
+              onChange={e => setFilterTier(e.target.value)}
             >
               <option value="">All Tiers</option>
               <option value="free">Free</option>
@@ -177,18 +216,18 @@ const PlatformOwnerTenantsPage = () => {
               <option value="team">Team</option>
               <option value="enterprise">Enterprise</option>
             </select>
-            
+
             <select
               className="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
+              onChange={e => setFilterStatus(e.target.value)}
             >
               <option value="">All Statuses</option>
               <option value="active">Active</option>
               <option value="trial">Trial</option>
               <option value="suspended">Suspended</option>
             </select>
-            
+
             <Button variant="outline" onClick={fetchTenants}>
               <Filter className="w-4 h-4 mr-2" />
               Refresh
@@ -243,9 +282,7 @@ const PlatformOwnerTenantsPage = () => {
             <h3 className="text-lg font-medium text-gray-900 mb-4">Create New Tenant</h3>
             <form className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Tenant Name
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Tenant Name</label>
                 <input
                   type="text"
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -253,9 +290,7 @@ const PlatformOwnerTenantsPage = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Slug
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Slug</label>
                 <input
                   type="text"
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -263,9 +298,7 @@ const PlatformOwnerTenantsPage = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Admin Email
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Admin Email</label>
                 <input
                   type="email"
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -283,16 +316,10 @@ const PlatformOwnerTenantsPage = () => {
                 </select>
               </div>
               <div className="flex justify-end space-x-3 pt-4">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setShowCreateModal(false)}
-                >
+                <Button type="button" variant="outline" onClick={() => setShowCreateModal(false)}>
                   Cancel
                 </Button>
-                <Button type="submit">
-                  Create Tenant
-                </Button>
+                <Button type="submit">Create Tenant</Button>
               </div>
             </form>
           </div>
@@ -304,9 +331,7 @@ const PlatformOwnerTenantsPage = () => {
         <DialogContent className="max-w-4xl">
           <DialogHeader>
             <DialogTitle>Tenant Details</DialogTitle>
-            <DialogDescription>
-              Comprehensive tenant information and management
-            </DialogDescription>
+            <DialogDescription>Comprehensive tenant information and management</DialogDescription>
           </DialogHeader>
           {selectedTenant && (
             <TenantDetailsDialog
@@ -325,8 +350,14 @@ const PlatformOwnerTenantsPage = () => {
 
 // Tenant List Section Component
 const TenantListSection = ({
-  tenants, loading, error, onRefresh, onViewDetails, onTenantAction,
-  getTierBadgeColor, getStatusBadgeColor
+  tenants,
+  loading,
+  error,
+  onRefresh,
+  onViewDetails,
+  onTenantAction,
+  getTierBadgeColor,
+  getStatusBadgeColor,
 }) => (
   <Card>
     <CardHeader>
@@ -353,7 +384,9 @@ const TenantListSection = ({
       ) : error ? (
         <div className="p-8 text-center">
           <p className="text-red-600">{error}</p>
-          <Button onClick={onRefresh} className="mt-4">Retry</Button>
+          <Button onClick={onRefresh} className="mt-4">
+            Retry
+          </Button>
         </div>
       ) : (
         <div className="overflow-x-auto">
@@ -381,7 +414,7 @@ const TenantListSection = ({
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {tenants.map((tenant) => (
+              {tenants.map(tenant => (
                 <tr key={tenant.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
@@ -401,7 +434,9 @@ const TenantListSection = ({
                       <Badge className={`text-xs ${getTierBadgeColor(tenant.subscription_tier)}`}>
                         {tenant.subscription_tier?.replace('_', ' ')}
                       </Badge>
-                      <Badge className={`text-xs ${getStatusBadgeColor(tenant.subscription_status)}`}>
+                      <Badge
+                        className={`text-xs ${getStatusBadgeColor(tenant.subscription_status)}`}
+                      >
                         {tenant.subscription_status}
                       </Badge>
                     </div>
@@ -410,11 +445,15 @@ const TenantListSection = ({
                     <div className="space-y-1">
                       <div className="flex items-center">
                         <Users className="h-4 w-4 text-gray-400 mr-1" />
-                        <span>{tenant.current_users}/{tenant.max_users}</span>
+                        <span>
+                          {tenant.current_users}/{tenant.max_users}
+                        </span>
                       </div>
                       <div className="flex items-center">
                         <Database className="h-4 w-4 text-gray-400 mr-1" />
-                        <span>{tenant.current_storage_gb}/{tenant.max_storage_gb} GB</span>
+                        <span>
+                          {tenant.current_storage_gb}/{tenant.max_storage_gb} GB
+                        </span>
                       </div>
                     </div>
                   </td>
@@ -429,11 +468,7 @@ const TenantListSection = ({
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex space-x-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => onViewDetails(tenant)}
-                      >
+                      <Button variant="ghost" size="sm" onClick={() => onViewDetails(tenant)}>
                         <Eye className="h-4 w-4" />
                       </Button>
                       <Button
@@ -482,15 +517,21 @@ const TenantAnalyticsSection = ({ tenants, tenantMetrics }) => (
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
               <span>Active</span>
-              <span className="text-green-600">{tenants.filter(t => t.subscription_status === 'active').length}</span>
+              <span className="text-green-600">
+                {tenants.filter(t => t.subscription_status === 'active').length}
+              </span>
             </div>
             <div className="flex justify-between text-sm">
               <span>Trial</span>
-              <span className="text-yellow-600">{tenants.filter(t => t.subscription_status === 'trial').length}</span>
+              <span className="text-yellow-600">
+                {tenants.filter(t => t.subscription_status === 'trial').length}
+              </span>
             </div>
             <div className="flex justify-between text-sm">
               <span>Suspended</span>
-              <span className="text-red-600">{tenants.filter(t => t.subscription_status === 'suspended').length}</span>
+              <span className="text-red-600">
+                {tenants.filter(t => t.subscription_status === 'suspended').length}
+              </span>
             </div>
           </div>
         </div>
@@ -567,7 +608,10 @@ const TenantAnalyticsSection = ({ tenants, tenantMetrics }) => (
 // Tenant Billing Section Component
 const TenantBillingSection = ({ tenants }) => {
   const tierPricing = { free: 0, team: 49, enterprise: 500 };
-  const totalMRR = tenants.reduce((sum, tenant) => sum + (tierPricing[tenant.subscription_tier] || 0), 0);
+  const totalMRR = tenants.reduce(
+    (sum, tenant) => sum + (tierPricing[tenant.subscription_tier] || 0),
+    0
+  );
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -645,13 +689,13 @@ const BulkOperationsSection = ({ tenants, onRefresh }) => {
           fetch(`/api/v1/platform/tenants/${tenantId}/${bulkAction}`, {
             method: 'POST',
             headers: {
-              'Authorization': `Bearer ${localStorage.getItem('token')}`,
-              'Content-Type': 'application/json'
-            }
+              Authorization: `Bearer ${localStorage.getItem('token')}`,
+              'Content-Type': 'application/json',
+            },
           })
         )
       );
-      
+
       setSelectedTenants([]);
       setBulkAction('');
       onRefresh();
@@ -673,7 +717,7 @@ const BulkOperationsSection = ({ tenants, onRefresh }) => {
           <div className="flex items-center space-x-4">
             <select
               value={bulkAction}
-              onChange={(e) => setBulkAction(e.target.value)}
+              onChange={e => setBulkAction(e.target.value)}
               className="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               <option value="">Select Action</option>
@@ -682,7 +726,7 @@ const BulkOperationsSection = ({ tenants, onRefresh }) => {
               <option value="upgrade">Upgrade Tier</option>
               <option value="export">Export Data</option>
             </select>
-            
+
             <Button
               onClick={handleBulkAction}
               disabled={!bulkAction || selectedTenants.length === 0}
@@ -706,7 +750,7 @@ const BulkOperationsSection = ({ tenants, onRefresh }) => {
               <Upload className="h-6 w-6 mb-2" />
               <span className="text-sm">Import Tenants</span>
             </Button>
-            
+
             <Button variant="outline" className="h-20 flex flex-col items-center justify-center">
               <Download className="h-6 w-6 mb-2" />
               <span className="text-sm">Export All Data</span>
@@ -757,21 +801,27 @@ const TenantDetailsDialog = ({ tenant, onAction, onClose }) => (
           <div>
             <div className="flex justify-between text-sm mb-1">
               <span>Users</span>
-              <span>{tenant.usage_metrics?.current_users}/{tenant.usage_metrics?.max_users}</span>
+              <span>
+                {tenant.usage_metrics?.current_users}/{tenant.usage_metrics?.max_users}
+              </span>
             </div>
             <Progress value={tenant.usage_metrics?.user_utilization || 0} />
           </div>
           <div>
             <div className="flex justify-between text-sm mb-1">
               <span>Storage</span>
-              <span>{tenant.usage_metrics?.current_storage_gb}/{tenant.usage_metrics?.max_storage_gb} GB</span>
+              <span>
+                {tenant.usage_metrics?.current_storage_gb}/{tenant.usage_metrics?.max_storage_gb} GB
+              </span>
             </div>
             <Progress value={tenant.usage_metrics?.storage_utilization || 0} />
           </div>
           <div>
             <div className="flex justify-between text-sm mb-1">
               <span>API Calls</span>
-              <span>{tenant.usage_metrics?.current_api_calls}/{tenant.usage_metrics?.max_api_calls}</span>
+              <span>
+                {tenant.usage_metrics?.current_api_calls}/{tenant.usage_metrics?.max_api_calls}
+              </span>
             </div>
             <Progress value={tenant.usage_metrics?.api_utilization || 0} />
           </div>
@@ -785,13 +835,17 @@ const TenantDetailsDialog = ({ tenant, onAction, onClose }) => (
       </CardHeader>
       <CardContent>
         <div className="space-y-2">
-          {(tenant.users || []).map((user) => (
+          {(tenant.users || []).map(user => (
             <div key={user.id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
               <div>
                 <p className="text-sm font-medium">{user.username}</p>
                 <p className="text-xs text-gray-500">{user.email}</p>
               </div>
-              <Badge className={user.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>
+              <Badge
+                className={
+                  user.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                }
+              >
                 {user.is_active ? 'Active' : 'Inactive'}
               </Badge>
             </div>
@@ -804,9 +858,7 @@ const TenantDetailsDialog = ({ tenant, onAction, onClose }) => (
       <Button variant="outline" onClick={onClose}>
         Close
       </Button>
-      <Button onClick={() => onAction(tenant.tenant_info?.id, 'edit')}>
-        Edit Tenant
-      </Button>
+      <Button onClick={() => onAction(tenant.tenant_info?.id, 'edit')}>Edit Tenant</Button>
     </div>
   </div>
 );

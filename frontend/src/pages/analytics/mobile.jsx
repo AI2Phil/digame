@@ -1,12 +1,31 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import {
-  Smartphone, Battery, Wifi, Clock,
-  TrendingUp, Activity, Zap, Volume2,
-  Settings, Bell, Eye, BarChart3,
-  Mic, RefreshCw, Brain, Target, Home
+  Smartphone,
+  Battery,
+  Wifi,
+  Clock,
+  TrendingUp,
+  Activity,
+  Zap,
+  Volume2,
+  Settings,
+  Bell,
+  Eye,
+  BarChart3,
+  Mic,
+  RefreshCw,
+  Brain,
+  Target,
+  Home,
 } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/Card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { Progress } from '../../components/ui/Progress';
@@ -34,25 +53,19 @@ const MobileAnalyticsDashboard = () => {
     setLoading(true);
     try {
       const userId = localStorage.getItem('userId');
-      
+
       // Initialize advanced mobile service if not already done
       if (!advancedMobileService.isInitialized) {
         await advancedMobileService.initialize();
       }
 
       // Load comprehensive mobile analytics
-      const [
-        analytics,
-        syncStatus,
-        notifications,
-        voice,
-        performance
-      ] = await Promise.all([
+      const [analytics, syncStatus, notifications, voice, performance] = await Promise.all([
         advancedMobileService.generateAdvancedAnalytics(),
         apiService.getMobileAnalytics(userId),
         apiService.getOptimalNotificationTimes(userId),
         apiService.getVoiceCommandHistory(userId),
-        apiService.getMobilePerformanceMetrics(userId)
+        apiService.getMobilePerformanceMetrics(userId),
       ]);
 
       setMobileAnalytics(analytics || {});
@@ -60,7 +73,6 @@ const MobileAnalyticsDashboard = () => {
       setNotificationSettings(notifications || {});
       setVoiceSettings(voice || {});
       setPerformanceMetrics(performance || {});
-
     } catch (error) {
       console.error('Failed to load mobile analytics:', error);
       toast.error('Failed to load mobile analytics');
@@ -73,10 +85,10 @@ const MobileAnalyticsDashboard = () => {
     try {
       const userId = localStorage.getItem('userId');
       const newStatus = !backgroundSyncStatus.enabled;
-      
+
       await apiService.updateBackgroundSyncStatus(userId, { enabled: newStatus });
       setBackgroundSyncStatus(prev => ({ ...prev, enabled: newStatus }));
-      
+
       toast.success(`Background sync ${newStatus ? 'enabled' : 'disabled'}`);
     } catch (error) {
       toast.error('Failed to update background sync settings');
@@ -135,10 +147,12 @@ const MobileAnalyticsDashboard = () => {
               </div>
               <div>
                 <h1 className="text-3xl font-bold text-gray-900">Advanced Mobile Analytics</h1>
-                <p className="text-gray-600">Comprehensive mobile experience optimization and insights</p>
+                <p className="text-gray-600">
+                  Comprehensive mobile experience optimization and insights
+                </p>
               </div>
             </div>
-            
+
             {/* Home Button */}
             <Button
               variant="outline"
@@ -152,14 +166,14 @@ const MobileAnalyticsDashboard = () => {
               Home
             </Button>
           </div>
-          
+
           {/* Quick Stats */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <MobileMetricCard
               title="Background Sync"
-              value={backgroundSyncStatus.enabled ? "Active" : "Inactive"}
+              value={backgroundSyncStatus.enabled ? 'Active' : 'Inactive'}
               icon={RefreshCw}
-              color={backgroundSyncStatus.enabled ? "green" : "gray"}
+              color={backgroundSyncStatus.enabled ? 'green' : 'gray'}
               trend={`Last sync: ${backgroundSyncStatus.lastSync || 'Never'}`}
             />
             <MobileMetricCard
@@ -198,7 +212,7 @@ const MobileAnalyticsDashboard = () => {
 
           {/* Overview Tab */}
           <TabsContent value="overview" className="space-y-6">
-            <MobileOverviewSection 
+            <MobileOverviewSection
               analytics={mobileAnalytics}
               backgroundSync={backgroundSyncStatus}
               notifications={notificationSettings}
@@ -209,7 +223,7 @@ const MobileAnalyticsDashboard = () => {
 
           {/* Background Sync Tab */}
           <TabsContent value="background-sync" className="space-y-6">
-            <BackgroundSyncSection 
+            <BackgroundSyncSection
               syncStatus={backgroundSyncStatus}
               onToggleSync={handleToggleBackgroundSync}
             />
@@ -217,7 +231,7 @@ const MobileAnalyticsDashboard = () => {
 
           {/* AI Notifications Tab */}
           <TabsContent value="notifications" className="space-y-6">
-            <AiNotificationsSection 
+            <AiNotificationsSection
               notificationData={notificationSettings}
               onOptimize={handleOptimizeNotifications}
             />
@@ -225,7 +239,7 @@ const MobileAnalyticsDashboard = () => {
 
           {/* Voice Recognition Tab */}
           <TabsContent value="voice" className="space-y-6">
-            <VoiceRecognitionSection 
+            <VoiceRecognitionSection
               voiceData={voiceSettings}
               onStartVoice={handleStartVoiceRecognition}
               onStopVoice={handleStopVoiceRecognition}
@@ -234,9 +248,7 @@ const MobileAnalyticsDashboard = () => {
 
           {/* Performance Tab */}
           <TabsContent value="performance" className="space-y-6">
-            <PerformanceSection 
-              performanceData={performanceMetrics}
-            />
+            <PerformanceSection performanceData={performanceMetrics} />
           </TabsContent>
         </Tabs>
       </div>
@@ -251,7 +263,7 @@ const MobileMetricCard = ({ title, value, icon: Icon, color, trend }) => {
     green: 'text-green-600 bg-green-100',
     purple: 'text-purple-600 bg-purple-100',
     orange: 'text-orange-600 bg-orange-100',
-    gray: 'text-gray-600 bg-gray-100'
+    gray: 'text-gray-600 bg-gray-100',
   };
 
   return (
@@ -273,7 +285,13 @@ const MobileMetricCard = ({ title, value, icon: Icon, color, trend }) => {
 };
 
 // Mobile Overview Section Component
-const MobileOverviewSection = ({ analytics, backgroundSync, notifications, voice, performance }) => (
+const MobileOverviewSection = ({
+  analytics,
+  backgroundSync,
+  notifications,
+  voice,
+  performance,
+}) => (
   <div className="space-y-6">
     {/* Mobile Experience Summary */}
     <Card>
@@ -287,7 +305,10 @@ const MobileOverviewSection = ({ analytics, backgroundSync, notifications, voice
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <div className="text-center">
             <div className="text-3xl font-bold text-blue-600 mb-2">
-              {analytics.sessionData?.duration ? Math.round(analytics.sessionData.duration / 60000) : 0}m
+              {analytics.sessionData?.duration
+                ? Math.round(analytics.sessionData.duration / 60000)
+                : 0}
+              m
             </div>
             <p className="text-sm text-gray-600">Session Duration</p>
           </div>
@@ -317,27 +338,27 @@ const MobileOverviewSection = ({ analytics, backgroundSync, notifications, voice
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       <FeatureStatusCard
         title="Background App Refresh"
-        status={backgroundSync.enabled ? "Active" : "Inactive"}
+        status={backgroundSync.enabled ? 'Active' : 'Inactive'}
         description="Automatic data synchronization when app is in background"
         icon={RefreshCw}
-        color={backgroundSync.enabled ? "green" : "gray"}
+        color={backgroundSync.enabled ? 'green' : 'gray'}
         details={[
           `Last sync: ${backgroundSync.lastSync || 'Never'}`,
           `Sync frequency: ${backgroundSync.frequency || '15 minutes'}`,
-          `Data synced: ${backgroundSync.dataSynced || 'Goals, notifications, analytics'}`
+          `Data synced: ${backgroundSync.dataSynced || 'Goals, notifications, analytics'}`,
         ]}
       />
-      
+
       <FeatureStatusCard
         title="AI-Powered Notifications"
-        status={notifications.optimized ? "Optimized" : "Standard"}
+        status={notifications.optimized ? 'Optimized' : 'Standard'}
         description="Smart notification timing based on your behavior patterns"
         icon={Brain}
         color="blue"
         details={[
           `Optimal times: ${notifications.optimalTimes?.join(', ') || 'Learning...'}`,
           `Notifications today: ${notifications.todayCount || 0}`,
-          `Engagement rate: ${notifications.engagementRate || 0}%`
+          `Engagement rate: ${notifications.engagementRate || 0}%`,
         ]}
       />
     </div>
@@ -388,7 +409,7 @@ const FeatureStatusCard = ({ title, status, description, icon: Icon, color, deta
   const colorClasses = {
     green: 'text-green-600 bg-green-100',
     blue: 'text-blue-600 bg-blue-100',
-    gray: 'text-gray-600 bg-gray-100'
+    gray: 'text-gray-600 bg-gray-100',
   };
 
   return (
@@ -401,14 +422,14 @@ const FeatureStatusCard = ({ title, status, description, icon: Icon, color, deta
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-2">
               <h4 className="font-semibold text-gray-900">{title}</h4>
-              <Badge variant={color === 'green' ? 'success' : 'secondary'}>
-                {status}
-              </Badge>
+              <Badge variant={color === 'green' ? 'success' : 'secondary'}>{status}</Badge>
             </div>
             <p className="text-sm text-gray-600 mb-3">{description}</p>
             <div className="space-y-1">
               {details.map((detail, index) => (
-                <p key={index} className="text-xs text-gray-500">• {detail}</p>
+                <p key={index} className="text-xs text-gray-500">
+                  • {detail}
+                </p>
               ))}
             </div>
           </div>
@@ -438,12 +459,12 @@ const BackgroundSyncSection = ({ syncStatus, onToggleSync }) => (
             <div>
               <h4 className="font-medium">Background Sync Status</h4>
               <p className="text-sm text-gray-600">
-                {syncStatus.enabled ? 'Active - Data syncs automatically' : 'Inactive - Manual sync only'}
+                {syncStatus.enabled
+                  ? 'Active - Data syncs automatically'
+                  : 'Inactive - Manual sync only'}
               </p>
             </div>
-            <Button onClick={onToggleSync}>
-              {syncStatus.enabled ? 'Disable' : 'Enable'}
-            </Button>
+            <Button onClick={onToggleSync}>{syncStatus.enabled ? 'Disable' : 'Enable'}</Button>
           </div>
 
           {/* Sync Statistics */}
@@ -513,22 +534,22 @@ const AiNotificationsSection = ({ notificationData, onOptimize }) => (
                 AI analyzes your productivity patterns to find optimal notification times
               </p>
             </div>
-            <Button onClick={onOptimize}>
-              Optimize Now
-            </Button>
+            <Button onClick={onOptimize}>Optimize Now</Button>
           </div>
 
           {/* Optimal Times */}
           <div>
             <h4 className="font-medium mb-4">Your Optimal Notification Times</h4>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {(notificationData.optimalTimes || ['9:00 AM', '2:00 PM', '6:00 PM']).map((time, index) => (
-                <div key={index} className="text-center p-3 border rounded-lg">
-                  <Clock className="w-6 h-6 mx-auto mb-2 text-blue-600" />
-                  <p className="font-medium">{time}</p>
-                  <p className="text-xs text-gray-500">Peak focus</p>
-                </div>
-              ))}
+              {(notificationData.optimalTimes || ['9:00 AM', '2:00 PM', '6:00 PM']).map(
+                (time, index) => (
+                  <div key={index} className="text-center p-3 border rounded-lg">
+                    <Clock className="w-6 h-6 mx-auto mb-2 text-blue-600" />
+                    <p className="font-medium">{time}</p>
+                    <p className="text-xs text-gray-500">Peak focus</p>
+                  </div>
+                )
+              )}
             </div>
           </div>
 
@@ -568,9 +589,7 @@ const VoiceRecognitionSection = ({ voiceData, onStartVoice, onStopVoice }) => (
           <Mic className="w-5 h-5" />
           Voice Recognition Support
         </CardTitle>
-        <CardDescription>
-          Natural language commands for hands-free app control
-        </CardDescription>
+        <CardDescription>Natural language commands for hands-free app control</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="space-y-6">
@@ -598,13 +617,13 @@ const VoiceRecognitionSection = ({ voiceData, onStartVoice, onStopVoice }) => (
             <h4 className="font-medium mb-4">Available Voice Commands</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {[
-                { command: "Add goal", description: "Create a new goal" },
-                { command: "Show analytics", description: "Display analytics dashboard" },
-                { command: "Update progress", description: "Update goal progress" },
-                { command: "Read notifications", description: "Read unread notifications" },
-                { command: "Start focus session", description: "Begin a focus session" },
-                { command: "Take break", description: "Start break reminder" },
-                { command: "Show recommendations", description: "Display AI recommendations" }
+                { command: 'Add goal', description: 'Create a new goal' },
+                { command: 'Show analytics', description: 'Display analytics dashboard' },
+                { command: 'Update progress', description: 'Update goal progress' },
+                { command: 'Read notifications', description: 'Read unread notifications' },
+                { command: 'Start focus session', description: 'Begin a focus session' },
+                { command: 'Take break', description: 'Start break reminder' },
+                { command: 'Show recommendations', description: 'Display AI recommendations' },
               ].map((item, index) => (
                 <div key={index} className="p-3 border rounded-lg">
                   <p className="font-medium text-purple-600">"{item.command}"</p>

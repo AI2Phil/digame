@@ -16,9 +16,15 @@ export default function FeaturesPage() {
             <span className="text-xl font-bold text-gray-900">Digame</span>
           </Link>
           <div className="hidden md:flex space-x-8">
-            <Link href="/FeaturesPage" className="text-blue-600 font-semibold">Features</Link>
-            <Link href="/HowItWorksPage" className="text-gray-600 hover:text-gray-900">How it Works</Link>
-            <Link href="/PricingPage" className="text-gray-600 hover:text-gray-900">Pricing</Link>
+            <Link href="/FeaturesPage" className="text-blue-600 font-semibold">
+              Features
+            </Link>
+            <Link href="/HowItWorksPage" className="text-gray-600 hover:text-gray-900">
+              How it Works
+            </Link>
+            <Link href="/PricingPage" className="text-gray-600 hover:text-gray-900">
+              Pricing
+            </Link>
           </div>
           <Link href="/">
             <Button variant="primary" size="md" icon="🚀">
@@ -32,7 +38,7 @@ export default function FeaturesPage() {
       <div className="container mx-auto px-4 py-16">
         <div className="text-center max-w-4xl mx-auto mb-16">
           <h1 className="text-5xl font-bold text-gray-900 mb-6">
-            Powerful Features for 
+            Powerful Features for
             <span className="text-blue-600"> Professional Growth</span>
           </h1>
           <p className="text-xl text-gray-600 mb-8">
@@ -49,7 +55,8 @@ export default function FeaturesPage() {
               </div>
               <h3 className="text-2xl font-bold text-gray-900 mb-4">Behavioral Analysis</h3>
               <p className="text-gray-600 mb-6">
-                Advanced ML algorithms analyze your work patterns and identify optimization opportunities
+                Advanced ML algorithms analyze your work patterns and identify optimization
+                opportunities
               </p>
               <ul className="text-left space-y-2 text-gray-700">
                 <li className="flex items-center">
@@ -101,7 +108,8 @@ export default function FeaturesPage() {
               </div>
               <h3 className="text-2xl font-bold text-gray-900 mb-4">Goal Achievement</h3>
               <p className="text-gray-600 mb-6">
-                Set and track professional goals with AI-powered recommendations and progress monitoring
+                Set and track professional goals with AI-powered recommendations and progress
+                monitoring
               </p>
               <ul className="text-left space-y-2 text-gray-700">
                 <li className="flex items-center">
@@ -166,7 +174,7 @@ export default function FeaturesPage() {
           <p className="text-center text-gray-600 mb-12">
             See how digital twins are transforming careers
           </p>
-          
+
           <div className="grid md:grid-cols-3 gap-8">
             <Card className="rounded-lg shadow-sm">
               <CardContent className="p-6">
@@ -180,12 +188,12 @@ export default function FeaturesPage() {
                   </div>
                 </div>
                 <p className="text-gray-700 italic">
-                  "Digame helped me identify productivity patterns I never knew existed. 
-                  I've increased my efficiency by 40% in just 3 months."
+                  "Digame helped me identify productivity patterns I never knew existed. I've
+                  increased my efficiency by 40% in just 3 months."
                 </p>
               </CardContent>
             </Card>
-            
+
             <Card className="rounded-lg shadow-sm">
               <CardContent className="p-6">
                 <div className="flex items-center mb-4">
@@ -198,12 +206,12 @@ export default function FeaturesPage() {
                   </div>
                 </div>
                 <p className="text-gray-700 italic">
-                  "The predictive insights are incredible. Digame predicted my promotion 
-                  6 months before it happened and helped me prepare perfectly."
+                  "The predictive insights are incredible. Digame predicted my promotion 6 months
+                  before it happened and helped me prepare perfectly."
                 </p>
               </CardContent>
             </Card>
-            
+
             <Card className="rounded-lg shadow-sm">
               <CardContent className="p-6">
                 <div className="flex items-center mb-4">
@@ -216,8 +224,8 @@ export default function FeaturesPage() {
                   </div>
                 </div>
                 <p className="text-gray-700 italic">
-                  "My digital twin became my career coach. The personalized recommendations 
-                  led to a 60% salary increase within a year."
+                  "My digital twin became my career coach. The personalized recommendations led to a
+                  60% salary increase within a year."
                 </p>
               </CardContent>
             </Card>
@@ -230,16 +238,27 @@ export default function FeaturesPage() {
             Ready to Transform Your Professional Life?
           </h2>
           <p className="text-xl text-blue-100 mb-8">
-            Join thousands of professionals who are already using their digital twins to accelerate their careers
+            Join thousands of professionals who are already using their digital twins to accelerate
+            their careers
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/DemoPage">
-              <Button variant="secondary" size="xl" icon="🚀" className="bg-white text-blue-600 hover:bg-gray-50">
+              <Button
+                variant="secondary"
+                size="xl"
+                icon="🚀"
+                className="bg-white text-blue-600 hover:bg-gray-50"
+              >
                 Try Demo
               </Button>
             </Link>
             <Link href="/">
-              <Button variant="outline" size="xl" icon="⚡" className="border-white text-white hover:bg-white hover:text-blue-600">
+              <Button
+                variant="outline"
+                size="xl"
+                icon="⚡"
+                className="border-white text-white hover:bg-white hover:text-blue-600"
+              >
                 Get Started
               </Button>
             </Link>
@@ -256,9 +275,7 @@ export default function FeaturesPage() {
             </div>
             <span className="text-lg font-bold">Digame</span>
           </div>
-          <p className="text-gray-400">
-            © 2025 Digame. Your Digital Professional Twin Platform.
-          </p>
+          <p className="text-gray-400">© 2025 Digame. Your Digital Professional Twin Platform.</p>
         </div>
       </footer>
     </div>

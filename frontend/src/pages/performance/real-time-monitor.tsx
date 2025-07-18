@@ -1,7 +1,11 @@
 import React from 'react';
 import Head from 'next/head';
 import { Container, Box, Typography, Breadcrumbs, Link } from '@mui/material';
-import { Home as HomeIcon, Speed as SpeedIcon, NavigateNext as NavigateNextIcon } from '@mui/icons-material';
+import {
+  Home as HomeIcon,
+  Speed as SpeedIcon,
+  NavigateNext as NavigateNextIcon,
+} from '@mui/icons-material';
 import { useRouter } from 'next/router';
 import RealTimePerformanceMonitor from '../../components/performance/RealTimePerformanceMonitor';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -24,7 +28,10 @@ const RealTimeMonitorPage: React.FC = () => {
     <>
       <Head>
         <title>Real-Time Performance Monitor - Digame</title>
-        <meta name="description" content="Real-time performance monitoring with automated optimizations and comprehensive metrics tracking" />
+        <meta
+          name="description"
+          content="Real-time performance monitoring with automated optimizations and comprehensive metrics tracking"
+        />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
 
@@ -40,7 +47,7 @@ const RealTimeMonitorPage: React.FC = () => {
               <Link
                 color="inherit"
                 href="/"
-                onClick={(e) => {
+                onClick={e => {
                   e.preventDefault();
                   router.push('/');
                 }}
@@ -52,7 +59,7 @@ const RealTimeMonitorPage: React.FC = () => {
               <Link
                 color="inherit"
                 href="/performance"
-                onClick={(e) => {
+                onClick={e => {
                   e.preventDefault();
                   router.push('/performance');
                 }}
@@ -72,7 +79,8 @@ const RealTimeMonitorPage: React.FC = () => {
                 Real-Time Performance Monitor
               </Typography>
               <Typography variant="body1" color="text.secondary">
-                Live performance monitoring with automated optimizations, comprehensive metrics tracking, and intelligent alerting system
+                Live performance monitoring with automated optimizations, comprehensive metrics
+                tracking, and intelligent alerting system
               </Typography>
             </Box>
 

@@ -1,16 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
-import { 
-  User, 
-  Briefcase, 
-  Settings as SettingsIcon, 
-  Shield, 
+import {
+  User,
+  Briefcase,
+  Settings as SettingsIcon,
+  Shield,
   CreditCard,
   Save,
   Upload,
   Plus,
-  X
+  X,
 } from 'lucide-react';
 
 const ProfilePage = () => {
@@ -33,7 +33,7 @@ const ProfilePage = () => {
       website: '',
       linkedIn: '',
       twitter: '',
-      github: ''
+      github: '',
     },
     professional: {
       jobTitle: '',
@@ -46,7 +46,7 @@ const ProfilePage = () => {
       skills: [],
       certifications: [],
       experience: [],
-      education: []
+      education: [],
     },
     preferences: {
       theme: 'light',
@@ -57,7 +57,7 @@ const ProfilePage = () => {
       dataSharing: false,
       twoFactorAuth: false,
       sessionTimeout: 30,
-      defaultDashboard: 'overview'
+      defaultDashboard: 'overview',
     },
     privacy: {
       profileVisibility: 'team',
@@ -66,7 +66,7 @@ const ProfilePage = () => {
       showLocation: true,
       allowDirectMessages: true,
       allowMentions: true,
-      searchable: true
+      searchable: true,
     },
     subscription: {
       tier: 'Individual Pro',
@@ -76,14 +76,14 @@ const ProfilePage = () => {
       usage: {
         apiCalls: 1250,
         storage: 2.3,
-        teamMembers: 1
+        teamMembers: 1,
       },
       limits: {
         apiCalls: 10000,
         storage: 10,
-        teamMembers: 1
-      }
-    }
+        teamMembers: 1,
+      },
+    },
   });
 
   const [newSkill, setNewSkill] = useState('');
@@ -92,7 +92,7 @@ const ProfilePage = () => {
     issuer: '',
     date: '',
     expiryDate: '',
-    credentialId: ''
+    credentialId: '',
   });
 
   useEffect(() => {
@@ -105,7 +105,7 @@ const ProfilePage = () => {
       const data = await response.json();
       setProfileData(prev => ({
         ...prev,
-        ...data.profile
+        ...data.profile,
       }));
     } catch (error) {
       console.error('Error fetching profile data:', error);
@@ -120,13 +120,13 @@ const ProfilePage = () => {
       const response = await fetch('/api/auth/profile', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ section, data })
+        body: JSON.stringify({ section, data }),
       });
 
       if (response.ok) {
         setProfileData(prev => ({
           ...prev,
-          [section]: { ...prev[section], ...data }
+          [section]: { ...prev[section], ...data },
         }));
       }
     } catch (error) {
@@ -136,7 +136,7 @@ const ProfilePage = () => {
     }
   };
 
-  const handleAvatarUpload = async (event) => {
+  const handleAvatarUpload = async event => {
     const file = event.target.files[0];
     if (!file) return;
 
@@ -146,14 +146,14 @@ const ProfilePage = () => {
     try {
       const response = await fetch('/api/auth/profile/avatar', {
         method: 'POST',
-        body: formData
+        body: formData,
       });
 
       if (response.ok) {
         const data = await response.json();
         setProfileData(prev => ({
           ...prev,
-          personal: { ...prev.personal, avatar: data.avatarUrl }
+          personal: { ...prev.personal, avatar: data.avatarUrl },
         }));
       }
     } catch (error) {
@@ -163,35 +163,41 @@ const ProfilePage = () => {
 
   const addSkill = () => {
     if (newSkill.trim()) {
-      const updatedSkills = [...profileData.professional.skills, {
-        id: Date.now(),
-        name: newSkill.trim(),
-        level: 'intermediate',
-        verified: false
-      }];
+      const updatedSkills = [
+        ...profileData.professional.skills,
+        {
+          id: Date.now(),
+          name: newSkill.trim(),
+          level: 'intermediate',
+          verified: false,
+        },
+      ];
       updateProfile('professional', { skills: updatedSkills });
       setNewSkill('');
     }
   };
 
-  const removeSkill = (skillId) => {
+  const removeSkill = skillId => {
     const updatedSkills = profileData.professional.skills.filter(skill => skill.id !== skillId);
     updateProfile('professional', { skills: updatedSkills });
   };
 
   const addCertification = () => {
     if (newCertification.name.trim()) {
-      const updatedCertifications = [...profileData.professional.certifications, {
-        id: Date.now(),
-        ...newCertification
-      }];
+      const updatedCertifications = [
+        ...profileData.professional.certifications,
+        {
+          id: Date.now(),
+          ...newCertification,
+        },
+      ];
       updateProfile('professional', { certifications: updatedCertifications });
       setNewCertification({
         name: '',
         issuer: '',
         date: '',
         expiryDate: '',
-        credentialId: ''
+        credentialId: '',
       });
     }
   };
@@ -206,9 +212,9 @@ const ProfilePage = () => {
       profileData.personal.bio,
       profileData.professional.jobTitle,
       profileData.professional.company,
-      profileData.professional.skills.length > 0
+      profileData.professional.skills.length > 0,
     ];
-    
+
     const completed = fields.filter(field => field && field !== '').length;
     return Math.round((completed / fields.length) * 100);
   };
@@ -229,7 +235,8 @@ const ProfilePage = () => {
             ) : (
               <div className="w-24 h-24 rounded-full bg-gray-300 flex items-center justify-center">
                 <span className="text-2xl text-gray-600">
-                  {profileData.personal.firstName?.[0]}{profileData.personal.lastName?.[0]}
+                  {profileData.personal.firstName?.[0]}
+                  {profileData.personal.lastName?.[0]}
                 </span>
               </div>
             )}
@@ -259,10 +266,12 @@ const ProfilePage = () => {
             <input
               type="text"
               value={profileData.personal.firstName}
-              onChange={(e) => setProfileData(prev => ({
-                ...prev,
-                personal: { ...prev.personal, firstName: e.target.value }
-              }))}
+              onChange={e =>
+                setProfileData(prev => ({
+                  ...prev,
+                  personal: { ...prev.personal, firstName: e.target.value },
+                }))
+              }
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
@@ -271,10 +280,12 @@ const ProfilePage = () => {
             <input
               type="text"
               value={profileData.personal.lastName}
-              onChange={(e) => setProfileData(prev => ({
-                ...prev,
-                personal: { ...prev.personal, lastName: e.target.value }
-              }))}
+              onChange={e =>
+                setProfileData(prev => ({
+                  ...prev,
+                  personal: { ...prev.personal, lastName: e.target.value },
+                }))
+              }
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
@@ -283,10 +294,12 @@ const ProfilePage = () => {
             <input
               type="email"
               value={profileData.personal.email}
-              onChange={(e) => setProfileData(prev => ({
-                ...prev,
-                personal: { ...prev.personal, email: e.target.value }
-              }))}
+              onChange={e =>
+                setProfileData(prev => ({
+                  ...prev,
+                  personal: { ...prev.personal, email: e.target.value },
+                }))
+              }
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
@@ -295,10 +308,12 @@ const ProfilePage = () => {
             <input
               type="tel"
               value={profileData.personal.phone}
-              onChange={(e) => setProfileData(prev => ({
-                ...prev,
-                personal: { ...prev.personal, phone: e.target.value }
-              }))}
+              onChange={e =>
+                setProfileData(prev => ({
+                  ...prev,
+                  personal: { ...prev.personal, phone: e.target.value },
+                }))
+              }
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
@@ -307,10 +322,12 @@ const ProfilePage = () => {
             <input
               type="text"
               value={profileData.personal.location}
-              onChange={(e) => setProfileData(prev => ({
-                ...prev,
-                personal: { ...prev.personal, location: e.target.value }
-              }))}
+              onChange={e =>
+                setProfileData(prev => ({
+                  ...prev,
+                  personal: { ...prev.personal, location: e.target.value },
+                }))
+              }
               placeholder="City, Country"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
@@ -319,10 +336,12 @@ const ProfilePage = () => {
             <label className="block text-sm font-medium text-gray-700 mb-1">Timezone</label>
             <select
               value={profileData.personal.timezone}
-              onChange={(e) => setProfileData(prev => ({
-                ...prev,
-                personal: { ...prev.personal, timezone: e.target.value }
-              }))}
+              onChange={e =>
+                setProfileData(prev => ({
+                  ...prev,
+                  personal: { ...prev.personal, timezone: e.target.value },
+                }))
+              }
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
               <option value="">Select timezone</option>
@@ -342,10 +361,12 @@ const ProfilePage = () => {
           <label className="block text-sm font-medium text-gray-700 mb-1">Bio</label>
           <textarea
             value={profileData.personal.bio}
-            onChange={(e) => setProfileData(prev => ({
-              ...prev,
-              personal: { ...prev.personal, bio: e.target.value }
-            }))}
+            onChange={e =>
+              setProfileData(prev => ({
+                ...prev,
+                personal: { ...prev.personal, bio: e.target.value },
+              }))
+            }
             rows={3}
             placeholder="Tell us about yourself..."
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -377,10 +398,12 @@ const ProfilePage = () => {
             <input
               type="text"
               value={profileData.professional.jobTitle}
-              onChange={(e) => setProfileData(prev => ({
-                ...prev,
-                professional: { ...prev.professional, jobTitle: e.target.value }
-              }))}
+              onChange={e =>
+                setProfileData(prev => ({
+                  ...prev,
+                  professional: { ...prev.professional, jobTitle: e.target.value },
+                }))
+              }
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
@@ -389,10 +412,12 @@ const ProfilePage = () => {
             <input
               type="text"
               value={profileData.professional.company}
-              onChange={(e) => setProfileData(prev => ({
-                ...prev,
-                professional: { ...prev.professional, company: e.target.value }
-              }))}
+              onChange={e =>
+                setProfileData(prev => ({
+                  ...prev,
+                  professional: { ...prev.professional, company: e.target.value },
+                }))
+              }
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
@@ -403,7 +428,7 @@ const ProfilePage = () => {
       <div className="bg-white rounded-lg shadow p-6">
         <h3 className="text-lg font-medium text-gray-900 mb-4">Skills</h3>
         <div className="flex flex-wrap gap-2 mb-4">
-          {profileData.professional.skills.map((skill) => (
+          {profileData.professional.skills.map(skill => (
             <span
               key={skill.id}
               className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-blue-100 text-blue-800"
@@ -422,10 +447,10 @@ const ProfilePage = () => {
           <input
             type="text"
             value={newSkill}
-            onChange={(e) => setNewSkill(e.target.value)}
+            onChange={e => setNewSkill(e.target.value)}
             placeholder="Add a skill"
             className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            onKeyPress={(e) => e.key === 'Enter' && addSkill()}
+            onKeyPress={e => e.key === 'Enter' && addSkill()}
           />
           <button
             onClick={addSkill}
@@ -462,7 +487,10 @@ const ProfilePage = () => {
     <>
       <Head>
         <title>User Profile - Digame</title>
-        <meta name="description" content="Manage your personal information, professional details, and account settings" />
+        <meta
+          name="description"
+          content="Manage your personal information, professional details, and account settings"
+        />
       </Head>
 
       <div className="min-h-screen bg-gray-50">
@@ -474,7 +502,9 @@ const ProfilePage = () => {
                 <User className="w-8 h-8 text-blue-600" />
                 <div>
                   <h1 className="text-2xl font-bold text-gray-900">User Profile</h1>
-                  <p className="text-gray-600">Manage your personal information, professional details, and account settings</p>
+                  <p className="text-gray-600">
+                    Manage your personal information, professional details, and account settings
+                  </p>
                 </div>
               </div>
             </div>
@@ -489,7 +519,7 @@ const ProfilePage = () => {
               <span className="text-2xl font-bold text-blue-600">{getCompletionPercentage()}%</span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-3">
-              <div 
+              <div
                 className="bg-blue-600 h-3 rounded-full transition-all duration-300"
                 style={{ width: `${getCompletionPercentage()}%` }}
               ></div>
@@ -507,8 +537,8 @@ const ProfilePage = () => {
                 { id: 'professional', label: 'Professional', icon: Briefcase },
                 { id: 'preferences', label: 'Preferences', icon: SettingsIcon },
                 { id: 'privacy', label: 'Privacy', icon: Shield },
-                { id: 'subscription', label: 'Subscription', icon: CreditCard }
-              ].map((tab) => {
+                { id: 'subscription', label: 'Subscription', icon: CreditCard },
+              ].map(tab => {
                 const IconComponent = tab.icon;
                 return (
                   <button
@@ -532,7 +562,7 @@ const ProfilePage = () => {
           <div>
             {activeTab === 'personal' && renderPersonalTab()}
             {activeTab === 'professional' && renderProfessionalTab()}
-            
+
             {activeTab === 'preferences' && (
               <div className="bg-white rounded-lg shadow p-6">
                 <h3 className="text-lg font-medium text-gray-900 mb-4">Preferences</h3>
@@ -541,10 +571,12 @@ const ProfilePage = () => {
                     <label className="text-sm font-medium text-gray-700">Theme</label>
                     <select
                       value={profileData.preferences.theme}
-                      onChange={(e) => setProfileData(prev => ({
-                        ...prev,
-                        preferences: { ...prev.preferences, theme: e.target.value }
-                      }))}
+                      onChange={e =>
+                        setProfileData(prev => ({
+                          ...prev,
+                          preferences: { ...prev.preferences, theme: e.target.value },
+                        }))
+                      }
                       className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     >
                       <option value="light">Light</option>
@@ -552,21 +584,26 @@ const ProfilePage = () => {
                       <option value="auto">Auto</option>
                     </select>
                   </div>
-                  
+
                   <div className="flex items-center justify-between">
                     <label className="text-sm font-medium text-gray-700">Email Notifications</label>
                     <input
                       type="checkbox"
                       checked={profileData.preferences.emailNotifications}
-                      onChange={(e) => setProfileData(prev => ({
-                        ...prev,
-                        preferences: { ...prev.preferences, emailNotifications: e.target.checked }
-                      }))}
+                      onChange={e =>
+                        setProfileData(prev => ({
+                          ...prev,
+                          preferences: {
+                            ...prev.preferences,
+                            emailNotifications: e.target.checked,
+                          },
+                        }))
+                      }
                       className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                     />
                   </div>
                 </div>
-                
+
                 <div className="mt-6 flex justify-end">
                   <button
                     onClick={() => updateProfile('preferences', profileData.preferences)}
@@ -579,7 +616,7 @@ const ProfilePage = () => {
                 </div>
               </div>
             )}
-            
+
             {activeTab === 'privacy' && (
               <div className="bg-white rounded-lg shadow p-6">
                 <h3 className="text-lg font-medium text-gray-900 mb-4">Privacy Settings</h3>
@@ -588,10 +625,12 @@ const ProfilePage = () => {
                     <label className="text-sm font-medium text-gray-700">Profile Visibility</label>
                     <select
                       value={profileData.privacy.profileVisibility}
-                      onChange={(e) => setProfileData(prev => ({
-                        ...prev,
-                        privacy: { ...prev.privacy, profileVisibility: e.target.value }
-                      }))}
+                      onChange={e =>
+                        setProfileData(prev => ({
+                          ...prev,
+                          privacy: { ...prev.privacy, profileVisibility: e.target.value },
+                        }))
+                      }
                       className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     >
                       <option value="public">Public</option>
@@ -600,7 +639,7 @@ const ProfilePage = () => {
                     </select>
                   </div>
                 </div>
-                
+
                 <div className="mt-6 flex justify-end">
                   <button
                     onClick={() => updateProfile('privacy', profileData.privacy)}
@@ -619,20 +658,25 @@ const ProfilePage = () => {
                 <h3 className="text-lg font-medium text-gray-900 mb-4">Current Subscription</h3>
                 <div className="flex items-center justify-between mb-4">
                   <div>
-                    <h4 className="text-xl font-semibold text-gray-900">{profileData.subscription.tier}</h4>
+                    <h4 className="text-xl font-semibold text-gray-900">
+                      {profileData.subscription.tier}
+                    </h4>
                     <p className="text-gray-600">
-                      {profileData.subscription.billingCycle} billing • Next payment: {profileData.subscription.nextBilling}
+                      {profileData.subscription.billingCycle} billing • Next payment:{' '}
+                      {profileData.subscription.nextBilling}
                     </p>
                   </div>
-                  <span className={`px-3 py-1 rounded-full text-sm ${
-                    profileData.subscription.status === 'active' 
-                      ? 'bg-green-100 text-green-800' 
-                      : 'bg-red-100 text-red-800'
-                  }`}>
+                  <span
+                    className={`px-3 py-1 rounded-full text-sm ${
+                      profileData.subscription.status === 'active'
+                        ? 'bg-green-100 text-green-800'
+                        : 'bg-red-100 text-red-800'
+                    }`}
+                  >
                     {profileData.subscription.status}
                   </span>
                 </div>
-                
+
                 <div className="mt-6 flex space-x-4">
                   <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
                     Upgrade Plan

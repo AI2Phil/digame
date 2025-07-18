@@ -37,7 +37,7 @@ const ScheduledReports: React.FC = () => {
       lastRun: '2024-01-15T09:00:00Z',
       nextRun: '2024-01-22T09:00:00Z',
       successRate: 98.5,
-      totalRuns: 52
+      totalRuns: 52,
     },
     {
       id: 2,
@@ -50,7 +50,7 @@ const ScheduledReports: React.FC = () => {
       lastRun: '2024-01-01T08:00:00Z',
       nextRun: '2024-02-01T08:00:00Z',
       successRate: 100,
-      totalRuns: 12
+      totalRuns: 12,
     },
     {
       id: 3,
@@ -63,7 +63,7 @@ const ScheduledReports: React.FC = () => {
       lastRun: '2024-01-16T06:00:00Z',
       nextRun: '2024-01-17T06:00:00Z',
       successRate: 99.2,
-      totalRuns: 365
+      totalRuns: 365,
     },
     {
       id: 4,
@@ -76,7 +76,7 @@ const ScheduledReports: React.FC = () => {
       lastRun: '2023-10-01T10:00:00Z',
       nextRun: '2024-04-01T10:00:00Z',
       successRate: 95.8,
-      totalRuns: 8
+      totalRuns: 8,
     },
     {
       id: 5,
@@ -89,24 +89,24 @@ const ScheduledReports: React.FC = () => {
       lastRun: '2024-01-12T17:00:00Z',
       nextRun: '2024-01-19T17:00:00Z',
       successRate: 97.3,
-      totalRuns: 48
-    }
+      totalRuns: 48,
+    },
   ];
 
   const activeReports = mockScheduledReports.filter(report => report.status === 'active');
   const pausedReports = mockScheduledReports.filter(report => report.status === 'paused');
 
-  const formatDate = (dateString) => {
+  const formatDate = dateString => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
     });
   };
 
-  const getStatusColor = (status) => {
+  const getStatusColor = status => {
     switch (status) {
       case 'active':
         return 'bg-green-100 text-green-800';
@@ -211,12 +211,12 @@ const ScheduledReports: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <PageHeader 
+      <PageHeader
         title="Scheduled Reports"
         subtitle="Automated report generation and delivery management"
         breadcrumbs={[
           { label: 'Reports', href: '/reports' },
-          { label: 'Scheduled Reports', href: '/reports/scheduled' }
+          { label: 'Scheduled Reports', href: '/reports/scheduled' },
         ]}
       />
 
@@ -251,8 +251,8 @@ const ScheduledReports: React.FC = () => {
             {[
               { id: 'active', label: `Active (${activeReports.length})` },
               { id: 'paused', label: `Paused (${pausedReports.length})` },
-              { id: 'history', label: 'Execution History' }
-            ].map((tab) => (
+              { id: 'history', label: 'Execution History' },
+            ].map(tab => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
@@ -271,7 +271,7 @@ const ScheduledReports: React.FC = () => {
         {/* Active Reports Tab */}
         {activeTab === 'active' && (
           <div className="space-y-6">
-            {activeReports.map((report) => (
+            {activeReports.map(report => (
               <div key={report.id} className="bg-white rounded-lg shadow">
                 <div className="px-6 py-4 border-b border-gray-200">
                   <div className="flex items-center justify-between">
@@ -280,7 +280,9 @@ const ScheduledReports: React.FC = () => {
                       <p className="text-sm text-gray-600 mt-1">{report.description}</p>
                     </div>
                     <div className="flex items-center space-x-3">
-                      <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(report.status)}`}>
+                      <span
+                        className={`px-2 py-1 text-xs rounded-full ${getStatusColor(report.status)}`}
+                      >
                         {report.status.charAt(0).toUpperCase() + report.status.slice(1)}
                       </span>
                       <button className="text-gray-400 hover:text-gray-600">
@@ -314,7 +316,10 @@ const ScheduledReports: React.FC = () => {
                     <div className="text-sm font-medium text-gray-500 mb-2">Recipients</div>
                     <div className="flex flex-wrap gap-2">
                       {report.recipients.map((recipient, index) => (
-                        <span key={index} className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded">
+                        <span
+                          key={index}
+                          className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded"
+                        >
                           {recipient}
                         </span>
                       ))}
@@ -345,7 +350,7 @@ const ScheduledReports: React.FC = () => {
         {/* Paused Reports Tab */}
         {activeTab === 'paused' && (
           <div className="space-y-6">
-            {pausedReports.map((report) => (
+            {pausedReports.map(report => (
               <div key={report.id} className="bg-white rounded-lg shadow opacity-75">
                 <div className="px-6 py-4 border-b border-gray-200">
                   <div className="flex items-center justify-between">
@@ -353,7 +358,9 @@ const ScheduledReports: React.FC = () => {
                       <h3 className="text-lg font-medium text-gray-900">{report.name}</h3>
                       <p className="text-sm text-gray-600 mt-1">{report.description}</p>
                     </div>
-                    <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(report.status)}`}>
+                    <span
+                      className={`px-2 py-1 text-xs rounded-full ${getStatusColor(report.status)}`}
+                    >
                       {report.status.charAt(0).toUpperCase() + report.status.slice(1)}
                     </span>
                   </div>

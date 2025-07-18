@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Layout from '../../components/Layout';
-import { 
-  Crown, 
-  BarChart3, 
-  Settings, 
-  Users, 
-  Shield, 
+import {
+  Crown,
+  BarChart3,
+  Settings,
+  Users,
+  Shield,
   Globe,
   TrendingUp,
   Activity,
@@ -24,7 +24,7 @@ import {
   Target,
   Cpu,
   Monitor,
-  ArrowRight
+  ArrowRight,
 } from 'lucide-react';
 
 // Access control hook
@@ -40,13 +40,14 @@ const usePlatformOwnerAccess = () => {
         // In a real application, this would be an API call to verify user permissions
         const mockUser = {
           role: 'platform_owner', // Could be: 'platform_owner', 'admin', 'user', etc.
-          permissions: ['platform_management', 'system_administration', 'analytics_access']
+          permissions: ['platform_management', 'system_administration', 'analytics_access'],
         };
 
         // Check if user has platform owner role or admin privileges
-        const hasPermission = mockUser.role === 'platform_owner' || 
-                             mockUser.role === 'admin' ||
-                             mockUser.permissions.includes('platform_management');
+        const hasPermission =
+          mockUser.role === 'platform_owner' ||
+          mockUser.role === 'admin' ||
+          mockUser.permissions.includes('platform_management');
 
         setUserRole(mockUser.role);
         setHasAccess(hasPermission);
@@ -80,7 +81,7 @@ export default function PlatformOwnerDashboard() {
             systemHealth: 98.7,
             revenue: 2450000,
             apiCalls: 15600000,
-            uptime: 99.9
+            uptime: 99.9,
           },
           quickActions: [
             {
@@ -88,29 +89,29 @@ export default function PlatformOwnerDashboard() {
               description: 'Monitor system performance and user satisfaction',
               icon: BarChart3,
               path: '/platform-owner/performance-overview',
-              color: 'blue'
+              color: 'blue',
             },
             {
               title: 'System Orchestration',
               description: 'Manage global system operations and scaling',
               icon: Settings,
               path: '/platform-owner/system-orchestration',
-              color: 'green'
+              color: 'green',
             },
             {
               title: 'User Journey Analytics',
               description: 'Analyze user behavior and conversion patterns',
               icon: Users,
               path: '/platform-owner/user-journey-analytics',
-              color: 'purple'
+              color: 'purple',
             },
             {
               title: 'Compliance Dashboard',
               description: 'Monitor regulatory compliance and security',
               icon: Shield,
               path: '/platform-owner/compliance-dashboard',
-              color: 'red'
-            }
+              color: 'red',
+            },
           ],
           recentAlerts: [
             {
@@ -118,23 +119,23 @@ export default function PlatformOwnerDashboard() {
               type: 'warning',
               title: 'High API Usage Detected',
               description: 'API calls increased by 45% in the last hour',
-              timestamp: '5 minutes ago'
+              timestamp: '5 minutes ago',
             },
             {
               id: 2,
               type: 'success',
               title: 'System Update Completed',
               description: 'Platform infrastructure update deployed successfully',
-              timestamp: '2 hours ago'
+              timestamp: '2 hours ago',
             },
             {
               id: 3,
               type: 'info',
               title: 'New Integration Added',
               description: 'Salesforce integration configured and active',
-              timestamp: '4 hours ago'
-            }
-          ]
+              timestamp: '4 hours ago',
+            },
+          ],
         });
       }, 1000);
     }
@@ -166,8 +167,8 @@ export default function PlatformOwnerDashboard() {
               </div>
               <h2 className="text-2xl font-bold text-gray-900 mb-2">Access Restricted</h2>
               <p className="text-gray-600 mb-6">
-                You don't have permission to access the Platform Owner dashboard. 
-                This area is restricted to platform administrators and owners only.
+                You don't have permission to access the Platform Owner dashboard. This area is
+                restricted to platform administrators and owners only.
               </p>
               <div className="bg-gray-50 rounded-lg p-4 mb-6">
                 <p className="text-sm text-gray-700">
@@ -201,7 +202,7 @@ export default function PlatformOwnerDashboard() {
         subscription_tier: 'enterprise',
         tenant_id: 1,
         tenant_name: 'Platform Owner',
-        permissions: ['platform_management', 'system_administration', 'analytics_access']
+        permissions: ['platform_management', 'system_administration', 'analytics_access'],
       }}
       onLogout={() => router.push('/')}
     >
@@ -287,7 +288,10 @@ export default function PlatformOwnerDashboard() {
                 <div>
                   <p className="text-sm font-medium text-gray-600">Revenue</p>
                   <p className="text-2xl font-bold text-gray-900">
-                    ${dashboardData?.overview.revenue ? (dashboardData.overview.revenue / 1000000).toFixed(1) + 'M' : '---'}
+                    $
+                    {dashboardData?.overview.revenue
+                      ? (dashboardData.overview.revenue / 1000000).toFixed(1) + 'M'
+                      : '---'}
                   </p>
                 </div>
                 <Target className="w-8 h-8 text-green-600" />
@@ -303,7 +307,9 @@ export default function PlatformOwnerDashboard() {
                 <div>
                   <p className="text-sm font-medium text-gray-600">API Calls</p>
                   <p className="text-2xl font-bold text-gray-900">
-                    {dashboardData?.overview.apiCalls ? (dashboardData.overview.apiCalls / 1000000).toFixed(1) + 'M' : '---'}
+                    {dashboardData?.overview.apiCalls
+                      ? (dashboardData.overview.apiCalls / 1000000).toFixed(1) + 'M'
+                      : '---'}
                   </p>
                 </div>
                 <Zap className="w-8 h-8 text-yellow-600" />
@@ -341,7 +347,7 @@ export default function PlatformOwnerDashboard() {
                   blue: 'bg-blue-100 text-blue-600 hover:bg-blue-200',
                   green: 'bg-green-100 text-green-600 hover:bg-green-200',
                   purple: 'bg-purple-100 text-purple-600 hover:bg-purple-200',
-                  red: 'bg-red-100 text-red-600 hover:bg-red-200'
+                  red: 'bg-red-100 text-red-600 hover:bg-red-200',
                 };
 
                 return (
@@ -350,7 +356,9 @@ export default function PlatformOwnerDashboard() {
                     onClick={() => router.push(action.path)}
                     className="bg-white rounded-lg shadow-sm border p-6 cursor-pointer hover:shadow-md transition-shadow"
                   >
-                    <div className={`w-12 h-12 rounded-lg flex items-center justify-center mb-4 ${colorClasses[action.color]}`}>
+                    <div
+                      className={`w-12 h-12 rounded-lg flex items-center justify-center mb-4 ${colorClasses[action.color]}`}
+                    >
                       <IconComponent className="w-6 h-6" />
                     </div>
                     <h3 className="text-lg font-semibold text-gray-900 mb-2">{action.title}</h3>
@@ -375,19 +383,19 @@ export default function PlatformOwnerDashboard() {
             </div>
             <div className="p-6">
               <div className="space-y-4">
-                {dashboardData?.recentAlerts.map((alert) => {
+                {dashboardData?.recentAlerts.map(alert => {
                   const alertColors = {
                     warning: 'text-yellow-600 bg-yellow-50',
                     success: 'text-green-600 bg-green-50',
                     info: 'text-blue-600 bg-blue-50',
-                    error: 'text-red-600 bg-red-50'
+                    error: 'text-red-600 bg-red-50',
                   };
 
                   const alertIcons = {
                     warning: AlertTriangle,
                     success: CheckCircle,
                     info: Activity,
-                    error: AlertTriangle
+                    error: AlertTriangle,
                   };
 
                   const AlertIcon = alertIcons[alert.type];
@@ -411,7 +419,9 @@ export default function PlatformOwnerDashboard() {
 
           {/* Platform Owner Features Grid */}
           <div className="mt-8">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">All Platform Owner Features</h2>
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">
+              All Platform Owner Features
+            </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {/* Strategic Business Intelligence */}
               <div className="bg-white rounded-lg shadow-sm border p-4">
@@ -420,16 +430,28 @@ export default function PlatformOwnerDashboard() {
                   Strategic Business Intelligence
                 </h4>
                 <div className="space-y-2 text-sm">
-                  <button onClick={() => router.push('/platform-owner/performance-overview')} className="block w-full text-left text-gray-600 hover:text-blue-600 transition-colors">
+                  <button
+                    onClick={() => router.push('/platform-owner/performance-overview')}
+                    className="block w-full text-left text-gray-600 hover:text-blue-600 transition-colors"
+                  >
                     Platform Performance Dashboard
                   </button>
-                  <button onClick={() => router.push('/platform-owner/competitive-intelligence')} className="block w-full text-left text-gray-600 hover:text-blue-600 transition-colors">
+                  <button
+                    onClick={() => router.push('/platform-owner/competitive-intelligence')}
+                    className="block w-full text-left text-gray-600 hover:text-blue-600 transition-colors"
+                  >
                     Competitive Intelligence Hub
                   </button>
-                  <button onClick={() => router.push('/platform-owner/roi-analytics')} className="block w-full text-left text-gray-600 hover:text-blue-600 transition-colors">
+                  <button
+                    onClick={() => router.push('/platform-owner/roi-analytics')}
+                    className="block w-full text-left text-gray-600 hover:text-blue-600 transition-colors"
+                  >
                     Platform ROI Analytics
                   </button>
-                  <button onClick={() => router.push('/platform-owner/strategic-planning')} className="block w-full text-left text-gray-600 hover:text-blue-600 transition-colors">
+                  <button
+                    onClick={() => router.push('/platform-owner/strategic-planning')}
+                    className="block w-full text-left text-gray-600 hover:text-blue-600 transition-colors"
+                  >
                     Strategic Planning Dashboard
                   </button>
                 </div>
@@ -442,16 +464,28 @@ export default function PlatformOwnerDashboard() {
                   Advanced Operations Management
                 </h4>
                 <div className="space-y-2 text-sm">
-                  <button onClick={() => router.push('/platform-owner/system-orchestration')} className="block w-full text-left text-gray-600 hover:text-green-600 transition-colors">
+                  <button
+                    onClick={() => router.push('/platform-owner/system-orchestration')}
+                    className="block w-full text-left text-gray-600 hover:text-green-600 transition-colors"
+                  >
                     Global System Orchestration
                   </button>
-                  <button onClick={() => router.push('/platform-owner/incident-management')} className="block w-full text-left text-gray-600 hover:text-green-600 transition-colors">
+                  <button
+                    onClick={() => router.push('/platform-owner/incident-management')}
+                    className="block w-full text-left text-gray-600 hover:text-green-600 transition-colors"
+                  >
                     Incident Command Center
                   </button>
-                  <button onClick={() => router.push('/platform-owner/capacity-planning')} className="block w-full text-left text-gray-600 hover:text-green-600 transition-colors">
+                  <button
+                    onClick={() => router.push('/platform-owner/capacity-planning')}
+                    className="block w-full text-left text-gray-600 hover:text-green-600 transition-colors"
+                  >
                     Capacity Planning Center
                   </button>
-                  <button onClick={() => router.push('/platform-owner/feature-flags')} className="block w-full text-left text-gray-600 hover:text-green-600 transition-colors">
+                  <button
+                    onClick={() => router.push('/platform-owner/feature-flags')}
+                    className="block w-full text-left text-gray-600 hover:text-green-600 transition-colors"
+                  >
                     Feature Flag Management
                   </button>
                 </div>
@@ -464,16 +498,28 @@ export default function PlatformOwnerDashboard() {
                   Advanced Analytics & Intelligence
                 </h4>
                 <div className="space-y-2 text-sm">
-                  <button onClick={() => router.push('/platform-owner/user-journey-analytics')} className="block w-full text-left text-gray-600 hover:text-purple-600 transition-colors">
+                  <button
+                    onClick={() => router.push('/platform-owner/user-journey-analytics')}
+                    className="block w-full text-left text-gray-600 hover:text-purple-600 transition-colors"
+                  >
                     User Journey Intelligence
                   </button>
-                  <button onClick={() => router.push('/platform-owner/health-scoring')} className="block w-full text-left text-gray-600 hover:text-purple-600 transition-colors">
+                  <button
+                    onClick={() => router.push('/platform-owner/health-scoring')}
+                    className="block w-full text-left text-gray-600 hover:text-purple-600 transition-colors"
+                  >
                     Platform Health Scoring
                   </button>
-                  <button onClick={() => router.push('/platform-owner/ai-model-observatory')} className="block w-full text-left text-gray-600 hover:text-purple-600 transition-colors">
+                  <button
+                    onClick={() => router.push('/platform-owner/ai-model-observatory')}
+                    className="block w-full text-left text-gray-600 hover:text-purple-600 transition-colors"
+                  >
                     AI Model Observatory
                   </button>
-                  <button onClick={() => router.push('/platform-owner/data-quality')} className="block w-full text-left text-gray-600 hover:text-purple-600 transition-colors">
+                  <button
+                    onClick={() => router.push('/platform-owner/data-quality')}
+                    className="block w-full text-left text-gray-600 hover:text-purple-600 transition-colors"
+                  >
                     Data Quality Command Center
                   </button>
                 </div>
@@ -486,13 +532,22 @@ export default function PlatformOwnerDashboard() {
                   Governance & Compliance
                 </h4>
                 <div className="space-y-2 text-sm">
-                  <button onClick={() => router.push('/platform-owner/compliance-dashboard')} className="block w-full text-left text-gray-600 hover:text-red-600 transition-colors">
+                  <button
+                    onClick={() => router.push('/platform-owner/compliance-dashboard')}
+                    className="block w-full text-left text-gray-600 hover:text-red-600 transition-colors"
+                  >
                     Compliance Dashboard
                   </button>
-                  <button onClick={() => router.push('/platform-owner/risk-management')} className="block w-full text-left text-gray-600 hover:text-red-600 transition-colors">
+                  <button
+                    onClick={() => router.push('/platform-owner/risk-management')}
+                    className="block w-full text-left text-gray-600 hover:text-red-600 transition-colors"
+                  >
                     Risk Management Center
                   </button>
-                  <button onClick={() => router.push('/platform-owner/audit-analytics')} className="block w-full text-left text-gray-600 hover:text-red-600 transition-colors">
+                  <button
+                    onClick={() => router.push('/platform-owner/audit-analytics')}
+                    className="block w-full text-left text-gray-600 hover:text-red-600 transition-colors"
+                  >
                     Audit Trail Analytics
                   </button>
                 </div>
@@ -505,13 +560,22 @@ export default function PlatformOwnerDashboard() {
                   Developer & Partner Ecosystem
                 </h4>
                 <div className="space-y-2 text-sm">
-                  <button onClick={() => router.push('/platform-owner/developer-portal')} className="block w-full text-left text-gray-600 hover:text-yellow-600 transition-colors">
+                  <button
+                    onClick={() => router.push('/platform-owner/developer-portal')}
+                    className="block w-full text-left text-gray-600 hover:text-yellow-600 transition-colors"
+                  >
                     Developer Portal Management
                   </button>
-                  <button onClick={() => router.push('/platform-owner/partner-integrations')} className="block w-full text-left text-gray-600 hover:text-yellow-600 transition-colors">
+                  <button
+                    onClick={() => router.push('/platform-owner/partner-integrations')}
+                    className="block w-full text-left text-gray-600 hover:text-yellow-600 transition-colors"
+                  >
                     Partner Integration Hub
                   </button>
-                  <button onClick={() => router.push('/platform-owner/marketplace-management')} className="block w-full text-left text-gray-600 hover:text-yellow-600 transition-colors">
+                  <button
+                    onClick={() => router.push('/platform-owner/marketplace-management')}
+                    className="block w-full text-left text-gray-600 hover:text-yellow-600 transition-colors"
+                  >
                     Marketplace Management
                   </button>
                 </div>

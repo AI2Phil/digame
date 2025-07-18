@@ -5,12 +5,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '../../src/components/u
 import { Button } from '../../src/components/ui/Button';
 import { Badge } from '../../src/components/ui/Badge';
 import { Avatar, AvatarFallback, AvatarImage } from '../../src/components/ui/Avatar';
-import { 
-  Users, 
-  MessageSquare, 
-  Heart, 
-  Share2, 
-  Calendar, 
+import {
+  Users,
+  MessageSquare,
+  Heart,
+  Share2,
+  Calendar,
   Coffee,
   Trophy,
   Star,
@@ -36,7 +36,7 @@ import {
   Gift,
   Zap,
   Target,
-  Award
+  Award,
 } from 'lucide-react';
 
 const TeamSocial: React.FC = () => {
@@ -56,10 +56,10 @@ const TeamSocial: React.FC = () => {
       setLoading(true);
       const response = await fetch('/api/team/social', {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
       });
-      
+
       if (response.ok) {
         const data = await response.json();
         setSocialData(data);
@@ -80,9 +80,10 @@ const TeamSocial: React.FC = () => {
           name: 'Sarah Johnson',
           avatar: 'SJ',
           role: 'Team Lead',
-          status: 'online'
+          status: 'online',
         },
-        content: 'Just completed the Q1 project milestone! 🎉 Thanks to everyone for the amazing teamwork.',
+        content:
+          'Just completed the Q1 project milestone! 🎉 Thanks to everyone for the amazing teamwork.',
         timestamp: '2 hours ago',
         likes: 12,
         comments: 5,
@@ -92,8 +93,8 @@ const TeamSocial: React.FC = () => {
         reactions: {
           like: 8,
           celebrate: 3,
-          heart: 1
-        }
+          heart: 1,
+        },
       },
       {
         id: 2,
@@ -102,21 +103,20 @@ const TeamSocial: React.FC = () => {
           name: 'Mike Chen',
           avatar: 'MC',
           role: 'Senior Developer',
-          status: 'online'
+          status: 'online',
         },
-        content: 'New code review guidelines are now available in the wiki. Please take a look and let me know if you have any questions!',
+        content:
+          'New code review guidelines are now available in the wiki. Please take a look and let me know if you have any questions!',
         timestamp: '4 hours ago',
         likes: 8,
         comments: 3,
         shares: 1,
         tags: ['guidelines', 'development'],
-        attachments: [
-          { type: 'link', title: 'Code Review Guidelines', url: '#' }
-        ],
+        attachments: [{ type: 'link', title: 'Code Review Guidelines', url: '#' }],
         reactions: {
           like: 6,
-          thumbsup: 2
-        }
+          thumbsup: 2,
+        },
       },
       {
         id: 3,
@@ -125,9 +125,9 @@ const TeamSocial: React.FC = () => {
           name: 'Lisa Brown',
           avatar: 'LB',
           role: 'UX Designer',
-          status: 'away'
+          status: 'away',
         },
-        content: 'Coffee break anyone? ☕ I\'m heading to the kitchen in 5 minutes!',
+        content: "Coffee break anyone? ☕ I'm heading to the kitchen in 5 minutes!",
         timestamp: '6 hours ago',
         likes: 15,
         comments: 8,
@@ -136,8 +136,8 @@ const TeamSocial: React.FC = () => {
         attachments: [],
         reactions: {
           like: 10,
-          coffee: 5
-        }
+          coffee: 5,
+        },
       },
       {
         id: 4,
@@ -146,9 +146,10 @@ const TeamSocial: React.FC = () => {
           name: 'David Wilson',
           avatar: 'DW',
           role: 'QA Engineer',
-          status: 'offline'
+          status: 'offline',
         },
-        content: 'Has anyone worked with the new testing framework? I could use some guidance on setting up automated tests.',
+        content:
+          'Has anyone worked with the new testing framework? I could use some guidance on setting up automated tests.',
         timestamp: '1 day ago',
         likes: 6,
         comments: 12,
@@ -157,8 +158,8 @@ const TeamSocial: React.FC = () => {
         attachments: [],
         reactions: {
           like: 4,
-          help: 2
-        }
+          help: 2,
+        },
       },
       {
         id: 5,
@@ -167,7 +168,7 @@ const TeamSocial: React.FC = () => {
           name: 'Emma Garcia',
           avatar: 'EG',
           role: 'Marketing Specialist',
-          status: 'online'
+          status: 'online',
         },
         content: 'Happy birthday to our amazing designer Lisa! 🎂🎉 Hope you have a wonderful day!',
         timestamp: '2 days ago',
@@ -175,14 +176,12 @@ const TeamSocial: React.FC = () => {
         comments: 15,
         shares: 3,
         tags: ['birthday', 'celebration'],
-        attachments: [
-          { type: 'image', title: 'Birthday Card', url: '#' }
-        ],
+        attachments: [{ type: 'image', title: 'Birthday Card', url: '#' }],
         reactions: {
           heart: 15,
-          celebrate: 8
-        }
-      }
+          celebrate: 8,
+        },
+      },
     ],
     channels: [
       {
@@ -192,7 +191,7 @@ const TeamSocial: React.FC = () => {
         members: 12,
         unread: 3,
         lastActivity: '5 min ago',
-        type: 'public'
+        type: 'public',
       },
       {
         id: 'development',
@@ -201,7 +200,7 @@ const TeamSocial: React.FC = () => {
         members: 8,
         unread: 1,
         lastActivity: '1 hour ago',
-        type: 'public'
+        type: 'public',
       },
       {
         id: 'design',
@@ -210,7 +209,7 @@ const TeamSocial: React.FC = () => {
         members: 5,
         unread: 0,
         lastActivity: '3 hours ago',
-        type: 'public'
+        type: 'public',
       },
       {
         id: 'random',
@@ -219,7 +218,7 @@ const TeamSocial: React.FC = () => {
         members: 12,
         unread: 7,
         lastActivity: '10 min ago',
-        type: 'public'
+        type: 'public',
       },
       {
         id: 'leadership',
@@ -228,8 +227,8 @@ const TeamSocial: React.FC = () => {
         members: 3,
         unread: 0,
         lastActivity: '1 day ago',
-        type: 'private'
-      }
+        type: 'private',
+      },
     ],
     events: [
       {
@@ -240,7 +239,7 @@ const TeamSocial: React.FC = () => {
         location: 'Conference Room A',
         attendees: 8,
         type: 'social',
-        organizer: 'Sarah Johnson'
+        organizer: 'Sarah Johnson',
       },
       {
         id: 2,
@@ -250,7 +249,7 @@ const TeamSocial: React.FC = () => {
         location: 'Virtual',
         attendees: 6,
         type: 'work',
-        organizer: 'Mike Chen'
+        organizer: 'Mike Chen',
       },
       {
         id: 3,
@@ -260,8 +259,8 @@ const TeamSocial: React.FC = () => {
         location: 'Design Studio',
         attendees: 4,
         type: 'work',
-        organizer: 'Lisa Brown'
-      }
+        organizer: 'Lisa Brown',
+      },
     ],
     leaderboard: [
       {
@@ -271,7 +270,7 @@ const TeamSocial: React.FC = () => {
         points: 1250,
         badges: ['Team Player', 'Mentor', 'Leader'],
         level: 'Gold',
-        achievements: 15
+        achievements: 15,
       },
       {
         id: 2,
@@ -280,7 +279,7 @@ const TeamSocial: React.FC = () => {
         points: 1180,
         badges: ['Code Master', 'Helper', 'Innovator'],
         level: 'Gold',
-        achievements: 12
+        achievements: 12,
       },
       {
         id: 3,
@@ -289,7 +288,7 @@ const TeamSocial: React.FC = () => {
         points: 980,
         badges: ['Creative', 'Collaborator'],
         level: 'Silver',
-        achievements: 9
+        achievements: 9,
       },
       {
         id: 4,
@@ -298,7 +297,7 @@ const TeamSocial: React.FC = () => {
         points: 920,
         badges: ['Designer', 'Problem Solver'],
         level: 'Silver',
-        achievements: 8
+        achievements: 8,
       },
       {
         id: 5,
@@ -307,16 +306,16 @@ const TeamSocial: React.FC = () => {
         points: 850,
         badges: ['Quality Guardian', 'Detail Oriented'],
         level: 'Bronze',
-        achievements: 7
-      }
+        achievements: 7,
+      },
     ],
     stats: {
       totalPosts: 156,
       totalLikes: 892,
       totalComments: 234,
       activeUsers: 10,
-      topHashtags: ['teamwork', 'development', 'coffee', 'milestone', 'help']
-    }
+      topHashtags: ['teamwork', 'development', 'coffee', 'milestone', 'help'],
+    },
   };
 
   const currentData = socialData || mockSocialData;
@@ -329,12 +328,12 @@ const TeamSocial: React.FC = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
         },
         body: JSON.stringify({
           content: newPost,
-          channel: selectedChannel
-        })
+          channel: selectedChannel,
+        }),
       });
 
       if (response.ok) {
@@ -346,13 +345,13 @@ const TeamSocial: React.FC = () => {
     }
   };
 
-  const handleLike = async (postId) => {
+  const handleLike = async postId => {
     try {
       await fetch(`/api/team/social/posts/${postId}/like`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
       });
       fetchSocialData();
     } catch (error) {
@@ -360,34 +359,50 @@ const TeamSocial: React.FC = () => {
     }
   };
 
-  const getPostTypeIcon = (type) => {
+  const getPostTypeIcon = type => {
     switch (type) {
-      case 'achievement': return <Trophy className="h-4 w-4 text-yellow-600" />;
-      case 'announcement': return <Bell className="h-4 w-4 text-blue-600" />;
-      case 'social': return <Coffee className="h-4 w-4 text-green-600" />;
-      case 'help': return <MessageCircle className="h-4 w-4 text-purple-600" />;
-      case 'celebration': return <Gift className="h-4 w-4 text-pink-600" />;
-      default: return <MessageSquare className="h-4 w-4 text-gray-600" />;
+      case 'achievement':
+        return <Trophy className="h-4 w-4 text-yellow-600" />;
+      case 'announcement':
+        return <Bell className="h-4 w-4 text-blue-600" />;
+      case 'social':
+        return <Coffee className="h-4 w-4 text-green-600" />;
+      case 'help':
+        return <MessageCircle className="h-4 w-4 text-purple-600" />;
+      case 'celebration':
+        return <Gift className="h-4 w-4 text-pink-600" />;
+      default:
+        return <MessageSquare className="h-4 w-4 text-gray-600" />;
     }
   };
 
-  const getPostTypeColor = (type) => {
+  const getPostTypeColor = type => {
     switch (type) {
-      case 'achievement': return 'bg-yellow-50 border-yellow-200';
-      case 'announcement': return 'bg-blue-50 border-blue-200';
-      case 'social': return 'bg-green-50 border-green-200';
-      case 'help': return 'bg-purple-50 border-purple-200';
-      case 'celebration': return 'bg-pink-50 border-pink-200';
-      default: return 'bg-white border-gray-200';
+      case 'achievement':
+        return 'bg-yellow-50 border-yellow-200';
+      case 'announcement':
+        return 'bg-blue-50 border-blue-200';
+      case 'social':
+        return 'bg-green-50 border-green-200';
+      case 'help':
+        return 'bg-purple-50 border-purple-200';
+      case 'celebration':
+        return 'bg-pink-50 border-pink-200';
+      default:
+        return 'bg-white border-gray-200';
     }
   };
 
-  const getLevelColor = (level) => {
+  const getLevelColor = level => {
     switch (level) {
-      case 'Gold': return 'text-yellow-600 bg-yellow-100';
-      case 'Silver': return 'text-gray-600 bg-gray-100';
-      case 'Bronze': return 'text-orange-600 bg-orange-100';
-      default: return 'text-gray-600 bg-gray-100';
+      case 'Gold':
+        return 'text-yellow-600 bg-yellow-100';
+      case 'Silver':
+        return 'text-gray-600 bg-gray-100';
+      case 'Bronze':
+        return 'text-orange-600 bg-orange-100';
+      default:
+        return 'text-gray-600 bg-gray-100';
     }
   };
 
@@ -399,7 +414,7 @@ const TeamSocial: React.FC = () => {
         icon={<Users className="h-8 w-8" />}
         breadcrumb={[
           { label: 'Team', href: '/team' },
-          { label: 'Social', href: '/team/social' }
+          { label: 'Social', href: '/team/social' },
         ]}
         actions={
           <div className="flex gap-2">
@@ -478,7 +493,7 @@ const TeamSocial: React.FC = () => {
                     <div className="flex-1 space-y-3">
                       <textarea
                         value={newPost}
-                        onChange={(e) => setNewPost(e.target.value)}
+                        onChange={e => setNewPost(e.target.value)}
                         placeholder="Share something with your team..."
                         className="w-full p-3 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
                         rows={3}
@@ -507,7 +522,7 @@ const TeamSocial: React.FC = () => {
 
               {/* Posts Feed */}
               <div className="space-y-4">
-                {currentData.feed.map((post) => (
+                {currentData.feed.map(post => (
                   <Card key={post.id} className={`${getPostTypeColor(post.type)} border`}>
                     <CardContent className="p-4">
                       {/* Post Header */}
@@ -521,7 +536,9 @@ const TeamSocial: React.FC = () => {
                               <h4 className="font-medium">{post.user.name}</h4>
                               {getPostTypeIcon(post.type)}
                             </div>
-                            <p className="text-sm text-gray-600">{post.user.role} • {post.timestamp}</p>
+                            <p className="text-sm text-gray-600">
+                              {post.user.role} • {post.timestamp}
+                            </p>
                           </div>
                         </div>
                         <Button variant="ghost" size="sm">
@@ -532,7 +549,7 @@ const TeamSocial: React.FC = () => {
                       {/* Post Content */}
                       <div className="mb-4">
                         <p className="text-gray-800 mb-2">{post.content}</p>
-                        
+
                         {/* Tags */}
                         {post.tags.length > 0 && (
                           <div className="flex flex-wrap gap-1 mb-2">
@@ -572,11 +589,19 @@ const TeamSocial: React.FC = () => {
                             <ThumbsUp className="h-4 w-4 mr-1" />
                             {post.likes}
                           </Button>
-                          <Button variant="ghost" size="sm" className="text-gray-600 hover:text-green-600">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-gray-600 hover:text-green-600"
+                          >
                             <MessageCircle className="h-4 w-4 mr-1" />
                             {post.comments}
                           </Button>
-                          <Button variant="ghost" size="sm" className="text-gray-600 hover:text-purple-600">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-gray-600 hover:text-purple-600"
+                          >
                             <Share2 className="h-4 w-4 mr-1" />
                             {post.shares}
                           </Button>
@@ -599,7 +624,7 @@ const TeamSocial: React.FC = () => {
 
           {activeTab === 'channels' && (
             <div className="space-y-4">
-              {currentData.channels.map((channel) => (
+              {currentData.channels.map(channel => (
                 <Card key={channel.id} className="hover:shadow-md transition-shadow cursor-pointer">
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
@@ -635,14 +660,16 @@ const TeamSocial: React.FC = () => {
 
           {activeTab === 'events' && (
             <div className="space-y-4">
-              {currentData.events.map((event) => (
+              {currentData.events.map(event => (
                 <Card key={event.id} className="hover:shadow-md transition-shadow">
                   <CardContent className="p-4">
                     <div className="flex items-start justify-between">
                       <div className="flex items-start gap-3">
-                        <div className={`p-2 rounded ${
-                          event.type === 'social' ? 'bg-green-100' : 'bg-blue-100'
-                        }`}>
+                        <div
+                          className={`p-2 rounded ${
+                            event.type === 'social' ? 'bg-green-100' : 'bg-blue-100'
+                          }`}
+                        >
                           {event.type === 'social' ? (
                             <Coffee className="h-4 w-4 text-green-600" />
                           ) : (
@@ -684,18 +711,14 @@ const TeamSocial: React.FC = () => {
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-4">
-                        <div className="text-2xl font-bold text-gray-400">
-                          #{index + 1}
-                        </div>
+                        <div className="text-2xl font-bold text-gray-400">#{index + 1}</div>
                         <Avatar>
                           <AvatarFallback>{user.avatar}</AvatarFallback>
                         </Avatar>
                         <div>
                           <h4 className="font-medium">{user.user}</h4>
                           <div className="flex items-center gap-2">
-                            <Badge className={getLevelColor(user.level)}>
-                              {user.level}
-                            </Badge>
+                            <Badge className={getLevelColor(user.level)}>{user.level}</Badge>
                             <span className="text-sm text-gray-600">
                               {user.achievements} achievements
                             </span>
@@ -703,9 +726,7 @@ const TeamSocial: React.FC = () => {
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className="text-xl font-bold text-blue-600">
-                          {user.points}
-                        </div>
+                        <div className="text-xl font-bold text-blue-600">{user.points}</div>
                         <div className="text-sm text-gray-600">points</div>
                       </div>
                     </div>

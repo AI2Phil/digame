@@ -5,12 +5,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '../../src/components/u
 import { Button } from '../../src/components/ui/Button';
 import { Badge } from '../../src/components/ui/Badge';
 import { Progress } from '../../src/components/ui/Progress';
-import { 
-  Users, 
-  TrendingUp, 
-  CheckCircle, 
-  Clock, 
-  MessageSquare, 
+import {
+  Users,
+  TrendingUp,
+  CheckCircle,
+  Clock,
+  MessageSquare,
   Target,
   BarChart3,
   Calendar,
@@ -23,7 +23,7 @@ import {
   Settings,
   Filter,
   Download,
-  RefreshCw
+  RefreshCw,
 } from 'lucide-react';
 
 const TeamDashboard: React.FC = () => {
@@ -40,7 +40,7 @@ const TeamDashboard: React.FC = () => {
   const fetchTeamData = async () => {
     try {
       setLoading(true);
-      
+
       // Try to get backend service info first
       let backendUrl = 'http://localhost:8001'; // Default fallback
       try {
@@ -55,11 +55,11 @@ const TeamDashboard: React.FC = () => {
 
       const response = await fetch(`${backendUrl}/team/dashboard?range=${timeRange}`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        }
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json',
+        },
       });
-      
+
       if (response.ok) {
         const result = await response.json();
         if (result.success) {
@@ -96,8 +96,8 @@ const TeamDashboard: React.FC = () => {
         productivity: '+12.5%',
         tasks: '+8.7%',
         satisfaction: '+0.3',
-        collaboration: '+5.2%'
-      }
+        collaboration: '+5.2%',
+      },
     },
     members: [
       {
@@ -112,7 +112,7 @@ const TeamDashboard: React.FC = () => {
         lastActive: 'now',
         skills: ['Leadership', 'Project Management', 'Strategy'],
         workload: 85,
-        satisfaction: 4.5
+        satisfaction: 4.5,
       },
       {
         id: 2,
@@ -126,7 +126,7 @@ const TeamDashboard: React.FC = () => {
         lastActive: '5 min ago',
         skills: ['React', 'Node.js', 'Database'],
         workload: 92,
-        satisfaction: 4.3
+        satisfaction: 4.3,
       },
       {
         id: 3,
@@ -140,7 +140,7 @@ const TeamDashboard: React.FC = () => {
         lastActive: '1 hour ago',
         skills: ['UI/UX', 'Figma', 'User Research'],
         workload: 78,
-        satisfaction: 4.1
+        satisfaction: 4.1,
       },
       {
         id: 4,
@@ -154,7 +154,7 @@ const TeamDashboard: React.FC = () => {
         lastActive: '3 hours ago',
         skills: ['Testing', 'Automation', 'Quality Assurance'],
         workload: 88,
-        satisfaction: 4.0
+        satisfaction: 4.0,
       },
       {
         id: 5,
@@ -168,8 +168,8 @@ const TeamDashboard: React.FC = () => {
         lastActive: '10 min ago',
         skills: ['Digital Marketing', 'Content', 'Analytics'],
         workload: 75,
-        satisfaction: 4.4
-      }
+        satisfaction: 4.4,
+      },
     ],
     projects: [
       {
@@ -181,7 +181,7 @@ const TeamDashboard: React.FC = () => {
         teamMembers: 4,
         tasksCompleted: 16,
         totalTasks: 24,
-        priority: 'high'
+        priority: 'high',
       },
       {
         id: 2,
@@ -192,7 +192,7 @@ const TeamDashboard: React.FC = () => {
         teamMembers: 3,
         tasksCompleted: 8,
         totalTasks: 35,
-        priority: 'medium'
+        priority: 'medium',
       },
       {
         id: 3,
@@ -203,7 +203,7 @@ const TeamDashboard: React.FC = () => {
         teamMembers: 2,
         tasksCompleted: 17,
         totalTasks: 19,
-        priority: 'high'
+        priority: 'high',
       },
       {
         id: 4,
@@ -214,8 +214,8 @@ const TeamDashboard: React.FC = () => {
         teamMembers: 3,
         tasksCompleted: 9,
         totalTasks: 20,
-        priority: 'medium'
-      }
+        priority: 'medium',
+      },
     ],
     activities: [
       {
@@ -225,7 +225,7 @@ const TeamDashboard: React.FC = () => {
         action: 'completed task',
         target: 'User Authentication Module',
         timestamp: '5 minutes ago',
-        icon: <CheckCircle className="h-4 w-4 text-green-600" />
+        icon: <CheckCircle className="h-4 w-4 text-green-600" />,
       },
       {
         id: 2,
@@ -234,7 +234,7 @@ const TeamDashboard: React.FC = () => {
         action: 'updated project',
         target: 'Website Redesign',
         timestamp: '15 minutes ago',
-        icon: <Activity className="h-4 w-4 text-blue-600" />
+        icon: <Activity className="h-4 w-4 text-blue-600" />,
       },
       {
         id: 3,
@@ -243,7 +243,7 @@ const TeamDashboard: React.FC = () => {
         action: 'commented on',
         target: 'Design Review Task',
         timestamp: '1 hour ago',
-        icon: <MessageSquare className="h-4 w-4 text-purple-600" />
+        icon: <MessageSquare className="h-4 w-4 text-purple-600" />,
       },
       {
         id: 4,
@@ -252,53 +252,65 @@ const TeamDashboard: React.FC = () => {
         action: 'reached milestone',
         target: 'Testing Phase Complete',
         timestamp: '2 hours ago',
-        icon: <Award className="h-4 w-4 text-orange-600" />
-      }
+        icon: <Award className="h-4 w-4 text-orange-600" />,
+      },
     ],
     metrics: {
       weeklyStats: {
         tasksCompleted: [12, 15, 18, 22, 19, 16, 14],
         productivity: [85, 87, 89, 91, 88, 86, 87],
-        collaboration: [78, 82, 85, 88, 90, 87, 92]
+        collaboration: [78, 82, 85, 88, 90, 87, 92],
       },
       topPerformers: [
         { name: 'Sarah Johnson', score: 94.2, improvement: '+2.1%' },
         { name: 'Mike Chen', score: 91.7, improvement: '+1.8%' },
-        { name: 'Emma Garcia', score: 89.2, improvement: '+3.2%' }
-      ]
-    }
+        { name: 'Emma Garcia', score: 89.2, improvement: '+3.2%' },
+      ],
+    },
   };
 
   const currentData = teamData || mockTeamData;
 
-  const getStatusColor = (status) => {
+  const getStatusColor = status => {
     switch (status) {
-      case 'online': return 'bg-green-500';
-      case 'away': return 'bg-yellow-500';
-      case 'offline': return 'bg-gray-400';
-      default: return 'bg-gray-400';
+      case 'online':
+        return 'bg-green-500';
+      case 'away':
+        return 'bg-yellow-500';
+      case 'offline':
+        return 'bg-gray-400';
+      default:
+        return 'bg-gray-400';
     }
   };
 
-  const getProjectStatusColor = (status) => {
+  const getProjectStatusColor = status => {
     switch (status) {
-      case 'on_track': return 'default';
-      case 'ahead': return 'secondary';
-      case 'at_risk': return 'destructive';
-      default: return 'outline';
+      case 'on_track':
+        return 'default';
+      case 'ahead':
+        return 'secondary';
+      case 'at_risk':
+        return 'destructive';
+      default:
+        return 'outline';
     }
   };
 
-  const getPriorityColor = (priority) => {
+  const getPriorityColor = priority => {
     switch (priority) {
-      case 'high': return 'destructive';
-      case 'medium': return 'secondary';
-      case 'low': return 'outline';
-      default: return 'default';
+      case 'high':
+        return 'destructive';
+      case 'medium':
+        return 'secondary';
+      case 'low':
+        return 'outline';
+      default:
+        return 'default';
     }
   };
 
-  const getWorkloadColor = (workload) => {
+  const getWorkloadColor = workload => {
     if (workload >= 90) return 'text-red-600';
     if (workload >= 80) return 'text-yellow-600';
     return 'text-green-600';
@@ -312,13 +324,13 @@ const TeamDashboard: React.FC = () => {
         icon={<Users className="h-8 w-8" />}
         breadcrumb={[
           { label: 'Team', href: '/team' },
-          { label: 'Dashboard', href: '/team/dashboard' }
+          { label: 'Dashboard', href: '/team/dashboard' },
         ]}
         actions={
           <div className="flex gap-2">
             <select
               value={timeRange}
-              onChange={(e) => setTimeRange(e.target.value)}
+              onChange={e => setTimeRange(e.target.value)}
               className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="7d">Last 7 Days</option>
@@ -395,7 +407,9 @@ const TeamDashboard: React.FC = () => {
                   <div>
                     <p className="text-sm font-medium text-gray-600">Team Members</p>
                     <p className="text-2xl font-bold">{currentData.overview.totalMembers}</p>
-                    <p className="text-xs text-green-600">{currentData.overview.activeMembers} active</p>
+                    <p className="text-xs text-green-600">
+                      {currentData.overview.activeMembers} active
+                    </p>
                   </div>
                   <Users className="h-8 w-8 text-blue-600" />
                 </div>
@@ -407,8 +421,12 @@ const TeamDashboard: React.FC = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-600">Team Productivity</p>
-                    <p className="text-2xl font-bold text-green-600">{currentData.overview.teamProductivity}</p>
-                    <p className="text-xs text-green-600">{currentData.overview.trends.productivity} this period</p>
+                    <p className="text-2xl font-bold text-green-600">
+                      {currentData.overview.teamProductivity}
+                    </p>
+                    <p className="text-xs text-green-600">
+                      {currentData.overview.trends.productivity} this period
+                    </p>
                   </div>
                   <TrendingUp className="h-8 w-8 text-green-600" />
                 </div>
@@ -420,8 +438,12 @@ const TeamDashboard: React.FC = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-600">Tasks Completed</p>
-                    <p className="text-2xl font-bold text-purple-600">{currentData.overview.completedTasks}</p>
-                    <p className="text-xs text-green-600">{currentData.overview.trends.tasks} this period</p>
+                    <p className="text-2xl font-bold text-purple-600">
+                      {currentData.overview.completedTasks}
+                    </p>
+                    <p className="text-xs text-green-600">
+                      {currentData.overview.trends.tasks} this period
+                    </p>
                   </div>
                   <CheckCircle className="h-8 w-8 text-purple-600" />
                 </div>
@@ -433,8 +455,12 @@ const TeamDashboard: React.FC = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-600">Collaboration Score</p>
-                    <p className="text-2xl font-bold text-orange-600">{currentData.overview.collaborationScore}</p>
-                    <p className="text-xs text-green-600">{currentData.overview.trends.collaboration} this period</p>
+                    <p className="text-2xl font-bold text-orange-600">
+                      {currentData.overview.collaborationScore}
+                    </p>
+                    <p className="text-xs text-green-600">
+                      {currentData.overview.trends.collaboration} this period
+                    </p>
                   </div>
                   <Zap className="h-8 w-8 text-orange-600" />
                 </div>
@@ -461,8 +487,12 @@ const TeamDashboard: React.FC = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-600">Team Satisfaction</p>
-                    <p className="text-2xl font-bold text-green-600">{currentData.overview.teamSatisfaction}/5</p>
-                    <p className="text-xs text-green-600">{currentData.overview.trends.satisfaction} this period</p>
+                    <p className="text-2xl font-bold text-green-600">
+                      {currentData.overview.teamSatisfaction}/5
+                    </p>
+                    <p className="text-xs text-green-600">
+                      {currentData.overview.trends.satisfaction} this period
+                    </p>
                   </div>
                   <Star className="h-8 w-8 text-green-600" />
                 </div>
@@ -474,7 +504,9 @@ const TeamDashboard: React.FC = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-600">Active Now</p>
-                    <p className="text-2xl font-bold text-blue-600">{currentData.overview.activeMembers}</p>
+                    <p className="text-2xl font-bold text-blue-600">
+                      {currentData.overview.activeMembers}
+                    </p>
                   </div>
                   <Activity className="h-8 w-8 text-blue-600" />
                 </div>
@@ -493,7 +525,10 @@ const TeamDashboard: React.FC = () => {
             <CardContent>
               <div className="space-y-4">
                 {currentData.metrics.topPerformers.map((performer, index) => (
-                  <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div
+                    key={index}
+                    className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                  >
                     <div className="flex items-center gap-3">
                       <span className="text-lg font-bold text-gray-500">#{index + 1}</span>
                       <div>
@@ -517,7 +552,7 @@ const TeamDashboard: React.FC = () => {
         <div className="space-y-6">
           {/* Team Members Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {currentData.members.map((member) => (
+            {currentData.members.map(member => (
               <Card key={member.id} className="hover:shadow-lg transition-shadow">
                 <CardHeader>
                   <div className="flex items-center gap-3">
@@ -525,7 +560,9 @@ const TeamDashboard: React.FC = () => {
                       <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center text-white font-medium">
                         {member.avatar}
                       </div>
-                      <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white ${getStatusColor(member.status)}`}></div>
+                      <div
+                        className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white ${getStatusColor(member.status)}`}
+                      ></div>
                     </div>
                     <div>
                       <CardTitle className="text-lg">{member.name}</CardTitle>
@@ -546,7 +583,9 @@ const TeamDashboard: React.FC = () => {
                   {/* Tasks */}
                   <div className="grid grid-cols-2 gap-4 text-center">
                     <div className="bg-green-50 p-2 rounded">
-                      <div className="text-lg font-bold text-green-600">{member.tasksCompleted}</div>
+                      <div className="text-lg font-bold text-green-600">
+                        {member.tasksCompleted}
+                      </div>
                       <div className="text-xs text-gray-600">Completed</div>
                     </div>
                     <div className="bg-blue-50 p-2 rounded">
@@ -593,7 +632,7 @@ const TeamDashboard: React.FC = () => {
         <div className="space-y-6">
           {/* Projects Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {currentData.projects.map((project) => (
+            {currentData.projects.map(project => (
               <Card key={project.id} className="hover:shadow-lg transition-shadow">
                 <CardHeader>
                   <div className="flex items-center justify-between">
@@ -602,9 +641,7 @@ const TeamDashboard: React.FC = () => {
                       <Badge variant={getProjectStatusColor(project.status)}>
                         {project.status.replace('_', ' ')}
                       </Badge>
-                      <Badge variant={getPriorityColor(project.priority)}>
-                        {project.priority}
-                      </Badge>
+                      <Badge variant={getPriorityColor(project.priority)}>{project.priority}</Badge>
                     </div>
                   </div>
                 </CardHeader>
@@ -625,7 +662,9 @@ const TeamDashboard: React.FC = () => {
                       <div className="text-xs text-gray-600">Members</div>
                     </div>
                     <div>
-                      <div className="text-lg font-bold text-green-600">{project.tasksCompleted}</div>
+                      <div className="text-lg font-bold text-green-600">
+                        {project.tasksCompleted}
+                      </div>
                       <div className="text-xs text-gray-600">Completed</div>
                     </div>
                     <div>
@@ -656,11 +695,12 @@ const TeamDashboard: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {currentData.activities.map((activity) => (
-                <div key={activity.id} className="flex items-start gap-3 p-3 hover:bg-gray-50 rounded-lg">
-                  <div className="p-1 bg-gray-100 rounded">
-                    {activity.icon}
-                  </div>
+              {currentData.activities.map(activity => (
+                <div
+                  key={activity.id}
+                  className="flex items-start gap-3 p-3 hover:bg-gray-50 rounded-lg"
+                >
+                  <div className="p-1 bg-gray-100 rounded">{activity.icon}</div>
                   <div className="flex-1">
                     <p className="text-sm">
                       <span className="font-medium">{activity.user}</span>

@@ -1,16 +1,37 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/router';
 import {
-  FileText, Download, Calendar, Filter, Search,
-  BarChart3, PieChart, TrendingUp, Clock, Target,
-  Users, Activity, Zap, Eye, Share2, Printer, Home
+  FileText,
+  Download,
+  Calendar,
+  Filter,
+  Search,
+  BarChart3,
+  PieChart,
+  TrendingUp,
+  Clock,
+  Target,
+  Users,
+  Activity,
+  Zap,
+  Eye,
+  Share2,
+  Printer,
+  Home,
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Label } from '../components/ui/Label';
 import { Select } from '../components/ui/Select';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/Table';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '../components/ui/Table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/Tabs';
 import { Badge } from '../components/ui/Badge';
 import { Progress } from '../components/ui/Progress';
@@ -19,14 +40,27 @@ import { Popover, PopoverContent, PopoverTrigger } from '../components/ui/Popove
 import { Checkbox } from '../components/ui/Checkbox';
 import { Separator } from '../components/ui/Separator';
 import { Chart } from '../components/ui/Chart';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../components/ui/DropdownMenu';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/Dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '../components/ui/DropdownMenu';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '../components/ui/Dialog';
 
 const ReportsPage = () => {
   const router = useRouter();
   const [dateRange, setDateRange] = useState({
     from: new Date(2024, 0, 1),
-    to: new Date()
+    to: new Date(),
   });
   const [selectedReports, setSelectedReports] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -44,7 +78,7 @@ const ReportsPage = () => {
       icon: TrendingUp,
       lastGenerated: '2024-01-15',
       size: '2.3 MB',
-      status: 'ready'
+      status: 'ready',
     },
     {
       id: 'time-tracking',
@@ -54,7 +88,7 @@ const ReportsPage = () => {
       icon: Clock,
       lastGenerated: '2024-01-14',
       size: '1.8 MB',
-      status: 'ready'
+      status: 'ready',
     },
     {
       id: 'goal-progress',
@@ -64,7 +98,7 @@ const ReportsPage = () => {
       icon: Target,
       lastGenerated: '2024-01-13',
       size: '1.2 MB',
-      status: 'ready'
+      status: 'ready',
     },
     {
       id: 'team-analytics',
@@ -74,7 +108,7 @@ const ReportsPage = () => {
       icon: Users,
       lastGenerated: '2024-01-12',
       size: '3.1 MB',
-      status: 'generating'
+      status: 'generating',
     },
     {
       id: 'activity-patterns',
@@ -84,7 +118,7 @@ const ReportsPage = () => {
       icon: Activity,
       lastGenerated: '2024-01-11',
       size: '2.7 MB',
-      status: 'ready'
+      status: 'ready',
     },
     {
       id: 'performance-insights',
@@ -94,8 +128,8 @@ const ReportsPage = () => {
       icon: Zap,
       lastGenerated: '2024-01-10',
       size: '1.5 MB',
-      status: 'ready'
-    }
+      status: 'ready',
+    },
   ];
 
   // Sample chart data
@@ -106,17 +140,18 @@ const ReportsPage = () => {
     { name: 'Thu', productivity: 88, focus: 85, efficiency: 90 },
     { name: 'Fri', productivity: 95, focus: 92, efficiency: 87 },
     { name: 'Sat', productivity: 72, focus: 68, efficiency: 75 },
-    { name: 'Sun', productivity: 65, focus: 62, efficiency: 70 }
+    { name: 'Sun', productivity: 65, focus: 62, efficiency: 70 },
   ];
 
   const filteredReports = availableReports.filter(report => {
-    const matchesSearch = report.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         report.description.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch =
+      report.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      report.description.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesFilter = filterType === 'all' || report.type === filterType;
     return matchesSearch && matchesFilter;
   });
 
-  const handleGenerateReport = async (reportId) => {
+  const handleGenerateReport = async reportId => {
     setIsGenerating(true);
     try {
       // Simulate report generation
@@ -129,7 +164,7 @@ const ReportsPage = () => {
     }
   };
 
-  const handleDownloadReport = (report) => {
+  const handleDownloadReport = report => {
     // Simulate download
     alert(`Downloading ${report.name}...`);
   };
@@ -142,11 +177,11 @@ const ReportsPage = () => {
     alert(`Downloading ${selectedReports.length} reports...`);
   };
 
-  const handleScheduleReport = (reportId) => {
+  const handleScheduleReport = reportId => {
     alert(`Schedule setup for report ${reportId} would be implemented here`);
   };
 
-  const getStatusBadge = (status) => {
+  const getStatusBadge = status => {
     switch (status) {
       case 'ready':
         return <Badge variant="success">Ready</Badge>;
@@ -168,7 +203,7 @@ const ReportsPage = () => {
             <h1 className="text-3xl font-bold">Reports & Analytics</h1>
             <p className="text-muted-foreground">Generate and manage your productivity reports</p>
           </div>
-          
+
           {/* Home Button */}
           <Button
             variant="outline"
@@ -183,16 +218,20 @@ const ReportsPage = () => {
           </Button>
         </div>
       </div>
-      
+
       <div className="flex items-center justify-between mb-6">
         <div></div>
-        
+
         <div className="flex items-center space-x-2">
-          <Button variant="outline" onClick={handleBulkDownload} disabled={selectedReports.length === 0}>
+          <Button
+            variant="outline"
+            onClick={handleBulkDownload}
+            disabled={selectedReports.length === 0}
+          >
             <Download className="mr-2 h-4 w-4" />
             Download Selected ({selectedReports.length})
           </Button>
-          
+
           <Dialog>
             <DialogTrigger asChild>
               <Button>
@@ -207,28 +246,37 @@ const ReportsPage = () => {
                   Configure a custom report with your preferred metrics and date range
                 </DialogDescription>
               </DialogHeader>
-              
+
               <div className="space-y-4 py-4">
                 <div className="space-y-2">
                   <Label>Report Name</Label>
                   <Input placeholder="Enter report name" />
                 </div>
-                
+
                 <div className="space-y-2">
                   <Label>Metrics to Include</Label>
                   <div className="grid grid-cols-2 gap-2">
-                    {['Productivity Score', 'Time Tracking', 'Goal Progress', 'Focus Time', 'Break Patterns', 'Activity Levels'].map((metric) => (
+                    {[
+                      'Productivity Score',
+                      'Time Tracking',
+                      'Goal Progress',
+                      'Focus Time',
+                      'Break Patterns',
+                      'Activity Levels',
+                    ].map(metric => (
                       <div key={metric} className="flex items-center space-x-2">
                         <Checkbox id={metric} />
-                        <Label htmlFor={metric} className="text-sm">{metric}</Label>
+                        <Label htmlFor={metric} className="text-sm">
+                          {metric}
+                        </Label>
                       </div>
                     ))}
                   </div>
                 </div>
-                
+
                 <div className="space-y-2">
                   <Label htmlFor="customReportDateRangeSelect">Date Range</Label>
-                  <Select 
+                  <Select
                     id="customReportDateRangeSelect"
                     value={customReportDateRange}
                     onChange={setCustomReportDateRange}
@@ -241,7 +289,7 @@ const ReportsPage = () => {
                   />
                 </div>
               </div>
-              
+
               <DialogFooter>
                 <Button variant="outline">Cancel</Button>
                 <Button>Generate Report</Button>
@@ -262,16 +310,16 @@ const ReportsPage = () => {
                 <Input
                   placeholder="Search reports..."
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={e => setSearchTerm(e.target.value)}
                   className="pl-10"
                 />
               </div>
             </div>
-            
+
             {/* Filter by Type */}
             <div className="w-full md:w-48">
-              <Select 
-                value={filterType} 
+              <Select
+                value={filterType}
                 onChange={setFilterType}
                 options={[
                   { value: 'all', label: 'All Types' },
@@ -284,7 +332,7 @@ const ReportsPage = () => {
                 ]}
               />
             </div>
-            
+
             {/* Date Range */}
             <Popover>
               <PopoverTrigger asChild>
@@ -317,18 +365,21 @@ const ReportsPage = () => {
         {/* Available Reports */}
         <TabsContent value="reports" className="space-y-6">
           <div className="grid gap-4">
-            {filteredReports.map((report) => {
+            {filteredReports.map(report => {
               const IconComponent = report.icon;
               const isSelected = selectedReports.includes(report.id);
-              
+
               return (
-                <Card key={report.id} className={`transition-all ${isSelected ? 'ring-2 ring-primary' : ''}`}>
+                <Card
+                  key={report.id}
+                  className={`transition-all ${isSelected ? 'ring-2 ring-primary' : ''}`}
+                >
                   <CardContent className="pt-6">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-4">
                         <Checkbox
                           checked={isSelected}
-                          onCheckedChange={(checked) => {
+                          onCheckedChange={checked => {
                             if (checked) {
                               setSelectedReports([...selectedReports, report.id]);
                             } else {
@@ -336,7 +387,7 @@ const ReportsPage = () => {
                             }
                           }}
                         />
-                        
+
                         <div className="flex items-center space-x-3">
                           <div className="p-2 bg-primary/10 rounded-lg">
                             <IconComponent className="h-5 w-5 text-primary" />
@@ -356,7 +407,7 @@ const ReportsPage = () => {
                           </div>
                         </div>
                       </div>
-                      
+
                       <div className="flex items-center space-x-2">
                         <Button
                           variant="outline"
@@ -367,7 +418,7 @@ const ReportsPage = () => {
                           <FileText className="mr-2 h-4 w-4" />
                           {report.status === 'generating' ? 'Generating...' : 'Generate'}
                         </Button>
-                        
+
                         <Button
                           variant="outline"
                           size="sm"
@@ -377,7 +428,7 @@ const ReportsPage = () => {
                           <Download className="mr-2 h-4 w-4" />
                           Download
                         </Button>
-                        
+
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="sm">
@@ -426,7 +477,7 @@ const ReportsPage = () => {
                 <Progress value={87} className="mt-2" />
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Focus Time</CardTitle>
@@ -438,7 +489,7 @@ const ReportsPage = () => {
                 <Progress value={78} className="mt-2" />
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Goals Completed</CardTitle>
@@ -450,7 +501,7 @@ const ReportsPage = () => {
                 <Progress value={80} className="mt-2" />
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Efficiency Score</CardTitle>
@@ -479,7 +530,7 @@ const ReportsPage = () => {
                 config={{
                   productivity: { label: 'Productivity', color: '#3b82f6' },
                   focus: { label: 'Focus', color: '#10b981' },
-                  efficiency: { label: 'Efficiency', color: '#f59e0b' }
+                  efficiency: { label: 'Efficiency', color: '#f59e0b' },
                 }}
                 className="h-80"
               />
@@ -492,9 +543,7 @@ const ReportsPage = () => {
           <Card>
             <CardHeader>
               <CardTitle>Scheduled Reports</CardTitle>
-              <CardDescription>
-                Manage your automated report generation schedule
-              </CardDescription>
+              <CardDescription>Manage your automated report generation schedule</CardDescription>
             </CardHeader>
             <CardContent>
               <Table>
@@ -514,11 +563,17 @@ const ReportsPage = () => {
                     <TableCell>Weekly</TableCell>
                     <TableCell>Jan 22, 2024</TableCell>
                     <TableCell>john.doe@example.com</TableCell>
-                    <TableCell><Badge variant="success">Active</Badge></TableCell>
+                    <TableCell>
+                      <Badge variant="success">Active</Badge>
+                    </TableCell>
                     <TableCell>
                       <div className="flex space-x-2">
-                        <Button variant="outline" size="sm">Edit</Button>
-                        <Button variant="ghost" size="sm">Pause</Button>
+                        <Button variant="outline" size="sm">
+                          Edit
+                        </Button>
+                        <Button variant="ghost" size="sm">
+                          Pause
+                        </Button>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -527,11 +582,17 @@ const ReportsPage = () => {
                     <TableCell>Monthly</TableCell>
                     <TableCell>Feb 1, 2024</TableCell>
                     <TableCell>team@example.com</TableCell>
-                    <TableCell><Badge variant="success">Active</Badge></TableCell>
+                    <TableCell>
+                      <Badge variant="success">Active</Badge>
+                    </TableCell>
                     <TableCell>
                       <div className="flex space-x-2">
-                        <Button variant="outline" size="sm">Edit</Button>
-                        <Button variant="ghost" size="sm">Pause</Button>
+                        <Button variant="outline" size="sm">
+                          Edit
+                        </Button>
+                        <Button variant="ghost" size="sm">
+                          Pause
+                        </Button>
                       </div>
                     </TableCell>
                   </TableRow>

@@ -1,7 +1,26 @@
 import React, { useState } from 'react';
 import Button, { ButtonGroup, IconButton } from '../components/ui/Button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogBody, DialogFooter, AlertDialog, useDialog } from '../components/ui/Dialog';
-import { Form, FormField, FormLabel, FormInput, FormTextarea, FormSelect, FormCheckbox, FormSubmitButton } from '../components/ui/Form';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogBody,
+  DialogFooter,
+  AlertDialog,
+  useDialog,
+} from '../components/ui/Dialog';
+import {
+  Form,
+  FormField,
+  FormLabel,
+  FormInput,
+  FormTextarea,
+  FormSelect,
+  FormCheckbox,
+  FormSubmitButton,
+} from '../components/ui/Form';
 import Input from '../components/ui/Input';
 import { DataTable } from '../components/ui/Table';
 import { Tabs, TabsList, TabsTrigger, TabsContent, TabBadge } from '../components/ui/Tabs';
@@ -16,26 +35,28 @@ const ComponentDemoPage = () => {
     { id: 2, name: 'Jane Smith', email: 'jane@example.com', role: 'User', status: 'Active' },
     { id: 3, name: 'Bob Johnson', email: 'bob@example.com', role: 'User', status: 'Inactive' },
     { id: 4, name: 'Alice Brown', email: 'alice@example.com', role: 'Manager', status: 'Active' },
-    { id: 5, name: 'Charlie Wilson', email: 'charlie@example.com', role: 'User', status: 'Active' }
+    { id: 5, name: 'Charlie Wilson', email: 'charlie@example.com', role: 'User', status: 'Active' },
   ]);
 
   const tableColumns = [
     { key: 'name', title: 'Name', sortable: true, filterable: true },
     { key: 'email', title: 'Email', sortable: true, filterable: true },
     { key: 'role', title: 'Role', sortable: true, filterable: true },
-    { 
-      key: 'status', 
-      title: 'Status', 
-      sortable: true, 
+    {
+      key: 'status',
+      title: 'Status',
+      sortable: true,
       filterable: true,
-      render: (value) => (
-        <span className={`px-2 py-1 text-xs rounded-full ${
-          value === 'Active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-        }`}>
+      render: value => (
+        <span
+          className={`px-2 py-1 text-xs rounded-full ${
+            value === 'Active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+          }`}
+        >
           {value}
         </span>
-      )
-    }
+      ),
+    },
   ];
 
   const dialog = useDialog();
@@ -43,7 +64,7 @@ const ComponentDemoPage = () => {
 
   return (
     <ToastProvider>
-      <ComponentDemoContent 
+      <ComponentDemoContent
         formData={formData}
         setFormData={setFormData}
         tableData={tableData}
@@ -56,23 +77,23 @@ const ComponentDemoPage = () => {
   );
 };
 
-const ComponentDemoContent = ({ 
-  formData, 
-  setFormData, 
-  tableData, 
-  tableColumns, 
-  dialog, 
-  alertOpen, 
-  setAlertOpen 
+const ComponentDemoContent = ({
+  formData,
+  setFormData,
+  tableData,
+  tableColumns,
+  dialog,
+  alertOpen,
+  setAlertOpen,
 }) => {
   const { toast } = useToast();
 
-  const handleFormSubmit = (values) => {
+  const handleFormSubmit = values => {
     console.log('Form submitted:', values);
     toast.success('Form Submitted', 'Your form has been successfully submitted!');
   };
 
-  const handleToastDemo = (type) => {
+  const handleToastDemo = type => {
     switch (type) {
       case 'success':
         toast.success('Success!', 'This is a success message');
@@ -96,12 +117,8 @@ const ComponentDemoContent = ({
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            🎨 Component Library Demo
-          </h1>
-          <p className="text-xl text-gray-600">
-            Showcase of all 8 Core UI Components
-          </p>
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">🎨 Component Library Demo</h1>
+          <p className="text-xl text-gray-600">Showcase of all 8 Core UI Components</p>
         </div>
 
         <Tabs defaultValue="buttons" className="space-y-8">
@@ -123,7 +140,7 @@ const ComponentDemoContent = ({
           <TabsContent value="buttons">
             <div className="card">
               <h2 className="text-2xl font-bold text-gray-900 mb-6">Button Components</h2>
-              
+
               <div className="space-y-8">
                 {/* Button Variants */}
                 <div>
@@ -168,7 +185,9 @@ const ComponentDemoContent = ({
                     <Button loading>Loading</Button>
                     <Button disabled>Disabled</Button>
                     <Button icon="🚀">With Icon</Button>
-                    <Button icon="📧" iconPosition="right">Icon Right</Button>
+                    <Button icon="📧" iconPosition="right">
+                      Icon Right
+                    </Button>
                   </div>
                   <Code
                     codeString={`<Button loading>Loading</Button>\n<Button disabled>Disabled</Button>\n<Button icon="🚀">With Icon</Button>\n<Button icon="📧" iconPosition="right">Icon Right</Button>`}
@@ -215,7 +234,7 @@ const ComponentDemoContent = ({
           <TabsContent value="dialogs">
             <div className="card">
               <h2 className="text-2xl font-bold text-gray-900 mb-6">Dialog Components</h2>
-              
+
               <div className="space-y-6">
                 <div className="flex flex-wrap gap-4">
                   <Button onClick={dialog.open}>Open Dialog</Button>
@@ -234,14 +253,15 @@ const ComponentDemoContent = ({
                     <DialogHeader>
                       <DialogTitle>Example Dialog</DialogTitle>
                       <DialogDescription>
-                        This is a demonstration of the dialog component with header, body, and footer.
+                        This is a demonstration of the dialog component with header, body, and
+                        footer.
                       </DialogDescription>
                     </DialogHeader>
-                    
+
                     <DialogBody>
                       <p className="text-gray-600">
-                        This dialog showcases the flexible dialog system with proper focus management,
-                        backdrop clicks, and escape key handling.
+                        This dialog showcases the flexible dialog system with proper focus
+                        management, backdrop clicks, and escape key handling.
                       </p>
                       <div className="mt-4 p-4 bg-blue-50 rounded-lg">
                         <p className="text-sm text-blue-800">
@@ -249,14 +269,12 @@ const ComponentDemoContent = ({
                         </p>
                       </div>
                     </DialogBody>
-                    
+
                     <DialogFooter>
                       <Button variant="ghost" onClick={dialog.close}>
                         Cancel
                       </Button>
-                      <Button onClick={dialog.close}>
-                        Confirm
-                      </Button>
+                      <Button onClick={dialog.close}>Confirm</Button>
                     </DialogFooter>
                   </DialogContent>
                 </Dialog>
@@ -278,7 +296,7 @@ const ComponentDemoContent = ({
                     toast.success('Deleted', 'Item has been deleted successfully');
                   }}
                 />
-                 <Code
+                <Code
                   codeString={`<AlertDialog\n  open={isAlertOpen}\n  onOpenChange={setIsAlertOpen}\n  title="Confirm Action"\n  description="Are you sure?"\n  confirmText="Confirm"\n  onConfirm={handleConfirm}\n/>`}
                   language="jsx"
                   className="mt-2"
@@ -291,31 +309,35 @@ const ComponentDemoContent = ({
           <TabsContent value="forms">
             <div className="card">
               <h2 className="text-2xl font-bold text-gray-900 mb-6">Form Components</h2>
-              
+
               <Form
                 onSubmit={handleFormSubmit}
                 validation={{
                   name: { required: true, minLength: 2 },
-                  email: { 
-                    required: true, 
+                  email: {
+                    required: true,
                     pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-                    patternMessage: 'Please enter a valid email address'
+                    patternMessage: 'Please enter a valid email address',
                   },
-                  message: { required: true, minLength: 10 }
+                  message: { required: true, minLength: 10 },
                 }}
                 defaultValues={{ role: '', newsletter: false }}
               >
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <FormField name="name">
                     <div>
-                      <FormLabel htmlFor="name" required>Full Name</FormLabel>
+                      <FormLabel htmlFor="name" required>
+                        Full Name
+                      </FormLabel>
                       <FormInput name="name" placeholder="Enter your full name" />
                     </div>
                   </FormField>
 
                   <FormField name="email">
                     <div>
-                      <FormLabel htmlFor="email" required>Email Address</FormLabel>
+                      <FormLabel htmlFor="email" required>
+                        Email Address
+                      </FormLabel>
                       <FormInput name="email" type="email" placeholder="Enter your email" />
                     </div>
                   </FormField>
@@ -324,13 +346,13 @@ const ComponentDemoContent = ({
                 <FormField name="role">
                   <div>
                     <FormLabel htmlFor="role">Role</FormLabel>
-                    <FormSelect 
-                      name="role" 
+                    <FormSelect
+                      name="role"
                       options={[
                         { value: 'developer', label: 'Developer' },
                         { value: 'designer', label: 'Designer' },
                         { value: 'manager', label: 'Manager' },
-                        { value: 'other', label: 'Other' }
+                        { value: 'other', label: 'Other' },
                       ]}
                       placeholder="Select your role"
                     />
@@ -339,9 +361,11 @@ const ComponentDemoContent = ({
 
                 <FormField name="message">
                   <div>
-                    <FormLabel htmlFor="message" required>Message</FormLabel>
-                    <FormTextarea 
-                      name="message" 
+                    <FormLabel htmlFor="message" required>
+                      Message
+                    </FormLabel>
+                    <FormTextarea
+                      name="message"
                       placeholder="Enter your message (minimum 10 characters)"
                       rows={4}
                     />
@@ -349,15 +373,10 @@ const ComponentDemoContent = ({
                 </FormField>
 
                 <FormField name="newsletter">
-                  <FormCheckbox 
-                    name="newsletter" 
-                    label="Subscribe to newsletter"
-                  />
+                  <FormCheckbox name="newsletter" label="Subscribe to newsletter" />
                 </FormField>
 
-                <FormSubmitButton>
-                  Submit Form
-                </FormSubmitButton>
+                <FormSubmitButton>Submit Form</FormSubmitButton>
               </Form>
               <Code
                 codeString={`<Form onSubmit={handleSubmit} validation={rules}>\n  <FormField name="username">\n    <FormLabel>Username</FormLabel>\n    <FormInput name="username" />\n  </FormField>\n  <FormSubmitButton>Submit</FormSubmitButton>\n</Form>`}
@@ -371,7 +390,7 @@ const ComponentDemoContent = ({
           <TabsContent value="inputs">
             <div className="card">
               <h2 className="text-2xl font-bold text-gray-900 mb-6">Input Components</h2>
-              
+
               <div className="space-y-6">
                 {/* Basic Inputs */}
                 <div>
@@ -413,20 +432,15 @@ const ComponentDemoContent = ({
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">Special Input Types</h3>
                   <div className="space-y-4">
-                    <Input 
-                      placeholder="Search anything..." 
-                      onSearch={(term) => console.log('Searching:', term)}
+                    <Input
+                      placeholder="Search anything..."
+                      onSearch={term => console.log('Searching:', term)}
                     />
-                    <Input 
-                      defaultValue="10"
-                      min={0} 
-                      max={100} 
-                      placeholder="Number input"
-                    />
-                    <Input 
-                      accept="image/*" 
-                      multiple 
-                      onChange={(e) => console.log('Files:', e.target.files)}
+                    <Input defaultValue="10" min={0} max={100} placeholder="Number input" />
+                    <Input
+                      accept="image/*"
+                      multiple
+                      onChange={e => console.log('Files:', e.target.files)}
                     />
                   </div>
                   <Code
@@ -443,7 +457,7 @@ const ComponentDemoContent = ({
           <TabsContent value="tables">
             <div className="card">
               <h2 className="text-2xl font-bold text-gray-900 mb-6">Table Components</h2>
-              
+
               <DataTable
                 data={tableData}
                 columns={tableColumns}
@@ -453,10 +467,10 @@ const ComponentDemoContent = ({
                 pagination
                 pageSize={3}
                 rowSelection
-                onRowClick={(row) => {
+                onRowClick={row => {
                   toast.info('Row Clicked', `You clicked on ${row.name}`);
                 }}
-                onSelectionChange={(selected) => {
+                onSelectionChange={selected => {
                   console.log('Selected rows:', selected);
                 }}
               />
@@ -472,7 +486,7 @@ const ComponentDemoContent = ({
           <TabsContent value="tabs">
             <div className="card">
               <h2 className="text-2xl font-bold text-gray-900 mb-6">Tab Components</h2>
-              
+
               <div className="space-y-8">
                 {/* Default Tabs */}
                 <div>
@@ -594,7 +608,7 @@ const ComponentDemoContent = ({
           <TabsContent value="toasts">
             <div className="card">
               <h2 className="text-2xl font-bold text-gray-900 mb-6">Toast Components</h2>
-              
+
               <div className="space-y-6">
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">Toast Variants</h3>
@@ -624,16 +638,16 @@ const ComponentDemoContent = ({
 
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">Promise Toast</h3>
-                  <Button 
+                  <Button
                     onClick={() => {
-                      const promise = new Promise((resolve) => {
+                      const promise = new Promise(resolve => {
                         setTimeout(resolve, 2000);
                       });
-                      
+
                       toast.promise(promise, {
                         loading: { title: 'Loading...', description: 'Please wait' },
                         success: { title: 'Success!', description: 'Operation completed' },
-                        error: { title: 'Error!', description: 'Something went wrong' }
+                        error: { title: 'Error!', description: 'Something went wrong' },
                       });
                     }}
                     variant="outline"
@@ -659,7 +673,7 @@ const ComponentDemoContent = ({
           <TabsContent value="overview">
             <div className="card">
               <h2 className="text-2xl font-bold text-gray-900 mb-6">Component Library Overview</h2>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {[
                   { name: 'Button', count: '7 variants', icon: '🔘', color: 'blue' },
@@ -669,9 +683,12 @@ const ComponentDemoContent = ({
                   { name: 'Table', count: 'Full featured', icon: '📊', color: 'red' },
                   { name: 'Tabs', count: '4 variants', icon: '📑', color: 'indigo' },
                   { name: 'Toast', count: '5 types', icon: '🔔', color: 'pink' },
-                  { name: 'Total', count: '8 components', icon: '🎨', color: 'gray' }
+                  { name: 'Total', count: '8 components', icon: '🎨', color: 'gray' },
                 ].map((component, index) => (
-                  <div key={index} className="p-6 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow">
+                  <div
+                    key={index}
+                    className="p-6 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow"
+                  >
                     <div className="text-center">
                       <div className="text-3xl mb-2">{component.icon}</div>
                       <h3 className="text-lg font-semibold text-gray-900">{component.name}</h3>
@@ -685,7 +702,9 @@ const ComponentDemoContent = ({
                 <h3 className="text-xl font-bold text-gray-900 mb-4">🚀 What's Next?</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                   <div>
-                    <h4 className="font-semibold text-gray-900 mb-2">Phase 2A - Navigation (5 components)</h4>
+                    <h4 className="font-semibold text-gray-900 mb-2">
+                      Phase 2A - Navigation (5 components)
+                    </h4>
                     <ul className="text-gray-600 space-y-1">
                       <li>• Navigation Menu</li>
                       <li>• Sidebar</li>
@@ -695,7 +714,9 @@ const ComponentDemoContent = ({
                     </ul>
                   </div>
                   <div>
-                    <h4 className="font-semibold text-gray-900 mb-2">Phase 2B - Data Display (6 components)</h4>
+                    <h4 className="font-semibold text-gray-900 mb-2">
+                      Phase 2B - Data Display (6 components)
+                    </h4>
                     <ul className="text-gray-600 space-y-1">
                       <li>• Chart</li>
                       <li>• Progress</li>

@@ -5,17 +5,7 @@ export default function handler(req, res) {
   }
 
   try {
-    const {
-      name,
-      value,
-      id,
-      delta,
-      rating,
-      navigationType,
-      timestamp,
-      url,
-      userAgent
-    } = req.body;
+    const { name, value, id, delta, rating, navigationType, timestamp, url, userAgent } = req.body;
 
     // Validate required fields
     if (!name || value === undefined || !id) {
@@ -33,7 +23,7 @@ export default function handler(req, res) {
       timestamp,
       url,
       userAgent: userAgent ? userAgent.substring(0, 100) : undefined, // Truncate for storage
-      receivedAt: new Date().toISOString()
+      receivedAt: new Date().toISOString(),
     });
 
     // In a real application, you would:
@@ -110,14 +100,13 @@ export default function handler(req, res) {
     res.status(200).json({
       success: true,
       message: 'Metric recorded successfully',
-      recommendations
+      recommendations,
     });
-
   } catch (error) {
     console.error('Error processing Web Vitals metric:', error);
     res.status(500).json({
       success: false,
-      message: 'Internal server error'
+      message: 'Internal server error',
     });
   }
 }
@@ -135,10 +124,7 @@ function getPerformanceRecommendations(metricName, value, rating) {
           'Use a CDN for static assets'
         );
       } else if (rating === 'needs-improvement') {
-        recommendations.push(
-          'Preload critical resources',
-          'Optimize CSS delivery'
-        );
+        recommendations.push('Preload critical resources', 'Optimize CSS delivery');
       }
       break;
 
@@ -151,10 +137,7 @@ function getPerformanceRecommendations(metricName, value, rating) {
           'Optimize third-party scripts'
         );
       } else if (rating === 'needs-improvement') {
-        recommendations.push(
-          'Reduce JavaScript execution time',
-          'Use code splitting'
-        );
+        recommendations.push('Reduce JavaScript execution time', 'Use code splitting');
       }
       break;
 

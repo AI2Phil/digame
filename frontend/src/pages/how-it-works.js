@@ -7,7 +7,10 @@ export default function HowItWorks() {
     <>
       <Head>
         <title>How it Works - Digame</title>
-        <meta name="description" content="Learn how Digame creates your digital professional twin and transforms your career." />
+        <meta
+          name="description"
+          content="Learn how Digame creates your digital professional twin and transforms your career."
+        />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
       </Head>
@@ -23,11 +26,20 @@ export default function HowItWorks() {
               <span className="text-xl font-bold text-gray-900">Digame</span>
             </Link>
             <div className="hidden md:flex space-x-8">
-              <Link href="/features" className="text-gray-600 hover:text-gray-900">Features</Link>
-              <Link href="/how-it-works" className="text-blue-600 font-medium">How it Works</Link>
-              <Link href="/pricing" className="text-gray-600 hover:text-gray-900">Pricing</Link>
+              <Link href="/features" className="text-gray-600 hover:text-gray-900">
+                Features
+              </Link>
+              <Link href="/how-it-works" className="text-blue-600 font-medium">
+                How it Works
+              </Link>
+              <Link href="/pricing" className="text-gray-600 hover:text-gray-900">
+                Pricing
+              </Link>
             </div>
-            <Link href="/" className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+            <Link
+              href="/"
+              className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+            >
               🚀 Get Started
             </Link>
           </div>
@@ -41,7 +53,8 @@ export default function HowItWorks() {
               <span className="text-blue-600"> Works</span>
             </h1>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Discover the simple 4-step process that creates your digital professional twin and accelerates your career growth.
+              Discover the simple 4-step process that creates your digital professional twin and
+              accelerates your career growth.
             </p>
           </div>
 
@@ -57,13 +70,25 @@ export default function HowItWorks() {
                   <h2 className="text-3xl font-bold text-gray-900">Connect Your Data</h2>
                 </div>
                 <p className="text-lg text-gray-600 mb-6">
-                  Securely connect your professional tools and platforms. Digame integrates with your calendar, email, project management tools, and more to understand your work patterns.
+                  Securely connect your professional tools and platforms. Digame integrates with
+                  your calendar, email, project management tools, and more to understand your work
+                  patterns.
                 </p>
                 <ul className="space-y-3 text-gray-600">
-                  <li className="flex items-center"><span className="text-green-500 mr-3">✓</span>Calendar integration (Google, Outlook)</li>
-                  <li className="flex items-center"><span className="text-green-500 mr-3">✓</span>Email analysis (Gmail, Outlook)</li>
-                  <li className="flex items-center"><span className="text-green-500 mr-3">✓</span>Project tools (Slack, Asana, Trello)</li>
-                  <li className="flex items-center"><span className="text-green-500 mr-3">✓</span>Code repositories (GitHub, GitLab)</li>
+                  <li className="flex items-center">
+                    <span className="text-green-500 mr-3">✓</span>Calendar integration (Google,
+                    Outlook)
+                  </li>
+                  <li className="flex items-center">
+                    <span className="text-green-500 mr-3">✓</span>Email analysis (Gmail, Outlook)
+                  </li>
+                  <li className="flex items-center">
+                    <span className="text-green-500 mr-3">✓</span>Project tools (Slack, Asana,
+                    Trello)
+                  </li>
+                  <li className="flex items-center">
+                    <span className="text-green-500 mr-3">✓</span>Code repositories (GitHub, GitLab)
+                  </li>
                 </ul>
               </div>
               <div className="lg:w-1/2">
@@ -100,13 +125,22 @@ export default function HowItWorks() {
                   <h2 className="text-3xl font-bold text-gray-900">AI Analysis</h2>
                 </div>
                 <p className="text-lg text-gray-600 mb-6">
-                  Our advanced AI algorithms analyze your data to understand your work patterns, communication style, productivity habits, and professional strengths.
+                  Our advanced AI algorithms analyze your data to understand your work patterns,
+                  communication style, productivity habits, and professional strengths.
                 </p>
                 <ul className="space-y-3 text-gray-600">
-                  <li className="flex items-center"><span className="text-green-500 mr-3">✓</span>Behavioral pattern recognition</li>
-                  <li className="flex items-center"><span className="text-green-500 mr-3">✓</span>Communication style analysis</li>
-                  <li className="flex items-center"><span className="text-green-500 mr-3">✓</span>Productivity optimization</li>
-                  <li className="flex items-center"><span className="text-green-500 mr-3">✓</span>Skill assessment</li>
+                  <li className="flex items-center">
+                    <span className="text-green-500 mr-3">✓</span>Behavioral pattern recognition
+                  </li>
+                  <li className="flex items-center">
+                    <span className="text-green-500 mr-3">✓</span>Communication style analysis
+                  </li>
+                  <li className="flex items-center">
+                    <span className="text-green-500 mr-3">✓</span>Productivity optimization
+                  </li>
+                  <li className="flex items-center">
+                    <span className="text-green-500 mr-3">✓</span>Skill assessment
+                  </li>
                 </ul>
               </div>
               <div className="lg:w-1/2">
@@ -118,19 +152,28 @@ export default function HowItWorks() {
                   <div className="space-y-3">
                     <div className="flex items-center">
                       <div className="w-full bg-gray-200 rounded-full h-2 mr-3">
-                        <div className="bg-blue-600 h-2 rounded-full" style={{width: '95%'}}></div>
+                        <div
+                          className="bg-blue-600 h-2 rounded-full"
+                          style={{ width: '95%' }}
+                        ></div>
                       </div>
                       <span className="text-sm">95%</span>
                     </div>
                     <div className="flex items-center">
                       <div className="w-full bg-gray-200 rounded-full h-2 mr-3">
-                        <div className="bg-green-600 h-2 rounded-full" style={{width: '88%'}}></div>
+                        <div
+                          className="bg-green-600 h-2 rounded-full"
+                          style={{ width: '88%' }}
+                        ></div>
                       </div>
                       <span className="text-sm">88%</span>
                     </div>
                     <div className="flex items-center">
                       <div className="w-full bg-gray-200 rounded-full h-2 mr-3">
-                        <div className="bg-purple-600 h-2 rounded-full" style={{width: '92%'}}></div>
+                        <div
+                          className="bg-purple-600 h-2 rounded-full"
+                          style={{ width: '92%' }}
+                        ></div>
                       </div>
                       <span className="text-sm">92%</span>
                     </div>
@@ -149,13 +192,22 @@ export default function HowItWorks() {
                   <h2 className="text-3xl font-bold text-gray-900">Digital Twin Creation</h2>
                 </div>
                 <p className="text-lg text-gray-600 mb-6">
-                  Your digital professional twin is created - a comprehensive model that represents your work style, skills, goals, and career trajectory.
+                  Your digital professional twin is created - a comprehensive model that represents
+                  your work style, skills, goals, and career trajectory.
                 </p>
                 <ul className="space-y-3 text-gray-600">
-                  <li className="flex items-center"><span className="text-green-500 mr-3">✓</span>Personalized professional profile</li>
-                  <li className="flex items-center"><span className="text-green-500 mr-3">✓</span>Skill and competency mapping</li>
-                  <li className="flex items-center"><span className="text-green-500 mr-3">✓</span>Career trajectory modeling</li>
-                  <li className="flex items-center"><span className="text-green-500 mr-3">✓</span>Goal alignment analysis</li>
+                  <li className="flex items-center">
+                    <span className="text-green-500 mr-3">✓</span>Personalized professional profile
+                  </li>
+                  <li className="flex items-center">
+                    <span className="text-green-500 mr-3">✓</span>Skill and competency mapping
+                  </li>
+                  <li className="flex items-center">
+                    <span className="text-green-500 mr-3">✓</span>Career trajectory modeling
+                  </li>
+                  <li className="flex items-center">
+                    <span className="text-green-500 mr-3">✓</span>Goal alignment analysis
+                  </li>
                 </ul>
               </div>
               <div className="lg:w-1/2">
@@ -198,13 +250,22 @@ export default function HowItWorks() {
                   <h2 className="text-3xl font-bold text-gray-900">Continuous Growth</h2>
                 </div>
                 <p className="text-lg text-gray-600 mb-6">
-                  Receive personalized insights, recommendations, and coaching to accelerate your professional growth and achieve your career goals.
+                  Receive personalized insights, recommendations, and coaching to accelerate your
+                  professional growth and achieve your career goals.
                 </p>
                 <ul className="space-y-3 text-gray-600">
-                  <li className="flex items-center"><span className="text-green-500 mr-3">✓</span>Daily productivity insights</li>
-                  <li className="flex items-center"><span className="text-green-500 mr-3">✓</span>Personalized recommendations</li>
-                  <li className="flex items-center"><span className="text-green-500 mr-3">✓</span>Goal tracking and optimization</li>
-                  <li className="flex items-center"><span className="text-green-500 mr-3">✓</span>Career coaching and guidance</li>
+                  <li className="flex items-center">
+                    <span className="text-green-500 mr-3">✓</span>Daily productivity insights
+                  </li>
+                  <li className="flex items-center">
+                    <span className="text-green-500 mr-3">✓</span>Personalized recommendations
+                  </li>
+                  <li className="flex items-center">
+                    <span className="text-green-500 mr-3">✓</span>Goal tracking and optimization
+                  </li>
+                  <li className="flex items-center">
+                    <span className="text-green-500 mr-3">✓</span>Career coaching and guidance
+                  </li>
                 </ul>
               </div>
               <div className="lg:w-1/2">
@@ -215,21 +276,28 @@ export default function HowItWorks() {
                         <span className="text-blue-600 mr-2">💡</span>
                         <span className="font-medium">Today's Insight</span>
                       </div>
-                      <p className="text-sm text-gray-600">Your focus time is 23% higher on Tuesdays. Schedule important tasks accordingly.</p>
+                      <p className="text-sm text-gray-600">
+                        Your focus time is 23% higher on Tuesdays. Schedule important tasks
+                        accordingly.
+                      </p>
                     </div>
                     <div className="bg-green-50 p-4 rounded-lg">
                       <div className="flex items-center mb-2">
                         <span className="text-green-600 mr-2">🎯</span>
                         <span className="font-medium">Goal Progress</span>
                       </div>
-                      <p className="text-sm text-gray-600">You're 78% towards your Q1 productivity goal. Keep up the great work!</p>
+                      <p className="text-sm text-gray-600">
+                        You're 78% towards your Q1 productivity goal. Keep up the great work!
+                      </p>
                     </div>
                     <div className="bg-purple-50 p-4 rounded-lg">
                       <div className="flex items-center mb-2">
                         <span className="text-purple-600 mr-2">🚀</span>
                         <span className="font-medium">Recommendation</span>
                       </div>
-                      <p className="text-sm text-gray-600">Consider learning React.js to enhance your frontend development skills.</p>
+                      <p className="text-sm text-gray-600">
+                        Consider learning React.js to enhance your frontend development skills.
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -243,9 +311,13 @@ export default function HowItWorks() {
               Ready to Create Your Digital Twin?
             </h2>
             <p className="text-xl text-gray-600 mb-8">
-              Join thousands of professionals who are already accelerating their careers with Digame.
+              Join thousands of professionals who are already accelerating their careers with
+              Digame.
             </p>
-            <Link href="/" className="bg-blue-600 text-white px-8 py-4 rounded-lg hover:bg-blue-700 transition-colors text-lg inline-block">
+            <Link
+              href="/"
+              className="bg-blue-600 text-white px-8 py-4 rounded-lg hover:bg-blue-700 transition-colors text-lg inline-block"
+            >
               🚀 Start Your Journey
             </Link>
           </div>

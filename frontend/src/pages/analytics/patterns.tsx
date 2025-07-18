@@ -14,7 +14,7 @@ export default function PatternRecognition() {
     try {
       setLoading(true);
       const response = await fetch('/api/analytics/patterns');
-      
+
       if (response.ok) {
         const data = await response.json();
         setPatterns(data.data);
@@ -26,7 +26,7 @@ export default function PatternRecognition() {
     }
   };
 
-  const getGrowthColor = (growth) => {
+  const getGrowthColor = growth => {
     const value = parseFloat(growth.replace('%', '').replace('+', ''));
     if (value > 20) return 'text-green-600';
     if (value > 0) return 'text-blue-600';
@@ -37,7 +37,10 @@ export default function PatternRecognition() {
     <>
       <Head>
         <title>Pattern Recognition - Digame</title>
-        <meta name="description" content="AI-powered pattern recognition and user behavior analysis" />
+        <meta
+          name="description"
+          content="AI-powered pattern recognition and user behavior analysis"
+        />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
       </Head>
@@ -53,7 +56,9 @@ export default function PatternRecognition() {
                 </div>
                 <div>
                   <h1 className="text-3xl font-bold text-gray-900">Pattern Recognition</h1>
-                  <p className="text-gray-600">AI-powered pattern discovery and behavior analysis</p>
+                  <p className="text-gray-600">
+                    AI-powered pattern discovery and behavior analysis
+                  </p>
                 </div>
                 <div className="ml-auto">
                   <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
@@ -62,7 +67,7 @@ export default function PatternRecognition() {
                   </span>
                 </div>
               </div>
-              
+
               <button
                 onClick={fetchPatterns}
                 className="px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 transition-colors"
@@ -80,10 +85,15 @@ export default function PatternRecognition() {
             <>
               {/* User Journey Patterns */}
               <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
-                <h3 className="text-lg font-semibold text-gray-900 mb-6">Common User Journey Patterns</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-6">
+                  Common User Journey Patterns
+                </h3>
                 <div className="space-y-4">
                   {patterns.userJourney.commonPaths.map((path, index) => (
-                    <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                    <div
+                      key={index}
+                      className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
+                    >
                       <div className="flex items-center space-x-4">
                         <div className="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600 font-medium text-sm">
                           {index + 1}
@@ -111,10 +121,15 @@ export default function PatternRecognition() {
               {/* Dropoff Analysis */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
                 <div className="bg-white rounded-lg shadow-sm p-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Dropoff Points Analysis</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                    Dropoff Points Analysis
+                  </h3>
                   <div className="space-y-4">
                     {patterns.userJourney.dropoffPoints.map((dropoff, index) => (
-                      <div key={index} className="flex items-center justify-between p-3 border border-red-200 bg-red-50 rounded-lg">
+                      <div
+                        key={index}
+                        className="flex items-center justify-between p-3 border border-red-200 bg-red-50 rounded-lg"
+                      >
                         <div>
                           <div className="font-medium text-red-900">{dropoff.step}</div>
                           <div className="text-sm text-red-700">High abandonment rate</div>
@@ -131,8 +146,11 @@ export default function PatternRecognition() {
                     <div>
                       <h4 className="font-medium text-gray-700 mb-2">Peak Hours</h4>
                       <div className="flex flex-wrap gap-2">
-                        {patterns.temporalPatterns.peakHours.map((hour) => (
-                          <span key={hour} className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-sm">
+                        {patterns.temporalPatterns.peakHours.map(hour => (
+                          <span
+                            key={hour}
+                            className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-sm"
+                          >
                             {hour}:00
                           </span>
                         ))}
@@ -141,8 +159,11 @@ export default function PatternRecognition() {
                     <div>
                       <h4 className="font-medium text-gray-700 mb-2">Peak Days</h4>
                       <div className="flex flex-wrap gap-2">
-                        {patterns.temporalPatterns.peakDays.map((day) => (
-                          <span key={day} className="px-2 py-1 bg-green-100 text-green-800 rounded text-sm">
+                        {patterns.temporalPatterns.peakDays.map(day => (
+                          <span
+                            key={day}
+                            className="px-2 py-1 bg-green-100 text-green-800 rounded text-sm"
+                          >
                             {day}
                           </span>
                         ))}
@@ -171,10 +192,15 @@ export default function PatternRecognition() {
                     </h4>
                     <div className="space-y-3">
                       {patterns.featureUsage.trending.map((feature, index) => (
-                        <div key={index} className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                        <div
+                          key={index}
+                          className="flex items-center justify-between p-3 bg-green-50 rounded-lg"
+                        >
                           <div>
                             <div className="font-medium text-green-900">{feature.feature}</div>
-                            <div className="text-sm text-green-700">{feature.adoption}% adoption</div>
+                            <div className="text-sm text-green-700">
+                              {feature.adoption}% adoption
+                            </div>
                           </div>
                           <div className={`font-bold ${getGrowthColor(feature.growth)}`}>
                             {feature.growth}
@@ -191,7 +217,10 @@ export default function PatternRecognition() {
                     </h4>
                     <div className="space-y-3">
                       {patterns.featureUsage.declining.map((feature, index) => (
-                        <div key={index} className="flex items-center justify-between p-3 bg-red-50 rounded-lg">
+                        <div
+                          key={index}
+                          className="flex items-center justify-between p-3 bg-red-50 rounded-lg"
+                        >
                           <div>
                             <div className="font-medium text-red-900">{feature.feature}</div>
                             <div className="text-sm text-red-700">{feature.usage}% usage</div>
@@ -214,22 +243,22 @@ export default function PatternRecognition() {
                   <div className="bg-white bg-opacity-10 rounded-lg p-4">
                     <h4 className="font-medium mb-2">🎯 User Flow Optimization</h4>
                     <p className="text-sm text-emerald-100">
-                      Most successful users follow the Login → Dashboard → Tasks → Profile pattern. 
+                      Most successful users follow the Login → Dashboard → Tasks → Profile pattern.
                       Consider promoting this flow in onboarding.
                     </p>
                   </div>
                   <div className="bg-white bg-opacity-10 rounded-lg p-4">
                     <h4 className="font-medium mb-2">⏰ Timing Optimization</h4>
                     <p className="text-sm text-emerald-100">
-                      Peak engagement occurs Tuesday-Thursday, 9-11 AM. 
-                      Schedule important features and notifications during these windows.
+                      Peak engagement occurs Tuesday-Thursday, 9-11 AM. Schedule important features
+                      and notifications during these windows.
                     </p>
                   </div>
                   <div className="bg-white bg-opacity-10 rounded-lg p-4">
                     <h4 className="font-medium mb-2">🚀 Feature Adoption</h4>
                     <p className="text-sm text-emerald-100">
-                      AI Tools show highest growth (+45%). 
-                      Consider expanding AI features and improving discoverability.
+                      AI Tools show highest growth (+45%). Consider expanding AI features and
+                      improving discoverability.
                     </p>
                   </div>
                 </div>
@@ -239,7 +268,9 @@ export default function PatternRecognition() {
               <div className="bg-white rounded-lg shadow-sm p-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Pattern Visualization</h3>
                 <div className="h-64 bg-gray-100 rounded-lg flex items-center justify-center">
-                  <p className="text-gray-500">Interactive pattern visualization and heatmaps will be rendered here</p>
+                  <p className="text-gray-500">
+                    Interactive pattern visualization and heatmaps will be rendered here
+                  </p>
                 </div>
               </div>
             </>

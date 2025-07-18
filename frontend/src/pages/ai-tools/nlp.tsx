@@ -18,7 +18,10 @@ const NLPEnhancementPage = () => {
     <>
       <Head>
         <title>NLP Enhancement - Digame AI Tools</title>
-        <meta name="description" content="Advanced natural language processing and text analysis tools" />
+        <meta
+          name="description"
+          content="Advanced natural language processing and text analysis tools"
+        />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
       </Head>

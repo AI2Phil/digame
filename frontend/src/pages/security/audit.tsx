@@ -1,17 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import { 
-  FileText, 
-  Search, 
-  Filter, 
-  Download, 
-  Calendar, 
-  Clock, 
-  User, 
-  Shield, 
-  AlertTriangle, 
-  CheckCircle, 
-  Eye, 
+import {
+  FileText,
+  Search,
+  Filter,
+  Download,
+  Calendar,
+  Clock,
+  User,
+  Shield,
+  AlertTriangle,
+  CheckCircle,
+  Eye,
   Settings,
   Activity,
   Globe,
@@ -25,50 +25,50 @@ import {
   BarChart3,
   TrendingUp,
   MapPin,
-  Wifi
+  Wifi,
 } from 'lucide-react';
 
 // UI Components
-const Card = ({ children, className = "" }) => (
-  <div className={`bg-white rounded-lg border shadow-sm ${className}`}>
-    {children}
-  </div>
+const Card = ({ children, className = '' }) => (
+  <div className={`bg-white rounded-lg border shadow-sm ${className}`}>{children}</div>
 );
 
-const CardHeader = ({ children, className = "" }) => (
-  <div className={`p-6 pb-4 ${className}`}>
-    {children}
-  </div>
+const CardHeader = ({ children, className = '' }) => (
+  <div className={`p-6 pb-4 ${className}`}>{children}</div>
 );
 
-const CardTitle = ({ children, className = "" }) => (
-  <h3 className={`text-lg font-semibold ${className}`}>
-    {children}
-  </h3>
+const CardTitle = ({ children, className = '' }) => (
+  <h3 className={`text-lg font-semibold ${className}`}>{children}</h3>
 );
 
-const CardContent = ({ children, className = "" }) => (
-  <div className={`p-6 pt-0 ${className}`}>
-    {children}
-  </div>
+const CardContent = ({ children, className = '' }) => (
+  <div className={`p-6 pt-0 ${className}`}>{children}</div>
 );
 
-const Button = ({ children, className = "", size = "default", variant = "default", onClick, disabled }) => {
-  const baseClasses = "inline-flex items-center justify-center rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none";
+const Button = ({
+  children,
+  className = '',
+  size = 'default',
+  variant = 'default',
+  onClick,
+  disabled,
+}) => {
+  const baseClasses =
+    'inline-flex items-center justify-center rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none';
   const sizeClasses = {
-    default: "h-10 py-2 px-4",
-    sm: "h-9 px-3 text-sm",
-    lg: "h-11 px-8"
+    default: 'h-10 py-2 px-4',
+    sm: 'h-9 px-3 text-sm',
+    lg: 'h-11 px-8',
   };
   const variantClasses = {
-    default: "bg-blue-600 text-white hover:bg-blue-700",
-    outline: "border border-gray-300 bg-white hover:bg-gray-50",
-    ghost: "hover:bg-gray-100",
-    destructive: "bg-red-600 text-white hover:bg-red-700"
+    default: 'bg-blue-600 text-white hover:bg-blue-700',
+    outline: 'border border-gray-300 bg-white hover:bg-gray-50',
+    ghost: 'hover:bg-gray-100',
+    destructive: 'bg-red-600 text-white hover:bg-red-700',
   };
-  
+
   return (
-    <button 
+    <button
       className={`${baseClasses} ${sizeClasses[size]} ${variantClasses[variant]} ${className}`}
       onClick={onClick}
       disabled={disabled}
@@ -78,18 +78,20 @@ const Button = ({ children, className = "", size = "default", variant = "default
   );
 };
 
-const Badge = ({ children, className = "", variant = "default" }) => {
+const Badge = ({ children, className = '', variant = 'default' }) => {
   const variantClasses = {
-    default: "bg-blue-100 text-blue-800",
-    secondary: "bg-gray-100 text-gray-800",
-    outline: "border border-gray-300 bg-white text-gray-700",
-    destructive: "bg-red-100 text-red-800",
-    success: "bg-green-100 text-green-800",
-    warning: "bg-yellow-100 text-yellow-800"
+    default: 'bg-blue-100 text-blue-800',
+    secondary: 'bg-gray-100 text-gray-800',
+    outline: 'border border-gray-300 bg-white text-gray-700',
+    destructive: 'bg-red-100 text-red-800',
+    success: 'bg-green-100 text-green-800',
+    warning: 'bg-yellow-100 text-yellow-800',
   };
-  
+
   return (
-    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${variantClasses[variant]} ${className}`}>
+    <span
+      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${variantClasses[variant]} ${className}`}
+    >
       {children}
     </span>
   );
@@ -114,149 +116,149 @@ const AuditLogs: React.FC = () => {
       warningEvents: 156,
       infoEvents: 1070,
       retentionPeriod: 365,
-      storageUsed: "2.4 GB"
+      storageUsed: '2.4 GB',
     },
     logs: [
       {
         id: 1,
-        timestamp: "2024-03-15T10:30:15.123Z",
-        category: "Authentication",
-        severity: "warning",
-        event: "Failed Login Attempt",
-        user: "john.doe@company.com",
-        ipAddress: "192.168.1.100",
-        userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-        location: "San Francisco, CA",
-        details: "Multiple failed login attempts detected",
-        source: "Web Application",
-        sessionId: "sess_abc123def456",
-        riskScore: 75
+        timestamp: '2024-03-15T10:30:15.123Z',
+        category: 'Authentication',
+        severity: 'warning',
+        event: 'Failed Login Attempt',
+        user: 'john.doe@company.com',
+        ipAddress: '192.168.1.100',
+        userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        location: 'San Francisco, CA',
+        details: 'Multiple failed login attempts detected',
+        source: 'Web Application',
+        sessionId: 'sess_abc123def456',
+        riskScore: 75,
       },
       {
         id: 2,
-        timestamp: "2024-03-15T10:25:42.456Z",
-        category: "Access Control",
-        severity: "critical",
-        event: "Unauthorized Access Attempt",
-        user: "jane.smith@company.com",
-        ipAddress: "203.0.113.45",
-        userAgent: "curl/7.68.0",
-        location: "Unknown",
-        details: "Attempted to access admin panel without proper permissions",
-        source: "API",
-        sessionId: "sess_xyz789ghi012",
-        riskScore: 95
+        timestamp: '2024-03-15T10:25:42.456Z',
+        category: 'Access Control',
+        severity: 'critical',
+        event: 'Unauthorized Access Attempt',
+        user: 'jane.smith@company.com',
+        ipAddress: '203.0.113.45',
+        userAgent: 'curl/7.68.0',
+        location: 'Unknown',
+        details: 'Attempted to access admin panel without proper permissions',
+        source: 'API',
+        sessionId: 'sess_xyz789ghi012',
+        riskScore: 95,
       },
       {
         id: 3,
-        timestamp: "2024-03-15T10:20:18.789Z",
-        category: "Data Access",
-        severity: "info",
-        event: "Data Export",
-        user: "admin@company.com",
-        ipAddress: "10.0.0.50",
-        userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)",
-        location: "New York, NY",
-        details: "User exported customer data report",
-        source: "Dashboard",
-        sessionId: "sess_mno345pqr678",
-        riskScore: 25
+        timestamp: '2024-03-15T10:20:18.789Z',
+        category: 'Data Access',
+        severity: 'info',
+        event: 'Data Export',
+        user: 'admin@company.com',
+        ipAddress: '10.0.0.50',
+        userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)',
+        location: 'New York, NY',
+        details: 'User exported customer data report',
+        source: 'Dashboard',
+        sessionId: 'sess_mno345pqr678',
+        riskScore: 25,
       },
       {
         id: 4,
-        timestamp: "2024-03-15T10:15:33.012Z",
-        category: "System",
-        severity: "warning",
-        event: "Configuration Change",
-        user: "system",
-        ipAddress: "127.0.0.1",
-        userAgent: "System Process",
-        location: "Server",
-        details: "Security policy updated: MFA enforcement enabled",
-        source: "System",
-        sessionId: "sess_system001",
-        riskScore: 40
+        timestamp: '2024-03-15T10:15:33.012Z',
+        category: 'System',
+        severity: 'warning',
+        event: 'Configuration Change',
+        user: 'system',
+        ipAddress: '127.0.0.1',
+        userAgent: 'System Process',
+        location: 'Server',
+        details: 'Security policy updated: MFA enforcement enabled',
+        source: 'System',
+        sessionId: 'sess_system001',
+        riskScore: 40,
       },
       {
         id: 5,
-        timestamp: "2024-03-15T10:10:07.345Z",
-        category: "Authentication",
-        severity: "info",
-        event: "Successful Login",
-        user: "alice.johnson@company.com",
-        ipAddress: "192.168.1.75",
-        userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 14_7_1 like Mac OS X)",
-        location: "Austin, TX",
-        details: "User logged in successfully with MFA",
-        source: "Mobile App",
-        sessionId: "sess_stu901vwx234",
-        riskScore: 10
-      }
+        timestamp: '2024-03-15T10:10:07.345Z',
+        category: 'Authentication',
+        severity: 'info',
+        event: 'Successful Login',
+        user: 'alice.johnson@company.com',
+        ipAddress: '192.168.1.75',
+        userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 14_7_1 like Mac OS X)',
+        location: 'Austin, TX',
+        details: 'User logged in successfully with MFA',
+        source: 'Mobile App',
+        sessionId: 'sess_stu901vwx234',
+        riskScore: 10,
+      },
     ],
     categories: [
-      { name: "Authentication", count: 15420, percentage: 33.8 },
-      { name: "Access Control", count: 12340, percentage: 27.0 },
-      { name: "Data Access", count: 8950, percentage: 19.6 },
-      { name: "System", count: 5670, percentage: 12.4 },
-      { name: "API", count: 2340, percentage: 5.1 },
-      { name: "Other", count: 952, percentage: 2.1 }
+      { name: 'Authentication', count: 15420, percentage: 33.8 },
+      { name: 'Access Control', count: 12340, percentage: 27.0 },
+      { name: 'Data Access', count: 8950, percentage: 19.6 },
+      { name: 'System', count: 5670, percentage: 12.4 },
+      { name: 'API', count: 2340, percentage: 5.1 },
+      { name: 'Other', count: 952, percentage: 2.1 },
     ],
     analytics: {
       timeDistribution: {
-        "00-06": 234,
-        "06-12": 1890,
-        "12-18": 2340,
-        "18-24": 1456
+        '00-06': 234,
+        '06-12': 1890,
+        '12-18': 2340,
+        '18-24': 1456,
       },
       topUsers: [
-        { user: "admin@company.com", events: 456 },
-        { user: "john.doe@company.com", events: 234 },
-        { user: "jane.smith@company.com", events: 189 },
-        { user: "alice.johnson@company.com", events: 156 },
-        { user: "bob.wilson@company.com", events: 134 }
+        { user: 'admin@company.com', events: 456 },
+        { user: 'john.doe@company.com', events: 234 },
+        { user: 'jane.smith@company.com', events: 189 },
+        { user: 'alice.johnson@company.com', events: 156 },
+        { user: 'bob.wilson@company.com', events: 134 },
       ],
       topIPs: [
-        { ip: "192.168.1.100", events: 567, location: "San Francisco, CA" },
-        { ip: "10.0.0.50", events: 234, location: "New York, NY" },
-        { ip: "203.0.113.45", events: 189, location: "Unknown" },
-        { ip: "192.168.1.75", events: 156, location: "Austin, TX" }
+        { ip: '192.168.1.100', events: 567, location: 'San Francisco, CA' },
+        { ip: '10.0.0.50', events: 234, location: 'New York, NY' },
+        { ip: '203.0.113.45', events: 189, location: 'Unknown' },
+        { ip: '192.168.1.75', events: 156, location: 'Austin, TX' },
       ],
       riskDistribution: {
         low: 3456,
         medium: 1234,
         high: 567,
-        critical: 89
-      }
+        critical: 89,
+      },
     },
     alerts: [
       {
         id: 1,
-        title: "Suspicious Login Pattern",
-        description: "Multiple failed login attempts from different locations",
-        severity: "high",
+        title: 'Suspicious Login Pattern',
+        description: 'Multiple failed login attempts from different locations',
+        severity: 'high',
         count: 15,
-        lastOccurrence: "2024-03-15T10:30:00Z",
-        status: "active"
+        lastOccurrence: '2024-03-15T10:30:00Z',
+        status: 'active',
       },
       {
         id: 2,
-        title: "Unusual Data Access",
-        description: "Large volume of data accessed outside business hours",
-        severity: "medium",
+        title: 'Unusual Data Access',
+        description: 'Large volume of data accessed outside business hours',
+        severity: 'medium',
         count: 8,
-        lastOccurrence: "2024-03-15T02:15:00Z",
-        status: "investigating"
+        lastOccurrence: '2024-03-15T02:15:00Z',
+        status: 'investigating',
       },
       {
         id: 3,
-        title: "API Rate Limit Exceeded",
-        description: "API calls exceeding normal usage patterns",
-        severity: "low",
+        title: 'API Rate Limit Exceeded',
+        description: 'API calls exceeding normal usage patterns',
+        severity: 'low',
         count: 23,
-        lastOccurrence: "2024-03-15T09:45:00Z",
-        status: "resolved"
-      }
-    ]
+        lastOccurrence: '2024-03-15T09:45:00Z',
+        status: 'resolved',
+      },
+    ],
   };
 
   useEffect(() => {
@@ -277,54 +279,74 @@ const AuditLogs: React.FC = () => {
     setTimeout(() => setLoading(false), 1000);
   };
 
-  const handleViewDetails = (logId) => {
+  const handleViewDetails = logId => {
     console.log('Viewing log details:', logId);
   };
 
-  const getSeverityColor = (severity) => {
+  const getSeverityColor = severity => {
     switch (severity) {
-      case 'critical': return 'bg-red-100 text-red-800';
-      case 'warning': return 'bg-yellow-100 text-yellow-800';
-      case 'info': return 'bg-blue-100 text-blue-800';
-      case 'success': return 'bg-green-100 text-green-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'critical':
+        return 'bg-red-100 text-red-800';
+      case 'warning':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'info':
+        return 'bg-blue-100 text-blue-800';
+      case 'success':
+        return 'bg-green-100 text-green-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
-  const getSeverityIcon = (severity) => {
+  const getSeverityIcon = severity => {
     switch (severity) {
-      case 'critical': return <AlertTriangle className="h-4 w-4 text-red-600" />;
-      case 'warning': return <AlertTriangle className="h-4 w-4 text-yellow-600" />;
-      case 'info': return <CheckCircle className="h-4 w-4 text-blue-600" />;
-      case 'success': return <CheckCircle className="h-4 w-4 text-green-600" />;
-      default: return <CheckCircle className="h-4 w-4 text-gray-600" />;
+      case 'critical':
+        return <AlertTriangle className="h-4 w-4 text-red-600" />;
+      case 'warning':
+        return <AlertTriangle className="h-4 w-4 text-yellow-600" />;
+      case 'info':
+        return <CheckCircle className="h-4 w-4 text-blue-600" />;
+      case 'success':
+        return <CheckCircle className="h-4 w-4 text-green-600" />;
+      default:
+        return <CheckCircle className="h-4 w-4 text-gray-600" />;
     }
   };
 
-  const getCategoryIcon = (category) => {
+  const getCategoryIcon = category => {
     switch (category) {
-      case 'Authentication': return <Key className="h-4 w-4" />;
-      case 'Access Control': return <Shield className="h-4 w-4" />;
-      case 'Data Access': return <Database className="h-4 w-4" />;
-      case 'System': return <Settings className="h-4 w-4" />;
-      case 'API': return <Globe className="h-4 w-4" />;
-      default: return <Activity className="h-4 w-4" />;
+      case 'Authentication':
+        return <Key className="h-4 w-4" />;
+      case 'Access Control':
+        return <Shield className="h-4 w-4" />;
+      case 'Data Access':
+        return <Database className="h-4 w-4" />;
+      case 'System':
+        return <Settings className="h-4 w-4" />;
+      case 'API':
+        return <Globe className="h-4 w-4" />;
+      default:
+        return <Activity className="h-4 w-4" />;
     }
   };
 
-  const getRiskColor = (score) => {
+  const getRiskColor = score => {
     if (score >= 80) return 'bg-red-100 text-red-800';
     if (score >= 60) return 'bg-orange-100 text-orange-800';
     if (score >= 40) return 'bg-yellow-100 text-yellow-800';
     return 'bg-green-100 text-green-800';
   };
 
-  const getStatusColor = (status) => {
+  const getStatusColor = status => {
     switch (status) {
-      case 'active': return 'bg-red-100 text-red-800';
-      case 'investigating': return 'bg-yellow-100 text-yellow-800';
-      case 'resolved': return 'bg-green-100 text-green-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'active':
+        return 'bg-red-100 text-red-800';
+      case 'investigating':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'resolved':
+        return 'bg-green-100 text-green-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
@@ -343,7 +365,9 @@ const AuditLogs: React.FC = () => {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Audit Logs & Monitoring</h1>
-            <p className="text-gray-600 mt-2">Track and monitor all system activities and security events</p>
+            <p className="text-gray-600 mt-2">
+              Track and monitor all system activities and security events
+            </p>
           </div>
           <div className="flex items-center gap-4">
             <Button variant="outline" onClick={handleRefreshLogs}>
@@ -369,12 +393,15 @@ const AuditLogs: React.FC = () => {
                   <div>
                     <h2 className="text-2xl font-bold">Audit Logging Active</h2>
                     <p className="text-gray-600">
-                      {currentData.overview.todayLogs} events logged today | {currentData.overview.retentionPeriod} days retention
+                      {currentData.overview.todayLogs} events logged today |{' '}
+                      {currentData.overview.retentionPeriod} days retention
                     </p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="text-4xl font-bold text-blue-600">{(currentData.overview.totalLogs / 1000).toFixed(1)}K</div>
+                  <div className="text-4xl font-bold text-blue-600">
+                    {(currentData.overview.totalLogs / 1000).toFixed(1)}K
+                  </div>
                   <div className="text-sm text-gray-600">Total Events</div>
                 </div>
               </div>
@@ -390,11 +417,15 @@ const AuditLogs: React.FC = () => {
           <div className="text-sm text-gray-600">Today's Events</div>
         </Card>
         <Card className="p-4 text-center">
-          <div className="text-2xl font-bold text-red-600">{currentData.overview.criticalEvents}</div>
+          <div className="text-2xl font-bold text-red-600">
+            {currentData.overview.criticalEvents}
+          </div>
           <div className="text-sm text-gray-600">Critical</div>
         </Card>
         <Card className="p-4 text-center">
-          <div className="text-2xl font-bold text-yellow-600">{currentData.overview.warningEvents}</div>
+          <div className="text-2xl font-bold text-yellow-600">
+            {currentData.overview.warningEvents}
+          </div>
           <div className="text-sm text-gray-600">Warnings</div>
         </Card>
         <Card className="p-4 text-center">
@@ -402,11 +433,15 @@ const AuditLogs: React.FC = () => {
           <div className="text-sm text-gray-600">Info</div>
         </Card>
         <Card className="p-4 text-center">
-          <div className="text-2xl font-bold text-purple-600">{currentData.overview.retentionPeriod}</div>
+          <div className="text-2xl font-bold text-purple-600">
+            {currentData.overview.retentionPeriod}
+          </div>
           <div className="text-sm text-gray-600">Days Retention</div>
         </Card>
         <Card className="p-4 text-center">
-          <div className="text-2xl font-bold text-indigo-600">{currentData.overview.storageUsed}</div>
+          <div className="text-2xl font-bold text-indigo-600">
+            {currentData.overview.storageUsed}
+          </div>
           <div className="text-sm text-gray-600">Storage Used</div>
         </Card>
       </div>
@@ -418,8 +453,8 @@ const AuditLogs: React.FC = () => {
             { id: 'logs', label: 'Audit Logs', icon: FileText },
             { id: 'analytics', label: 'Analytics', icon: BarChart3 },
             { id: 'alerts', label: 'Security Alerts', icon: AlertTriangle },
-            { id: 'settings', label: 'Log Settings', icon: Settings }
-          ].map((tab) => {
+            { id: 'settings', label: 'Log Settings', icon: Settings },
+          ].map(tab => {
             const Icon = tab.icon;
             return (
               <button
@@ -448,13 +483,13 @@ const AuditLogs: React.FC = () => {
               type="text"
               placeholder="Search logs..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={e => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
           <select
             value={selectedCategory}
-            onChange={(e) => setSelectedCategory(e.target.value)}
+            onChange={e => setSelectedCategory(e.target.value)}
             className="px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           >
             <option value="all">All Categories</option>
@@ -466,7 +501,7 @@ const AuditLogs: React.FC = () => {
           </select>
           <select
             value={selectedSeverity}
-            onChange={(e) => setSelectedSeverity(e.target.value)}
+            onChange={e => setSelectedSeverity(e.target.value)}
             className="px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           >
             <option value="all">All Severities</option>
@@ -476,7 +511,7 @@ const AuditLogs: React.FC = () => {
           </select>
           <select
             value={dateRange}
-            onChange={(e) => setDateRange(e.target.value)}
+            onChange={e => setDateRange(e.target.value)}
             className="px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           >
             <option value="1h">Last Hour</option>
@@ -490,7 +525,7 @@ const AuditLogs: React.FC = () => {
       {/* Content */}
       {activeTab === 'logs' && (
         <div className="space-y-4">
-          {currentData.logs.map((log) => (
+          {currentData.logs.map(log => (
             <Card key={log.id} className="hover:shadow-md transition-shadow">
               <CardContent className="p-6">
                 <div className="flex items-start justify-between">
@@ -499,23 +534,17 @@ const AuditLogs: React.FC = () => {
                       {getSeverityIcon(log.severity)}
                       {getCategoryIcon(log.category)}
                     </div>
-                    
+
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-3 mb-2">
                         <h4 className="font-medium">{log.event}</h4>
-                        <Badge className={getSeverityColor(log.severity)}>
-                          {log.severity}
-                        </Badge>
-                        <Badge variant="outline">
-                          {log.category}
-                        </Badge>
-                        <Badge className={getRiskColor(log.riskScore)}>
-                          Risk: {log.riskScore}
-                        </Badge>
+                        <Badge className={getSeverityColor(log.severity)}>{log.severity}</Badge>
+                        <Badge variant="outline">{log.category}</Badge>
+                        <Badge className={getRiskColor(log.riskScore)}>Risk: {log.riskScore}</Badge>
                       </div>
-                      
+
                       <p className="text-sm text-gray-700 mb-3">{log.details}</p>
-                      
+
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs text-gray-500">
                         <div className="flex items-center gap-1">
                           <User className="h-3 w-3" />
@@ -534,13 +563,13 @@ const AuditLogs: React.FC = () => {
                           <span>{new Date(log.timestamp).toLocaleString()}</span>
                         </div>
                       </div>
-                      
+
                       <div className="mt-2 text-xs text-gray-400">
                         Source: {log.source} | Session: {log.sessionId}
                       </div>
                     </div>
                   </div>
-                  
+
                   <Button size="sm" variant="outline" onClick={() => handleViewDetails(log.id)}>
                     <Eye className="h-4 w-4 mr-2" />
                     Details
@@ -572,13 +601,15 @@ const AuditLogs: React.FC = () => {
                         <span className="font-medium">{category.name}</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="text-sm text-gray-600">{category.count.toLocaleString()}</span>
+                        <span className="text-sm text-gray-600">
+                          {category.count.toLocaleString()}
+                        </span>
                         <span className="text-sm text-gray-600">({category.percentage}%)</span>
                       </div>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div 
-                        className="bg-blue-600 h-2 rounded-full transition-all duration-300" 
+                      <div
+                        className="bg-blue-600 h-2 rounded-full transition-all duration-300"
                         style={{ width: `${category.percentage}%` }}
                       />
                     </div>
@@ -643,19 +674,27 @@ const AuditLogs: React.FC = () => {
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-green-600">{currentData.analytics.riskDistribution.low}</div>
+                  <div className="text-2xl font-bold text-green-600">
+                    {currentData.analytics.riskDistribution.low}
+                  </div>
                   <div className="text-sm text-gray-600">Low Risk</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-yellow-600">{currentData.analytics.riskDistribution.medium}</div>
+                  <div className="text-2xl font-bold text-yellow-600">
+                    {currentData.analytics.riskDistribution.medium}
+                  </div>
                   <div className="text-sm text-gray-600">Medium Risk</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-orange-600">{currentData.analytics.riskDistribution.high}</div>
+                  <div className="text-2xl font-bold text-orange-600">
+                    {currentData.analytics.riskDistribution.high}
+                  </div>
                   <div className="text-sm text-gray-600">High Risk</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-red-600">{currentData.analytics.riskDistribution.critical}</div>
+                  <div className="text-2xl font-bold text-red-600">
+                    {currentData.analytics.riskDistribution.critical}
+                  </div>
                   <div className="text-sm text-gray-600">Critical Risk</div>
                 </div>
               </div>
@@ -666,7 +705,7 @@ const AuditLogs: React.FC = () => {
 
       {activeTab === 'alerts' && (
         <div className="space-y-4">
-          {currentData.alerts.map((alert) => (
+          {currentData.alerts.map(alert => (
             <Card key={alert.id} className="hover:shadow-md transition-shadow">
               <CardContent className="p-6">
                 <div className="flex items-start justify-between">
@@ -674,35 +713,29 @@ const AuditLogs: React.FC = () => {
                     <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
                       <AlertTriangle className="h-6 w-6 text-red-600" />
                     </div>
-                    
+
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
                         <h4 className="font-semibold">{alert.title}</h4>
-                        <Badge className={getSeverityColor(alert.severity)}>
-                          {alert.severity}
-                        </Badge>
-                        <Badge className={getStatusColor(alert.status)}>
-                          {alert.status}
-                        </Badge>
+                        <Badge className={getSeverityColor(alert.severity)}>{alert.severity}</Badge>
+                        <Badge className={getStatusColor(alert.status)}>{alert.status}</Badge>
                       </div>
-                      
+
                       <p className="text-sm text-gray-700 mb-3">{alert.description}</p>
-                      
+
                       <div className="flex items-center gap-4 text-sm text-gray-500">
                         <span>Occurrences: {alert.count}</span>
                         <span>Last seen: {new Date(alert.lastOccurrence).toLocaleString()}</span>
                       </div>
                     </div>
                   </div>
-                  
+
                   <div className="flex gap-2">
                     <Button size="sm" variant="outline">
                       <Eye className="h-4 w-4 mr-2" />
                       Investigate
                     </Button>
-                    <Button size="sm">
-                      Resolve
-                    </Button>
+                    <Button size="sm">Resolve</Button>
                   </div>
                 </div>
               </CardContent>
@@ -725,11 +758,13 @@ const AuditLogs: React.FC = () => {
                     <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                       <option value="30">30 Days</option>
                       <option value="90">90 Days</option>
-                      <option value="365" selected>365 Days</option>
+                      <option value="365" selected>
+                        365 Days
+                      </option>
                       <option value="1095">3 Years</option>
                     </select>
                   </div>
-                  
+
                   <div>
                     <label className="block text-sm font-medium mb-2">Log Level</label>
                     <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent">
@@ -738,7 +773,7 @@ const AuditLogs: React.FC = () => {
                       <option value="critical">Critical Only</option>
                     </select>
                   </div>
-                  
+
                   <div>
                     <label className="block text-sm font-medium mb-2">Storage Location</label>
                     <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent">
@@ -749,7 +784,7 @@ const AuditLogs: React.FC = () => {
                     </select>
                   </div>
                 </div>
-                
+
                 <div className="space-y-4">
                   <div className="flex items-center gap-2">
                     <input
@@ -759,7 +794,7 @@ const AuditLogs: React.FC = () => {
                     />
                     <label className="text-sm font-medium">Enable Real-time Monitoring</label>
                   </div>
-                  
+
                   <div className="flex items-center gap-2">
                     <input
                       type="checkbox"
@@ -768,7 +803,7 @@ const AuditLogs: React.FC = () => {
                     />
                     <label className="text-sm font-medium">Log User Agent Information</label>
                   </div>
-                  
+
                   <div className="flex items-center gap-2">
                     <input
                       type="checkbox"
@@ -777,7 +812,7 @@ const AuditLogs: React.FC = () => {
                     />
                     <label className="text-sm font-medium">Include Geolocation Data</label>
                   </div>
-                  
+
                   <div className="flex items-center gap-2">
                     <input
                       type="checkbox"
@@ -786,7 +821,7 @@ const AuditLogs: React.FC = () => {
                     />
                     <label className="text-sm font-medium">Enable SIEM Integration</label>
                   </div>
-                  
+
                   <div className="flex items-center gap-2">
                     <input
                       type="checkbox"
@@ -797,15 +832,11 @@ const AuditLogs: React.FC = () => {
                   </div>
                 </div>
               </div>
-              
+
               <div className="mt-6 pt-6 border-t">
                 <div className="flex gap-4">
-                  <Button>
-                    Save Configuration
-                  </Button>
-                  <Button variant="outline">
-                    Test Settings
-                  </Button>
+                  <Button>Save Configuration</Button>
+                  <Button variant="outline">Test Settings</Button>
                 </div>
               </div>
             </CardContent>
@@ -825,17 +856,21 @@ const AuditLogs: React.FC = () => {
                     defaultValue="5"
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
-                  <p className="text-xs text-gray-500 mt-1">Number of failed attempts before alert</p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Number of failed attempts before alert
+                  </p>
                 </div>
-                
+
                 <div>
-                  <label className="block text-sm font-medium mb-2">Unusual Access Pattern Detection</label>
+                  <label className="block text-sm font-medium mb-2">
+                    Unusual Access Pattern Detection
+                  </label>
                   <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                     <option value="enabled">Enabled</option>
                     <option value="disabled">Disabled</option>
                   </select>
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium mb-2">Alert Recipients</label>
                   <textarea
@@ -865,7 +900,7 @@ const AuditLogs: React.FC = () => {
                       <option value="syslog">Syslog</option>
                     </select>
                   </div>
-                  
+
                   <div>
                     <label className="block text-sm font-medium mb-2">Backup Frequency</label>
                     <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent">
@@ -875,7 +910,7 @@ const AuditLogs: React.FC = () => {
                     </select>
                   </div>
                 </div>
-                
+
                 <div className="space-y-4">
                   <div className="flex items-center gap-2">
                     <input
@@ -885,7 +920,7 @@ const AuditLogs: React.FC = () => {
                     />
                     <label className="text-sm font-medium">Compress Exports</label>
                   </div>
-                  
+
                   <div className="flex items-center gap-2">
                     <input
                       type="checkbox"
@@ -894,7 +929,7 @@ const AuditLogs: React.FC = () => {
                     />
                     <label className="text-sm font-medium">Encrypt Backups</label>
                   </div>
-                  
+
                   <div className="flex items-center gap-2">
                     <input
                       type="checkbox"

@@ -63,7 +63,9 @@ export default function SettingsApiKeys() {
                       </div>
                       <div>
                         <h3 className="font-medium text-gray-900 dark:text-white">OpenAI</h3>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">GPT models and embeddings</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                          GPT models and embeddings
+                        </p>
                       </div>
                     </div>
                     <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs rounded">
@@ -157,15 +159,15 @@ export default function SettingsApiKeys() {
               {/* Security Notice */}
               <div className="mt-8 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
                 <div className="flex items-start space-x-3">
-                  <div className="w-5 h-5 text-yellow-600 dark:text-yellow-400 mt-0.5">
-                    🔒
-                  </div>
+                  <div className="w-5 h-5 text-yellow-600 dark:text-yellow-400 mt-0.5">🔒</div>
                   <div>
                     <h4 className="font-medium text-yellow-800 dark:text-yellow-200 mb-1">
                       Security Notice
                     </h4>
                     <p className="text-sm text-yellow-700 dark:text-yellow-300">
-                      Your API keys are encrypted and stored securely. They are only used to make requests to the respective AI services on your behalf. Never share your API keys with others.
+                      Your API keys are encrypted and stored securely. They are only used to make
+                      requests to the respective AI services on your behalf. Never share your API
+                      keys with others.
                     </p>
                   </div>
                 </div>
@@ -174,17 +176,21 @@ export default function SettingsApiKeys() {
               {/* Usage Information */}
               <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
                 <div className="flex items-start space-x-3">
-                  <div className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5">
-                    💡
-                  </div>
+                  <div className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5">💡</div>
                   <div>
                     <h4 className="font-medium text-blue-800 dark:text-blue-200 mb-1">
                       How to get API Keys
                     </h4>
                     <ul className="text-sm text-blue-700 dark:text-blue-300 space-y-1">
-                      <li>• <strong>OpenAI:</strong> Visit platform.openai.com and create an API key</li>
-                      <li>• <strong>Anthropic:</strong> Sign up at console.anthropic.com</li>
-                      <li>• <strong>Google AI:</strong> Get your key from ai.google.dev</li>
+                      <li>
+                        • <strong>OpenAI:</strong> Visit platform.openai.com and create an API key
+                      </li>
+                      <li>
+                        • <strong>Anthropic:</strong> Sign up at console.anthropic.com
+                      </li>
+                      <li>
+                        • <strong>Google AI:</strong> Get your key from ai.google.dev
+                      </li>
                     </ul>
                   </div>
                 </div>
