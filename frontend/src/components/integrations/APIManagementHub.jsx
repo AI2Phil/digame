@@ -74,21 +74,8 @@ import {
 } from 'lucide-react';
 import { LineChart, Line, AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
-const APIManagementHub = () => {
-  const [activeTab, setActiveTab] = useState('overview');
-  const [apiKeys, setApiKeys] = useState([]);
-  const [webhooks, setWebhooks] = useState([]);
-  const [endpoints, setEndpoints] = useState([]);
-  const [marketplaceItems, setMarketplaceItems] = useState([]);
-  const [selectedEndpoint, setSelectedEndpoint] = useState(null);
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState('all');
-  const [apiMetrics, setApiMetrics] = useState({});
-  const [webhookLogs, setWebhookLogs] = useState([]);
-
-  // Mock data for API management
-  const apiEndpoints = [
+// Mock data for API management - moved outside component to prevent recreation
+const apiEndpoints = [
     {
       id: 'auth-login',
       name: 'Authentication Login',
@@ -149,9 +136,9 @@ const APIManagementHub = () => {
       successRate: 98.9,
       lastUsed: '2025-01-07T10:10:00Z'
     }
-  ];
+];
 
-  const webhookConfigs = [
+const webhookConfigs = [
     {
       id: 'slack-notifications',
       name: 'Slack Notifications',
@@ -182,9 +169,9 @@ const APIManagementHub = () => {
       successRate: 97.8,
       totalCalls: 1560
     }
-  ];
+];
 
-  const marketplaceIntegrations = [
+const marketplaceIntegrations = [
     {
       id: 'salesforce-crm',
       name: 'Salesforce CRM',
@@ -269,24 +256,29 @@ const APIManagementHub = () => {
       tags: ['marketing', 'automation', 'leads', 'analytics'],
       lastUpdated: '2025-01-01T00:00:00Z'
     }
-  ];
+];
 
-  const apiUsageData = [
-    { name: 'Jan', calls: 45000, errors: 120, responseTime: 145 },
-    { name: 'Feb', calls: 52000, errors: 98, responseTime: 138 },
-    { name: 'Mar', calls: 48000, errors: 156, responseTime: 142 },
-    { name: 'Apr', calls: 61000, errors: 89, responseTime: 135 },
-    { name: 'May', calls: 58000, errors: 67, responseTime: 128 },
-    { name: 'Jun', calls: 67000, errors: 45, responseTime: 122 }
-  ];
+const apiUsageData = [
+  { name: 'Jan', calls: 45000, errors: 120, responseTime: 145 },
+  { name: 'Feb', calls: 52000, errors: 98, responseTime: 138 },
+  { name: 'Mar', calls: 48000, errors: 156, responseTime: 142 },
+  { name: 'Apr', calls: 61000, errors: 89, responseTime: 135 },
+  { name: 'May', calls: 58000, errors: 67, responseTime: 128 },
+  { name: 'Jun', calls: 67000, errors: 45, responseTime: 122 }
+];
 
-  useEffect(() => {
-    loadAPIMetrics();
-    loadWebhookLogs();
-    setEndpoints(apiEndpoints);
-    setWebhooks(webhookConfigs);
-    setMarketplaceItems(marketplaceIntegrations);
-  }, [apiEndpoints, loadAPIMetrics, marketplaceIntegrations, webhookConfigs]);
+const APIManagementHub = () => {
+  const [activeTab, setActiveTab] = useState('overview');
+  const [apiKeys, setApiKeys] = useState([]);
+  const [webhooks, setWebhooks] = useState([]);
+  const [endpoints, setEndpoints] = useState([]);
+  const [marketplaceItems, setMarketplaceItems] = useState([]);
+  const [selectedEndpoint, setSelectedEndpoint] = useState(null);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [apiMetrics, setApiMetrics] = useState({});
+  const [webhookLogs, setWebhookLogs] = useState([]);
 
   const loadAPIMetrics = useCallback(async () => {
     setApiMetrics({
@@ -297,7 +289,15 @@ const APIManagementHub = () => {
       activeWebhooks: webhookConfigs.filter(w => w.status === 'active').length,
       totalWebhookCalls: 4790
     });
-  }, [apiEndpoints, webhookConfigs]);
+  }, []); // Empty dependency array since arrays are now defined outside component
+
+  useEffect(() => {
+    loadAPIMetrics();
+    loadWebhookLogs();
+    setEndpoints(apiEndpoints);
+    setWebhooks(webhookConfigs);
+    setMarketplaceItems(marketplaceIntegrations);
+  }, [loadAPIMetrics, loadWebhookLogs]); // Only include the callback functions
 
   const loadWebhookLogs = useCallback(async () => {
     const logs = [

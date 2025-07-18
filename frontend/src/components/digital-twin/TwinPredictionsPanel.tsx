@@ -139,7 +139,7 @@ export const TwinPredictionsPanel: React.FC<TwinPredictionsPanelProps> = ({ twin
     } finally {
       setLoading(false);
     }
-  }, [twinId, toast, loadFallbackPredictions]);
+  }, [twinId, loadFallbackPredictions]);
 
   useEffect(() => {
     loadPredictions();

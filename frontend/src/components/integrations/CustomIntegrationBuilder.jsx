@@ -85,74 +85,63 @@ import {
 } from 'lucide-react';
 import { LineChart, Line, AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
-const CustomIntegrationBuilder = () => {
-  const [activeTab, setActiveTab] = useState('builder');
-  const [workflows, setWorkflows] = useState([]);
-  const [selectedWorkflow, setSelectedWorkflow] = useState(null);
-  const [isBuilderOpen, setIsBuilderOpen] = useState(false);
-  const [workflowSteps, setWorkflowSteps] = useState([]);
-  const [availableConnectors, setAvailableConnectors] = useState([]);
-  const [templates, setTemplates] = useState([]);
-  const [testResults, setTestResults] = useState({});
-  const [deploymentStatus, setDeploymentStatus] = useState({});
+// Mock data for workflow builder - moved outside component to prevent recreation
+const connectorTypes = [
+  {
+    id: 'trigger',
+    name: 'Triggers',
+    icon: Zap,
+    color: 'text-yellow-500',
+    items: [
+      { id: 'webhook', name: 'Webhook Trigger', description: 'Trigger on incoming webhook' },
+      { id: 'schedule', name: 'Schedule Trigger', description: 'Trigger on time schedule' },
+      { id: 'email', name: 'Email Trigger', description: 'Trigger on email received' },
+      { id: 'file', name: 'File Trigger', description: 'Trigger on file upload' },
+      { id: 'database', name: 'Database Trigger', description: 'Trigger on data change' }
+    ]
+  },
+  {
+    id: 'action',
+    name: 'Actions',
+    icon: Activity,
+    color: 'text-blue-500',
+    items: [
+      { id: 'send-email', name: 'Send Email', description: 'Send email notification' },
+      { id: 'create-record', name: 'Create Record', description: 'Create database record' },
+      { id: 'api-call', name: 'API Call', description: 'Make HTTP API request' },
+      { id: 'transform-data', name: 'Transform Data', description: 'Transform data format' },
+      { id: 'conditional', name: 'Conditional Logic', description: 'Add if/then logic' }
+    ]
+  },
+  {
+    id: 'integration',
+    name: 'Integrations',
+    icon: Puzzle,
+    color: 'text-green-500',
+    items: [
+      { id: 'slack', name: 'Slack', description: 'Send Slack messages' },
+      { id: 'salesforce', name: 'Salesforce', description: 'Sync with Salesforce CRM' },
+      { id: 'github', name: 'GitHub', description: 'Manage GitHub repositories' },
+      { id: 'google-sheets', name: 'Google Sheets', description: 'Update spreadsheets' },
+      { id: 'trello', name: 'Trello', description: 'Manage Trello boards' }
+    ]
+  },
+  {
+    id: 'utility',
+    name: 'Utilities',
+    icon: Wrench,
+    color: 'text-purple-500',
+    items: [
+      { id: 'delay', name: 'Delay', description: 'Add time delay' },
+      { id: 'filter', name: 'Filter', description: 'Filter data conditions' },
+      { id: 'loop', name: 'Loop', description: 'Repeat actions' },
+      { id: 'merge', name: 'Merge Data', description: 'Combine data sources' },
+      { id: 'split', name: 'Split Data', description: 'Split data streams' }
+    ]
+  }
+];
 
-  // Mock data for workflow builder
-  const connectorTypes = [
-    {
-      id: 'trigger',
-      name: 'Triggers',
-      icon: Zap,
-      color: 'text-yellow-500',
-      items: [
-        { id: 'webhook', name: 'Webhook Trigger', description: 'Trigger on incoming webhook' },
-        { id: 'schedule', name: 'Schedule Trigger', description: 'Trigger on time schedule' },
-        { id: 'email', name: 'Email Trigger', description: 'Trigger on email received' },
-        { id: 'file', name: 'File Trigger', description: 'Trigger on file upload' },
-        { id: 'database', name: 'Database Trigger', description: 'Trigger on data change' }
-      ]
-    },
-    {
-      id: 'action',
-      name: 'Actions',
-      icon: Activity,
-      color: 'text-blue-500',
-      items: [
-        { id: 'send-email', name: 'Send Email', description: 'Send email notification' },
-        { id: 'create-record', name: 'Create Record', description: 'Create database record' },
-        { id: 'api-call', name: 'API Call', description: 'Make HTTP API request' },
-        { id: 'transform-data', name: 'Transform Data', description: 'Transform data format' },
-        { id: 'conditional', name: 'Conditional Logic', description: 'Add if/then logic' }
-      ]
-    },
-    {
-      id: 'integration',
-      name: 'Integrations',
-      icon: Puzzle,
-      color: 'text-green-500',
-      items: [
-        { id: 'slack', name: 'Slack', description: 'Send Slack messages' },
-        { id: 'salesforce', name: 'Salesforce', description: 'Sync with Salesforce CRM' },
-        { id: 'github', name: 'GitHub', description: 'Manage GitHub repositories' },
-        { id: 'google-sheets', name: 'Google Sheets', description: 'Update spreadsheets' },
-        { id: 'trello', name: 'Trello', description: 'Manage Trello boards' }
-      ]
-    },
-    {
-      id: 'utility',
-      name: 'Utilities',
-      icon: Wrench,
-      color: 'text-purple-500',
-      items: [
-        { id: 'delay', name: 'Delay', description: 'Add time delay' },
-        { id: 'filter', name: 'Filter', description: 'Filter data conditions' },
-        { id: 'loop', name: 'Loop', description: 'Repeat actions' },
-        { id: 'merge', name: 'Merge Data', description: 'Combine data sources' },
-        { id: 'split', name: 'Split Data', description: 'Split data streams' }
-      ]
-    }
-  ];
-
-  const workflowTemplates = [
+const workflowTemplates = [
     {
       id: 'lead-nurturing',
       name: 'Lead Nurturing Automation',
@@ -213,9 +202,9 @@ const CustomIntegrationBuilder = () => {
       popularity: 4.3,
       uses: 540
     }
-  ];
+];
 
-  const existingWorkflows = [
+const existingWorkflows = [
     {
       id: 'wf-001',
       name: 'New User Welcome Sequence',
@@ -264,22 +253,33 @@ const CustomIntegrationBuilder = () => {
       integrations: ['billing', 'email', 'accounting'],
       created: '2024-11-28T00:00:00Z'
     }
-  ];
+];
 
-  const workflowMetrics = [
-    { name: 'Jan', workflows: 12, executions: 45000, success: 97.2 },
-    { name: 'Feb', workflows: 15, executions: 52000, success: 97.8 },
-    { name: 'Mar', workflows: 18, executions: 48000, success: 96.5 },
-    { name: 'Apr', workflows: 22, executions: 61000, success: 98.1 },
-    { name: 'May', workflows: 25, executions: 58000, success: 97.9 },
-    { name: 'Jun', workflows: 28, executions: 67000, success: 98.4 }
-  ];
+const workflowMetrics = [
+  { name: 'Jan', workflows: 12, executions: 45000, success: 97.2 },
+  { name: 'Feb', workflows: 15, executions: 52000, success: 97.8 },
+  { name: 'Mar', workflows: 18, executions: 48000, success: 96.5 },
+  { name: 'Apr', workflows: 22, executions: 61000, success: 98.1 },
+  { name: 'May', workflows: 25, executions: 58000, success: 97.9 },
+  { name: 'Jun', workflows: 28, executions: 67000, success: 98.4 }
+];
+
+const CustomIntegrationBuilder = () => {
+  const [activeTab, setActiveTab] = useState('builder');
+  const [workflows, setWorkflows] = useState([]);
+  const [selectedWorkflow, setSelectedWorkflow] = useState(null);
+  const [isBuilderOpen, setIsBuilderOpen] = useState(false);
+  const [workflowSteps, setWorkflowSteps] = useState([]);
+  const [availableConnectors, setAvailableConnectors] = useState([]);
+  const [templates, setTemplates] = useState([]);
+  const [testResults, setTestResults] = useState({});
+  const [deploymentStatus, setDeploymentStatus] = useState({});
 
   useEffect(() => {
     setWorkflows(existingWorkflows);
     setTemplates(workflowTemplates);
     setAvailableConnectors(connectorTypes);
-  }, [connectorTypes, existingWorkflows, workflowTemplates]);
+  }, []); // Empty dependency array since all arrays are now defined outside component
 
   const handleCreateWorkflow = useCallback((template = null) => {
     if (template) {

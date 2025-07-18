@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
@@ -60,7 +60,7 @@ export const TwinWorkspace: React.FC<TwinWorkspaceProps> = ({ twinId }) => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const loadConversationHistory = async () => {
+  const loadConversationHistory = useCallback(async () => {
     try {
       setError(null);
       const response = await digitalTwinApi.getTwinInteractions(undefined, 20);
@@ -93,7 +93,7 @@ export const TwinWorkspace: React.FC<TwinWorkspaceProps> = ({ twinId }) => {
       loadFallbackWorkspaceConversation();
       toast.warning("Using demo workspace conversation - Digital Twin API currently unavailable");
     }
-  };
+  }, [toast]);
 
   useEffect(() => {
     scrollToBottom();

@@ -380,7 +380,7 @@ const NLPEnhancement = () => {
       modelsActive: 5,
       dailyProcessing: 12847
     });
-  }, []);
+  }, [conversationData, nlpModels, textAnalysisResults, sentimentTrends]);
 
   const loadNLPData = useCallback(async () => {
     setLoading(true);

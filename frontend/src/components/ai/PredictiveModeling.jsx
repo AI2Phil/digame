@@ -284,7 +284,7 @@ const PredictiveModeling = () => {
     } finally {
       setLoading(false);
     }
-  }, [loadFallbackData, loadModelPerformance, loadModels, loadPredictions, loadRecommendations]);
+  }, [fallbackPredictiveModels, loadModelPerformance, loadModels, loadPredictions, loadRecommendations]);
 
   const loadModels = async () => {
     try {
@@ -461,7 +461,7 @@ const PredictiveModeling = () => {
     }
   };
 
-  const loadFallbackData = () => {
+  const loadFallbackData = useCallback(() => {
     const selectedModelData = fallbackPredictiveModels.find(m => m.id === selectedModel);
     if (selectedModelData) {
       setPredictions(selectedModelData.predictions);
@@ -473,7 +473,7 @@ const PredictiveModeling = () => {
       avgAccuracy: fallbackPredictiveModels.reduce((sum, m) => sum + m.accuracy, 0) / fallbackPredictiveModels.length,
       lastUpdate: new Date().toISOString()
     });
-  };
+  }, [fallbackPredictiveModels, selectedModel]);
 
   const trainModel = useCallback(async (modelId) => {
     setIsTraining(true);

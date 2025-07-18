@@ -74,7 +74,7 @@ export const TwinSettings: React.FC<TwinSettingsProps> = ({ twin, onUpdate }) =>
   const { success, error, info } = useToastHelpers();
 
   // Generate comprehensive fallback settings data
-  const generateFallbackSettings = (): TwinSettings => {
+  const generateFallbackSettings = useCallback((): TwinSettings => {
     const now = new Date();
     const createdDate = new Date(now.getTime() - (Math.random() * 90 + 30) * 24 * 60 * 60 * 1000);
     const updatedDate = new Date(now.getTime() - Math.random() * 7 * 24 * 60 * 60 * 1000);
@@ -106,7 +106,7 @@ export const TwinSettings: React.FC<TwinSettingsProps> = ({ twin, onUpdate }) =>
         experimental_features: false
       }
     };
-  };
+  }, [twin]);
 
   // Load twin settings from database
   const loadTwinSettings = useCallback(async () => {
