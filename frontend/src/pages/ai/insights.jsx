@@ -11,12 +11,13 @@ import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { Progress } from '../components/ui/Progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/Tabs';
-import Toast from '../components/ui/Toast';
+import { useToastActions } from '../components/ui/Toast';
 import recommendationEngine from '../services/recommendationEngine';
 import coachingService from '../services/coachingService';
 import apiService from '../services/apiService';
 
 const AiInsightsDashboard = () => {
+  const toast = useToastActions();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
@@ -70,7 +71,7 @@ const AiInsightsDashboard = () => {
 
     } catch (error) {
       console.error('Failed to load AI insights:', error);
-      Toast.error('Failed to load AI insights');
+      toast.error('Failed to load AI insights');
     } finally {
       setLoading(false);
     }
@@ -79,19 +80,19 @@ const AiInsightsDashboard = () => {
   const handleAcceptRecommendation = async (recommendationId) => {
     try {
       await apiService.acceptRecommendation(recommendationId);
-      Toast.success('Recommendation accepted and added to your learning plan');
+      toast.success('Recommendation accepted and added to your learning plan');
       loadAiInsights(); // Refresh data
     } catch (error) {
-      Toast.error('Failed to accept recommendation');
+      toast.error('Failed to accept recommendation');
     }
   };
 
   const handleStartCoachingPlan = async () => {
     try {
       await apiService.startCoachingPlan(coachingPlan.id);
-      Toast.success('Coaching plan started! You\'ll receive daily guidance.');
+      toast.success('Coaching plan started! You\'ll receive daily guidance.');
     } catch (error) {
-      Toast.error('Failed to start coaching plan');
+      toast.error('Failed to start coaching plan');
     }
   };
 

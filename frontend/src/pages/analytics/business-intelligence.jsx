@@ -6,13 +6,13 @@ import {
   MousePointer, Timer, FileText, Search, Settings, Bell, DollarSign,
   PieChart, LineChart, BarChart, TrendingDown, ArrowUpRight, ArrowDownRight
 } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card';
-import { Button } from '../components/ui/Button';
-import { Badge } from '../components/ui/Badge';
-import { Progress } from '../components/ui/Progress';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/Tabs';
-import { useToast } from '../components/ui/Toast';
-import enhancedApiService from '../services/enhancedApiService';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/Card';
+import { Button } from '../../components/ui/Button';
+import { Badge } from '../../components/ui/Badge';
+import { Progress } from '../../components/ui/Progress';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/Tabs';
+import { useToastActions } from '../../components/ui/Toast';
+import enhancedApiService from '../../services/enhancedApiService';
 import { useRouter } from 'next/router';
 import {
   ResponsiveContainer,
@@ -36,7 +36,7 @@ import {
 } from 'recharts';
 
 const BusinessIntelligenceDashboard = () => {
-  const { toast } = useToast();
+  const toast = useToastActions();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('overview');
   const [timeRange, setTimeRange] = useState('30d');

@@ -160,7 +160,7 @@ const IntegrationsPage = () => {
       {
         id: 1,
         connection_id: 1,
-        webhook_url: 'https://api.digame.com/webhooks/slack/1',
+        webhook_url: '/api/webhooks/slack/1',
         events: ['message.posted', 'channel.created', 'user.joined'],
         is_active: true,
         total_triggers: 1847,
@@ -171,7 +171,7 @@ const IntegrationsPage = () => {
       {
         id: 2,
         connection_id: 2,
-        webhook_url: 'https://api.digame.com/webhooks/google/2',
+        webhook_url: '/api/webhooks/google/2',
         events: ['file.created', 'file.modified', 'calendar.event'],
         is_active: true,
         total_triggers: 623,

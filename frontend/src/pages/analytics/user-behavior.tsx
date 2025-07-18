@@ -1,6 +1,6 @@
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import UserBehaviorAnalyticsSection from '../../src/components/analytics/UserBehaviorAnalyticsSection';
+import UserBehaviorAnalyticsSection from '../../components/analytics/UserBehaviorAnalyticsSection';
 
 // Create a query client for this page
 const queryClient = new QueryClient({
@@ -24,7 +24,7 @@ const UserBehaviorAnalyticsPage = () => {
             </p>
           </div>
           
-          <UserBehaviorAnalyticsSection />
+          <UserBehaviorAnalyticsSection data={{}} />
         </div>
       </div>
     </QueryClientProvider>

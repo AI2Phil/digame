@@ -12,11 +12,12 @@ import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { Progress } from '../components/ui/Progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/Tabs';
-import Toast from '../components/ui/Toast';
+import { useToastActions } from '../components/ui/Toast';
 import socialService from '../services/socialService';
 import apiService from '../services/apiService';
 
 const EnhancedSocialCollaborationDashboard = () => {
+  const toast = useToastActions();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('overview');
   const [loading, setLoading] = useState(true);
@@ -65,7 +66,7 @@ const EnhancedSocialCollaborationDashboard = () => {
 
     } catch (error) {
       console.error('Failed to load social collaboration data:', error);
-      Toast.error('Failed to load social collaboration data');
+      toast.error('Failed to load social collaboration data');
     } finally {
       setLoading(false);
     }
@@ -74,20 +75,20 @@ const EnhancedSocialCollaborationDashboard = () => {
   const handleConnectPeer = async (peerId) => {
     try {
       await socialService.sendConnectionRequest(peerId);
-      Toast.success('Connection request sent successfully');
+      toast.success('Connection request sent successfully');
       loadSocialCollaborationData();
     } catch (error) {
-      Toast.error('Failed to send connection request');
+      toast.error('Failed to send connection request');
     }
   };
 
   const handleJoinProject = async (projectId) => {
     try {
       await socialService.joinCollaborationProject(projectId);
-      Toast.success('Successfully joined collaboration project');
+      toast.success('Successfully joined collaboration project');
       loadSocialCollaborationData();
     } catch (error) {
-      Toast.error('Failed to join project');
+      toast.error('Failed to join project');
     }
   };
 
@@ -521,14 +522,14 @@ const MentorshipSection = ({ mentorshipPrograms }) => {
   const handleJoinProgram = async (programId) => {
     try {
       await socialService.joinMentorshipProgram(programId);
-      Toast.success('Successfully joined mentorship program');
+      toast.success('Successfully joined mentorship program');
       // Update local state
       const program = availablePrograms.find(p => p.id === programId);
       if (program) {
         setActivePrograms([...activePrograms, { ...program, status: 'joined' }]);
       }
     } catch (error) {
-      Toast.error('Failed to join mentorship program');
+      toast.error('Failed to join mentorship program');
     }
   };
 

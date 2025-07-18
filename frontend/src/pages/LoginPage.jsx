@@ -4,9 +4,11 @@ import { Eye, EyeOff, Mail, Lock, Github, Chrome } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
+import { useAuth } from '../contexts/AuthContext';
 
 const LoginPage = () => {
   const router = useRouter();
+  const { login, enterDemoMode, isAuthenticated, isLoading: authLoading } = useAuth();
   const [isClient, setIsClient] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
@@ -22,6 +24,13 @@ const LoginPage = () => {
     setIsClient(true);
   }, []);
 
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.push('/dashboard');
+    }
+  }, [isAuthenticated, router]);
+
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData(prev => ({
@@ -36,9 +45,6 @@ const LoginPage = () => {
     setError('');
 
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
       // Platform owner credentials
       const platformOwner = {
         email: 'philip.a.oshea@gmail.com',
@@ -65,47 +71,55 @@ const LoginPage = () => {
         formData.password === cred.password
       );
       
-      if (isPlatformOwner) {
-        // Platform owner login - redirect to platform owner dashboard
-        console.log('Platform owner login successful');
-        if (typeof window !== 'undefined') {
-          window.location.href = '/platform-owner';
-        }
-      } else if (isValidDemo) {
-        // Demo user login - redirect to regular dashboard
-        console.log('Demo user login successful');
-        if (typeof window !== 'undefined') {
-          window.location.href = '/dashboard';
+      if (isPlatformOwner || isValidDemo) {
+        // Use AuthContext login function
+        const loginSuccess = await login({
+          username: formData.email,
+          email: formData.email,
+          password: formData.password,
+          rememberMe: formData.rememberMe
+        });
+
+        if (loginSuccess) {
+          console.log('Login successful via AuthContext');
+          // Redirect based on user type
+          if (isPlatformOwner) {
+            router.push('/platform-owner');
+          } else {
+            router.push('/dashboard');
+          }
+        } else {
+          setError('Login failed. Please check your credentials and try again.');
         }
       } else {
         console.log('Login failed - credentials:', { email: formData.email, password: formData.password });
         setError('Invalid credentials. Please use your platform owner account or one of the demo accounts shown above.');
       }
     } catch (err) {
+      console.error('Login error:', err);
       setError('Login failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Handle direct demo user login (no authentication required)
+  // Handle direct demo user login using AuthContext
   const handleDemoLogin = async (demoUser) => {
     if (!isClient) return;
     setIsLoading(true);
     
     try {
-      // Simulate loading
-      await new Promise(resolve => setTimeout(resolve, 800));
+      console.log('Demo login initiated for:', demoUser);
       
-      // Redirect based on demo user type
-      if (typeof window !== 'undefined') {
-        if (demoUser === 'guest') {
-          window.location.href = '/dashboard?demo=guest';
-        } else {
-          window.location.href = '/dashboard?demo=' + demoUser;
-        }
-      }
+      // Use AuthContext enterDemoMode function
+      await enterDemoMode();
+      
+      console.log('Demo mode activated successfully');
+      
+      // Navigate to dashboard
+      router.push('/dashboard');
     } catch (err) {
+      console.error('Demo login error:', err);
       setError('Demo login failed. Please try again.');
     } finally {
       setIsLoading(false);
@@ -294,9 +308,9 @@ const LoginPage = () => {
               <button
                 type="submit"
                 className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                disabled={isLoading}
+                disabled={isLoading || authLoading}
               >
-                {isLoading ? 'Signing in...' : 'Sign In'}
+                {(isLoading || authLoading) ? 'Signing in...' : 'Sign In'}
               </button>
             </form>
 

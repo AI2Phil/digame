@@ -3,14 +3,14 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { SnackbarProvider } from 'notistack';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
-import { DashboardBuilder } from '../../src/components/analytics/DashboardBuilder';
+import { DashboardBuilder } from '../../components/analytics/DashboardBuilder';
 
 // Create a client
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 5 * 60 * 1000, // 5 minutes
-      cacheTime: 10 * 60 * 1000, // 10 minutes
+      gcTime: 10 * 60 * 1000, // 10 minutes
     },
   },
 });

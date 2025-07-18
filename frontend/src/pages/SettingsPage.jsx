@@ -18,9 +18,11 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Badge } from '../components/ui/Badge';
 import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/Avatar';
 import { Progress } from '../components/ui/Progress';
-import { useToast } from '../components/ui/Toast';
+import { useToastActions } from '../components/ui/Toast';
+import apiService from '../services/apiService';
 
 const SettingsPage = () => {
+  const toast = useToastActions();
   const [settings, setSettings] = useState({
     // Profile Settings
     profile: {
@@ -99,9 +101,9 @@ const SettingsPage = () => {
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1500));
       setHasChanges(false);
-      // toast.success('Settings saved successfully');
+      toast.success('Settings saved successfully');
     } catch (error) {
-      // toast.error('Failed to save settings');
+      toast.error('Failed to save settings');
     } finally {
       setIsLoading(false);
     }
@@ -131,17 +133,11 @@ const SettingsPage = () => {
   const fetchApiKeys = async () => {
     setIsLoadingApiKeys(true);
     try {
-      const response = await fetch('/api/settings/api-keys', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setApiKeys(data.api_keys || {});
-      }
+      const data = await apiService.getApiKeys();
+      setApiKeys(data.api_keys || {});
     } catch (error) {
       console.error('Failed to fetch API keys:', error);
+      toast.error('Failed to load API keys');
     } finally {
       setIsLoadingApiKeys(false);
     }
@@ -152,22 +148,16 @@ const SettingsPage = () => {
     
     setIsLoadingApiKeys(true);
     try {
-      const updatedKeys = { ...apiKeys, [newApiKey.name]: newApiKey.value };
-      const response = await fetch('/api/settings/api-keys', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify({ api_keys: updatedKeys })
-      });
-      
-      if (response.ok) {
+      const result = await apiService.addApiKey(newApiKey.name, newApiKey.value);
+      if (result.success) {
+        const updatedKeys = { ...apiKeys, [newApiKey.name]: newApiKey.value };
         setApiKeys(updatedKeys);
         setNewApiKey({ name: '', value: '' });
+        toast.success('API key added successfully');
       }
     } catch (error) {
       console.error('Failed to add API key:', error);
+      toast.error('Failed to add API key');
     } finally {
       setIsLoadingApiKeys(false);
     }
@@ -176,20 +166,16 @@ const SettingsPage = () => {
   const deleteApiKey = async (keyName) => {
     setIsLoadingApiKeys(true);
     try {
-      const response = await fetch(`/api/settings/api-keys/${keyName}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-      
-      if (response.ok) {
+      const result = await apiService.deleteApiKey(keyName);
+      if (result.success) {
         const updatedKeys = { ...apiKeys };
         delete updatedKeys[keyName];
         setApiKeys(updatedKeys);
+        toast.success('API key deleted successfully');
       }
     } catch (error) {
       console.error('Failed to delete API key:', error);
+      toast.error('Failed to delete API key');
     } finally {
       setIsLoadingApiKeys(false);
     }
@@ -204,7 +190,7 @@ const SettingsPage = () => {
 
   const copyApiKey = (value) => {
     navigator.clipboard.writeText(value);
-    // toast.success('API key copied to clipboard');
+    toast.success('API key copied to clipboard');
   };
 
   const maskApiKey = (key) => {

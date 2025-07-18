@@ -2,11 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import OnboardingWizard from '../components/onboarding/OnboardingWizard';
 import { useAuth } from '../contexts/AuthContext';
-import Toast from '../components/ui/Toast';
+import { useToastActions } from '../components/ui/Toast';
 import { Button } from '../components/ui/Button';
 import { Alert, AlertDescription } from '../components/ui/Alert';
 
 const OnboardingPage = () => {
+  const toast = useToastActions();
   const router = useRouter();
   const { user, updateProfile, isDemoMode } = useAuth();
   const [loading, setLoading] = useState(true);
@@ -127,7 +128,7 @@ const OnboardingPage = () => {
 
       if (success) {
         // Show success message
-        Toast.success('Welcome to Digame! Your account is now set up.');
+        toast.success('Welcome to Digame! Your account is now set up.');
         
         console.log('Onboarding completed successfully, navigating to dashboard...');
         
@@ -138,7 +139,7 @@ const OnboardingPage = () => {
       } else {
         // If all approaches fail, still allow navigation but show warning
         console.warn('Onboarding data save failed, but allowing navigation to dashboard');
-        Toast.success('Welcome to Digame! Setup completed with default settings.');
+        toast.success('Welcome to Digame! Setup completed with default settings.');
         
         setTimeout(() => {
           router.push('/dashboard', { replace: true });
@@ -195,7 +196,7 @@ const OnboardingPage = () => {
       const success = await updateProfile(defaultProfileUpdates);
       
       if (success) {
-        Toast.success('Welcome to Digame! Default setup completed.');
+        toast.success('Welcome to Digame! Default setup completed.');
         router.push('/dashboard', { replace: true });
       } else {
         throw new Error('Failed to save default settings');

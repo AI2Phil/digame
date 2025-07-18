@@ -3,6 +3,12 @@ import { useEffect, useCallback } from 'react';
 export const usePerformanceOptimization = () => {
   // Preload critical resources
   const preloadCriticalResources = useCallback(() => {
+    // Skip resource preloading in development to avoid 404 errors
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Skipping resource preloading in development mode');
+      return;
+    }
+
     const criticalResources = [
       '/fonts/inter-var.woff2',
       '/icons/icon-192x192.png',
@@ -69,7 +75,13 @@ export const usePerformanceOptimization = () => {
 
   // Optimize third-party scripts
   const optimizeThirdPartyScripts = useCallback(() => {
-    // Defer non-critical scripts
+    // Skip third-party scripts in development environment
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Skipping third-party scripts in development mode');
+      return;
+    }
+    
+    // Defer non-critical scripts (only in production)
     const deferredScripts = [
       'https://www.googletagmanager.com/gtag/js',
       'https://connect.facebook.net/en_US/fbevents.js'
@@ -88,10 +100,16 @@ export const usePerformanceOptimization = () => {
   const addResourceHints = useCallback(() => {
     const hints = [
       { rel: 'dns-prefetch', href: '//fonts.googleapis.com' },
-      { rel: 'dns-prefetch', href: '//www.google-analytics.com' },
-      { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossOrigin: 'anonymous' },
-      { rel: 'preconnect', href: 'https://api.digame.com', crossOrigin: 'anonymous' }
+      { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossOrigin: 'anonymous' }
     ];
+
+    // Only add external API hints in production
+    if (process.env.NODE_ENV === 'production') {
+      hints.push(
+        { rel: 'dns-prefetch', href: '//www.google-analytics.com' },
+        { rel: 'preconnect', href: 'https://api.digame.com', crossOrigin: 'anonymous' }
+      );
+    }
 
     hints.forEach(hint => {
       const link = document.createElement('link');

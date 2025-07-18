@@ -8,7 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/Avatar';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import apiService from '../services/apiService';
-import Toast from '../components/ui/Toast';
+import { useToastActions } from '../components/ui/Toast';
 
 // Import display cards if they exist
 // import ProjectDisplayCard from '../components/profile/ProjectDisplayCard';
@@ -16,6 +16,7 @@ import Toast from '../components/ui/Toast';
 // import EducationDisplayCard from '../components/profile/EducationDisplayCard';
 
 const UserProfileOverviewPage = () => {
+  const toast = useToastActions();
   const router = useRouter();
   const { userId } = router.query;
   const [profileData, setProfileData] = useState(null);
@@ -40,7 +41,7 @@ const UserProfileOverviewPage = () => {
       } catch (err) {
         console.error('Failed to load user profile:', err);
         setError(err.message || 'Failed to load profile data.');
-        Toast.error(err.message || 'Failed to load profile data.');
+        toast.error(err.message || 'Failed to load profile data.');
       } finally {
         setLoading(false);
       }
@@ -59,13 +60,13 @@ const UserProfileOverviewPage = () => {
           ...prevData,
           kudos_count: response.kudos_count
         }));
-        Toast.success(response.message || 'Kudos given successfully!');
+        toast.success(response.message || 'Kudos given successfully!');
       } else {
-        Toast.error('Could not update kudos count, unexpected response.');
+        toast.error('Could not update kudos count, unexpected response.');
       }
     } catch (err) {
       console.error('Failed to give kudos:', err);
-      Toast.error(err.message || 'Failed to give kudos.');
+      toast.error(err.message || 'Failed to give kudos.');
     } finally {
       setKudosLoading(false);
     }

@@ -6,19 +6,19 @@ import {
   Monitor, Smartphone, Globe, RefreshCw,
   Download, Filter, Calendar, Eye, Target, Home
 } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card';
-import { Button } from '../components/ui/Button';
-import { Badge } from '../components/ui/Badge';
-import { Progress } from '../components/ui/Progress';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/Tabs';
-import Toast from '../components/ui/Toast';
-import { Select } from '../components/ui/Select'; // Added import
-import apiService from '../services/apiService';
-import PerformanceMonitoringSection from '../components/analytics/PerformanceMonitoringSection';
-import UserBehaviorAnalyticsSection from '../components/analytics/UserBehaviorAnalyticsSection';
-import ApiAnalyticsSection from '../components/analytics/ApiAnalyticsSection';
-import MobileAnalyticsSection from '../components/analytics/MobileAnalyticsSection';
-import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '../components/ui/Resizable'; // Import Resizable components
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/Card';
+import { Button } from '../../components/ui/Button';
+import { Badge } from '../../components/ui/Badge';
+import { Progress } from '../../components/ui/Progress';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/Tabs';
+import { useToastActions } from '../../components/ui/Toast';
+import { Select } from '../../components/ui/Select'; // Added import
+import apiService from '../../services/apiService';
+import PerformanceMonitoringSection from '../../components/analytics/PerformanceMonitoringSection';
+import UserBehaviorAnalyticsSection from '../../components/analytics/UserBehaviorAnalyticsSection';
+import ApiAnalyticsSection from '../../components/analytics/ApiAnalyticsSection';
+import MobileAnalyticsSection from '../../components/analytics/MobileAnalyticsSection';
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '../../components/ui/Resizable'; // Import Resizable components
 
 const AnalyticsDashboardPage = () => {
   const router = useRouter();
@@ -58,7 +58,7 @@ const AnalyticsDashboardPage = () => {
       });
     } catch (error) {
       console.error('Failed to load analytics data:', error);
-      Toast.error('Failed to load analytics data');
+      toast.error('Failed to load analytics data');
     } finally {
       setLoading(false);
     }
@@ -68,15 +68,15 @@ const AnalyticsDashboardPage = () => {
     setRefreshing(true);
     await loadAnalyticsData();
     setRefreshing(false);
-    Toast.success('Analytics data refreshed');
+    toast.success('Analytics data refreshed');
   };
 
   const handleExport = async () => {
     try {
       await apiService.exportAnalyticsData(timeRange);
-      Toast.success('Analytics data exported successfully');
+      toast.success('Analytics data exported successfully');
     } catch (error) {
-      Toast.error('Failed to export analytics data');
+      toast.error('Failed to export analytics data');
     }
   };
 

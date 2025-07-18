@@ -6,17 +6,18 @@ import {
   Settings, Bell, Eye, BarChart3,
   Mic, RefreshCw, Brain, Target, Home
 } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card';
-import { Button } from '../components/ui/Button';
-import { Badge } from '../components/ui/Badge';
-import { Progress } from '../components/ui/Progress';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/Tabs';
-import Toast from '../components/ui/Toast';
-import advancedMobileService from '../services/advancedMobileService';
-import apiService from '../services/apiService';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/Card';
+import { Button } from '../../components/ui/Button';
+import { Badge } from '../../components/ui/Badge';
+import { Progress } from '../../components/ui/Progress';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/Tabs';
+import { useToastActions } from '../../components/ui/Toast';
+import advancedMobileService from '../../services/advancedMobileService';
+import apiService from '../../services/apiService';
 
 const MobileAnalyticsDashboard = () => {
   const router = useRouter();
+  const toast = useToastActions();
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
   const [mobileAnalytics, setMobileAnalytics] = useState({});
@@ -62,7 +63,7 @@ const MobileAnalyticsDashboard = () => {
 
     } catch (error) {
       console.error('Failed to load mobile analytics:', error);
-      Toast.error('Failed to load mobile analytics');
+      toast.error('Failed to load mobile analytics');
     } finally {
       setLoading(false);
     }
@@ -76,27 +77,27 @@ const MobileAnalyticsDashboard = () => {
       await apiService.updateBackgroundSyncStatus(userId, { enabled: newStatus });
       setBackgroundSyncStatus(prev => ({ ...prev, enabled: newStatus }));
       
-      Toast.success(`Background sync ${newStatus ? 'enabled' : 'disabled'}`);
+      toast.success(`Background sync ${newStatus ? 'enabled' : 'disabled'}`);
     } catch (error) {
-      Toast.error('Failed to update background sync settings');
+      toast.error('Failed to update background sync settings');
     }
   };
 
   const handleStartVoiceRecognition = async () => {
     try {
       await advancedMobileService.startVoiceRecognition();
-      Toast.success('Voice recognition started. Say a command!');
+      toast.success('Voice recognition started. Say a command!');
     } catch (error) {
-      Toast.error('Failed to start voice recognition');
+      toast.error('Failed to start voice recognition');
     }
   };
 
   const handleStopVoiceRecognition = async () => {
     try {
       await advancedMobileService.stopVoiceRecognition();
-      Toast.success('Voice recognition stopped');
+      toast.success('Voice recognition stopped');
     } catch (error) {
-      Toast.error('Failed to stop voice recognition');
+      toast.error('Failed to stop voice recognition');
     }
   };
 
@@ -104,10 +105,10 @@ const MobileAnalyticsDashboard = () => {
     try {
       const userId = localStorage.getItem('userId');
       await advancedMobileService.processAiNotifications();
-      Toast.success('Notification timing optimized based on your behavior patterns');
+      toast.success('Notification timing optimized based on your behavior patterns');
       loadMobileAnalytics(); // Refresh data
     } catch (error) {
-      Toast.error('Failed to optimize notifications');
+      toast.error('Failed to optimize notifications');
     }
   };
 

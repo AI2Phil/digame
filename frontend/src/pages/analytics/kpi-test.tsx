@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, Typography, Grid, Container, Card, CardContent } from '@mui/material';
-import { KPICard } from '../../src/components/analytics/widgets/KPICard';
+import { KPICard } from '../../components/analytics/widgets/KPICard';
 
 const KPITestPage = () => {
   // Sample KPI data for testing different scenarios
@@ -11,13 +11,13 @@ const KPITestPage = () => {
         value: 45750.50,
         previous_value: 42300.00,
         change_percent: 8.2,
-        trend: "up",
-        status: "excellent",
+        trend: "up" as const,
+        status: "excellent" as const,
         target_value: 50000,
         unit: "USD"
       },
       options: {
-        format: "currency",
+        format: "currency" as const,
         currency: "$",
         decimals: 2,
         show_trend: true,
@@ -31,12 +31,12 @@ const KPITestPage = () => {
         value: 12847,
         previous_value: 11950,
         change_percent: 7.5,
-        trend: "up",
-        status: "good",
+        trend: "up" as const,
+        status: "good" as const,
         target_value: 15000
       },
       options: {
-        format: "number",
+        format: "number" as const,
         decimals: 0,
         show_trend: true,
         show_progress: true
@@ -48,12 +48,12 @@ const KPITestPage = () => {
         value: 3.42,
         previous_value: 3.18,
         change_percent: 7.5,
-        trend: "up",
-        status: "excellent",
+        trend: "up" as const,
+        status: "excellent" as const,
         target_value: 4.0
       },
       options: {
-        format: "percentage",
+        format: "percentage" as const,
         decimals: 2,
         show_trend: true,
         show_progress: true
@@ -65,13 +65,13 @@ const KPITestPage = () => {
         value: 4.7,
         previous_value: 4.5,
         change_percent: 4.4,
-        trend: "up",
-        status: "excellent",
+        trend: "up" as const,
+        status: "excellent" as const,
         target_value: 5.0,
         unit: "out of 5"
       },
       options: {
-        format: "number",
+        format: "number" as const,
         decimals: 1,
         show_trend: true,
         show_progress: true
@@ -83,12 +83,12 @@ const KPITestPage = () => {
         value: 2.1,
         previous_value: 2.8,
         change_percent: -25.0,
-        trend: "down",
-        status: "excellent",
+        trend: "down" as const,
+        status: "excellent" as const,
         target_value: 2.0
       },
       options: {
-        format: "percentage",
+        format: "percentage" as const,
         decimals: 1,
         show_trend: true,
         show_progress: true
@@ -100,12 +100,12 @@ const KPITestPage = () => {
         value: 99.97,
         previous_value: 99.85,
         change_percent: 0.12,
-        trend: "up",
-        status: "excellent",
+        trend: "up" as const,
+        status: "excellent" as const,
         target_value: 99.9
       },
       options: {
-        format: "percentage",
+        format: "percentage" as const,
         decimals: 2,
         show_trend: true,
         show_progress: true
@@ -117,12 +117,12 @@ const KPITestPage = () => {
         value: 23,
         previous_value: 31,
         change_percent: -25.8,
-        trend: "down",
-        status: "good",
+        trend: "down" as const,
+        status: "good" as const,
         target_value: 20
       },
       options: {
-        format: "number",
+        format: "number" as const,
         decimals: 0,
         show_trend: true,
         show_progress: true
@@ -134,13 +134,13 @@ const KPITestPage = () => {
         value: 145,
         previous_value: 167,
         change_percent: -13.2,
-        trend: "down",
-        status: "good",
+        trend: "down" as const,
+        status: "good" as const,
         target_value: 120,
         unit: "ms"
       },
       options: {
-        format: "number",
+        format: "number" as const,
         decimals: 0,
         show_trend: true,
         show_progress: true

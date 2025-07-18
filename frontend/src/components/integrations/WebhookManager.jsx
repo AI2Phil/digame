@@ -77,7 +77,7 @@ const WebhookManager = ({ connectionId, connectionName }) => {
         {
           id: 1,
           connection_id: connectionId,
-          webhook_url: 'https://api.digame.com/webhooks/slack/1',
+          webhook_url: '/api/webhooks/slack/1',
           events: ['message.posted', 'channel.created', 'user.joined'],
           webhook_secret: 'wh_secret_123',
           is_active: true,
