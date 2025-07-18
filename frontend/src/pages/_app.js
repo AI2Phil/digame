@@ -6,14 +6,17 @@ import { ThemeProvider } from '../contexts/ThemeContext';
 import { ToastProvider } from '../components/ui/Toast';
 import { AuthProvider } from '../contexts/AuthContext';
 import WebVitalsReporter from '../components/performance/WebVitalsReporter';
-import { usePerformanceOptimization } from '../hooks/usePerformanceOptimization';
 import { useEffect } from 'react';
 import { appWithTranslation } from 'next-i18next';
+import dynamic from 'next/dynamic';
+
+// Dynamically import performance optimization component (client-side only)
+const PerformanceOptimizer = dynamic(
+  () => import('../components/performance/PerformanceOptimizer'),
+  { ssr: false }
+);
 
 function AppWithPerformance({ Component, pageProps }) {
-  // Initialize performance optimizations
-  usePerformanceOptimization();
-
   // Add performance monitoring
   useEffect(() => {
     // Monitor performance metrics
@@ -59,6 +62,7 @@ function AppWithPerformance({ Component, pageProps }) {
         <ToastProvider>
           <div className="App">
             <WebVitalsReporter />
+            <PerformanceOptimizer />
             <Component {...pageProps} />
           </div>
         </ToastProvider>
