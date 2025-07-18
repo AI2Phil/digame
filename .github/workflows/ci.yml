@@ -272,6 +272,21 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_DB: backend_test_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -319,12 +334,23 @@ jobs:
           npm test --silent || echo "⚠️ Some backend tests failed but continuing"
         fi
 
-    - name: Ensure SQLite directory exists
-      working-directory: ./backend
+    - name: Wait for PostgreSQL to be ready
       run: |
-        echo "📁 Creating SQLite database directory..."
-        mkdir -p ./data
-        ls -la ./data || echo "Directory created successfully"
+        echo "⏳ Waiting for PostgreSQL..."
+        for i in {1..20}; do
+          if pg_isready -h localhost -p 5432 -U postgres; then
+            echo "✅ PostgreSQL is ready"
+            break
+          fi
+          echo "Attempt $i/20 - PostgreSQL not ready yet..."
+          sleep 2
+        done
+        
+        # Verify PostgreSQL is accessible
+        if ! pg_isready -h localhost -p 5432 -U postgres; then
+          echo "❌ PostgreSQL failed to start"
+          exit 1
+        fi
 
     - name: Verify backend server can start
       working-directory: ./backend
@@ -332,7 +358,7 @@ jobs:
         NODE_ENV: production
         PORT: ${{ env.BACKEND_PORT }}
         NODE_OPTIONS: ${{ env.NODE_OPTIONS }}
-        DATABASE_URL: sqlite:./data/test.db
+        DATABASE_URL: postgres://postgres:postgres@localhost:5432/backend_test_db
       run: |
         echo "🚀 Verifying backend server can start on port $BACKEND_PORT..."
         timeout 10s npm start &
@@ -359,22 +385,20 @@ jobs:
         browser: [chromium, firefox, webkit]
       fail-fast: false  # Continue testing other browsers even if one fails
     
-    # Note: PostgreSQL service removed since Node.js backend doesn't require it
-    # If database is needed later, uncomment the services section below:
-    # services:
-    #   postgres:
-    #     image: postgres:15
-    #     env:
-    #       POSTGRES_PASSWORD: postgres
-    #       POSTGRES_USER: postgres
-    #       POSTGRES_DB: e2e_test_db
-    #     options: >-
-    #       --health-cmd pg_isready
-    #       --health-interval 10s
-    #       --health-timeout 5s
-    #       --health-retries 5
-    #     ports:
-    #       - 5432:5432
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_DB: e2e_test_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
 
     steps:
     - name: Checkout code
@@ -478,15 +502,33 @@ jobs:
         echo "✅ SQLite directory created: $(pwd)/data"
         ls -la ./data || echo "Directory ready for database files"
 
+    - name: Wait for PostgreSQL to be ready
+      run: |
+        echo "⏳ Waiting for PostgreSQL..."
+        for i in {1..20}; do
+          if pg_isready -h localhost -p 5432 -U postgres; then
+            echo "✅ PostgreSQL is ready"
+            break
+          fi
+          echo "Attempt $i/20 - PostgreSQL not ready yet..."
+          sleep 2
+        done
+        
+        # Verify PostgreSQL is accessible
+        if ! pg_isready -h localhost -p 5432 -U postgres; then
+          echo "❌ PostgreSQL failed to start"
+          exit 1
+        fi
+
     - name: Start backend server
       env:
         NODE_ENV: production
         PORT: ${{ env.BACKEND_PORT }}
         TESTING: true
         NODE_OPTIONS: ${{ env.NODE_OPTIONS }}
-        DATABASE_URL: sqlite:./data/e2e_test.db
+        DATABASE_URL: postgres://postgres:postgres@localhost:5432/e2e_test_db
       run: |
-        # Use Node.js Express backend instead of Python FastAPI
+        # Use Node.js Express backend with PostgreSQL
         echo "🚀 Starting Node.js Express backend server on port $BACKEND_PORT..."
         cd backend
         npm ci --prefer-offline --no-audit
@@ -795,6 +837,21 @@ jobs:
     if: always() && github.ref == 'refs/heads/main' && (needs.e2e-test.result == 'success')
     timeout-minutes: 20
     
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_DB: performance_test_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -823,12 +880,23 @@ jobs:
         name: frontend-build-${{ github.run_id }}
         path: frontend/.next/
 
-    - name: Setup SQLite database for performance testing
-      working-directory: ./backend
+    - name: Wait for PostgreSQL to be ready
       run: |
-        echo "🗄️ Setting up SQLite database for performance testing..."
-        mkdir -p ./data
-        echo "✅ SQLite directory created for performance tests"
+        echo "⏳ Waiting for PostgreSQL..."
+        for i in {1..20}; do
+          if pg_isready -h localhost -p 5432 -U postgres; then
+            echo "✅ PostgreSQL is ready"
+            break
+          fi
+          echo "Attempt $i/20 - PostgreSQL not ready yet..."
+          sleep 2
+        done
+        
+        # Verify PostgreSQL is accessible
+        if ! pg_isready -h localhost -p 5432 -U postgres; then
+          echo "❌ PostgreSQL failed to start"
+          exit 1
+        fi
 
     - name: Run performance tests
       env:
@@ -836,7 +904,7 @@ jobs:
         FRONTEND_PORT: ${{ env.FRONTEND_PORT }}
         BACKEND_PORT: ${{ env.BACKEND_PORT }}
         NODE_OPTIONS: ${{ env.NODE_OPTIONS }}
-        DATABASE_URL: sqlite:./data/performance_test.db
+        DATABASE_URL: postgres://postgres:postgres@localhost:5432/performance_test_db
       run: |
         # Start services for performance testing
         cd frontend

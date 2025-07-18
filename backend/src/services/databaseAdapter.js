@@ -8,9 +8,32 @@ const path = require('path');
  */
 class DatabaseAdapter {
     constructor() {
-        this.type = process.env.DATABASE_URL ? 'postgresql' : 'sqlite';
+        // Properly detect database type based on DATABASE_URL format
+        this.type = this.detectDatabaseType();
         this.connection = null;
         this.initializeConnection();
+    }
+
+    detectDatabaseType() {
+        const databaseUrl = process.env.DATABASE_URL;
+        
+        if (!databaseUrl) {
+            return 'sqlite';
+        }
+        
+        // Check if it's a SQLite connection string
+        if (databaseUrl.startsWith('sqlite:') || databaseUrl.includes('.db')) {
+            return 'sqlite';
+        }
+        
+        // Check if it's a PostgreSQL connection string
+        if (databaseUrl.startsWith('postgres://') || databaseUrl.startsWith('postgresql://')) {
+            return 'postgresql';
+        }
+        
+        // Default to SQLite for safety
+        console.warn(`⚠️ Unknown DATABASE_URL format: ${databaseUrl}. Defaulting to SQLite.`);
+        return 'sqlite';
     }
 
     initializeConnection() {
