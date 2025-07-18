@@ -25,11 +25,11 @@ import {
   Download,
   Upload,
 } from 'lucide-react';
-import { Button } from '../components/ui/Button';
-import { Badge } from '../components/ui/Badge';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card';
-import { Progress } from '../components/ui/Progress';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/Tabs';
+import { Button } from '../../components/ui/Button';
+import { Badge } from '../../components/ui/Badge';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/Card';
+import { Progress } from '../../components/ui/Progress';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/Tabs';
 import {
   Dialog,
   DialogContent,
@@ -37,7 +37,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '../components/ui/Dialog';
+} from '../../components/ui/Dialog';
 
 const PlatformOwnerTenantsPage = () => {
   const [tenants, setTenants] = useState([]);

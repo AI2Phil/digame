@@ -32,14 +32,14 @@ import {
   Lock,
   Unlock,
 } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card';
-import { Button } from '../components/ui/Button';
-import { Input } from '../components/ui/Input';
-import { Table } from '../components/ui/Table';
-import { Progress } from '../components/ui/Progress';
-import { Avatar } from '../components/ui/Avatar';
-import { Badge } from '../components/ui/Badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/Tabs';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/Card';
+import { Button } from '../../components/ui/Button';
+import { Input } from '../../components/ui/Input';
+import { Table } from '../../components/ui/Table';
+import { Progress } from '../../components/ui/Progress';
+import { Avatar } from '../../components/ui/Avatar';
+import { Badge } from '../../components/ui/Badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/Tabs';
 import {
   Dialog,
   DialogContent,
@@ -47,14 +47,14 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '../components/ui/Dialog';
-import { useToast } from '../components/ui/Toast';
-import enhancedApiService from '../services/enhancedApiService';
-import UserManagementSection from '../components/admin/UserManagementSection';
-import SystemAnalyticsSection from '../components/admin/SystemAnalyticsSection';
-import ApiKeyManagementSection from '../components/admin/ApiKeyManagementSection';
-import OnboardingAnalyticsSection from '../components/admin/OnboardingAnalyticsSection';
-import UserDetailsDialog from '../components/admin/UserDetailsDialog';
+} from '../../components/ui/Dialog';
+import { useToast } from '../../components/ui/Toast';
+import enhancedApiService from '../../services/enhancedApiService';
+import UserManagementSection from '../../components/admin/UserManagementSection';
+import SystemAnalyticsSection from '../../components/admin/SystemAnalyticsSection';
+import ApiKeyManagementSection from '../../components/admin/ApiKeyManagementSection';
+import OnboardingAnalyticsSection from '../../components/admin/OnboardingAnalyticsSection';
+import UserDetailsDialog from '../../components/admin/UserDetailsDialog';
 
 const AdminDashboardPage = () => {
   const router = useRouter();
