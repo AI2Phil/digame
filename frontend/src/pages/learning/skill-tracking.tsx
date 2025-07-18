@@ -1,0 +1,11 @@
+import React from 'react';
+import { Container } from '@mui/material';
+import SkillTracking from '../../src/components/learning/SkillTracking';
+
+export default const SkillTrackingPage: React.FC = () => {
+  return (
+    <Container maxWidth="xl" sx={{ py: 4 }}>
+      <SkillTracking />
+    </Container>
+  );
+}

@@ -1,49 +1,61 @@
 const fs = require('fs');
 const path = require('path');
 
-// Define the social networking pages to restore (excluding forums.js which already exists)
-const socialPages = [
+// Define the learning & development pages to restore
+const learningPages = [
   {
-    source: 'frontend/pages_archived_20250717_193641/social/index.js',
-    target: 'frontend/src/pages/social/collaboration.tsx',
-    route: '/social/collaboration',
-    title: 'Social Collaboration Dashboard'
+    source: 'frontend/pages_archived_20250717_193641/learning/index.js',
+    target: 'frontend/src/pages/learning/index.tsx',
+    route: '/learning',
+    title: 'Learning Dashboard'
   },
   {
-    source: 'frontend/pages_archived_20250717_193641/social/peer-matching.js',
-    target: 'frontend/src/pages/social/peer-matching.tsx',
-    route: '/social/peer-matching',
-    title: 'Peer Matching'
+    source: 'frontend/pages_archived_20250717_193641/learning/paths.js',
+    target: 'frontend/src/pages/learning/paths.tsx',
+    route: '/learning/paths',
+    title: 'Learning Paths'
   },
   {
-    source: 'frontend/pages_archived_20250717_193641/social/network.js',
-    target: 'frontend/src/pages/social/network.tsx',
-    route: '/social/network',
-    title: 'Professional Network'
+    source: 'frontend/pages_archived_20250717_193641/learning/skills-assessment.js',
+    target: 'frontend/src/pages/learning/skills-assessment.tsx',
+    route: '/learning/skills-assessment',
+    title: 'Skills Assessment'
   },
   {
-    source: 'frontend/pages_archived_20250717_193641/social/mentorship.js',
-    target: 'frontend/src/pages/social/mentorship.tsx',
-    route: '/social/mentorship',
-    title: 'Mentorship Hub'
+    source: 'frontend/pages_archived_20250717_193641/learning/courses.js',
+    target: 'frontend/src/pages/learning/courses.tsx',
+    route: '/learning/courses',
+    title: 'Course Catalog'
   },
   {
-    source: 'frontend/pages_archived_20250717_193641/social/learning-partners.js',
-    target: 'frontend/src/pages/social/learning-partners.tsx',
-    route: '/social/learning-partners',
-    title: 'Learning Partners'
+    source: 'frontend/pages_archived_20250717_193641/learning/ai-assistant.js',
+    target: 'frontend/src/pages/learning/ai-assistant.tsx',
+    route: '/learning/ai-assistant',
+    title: 'AI Learning Assistant'
   },
   {
-    source: 'frontend/pages_archived_20250717_193641/social/events.js',
-    target: 'frontend/src/pages/social/events.tsx',
-    route: '/social/events',
-    title: 'Networking Events'
+    source: 'frontend/pages_archived_20250717_193641/learning/language.js',
+    target: 'frontend/src/pages/learning/language.tsx',
+    route: '/learning/language',
+    title: 'Language Learning'
   },
   {
-    source: 'frontend/pages_archived_20250717_193641/social/analytics.js',
-    target: 'frontend/src/pages/social/analytics.tsx',
-    route: '/social/analytics',
-    title: 'Social Analytics'
+    source: 'frontend/pages_archived_20250717_193641/learning/skill-tracking.js',
+    target: 'frontend/src/pages/learning/skill-tracking.tsx',
+    route: '/learning/skill-tracking',
+    title: 'Skill Tracking'
+  },
+  {
+    source: 'frontend/pages_archived_20250717_193641/learning/analytics.js',
+    target: 'frontend/src/pages/learning/analytics.tsx',
+    route: '/learning/analytics',
+    title: 'Learning Analytics'
+  },
+  {
+    source: 'frontend/pages_archived_20250717_193641/learning/certifications.js',
+    target: 'frontend/src/pages/learning/certifications.tsx',
+    route: '/learning/certifications',
+    title: 'Certification Hub'
   }
 ];
 
@@ -137,15 +149,15 @@ function ensureDirectoryExists(filePath) {
 }
 
 // Main restoration function
-function restoreSocialPages() {
-  console.log('🚀 Starting Social Networking pages restoration...\n');
+function restoreLearningPages() {
+  console.log('🚀 Starting Learning & Development pages restoration...\n');
   
   let successCount = 0;
   let errorCount = 0;
   
-  socialPages.forEach((page, index) => {
+  learningPages.forEach((page, index) => {
     try {
-      console.log(`📄 Processing ${index + 1}/${socialPages.length}: ${page.title}`);
+      console.log(`📄 Processing ${index + 1}/${learningPages.length}: ${page.title}`);
       console.log(`   Source: ${page.source}`);
       console.log(`   Target: ${page.target}`);
       console.log(`   Route: ${page.route}`);
@@ -185,22 +197,21 @@ function restoreSocialPages() {
   // Summary
   console.log('📊 RESTORATION SUMMARY');
   console.log('========================');
-  console.log(`✅ Successfully restored: ${successCount}/${socialPages.length} pages`);
-  console.log(`❌ Errors encountered: ${errorCount}/${socialPages.length} pages`);
-  console.log(`📁 Target directory: frontend/src/pages/social/`);
-  console.log(`🎯 Routes created: /social/collaboration, /social/peer-matching, /social/network, /social/mentorship, /social/learning-partners, /social/events, /social/analytics`);
-  console.log(`📝 Note: /social/forums already exists and was not modified`);
+  console.log(`✅ Successfully restored: ${successCount}/${learningPages.length} pages`);
+  console.log(`❌ Errors encountered: ${errorCount}/${learningPages.length} pages`);
+  console.log(`📁 Target directory: frontend/src/pages/learning/`);
+  console.log(`🎯 Routes created: /learning, /learning/paths, /learning/skills-assessment, /learning/courses, /learning/ai-assistant, /learning/language, /learning/skill-tracking, /learning/analytics, /learning/certifications`);
   
-  if (successCount === socialPages.length) {
-    console.log('\n🎉 SUCCESS: All Social Networking pages restored successfully!');
+  if (successCount === learningPages.length) {
+    console.log('\n🎉 SUCCESS: All Learning & Development pages restored successfully!');
     console.log('📋 Next steps:');
     console.log('   1. Test the restored pages in the browser');
-    console.log('   2. Update ROUTING_AUDIT.md to mark Section 7 as completed');
-    console.log('   3. Proceed to Section 8: Learning & Development restoration');
+    console.log('   2. Update ROUTING_AUDIT.md to mark Section 8 as completed');
+    console.log('   3. Proceed to Section 9: Team Collaboration restoration');
   } else {
     console.log('\n⚠️  Some pages had errors. Please review the output above.');
   }
 }
 
 // Run the restoration
-restoreSocialPages();
+restoreLearningPages();

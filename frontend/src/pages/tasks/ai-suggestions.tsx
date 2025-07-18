@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import PageHeader from '../../components/PageHeader';
-import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
-import { Button } from '../../components/ui/Button';
-import { Badge } from '../../components/ui/Badge';
-import { Input } from '../../components/ui/Input';
-import { Textarea } from '../../components/ui/Textarea';
-import { Progress } from '../../components/ui/Progress';
+import PageHeader from '../../../components/PageHeader';
+import { Card, CardContent, CardHeader, CardTitle } from '../../src/components/ui/Card';
+import { Button } from '../../src/components/ui/Button';
+import { Badge } from '../../src/components/ui/Badge';
+import { Input } from '../../src/components/ui/Input';
+import { Textarea } from '../../src/components/ui/Textarea';
+import { Progress } from '../../src/components/ui/Progress';
 import { 
   Brain, 
   Lightbulb, 
@@ -29,7 +29,7 @@ import {
   Bookmark
 } from 'lucide-react';
 
-const AITaskSuggestions = () => {
+const AITaskSuggestions: React.FC = () => {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('suggestions');
   const [suggestions, setSuggestions] = useState([]);

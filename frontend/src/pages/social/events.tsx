@@ -1,13 +1,11 @@
+import Head from 'next/head';
 import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { ArrowLeft, Calendar, MapPin, Users, Clock, Plus, Search, Filter, Star, Share2, Bell, Video, Globe } from 'lucide-react';
 
-const NetworkingEvents: React.FC = () => {
+export default const NetworkingEvents: React.FC = () => {
   const [events, setEvents] = useState([]);
-
-const NetworkingEvents: React.FC = () => {
-
   const [filters, setFilters] = useState({
     type: 'all',
     location: 'all',
@@ -493,5 +491,3 @@ const NetworkingEvents: React.FC = () => {
     </>
   );
 }
-
-export default NetworkingEvents;

@@ -1,13 +1,11 @@
+import Head from 'next/head';
 import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { ArrowLeft, BarChart3, Users, MessageCircle, Calendar, TrendingUp, Eye, Heart, Share2, Target, Activity, Clock } from 'lucide-react';
 
-const SocialAnalytics: React.FC = () => {
+export default const SocialAnalytics: React.FC = () => {
   const [analyticsData, setAnalyticsData] = useState(null);
-
-const SocialAnalytics: React.FC = () => {
-
   const [loading, setLoading] = useState(true);
   const [timeRange, setTimeRange] = useState('30d');
   const [activeTab, setActiveTab] = useState('overview');
@@ -552,5 +550,3 @@ const SocialAnalytics: React.FC = () => {
     </>
   );
 }
-
-export default SocialAnalytics;

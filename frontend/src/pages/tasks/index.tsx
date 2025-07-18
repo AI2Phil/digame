@@ -1,12 +1,10 @@
+import Head from 'next/head';
 import React from 'react';
 import Head from 'next/head';
 import { CheckCircle, Plus, Calendar, Flag, Clock, User, BarChart3, Lightbulb } from 'lucide-react';
 
-const TaskManagement: React.FC = () => {
+export default const TaskManagement: React.FC = () => {
   const tasks = [
-
-const TaskManagement: React.FC = () => {
-
     {
       id: 1,
       title: 'Complete Q1 Performance Review',
@@ -215,5 +213,3 @@ const TaskManagement: React.FC = () => {
     </>
   );
 }
-
-export default TaskManagement;

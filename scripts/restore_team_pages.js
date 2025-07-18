@@ -1,49 +1,31 @@
 const fs = require('fs');
 const path = require('path');
 
-// Define the social networking pages to restore (excluding forums.js which already exists)
-const socialPages = [
+// Define the team collaboration pages to restore (only the missing ones)
+const teamPages = [
   {
-    source: 'frontend/pages_archived_20250717_193641/social/index.js',
-    target: 'frontend/src/pages/social/collaboration.tsx',
-    route: '/social/collaboration',
-    title: 'Social Collaboration Dashboard'
+    source: 'frontend/pages_archived_20250717_193641/team/dashboard.js',
+    target: 'frontend/src/pages/team/dashboard.tsx',
+    route: '/team/dashboard',
+    title: 'Team Dashboard'
   },
   {
-    source: 'frontend/pages_archived_20250717_193641/social/peer-matching.js',
-    target: 'frontend/src/pages/social/peer-matching.tsx',
-    route: '/social/peer-matching',
-    title: 'Peer Matching'
+    source: 'frontend/pages_archived_20250717_193641/collaboration/real-time.js',
+    target: 'frontend/src/pages/collaboration/real-time.tsx',
+    route: '/collaboration/real-time',
+    title: 'Real-Time Collaboration'
   },
   {
-    source: 'frontend/pages_archived_20250717_193641/social/network.js',
-    target: 'frontend/src/pages/social/network.tsx',
-    route: '/social/network',
-    title: 'Professional Network'
+    source: 'frontend/pages_archived_20250717_193641/team/social.js',
+    target: 'frontend/src/pages/team/social.tsx',
+    route: '/team/social',
+    title: 'Social Collaboration'
   },
   {
-    source: 'frontend/pages_archived_20250717_193641/social/mentorship.js',
-    target: 'frontend/src/pages/social/mentorship.tsx',
-    route: '/social/mentorship',
-    title: 'Mentorship Hub'
-  },
-  {
-    source: 'frontend/pages_archived_20250717_193641/social/learning-partners.js',
-    target: 'frontend/src/pages/social/learning-partners.tsx',
-    route: '/social/learning-partners',
-    title: 'Learning Partners'
-  },
-  {
-    source: 'frontend/pages_archived_20250717_193641/social/events.js',
-    target: 'frontend/src/pages/social/events.tsx',
-    route: '/social/events',
-    title: 'Networking Events'
-  },
-  {
-    source: 'frontend/pages_archived_20250717_193641/social/analytics.js',
-    target: 'frontend/src/pages/social/analytics.tsx',
-    route: '/social/analytics',
-    title: 'Social Analytics'
+    source: 'frontend/pages_archived_20250717_193641/team/skills.js',
+    target: 'frontend/src/pages/team/skills.tsx',
+    route: '/team/skills',
+    title: 'Skill Gap Analysis'
   }
 ];
 
@@ -137,15 +119,15 @@ function ensureDirectoryExists(filePath) {
 }
 
 // Main restoration function
-function restoreSocialPages() {
-  console.log('🚀 Starting Social Networking pages restoration...\n');
+function restoreTeamPages() {
+  console.log('🚀 Starting Team Collaboration pages restoration...\n');
   
   let successCount = 0;
   let errorCount = 0;
   
-  socialPages.forEach((page, index) => {
+  teamPages.forEach((page, index) => {
     try {
-      console.log(`📄 Processing ${index + 1}/${socialPages.length}: ${page.title}`);
+      console.log(`📄 Processing ${index + 1}/${teamPages.length}: ${page.title}`);
       console.log(`   Source: ${page.source}`);
       console.log(`   Target: ${page.target}`);
       console.log(`   Route: ${page.route}`);
@@ -185,22 +167,22 @@ function restoreSocialPages() {
   // Summary
   console.log('📊 RESTORATION SUMMARY');
   console.log('========================');
-  console.log(`✅ Successfully restored: ${successCount}/${socialPages.length} pages`);
-  console.log(`❌ Errors encountered: ${errorCount}/${socialPages.length} pages`);
-  console.log(`📁 Target directory: frontend/src/pages/social/`);
-  console.log(`🎯 Routes created: /social/collaboration, /social/peer-matching, /social/network, /social/mentorship, /social/learning-partners, /social/events, /social/analytics`);
-  console.log(`📝 Note: /social/forums already exists and was not modified`);
+  console.log(`✅ Successfully restored: ${successCount}/${teamPages.length} pages`);
+  console.log(`❌ Errors encountered: ${errorCount}/${teamPages.length} pages`);
+  console.log(`📁 Target directories: frontend/src/pages/team/, frontend/src/pages/collaboration/`);
+  console.log(`🎯 Routes created: /team/dashboard, /collaboration/real-time, /team/social, /team/skills`);
+  console.log(`📝 Note: Existing team pages (/team, /team/analytics, /team/collaboration) were preserved`);
   
-  if (successCount === socialPages.length) {
-    console.log('\n🎉 SUCCESS: All Social Networking pages restored successfully!');
+  if (successCount === teamPages.length) {
+    console.log('\n🎉 SUCCESS: All missing Team Collaboration pages restored successfully!');
     console.log('📋 Next steps:');
     console.log('   1. Test the restored pages in the browser');
-    console.log('   2. Update ROUTING_AUDIT.md to mark Section 7 as completed');
-    console.log('   3. Proceed to Section 8: Learning & Development restoration');
+    console.log('   2. Update ROUTING_AUDIT.md to mark Section 9 as completed');
+    console.log('   3. Proceed to Section 10: Career Development restoration');
   } else {
     console.log('\n⚠️  Some pages had errors. Please review the output above.');
   }
 }
 
 // Run the restoration
-restoreSocialPages();
+restoreTeamPages();

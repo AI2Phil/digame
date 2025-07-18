@@ -1,13 +1,11 @@
+import Head from 'next/head';
 import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { ArrowLeft, Users, Search, Filter, Heart, MessageCircle, UserPlus, Star, MapPin, Briefcase, GraduationCap } from 'lucide-react';
 
-const PeerMatching: React.FC = () => {
+export default const PeerMatching: React.FC = () => {
   const [matches, setMatches] = useState([]);
-
-const PeerMatching: React.FC = () => {
-
   const [filters, setFilters] = useState({
     skills: '',
     location: '',
@@ -409,5 +407,3 @@ const PeerMatching: React.FC = () => {
     </>
   );
 }
-
-export default PeerMatching;

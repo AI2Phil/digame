@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import PageHeader from '../../components/PageHeader';
-import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
-import { Button } from '../../components/ui/Button';
-import { Badge } from '../../components/ui/Badge';
-import { Progress } from '../../components/ui/Progress';
+import PageHeader from '../../../components/PageHeader';
+import { Card, CardContent, CardHeader, CardTitle } from '../../src/components/ui/Card';
+import { Button } from '../../src/components/ui/Button';
+import { Badge } from '../../src/components/ui/Badge';
+import { Progress } from '../../src/components/ui/Progress';
 import { 
   BarChart3, 
   TrendingUp, 
@@ -25,7 +25,7 @@ import {
   Timer
 } from 'lucide-react';
 
-const TaskAnalytics = () => {
+const TaskAnalytics: React.FC = () => {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('overview');
   const [analyticsData, setAnalyticsData] = useState(null);

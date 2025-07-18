@@ -1,16 +1,11 @@
 import React from 'react';
-import DashboardLayout from '../../components/layout/DashboardLayout';
-import SocialCollaborationDashboard from '../../components/social/SocialCollaborationDashboard';
+import DashboardLayout from '../../src/components/layout/DashboardLayout';
+import SocialDashboard from '../../src/components/social/SocialDashboard.tsx';
 
-const SocialCollaborationPage: React.FC = () => {
+export default const SocialIndex: React.FC = () => {
   return (
-
-const SocialCollaborationPage: React.FC = () => {
-
     <DashboardLayout>
-      <SocialCollaborationDashboard />
+      <SocialDashboard />
     </DashboardLayout>
   );
 }
-
-export default SocialCollaborationPage;

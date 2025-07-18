@@ -1,49 +1,43 @@
 const fs = require('fs');
 const path = require('path');
 
-// Define the social networking pages to restore (excluding forums.js which already exists)
-const socialPages = [
+// Define the career development pages to restore
+const careerPages = [
   {
-    source: 'frontend/pages_archived_20250717_193641/social/index.js',
-    target: 'frontend/src/pages/social/collaboration.tsx',
-    route: '/social/collaboration',
-    title: 'Social Collaboration Dashboard'
+    source: 'frontend/pages_archived_20250717_193641/career/index.js',
+    target: 'frontend/src/pages/career/index.tsx',
+    route: '/career',
+    title: 'Career Dashboard'
   },
   {
-    source: 'frontend/pages_archived_20250717_193641/social/peer-matching.js',
-    target: 'frontend/src/pages/social/peer-matching.tsx',
-    route: '/social/peer-matching',
-    title: 'Peer Matching'
+    source: 'frontend/pages_archived_20250717_193641/career/jobs.js',
+    target: 'frontend/src/pages/career/jobs.tsx',
+    route: '/career/jobs',
+    title: 'Job Opportunities'
   },
   {
-    source: 'frontend/pages_archived_20250717_193641/social/network.js',
-    target: 'frontend/src/pages/social/network.tsx',
-    route: '/social/network',
+    source: 'frontend/pages_archived_20250717_193641/career/learning.js',
+    target: 'frontend/src/pages/career/learning.tsx',
+    route: '/career/learning',
+    title: 'Learning Paths'
+  },
+  {
+    source: 'frontend/pages_archived_20250717_193641/career/modeling.js',
+    target: 'frontend/src/pages/career/modeling.tsx',
+    route: '/career/modeling',
+    title: 'Career Modeling'
+  },
+  {
+    source: 'frontend/pages_archived_20250717_193641/career/network.js',
+    target: 'frontend/src/pages/career/network.tsx',
+    route: '/career/network',
     title: 'Professional Network'
   },
   {
-    source: 'frontend/pages_archived_20250717_193641/social/mentorship.js',
-    target: 'frontend/src/pages/social/mentorship.tsx',
-    route: '/social/mentorship',
-    title: 'Mentorship Hub'
-  },
-  {
-    source: 'frontend/pages_archived_20250717_193641/social/learning-partners.js',
-    target: 'frontend/src/pages/social/learning-partners.tsx',
-    route: '/social/learning-partners',
-    title: 'Learning Partners'
-  },
-  {
-    source: 'frontend/pages_archived_20250717_193641/social/events.js',
-    target: 'frontend/src/pages/social/events.tsx',
-    route: '/social/events',
-    title: 'Networking Events'
-  },
-  {
-    source: 'frontend/pages_archived_20250717_193641/social/analytics.js',
-    target: 'frontend/src/pages/social/analytics.tsx',
-    route: '/social/analytics',
-    title: 'Social Analytics'
+    source: 'frontend/pages_archived_20250717_193641/career/skills.js',
+    target: 'frontend/src/pages/career/skills.tsx',
+    route: '/career/skills',
+    title: 'Skills Assessment'
   }
 ];
 
@@ -137,15 +131,15 @@ function ensureDirectoryExists(filePath) {
 }
 
 // Main restoration function
-function restoreSocialPages() {
-  console.log('🚀 Starting Social Networking pages restoration...\n');
+function restoreCareerPages() {
+  console.log('🚀 Starting Career Development pages restoration...\n');
   
   let successCount = 0;
   let errorCount = 0;
   
-  socialPages.forEach((page, index) => {
+  careerPages.forEach((page, index) => {
     try {
-      console.log(`📄 Processing ${index + 1}/${socialPages.length}: ${page.title}`);
+      console.log(`📄 Processing ${index + 1}/${careerPages.length}: ${page.title}`);
       console.log(`   Source: ${page.source}`);
       console.log(`   Target: ${page.target}`);
       console.log(`   Route: ${page.route}`);
@@ -185,22 +179,21 @@ function restoreSocialPages() {
   // Summary
   console.log('📊 RESTORATION SUMMARY');
   console.log('========================');
-  console.log(`✅ Successfully restored: ${successCount}/${socialPages.length} pages`);
-  console.log(`❌ Errors encountered: ${errorCount}/${socialPages.length} pages`);
-  console.log(`📁 Target directory: frontend/src/pages/social/`);
-  console.log(`🎯 Routes created: /social/collaboration, /social/peer-matching, /social/network, /social/mentorship, /social/learning-partners, /social/events, /social/analytics`);
-  console.log(`📝 Note: /social/forums already exists and was not modified`);
+  console.log(`✅ Successfully restored: ${successCount}/${careerPages.length} pages`);
+  console.log(`❌ Errors encountered: ${errorCount}/${careerPages.length} pages`);
+  console.log(`📁 Target directory: frontend/src/pages/career/`);
+  console.log(`🎯 Routes created: /career, /career/jobs, /career/learning, /career/modeling, /career/network, /career/skills`);
   
-  if (successCount === socialPages.length) {
-    console.log('\n🎉 SUCCESS: All Social Networking pages restored successfully!');
+  if (successCount === careerPages.length) {
+    console.log('\n🎉 SUCCESS: All Career Development pages restored successfully!');
     console.log('📋 Next steps:');
     console.log('   1. Test the restored pages in the browser');
-    console.log('   2. Update ROUTING_AUDIT.md to mark Section 7 as completed');
-    console.log('   3. Proceed to Section 8: Learning & Development restoration');
+    console.log('   2. Update ROUTING_AUDIT.md to mark Section 10 as completed');
+    console.log('   3. Proceed to Section 11: Reports & Publishing restoration');
   } else {
     console.log('\n⚠️  Some pages had errors. Please review the output above.');
   }
 }
 
 // Run the restoration
-restoreSocialPages();
+restoreCareerPages();

@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import PageHeader from '../../components/PageHeader';
-import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
-import { Button } from '../../components/ui/Button';
-import { Badge } from '../../components/ui/Badge';
-import { Input } from '../../components/ui/Input';
-import { Progress } from '../../components/ui/Progress';
+import PageHeader from '../../../components/PageHeader';
+import { Card, CardContent, CardHeader, CardTitle } from '../../src/components/ui/Card';
+import { Button } from '../../src/components/ui/Button';
+import { Badge } from '../../src/components/ui/Badge';
+import { Input } from '../../src/components/ui/Input';
+import { Progress } from '../../src/components/ui/Progress';
 import { 
   FolderOpen, 
   Plus, 
@@ -30,7 +30,7 @@ import {
   Zap
 } from 'lucide-react';
 
-const TaskProjects = () => {
+const TaskProjects: React.FC = () => {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('active');
   const [projects, setProjects] = useState([]);
