@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Brain,
   TrendingUp,
@@ -65,11 +65,7 @@ const IntelligenceInsights: React.FC = () => {
     { id: 'recommendations', label: 'Recommendations', icon: <Lightbulb className="w-4 h-4" /> }
   ];
 
-  useEffect(() => {
-    fetchIntelligenceData();
-  }, []);
-
-  const fetchIntelligenceData = async () => {
+  const fetchIntelligenceData = useCallback(async () => {
     try {
       setLoading(true);
       setUsingFallbackData(false);
@@ -155,7 +151,11 @@ const IntelligenceInsights: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [success, error, warning, info]);
+
+  useEffect(() => {
+    fetchIntelligenceData();
+  }, [fetchIntelligenceData]);
 
   const getSampleActivityData = () => ({
     activities: [

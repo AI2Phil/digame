@@ -40,7 +40,7 @@ const AchievementNotification = ({
       setIsAnimating(false);
       setProgress(0);
     }
-  }, [isVisible, autoHide, duration]);
+  }, [isVisible, autoHide, duration, handleAutoClose]);
 
   const handleAutoClose = () => {
     setIsAnimating(false);

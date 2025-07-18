@@ -284,9 +284,9 @@ const PredictiveModeling = () => {
     } finally {
       setLoading(false);
     }
-  }, [loadModelPerformance, loadModels, loadPredictions, loadRecommendations, loadFallbackData]);
+  }, [loadModels, loadPredictions, loadModelPerformance, loadRecommendations, loadFallbackData]);
 
-  const loadModels = async () => {
+  const loadModels = useCallback(async () => {
     try {
       const response = await fetch('/api/analytics/models?active_only=true&category=predictive');
       if (!response.ok) throw new Error('Failed to fetch models');
@@ -320,7 +320,7 @@ const PredictiveModeling = () => {
       console.error('Error loading models:', error);
       throw error;
     }
-  };
+  }, [selectedModel]);
 
   const generatePredictionsFromModel = (model) => {
     // Generate predictions based on model type
@@ -346,7 +346,7 @@ const PredictiveModeling = () => {
     };
   };
 
-  const loadPredictions = async () => {
+  const loadPredictions = useCallback(async () => {
     try {
       const response = await fetch('/api/analytics/predictions?limit=10');
       if (!response.ok) throw new Error('Failed to fetch predictions');
@@ -367,7 +367,7 @@ const PredictiveModeling = () => {
         setPredictions(selectedModelData.predictions);
       }
     }
-  };
+  }, [selectedModel, models]);
 
   const loadModelPerformance = useCallback(async () => {
     try {
@@ -399,7 +399,7 @@ const PredictiveModeling = () => {
     }
   }, [models]);
 
-  const loadRecommendations = async () => {
+  const loadRecommendations = useCallback(async () => {
     try {
       // Generate AI-powered recommendations based on model performance
       const recommendations = [];
@@ -459,7 +459,7 @@ const PredictiveModeling = () => {
         }
       ]);
     }
-  };
+  }, [modelPerformance]);
 
   const loadFallbackData = useCallback(() => {
     const selectedModelData = fallbackPredictiveModels.find(m => m.id === selectedModel);

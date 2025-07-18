@@ -222,7 +222,7 @@ const IntegrationManagementDashboard: React.FC = () => {
 
   useEffect(() => {
     fetchManagementData();
-  }, [statusFilter, categoryFilter]);
+  }, [fetchManagementData]);
 
   // Helper functions
   const getStatusColor = (status: string) => {

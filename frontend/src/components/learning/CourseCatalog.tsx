@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Grid,
@@ -142,15 +142,7 @@ const CourseCatalog: React.FC = () => {
     { label: '20+ hours', value: '20+' }
   ];
 
-  useEffect(() => {
-    fetchCourses();
-  }, []);
-
-  useEffect(() => {
-    applyFilters();
-  }, [courses, filters]);
-
-  const fetchCourses = async () => {
+  const fetchCourses = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -291,9 +283,9 @@ const CourseCatalog: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters.difficulty_level]);
 
-  const applyFilters = () => {
+  const applyFilters = useCallback(() => {
     let filtered = [...courses];
 
     // Search filter
@@ -322,14 +314,22 @@ const CourseCatalog: React.FC = () => {
 
     // Rating filter
     if (filters.rating_min > 0) {
-      filtered = filtered.filter(course => 
+      filtered = filtered.filter(course =>
         course.average_rating && course.average_rating >= filters.rating_min
       );
     }
 
     setFilteredCourses(filtered);
     setCurrentPage(1);
-  };
+  }, [courses, filters]);
+
+  useEffect(() => {
+    fetchCourses();
+  }, [fetchCourses]);
+
+  useEffect(() => {
+    applyFilters();
+  }, [applyFilters]);
 
   const handleFilterChange = (key: keyof CourseFilters, value: any) => {
     setFilters(prev => ({ ...prev, [key]: value }));

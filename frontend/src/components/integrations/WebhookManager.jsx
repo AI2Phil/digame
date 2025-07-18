@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
@@ -67,9 +67,9 @@ const WebhookManager = ({ connectionId, connectionName }) => {
 
   useEffect(() => {
     fetchWebhooks();
-  }, [connectionId]);
+  }, [fetchWebhooks]);
 
-  const fetchWebhooks = async () => {
+  const fetchWebhooks = useCallback(async () => {
     try {
       setLoading(true);
       // Mock API call - replace with actual API
@@ -94,7 +94,7 @@ const WebhookManager = ({ connectionId, connectionName }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [connectionId]);
 
   const createWebhook = async () => {
     try {

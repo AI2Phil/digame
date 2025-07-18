@@ -156,7 +156,7 @@ const IntegrationMarketplace: React.FC = () => {
   }, [selectedCategory, selectedComplexity, searchQuery, sortBy]);
 
   // Fetch categories
-  const fetchCategories = async () => {
+  const fetchCategories = useCallback(async () => {
     try {
       const response = await fetch('/api/v1/integrations/marketplace/categories', {
         headers: {
@@ -173,7 +173,7 @@ const IntegrationMarketplace: React.FC = () => {
     } catch (err) {
       console.error('Failed to fetch categories:', err);
     }
-  };
+  }, []);
 
   // Get integration details
   const getIntegrationDetails = async (integrationId: string) => {
@@ -229,7 +229,7 @@ const IntegrationMarketplace: React.FC = () => {
   useEffect(() => {
     fetchMarketplaceData();
     fetchCategories();
-  }, [selectedCategory, selectedComplexity, searchQuery, sortBy]);
+  }, [fetchMarketplaceData, fetchCategories]);
 
   // Helper functions
   const getComplexityColor = (complexity: string) => {
