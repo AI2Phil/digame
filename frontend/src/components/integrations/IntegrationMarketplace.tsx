@@ -5,7 +5,7 @@
  * Comprehensive marketplace for discovering, installing, and managing integrations
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import {
   Box,
@@ -123,7 +123,7 @@ const IntegrationMarketplace: React.FC = () => {
   const [installDialogOpen, setInstallDialogOpen] = useState(false);
 
   // Fetch marketplace data
-  const fetchMarketplaceData = async () => {
+  const fetchMarketplaceData = useCallback(async () => {
     try {
       setLoading(true);
       const params = new URLSearchParams({
@@ -153,7 +153,7 @@ const IntegrationMarketplace: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedCategory, selectedComplexity, searchQuery, sortBy]);
 
   // Fetch categories
   const fetchCategories = async () => {

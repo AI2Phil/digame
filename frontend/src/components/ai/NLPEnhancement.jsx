@@ -143,23 +143,8 @@ import {
   PolarRadiusAxis
 } from 'recharts';
 
-const NLPEnhancement = () => {
-  const [activeTab, setActiveTab] = useState('conversation');
-  const [selectedModel, setSelectedModel] = useState('all');
-  const [analysisType, setAnalysisType] = useState('all');
-  const [conversations, setConversations] = useState([]);
-  const [textAnalysis, setTextAnalysis] = useState([]);
-  const [languageModels, setLanguageModels] = useState([]);
-  const [sentimentData, setSentimentData] = useState([]);
-  const [performance, setPerformance] = useState({});
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [usingFallbackData, setUsingFallbackData] = useState(false);
-  const { toast } = useToast();
-
-  // Mock conversation data
-  const conversationData = [
+// Mock conversation data - moved outside component
+const conversationData = [
     {
       id: 'conv-001',
       user: 'Sarah Johnson',
@@ -238,7 +223,7 @@ const NLPEnhancement = () => {
     }
   ];
 
-  const nlpModels = [
+const nlpModels = [
     {
       id: 'sentiment-analyzer',
       name: 'Advanced Sentiment Analyzer',
@@ -301,7 +286,7 @@ const NLPEnhancement = () => {
     }
   ];
 
-  const sentimentTrends = [
+const sentimentTrends = [
     { name: 'Mon', positive: 65, neutral: 25, negative: 10, total: 1240 },
     { name: 'Tue', positive: 68, neutral: 22, negative: 10, total: 1340 },
     { name: 'Wed', positive: 62, neutral: 28, negative: 10, total: 1420 },
@@ -311,7 +296,7 @@ const NLPEnhancement = () => {
     { name: 'Sun', positive: 60, neutral: 30, negative: 10, total: 780 }
   ];
 
-  const topicDistribution = [
+const topicDistribution = [
     { name: 'Customer Support', value: 35, color: '#3b82f6' },
     { name: 'Product Feedback', value: 25, color: '#10b981' },
     { name: 'Sales Inquiries', value: 20, color: '#f59e0b' },
@@ -319,7 +304,7 @@ const NLPEnhancement = () => {
     { name: 'Feature Requests', value: 5, color: '#8b5cf6' }
   ];
 
-  const languageUsage = [
+const languageUsage = [
     { language: 'English', conversations: 1247, percentage: 62.4, sentiment: 0.72 },
     { language: 'Spanish', conversations: 456, percentage: 22.8, sentiment: 0.68 },
     { language: 'French', conversations: 189, percentage: 9.5, sentiment: 0.74 },
@@ -327,7 +312,7 @@ const NLPEnhancement = () => {
     { language: 'Other', conversations: 28, percentage: 1.4, sentiment: 0.69 }
   ];
 
-  const textAnalysisResults = [
+const textAnalysisResults = [
     {
       id: 'analysis-001',
       text: 'I absolutely love the new dashboard features! The analytics are incredibly detailed and the user interface is so intuitive. This has made our workflow so much more efficient.',
@@ -366,6 +351,21 @@ const NLPEnhancement = () => {
     }
   ];
 
+const NLPEnhancement = () => {
+  const [activeTab, setActiveTab] = useState('conversation');
+  const [selectedModel, setSelectedModel] = useState('all');
+  const [analysisType, setAnalysisType] = useState('all');
+  const [conversations, setConversations] = useState([]);
+  const [textAnalysis, setTextAnalysis] = useState([]);
+  const [languageModels, setLanguageModels] = useState([]);
+  const [sentimentData, setSentimentData] = useState([]);
+  const [performance, setPerformance] = useState({});
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [usingFallbackData, setUsingFallbackData] = useState(false);
+  const { toast } = useToast();
+
   const loadFallbackData = useCallback(() => {
     setConversations(conversationData);
     setLanguageModels(nlpModels);
@@ -380,7 +380,7 @@ const NLPEnhancement = () => {
       modelsActive: 5,
       dailyProcessing: 12847
     });
-  }, [conversationData, nlpModels, textAnalysisResults, sentimentTrends]);
+  }, []);
 
   const loadNLPData = useCallback(async () => {
     setLoading(true);

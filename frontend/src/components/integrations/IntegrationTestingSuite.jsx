@@ -47,6 +47,62 @@ import {
 } from 'lucide-react';
 import { LineChart, Line, AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
+// Mock data for 40+ integration providers - moved outside component to prevent re-creation
+const integrationProviders = [
+  // Communication Tools
+  { id: 'slack', name: 'Slack', category: 'communication', status: 'active', tests: 15, passed: 14, failed: 1 },
+  { id: 'teams', name: 'Microsoft Teams', category: 'communication', status: 'active', tests: 12, passed: 11, failed: 1 },
+  { id: 'discord', name: 'Discord', category: 'communication', status: 'active', tests: 10, passed: 10, failed: 0 },
+  { id: 'zoom', name: 'Zoom', category: 'communication', status: 'active', tests: 8, passed: 7, failed: 1 },
+  { id: 'webex', name: 'Cisco Webex', category: 'communication', status: 'active', tests: 9, passed: 8, failed: 1 },
+  { id: 'mattermost', name: 'Mattermost', category: 'communication', status: 'active', tests: 11, passed: 10, failed: 1 },
+
+  // CRM Systems
+  { id: 'salesforce', name: 'Salesforce', category: 'crm', status: 'active', tests: 20, passed: 18, failed: 2 },
+  { id: 'hubspot', name: 'HubSpot', category: 'crm', status: 'active', tests: 18, passed: 17, failed: 1 },
+  { id: 'pipedrive', name: 'Pipedrive', category: 'crm', status: 'active', tests: 14, passed: 13, failed: 1 },
+  { id: 'zoho', name: 'Zoho CRM', category: 'crm', status: 'active', tests: 16, passed: 15, failed: 1 },
+  { id: 'freshworks', name: 'Freshworks CRM', category: 'crm', status: 'active', tests: 15, passed: 14, failed: 1 },
+  { id: 'airtable', name: 'Airtable', category: 'crm', status: 'active', tests: 12, passed: 11, failed: 1 },
+  { id: 'copper', name: 'Copper', category: 'crm', status: 'active', tests: 13, passed: 12, failed: 1 },
+
+  // Project Management
+  { id: 'trello', name: 'Trello', category: 'project', status: 'active', tests: 14, passed: 13, failed: 1 },
+  { id: 'asana', name: 'Asana', category: 'project', status: 'active', tests: 16, passed: 15, failed: 1 },
+  { id: 'monday', name: 'Monday.com', category: 'project', status: 'active', tests: 18, passed: 17, failed: 1 },
+  { id: 'jira', name: 'Atlassian Jira', category: 'project', status: 'active', tests: 22, passed: 20, failed: 2 },
+  { id: 'notion', name: 'Notion', category: 'project', status: 'active', tests: 15, passed: 14, failed: 1 },
+  { id: 'clickup', name: 'ClickUp', category: 'project', status: 'active', tests: 17, passed: 16, failed: 1 },
+  { id: 'basecamp', name: 'Basecamp', category: 'project', status: 'active', tests: 12, passed: 11, failed: 1 },
+  { id: 'wrike', name: 'Wrike', category: 'project', status: 'active', tests: 14, passed: 13, failed: 1 },
+
+  // Time Tracking
+  { id: 'toggl', name: 'Toggl Track', category: 'time', status: 'active', tests: 10, passed: 9, failed: 1 },
+  { id: 'harvest', name: 'Harvest', category: 'time', status: 'active', tests: 12, passed: 11, failed: 1 },
+  { id: 'clockify', name: 'Clockify', category: 'time', status: 'active', tests: 9, passed: 8, failed: 1 },
+  { id: 'rescuetime', name: 'RescueTime', category: 'time', status: 'active', tests: 8, passed: 7, failed: 1 },
+  { id: 'timely', name: 'Timely', category: 'time', status: 'active', tests: 11, passed: 10, failed: 1 },
+  { id: 'timedoctor', name: 'Time Doctor', category: 'time', status: 'active', tests: 10, passed: 9, failed: 1 },
+  { id: 'hubstaff', name: 'Hubstaff', category: 'time', status: 'active', tests: 9, passed: 8, failed: 1 },
+
+  // Learning Platforms
+  { id: 'coursera', name: 'Coursera', category: 'learning', status: 'active', tests: 13, passed: 12, failed: 1 },
+  { id: 'udemy', name: 'Udemy', category: 'learning', status: 'active', tests: 11, passed: 10, failed: 1 },
+  { id: 'linkedin', name: 'LinkedIn Learning', category: 'learning', status: 'active', tests: 14, passed: 13, failed: 1 },
+  { id: 'pluralsight', name: 'Pluralsight', category: 'learning', status: 'active', tests: 12, passed: 11, failed: 1 },
+  { id: 'skillshare', name: 'Skillshare', category: 'learning', status: 'active', tests: 10, passed: 9, failed: 1 },
+  { id: 'udacity', name: 'Udacity', category: 'learning', status: 'active', tests: 13, passed: 12, failed: 1 },
+  { id: 'edx', name: 'edX', category: 'learning', status: 'active', tests: 12, passed: 11, failed: 1 },
+  { id: 'khan', name: 'Khan Academy', category: 'learning', status: 'active', tests: 9, passed: 8, failed: 1 },
+
+  // Development & Productivity
+  { id: 'github', name: 'GitHub', category: 'development', status: 'active', tests: 18, passed: 17, failed: 1 },
+  { id: 'gitlab', name: 'GitLab', category: 'development', status: 'active', tests: 16, passed: 15, failed: 1 },
+  { id: 'bitbucket', name: 'Bitbucket', category: 'development', status: 'active', tests: 14, passed: 13, failed: 1 },
+  { id: 'google', name: 'Google Workspace', category: 'productivity', status: 'active', tests: 20, passed: 19, failed: 1 },
+  { id: 'microsoft', name: 'Microsoft 365', category: 'productivity', status: 'active', tests: 22, passed: 21, failed: 1 }
+];
+
 const IntegrationTestingSuite = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [testResults, setTestResults] = useState({});
@@ -56,62 +112,6 @@ const IntegrationTestingSuite = () => {
   const [testProgress, setTestProgress] = useState(0);
   const [optimizationResults, setOptimizationResults] = useState({});
   const [performanceMetrics, setPerformanceMetrics] = useState({});
-
-  // Mock data for 40+ integration providers
-  const integrationProviders = [
-    // Communication Tools
-    { id: 'slack', name: 'Slack', category: 'communication', status: 'active', tests: 15, passed: 14, failed: 1 },
-    { id: 'teams', name: 'Microsoft Teams', category: 'communication', status: 'active', tests: 12, passed: 11, failed: 1 },
-    { id: 'discord', name: 'Discord', category: 'communication', status: 'active', tests: 10, passed: 10, failed: 0 },
-    { id: 'zoom', name: 'Zoom', category: 'communication', status: 'active', tests: 8, passed: 7, failed: 1 },
-    { id: 'webex', name: 'Cisco Webex', category: 'communication', status: 'active', tests: 9, passed: 8, failed: 1 },
-    { id: 'mattermost', name: 'Mattermost', category: 'communication', status: 'active', tests: 11, passed: 10, failed: 1 },
-
-    // CRM Systems
-    { id: 'salesforce', name: 'Salesforce', category: 'crm', status: 'active', tests: 20, passed: 18, failed: 2 },
-    { id: 'hubspot', name: 'HubSpot', category: 'crm', status: 'active', tests: 18, passed: 17, failed: 1 },
-    { id: 'pipedrive', name: 'Pipedrive', category: 'crm', status: 'active', tests: 14, passed: 13, failed: 1 },
-    { id: 'zoho', name: 'Zoho CRM', category: 'crm', status: 'active', tests: 16, passed: 15, failed: 1 },
-    { id: 'freshworks', name: 'Freshworks CRM', category: 'crm', status: 'active', tests: 15, passed: 14, failed: 1 },
-    { id: 'airtable', name: 'Airtable', category: 'crm', status: 'active', tests: 12, passed: 11, failed: 1 },
-    { id: 'copper', name: 'Copper', category: 'crm', status: 'active', tests: 13, passed: 12, failed: 1 },
-
-    // Project Management
-    { id: 'trello', name: 'Trello', category: 'project', status: 'active', tests: 14, passed: 13, failed: 1 },
-    { id: 'asana', name: 'Asana', category: 'project', status: 'active', tests: 16, passed: 15, failed: 1 },
-    { id: 'monday', name: 'Monday.com', category: 'project', status: 'active', tests: 18, passed: 17, failed: 1 },
-    { id: 'jira', name: 'Atlassian Jira', category: 'project', status: 'active', tests: 22, passed: 20, failed: 2 },
-    { id: 'notion', name: 'Notion', category: 'project', status: 'active', tests: 15, passed: 14, failed: 1 },
-    { id: 'clickup', name: 'ClickUp', category: 'project', status: 'active', tests: 17, passed: 16, failed: 1 },
-    { id: 'basecamp', name: 'Basecamp', category: 'project', status: 'active', tests: 12, passed: 11, failed: 1 },
-    { id: 'wrike', name: 'Wrike', category: 'project', status: 'active', tests: 14, passed: 13, failed: 1 },
-
-    // Time Tracking
-    { id: 'toggl', name: 'Toggl Track', category: 'time', status: 'active', tests: 10, passed: 9, failed: 1 },
-    { id: 'harvest', name: 'Harvest', category: 'time', status: 'active', tests: 12, passed: 11, failed: 1 },
-    { id: 'clockify', name: 'Clockify', category: 'time', status: 'active', tests: 9, passed: 8, failed: 1 },
-    { id: 'rescuetime', name: 'RescueTime', category: 'time', status: 'active', tests: 8, passed: 7, failed: 1 },
-    { id: 'timely', name: 'Timely', category: 'time', status: 'active', tests: 11, passed: 10, failed: 1 },
-    { id: 'timedoctor', name: 'Time Doctor', category: 'time', status: 'active', tests: 10, passed: 9, failed: 1 },
-    { id: 'hubstaff', name: 'Hubstaff', category: 'time', status: 'active', tests: 9, passed: 8, failed: 1 },
-
-    // Learning Platforms
-    { id: 'coursera', name: 'Coursera', category: 'learning', status: 'active', tests: 13, passed: 12, failed: 1 },
-    { id: 'udemy', name: 'Udemy', category: 'learning', status: 'active', tests: 11, passed: 10, failed: 1 },
-    { id: 'linkedin', name: 'LinkedIn Learning', category: 'learning', status: 'active', tests: 14, passed: 13, failed: 1 },
-    { id: 'pluralsight', name: 'Pluralsight', category: 'learning', status: 'active', tests: 12, passed: 11, failed: 1 },
-    { id: 'skillshare', name: 'Skillshare', category: 'learning', status: 'active', tests: 10, passed: 9, failed: 1 },
-    { id: 'udacity', name: 'Udacity', category: 'learning', status: 'active', tests: 13, passed: 12, failed: 1 },
-    { id: 'edx', name: 'edX', category: 'learning', status: 'active', tests: 12, passed: 11, failed: 1 },
-    { id: 'khan', name: 'Khan Academy', category: 'learning', status: 'active', tests: 9, passed: 8, failed: 1 },
-
-    // Development & Productivity
-    { id: 'github', name: 'GitHub', category: 'development', status: 'active', tests: 18, passed: 17, failed: 1 },
-    { id: 'gitlab', name: 'GitLab', category: 'development', status: 'active', tests: 16, passed: 15, failed: 1 },
-    { id: 'bitbucket', name: 'Bitbucket', category: 'development', status: 'active', tests: 14, passed: 13, failed: 1 },
-    { id: 'google', name: 'Google Workspace', category: 'productivity', status: 'active', tests: 20, passed: 19, failed: 1 },
-    { id: 'microsoft', name: 'Microsoft 365', category: 'productivity', status: 'active', tests: 22, passed: 21, failed: 1 }
-  ];
 
   const testCategories = [
     { id: 'authentication', name: 'Authentication', icon: Shield, tests: 156, passed: 148, failed: 8 },
@@ -140,13 +140,7 @@ const IntegrationTestingSuite = () => {
     { category: 'Development', before: 180, after: 140, improvement: 22.2 }
   ];
 
-  useEffect(() => {
-    loadTestResults();
-    loadPerformanceMetrics();
-    loadOptimizationResults();
-  }, [loadTestResults]);
-
-  const loadTestResults = async () => {
+  const loadTestResults = useCallback(async () => {
     // Simulate loading test results
     const results = {};
     integrationProviders.forEach(provider => {
@@ -167,9 +161,9 @@ const IntegrationTestingSuite = () => {
       };
     });
     setTestResults(results);
-  };
+  }, []);
 
-  const loadPerformanceMetrics = async () => {
+  const loadPerformanceMetrics = useCallback(async () => {
     setPerformanceMetrics({
       totalTests: 1134,
       passedTests: 1087,
@@ -179,16 +173,22 @@ const IntegrationTestingSuite = () => {
       totalThroughput: 15420,
       avgErrorRate: 0.3
     });
-  };
+  }, []);
 
-  const loadOptimizationResults = async () => {
+  const loadOptimizationResults = useCallback(async () => {
     setOptimizationResults({
       totalOptimizations: 156,
       performanceGains: 26.8,
       errorReduction: 45.2,
       throughputIncrease: 34.7
     });
-  };
+  }, []);
+
+  useEffect(() => {
+    loadTestResults();
+    loadPerformanceMetrics();
+    loadOptimizationResults();
+  }, [loadTestResults, loadPerformanceMetrics, loadOptimizationResults]);
 
   const runAllTests = useCallback(async () => {
     setTestProgress(0);
@@ -210,7 +210,7 @@ const IntegrationTestingSuite = () => {
     }
     
     await loadTestResults();
-  }, [selectedProvider, integrationProviders, loadTestResults]);
+  }, [selectedProvider, loadTestResults]);
 
   const runOptimization = useCallback(async () => {
     setTestProgress(0);
@@ -246,7 +246,7 @@ const IntegrationTestingSuite = () => {
       totalFailed,
       successRate: (totalPassed / totalTests) * 100
     };
-  }, [integrationProviders]);
+  }, []);
 
   const renderOverviewTab = () => (
     <div className="space-y-6">

@@ -101,22 +101,8 @@ import {
   Treemap
 } from 'recharts';
 
-const PredictiveModeling = () => {
-  const [activeTab, setActiveTab] = useState('forecasting');
-  const [selectedModel, setSelectedModel] = useState('user-growth');
-  const [timeHorizon, setTimeHorizon] = useState('30d');
-  const [confidenceLevel, setConfidenceLevel] = useState('95');
-  const [models, setModels] = useState([]);
-  const [predictions, setPredictions] = useState({});
-  const [modelPerformance, setModelPerformance] = useState({});
-  const [recommendations, setRecommendations] = useState([]);
-  const [isTraining, setIsTraining] = useState(false);
-  const [trainingProgress, setTrainingProgress] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  // Fallback mock predictive models for error scenarios
-  const fallbackPredictiveModels = [
+// Fallback mock predictive models for error scenarios - moved outside component
+const fallbackPredictiveModels = [
     {
       id: 'user-growth',
       name: 'User Growth Prediction',
@@ -193,6 +179,20 @@ const PredictiveModeling = () => {
       }
     }
   ];
+
+const PredictiveModeling = () => {
+  const [activeTab, setActiveTab] = useState('forecasting');
+  const [selectedModel, setSelectedModel] = useState('user-growth');
+  const [timeHorizon, setTimeHorizon] = useState('30d');
+  const [confidenceLevel, setConfidenceLevel] = useState('95');
+  const [models, setModels] = useState([]);
+  const [predictions, setPredictions] = useState({});
+  const [modelPerformance, setModelPerformance] = useState({});
+  const [recommendations, setRecommendations] = useState([]);
+  const [isTraining, setIsTraining] = useState(false);
+  const [trainingProgress, setTrainingProgress] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const forecastData = [
     { period: 'Week 1', actual: 8500, predicted: 8650, confidence_low: 8200, confidence_high: 9100 },
@@ -284,7 +284,7 @@ const PredictiveModeling = () => {
     } finally {
       setLoading(false);
     }
-  }, [fallbackPredictiveModels, loadModelPerformance, loadModels, loadPredictions, loadRecommendations]);
+  }, [loadModelPerformance, loadModels, loadPredictions, loadRecommendations, loadFallbackData]);
 
   const loadModels = async () => {
     try {
@@ -473,7 +473,7 @@ const PredictiveModeling = () => {
       avgAccuracy: fallbackPredictiveModels.reduce((sum, m) => sum + m.accuracy, 0) / fallbackPredictiveModels.length,
       lastUpdate: new Date().toISOString()
     });
-  }, [fallbackPredictiveModels, selectedModel]);
+  }, [selectedModel]);
 
   const trainModel = useCallback(async (modelId) => {
     setIsTraining(true);

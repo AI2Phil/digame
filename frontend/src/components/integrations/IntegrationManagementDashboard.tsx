@@ -5,7 +5,7 @@
  * Comprehensive dashboard for managing installed integrations with enterprise features
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import {
   Box,
@@ -139,7 +139,7 @@ const IntegrationManagementDashboard: React.FC = () => {
   const [categoryFilter, setCategoryFilter] = useState('');
 
   // Fetch management data
-  const fetchManagementData = async () => {
+  const fetchManagementData = useCallback(async () => {
     try {
       setLoading(true);
       const params = new URLSearchParams({
@@ -165,7 +165,7 @@ const IntegrationManagementDashboard: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [statusFilter, categoryFilter]);
 
   // Execute bulk action
   const executeBulkAction = async (action: string) => {
