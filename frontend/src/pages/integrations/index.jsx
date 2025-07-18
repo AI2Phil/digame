@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card';
-import { Button } from '../components/ui/Button';
-import { Badge } from '../components/ui/Badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/Tabs';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/Card';
+import { Button } from '../../components/ui/Button';
+import { Badge } from '../../components/ui/Badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/Tabs';
 import {
   Dialog,
   DialogContent,
@@ -10,8 +10,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '../components/ui/Dialog';
-import { Input } from '../components/ui/Input';
+} from '../../components/ui/Dialog';
+import { Input } from '../../components/ui/Input';
 import {
   Sheet,
   SheetContent,
@@ -19,9 +19,9 @@ import {
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-} from '../components/ui/Sheet';
-import { Progress } from '../components/ui/Progress';
-import Alert, { AlertDescription } from '../components/ui/Alert';
+} from '../../components/ui/Sheet';
+import { Progress } from '../../components/ui/Progress';
+import Alert, { AlertDescription } from '../../components/ui/Alert';
 import {
   Settings,
   Plus,

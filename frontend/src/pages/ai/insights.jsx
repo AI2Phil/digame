@@ -18,15 +18,15 @@ import {
   Star,
   Home,
 } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card';
-import { Button } from '../components/ui/Button';
-import { Badge } from '../components/ui/Badge';
-import { Progress } from '../components/ui/Progress';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/Tabs';
-import { useToastActions } from '../components/ui/Toast';
-import recommendationEngine from '../services/recommendationEngine';
-import coachingService from '../services/coachingService';
-import apiService from '../services/apiService';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/Card';
+import { Button } from '../../components/ui/Button';
+import { Badge } from '../../components/ui/Badge';
+import { Progress } from '../../components/ui/Progress';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/Tabs';
+import { useToastActions } from '../../components/ui/Toast';
+import recommendationEngine from '../../services/recommendationEngine';
+import coachingService from '../../services/coachingService';
+import apiService from '../../services/apiService';
 
 const AiInsightsDashboard = () => {
   const toast = useToastActions();

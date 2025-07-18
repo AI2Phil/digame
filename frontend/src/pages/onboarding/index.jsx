@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import OnboardingWizard from '../components/onboarding/OnboardingWizard';
-import { useAuth } from '../contexts/AuthContext';
-import { useToastActions } from '../components/ui/Toast';
-import { Button } from '../components/ui/Button';
-import { Alert, AlertDescription } from '../components/ui/Alert';
+import OnboardingWizard from '../../components/onboarding/OnboardingWizard';
+import { useAuth } from '../../contexts/AuthContext';
+import { useToastActions } from '../../components/ui/Toast';
+import { Button } from '../../components/ui/Button';
+import { Alert, AlertDescription } from '../../components/ui/Alert';
 
 const OnboardingPage = () => {
   const toast = useToastActions();

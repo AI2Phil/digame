@@ -19,11 +19,11 @@ import {
   Printer,
   Home,
 } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card';
-import { Button } from '../components/ui/Button';
-import { Input } from '../components/ui/Input';
-import { Label } from '../components/ui/Label';
-import { Select } from '../components/ui/Select';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/Card';
+import { Button } from '../../components/ui/Button';
+import { Input } from '../../components/ui/Input';
+import { Label } from '../../components/ui/Label';
+import { Select } from '../../components/ui/Select';
 import {
   Table,
   TableBody,
@@ -31,21 +31,21 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '../components/ui/Table';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/Tabs';
-import { Badge } from '../components/ui/Badge';
-import { Progress } from '../components/ui/Progress';
-import { Calendar as CalendarComponent } from '../components/ui/Calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '../components/ui/Popover';
-import { Checkbox } from '../components/ui/Checkbox';
-import { Separator } from '../components/ui/Separator';
-import { Chart } from '../components/ui/Chart';
+} from '../../components/ui/Table';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/Tabs';
+import { Badge } from '../../components/ui/Badge';
+import { Progress } from '../../components/ui/Progress';
+import { Calendar as CalendarComponent } from '../../components/ui/Calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '../../components/ui/Popover';
+import { Checkbox } from '../../components/ui/Checkbox';
+import { Separator } from '../../components/ui/Separator';
+import { Chart } from '../../components/ui/Chart';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '../components/ui/DropdownMenu';
+} from '../../components/ui/DropdownMenu';
 import {
   Dialog,
   DialogContent,
@@ -54,7 +54,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '../components/ui/Dialog';
+} from '../../components/ui/Dialog';
 
 const ReportsPage = () => {
   const router = useRouter();

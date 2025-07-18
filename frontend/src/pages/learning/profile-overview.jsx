@@ -13,12 +13,12 @@ import {
   Info,
   Code,
 } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
-import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/Avatar';
-import { Badge } from '../components/ui/Badge';
-import { Button } from '../components/ui/Button';
-import apiService from '../services/apiService';
-import { useToastActions } from '../components/ui/Toast';
+import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
+import { Avatar, AvatarFallback, AvatarImage } from '../../components/ui/Avatar';
+import { Badge } from '../../components/ui/Badge';
+import { Button } from '../../components/ui/Button';
+import apiService from '../../services/apiService';
+import { useToastActions } from '../../components/ui/Toast';
 
 // Import display cards if they exist
 // import ProjectDisplayCard from '../components/profile/ProjectDisplayCard';

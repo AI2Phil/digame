@@ -27,14 +27,14 @@ import {
   CheckCircle,
   Home,
 } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card';
-import { Button } from '../components/ui/Button';
-import { Input } from '../components/ui/Input';
-import { Label } from '../components/ui/Label';
-import { Select } from '../components/ui/Select';
-import { Badge } from '../components/ui/Badge';
-import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/Avatar';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/Tabs';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/Card';
+import { Button } from '../../components/ui/Button';
+import { Input } from '../../components/ui/Input';
+import { Label } from '../../components/ui/Label';
+import { Select } from '../../components/ui/Select';
+import { Badge } from '../../components/ui/Badge';
+import { Avatar, AvatarFallback, AvatarImage } from '../../components/ui/Avatar';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/Tabs';
 import {
   Table,
   TableBody,
@@ -42,13 +42,13 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '../components/ui/Table';
+} from '../../components/ui/Table';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '../components/ui/DropdownMenu';
+} from '../../components/ui/DropdownMenu';
 import {
   Dialog,
   DialogContent,
@@ -57,12 +57,12 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '../components/ui/Dialog';
-import { Separator } from '../components/ui/Separator';
-import { Progress } from '../components/ui/Progress';
-import { Chart } from '../components/ui/Chart';
-import { Textarea } from '../components/ui/Textarea'; // Added
-import { Switch } from '../components/ui/Switch'; // Added
+} from '../../components/ui/Dialog';
+import { Separator } from '../../components/ui/Separator';
+import { Progress } from '../../components/ui/Progress';
+import { Chart } from '../../components/ui/Chart';
+import { Textarea } from '../../components/ui/Textarea'; // Added
+import { Switch } from '../../components/ui/Switch'; // Added
 
 const TeamsPage = ({ isDemoMode = false, onLogout }) => {
   const router = useRouter();

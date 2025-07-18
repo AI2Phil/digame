@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card';
-import { Alert, AlertDescription } from '../components/ui/Alert';
-import { Progress } from '../components/ui/Progress';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/Card';
+import { Alert, AlertDescription } from '../../components/ui/Alert';
+import { Progress } from '../../components/ui/Progress';
 import { CheckCircle, AlertCircle, RefreshCw, ExternalLink } from 'lucide-react';
 
 const OAuthCallbackPage = () => {

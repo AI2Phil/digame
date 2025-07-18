@@ -1,6 +1,6 @@
 import React from 'react';
-import AIMLDashboard from '../components/ai/AIMLDashboard';
-import DashboardLayout from '../components/layout/DashboardLayout';
+import AIMLDashboard from '../../components/ai/AIMLDashboard';
+import DashboardLayout from '../../components/layout/DashboardLayout';
 
 const AIMLDashboardPage = ({ isDemoMode = false, onLogout }) => {
   return (

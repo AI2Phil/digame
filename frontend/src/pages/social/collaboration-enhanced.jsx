@@ -33,14 +33,14 @@ import {
   Shield,
   Home,
 } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card';
-import { Button } from '../components/ui/Button';
-import { Badge } from '../components/ui/Badge';
-import { Progress } from '../components/ui/Progress';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/Tabs';
-import { useToastActions } from '../components/ui/Toast';
-import socialService from '../services/socialService';
-import apiService from '../services/apiService';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/Card';
+import { Button } from '../../components/ui/Button';
+import { Badge } from '../../components/ui/Badge';
+import { Progress } from '../../components/ui/Progress';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/Tabs';
+import { useToastActions } from '../../components/ui/Toast';
+import socialService from '../../services/socialService';
+import apiService from '../../services/apiService';
 
 const EnhancedSocialCollaborationDashboard = () => {
   const toast = useToastActions();

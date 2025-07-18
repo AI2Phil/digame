@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card';
-import { Button } from '../components/ui/Button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/Tabs';
-import { Badge } from '../components/ui/Badge';
-import { Progress } from '../components/ui/Progress';
-import { Label } from '../components/ui/Label';
-import { Switch } from '../components/ui/Switch';
-import { Skeleton } from '../components/ui/Skeleton';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/Card';
+import { Button } from '../../components/ui/Button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/Tabs';
+import { Badge } from '../../components/ui/Badge';
+import { Progress } from '../../components/ui/Progress';
+import { Label } from '../../components/ui/Label';
+import { Switch } from '../../components/ui/Switch';
+import { Skeleton } from '../../components/ui/Skeleton';
 import {
   Building,
   Users,
@@ -33,7 +33,7 @@ import {
   Eye,
   RefreshCw,
 } from 'lucide-react';
-import { Alert, AlertTitle, AlertDescription } from '../components/ui/Alert';
+import { Alert, AlertTitle, AlertDescription } from '../../components/ui/Alert';
 
 // Mock API service (replace with actual implementation)
 const mockApiService = {

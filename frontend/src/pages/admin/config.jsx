@@ -1,6 +1,6 @@
 import React from 'react';
-import { ToastProvider } from '../components/ui/Toaster';
-import { SystemConfigurationDashboard } from '../components/settings/SystemConfigurationDashboard';
+import { ToastProvider } from '../../components/ui/Toaster';
+import { SystemConfigurationDashboard } from '../../components/settings/SystemConfigurationDashboard';
 
 const SystemConfigurationPage = () => {
   return (

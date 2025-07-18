@@ -34,16 +34,16 @@ import {
 import { useRouter } from 'next/router';
 
 // Import our new advanced components
-import PerformanceDashboard from '../components/performance/PerformanceDashboard';
-import BundleAnalyzer from '../components/performance/BundleAnalyzer';
-import QueryOptimization from '../components/performance/QueryOptimization';
-import UserExperienceTracking from '../components/performance/UserExperienceTracking';
-import RealTimePerformanceMonitor from '../components/performance/RealTimePerformanceMonitor';
-import AIInsightsDashboard from '../components/advanced/AIInsightsDashboard';
-import WorkflowAutomation from '../components/advanced/WorkflowAutomation';
+import PerformanceDashboard from '../../components/performance/PerformanceDashboard';
+import BundleAnalyzer from '../../components/performance/BundleAnalyzer';
+import QueryOptimization from '../../components/performance/QueryOptimization';
+import UserExperienceTracking from '../../components/performance/UserExperienceTracking';
+import RealTimePerformanceMonitor from '../../components/performance/RealTimePerformanceMonitor';
+import AIInsightsDashboard from '../../components/advanced/AIInsightsDashboard';
+import WorkflowAutomation from '../../components/advanced/WorkflowAutomation';
 
 // Import performance optimization service
-import { performanceOptimizationService } from '../services/performanceOptimizationService';
+import { performanceOptimizationService } from '../../services/performanceOptimizationService';
 
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
