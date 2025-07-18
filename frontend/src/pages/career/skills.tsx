@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import PageHeader from '../../../components/PageHeader';
+import PageHeader from '../../components/navigation/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
@@ -442,25 +442,9 @@ const CareerSkills: React.FC = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <PageHeader title="Skills Development"
+      <PageHeader
+        title="Skills Development"
         subtitle="Track, develop, and optimize your professional skills"
-        icon={<Brain className="h-8 w-8" />}
-        breadcrumb={[
-          { label: 'Career', href: '/career' },
-          { label: 'Skills', href: '/career/skills' },
-        ]}
-        actions={
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={() => {}} disabled={false}>
-              <Upload className="h-4 w-4 mr-2" />
-              Import Skills
-            </Button>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Skill
-            </Button>
-          </div>
-        }
       />
 
       {/* Tab Navigation */}

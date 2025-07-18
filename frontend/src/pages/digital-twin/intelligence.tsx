@@ -5,10 +5,8 @@ import PageHeader from '../../components/navigation/PageHeader';
 
 const DigitalTwinIntelligence: React.FC = () => {
   const [selectedEndpoint, setSelectedEndpoint] = useState('chat');
-
-  const DigitalTwinIntelligence: React.FC = () => {
-    const [apiResponse, setApiResponse] = useState(null);
-    const [isLoading, setIsLoading] = useState(false);
+  const [apiResponse, setApiResponse] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
 
     const apiEndpoints = [
       {
@@ -203,9 +201,9 @@ const DigitalTwinIntelligence: React.FC = () => {
         </Head>
 
         <div className="min-h-screen bg-gray-50">
-          <PageHeader title="Intelligence API"
+          <PageHeader
+            title="Intelligence API"
             subtitle="Access your Digital Twin through powerful API endpoints"
-            icon={<Code className="w-6 h-6 text-blue-600" />}
             badge="API ACCESS"
           />
 
@@ -406,8 +404,6 @@ print(data['response'])`}</pre>
         </div>
       </>
     );
-  };
-
 };
 
 export default DigitalTwinIntelligence;

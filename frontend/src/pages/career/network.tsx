@@ -541,7 +541,7 @@ const CareerNetwork: React.FC = () => {
                         </Button>
                       </>
                     ) : connection.status === 'pending' ? (
-                      <Button size="sm" variant="outline" disabled onClick={() => {}} disabled={false}>
+                      <Button size="sm" variant="outline" disabled onClick={() => {}}>
                         <Clock className="h-4 w-4 mr-2" />
                         Pending
                       </Button>
@@ -699,8 +699,9 @@ const CareerNetwork: React.FC = () => {
                   </div>
 
                   <div className="flex gap-2">
-                    <Button className="flex-1"
-                      onClick={() => handleBookMentor(mentor.id)} disabled={false}
+                    <Button
+                      className="flex-1"
+                      onClick={() => handleBookMentor(mentor.id)}
                       disabled={mentor.availability !== 'Available'}
                     >
                       <Calendar className="h-4 w-4 mr-2" />

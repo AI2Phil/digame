@@ -20,12 +20,10 @@ import NavigationHubFooter from '../../components/layout/NavigationHubFooter';
 
 const WorkflowAutomation: React.FC = () => {
   const [activeTab, setActiveTab] = useState('workflows');
-
-  const WorkflowAutomation: React.FC = () => {
-    const [selectedWorkflow, setSelectedWorkflow] = useState(null);
-    const [workflowData, setWorkflowData] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+  const [selectedWorkflow, setSelectedWorkflow] = useState(null);
+  const [workflowData, setWorkflowData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
     // Fetch workflow data from backend
     useEffect(() => {
@@ -252,9 +250,9 @@ const WorkflowAutomation: React.FC = () => {
             </div>
           </div>
 
-          <PageHeader title="Workflow & Automation"
+          <PageHeader
+            title="Workflow & Automation"
             subtitle="Streamline processes and boost productivity with intelligent automation"
-            icon={<Workflow className="w-6 h-6 text-purple-600" />}
             badge="AUTOMATION"
           />
 
@@ -657,8 +655,6 @@ const WorkflowAutomation: React.FC = () => {
         </div>
       </>
     );
-  };
-
 };
 
 export default WorkflowAutomation;

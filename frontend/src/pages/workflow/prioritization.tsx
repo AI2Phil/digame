@@ -379,7 +379,7 @@ const WorkflowPrioritization = () => {
               <Settings className="h-4 w-4 mr-2" />
               Configure Framework
             </Button>
-            <Button>
+            <Button onClick={() => {}} disabled={false}>
               <Plus className="h-4 w-4 mr-2" />
               Add Task
             </Button>
@@ -773,7 +773,7 @@ const WorkflowPrioritization = () => {
 
                   <Button className="w-full"
                     variant={framework.active ? 'outline' : 'default'}
-                    onClick={() => handleFrameworkChange(framework.id)} disabled={false}
+                    onClick={() => handleFrameworkChange(framework.id)}
                     disabled={framework.active}
                   >
                     {framework.active ? 'Currently Active' : 'Switch to This Framework'}

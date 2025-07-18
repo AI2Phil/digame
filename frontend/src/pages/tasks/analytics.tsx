@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import PageHeader from '../../../components/PageHeader';
+import PageHeader from '../../components/navigation/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
@@ -213,33 +213,6 @@ const TaskAnalytics: React.FC = () => {
     <div className="container mx-auto px-4 py-8">
       <PageHeader title="Task Analytics"
         subtitle="Comprehensive insights into your task performance and productivity patterns"
-        icon={<BarChart3 className="h-8 w-8" />}
-        breadcrumb={[
-          { label: 'Tasks', href: '/tasks' },
-          { label: 'Analytics', href: '/tasks/analytics' },
-        ]}
-        actions={
-          <div className="flex gap-2">
-            <select
-              value={timeRange}
-              onChange={e => setTimeRange(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="7d">Last 7 Days</option>
-              <option value="30d">Last 30 Days</option>
-              <option value="90d">Last 90 Days</option>
-              <option value="1y">Last Year</option>
-            </select>
-            <Button variant="outline" onClick={fetchTaskAnalytics} disabled={false}>
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Refresh
-            </Button>
-            <Button variant="outline" onClick={() => {}} disabled={false}>
-              <Download className="h-4 w-4 mr-2" />
-              Export
-            </Button>
-          </div>
-        }
       />
 
       {/* Tab Navigation */}

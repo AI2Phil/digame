@@ -408,25 +408,9 @@ const TeamSocial: React.FC = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <PageHeader title="Team Social"
+      <PageHeader
+        title="Team Social"
         subtitle="Connect, collaborate, and celebrate with your team"
-        icon={<Users className="h-8 w-8" />}
-        breadcrumb={[
-          { label: 'Team', href: '/team' },
-          { label: 'Social', href: '/team/social' },
-        ]}
-        actions={
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={() => {}} disabled={false}>
-              <Bell className="h-4 w-4 mr-2" />
-              Notifications
-            </Button>
-            <Button variant="outline" onClick={() => {}} disabled={false}>
-              <Settings className="h-4 w-4 mr-2" />
-              Settings
-            </Button>
-          </div>
-        }
       />
 
       {/* Tab Navigation */}
@@ -486,9 +470,7 @@ const TeamSocial: React.FC = () => {
               <Card>
                 <CardContent className="p-4">
                   <div className="flex gap-3">
-                    <Avatar>
-                      <AvatarFallback>YU</AvatarFallback>
-                    </Avatar>
+                    <Avatar fallback="YU" />
                     <div className="flex-1 space-y-3">
                       <textarea
                         value={newPost}
@@ -527,9 +509,7 @@ const TeamSocial: React.FC = () => {
                       {/* Post Header */}
                       <div className="flex items-start justify-between mb-3">
                         <div className="flex items-center gap-3">
-                          <Avatar>
-                            <AvatarFallback>{post.user.avatar}</AvatarFallback>
-                          </Avatar>
+                          <Avatar fallback={post.user.avatar} />
                           <div>
                             <div className="flex items-center gap-2">
                               <h4 className="font-medium">{post.user.name}</h4>
@@ -708,9 +688,7 @@ const TeamSocial: React.FC = () => {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-4">
                         <div className="text-2xl font-bold text-gray-400">#{index + 1}</div>
-                        <Avatar>
-                          <AvatarFallback>{user.avatar}</AvatarFallback>
-                        </Avatar>
+                        <Avatar fallback={user.avatar} />
                         <div>
                           <h4 className="font-medium">{user.user}</h4>
                           <div className="flex items-center gap-2">

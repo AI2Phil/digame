@@ -835,7 +835,7 @@ const AuditLogs: React.FC = () => {
 
               <div className="mt-6 pt-6 border-t">
                 <div className="flex gap-4">
-                  <Button>Save Configuration</Button>
+                  <Button onClick={() => {}} disabled={false}>Save Configuration</Button>
                   <Button variant="outline" onClick={() => {}} disabled={false}>Test Settings</Button>
                 </div>
               </div>

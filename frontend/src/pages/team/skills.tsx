@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import PageHeader from '../../../components/PageHeader';
+import PageHeader from '../../components/navigation/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
@@ -398,23 +398,6 @@ const TeamSkills: React.FC = () => {
     <div className="container mx-auto px-4 py-8">
       <PageHeader title="Team Skills"
         subtitle="Track, develop, and optimize team capabilities and expertise"
-        icon={<Brain className="h-8 w-8" />}
-        breadcrumb={[
-          { label: 'Team', href: '/team' },
-          { label: 'Skills', href: '/team/skills' },
-        ]}
-        actions={
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={() => {}} disabled={false}>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Skill
-            </Button>
-            <Button>
-              <Target className="h-4 w-4 mr-2" />
-              Set Goals
-            </Button>
-          </div>
-        }
       />
 
       {/* Tab Navigation */}
@@ -628,9 +611,7 @@ const TeamSkills: React.FC = () => {
               <Card key={member.id} className="hover:shadow-lg transition-shadow">
                 <CardHeader>
                   <div className="flex items-center gap-3">
-                    <Avatar className="h-12 w-12">
-                      <AvatarFallback>{member.avatar}</AvatarFallback>
-                    </Avatar>
+                    <Avatar className="h-12 w-12" fallback={member.avatar} />
                     <div>
                       <CardTitle className="text-lg">{member.name}</CardTitle>
                       <p className="text-sm text-gray-600">{member.role}</p>

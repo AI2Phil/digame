@@ -6,17 +6,15 @@ import PageHeader from '../../components/navigation/PageHeader';
 
 const DigitalTwinOnboarding: React.FC = () => {
   const router = useRouter();
-
-  const DigitalTwinOnboarding: React.FC = () => {
-    const [currentStep, setCurrentStep] = useState(1);
-    const [formData, setFormData] = useState({
-      goals: [],
-      workStyle: '',
-      preferences: {},
-      interests: [],
-    });
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const [error, setError] = useState(null);
+  const [currentStep, setCurrentStep] = useState(1);
+  const [formData, setFormData] = useState({
+    goals: [],
+    workStyle: '',
+    preferences: {},
+    interests: [],
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState(null);
 
     const steps = [
       {
@@ -296,9 +294,9 @@ const DigitalTwinOnboarding: React.FC = () => {
         </Head>
 
         <div className="min-h-screen bg-gray-50">
-          <PageHeader title="Digital Twin Onboarding"
+          <PageHeader
+            title="Digital Twin Onboarding"
             subtitle="Set up your AI-powered professional companion"
-            icon={<Rocket className="w-6 h-6 text-blue-600" />}
             badge="SETUP"
           />
 
@@ -391,8 +389,6 @@ const DigitalTwinOnboarding: React.FC = () => {
         </div>
       </>
     );
-  };
-
 };
 
 export default DigitalTwinOnboarding;

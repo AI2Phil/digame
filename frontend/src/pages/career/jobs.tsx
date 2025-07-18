@@ -563,9 +563,10 @@ const CareerJobs: React.FC = () => {
                       </div>
 
                       <div className="flex gap-2">
-                        <Button variant="outline"
+                        <Button
+                          variant="outline"
                           size="sm"
-                          onClick={() => handleSaveJob(job.id)} disabled={false}
+                          onClick={() => handleSaveJob(job.id)}
                           disabled={job.saved || savedJobs.has(job.id)}
                         >
                           <Bookmark
@@ -582,8 +583,9 @@ const CareerJobs: React.FC = () => {
 
                       <div className="flex gap-2">
                         {job.quickApply ? (
-                          <Button size="sm"
-                            onClick={() => handleApplyJob(job.id)} disabled={false}
+                          <Button
+                            size="sm"
+                            onClick={() => handleApplyJob(job.id)}
                             disabled={job.applied}
                           >
                             <Zap className="h-4 w-4 mr-2" />

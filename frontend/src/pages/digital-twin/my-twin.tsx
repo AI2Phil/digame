@@ -16,12 +16,10 @@ import PageHeader from '../../components/navigation/PageHeader';
 
 const MyDigitalTwin: React.FC = () => {
   const [twinData, setTwinData] = useState(null);
-
-  const MyDigitalTwin: React.FC = () => {
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-    const [chatMessage, setChatMessage] = useState('');
-    const [chatHistory, setChatHistory] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [chatMessage, setChatMessage] = useState('');
+  const [chatHistory, setChatHistory] = useState([]);
 
     // Fetch digital twin data from backend
     useEffect(() => {
@@ -204,9 +202,9 @@ const MyDigitalTwin: React.FC = () => {
         </Head>
 
         <div className="min-h-screen bg-gray-50">
-          <PageHeader title="My Digital Twin"
+          <PageHeader
+            title="My Digital Twin"
             subtitle="Your AI-powered professional development companion"
-            icon={<Bot className="w-6 h-6 text-blue-600" />}
             badge="CORE PLATFORM"
           />
           <div className="container mx-auto px-4 py-8">
@@ -484,8 +482,6 @@ const MyDigitalTwin: React.FC = () => {
         </div>
       </>
     );
-  };
-
 };
 
 export default MyDigitalTwin;

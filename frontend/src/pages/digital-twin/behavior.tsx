@@ -126,12 +126,9 @@ const BehaviorModeling = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <PageHeader title="Behavior Modeling"
+      <PageHeader
+        title="Behavior Modeling"
         subtitle="AI-powered behavioral pattern analysis and optimization"
-        breadcrumbs={[
-          { label: 'Digital Twin', href: '/digital-twin/my-twin' },
-          { label: 'Behavior Modeling', href: '/digital-twin/behavior' },
-        ]}
       />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

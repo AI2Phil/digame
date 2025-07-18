@@ -10,26 +10,21 @@ const WorkflowAutomation = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <PageHeader title="Workflow Automation"
+      <PageHeader
+        title="Workflow Automation"
         subtitle="Create, manage, and monitor automated workflows with database-driven insights"
-        icon={<Zap className="h-8 w-8" />}
-        breadcrumb={[
-          { label: 'Workflow', href: '/workflow' },
-          { label: 'Automation', href: '/workflow/automation' },
-        ]}
-        actions={
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={() => {}} disabled={false}>
-              <Download className="h-4 w-4 mr-2" />
-              Export
-            </Button>
-            <Button onClick={() => router.push('/workflow/automation?tab=designer')} disabled={false}>
-              <Plus className="h-4 w-4 mr-2" />
-              Create Workflow
-            </Button>
-          </div>
-        }
       />
+      
+      <div className="flex gap-2 mb-6">
+        <Button variant="outline" onClick={() => {}} disabled={false}>
+          <Download className="h-4 w-4 mr-2" />
+          Export
+        </Button>
+        <Button onClick={() => router.push('/workflow/automation?tab=designer')} disabled={false}>
+          <Plus className="h-4 w-4 mr-2" />
+          Create Workflow
+        </Button>
+      </div>
 
       {/* Database-driven Workflow Automation Dashboard */}
       <WorkflowAutomationDashboard />

@@ -14,7 +14,7 @@ import {
   Plus,
   Trash2,
 } from 'lucide-react';
-import PageHeader from '../../../components/PageHeader';
+import PageHeader from '../../components/navigation/PageHeader';
 
 const PublishingCenter: React.FC = () => {
   const [activeTab, setActiveTab] = useState('published');
@@ -237,7 +237,6 @@ const PublishingCenter: React.FC = () => {
       <div className="min-h-screen bg-gray-50">
         <PageHeader title="Publishing Center"
           subtitle="Publish and share reports with advanced distribution options"
-          icon={<Share2 className="w-6 h-6 text-purple-600" />}
         />
 
         <div className="container mx-auto px-4 py-8">

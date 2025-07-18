@@ -217,26 +217,21 @@ const WorkflowNotes = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <PageHeader title="Workflow Notes"
+      <PageHeader
+        title="Workflow Notes"
         subtitle="Document processes, troubleshooting guides, and best practices"
-        icon={<FileText className="h-8 w-8" />}
-        breadcrumb={[
-          { label: 'Workflow', href: '/workflow' },
-          { label: 'Notes', href: '/workflow/notes' },
-        ]}
-        actions={
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={() => {}} disabled={false}>
-              <Upload className="h-4 w-4 mr-2" />
-              Import
-            </Button>
-            <Button onClick={() => setShowCreateModal(true)} disabled={false}>
-              <Plus className="h-4 w-4 mr-2" />
-              New Note
-            </Button>
-          </div>
-        }
       />
+      
+      <div className="flex gap-2 mb-6">
+        <Button variant="outline" onClick={() => {}} disabled={false}>
+          <Upload className="h-4 w-4 mr-2" />
+          Import
+        </Button>
+        <Button onClick={() => setShowCreateModal(true)} disabled={false}>
+          <Plus className="h-4 w-4 mr-2" />
+          New Note
+        </Button>
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Sidebar */}

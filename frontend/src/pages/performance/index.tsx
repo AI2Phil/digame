@@ -176,7 +176,7 @@ const PerformanceIndexPage: React.FC = () => {
                 <CardActions>
                   <Button variant="contained"
                     fullWidth
-                    onClick={() => router.push(tool.path)} disabled={false}
+                    onClick={() => router.push(tool.path)}
                     disabled={tool.status === 'Coming Soon'}
                   >
                     {tool.status === 'Coming Soon' ? 'Coming Soon' : 'Open Dashboard'}

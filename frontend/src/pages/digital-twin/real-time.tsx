@@ -17,7 +17,7 @@ const RealTimeTwinPage: React.FC = () => {
     <QueryClientProvider client={queryClient}>
       <ToastProvider>
         <div className="page-container">
-          <RealTimeTwinDashboard />
+          <RealTimeTwinDashboard twinId="default-twin" userId="current-user" />
         </div>
       </ToastProvider>
     </QueryClientProvider>

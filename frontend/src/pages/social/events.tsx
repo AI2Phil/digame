@@ -23,6 +23,7 @@ const NetworkingEvents: React.FC = () => {
     type: 'all',
     location: 'all',
     date: 'all',
+    format: 'all',
   });
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');

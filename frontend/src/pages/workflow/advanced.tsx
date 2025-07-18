@@ -219,23 +219,6 @@ const AdvancedWorkflows = () => {
     <div className="container mx-auto px-4 py-8">
       <PageHeader title="Advanced Workflows"
         subtitle="Build complex, AI-powered workflows with conditional logic and integrations"
-        icon={<Brain className="h-8 w-8" />}
-        breadcrumb={[
-          { label: 'Workflow', href: '/workflow' },
-          { label: 'Advanced', href: '/workflow/advanced' },
-        ]}
-        actions={
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={() => {}} disabled={false}>
-              <Copy className="h-4 w-4 mr-2" />
-              Import
-            </Button>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              New Workflow
-            </Button>
-          </div>
-        }
       />
 
       {/* Tab Navigation */}

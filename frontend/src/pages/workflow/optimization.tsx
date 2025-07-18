@@ -251,26 +251,21 @@ const WorkflowOptimization = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <PageHeader title="Workflow Optimization"
+      <PageHeader
+        title="Workflow Optimization"
         subtitle="AI-powered suggestions to improve workflow performance, reliability, and efficiency"
-        icon={<Target className="h-8 w-8" />}
-        breadcrumb={[
-          { label: 'Workflow', href: '/workflow' },
-          { label: 'Optimization', href: '/workflow/optimization' },
-        ]}
-        actions={
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={fetchOptimizations} disabled={false}>
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Refresh
-            </Button>
-            <Button variant="outline" onClick={() => {}} disabled={false}>
-              <Download className="h-4 w-4 mr-2" />
-              Export Report
-            </Button>
-          </div>
-        }
       />
+      
+      <div className="flex gap-2 mb-6">
+        <Button variant="outline" onClick={fetchOptimizations} disabled={false}>
+          <RefreshCw className="h-4 w-4 mr-2" />
+          Refresh
+        </Button>
+        <Button variant="outline" onClick={() => {}} disabled={false}>
+          <Download className="h-4 w-4 mr-2" />
+          Export Report
+        </Button>
+      </div>
 
       {/* Tab Navigation */}
       <div className="flex space-x-1 mb-6 bg-gray-100 p-1 rounded-lg">
