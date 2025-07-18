@@ -79,10 +79,9 @@ Since you have Docker Desktop running, I recommend using Docker because:
 - Production database performance
 ```
 
-## 🚀 **Let's Switch to Docker**
+## 🚀 **Let's Switch to using the Docker stack**
 
-Would you like me to start the full Docker stack? This would give you:
-
+This would give you:
 1. **Full Intelligent Cache System** with Redis
 2. **PostgreSQL Database** for migration testing
 3. **Production-like Environment**
@@ -111,14 +110,11 @@ docker-compose down
 
 **Should I stop the current npm processes and start the Docker stack instead?** 
 This would give you the full intelligent caching experience with Redis and PostgreSQL!
-
 The Docker stack includes everything we need:
-
 - **PostgreSQL Database** (port 5433)
 - **Redis Cache** (port 6379) 
 - **Backend API** (port 8000)
 - **Frontend** (port 3000)
-
 This will showcase the complete intelligent cache system with Redis and PostgreSQL. 
 
 
@@ -141,7 +137,10 @@ cd ../frontend
 npm install
 npm run dev
 
-- **start the frontend** (React/Next.js on port 3000) in a new terminal: ```cd frontend && npm run dev```
+- **start the frontend** (React/Next.js on port 3000) in a new terminal: 
+```
+cd frontend && npm run dev
+```
 
 - **Both services are now running**
 - Backend: http://localhost:8001 ✅

@@ -33,9 +33,8 @@ export default function Document() {
         {/* Splash Screens for iOS */}
         <link rel="apple-touch-startup-image" href="/icons/icon-512x512.png" />
 
-        {/* Security Headers */}
+        {/* Security Headers - Note: X-Frame-Options should be set via HTTP headers, not meta tags */}
         <meta httpEquiv="X-Content-Type-Options" content="nosniff" />
-        <meta httpEquiv="X-Frame-Options" content="DENY" />
         <meta httpEquiv="X-XSS-Protection" content="1; mode=block" />
         <meta name="referrer" content="strict-origin-when-cross-origin" />
 
@@ -61,11 +60,10 @@ export default function Document() {
         <meta name="twitter:description" content="Enterprise-grade analytics platform with AI-powered insights, real-time monitoring, and comprehensive business intelligence tools." />
         <meta name="twitter:image" content="/icons/icon-512x512.png" />
 
-        {/* Viewport for better mobile experience */}
-        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, user-scalable=no, viewport-fit=cover" />
-
-        {/* Preload critical resources */}
-        <link rel="preload" href="/fonts/inter.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
+        {/* Google Fonts - Inter font family */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
       </Head>
       <body>
         {/* Skip to main content for accessibility */}

@@ -3,12 +3,14 @@ const { i18n } = require('./next-i18next.config');
 
 const withPWA = require('next-pwa')({
   dest: 'public',
-  register: true,
-  skipWaiting: true,
-  disable: true, // Always disable PWA in test environment
+  register: false,
+  skipWaiting: false,
+  disable: process.env.NODE_ENV === 'development', // Disable PWA in development
   fallbacks: {
     document: '/offline.html',
   },
+  buildExcludes: [/middleware-manifest\.json$/],
+  runtimeCaching: [],
 });
 
 const nextConfig = {
@@ -22,6 +24,33 @@ const nextConfig = {
   env: {
     PLATFORM_OWNER_ACCESS_REQUIRED: 'true',
     ACCESS_CONTROL_ENABLED: 'true'
+  },
+
+  // Security headers
+  async headers() {
+    return [
+      {
+        source: '/(.*)',
+        headers: [
+          {
+            key: 'X-Frame-Options',
+            value: 'DENY'
+          },
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff'
+          },
+          {
+            key: 'X-XSS-Protection',
+            value: '1; mode=block'
+          },
+          {
+            key: 'Referrer-Policy',
+            value: 'strict-origin-when-cross-origin'
+          }
+        ]
+      }
+    ];
   },
 
   // Enhanced webpack configuration
