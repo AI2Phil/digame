@@ -59,25 +59,54 @@ const LoginPage = () => {
       
       // Check if credentials match any demo user (using username or email)
       const isValidDemo = demoCredentials.some(cred =>
-        (formData.email === cred.username || formData.email === `${cred.username}@digame.com`) &&
+        (formData.email === cred.username ||
+         formData.email === `${cred.username}@digame.com` ||
+         formData.email === `${cred.username}@example.com`) &&
         formData.password === cred.password
       );
       
       if (isPlatformOwner) {
         // Platform owner login - redirect to platform owner dashboard
+        console.log('Platform owner login successful');
         if (typeof window !== 'undefined') {
           window.location.href = '/platform-owner';
         }
       } else if (isValidDemo) {
         // Demo user login - redirect to regular dashboard
+        console.log('Demo user login successful');
         if (typeof window !== 'undefined') {
           window.location.href = '/dashboard';
         }
       } else {
+        console.log('Login failed - credentials:', { email: formData.email, password: formData.password });
         setError('Invalid credentials. Please use your platform owner account or one of the demo accounts shown above.');
       }
     } catch (err) {
       setError('Login failed. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Handle direct demo user login (no authentication required)
+  const handleDemoLogin = async (demoUser) => {
+    if (!isClient) return;
+    setIsLoading(true);
+    
+    try {
+      // Simulate loading
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
+      // Redirect based on demo user type
+      if (typeof window !== 'undefined') {
+        if (demoUser === 'guest') {
+          window.location.href = '/dashboard?demo=guest';
+        } else {
+          window.location.href = '/dashboard?demo=' + demoUser;
+        }
+      }
+    } catch (err) {
+      setError('Demo login failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -117,34 +146,53 @@ const LoginPage = () => {
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="grid gap-2 text-sm">
-                <div className="flex justify-between items-center p-2 bg-white rounded border">
+                <button
+                  onClick={() => handleDemoLogin('demo')}
+                  disabled={isLoading}
+                  className="flex justify-between items-center p-2 bg-white rounded border hover:bg-blue-50 hover:border-blue-300 transition-colors cursor-pointer disabled:opacity-50"
+                >
                   <div>
                     <span className="font-medium text-gray-900">demo</span>
                     <span className="text-gray-500 ml-2">/ demo</span>
                   </div>
                   <Badge variant="success" className="text-xs">Fully Onboarded</Badge>
-                </div>
-                <div className="flex justify-between items-center p-2 bg-white rounded border">
+                </button>
+                <button
+                  onClick={() => handleDemoLogin('sarah_demo')}
+                  disabled={isLoading}
+                  className="flex justify-between items-center p-2 bg-white rounded border hover:bg-blue-50 hover:border-blue-300 transition-colors cursor-pointer disabled:opacity-50"
+                >
                   <div>
                     <span className="font-medium text-gray-900">sarah_demo</span>
                     <span className="text-gray-500 ml-2">/ demo123</span>
                   </div>
                   <Badge variant="default" className="text-xs">Product Manager</Badge>
-                </div>
-                <div className="flex justify-between items-center p-2 bg-white rounded border">
+                </button>
+                <button
+                  onClick={() => handleDemoLogin('alex_demo')}
+                  disabled={isLoading}
+                  className="flex justify-between items-center p-2 bg-white rounded border hover:bg-blue-50 hover:border-blue-300 transition-colors cursor-pointer disabled:opacity-50"
+                >
                   <div>
                     <span className="font-medium text-gray-900">alex_demo</span>
                     <span className="text-gray-500 ml-2">/ demo123</span>
                   </div>
                   <Badge variant="secondary" className="text-xs">New User</Badge>
-                </div>
-                <div className="flex justify-between items-center p-2 bg-white rounded border">
+                </button>
+                <button
+                  onClick={() => handleDemoLogin('guest')}
+                  disabled={isLoading}
+                  className="flex justify-between items-center p-2 bg-white rounded border hover:bg-green-50 hover:border-green-300 transition-colors cursor-pointer disabled:opacity-50"
+                >
                   <div>
                     <span className="font-medium text-gray-900">guest</span>
-                    <span className="text-gray-500 ml-2">/ guest</span>
+                    <span className="text-gray-500 ml-2">/ No Auth Required</span>
                   </div>
                   <Badge variant="outline" className="text-xs">Guest Access</Badge>
-                </div>
+                </button>
+              </div>
+              <div className="text-center text-xs text-blue-600 mt-2">
+                👆 Click any demo user above for instant access
               </div>
             </CardContent>
           </Card>
@@ -155,7 +203,8 @@ const LoginPage = () => {
           <CardHeader className="space-y-1">
             <CardTitle className="text-2xl text-center">Sign In</CardTitle>
             <CardDescription className="text-center">
-              Enter your credentials to access your account
+              Enter your credentials to access your account<br/>
+              <span className="text-sm text-blue-600">Or use demo accounts above for instant access</span>
             </CardDescription>
           </CardHeader>
 
