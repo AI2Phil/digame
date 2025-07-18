@@ -13,7 +13,7 @@ import { Progress } from '../components/ui/Progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/Tabs';
 import { useToast } from '../components/ui/Toast';
 import enhancedApiService from '../services/enhancedApiService';
-import { useNavigate } from 'react-router-dom';
+import { useRouter } from 'next/router';
 import {
   ResponsiveContainer,
   LineChart as RechartsLineChart,
@@ -37,7 +37,7 @@ import {
 
 const BusinessIntelligenceDashboard = () => {
   const { toast } = useToast();
-  const navigate = useNavigate();
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState('overview');
   const [timeRange, setTimeRange] = useState('30d');
   const [loading, setLoading] = useState(true);
@@ -280,7 +280,7 @@ const BusinessIntelligenceDashboard = () => {
             <div className="flex items-center gap-3">
               <Button
                 variant="ghost"
-                onClick={() => navigate('/dashboard')}
+                onClick={() => router.push('/dashboard')}
                 className="mr-2 text-gray-600 hover:text-gray-900"
               >
                 ← Dashboard

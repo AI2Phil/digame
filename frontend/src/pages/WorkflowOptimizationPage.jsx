@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useRouter } from 'next/router';
 import {
   Workflow, Clock, TrendingUp, Zap, AlertCircle, CheckCircle,
   BarChart3, Settings, Home, Download, Play, Pause, RotateCcw
@@ -11,14 +11,14 @@ import { Progress } from '../components/ui/Progress';
 import { Chart } from '../components/ui/Chart';
 
 const WorkflowOptimizationPage = ({ isDemoMode = false, onLogout }) => {
-  const navigate = useNavigate();
+  const router = useRouter();
   const [selectedWorkflow, setSelectedWorkflow] = useState(null);
 
   // Use prop if provided, otherwise fallback to localStorage (client-side only)
   const isDemo = isDemoMode || (typeof window !== 'undefined' && localStorage.getItem('demo_mode') === 'true');
 
   const handleHomeClick = () => {
-    navigate(isDemo ? '/dashboard' : '/');
+    router.push(isDemo ? '/dashboard' : '/');
   };
 
   // Mock workflow metrics

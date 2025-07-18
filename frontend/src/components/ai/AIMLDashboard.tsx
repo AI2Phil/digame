@@ -1127,4 +1127,4 @@ export const AIMLDashboard: React.FC = () => {
       )}
     </div>
   );
-};
+};export default AIMLDashboard;

@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useRouter } from 'next/router';
 import OnboardingWizard from '../components/onboarding/OnboardingWizard';
 import { useAuth } from '../contexts/AuthContext';
-import { Toast } from '../components/ui/Toast';
+import Toast from '../components/ui/Toast';
 import { Button } from '../components/ui/Button';
 import { Alert, AlertDescription } from '../components/ui/Alert';
 
 const OnboardingPage = () => {
-  const navigate = useNavigate();
+  const router = useRouter();
   const { user, updateProfile, isDemoMode } = useAuth();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -26,7 +26,7 @@ const OnboardingPage = () => {
 
       // Check if onboarding is already completed
       if (user?.onboardingCompleted) {
-        navigate('/dashboard');
+        router.push('/dashboard');
         return;
       }
 
@@ -133,7 +133,7 @@ const OnboardingPage = () => {
         
         // Navigate to dashboard with a small delay to ensure state updates
         setTimeout(() => {
-          navigate('/dashboard', { replace: true });
+          router.push('/dashboard', { replace: true });
         }, 1000);
       } else {
         // If all approaches fail, still allow navigation but show warning
@@ -141,7 +141,7 @@ const OnboardingPage = () => {
         Toast.success('Welcome to Digame! Setup completed with default settings.');
         
         setTimeout(() => {
-          navigate('/dashboard', { replace: true });
+          router.push('/dashboard', { replace: true });
         }, 1000);
       }
 
@@ -151,7 +151,7 @@ const OnboardingPage = () => {
       
       // Even if there's an error, redirect to dashboard after a delay
       setTimeout(() => {
-        navigate('/dashboard', { replace: true });
+        router.push('/dashboard', { replace: true });
       }, 3000);
     } finally {
       setLoading(false);
@@ -196,7 +196,7 @@ const OnboardingPage = () => {
       
       if (success) {
         Toast.success('Welcome to Digame! Default setup completed.');
-        navigate('/dashboard', { replace: true });
+        router.push('/dashboard', { replace: true });
       } else {
         throw new Error('Failed to save default settings');
       }

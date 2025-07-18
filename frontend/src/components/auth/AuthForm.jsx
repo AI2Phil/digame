@@ -3,7 +3,7 @@ import { X } from 'lucide-react';
 import Button from '../ui/Button'; // Will be used for non-submit buttons
 // Input from '../ui/Input' is no longer needed directly, FormInput will be used.
 import { Card } from '../ui/Card';
-import { Toast } from '../ui/Toast';
+import Toast from '../ui/Toast';
 import { Form, FormField, FormLabel, FormInput, FormSubmitButton, FormCheckbox } from '../ui/Form';
 import apiService from '../../services/apiService';
 

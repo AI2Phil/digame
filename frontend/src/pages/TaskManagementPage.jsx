@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useRouter } from 'next/router';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/Tabs';
@@ -21,9 +21,8 @@ import {
 import { Select } from '../components/ui/Select'; // Added import
 
 export default function TaskManagementPage({ isDemoMode, onLogout }) {
-  const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'overview');
+  const router = useRouter();
+  const [activeTab, setActiveTab] = useState(router.query.tab || 'overview');
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState('all');
@@ -373,7 +372,7 @@ export default function TaskManagementPage({ isDemoMode, onLogout }) {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => navigate('/dashboard')}
+                onClick={() => router.push('/dashboard')}
                 className="flex items-center gap-2"
               >
                 <ArrowLeft className="h-4 w-4" />
@@ -394,7 +393,7 @@ export default function TaskManagementPage({ isDemoMode, onLogout }) {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => navigate('/dashboard')}
+                onClick={() => router.push('/dashboard')}
               >
                 Dashboard
               </Button>

@@ -30,8 +30,16 @@ const ToastContext = createContext<ToastContextType | undefined>(undefined);
 // Toast provider component
 export const ToastProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [toasts, setToasts] = useState<Toast[]>([]);
+  const [isClient, setIsClient] = useState(false);
+
+  // Ensure client-side only rendering
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const addToast = (toast: Omit<Toast, 'id'>) => {
+    if (typeof window === 'undefined') return;
+    
     const id = Math.random().toString(36).substr(2, 9);
     const newToast: Toast = {
       ...toast,
@@ -50,17 +58,19 @@ export const ToastProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   };
 
   const removeToast = (id: string) => {
+    if (typeof window === 'undefined') return;
     setToasts(prev => prev.filter(toast => toast.id !== id));
   };
 
   const clearAllToasts = () => {
+    if (typeof window === 'undefined') return;
     setToasts([]);
   };
 
   return (
     <ToastContext.Provider value={{ toasts, addToast, removeToast, clearAllToasts }}>
       {children}
-      <ToastContainer />
+      {isClient && <ToastContainer />}
     </ToastContext.Provider>
   );
 };

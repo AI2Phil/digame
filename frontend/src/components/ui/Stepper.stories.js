@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Stepper, StepItem } from './Stepper';
 import { Button } from './Button'; // Assuming Button component exists for interaction
 

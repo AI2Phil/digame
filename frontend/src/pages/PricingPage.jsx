@@ -1,17 +1,17 @@
 import React, { useEffect, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import Link from 'next/link'; import { useRouter } from 'next/router';
 import Button from '../components/ui/Button';
 import { Card, CardContent } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui/Table';
 
 export default function PricingPage() {
-  const [searchParams] = useSearchParams();
+  const router = useRouter(); const searchParams = router.query;
   const [showDemoCompletedMessage, setShowDemoCompletedMessage] = useState(false);
 
   useEffect(() => {
     // Check if user came from completed demo
-    if (searchParams.get('demo_completed') === 'true') {
+    if (router.query.demo_completed === 'true') {
       setShowDemoCompletedMessage(true);
     }
   }, [searchParams]);
@@ -21,18 +21,18 @@ export default function PricingPage() {
       {/* Navigation */}
       <nav className="container mx-auto px-4 py-6">
         <div className="flex justify-between items-center">
-          <Link to="/" className="flex items-center space-x-2">
+          <Link href="/" className="flex items-center space-x-2">
             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
               <span className="text-white font-bold text-sm">D</span>
             </div>
             <span className="text-xl font-bold text-gray-900">Digame</span>
           </Link>
           <div className="hidden md:flex space-x-8">
-            <Link to="/features" className="text-gray-600 hover:text-gray-900">Features</Link>
-            <Link to="/how-it-works" className="text-gray-600 hover:text-gray-900">How it Works</Link>
-            <Link to="/pricing" className="text-blue-600 font-semibold">Pricing</Link>
+            <Link href="/FeaturesPage" className="text-gray-600 hover:text-gray-900">Features</Link>
+            <Link href="/HowItWorksPage" className="text-gray-600 hover:text-gray-900">How it Works</Link>
+            <Link href="/PricingPage" className="text-blue-600 font-semibold">Pricing</Link>
           </div>
-          <Link to="/">
+          <Link href="/">
             <Button variant="primary" size="md" icon="🚀">
               Get Started
             </Button>
@@ -53,7 +53,7 @@ export default function PricingPage() {
               You've experienced the power of your digital professional twin. Ready to unlock your full potential?
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link to="/auth">
+              <Link href="/LoginPage">
                 <Button variant="primary" size="lg" icon="🚀" className="bg-green-600 hover:bg-green-700">
                   Create Your Account
                 </Button>
@@ -356,12 +356,12 @@ export default function PricingPage() {
             Start your free trial today and discover the power of your digital twin
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/demo">
+            <Link href="/DemoPage">
               <Button variant="secondary" size="xl" icon="🚀" className="bg-white text-blue-600 hover:bg-gray-50">
                 Try Demo
               </Button>
             </Link>
-            <Link to="/">
+            <Link href="/">
               <Button variant="outline" size="xl" icon="⚡" className="border-white text-white hover:bg-white hover:text-blue-600">
                 Start Free Trial
               </Button>

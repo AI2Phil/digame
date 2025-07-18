@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { render, screen, act } from '@testing-library/react';
 import '@testing-library/jest-dom'; // For extended matchers like .toBeInTheDocument()
 

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useRouter } from 'next/router';
 import {
   Users, TrendingUp, Target, Clock, Award, BarChart3,
   Activity, Calendar, Home, Download, Settings
@@ -12,13 +12,13 @@ import { Progress } from '../components/ui/Progress';
 import { Chart } from '../components/ui/Chart';
 
 const TeamDashboardPage = ({ isDemoMode = false, onLogout }) => {
-  const navigate = useNavigate();
+  const router = useRouter();
 
   // Use prop if provided, otherwise fallback to localStorage (client-side only)
   const isDemo = isDemoMode || (typeof window !== 'undefined' && localStorage.getItem('demo_mode') === 'true');
 
   const handleHomeClick = () => {
-    navigate(isDemo ? '/dashboard' : '/');
+    router.push(isDemo ? '/dashboard' : '/');
   };
 
   // Mock team performance data

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import Button from '../components/ui/Button';
+import Link from 'next/link';
+import { useRouter } from 'next/router';
+import Button from '../components/ui/Button.tsx';
 import { Badge } from '../components/ui/Badge';
 import { Progress } from '../components/ui/Progress';
 import { useTranslation } from 'next-i18next';
@@ -10,7 +11,7 @@ import { Card, CardContent } from '../components/ui/Card';
 
 export default function HomePage({ onDemoAccess, onLogin }) {
   const { t } = useTranslation('common'); // Assuming 'common' namespace
-  const navigate = useNavigate();
+  const router = useRouter();
   const [showOnboarding, setShowOnboarding] = useState(false);
 
   const handleGetStarted = () => {
@@ -18,7 +19,7 @@ export default function HomePage({ onDemoAccess, onLogin }) {
   };
 
   const handleDemoClick = () => {
-    navigate('/demo');
+    router.push('/demo');
   };
 
   const [showAuthForm, setShowAuthForm] = useState(false);
@@ -106,7 +107,7 @@ export default function HomePage({ onDemoAccess, onLogin }) {
                   </div>
 
                   <Button
-                    onClick={() => navigate('/guest-journey')}
+                    onClick={() => router.push('/guest-journey')}
                     variant="outline"
                     size="md"
                     className="w-full border-purple-200 text-purple-700 hover:bg-purple-50"
@@ -208,7 +209,7 @@ export default function HomePage({ onDemoAccess, onLogin }) {
                 </div>
 
                 <Button
-                  onClick={() => navigate('/auth')}
+                  onClick={() => router.push('/auth')}
                   variant="primary"
                   size="lg"
                   className="w-full"
@@ -239,17 +240,41 @@ export default function HomePage({ onDemoAccess, onLogin }) {
             <span className="text-xl font-bold text-gray-900">Digame</span>
           </div>
           <div className="hidden md:flex space-x-8">
-            <Link to="/features" className="text-gray-600 hover:text-gray-900">Features</Link>
-            <Link to="/how-it-works" className="text-gray-600 hover:text-gray-900">How it Works</Link>
-            <Link to="/pricing" className="text-gray-600 hover:text-gray-900">Pricing</Link>
+            <Link href="/features" className="text-gray-600 hover:text-gray-900">Features</Link>
+            <Link href="/how-it-works" className="text-gray-600 hover:text-gray-900">How it Works</Link>
+            <Link href="/pricing" className="text-gray-600 hover:text-gray-900">Pricing</Link>
           </div>
-          <Button
-            onClick={handleGetStarted}
-            variant="primary"
-            size="md"
-          >
-            🚀 {t('getStarted', 'Get Started')}
-          </Button>
+          <div className="flex items-center space-x-2 sm:space-x-3">
+            <button
+              onClick={() => router.push('/login')}
+              style={{
+                padding: '8px 16px',
+                border: '2px solid #3b82f6',
+                borderRadius: '6px',
+                backgroundColor: 'white',
+                color: '#3b82f6',
+                fontSize: '14px',
+                cursor: 'pointer',
+                fontWeight: '500',
+                display: 'block',
+                visibility: 'visible',
+                opacity: '1',
+                zIndex: '10'
+              }}
+              className="hover:bg-blue-50 transition-colors"
+            >
+              Sign In
+            </button>
+            <Button
+              onClick={handleGetStarted}
+              variant="primary"
+              size="md"
+              className="text-sm sm:text-base px-3 sm:px-4"
+            >
+              <span className="hidden sm:inline">🚀 {t('getStarted', 'Get Started')}</span>
+              <span className="sm:hidden">🚀 Start</span>
+            </Button>
+          </div>
         </div>
       </nav>
 
@@ -274,7 +299,7 @@ export default function HomePage({ onDemoAccess, onLogin }) {
               🎯 Start Your Journey
             </Button>
             <Button
-              onClick={() => navigate('/guest-journey')}
+              onClick={() => router.push('/guest-journey')}
               variant="outline"
               size="xl"
               className="text-lg border-purple-200 text-purple-700 hover:bg-purple-50"

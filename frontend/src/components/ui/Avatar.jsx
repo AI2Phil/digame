@@ -378,7 +378,7 @@ export const AvatarUpload = (/** @type {any} */ {
     setDragOver(false);
   };
 
-  const handleFileInput = (e) => {
+  const handleInput = (e) => {
     const files = Array.from(e.target.files);
     if (files.length > 0) {
       onUpload?.(files[0]);
@@ -404,7 +404,7 @@ export const AvatarUpload = (/** @type {any} */ {
           <input
             type="file"
             accept="image/*"
-            onChange={handleFileInput}
+            onChange={handleInput}
             className="hidden"
           />
           <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">

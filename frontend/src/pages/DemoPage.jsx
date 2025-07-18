@@ -1,13 +1,27 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import Link from 'next/link';
+import { useRouter } from 'next/router';
 import Button from '../components/ui/Button';
 import { Card, CardContent } from '../components/ui/Card';
 import { useAuth } from '../contexts/AuthContext';
 
 export default function DemoPage({ onDemoAccess }) {
   const [selectedDemo, setSelectedDemo] = useState(null);
-  const navigate = useNavigate();
-  const { enterDemoMode } = useAuth();
+  const router = useRouter();
+  const { enterDemoMode, isSSR } = useAuth();
+  
+  // SSR safety check
+  if (isSSR) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+        <div className="container mx-auto px-4 py-16">
+          <div className="text-center">
+            <h1 className="text-5xl font-bold text-gray-900 mb-6">Loading Demo...</h1>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const handleDemoSelect = (demoType) => {
     setSelectedDemo(demoType);
@@ -18,11 +32,11 @@ export default function DemoPage({ onDemoAccess }) {
     }
     
     if (demoType === 'guided') {
-      // For guided tour, navigate to onboarding wizard
-      navigate('/onboarding-wizard');
+      // For guided tour, router to onboarding wizard
+      router.push('/onboarding-wizard');
     } else {
       // For interactive demo, also go through onboarding first to test the flow
-      navigate('/onboarding-wizard');
+      router.push('/onboarding-wizard');
     }
   };
 
@@ -31,18 +45,18 @@ export default function DemoPage({ onDemoAccess }) {
       {/* Navigation */}
       <nav className="container mx-auto px-4 py-6">
         <div className="flex justify-between items-center">
-          <Link to="/" className="flex items-center space-x-2">
+          <Link href="/" className="flex items-center space-x-2">
             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
               <span className="text-white font-bold text-sm">D</span>
             </div>
             <span className="text-xl font-bold text-gray-900">Digame</span>
           </Link>
           <div className="hidden md:flex space-x-8">
-            <Link to="/features" className="text-gray-600 hover:text-gray-900">Features</Link>
-            <Link to="/how-it-works" className="text-gray-600 hover:text-gray-900">How it Works</Link>
-            <Link to="/pricing" className="text-gray-600 hover:text-gray-900">Pricing</Link>
+            <Link href="/features" className="text-gray-600 hover:text-gray-900">Features</Link>
+            <Link href="/how-it-works" className="text-gray-600 hover:text-gray-900">How it Works</Link>
+            <Link href="/pricing" className="text-gray-600 hover:text-gray-900">Pricing</Link>
           </div>
-          <Link to="/">
+          <Link href="/">
             <Button variant="primary" size="md">
               🚀 Get Started
             </Button>
@@ -217,12 +231,12 @@ export default function DemoPage({ onDemoAccess }) {
             After exploring the demo, sign up to start building your personalized professional twin
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/">
+            <Link href="/">
               <Button variant="secondary" size="xl" className="bg-white text-blue-600 hover:bg-gray-50">
                 ⚡ Sign Up Free
               </Button>
             </Link>
-            <Link to="/pricing">
+            <Link href="/pricing">
               <Button variant="outline" size="xl" className="border-white text-white hover:bg-white hover:text-blue-600">
                 💎 View Pricing
               </Button>

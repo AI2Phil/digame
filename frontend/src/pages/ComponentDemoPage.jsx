@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import Button, { ButtonGroup, IconButton } from '../components/ui/Button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogBody, DialogFooter, AlertDialog, useDialog } from '../components/ui/Dialog';
 import { Form, FormField, FormLabel, FormInput, FormTextarea, FormSelect, FormCheckbox, FormSubmitButton } from '../components/ui/Form';
-import Input, { SearchInput, NumberInput, FileInput } from '../components/ui/Input';
+import Input from '../components/ui/Input';
 import { DataTable } from '../components/ui/Table';
 import { Tabs, TabsList, TabsTrigger, TabsContent, TabBadge } from '../components/ui/Tabs';
 import { ToastProvider, useToast } from '../components/ui/Toast';
@@ -413,24 +413,24 @@ const ComponentDemoContent = ({
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">Special Input Types</h3>
                   <div className="space-y-4">
-                    <SearchInput 
+                    <Input 
                       placeholder="Search anything..." 
                       onSearch={(term) => console.log('Searching:', term)}
                     />
-                    <NumberInput 
+                    <Input 
                       defaultValue="10"
                       min={0} 
                       max={100} 
                       placeholder="Number input"
                     />
-                    <FileInput 
+                    <Input 
                       accept="image/*" 
                       multiple 
                       onChange={(e) => console.log('Files:', e.target.files)}
                     />
                   </div>
                   <Code
-                    codeString={`<SearchInput placeholder="Search..." />\n<NumberInput defaultValue="10" min={0} max={100} />\n<FileInput accept="image/*" multiple />`}
+                    codeString={`<Input placeholder="Search..." />\n<Input defaultValue="10" min={0} max={100} />\n<Input accept="image/*" multiple />`}
                     language="jsx"
                     className="mt-2"
                   />

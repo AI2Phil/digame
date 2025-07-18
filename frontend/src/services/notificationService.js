@@ -3,7 +3,7 @@
  * Handles notification display, preferences, and user interactions
  */
 
-import { Toast } from '../components/ui/Toast';
+import Toast from '../components/ui/Toast';
 import websocketService from './websocketService';
 import apiService from './apiService';
 

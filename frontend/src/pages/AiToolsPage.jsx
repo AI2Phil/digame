@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/router';
 import WritingAssistance from '../components/ai/WritingAssistance';
 import CommunicationStyleAnalyzer from '../components/ai/CommunicationStyleAnalyzer';
 import MeetingSummarizer from '../components/ai/MeetingSummarizer';
@@ -26,7 +26,7 @@ import {
 } from 'lucide-react';
 
 export default function AiToolsPage({ isDemoMode, onLogout }) {
-  const navigate = useNavigate();
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState('writing');
 
   const aiTools = [
@@ -221,7 +221,7 @@ export default function AiToolsPage({ isDemoMode, onLogout }) {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => navigate('/dashboard')}
+                onClick={() => router.push('/dashboard')}
                 className="flex items-center gap-2"
               >
                 <ArrowLeft className="h-4 w-4" />
@@ -242,7 +242,7 @@ export default function AiToolsPage({ isDemoMode, onLogout }) {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => navigate('/dashboard')}
+                onClick={() => router.push('/dashboard')}
               >
                 Dashboard
               </Button>

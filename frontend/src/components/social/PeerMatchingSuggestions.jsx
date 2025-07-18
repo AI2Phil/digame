@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import Link from 'next/link';
 import apiService from '../../../services/apiService';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '../../ui/Card';
 import { Avatar } from '../../ui/Avatar';

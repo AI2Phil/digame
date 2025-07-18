@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Avatar, Button, Card, Pagination, Select, Input, Spinner } from '@nextui-org/react'; // NextUI components
-import { safeNavigate } from '../hooks/useClientNavigation';
-// import apiService from '../services/apiService'; // Uncomment when apiService is ready
+import { useRouter } from 'next/router';
 
 // Mock apiService for now
 const mockApiService = {
@@ -24,12 +22,13 @@ const mockApiService = {
 };
 
 const UserListPage = () => {
+  const router = useRouter();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [filters, setFilters] = useState({ name: '', role: '' });
-  const [sortBy, setSortBy] = useState('username'); // Default sort by username
+  const [sortBy, setSortBy] = useState('username');
   const [totalPages, setTotalPages] = useState(1);
 
   useEffect(() => {
@@ -37,7 +36,6 @@ const UserListPage = () => {
       setLoading(true);
       setError(null);
       try {
-        // Replace mockApiService with apiService when ready
         const response = await mockApiService.getUsers({ page: currentPage, ...filters, sort: sortBy });
         setUsers(response.users);
         setTotalPages(response.totalPages);
@@ -55,21 +53,19 @@ const UserListPage = () => {
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
     setFilters(prevFilters => ({ ...prevFilters, [name]: value }));
-    setCurrentPage(1); // Reset to first page on filter change
+    setCurrentPage(1);
   };
 
   const handleSortChange = (value) => {
     setSortBy(value);
-    setCurrentPage(1); // Reset to first page on sort change
+    setCurrentPage(1);
   };
 
-  // Helper to get unique roles for filter dropdown
   const getUniqueRoles = (userList) => {
-    if (!userList) return [];
+    if (!Array.isArray(userList)) return [];
     const roles = userList.map(user => user.role);
     return [...new Set(roles)];
   };
-
 
   return (
     <div className="container mx-auto p-4">
@@ -78,54 +74,57 @@ const UserListPage = () => {
       {/* Filters and Sorting */}
       <div className="mb-6 p-4 bg-white dark:bg-gray-800 shadow-md rounded-lg">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-          <Input
-            label="Search by Name"
-            name="name"
-            placeholder="Enter username..."
-            value={filters.name}
-            onChange={handleFilterChange}
-            clearable
-            bordered
-          />
-          <Select
-            label="Filter by Role"
-            name="role"
-            placeholder="Select role"
-            value={filters.role}
-            onChange={(e) => handleFilterChange({ target: { name: 'role', value: e.target.value }})} // Select gives value directly
-            className="w-full"
-          >
-            {/* Dynamically generate options based on available roles or use predefined ones */}
-            {/* For now, using a static list, ideally this would come from an API or be derived */}
-            <Select.Option value="">All Roles</Select.Option>
-            {getUniqueRoles(users).map(role => (
-                <Select.Option key={role} value={role}>{role}</Select.Option>
-            ))}
-            <Select.Option value="Developer">Developer</Select.Option>
-            <Select.Option value="Designer">Designer</Select.Option>
-            <Select.Option value="Product Manager">Product Manager</Select.Option>
-            <Select.Option value="QA Engineer">QA Engineer</Select.Option>
-          </Select>
-          <Select
-            label="Sort by"
-            placeholder="Select sort criteria"
-            value={sortBy}
-            onChange={(value) => handleSortChange(value)} // Select gives value directly
-            className="w-full"
-          >
-            <Select.Option value="username">Name (A-Z)</Select.Option>
-            <Select.Option value="-username">Name (Z-A)</Select.Option> {/* Assuming API supports '-' for descending */}
-            <Select.Option value="role">Role</Select.Option>
-          </Select>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Search by Name</label>
+            <input
+              type="text"
+              name="name"
+              placeholder="Enter username..."
+              value={filters.name}
+              onChange={handleFilterChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Filter by Role</label>
+            <select
+              name="role"
+              value={filters.role}
+              onChange={handleFilterChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">All Roles</option>
+              {Array.isArray(users) && getUniqueRoles(users).map(role => (
+                <option key={role} value={role}>{role}</option>
+              ))}
+              <option value="Developer">Developer</option>
+              <option value="Designer">Designer</option>
+              <option value="Product Manager">Product Manager</option>
+              <option value="QA Engineer">QA Engineer</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Sort by</label>
+            <select
+              value={sortBy}
+              onChange={(e) => handleSortChange(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="username">Name (A-Z)</option>
+              <option value="-username">Name (Z-A)</option>
+              <option value="role">Role</option>
+            </select>
+          </div>
         </div>
       </div>
 
       {loading && (
         <div className="flex justify-center items-center h-64">
-          <Spinner size="lg" />
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
           <p className="ml-2">Loading users...</p>
         </div>
       )}
+      
       {error && <p className="text-red-500 text-center">{error}</p>}
 
       {!loading && !error && users.length === 0 && (
@@ -135,43 +134,47 @@ const UserListPage = () => {
       {!loading && !error && users.length > 0 && (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {users.map(user => (
-              <Card key={user.id} shadow="sm" className="hover:shadow-lg transition-shadow">
-                <Card.Body className="p-4 text-center">
-                  <Avatar
+            {Array.isArray(users) && users.map(user => (
+              <div key={user.id} className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-4">
+                <div className="text-center">
+                  <img
                     src={user.avatar}
                     alt={`${user.username}'s avatar`}
-                    size="xl"
-                    bordered
-                    color="gradient"
-                    className="mx-auto mb-3"
+                    className="w-16 h-16 rounded-full mx-auto mb-3 border-2 border-blue-200"
                   />
                   <h3 className="text-xl font-semibold mb-1">{user.username}</h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">{user.role}</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-300 mb-3 h-10 overflow-hidden text-ellipsis">
+                  <p className="text-sm text-gray-600 mb-2">{user.role}</p>
+                  <p className="text-xs text-gray-500 mb-3 h-10 overflow-hidden">
                     {user.bio.substring(0, 50)}{user.bio.length > 50 ? '...' : ''}
                   </p>
-                  <Button
-                    size="sm"
-                    auto
-                    ghost
-                    onClick={() => safeNavigate(`/users/${user.id}/profile_overview`)}
+                  <button
+                    onClick={() => router.push(`/users/${user.id}/profile_overview`)}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm"
                   >
                     View Profile
-                  </Button>
-                </Card.Body>
-              </Card>
+                  </button>
+                </div>
+              </div>
             ))}
           </div>
 
           {totalPages > 1 && (
             <div className="mt-8 flex justify-center">
-              <Pagination
-                total={totalPages}
-                initialPage={currentPage}
-                onChange={(page) => setCurrentPage(page)}
-                color="primary"
-              />
+              <div className="flex space-x-2">
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                  <button
+                    key={page}
+                    onClick={() => setCurrentPage(page)}
+                    className={`px-3 py-2 rounded-md ${
+                      currentPage === page
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    }`}
+                  >
+                    {page}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
         </>

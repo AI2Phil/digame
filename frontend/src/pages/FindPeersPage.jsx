@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom'; // Import useNavigate
+import { useRouter } from 'next/router'; // Import useNavigate
 
 // Example: Card component (if you have one, otherwise simple divs will be used)
 // import Card from '../components/ui/Card';
@@ -11,7 +11,7 @@ const FindPeersPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const navigate = useNavigate(); // Get navigate function
+  const router = useRouter(); // Get navigate function
 
   // Assume a fixed user ID for now. In a real app, this would come from auth context or localStorage.
   const currentUserId = 1;
@@ -74,7 +74,7 @@ const FindPeersPage = () => {
       matchData: match // Log the whole match object for full details
     });
     // Optional: Navigate to a placeholder profile page
-    // navigate(`/users/${match.id}/profile_placeholder`); // Example, if a profile page exists
+    // router.push(`/users/${match.id}/profile_placeholder`); // Example, if a profile page exists
     alert(`You clicked on ${match.name || 'this peer'}. Check the console for more details.`);
   };
 

@@ -253,7 +253,7 @@ const ComprehensiveNavigationDemo = () => {
           <div className="mt-6 p-4 bg-green-50 rounded-lg">
             <h3 className="font-medium text-green-900 mb-2">✅ Complete Backend Coverage</h3>
             <p className="text-sm text-green-700">
-              All {Object.keys(require('../../../app/routers')).length - 1} backend routers are mapped to frontend navigation items, 
+              All {Object.keys({}/* removed router require */).length - 1} backend routers are mapped to frontend navigation items, 
               providing complete access to every backend feature and functionality through an intuitive, 
               role-based navigation interface.
             </p>

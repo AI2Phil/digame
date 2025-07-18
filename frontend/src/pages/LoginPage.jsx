@@ -1,16 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/router';
 import { Eye, EyeOff, Mail, Lock, Github, Chrome } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../components/ui/Card';
-import { Button } from '../components/ui/Button';
-import { Input } from '../components/ui/Input';
-import { Label as UiLabel } from '../components/ui/Label'; // Alias to avoid conflict
-import { Checkbox } from '../components/ui/Checkbox';
-import { Separator } from '../components/ui/Separator';
-import { Alert, AlertDescription } from '../components/ui/Alert';
-import { Form, FormField, FormInput, FormLabel, FormSubmitButton, FormCheckbox } from '../components/ui/Form';
+import Button from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 
 const LoginPage = () => {
+  const router = useRouter();
+  const [isClient, setIsClient] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -20,6 +17,11 @@ const LoginPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
+  // Ensure client-side rendering for form interactions
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData(prev => ({
@@ -28,15 +30,20 @@ const LoginPage = () => {
     }));
   };
 
-  // handleSubmit now receives form values from the Form component
-  const handleSubmit = async (values) => { 
-    // e.preventDefault() is handled by the Form component internally
+  const handleSubmit = async (e) => {
+    e.preventDefault();
     setIsLoading(true);
     setError('');
 
     try {
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // Platform owner credentials
+      const platformOwner = {
+        email: 'philip.a.oshea@gmail.com',
+        password: 'Dalk3y1306'
+      };
       
       // Demo user credentials validation
       const demoCredentials = [
@@ -46,17 +53,28 @@ const LoginPage = () => {
         { username: 'guest', password: 'guest' }
       ];
       
+      // Check platform owner credentials first
+      const isPlatformOwner = formData.email === platformOwner.email &&
+                             formData.password === platformOwner.password;
+      
       // Check if credentials match any demo user (using username or email)
       const isValidDemo = demoCredentials.some(cred =>
-        (values.email === cred.username || values.email === `${cred.username}@digame.com`) &&
-        values.password === cred.password
+        (formData.email === cred.username || formData.email === `${cred.username}@digame.com`) &&
+        formData.password === cred.password
       );
       
-      if (isValidDemo) {
-        // Successful login - redirect to dashboard
-        window.location.href = '/dashboard';
+      if (isPlatformOwner) {
+        // Platform owner login - redirect to platform owner dashboard
+        if (typeof window !== 'undefined') {
+          window.location.href = '/platform-owner';
+        }
+      } else if (isValidDemo) {
+        // Demo user login - redirect to regular dashboard
+        if (typeof window !== 'undefined') {
+          window.location.href = '/dashboard';
+        }
       } else {
-        setError('Invalid credentials. Please use one of the demo accounts shown above.');
+        setError('Invalid credentials. Please use your platform owner account or one of the demo accounts shown above.');
       }
     } catch (err) {
       setError('Login failed. Please try again.');
@@ -66,6 +84,7 @@ const LoginPage = () => {
   };
 
   const handleSocialLogin = (provider) => {
+    if (!isClient) return;
     setIsLoading(true);
     // Simulate social login
     setTimeout(() => {
@@ -75,6 +94,7 @@ const LoginPage = () => {
   };
 
   const handleForgotPassword = () => {
+    if (!isClient) return;
     alert('Password reset functionality would be implemented here');
   };
 
@@ -142,137 +162,135 @@ const LoginPage = () => {
           <CardContent className="space-y-4">
             {/* Error Alert */}
             {error && (
-              <Alert variant="destructive">
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
+              <div className="bg-red-50 border border-red-200 rounded-md p-4">
+                <p className="text-red-800 text-sm">{error}</p>
+              </div>
             )}
 
             {/* Login Form */}
-            <Form 
-              onSubmit={handleSubmit} 
-              className="space-y-4"
-              defaultValues={{ email: formData.email, password: formData.password, rememberMe: formData.rememberMe }}
-              // Optional: Add validation schema if defined in Form.jsx's capabilities
-              // validation={{
-              //   email: { required: 'Email is required', pattern: /^\S+@\S+\.\S+$/, patternMessage: 'Invalid email format' },
-              //   password: { required: 'Password is required', minLength: 6 }
-              // }}
-            >
+            <form onSubmit={handleSubmit} className="space-y-4">
               {/* Email Field */}
-              <FormField name="email" className="space-y-2">
-                <FormLabel htmlFor="email">Email Address</FormLabel>
+              <div className="space-y-2">
+                <label htmlFor="email" className="text-sm font-medium text-gray-700">Email Address</label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                  <FormInput
+                  <input
                     id="email"
-                    name="email" // FormInput uses name from FormField, but explicit doesn't hurt
+                    name="email"
                     type="email"
                     placeholder="Enter your email"
-                    // value={formData.email} // Handled by Form context
-                    // onChange={handleInputChange} // Handled by Form context
-                    className="pl-10"
-                    required // HTML5 required, Form component handles its own 'required' via validation prop
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    required
                     disabled={isLoading}
                   />
                 </div>
-              </FormField>
+              </div>
 
               {/* Password Field */}
-              <FormField name="password" className="space-y-2">
-                <FormLabel htmlFor="password">Password</FormLabel>
+              <div className="space-y-2">
+                <label htmlFor="password" className="text-sm font-medium text-gray-700">Password</label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                  <FormInput
+                  <input
                     id="password"
                     name="password"
                     type={showPassword ? 'text' : 'password'}
                     placeholder="Enter your password"
-                    // value={formData.password} // Handled by Form context
-                    // onChange={handleInputChange} // Handled by Form context
-                    className="pl-10 pr-10"
+                    value={formData.password}
+                    onChange={handleInputChange}
+                    className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     required
                     disabled={isLoading}
                   />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
-                    disabled={isLoading}
-                  >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
+                  {isClient && (
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
+                      disabled={isLoading}
+                    >
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  )}
                 </div>
-              </FormField>
+              </div>
 
               {/* Remember Me & Forgot Password */}
               <div className="flex items-center justify-between">
-                <FormField name="rememberMe" className="flex items-center space-x-2">
-                  <FormCheckbox
+                <div className="flex items-center space-x-2">
+                  <input
                     id="rememberMe"
                     name="rememberMe"
-                    // checked={formData.rememberMe} // Handled by Form context
-                    // onCheckedChange handled by Form context
-                    label="Remember me"
+                    type="checkbox"
+                    checked={formData.rememberMe}
+                    onChange={handleInputChange}
                     disabled={isLoading}
-                    className="text-sm" // Applied to the label span inside FormCheckbox
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                   />
-                  {/* UiLabel is removed as FormCheckbox handles its own label */}
-                </FormField>
-                <Button
+                  <label htmlFor="rememberMe" className="text-sm text-gray-700">Remember me</label>
+                </div>
+                <button
                   type="button"
-                  variant="link"
-                  className="px-0 text-sm"
+                  className="text-sm text-blue-600 hover:text-blue-500"
                   onClick={handleForgotPassword}
                   disabled={isLoading}
                 >
                   Forgot password?
-                </Button>
+                </button>
               </div>
 
               {/* Sign In Button */}
-              <FormSubmitButton className="w-full" disabled={isLoading}>
+              <button
+                type="submit"
+                className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={isLoading}
+              >
                 {isLoading ? 'Signing in...' : 'Sign In'}
-              </FormSubmitButton>
-            </Form>
+              </button>
+            </form>
 
             {/* Separator */}
             <div className="relative">
-              <Separator />
-              <div className="absolute inset-0 flex items-center justify-center">
-                <span className="bg-white px-2 text-xs text-gray-500">Or continue with</span>
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-white px-2 text-gray-500">Or continue with</span>
               </div>
             </div>
 
             {/* Social Login */}
             <div className="grid grid-cols-2 gap-3">
-              <Button
-                variant="outline"
+              <button
+                type="button"
                 onClick={() => handleSocialLogin('Google')}
                 disabled={isLoading}
-                className="w-full"
+                className="w-full flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
               >
                 <Chrome className="mr-2 h-4 w-4" />
                 Google
-              </Button>
-              <Button
-                variant="outline"
+              </button>
+              <button
+                type="button"
                 onClick={() => handleSocialLogin('GitHub')}
                 disabled={isLoading}
-                className="w-full"
+                className="w-full flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
               >
                 <Github className="mr-2 h-4 w-4" />
                 GitHub
-              </Button>
+              </button>
             </div>
           </CardContent>
 
           <CardFooter className="flex flex-col space-y-4">
-            <Separator />
+            <div className="w-full border-t border-gray-300" />
             <div className="text-center text-sm text-gray-600">
               Don't have an account?{' '}
-              <Button variant="link" className="px-0 text-sm">
+              <button className="text-blue-600 hover:text-blue-500 font-medium">
                 Sign up for free
-              </Button>
+              </button>
             </div>
           </CardFooter>
         </Card>
@@ -281,13 +299,13 @@ const LoginPage = () => {
         <div className="text-center text-xs text-gray-500">
           <p>
             By signing in, you agree to our{' '}
-            <Button variant="link" className="px-0 text-xs">
+            <button className="text-blue-600 hover:text-blue-500 underline">
               Terms of Service
-            </Button>{' '}
+            </button>{' '}
             and{' '}
-            <Button variant="link" className="px-0 text-xs">
+            <button className="text-blue-600 hover:text-blue-500 underline">
               Privacy Policy
-            </Button>
+            </button>
           </p>
         </div>
       </div>

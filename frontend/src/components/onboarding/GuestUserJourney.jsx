@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useRouter } from 'next/router';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
@@ -16,7 +16,7 @@ import { conversionTrackingService } from '../../services/conversionTrackingServ
 import { featureHubService } from '../../services/featureHubService';
 
 const GuestUserJourney = ({ onSignUp, onLogin }) => {
-  const navigate = useNavigate();
+  const router = useRouter();
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedRole, setSelectedRole] = useState('');
   const [exploredFeatures, setExploredFeatures] = useState([]);

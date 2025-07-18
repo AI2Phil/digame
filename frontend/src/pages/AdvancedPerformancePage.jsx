@@ -76,85 +76,12 @@ const AdvancedPerformancePage = () => {
   const router = useRouter();
   const [tabValue, setTabValue] = useState(0);
   const [realTimeMode, setRealTimeMode] = useState(false);
-  const [performanceScore, setPerformanceScore] = useState<number | null>(null);
-  const [systemStatus, setSystemStatus] = useState<'healthy' | 'warning' | 'critical'>('healthy');
+  const [performanceScore, setPerformanceScore] = useState(null);
+  const [systemStatus, setSystemStatus] = useState('healthy');
   const [activeOptimizations, setActiveOptimizations] = useState(0);
+  const [isClient, setIsClient] = useState(false);
 
-  useEffect(() => {
-    // Initialize performance monitoring
-    initializePerformanceMonitoring();
-    
-    // Set tab from URL parameter
-    const tab = router.query.tab;
-    if (tab) {
-      const tabIndex = tabs.findIndex(t => t.id === tab);
-      if (tabIndex !== -1) {
-        setTabValue(tabIndex);
-      }
-    }
-  }, [router.query.tab]);
-
-  const initializePerformanceMonitoring = async () => {
-    try {
-      await performanceOptimizationService.initialize();
-      
-      // Get current metrics
-      const metrics = performanceOptimizationService.getCurrentMetrics();
-      if (metrics) {
-        // Calculate performance score based on key metrics
-        const score = calculatePerformanceScore(metrics);
-        setPerformanceScore(score);
-        setSystemStatus(score > 80 ? 'healthy' : score > 60 ? 'warning' : 'critical');
-      }
-      
-      // Get active optimizations
-      const optimizations = performanceOptimizationService.getOptimizations();
-      setActiveOptimizations(optimizations.filter(opt => opt.status === 'pending').length);
-    } catch (error) {
-      console.error('Failed to initialize performance monitoring:', error);
-    }
-  };
-
-  const calculatePerformanceScore = (metrics) => {
-    // Simplified performance score calculation
-    let score = 100;
-    
-    // Penalize for slow load times
-    if (metrics.firstContentfulPaint > 2000) score -= 20;
-    if (metrics.largestContentfulPaint > 3000) score -= 20;
-    
-    // Penalize for high memory usage
-    if (metrics.memoryUsage > 100000000) score -= 15; // 100MB
-    
-    // Penalize for large bundle size
-    if (metrics.bundleSize > 1000000) score -= 15; // 1MB
-    
-    // Penalize for poor interactivity
-    if (metrics.firstInputDelay > 100) score -= 10;
-    if (metrics.cumulativeLayoutShift > 0.1) score -= 10;
-    
-    return Math.max(0, score);
-  };
-
-  const handleTabChange = (event, newValue) => {
-    setTabValue(newValue);
-    const tab = tabs[newValue];
-    router.push(`/performance?tab=${tab.id}`, undefined, { shallow: true });
-  };
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'healthy':
-        return 'success';
-      case 'warning':
-        return 'warning';
-      case 'critical':
-        return 'error';
-      default:
-        return 'default';
-    }
-  };
-
+  // Define tabs array before useEffect
   const tabs = [
     {
       id: 'overview',
@@ -206,6 +133,107 @@ const AdvancedPerformancePage = () => {
       description: 'Automated performance optimization workflows'
     }
   ];
+
+  useEffect(() => {
+    setIsClient(true);
+    
+    // Initialize performance monitoring only on client
+    if (typeof window !== 'undefined') {
+      initializePerformanceMonitoring();
+    }
+    
+    // Set tab from URL parameter
+    const tab = router.query.tab;
+    if (tab && Array.isArray(tabs)) {
+      const tabIndex = tabs.findIndex(t => t.id === tab);
+      if (tabIndex !== -1) {
+        setTabValue(tabIndex);
+      }
+    }
+  }, [router.query.tab]);
+
+  const initializePerformanceMonitoring = async () => {
+    try {
+      if (typeof window === 'undefined') return;
+      
+      await performanceOptimizationService.initialize();
+      
+      // Get current metrics
+      const metrics = performanceOptimizationService.getCurrentMetrics();
+      if (metrics) {
+        // Calculate performance score based on key metrics
+        const score = calculatePerformanceScore(metrics);
+        setPerformanceScore(score);
+        setSystemStatus(score > 80 ? 'healthy' : score > 60 ? 'warning' : 'critical');
+      }
+      
+      // Get active optimizations
+      const optimizations = performanceOptimizationService.getOptimizations();
+      if (Array.isArray(optimizations)) {
+        setActiveOptimizations(optimizations.filter(opt => opt.status === 'pending').length);
+      }
+    } catch (error) {
+      console.error('Failed to initialize performance monitoring:', error);
+    }
+  };
+
+  const calculatePerformanceScore = (metrics) => {
+    if (!metrics || typeof metrics !== 'object') return 85; // Default score
+    
+    // Simplified performance score calculation
+    let score = 100;
+    
+    // Penalize for slow load times
+    if (metrics.firstContentfulPaint > 2000) score -= 20;
+    if (metrics.largestContentfulPaint > 3000) score -= 20;
+    
+    // Penalize for high memory usage
+    if (metrics.memoryUsage > 100000000) score -= 15; // 100MB
+    
+    // Penalize for large bundle size
+    if (metrics.bundleSize > 1000000) score -= 15; // 1MB
+    
+    // Penalize for poor interactivity
+    if (metrics.firstInputDelay > 100) score -= 10;
+    if (metrics.cumulativeLayoutShift > 0.1) score -= 10;
+    
+    return Math.max(0, score);
+  };
+
+  const handleTabChange = (event, newValue) => {
+    setTabValue(newValue);
+    if (Array.isArray(tabs) && tabs[newValue]) {
+      const tab = tabs[newValue];
+      router.push(`/AdvancedPerformancePage?tab=${tab.id}`, undefined, { shallow: true });
+    }
+  };
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'healthy':
+        return 'success';
+      case 'warning':
+        return 'warning';
+      case 'critical':
+        return 'error';
+      default:
+        return 'default';
+    }
+  };
+
+  // SSR safety check
+  if (!isClient) {
+    return (
+      <Container maxWidth="xl" sx={{ py: 3 }}>
+        <Typography variant="h4" component="h1" gutterBottom>
+          Advanced Performance Center
+        </Typography>
+        <Typography variant="body1" color="text.secondary">
+          Loading performance monitoring tools...
+        </Typography>
+      </Container>
+    );
+  }
 
   return (
     <Container maxWidth="xl" sx={{ py: 3 }}>
@@ -368,7 +396,7 @@ const AdvancedPerformancePage = () => {
             scrollButtons="auto"
             aria-label="performance tabs"
           >
-            {tabs.map((tab, index) => (
+            {Array.isArray(tabs) && tabs.map((tab, index) => (
               <Tab
                 key={tab.id}
                 icon={tab.icon}
@@ -383,12 +411,12 @@ const AdvancedPerformancePage = () => {
         {/* Tab Description */}
         <Box sx={{ p: 2, bgcolor: 'grey.50', borderBottom: 1, borderColor: 'divider' }}>
           <Typography variant="body2" color="text.secondary">
-            {tabs[tabValue]?.description}
+            {Array.isArray(tabs) && tabs[tabValue] ? tabs[tabValue].description : 'Loading...'}
           </Typography>
         </Box>
 
         {/* Tab Panels */}
-        {tabs.map((tab, index) => (
+        {Array.isArray(tabs) && tabs.map((tab, index) => (
           <TabPanel key={tab.id} value={tabValue} index={index}>
             {tab.component}
           </TabPanel>

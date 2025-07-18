@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import Link from 'next/link';
 import Button from '../components/ui/Button';
 import { Card, CardContent } from '../components/ui/Card';
 
@@ -9,18 +9,18 @@ export default function FeaturesPage() {
       {/* Navigation */}
       <nav className="container mx-auto px-4 py-6">
         <div className="flex justify-between items-center">
-          <Link to="/" className="flex items-center space-x-2">
+          <Link href="/" className="flex items-center space-x-2">
             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
               <span className="text-white font-bold text-sm">D</span>
             </div>
             <span className="text-xl font-bold text-gray-900">Digame</span>
           </Link>
           <div className="hidden md:flex space-x-8">
-            <Link to="/features" className="text-blue-600 font-semibold">Features</Link>
-            <Link to="/how-it-works" className="text-gray-600 hover:text-gray-900">How it Works</Link>
-            <Link to="/pricing" className="text-gray-600 hover:text-gray-900">Pricing</Link>
+            <Link href="/FeaturesPage" className="text-blue-600 font-semibold">Features</Link>
+            <Link href="/HowItWorksPage" className="text-gray-600 hover:text-gray-900">How it Works</Link>
+            <Link href="/PricingPage" className="text-gray-600 hover:text-gray-900">Pricing</Link>
           </div>
-          <Link to="/">
+          <Link href="/">
             <Button variant="primary" size="md" icon="🚀">
               Get Started
             </Button>
@@ -233,12 +233,12 @@ export default function FeaturesPage() {
             Join thousands of professionals who are already using their digital twins to accelerate their careers
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/demo">
+            <Link href="/DemoPage">
               <Button variant="secondary" size="xl" icon="🚀" className="bg-white text-blue-600 hover:bg-gray-50">
                 Try Demo
               </Button>
             </Link>
-            <Link to="/">
+            <Link href="/">
               <Button variant="outline" size="xl" icon="⚡" className="border-white text-white hover:bg-white hover:text-blue-600">
                 Get Started
               </Button>

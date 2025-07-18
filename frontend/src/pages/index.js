@@ -241,13 +241,24 @@ export default function HomePage({ onDemoAccess, onLogin }) {
               <Link href="/how-it-works" className="text-gray-600 hover:text-gray-900 transition-colors">How it Works</Link>
               <Link href="/pricing" className="text-gray-600 hover:text-gray-900 transition-colors">Pricing</Link>
             </div>
-            <Button
-              onClick={handleGetStarted}
-              variant="primary"
-              size="md"
-            >
-              🚀 {t('getStarted', 'Get Started')}
-            </Button>
+            <div className="flex items-center space-x-2 sm:space-x-3">
+              <Link href="/LoginPage">
+                <Button
+                  variant="outline"
+                  size="md"
+                  className="text-gray-700 border-gray-300 hover:bg-gray-50"
+                >
+                  Sign In
+                </Button>
+              </Link>
+              <Button
+                onClick={handleGetStarted}
+                variant="primary"
+                size="md"
+              >
+                🚀 {t('getStarted', 'Get Started')}
+              </Button>
+            </div>
           </div>
         </nav>
 

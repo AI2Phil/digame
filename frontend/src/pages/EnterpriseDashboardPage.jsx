@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useRouter } from 'next/router';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/Tabs';
@@ -112,9 +112,8 @@ const getSubscriptionColor = (tier) => {
 
 
 export default function EnterpriseDashboardPage({ isDemoMode, onLogout }) {
-  const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'overview');
+  const router = useRouter();
+  const [activeTab, setActiveTab] = useState(router.query.tab || 'overview');
 
   // General loading for initial data
   const [pageLoading, setPageLoading] = useState(true);
@@ -587,7 +586,7 @@ export default function EnterpriseDashboardPage({ isDemoMode, onLogout }) {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => navigate('/dashboard')}
+                onClick={() => router.push('/dashboard')}
                 className="flex items-center gap-2"
               >
                 <ArrowLeft className="h-4 w-4" />
@@ -608,7 +607,7 @@ export default function EnterpriseDashboardPage({ isDemoMode, onLogout }) {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => navigate('/dashboard')}
+                onClick={() => router.push('/dashboard')}
               >
                 Dashboard
               </Button>

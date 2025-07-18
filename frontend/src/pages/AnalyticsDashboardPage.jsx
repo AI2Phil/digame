@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useRouter } from 'next/router';
 import {
   BarChart3, TrendingUp, Activity, Database,
   Clock, Users, Zap, AlertTriangle, CheckCircle,
@@ -11,7 +11,7 @@ import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { Progress } from '../components/ui/Progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/Tabs';
-import { Toast } from '../components/ui/Toast';
+import Toast from '../components/ui/Toast';
 import { Select } from '../components/ui/Select'; // Added import
 import apiService from '../services/apiService';
 import PerformanceMonitoringSection from '../components/analytics/PerformanceMonitoringSection';
@@ -21,7 +21,7 @@ import MobileAnalyticsSection from '../components/analytics/MobileAnalyticsSecti
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '../components/ui/Resizable'; // Import Resizable components
 
 const AnalyticsDashboardPage = () => {
-  const navigate = useNavigate();
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState('overview');
   const [timeRange, setTimeRange] = useState('24h');
   const [loading, setLoading] = useState(true);
@@ -107,7 +107,7 @@ const AnalyticsDashboardPage = () => {
                 variant="outline"
                 onClick={() => {
                   const isDemoMode = localStorage.getItem('demo_mode') === 'true';
-                  navigate(isDemoMode ? '/dashboard' : '/');
+                  router.push(isDemoMode ? '/dashboard' : '/');
                 }}
                 className="flex items-center gap-2"
               >

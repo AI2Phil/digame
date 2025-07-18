@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import enhancedApiService from '../services/enhancedApiService';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
-import { safeNavigate } from '../hooks/useClientNavigation';
+// Removed safeNavigate import - using Next.js router
 
 const PredictiveAnalyticsPage = ({ isDemoMode, onLogout }) => {
   const [predictiveData, setPredictiveData] = useState(null);

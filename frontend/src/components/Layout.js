@@ -1,9 +1,13 @@
 import React from 'react';
 import DashboardLayout from './layout/DashboardLayout';
 
-const Layout = ({ children }) => {
+const Layout = ({ children, isDemoMode, currentUser, onLogout }) => {
   return (
-    <DashboardLayout>
+    <DashboardLayout
+      isDemoMode={isDemoMode}
+      currentUser={currentUser}
+      onLogout={onLogout}
+    >
       {children}
     </DashboardLayout>
   );

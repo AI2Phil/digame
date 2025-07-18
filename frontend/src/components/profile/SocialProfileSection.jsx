@@ -5,7 +5,7 @@ import {
   Linkedin, Twitter, Globe, MapPin,
   Calendar, Award, Target, TrendingUp
 } from 'lucide-react';
-import { Link } from 'react-router-dom'; // Added Link import
+import Link from 'next/link'; // Added Link import
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';

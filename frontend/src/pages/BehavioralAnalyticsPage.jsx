@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import enhancedApiService from '../services/enhancedApiService';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
-import { safeNavigate } from '../hooks/useClientNavigation';
+// Removed safeNavigate import - using Next.js router
 
 const BehavioralAnalyticsPage = ({ isDemoMode, onLogout }) => {
   const [behaviorData, setBehaviorData] = useState(null);

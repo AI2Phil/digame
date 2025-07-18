@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useRouter } from 'next/router';
 import {
   FileText, Download, Calendar, Filter, Search,
   BarChart3, PieChart, TrendingUp, Clock, Target,
@@ -23,7 +23,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/Dialog';
 
 const ReportsPage = () => {
-  const navigate = useNavigate();
+  const router = useRouter();
   const [dateRange, setDateRange] = useState({
     from: new Date(2024, 0, 1),
     to: new Date()
@@ -174,7 +174,7 @@ const ReportsPage = () => {
             variant="outline"
             onClick={() => {
               const isDemoMode = localStorage.getItem('demo_mode') === 'true';
-              navigate(isDemoMode ? '/dashboard' : '/');
+              router.push(isDemoMode ? '/dashboard' : '/');
             }}
             className="flex items-center gap-2"
           >

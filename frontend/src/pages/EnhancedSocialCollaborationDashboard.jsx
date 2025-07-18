@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useRouter } from 'next/router';
 import {
   Users, UserPlus, MessageCircle, Target, Award, TrendingUp,
   Network, Brain, Handshake, BookOpen, Calendar, MapPin,
@@ -12,12 +12,12 @@ import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { Progress } from '../components/ui/Progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/Tabs';
-import { Toast } from '../components/ui/Toast';
+import Toast from '../components/ui/Toast';
 import socialService from '../services/socialService';
 import apiService from '../services/apiService';
 
 const EnhancedSocialCollaborationDashboard = () => {
-  const navigate = useNavigate();
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState('overview');
   const [loading, setLoading] = useState(true);
   const [userProfile, setUserProfile] = useState({});
@@ -123,7 +123,7 @@ const EnhancedSocialCollaborationDashboard = () => {
               variant="outline"
               onClick={() => {
                 const isDemoMode = localStorage.getItem('demo_mode') === 'true';
-                navigate(isDemoMode ? '/dashboard' : '/');
+                router.push(isDemoMode ? '/dashboard' : '/');
               }}
               className="flex items-center gap-2"
             >

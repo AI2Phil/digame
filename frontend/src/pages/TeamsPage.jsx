@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useRouter } from 'next/router';
 import {
   Users, UserPlus, Mail, MoreHorizontal, Crown,
   Shield, Eye, Edit, Trash2, Search, Filter,
@@ -25,7 +25,7 @@ import { Textarea } from '../components/ui/Textarea'; // Added
 import { Switch } from '../components/ui/Switch';   // Added
 
 const TeamsPage = ({ isDemoMode = false, onLogout }) => {
-  const navigate = useNavigate();
+  const router = useRouter();
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -34,7 +34,7 @@ const TeamsPage = ({ isDemoMode = false, onLogout }) => {
   const isDemo = isDemoMode || (typeof window !== 'undefined' && localStorage.getItem('demo_mode') === 'true');
 
   const handleHomeClick = () => {
-    navigate(isDemo ? '/dashboard' : '/');
+    router.push(isDemo ? '/dashboard' : '/');
   };
 
   // State for Invite Dialog

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useRouter } from 'next/router';
 import {
   User, Mail, Briefcase, GraduationCap, Star, Globe, Linkedin, ExternalLink, ThumbsUp, Info, Code
 } from 'lucide-react';
@@ -8,7 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/Avatar';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import apiService from '../services/apiService';
-import { Toast } from '../components/ui/Toast';
+import Toast from '../components/ui/Toast';
 
 // Import display cards if they exist
 // import ProjectDisplayCard from '../components/profile/ProjectDisplayCard';
@@ -16,7 +16,8 @@ import { Toast } from '../components/ui/Toast';
 // import EducationDisplayCard from '../components/profile/EducationDisplayCard';
 
 const UserProfileOverviewPage = () => {
-  const { userId } = useParams();
+  const router = useRouter();
+  const { userId } = router.query;
   const [profileData, setProfileData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);

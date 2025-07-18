@@ -12,11 +12,11 @@ import { Progress } from '../components/ui/Progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/Tabs';
 import { useToast } from '../components/ui/Toast';
 import enhancedApiService from '../services/enhancedApiService';
-import { useNavigate } from 'react-router-dom';
+import { useRouter } from 'next/router';
 
 const AdvancedWebAnalyticsDashboard = () => {
   const { toast } = useToast();
-  const navigate = useNavigate();
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState('overview');
   const [timeRange, setTimeRange] = useState('24h');
   const [loading, setLoading] = useState(true);
@@ -149,7 +149,7 @@ const AdvancedWebAnalyticsDashboard = () => {
                 onClick={() => {
                   // Check if we're in demo mode (only on client side)
                   const isDemoMode = typeof window !== 'undefined' && localStorage.getItem('demo_mode') === 'true';
-                  navigate(isDemoMode ? '/dashboard' : '/');
+                  router.push(isDemoMode ? '/dashboard' : '/');
                 }}
                 className="mr-2 text-gray-600 hover:text-gray-900"
               >

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useRouter } from 'next/router';
 import {
   Brain, TrendingUp, Target, Lightbulb,
   BookOpen, Award, Clock, BarChart3,
@@ -11,13 +11,13 @@ import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { Progress } from '../components/ui/Progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/Tabs';
-import { Toast } from '../components/ui/Toast';
+import Toast from '../components/ui/Toast';
 import recommendationEngine from '../services/recommendationEngine';
 import coachingService from '../services/coachingService';
 import apiService from '../services/apiService';
 
 const AiInsightsDashboard = () => {
-  const navigate = useNavigate();
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
   const [insights, setInsights] = useState({});
@@ -127,7 +127,7 @@ const AiInsightsDashboard = () => {
               variant="outline"
               onClick={() => {
                 const isDemoMode = localStorage.getItem('demo_mode') === 'true';
-                navigate(isDemoMode ? '/dashboard' : '/');
+                router.push(isDemoMode ? '/dashboard' : '/');
               }}
               className="flex items-center gap-2"
             >

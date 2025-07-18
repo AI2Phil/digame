@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useRouter } from 'next/router';
 import { useAuth } from '../contexts/AuthContext';
 import ComprehensiveNavigation from '../components/navigation/ComprehensiveNavigation';
 import PersonalizedDashboard from '../components/dashboard/PersonalizedDashboard';
@@ -28,8 +28,7 @@ const ComprehensiveDashboardPage = ({
   onLogout: propOnLogout, 
   isNewUser 
 }) => {
-  const navigate = useNavigate();
-  const location = useLocation();
+  const router = useRouter();
   const { user, isAuthenticated, isDemoMode: authIsDemoMode, logout, isLoading } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   
@@ -42,7 +41,7 @@ const ComprehensiveDashboardPage = ({
       propOnLogout();
     } else {
       logout();
-      navigate('/');
+      router.push('/');
     }
   };
 
@@ -53,9 +52,9 @@ const ComprehensiveDashboardPage = ({
   // Redirect to login if not authenticated
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
-      navigate('/login');
+      router.push('/login');
     }
-  }, [isAuthenticated, isLoading, navigate]);
+  }, [isAuthenticated, isLoading, router]);
 
   // Transform AuthContext user to match ComprehensiveNavigation expected format
   const adaptedUser = currentUser ? {
@@ -91,7 +90,7 @@ const ComprehensiveDashboardPage = ({
 
   // Check if user has completed onboarding
   if (currentUser && !currentUser.onboardingCompleted && !isDemoMode) {
-    navigate('/onboarding-wizard');
+    router.push('/onboarding-wizard');
     return null;
   }
 
@@ -139,7 +138,7 @@ const ComprehensiveDashboardPage = ({
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => navigate('/')}
+                onClick={() => router.push('/')}
                 className="flex items-center gap-2 text-sm"
               >
                 <Home className="w-4 h-4" />

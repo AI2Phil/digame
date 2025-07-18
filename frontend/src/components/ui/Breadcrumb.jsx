@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 
 // Main Breadcrumb component
 export const Breadcrumb = (/** @type {any} */ {

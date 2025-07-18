@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useRouter } from 'next/router';
 import {
   Users, Settings, BarChart3, Key, UserCheck,
   Activity, Shield, Database, AlertTriangle,
@@ -26,7 +26,7 @@ import OnboardingAnalyticsSection from '../components/admin/OnboardingAnalyticsS
 import UserDetailsDialog from '../components/admin/UserDetailsDialog';
 
 const AdminDashboardPage = () => {
-  const navigate = useNavigate();
+  const router = useRouter();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('overview');
   const [users, setUsers] = useState([]);
@@ -125,7 +125,7 @@ const AdminDashboardPage = () => {
               variant="outline"
               onClick={() => {
                 const isDemoMode = localStorage.getItem('demo_mode') === 'true';
-                navigate(isDemoMode ? '/dashboard' : '/');
+                router.push(isDemoMode ? '/dashboard' : '/');
               }}
               className="flex items-center gap-2"
             >

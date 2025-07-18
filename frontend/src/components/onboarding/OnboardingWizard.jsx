@@ -22,10 +22,10 @@ import {
   Home,
   AlertCircle
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useRouter } from 'next/router';
 
 const OnboardingWizard = ({ onComplete, user }) => {
-  const navigate = useNavigate();
+  const router = useRouter();
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
     // Step 1: Profile Setup
@@ -237,7 +237,7 @@ const OnboardingWizard = ({ onComplete, user }) => {
           console.error('No onComplete function provided');
           setError('Setup completion handler not found. Redirecting to dashboard...');
           // Fallback navigation
-          setTimeout(() => navigate('/dashboard'), 2000);
+          setTimeout(() => router.push('/dashboard'), 2000);
         }
       }
     } catch (error) {
@@ -632,7 +632,7 @@ const OnboardingWizard = ({ onComplete, user }) => {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => navigate('/')}
+                onClick={() => router.push('/')}
                 className="flex items-center space-x-1 text-gray-600 hover:text-gray-900"
                 title="Return to Home"
               >

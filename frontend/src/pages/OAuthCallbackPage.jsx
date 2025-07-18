@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useRouter } from 'next/router';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/Card';
 import { Alert, AlertDescription } from '../components/ui/Alert';
 import { Progress } from '../components/ui/Progress';
@@ -11,8 +11,7 @@ import {
 } from 'lucide-react';
 
 const OAuthCallbackPage = () => {
-  const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
+  const router = useRouter(); const searchParams = router.query;
   const [status, setStatus] = useState('processing'); // processing, success, error
   const [message, setMessage] = useState('Processing authorization...');
   const [progress, setProgress] = useState(0);
@@ -21,10 +20,10 @@ const OAuthCallbackPage = () => {
     const handleCallback = async () => {
       try {
         // Get parameters from URL
-        const code = searchParams.get('code');
-        const state = searchParams.get('state');
-        const error = searchParams.get('error');
-        const errorDescription = searchParams.get('error_description');
+        const code = router.query.code;
+        const state = router.query.state;
+        const error = router.query.error;
+        const errorDescription = router.query.error_description;
 
         // Check for OAuth errors
         if (error) {
@@ -105,7 +104,7 @@ const OAuthCallbackPage = () => {
             window.close();
           } else {
             // If not in popup, redirect to integrations page
-            navigate('/integrations');
+            router.push('/integrations');
           }
         }, 2000);
 
@@ -123,7 +122,7 @@ const OAuthCallbackPage = () => {
     };
 
     handleCallback();
-  }, [searchParams, navigate]);
+  }, [searchParams, router]);
 
   const getStatusIcon = () => {
     switch (status) {
@@ -208,7 +207,7 @@ const OAuthCallbackPage = () => {
             {status === 'error' && !window.opener && (
               <div className="text-center pt-4">
                 <button
-                  onClick={() => navigate('/integrations')}
+                  onClick={() => router.push('/integrations')}
                   className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                 >
                   <ExternalLink className="h-4 w-4 mr-2" />

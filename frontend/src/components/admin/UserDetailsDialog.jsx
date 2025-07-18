@@ -8,7 +8,7 @@ import { Input } from '../ui/Input';   // Path corrected
 import { Badge } from '../ui/Badge';   // Path corrected
 import { Avatar } from '../ui/Avatar'; // Path corrected
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/Tabs'; // Path corrected
-import { Toast } from '../ui/Toast';   // Path corrected
+import Toast from '../ui/Toast';   // Path corrected
 import { Select } from '../ui/Select';
 import { Label } from '../ui/Label';
 import { Checkbox } from '../ui/Checkbox';

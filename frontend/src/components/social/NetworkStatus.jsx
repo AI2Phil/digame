@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useOffline } from './PWAProvider';
 import { Badge } from './ui/Badge';
 import { Button } from './ui/Button';

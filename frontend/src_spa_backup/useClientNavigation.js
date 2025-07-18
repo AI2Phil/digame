@@ -10,7 +10,7 @@ export const useClientNavigation = () => {
     
     // Only import and use React Router on the client side
     if (typeof window !== 'undefined') {
-      import('react-router-dom').then(({ useNavigate }) => {
+      // Dynamic import removed - using Next.js router
         // This won't work as useNavigate needs to be called in component context
         // We'll use window.location instead for SSR compatibility
       });

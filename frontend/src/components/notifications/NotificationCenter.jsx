@@ -9,7 +9,7 @@ import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/Tabs';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../ui/Dialog';
-import { Toast } from '../ui/Toast';
+import Toast from '../ui/Toast';
 import { Switch } from '../ui/Switch'; // Added import
 import { Label } from '../ui/Label';   // Added import
 import notificationService from '../../services/notificationService';

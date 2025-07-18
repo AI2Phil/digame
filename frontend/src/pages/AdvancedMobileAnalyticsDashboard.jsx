@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useRouter } from 'next/router';
 import {
   Smartphone, Battery, Wifi, Clock, TrendingUp, Activity, Zap, Volume2,
   Settings, Bell, Eye, BarChart3, Mic, RefreshCw, Brain, Target,
@@ -15,7 +15,7 @@ import { useToast } from '../components/ui/Toast';
 import enhancedApiService from '../services/enhancedApiService';
 
 const AdvancedMobileAnalyticsDashboard = () => {
-  const navigate = useNavigate();
+  const router = useRouter();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
@@ -188,7 +188,7 @@ const AdvancedMobileAnalyticsDashboard = () => {
               variant="outline"
               onClick={() => {
                 const isDemoMode = localStorage.getItem('demo_mode') === 'true';
-                navigate(isDemoMode ? '/dashboard' : '/');
+                router.push(isDemoMode ? '/dashboard' : '/');
               }}
               className="flex items-center gap-2"
             >
