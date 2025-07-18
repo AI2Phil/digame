@@ -164,7 +164,7 @@ jobs:
         df -h . || echo "Disk info not available"
         
         # First attempt with conservative memory settings optimized for multi-language builds
-        if NODE_OPTIONS="--max-old-space-size=2048 --max-semi-space-size=32 --optimize-for-size" NEXT_TELEMETRY_DISABLED=1 ESLINT_NO_DEV_ERRORS=true npm run build; then
+        if NODE_OPTIONS="--max-old-space-size=2048 --max-semi-space-size=32" NEXT_TELEMETRY_DISABLED=1 ESLINT_NO_DEV_ERRORS=true npm run build; then
           echo "✅ Build completed successfully"
         else
           echo "⚠️ First build attempt failed, trying with ultra-minimal settings..."
@@ -173,7 +173,7 @@ jobs:
           rm -rf .next node_modules/.cache /tmp/* 2>/dev/null || true
           
           # Ultra-conservative settings for large multi-language builds
-          if NODE_OPTIONS="--max-old-space-size=1536 --max-semi-space-size=16 --optimize-for-size --gc-interval=100" NEXT_TELEMETRY_DISABLED=1 ESLINT_NO_DEV_ERRORS=true npm run build; then
+          if NODE_OPTIONS="--max-old-space-size=1536 --max-semi-space-size=16" NEXT_TELEMETRY_DISABLED=1 ESLINT_NO_DEV_ERRORS=true npm run build; then
             echo "✅ Build completed successfully on second attempt"
           else
             echo "❌ Build failed on both attempts"
