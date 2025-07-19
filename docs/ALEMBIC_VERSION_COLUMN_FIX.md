@@ -6,7 +6,7 @@ The CI/CD pipeline was failing with a PostgreSQL string truncation error:
 ```
 psycopg2.errors.StringDataRightTruncation: value too long for type character varying(32)
 ```
-
+ 
 This occurred when Alembic tried to update the version number:
 ```sql
 UPDATE alembic_version SET version_num='add_user_profiles_and_enhanced_rbac' WHERE alembic_version.version_num = 'add_missing_user_columns'
