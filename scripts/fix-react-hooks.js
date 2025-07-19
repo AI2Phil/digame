@@ -143,7 +143,7 @@ function isValidDependency(name) {
   return false;
 }
 
-function extractReferencedIdentifiers(node) {
+function extractReferencedIdentifiers(node, hookPath) {
   const identifiers = new Set();
   
   traverse(node, {
@@ -151,7 +151,9 @@ function extractReferencedIdentifiers(node) {
       // Skip if it's a property key or function declaration
       if (path.isReferencedIdentifier() && !path.isBindingIdentifier()) {
         const name = path.node.name;
-        if (isValidDependency(name)) {
+        
+        // Only include if it's a valid dependency AND exists in scope
+        if (isValidDependency(name) && isIdentifierInScope(name, hookPath)) {
           identifiers.add(name);
         }
       }
@@ -159,6 +161,39 @@ function extractReferencedIdentifiers(node) {
   }, node);
   
   return Array.from(identifiers);
+}
+
+function isIdentifierInScope(identifierName, hookPath) {
+  // Check if the identifier is bound in any parent scope
+  let currentPath = hookPath;
+  
+  while (currentPath) {
+    const binding = currentPath.scope.getBinding(identifierName);
+    if (binding) {
+      // Found a binding - check if it's a valid type for dependencies
+      const bindingKind = binding.kind;
+      
+      // Allow: var, let, const, param (function parameters), hoisted (function declarations)
+      if (['var', 'let', 'const', 'param', 'hoisted'].includes(bindingKind)) {
+        return true;
+      }
+    }
+    
+    currentPath = currentPath.parentPath;
+  }
+  
+  // Check if it's a common React/Next.js import or global
+  const commonGlobals = new Set([
+    'router', 'useRouter', 'useState', 'useEffect', 'useCallback', 'useMemo',
+    'useRef', 'useContext', 'useReducer', 'useQuery', 'useMutation',
+    'toast', 'console', 'window', 'document', 'process', 'Buffer'
+  ]);
+  
+  if (commonGlobals.has(identifierName)) {
+    return true;
+  }
+  
+  return false;
 }
 
 function isValidReactComponent(func) {
@@ -252,7 +287,7 @@ function fixReactHooksInFile(filePath) {
               let depsArray = args[1];
               
               // Extract referenced identifiers from the callback
-              const referencedIds = extractReferencedIdentifiers(callback);
+              const referencedIds = extractReferencedIdentifiers(callback, path);
               
               if (referencedIds.length > 0) {
                 if (!depsArray) {
