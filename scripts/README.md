@@ -77,6 +77,11 @@ This directory contains utility scripts for the Digame platform, including devel
 | [`stop-dev.sh`](#stop-devsh) | Frontend-backend development environment shutdown | `./stop-dev.sh` | ✅ Active |
 | [`setup-test-env.sh`](#setup-test-envsh) | Test environment setup with backend services | `./setup-test-env.sh` | ✅ Active |
 | [`cleanup-test-env.sh`](#cleanup-test-envsh) | Test environment cleanup and teardown | `./cleanup-test-env.sh` | ✅ Active |
+| [`debug_activity_model.py`](#debug_activity_modelpy) | ActivityEnrichedFeature model debugging and testing | `python scripts/debug_activity_model.py` | ✅ Active |
+| [`debug_imports.py`](#debug_importspy) | UserRoleAssignment import conflicts debugging | `python scripts/debug_imports.py` | ✅ Active |
+| [`debug_models.py`](#debug_modelspy) | SQLAlchemy model diagnostic and troubleshooting | `python scripts/debug_models.py` | ✅ Active |
+| [`debug_test_user.py`](#debug_test_userpy) | User model creation debugging in test environment | `python scripts/debug_test_user.py` | ✅ Active |
+| [`debug_user_class.py`](#debug_user_classpy) | User class import and registry debugging | `python scripts/debug_user_class.py` | ✅ Active |
 
 ---
 
@@ -3174,8 +3179,311 @@ python scripts/test_sqlalchemy_fixes.py --report
 - Confirms backward compatibility with existing code
 
 ---
+## 🐛 Debugging & Troubleshooting Scripts
+
+### `debug_activity_model.py`
+**Purpose**: ActivityEnrichedFeature model debugging and testing with multiple import source analysis
+
+**Description**:
+- Debugs ActivityEnrichedFeature model import conflicts and registry issues
+- Tests multiple import sources to identify SQLAlchemy registry conflicts
+- Provides comprehensive model analysis and troubleshooting capabilities
+- Helps resolve model definition conflicts in complex SQLAlchemy applications
+
+**Usage**:
+```bash
+# Debug ActivityEnrichedFeature model issues
+python scripts/debug_activity_model.py
+
+# Debug with verbose output
+python scripts/debug_activity_model.py --verbose
+
+# Test specific import source
+python scripts/debug_activity_model.py --source app.models.analytics
+```
+
+**Features**:
+- ✅ **Multiple Import Testing**: Tests imports from different module paths
+- ✅ **Registry Analysis**: Analyzes SQLAlchemy registry for conflicts
+- ✅ **Model Inspection**: Provides detailed model attribute analysis
+- ✅ **Conflict Detection**: Identifies duplicate model definitions
+- ✅ **Import Path Validation**: Validates correct import paths for models
+- ✅ **Troubleshooting Guidance**: Provides specific guidance for resolving issues
+
+**Import Sources Tested**:
+- `app.models.analytics.ActivityEnrichedFeature`
+- `app.models.ActivityEnrichedFeature`
+- Direct model registry inspection
+- Alternative import path validation
+
+**Common Issues Resolved**:
+- SQLAlchemy registry conflicts between model definitions
+- Import path inconsistencies across modules
+- Model attribute conflicts and inheritance issues
+- Registry state inconsistencies during testing
+
+---
+
+### `debug_imports.py`
+**Purpose**: UserRoleAssignment import conflicts debugging with comprehensive registry analysis
+
+**Description**:
+- Debugs UserRoleAssignment model import conflicts and SQLAlchemy registry issues
+- Provides detailed analysis of import paths and model registration
+- Tests multiple import sources to identify the root cause of conflicts
+- Offers solutions for resolving complex SQLAlchemy model import issues
+
+**Usage**:
+```bash
+# Debug UserRoleAssignment import conflicts
+python scripts/debug_imports.py
+
+# Debug with detailed registry analysis
+python scripts/debug_imports.py --detailed
+
+# Test specific import scenarios
+python scripts/debug_imports.py --test-imports
+```
+
+**Features**:
+- ✅ **Import Conflict Analysis**: Identifies conflicts between different import paths
+- ✅ **Registry State Inspection**: Analyzes SQLAlchemy registry state and conflicts
+- ✅ **Multiple Import Testing**: Tests various import scenarios and paths
+- ✅ **Model Relationship Analysis**: Examines model relationships and dependencies
+- ✅ **Error Pattern Recognition**: Identifies common error patterns and solutions
+- ✅ **Resolution Strategies**: Provides specific strategies for resolving conflicts
+
+**Import Paths Analyzed**:
+- `app.models.user_management.UserRoleAssignment`
+- `app.models.UserRoleAssignment`
+- Registry-based model access
+- Alternative import path validation
+
+**Debugging Capabilities**:
+- Model registration state analysis
+- Import order dependency testing
+- Registry conflict identification
+- Model attribute and relationship validation
+
+---
+
+### `debug_models.py`
+**Purpose**: SQLAlchemy model diagnostic and troubleshooting for core application models
+
+**Description**:
+- Provides comprehensive diagnostic capabilities for core SQLAlchemy models
+- Tests model imports, relationships, and database operations
+- Identifies and helps resolve model definition and registry conflicts
+- Offers detailed analysis of User, Tenant, and Notification models
+
+**Usage**:
+```bash
+# Run comprehensive model diagnostics
+python scripts/debug_models.py
+
+# Debug specific model
+python scripts/debug_models.py --model User
+
+# Test model relationships
+python scripts/debug_models.py --test-relationships
+
+# Analyze registry state
+python scripts/debug_models.py --registry-analysis
+```
+
+**Features**:
+- ✅ **Core Model Testing**: Tests User, Tenant, Notification, and related models
+- ✅ **Relationship Validation**: Validates foreign key relationships and joins
+- ✅ **Import Path Testing**: Tests multiple import paths for each model
+- ✅ **Registry Diagnostics**: Analyzes SQLAlchemy registry state and conflicts
+- ✅ **Database Operation Testing**: Tests basic CRUD operations on models
+- ✅ **Comprehensive Reporting**: Provides detailed diagnostic reports
+
+**Models Analyzed**:
+- **User**: Core user model with authentication and profile data
+- **Tenant**: Multi-tenancy support model
+- **Notification**: User notification and messaging model
+- **Related Models**: Associated models and relationships
+
+**Diagnostic Categories**:
+- Model import and registration validation
+- Foreign key relationship testing
+- Database schema consistency checks
+- Model attribute and method validation
+- Registry state and conflict analysis
+
+---
+
+### `debug_test_user.py`
+**Purpose**: User model creation debugging in test environment with comprehensive validation
+
+**Description**:
+- Debugs User model creation issues specifically in test environments
+- Provides detailed analysis of test-specific model creation problems
+- Tests user creation workflows and identifies common test environment issues
+- Offers solutions for test database setup and user model validation
+
+**Usage**:
+```bash
+# Debug user creation in test environment
+python scripts/debug_test_user.py
+
+# Test with specific user data
+python scripts/debug_test_user.py --test-data
+
+# Debug test database setup
+python scripts/debug_test_user.py --test-db-setup
+
+# Validate test environment configuration
+python scripts/debug_test_user.py --validate-env
+```
+
+**Features**:
+- ✅ **Test Environment Focus**: Specifically designed for test environment debugging
+- ✅ **User Creation Testing**: Tests various user creation scenarios and workflows
+- ✅ **Test Database Validation**: Validates test database setup and configuration
+- ✅ **Environment Analysis**: Analyzes test environment configuration and dependencies
+- ✅ **Error Pattern Recognition**: Identifies common test environment error patterns
+- ✅ **Solution Guidance**: Provides specific solutions for test environment issues
+
+**Test Scenarios**:
+- Basic user model creation and validation
+- User creation with various attribute combinations
+- Test database transaction handling
+- User model relationship testing in test context
+
+**Common Test Issues Resolved**:
+- Test database setup and configuration problems
+- User model validation failures in test environment
+- Test transaction and rollback issues
+- Test data isolation and cleanup problems
+
+---
+
+### `debug_user_class.py`
+**Purpose**: User class import and registry debugging with import order testing
+
+**Description**:
+- Debugs User class import issues and SQLAlchemy registry conflicts
+- Tests import order dependencies and their impact on model registration
+- Provides comprehensive analysis of User class definition and registration
+- Offers solutions for resolving User class import and registry issues
+
+**Usage**:
+```bash
+# Debug User class import and registry issues
+python scripts/debug_user_class.py
+
+# Test import order dependencies
+python scripts/debug_user_class.py --test-import-order
+
+# Analyze registry state
+python scripts/debug_user_class.py --registry-state
+
+# Test alternative import paths
+python scripts/debug_user_class.py --test-imports
+```
+
+**Features**:
+- ✅ **Import Order Testing**: Tests how import order affects model registration
+- ✅ **Registry State Analysis**: Analyzes SQLAlchemy registry state and User class registration
+- ✅ **Multiple Import Path Testing**: Tests various import paths for User class
+- ✅ **Class Definition Analysis**: Analyzes User class definition and attributes
+- ✅ **Conflict Resolution**: Provides strategies for resolving import conflicts
+- ✅ **Dependency Mapping**: Maps import dependencies and their relationships
+
+**Import Order Scenarios Tested**:
+- Different module import sequences
+- Registry state before and after imports
+- Impact of import order on model relationships
+- Alternative import path validation
+
+**Registry Analysis Features**:
+- User class registration state inspection
+- Registry conflict identification and resolution
+- Model inheritance and relationship validation
+- Class attribute and method analysis
+
+---
+
+### **Debugging Workflow Examples**
+
+#### **SQLAlchemy Model Import Conflict Resolution**
+```bash
+# 1. Identify the specific model with import conflicts
+python scripts/debug_models.py --model User
+
+# 2. Analyze import paths and registry state
+python scripts/debug_user_class.py --registry-state
+
+# 3. Test import order dependencies
+python scripts/debug_user_class.py --test-import-order
+
+# 4. Resolve conflicts and validate fixes
+python scripts/debug_models.py --test-relationships
+```
+
+#### **Test Environment User Creation Issues**
+```bash
+# 1. Debug test environment setup
+python scripts/debug_test_user.py --validate-env
+
+# 2. Test user creation workflows
+python scripts/debug_test_user.py --test-data
+
+# 3. Validate test database configuration
+python scripts/debug_test_user.py --test-db-setup
+
+# 4. Verify fixes with comprehensive testing
+python scripts/debug_models.py --model User
+```
+
+#### **Complex Model Relationship Debugging**
+```bash
+# 1. Debug specific model relationships
+python scripts/debug_activity_model.py --verbose
+
+# 2. Analyze import conflicts
+python scripts/debug_imports.py --detailed
+
+# 3. Test model registry state
+python scripts/debug_models.py --registry-analysis
+
+# 4. Validate all model relationships
+python scripts/debug_models.py --test-relationships
+```
+
+#### **Import Path Validation and Optimization**
+```bash
+# 1. Test all import paths for consistency
+python scripts/debug_user_class.py --test-imports
+
+# 2. Analyze ActivityEnrichedFeature import sources
+python scripts/debug_activity_model.py --source app.models.analytics
+
+# 3. Debug UserRoleAssignment import conflicts
+python scripts/debug_imports.py --test-imports
+
+# 4. Validate optimized import paths
+python scripts/debug_models.py --model User
+```
+
+---
+
 
 ## 📝 Recent Updates
+**January 19, 2025**: Added Debugging & Troubleshooting Scripts Documentation:
+- Added comprehensive documentation for 5 debugging scripts moved from root to `/scripts/` directory
+- Added [`debug_activity_model.py`](scripts/debug_activity_model.py) - ActivityEnrichedFeature model debugging with multiple import source testing
+- Added [`debug_imports.py`](scripts/debug_imports.py) - UserRoleAssignment import conflict diagnosis with registry analysis
+- Added [`debug_models.py`](scripts/debug_models.py) - Core SQLAlchemy model diagnostics for User, Tenant, Notification models
+- Added [`debug_test_user.py`](scripts/debug_test_user.py) - User model creation debugging in test environment context
+- Added [`debug_user_class.py`](scripts/debug_user_class.py) - User class import and registry debugging with import order testing
+- Created new "🐛 Debugging & Troubleshooting Scripts" section with comprehensive documentation
+- Added debugging workflow examples for SQLAlchemy model conflicts, test environment issues, and import path validation
+- Updated script overview table to include all debugging scripts with proper usage examples
+- Enhanced project maintenance capabilities with specialized debugging tools for complex SQLAlchemy issues
+
 
 **January 13, 2025**: Completed Script Reorganization and Documentation Updates:
 - Moved `fix_database_schema.py` from root to `/scripts/` directory - SQLAlchemy model conflicts and schema fixes

@@ -290,122 +290,132 @@ const CarouselIndicators = forwardRef(/** @param {{
 
 CarouselIndicators.displayName = "CarouselIndicators";
 
-// Predefined carousel variants
-export const CarouselVariants = {
-  // Auto-playing carousel
-  Auto: forwardRef(/** @param {{
-    autoplayDelay?: number,
-    pauseOnHover?: boolean,
-    children?: React.ReactNode
-  } & React.ComponentProps<typeof Carousel>} props */ ({ autoplayDelay = 3000, pauseOnHover = true, children, ...props }, ref) => {
-    const { scrollToNext, currentIndex, itemsCount } = useCarousel();
-    const [isPlaying, setIsPlaying] = React.useState(true);
-    const intervalRef = React.useRef(null);
+// Auto-playing carousel component
+const CarouselAuto = forwardRef(/** @param {{
+  autoplayDelay?: number,
+  pauseOnHover?: boolean,
+  children?: React.ReactNode
+} & React.ComponentProps<typeof Carousel>} props */ ({ autoplayDelay = 3000, pauseOnHover = true, children, ...props }, ref) => {
+  const { scrollToNext, currentIndex, itemsCount } = useCarousel();
+  const [isPlaying, setIsPlaying] = React.useState(true);
+  const intervalRef = React.useRef(null);
 
-    React.useEffect(() => {
-      if (isPlaying) {
-        intervalRef.current = setInterval(() => {
-          scrollToNext();
-        }, autoplayDelay);
-      } else {
-        clearInterval(intervalRef.current);
-      }
+  React.useEffect(() => {
+    if (isPlaying) {
+      intervalRef.current = setInterval(() => {
+        scrollToNext();
+      }, autoplayDelay);
+    } else {
+      clearInterval(intervalRef.current);
+    }
 
-      return () => clearInterval(intervalRef.current);
-    }, [isPlaying, scrollToNext, autoplayDelay]);
+    return () => clearInterval(intervalRef.current);
+  }, [isPlaying, scrollToNext, autoplayDelay]);
 
-    // Reset to first slide when reaching the end
-    React.useEffect(() => {
-      if (currentIndex === itemsCount - 1) {
-        setTimeout(() => {
-          scrollToNext();
-        }, autoplayDelay);
-      }
-    }, [currentIndex, itemsCount, scrollToNext, autoplayDelay]);
+  // Reset to first slide when reaching the end
+  React.useEffect(() => {
+    if (currentIndex === itemsCount - 1) {
+      setTimeout(() => {
+        scrollToNext();
+      }, autoplayDelay);
+    }
+  }, [currentIndex, itemsCount, scrollToNext, autoplayDelay]);
 
-    const handleMouseEnter = () => {
-      if (pauseOnHover) setIsPlaying(false);
-    };
+  const handleMouseEnter = () => {
+    if (pauseOnHover) setIsPlaying(false);
+  };
 
-    const handleMouseLeave = () => {
-      if (pauseOnHover) setIsPlaying(true);
-    };
+  const handleMouseLeave = () => {
+    if (pauseOnHover) setIsPlaying(true);
+  };
 
-    return (
-      <Carousel
-        ref={ref}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
-        {...props}
-      >
+  return (
+    <Carousel
+      ref={ref}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      {...props}
+    >
+      {children}
+    </Carousel>
+  );
+});
+
+CarouselAuto.displayName = "CarouselAuto";
+
+// Thumbnail carousel component
+const CarouselThumbnails = forwardRef(/** @param {{
+  thumbnails?: string[],
+  children?: React.ReactNode
+} & React.ComponentProps<typeof Carousel>} props */ ({ thumbnails = [], children, ...props }, ref) => {
+  const { currentIndex, scrollToIndex } = useCarousel();
+
+  return (
+    <div className="space-y-4">
+      <Carousel ref={ref} {...props}>
         {children}
       </Carousel>
-    );
-  }),
-
-  // Thumbnail carousel
-  Thumbnails: forwardRef(/** @param {{
-    thumbnails?: string[],
-    children?: React.ReactNode
-  } & React.ComponentProps<typeof Carousel>} props */ ({ thumbnails = [], children, ...props }, ref) => {
-    const { currentIndex, scrollToIndex } = useCarousel();
-
-    return (
-      <div className="space-y-4">
-        <Carousel ref={ref} {...props}>
-          {children}
-        </Carousel>
-        
-        <div className="flex justify-center space-x-2 overflow-x-auto">
-          {thumbnails.map((thumbnail, index) => (
-            <button
-              key={index}
-              type="button"
-              className={cn(
-                "flex-shrink-0 w-16 h-16 rounded-md overflow-hidden border-2 transition-colors",
-                currentIndex === index
-                  ? "border-primary"
-                  : "border-transparent hover:border-primary/50"
-              )}
-              onClick={() => scrollToIndex(index)}
-            >
-              <img
-                src={thumbnail}
-                alt={`Thumbnail ${index + 1}`}
-                className="w-full h-full object-cover"
-              />
-            </button>
-          ))}
-        </div>
+      
+      <div className="flex justify-center space-x-2 overflow-x-auto">
+        {thumbnails.map((thumbnail, index) => (
+          <button
+            key={index}
+            type="button"
+            className={cn(
+              "flex-shrink-0 w-16 h-16 rounded-md overflow-hidden border-2 transition-colors",
+              currentIndex === index
+                ? "border-primary"
+                : "border-transparent hover:border-primary/50"
+            )}
+            onClick={() => scrollToIndex(index)}
+          >
+            <img
+              src={thumbnail}
+              alt={`Thumbnail ${index + 1}`}
+              className="w-full h-full object-cover"
+            />
+          </button>
+        ))}
       </div>
-    );
-  }),
+    </div>
+  );
+});
 
-  // Fade transition carousel
-  Fade: forwardRef(/** @param {{
-    className?: string,
-    children?: React.ReactNode
-  } & React.ComponentProps<typeof Carousel>} props */ ({ className, children, ...props }, ref) => {
-    const { currentIndex } = useCarousel();
+CarouselThumbnails.displayName = "CarouselThumbnails";
 
-    return (
-      <Carousel ref={ref} {...props}>
-        <div className={cn("relative", className)}>
-          {React.Children.map(children, (child, index) => (
-            <div
-              key={index}
-              className={cn(
-                "absolute inset-0 transition-opacity duration-500",
-                currentIndex === index ? "opacity-100" : "opacity-0"
-              )}
-            >
-              {child}
-            </div>
-          ))}
-        </div>
-      </Carousel>
-    );
-  })
+// Fade transition carousel component
+const CarouselFade = forwardRef(/** @param {{
+  className?: string,
+  children?: React.ReactNode
+} & React.ComponentProps<typeof Carousel>} props */ ({ className, children, ...props }, ref) => {
+  const { currentIndex } = useCarousel();
+
+  return (
+    <Carousel ref={ref} {...props}>
+      <div className={cn("relative", className)}>
+        {React.Children.map(children, (child, index) => (
+          <div
+            key={index}
+            className={cn(
+              "absolute inset-0 transition-opacity duration-500",
+              currentIndex === index ? "opacity-100" : "opacity-0"
+            )}
+          >
+            {child}
+          </div>
+        ))}
+      </div>
+    </Carousel>
+  );
+});
+
+CarouselFade.displayName = "CarouselFade";
+
+// Predefined carousel variants - now properly exported as individual components
+export const CarouselVariants = {
+  Auto: CarouselAuto,
+  Thumbnails: CarouselThumbnails,
+  Fade: CarouselFade
 };
 
 // Hook for carousel state management

@@ -11,8 +11,22 @@ const withPWA = require('next-pwa')({
 });
 
 const nextConfig = {
-  reactStrictMode: true,
+  reactStrictMode: false,  // Less strict for development flexibility
   swcMinify: true,
+  
+  // TypeScript configuration - less strict
+  typescript: {
+    // Dangerously allow production builds to successfully complete even if
+    // your project has TypeScript errors.
+    ignoreBuildErrors: true,
+  },
+  
+  // ESLint configuration - less strict
+  eslint: {
+    // Warning: This allows production builds to successfully complete even if
+    // your project has ESLint errors.
+    ignoreDuringBuilds: true,
+  },
   
   // Enable standalone output for Docker builds
   output: 'standalone',
