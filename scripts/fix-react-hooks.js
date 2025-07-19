@@ -1,298 +1,289 @@
 #!/usr/bin/env node
 
-/**
- * React Hooks ESLint Violations Auto-Fixer
- * 
- * This script automatically fixes common react-hooks/exhaustive-deps violations:
- * 1. Missing function dependencies in useEffect/useCallback
- * 2. Objects causing re-renders (wraps with useMemo)
- * 3. Missing dependencies in dependency arrays
- */
-
 const fs = require('fs');
 const path = require('path');
+const babel = require('@babel/core');
+const parser = require('@babel/parser');
+const traverse = require('@babel/traverse').default;
+const generate = require('@babel/generator').default;
+const t = require('@babel/types');
 
-class ReactHooksFixer {
-  constructor() {
-    this.fixes = [];
-    this.imports = new Set();
+// Conservative list of valid React dependencies (no keywords or built-ins)
+const VALID_DEPENDENCIES = new Set([
+  // React hooks
+  'useState', 'useEffect', 'useCallback', 'useMemo', 'useRef', 'useContext',
+  'useReducer', 'useImperativeHandle', 'useLayoutEffect', 'useDebugValue',
+  
+  // Common state setters (pattern: set + PascalCase)
+  // Will be validated dynamically
+  
+  // Common function names
+  'fetch', 'load', 'save', 'update', 'delete', 'create', 'get', 'post', 'put',
+  'handleClick', 'handleChange', 'handleSubmit', 'handleClose', 'handleOpen',
+  'onSubmit', 'onChange', 'onClick', 'onClose', 'onOpen', 'onSave', 'onCancel',
+  
+  // Router and navigation
+  'router', 'navigate', 'push', 'replace', 'back', 'forward',
+  
+  // Common props and variables
+  'id', 'data', 'items', 'user', 'config', 'settings', 'options', 'params',
+  'query', 'pathname', 'search', 'hash', 'state', 'props', 'children',
+  
+  // API and async
+  'api', 'client', 'service', 'request', 'response', 'error', 'loading',
+  'success', 'failure', 'pending', 'resolved', 'rejected',
+  
+  // Toast and notifications
+  'toast', 'success', 'error', 'warning', 'info',
+  
+  // Common utilities
+  'debounce', 'throttle', 'delay', 'timeout', 'interval'
+]);
+
+// JavaScript keywords and built-ins that should NEVER be dependencies
+const INVALID_DEPENDENCIES = new Set([
+  // JavaScript keywords
+  'if', 'else', 'for', 'while', 'do', 'switch', 'case', 'default', 'break', 'continue',
+  'function', 'return', 'var', 'let', 'const', 'class', 'extends', 'import', 'export',
+  'try', 'catch', 'finally', 'throw', 'new', 'this', 'super', 'typeof', 'instanceof',
+  'in', 'of', 'delete', 'void', 'null', 'undefined', 'true', 'false',
+  
+  // Built-in objects and functions
+  'Object', 'Array', 'String', 'Number', 'Boolean', 'Date', 'RegExp', 'Error',
+  'Math', 'JSON', 'console', 'window', 'document', 'localStorage', 'sessionStorage',
+  'setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'Promise',
+  'fetch', 'XMLHttpRequest', 'FormData', 'URLSearchParams', 'URL', 'Blob',
+  
+  // DOM methods and properties
+  'getElementById', 'querySelector', 'addEventListener', 'removeEventListener',
+  'createElement', 'appendChild', 'removeChild', 'setAttribute', 'getAttribute',
+  'classList', 'className', 'innerHTML', 'textContent', 'value', 'checked',
+  'focus', 'blur', 'click', 'submit', 'reset', 'scrollIntoView', 'scrollToBottom',
+  'getBoundingClientRect', 'getComputedStyle', 'matchMedia',
+  
+  // Array methods
+  'push', 'pop', 'shift', 'unshift', 'splice', 'slice', 'concat', 'join',
+  'reverse', 'sort', 'filter', 'map', 'reduce', 'forEach', 'find', 'findIndex',
+  'includes', 'indexOf', 'lastIndexOf', 'some', 'every',
+  
+  // String methods
+  'charAt', 'charCodeAt', 'concat', 'indexOf', 'lastIndexOf', 'slice', 'substring',
+  'substr', 'toLowerCase', 'toUpperCase', 'trim', 'split', 'replace', 'match',
+  'search', 'includes', 'startsWith', 'endsWith', 'repeat', 'padStart', 'padEnd',
+  
+  // Object methods
+  'keys', 'values', 'entries', 'assign', 'create', 'defineProperty', 'freeze',
+  'seal', 'hasOwnProperty', 'isPrototypeOf', 'propertyIsEnumerable',
+  
+  // Number methods
+  'toString', 'toFixed', 'toPrecision', 'toExponential', 'parseInt', 'parseFloat',
+  'isNaN', 'isFinite', 'isInteger', 'isSafeInteger',
+  
+  // Date methods
+  'getTime', 'getFullYear', 'getMonth', 'getDate', 'getDay', 'getHours',
+  'getMinutes', 'getSeconds', 'getMilliseconds', 'toISOString', 'toDateString',
+  'toTimeString', 'toLocaleString', 'toLocaleDateString', 'toLocaleTimeString',
+  
+  // Common browser APIs
+  'alert', 'confirm', 'prompt', 'open', 'close', 'print', 'history', 'location',
+  'navigator', 'screen', 'performance', 'crypto', 'atob', 'btoa',
+  
+  // Event-related
+  'preventDefault', 'stopPropagation', 'stopImmediatePropagation', 'target',
+  'currentTarget', 'type', 'bubbles', 'cancelable', 'defaultPrevented',
+  
+  // React-specific but not dependencies
+  'render', 'componentDidMount', 'componentDidUpdate', 'componentWillUnmount',
+  'shouldComponentUpdate', 'getSnapshotBeforeUpdate', 'componentDidCatch',
+  
+  // Common utilities that are not dependencies
+  'min', 'max', 'abs', 'floor', 'ceil', 'round', 'random', 'sqrt', 'pow',
+  'sin', 'cos', 'tan', 'asin', 'acos', 'atan', 'atan2', 'log', 'exp',
+  
+  // Browser storage and networking
+  'getItem', 'setItem', 'removeItem', 'clear', 'key', 'length',
+  'send', 'open', 'close', 'abort', 'getAllResponseHeaders', 'getResponseHeader',
+  
+  // Misc
+  'parse', 'stringify', 'now', 'disconnect', 'observe', 'unobserve'
+]);
+
+function isValidDependency(name) {
+  // Never allow invalid dependencies
+  if (INVALID_DEPENDENCIES.has(name)) {
+    return false;
   }
-
-  /**
-   * Fix a single file
-   */
-  fixFile(filePath) {
-    console.log(`🔧 Fixing React Hooks violations in: ${filePath}`);
-    
-    if (!fs.existsSync(filePath)) {
-      console.error(`❌ File not found: ${filePath}`);
-      return false;
-    }
-
-    const content = fs.readFileSync(filePath, 'utf8');
-    const originalContent = content;
-    
-    let fixedContent = content;
-    this.fixes = [];
-    this.imports = new Set();
-
-    // Apply fixes in order
-    fixedContent = this.fixMissingDependencies(fixedContent);
-    fixedContent = this.fixObjectDependencies(fixedContent);
-    fixedContent = this.fixFunctionDependencies(fixedContent);
-    fixedContent = this.addMissingImports(fixedContent);
-
-    if (fixedContent !== originalContent) {
-      // Create backup
-      const backupPath = `${filePath}.backup`;
-      fs.writeFileSync(backupPath, originalContent);
-      
-      // Write fixed content
-      fs.writeFileSync(filePath, fixedContent);
-      
-      console.log(`✅ Fixed ${this.fixes.length} issues in ${filePath}`);
-      this.fixes.forEach(fix => console.log(`   - ${fix}`));
-      console.log(`📁 Backup created: ${backupPath}`);
-      return true;
-    } else {
-      console.log(`ℹ️  No fixes needed for ${filePath}`);
-      return false;
-    }
+  
+  // Allow explicitly valid dependencies
+  if (VALID_DEPENDENCIES.has(name)) {
+    return true;
   }
-
-  /**
-   * Fix missing dependencies in useEffect/useCallback
-   */
-  fixMissingDependencies(content) {
-    // Pattern: useEffect(() => { ... }, [])
-    const useEffectPattern = /useEffect\(\s*\(\s*\)\s*=>\s*\{([^}]*(?:\{[^}]*\}[^}]*)*)\},\s*\[([^\]]*)\]\s*\)/g;
-    
-    return content.replace(useEffectPattern, (match, body, deps) => {
-      const functionCalls = this.extractFunctionCalls(body);
-      const currentDeps = this.parseDependencyArray(deps);
-      const missingDeps = functionCalls.filter(fn => !currentDeps.includes(fn));
-      
-      if (missingDeps.length > 0) {
-        const newDeps = [...currentDeps, ...missingDeps].join(', ');
-        this.fixes.push(`Added missing dependencies to useEffect: ${missingDeps.join(', ')}`);
-        return match.replace(`[${deps}]`, `[${newDeps}]`);
-      }
-      
-      return match;
-    });
+  
+  // Allow state setters (set + PascalCase)
+  if (/^set[A-Z][a-zA-Z0-9]*$/.test(name)) {
+    return true;
   }
+  
+  // Allow event handlers (on + PascalCase or handle + PascalCase)
+  if (/^(on|handle)[A-Z][a-zA-Z0-9]*$/.test(name)) {
+    return true;
+  }
+  
+  // Allow fetch/load functions (fetch/load + PascalCase)
+  if (/^(fetch|load)[A-Z][a-zA-Z0-9]*$/.test(name)) {
+    return true;
+  }
+  
+  // Allow camelCase variables (but be conservative)
+  if (/^[a-z][a-zA-Z0-9]*$/.test(name) && name.length > 2) {
+    return true;
+  }
+  
+  // Reject everything else
+  return false;
+}
 
-  /**
-   * Fix object dependencies that cause re-renders
-   */
-  fixObjectDependencies(content) {
-    // Find object declarations that are used in useEffect
-    const objectPattern = /const\s+(\w+)\s*=\s*\{[^}]*\};/g;
-    const useEffectWithObjectPattern = /useEffect\([^,]+,\s*\[([^\]]*)\]\)/g;
-    
-    let fixedContent = content;
-    const objectMatches = [...content.matchAll(objectPattern)];
-    const effectMatches = [...content.matchAll(useEffectWithObjectPattern)];
-    
-    objectMatches.forEach(objMatch => {
-      const objectName = objMatch[1];
-      
-      // Check if this object is used in any useEffect dependency
-      effectMatches.forEach(effectMatch => {
-        if (effectMatch[1].includes(objectName)) {
-          // Wrap object with useMemo
-          const wrappedObject = objMatch[0].replace(
-            `const ${objectName} = `,
-            `const ${objectName} = useMemo(() => `
-          ).replace(/;$/, ', []);');
-          
-          fixedContent = fixedContent.replace(objMatch[0], wrappedObject);
-          this.fixes.push(`Wrapped ${objectName} with useMemo to prevent re-renders`);
-          this.imports.add('useMemo');
+function extractReferencedIdentifiers(node) {
+  const identifiers = new Set();
+  
+  traverse(node, {
+    Identifier(path) {
+      // Skip if it's a property key or function declaration
+      if (path.isReferencedIdentifier() && !path.isBindingIdentifier()) {
+        const name = path.node.name;
+        if (isValidDependency(name)) {
+          identifiers.add(name);
         }
-      });
-    });
-    
-    return fixedContent;
-  }
-
-  /**
-   * Fix function dependencies in useCallback
-   */
-  fixFunctionDependencies(content) {
-    // Pattern: const functionName = useCallback(() => { ... }, [])
-    const useCallbackPattern = /const\s+(\w+)\s*=\s*useCallback\(\s*\([^)]*\)\s*=>\s*\{([^}]*(?:\{[^}]*\}[^}]*)*)\},\s*\[([^\]]*)\]\s*\)/g;
-    
-    return content.replace(useCallbackPattern, (match, funcName, body, deps) => {
-      const functionCalls = this.extractFunctionCalls(body);
-      const currentDeps = this.parseDependencyArray(deps);
-      const missingDeps = functionCalls.filter(fn => !currentDeps.includes(fn) && fn !== funcName);
-      
-      if (missingDeps.length > 0) {
-        const newDeps = [...currentDeps, ...missingDeps].join(', ');
-        this.fixes.push(`Added missing dependencies to useCallback ${funcName}: ${missingDeps.join(', ')}`);
-        return match.replace(`[${deps}]`, `[${newDeps}]`);
       }
-      
-      return match;
-    });
-  }
-
-  /**
-   * Add missing React imports
-   */
-  addMissingImports(content) {
-    if (this.imports.size === 0) return content;
-    
-    const reactImportPattern = /import\s+(?:React,\s*)?\{\s*([^}]+)\s*\}\s+from\s+['"]react['"];?/;
-    const reactImportMatch = content.match(reactImportPattern);
-    
-    if (reactImportMatch) {
-      const existingImports = reactImportMatch[1].split(',').map(imp => imp.trim());
-      const newImports = [...this.imports].filter(imp => !existingImports.includes(imp));
-      
-      if (newImports.length > 0) {
-        const allImports = [...existingImports, ...newImports].join(', ');
-        const newImportLine = `import { ${allImports} } from 'react';`;
-        content = content.replace(reactImportMatch[0], newImportLine);
-        this.fixes.push(`Added React imports: ${newImports.join(', ')}`);
-      }
-    } else {
-      // Add new import line
-      const importLine = `import { ${[...this.imports].join(', ')} } from 'react';\n`;
-      content = importLine + content;
-      this.fixes.push(`Added React imports: ${[...this.imports].join(', ')}`);
     }
-    
-    return content;
-  }
+  }, node);
+  
+  return Array.from(identifiers);
+}
 
-  /**
-   * Extract function calls from code body
-   */
-  extractFunctionCalls(body) {
-    const functionCallPattern = /(\w+)\s*\(/g;
-    const matches = [...body.matchAll(functionCallPattern)];
-    return [...new Set(matches.map(match => match[1]))].filter(fn => 
-      // Filter out common non-dependency functions
-      !['console', 'setTimeout', 'setInterval', 'fetch', 'JSON', 'Object', 'Array'].includes(fn)
-    );
-  }
-
-  /**
-   * Parse dependency array string
-   */
-  parseDependencyArray(deps) {
-    if (!deps || deps.trim() === '') return [];
-    return deps.split(',').map(dep => dep.trim()).filter(dep => dep !== '');
-  }
-
-  /**
-   * Fix all files in a directory
-   */
-  fixDirectory(dirPath, pattern = /\.(jsx?|tsx?)$/) {
-    console.log(`🔍 Scanning directory: ${dirPath}`);
+function fixReactHooksInFile(filePath) {
+  console.log(`🔧 Fixing React Hooks violations in: ${path.relative(process.cwd(), filePath)}`);
+  
+  try {
+    const code = fs.readFileSync(filePath, 'utf8');
     
-    const files = this.getFilesRecursively(dirPath, pattern);
-    let fixedCount = 0;
-    
-    files.forEach(file => {
-      if (this.fixFile(file)) {
-        fixedCount++;
-      }
+    // Parse the code
+    const ast = parser.parse(code, {
+      sourceType: 'module',
+      plugins: ['jsx', 'typescript', 'decorators-legacy', 'classProperties']
     });
     
-    console.log(`\n📊 Summary: Fixed ${fixedCount} out of ${files.length} files`);
-    return fixedCount;
-  }
-
-  /**
-   * Get all files recursively
-   */
-  getFilesRecursively(dir, pattern) {
-    const files = [];
+    let hasChanges = false;
+    const fixes = [];
     
-    const scan = (currentDir) => {
-      const items = fs.readdirSync(currentDir);
-      
-      items.forEach(item => {
-        const fullPath = path.join(currentDir, item);
-        const stat = fs.statSync(fullPath);
+    // Find and fix React Hooks violations
+    traverse(ast, {
+      CallExpression(path) {
+        const { node } = path;
         
-        if (stat.isDirectory() && !item.startsWith('.') && item !== 'node_modules') {
-          scan(fullPath);
-        } else if (stat.isFile() && pattern.test(item)) {
-          files.push(fullPath);
+        // Check for useEffect, useCallback, useMemo
+        if (t.isIdentifier(node.callee)) {
+          const hookName = node.callee.name;
+          
+          if (['useEffect', 'useCallback', 'useMemo'].includes(hookName)) {
+            const args = node.arguments;
+            
+            if (args.length >= 1) {
+              const callback = args[0];
+              let depsArray = args[1];
+              
+              // Extract referenced identifiers from the callback
+              const referencedIds = extractReferencedIdentifiers(callback);
+              
+              if (referencedIds.length > 0) {
+                if (!depsArray) {
+                  // Add missing dependency array
+                  const newDepsArray = t.arrayExpression(
+                    referencedIds.map(id => t.identifier(id))
+                  );
+                  args.push(newDepsArray);
+                  hasChanges = true;
+                  fixes.push(`Added missing dependencies to ${hookName}: ${referencedIds.join(', ')}`);
+                } else if (t.isArrayExpression(depsArray)) {
+                  // Check existing dependencies
+                  const existingDeps = new Set(
+                    depsArray.elements
+                      .filter(el => t.isIdentifier(el))
+                      .map(el => el.name)
+                  );
+                  
+                  const missingDeps = referencedIds.filter(id => !existingDeps.has(id));
+                  
+                  if (missingDeps.length > 0) {
+                    // Add missing dependencies
+                    missingDeps.forEach(dep => {
+                      depsArray.elements.push(t.identifier(dep));
+                    });
+                    hasChanges = true;
+                    fixes.push(`Added missing dependencies to ${hookName}: ${missingDeps.join(', ')}`);
+                  }
+                }
+              }
+            }
+          }
         }
-      });
-    };
+      }
+    });
     
-    scan(dir);
-    return files;
-  }
-
-  /**
-   * Restore from backup
-   */
-  restoreBackup(filePath) {
-    const backupPath = `${filePath}.backup`;
-    if (fs.existsSync(backupPath)) {
-      fs.copyFileSync(backupPath, filePath);
-      fs.unlinkSync(backupPath);
-      console.log(`✅ Restored ${filePath} from backup`);
+    if (hasChanges) {
+      // Create backup
+      const backupPath = filePath + '.backup';
+      fs.writeFileSync(backupPath, code);
+      
+      // Generate and write the fixed code
+      const output = generate(ast, {
+        retainLines: true,
+        compact: false
+      });
+      
+      fs.writeFileSync(filePath, output.code);
+      
+      console.log(`✅ Fixed ${fixes.length} issues in ${path.relative(process.cwd(), filePath)}`);
+      fixes.forEach(fix => console.log(`   - ${fix}`));
+      console.log(`📁 Backup created: ${path.relative(process.cwd(), backupPath)}`);
+      
       return true;
+    } else {
+      console.log(`ℹ️  No fixes needed for ${path.relative(process.cwd(), filePath)}`);
+      return false;
     }
-    console.log(`❌ No backup found for ${filePath}`);
+    
+  } catch (error) {
+    console.error(`❌ Error processing ${filePath}:`, error.message);
     return false;
   }
 }
 
-// CLI Interface
 function main() {
   const args = process.argv.slice(2);
-  const fixer = new ReactHooksFixer();
   
   if (args.length === 0) {
-    console.log(`
-🔧 React Hooks ESLint Violations Auto-Fixer
-
-Usage:
-  node fix-react-hooks.js <file>           # Fix single file
-  node fix-react-hooks.js <directory>      # Fix all files in directory
-  node fix-react-hooks.js --restore <file> # Restore from backup
-
-Examples:
-  node fix-react-hooks.js src/components/MyComponent.jsx
-  node fix-react-hooks.js src/components/
-  node fix-react-hooks.js --restore src/components/MyComponent.jsx
-`);
+    console.log('Usage: node fix-react-hooks.js <file1> [file2] [file3] ...');
+    console.log('Example: node fix-react-hooks.js src/components/MyComponent.jsx');
     process.exit(1);
   }
   
-  if (args[0] === '--restore') {
-    if (args.length < 2) {
-      console.error('❌ Please specify a file to restore');
-      process.exit(1);
+  let totalFixed = 0;
+  
+  args.forEach(filePath => {
+    if (fs.existsSync(filePath)) {
+      const fixed = fixReactHooksInFile(filePath);
+      if (fixed) totalFixed++;
+    } else {
+      console.error(`❌ File not found: ${filePath}`);
     }
-    fixer.restoreBackup(args[1]);
-    return;
-  }
+  });
   
-  const target = args[0];
-  const stat = fs.statSync(target);
-  
-  if (stat.isFile()) {
-    fixer.fixFile(target);
-  } else if (stat.isDirectory()) {
-    fixer.fixDirectory(target);
-  } else {
-    console.error(`❌ Invalid target: ${target}`);
-    process.exit(1);
-  }
+  console.log(`\n🎉 Summary: Fixed ${totalFixed} out of ${args.length} files`);
 }
 
 if (require.main === module) {
   main();
 }
 
-module.exports = ReactHooksFixer;
+module.exports = { fixReactHooksInFile, isValidDependency };
