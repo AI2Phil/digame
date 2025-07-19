@@ -205,7 +205,7 @@ module.exports = { fixReactHooksInFile };
 
 
 
-
+------------------------------------
 
 
 Run if [ "$VERBOSE" = "true" ]; then
