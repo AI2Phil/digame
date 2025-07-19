@@ -462,7 +462,8 @@ jobs:
       run: |
         echo "🐳 Starting Docker containers..."
         if [ -f "docker-compose.yml" ]; then
-          docker-compose -f docker-compose.yml up -d --build
+          # Use newer docker compose command (without hyphen)
+          docker compose -f docker-compose.yml up -d --build
         else
           echo "⚠️ docker-compose.yml not found, skipping Docker setup"
         fi
@@ -558,7 +559,8 @@ jobs:
       run: |
         echo "🐳 Stopping Docker containers..."
         if [ -f "docker-compose.yml" ]; then
-          docker-compose down
+          # Use newer docker compose command (without hyphen)
+          docker compose down
         else
           echo "⚠️ docker-compose.yml not found, skipping Docker teardown"
         fi
