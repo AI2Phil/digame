@@ -111,70 +111,122 @@ jobs:
         NODE_ENV: production
         NEXT_TELEMETRY_DISABLED: 1
         CI: true
-        # Reduce build verbosity significantly
-        NEXT_PRIVATE_STANDALONE: true
-        NEXT_PRIVATE_DEBUG_CACHE: false
       run: |
-        # Minimal pre-build info
-        echo "🏗️ Building frontend (reduced verbosity)..."
+        echo "🏗️ Building frontend..."
         
-        # Clear build artifacts silently
-        rm -rf .next node_modules/.cache /tmp/next-* 2>/dev/null || true
+        # Clear build artifacts
+        rm -rf .next node_modules/.cache 2>/dev/null || true
         
-        # Single optimized build attempt with minimal logging
-        if NODE_OPTIONS="--max-old-space-size=2048" NEXT_TELEMETRY_DISABLED=1 npm run build --silent 2>&1 | grep -E "(✓|✗|Error|Failed|Warning)" || npm run build --silent; then
-          echo "✅ Build completed"
+        # Use the build:silent script from package.json for reduced verbosity
+        if npm run build:silent; then
+          echo "✅ Build completed successfully"
         else
-          echo "⚠️ Build failed, retrying with fallback settings..."
+          echo "⚠️ Silent build failed, trying with CI build script..."
           rm -rf .next node_modules/.cache 2>/dev/null || true
           
-          if NODE_OPTIONS="--max-old-space-size=1536" NEXT_TELEMETRY_DISABLED=1 npm run build --silent 2>&1 | grep -E "(✓|✗|Error|Failed)"; then
-            echo "✅ Build completed on retry"
+          if npm run build:ci; then
+            echo "✅ Build completed with CI script"
           else
-            echo "❌ Build failed"
-            echo "Memory: $(free -h | awk 'NR==2{print $3"/"$2}' 2>/dev/null || echo 'unknown')"
-            echo "Node: $(node --version)"
-            exit 1
+            echo "⚠️ CI build failed, trying standard build..."
+            rm -rf .next node_modules/.cache 2>/dev/null || true
+            
+            if npm run build; then
+              echo "✅ Build completed with standard script"
+            else
+              echo "❌ All build attempts failed"
+              echo "Memory: $(free -h | awk 'NR==2{print $3"/"$2}' 2>/dev/null || echo 'unknown')"
+              echo "Node: $(node --version)"
+              echo "NPM: $(npm --version)"
+              echo "Checking for build errors..."
+              ls -la . || true
+              exit 1
+            fi
           fi
         fi
         
-        # Silent cleanup
-        rm -rf node_modules/.cache 2>/dev/null || true
+        # Verify .next directory was created
+        if [ ! -d ".next" ]; then
+          echo "❌ Build failed: .next directory not created"
+          echo "Current directory contents:"
+          ls -la
+          exit 1
+        fi
+        
         echo "📦 Build size: $(du -sh .next/ | cut -f1)"
         
     - name: Verify build output
       working-directory: ./frontend
       run: |
-        # Quick verification with minimal output
-        [ -f .next/BUILD_ID ] || { echo "❌ BUILD_ID missing"; exit 1; }
-        [ -d .next/static ] || { echo "❌ Static assets missing"; exit 1; }
-        echo "✅ Build verified ($(du -sh .next/ | cut -f1))"
+        echo "🔍 Verifying build output..."
         
-    - name: Verify and prepare build artifacts
+        # Check if .next directory exists
+        if [ ! -d ".next" ]; then
+          echo "❌ .next directory missing"
+          echo "Current directory contents:"
+          ls -la
+          exit 1
+        fi
+        
+        # Check for BUILD_ID
+        if [ ! -f ".next/BUILD_ID" ]; then
+          echo "❌ BUILD_ID missing"
+          echo ".next directory contents:"
+          ls -la .next/
+          exit 1
+        fi
+        
+        # Check for static assets
+        if [ ! -d ".next/static" ]; then
+          echo "❌ Static assets missing"
+          echo ".next directory contents:"
+          ls -la .next/
+          exit 1
+        fi
+        
+        # Verify BUILD_ID content
+        BUILD_ID=$(cat .next/BUILD_ID)
+        if [ -z "$BUILD_ID" ]; then
+          echo "❌ BUILD_ID is empty"
+          exit 1
+        fi
+        
+        echo "✅ Build verified successfully"
+        echo "   BUILD_ID: $BUILD_ID"
+        echo "   Size: $(du -sh .next/ | cut -f1)"
+        echo "   Static files: $(find .next/static -type f | wc -l) files"
+        
+    - name: Prepare build artifacts
       working-directory: ./frontend
       run: |
-        echo "🔍 Verifying build artifacts before upload..."
+        echo "📦 Preparing build artifacts for upload..."
+        
+        # Final verification before upload
         if [ ! -d ".next" ]; then
-          echo "❌ No .next directory found"
+          echo "❌ No .next directory found for artifact upload"
+          echo "Available files:"
+          ls -la
           exit 1
         fi
         
         if [ ! -f ".next/BUILD_ID" ]; then
-          echo "❌ No BUILD_ID found"
+          echo "❌ No BUILD_ID found for artifact upload"
+          echo ".next contents:"
+          ls -la .next/
           exit 1
         fi
         
-        echo "✅ Build artifacts verified:"
-        echo "BUILD_ID: $(cat .next/BUILD_ID)"
-        echo "Directory size: $(du -sh .next/)"
-        echo "Key files:"
-        find .next -name "*.js" -o -name "*.html" -o -name "*.css" | head -5
+        # Create build info for debugging
+        BUILD_ID=$(cat .next/BUILD_ID)
+        echo "{\"build_id\": \"$BUILD_ID\", \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\", \"run_id\": \"${{ github.run_id }}\", \"commit\": \"${{ github.sha }}\"}" > .next/build-info.json
         
-        # Create a build info file for debugging
-        echo "{\"build_id\": \"$(cat .next/BUILD_ID)\", \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\", \"run_id\": \"${{ github.run_id }}\"}" > .next/build-info.json
+        echo "✅ Artifacts ready for upload:"
+        echo "   BUILD_ID: $BUILD_ID"
+        echo "   Size: $(du -sh .next/ | cut -f1)"
+        echo "   Files: $(find .next -type f | wc -l)"
         
-        echo "📦 Preparing artifact for upload..."
-        ls -la .next/
+        # List key artifact files
+        echo "Key files present:"
+        ls -la .next/ | head -10
 
     - name: Upload Next.js build artifacts
       uses: actions/upload-artifact@v4
