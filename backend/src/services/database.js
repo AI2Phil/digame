@@ -1424,6 +1424,17 @@ class DatabaseService {
 DatabaseService.instance = null;
 DatabaseService.initialized = false;
 
-// Export singleton instance
-module.exports = new DatabaseService();
-module.exports.DatabaseService = DatabaseService;
+// Export factory function instead of auto-instantiated singleton
+let databaseServiceInstance = null;
+
+function getDatabaseService() {
+  if (!databaseServiceInstance) {
+    databaseServiceInstance = new DatabaseService();
+  }
+  return databaseServiceInstance;
+}
+
+module.exports = {
+  getDatabaseService,
+  DatabaseService
+};

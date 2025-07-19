@@ -334,6 +334,13 @@ jobs:
           npm test --silent || echo "⚠️ Some backend tests failed but continuing"
         fi
 
+    - name: Create SQLite directory to prevent startup crash
+      working-directory: ./backend
+      run: |
+        echo "📁 Creating SQLite database directory to prevent startup crash..."
+        mkdir -p ./data
+        echo "✅ SQLite directory created: $(pwd)/data"
+
     - name: Wait for PostgreSQL to be ready
       run: |
         echo "⏳ Waiting for PostgreSQL..."
@@ -494,13 +501,12 @@ jobs:
         
         echo "✅ Frontend build ready"
 
-    - name: Setup SQLite database for backend
+    - name: Create SQLite directory to prevent startup crash
       working-directory: ./backend
       run: |
-        echo "🗄️ Setting up SQLite database directory..."
+        echo "📁 Creating SQLite database directory to prevent startup crash..."
         mkdir -p ./data
         echo "✅ SQLite directory created: $(pwd)/data"
-        ls -la ./data || echo "Directory ready for database files"
 
     - name: Wait for PostgreSQL to be ready
       run: |
@@ -879,6 +885,13 @@ jobs:
       with:
         name: frontend-build-${{ github.run_id }}
         path: frontend/.next/
+
+    - name: Create SQLite directory to prevent startup crash
+      working-directory: ./backend
+      run: |
+        echo "📁 Creating SQLite database directory to prevent startup crash..."
+        mkdir -p ./data
+        echo "✅ SQLite directory created: $(pwd)/data"
 
     - name: Wait for PostgreSQL to be ready
       run: |
