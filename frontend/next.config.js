@@ -16,7 +16,7 @@ const nextConfig = {
   
   // Internationalization
   i18n: {
-    locales: ['en', 'es'], // Removed 'ar', Portuguese 'pt' can be added later
+    locales: ['en'], // Only English for now, Spanish disabled to reduce build size
     defaultLocale: 'en',
   },
 
@@ -77,13 +77,11 @@ const nextConfig = {
     
     problematicPages.forEach(page => {
       delete pathMap[page];
-      // Also remove localized versions
+      // Also remove localized versions (only English now)
       delete pathMap[`/en${page}`];
-      delete pathMap[`/es${page}`];
-      delete pathMap[`/ar${page}`];
     });
     
-    console.log(`📊 Exporting ${Object.keys(pathMap).length} pages (excluded ${problematicPages.length * 4} problematic pages)`);
+    console.log(`📊 Exporting ${Object.keys(pathMap).length} pages (excluded ${problematicPages.length * 2} problematic pages)`);
     return pathMap;
   },
 };

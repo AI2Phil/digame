@@ -6,9 +6,9 @@ This comprehensive guide covers multi-language support in the Digame application
 
 **Active Languages:**
 - 🇺🇸 **English (en)** - Default language
-- 🇪🇸 **Spanish (es)** - Full support
 
 **Recently Removed:**
+- ~~🇪🇸 **Spanish (es)**~~ - **UPDATE: Extracted to reduce build size by 50%** (archived in [`app/locales_archived/es_[timestamp]`](../../app/locales_archived/))
 - ~~Arabic (ar)~~ - Removed to optimize build performance (can be re-added if needed)
 
 **Ready to Add:**
@@ -104,7 +104,7 @@ After adding or updating translations in `.po` files:
 **File 1:** `frontend/next.config.js`
 ```javascript
 i18n: {
-  locales: ['en', 'es', 'pt'], // Add 'pt' here
+  locales: ['en', 'pt'], // Add 'pt' here (Spanish removed)
   defaultLocale: 'en',
 },
 ```
@@ -113,7 +113,7 @@ i18n: {
 ```javascript
 i18n: {
   defaultLocale: 'en',
-  locales: ['en', 'es', 'pt'], // Add 'pt' here
+  locales: ['en', 'pt'], // Add 'pt' here (Spanish removed)
 },
 ```
 
@@ -140,13 +140,13 @@ Create: `frontend/public/locales/pt/common.json`
 
 **File:** `frontend/src/components/layout/LanguageSwitcher.jsx`
 ```javascript
-const supportedLocales = ['en', 'es', 'pt']; // Add 'pt' here
+const supportedLocales = ['en', 'pt']; // Add 'pt' here (Spanish removed)
 ```
 
 ### Step 4: Test & Deploy (2 minutes)
 ```bash
 cd frontend
-npm run build  # Should generate ~650 pages (up from 433)
+npm run build  # Should generate ~325 pages (reduced from 433 after Spanish removal)
 ```
 
 **Result:** Portuguese language support fully functional! 🎉
@@ -236,7 +236,7 @@ In `public/locales/es/common.json`:
     module.exports = {
       i18n: {
         defaultLocale: 'en',
-        locales: ['en', 'es', 'ar', 'fr'], // Added 'fr'
+        locales: ['en', 'fr'], // Added 'fr' (Spanish removed)
       },
       // ... other settings
     };
@@ -473,6 +473,44 @@ const useLocaleFormatting = () => {
 3.  **Resource Planning**: Allocate budget and time for translation and localization
 4.  **User Experience**: Ensure language selection and switching is intuitive
 5.  **Performance Monitoring**: Track impact of multi-language support on app performance
+
+---
+
+## 📋 Spanish Language Extraction Update
+
+**Date:** 2025-01-19
+**Reason:** Build optimization to reduce CI failures and page generation by 50%
+
+### What Was Changed:
+- **Configuration Files Updated:**
+  - [`frontend/next.config.js`](../../frontend/next.config.js) - Removed 'es' from locales array
+  - [`frontend/next-i18next.config.js`](../../frontend/next-i18next.config.js) - Removed 'es' from locales array
+  - Updated [`exportPathMap`](../../frontend/next.config.js) to remove Spanish path references
+
+- **Locale Files Archived:**
+  - Frontend: Removed [`frontend/public/locales/es/`](../../frontend/public/locales/)
+  - Backend: Archived [`app/locales/es/`](../../app/locales/) → [`app/locales_archived/es_[timestamp]`](../../app/locales_archived/)
+
+### Build Impact:
+- **Before:** ~433 pages generated (English + Spanish variants)
+- **After:** ~217 pages generated (English only)
+- **Reduction:** 50% fewer pages, significantly faster CI builds
+
+### Known Issues & Solutions:
+The Spanish locale files contained React Hook violations that caused SSR (Server-Side Rendering) failures during the build process. These issues were identified through CI logs and can be resolved using the [`scripts/fix-react-hooks.js`](../../scripts/fix-react-hooks.js) script.
+
+**Script Purpose:** (as documented in [`docs/CI_LOG_DETAILS.md`](../CI_LOG_DETAILS.md))
+- Validates that dependencies exist in local scope before adding them to [`useEffect()`](../../frontend/src/), [`useCallback()`](../../frontend/src/), or [`useMemo()`](../../frontend/src/)
+- Logs SSR violations when hooks are used outside valid React components
+- Creates backups before overwriting files
+- Returns structured result objects for better CI handling
+- Provides clean summary of fixes and diagnostics
+
+**To Re-enable Spanish:**
+1. Restore archived files from [`app/locales_archived/es_[timestamp]`](../../app/locales_archived/)
+2. Run [`scripts/fix-react-hooks.js`](../../scripts/fix-react-hooks.js) on all React components
+3. Update configuration files to include 'es' in locales arrays
+4. Test build process thoroughly before deployment
 
 ---
 
