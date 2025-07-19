@@ -121,29 +121,72 @@ function isValidDependency(name, declaredIdentifiers) {
 
 function extractIdentifiersInScope(path) {
   const declared = new Set();
-  path.traverse({
+  
+  // Get the function scope (component scope)
+  const functionScope = path.getFunctionParent();
+  if (!functionScope) return declared;
+  
+  // Traverse only within the component function scope
+  functionScope.traverse({
     VariableDeclarator(p) {
-      if (t.isIdentifier(p.node.id)) declared.add(p.node.id.name);
+      if (t.isIdentifier(p.node.id)) {
+        declared.add(p.node.id.name);
+      }
+      // Handle destructuring
+      if (t.isObjectPattern(p.node.id)) {
+        p.node.id.properties.forEach(prop => {
+          if (t.isObjectProperty(prop) && t.isIdentifier(prop.value)) {
+            declared.add(prop.value.name);
+          }
+        });
+      }
+      if (t.isArrayPattern(p.node.id)) {
+        p.node.id.elements.forEach(element => {
+          if (t.isIdentifier(element)) {
+            declared.add(element.name);
+          }
+        });
+      }
     },
     FunctionDeclaration(p) {
       if (t.isIdentifier(p.node.id)) declared.add(p.node.id.name);
     },
-    ImportSpecifier(p) {
-      declared.add(p.node.local.name);
-    },
-    ImportDefaultSpecifier(p) {
-      declared.add(p.node.local.name);
-    },
-    ImportNamespaceSpecifier(p) {
-      declared.add(p.node.local.name);
-    },
     // Include function parameters
-    Function(path) {
-      path.node.params.forEach(param => {
-        if (t.isIdentifier(param)) declared.add(param.name);
-      });
+    Function(p) {
+      if (p === functionScope) { // Only for the current function
+        p.node.params.forEach(param => {
+          if (t.isIdentifier(param)) {
+            declared.add(param.name);
+          }
+          // Handle destructured parameters
+          if (t.isObjectPattern(param)) {
+            param.properties.forEach(prop => {
+              if (t.isObjectProperty(prop) && t.isIdentifier(prop.value)) {
+                declared.add(prop.value.name);
+              }
+            });
+          }
+        });
+      }
     }
   });
+  
+  // Also check for imports at the module level
+  const program = path.findParent(p => p.isProgram());
+  if (program) {
+    program.traverse({
+      ImportSpecifier(p) {
+        declared.add(p.node.local.name);
+      },
+      ImportDefaultSpecifier(p) {
+        declared.add(p.node.local.name);
+      },
+      ImportNamespaceSpecifier(p) {
+        declared.add(p.node.local.name);
+      }
+    });
+  }
+  
   return declared;
 }
 
