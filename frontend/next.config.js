@@ -14,6 +14,9 @@ const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
   
+  // Enable standalone output for Docker builds
+  output: 'standalone',
+  
   // Internationalization
   i18n: {
     locales: ['en'], // Only English for now, Spanish disabled to reduce build size
