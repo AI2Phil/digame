@@ -161,6 +161,49 @@ function extractReferencedIdentifiers(node) {
   return Array.from(identifiers);
 }
 
+function isValidReactComponent(func) {
+  if (!func) return false;
+  
+  // Check if it's a function declaration with PascalCase name
+  if (t.isFunctionDeclaration(func.node) && func.node.id) {
+    const name = func.node.id.name;
+    return /^[A-Z][a-zA-Z0-9]*$/.test(name);
+  }
+  
+  // Check if it's an arrow function or function expression assigned to PascalCase variable
+  if (t.isArrowFunctionExpression(func.node) || t.isFunctionExpression(func.node)) {
+    const parent = func.parent;
+    
+    // Variable declarator: const MyComponent = () => {}
+    if (t.isVariableDeclarator(parent) && t.isIdentifier(parent.id)) {
+      const name = parent.id.name;
+      return /^[A-Z][a-zA-Z0-9]*$/.test(name);
+    }
+    
+    // Assignment expression: MyComponent = () => {}
+    if (t.isAssignmentExpression(parent) && t.isIdentifier(parent.left)) {
+      const name = parent.left.name;
+      return /^[A-Z][a-zA-Z0-9]*$/.test(name);
+    }
+    
+    // Export default: export default () => {}
+    if (t.isExportDefaultDeclaration(parent)) {
+      return true;
+    }
+    
+    // Named export: export const MyComponent = () => {}
+    if (t.isVariableDeclarator(parent) && t.isIdentifier(parent.id)) {
+      const grandParent = func.parentPath?.parentPath?.parent;
+      if (t.isExportNamedDeclaration(grandParent)) {
+        const name = parent.id.name;
+        return /^[A-Z][a-zA-Z0-9]*$/.test(name);
+      }
+    }
+  }
+  
+  return false;
+}
+
 function fixReactHooksInFile(filePath) {
   console.log(`🔧 Fixing React Hooks violations in: ${path.relative(process.cwd(), filePath)}`);
   
@@ -175,16 +218,32 @@ function fixReactHooksInFile(filePath) {
     
     let hasChanges = false;
     const fixes = [];
+    const warnings = [];
     
     // Find and fix React Hooks violations
     traverse(ast, {
       CallExpression(path) {
         const { node } = path;
         
-        // Check for useEffect, useCallback, useMemo
         if (t.isIdentifier(node.callee)) {
           const hookName = node.callee.name;
           
+          // Check for any React hook (starts with 'use' and has uppercase letter)
+          const isReactHook = /^use[A-Z]/.test(hookName);
+          
+          if (isReactHook) {
+            // SSR Safety Check: Ensure hook is inside a valid React component
+            const func = path.getFunctionParent();
+            const isInsideComponent = isValidReactComponent(func);
+            
+            if (!func || !isInsideComponent) {
+              const line = node.loc?.start.line || 'unknown';
+              warnings.push(`❌ Invalid hook usage: ${hookName} called outside React component at line ${line}`);
+              console.warn(`❌ SSR VIOLATION: ${hookName} at ${path.relative(process.cwd(), filePath)}:${line}`);
+            }
+          }
+          
+          // Original dependency array fixes for useEffect, useCallback, useMemo
           if (['useEffect', 'useCallback', 'useMemo'].includes(hookName)) {
             const args = node.arguments;
             
@@ -230,6 +289,13 @@ function fixReactHooksInFile(filePath) {
       }
     });
     
+    // Report warnings (SSR violations)
+    if (warnings.length > 0) {
+      console.log(`⚠️  Found ${warnings.length} SSR violations in ${path.relative(process.cwd(), filePath)}`);
+      warnings.forEach(warning => console.log(`   ${warning}`));
+      console.log(`🚨 These violations will cause SSR crashes! Fix them manually.`);
+    }
+    
     if (hasChanges) {
       // Create backup
       const backupPath = filePath + '.backup';
@@ -243,14 +309,18 @@ function fixReactHooksInFile(filePath) {
       
       fs.writeFileSync(filePath, output.code);
       
-      console.log(`✅ Fixed ${fixes.length} issues in ${path.relative(process.cwd(), filePath)}`);
+      console.log(`✅ Fixed ${fixes.length} dependency issues in ${path.relative(process.cwd(), filePath)}`);
       fixes.forEach(fix => console.log(`   - ${fix}`));
       console.log(`📁 Backup created: ${path.relative(process.cwd(), backupPath)}`);
       
-      return true;
+      return { hasChanges: true, hasWarnings: warnings.length > 0 };
     } else {
-      console.log(`ℹ️  No fixes needed for ${path.relative(process.cwd(), filePath)}`);
-      return false;
+      if (warnings.length > 0) {
+        return { hasChanges: false, hasWarnings: true };
+      } else {
+        console.log(`ℹ️  No issues found in ${path.relative(process.cwd(), filePath)}`);
+        return { hasChanges: false, hasWarnings: false };
+      }
     }
     
   } catch (error) {
@@ -265,21 +335,44 @@ function main() {
   if (args.length === 0) {
     console.log('Usage: node fix-react-hooks.js <file1> [file2] [file3] ...');
     console.log('Example: node fix-react-hooks.js src/components/MyComponent.jsx');
+    console.log('');
+    console.log('This script will:');
+    console.log('  ✅ Fix missing dependency arrays in useEffect, useCallback, useMemo');
+    console.log('  🚨 Detect React hooks called outside components (SSR violations)');
     process.exit(1);
   }
   
   let totalFixed = 0;
+  let totalWarnings = 0;
+  let filesWithIssues = 0;
   
   args.forEach(filePath => {
     if (fs.existsSync(filePath)) {
-      const fixed = fixReactHooksInFile(filePath);
-      if (fixed) totalFixed++;
+      const result = fixReactHooksInFile(filePath);
+      
+      // Handle both old boolean return and new object return for backward compatibility
+      if (typeof result === 'boolean') {
+        if (result) totalFixed++;
+      } else if (result && typeof result === 'object') {
+        if (result.hasChanges) totalFixed++;
+        if (result.hasWarnings) totalWarnings++;
+        if (result.hasChanges || result.hasWarnings) filesWithIssues++;
+      }
     } else {
       console.error(`❌ File not found: ${filePath}`);
     }
   });
   
-  console.log(`\n🎉 Summary: Fixed ${totalFixed} out of ${args.length} files`);
+  console.log(`\n🎉 Summary:`);
+  console.log(`   📁 Files processed: ${args.length}`);
+  console.log(`   ✅ Files with dependency fixes: ${totalFixed}`);
+  console.log(`   🚨 Files with SSR violations: ${totalWarnings}`);
+  
+  if (totalWarnings > 0) {
+    console.log(`\n⚠️  WARNING: Found SSR violations that will cause build failures!`);
+    console.log(`   These must be fixed manually by moving hooks inside React components.`);
+    process.exit(1); // Exit with error code to fail CI if there are SSR violations
+  }
 }
 
 if (require.main === module) {
