@@ -70,14 +70,19 @@ jobs:
       run: |
         echo "🔍 Running comprehensive pre-build validation..."
         
-        # 1. Fix missing React imports first
+        # 1. Fix missing React imports using enhanced script
         echo "Adding missing React imports..."
-        find src/ components/ utils/ -name "*.tsx" -o -name "*.jsx" 2>/dev/null | while read file; do
-          if [ -f "$file" ] && grep -q "useState\|useEffect\|useCallback\|useMemo\|useRef\|useContext" "$file" && ! grep -q "import.*React" "$file"; then
-            echo "Adding React import to: $file"
-            sed -i '1i import React from '\''react'\'';' "$file" 2>/dev/null || true
-          fi
-        done
+        if [ -f "../scripts/fix-react-imports.js" ]; then
+          node ../scripts/fix-react-imports.js src components || echo "⚠️ React import script completed with warnings"
+        else
+          # Fallback to basic sed approach
+          find src/ components/ -name "*.tsx" -o -name "*.jsx" 2>/dev/null | while read file; do
+            if [ -f "$file" ] && grep -q "useState\|useEffect\|useCallback\|useMemo\|useRef\|useContext" "$file" && ! grep -q "import.*React" "$file"; then
+              echo "Adding React import to: $file"
+              sed -i '1i import React from '\''react'\'';' "$file" 2>/dev/null || true
+            fi
+          done
+        fi
         
         # 2. TypeScript compilation check (catch type errors early)
         echo "Checking TypeScript compilation..."
@@ -87,16 +92,16 @@ jobs:
           echo "✅ TypeScript compilation passed"
         fi
         
-        # 3. ESLint with React hooks rules enforcement (correct paths)
+        # 3. ESLint with React hooks rules enforcement (proper glob patterns)
         echo "Running ESLint with React hooks validation..."
-        npx eslint src/ components/ utils/ --ext .js,.jsx,.ts,.tsx \
+        npx eslint 'src/**/*.{js,jsx,ts,tsx}' 'components/**/*.{js,jsx,ts,tsx}' 'utils/**/*.{js,jsx,ts,tsx}' \
           --rule "react-hooks/rules-of-hooks: error" \
           --rule "react-hooks/exhaustive-deps: error" \
           --fix --quiet || echo "⚠️ Some linting issues require manual fixes"
         
         # 4. Check for conditional hook usage (Rules of Hooks violations)
         echo "Scanning for conditional hook usage..."
-        if find src/ components/ -name "*.tsx" -o -name "*.jsx" -o -name "*.ts" -o -name "*.js" 2>/dev/null | xargs grep -l "if.*use[A-Z]" 2>/dev/null; then
+        if find src/ components/ -name "*.tsx" -o -name "*.jsx" -o -name "*.ts" -o -name "*.js" 2>/dev/null | xargs grep -l "if.*use[A-Z]\|for.*use[A-Z]\|while.*use[A-Z]" 2>/dev/null; then
           echo "⚠️ Found potential conditional hook usage - manual review required"
         fi
         
@@ -123,11 +128,11 @@ jobs:
       run: |
         echo "🔧 Running enhanced linting..."
         
-        # Run standard linting with fixes on correct paths
-        npx eslint src/ components/ utils/ --ext .js,.jsx,.ts,.tsx --fix --quiet || true
+        # Run standard linting with fixes using proper glob patterns
+        npx eslint 'src/**/*.{js,jsx,ts,tsx}' 'components/**/*.{js,jsx,ts,tsx}' 'utils/**/*.{js,jsx,ts,tsx}' --fix --quiet || true
         
-        # Additional React-specific linting
-        npx eslint src/ components/ --ext .js,.jsx,.ts,.tsx \
+        # Additional React-specific linting with proper patterns
+        npx eslint 'src/**/*.{js,jsx,ts,tsx}' 'components/**/*.{js,jsx,ts,tsx}' \
           --rule "react/jsx-uses-react: error" \
           --rule "react/jsx-uses-vars: error" \
           --rule "react-hooks/rules-of-hooks: error" \
@@ -171,15 +176,15 @@ jobs:
           done
         else
           echo "Enhanced script not found, using ESLint with React hooks rules..."
-          npx eslint src/ components/ --ext .js,.jsx,.ts,.tsx \
+          npx eslint 'src/**/*.{js,jsx,ts,tsx}' 'components/**/*.{js,jsx,ts,tsx}' \
             --fix --quiet \
             --rule "react-hooks/rules-of-hooks: error" \
             --rule "react-hooks/exhaustive-deps: warn" || true
         fi
         
-        # Validate no critical violations remain
+        # Validate no critical violations remain using proper glob patterns
         echo "Validating hook usage after fixes..."
-        VIOLATIONS=$(npx eslint src/ components/ --ext .js,.jsx,.ts,.tsx \
+        VIOLATIONS=$(npx eslint 'src/**/*.{js,jsx,ts,tsx}' 'components/**/*.{js,jsx,ts,tsx}' \
           --rule "react-hooks/rules-of-hooks: error" \
           --format compact 2>/dev/null | grep -c "react-hooks/rules-of-hooks" || echo "0")
         
@@ -246,7 +251,7 @@ jobs:
         
         # Issue Type 5: ESLint React hooks violations
         echo "⚠️ Final ESLint React hooks check..." | tee -a $ISSUE_REPORT
-        HOOK_VIOLATIONS=$(npx eslint src/ components/ --ext .js,.jsx,.ts,.tsx \
+        HOOK_VIOLATIONS=$(npx eslint 'src/**/*.{js,jsx,ts,tsx}' 'components/**/*.{js,jsx,ts,tsx}' \
           --rule "react-hooks/rules-of-hooks: error" \
           --rule "react-hooks/exhaustive-deps: error" \
           --format compact 2>/dev/null | grep -c "react-hooks" || echo "0")
@@ -276,6 +281,7 @@ jobs:
         path: |
           frontend/ci-issues-report.txt
           frontend/utility-hooks-report.txt
+          frontend/react-imports-report.txt
         retention-days: 7
         if-no-files-found: ignore
 
@@ -452,6 +458,15 @@ jobs:
           backend/package-lock.json
           package-lock.json
 
+    - name: Start Docker containers
+      run: |
+        echo "🐳 Starting Docker containers..."
+        if [ -f "docker-compose.yml" ]; then
+          docker-compose -f docker-compose.yml up -d --build
+        else
+          echo "⚠️ docker-compose.yml not found, skipping Docker setup"
+        fi
+
     - name: Install backend dependencies
       working-directory: ./backend
       run: |
@@ -511,6 +526,11 @@ jobs:
           exit 1
         fi
 
+    - name: Wait for backend to be ready
+      run: |
+        echo "⏳ Waiting for backend health check..."
+        curl --retry 10 --retry-delay 5 --retry-connrefused http://localhost:4000/health || echo "⚠️ Backend health check failed, continuing with manual verification"
+
     - name: Verify backend server can start
       working-directory: ./backend
       env:
@@ -531,6 +551,16 @@ jobs:
         else
           echo "❌ Backend server failed to start"
           exit 1
+        fi
+
+    - name: Stop Docker
+      if: always()
+      run: |
+        echo "🐳 Stopping Docker containers..."
+        if [ -f "docker-compose.yml" ]; then
+          docker-compose down
+        else
+          echo "⚠️ docker-compose.yml not found, skipping Docker teardown"
         fi
 
   # E2E Testing - Enhanced with matrix strategy
