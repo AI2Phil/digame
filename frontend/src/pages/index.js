@@ -41,7 +41,7 @@ const Button = ({
 };
 import { Badge } from '../components/ui/Badge';
 import { Progress } from '../components/ui/Progress';
-import { useTranslation } from 'next-i18next';
+// import { useTranslation } from 'next-i18next'; // Temporarily disabled while i18n is deactivated
 import { Avatar } from '../components/ui/Avatar';
 import { Card, CardContent } from '../components/ui/Card';
 
@@ -52,7 +52,7 @@ const AuthForm = dynamic(() => import('../components/auth/AuthForm'), {
 });
 
 export default function HomePage({ onDemoAccess, onLogin }) {
-  const { t } = useTranslation('common');
+  // const { t } = useTranslation('common'); // Temporarily disabled while i18n is deactivated
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showAuthForm, setShowAuthForm] = useState(false);
 
@@ -276,7 +276,7 @@ export default function HomePage({ onDemoAccess, onLogin }) {
                 </Button>
               </Link>
               <Button onClick={handleGetStarted} variant="primary" size="md">
-                🚀 {t('getStarted', 'Get Started')}
+                🚀 Get Started
               </Button>
             </div>
           </div>
@@ -286,14 +286,11 @@ export default function HomePage({ onDemoAccess, onLogin }) {
         <div className="container mx-auto px-4 py-16">
           <div className="text-center max-w-4xl mx-auto">
             <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6">
-              {t('heroTitlePart1', 'Your Digital')}
-              <span className="text-blue-600"> {t('heroTitlePart2', 'Professional Twin')}</span>
+              Your Digital
+              <span className="text-blue-600"> Professional Twin</span>
             </h1>
             <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-              {t(
-                'heroSubtitle',
-                'Unlock your professional potential with AI-powered behavioral analysis, predictive insights, and personalized career development recommendations.'
-              )}
+              Unlock your professional potential with AI-powered behavioral analysis, predictive insights, and personalized career development recommendations.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
@@ -377,13 +374,10 @@ export default function HomePage({ onDemoAccess, onLogin }) {
                   <span className="text-2xl">🧠</span>
                 </div>
                 <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                  {t('featureBehavioralAnalysisTitle', 'Behavioral Analysis')}
+                  Behavioral Analysis
                 </h3>
                 <p className="text-gray-600">
-                  {t(
-                    'featureBehavioralAnalysisText',
-                    'Advanced ML algorithms analyze your work patterns and identify optimization opportunities'
-                  )}
+                  Advanced ML algorithms analyze your work patterns and identify optimization opportunities
                 </p>
               </div>
 
@@ -392,13 +386,10 @@ export default function HomePage({ onDemoAccess, onLogin }) {
                   <span className="text-2xl">🔮</span>
                 </div>
                 <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                  {t('featurePredictiveInsightsTitle', 'Predictive Insights')}
+                  Predictive Insights
                 </h3>
                 <p className="text-gray-600">
-                  {t(
-                    'featurePredictiveInsightsText',
-                    'Get personalized predictions about your career trajectory and skill development'
-                  )}
+                  Get personalized predictions about your career trajectory and skill development
                 </p>
               </div>
 
@@ -407,13 +398,10 @@ export default function HomePage({ onDemoAccess, onLogin }) {
                   <span className="text-2xl">🎯</span>
                 </div>
                 <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                  {t('featureGoalAchievementTitle', 'Goal Achievement')}
+                  Goal Achievement
                 </h3>
                 <p className="text-gray-600">
-                  {t(
-                    'featureGoalAchievementText',
-                    'Set and track professional goals with AI-powered recommendations and progress monitoring'
-                  )}
+                  Set and track professional goals with AI-powered recommendations and progress monitoring
                 </p>
               </div>
             </div>
@@ -515,7 +503,7 @@ export default function HomePage({ onDemoAccess, onLogin }) {
               <span className="text-lg font-bold">Digame</span>
             </div>
             <p className="text-gray-400">
-              {t('footerCopyright', '© 2025 Digame. Your Digital Professional Twin Platform.')}
+              © 2025 Digame. Your Digital Professional Twin Platform.
             </p>
           </div>
         </footer>
@@ -527,12 +515,13 @@ export default function HomePage({ onDemoAccess, onLogin }) {
   );
 }
 
-import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
+// import { serverSideTranslations } from 'next-i18next/serverSideTranslations'; // Temporarily disabled while i18n is deactivated
 
-export async function getStaticProps({ locale }) {
-  return {
-    props: {
-      ...(await serverSideTranslations(locale, ['common'])),
-    },
-  };
-}
+// TODO: Re-enable when implementing Spanish localization
+// export async function getStaticProps({ locale }) {
+//   return {
+//     props: {
+//       ...(await serverSideTranslations(locale, ['common'])),
+//     },
+//   };
+// }

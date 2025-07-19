@@ -31,15 +31,27 @@ const nextConfig = {
   // Enable standalone output for Docker builds
   output: 'standalone',
   
-  // Internationalization
-  i18n: {
-    locales: ['en'], // Only English for now, Spanish disabled to reduce build size
-    defaultLocale: 'en',
-  },
+  // Internationalization - COMMENTED OUT to avoid duplicate /en/* pages
+  // TODO: Re-enable when implementing Spanish localization
+  // i18n: {
+  //   locales: ['en', 'es'], // English and Spanish
+  //   defaultLocale: 'en',
+  // },
 
   // Disable SSR for problematic pages
   experimental: {
     esmExternals: 'loose'
+  },
+
+  // Redirect /en/* paths to base paths (for SEO and bookmarked URLs)
+  async redirects() {
+    return [
+      {
+        source: '/en/:path*',
+        destination: '/:path*',
+        permanent: true,
+      },
+    ];
   },
 
   // Custom webpack config
@@ -94,11 +106,10 @@ const nextConfig = {
     
     problematicPages.forEach(page => {
       delete pathMap[page];
-      // Also remove localized versions (only English now)
-      delete pathMap[`/en${page}`];
+      // No longer need to remove localized versions since i18n is disabled
     });
     
-    console.log(`📊 Exporting ${Object.keys(pathMap).length} pages (excluded ${problematicPages.length * 2} problematic pages)`);
+    console.log(`📊 Exporting ${Object.keys(pathMap).length} pages (excluded ${problematicPages.length} problematic pages)`);
     return pathMap;
   },
 };
