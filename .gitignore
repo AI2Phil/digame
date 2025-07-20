@@ -357,9 +357,35 @@ alembic.ini.bak
 config.local.py
 settings.local.py
 
-# Backup files
+# Backup files (including those causing CI React hooks violations)
 *.bak
 *.backup
+*.backup-*
+**/*backup*
+**/backups/
+**/*archive*
+**/archive/
+**/archived/
+
+# Script backup directories (causing CI issues)
+scripts/backups/
+**/prettier_formatting/
+**/syntax_fixes/
+**/import_path_fixes/
+
+# Cache and temporary files that may contain code
+*.cache
+node_modules/.cache/
+.rpt2_cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/
+
+# Report files with code snippets (causing CI linting issues)
+*-report.txt
+*-report.json
+react-imports-report.txt
+utility-hooks-report.txt
 
 # Test output and reports
 test-results/
