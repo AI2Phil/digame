@@ -500,7 +500,7 @@ jobs:
         name: frontend-build-${{ github.run_id }}
         path: frontend/.next/
         retention-days: 1
-        if-no-files-found: warn
+        if-no-files-found: error
         compression-level: 6
         
     - name: Confirm artifact upload
@@ -820,7 +820,7 @@ jobs:
         echo "🚀 Starting Node.js Express backend server on port $BACKEND_PORT..."
         cd backend
         npm ci --prefer-offline --no-audit
-        npm start &
+        npx next start &
         echo $! > ../backend.pid
         cd ..
         
@@ -929,7 +929,7 @@ jobs:
         echo "✅ Using verified build: $(cat .next/BUILD_ID)"
         
         # Start frontend server in production mode
-        npm start | tee ../frontend.log &
+        npx next start | tee ../frontend.log &
         FRONTEND_PID=$!
         echo $FRONTEND_PID > ../frontend.pid
         
@@ -1181,7 +1181,7 @@ jobs:
         fi
         
         # Start frontend in production mode
-        PORT=$FRONTEND_PORT npm start &
+        PORT=$FRONTEND_PORT npx next start &
         FRONTEND_PID=$!
         
         cd ../backend
