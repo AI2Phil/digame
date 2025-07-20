@@ -18,8 +18,16 @@ let nextConfig = {
     ignoreDuringBuilds: true,
   },
   
-  // Enable standalone output for Docker builds
-  output: 'standalone',
+  // Conditional output based on environment
+  output: (() => {
+    if (process.env.DOCKER_BUILD === 'true') {
+      return 'standalone'; // For Docker builds
+    }
+    if (process.env.CI === 'true') {
+      return undefined; // Standard build for CI
+    }
+    return undefined; // Standard build for development
+  })(),
   
   // Internationalization - COMMENTED OUT to avoid duplicate /en/* pages
   // TODO: Re-enable when implementing Spanish localization
