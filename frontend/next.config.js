@@ -1,16 +1,6 @@
 
 /** @type {import('next').NextConfig} */
-const withPWA = require('next-pwa')({
-  dest: 'public',
-  register: false,
-  skipWaiting: false,
-  disable: process.env.NODE_ENV === 'development',
-  fallbacks: {
-    document: '/offline.html'
-  }
-});
-
-const nextConfig = {
+let nextConfig = {
   reactStrictMode: false,  // Less strict for development flexibility
   swcMinify: true,
   
@@ -114,4 +104,21 @@ const nextConfig = {
   },
 };
 
-module.exports = withPWA(nextConfig);
+// Conditionally apply PWA only if next-pwa is available
+try {
+  const withPWA = require('next-pwa')({
+    dest: 'public',
+    register: false,
+    skipWaiting: false,
+    disable: process.env.NODE_ENV === 'development',
+    fallbacks: {
+      document: '/offline.html'
+    }
+  });
+  nextConfig = withPWA(nextConfig);
+  console.log('✅ PWA features enabled');
+} catch (error) {
+  console.warn('⚠️ next-pwa not available, PWA features disabled');
+}
+
+module.exports = nextConfig;

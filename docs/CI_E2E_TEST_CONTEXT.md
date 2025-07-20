@@ -269,6 +269,3 @@ The main issues were:
 
 The E2E test suite now achieves **100% pass rate** in CI environment, matching the local test results. All MFA flows, security dashboard integration, API endpoints, and error handling scenarios are working correctly.
 
-
-**next prompt**
-The problem is that the global setup is trying to start a Python FastAPI backend with uvicorn, but the CI workflow is starting a Node.js Express backend. 
