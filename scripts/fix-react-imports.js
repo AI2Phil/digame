@@ -40,18 +40,14 @@ function fixReactImportsInFile(filePath) {
   if (needsReactImport(content)) {
     console.log(`📝 Adding React import to: ${filePath}`);
     
-    // Create backup
-    const backupPath = filePath + '.backup-imports';
-    fs.writeFileSync(backupPath, content);
-    
     // Add React import
     const updatedContent = addReactImport(content);
     fs.writeFileSync(filePath, updatedContent);
     
     console.log(`✅ React import added to: ${filePath}`);
-    console.log(`📁 Backup created: ${backupPath}`);
+    console.log(`📁 Changes tracked by git - no backup files needed`);
     
-    return { fixed: true, backup: backupPath };
+    return { fixed: true, backup: null };
   } else {
     console.log(`✅ React import already present or not needed: ${filePath}`);
     return { fixed: false, backup: null };
@@ -100,9 +96,9 @@ function generateReport(results) {
     report.push(`📊 Fixed ${results.length} files with missing React imports:`);
     report.push('');
     
-    results.forEach(({ file, backup }) => {
+    results.forEach(({ file }) => {
       report.push(`✅ Fixed: ${file}`);
-      report.push(`   Backup: ${backup}`);
+      report.push(`   Changes tracked by git`);
       report.push('');
     });
   }

@@ -233,8 +233,8 @@ async function formatRestoredPages() {
     try {
       logger.info(`🎨 Formatting (${i + 1}/${filesToFormat.length}): ${relativePath}`);
 
-      // Create backup
-      backupPath = backupManager.createBackup(filePath);
+      // Log change
+      backupManager.logChange(filePath, 'Formatting with Prettier');
 
       // Read original content
       const originalContent = fs.readFileSync(filePath, 'utf8');

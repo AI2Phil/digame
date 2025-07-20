@@ -283,13 +283,11 @@ function fixReactHooksInFile(filePath) {
   }
 
   if (hasChanges) {
-    const backupPath = filePath + '.backup';
-    fs.writeFileSync(backupPath, code);
     const output = generate(ast, { retainLines: true, compact: false });
     fs.writeFileSync(filePath, output.code);
     console.log(`✅ Fixed ${fixes.length} dependency issues in ${filePath}`);
     fixes.forEach(f => console.log(`   - ${f}`));
-    console.log(`📁 Backup created: ${backupPath}`);
+    console.log(`📁 Changes tracked by git - no backup files needed`);
     return { hasChanges: true, hasWarnings: warnings.length > 0 };
   }
 

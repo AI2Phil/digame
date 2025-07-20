@@ -37,13 +37,9 @@ if (!fs.existsSync(BACKUP_DIR)) {
   fs.mkdirSync(BACKUP_DIR, { recursive: true });
 }
 
-function createBackup(filePath, content) {
-  const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-  const fileName = path.basename(filePath).replace(/[/\\]/g, '_');
-  const backupPath = path.join(BACKUP_DIR, `${fileName}.${timestamp}.backup`);
-  fs.writeFileSync(backupPath, content, 'utf8');
-  console.log(`[${new Date().toISOString()}] INFO: Created backup: ${backupPath}`);
-  return backupPath;
+function logChange(filePath, description) {
+  console.log(`[${new Date().toISOString()}] INFO: ${description} for ${filePath}`);
+  console.log(`[${new Date().toISOString()}] INFO: Changes tracked by git - no backup files needed`);
 }
 
 function fixImportPaths(content) {
@@ -81,12 +77,12 @@ async function main() {
       }
 
       const originalContent = fs.readFileSync(fullPath, 'utf8');
-      const backupPath = createBackup(fullPath, originalContent);
       
       const { content: fixedContent, changes } = fixImportPaths(originalContent);
       
       if (changes.length > 0) {
         fs.writeFileSync(fullPath, fixedContent, 'utf8');
+        logChange(relativePath, 'Fixed import paths');
         console.log(`[${new Date().toISOString()}] SUCCESS:    ✅ Fixed successfully`);
         console.log(`[${new Date().toISOString()}] INFO:    📊 Size: ${originalContent.length} → ${fixedContent.length} chars (${fixedContent.length - originalContent.length >= 0 ? '+' : ''}${fixedContent.length - originalContent.length})`);
         console.log(`[${new Date().toISOString()}] INFO:    🔧 Changes: ${changes.join(', ')}`);
@@ -97,8 +93,7 @@ async function main() {
           status: 'success',
           changes: changes,
           originalSize: originalContent.length,
-          newSize: fixedContent.length,
-          backup: backupPath
+          newSize: fixedContent.length
         });
       } else {
         console.log(`[${new Date().toISOString()}] INFO:    ⏭️  No changes needed`);
@@ -107,8 +102,7 @@ async function main() {
           status: 'no_changes',
           changes: [],
           originalSize: originalContent.length,
-          newSize: originalContent.length,
-          backup: backupPath
+          newSize: originalContent.length
         });
       }
       

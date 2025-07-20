@@ -116,12 +116,12 @@ async function main() {
       }
 
       const originalContent = fs.readFileSync(fullPath, 'utf8');
-      const backupPath = createBackup(fullPath, originalContent);
       
       const { content: fixedContent, changes } = fixMalformedComponent(originalContent);
       
       if (changes.length > 0) {
         fs.writeFileSync(fullPath, fixedContent, 'utf8');
+        logChange(relativePath, 'Fixed malformed component');
         console.log(`[${new Date().toISOString()}] SUCCESS:    ✅ Fixed successfully`);
         console.log(`[${new Date().toISOString()}] INFO:    📊 Size: ${originalContent.length} → ${fixedContent.length} chars (${fixedContent.length - originalContent.length >= 0 ? '+' : ''}${fixedContent.length - originalContent.length})`);
         console.log(`[${new Date().toISOString()}] INFO:    🔧 Changes: ${changes.join(', ')}`);
@@ -132,8 +132,7 @@ async function main() {
           status: 'success',
           changes: changes,
           originalSize: originalContent.length,
-          newSize: fixedContent.length,
-          backup: backupPath
+          newSize: fixedContent.length
         });
       } else {
         console.log(`[${new Date().toISOString()}] INFO:    ⏭️  No changes needed`);
@@ -142,8 +141,7 @@ async function main() {
           status: 'no_changes',
           changes: [],
           originalSize: originalContent.length,
-          newSize: originalContent.length,
-          backup: backupPath
+          newSize: originalContent.length
         });
       }
       

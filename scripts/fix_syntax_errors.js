@@ -260,8 +260,8 @@ async function fixAllSyntaxErrors() {
         continue;
       }
 
-      // Create backup
-      backupPath = backupManager.createBackup(filePath);
+      // Log change
+      backupManager.logChange(filePath, 'Fixing syntax errors');
 
       // Read current content
       const originalContent = fs.readFileSync(filePath, 'utf8');

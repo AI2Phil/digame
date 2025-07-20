@@ -643,7 +643,7 @@ async function restorePlatformOwnerPages() {
       // Check if target file already exists and create backup
       const targetFilePath = path.join(TARGET_DIR, page.targetPath);
       if (fs.existsSync(targetFilePath)) {
-        backupPath = backupManager.createBackup(targetFilePath, 'restore');
+        backupManager.logChange(targetFilePath, 'Restoring platform owner page');
         logger.info(`   💾 Created backup before overwrite`);
       }
 
