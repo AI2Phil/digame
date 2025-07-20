@@ -4,14 +4,14 @@
   "description": "Digame Frontend - Advanced Analytics & Visualization Platform",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "dev:test": "NEXT_CONFIG=next.config.test.js next dev",
-    "build": "next build",
-    "build:ci": "NODE_OPTIONS=\"--max-old-space-size=4096 --max-semi-space-size=128\" NEXT_TELEMETRY_DISABLED=1 next build",
-    "build:analyze": "ANALYZE=true next build",
-    "start": "next start",
-    "lint": "next lint",
-    "lint:fix": "next lint --fix",
+    "dev": "npx next dev",
+    "dev:test": "NEXT_CONFIG=next.config.test.js npx next dev",
+    "build": "npx next build",
+    "build:ci": "NODE_OPTIONS=\"--max-old-space-size=4096 --max-semi-space-size=128\" NEXT_TELEMETRY_DISABLED=1 npx next build",
+    "build:analyze": "ANALYZE=true npx next build",
+    "start": "npx next start",
+    "lint": "npx next lint",
+    "lint:fix": "npx next lint --fix",
     "lint:security": "eslint . --ext .js,.jsx,.ts,.tsx --config .eslintrc.security.json || true",
     "type-check": "tsc --noEmit",
     "test": "jest --passWithNoTests",
@@ -40,8 +40,8 @@
     "reinstall": "npm run clean && npm install",
     "generate:icons": "node scripts/generate-icons.js",
     "pwa:build": "npm run generate:icons && npm run build",
-    "build:verbose": "DEBUG=next:* next build",
-    "build:silent": "NODE_OPTIONS=\"--max-old-space-size=4096\" NEXT_TELEMETRY_DISABLED=1 next build --quiet"
+    "build:verbose": "DEBUG=next:* npx next build",
+    "build:silent": "NODE_OPTIONS=\"--max-old-space-size=4096\" NEXT_TELEMETRY_DISABLED=1 npx next build --quiet"
   },
   "dependencies": {
     "@emotion/react": "^11.11.1",
