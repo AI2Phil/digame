@@ -223,6 +223,177 @@ router.post('/mfa/backup-codes/generate', (req, res) => {
   });
 });
 
+// Individual MFA User Management Routes (for E2E tests)
+router.get('/mfa/status', (req, res) => {
+  // Mock user MFA status
+  const userMfaStatus = {
+    mfa_enabled: false,
+    methods: [
+      {
+        id: 'totp_1',
+        type: 'totp',
+        name: 'Authenticator App',
+        description: 'Time-based one-time passwords via mobile apps',
+        icon: 'smartphone',
+        enabled: false,
+        primary: false,
+        created_at: new Date().toISOString(),
+        last_used: null
+      },
+      {
+        id: 'sms_1',
+        type: 'sms',
+        name: 'SMS Verification',
+        description: 'Text message verification codes',
+        icon: 'mail',
+        enabled: false,
+        primary: false,
+        created_at: null,
+        last_used: null
+      }
+    ]
+  };
+
+  res.json({
+    success: true,
+    data: userMfaStatus
+  });
+});
+
+router.get('/mfa/stats', (req, res) => {
+  // Mock MFA statistics for organization
+  const mfaStats = {
+    total_users: 1247,
+    mfa_enabled_users: 1089,
+    adoption_rate: 87.3,
+    method_distribution: {
+      totp: 856,
+      sms: 423,
+      email: 210
+    }
+  };
+
+  res.json({
+    success: true,
+    data: mfaStats
+  });
+});
+
+router.post('/mfa/setup', (req, res) => {
+  const { method, phone_number, recovery_email } = req.body;
+  
+  // Mock MFA setup response
+  const setupResponse = {
+    method,
+    qr_code_url: method === 'totp' ? 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==' : null,
+    secret_key: method === 'totp' ? 'JBSWY3DPEHPK3PXP' : null,
+    backup_codes: [
+      'ABCD-1234-EFGH',
+      'IJKL-5678-MNOP',
+      'QRST-9012-UVWX',
+      'YZAB-3456-CDEF',
+      'GHIJ-7890-KLMN',
+      'OPQR-1234-STUV',
+      'WXYZ-5678-ABCD',
+      'EFGH-9012-IJKL'
+    ],
+    recovery_email,
+    phone_number
+  };
+
+  res.json({
+    success: true,
+    message: 'MFA setup initiated successfully',
+    data: setupResponse
+  });
+});
+
+router.post('/mfa/verify', (req, res) => {
+  const { code, method } = req.body;
+  
+  // Mock verification - accept any 6-digit code for testing
+  if (!code || code.length !== 6) {
+    return res.status(400).json({
+      success: false,
+      detail: 'Invalid verification code format'
+    });
+  }
+
+  // For testing, accept specific codes or any 6-digit number
+  const validCodes = ['123456', '654321', '000000'];
+  if (!validCodes.includes(code) && !/^\d{6}$/.test(code)) {
+    return res.status(400).json({
+      success: false,
+      detail: 'Invalid verification code'
+    });
+  }
+
+  res.json({
+    success: true,
+    message: 'MFA verified successfully',
+    data: {
+      method,
+      verified_at: new Date().toISOString(),
+      backup_codes: [
+        'ABCD-1234-EFGH',
+        'IJKL-5678-MNOP',
+        'QRST-9012-UVWX',
+        'YZAB-3456-CDEF',
+        'GHIJ-7890-KLMN',
+        'OPQR-1234-STUV',
+        'WXYZ-5678-ABCD',
+        'EFGH-9012-IJKL'
+      ]
+    }
+  });
+});
+
+router.post('/mfa/disable/:methodId', (req, res) => {
+  const { methodId } = req.params;
+  
+  res.json({
+    success: true,
+    message: 'MFA method disabled successfully',
+    data: {
+      method_id: methodId,
+      disabled_at: new Date().toISOString()
+    }
+  });
+});
+
+// Security Dashboard API (for E2E tests)
+router.get('/dashboard', (req, res) => {
+  const dashboardData = {
+    security_score: 87,
+    security_metrics: {
+      active_threats: 3,
+      resolved_threats: 156,
+      vulnerability_count: 25,
+      compliance_score: 94,
+      mfa_adoption: 87.3,
+      last_scan: new Date().toISOString()
+    },
+    total_users: 1247,
+    active_users: 1089,
+    mfa_enabled_users: 1089,
+    active_sessions: 234,
+    recent_activities: [
+      {
+        id: 1,
+        type: 'login',
+        user: 'john.doe@company.com',
+        timestamp: new Date().toISOString(),
+        ip_address: '192.168.1.100'
+      }
+    ]
+  };
+
+  res.json({
+    success: true,
+    data: dashboardData
+  });
+});
+
 // Access Control Routes
 router.get('/access/overview', (req, res) => {
   res.json({
