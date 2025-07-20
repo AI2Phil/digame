@@ -25,13 +25,9 @@ if (!fs.existsSync(BACKUP_DIR)) {
   fs.mkdirSync(BACKUP_DIR, { recursive: true });
 }
 
-function createBackup(filePath, content) {
-  const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-  const fileName = path.basename(filePath).replace(/[/\\]/g, '_');
-  const backupPath = path.join(BACKUP_DIR, `${fileName}.${timestamp}.backup`);
-  fs.writeFileSync(backupPath, content, 'utf8');
-  console.log(`[${new Date().toISOString()}] INFO: Created backup: ${backupPath}`);
-  return backupPath;
+function logChange(filePath, description) {
+  console.log(`[${new Date().toISOString()}] INFO: ${description} for ${filePath}`);
+  console.log(`[${new Date().toISOString()}] INFO: Changes tracked by git - no backup files needed`);
 }
 
 function fixMalformedComponent(content) {

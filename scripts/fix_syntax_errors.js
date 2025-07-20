@@ -118,24 +118,7 @@ class BackupManager {
     }
   }
 
-  createBackup(filePath) {
-    try {
-      if (fs.existsSync(filePath)) {
-        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-        const relativePath = path.relative(TARGET_DIR, filePath);
-        const backupFileName = `${relativePath.replace(/[/\\]/g, '_')}.${timestamp}.backup`;
-        const backupPath = path.join(this.backupDir, backupFileName);
-        
-        fs.copyFileSync(filePath, backupPath);
-        this.logger.info(`Created backup: ${backupPath}`);
-        return backupPath;
-      }
-      return null;
-    } catch (error) {
-      this.logger.error(`Failed to create backup for ${filePath}:`, error.message);
-      return null;
-    }
-  }
+  // Backup creation removed - git is our backup system
 }
 
 // Syntax fix functions

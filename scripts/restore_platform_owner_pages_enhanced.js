@@ -745,13 +745,7 @@ async function restorePlatformOwnerPages() {
     } catch (error) {
       logger.error(`   ❌ Error processing ${page.title}:`, error.message);
       
-      // Attempt rollback if backup exists
-      if (backupPath) {
-        const rollbackSuccess = backupManager.rollback(backupPath, path.join(TARGET_DIR, page.targetPath));
-        if (rollbackSuccess) {
-          logger.info(`   🔄 Successfully rolled back changes`);
-        }
-      }
+      // Rollback not needed - use git to revert changes if necessary
       
       failedFiles.push({
         title: page.title,

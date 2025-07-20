@@ -277,13 +277,7 @@ async function formatRestoredPages() {
     } catch (error) {
       logger.error(`   ❌ Error formatting ${relativePath}:`, error.message);
 
-      // Attempt rollback if backup exists
-      if (backupPath) {
-        const rollbackSuccess = backupManager.rollback(backupPath, filePath);
-        if (rollbackSuccess) {
-          logger.info(`   🔄 Successfully rolled back changes`);
-        }
-      }
+      // Rollback not needed - use git to revert changes if necessary
 
       failedFiles.push({
         path: relativePath,
