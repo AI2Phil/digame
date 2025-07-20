@@ -8,7 +8,7 @@ import { setupTestAuth } from '../helpers/auth-helper.js';
 
 // Test configuration - Updated to match CI environment
 const BASE_URL = process.env.BASE_URL || process.env.FRONTEND_URL || 'http://localhost:3000';
-const API_BASE_URL = process.env.API_BASE_URL || process.env.BACKEND_URL || 'http://localhost:3001';
+const API_BASE_URL = process.env.API_BASE_URL || process.env.BACKEND_URL || 'http://localhost:8000';
 
 // Test data
 const testUser = {
@@ -45,7 +45,7 @@ test.describe('MFA Flows End-to-End Testing', () => {
       await page.waitForLoadState('networkidle');
 
       // Step 2: Verify the MFA page loads with expected content
-      const mfaPageContent = page.locator('text="Multi-Factor Authentication"').or(page.locator('text="MFA"')).or(page.locator('text="Set Up MFA"')).or(page.locator('text="Authenticator"'));
+      const mfaPageContent = page.locator('h1:has-text("Multi-Factor Authentication")');
       await expect(mfaPageContent).toBeVisible({ timeout: 10000 });
 
       // Step 3: Check for MFA-related elements (setup button, management interface, or overview)

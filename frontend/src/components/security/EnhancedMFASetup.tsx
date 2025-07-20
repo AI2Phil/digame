@@ -57,7 +57,8 @@ export const EnhancedMFASetup: React.FC = () => {
 
   const fetchMFAStatus = async () => {
     try {
-      const response = await fetch('/api/security/mfa/status', {
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
+      const response = await fetch(`${backendUrl}/api/security/mfa/status`, {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
       });
       
@@ -77,7 +78,8 @@ export const EnhancedMFASetup: React.FC = () => {
 
   const fetchMFAStats = async () => {
     try {
-      const response = await fetch('/api/security/mfa/stats', {
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
+      const response = await fetch(`${backendUrl}/api/security/mfa/stats`, {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
       });
       
@@ -95,7 +97,8 @@ export const EnhancedMFASetup: React.FC = () => {
     setError(null);
 
     try {
-      const response = await fetch('/api/security/mfa/setup', {
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
+      const response = await fetch(`${backendUrl}/api/security/mfa/setup`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -134,7 +137,8 @@ export const EnhancedMFASetup: React.FC = () => {
     setError(null);
 
     try {
-      const response = await fetch('/api/security/mfa/verify', {
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
+      const response = await fetch(`${backendUrl}/api/security/mfa/verify`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -162,7 +166,8 @@ export const EnhancedMFASetup: React.FC = () => {
 
   const handleDisableMFA = async (methodId: string) => {
     try {
-      const response = await fetch(`/api/security/mfa/disable/${methodId}`, {
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
+      const response = await fetch(`${backendUrl}/api/security/mfa/disable/${methodId}`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
       });
