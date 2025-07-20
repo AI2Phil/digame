@@ -114,6 +114,62 @@ export const usePerformanceAlerts = createSSRSafeHook({
   ]
 });
 
+// User Behavior Analytics Hook
+export const useUserBehaviorAnalytics = createSSRSafeHook({
+  pageViews: 12543,
+  uniqueVisitors: 8921,
+  bounceRate: 23.4,
+  avgSessionDuration: 245,
+  topPages: [
+    { page: '/dashboard', views: 3421, time: 180 },
+    { page: '/analytics', views: 2156, time: 240 },
+    { page: '/profile', views: 1876, time: 120 }
+  ]
+});
+
+// User Segmentation Hook
+export const useUserSegmentation = createSSRSafeHook({
+  segments: [
+    { name: 'Power Users', count: 1234, percentage: 15.2 },
+    { name: 'Regular Users', count: 4567, percentage: 56.3 },
+    { name: 'New Users', count: 2345, percentage: 28.5 }
+  ]
+});
+
+// User Journey Analysis Hook
+export const useUserJourneyAnalysis = createSSRSafeHook({
+  commonPaths: [
+    { path: 'Login → Dashboard → Tasks', frequency: 45.2 },
+    { path: 'Login → Profile → Settings', frequency: 23.1 },
+    { path: 'Dashboard → Analytics → Reports', frequency: 18.7 }
+  ],
+  dropoffPoints: [
+    { step: 'Registration Form', rate: 12.3 },
+    { step: 'Payment Page', rate: 8.7 },
+    { step: 'Onboarding', rate: 5.2 }
+  ]
+});
+
+// Content Analytics Hook
+export const useContentAnalytics = createSSRSafeHook({
+  topContent: [
+    { title: 'Getting Started Guide', views: 5432, engagement: 87.2 },
+    { title: 'Advanced Features', views: 3210, engagement: 72.1 },
+    { title: 'API Documentation', views: 2876, engagement: 65.4 }
+  ]
+});
+
+// Conversion Analytics Hook
+export const useConversionAnalytics = createSSRSafeHook({
+  conversionRate: 3.2,
+  funnelSteps: [
+    { step: 'Landing Page', users: 10000, conversion: 100 },
+    { step: 'Sign Up', users: 6500, conversion: 65 },
+    { step: 'Onboarding', users: 4200, conversion: 42 },
+    { step: 'First Action', users: 3200, conversion: 32 }
+  ]
+});
+
 // General Analytics Hook
 export const useAnalytics = createSSRSafeHook({
   pageViews: 12543,
@@ -129,5 +185,10 @@ export default {
   useDatabasePerformanceMetrics,
   useNetworkMetrics,
   usePerformanceAlerts,
+  useUserBehaviorAnalytics,
+  useUserSegmentation,
+  useUserJourneyAnalysis,
+  useContentAnalytics,
+  useConversionAnalytics,
   useAnalytics
 };
