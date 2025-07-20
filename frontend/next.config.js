@@ -85,33 +85,8 @@ let nextConfig = {
     CUSTOM_KEY: process.env.CUSTOM_KEY,
   },
 
-  // Export configuration - only used for explicit static export, not regular builds
-  ...(process.env.NEXT_EXPORT === 'true' && {
-    exportPathMap: async function (defaultPathMap, { dev, dir, outDir, distDir, buildId }) {
-      if (dev) {
-        return defaultPathMap;
-      }
-      
-      const pathMap = { ...defaultPathMap };
-      
-      // Remove problematic pages from static generation
-      const problematicPages = [
-        '/FeaturesPage',
-        '/HowItWorksPage',
-        '/LoginPage',
-        '/PricingPage',
-        '/AdvancedPerformancePage'
-      ];
-      
-      problematicPages.forEach(page => {
-        delete pathMap[page];
-        // No longer need to remove localized versions since i18n is disabled
-      });
-      
-      console.log(`📊 Exporting ${Object.keys(pathMap).length} pages (excluded ${problematicPages.length} problematic pages)`);
-      return pathMap;
-    }
-  }),
+  // Export configuration removed to prevent triggering export mode during regular builds
+  // If static export is needed in the future, add exportPathMap conditionally with NEXT_EXPORT=true
 };
 
 // Conditionally apply PWA only if next-pwa is available

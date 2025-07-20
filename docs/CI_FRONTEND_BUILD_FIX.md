@@ -7,14 +7,18 @@ The CI pipeline was failing during the frontend build artifact upload step with 
 Error: No files were found with the provided path: frontend/.next/. No artifacts will be uploaded.
 ```
 
-This occurred because Next.js was configured with `output: 'standalone'` which changes the build output structure, causing the expected `.next/` directory to be missing or have different contents.
+This occurred because:
+1. Next.js was configured with `output: 'standalone'` which changes the build output structure
+2. The `exportPathMap` function was triggering export mode, creating an `export/` directory instead of `.next/`
+3. The `build:ci` script wasn't explicitly setting the `CI=true` environment variable
 
 ## Root Cause Analysis
 
 ### Problem
-- Next.js `standalone` output mode creates a different directory structure optimized for Docker deployment
-- The CI artifact upload expected the standard `.next/` directory structure
-- The `standalone` output was needed for Docker builds but incompatible with CI artifact management
+- The `exportPathMap` function in `next.config.js` was causing Next.js to run in export mode
+- Export mode creates an `export/` directory instead of the standard `.next/` directory
+- The `build:ci` script wasn't setting `CI=true`, so conditional output logic wasn't working
+- CI artifact upload expected the standard `.next/` directory structure
 
 ### Investigation Steps
 1. **Build Output Analysis**: Compared CI vs Docker build requirements
@@ -24,9 +28,20 @@ This occurred because Next.js was configured with `output: 'standalone'` which c
 
 ## Solution Implementation
 
-### 1. Conditional Output Configuration
+### 1. Removed Export Mode Configuration
 
-Modified [`frontend/next.config.js`](../frontend/next.config.js) to use environment-based output:
+Completely removed `exportPathMap` from [`frontend/next.config.js`](../frontend/next.config.js) to prevent triggering export mode:
+
+```javascript
+// Export configuration removed to prevent triggering export mode during regular builds
+// If static export is needed in the future, add exportPathMap conditionally with NEXT_EXPORT=true
+```
+
+**Root Cause**: The presence of `exportPathMap` in the Next.js configuration was causing the build to run in export mode, creating an `export/` directory instead of the standard `.next/` directory structure.
+
+### 2. Conditional Output Configuration
+
+The existing environment-based output configuration in [`frontend/next.config.js`](../frontend/next.config.js):
 
 ```javascript
 output: (() => {
@@ -45,7 +60,7 @@ output: (() => {
 })()
 ```
 
-### 2. Docker Configuration Update
+### 3. Docker Configuration Update
 
 Updated [`frontend/Dockerfile`](../frontend/Dockerfile) to set the Docker build flag:
 
