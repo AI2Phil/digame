@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
-import { 
 import { apiClient, replaceApiUrl } from '../../lib/api-config';
 
   BarChart3, LineChart, PieChart, TrendingUp, TrendingDown,

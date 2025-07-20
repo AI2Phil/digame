@@ -2,12 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
-import {
   Smartphone, Wifi, WifiOff, Download, Upload, RefreshCw as Sync,
   Bell, Settings, Globe, Monitor, Tablet, RefreshCw,
   CheckCircle, XCircle, Clock, AlertTriangle, Info,
   Battery, Signal, HardDrive, Eye, Play, Pause,
   Share, Star, Heart, Bookmark, Search, Filter,
+import {
   BarChart3, PieChart, TrendingUp, Activity, Zap
 } from 'lucide-react';
 

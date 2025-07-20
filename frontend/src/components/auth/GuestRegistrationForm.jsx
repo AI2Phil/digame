@@ -7,9 +7,9 @@ import { Label } from '../ui/Label';
 import { Alert, AlertDescription } from '../ui/Alert';
 import { Badge } from '../ui/Badge';
 
+import { apiClient, replaceApiUrl } from '../../lib/api-config';
 const GuestRegistrationForm = ({ onSuccess, onClose }) => {
   const [formData, setFormData] = useState({
-import { apiClient, replaceApiUrl } from '../../lib/api-config';
 
     email: '',
     password: '',

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import {
 import { apiClient, replaceApiUrl } from '../../lib/api-config';
 
+import {
   Smartphone, Monitor, Tablet, Users,
   TrendingUp, Clock, Download, Star,
   Battery, Wifi, MapPin, Activity,

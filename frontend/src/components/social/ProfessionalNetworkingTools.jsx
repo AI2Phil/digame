@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { 
   Network, Users, Building, MapPin, Calendar, Star,
   MessageCircle, UserPlus, Eye, TrendingUp, Globe,
   Briefcase, GraduationCap, Award, Coffee, Video,
+import {
   Search, Filter, ArrowRight, ExternalLink
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/Card';

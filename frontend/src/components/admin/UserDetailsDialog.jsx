@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
-import { 
 import { apiClient, replaceApiUrl } from '../../lib/api-config';
 
+import {
   User, Mail, Calendar, Shield, Activity, 
   Key, Settings, Edit, Save, X
 } from 'lucide-react';

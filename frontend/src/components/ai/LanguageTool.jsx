@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/Tabs';
 import { Loader2, Sparkles, Languages, BookOpen, AlertCircle, Info, Zap, Repeat, RefreshCw } from 'lucide-react';
 import { useToast } from '../ui/Toast';
 
+import { apiClient, replaceApiUrl } from '../../lib/api-config';
 const LanguageTool = () => {
   const [activeToolTab, setActiveToolTab] = useState('translate'); // 'translate' or 'define'
 
@@ -34,7 +35,6 @@ const LanguageTool = () => {
 
   // Supported languages (example list)
   const languages = [
-import { apiClient, replaceApiUrl } from '../../lib/api-config';
 
     { value: 'English', label: 'English' }, { value: 'Spanish', label: 'Spanish' },
     { value: 'French', label: 'French' }, { value: 'German', label: 'German' },

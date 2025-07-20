@@ -35,7 +35,6 @@ import { Select } from '../../components/ui/Select';
 import { Badge } from '../../components/ui/Badge';
 import { Avatar, AvatarFallback, AvatarImage } from '../../components/ui/Avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/Tabs';
-import {
   Table,
   TableBody,
   TableCell,
@@ -43,7 +42,6 @@ import {
   TableHeader,
   TableRow,
 } from '../../components/ui/Table';
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,

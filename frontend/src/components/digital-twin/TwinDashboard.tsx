@@ -5,7 +5,6 @@ import { Badge } from '../ui/Badge';
 import { Progress } from '../ui/Progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/Tabs';
 import { Avatar, AvatarFallback } from '../ui/Avatar';
-import { 
 import { apiClient, replaceApiUrl } from '../../lib/api-config';
 
   Brain, 

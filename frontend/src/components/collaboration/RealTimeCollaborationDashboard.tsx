@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
-import {
 import { apiClient, replaceApiUrl } from '../../lib/api-config';
 
   Users, MessageSquare, Video, Phone, Share2, Edit3,

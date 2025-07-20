@@ -4,7 +4,6 @@ import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
 import { useToastHelpers } from '../ui/Toaster';
 import { digitalTwinApi } from '../../services/digitalTwinApi';
-import {
 import { apiClient, replaceApiUrl } from '../../lib/api-config';
 
   Settings,

@@ -3,9 +3,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
 import { Progress } from '../ui/Progress';
-import {
   DollarSign, Clock, TrendingUp, Users, Zap, Brain,
   Target, Star, Calculator, ArrowRight, CheckCircle,
+import {
   BarChart3, Rocket, Award, Heart, Crown
 } from 'lucide-react';
 

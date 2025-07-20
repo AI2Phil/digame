@@ -7,6 +7,7 @@ import { Badge } from '../ui/Badge';
 import { Loader2, Sparkles, Copy, Check, AlertCircle, Wand2, RefreshCw } from 'lucide-react';
 import { useToast } from '../ui/Toast';
 
+import { apiClient, replaceApiUrl } from '../../lib/api-config';
 const WritingAssistance = () => {
   const [inputText, setInputText] = useState('');
   const [suggestion, setSuggestion] = useState('');
@@ -19,7 +20,6 @@ const WritingAssistance = () => {
   const [suggestionHistory, setSuggestionHistory] = useState([]);
   const [usingFallbackData, setUsingFallbackData] = useState(false);
   const { toast } = useToast();
-import { apiClient, replaceApiUrl } from '../../lib/api-config';
 
 
   useEffect(() => {

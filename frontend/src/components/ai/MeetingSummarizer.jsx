@@ -7,6 +7,7 @@ import { Badge } from '../ui/Badge';
 import { Loader2, Sparkles, FileText, ListChecks, AlertCircle, Info, Zap, RefreshCw, Clock } from 'lucide-react';
 import { useToastHelpers } from '../ui/Toaster';
 
+import { apiClient, replaceApiUrl } from '../../lib/api-config';
 const MeetingSummarizer = () => {
   const [inputText, setInputText] = useState('');
   const [analysisResult, setAnalysisResult] = useState(null);
@@ -19,7 +20,6 @@ const MeetingSummarizer = () => {
   const { success, error: showError, warning, info } = useToastHelpers();
 
   const checkFeatureAvailability = useCallback(async () => {
-import { apiClient, replaceApiUrl } from '../../lib/api-config';
 
     try {
       const token = localStorage.getItem('access_token');

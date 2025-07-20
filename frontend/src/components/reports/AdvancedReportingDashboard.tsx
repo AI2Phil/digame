@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import {
 import { apiClient, replaceApiUrl } from '../../lib/api-config';
 
   BarChart3, TrendingUp, Users, Clock, Database, Zap,

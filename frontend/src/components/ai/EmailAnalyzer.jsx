@@ -7,6 +7,7 @@ import { Badge } from '../ui/Badge';
 import { Loader2, Sparkles, Mail, BarChart2, AlertCircle, Info, Zap, RefreshCw } from 'lucide-react';
 import { useToastHelpers } from '../ui/Toaster';
 
+import { apiClient, replaceApiUrl } from '../../lib/api-config';
 const EmailAnalyzer = () => {
   const [inputText, setInputText] = useState('');
   const [analysisResult, setAnalysisResult] = useState(null);
@@ -19,7 +20,6 @@ const EmailAnalyzer = () => {
   const { success, error: showError, warning, info } = useToastHelpers();
 
   const exampleJsonFormat = `[
-import { apiClient, replaceApiUrl } from '../../lib/api-config';
 
   { "subject": "Weekly Report", "sender": "boss@example.com", "timestamp": "2023-10-01T10:00:00Z" },
   { "subject": "Project Update", "sender": "colleague@example.com", "timestamp": "2023-10-02T14:30:00Z" }

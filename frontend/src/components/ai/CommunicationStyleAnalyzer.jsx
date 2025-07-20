@@ -7,6 +7,7 @@ import { Badge } from '../ui/Badge';
 import { Loader2, Sparkles, MessageSquare, AlertCircle, Info, Zap, RefreshCw } from 'lucide-react';
 import { useToast } from '../ui/Toast';
 
+import { apiClient, replaceApiUrl } from '../../lib/api-config';
 const CommunicationStyleAnalyzer = () => {
   const [inputText, setInputText] = useState('');
   const [analysisResult, setAnalysisResult] = useState(null);
@@ -18,7 +19,6 @@ const CommunicationStyleAnalyzer = () => {
   const [usingFallbackData, setUsingFallbackData] = useState(false);
 
   const { toast } = useToast();
-import { apiClient, replaceApiUrl } from '../../lib/api-config';
 
 
   useEffect(() => {
