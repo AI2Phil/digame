@@ -13,7 +13,7 @@ export const usePWA = () => {
 };
 
 export const PWAProvider = ({ children }) => {
-  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [isOnline, setIsOnline] = useState(typeof window !== 'undefined' ? navigator.onLine : true);
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [syncStatus, setSyncStatus] = useState({
     inProgress: false,

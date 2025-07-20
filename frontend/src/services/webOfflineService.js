@@ -1,6 +1,6 @@
 class WebOfflineService {
   constructor() {
-    this.isOnline = navigator.onLine;
+    this.isOnline = typeof window !== 'undefined' ? navigator.onLine : true;
     this.db = null;
     this.dbName = 'DigameOfflineDB';
     this.dbVersion = 1;

@@ -56,7 +56,7 @@ export class EnhancedApiService {
   private config: ApiConfig;
   private cache: Map<string, CacheEntry> = new Map();
   private offlineQueue: OfflineQueueItem[] = [];
-  private isOnline: boolean = navigator.onLine;
+  private isOnline: boolean = typeof window !== 'undefined' ? navigator.onLine : true;
   private requestDeduplication: Map<string, Promise<any>> = new Map();
   private authToken: string | null = null;
   private refreshTokenPromise: Promise<string> | null = null;
