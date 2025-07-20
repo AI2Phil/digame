@@ -42,7 +42,8 @@ class RouteHealthMonitor {
     const timestamp = new Date().toISOString();
     const logEntry = `[${timestamp}] [${level}] ${message}\n`;
     
-    console.log(logEntry.trim());
+    // Only log to file and stderr to avoid polluting JSON output
+    console.error(logEntry.trim());
     fs.appendFileSync(this.config.logFile, logEntry);
   }
 
@@ -377,8 +378,10 @@ if (require.main === module) {
 
     case 'check':
       monitor.runHealthCheck().then(metrics => {
+        // Output clean JSON to stdout for CI/CD parsing
         console.log(JSON.stringify(metrics, null, 2));
       }).catch(error => {
+        // Log errors to stderr to avoid polluting JSON output
         console.error('Health check failed:', error.message);
         process.exit(1);
       });

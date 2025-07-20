@@ -43,14 +43,18 @@ jobs:
       run: |
         echo "🚀 Starting Route Health Audit..."
         
-        # Run the route health monitor
-        node scripts/routing-audit/route-health-monitor.js check > health_results.json
+        # Run the route health monitor (logs go to stderr, JSON to stdout)
+        node scripts/routing-audit/route-health-monitor.js check 2>/dev/null > health_results.json
         
         # Extract health score
         HEALTH_SCORE=$(node -e "
           const fs = require('fs');
-          const data = JSON.parse(fs.readFileSync('health_results.json', 'utf8'));
-          console.log(data.healthScore || 0);
+          try {
+            const data = JSON.parse(fs.readFileSync('health_results.json', 'utf8'));
+            console.log(data.healthScore || 0);
+          } catch (error) {
+            console.log(0);
+          }
         ")
         
         echo "health_score=$HEALTH_SCORE" >> $GITHUB_OUTPUT

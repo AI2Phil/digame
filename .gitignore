@@ -222,8 +222,12 @@ web_modules/
 .parcel-cache
 
 # Next.js build output
-.next
-out
+.next/
+out/
+frontend/.next/
+frontend/out/
+frontend/build/
+frontend/dist/
 
 # Nuxt.js build / generate output
 .nuxt
