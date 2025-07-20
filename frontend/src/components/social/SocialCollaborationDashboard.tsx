@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
-  Users, MessageCircle, Target, TrendingUp, Star,
 import {
+  Users, MessageCircle, Target, TrendingUp, Star,
   Search, Filter, Plus, UserPlus, Award, Clock,
   BookOpen, Lightbulb, Network, Heart, Share2,
   Calendar, MapPin, Briefcase, GraduationCap,

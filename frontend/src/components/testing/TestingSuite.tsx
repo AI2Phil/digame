@@ -2,11 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
-  Play, Pause, RotateCcw, CheckCircle, XCircle, 
+import {
+  Play, Pause, RotateCcw, CheckCircle, XCircle,
   AlertTriangle, Clock, Code, Database, Globe,
   Monitor, Zap, Shield, Users, Settings, Eye,
   Download, Upload, Filter, Search, Calendar,
-import {
   BarChart3, TrendingUp, Activity, FileText
 } from 'lucide-react';
 

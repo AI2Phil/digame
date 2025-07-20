@@ -10,7 +10,6 @@ import {
   InputLabel,
   Select,
   MenuItem,
-import {
   Box,
   Typography
 } from '@mui/material';

@@ -349,6 +349,7 @@ const NextJSComprehensiveNavigation: React.FC<NextJSComprehensiveNavigationProps
         { label: 'System Analytics', icon: <BarChart3 className="w-4 h-4" />, path: '/admin/system-analytics', subtitle: 'SYSTEM ANALYTICS', description: 'System performance monitoring and analytics' },
         { label: 'System Monitoring', icon: <Monitor className="w-4 h-4" />, path: '/admin/monitoring', subtitle: 'MONITORING' },
         { label: 'Advanced Monitoring', icon: <Activity className="w-4 h-4" />, path: '/monitoring/advanced', subtitle: 'ADVANCED MONITORING', description: 'Advanced system monitoring, alerting, metrics tracking, and service health monitoring' },
+        { label: 'Route Health Dashboard', icon: <Network className="w-4 h-4" />, path: '/admin/route-health', subtitle: 'ROUTE MONITORING', description: 'Real-time monitoring of navigation links, API calls, and import statements with automated health checks' },
         { label: 'RBAC Management', icon: <Shield className="w-4 h-4" />, path: '/admin/rbac', subtitle: 'ROLE MANAGEMENT' }
       ]
     },
@@ -384,6 +385,7 @@ const NextJSComprehensiveNavigation: React.FC<NextJSComprehensiveNavigationProps
         { label: 'User Management', icon: <Users className="w-4 h-4" />, path: '/platform-owner/users', subtitle: 'ALL USERS', description: 'Platform-wide user management' },
         { label: 'Revenue Analytics', icon: <TrendingUp className="w-4 h-4" />, path: '/platform-owner/revenue', subtitle: 'BUSINESS INTELLIGENCE', description: 'Revenue insights and business intelligence' },
         { label: 'System Health', icon: <Activity className="w-4 h-4" />, path: '/platform-owner/health', subtitle: 'MONITORING', description: 'System health monitoring and alerts' },
+        { label: 'Route Health Dashboard', icon: <Network className="w-4 h-4" />, path: '/platform-owner/route-health', subtitle: 'ROUTE MONITORING', description: 'Comprehensive route health monitoring with real-time analytics, automated alerts, and CI/CD integration' },
         { label: 'Platform Settings', icon: <SettingsIcon className="w-4 h-4" />, path: '/platform-owner/settings', subtitle: 'CONFIGURATION', description: 'Platform configuration management' },
         { label: 'API Test Zone', icon: <Code className="w-4 h-4" />, path: '/platform-owner/test-zone', subtitle: 'DEVELOPMENT', description: 'API testing and validation tools' },
         { label: 'Service Discovery Test', icon: <Network className="w-4 h-4" />, path: '/service-test', subtitle: 'DEVELOPMENT', description: 'Dynamic service discovery testing' },

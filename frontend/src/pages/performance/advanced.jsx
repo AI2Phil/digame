@@ -5,6 +5,7 @@ import {
   Typography,
   Tabs,
   Tab,
+} from '@mui/material';
 import {
   Card,
   CardContent,

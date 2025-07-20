@@ -297,7 +297,7 @@ export default function SystemConfiguration() {
                   const formatTimeAgo = (timestamp) => {
                     const now = new Date();
                     const changeTime = new Date(timestamp);
-                    const diffMs = now - changeTime;
+                    const diffMs = now.getTime() - changeTime.getTime();
                     const diffMins = Math.floor(diffMs / 60000);
                     const diffHours = Math.floor(diffMs / 3600000);
                     

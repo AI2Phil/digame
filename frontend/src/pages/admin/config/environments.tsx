@@ -116,7 +116,7 @@ export default function EnvironmentManagement() {
   const formatTimeAgo = (timestamp) => {
     const now = new Date();
     const time = new Date(timestamp);
-    const diffMs = now - time;
+    const diffMs = now.getTime() - time.getTime();
     const diffHours = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
     

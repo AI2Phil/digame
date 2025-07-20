@@ -129,7 +129,7 @@ export default function ConfigurationAPI() {
   const formatTimeAgo = (timestamp) => {
     const now = new Date();
     const time = new Date(timestamp);
-    const diffMs = now - time;
+    const diffMs = now.getTime() - time.getTime();
     const diffMins = Math.floor(diffMs / 60000);
     
     if (diffMins < 60) return `${diffMins} min ago`;

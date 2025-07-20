@@ -1,0 +1,238 @@
+name: Route Health Check
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    # Run daily at 6 AM UTC
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+    inputs:
+      full_audit:
+        description: 'Run full comprehensive audit'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  route-health-audit:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: |
+          package-lock.json
+          frontend/package-lock.json
+          
+    - name: Install dependencies
+      run: |
+        npm ci
+        cd frontend && npm ci
+        
+    - name: Run Route Health Check
+      id: health_check
+      run: |
+        echo "🚀 Starting Route Health Audit..."
+        
+        # Run the route health monitor
+        node scripts/routing-audit/route-health-monitor.js check > health_results.json
+        
+        # Extract health score
+        HEALTH_SCORE=$(node -e "
+          const fs = require('fs');
+          const data = JSON.parse(fs.readFileSync('health_results.json', 'utf8'));
+          console.log(data.healthScore || 0);
+        ")
+        
+        echo "health_score=$HEALTH_SCORE" >> $GITHUB_OUTPUT
+        echo "Health Score: $HEALTH_SCORE%"
+        
+        # Set status based on health score
+        if [ "$HEALTH_SCORE" -ge 95 ]; then
+          echo "status=excellent" >> $GITHUB_OUTPUT
+          echo "✅ Excellent route health!"
+        elif [ "$HEALTH_SCORE" -ge 85 ]; then
+          echo "status=good" >> $GITHUB_OUTPUT
+          echo "✅ Good route health"
+        elif [ "$HEALTH_SCORE" -ge 70 ]; then
+          echo "status=warning" >> $GITHUB_OUTPUT
+          echo "⚠️ Route health needs attention"
+        else
+          echo "status=critical" >> $GITHUB_OUTPUT
+          echo "❌ Critical route health issues detected"
+        fi
+        
+    - name: Run Full Audit (if requested)
+      if: github.event.inputs.full_audit == 'true' || github.event_name == 'schedule'
+      run: |
+        echo "🔍 Running comprehensive audit..."
+        node scripts/routing-audit/audit-runner.js > full_audit_results.txt
+        
+    - name: Generate Route Health Report
+      run: |
+        echo "📊 Generating detailed report..."
+        node scripts/routing-audit/route-health-monitor.js report > route_health_report.txt
+        
+    - name: Upload Health Report
+      uses: actions/upload-artifact@v4
+      with:
+        name: route-health-report-${{ github.run_number }}
+        path: |
+          health_results.json
+          route_health_report.txt
+          full_audit_results.txt
+        retention-days: 30
+        
+    - name: Comment on PR (if PR)
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          const healthScore = '${{ steps.health_check.outputs.health_score }}';
+          const status = '${{ steps.health_check.outputs.status }}';
+          
+          let emoji = '✅';
+          let statusText = 'Excellent';
+          if (status === 'warning') {
+            emoji = '⚠️';
+            statusText = 'Needs Attention';
+          } else if (status === 'critical') {
+            emoji = '❌';
+            statusText = 'Critical Issues';
+          }
+          
+          const report = fs.readFileSync('route_health_report.txt', 'utf8');
+          
+          const comment = `## ${emoji} Route Health Check Results
+          
+          **Health Score: ${healthScore}%** (${statusText})
+          
+          <details>
+          <summary>📊 Detailed Report</summary>
+          
+          \`\`\`
+          ${report}
+          \`\`\`
+          </details>
+          
+          ${status === 'critical' ? '⚠️ **Action Required**: Critical route health issues detected. Please review and fix before merging.' : ''}
+          `;
+          
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: comment
+          });
+          
+    - name: Fail on Critical Issues
+      if: steps.health_check.outputs.status == 'critical'
+      run: |
+        echo "❌ Critical route health issues detected!"
+        echo "Health score: ${{ steps.health_check.outputs.health_score }}%"
+        echo "Please fix routing issues before proceeding."
+        exit 1
+        
+    - name: Create Issue on Scheduled Run (if issues found)
+      if: github.event_name == 'schedule' && (steps.health_check.outputs.status == 'warning' || steps.health_check.outputs.status == 'critical')
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          const healthScore = '${{ steps.health_check.outputs.health_score }}';
+          const status = '${{ steps.health_check.outputs.status }}';
+          const report = fs.readFileSync('route_health_report.txt', 'utf8');
+          
+          const title = `🚨 Route Health Alert - ${healthScore}% Health Score`;
+          const body = `## Route Health Issues Detected
+          
+          **Health Score: ${healthScore}%**
+          **Status: ${status}**
+          **Detected: ${new Date().toISOString()}**
+          
+          ### Detailed Report
+          \`\`\`
+          ${report}
+          \`\`\`
+          
+          ### Recommended Actions
+          1. Review broken links and fix navigation issues
+          2. Check API endpoints and update configurations
+          3. Fix import statement errors
+          4. Run manual audit for detailed analysis: \`node scripts/routing-audit/audit-runner.js\`
+          
+          ### Auto-generated by Route Health Monitor
+          This issue was automatically created by the scheduled route health check.
+          `;
+          
+          // Check if similar issue already exists
+          const { data: issues } = await github.rest.issues.listForRepo({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            state: 'open',
+            labels: 'route-health,automated'
+          });
+          
+          if (issues.length === 0) {
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: title,
+              body: body,
+              labels: ['route-health', 'automated', 'bug']
+            });
+          }
+
+  type-check:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: frontend/package-lock.json
+        
+    - name: Install frontend dependencies
+      run: cd frontend && npm ci
+      
+    - name: Run TypeScript type check
+      run: |
+        cd frontend
+        npm run type-check 2>&1 | tee ../type_check_results.txt
+        
+        # Count errors
+        ERROR_COUNT=$(grep -c "error TS" ../type_check_results.txt || echo "0")
+        echo "TypeScript errors found: $ERROR_COUNT"
+        
+        # Create summary
+        if [ "$ERROR_COUNT" -eq "0" ]; then
+          echo "✅ No TypeScript errors found!" >> ../type_check_summary.txt
+        else
+          echo "⚠️ Found $ERROR_COUNT TypeScript errors" >> ../type_check_summary.txt
+          echo "Note: These are non-blocking for route health but should be addressed" >> ../type_check_summary.txt
+        fi
+        
+    - name: Upload TypeScript Results
+      uses: actions/upload-artifact@v4
+      with:
+        name: typescript-check-${{ github.run_number }}
+        path: |
+          type_check_results.txt
+          type_check_summary.txt
+        retention-days: 7

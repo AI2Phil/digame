@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { apiClient, replaceApiUrl } from '../../lib/api-config';
 
 // Simple toast function for user feedback
 const toast = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
   // Create toast element
   const toastEl = document.createElement('div');
-import { apiClient, replaceApiUrl } from '../../lib/api-config';
 
   toastEl.style.cssText = `
     position: fixed;

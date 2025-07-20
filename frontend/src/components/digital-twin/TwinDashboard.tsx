@@ -6,11 +6,11 @@ import { Progress } from '../ui/Progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/Tabs';
 import { Avatar, AvatarFallback } from '../ui/Avatar';
 import { apiClient, replaceApiUrl } from '../../lib/api-config';
-
-  Brain, 
-  MessageCircle, 
-  BarChart3, 
-  Settings, 
+import {
+  Brain,
+  MessageCircle,
+  BarChart3,
+  Settings,
   Activity,
   TrendingUp,
   Clock,

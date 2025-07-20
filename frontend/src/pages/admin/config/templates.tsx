@@ -102,7 +102,7 @@ export default function ConfigurationTemplates() {
   const formatTimeAgo = (timestamp) => {
     const now = new Date();
     const time = new Date(timestamp);
-    const diffMs = now - time;
+    const diffMs = now.getTime() - time.getTime();
     const diffDays = Math.floor(diffMs / 86400000);
     
     if (diffDays === 0) return 'Today';
