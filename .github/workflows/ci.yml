@@ -364,8 +364,8 @@ jobs:
         echo "NPM: $(npm --version)" >> $BUILD_LOG
         echo "" >> $BUILD_LOG
         
-        # Try build with full error capture
-        if npm run build 2>&1 | tee -a $BUILD_LOG; then
+        # Try build with full error capture using CI-optimized build command
+        if npm run build:ci 2>&1 | tee -a $BUILD_LOG; then
           echo "✅ Build completed successfully" | tee -a $BUILD_LOG
           BUILD_SUCCESS=true
         else
@@ -749,8 +749,8 @@ jobs:
           # Clean any partial artifacts
           rm -rf .next node_modules/.cache 2>/dev/null || true
           
-          # Build with error handling
-          if npm run build; then
+          # Build with error handling using CI-optimized build
+          if npm run build:ci; then
             echo "✅ Fresh build completed successfully"
             verify_build || {
               echo "❌ Fresh build verification failed"
@@ -764,7 +764,7 @@ jobs:
             rm -rf .next node_modules/.cache 2>/dev/null || true
             npm ci --prefer-offline --no-audit
             
-            if npm run build; then
+            if npm run build:ci; then
               echo "✅ Recovery build successful"
               verify_build || {
                 echo "❌ Recovery build verification failed"
@@ -1177,7 +1177,7 @@ jobs:
         # Build if no artifacts were downloaded
         if [ ! -d ".next" ] || [ ! -f ".next/BUILD_ID" ]; then
           echo "No valid build artifacts found, building fresh..."
-          npm run build
+          npm run build:ci
         fi
         
         # Start frontend in production mode
