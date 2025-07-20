@@ -193,81 +193,150 @@ jobs:
         
         echo "✅ React Hooks processing complete"
 
-    - name: Comprehensive Issue Detection and Reporting
+    - name: Enhanced Build Failure Detection and Reporting
+      if: failure()
       working-directory: ./frontend
       run: |
-        echo "🔍 Running comprehensive issue detection..."
+        echo "🚨 Build failed - capturing detailed failure information..."
         
-        # Create issue report
-        ISSUE_REPORT="ci-issues-report.txt"
-        echo "=== CI Issues Report ===" > $ISSUE_REPORT
-        echo "Generated: $(date)" >> $ISSUE_REPORT
-        echo "Project structure: src/, components/, utils/" >> $ISSUE_REPORT
-        echo "" >> $ISSUE_REPORT
+        # Create comprehensive failure report
+        FAILURE_REPORT="ci-build-failure-report.txt"
+        echo "=== CI BUILD FAILURE REPORT ===" > $FAILURE_REPORT
+        echo "Generated: $(date)" >> $FAILURE_REPORT
+        echo "Build Status: FAILED" >> $FAILURE_REPORT
+        echo "Commit: ${{ github.sha }}" >> $FAILURE_REPORT
+        echo "Branch: ${{ github.ref_name }}" >> $FAILURE_REPORT
+        echo "Run ID: ${{ github.run_id }}" >> $FAILURE_REPORT
+        echo "" >> $FAILURE_REPORT
         
-        # Issue Type 1: Invalid Hook Usage (Rules of Hooks Violation) - DISABLED FOR CI COMPATIBILITY
-        echo "🧨 Invalid hook usage check disabled for CI compatibility..." | tee -a $ISSUE_REPORT
-        echo "✅ Hook usage validation skipped (disabled for CI)" | tee -a $ISSUE_REPORT
-        echo "" >> $ISSUE_REPORT
+        # Capture build logs and errors
+        echo "=== BUILD ERROR ANALYSIS ===" >> $FAILURE_REPORT
+        echo "" >> $FAILURE_REPORT
         
-        # Issue Type 2: Missing React imports
-        echo "📄 Checking for missing React imports..." | tee -a $ISSUE_REPORT
-        MISSING_IMPORTS=0
+        # Check for TypeScript compilation errors
+        echo "🔍 TypeScript Compilation Check:" >> $FAILURE_REPORT
+        if ! npx tsc --noEmit --skipLibCheck 2>&1 | tee -a $FAILURE_REPORT; then
+          echo "❌ TypeScript compilation failed - see errors above" >> $FAILURE_REPORT
+        else
+          echo "✅ TypeScript compilation passed" >> $FAILURE_REPORT
+        fi
+        echo "" >> $FAILURE_REPORT
+        
+        # Check for missing dependencies/imports
+        echo "🔍 Missing Dependencies Check:" >> $FAILURE_REPORT
+        if npm ls --depth=0 2>&1 | grep -i "missing\|error" | tee -a $FAILURE_REPORT; then
+          echo "❌ Missing dependencies detected" >> $FAILURE_REPORT
+        else
+          echo "✅ All dependencies present" >> $FAILURE_REPORT
+        fi
+        echo "" >> $FAILURE_REPORT
+        
+        # Check for syntax errors in key files
+        echo "🔍 Syntax Error Check:" >> $FAILURE_REPORT
+        SYNTAX_ERRORS=0
+        find src/ components/ -name "*.js" -o -name "*.jsx" -o -name "*.ts" -o -name "*.tsx" 2>/dev/null | head -20 | while read file; do
+          if [ -f "$file" ]; then
+            if ! node -c "$file" 2>/dev/null; then
+              echo "❌ Syntax error in: $file" >> $FAILURE_REPORT
+              SYNTAX_ERRORS=$((SYNTAX_ERRORS + 1))
+            fi
+          fi
+        done
+        if [ "$SYNTAX_ERRORS" -eq "0" ]; then
+          echo "✅ No syntax errors in sampled files" >> $FAILURE_REPORT
+        fi
+        echo "" >> $FAILURE_REPORT
+        
+        # Check for import/export errors
+        echo "🔍 Import/Export Error Check:" >> $FAILURE_REPORT
+        if grep -r "Cannot resolve module\|Module not found\|Attempted import error" .next/ 2>/dev/null | head -10 | tee -a $FAILURE_REPORT; then
+          echo "❌ Import/export errors detected" >> $FAILURE_REPORT
+        else
+          echo "✅ No obvious import/export errors" >> $FAILURE_REPORT
+        fi
+        echo "" >> $FAILURE_REPORT
+        
+        # Check for SSR-specific errors
+        echo "🔍 SSR Error Check:" >> $FAILURE_REPORT
+        if grep -r "Cannot read properties of null\|navigator is not defined\|window is not defined" .next/ 2>/dev/null | head -10 | tee -a $FAILURE_REPORT; then
+          echo "❌ SSR compatibility errors detected" >> $FAILURE_REPORT
+        else
+          echo "✅ No obvious SSR errors" >> $FAILURE_REPORT
+        fi
+        echo "" >> $FAILURE_REPORT
+        
+        # System information
+        echo "=== SYSTEM INFORMATION ===" >> $FAILURE_REPORT
+        echo "Node version: $(node --version)" >> $FAILURE_REPORT
+        echo "NPM version: $(npm --version)" >> $FAILURE_REPORT
+        echo "Memory usage: $(free -h | awk 'NR==2{print $3"/"$2}' 2>/dev/null || echo 'unknown')" >> $FAILURE_REPORT
+        echo "Disk space: $(df -h . | awk 'NR==2{print $4" available"}' 2>/dev/null || echo 'unknown')" >> $FAILURE_REPORT
+        echo "" >> $FAILURE_REPORT
+        
+        # Recent git changes
+        echo "=== RECENT CHANGES ===" >> $FAILURE_REPORT
+        echo "Last 5 commits:" >> $FAILURE_REPORT
+        git log --oneline -5 >> $FAILURE_REPORT
+        echo "" >> $FAILURE_REPORT
+        
+        # File changes in this commit
+        echo "Files changed in this commit:" >> $FAILURE_REPORT
+        git diff --name-only HEAD~1 HEAD >> $FAILURE_REPORT
+        echo "" >> $FAILURE_REPORT
+        
+        echo "📊 Build failure analysis complete. Report saved to $FAILURE_REPORT"
+
+    - name: Success Issue Detection (Optional)
+      if: success()
+      working-directory: ./frontend
+      run: |
+        echo "✅ Build succeeded - generating success report..."
+        
+        # Create success report
+        SUCCESS_REPORT="ci-success-report.txt"
+        echo "=== CI BUILD SUCCESS REPORT ===" > $SUCCESS_REPORT
+        echo "Generated: $(date)" >> $SUCCESS_REPORT
+        echo "Build Status: SUCCESS" >> $SUCCESS_REPORT
+        echo "Commit: ${{ github.sha }}" >> $SUCCESS_REPORT
+        echo "Branch: ${{ github.ref_name }}" >> $SUCCESS_REPORT
+        echo "Run ID: ${{ github.run_id }}" >> $SUCCESS_REPORT
+        echo "" >> $SUCCESS_REPORT
+        
+        # Build statistics
+        echo "=== BUILD STATISTICS ===" >> $SUCCESS_REPORT
+        if [ -d ".next" ]; then
+          echo "Build size: $(du -sh .next/ | cut -f1)" >> $SUCCESS_REPORT
+          echo "Static pages: $(find .next/server/pages -name "*.html" 2>/dev/null | wc -l)" >> $SUCCESS_REPORT
+          echo "JavaScript bundles: $(find .next/static -name "*.js" 2>/dev/null | wc -l)" >> $SUCCESS_REPORT
+        fi
+        echo "" >> $SUCCESS_REPORT
+        
+        # Optional warnings (non-blocking)
+        echo "=== OPTIONAL IMPROVEMENTS ===" >> $SUCCESS_REPORT
+        
+        # Check for missing React imports (informational only)
+        MISSING_REACT=0
         find src/ components/ -name "*.tsx" -o -name "*.jsx" 2>/dev/null | while read file; do
           if [ -f "$file" ] && grep -q "useState\|useEffect\|useCallback\|useMemo" "$file" && ! grep -q "import.*React" "$file"; then
-            echo "⚠️ Missing React import: $file" | tee -a $ISSUE_REPORT
-            MISSING_IMPORTS=$((MISSING_IMPORTS + 1))
+            echo "ℹ️ Could add explicit React import: $file" >> $SUCCESS_REPORT
+            MISSING_REACT=$((MISSING_REACT + 1))
           fi
         done
         
-        # Issue Type 3: Hooks in non-component functions
-        echo "🧪 Checking for hooks in utility functions..." | tee -a $ISSUE_REPORT
-        UTIL_HOOKS=$(find utils/ -name "*.ts" -o -name "*.js" 2>/dev/null | xargs grep -l "useState\|useEffect" 2>/dev/null || echo "")
-        if [ -n "$UTIL_HOOKS" ]; then
-          echo "❌ Hooks found in utility files - these need manual refactoring:" | tee -a $ISSUE_REPORT
-          echo "$UTIL_HOOKS" | tee -a $ISSUE_REPORT
-        else
-          echo "✅ No hooks in utility files" | tee -a $ISSUE_REPORT
+        if [ "$MISSING_REACT" -eq "0" ]; then
+          echo "✅ All React imports are explicit" >> $SUCCESS_REPORT
         fi
-        echo "" >> $ISSUE_REPORT
         
-        # Issue Type 4: TypeScript warnings (non-blocking)
-        echo "🟡 Running TypeScript validation (warnings only)..." | tee -a $ISSUE_REPORT
-        if npx tsc --noEmit --skipLibCheck --pretty 2>&1 | head -20 | tee -a $ISSUE_REPORT; then
-          echo "✅ TypeScript validation passed" | tee -a $ISSUE_REPORT
-        else
-          echo "⚠️ TypeScript warnings found - see above (showing first 20 lines, non-blocking)" | tee -a $ISSUE_REPORT
-        fi
-        echo "" >> $ISSUE_REPORT
-        
-        # Issue Type 5: ESLint React hooks violations (disabled for CI)
-        echo "⚠️ React hooks check disabled for CI compatibility..." | tee -a $ISSUE_REPORT
-        HOOK_VIOLATIONS=0
-        
-        echo "Hook violations found: $HOOK_VIOLATIONS (rules disabled)" | tee -a $ISSUE_REPORT
-        
-        # Summary
-        echo "" >> $ISSUE_REPORT
-        echo "=== Summary ===" >> $ISSUE_REPORT
-        echo "Hook violations: $HOOK_VIOLATIONS" >> $ISSUE_REPORT
-        echo "Files processed: $(find src/ components/ utils/ -name "*.tsx" -o -name "*.jsx" -o -name "*.ts" -o -name "*.js" 2>/dev/null | wc -l)" >> $ISSUE_REPORT
-        echo "Report generated at: $(date)" >> $ISSUE_REPORT
-        
-        # Upload report as artifact for review
-        echo "📊 Issue detection complete. Report saved to $ISSUE_REPORT"
-        
-        # Don't fail the build for warnings, but report them
-        if [ "$HOOK_VIOLATIONS" -gt "5" ]; then
-          echo "⚠️ High number of hook violations detected - consider manual review"
-        fi
+        echo "📊 Success analysis complete. Report saved to $SUCCESS_REPORT"
 
-    - name: Upload CI Issues Reports
+    - name: Upload CI Analysis Reports
       uses: actions/upload-artifact@v4
       if: always()
       with:
-        name: ci-issues-reports-${{ github.run_id }}
+        name: ci-analysis-reports-${{ github.run_id }}
         path: |
-          frontend/ci-issues-report.txt
+          frontend/ci-build-failure-report.txt
+          frontend/ci-success-report.txt
           frontend/utility-hooks-report.txt
           frontend/react-imports-report.txt
         retention-days: 7
