@@ -37,12 +37,12 @@ const Code = (/** @type {any} */ {
   const textInput = useRef(null);
 
   const handleCopy = () => {
-    if (navigator.clipboard && codeString) {
+    if (typeof window !== 'undefined' && navigator.clipboard && codeString) {
       navigator.clipboard.writeText(codeString).then(() => {
         setIsCopied(true);
         setTimeout(() => setIsCopied(false), copiedDuration);
       });
-    } else if (textInput.current) {
+    } else if (typeof window !== 'undefined' && textInput.current) {
       // Fallback for older browsers or insecure contexts
       textInput.current.select();
       document.execCommand('copy');
@@ -64,7 +64,7 @@ const Code = (/** @type {any} */ {
         </code>
       </pre>
       {/* Fallback textarea for browsers that don't support navigator.clipboard */}
-      {typeof navigator.clipboard === 'undefined' && (
+      {typeof window !== 'undefined' && typeof navigator.clipboard === 'undefined' && (
           <textarea
             ref={textInput}
             value={codeString}
