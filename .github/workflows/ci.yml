@@ -811,6 +811,31 @@ jobs:
           exit 1
         fi
 
+    - name: Build backend
+      working-directory: ./backend
+      env:
+        NODE_ENV: production
+        CI: true
+        DOCKER_BUILD: false
+      run: |
+        echo "🏗️ Building backend..."
+        npm run build || npm run build:ci || {
+          echo "❌ Backend build failed"
+          exit 1
+        }
+
+    - name: Confirm backend is ready
+      working-directory: ./backend
+      run: |
+        echo "✅ Backend ready (Node.js Express - no build verification needed)"
+        echo "Backend main file: $(cat package.json | grep '"main"' || echo 'src/server.js')"
+        if [ -f "src/server.js" ]; then
+          echo "✅ Backend server file exists"
+        else
+          echo "❌ Backend server file missing"
+          exit 1
+        fi
+
     - name: Start backend server
       env:
         NODE_ENV: production
@@ -823,7 +848,7 @@ jobs:
         echo "🚀 Starting Node.js Express backend server on port $BACKEND_PORT..."
         cd backend
         npm ci --prefer-offline --no-audit
-        npx next start &
+        npm start &
         echo $! > ../backend.pid
         cd ..
         
@@ -1189,6 +1214,9 @@ jobs:
         
         cd ../backend
         npm ci --prefer-offline --no-audit
+        
+        # Backend is Node.js Express - no build needed
+        echo "✅ Backend ready (Node.js Express - no build step required)"
         
         # Start backend in production mode
         PORT=$BACKEND_PORT npm start &
