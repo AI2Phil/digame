@@ -720,55 +720,68 @@ jobs:
       continue-on-error: true
       id: download-artifacts
       
-    - name: Debug artifact download
-      run: |
-        echo "🔍 Artifact download status: ${{ steps.download-artifacts.outcome }}"
-        echo "Available artifacts in this run:"
-        # List available artifacts (this is for debugging)
-        echo "Run ID: ${{ github.run_id }}"
-        echo "Checking frontend directory:"
-        ls -la frontend/ || echo "Frontend directory not found"
-        if [ -d "frontend/.next" ]; then
-          echo "✅ .next directory found"
-          ls -la frontend/.next/
-        else
-          echo "❌ .next directory not found"
-        fi
-        
-    - name: Handle missing or invalid artifacts
+    - name: Ensure frontend build is available
       working-directory: ./frontend
       run: |
-        echo "🔍 Checking downloaded artifacts..."
-        ls -la
+        echo "🔍 Ensuring frontend build is available..."
         
         # Check if artifacts were downloaded successfully
-        if [ "${{ steps.download-artifacts.outcome }}" = "failure" ]; then
-          echo "⚠️ Artifact download failed, building fresh..."
-          npm run build
-        elif [ -d ".next" ]; then
-          echo "✅ .next directory found from artifacts"
-          ls -la .next/
-          
-          # Verify critical Next.js files exist
-          if [ -f ".next/BUILD_ID" ]; then
+        ARTIFACT_STATUS="${{ steps.download-artifacts.outcome }}"
+        echo "Artifact download status: $ARTIFACT_STATUS"
+        
+        # Function to verify build integrity
+        verify_build() {
+          if [ -d ".next" ] && [ -f ".next/BUILD_ID" ] && [ -d ".next/static" ]; then
             echo "✅ Valid Next.js build found: $(cat .next/BUILD_ID)"
+            return 0
           else
-            echo "⚠️ Invalid build artifacts (missing BUILD_ID), rebuilding..."
-            rm -rf .next
-            npm run build
+            echo "❌ Invalid or incomplete build"
+            return 1
           fi
+        }
+        
+        # Try to use downloaded artifacts first
+        if [ "$ARTIFACT_STATUS" = "success" ] && verify_build; then
+          echo "✅ Using downloaded build artifacts"
         else
-          echo "⚠️ No .next directory found, building fresh..."
-          npm run build
+          echo "⚠️ Building fresh frontend (artifacts unavailable or invalid)..."
+          
+          # Clean any partial artifacts
+          rm -rf .next node_modules/.cache 2>/dev/null || true
+          
+          # Build with error handling
+          if npm run build; then
+            echo "✅ Fresh build completed successfully"
+            verify_build || {
+              echo "❌ Fresh build verification failed"
+              exit 1
+            }
+          else
+            echo "❌ Fresh build failed"
+            echo "Attempting recovery build..."
+            
+            # Clear caches and try again
+            rm -rf .next node_modules/.cache 2>/dev/null || true
+            npm ci --prefer-offline --no-audit
+            
+            if npm run build; then
+              echo "✅ Recovery build successful"
+              verify_build || {
+                echo "❌ Recovery build verification failed"
+                exit 1
+              }
+            else
+              echo "❌ All build attempts failed"
+              exit 1
+            fi
+          fi
         fi
         
-        # Final verification
-        if [ ! -d ".next" ] || [ ! -f ".next/BUILD_ID" ]; then
-          echo "❌ Build verification failed"
-          exit 1
-        fi
-        
-        echo "✅ Frontend build ready"
+        # Final verification and stats
+        echo "📊 Build ready:"
+        echo "   BUILD_ID: $(cat .next/BUILD_ID)"
+        echo "   Size: $(du -sh .next/ | cut -f1)"
+        echo "   Static files: $(find .next/static -type f 2>/dev/null | wc -l) files"
 
     - name: Create SQLite directory to prevent startup crash
       working-directory: ./backend
@@ -894,32 +907,6 @@ jobs:
           echo "No next.config.js/mjs found"
         fi
 
-    - name: Verify build before start
-      working-directory: ./frontend
-      run: |
-        echo "🔧 Verifying build before starting server..."
-        if [ ! -d ".next" ]; then
-          echo "No .next directory, building fresh..."
-          npm run build
-          
-          # Verify build completed successfully
-          if [ ! -d ".next" ]; then
-            echo "❌ Build failed - no .next directory created"
-            exit 1
-          fi
-        fi
-        
-        # Verify critical files exist
-        if [ ! -f ".next/BUILD_ID" ]; then
-          echo "❌ Invalid build - BUILD_ID missing"
-          echo "Rebuilding..."
-          rm -rf .next
-          npm run build
-        fi
-        
-        echo "✅ Build verification complete"
-        ls -la .next/
-
     - name: Start frontend server with optimized startup
       working-directory: ./frontend
       env:
@@ -928,28 +915,25 @@ jobs:
         PORT: ${{ env.FRONTEND_PORT }}
         NODE_OPTIONS: ${{ env.NODE_OPTIONS }}
       run: |
-        if [ "$VERBOSE" = "true" ]; then
-          echo "🚀 Starting frontend server on port $FRONTEND_PORT..."
-        fi
+        echo "🚀 Starting frontend server on port $FRONTEND_PORT..."
         
         # Kill any existing processes on the target port
         lsof -ti:$FRONTEND_PORT | xargs kill -9 2>/dev/null || true
         
-        # Use production build with npm start for E2E testing
-        echo "🏗️ Ensuring production build exists..."
+        # Verify build is ready (should be handled by previous step)
         if [ ! -d ".next" ] || [ ! -f ".next/BUILD_ID" ]; then
-          echo "Building production frontend..."
-          npm run build
+          echo "❌ No build found - this should have been handled by previous step"
+          exit 1
         fi
+        
+        echo "✅ Using verified build: $(cat .next/BUILD_ID)"
         
         # Start frontend server in production mode
         npm start | tee ../frontend.log &
         FRONTEND_PID=$!
         echo $FRONTEND_PID > ../frontend.pid
         
-        if [ "$VERBOSE" = "true" ]; then
-          echo "Frontend PID: $FRONTEND_PID"
-        fi
+        echo "Frontend PID: $FRONTEND_PID"
         
         # Optimized health polling with static port
         echo "⏳ Waiting for frontend server..."
@@ -959,45 +943,44 @@ jobs:
           echo "✅ Frontend server ready on port $FRONTEND_PORT"
         else
           echo "❌ Frontend failed to start"
-          if [ "$VERBOSE" = "true" ]; then
-            echo "Process status:"
-            ps aux | grep -E "(node|npm|next)" | head -3 || echo "No Node processes"
-            echo "Port status:"
-            netstat -tulpn | grep LISTEN | grep $FRONTEND_PORT || echo "Port $FRONTEND_PORT not listening"
-            echo "Recent logs:"
-            tail -10 ../frontend.log 2>/dev/null || echo "No logs available"
-          fi
+          echo "Process status:"
+          ps aux | grep -E "(node|npm|next)" | head -5 || echo "No Node processes"
+          echo "Port status:"
+          netstat -tulpn | grep LISTEN | grep $FRONTEND_PORT || echo "Port $FRONTEND_PORT not listening"
+          echo "Recent logs:"
+          tail -20 ../frontend.log 2>/dev/null || echo "No logs available"
           
-          # Streamlined Error Recovery
-          echo "🔧 Recovery in progress..."
+          # Single recovery attempt with development mode
+          echo "🔧 Attempting recovery with development mode..."
           
-          # Memory-aware recovery check
+          # Memory check
           available_mem=$(free -m | awk 'NR==2{printf "%.0f", $7}')
           if [ $available_mem -lt 512 ]; then
-            echo "⚠️ Low memory, skipping recovery"
+            echo "⚠️ Low memory ($available_mem MB), skipping recovery"
             exit 1
           fi
           
-          # Single recovery attempt
+          # Clean recovery attempt
           pkill -f "next" 2>/dev/null || true
-          rm -rf .next node_modules/.cache 2>/dev/null || true
+          sleep 2
           
-          if npm run dev > ../frontend-recovery.log 2>&1 & then
-            RECOVERY_PID=$!
-            
-            # Quick recovery check
-            for j in {1..15}; do
-              if curl -f http://localhost:$FRONTEND_PORT 2>/dev/null; then
-                echo "✅ Recovery successful!"
-                exit 0
-              fi
-              sleep 2
-            done
-            
-            kill $RECOVERY_PID 2>/dev/null || true
-          fi
+          # Try development mode as fallback
+          npm run dev > ../frontend-recovery.log 2>&1 &
+          RECOVERY_PID=$!
           
+          # Quick recovery check
+          for j in {1..15}; do
+            if curl -f http://localhost:$FRONTEND_PORT 2>/dev/null; then
+              echo "✅ Recovery successful with development mode!"
+              exit 0
+            fi
+            sleep 2
+          done
+          
+          kill $RECOVERY_PID 2>/dev/null || true
           echo "❌ Recovery failed"
+          echo "Recovery logs:"
+          tail -10 ../frontend-recovery.log 2>/dev/null || echo "No recovery logs"
           exit 1
         fi
 
