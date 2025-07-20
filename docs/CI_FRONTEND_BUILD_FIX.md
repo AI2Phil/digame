@@ -55,7 +55,19 @@ ENV DOCKER_BUILD=true
 RUN npm run build
 ```
 
-### 3. CI Workflow Enhancement
+### 3. Build Script Enhancement
+
+Updated [`frontend/package.json`](../frontend/package.json) to explicitly set CI environment variable:
+
+```json
+{
+  "scripts": {
+    "build:ci": "NODE_OPTIONS=\"--max-old-space-size=4096 --max-semi-space-size=128\" NEXT_TELEMETRY_DISABLED=1 CI=true npx next build"
+  }
+}
+```
+
+### 4. CI Workflow Enhancement
 
 Enhanced [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) with explicit environment variables:
 
