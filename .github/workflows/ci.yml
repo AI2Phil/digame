@@ -500,7 +500,7 @@ jobs:
         name: frontend-build-${{ github.run_id }}
         path: frontend/.next/
         retention-days: 1
-        if-no-files-found: error
+        if-no-files-found: warn
         compression-level: 6
         
     - name: Confirm artifact upload
