@@ -13,7 +13,8 @@ RUN npm install --frozen-lockfile || npm install
 # Copy source code
 COPY . .
 
-# Build the application with standalone output
+# Build the application with standalone output for Docker
+ENV DOCKER_BUILD=true
 RUN npm run build
 
 # Second stage: production image

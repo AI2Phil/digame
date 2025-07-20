@@ -499,11 +499,9 @@ jobs:
       if: success()
       with:
         name: frontend-build-${{ github.run_id }}
-        path: |
-          frontend/.next/
-          frontend/standalone/
+        path: frontend/.next/
         retention-days: 1
-        if-no-files-found: warn
+        if-no-files-found: error
         compression-level: 6
         
     - name: Confirm artifact upload
