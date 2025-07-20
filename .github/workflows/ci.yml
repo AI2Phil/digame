@@ -501,7 +501,6 @@ jobs:
         name: frontend-build-${{ github.run_id }}
         path: |
           frontend/.next/
-          frontend/export/
         retention-days: 1
         if-no-files-found: warn
         compression-level: 6
