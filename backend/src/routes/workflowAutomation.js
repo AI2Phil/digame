@@ -284,18 +284,23 @@ router.post('/execute', async (req, res) => {
 // GET /api/workflow-automation/health - Health check endpoint for E2E tests
 router.get('/health', (req, res) => {
   res.json({
-    success: true,
     status: 'healthy',
-    data: {
-      status: 'healthy',
-      timestamp: new Date().toISOString(),
-      uptime: process.uptime(),
-      version: '1.0.0',
-      services: {
-        database: 'healthy',
-        workflow_engine: 'healthy',
-        notification_service: 'healthy'
-      }
+    service: 'workflow-automation',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    version: '1.0.0',
+    features: [
+      'workflow_templates',
+      'workflow_instances',
+      'automation_rules',
+      'step_monitoring',
+      'analytics',
+      'health_checks'
+    ],
+    services: {
+      database: 'healthy',
+      workflow_engine: 'healthy',
+      notification_service: 'healthy'
     }
   });
 });

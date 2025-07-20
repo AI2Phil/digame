@@ -373,8 +373,8 @@ test.describe('MFA Flows End-to-End Testing', () => {
     });
 
     test('should test security dashboard API', async () => {
-      // Test security metrics endpoint
-      const response = await page.request.get(`${API_BASE_URL}/api/security/dashboard`, {
+      // Test security metrics endpoint - use correct endpoint path
+      const response = await page.request.get(`${API_BASE_URL}/security/dashboard`, {
         headers: {
           'Authorization': 'Bearer test-auth-token-e2e-testing',
           'X-Test-Mode': 'true'
@@ -382,11 +382,13 @@ test.describe('MFA Flows End-to-End Testing', () => {
       });
       
       if (response.status() === 200) {
-        const metricsData = await response.json();
-        // Check for either security_score directly or within security_metrics
-        const hasSecurityScore = metricsData.security_score !== undefined ||
-                                 (metricsData.security_metrics && Object.keys(metricsData.security_metrics).length > 0);
-        expect(hasSecurityScore).toBe(true);
+        const responseData = await response.json();
+        // Check for success and data structure based on actual backend implementation
+        const hasValidData = responseData.success === true &&
+                             responseData.data &&
+                             (responseData.data.security_score !== undefined ||
+                              responseData.data.security_metrics !== undefined);
+        expect(hasValidData).toBe(true);
         console.log('✅ Security dashboard API is functional');
       } else {
         console.log('ℹ️ Security dashboard API endpoint may not be fully implemented');

@@ -72,6 +72,27 @@ app.use(detectDemoMode);
 // Health check endpoints (comprehensive)
 app.use('/health', healthRoutes);
 
+// API health endpoint for CI compatibility
+app.get('/api/health', async (req, res) => {
+  try {
+    const healthData = await performanceMonitor.getHealthCheck();
+    res.json({
+      status: 'healthy',
+      message: 'API is operational',
+      timestamp: new Date().toISOString(),
+      version: '2.0.0',
+      port: process.env.RUNTIME_PORT || process.env.PORT || 'unknown'
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: 'error',
+      message: 'API health check failed',
+      error: error.message,
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
 // Legacy health endpoint for backward compatibility
 app.get('/health-legacy', async (req, res) => {
   try {

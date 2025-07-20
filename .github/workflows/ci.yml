@@ -21,7 +21,7 @@ env:
   CI_MODE: ${{ github.event_name == 'pull_request' && 'light' || 'full' }}
   # Port configuration for consistent testing
   FRONTEND_PORT: 3000
-  BACKEND_PORT: 3001
+  BACKEND_PORT: 8000
   # Memory optimization for large monorepos
   NODE_OPTIONS: '--max-old-space-size=2048'
 

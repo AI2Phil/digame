@@ -32,10 +32,18 @@ async function checkBackendHealth() {
     const browser = await chromium.launch();
     const page = await browser.newPage();
     
-    const response = await page.goto('http://localhost:8000/health', {
+    // Check both possible health endpoints
+    let response = await page.goto('http://localhost:8000/api/health', {
       waitUntil: 'networkidle',
       timeout: 5000
-    });
+    }).catch(() => null);
+    
+    if (!response || !response.ok()) {
+      response = await page.goto('http://localhost:8000/health', {
+        waitUntil: 'networkidle',
+        timeout: 5000
+      }).catch(() => null);
+    }
     
     await browser.close();
     return response && response.ok();
@@ -46,16 +54,22 @@ async function checkBackendHealth() {
 
 async function startBackendServices() {
   return new Promise((resolve, reject) => {
-    console.log('🔧 Starting backend service...');
+    console.log('🔧 Starting Node.js Express backend service...');
     
-    // Navigate to project root (assuming we're in frontend/tests)
-    const projectRoot = path.resolve(__dirname, '../../');
+    // Navigate to backend directory
+    const backendDir = path.resolve(__dirname, '../../backend');
     
-    // Start backend using uvicorn
-    const backend = spawn('python3', ['-m', 'uvicorn', 'main:app', '--host', '0.0.0.0', '--port', '8000'], {
-      cwd: projectRoot,
+    // Start backend using Node.js
+    const backend = spawn('node', ['src/server.js'], {
+      cwd: backendDir,
       detached: true,
-      stdio: ['ignore', 'pipe', 'pipe']
+      stdio: ['ignore', 'pipe', 'pipe'],
+      env: {
+        ...process.env,
+        PORT: '8000',
+        NODE_ENV: 'production',
+        TESTING: 'true'
+      }
     });
     
     // Handle backend output
@@ -73,7 +87,7 @@ async function startBackendServices() {
     });
     
     // Store backend PID for cleanup
-    const pidFile = path.join(projectRoot, '.test-backend-pid');
+    const pidFile = path.join(path.resolve(__dirname, '../../'), '.test-backend-pid');
     fs.writeFileSync(pidFile, backend.pid.toString());
     
     // Wait a bit for the service to start
@@ -100,15 +114,29 @@ async function verifyServices() {
   // Wait for backend to be ready
   while (retries > 0 && !backendReady) {
     try {
-      const response = await page.goto('http://localhost:8000/health', {
+      // Try /api/health first, then fallback to /health
+      let response = await page.goto('http://localhost:8000/api/health', {
         waitUntil: 'networkidle',
         timeout: 2000
-      });
+      }).catch(() => null);
+      
+      if (!response || !response.ok()) {
+        response = await page.goto('http://localhost:8000/health', {
+          waitUntil: 'networkidle',
+          timeout: 2000
+        }).catch(() => null);
+      }
       
       if (response && response.ok()) {
-        const healthData = await response.json();
-        if (healthData.status === 'healthy') {
-          console.log('✅ Backend health check passed');
+        try {
+          const healthData = await response.json();
+          if (healthData.status === 'healthy' || healthData.status === 'ok') {
+            console.log('✅ Backend health check passed');
+            backendReady = true;
+          }
+        } catch (jsonError) {
+          // If JSON parsing fails but response is OK, consider it healthy
+          console.log('✅ Backend responding (non-JSON response)');
           backendReady = true;
         }
       }

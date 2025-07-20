@@ -41,9 +41,9 @@ export default defineConfig({
     ['junit', { outputFile: 'test-results/results.xml' }],
     ['list'] // Add list reporter for better console output
   ],
-  /* Global setup and teardown */
-  globalSetup: require.resolve('./tests/global-setup.js'),
-  globalTeardown: require.resolve('./tests/global-teardown.js'),
+  /* Global setup and teardown - disabled in CI since services are managed by CI workflow */
+  globalSetup: process.env.CI ? undefined : require.resolve('./tests/global-setup.js'),
+  globalTeardown: process.env.CI ? undefined : require.resolve('./tests/global-teardown.js'),
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
@@ -137,7 +137,7 @@ export default defineConfig({
   ],
 
   /* Run your local dev server before starting the tests */
-  webServer: {
+  webServer: process.env.CI ? undefined : {
     command: 'npm run dev',
     port: 3000,
     reuseExistingServer: !process.env.CI,
