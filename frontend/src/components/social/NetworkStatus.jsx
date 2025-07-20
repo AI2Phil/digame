@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
-import { useOffline } from './PWAProvider';
-import { Badge } from './ui/Badge';
-import { Button } from './ui/Button';
+import { useOffline } from '../pwa/PWAProvider';
+import { Badge } from '../ui/Badge';
+import { Button } from '../ui/Button';
 import { Wifi, WifiOff, RefreshCw, Cloud, CloudOff } from 'lucide-react';
 
 const NetworkStatus = ({ showDetails = false, className = '' }) => {

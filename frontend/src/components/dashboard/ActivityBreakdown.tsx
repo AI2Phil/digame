@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '../ui/Card';
 import { Progress } from '../ui/Progress';
 import { Badge } from '../ui/Badge';
+import { apiClient, replaceApiUrl } from '../../lib/api-config';
+
 
 interface ActivityCategory {
   name: string;
@@ -38,7 +40,7 @@ const ActivityBreakdown: React.FC<ActivityBreakdownProps> = ({ userId = 1, days 
         setError(null);
         
         // Call the new database-driven API endpoint
-        const response = await fetch(`http://localhost:8001/api/activity/breakdown?days=${days}`, {
+        const response = await fetch(`${replaceApiUrl("")}/api/activity/breakdown?days=${days}`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',

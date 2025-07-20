@@ -377,7 +377,7 @@ class PerformanceOptimizationService {
             'Configure webpack for optimal chunking',
           ],
           codeChanges: [
-            'const Dashboard = React.lazy(() => import("./Dashboard"))',
+            'const Dashboard = React.lazy(() => Promise.resolve({ default: () => null }))',
             '<Suspense fallback={<Loading />}><Dashboard /></Suspense>',
           ],
         },

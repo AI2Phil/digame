@@ -5,6 +5,8 @@ import Select from '../ui/Select';
 import { Badge } from '../ui/Badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/Tabs';
 import Progress from '../ui/Progress';
+import { apiClient, replaceApiUrl } from '../../lib/api-config';
+
 
 // Types
 interface TeamMember {
@@ -77,7 +79,7 @@ export const TeamCoordination: React.FC<TeamCoordinationProps> = ({ teamId = 'de
   const fetchTeamMembers = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:8001/api/digital-twin/team-coordination/members', {
+      const response = await fetch('${replaceApiUrl("")}/api/digital-twin/team-coordination/members', {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
           'Content-Type': 'application/json',
@@ -152,7 +154,7 @@ export const TeamCoordination: React.FC<TeamCoordinationProps> = ({ teamId = 'de
 
   const fetchCoordinationHistory = async () => {
     try {
-      const response = await fetch('http://localhost:8001/api/digital-twin/team-coordination/history?limit=10', {
+      const response = await fetch('${replaceApiUrl("")}/api/digital-twin/team-coordination/history?limit=10', {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
           'Content-Type': 'application/json',
@@ -194,7 +196,7 @@ export const TeamCoordination: React.FC<TeamCoordinationProps> = ({ teamId = 'de
 
     try {
       setIsCoordinating(true);
-      const response = await fetch('http://localhost:8001/api/digital-twin/team-coordination/start', {
+      const response = await fetch('${replaceApiUrl("")}/api/digital-twin/team-coordination/start', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,

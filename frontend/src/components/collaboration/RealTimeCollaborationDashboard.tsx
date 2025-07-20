@@ -3,6 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
 import {
+import { apiClient, replaceApiUrl } from '../../lib/api-config';
+
   Users, MessageSquare, Video, Phone, Share2, Edit3,
   Send, Paperclip, Smile, MoreHorizontal, Settings,
   UserPlus, UserMinus, Crown, Shield, Eye, EyeOff,
@@ -113,7 +115,7 @@ export const RealTimeCollaborationDashboard: React.FC = () => {
         setDataSource('loading');
         
         // Fetch workspace data from API
-        const workspaceResponse = await fetch('http://localhost:8001/api/collaboration/workspace', {
+        const workspaceResponse = await fetch('${replaceApiUrl("")}/api/collaboration/workspace', {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -283,7 +285,7 @@ export const RealTimeCollaborationDashboard: React.FC = () => {
   // Load messages for a specific channel
   const loadChannelMessages = async (channelId: string) => {
     try {
-      const response = await fetch(`http://localhost:8001/api/collaboration/channels/${channelId}/messages`, {
+      const response = await fetch(`${replaceApiUrl("")}/api/collaboration/channels/${channelId}/messages`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -326,7 +328,7 @@ export const RealTimeCollaborationDashboard: React.FC = () => {
     setNewMessage('');
 
     try {
-      const response = await fetch(`http://localhost:8001/api/collaboration/channels/${selectedChannel.id}/messages`, {
+      const response = await fetch(`${replaceApiUrl("")}/api/collaboration/channels/${selectedChannel.id}/messages`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

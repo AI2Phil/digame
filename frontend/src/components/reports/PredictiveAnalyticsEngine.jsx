@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
+import { apiClient, replaceApiUrl } from '../../lib/api-config';
+
   Brain, TrendingUp, Target, Zap, Eye, AlertCircle,
   CheckCircle, Clock, Settings, RefreshCw, Download,
   BarChart3, LineChart, Activity, Layers, Award,
@@ -26,7 +28,7 @@ const PredictiveAnalyticsEngine = () => {
   const fetchEngineData = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:3001/advanced-reporting/predictive-analytics');
+      const response = await fetch('${replaceApiUrl("/api/advanced-reporting/predictive-analytics")}');
       
       if (!response.ok) {
         throw new Error('Failed to fetch predictive analytics data');

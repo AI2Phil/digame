@@ -4,6 +4,8 @@ import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
 import { useToastHelpers } from '../ui/Toaster';
 import {
+import { apiClient, replaceApiUrl } from '../../lib/api-config';
+
   Settings, Save, RotateCcw, Download, Upload,
   Shield, Database, Globe, Mail, Bell, Key,
   Users, Building2, Zap, Activity, Clock,
@@ -89,16 +91,16 @@ export const SystemConfigurationDashboard: React.FC = () => {
       setLoading(true);
       
       const [configsRes, categoriesRes, backupsRes, statusRes] = await Promise.all([
-        fetch('http://localhost:8001/api/admin/system/configuration', {
+        fetch('${replaceApiUrl("")}/api/admin/system/configuration', {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
         }),
-        fetch('http://localhost:8001/api/admin/system/configuration/categories', {
+        fetch('${replaceApiUrl("")}/api/admin/system/configuration/categories', {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
         }),
-        fetch('http://localhost:8001/api/admin/system/configuration/backups', {
+        fetch('${replaceApiUrl("")}/api/admin/system/configuration/backups', {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
         }),
-        fetch('http://localhost:8001/api/admin/system/status', {
+        fetch('${replaceApiUrl("")}/api/admin/system/status', {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
         })
       ]);
@@ -343,7 +345,7 @@ export const SystemConfigurationDashboard: React.FC = () => {
 
   const handleConfigUpdate = async (configId: string, value: any) => {
     try {
-      const response = await fetch(`http://localhost:8001/api/admin/system/configuration/${configId}`, {
+      const response = await fetch(`${replaceApiUrl("")}/api/admin/system/configuration/${configId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -388,7 +390,7 @@ export const SystemConfigurationDashboard: React.FC = () => {
 
   const handleCreateBackup = async (name: string, description: string) => {
     try {
-      const response = await fetch('http://localhost:8001/api/admin/system/configuration/backups', {
+      const response = await fetch('${replaceApiUrl("")}/api/admin/system/configuration/backups', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -431,7 +433,7 @@ export const SystemConfigurationDashboard: React.FC = () => {
     }
 
     try {
-      const response = await fetch(`http://localhost:8001/api/admin/system/configuration/backups/${backupId}/restore`, {
+      const response = await fetch(`${replaceApiUrl("")}/api/admin/system/configuration/backups/${backupId}/restore`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
       });

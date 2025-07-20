@@ -19,6 +19,8 @@ const MeetingSummarizer = () => {
   const { success, error: showError, warning, info } = useToastHelpers();
 
   const checkFeatureAvailability = useCallback(async () => {
+import { apiClient, replaceApiUrl } from '../../lib/api-config';
+
     try {
       const token = localStorage.getItem('access_token');
       if (!token) {
@@ -27,7 +29,7 @@ const MeetingSummarizer = () => {
       }
 
       // Try to fetch user tier from database-driven API
-      const response = await fetch('http://localhost:8001/api/ai/meetings/feature-check', {
+      const response = await fetch('${replaceApiUrl("")}/api/ai/meetings/feature-check', {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -69,7 +71,7 @@ const MeetingSummarizer = () => {
       const token = localStorage.getItem('access_token');
       if (!token) return;
 
-      const response = await fetch('http://localhost:8001/api/ai/meetings/history', {
+      const response = await fetch('${replaceApiUrl("")}/api/ai/meetings/history', {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -148,7 +150,7 @@ const MeetingSummarizer = () => {
         return;
       }
 
-      const response = await fetch('http://localhost:8001/api/ai/meetings/summarize', {
+      const response = await fetch('${replaceApiUrl("")}/api/ai/meetings/summarize', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

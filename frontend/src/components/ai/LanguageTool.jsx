@@ -34,6 +34,8 @@ const LanguageTool = () => {
 
   // Supported languages (example list)
   const languages = [
+import { apiClient, replaceApiUrl } from '../../lib/api-config';
+
     { value: 'English', label: 'English' }, { value: 'Spanish', label: 'Spanish' },
     { value: 'French', label: 'French' }, { value: 'German', label: 'German' },
     { value: 'Italian', label: 'Italian' }, { value: 'Portuguese', label: 'Portuguese' },
@@ -57,7 +59,7 @@ const LanguageTool = () => {
       }
 
       // Try to fetch user features from database
-      const response = await fetch('http://localhost:8001/api/ai/language-tools/features', {
+      const response = await fetch('${replaceApiUrl("")}/api/ai/language-tools/features', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
@@ -90,13 +92,13 @@ const LanguageTool = () => {
       if (!token) return;
 
       const [translationsRes, definitionsRes] = await Promise.all([
-        fetch('http://localhost:8001/api/ai/language-tools/translations/history', {
+        fetch('${replaceApiUrl("")}/api/ai/language-tools/translations/history', {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
           }
         }),
-        fetch('http://localhost:8001/api/ai/language-tools/definitions/history', {
+        fetch('${replaceApiUrl("")}/api/ai/language-tools/definitions/history', {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
@@ -171,7 +173,7 @@ const LanguageTool = () => {
         payload.source_language = sourceLanguage;
       }
 
-      const response = await fetch('http://localhost:8001/api/ai/language-tools/translate', {
+      const response = await fetch('${replaceApiUrl("")}/api/ai/language-tools/translate', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -254,7 +256,7 @@ const LanguageTool = () => {
         return;
       }
 
-      const response = await fetch('http://localhost:8001/api/ai/language-tools/define', {
+      const response = await fetch('${replaceApiUrl("")}/api/ai/language-tools/define', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

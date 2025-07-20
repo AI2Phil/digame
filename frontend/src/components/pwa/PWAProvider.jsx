@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import webNotificationService from '../services/webNotificationService';
-import webOfflineService from '../services/webOfflineService';
+import webNotificationService from '../../services/webNotificationService';
+import webOfflineService from '../../services/webOfflineService';
 
 const PWAContext = createContext();
 

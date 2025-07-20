@@ -21,9 +21,9 @@ import apiService from '../../services/apiService';
 import { useToastActions } from '../../components/ui/Toast';
 
 // Import display cards if they exist
-// import ProjectDisplayCard from '../components/profile/ProjectDisplayCard';
-// import ExperienceDisplayCard from '../components/profile/ExperienceDisplayCard';
-// import EducationDisplayCard from '../components/profile/EducationDisplayCard';
+// import ProjectDisplayCard from '../../components/profile/ProjectDisplayCard';
+// import ExperienceDisplayCard from '../../components/profile/ExperienceDisplayCard';
+// import EducationDisplayCard from '../../components/profile/EducationDisplayCard';
 
 const UserProfileOverviewPage = () => {
   const toast = useToastActions();

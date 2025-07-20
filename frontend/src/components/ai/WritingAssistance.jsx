@@ -19,6 +19,8 @@ const WritingAssistance = () => {
   const [suggestionHistory, setSuggestionHistory] = useState([]);
   const [usingFallbackData, setUsingFallbackData] = useState(false);
   const { toast } = useToast();
+import { apiClient, replaceApiUrl } from '../../lib/api-config';
+
 
   useEffect(() => {
     checkFeatureAvailability();
@@ -31,7 +33,7 @@ const WritingAssistance = () => {
       if (!token) return;
 
       // Try to fetch user features from database
-      const response = await fetch('http://localhost:8001/api/ai/writing-assistance/features', {
+      const response = await fetch('${replaceApiUrl("")}/api/ai/writing-assistance/features', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
@@ -63,7 +65,7 @@ const WritingAssistance = () => {
       const token = localStorage.getItem('access_token');
       if (!token) return;
 
-      const response = await fetch('http://localhost:8001/api/ai/writing-assistance/history', {
+      const response = await fetch('${replaceApiUrl("")}/api/ai/writing-assistance/history', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
@@ -102,7 +104,7 @@ const WritingAssistance = () => {
 
     try {
       const token = localStorage.getItem('access_token');
-      const response = await fetch('http://localhost:8001/api/ai/writing-assistance/suggest', {
+      const response = await fetch('${replaceApiUrl("")}/api/ai/writing-assistance/suggest', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

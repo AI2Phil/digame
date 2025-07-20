@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
+import { apiClient, replaceApiUrl } from '../../lib/api-config';
+
   Key, Plus, Search, Eye, EyeOff, Copy,
   Trash2, Edit, Calendar, Activity,
   AlertTriangle, CheckCircle, Clock, Server, UserCircle,
@@ -88,7 +90,7 @@ const ApiKeyManagementSection = () => {
       setLoading(true);
       setError(null);
       
-      const response = await fetch('http://localhost:8001/api/user/api-keys', {
+      const response = await fetch('${replaceApiUrl("")}/api/user/api-keys', {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
           'Content-Type': 'application/json'
@@ -197,7 +199,7 @@ const ApiKeyManagementSection = () => {
     }
 
     try {
-      const response = await fetch(`http://localhost:8001/api/user/api-keys/${keyId}`, {
+      const response = await fetch(`${replaceApiUrl("")}/api/user/api-keys/${keyId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -545,7 +547,7 @@ const AddApiKeyForm = ({ providers, onClose, onRefresh }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch('http://localhost:8001/api/user/api-keys', {
+      const response = await fetch('${replaceApiUrl("")}/api/user/api-keys', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -649,7 +651,7 @@ const EditApiKeyForm = ({ apiKey, providers, onClose, onRefresh }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch(`http://localhost:8001/api/user/api-keys/${apiKey.id}`, {
+      const response = await fetch(`${replaceApiUrl("")}/api/user/api-keys/${apiKey.id}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,

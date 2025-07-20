@@ -24,7 +24,7 @@ import {
   getTimelineData,
   getUserModels,
   publishModel // Imported publishModel
-} from '../services/visualizationService';
+} from '../../services/visualizationService';
 import HeatmapChart from './visualizations/HeatmapChart';
 import SankeyChart from './visualizations/SankeyChart';
 import RadarChart from './visualizations/RadarChart';

@@ -1,4 +1,6 @@
-const API_BASE = 'http://localhost:8000';
+const API_BASE = '${replaceApiUrl("")}';
+import { apiClient, replaceApiUrl } from '../lib/api-config';
+
 
 export const dashboardService = {
   // Get user productivity metrics from Digame's behavioral analysis

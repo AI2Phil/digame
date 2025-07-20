@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
+import { apiClient, replaceApiUrl } from '../../lib/api-config';
+
   BarChart3, TrendingUp, Users, Clock, Database, Zap,
   FileText, Calendar, Share, Download, Settings, AlertCircle,
   CheckCircle, Activity, Eye, Brain, Target, Layers
@@ -88,7 +90,7 @@ const AdvancedReportingDashboard: React.FC = () => {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`http://localhost:8001/api/advanced-reporting/dashboard?timeRange=${selectedTimeRange}`);
+      const response = await fetch(`${replaceApiUrl("")}/api/advanced-reporting/dashboard?timeRange=${selectedTimeRange}`);
       
       if (!response.ok) {
         throw new Error('Failed to fetch dashboard data');

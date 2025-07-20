@@ -4,7 +4,7 @@ import Button from '../ui/Button';
 import { Card } from '../ui/Card';
 import Input from '../ui/Input';
 import { Badge } from '../ui/Badge';
-import { Switch } from '../../ui/Switch'; // Added Switch import
+import { Switch } from '../ui/Switch'; // Added Switch import
 
 const OnboardingFlow = ({ onComplete, onSkip }) => {
   const [currentStep, setCurrentStep] = useState(0);

@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
+import { apiClient, replaceApiUrl } from '../../lib/api-config';
+
   Plus, Trash2, Settings, Play, Save, Download, Eye,
   Database, BarChart3, PieChart, LineChart, Table,
   Filter, Columns, Palette, Calendar, Users, Target
@@ -41,7 +43,7 @@ const CustomReportBuilder = () => {
   const fetchBuilderData = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:3001/advanced-reporting/report-builder');
+      const response = await fetch('${replaceApiUrl("/api/advanced-reporting/report-builder")}');
       
       if (!response.ok) {
         throw new Error('Failed to fetch report builder data');

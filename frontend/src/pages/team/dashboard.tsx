@@ -6,6 +6,8 @@ import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { Progress } from '../../components/ui/Progress';
 import {
+import { apiClient, replaceApiUrl } from '../../lib/api-config';
+
   Users,
   TrendingUp,
   CheckCircle,
@@ -42,9 +44,9 @@ const TeamDashboard: React.FC = () => {
       setLoading(true);
 
       // Try to get backend service info first
-      let backendUrl = 'http://localhost:8001'; // Default fallback
+      let backendUrl = '${replaceApiUrl("")}'; // Default fallback
       try {
-        const serviceResponse = await fetch('http://localhost:8001/service-info');
+        const serviceResponse = await fetch('${replaceApiUrl("")}/service-info');
         if (serviceResponse.ok) {
           const serviceInfo = await serviceResponse.json();
           backendUrl = serviceInfo.url || `http://localhost:${serviceInfo.port}`;

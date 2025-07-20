@@ -4,6 +4,8 @@ import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
 import { useToastHelpers } from '../ui/Toaster';
 import {
+import { apiClient, replaceApiUrl } from '../../lib/api-config';
+
   FileText, Eye, Download, Filter, Search, Calendar,
   User, Shield, AlertTriangle, CheckCircle, Clock,
   BarChart3, TrendingUp, Activity, Database, Globe,
@@ -36,19 +38,19 @@ const AuditTrailAnalytics = () => {
       setLoading(true);
 
       const [overviewResponse, logsResponse, activityResponse, eventsResponse, securityResponse] = await Promise.all([
-        fetch(`http://localhost:8001/api/security/audit-trail/overview?range=${dateRange}`, {
+        fetch(`${replaceApiUrl("")}/api/security/audit-trail/overview?range=${dateRange}`, {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
         }),
-        fetch(`http://localhost:8001/api/security/audit-trail/logs?range=${dateRange}`, {
+        fetch(`${replaceApiUrl("")}/api/security/audit-trail/logs?range=${dateRange}`, {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
         }),
-        fetch(`http://localhost:8001/api/security/audit-trail/user-activity?range=${dateRange}`, {
+        fetch(`${replaceApiUrl("")}/api/security/audit-trail/user-activity?range=${dateRange}`, {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
         }),
-        fetch(`http://localhost:8001/api/security/audit-trail/system-events?range=${dateRange}`, {
+        fetch(`${replaceApiUrl("")}/api/security/audit-trail/system-events?range=${dateRange}`, {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
         }),
-        fetch(`http://localhost:8001/api/security/audit-trail/security-events?range=${dateRange}`, {
+        fetch(`${replaceApiUrl("")}/api/security/audit-trail/security-events?range=${dateRange}`, {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
         })
       ]);

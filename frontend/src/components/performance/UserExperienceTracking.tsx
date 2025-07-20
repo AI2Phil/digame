@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
+import { apiClient, replaceApiUrl } from '../../lib/api-config';
+
   Clock,
   Zap,
   Eye,
@@ -179,7 +181,7 @@ const UserExperienceTracking: React.FC<UserExperienceTrackingProps> = ({
       }
 
       // Fetch user experience data from database-driven API
-      const response = await fetch(`http://localhost:8001/api/performance/user-experience/session?timeRange=${selectedTimeRange}&device=${selectedDevice}`, {
+      const response = await fetch(`${replaceApiUrl("")}/api/performance/user-experience/session?timeRange=${selectedTimeRange}&device=${selectedDevice}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'

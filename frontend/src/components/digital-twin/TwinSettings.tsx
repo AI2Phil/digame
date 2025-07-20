@@ -5,6 +5,8 @@ import { Badge } from '../ui/Badge';
 import { useToastHelpers } from '../ui/Toaster';
 import { digitalTwinApi } from '../../services/digitalTwinApi';
 import {
+import { apiClient, replaceApiUrl } from '../../lib/api-config';
+
   Settings,
   Edit3,
   Trash2,
@@ -212,7 +214,7 @@ export const TwinSettings: React.FC<TwinSettingsProps> = ({ twin, onUpdate }) =>
         success('Demo settings updated successfully');
       } else {
         // Try to save to database
-        const response = await fetch(`http://localhost:8001/api/v1/digital-twins/${settings.id}`, {
+        const response = await fetch(`${replaceApiUrl("")}/api/v1/digital-twins/${settings.id}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -270,7 +272,7 @@ export const TwinSettings: React.FC<TwinSettingsProps> = ({ twin, onUpdate }) =>
           window.location.href = '/dashboard';
         }, 1000);
       } else {
-        const response = await fetch(`http://localhost:8001/api/v1/digital-twins/${settings.id}`, {
+        const response = await fetch(`${replaceApiUrl("")}/api/v1/digital-twins/${settings.id}`, {
           method: 'DELETE'
         });
 

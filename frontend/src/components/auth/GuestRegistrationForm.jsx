@@ -9,6 +9,8 @@ import { Badge } from '../ui/Badge';
 
 const GuestRegistrationForm = ({ onSuccess, onClose }) => {
   const [formData, setFormData] = useState({
+import { apiClient, replaceApiUrl } from '../../lib/api-config';
+
     email: '',
     password: '',
     confirmPassword: '',
@@ -60,7 +62,7 @@ const GuestRegistrationForm = ({ onSuccess, onClose }) => {
 
     setCheckingEmail(true);
     try {
-      const response = await fetch(`http://localhost:8001/auth/guest/check-email/${encodeURIComponent(email)}`);
+      const response = await fetch(`${replaceApiUrl("")}/auth/guest/check-email/${encodeURIComponent(email)}`);
       const data = await response.json();
       setEmailAvailable(data.available);
     } catch (error) {
@@ -113,7 +115,7 @@ const GuestRegistrationForm = ({ onSuccess, onClose }) => {
     setIsLoading(true);
 
     try {
-      const response = await fetch('http://localhost:8001/auth/guest/register', {
+      const response = await fetch('${replaceApiUrl("")}/auth/guest/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

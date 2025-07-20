@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
+import { apiClient, replaceApiUrl } from '../../lib/api-config';
+
   BarChart3, TrendingUp, Activity, Database,
   Clock, Users, Zap, AlertTriangle, CheckCircle,
   Calendar, Download, RefreshCw, Monitor, Server, Cpu, MemoryStick, HardDrive, Network
@@ -79,7 +81,7 @@ const SystemAnalyticsSection = () => {
       setLoading(true);
       setError(null);
 
-      const response = await fetch(`http://localhost:8001/api/admin/system/analytics/detailed?time_range=${timeRange}`, {
+      const response = await fetch(`${replaceApiUrl("")}/api/admin/system/analytics/detailed?time_range=${timeRange}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
           'Content-Type': 'application/json'

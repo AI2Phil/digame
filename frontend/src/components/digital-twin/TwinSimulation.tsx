@@ -3,6 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import {
+import { apiClient, replaceApiUrl } from '../../lib/api-config';
+
   Play,
   Pause,
   RotateCcw,
@@ -81,7 +83,7 @@ export const TwinSimulation: React.FC<TwinSimulationProps> = ({ twinId = 'defaul
     setIsLoading(true);
     try {
       // Try to fetch from database first
-      const response = await fetch('http://localhost:8001/api/digital-twin/simulation-history', {
+      const response = await fetch('${replaceApiUrl("")}/api/digital-twin/simulation-history', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -252,7 +254,7 @@ export const TwinSimulation: React.FC<TwinSimulationProps> = ({ twinId = 'defaul
     try {
       // Try database-driven simulation first
       if (!usingFallbackData) {
-        const response = await fetch('http://localhost:8001/api/digital-twin/simulation', {
+        const response = await fetch('${replaceApiUrl("")}/api/digital-twin/simulation', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from './ui/Card';
-import { Button } from './ui/Button';
-import { Badge } from './ui/Badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/Tabs';
-import { Input } from './ui/Input';
-import { Textarea } from './ui/Textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/Select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './ui/Dialog';
-import { Avatar, AvatarFallback, AvatarImage } from './ui/Avatar';
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card';
+import { Button } from '../ui/Button';
+import { Badge } from '../ui/Badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/Tabs';
+import { Input } from '../ui/Input';
+import { Textarea } from '../ui/Textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/Select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../ui/Dialog';
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/Avatar';
 import { MessageCircle, Users, Briefcase, Award, UserPlus, Search, Filter } from 'lucide-react';
 import PeerMessaging from './PeerMessaging';
 

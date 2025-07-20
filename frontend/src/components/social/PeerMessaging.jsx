@@ -3,10 +3,10 @@ import {
   MessageCircle, Send, Paperclip, Smile, MoreVertical,
   Phone, Video, Info, Search, X
 } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from './ui/Card';
-import { Button } from './ui/Button';
-import { Badge } from './ui/Badge';
-import Toast from './ui/Toast';
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card';
+import { Button } from '../ui/Button';
+import { Badge } from '../ui/Badge';
+import Toast from '../ui/Toast';
 
 const PeerMessaging = ({ peerId, peerName, onClose }) => {
   const [messages, setMessages] = useState([]);

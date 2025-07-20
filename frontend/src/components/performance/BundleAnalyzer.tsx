@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
+import { apiClient, replaceApiUrl } from '../../lib/api-config';
+
   Package,
   FileText,
   Zap,
@@ -129,7 +131,7 @@ const BundleAnalyzer: React.FC<BundleAnalyzerProps> = ({
       }
 
       // Fetch bundle analysis data from database-driven API
-      const response = await fetch('http://localhost:8001/api/performance/bundle-analysis', {
+      const response = await fetch('${replaceApiUrl("")}/api/performance/bundle-analysis', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'

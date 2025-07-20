@@ -1,3 +1,5 @@
+import { apiClient, replaceApiUrl } from '../lib/api-config';
+
 /**
  * Dynamic API Service - Automatically detects correct backend port
  * Uses service discovery and port detection for robust backend connection
@@ -19,7 +21,7 @@ class ApiService {
       // Instead, we'll try to fetch service info from the backend's service-info endpoint
       for (const port of this.commonPorts) {
         try {
-          const response = await fetch(`http://localhost:${port}/service-info`, {
+          const response = await fetch(`${replaceApiUrl("/service-info")}`, {
             method: 'GET',
             signal: AbortSignal.timeout(1000), // 1 second timeout
           });
@@ -92,7 +94,7 @@ class ApiService {
     }
 
     // Fallback to default
-    this.baseUrl = 'http://localhost:8001';
+    this.baseUrl = '${replaceApiUrl("")}';
     console.warn(`[API Service] No backend detected, using fallback: ${this.baseUrl}`);
     return this.baseUrl;
   }

@@ -3,6 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
 import { 
+import { apiClient, replaceApiUrl } from '../../lib/api-config';
+
   BarChart3, LineChart, PieChart, TrendingUp, TrendingDown,
   Download, Upload, Calendar, Filter, Search, Settings,
   FileText, Image, Database, Globe, Users, Activity,
@@ -101,16 +103,16 @@ export const AdvancedReportingDashboard: React.FC = () => {
       setLoading(true);
       
       const [reportsRes, sourcesRes, exportsRes, metricsRes] = await Promise.all([
-        fetch('http://localhost:8001/api/advanced-reporting/report-builder', {
+        fetch('${replaceApiUrl("")}/api/advanced-reporting/report-builder', {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
         }),
-        fetch('http://localhost:8001/api/advanced-reporting/data-sources', {
+        fetch('${replaceApiUrl("")}/api/advanced-reporting/data-sources', {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
         }),
-        fetch('http://localhost:8001/api/advanced-reporting/exports', {
+        fetch('${replaceApiUrl("")}/api/advanced-reporting/exports', {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
         }),
-        fetch('http://localhost:8001/api/advanced-reporting/dashboard', {
+        fetch('${replaceApiUrl("")}/api/advanced-reporting/dashboard', {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
         })
       ]);
@@ -145,7 +147,7 @@ export const AdvancedReportingDashboard: React.FC = () => {
 
   const handleExportReport = async (reportId: string, format: 'pdf' | 'excel' | 'csv' | 'json') => {
     try {
-      const response = await fetch(`http://localhost:8001/api/advanced-reporting/reports/${reportId}/export`, {
+      const response = await fetch(`${replaceApiUrl("")}/api/advanced-reporting/reports/${reportId}/export`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -166,7 +168,7 @@ export const AdvancedReportingDashboard: React.FC = () => {
 
   const handleScheduleReport = async (reportId: string, schedule: any) => {
     try {
-      const response = await fetch(`http://localhost:8001/api/advanced-reporting/reports/${reportId}/schedule`, {
+      const response = await fetch(`${replaceApiUrl("")}/api/advanced-reporting/reports/${reportId}/schedule`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

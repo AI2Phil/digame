@@ -18,6 +18,8 @@ const CommunicationStyleAnalyzer = () => {
   const [usingFallbackData, setUsingFallbackData] = useState(false);
 
   const { toast } = useToast();
+import { apiClient, replaceApiUrl } from '../../lib/api-config';
+
 
   useEffect(() => {
     checkFeatureAvailability();
@@ -33,7 +35,7 @@ const CommunicationStyleAnalyzer = () => {
       }
 
       // Try to fetch user features from database
-      const response = await fetch('http://localhost:8001/api/ai/communication-style/features', {
+      const response = await fetch('${replaceApiUrl("")}/api/ai/communication-style/features', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
@@ -67,7 +69,7 @@ const CommunicationStyleAnalyzer = () => {
       const token = localStorage.getItem('access_token');
       if (!token) return;
 
-      const response = await fetch('http://localhost:8001/api/ai/communication-style/history', {
+      const response = await fetch('${replaceApiUrl("")}/api/ai/communication-style/history', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
@@ -115,7 +117,7 @@ const CommunicationStyleAnalyzer = () => {
         return;
       }
 
-      const response = await fetch('http://localhost:8001/api/ai/communication-style/analyze', {
+      const response = await fetch('${replaceApiUrl("")}/api/ai/communication-style/analyze', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

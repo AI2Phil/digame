@@ -5,6 +5,8 @@ import { Progress } from '../ui/Progress';
 import { ArrowUp, ArrowDown, ChevronRight, Activity } from 'lucide-react';
 
 const ProductivityMetricCard = ({
+import { apiClient, replaceApiUrl } from '../../lib/api-config';
+
   userId = 1, // Default user ID for demo
   title = "Activities Today",
   value,
@@ -27,7 +29,7 @@ const ProductivityMetricCard = ({
     const fetchActivitiesData = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`http://localhost:8001/api/v1/productivity/activities/today/${userId}`);
+        const response = await fetch(`${replaceApiUrl("")}/api/v1/productivity/activities/today/${userId}`);
         
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);

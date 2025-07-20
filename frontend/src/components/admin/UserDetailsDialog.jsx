@@ -1,5 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { 
+import { apiClient, replaceApiUrl } from '../../lib/api-config';
+
   User, Mail, Calendar, Shield, Activity, 
   Key, Settings, Edit, Save, X
 } from 'lucide-react';
@@ -29,7 +31,7 @@ const UserDetailsDialog = ({ user, onAction, onClose }) => {
   const fetchUserDetails = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetch(`http://localhost:8001/api/admin/users/${user.id}`, {
+      const response = await fetch(`${replaceApiUrl("")}/api/admin/users/${user.id}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
           'Content-Type': 'application/json'
@@ -65,7 +67,7 @@ const UserDetailsDialog = ({ user, onAction, onClose }) => {
 
   const handleSave = async () => {
     try {
-      const response = await fetch(`http://localhost:8001/api/admin/users/${user.id}`, {
+      const response = await fetch(`${replaceApiUrl("")}/api/admin/users/${user.id}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,

@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
+import { apiClient, replaceApiUrl } from '../../lib/api-config';
+
   Play,
   RefreshCw,
   Copy,
@@ -107,7 +109,7 @@ const TestZone: React.FC = () => {
         return;
       }
 
-      const response = await fetch('http://localhost:8001/platform-owner/test-zone/metrics', {
+      const response = await fetch('${replaceApiUrl("")}/platform-owner/test-zone/metrics', {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -141,7 +143,7 @@ const TestZone: React.FC = () => {
         return;
       }
 
-      const response = await fetch('http://localhost:8001/platform-owner/test-zone/available-tests', {
+      const response = await fetch('${replaceApiUrl("")}/platform-owner/test-zone/available-tests', {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -198,7 +200,7 @@ const TestZone: React.FC = () => {
         return;
       }
 
-      const response = await fetch('http://localhost:8001/platform-owner/test-zone/intelligence/sample-data', {
+      const response = await fetch('${replaceApiUrl("")}/platform-owner/test-zone/intelligence/sample-data', {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -980,7 +982,7 @@ const TestZone: React.FC = () => {
         throw new Error('No authentication token found');
       }
 
-      const response = await fetch('http://localhost:8001/platform-owner/test-zone/run-all-tests', {
+      const response = await fetch('${replaceApiUrl("")}/platform-owner/test-zone/run-all-tests', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1050,7 +1052,7 @@ const TestZone: React.FC = () => {
       
       if (token) {
         try {
-          await fetch('http://localhost:8001/platform-owner/test-zone/reset-metrics', {
+          await fetch('${replaceApiUrl("")}/platform-owner/test-zone/reset-metrics', {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${token}`,

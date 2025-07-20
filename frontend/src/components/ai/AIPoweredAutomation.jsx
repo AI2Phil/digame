@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
+import { apiClient, replaceApiUrl } from '../../lib/api-config';
+
   Card,
   CardContent,
   CardDescription,
@@ -577,7 +579,7 @@ const AIPoweredAutomation = () => {
       const newStatus = automation.status === 'active' ? 'paused' : 'active';
       
       // Update via API (assuming template activation/deactivation)
-      const response = await fetch(`http://localhost:8001/api/workflow-automation/templates/${automationId}`, {
+      const response = await fetch(`${replaceApiUrl("")}/api/workflow-automation/templates/${automationId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

@@ -4,6 +4,8 @@ import React, { useState, useEffect } from 'react';
 const toast = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
   // Create toast element
   const toastEl = document.createElement('div');
+import { apiClient, replaceApiUrl } from '../../lib/api-config';
+
   toastEl.style.cssText = `
     position: fixed;
     top: 20px;
@@ -98,7 +100,7 @@ export const IntegrationDashboard: React.FC = () => {
       setError(null);
       
       // Fetch connections
-      const connectionsResponse = await fetch('http://localhost:8001/api/integrations/connections');
+      const connectionsResponse = await fetch('${replaceApiUrl("")}/api/integrations/connections');
       if (!connectionsResponse.ok) {
         if (connectionsResponse.status === 401) {
           throw new Error('Authentication required. Please log in.');
@@ -109,13 +111,13 @@ export const IntegrationDashboard: React.FC = () => {
       setConnections(connectionsData);
 
       // Fetch recent sync logs
-      const logsResponse = await fetch('http://localhost:8001/api/integrations/sync-logs?limit=50');
+      const logsResponse = await fetch('${replaceApiUrl("")}/api/integrations/sync-logs?limit=50');
       if (!logsResponse.ok) throw new Error('Failed to fetch sync logs');
       const logsData = await logsResponse.json();
       setSyncLogs(logsData);
 
       // Fetch analytics
-      const analyticsResponse = await fetch('http://localhost:8001/api/integrations/analytics');
+      const analyticsResponse = await fetch('${replaceApiUrl("")}/api/integrations/analytics');
       if (!analyticsResponse.ok) throw new Error('Failed to fetch analytics');
       const analyticsData = await analyticsResponse.json();
       setAnalytics(analyticsData);
@@ -133,7 +135,7 @@ export const IntegrationDashboard: React.FC = () => {
 
   const handleSync = async (connectionId: number) => {
     try {
-      const response = await fetch(`http://localhost:8001/api/integrations/connections/${connectionId}/sync`, {
+      const response = await fetch(`${replaceApiUrl("")}/api/integrations/connections/${connectionId}/sync`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -156,7 +158,7 @@ export const IntegrationDashboard: React.FC = () => {
 
   const handleTestConnection = async (connectionId: number) => {
     try {
-      const response = await fetch(`http://localhost:8001/api/integrations/connections/${connectionId}/test`, {
+      const response = await fetch(`${replaceApiUrl("")}/api/integrations/connections/${connectionId}/test`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

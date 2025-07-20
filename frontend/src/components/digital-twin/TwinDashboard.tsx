@@ -6,6 +6,8 @@ import { Progress } from '../ui/Progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/Tabs';
 import { Avatar, AvatarFallback } from '../ui/Avatar';
 import { 
+import { apiClient, replaceApiUrl } from '../../lib/api-config';
+
   Brain, 
   MessageCircle, 
   BarChart3, 
@@ -47,7 +49,7 @@ export const TwinDashboard: React.FC<TwinDashboardProps> = ({ twinId, userId }) 
   const fetchTwinData = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetch(`http://localhost:8001/api/digital-twin/status`, {
+      const response = await fetch(`${replaceApiUrl("")}/api/digital-twin/status`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
           'Content-Type': 'application/json',

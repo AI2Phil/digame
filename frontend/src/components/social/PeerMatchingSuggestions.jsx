@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import apiService from '../../../services/apiService';
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '../../ui/Card';
-import { Avatar } from '../../ui/Avatar';
-import { Badge } from '../../ui/Badge';
-import { Button } from '../../ui/Button';
+import apiService from '../../services/apiService';
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '../ui/Card';
+import { Avatar } from '../ui/Avatar';
+import { Badge } from '../ui/Badge';
+import { Button } from '../ui/Button';
 import { Users, Zap, Eye, UserPlus } from 'lucide-react'; // Zap for suggestions, Eye for view, UserPlus for connect
 
 const PeerSuggestionItem = ({ peer }) => {

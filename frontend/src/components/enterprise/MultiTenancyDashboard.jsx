@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
+import { apiClient, replaceApiUrl } from '../../lib/api-config';
+
   Building, Users, Settings, Shield, Crown, Calendar,
   UserPlus, Mail, Key, BarChart3, Activity, AlertTriangle,
   CheckCircle, Clock, Globe, Database, Zap, Eye
@@ -28,7 +30,7 @@ const MultiTenancyDashboard = ({ currentTenant, userRole, onTenantSwitch }) => {
   const loadDashboardData = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:8001/api/multi-tenancy/dashboard', {
+      const response = await fetch('${replaceApiUrl("")}/api/multi-tenancy/dashboard', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -170,7 +172,7 @@ const MultiTenancyDashboard = ({ currentTenant, userRole, onTenantSwitch }) => {
 
   const handleInviteUser = async (email, role) => {
     try {
-      const response = await fetch('http://localhost:8001/api/multi-tenancy/invite-user', {
+      const response = await fetch('${replaceApiUrl("")}/api/multi-tenancy/invite-user', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -217,7 +219,7 @@ const MultiTenancyDashboard = ({ currentTenant, userRole, onTenantSwitch }) => {
 
   const handleUpdateUserRole = async (userId, newRole) => {
     try {
-      const response = await fetch(`http://localhost:8001/api/multi-tenancy/users/${userId}/role`, {
+      const response = await fetch(`${replaceApiUrl("")}/api/multi-tenancy/users/${userId}/role`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -252,7 +254,7 @@ const MultiTenancyDashboard = ({ currentTenant, userRole, onTenantSwitch }) => {
 
   const handleRemoveUser = async (userId) => {
     try {
-      const response = await fetch(`http://localhost:8001/api/multi-tenancy/users/${userId}`, {
+      const response = await fetch(`${replaceApiUrl("")}/api/multi-tenancy/users/${userId}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',

@@ -19,6 +19,8 @@ const EmailAnalyzer = () => {
   const { success, error: showError, warning, info } = useToastHelpers();
 
   const exampleJsonFormat = `[
+import { apiClient, replaceApiUrl } from '../../lib/api-config';
+
   { "subject": "Weekly Report", "sender": "boss@example.com", "timestamp": "2023-10-01T10:00:00Z" },
   { "subject": "Project Update", "sender": "colleague@example.com", "timestamp": "2023-10-02T14:30:00Z" }
 ]`;
@@ -32,7 +34,7 @@ const EmailAnalyzer = () => {
       }
 
       // Try to fetch user tier from database-driven API
-      const response = await fetch('http://localhost:8001/api/ai/email/feature-check', {
+      const response = await fetch('${replaceApiUrl("")}/api/ai/email/feature-check', {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -69,7 +71,7 @@ const EmailAnalyzer = () => {
       const token = localStorage.getItem('access_token');
       if (!token) return;
 
-      const response = await fetch('http://localhost:8001/api/ai/email/history', {
+      const response = await fetch('${replaceApiUrl("")}/api/ai/email/history', {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -164,7 +166,7 @@ const EmailAnalyzer = () => {
         return;
       }
 
-      const response = await fetch('http://localhost:8001/api/ai/email/analyze', {
+      const response = await fetch('${replaceApiUrl("")}/api/ai/email/analyze', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
+import { apiClient, replaceApiUrl } from '../../lib/api-config';
+
   Database,
   Zap,
   Clock,
@@ -100,7 +102,7 @@ const QueryOptimization: React.FC<QueryOptimizationProps> = ({
       }
 
       // Fetch query optimization data from database-driven API
-      const response = await fetch(`http://localhost:8001/api/performance/query-optimization?database=${selectedDatabase}`, {
+      const response = await fetch(`${replaceApiUrl("")}/api/performance/query-optimization?database=${selectedDatabase}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'

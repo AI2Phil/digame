@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
+import { apiClient, replaceApiUrl } from '../../lib/api-config';
+
   Brain,
   TrendingUp,
   TrendingDown,
@@ -86,7 +88,7 @@ const IntelligenceInsights: React.FC = () => {
         throw new Error('No authentication token found');
       }
 
-      const response = await fetch('http://localhost:8001/platform-owner/dashboard', {
+      const response = await fetch('${replaceApiUrl("")}/platform-owner/dashboard', {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,

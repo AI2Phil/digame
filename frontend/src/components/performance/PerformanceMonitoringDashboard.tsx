@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
+import { apiClient, replaceApiUrl } from '../../lib/api-config';
+
   Activity,
   Zap,
   Clock,
@@ -116,7 +118,7 @@ const PerformanceMonitoringDashboard: React.FC<PerformanceMonitoringDashboardPro
       }
 
       // Fetch comprehensive performance monitoring data from database-driven API
-      const response = await fetch('http://localhost:8001/api/performance/monitoring-dashboard', {
+      const response = await fetch('${replaceApiUrl("")}/api/performance/monitoring-dashboard', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'

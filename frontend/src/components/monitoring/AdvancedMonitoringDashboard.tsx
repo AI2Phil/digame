@@ -3,6 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
 import {
+import { apiClient, replaceApiUrl } from '../../lib/api-config';
+
   Activity, AlertTriangle, CheckCircle, XCircle, Clock,
   TrendingUp, TrendingDown, Zap, Shield, Database,
   Server, Wifi, HardDrive, Cpu, MemoryStick, Globe,
@@ -103,7 +105,7 @@ export const AdvancedMonitoringDashboard: React.FC = () => {
         setLoading(true);
         
         // Fetch from database API
-        const response = await fetch('http://localhost:8001/api/monitoring/dashboard', {
+        const response = await fetch('${replaceApiUrl("")}/api/monitoring/dashboard', {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -315,7 +317,7 @@ export const AdvancedMonitoringDashboard: React.FC = () => {
   const handleAlertAction = async (alertId: string, action: 'acknowledge' | 'resolve') => {
     try {
       // Call database API for alert action
-      const response = await fetch(`http://localhost:8001/api/monitoring/alerts/${alertId}/action`, {
+      const response = await fetch(`${replaceApiUrl("")}/api/monitoring/alerts/${alertId}/action`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

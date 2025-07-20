@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
+import { apiClient, replaceApiUrl } from '../../lib/api-config';
+
   Card,
   CardContent,
   CardDescription,
@@ -537,7 +539,7 @@ const WorkflowMarketplace = () => {
       
       // Parallel API calls for comprehensive marketplace data
       const [templatesResponse, myWorkflowsResponse, communityResponse] = await Promise.all([
-        fetch(`http://localhost:8001/api/workflow-marketplace/templates?category=${selectedCategory}&sort=${sortBy}&search=${searchQuery}`, {
+        fetch(`${replaceApiUrl("")}/api/workflow-marketplace/templates?category=${selectedCategory}&sort=${sortBy}&search=${searchQuery}`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -545,13 +547,13 @@ const WorkflowMarketplace = () => {
             // 'Authorization': `Bearer ${token}`
           },
         }),
-        fetch(`http://localhost:8001/api/workflow-marketplace/my-workflows`, {
+        fetch(`${replaceApiUrl("")}/api/workflow-marketplace/my-workflows`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
           },
         }),
-        fetch(`http://localhost:8001/api/workflow-marketplace/community`, {
+        fetch(`${replaceApiUrl("")}/api/workflow-marketplace/community`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',

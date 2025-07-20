@@ -4,6 +4,8 @@ import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
 import { useToastHelpers } from '../ui/Toaster';
 import {
+import { apiClient, replaceApiUrl } from '../../lib/api-config';
+
   Shield, CheckCircle, AlertTriangle, Clock, FileText, 
   Download, Upload, Settings, Eye, TrendingUp, BarChart3,
   Calendar, Users, Database, Lock, Globe, Zap
@@ -32,19 +34,19 @@ const ComplianceManagementSystem = () => {
       setLoading(true);
       
       const [overviewResponse, frameworksResponse, assessmentsResponse, policiesResponse, reportsResponse] = await Promise.all([
-        fetch('http://localhost:8001/api/security/compliance/overview', {
+        fetch('${replaceApiUrl("")}/api/security/compliance/overview', {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
         }),
-        fetch('http://localhost:8001/api/security/compliance/frameworks', {
+        fetch('${replaceApiUrl("")}/api/security/compliance/frameworks', {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
         }),
-        fetch('http://localhost:8001/api/security/compliance/assessments', {
+        fetch('${replaceApiUrl("")}/api/security/compliance/assessments', {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
         }),
-        fetch('http://localhost:8001/api/security/compliance/policies', {
+        fetch('${replaceApiUrl("")}/api/security/compliance/policies', {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
         }),
-        fetch('http://localhost:8001/api/security/compliance/audit-reports', {
+        fetch('${replaceApiUrl("")}/api/security/compliance/audit-reports', {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
         })
       ]);

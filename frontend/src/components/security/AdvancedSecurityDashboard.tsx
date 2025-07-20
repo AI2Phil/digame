@@ -4,6 +4,8 @@ import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
 import { useToastHelpers } from '../ui/Toaster';
 import {
+import { apiClient, replaceApiUrl } from '../../lib/api-config';
+
   Shield, Lock, Key, Eye, AlertTriangle, CheckCircle,
   Users, FileText, Clock, TrendingUp, BarChart3,
   Settings, Download, RefreshCw, Filter, Search,
@@ -204,16 +206,16 @@ export const AdvancedSecurityDashboard: React.FC = () => {
       setLoading(true);
       
       const [metricsResponse, frameworksResponse, policiesResponse, reviewsResponse] = await Promise.all([
-        fetch('http://localhost:8001/api/security/dashboard/metrics', {
+        fetch('${replaceApiUrl("")}/api/security/dashboard/metrics', {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
         }),
-        fetch('http://localhost:8001/api/security/compliance/frameworks', {
+        fetch('${replaceApiUrl("")}/api/security/compliance/frameworks', {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
         }),
-        fetch('http://localhost:8001/api/security/policies', {
+        fetch('${replaceApiUrl("")}/api/security/policies', {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
         }),
-        fetch('http://localhost:8001/api/security/access-reviews', {
+        fetch('${replaceApiUrl("")}/api/security/access-reviews', {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
         })
       ]);

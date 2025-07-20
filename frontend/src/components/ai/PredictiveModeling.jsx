@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
+import { apiClient, replaceApiUrl } from '../../lib/api-config';
+
   Card,
   CardContent,
   CardDescription,
@@ -498,7 +500,7 @@ const PredictiveModeling = () => {
       }, 500);
       
       // Call the real training API
-      const response = await fetch(`http://localhost:8001/api/analytics/models/${modelId}/train`, {
+      const response = await fetch(`${replaceApiUrl("")}/api/analytics/models/${modelId}/train`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

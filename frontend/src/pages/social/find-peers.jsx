@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/router'; // Import useNavigate
 
 // Example: Card component (if you have one, otherwise simple divs will be used)
-// import Card from '../components/ui/Card';
+// import Card from '../../components/ui/Card';
 
 const FindPeersPage = () => {
   const [matches, setMatches] = useState([]);

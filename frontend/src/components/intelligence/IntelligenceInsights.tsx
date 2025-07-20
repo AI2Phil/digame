@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
+import { apiClient, replaceApiUrl } from '../../lib/api-config';
+
   Brain,
   TrendingUp,
   Clock,
@@ -86,7 +88,7 @@ const IntelligenceInsights: React.FC = () => {
       }
 
       // Fetch patterns
-      const patternsResponse = await fetch('http://localhost:8001/api/v1/intelligence/patterns/analyze', {
+      const patternsResponse = await fetch('${replaceApiUrl("")}/api/v1/intelligence/patterns/analyze', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -96,7 +98,7 @@ const IntelligenceInsights: React.FC = () => {
       });
 
       // Fetch productivity predictions
-      const productivityResponse = await fetch('http://localhost:8001/api/v1/intelligence/predictions/productivity', {
+      const productivityResponse = await fetch('${replaceApiUrl("")}/api/v1/intelligence/predictions/productivity', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -106,7 +108,7 @@ const IntelligenceInsights: React.FC = () => {
       });
 
       // Fetch energy insights
-      const energyResponse = await fetch('http://localhost:8001/api/v1/intelligence/predictions/energy', {
+      const energyResponse = await fetch('${replaceApiUrl("")}/api/v1/intelligence/predictions/energy', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -116,7 +118,7 @@ const IntelligenceInsights: React.FC = () => {
       });
 
       // Fetch comprehensive insights
-      const comprehensiveResponse = await fetch('http://localhost:8001/api/v1/intelligence/insights/comprehensive', {
+      const comprehensiveResponse = await fetch('${replaceApiUrl("")}/api/v1/intelligence/insights/comprehensive', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

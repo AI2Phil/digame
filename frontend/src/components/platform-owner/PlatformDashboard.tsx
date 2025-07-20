@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
+import { apiClient, replaceApiUrl } from '../../lib/api-config';
+
   Users,
   Activity,
   Brain,
@@ -70,7 +72,7 @@ const PlatformDashboard: React.FC = () => {
       // Try to get backend service info first
       let backendUrl = 'http://localhost:8000';
       try {
-        const serviceResponse = await fetch('http://localhost:8000/service-info');
+        const serviceResponse = await fetch('${replaceApiUrl("/service-info")}');
         if (serviceResponse.ok) {
           const serviceInfo = await serviceResponse.json();
           backendUrl = serviceInfo.url || `http://localhost:${serviceInfo.port}`;

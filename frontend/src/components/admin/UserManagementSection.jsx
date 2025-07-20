@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
+import { apiClient, replaceApiUrl } from '../../lib/api-config';
+
   Search, Filter, Download, MoreHorizontal,
   UserCheck, UserX, Shield, Key, Mail,
   Calendar, Activity, Edit, Trash2, Users,
@@ -69,7 +71,7 @@ const UserManagementSection = () => {
         status_filter: currentFilterStatus
       });
 
-      const response = await fetch(`http://localhost:8001/api/admin/users/comprehensive?${params}`, {
+      const response = await fetch(`${replaceApiUrl("")}/api/admin/users/comprehensive?${params}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
           'Content-Type': 'application/json'
@@ -102,7 +104,7 @@ const UserManagementSection = () => {
   // Fetch user statistics
   const fetchUserStats = useCallback(async () => {
     try {
-      const response = await fetch('http://localhost:8001/api/admin/users/stats', {
+      const response = await fetch('${replaceApiUrl("")}/api/admin/users/stats', {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
           'Content-Type': 'application/json'
@@ -206,10 +208,10 @@ const UserManagementSection = () => {
       switch (action) {
         case 'activate':
         case 'deactivate':
-          endpoint = `http://localhost:8001/api/admin/users/${userId}/toggle-status`;
+          endpoint = `${replaceApiUrl("")}/api/admin/users/${userId}/toggle-status`;
           break;
         case 'delete':
-          endpoint = `http://localhost:8001/api/admin/users/${userId}`;
+          endpoint = `${replaceApiUrl("")}/api/admin/users/${userId}`;
           method = 'DELETE';
           break;
         default:
@@ -248,7 +250,7 @@ const UserManagementSection = () => {
     }
 
     try {
-      const response = await fetch('http://localhost:8001/api/admin/users/bulk-action', {
+      const response = await fetch('${replaceApiUrl("")}/api/admin/users/bulk-action', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,

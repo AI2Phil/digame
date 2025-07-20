@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
+import { apiClient, replaceApiUrl } from '../../lib/api-config';
+
   Save,
   RefreshCw,
   AlertCircle,
@@ -86,7 +88,7 @@ const PlatformSettings: React.FC = () => {
         throw new Error('No authentication token found');
       }
 
-      const response = await fetch('http://localhost:8001/platform-owner/settings', {
+      const response = await fetch('${replaceApiUrl("")}/platform-owner/settings', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -168,7 +170,7 @@ const PlatformSettings: React.FC = () => {
         throw new Error('No authentication token found');
       }
 
-      const response = await fetch('http://localhost:8001/platform-owner/settings', {
+      const response = await fetch('${replaceApiUrl("")}/platform-owner/settings', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

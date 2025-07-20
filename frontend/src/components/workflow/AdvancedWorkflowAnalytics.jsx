@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
+import { apiClient, replaceApiUrl } from '../../lib/api-config';
+
   Card,
   CardContent,
   CardDescription,
@@ -199,7 +201,7 @@ const AdvancedWorkflowAnalytics = () => {
       
       // Parallel API calls for comprehensive analytics data
       const [performanceResponse, bottleneckResponse, resourceResponse, metricsResponse] = await Promise.all([
-        fetch(`http://localhost:8001/api/workflow-automation/analytics/performance?timeRange=${selectedTimeRange}&workflow=${selectedWorkflow}`, {
+        fetch(`${replaceApiUrl("")}/api/workflow-automation/analytics/performance?timeRange=${selectedTimeRange}&workflow=${selectedWorkflow}`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -207,19 +209,19 @@ const AdvancedWorkflowAnalytics = () => {
             // 'Authorization': `Bearer ${token}`
           },
         }),
-        fetch(`http://localhost:8001/api/workflow-automation/analytics/bottlenecks?timeRange=${selectedTimeRange}`, {
+        fetch(`${replaceApiUrl("")}/api/workflow-automation/analytics/bottlenecks?timeRange=${selectedTimeRange}`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
           },
         }),
-        fetch(`http://localhost:8001/api/workflow-automation/analytics/resources?timeRange=${selectedTimeRange}`, {
+        fetch(`${replaceApiUrl("")}/api/workflow-automation/analytics/resources?timeRange=${selectedTimeRange}`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
           },
         }),
-        fetch(`http://localhost:8001/api/workflow-automation/analytics/metrics?timeRange=${selectedTimeRange}`, {
+        fetch(`${replaceApiUrl("")}/api/workflow-automation/analytics/metrics?timeRange=${selectedTimeRange}`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',

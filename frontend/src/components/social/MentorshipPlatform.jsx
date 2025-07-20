@@ -4,11 +4,11 @@ React component for the complete mentorship system
 */
 
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from './ui/Card';
-import { Button } from './ui/Button';
-import { Badge } from './ui/Badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/Tabs';
-import { Progress } from './ui/Progress';
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card';
+import { Button } from '../ui/Button';
+import { Badge } from '../ui/Badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/Tabs';
+import { Progress } from '../ui/Progress';
 import { 
   Users, 
   Star, 

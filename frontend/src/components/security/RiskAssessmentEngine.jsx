@@ -4,6 +4,8 @@ import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
 import { useToastHelpers } from '../ui/Toaster';
 import {
+import { apiClient, replaceApiUrl } from '../../lib/api-config';
+
   Shield, AlertTriangle, TrendingUp, TrendingDown, Eye,
   Target, Zap, Lock, Unlock, Users, Server, Database,
   Globe, Smartphone, Monitor, FileText, Settings,
@@ -37,19 +39,19 @@ const RiskAssessmentEngine = () => {
       setLoading(true);
 
       const [overviewResponse, vulnResponse, threatsResponse, matrixResponse, mitigationResponse] = await Promise.all([
-        fetch('http://localhost:8001/api/security/risk-assessment/overview', {
+        fetch('${replaceApiUrl("")}/api/security/risk-assessment/overview', {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
         }),
-        fetch('http://localhost:8001/api/security/risk-assessment/vulnerabilities', {
+        fetch('${replaceApiUrl("")}/api/security/risk-assessment/vulnerabilities', {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
         }),
-        fetch('http://localhost:8001/api/security/risk-assessment/threats', {
+        fetch('${replaceApiUrl("")}/api/security/risk-assessment/threats', {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
         }),
-        fetch('http://localhost:8001/api/security/risk-assessment/matrix', {
+        fetch('${replaceApiUrl("")}/api/security/risk-assessment/matrix', {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
         }),
-        fetch('http://localhost:8001/api/security/risk-assessment/mitigation', {
+        fetch('${replaceApiUrl("")}/api/security/risk-assessment/mitigation', {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
         })
       ]);

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Button } from '../../ui/Button'; // Added import
+import { Button } from '../ui/Button'; // Added import
 
 const InteractiveChart = ({ 
   data = [], 

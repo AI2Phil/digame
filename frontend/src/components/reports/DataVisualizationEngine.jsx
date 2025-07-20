@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
+import { apiClient, replaceApiUrl } from '../../lib/api-config';
+
   BarChart3, LineChart, PieChart, TrendingUp, Zap, Settings,
   Palette, Monitor, Download, Share, RefreshCw, AlertCircle,
   CheckCircle, Clock, Eye, Layers, Target, Activity
@@ -29,7 +31,7 @@ const DataVisualizationEngine = () => {
   const fetchEngineData = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:3001/advanced-reporting/visualization-engine');
+      const response = await fetch('${replaceApiUrl("/api/advanced-reporting/visualization-engine")}');
       
       if (!response.ok) {
         throw new Error('Failed to fetch visualization engine data');

@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
+import { apiClient, replaceApiUrl } from '../../lib/api-config';
+
   Card,
   CardContent,
   CardDescription,
@@ -389,31 +391,31 @@ const NLPEnhancement = () => {
     try {
       // Try to fetch from database first
       const [conversationsRes, modelsRes, analysisRes, sentimentRes, performanceRes] = await Promise.all([
-        fetch('http://localhost:8001/api/ai/nlp/conversations', {
+        fetch('${replaceApiUrl("")}/api/ai/nlp/conversations', {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`,
             'Content-Type': 'application/json',
           },
         }),
-        fetch('http://localhost:8001/api/ai/nlp/models', {
+        fetch('${replaceApiUrl("")}/api/ai/nlp/models', {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`,
             'Content-Type': 'application/json',
           },
         }),
-        fetch('http://localhost:8001/api/ai/nlp/text-analysis', {
+        fetch('${replaceApiUrl("")}/api/ai/nlp/text-analysis', {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`,
             'Content-Type': 'application/json',
           },
         }),
-        fetch('http://localhost:8001/api/ai/nlp/sentiment-trends', {
+        fetch('${replaceApiUrl("")}/api/ai/nlp/sentiment-trends', {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`,
             'Content-Type': 'application/json',
           },
         }),
-        fetch('http://localhost:8001/api/ai/nlp/performance', {
+        fetch('${replaceApiUrl("")}/api/ai/nlp/performance', {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`,
             'Content-Type': 'application/json',
@@ -470,7 +472,7 @@ const NLPEnhancement = () => {
     setIsProcessing(true);
     
     try {
-      const response = await fetch('http://localhost:8001/api/ai/nlp/analyze-text', {
+      const response = await fetch('${replaceApiUrl("")}/api/ai/nlp/analyze-text', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
