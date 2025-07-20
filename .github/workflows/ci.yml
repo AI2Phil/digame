@@ -329,20 +329,20 @@ jobs:
         
         echo "📊 Success analysis complete. Report saved to $SUCCESS_REPORT"
 
-    - name: Upload CI Analysis Reports
+    - name: Upload Build Analysis Reports
       uses: actions/upload-artifact@v4
       if: always()
       with:
-        name: ci-analysis-reports-${{ github.run_id }}
+        name: build-analysis-${{ github.run_id }}
         path: |
+          frontend/build-output.log
+          frontend/build-errors.log
           frontend/ci-build-failure-report.txt
           frontend/ci-success-report.txt
-          frontend/utility-hooks-report.txt
-          frontend/react-imports-report.txt
         retention-days: 7
         if-no-files-found: ignore
 
-    - name: Build frontend with reduced logging
+    - name: Build frontend with enhanced error capture
       working-directory: ./frontend
       env:
         NODE_ENV: production
@@ -354,31 +354,59 @@ jobs:
         # Clear build artifacts
         rm -rf .next node_modules/.cache 2>/dev/null || true
         
-        # Use the build:silent script from package.json for reduced verbosity
-        if npm run build:silent; then
-          echo "✅ Build completed successfully"
+        # Capture build output and errors
+        BUILD_LOG="build-output.log"
+        BUILD_ERROR_LOG="build-errors.log"
+        
+        echo "=== FRONTEND BUILD ATTEMPT ===" > $BUILD_LOG
+        echo "Started: $(date)" >> $BUILD_LOG
+        echo "Node: $(node --version)" >> $BUILD_LOG
+        echo "NPM: $(npm --version)" >> $BUILD_LOG
+        echo "" >> $BUILD_LOG
+        
+        # Try build with full error capture
+        if npm run build 2>&1 | tee -a $BUILD_LOG; then
+          echo "✅ Build completed successfully" | tee -a $BUILD_LOG
+          BUILD_SUCCESS=true
         else
-          echo "⚠️ Silent build failed, trying with CI build script..."
-          rm -rf .next node_modules/.cache 2>/dev/null || true
+          echo "❌ Build failed" | tee -a $BUILD_LOG
+          BUILD_SUCCESS=false
           
-          if npm run build:ci; then
-            echo "✅ Build completed with CI script"
-          else
-            echo "⚠️ CI build failed, trying standard build..."
-            rm -rf .next node_modules/.cache 2>/dev/null || true
-            
-            if npm run build; then
-              echo "✅ Build completed with standard script"
-            else
-              echo "❌ All build attempts failed"
-              echo "Memory: $(free -h | awk 'NR==2{print $3"/"$2}' 2>/dev/null || echo 'unknown')"
-              echo "Node: $(node --version)"
-              echo "NPM: $(npm --version)"
-              echo "Checking for build errors..."
-              ls -la . || true
-              exit 1
-            fi
+          # Capture detailed error information
+          echo "=== BUILD FAILURE ANALYSIS ===" > $BUILD_ERROR_LOG
+          echo "Build failed at: $(date)" >> $BUILD_ERROR_LOG
+          echo "Exit code: $?" >> $BUILD_ERROR_LOG
+          echo "" >> $BUILD_ERROR_LOG
+          
+          # Copy build log to error log
+          echo "=== BUILD OUTPUT ===" >> $BUILD_ERROR_LOG
+          cat $BUILD_LOG >> $BUILD_ERROR_LOG
+          echo "" >> $BUILD_ERROR_LOG
+          
+          # Check for specific error patterns
+          echo "=== ERROR ANALYSIS ===" >> $BUILD_ERROR_LOG
+          if grep -i "typescript\|tsc" $BUILD_LOG; then
+            echo "❌ TypeScript compilation errors detected" >> $BUILD_ERROR_LOG
           fi
+          if grep -i "module not found\|cannot resolve" $BUILD_LOG; then
+            echo "❌ Module resolution errors detected" >> $BUILD_ERROR_LOG
+          fi
+          if grep -i "syntax error\|unexpected token" $BUILD_LOG; then
+            echo "❌ Syntax errors detected" >> $BUILD_ERROR_LOG
+          fi
+          if grep -i "out of memory\|heap" $BUILD_LOG; then
+            echo "❌ Memory issues detected" >> $BUILD_ERROR_LOG
+          fi
+          
+          # System state at failure
+          echo "" >> $BUILD_ERROR_LOG
+          echo "=== SYSTEM STATE ===" >> $BUILD_ERROR_LOG
+          echo "Memory: $(free -h | awk 'NR==2{print $3"/"$2}' 2>/dev/null || echo 'unknown')" >> $BUILD_ERROR_LOG
+          echo "Disk: $(df -h . | awk 'NR==2{print $4" available"}' 2>/dev/null || echo 'unknown')" >> $BUILD_ERROR_LOG
+          echo "Directory contents:" >> $BUILD_ERROR_LOG
+          ls -la >> $BUILD_ERROR_LOG
+          
+          exit 1
         fi
         
         # Verify .next directory was created
