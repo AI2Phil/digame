@@ -56,19 +56,16 @@ jobs:
           # Clean install with devDependencies
           npm ci
           
-          # Force install Playwright if missing
-          echo "🔍 Checking for @playwright/test..."
-          if [ ! -d "node_modules/@playwright/test" ]; then
-            echo "⚠️ @playwright/test missing - installing explicitly..."
-            npm install @playwright/test@^1.41.2 --save-dev --force
-          fi
+          # Always install Playwright explicitly to ensure it's available
+          echo "🔧 Installing @playwright/test explicitly..."
+          npm install @playwright/test@^1.41.2 --save-dev
           
           echo "✅ Verifying @playwright/test installation:"
-          ls -la node_modules/@playwright/test/package.json || echo "❌ Still not found"
+          ls -la node_modules/@playwright/test/package.json
           
           # Verify the module can be required
           echo "🔍 Testing module import..."
-          node -e "try { require('@playwright/test'); console.log('✅ @playwright/test can be imported'); } catch(e) { console.log('❌ Import failed:', e.message); }"
+          node -e "try { require('@playwright/test'); console.log('✅ @playwright/test can be imported'); } catch(e) { console.log('❌ Import failed:', e.message); process.exit(1); }"
 
       - name: Build frontend
         working-directory: ./frontend
@@ -204,15 +201,15 @@ jobs:
         run: |
           echo "📦 Installing Playwright browsers for: ${{ matrix.browser }}"
           echo "Verifying @playwright/test is available:"
-          ls -la node_modules/@playwright/test/package.json || echo "Not found"
+          ls -la node_modules/@playwright/test/package.json
           
-          # Install specific browser for this matrix job
+          # Use local Playwright installation to install browsers
           echo "Installing browser: ${{ matrix.browser }}"
-          npx playwright install ${{ matrix.browser }} --with-deps
+          node_modules/.bin/playwright install ${{ matrix.browser }} --with-deps
           
           # Verify browser installation
           echo "✅ Verifying browser installation:"
-          npx playwright install --dry-run ${{ matrix.browser }} || echo "Browser verification failed"
+          node_modules/.bin/playwright install --dry-run ${{ matrix.browser }} || echo "Browser verification failed"
 
       - name: Run E2E tests
         working-directory: ./frontend
@@ -273,8 +270,9 @@ jobs:
           export NODE_PATH="$(pwd)/node_modules:$NODE_PATH"
           echo "Updated NODE_PATH: $NODE_PATH"
           
-          # Run all E2E tests with proper module resolution
-          NODE_PATH="$(pwd)/node_modules:$NODE_PATH" npx playwright test tests/e2e/ --config=playwright-ci.config.js --project=${{ matrix.browser }} --reporter=line
+          # Run all E2E tests using local Playwright binary
+          echo "🚀 Running E2E tests using local Playwright binary..."
+          node_modules/.bin/playwright test tests/e2e/ --config=playwright-ci.config.js --project=${{ matrix.browser }} --reporter=line
 
       - name: Stop servers
         if: always()
