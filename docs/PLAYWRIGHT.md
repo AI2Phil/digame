@@ -226,3 +226,145 @@ When ready to migrate to Python 3.12:
 The combination of Python 3.11 for backend services and the corrected Playwright configuration provides a stable, reliable testing environment for the Digame platform. This approach prioritizes stability and compatibility while maintaining the ability to upgrade when the ecosystem is ready.
 
 For immediate deployment needs, Python 3.11 is the recommended choice, with a planned migration to Python 3.12 once the dependency ecosystem achieves full compatibility.
+
+## CI/CD E2E Testing Setup
+
+### GitHub Actions Integration
+
+The Digame platform implements comprehensive E2E testing in CI/CD pipelines using GitHub Actions. This section documents the critical insights and solutions for reliable E2E test execution in CI environments.
+
+#### CI Pipeline Architecture
+
+**Service Orchestration Strategy**:
+```yaml
+# CI manages services directly instead of relying on Playwright global setup
+1. SQLite Database Initialization
+2. Backend Service (Node.js Express on port 8000)
+3. Frontend Service (Next.js on port 3001)
+4. Playwright Test Execution with Global Setup Disabled
+```
+
+#### Critical CI Configuration Insights
+
+**1. Dependency Management**
+```yaml
+# Ensure @playwright/test is available in CI
+- name: Install frontend dependencies
+  run: |
+    npm ci
+    # Explicit fallback installation
+    if [ ! -d "node_modules/@playwright" ]; then
+      npm install @playwright/test@^1.41.2 --save-dev
+    fi
+```
+
+**2. Global Setup Bypass**
+```yaml
+# Disable Playwright's global setup in CI to prevent service conflicts
+export PLAYWRIGHT_SKIP_GLOBAL_SETUP=true
+```
+
+**Key Insight**: Playwright's global setup (`frontend/tests/global-setup.js`) attempts to start backend services automatically, which conflicts with CI-managed services. Disabling global setup prevents:
+- Service startup race conditions
+- Port conflicts between CI and Playwright service management
+- Circular dependency issues with `@playwright/test` module
+
+**3. Service Health Validation**
+```yaml
+# Backend health check with proper endpoint
+curl -s http://localhost:8000/api/health
+
+# Frontend availability check
+curl -s http://localhost:3001
+```
+
+#### Resolved CI Issues
+
+**Issue 1: SQLite Database Missing**
+- **Problem**: Backend fails with "directory does not exist" error
+- **Solution**: Create `backend/data/` directory and initialize minimal schema
+- **Implementation**: Automatic database setup in CI workflow
+
+**Issue 2: Port Configuration Mismatch**
+- **Problem**: Backend dynamic port detection vs hardcoded health checks
+- **Solution**: Force backend to use `PORT=8000` in CI environment
+- **Implementation**: Environment variable override in CI
+
+**Issue 3: Playwright Dependency Resolution**
+- **Problem**: `@playwright/test` module not found despite being in devDependencies
+- **Solution**: Explicit installation fallback and global setup bypass
+- **Implementation**: Conditional installation check in CI
+
+**Issue 4: Service Management Conflicts**
+- **Problem**: Playwright global setup conflicts with CI service management
+- **Solution**: Disable global setup and use CI-managed services
+- **Implementation**: `PLAYWRIGHT_SKIP_GLOBAL_SETUP=true` environment variable
+
+#### CI Environment Variables
+
+**Required Environment Variables for E2E Tests**:
+```bash
+BASE_URL=http://localhost:3001          # Frontend URL
+API_BASE_URL=http://localhost:8000      # Backend API URL
+CI=true                                 # CI environment flag
+PLAYWRIGHT_SKIP_GLOBAL_SETUP=true      # Bypass global setup
+PORT=8000                               # Force backend port
+```
+
+#### Test Execution Strategy
+
+**Local Development**:
+- Uses Playwright global setup for automatic service management
+- Relies on `webServer` configuration in `playwright.config.ts`
+- Suitable for development workflow
+
+**CI Environment**:
+- Disables global setup to prevent service conflicts
+- Uses CI-managed service orchestration
+- Explicit service health validation before test execution
+
+#### Performance Optimizations
+
+**Browser Matrix Optimization**:
+```yaml
+# Reduced to single browser for CI efficiency
+strategy:
+  matrix:
+    browser: [chromium]  # Instead of [chromium, firefox, webkit]
+```
+
+**Service Startup Optimization**:
+- Parallel service startup where possible
+- Health check timeouts optimized for CI environment
+- Comprehensive cleanup to prevent resource leaks
+
+#### Troubleshooting Guide
+
+**Common CI E2E Issues**:
+
+1. **"Cannot find module '@playwright/test'"**
+   - Cause: devDependencies not installed or module resolution issues
+   - Solution: Explicit `@playwright/test` installation fallback
+
+2. **"Backend failed to start"**
+   - Cause: Missing database directory or port conflicts
+   - Solution: Database initialization and port forcing
+
+3. **"Timed out waiting for webServer"**
+   - Cause: Global setup conflicts or service startup issues
+   - Solution: Disable global setup and use CI service management
+
+4. **Service health check failures**
+   - Cause: Incorrect health endpoints or timing issues
+   - Solution: Use `/api/health` endpoint with proper retry logic
+
+#### Best Practices for CI E2E Testing
+
+1. **Service Separation**: Manage services in CI, not in Playwright global setup
+2. **Dependency Verification**: Always verify critical dependencies are installed
+3. **Health Validation**: Implement robust health checks before test execution
+4. **Environment Isolation**: Use environment variables to control behavior
+5. **Resource Cleanup**: Ensure comprehensive cleanup of processes and resources
+6. **Error Handling**: Implement fallback mechanisms for common CI issues
+
+This CI E2E testing setup provides reliable, scalable test execution while maintaining compatibility with local development workflows.

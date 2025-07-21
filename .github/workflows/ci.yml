@@ -214,15 +214,45 @@ jobs:
           export API_BASE_URL=http://localhost:8000
           export CI=true
           
-          # Disable global setup/teardown since we manage services in CI
-          export PLAYWRIGHT_SKIP_GLOBAL_SETUP=true
-          
           # List available test files
           echo "Available E2E test files:"
           ls -la tests/e2e/
           
-          # Run tests with explicit config to bypass global setup
-          npx playwright test tests/e2e/integration-verification.spec.js --project=${{ matrix.browser }} --reporter=line --config=playwright.config.ts
+          # Create a minimal config that doesn't import @playwright/test
+          cat > playwright-ci.config.js << 'EOF'
+          module.exports = {
+            testDir: './tests/e2e',
+            timeout: 60000,
+            expect: { timeout: 10000 },
+            fullyParallel: false,
+            forbidOnly: !!process.env.CI,
+            retries: process.env.CI ? 2 : 0,
+            workers: 1,
+            reporter: 'line',
+            use: {
+              baseURL: process.env.BASE_URL || 'http://localhost:3001',
+              trace: 'retain-on-failure',
+              screenshot: 'only-on-failure',
+              video: 'retain-on-failure',
+              actionTimeout: 15000,
+              navigationTimeout: 30000,
+            },
+            projects: [
+              {
+                name: 'chromium',
+                use: {
+                  browserName: 'chromium',
+                  viewport: { width: 1280, height: 720 }
+                },
+              },
+            ],
+          };
+          EOF
+          
+          echo "✅ Created minimal CI config"
+          
+          # Run tests with the minimal config
+          npx playwright test tests/e2e/integration-verification.spec.js --config=playwright-ci.config.js --project=${{ matrix.browser }} --reporter=line
 
       - name: Stop servers
         if: always()
