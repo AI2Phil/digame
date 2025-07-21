@@ -48,9 +48,21 @@ jobs:
         working-directory: ./frontend
         run: |
           echo "📦 Installing frontend dependencies including devDependencies..."
-          NODE_ENV=development npm ci
-          echo "🔍 Verifying @playwright/test installation..."
-          ls -la node_modules/@playwright/test/package.json || echo "@playwright/test not found"
+          echo "Current NODE_ENV: $NODE_ENV"
+          echo "Package.json devDependencies:"
+          grep -A 5 '"devDependencies"' package.json || echo "No devDependencies section found"
+          
+          # Force clean install with devDependencies
+          rm -rf node_modules package-lock.json || true
+          NODE_ENV=development npm install
+          
+          echo "🔍 Verifying installation results..."
+          echo "Node modules directory:"
+          ls -la node_modules/ | head -10
+          echo "Checking for @playwright specifically:"
+          ls -la node_modules/@playwright/ || echo "@playwright directory not found"
+          echo "Checking package.json for @playwright/test:"
+          grep "@playwright/test" package.json || echo "@playwright/test not in package.json"
 
       - name: Build frontend
         working-directory: ./frontend
@@ -184,12 +196,16 @@ jobs:
       - name: Install Playwright and browsers
         working-directory: ./frontend
         run: |
-          echo "📦 Ensuring Playwright is properly installed..."
-          # Explicitly install @playwright/test if not found
-          if [ ! -f "node_modules/@playwright/test/package.json" ]; then
-            echo "Installing @playwright/test explicitly..."
-            npm install @playwright/test@^1.41.2 --save-dev
-          fi
+          echo "📦 Force installing Playwright..."
+          echo "Current working directory: $(pwd)"
+          echo "Package.json exists: $(ls -la package.json)"
+          
+          # Force install @playwright/test regardless
+          echo "Force installing @playwright/test..."
+          npm install @playwright/test@^1.41.2 --save-dev --force
+          
+          echo "Verifying installation:"
+          ls -la node_modules/@playwright/test/package.json || echo "Still not found"
           
           echo "📦 Installing Playwright browsers..."
           npx playwright install --with-deps
