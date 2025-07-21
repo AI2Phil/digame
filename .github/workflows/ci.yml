@@ -59,19 +59,26 @@ jobs:
       - name: Start backend
         working-directory: ./backend
         run: |
-          npm start &
+          echo "🚀 Starting backend on port 8000..."
+          PORT=8000 npm start &
           echo $! > ../backend.pid
 
       - name: Wait for backend
         run: |
+          echo "⏳ Waiting for backend on port 8000..."
           for i in {1..30}; do
-            if curl -s http://localhost:8000 > /dev/null; then
-              echo "Backend is up"
+            if curl -s http://localhost:8000/api/health > /dev/null; then
+              echo "✅ Backend is up and healthy"
               exit 0
             fi
+            echo "   Attempt $i/30 - waiting 2 seconds..."
             sleep 2
           done
-          echo "Backend failed to start"
+          echo "❌ Backend failed to start after 60 seconds"
+          echo "Backend process status:"
+          ps aux | grep node || echo "No node processes found"
+          echo "Port 8000 status:"
+          netstat -tlnp | grep :8000 || echo "Port 8000 not listening"
           exit 1
 
       - name: Install E2E dependencies
