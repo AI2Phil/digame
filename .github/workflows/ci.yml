@@ -181,17 +181,19 @@ jobs:
         working-directory: ./frontend
         run: |
           echo "📦 Installing Playwright browsers..."
-          # Use the locally installed Playwright to install browsers
-          ./node_modules/.bin/playwright install --with-deps
+          # Use npm to run Playwright install which will use the local installation
+          npm run test:e2e -- --help > /dev/null 2>&1 || echo "Playwright test script exists"
+          npx playwright install --with-deps
 
       - name: Verify Playwright installation
         working-directory: ./frontend
         run: |
           echo "🔍 Verifying Playwright installation..."
-          echo "Playwright binary: $(which ./node_modules/.bin/playwright || echo 'not found')"
           echo "@playwright/test module: $(ls node_modules/@playwright/test/package.json 2>/dev/null || echo 'not found')"
           echo "Node modules structure:"
           ls -la node_modules/@playwright/ || echo "No @playwright directory"
+          echo "Available npm scripts:"
+          npm run | grep test:e2e || echo "No e2e scripts found"
 
       - name: Run E2E tests
         working-directory: ./frontend
@@ -199,8 +201,6 @@ jobs:
           echo "🧪 Running E2E tests with browser: ${{ matrix.browser }}"
           echo "Frontend URL: http://localhost:3001"
           echo "Backend URL: http://localhost:8000"
-          echo "Playwright config: $(pwd)/playwright.config.ts"
-          echo "Test directory: $(pwd)/tests/e2e"
           
           # Set environment variables for the tests
           export BASE_URL=http://localhost:3001
@@ -211,8 +211,8 @@ jobs:
           echo "Available E2E test files:"
           ls -la tests/e2e/
           
-          # Use the locally installed Playwright binary
-          ./node_modules/.bin/playwright test tests/e2e/integration-verification.spec.js --project=${{ matrix.browser }} --reporter=line
+          # Use npm script which properly resolves local Playwright
+          npm run test:e2e -- tests/e2e/integration-verification.spec.js --project=${{ matrix.browser }} --reporter=line
 
       - name: Stop servers
         if: always()
