@@ -189,7 +189,20 @@ jobs:
           echo "🧪 Running E2E tests with browser: ${{ matrix.browser }}"
           echo "Frontend URL: http://localhost:3001"
           echo "Backend URL: http://localhost:8000"
-          BASE_URL=http://localhost:3001 API_BASE_URL=http://localhost:8000 npx playwright test ../tests/e2e/integration-verification-test.js --project=${{ matrix.browser }} --reporter=line
+          echo "Playwright config: $(pwd)/playwright.config.ts"
+          echo "Test directory: $(pwd)/tests/e2e"
+          
+          # Set environment variables for the tests
+          export BASE_URL=http://localhost:3001
+          export API_BASE_URL=http://localhost:8000
+          export CI=true
+          
+          # List available test files
+          echo "Available E2E test files:"
+          ls -la tests/e2e/
+          
+          # Run the integration verification test
+          npx playwright test tests/e2e/integration-verification.spec.js --project=${{ matrix.browser }} --reporter=line
 
       - name: Stop servers
         if: always()
