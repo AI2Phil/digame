@@ -15,8 +15,8 @@ class AuthSettings(BaseModel):
     # JWT Configuration
     secret_key: str = "your-super-secret-key-change-in-production"
     algorithm: str = "HS256"
-    access_token_expire_minutes: int = 30
-    refresh_token_expire_days: int = 7
+    access_token_expire_minutes: int = 43200  # 30 days (30 * 24 * 60)
+    refresh_token_expire_days: int = 30
     
     # Password Configuration
     password_min_length: int = 8
@@ -59,7 +59,8 @@ class AuthSettings(BaseModel):
     auth_middleware_enabled: bool = True
     auth_exempt_paths: List[str] = [
         "/docs", "/redoc", "/openapi.json", "/health",
-        "/auth/login", "/auth/register", "/auth/password-reset"
+        "/auth/login", "/auth/register", "/auth/password-reset",
+        "/auth/me", "/auth/profile", "/auth/verify-token", "/auth/refresh"
     ]
     
     # Default Roles and Permissions

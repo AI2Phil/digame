@@ -4,6 +4,37 @@
 
 The Digame Digital Professional Twin Platform uses Docker Compose to orchestrate multiple services including backend (FastAPI), frontend (Next.js), PostgreSQL database, and Redis cache. This comprehensive setup provides a complete intelligent platform with advanced caching, analytics, and AI-powered features.
 
+
+## Intro
+When running Docker Compose, you need to use the **mapped port** on your local machine. 
+Looking at your [`docker-compose.yml`](docker-compose.yml:8), the frontend service maps port 3000 inside the container to port **3001** on your host machine:
+
+
+The URL `http://4823c8a27310:3000` won't work in your browser because `4823c8a27310` is the Docker container's internal hostname, which is only accessible from within the Docker network.
+
+```yaml
+frontend:
+  ports:
+    - "3001:3000"  # Host port 3001 -> Container port 3000
+```
+
+**To access your frontend application, use:**
+- **Frontend**: http://localhost:3001
+- **Backend**: http://localhost:8001
+
+The Docker Compose output shows:
+- `Local: http://4823c8a27310:3000` ← This is the internal container URL (won't work in browser)
+- `Network: http://172.18.0.3:3000` ← This is the internal Docker network IP (won't work in browser)
+
+**The correct URLs for your browser are:**
+- **Frontend Web App**: http://localhost:3001
+- **Backend API**: http://localhost:8001
+- **Backend Health Check**: http://localhost:8001/health
+
+Try opening http://localhost:3001 in your browser - that should display your frontend application correctly!
+
+
+
 ## Backend Architecture Overview
 
 ### Dual Backend Structure

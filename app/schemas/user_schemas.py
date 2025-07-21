@@ -54,6 +54,41 @@ class UserResponse(UserBase): # UserBase already includes detailed_bio, contact_
     updated_at: datetime
     kudos_count: Optional[int] = 0
     onboarding_completed: bool = False
+    
+    # Platform Owner fields
+    is_platform_owner: bool = False
+    platform_owner_level: Optional[int] = 0
+    
+    # Subscription fields
+    subscription_tier: str = "free"
+    subscription_status: str = "active"
+    subscription_expires: Optional[datetime] = None
+    is_founding_member: bool = False
+    founding_member_enrolled_at: Optional[datetime] = None
+    founding_member_discount_percent: Optional[int] = None
+    founding_member_monthly_price: Optional[float] = None
+    subscription_updated_at: Optional[datetime] = None
+    
+    # Security fields
+    last_login: Optional[datetime] = None
+    failed_login_attempts: int = 0
+    account_locked_until: Optional[datetime] = None
+    password_changed_at: Optional[datetime] = None
+    
+    # Email verification
+    email_verified: bool = False
+    email_verification_sent_at: Optional[datetime] = None
+    
+    # Account upgrade tracking
+    upgraded_from_guest: bool = False
+    upgrade_date: Optional[datetime] = None
+    
+    # Guest user support
+    is_guest: bool = False
+    guest_expires_at: Optional[datetime] = None
+    
+    # Tenant support
+    tenant_id: Optional[int] = None
 
     # Relationships
     projects: List[ProjectSchema] = Field(default_factory=list)

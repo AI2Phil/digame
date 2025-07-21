@@ -62,7 +62,7 @@ def login_for_access_token(
     user, tokens = auth_service.authenticate_user(db, form_data.username, form_data.password)
     return tokens
 
-@router.post("/login", response_model=Token)
+@router.post("/login", response_model=AuthResponse)
 def login_user(
     user_login: UserLogin,
     db: Session = Depends(get_db)
@@ -71,7 +71,17 @@ def login_user(
     Alternative login endpoint with JSON body
     """
     user, tokens = auth_service.authenticate_user(db, user_login.username, user_login.password)
-    return tokens
+    
+    # Convert SQLAlchemy model to Pydantic schema
+    user_schema = UserSchema.from_orm(user)
+    
+    return AuthResponse(
+        access_token=tokens["access_token"],
+        refresh_token=tokens["refresh_token"],
+        token_type=tokens["token_type"],
+        needs_onboarding=not user.onboarding_completed,
+        user=user_schema
+    )
 
 @router.get("/me", response_model=UserSchema)
 def read_users_me(
@@ -79,6 +89,15 @@ def read_users_me(
 ):
     """
     Get current user information
+    """
+    return current_user
+
+@router.get("/profile", response_model=UserSchema)
+def get_user_profile(
+    current_user = Depends(get_current_user)
+):
+    """
+    Get current user profile (alias for /me endpoint)
     """
     return current_user
 

@@ -1,4 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import Head from 'next/head';
+import Link from 'next/link';
+import { useRouter } from 'next/router';
 import {
   Crown,
   Users,
@@ -25,14 +28,25 @@ import {
   Trash2,
   Plus,
   RefreshCw,
+  Menu,
+  X,
+  Home,
+  Bell,
+  LogOut,
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/Card';
 import { Progress } from '../../components/ui/Progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/Tabs';
+import NextJSComprehensiveNavigation from '../../components/navigation/NextJSComprehensiveNavigation';
+import NavigationHubFooter from '../../components/layout/NavigationHubFooter';
+import { useAuth } from '../../contexts/AuthContext';
 
 const PlatformOwnerConsolePage = () => {
+  const router = useRouter();
+  const { user, logout, isAuthenticated, isLoading } = useAuth();
+  const [isNavigationOpen, setIsNavigationOpen] = useState(true);
   const [platformData, setPlatformData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -41,6 +55,52 @@ const PlatformOwnerConsolePage = () => {
   const [revenueData, setRevenueData] = useState({});
   const [allTenants, setAllTenants] = useState([]);
   const [allUsers, setAllUsers] = useState([]);
+
+  // Redirect if not authenticated
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      router.push('/login');
+    }
+  }, [isAuthenticated, isLoading, router]);
+
+  // Check if user is platform owner
+  useEffect(() => {
+    if (user && !user.isPlatformOwner) {
+      // Redirect non-platform owners to regular dashboard
+      router.push('/dashboard');
+    }
+  }, [user, router]);
+
+  const handleLogout = async () => {
+    await logout();
+    router.push('/');
+  };
+
+  const toggleNavigation = () => {
+    setIsNavigationOpen(!isNavigationOpen);
+  };
+
+  // Transform user data to match navigation component expectations
+  const adaptedUser = user
+    ? {
+        name:
+          user.fullName ||
+          user.name ||
+          `${user.firstName || ''} ${user.lastName || ''}`.trim() ||
+          user.username,
+        role: user.role,
+        is_platform_owner: user.isPlatformOwner,
+        subscription_tier: user.subscriptionTier,
+        tenant_id:
+          typeof user.teamId === 'number'
+            ? user.teamId
+            : user.teamId
+              ? parseInt(user.teamId.toString())
+              : 1,
+        tenant_name: user.teamId ? `Team ${user.teamId}` : 'Platform Owner',
+        permissions: user.permissions || [],
+      }
+    : null;
 
   useEffect(() => {
     fetchPlatformOverview();
@@ -117,27 +177,60 @@ const PlatformOwnerConsolePage = () => {
     }
   };
 
-  if (loading) {
+  // Show loading state while checking authentication
+  if (isLoading || loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading Platform Console...</p>
+          <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading Platform Console...</p>
         </div>
       </div>
     );
   }
 
+  // Don't render if not authenticated
+  if (!isAuthenticated) {
+    return null;
+  }
+
+  // Don't render if not platform owner (will redirect)
+  if (!user?.isPlatformOwner) {
+    return null;
+  }
+
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Error Loading Console</h2>
-          <p className="text-gray-600 mb-4">{error}</p>
-          <Button onClick={fetchPlatformOverview}>Retry</Button>
+      <>
+        <Head>
+          <title>Platform Owner Console - Error - Digame</title>
+          <meta name="description" content="Platform Owner Console - Error" />
+          <meta name="viewport" content="width=device-width, initial-scale=1" />
+          <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+        </Head>
+
+        <div className="flex min-h-screen bg-gray-50">
+          <NextJSComprehensiveNavigation
+            isDemoMode={user?.isDemoMode || false}
+            onLogout={handleLogout}
+            currentUser={adaptedUser}
+            isOpen={isNavigationOpen}
+            onToggle={toggleNavigation}
+            showAllFeatures={true}
+          />
+
+          <div className="flex-1 flex flex-col">
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+              <div className="text-center">
+                <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+                <h2 className="text-xl font-semibold text-gray-900 mb-2">Error Loading Console</h2>
+                <p className="text-gray-600 mb-4">{error}</p>
+                <Button onClick={fetchPlatformOverview}>Retry</Button>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 
@@ -145,30 +238,83 @@ const PlatformOwnerConsolePage = () => {
   const subscriptionBreakdown = platformData?.subscription_breakdown || {};
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center">
-              <Crown className="h-8 w-8 text-yellow-500 mr-3" />
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">Platform Owner Console</h1>
-                <p className="text-sm text-gray-500">
-                  Comprehensive platform management and analytics
-                </p>
+    <>
+      <Head>
+        <title>Platform Owner Console - Digame</title>
+        <meta name="description" content="Comprehensive platform management and analytics console" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+      </Head>
+
+      <div className="flex min-h-screen bg-gray-50">
+        {/* Comprehensive Navigation Sidebar */}
+        <NextJSComprehensiveNavigation
+          isDemoMode={user?.isDemoMode || false}
+          onLogout={handleLogout}
+          currentUser={adaptedUser}
+          isOpen={isNavigationOpen}
+          onToggle={toggleNavigation}
+          showAllFeatures={true} // Platform owners always have access to all features
+        />
+
+        {/* Main Content Area */}
+        <div
+          className={`flex-1 flex flex-col transition-all duration-300 ease-in-out ${
+            isNavigationOpen ? 'ml-0' : 'ml-0'
+          }`}
+        >
+          {/* Top Header */}
+          <header className="bg-white shadow-sm border-b border-gray-200">
+            <div className="flex items-center justify-between px-6 py-4">
+              <div className="flex items-center space-x-4">
+                <button
+                  onClick={toggleNavigation}
+                  className="p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 transition-colors"
+                  title={isNavigationOpen ? 'Collapse Menu' : 'Expand Menu'}
+                >
+                  <Menu className="w-6 h-6" />
+                </button>
+                <div>
+                  <h1 className="text-2xl font-bold text-gray-900 flex items-center">
+                    <Crown className="w-8 h-8 text-yellow-600 mr-3" />
+                    Platform Owner Console
+                  </h1>
+                  <p className="text-sm text-gray-600">
+                    Comprehensive platform management and analytics
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center space-x-3">
+                <Link href="/">
+                  <button
+                    className="p-2 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow"
+                    title="Return to Home"
+                  >
+                    <Home className="w-5 h-5 text-gray-600" />
+                  </button>
+                </Link>
+                <button className="p-2 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">
+                  <Bell className="w-5 h-5 text-gray-600" />
+                </button>
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 border border-yellow-200">
+                  <Crown className="w-3 h-3 mr-1" />
+                  Platform Owner
+                </span>
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center space-x-2 px-3 py-2 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg transition-colors"
+                  title="Logout"
+                >
+                  <LogOut className="w-4 h-4" />
+                  <span className="text-sm font-medium">Logout</span>
+                </button>
               </div>
             </div>
-            <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
-              <Crown className="w-3 h-3 mr-1" />
-              Platform Owner Access
-            </Badge>
-          </div>
-        </div>
-      </div>
+          </header>
 
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {/* Scrollable Main Content */}
+          <main className="flex-1">
+            <div className="container mx-auto px-6 py-8">
         {/* Key Metrics Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <MetricCard
@@ -248,9 +394,15 @@ const PlatformOwnerConsolePage = () => {
           <TabsContent value="config" className="space-y-6">
             <SystemConfigurationSection />
           </TabsContent>
-        </Tabs>
+              </Tabs>
+            </div>
+          </main>
+
+          {/* Navigation Hub Footer */}
+          <NavigationHubFooter />
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 

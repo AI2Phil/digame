@@ -23,20 +23,35 @@ export default function DemoPage({ onDemoAccess }) {
     );
   }
 
-  const handleDemoSelect = demoType => {
-    setSelectedDemo(demoType);
-    // Enable demo mode using auth context
-    enterDemoMode();
-    if (onDemoAccess) {
-      onDemoAccess();
-    }
+  const handleDemoSelect = async demoType => {
+    try {
+      console.log('Demo selection started:', demoType);
+      setSelectedDemo(demoType);
+      
+      // Enable demo mode using auth context
+      console.log('Entering demo mode...');
+      await enterDemoMode();
+      
+      if (onDemoAccess) {
+        onDemoAccess();
+      }
 
-    if (demoType === 'guided') {
-      // For guided tour, router to onboarding wizard
-      router.push('/onboarding-wizard');
-    } else {
-      // For interactive demo, also go through onboarding first to test the flow
-      router.push('/onboarding-wizard');
+      console.log('Demo mode enabled, navigating...');
+      
+      // Add a small delay to ensure demo mode is fully set
+      setTimeout(() => {
+        if (demoType === 'guided') {
+          // For guided tour, go through onboarding wizard with step-by-step explanations
+          console.log('Navigating to guided tour (onboarding-wizard)');
+          router.push('/onboarding-wizard');
+        } else {
+          // For interactive demo, go directly to dashboard with sample data
+          console.log('Navigating to interactive dashboard');
+          router.push('/dashboard');
+        }
+      }, 100);
+    } catch (error) {
+      console.error('Error in demo selection:', error);
     }
   };
 

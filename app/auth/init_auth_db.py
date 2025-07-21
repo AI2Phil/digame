@@ -203,6 +203,52 @@ def create_default_admin_user(db: Session, roles: Dict[str, Role]) -> User:
     
     return admin_user
 
+def create_platform_owner_user(db: Session, roles: Dict[str, Role]) -> User:
+    """
+    Create Platform Owner user with specific credentials
+    
+    Args:
+        db: Database session
+        roles: Dictionary of available roles
+        
+    Returns:
+        Created Platform Owner User object
+    """
+    logger.info("Creating Platform Owner user...")
+    
+    # Platform Owner credentials
+    platform_owner_email = "philip.a.oshea@gmail.com"
+    platform_owner_username = "philip.oshea"
+    platform_owner_password = "Dalk3y1306"
+    
+    # Check if Platform Owner user already exists
+    existing_owner = get_user_by_email(db, platform_owner_email)
+    
+    if existing_owner:
+        logger.info(f"Platform Owner user already exists: {platform_owner_email}")
+        return existing_owner
+    
+    # Create Platform Owner user
+    owner_data = UserCreate(
+        username=platform_owner_username,
+        email=platform_owner_email,
+        password=platform_owner_password,
+        first_name="Philip",
+        last_name="O'Shea",
+        is_active=True
+    )
+    
+    owner_user = create_user(db, owner_data)
+    
+    # Assign Super Admin role (Platform Owner has full access)
+    if Roles.SUPER_ADMIN in roles:
+        assign_role_to_user(db, getattr(owner_user, 'id'), getattr(roles[Roles.SUPER_ADMIN], 'id'))
+        logger.info(f"Assigned {Roles.SUPER_ADMIN} role to Platform Owner user")
+    
+    logger.info(f"Created Platform Owner user: {platform_owner_email}")
+    
+    return owner_user
+
 def initialize_auth_database(db: Session) -> bool:
     """
     Initialize the authentication database with default data
@@ -225,6 +271,9 @@ def initialize_auth_database(db: Session) -> bool:
         # Create default admin user if enabled
         if auth_settings.create_default_admin:
             create_default_admin_user(db, roles)
+        
+        # Create Platform Owner user
+        create_platform_owner_user(db, roles)
         
         # Commit all changes
         db.commit()

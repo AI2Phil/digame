@@ -260,9 +260,9 @@ class TokenValidationMiddleware(BaseHTTPMiddleware):
                 
                 if expiry_info["is_expired"]:
                     response.headers["X-Token-Status"] = "expired"
-                elif expiry_info["time_until_expiry"].total_seconds() < 300:  # 5 minutes
+                elif expiry_info["time_remaining_seconds"] < 300:  # 5 minutes
                     response.headers["X-Token-Status"] = "expiring-soon"
-                    response.headers["X-Token-Expires-In"] = str(int(expiry_info["time_until_expiry"].total_seconds()))
+                    response.headers["X-Token-Expires-In"] = str(expiry_info["time_remaining_seconds"])
                 else:
                     response.headers["X-Token-Status"] = "valid"
                 

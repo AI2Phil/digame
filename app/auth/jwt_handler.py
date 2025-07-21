@@ -176,11 +176,30 @@ class TokenHandler:
             "can_manage_platform_users": False,
         }
         
+        # Handle both string and numeric platform owner levels
+        level = user.platform_owner_level
+        
+        # Convert string levels to numeric for comparison
+        level_mapping = {
+            "admin": 1,
+            "super_admin": 2,
+            "supreme": 3,
+            "owner": 3
+        }
+        
+        # Determine numeric level
+        numeric_level = 0
+        if isinstance(level, str):
+            numeric_level = level_mapping.get(level.lower(), 0)
+        elif level is not None:
+            # If it's already numeric, use it directly
+            numeric_level = level
+        
         # Level-based permissions
-        if user.platform_owner_level >= 1:  # Platform Admin
+        if numeric_level >= 1:  # Platform Admin
             permissions["can_view_platform_analytics"] = True
         
-        if user.platform_owner_level >= 2:  # Platform Super Admin
+        if numeric_level >= 2:  # Platform Super Admin
             permissions.update({
                 "can_manage_platform_users": True,
                 "can_create_tenants": True,
@@ -188,7 +207,7 @@ class TokenHandler:
                 "can_access_all_data": True
             })
         
-        if user.platform_owner_level >= 3:  # Platform Owner
+        if numeric_level >= 3:  # Platform Owner/Supreme
             permissions["can_modify_platform_settings"] = True
         
         return permissions
