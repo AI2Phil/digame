@@ -30,6 +30,9 @@ jobs:
   frontend-build:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    outputs:
+      artifact_name: ${{ steps.set-artifact.outputs.artifact_name }}
+      build_id: ${{ steps.set-artifact.outputs.build_id }}
     
     steps:
     - name: Checkout code
@@ -479,10 +482,15 @@ jobs:
         echo "   Size: $(du -sh .next/ | cut -f1)"
         echo "   Static files: $(find .next/static -type f | wc -l) files"
         
-    - name: Prepare build artifacts
+    - name: Set frontend artifact name and prepare build artifacts
+      id: set-artifact
       working-directory: ./frontend
       run: |
         echo "📦 Preparing build artifacts for upload..."
+        
+        # Set artifact name for cross-job communication
+        ARTIFACT_NAME="frontend-build-${{ github.run_id }}"
+        echo "artifact_name=$ARTIFACT_NAME" >> $GITHUB_OUTPUT
         
         # Final verification before upload
         if [ ! -d ".next" ]; then
@@ -501,33 +509,36 @@ jobs:
         
         # Create build info for debugging
         BUILD_ID=$(cat .next/BUILD_ID)
-        echo "{\"build_id\": \"$BUILD_ID\", \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\", \"run_id\": \"${{ github.run_id }}\", \"commit\": \"${{ github.sha }}\"}" > .next/build-info.json
+        echo "build_id=$BUILD_ID" >> $GITHUB_OUTPUT
+        echo "{\"build_id\": \"$BUILD_ID\", \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\", \"run_id\": \"${{ github.run_id }}\", \"commit\": \"${{ github.sha }}\", \"artifact_name\": \"$ARTIFACT_NAME\"}" > .next/build-info.json
         
         echo "✅ Artifacts ready for upload:"
+        echo "   Artifact Name: $ARTIFACT_NAME"
         echo "   BUILD_ID: $BUILD_ID"
         echo "   Size: $(du -sh .next/ | cut -f1)"
         echo "   Files: $(find .next -type f | wc -l)"
         
-        # List key artifact files
-        echo "Key files present:"
-        ls -la .next/ | head -10
+        # Debug artifact structure
+        echo "🔍 Listing .next contents for upload verification:"
+        ls -R .next/ | head -20
 
     - name: Upload Next.js build artifacts
       uses: actions/upload-artifact@v4
       if: success()
       with:
-        name: frontend-build-${{ github.run_id }}
+        name: ${{ steps.set-artifact.outputs.artifact_name }}
         path: |
           frontend/.next/
         retention-days: 1
-        if-no-files-found: warn
+        if-no-files-found: error
         compression-level: 6
         
     - name: Confirm artifact upload
       if: success()
       run: |
         echo "✅ Build artifacts uploaded successfully"
-        echo "Artifact name: frontend-build-${{ github.run_id }}"
+        echo "Artifact name: ${{ steps.set-artifact.outputs.artifact_name }}"
+        echo "BUILD_ID: ${{ steps.set-artifact.outputs.build_id }}"
         echo "Upload completed at: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
   # Backend Test - Node.js Express Backend
@@ -735,8 +746,8 @@ jobs:
     - name: Download Next.js build artifacts
       uses: actions/download-artifact@v4
       with:
-        name: frontend-build-${{ github.run_id }}
-        path: frontend/.next/
+        name: ${{ needs.frontend-build.outputs.artifact_name }}
+        path: frontend/
       continue-on-error: true
       id: download-artifacts
       
@@ -744,6 +755,8 @@ jobs:
       working-directory: ./frontend
       run: |
         echo "🔍 Ensuring frontend build is available..."
+        echo "Expected artifact name: ${{ needs.frontend-build.outputs.artifact_name }}"
+        echo "Expected BUILD_ID: ${{ needs.frontend-build.outputs.build_id }}"
         
         # Check if artifacts were downloaded successfully
         ARTIFACT_STATUS="${{ steps.download-artifacts.outcome }}"
@@ -752,10 +765,21 @@ jobs:
         # Function to verify build integrity
         verify_build() {
           if [ -d ".next" ] && [ -f ".next/BUILD_ID" ] && [ -d ".next/static" ]; then
-            echo "✅ Valid Next.js build found: $(cat .next/BUILD_ID)"
+            ACTUAL_BUILD_ID=$(cat .next/BUILD_ID)
+            echo "✅ Valid Next.js build found: $ACTUAL_BUILD_ID"
+            
+            # Verify BUILD_ID matches expected (if available)
+            EXPECTED_BUILD_ID="${{ needs.frontend-build.outputs.build_id }}"
+            if [ -n "$EXPECTED_BUILD_ID" ] && [ "$ACTUAL_BUILD_ID" != "$EXPECTED_BUILD_ID" ]; then
+              echo "⚠️ BUILD_ID mismatch: expected $EXPECTED_BUILD_ID, got $ACTUAL_BUILD_ID"
+            fi
             return 0
           else
             echo "❌ Invalid or incomplete build"
+            if [ -d ".next" ]; then
+              echo "Contents of .next directory:"
+              ls -la .next/ || true
+            fi
             return 1
           fi
         }
@@ -765,6 +789,13 @@ jobs:
           echo "✅ Using downloaded build artifacts"
         else
           echo "⚠️ Building fresh frontend (artifacts unavailable or invalid)..."
+          echo "Reason: Artifact status=$ARTIFACT_STATUS, build verification failed"
+          
+          # Ensure dependencies are installed
+          if [ ! -d "node_modules" ]; then
+            echo "📦 Installing dependencies for fresh build..."
+            NODE_ENV=development npm ci --prefer-offline --no-audit
+          fi
           
           # Clean any partial artifacts
           rm -rf .next node_modules/.cache 2>/dev/null || true
@@ -782,7 +813,7 @@ jobs:
             
             # Clear caches and try again
             rm -rf .next node_modules/.cache 2>/dev/null || true
-            npm ci --prefer-offline --no-audit
+            NODE_ENV=development npm ci --prefer-offline --no-audit
             
             if npm run build:ci; then
               echo "✅ Recovery build successful"
@@ -1192,7 +1223,7 @@ jobs:
       continue-on-error: true
       with:
         name: frontend-build-${{ github.run_id }}
-        path: frontend/.next/
+        path: frontend/
 
     - name: Create SQLite directory to prevent startup crash
       working-directory: ./backend
