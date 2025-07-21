@@ -224,63 +224,61 @@ When ready to migrate to Python 3.12:
 ## Conclusion
 
 The combination of Python 3.11 for backend services and the corrected Playwright configuration provides a stable, reliable testing environment for the Digame platform. This approach prioritizes stability and compatibility while maintaining the ability to upgrade when the ecosystem is ready.
-
 For immediate deployment needs, Python 3.11 is the recommended choice, with a planned migration to Python 3.12 once the dependency ecosystem achieves full compatibility.
 
-I've implemented the final solution to resolve the persistent `@playwright/test` module resolution issue in CI. The key insight from the testing documentation was that the Playwright binary doesn't exist at `node_modules/.bin/playwright` in CI environments - only the browsers are installed.
 
-## Final Solution Implemented:
+## QUICK COMMANDS
+The issue you encountered is that the backend dependencies aren't installed locally. 
+When you run `npx playwright test` from the frontend directory, Playwright's global setup tries to automatically start the backend service, but it fails because the backend's `node_modules` directory doesn't exist.
 
-### Root Cause Identified ✅
-The issue was that `npx playwright install` only installs browsers, not the local binary. When `npx playwright` runs, it uses a temporary installation that can't access the locally installed `@playwright/test` module in the project's `node_modules`.
+## Root Cause:
+- **Playwright global setup** attempts to start the Node.js Express backend automatically
+- **Backend dependencies** (including `express`) aren't installed in the `/backend` directory
+- **Module resolution fails** when trying to `require('express')` in `backend/src/server.js`
 
-### Breakthrough Solution:
-**NODE_PATH Module Resolution**: Set the `NODE_PATH` environment variable to include the local `node_modules` directory, allowing `npx playwright` to properly resolve the `@playwright/test` imports in test files.
+## Solution:
+Install the backend dependencies first:
 
 ```bash
-# Set NODE_PATH to include local node_modules for proper module resolution
-export NODE_PATH="$(pwd)/node_modules:$NODE_PATH"
+# From project root, install backend dependencies
+cd backend
+npm install
 
-# Run tests with proper module resolution
-NODE_PATH="$(pwd)/node_modules:$NODE_PATH" npx playwright test
+# Then run E2E tests from frontend directory  
+cd ../frontend
+npx playwright test
 ```
 
-## Complete CI Pipeline Success:
+## Alternative Approach:
+If you want to run E2E tests without automatic backend startup (like CI does), you can:
 
-### ✅ All Critical Issues Now Resolved:
-
-1. **SQLite Database**: Automatic initialization with required schema
-2. **Backend Service**: Starts on port 8000 with health validation
-3. **Frontend Service**: Starts on port 3001 with health validation
-4. **Service Orchestration**: Both servers managed by CI
-5. **Playwright Dependencies**: Proper module resolution via NODE_PATH
-6. **Test Execution**: `npx playwright` with access to local modules
-7. **Process Cleanup**: Comprehensive server and resource management
-
-### Final Working CI Architecture:
-
-```yaml
-# Complete CI Pipeline - All Issues Resolved
-1. ✅ Install dependencies (with @playwright/test)
-2. ✅ Build frontend for production
-3. ✅ Setup SQLite database with schema
-4. ✅ Start backend on port 8000 + health check
-5. ✅ Start frontend on port 3001 + health check
-6. ✅ Install Playwright browsers
-7. ✅ Create minimal CI config (no module imports)
-8. ✅ Set NODE_PATH for module resolution
-9. ✅ Run E2E tests with proper module access
-10. ✅ Cleanup all processes and resources
+```bash
+# Skip global setup and manage services manually
+cd frontend
+PLAYWRIGHT_SKIP_GLOBAL_SETUP=true npx playwright test
 ```
 
-## Technical Innovation:
+But you'll need to manually start the backend in a separate terminal first.
 
-This solution represents the final breakthrough that:
-- **Solves Module Resolution**: NODE_PATH allows npx to access local modules
-- **Maintains CI Compatibility**: Works with temporary npx installations
-- **Preserves Test Integrity**: All test functionality preserved
-- **Ensures Reliability**: Robust execution without dependency conflicts
+## CI vs Local Difference:
+- **CI Environment**: Installs backend dependencies explicitly in the workflow before running E2E tests
+- **Local Environment**: Relies on you having run `npm install` in the backend directory
 
-The CI pipeline now has a bulletproof approach to E2E testing that resolves all module resolution issues while maintaining the flexibility of using `npx playwright`. This NODE_PATH strategy can be applied to other CI environments facing similar module resolution challenges.
+The CI pipeline we've been fixing handles this dependency installation automatically, but for local development you need to install backend dependencies manually first.
 
-**Result**: The E2E tests can now execute successfully in CI with all services properly orchestrated and all module dependencies resolved.
+**Quick Fix**: Run `cd backend && npm install` and then your E2E tests will work perfectly!
+
+
+
+🎉 All workflow execution flows tested successfully!
+  ✓  334 …spec.js:385:9 › Workflow Execution End-to-End Testing › Workflow Analytics and Monitoring › should access workflow monitoring dashboard (648ms)
+🧹 Starting global teardown for E2E tests...
+🛑 Stopping backend process (PID: 4295)
+Backend: 🛑 Shutting down backend server...
+Backend: 🧹 Service unregistered
+✅ Backend process terminated gracefully
+🗑️  Cleaned up PID file
+🧹 Cleaned up any remaining processes on port 8000
+✅ Global teardown completed successfully
+
+  343 passed (1.5m)
