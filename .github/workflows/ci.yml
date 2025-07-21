@@ -20,11 +20,70 @@ jobs:
 
       - name: Install frontend dependencies
         working-directory: ./frontend
-        run: npm ci
+        run: |
+          echo "📦 Installing frontend dependencies (including devDependencies for CI)..."
+          NODE_ENV=development npm ci --prefer-offline --no-audit
+          
+          # Verify critical runtime dependencies exist
+          echo "🔍 Verifying critical dependencies..."
+          if [ -f "node_modules/react/jsx-runtime.js" ]; then
+            echo "✅ react/jsx-runtime exists"
+          else
+            echo "❌ react/jsx-runtime missing - installing react explicitly"
+            npm install react@18.2.0 react-dom@18.2.0 --save-exact
+          fi
+          
+          # Verify TypeScript is available
+          if npx tsc --version >/dev/null 2>&1; then
+            echo "✅ TypeScript available: $(npx tsc --version)"
+          else
+            echo "❌ TypeScript missing - installing explicitly"
+            npm install typescript@5.8.3 @types/react@18.2.38 @types/node@20.19.2 --save-dev --save-exact
+          fi
+
+      - name: Clean previous builds
+        working-directory: ./frontend
+        run: |
+          echo "🧹 Cleaning previous builds..."
+          rm -rf .next out export node_modules/.cache 2>/dev/null || true
+          echo "✅ Workspace cleaned"
 
       - name: Build frontend
         working-directory: ./frontend
-        run: npm run build:ci
+        run: |
+          echo "🏗️ Building frontend..."
+          npm run build:ci
+
+      - name: Validate frontend build output
+        working-directory: ./frontend
+        run: |
+          echo "🔍 Validating frontend build output..."
+          
+          if [ ! -f ".next/BUILD_ID" ]; then
+            echo "❌ Frontend build failed to generate .next/BUILD_ID"
+            echo "Contents of current directory:"
+            ls -la
+            echo "Contents of .next directory (if exists):"
+            ls -la .next || echo "(no .next directory found)"
+            exit 1
+          else
+            echo "✅ .next/BUILD_ID found: $(cat .next/BUILD_ID)"
+          fi
+          
+          # Verify essential build components
+          if [ ! -d ".next/server" ]; then
+            echo "❌ Missing .next/server directory"
+            exit 1
+          fi
+          
+          if [ ! -d ".next/static" ]; then
+            echo "❌ Missing .next/static directory"
+            exit 1
+          fi
+          
+          echo "✅ All essential build components verified"
+          echo "Build structure:"
+          ls -la .next/
 
       - name: Set artifact name
         id: set-artifact
@@ -33,11 +92,10 @@ jobs:
       - name: Upload frontend build
         uses: actions/upload-artifact@v4
         with:
-          name: frontend-build-${{ github.run_id }}
+          name: ${{ steps.set-artifact.outputs.artifact_name }}
           path: |
             frontend/.next/
-            frontend/export/
-          if-no-files-found: warn
+          if-no-files-found: error
           retention-days: 1
 
   ##########################
@@ -79,21 +137,80 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: ${{ needs.frontend-build.outputs.artifact_name }}
-          path: frontend/.next/
+          path: frontend/
+        continue-on-error: true
+        id: download-artifacts
 
       - name: Install frontend dependencies
         working-directory: ./frontend
-        run: npm ci
+        run: |
+          echo "📦 Installing frontend dependencies (including devDependencies for E2E)..."
+          NODE_ENV=development npm ci --prefer-offline --no-audit
 
-      - name: Fallback build if .next missing
+      - name: Ensure frontend build is available
         working-directory: ./frontend
         run: |
-          if [ ! -f ".next/BUILD_ID" ]; then
-            echo "⚠️ .next/BUILD_ID missing — running fallback build"
-            npm run build:ci
+          echo "🔍 Ensuring frontend build is available..."
+          echo "Expected artifact name: ${{ needs.frontend-build.outputs.artifact_name }}"
+          
+          # Check if artifacts were downloaded successfully
+          ARTIFACT_STATUS="${{ steps.download-artifacts.outcome }}"
+          echo "Artifact download status: $ARTIFACT_STATUS"
+          
+          # Function to verify build integrity
+          verify_build() {
+            if [ -d ".next" ] && [ -f ".next/BUILD_ID" ] && [ -d ".next/static" ]; then
+              echo "✅ Valid Next.js build found: $(cat .next/BUILD_ID)"
+              return 0
+            else
+              echo "❌ Invalid or incomplete build"
+              if [ -d ".next" ]; then
+                echo "Contents of .next directory:"
+                ls -la .next/ || true
+              fi
+              return 1
+            fi
+          }
+          
+          # Try to use downloaded artifacts first
+          if [ "$ARTIFACT_STATUS" = "success" ] && verify_build; then
+            echo "✅ Using downloaded build artifacts"
           else
-            echo "✅ .next/BUILD_ID found — skipping fallback"
+            echo "⚠️ Building fresh frontend (artifacts unavailable or invalid)..."
+            echo "Reason: Artifact status=$ARTIFACT_STATUS, build verification failed"
+            
+            # Clean any partial artifacts
+            rm -rf .next out export node_modules/.cache 2>/dev/null || true
+            
+            # Build with error handling
+            if npm run build:ci; then
+              echo "✅ Fresh build completed successfully"
+              verify_build || {
+                echo "❌ Fresh build verification failed"
+                exit 1
+              }
+            else
+              echo "❌ Fresh build failed"
+              exit 1
+            fi
           fi
+          
+          # Verify critical runtime dependencies exist
+          echo "🔍 Verifying react/jsx-runtime module..."
+          if [ -f "node_modules/react/jsx-runtime.js" ]; then
+            echo "✅ react/jsx-runtime exists"
+          else
+            echo "❌ react/jsx-runtime is missing - this will cause runtime crashes"
+            echo "Available react files:"
+            ls node_modules/react/ || echo "React module not found"
+            exit 1
+          fi
+          
+          # Final verification and stats
+          echo "📊 Build ready:"
+          echo "   BUILD_ID: $(cat .next/BUILD_ID)"
+          echo "   Size: $(du -sh .next/ | cut -f1)"
+          echo "   Static files: $(find .next/static -type f 2>/dev/null | wc -l) files"
 
       - name: Install backend dependencies
         working-directory: ./backend
@@ -102,6 +219,7 @@ jobs:
       - name: Start backend
         working-directory: ./backend
         run: |
+          echo "🚀 Starting Node.js Express backend server..."
           npm start &
           echo $! > ../backend.pid
 
@@ -109,28 +227,71 @@ jobs:
         run: |
           echo "⏳ Waiting for backend to be ready..."
           for i in {1..30}; do
-            if curl -s http://localhost:8000 > /dev/null; then
-              echo "✅ Backend is up"
+            if curl -s http://localhost:8000/api/health > /dev/null; then
+              echo "✅ Backend is up and healthy"
               exit 0
             fi
             sleep 2
           done
           echo "❌ Backend failed to start"
+          ps aux | grep node || true
+          exit 1
+
+      - name: Start frontend server
+        working-directory: ./frontend
+        run: |
+          echo "🚀 Starting Next.js frontend server..."
+          npx next start &
+          echo $! > ../frontend.pid
+
+      - name: Wait for frontend server
+        run: |
+          echo "⏳ Waiting for frontend to be ready..."
+          for i in {1..30}; do
+            if curl -s http://localhost:3000 > /dev/null; then
+              echo "✅ Frontend is up"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "❌ Frontend failed to start"
+          echo "Frontend logs:"
+          ps aux | grep next || true
           exit 1
 
       - name: Install E2E dependencies
-        working-directory: ./e2e
-        run: npm ci
+        working-directory: ./frontend
+        run: |
+          echo "📦 Installing Playwright..."
+          npx playwright install --with-deps
 
       - name: Run Playwright E2E tests
-        working-directory: ./e2e
+        working-directory: ./frontend
         run: |
-          npx playwright install
-          npx playwright test --project=${{ matrix.browser }}
+          echo "🧪 Running E2E tests with browser: ${{ matrix.browser }}"
+          npx playwright test --project=${{ matrix.browser }} --reporter=line
 
-      - name: Stop backend
+      - name: Upload E2E test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: e2e-test-results-${{ matrix.browser }}
+          path: |
+            frontend/test-results/
+            frontend/playwright-report/
+          retention-days: 7
+
+      - name: Stop servers
         if: always()
         run: |
+          echo "🧹 Cleaning up processes..."
           if [ -f backend.pid ]; then
             kill -9 $(cat backend.pid) || true
+            rm backend.pid
           fi
+          if [ -f frontend.pid ]; then
+            kill -9 $(cat frontend.pid) || true
+            rm frontend.pid
+          fi
+          # Kill any remaining processes
+          pkill -f "node\|next\|npm" || true
