@@ -66,8 +66,7 @@ jobs:
             ls -la data/digame.db
           else
             echo "⚠️ Database file missing - creating minimal database for CI..."
-            # Create a minimal SQLite database with basic tables
-            sqlite3 data/digame.db << 'EOF'
+            sqlite3 data/digame.db "
             CREATE TABLE IF NOT EXISTS users (
               id INTEGER PRIMARY KEY AUTOINCREMENT,
               email TEXT UNIQUE NOT NULL,
@@ -127,8 +126,7 @@ jobs:
               createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
               updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
               completedAt DATETIME
-            );
-            EOF
+            );"
             echo "✅ Minimal database created for CI"
             ls -la data/digame.db
           fi
