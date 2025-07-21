@@ -216,21 +216,12 @@ jobs:
         working-directory: ./frontend
         run: |
           echo "📦 Installing Playwright browsers for: ${{ matrix.browser }}"
-          echo "Verifying @playwright/test is available:"
-          ls -la node_modules/@playwright/test/package.json
           
-          # Try local binary first, fallback to npx
-          echo "Installing browser: ${{ matrix.browser }}"
-          if [ -f "node_modules/.bin/playwright" ]; then
-            echo "Using local Playwright binary..."
-            node_modules/.bin/playwright install ${{ matrix.browser }} --with-deps
-          else
-            echo "Local binary not found, using npx..."
-            npx --yes @playwright/test@^1.41.2 install ${{ matrix.browser }} --with-deps
-          fi
+          # Skip verification and go straight to installation
+          echo "Installing browser: ${{ matrix.browser }} using npx..."
+          npx --yes @playwright/test@1.41.2 install ${{ matrix.browser }} --with-deps
           
-          # Verify browser installation
-          echo "✅ Verifying browser installation completed"
+          echo "✅ Browser installation completed"
 
       - name: Run E2E tests
         working-directory: ./frontend
@@ -281,25 +272,9 @@ jobs:
           
           echo "✅ Created minimal CI config"
           
-          # Use npx with proper NODE_PATH for module resolution
-          echo "🔍 Setting up Playwright execution environment..."
-          echo "Node modules @playwright/test:"
-          ls -la node_modules/@playwright/test/ | head -5
-          echo "Current NODE_PATH: $NODE_PATH"
-          
-          # Set NODE_PATH to include local node_modules for proper module resolution
-          export NODE_PATH="$(pwd)/node_modules:$NODE_PATH"
-          echo "Updated NODE_PATH: $NODE_PATH"
-          
-          # Run all E2E tests with fallback approach
-          echo "🚀 Running E2E tests..."
-          if [ -f "node_modules/.bin/playwright" ]; then
-            echo "Using local Playwright binary..."
-            node_modules/.bin/playwright test tests/e2e/ --config=playwright-ci.config.js --project=${{ matrix.browser }} --reporter=line
-          else
-            echo "Local binary not found, using npx with specific version..."
-            npx --yes @playwright/test@^1.41.2 test tests/e2e/ --config=playwright-ci.config.js --project=${{ matrix.browser }} --reporter=line
-          fi
+          # Run E2E tests using npx directly
+          echo "🚀 Running E2E tests with npx..."
+          npx --yes @playwright/test@1.41.2 test tests/e2e/ --config=playwright-ci.config.js --project=${{ matrix.browser }} --reporter=line
 
       - name: Stop servers
         if: always()
