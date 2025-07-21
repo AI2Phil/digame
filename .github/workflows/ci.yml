@@ -46,7 +46,11 @@ jobs:
 
       - name: Install frontend dependencies
         working-directory: ./frontend
-        run: npm ci
+        run: |
+          echo "📦 Installing frontend dependencies including devDependencies..."
+          NODE_ENV=development npm ci
+          echo "🔍 Verifying @playwright/test installation..."
+          ls -la node_modules/@playwright/test/package.json || echo "@playwright/test not found"
 
       - name: Build frontend
         working-directory: ./frontend
@@ -177,12 +181,17 @@ jobs:
           echo "❌ Frontend failed to start on port 3001"
           exit 1
 
-      - name: Install Playwright browsers
+      - name: Install Playwright and browsers
         working-directory: ./frontend
         run: |
+          echo "📦 Ensuring Playwright is properly installed..."
+          # Explicitly install @playwright/test if not found
+          if [ ! -f "node_modules/@playwright/test/package.json" ]; then
+            echo "Installing @playwright/test explicitly..."
+            npm install @playwright/test@^1.41.2 --save-dev
+          fi
+          
           echo "📦 Installing Playwright browsers..."
-          # Use npm to run Playwright install which will use the local installation
-          npm run test:e2e -- --help > /dev/null 2>&1 || echo "Playwright test script exists"
           npx playwright install --with-deps
 
       - name: Verify Playwright installation
@@ -194,6 +203,14 @@ jobs:
           ls -la node_modules/@playwright/ || echo "No @playwright directory"
           echo "Available npm scripts:"
           npm run | grep test:e2e || echo "No e2e scripts found"
+          
+          # Final verification
+          if [ ! -f "node_modules/@playwright/test/package.json" ]; then
+            echo "❌ @playwright/test still not found after installation attempts"
+            exit 1
+          else
+            echo "✅ @playwright/test is available"
+          fi
 
       - name: Run E2E tests
         working-directory: ./frontend
