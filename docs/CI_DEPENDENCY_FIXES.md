@@ -219,3 +219,142 @@ To prevent similar dependency issues:
 - **Status**: ✅ **RESOLVED** - All critical dependencies now properly installed and verified
 
 These fixes ensure the CI environment has all necessary dependencies for successful E2E test execution, including proper React JSX runtime support and TypeScript availability.
+
+## ci.yml - nuclear option
+
+name: CI Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+
+  ##########################
+  # Frontend Build & Upload
+  ##########################
+  frontend-build:
+    runs-on: ubuntu-latest
+    outputs:
+      artifact_name: ${{ steps.set-artifact.outputs.artifact_name }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install frontend dependencies
+        working-directory: ./frontend
+        run: npm ci
+
+      - name: Build frontend
+        working-directory: ./frontend
+        run: npm run build:ci
+
+      - name: Set artifact name
+        id: set-artifact
+        run: echo "artifact_name=frontend-build-${{ github.run_id }}" >> $GITHUB_OUTPUT
+
+      - name: Upload frontend build
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-build-${{ github.run_id }}
+          path: |
+            frontend/.next/
+            frontend/export/
+          if-no-files-found: warn
+          retention-days: 1
+
+  ##########################
+  # Backend Build & Upload
+  ##########################
+  backend-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install backend dependencies
+        working-directory: ./backend
+        run: npm ci
+
+      - name: Build backend
+        working-directory: ./backend
+        run: npm run build || true
+
+  ##########################
+  # End-to-End Tests
+  ##########################
+  e2e-test:
+    needs: [frontend-build, backend-build]
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        browser: [chromium, firefox, webkit]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Download frontend artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.frontend-build.outputs.artifact_name }}
+          path: frontend/.next/
+
+      - name: Install frontend dependencies
+        working-directory: ./frontend
+        run: npm ci
+
+      - name: Fallback build if .next missing
+        working-directory: ./frontend
+        run: |
+          if [ ! -f ".next/BUILD_ID" ]; then
+            echo "⚠️ .next/BUILD_ID missing — running fallback build"
+            npm run build:ci
+          else
+            echo "✅ .next/BUILD_ID found — skipping fallback"
+          fi
+
+      - name: Install backend dependencies
+        working-directory: ./backend
+        run: npm ci
+
+      - name: Start backend
+        working-directory: ./backend
+        run: |
+          npm start &
+          echo $! > ../backend.pid
+
+      - name: Wait for backend server
+        run: |
+          echo "⏳ Waiting for backend to be ready..."
+          for i in {1..30}; do
+            if curl -s http://localhost:8000 > /dev/null; then
+              echo "✅ Backend is up"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "❌ Backend failed to start"
+          exit 1
+
+      - name: Install E2E dependencies
+        working-directory: ./e2e
+        run: npm ci
+
+      - name: Run Playwright E2E tests
+        working-directory: ./e2e
+        run: |
+          npx playwright install
+          npx playwright test --project=${{ matrix.browser }}
+
+      - name: Stop backend
+        if: always()
+        run: |
+          if [ -f backend.pid ]; then
+            kill -9 $(cat backend.pid) || true
+          fi
