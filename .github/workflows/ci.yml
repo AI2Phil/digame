@@ -211,8 +211,8 @@ jobs:
           echo "Available E2E test files:"
           ls -la tests/e2e/
           
-          # Use npm script which properly resolves local Playwright
-          npm run test:e2e -- tests/e2e/integration-verification.spec.js --project=${{ matrix.browser }} --reporter=line
+          # Use npx directly to ensure proper Playwright resolution
+          npx playwright test tests/e2e/integration-verification.spec.js --project=${{ matrix.browser }} --reporter=line
 
       - name: Stop servers
         if: always()
