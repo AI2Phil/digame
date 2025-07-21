@@ -166,7 +166,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       items: [
         { label: 'Web Analytics', icon: '🌐', path: '/analytics/web' },
         { label: 'Mobile Analytics', icon: '📱', path: '/analytics/mobile' },
-        { label: 'Behavioral Analytics', icon: '🧠', path: '/analytics/behavioral', subtitle: 'AI-POWERED', minSubscriptionTier: 'individual_pro' },
+        { label: 'User Behavior Analytics', icon: '🧠', path: '/analytics/user-behavior', subtitle: 'AI-POWERED', minSubscriptionTier: 'individual_pro' },
         { label: 'Predictive Analytics', icon: '🔮', path: '/analytics/predictive', subtitle: 'AI-POWERED', minSubscriptionTier: 'team' },
         { label: 'Business Intelligence', icon: '📈', path: '/analytics/business-intelligence', subtitle: 'BUSINESS INTELLIGENCE' },
         { label: 'Data Visualization Engine', icon: '📊', path: '/analytics/data-visualization', subtitle: 'VISUALIZATION' },

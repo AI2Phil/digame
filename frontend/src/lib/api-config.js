@@ -11,7 +11,7 @@ const getApiBaseUrl = () => {
     const currentHost = window.location.hostname;
     const currentProtocol = window.location.protocol;
     
-    // Default to port 8000 for backend
+    // Default to port 8000 for Python FastAPI backend
     return `${currentProtocol}//${currentHost}:8000`;
   }
   

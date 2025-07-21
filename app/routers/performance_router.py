@@ -6,7 +6,7 @@ Database-driven endpoints for Performance & Monitoring Components
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from typing import List, Dict, Any, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 
 from app.database import get_db
 from app.services.performance_service import PerformanceService
@@ -14,6 +14,27 @@ from app.auth.auth_dependencies import get_current_user
 from app.models.user import User
 
 router = APIRouter(prefix="/api/performance", tags=["Performance & Monitoring"])
+
+# Create a separate router for v1 API compatibility
+v1_router = APIRouter(prefix="/api/v1/performance", tags=["Performance Metrics V1"])
+
+@v1_router.get("/metrics")
+async def get_performance_metrics_v1(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+) -> Dict[str, Any]:
+    """Get performance metrics - v1 API compatibility endpoint"""
+    try:
+        service = PerformanceService(db)
+        dashboard_data = service.get_performance_dashboard_data()
+        
+        return {
+            "success": True,
+            "data": dashboard_data,
+            "message": "Performance metrics retrieved successfully"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get performance metrics: {str(e)}")
 
 @router.get("/user-experience/analytics")
 async def get_user_experience_analytics(
@@ -351,10 +372,10 @@ async def resolve_performance_alert(
             raise HTTPException(status_code=404, detail="Alert not found")
         
         alert.resolved = True
-        alert.resolved_at = datetime.utcnow()
+        alert.resolved_at = datetime.now(timezone.utc)
         alert.resolved_by = current_user.id
         alert.actions_taken = resolution_data.get('actions_taken', [])
-        alert.updated_at = datetime.utcnow()
+        alert.updated_at = datetime.now(timezone.utc)
         
         db.commit()
         db.refresh(alert)
@@ -421,7 +442,7 @@ async def performance_health_check():
                 "cpu_percent": cpu_percent,
                 "memory_percent": memory.percent,
                 "disk_percent": disk.percent,
-                "timestamp": datetime.utcnow()
+                "timestamp": datetime.now(timezone.utc)
             },
             "message": "Performance monitoring system is operational"
         }
@@ -431,7 +452,10 @@ async def performance_health_check():
             "data": {
                 "status": "error",
                 "error": str(e),
-                "timestamp": datetime.utcnow()
+                "timestamp": datetime.now(timezone.utc)
             },
             "message": "Performance monitoring system health check failed"
         }
+
+# Export both routers for inclusion in main app
+__all__ = ["router", "v1_router"]

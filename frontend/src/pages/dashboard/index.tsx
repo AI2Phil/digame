@@ -365,7 +365,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
                   </div>
                 </Link>
 
-                <Link href="/analytics/behavioral">
+                <Link href="/analytics/user-behavior">
                   <div className="bg-white rounded-lg shadow-sm p-6 hover:shadow-md hover:scale-105 transition-all duration-200 cursor-pointer border-2 border-transparent hover:border-orange-200">
                     <div className="flex items-center justify-between mb-4">
                       <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">

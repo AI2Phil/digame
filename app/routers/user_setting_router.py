@@ -17,7 +17,7 @@ from ..schemas import user_setting_schemas as schemas # Alias for clarity
 from ..crud import user_setting_crud as crud # Alias for clarity
 
 router = APIRouter(
-    prefix="/settings",
+    prefix="/api/user-settings",
     tags=["User Settings"],
 )
 
@@ -93,13 +93,8 @@ def get_api_keys(
                         db, user_id=user_id, settings=create_settings
                      )
 
-                user_setting_data = {
-                    "user_id": getattr(db_user_settings, 'user_id', user_id),
-                    "api_keys": api_keys_dict, # Use cached api_keys
-                    "created_at": getattr(db_user_settings, 'created_at', None),
-                    "updated_at": getattr(db_user_settings, 'updated_at', None)
-                }
-                return schemas.UserSetting(**user_setting_data)
+                # Use the database object directly with from_attributes
+                return schemas.UserSetting.model_validate(db_user_settings)
         except Exception as e:
             # Log Redis error and fall through to DB
             print(f"Redis error during GET: {e}") # Or use proper logging
@@ -130,13 +125,8 @@ def get_api_keys(
             print(f"Redis error during SET: {e}") # Or use proper logging
             pass # Don't fail request if cache set fails
 
-    user_setting_data = {
-        "user_id": getattr(db_user_settings, 'user_id', user_id),
-        "api_keys": api_keys_dict,
-        "created_at": getattr(db_user_settings, 'created_at', None),
-        "updated_at": getattr(db_user_settings, 'updated_at', None)
-    }
-    return schemas.UserSetting(**user_setting_data)
+    # Use the database object directly with from_attributes
+    return schemas.UserSetting.model_validate(db_user_settings)
 @router.post("/api-keys", response_model=schemas.UserSetting)
 def update_api_keys(
     api_key_data: schemas.UserSettingUpdate,
@@ -179,14 +169,8 @@ def update_api_keys(
             pass # Don't fail request if cache delete fails
 
     api_keys_dict = _parse_api_keys(getattr(updated_settings, 'api_keys', None))
-    user_setting_data = {
-        "id": getattr(updated_settings, 'id', None),
-        "user_id": getattr(updated_settings, 'user_id', user_id),
-        "api_keys": api_keys_dict,
-        "created_at": getattr(updated_settings, 'created_at', None),
-        "updated_at": getattr(updated_settings, 'updated_at', None)
-    }
-    return schemas.UserSetting(**user_setting_data)
+    # Use the database object directly with from_attributes
+    return schemas.UserSetting.model_validate(updated_settings)
 @router.delete("/api-keys/{key_name}", response_model=schemas.UserSetting)
 def delete_api_key(
     key_name: str,
@@ -230,11 +214,5 @@ def delete_api_key(
             print(f"Redis error during DELETE (cache invalidation): {e}") # Or use proper logging
             pass # Don't fail request if cache delete fails
 
-    user_setting_data = {
-        "id": getattr(updated_settings, 'id', None),
-        "user_id": getattr(updated_settings, 'user_id', user_id),
-        "api_keys": api_keys_dict,
-        "created_at": getattr(updated_settings, 'created_at', None),
-        "updated_at": getattr(updated_settings, 'updated_at', None)
-    }
-    return schemas.UserSetting(**user_setting_data)
+    # Use the database object directly with from_attributes
+    return schemas.UserSetting.model_validate(updated_settings)

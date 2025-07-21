@@ -123,9 +123,9 @@ const ComprehensiveNavigation: React.FC<ComprehensiveNavigationProps> = ({
         { id: 'advanced-analytics', label: 'Advanced Analytics', icon: <TrendingUp className="w-4 h-4" />, path: '/analytics/advanced', description: 'Advanced analytics dashboard' },
         {
           id: 'behavioral-analytics',
-          label: 'Behavioral Analytics',
+          label: 'User Behavior Analytics',
           icon: <Brain className="w-4 h-4" />,
-          path: '/analytics/behavioral',
+          path: '/analytics/user-behavior',
           subtitle: 'AI-POWERED',
           requiredTier: 'individual_pro',
           requiredFeatures: ['behavioral-analytics'],
