@@ -49,20 +49,19 @@ jobs:
         run: |
           echo "📦 Installing frontend dependencies including devDependencies..."
           echo "Current NODE_ENV: $NODE_ENV"
-          echo "Package.json devDependencies:"
-          grep -A 5 '"devDependencies"' package.json || echo "No devDependencies section found"
           
-          # Force clean install with devDependencies
-          rm -rf node_modules package-lock.json || true
-          NODE_ENV=development npm install
+          # Clean install with devDependencies
+          npm ci
           
-          echo "🔍 Verifying installation results..."
-          echo "Node modules directory:"
-          ls -la node_modules/ | head -10
-          echo "Checking for @playwright specifically:"
-          ls -la node_modules/@playwright/ || echo "@playwright directory not found"
-          echo "Checking package.json for @playwright/test:"
-          grep "@playwright/test" package.json || echo "@playwright/test not in package.json"
+          # Explicitly install Playwright if missing
+          echo "🔍 Checking for @playwright/test..."
+          if [ ! -d "node_modules/@playwright" ]; then
+            echo "Installing @playwright/test explicitly..."
+            npm install @playwright/test@^1.41.2 --save-dev
+          fi
+          
+          echo "✅ Verifying @playwright/test installation:"
+          ls -la node_modules/@playwright/test/package.json || echo "Still not found"
 
       - name: Build frontend
         working-directory: ./frontend
@@ -193,40 +192,15 @@ jobs:
           echo "❌ Frontend failed to start on port 3001"
           exit 1
 
-      - name: Install Playwright and browsers
+      - name: Install Playwright browsers
         working-directory: ./frontend
         run: |
-          echo "📦 Force installing Playwright..."
-          echo "Current working directory: $(pwd)"
-          echo "Package.json exists: $(ls -la package.json)"
-          
-          # Force install @playwright/test regardless
-          echo "Force installing @playwright/test..."
-          npm install @playwright/test@^1.41.2 --save-dev --force
-          
-          echo "Verifying installation:"
-          ls -la node_modules/@playwright/test/package.json || echo "Still not found"
-          
           echo "📦 Installing Playwright browsers..."
-          npx playwright install --with-deps
-
-      - name: Verify Playwright installation
-        working-directory: ./frontend
-        run: |
-          echo "🔍 Verifying Playwright installation..."
-          echo "@playwright/test module: $(ls node_modules/@playwright/test/package.json 2>/dev/null || echo 'not found')"
-          echo "Node modules structure:"
-          ls -la node_modules/@playwright/ || echo "No @playwright directory"
-          echo "Available npm scripts:"
-          npm run | grep test:e2e || echo "No e2e scripts found"
+          echo "Verifying @playwright/test is available:"
+          ls -la node_modules/@playwright/test/package.json || echo "Not found"
           
-          # Final verification
-          if [ ! -f "node_modules/@playwright/test/package.json" ]; then
-            echo "❌ @playwright/test still not found after installation attempts"
-            exit 1
-          else
-            echo "✅ @playwright/test is available"
-          fi
+          # Install browsers using npx to ensure it uses the local installation
+          npx playwright install --with-deps
 
       - name: Run E2E tests
         working-directory: ./frontend
@@ -240,12 +214,15 @@ jobs:
           export API_BASE_URL=http://localhost:8000
           export CI=true
           
+          # Disable global setup/teardown since we manage services in CI
+          export PLAYWRIGHT_SKIP_GLOBAL_SETUP=true
+          
           # List available test files
           echo "Available E2E test files:"
           ls -la tests/e2e/
           
-          # Use npx directly to ensure proper Playwright resolution
-          npx playwright test tests/e2e/integration-verification.spec.js --project=${{ matrix.browser }} --reporter=line
+          # Run tests with explicit config to bypass global setup
+          npx playwright test tests/e2e/integration-verification.spec.js --project=${{ matrix.browser }} --reporter=line --config=playwright.config.ts
 
       - name: Stop servers
         if: always()
