@@ -251,8 +251,15 @@ jobs:
           
           echo "✅ Created minimal CI config"
           
-          # Run tests with the minimal config
-          npx playwright test tests/e2e/integration-verification.spec.js --config=playwright-ci.config.js --project=${{ matrix.browser }} --reporter=line
+          # Use locally installed Playwright to avoid module resolution issues
+          echo "🔍 Using local Playwright installation..."
+          echo "Playwright binary location:"
+          ls -la node_modules/.bin/playwright
+          echo "Node modules @playwright/test:"
+          ls -la node_modules/@playwright/test/ | head -5
+          
+          # Run tests using the local binary which has proper module resolution
+          ./node_modules/.bin/playwright test tests/e2e/integration-verification.spec.js --config=playwright-ci.config.js --project=${{ matrix.browser }} --reporter=line
 
       - name: Stop servers
         if: always()
