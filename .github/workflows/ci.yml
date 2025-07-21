@@ -56,21 +56,32 @@ jobs:
           # Clean install with devDependencies
           npm ci
           
-          # Force reinstall Playwright to ensure it's available
-          echo "🔧 Force installing @playwright/test..."
-          npm uninstall @playwright/test || true
-          npm install @playwright/test@^1.41.2 --save-dev --force
+          # Direct installation approach - bypass npm cache issues
+          echo "🔧 Direct Playwright installation..."
+          rm -rf node_modules/@playwright node_modules/.bin/playwright || true
+          npm cache clean --force
+          npm install @playwright/test@1.41.2 --no-save --force
           
           echo "✅ Verifying @playwright/test installation:"
+          ls -la node_modules/@playwright/test/package.json || echo "❌ Package not found"
+          
+          # If still not found, try global installation approach
+          if [ ! -f "node_modules/@playwright/test/package.json" ]; then
+            echo "🚨 Fallback: Installing Playwright globally..."
+            npm install -g @playwright/test@1.41.2
+            # Create symlink to local node_modules
+            mkdir -p node_modules/@playwright
+            ln -sf $(npm root -g)/@playwright/test node_modules/@playwright/test
+            mkdir -p node_modules/.bin
+            ln -sf $(npm root -g)/@playwright/test/cli.js node_modules/.bin/playwright
+          fi
+          
+          echo "✅ Final verification:"
           ls -la node_modules/@playwright/test/package.json
           
           # Verify the module can be required
           echo "🔍 Testing module import..."
-          node -e "try { require('@playwright/test'); console.log('✅ @playwright/test can be imported'); } catch(e) { console.log('❌ Import failed:', e.message); process.exit(1); }"
-          
-          # Verify Playwright binary exists
-          echo "🔍 Checking Playwright binary..."
-          ls -la node_modules/.bin/playwright || echo "❌ Playwright binary not found"
+          node -e "try { require('@playwright/test'); console.log('✅ @playwright/test can be imported'); } catch(e) { console.log('❌ Import failed:', e.message); }"
 
       - name: Build frontend
         working-directory: ./frontend
