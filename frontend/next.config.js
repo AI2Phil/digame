@@ -2,7 +2,7 @@
 /** @type {import('next').NextConfig} */
 let nextConfig = {
   reactStrictMode: false,  // Less strict for development flexibility
-  swcMinify: true,
+  // swcMinify removed - Next.js uses SWC by default now
   
   // TypeScript configuration - less strict
   typescript: {
@@ -36,10 +36,10 @@ let nextConfig = {
   //   defaultLocale: 'en',
   // },
 
-  // Disable SSR for problematic pages
-  experimental: {
-    esmExternals: 'loose'
-  },
+  // Experimental features - removed deprecated esmExternals
+  // experimental: {
+  //   // esmExternals removed - no longer needed in modern Next.js
+  // },
 
   // Redirect /en/* paths to base paths (for SEO and bookmarked URLs)
   async redirects() {

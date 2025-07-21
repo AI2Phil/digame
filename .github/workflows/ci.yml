@@ -63,7 +63,25 @@ jobs:
     - name: Install frontend dependencies
       working-directory: ./frontend
       run: |
-        npm ci --silent --prefer-offline --no-audit >/dev/null 2>&1 || npm ci --prefer-offline --no-audit
+        echo "📦 Installing frontend dependencies (including devDependencies for CI)..."
+        NODE_ENV=development npm ci --prefer-offline --no-audit
+        
+        # Verify critical runtime dependencies exist
+        echo "🔍 Verifying critical dependencies..."
+        if [ -f "node_modules/react/jsx-runtime.js" ]; then
+          echo "✅ react/jsx-runtime exists"
+        else
+          echo "❌ react/jsx-runtime missing - installing react explicitly"
+          npm install react@18.2.0 react-dom@18.2.0 --save-exact
+        fi
+        
+        # Verify TypeScript is available
+        if npx tsc --version >/dev/null 2>&1; then
+          echo "✅ TypeScript available: $(npx tsc --version)"
+        else
+          echo "❌ TypeScript missing - installing explicitly"
+          npm install typescript@5.8.3 @types/react@18.2.38 @types/node@20.19.2 --save-dev --save-exact
+        fi
 
     - name: Pre-build validation and fixes
       working-directory: ./frontend
@@ -707,8 +725,8 @@ jobs:
         # Root workspace dependencies
         npm ci --prefer-offline --no-audit
         
-        # Frontend dependencies
-        cd frontend && npm ci --prefer-offline --no-audit
+        # Frontend dependencies (including devDependencies for E2E tests)
+        cd frontend && NODE_ENV=development npm ci --prefer-offline --no-audit
         
         # Backend dependencies
         cd ../backend && npm ci --prefer-offline --no-audit
@@ -950,6 +968,17 @@ jobs:
         # Verify build is ready (should be handled by previous step)
         if [ ! -d ".next" ] || [ ! -f ".next/BUILD_ID" ]; then
           echo "❌ No build found - this should have been handled by previous step"
+          exit 1
+        fi
+        
+        # Verify critical runtime dependencies exist
+        echo "🔍 Verifying react/jsx-runtime module..."
+        if [ -f "node_modules/react/jsx-runtime.js" ]; then
+          echo "✅ react/jsx-runtime exists"
+        else
+          echo "❌ react/jsx-runtime is missing - this will cause runtime crashes"
+          echo "Available react files:"
+          ls node_modules/react/ || echo "React module not found"
           exit 1
         fi
         
