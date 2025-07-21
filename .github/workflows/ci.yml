@@ -156,19 +156,55 @@ jobs:
           netstat -tlnp | grep :8000 || echo "Port 8000 not listening"
           exit 1
 
-      - name: Install E2E dependencies
-        working-directory: ./e2e
-        run: npm ci
+      - name: Start frontend server
+        working-directory: ./frontend
+        run: |
+          echo "🚀 Starting Next.js frontend server on port 3001..."
+          PORT=3001 npx next start &
+          echo $! > ../frontend.pid
+
+      - name: Wait for frontend server
+        run: |
+          echo "⏳ Waiting for frontend on port 3001..."
+          for i in {1..30}; do
+            if curl -s http://localhost:3001 > /dev/null; then
+              echo "✅ Frontend is up on port 3001"
+              exit 0
+            fi
+            echo "   Attempt $i/30 - waiting 2 seconds..."
+            sleep 2
+          done
+          echo "❌ Frontend failed to start on port 3001"
+          exit 1
+
+      - name: Install Playwright for E2E tests
+        working-directory: ./frontend
+        run: |
+          echo "📦 Installing Playwright for E2E tests..."
+          npx playwright install --with-deps
 
       - name: Run E2E tests
-        working-directory: ./e2e
+        working-directory: ./frontend
         run: |
-          npx playwright install
-          npx playwright test --project=${{ matrix.browser }}
+          echo "🧪 Running E2E tests with browser: ${{ matrix.browser }}"
+          echo "Frontend URL: http://localhost:3001"
+          echo "Backend URL: http://localhost:8000"
+          BASE_URL=http://localhost:3001 API_BASE_URL=http://localhost:8000 npx playwright test ../tests/e2e/integration-verification-test.js --project=${{ matrix.browser }} --reporter=line
 
-      - name: Stop backend
+      - name: Stop servers
         if: always()
         run: |
+          echo "🧹 Cleaning up servers..."
           if [ -f backend.pid ]; then
+            echo "Stopping backend server..."
             kill -9 $(cat backend.pid) || true
+            rm backend.pid
           fi
+          if [ -f frontend.pid ]; then
+            echo "Stopping frontend server..."
+            kill -9 $(cat frontend.pid) || true
+            rm frontend.pid
+          fi
+          # Kill any remaining processes
+          pkill -f "node\|next\|npm" || true
+          echo "✅ Server cleanup completed"
