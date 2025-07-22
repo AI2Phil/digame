@@ -93,7 +93,7 @@ class AnalyticsAPI {
     user_id?: number;
     days?: number;
   } = {}): Promise<AnalyticsResponse> {
-    const response = await apiClient.get('/advanced-analytics/user-behavior', {
+    const response = await apiClient.get('/analytics/advanced-analytics/user-behavior', {
       params
     });
     return response.data;
@@ -106,7 +106,7 @@ class AnalyticsAPI {
     metric?: string;
     days?: number;
   } = {}): Promise<AnomalyResponse[]> {
-    const response = await apiClient.get('/advanced-analytics/anomaly-detection', {
+    const response = await apiClient.get('/analytics/advanced-analytics/anomaly-detection', {
       params: {
         metric: params.metric || 'user_activity',
         days: params.days || 30
@@ -121,7 +121,7 @@ class AnalyticsAPI {
   async predictRevenue(params: {
     days_ahead?: number;
   } = {}): Promise<PredictionResponse> {
-    const response = await apiClient.get('/advanced-analytics/revenue-prediction', {
+    const response = await apiClient.get('/analytics/advanced-analytics/revenue-prediction', {
       params: {
         days_ahead: params.days_ahead || 30
       }
@@ -135,7 +135,7 @@ class AnalyticsAPI {
   async predictChurn(params: {
     user_id?: number;
   } = {}): Promise<any> {
-    const response = await apiClient.get('/advanced-analytics/churn-prediction', {
+    const response = await apiClient.get('/analytics/advanced-analytics/churn-prediction', {
       params
     });
     return response.data;
@@ -147,7 +147,7 @@ class AnalyticsAPI {
   async generateInsightsReport(params: {
     days?: number;
   } = {}): Promise<InsightsReportResponse> {
-    const response = await apiClient.get('/advanced-analytics/insights-report', {
+    const response = await apiClient.get('/analytics/advanced-analytics/insights-report', {
       params: {
         days: params.days || 30
       }
@@ -159,7 +159,7 @@ class AnalyticsAPI {
    * Get platform performance metrics and optimization suggestions
    */
   async getPlatformPerformanceMetrics(): Promise<any> {
-    const response = await apiClient.get('/advanced-analytics/performance-metrics');
+    const response = await apiClient.get('/analytics/advanced-analytics/performance-metrics');
     return response.data;
   }
 
@@ -167,7 +167,7 @@ class AnalyticsAPI {
    * Get status of ML models and capabilities
    */
   async getMLModelsStatus(): Promise<any> {
-    const response = await apiClient.get('/advanced-analytics/ml-models/status');
+    const response = await apiClient.get('/analytics/advanced-analytics/ml-models/status');
     return response.data;
   }
 
@@ -175,7 +175,7 @@ class AnalyticsAPI {
    * Configure advanced analytics settings
    */
   async configureAnalytics(config: Record<string, any>): Promise<any> {
-    const response = await apiClient.post('/advanced-analytics/configure', config);
+    const response = await apiClient.post('/analytics/advanced-analytics/configure', config);
     return response.data;
   }
 
@@ -183,7 +183,7 @@ class AnalyticsAPI {
    * Health check for analytics services and dependencies
    */
   async healthCheck(): Promise<any> {
-    const response = await apiClient.get('/advanced-analytics/health');
+    const response = await apiClient.get('/analytics/advanced-analytics/health');
     return response.data;
   }
 
@@ -461,7 +461,7 @@ class AnalyticsAPI {
    * Get user segmentation analytics
    */
   async getUserSegmentation(params: { days?: number } = {}): Promise<any> {
-    const response = await apiClient.get('/api/analytics/advanced-analytics/user-segmentation', {
+    const response = await apiClient.get('/analytics/advanced-analytics/user-segmentation', {
       params: {
         days: params.days || 30
       }
@@ -473,7 +473,7 @@ class AnalyticsAPI {
    * Get user journey analysis
    */
   async getUserJourneyAnalysis(params: { days?: number } = {}): Promise<any> {
-    const response = await apiClient.get('/api/analytics/advanced-analytics/user-journey', {
+    const response = await apiClient.get('/analytics/advanced-analytics/user-journey', {
       params: {
         days: params.days || 30
       }
@@ -485,7 +485,7 @@ class AnalyticsAPI {
    * Get content analytics
    */
   async getContentAnalytics(params: { days?: number } = {}): Promise<any> {
-    const response = await apiClient.get('/api/analytics/advanced-analytics/content-analytics', {
+    const response = await apiClient.get('/analytics/advanced-analytics/content-analytics', {
       params: {
         days: params.days || 30
       }
@@ -497,7 +497,7 @@ class AnalyticsAPI {
    * Get conversion analytics
    */
   async getConversionAnalytics(params: { days?: number } = {}): Promise<any> {
-    const response = await apiClient.get('/api/analytics/advanced-analytics/conversion-analytics', {
+    const response = await apiClient.get('/analytics/advanced-analytics/conversion-analytics', {
       params: {
         days: params.days || 30
       }
@@ -509,7 +509,7 @@ class AnalyticsAPI {
    * Get system resource metrics
    */
   async getSystemResourceMetrics(): Promise<any> {
-    const response = await apiClient.get('/api/analytics/advanced-analytics/system-resources');
+    const response = await apiClient.get('/analytics/advanced-analytics/system-resources');
     return response.data;
   }
 
@@ -517,7 +517,7 @@ class AnalyticsAPI {
    * Get database performance metrics
    */
   async getDatabasePerformanceMetrics(): Promise<any> {
-    const response = await apiClient.get('/api/analytics/advanced-analytics/database-performance');
+    const response = await apiClient.get('/analytics/advanced-analytics/database-performance');
     return response.data;
   }
 
@@ -525,7 +525,7 @@ class AnalyticsAPI {
    * Get network metrics
    */
   async getNetworkMetrics(): Promise<any> {
-    const response = await apiClient.get('/api/analytics/advanced-analytics/network-metrics');
+    const response = await apiClient.get('/analytics/advanced-analytics/network-metrics');
     return response.data;
   }
 
@@ -533,7 +533,7 @@ class AnalyticsAPI {
    * Get performance alerts
    */
   async getPerformanceAlerts(): Promise<any> {
-    const response = await apiClient.get('/api/analytics/advanced-analytics/performance-alerts');
+    const response = await apiClient.get('/analytics/advanced-analytics/performance-alerts');
     return response.data;
   }
 

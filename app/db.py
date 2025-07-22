@@ -11,7 +11,7 @@ from app.database import Base, engine as db_engine
 
 # Get database URL from environment variable or use default
 SQLALCHEMY_DATABASE_URL = os.getenv(
-    "DATABASE_URL", "postgresql://digame_user:digame_password@db:5432/digame_db"
+    "DATABASE_URL", "sqlite:///./digame.db"
 )
 
 # Fix any root user references to use postgres in CI, digame_user in production

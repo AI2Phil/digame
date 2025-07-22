@@ -131,7 +131,7 @@ const BundleAnalyzer: React.FC<BundleAnalyzerProps> = ({
       }
 
       // Fetch bundle analysis data from database-driven API
-      const response = await fetch('${replaceApiUrl("")}/api/performance/bundle-analysis', {
+      const response = await fetch(`${replaceApiUrl("")}/api/performance/bundle-analysis`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'

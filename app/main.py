@@ -82,6 +82,8 @@ from .routers import data_management_router # Import the data management router
 from .routers import multi_tenancy_router # Import the multi-tenancy router
 from .routers import real_time_collaboration_router # Import the real-time collaboration router
 from .routers import advanced_monitoring_router # Import the advanced monitoring router
+from .routers import performance_monitoring_router # Import the performance monitoring router
+from .routers import performance_router # Import the performance router
 from .routers import integration_dashboard_router # Import the integration dashboard router
 from .routers import advanced_reporting_router # Import the advanced reporting router
 # from .api.v1 import advanced_tenant_management # Import the advanced tenant management router - temporarily disabled due to Session import issues
@@ -442,6 +444,10 @@ app.include_router(advanced_nlp_router.router, tags=["Advanced NLP"]) # Add adva
 app.include_router(data_management_router.router, tags=["Data Management"]) # Add data management router
 app.include_router(multi_tenancy_router.router, prefix="/api/multi-tenancy", tags=["Multi-Tenancy Management"]) # Add multi-tenancy router
 app.include_router(real_time_collaboration_router.router, prefix="/api/collaboration", tags=["Real-Time Collaboration"]) # Add real-time collaboration router
+# Performance monitoring routers
+app.include_router(performance_monitoring_router.router, tags=["Performance Monitoring"]) # Add performance monitoring router
+app.include_router(performance_router.router, tags=["Performance & Monitoring"]) # Add performance router
+app.include_router(performance_router.v1_router, tags=["Performance Metrics V1"]) # Add v1 performance router
 # Consolidated monitoring router replaces both performance_monitoring_router and advanced_monitoring_router
 app.include_router(integration_dashboard_router.router, tags=["Integration Dashboard"]) # Add integration dashboard router
 app.include_router(advanced_reporting_router.router, prefix="/api/advanced-reporting", tags=["Advanced Reporting"]) # Add advanced reporting router

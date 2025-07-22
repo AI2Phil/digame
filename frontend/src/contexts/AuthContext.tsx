@@ -142,7 +142,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               lastLogin: data.user.lastLogin,
               accessibleFeatures: data.user.isPlatformOwner ? ['*'] : [],
               isDemoMode: false,
-              onboardingCompleted: data.user.onboardingCompleted || false,
+              onboardingCompleted: data.user.onboardingCompleted || data.user.isPlatformOwner || false,
               onboardingData: {},
               unlockedFeatures: data.user.isPlatformOwner ? ['*'] : []
             };
@@ -248,7 +248,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           lastLogin: data.user.lastLogin,
           accessibleFeatures: data.user.isPlatformOwner ? ['*'] : [],
           isDemoMode: false,
-          onboardingCompleted: data.user.onboardingCompleted || false,
+          onboardingCompleted: data.user.onboardingCompleted || data.user.isPlatformOwner || false,
           onboardingData: {},
           unlockedFeatures: data.user.isPlatformOwner ? ['*'] : []
         };
@@ -339,7 +339,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               lastLogin: profileData.user.lastLogin,
               accessibleFeatures: profileData.user.isPlatformOwner ? ['*'] : [],
               isDemoMode: false,
-              onboardingCompleted: profileData.user.onboardingCompleted || false,
+              onboardingCompleted: profileData.user.onboardingCompleted || profileData.user.isPlatformOwner || false,
               onboardingData: {},
               unlockedFeatures: profileData.user.isPlatformOwner ? ['*'] : []
             };

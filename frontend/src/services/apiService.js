@@ -9,7 +9,7 @@ class ApiService {
   constructor() {
     this.baseUrl = null;
     this.isInitialized = false;
-    this.commonPorts = [8001, 8000, 3001, 5000, 4000]; // Preferred port order matching backend
+    this.commonPorts = [8003, 8001, 8000, 3001, 5000, 4000]; // Include Python FastAPI port 8003 first for performance endpoints
   }
 
   /**
