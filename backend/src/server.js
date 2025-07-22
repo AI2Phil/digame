@@ -40,6 +40,7 @@ const settingsRoutes = require('./routes/settings');
 const healthRoutes = require('./routes/health');
 const intelligentCacheRoutes = require('./routes/intelligentCache');
 const dataManagementRoutes = require('./routes/dataManagement');
+const performanceRoutes = require('./routes/performance');
 const { detectDemoMode } = require('./middleware/auth');
 const { getOptimalPort } = require('./utils/portDetection');
 const ServiceDiscovery = require('./utils/serviceDiscovery');
@@ -190,6 +191,7 @@ app.use('/notifications', notificationsRoutes);
 app.use('/settings', settingsRoutes);
 app.use('/api/intelligent-cache', intelligentCacheRoutes);
 app.use('/api/data-management', dataManagementRoutes);
+app.use('/api/performance', performanceRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

@@ -118,7 +118,7 @@ const PerformanceMonitoringDashboard: React.FC<PerformanceMonitoringDashboardPro
       }
 
       // Fetch comprehensive performance monitoring data from database-driven API
-      const response = await fetch('${replaceApiUrl("")}/api/performance/monitoring-dashboard', {
+      const response = await fetch(`${replaceApiUrl("")}/api/performance/monitoring-dashboard`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'

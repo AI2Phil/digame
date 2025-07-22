@@ -266,7 +266,7 @@ export default function HomePage({ onDemoAccess, onLogin }) {
               </Link>
             </div>
             <div className="flex items-center space-x-2 sm:space-x-3">
-              <Link href="/LoginPage">
+              <Link href="/auth/login">
                 <Button
                   variant="outline"
                   size="md"

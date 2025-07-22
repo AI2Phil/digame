@@ -39,6 +39,10 @@ Add the Python backend to [`docker-compose.yml`](docker-compose.yml:1) so both r
 
 ### Option C: Revert API config for Docker-only
 Keep the change I made to [`api-config.js`](frontend/src/lib/api-config.js:1) (port 8001) and use Docker only.
+open -a Docker
+docker-compose up -d
+docker-compose ps
+sleep 15 && curl -s http://localhost:8001/health
 
 ### Issue
 But our frontend is configured to use port 8000 for the Python FastAPI backend. We have two options:

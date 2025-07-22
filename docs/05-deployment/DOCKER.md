@@ -6,6 +6,9 @@ The Digame Digital Professional Twin Platform uses Docker Compose to orchestrate
 
 
 ## Intro
+
+open -a Docker
+
 When running Docker Compose, you need to use the **mapped port** on your local machine. 
 Looking at your [`docker-compose.yml`](docker-compose.yml:8), the frontend service maps port 3000 inside the container to port **3001** on your host machine:
 

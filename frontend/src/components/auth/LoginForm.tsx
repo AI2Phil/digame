@@ -141,9 +141,9 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess, redirectTo = '/dashboa
 
   const demoUsers = [
     {
-      identifier: 'admin',
-      password: 'admin123',
-      description: 'Platform Administrator - Full access to all features'
+      identifier: 'philip.a.oshea@gmail.com',
+      password: 'Dalk3y1306',
+      description: 'Platform Owner - Full platform administration access'
     },
     {
       identifier: 'demo',
