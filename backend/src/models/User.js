@@ -2,7 +2,7 @@
  * User Model with SQLite Database and RBAC
  */
 
-const databaseService = require('../services/database');
+const { getDatabaseService } = require('../services/database');
 const bcrypt = require('bcryptjs');
 
 class User {
@@ -241,7 +241,7 @@ class User {
  */
 class UserRepository {
   constructor() {
-    this.db = databaseService;
+    this.db = getDatabaseService();
   }
 
   /**

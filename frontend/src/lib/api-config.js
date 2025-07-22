@@ -11,12 +11,13 @@ const getApiBaseUrl = () => {
     const currentHost = window.location.hostname;
     const currentProtocol = window.location.protocol;
     
-    // Default to port 8000 for Python FastAPI backend
-    return `${currentProtocol}//${currentHost}:8000`;
+    // Default to port 8001 for Node.js backend (dual backend environment)
+    // The apiService.js will handle auto-detection between ports
+    return `${currentProtocol}//${currentHost}:8001`;
   }
   
-  // Server-side default
-  return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+  // Server-side default - prioritize Node.js backend for dual backend setup
+  return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001';
 };
 
 // API Configuration

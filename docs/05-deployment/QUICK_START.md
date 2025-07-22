@@ -12,10 +12,95 @@ Welcome to **Digame** - the Digital Professional Twin Platform! This guide will 
 
 ## 🎯 Quick Start (30 seconds)
 
+I found the issue! The Docker Compose setup is configured differently than expected:
+
+1. **Python FastAPI backend** is on port **8002** (not 8000) and requires the `dual-backend` profile
+2. **Node.js backend** is on port **8001** and is the primary backend
+3. **Frontend** is configured to use the Node.js backend (`NEXT_PUBLIC_API_URL=http://backend-node:8001`)
+
+**Best Solutions**:
+
+### Option A: Use Dual Backend (Recommended)
+The dual backend gives you the most complete development experience with all features working.
+```bash
+# Stop Docker first
+docker-compose down
+
+# Run both backends locally
+npm run dev:dual-backend
+```
+This gives you:
+- Node.js backend (port 8001) - for authentication
+- Python FastAPI (port 8002) - for analytics/AI features  
+- Frontend auto-detects and uses both
+
+### Option B: Fix Docker to include Python backend
+Add the Python backend to [`docker-compose.yml`](docker-compose.yml:1) so both run in Docker.
+
+### Option C: Revert API config for Docker-only
+Keep the change I made to [`api-config.js`](frontend/src/lib/api-config.js:1) (port 8001) and use Docker only.
+
+### Issue
+But our frontend is configured to use port 8000 for the Python FastAPI backend. We have two options:
+
+**Option 1: Start the Python FastAPI backend with the dual-backend profile**
+**Option 2: Update the frontend to use the Node.js backend**
+
+Start the Python FastAPI backend with the dual-backend profile:
+docker-compose --profile dual-backend up -d
+
+I can see both containers are running:
+- **Frontend**: `digame-frontend-1` on port 3001
+- **Node.js Backend**: `digame-backend-node-1` on port 8001 (but showing as unhealthy)
+
+The issue is that the Node.js backend is unhealthy. Let me check the logs to see what's wrong:
+docker-compose logs backend-node
+
+Now I need to update the todo list to reflect the current issue and then test the fix. The problem was that the frontend was trying to connect to port 8000 (Python FastAPI) but Docker only has the Node.js backend running on port 8001.
+The problem is that the api-config.js is hardcoded to use port 8000, but the Docker setup only has the Node.js backend running on port 8001. The apiService.js has the correct port detection logic (with 8001 as the first priority), but the api-config.js is overriding it.
+The issue is in line 15 of api-config.js where it defaults to port 8000. Let me fix this by updating the API configuration to prioritize port 8001 for Docker environments.
+Perfect! Yes, you're absolutely right! Looking at the [`package.json`](package.json:1), there are several options to run both backends simultaneously:
+
+## Available Development Commands:
+
+1. **`npm run dev`** - Runs [`./scripts/start-dev.sh`](package.json:7) (let me check what this script does)
+
+2. **`npm run dev:dual-backend`** - Runs frontend + Node.js backend + Python backend simultaneously on:
+   - Frontend: port 3000
+   - Node.js backend: port 8001  
+   - Python backend: port 8002 (note: different from 8000!)
+
+3. **`npm run dev:legacy`** - Runs frontend + Node.js backend only
+
+Let me check the start-dev.sh script to see what the default `npm run dev` does: scripts/start-dev.sh
+Excellent! Now I understand the full picture. Looking at the [`start-dev.sh`](scripts/start-dev.sh:1) script, I can see that:
+
+## Current Development Setup Options:
+
+### 1. **`npm run dev`** (Default - Python FastAPI only)
+- Runs [`./scripts/start-dev.sh`](scripts/start-dev.sh:1)
+- Starts **Python FastAPI backend** on port 8000+ (auto-detects available port)
+- Starts **Frontend** on port 3000+
+- **No Node.js backend** - this explains the 404 error!
+
+### 2. **`npm run dev:dual-backend`** (Both backends)
+- Frontend: port 3000
+- Node.js backend: port 8001
+- Python backend: port 8002 (not 8000!)
+
+### 3. **`npm run dev:legacy`** (Node.js only)
+- Frontend + Node.js backend only
+
+## The Problem & Solutions:
+
+**Current Issue**: You're using Docker (which runs Node.js on port 8001), but the frontend is configured for the Python backend approach.
+
 ### Prerequisites
 - **Node.js**: 18.0+ 
 - **npm**: 8.0+
 - **Python**: 3.8+ (for Python backend)
+
+
 
 ### Check for Lint or Typescript errors
 

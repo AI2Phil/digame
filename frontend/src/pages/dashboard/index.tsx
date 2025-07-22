@@ -116,8 +116,8 @@ const DashboardPage: React.FC<DashboardPageProps> = ({
     return null;
   }
 
-  // Check if user has completed onboarding
-  if (user && !user.onboardingCompleted && !user.isDemoMode) {
+  // Check if user has completed onboarding (Platform Owners bypass onboarding)
+  if (user && !user.onboardingCompleted && !user.isDemoMode && !user.isPlatformOwner) {
     router.push('/onboarding-wizard');
     return null;
   }

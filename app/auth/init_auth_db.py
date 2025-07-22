@@ -240,6 +240,14 @@ def create_platform_owner_user(db: Session, roles: Dict[str, Role]) -> User:
     
     owner_user = create_user(db, owner_data)
     
+    # Update Platform Owner specific attributes using database session
+    db.query(User).filter(User.id == owner_user.id).update({
+        "is_platform_owner": True,
+        "onboarding_completed": True,  # Platform Owners bypass onboarding
+        "subscription_tier": "enterprise"  # Platform Owners get enterprise tier
+    })
+    db.flush()  # Flush to ensure the updates are applied
+    
     # Assign Super Admin role (Platform Owner has full access)
     if Roles.SUPER_ADMIN in roles:
         assign_role_to_user(db, getattr(owner_user, 'id'), getattr(roles[Roles.SUPER_ADMIN], 'id'))
