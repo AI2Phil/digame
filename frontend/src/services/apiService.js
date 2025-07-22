@@ -94,7 +94,7 @@ class ApiService {
     }
 
     // Fallback to default
-    this.baseUrl = '${replaceApiUrl("")}';
+    this.baseUrl = replaceApiUrl("");
     console.warn(`[API Service] No backend detected, using fallback: ${this.baseUrl}`);
     return this.baseUrl;
   }

@@ -122,29 +122,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             // Transform backend user data to frontend User interface
             const transformedUser: User = {
               id: data.user.id,
-              name: data.user.first_name && data.user.last_name
-                ? `${data.user.first_name} ${data.user.last_name}`
+              name: data.user.firstName && data.user.lastName
+                ? `${data.user.firstName} ${data.user.lastName}`
                 : data.user.username,
-              firstName: data.user.first_name,
-              lastName: data.user.last_name,
-              fullName: data.user.first_name && data.user.last_name
-                ? `${data.user.first_name} ${data.user.last_name}`
+              firstName: data.user.firstName,
+              lastName: data.user.lastName,
+              fullName: data.user.firstName && data.user.lastName
+                ? `${data.user.firstName} ${data.user.lastName}`
                 : data.user.username,
               email: data.user.email,
               username: data.user.username,
-              role: data.user.is_platform_owner ? 'platform_owner' : 'user',
-              subscriptionTier: data.user.subscription_tier || 'free',
-              teamId: data.user.tenant_id?.toString() || null,
-              permissions: data.user.is_platform_owner ? ['*'] : [],
-              isPlatformOwner: data.user.is_platform_owner || false,
-              isActive: data.user.is_active || true,
-              isVerified: data.user.email_verified || false,
-              lastLogin: data.user.last_login,
-              accessibleFeatures: data.user.is_platform_owner ? ['*'] : [],
+              role: data.user.isPlatformOwner ? 'platform_owner' : 'user',
+              subscriptionTier: data.user.subscriptionTier || 'free',
+              teamId: data.user.teamId?.toString() || null,
+              permissions: data.user.isPlatformOwner ? ['*'] : [],
+              isPlatformOwner: data.user.isPlatformOwner || false,
+              isActive: data.user.isActive || true,
+              isVerified: data.user.isVerified || false,
+              lastLogin: data.user.lastLogin,
+              accessibleFeatures: data.user.isPlatformOwner ? ['*'] : [],
               isDemoMode: false,
-              onboardingCompleted: data.user.onboarding_completed || false,
+              onboardingCompleted: data.user.onboardingCompleted || false,
               onboardingData: {},
-              unlockedFeatures: data.user.is_platform_owner ? ['*'] : []
+              unlockedFeatures: data.user.isPlatformOwner ? ['*'] : []
             };
             
             setUser(transformedUser);
@@ -228,29 +228,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Transform backend user data to frontend User interface
         const transformedUser: User = {
           id: data.user.id,
-          name: data.user.first_name && data.user.last_name
-            ? `${data.user.first_name} ${data.user.last_name}`
+          name: data.user.firstName && data.user.lastName
+            ? `${data.user.firstName} ${data.user.lastName}`
             : data.user.username,
-          firstName: data.user.first_name,
-          lastName: data.user.last_name,
-          fullName: data.user.first_name && data.user.last_name
-            ? `${data.user.first_name} ${data.user.last_name}`
+          firstName: data.user.firstName,
+          lastName: data.user.lastName,
+          fullName: data.user.firstName && data.user.lastName
+            ? `${data.user.firstName} ${data.user.lastName}`
             : data.user.username,
           email: data.user.email,
           username: data.user.username,
-          role: data.user.is_platform_owner ? 'platform_owner' : 'user',
-          subscriptionTier: data.user.subscription_tier || 'free',
-          teamId: data.user.tenant_id?.toString() || null,
-          permissions: data.user.is_platform_owner ? ['*'] : [],
-          isPlatformOwner: data.user.is_platform_owner || false,
-          isActive: data.user.is_active || true,
-          isVerified: data.user.email_verified || false,
-          lastLogin: data.user.last_login,
-          accessibleFeatures: data.user.is_platform_owner ? ['*'] : [],
+          role: data.user.isPlatformOwner ? 'platform_owner' : 'user',
+          subscriptionTier: data.user.subscriptionTier || 'free',
+          teamId: data.user.teamId?.toString() || null,
+          permissions: data.user.isPlatformOwner ? ['*'] : [],
+          isPlatformOwner: data.user.isPlatformOwner || false,
+          isActive: data.user.isActive || true,
+          isVerified: data.user.isVerified || false,
+          lastLogin: data.user.lastLogin,
+          accessibleFeatures: data.user.isPlatformOwner ? ['*'] : [],
           isDemoMode: false,
-          onboardingCompleted: data.user.onboarding_completed || false,
+          onboardingCompleted: data.user.onboardingCompleted || false,
           onboardingData: {},
-          unlockedFeatures: data.user.is_platform_owner ? ['*'] : []
+          unlockedFeatures: data.user.isPlatformOwner ? ['*'] : []
         };
         
         setUser(transformedUser);
@@ -319,29 +319,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             // Transform backend user data to frontend User interface
             const transformedUser: User = {
               id: profileData.user.id,
-              name: profileData.user.first_name && profileData.user.last_name
-                ? `${profileData.user.first_name} ${profileData.user.last_name}`
+              name: profileData.user.firstName && profileData.user.lastName
+                ? `${profileData.user.firstName} ${profileData.user.lastName}`
                 : profileData.user.username,
-              firstName: profileData.user.first_name,
-              lastName: profileData.user.last_name,
-              fullName: profileData.user.first_name && profileData.user.last_name
-                ? `${profileData.user.first_name} ${profileData.user.last_name}`
+              firstName: profileData.user.firstName,
+              lastName: profileData.user.lastName,
+              fullName: profileData.user.firstName && profileData.user.lastName
+                ? `${profileData.user.firstName} ${profileData.user.lastName}`
                 : profileData.user.username,
               email: profileData.user.email,
               username: profileData.user.username,
-              role: profileData.user.is_platform_owner ? 'platform_owner' : 'user',
-              subscriptionTier: profileData.user.subscription_tier || 'free',
-              teamId: profileData.user.tenant_id?.toString() || null,
-              permissions: profileData.user.is_platform_owner ? ['*'] : [],
-              isPlatformOwner: profileData.user.is_platform_owner || false,
-              isActive: profileData.user.is_active || true,
-              isVerified: profileData.user.email_verified || false,
-              lastLogin: profileData.user.last_login,
-              accessibleFeatures: profileData.user.is_platform_owner ? ['*'] : [],
+              role: profileData.user.isPlatformOwner ? 'platform_owner' : 'user',
+              subscriptionTier: profileData.user.subscriptionTier || 'free',
+              teamId: profileData.user.teamId?.toString() || null,
+              permissions: profileData.user.isPlatformOwner ? ['*'] : [],
+              isPlatformOwner: profileData.user.isPlatformOwner || false,
+              isActive: profileData.user.isActive || true,
+              isVerified: profileData.user.isVerified || false,
+              lastLogin: profileData.user.lastLogin,
+              accessibleFeatures: profileData.user.isPlatformOwner ? ['*'] : [],
               isDemoMode: false,
-              onboardingCompleted: profileData.user.onboarding_completed || false,
+              onboardingCompleted: profileData.user.onboardingCompleted || false,
               onboardingData: {},
-              unlockedFeatures: profileData.user.is_platform_owner ? ['*'] : []
+              unlockedFeatures: profileData.user.isPlatformOwner ? ['*'] : []
             };
             
             setUser(transformedUser);
