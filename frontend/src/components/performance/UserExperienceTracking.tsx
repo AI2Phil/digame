@@ -64,7 +64,7 @@ interface UserExperienceTrackingProps {
 const UserExperienceTracking: React.FC<UserExperienceTrackingProps> = ({
   className = '',
   autoRefresh = true,
-  refreshInterval = 30000
+  refreshInterval = 300000 // 5 minutes instead of 30 seconds
 }) => {
   const [metrics, setMetrics] = useState<PerformanceMetric[]>([]);
   const [sessions, setSessions] = useState<UserSession[]>([]);
@@ -177,24 +177,31 @@ const UserExperienceTracking: React.FC<UserExperienceTrackingProps> = ({
                    localStorage.getItem('token');
 
       if (!token) {
-        throw new Error('No authentication token found');
-      }
-
-      // Fetch user experience data from database-driven API
-      const response = await fetch(`${replaceApiUrl("")}/api/performance/user-experience/session?timeRange=${selectedTimeRange}&device=${selectedDevice}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setSessions(data.sessions || []);
-        setPagePerformance(data.pagePerformance || []);
-        success('User experience data loaded successfully');
+        console.log('No authentication token found, using fallback data');
+        setUsingFallbackData(true);
+        // Don't throw error, just use fallback data
       } else {
-        throw new Error(`Failed to fetch user experience data: ${response.status} ${response.statusText}`);
+        // Fetch user experience data from database-driven API
+        const response = await fetch(`${replaceApiUrl("")}/api/performance/user-experience/session?timeRange=${selectedTimeRange}&device=${selectedDevice}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setSessions(data.sessions || []);
+          setPagePerformance(data.pagePerformance || []);
+          success('User experience data loaded successfully');
+          return; // Exit early on success
+        } else if (response.status === 429) {
+          console.log('Rate limited, using fallback data');
+          setUsingFallbackData(true);
+        } else {
+          console.log(`API error ${response.status}, using fallback data`);
+          setUsingFallbackData(true);
+        }
       }
     } catch (err) {
       console.error('Failed to fetch user experience data:', err);

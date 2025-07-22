@@ -69,7 +69,7 @@ interface QueryOptimizationProps {
 const QueryOptimization: React.FC<QueryOptimizationProps> = ({
   className = '',
   autoRefresh = true,
-  refreshInterval = 10000
+  refreshInterval = 300000 // 5 minutes instead of 10 seconds
 }) => {
   const [queries, setQueries] = useState<QueryMetric[]>([]);
   const [databases, setDatabases] = useState<DatabaseConnection[]>([]);
@@ -98,25 +98,32 @@ const QueryOptimization: React.FC<QueryOptimizationProps> = ({
                    localStorage.getItem('token');
 
       if (!token) {
-        throw new Error('No authentication token found');
-      }
-
-      // Fetch query optimization data from database-driven API
-      const response = await fetch(`${replaceApiUrl("")}/api/performance/query-optimization?database=${selectedDatabase}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setQueries(data.queries || []);
-        setDatabases(data.databases || []);
-        setRecommendations(data.recommendations || []);
-        success('Query optimization data loaded successfully');
+        console.log('No authentication token found, using fallback data');
+        setUsingFallbackData(true);
+        // Don't throw error, just use fallback data
       } else {
-        throw new Error(`Failed to fetch query optimization data: ${response.status} ${response.statusText}`);
+        // Fetch query optimization data from database-driven API
+        const response = await fetch(`${replaceApiUrl("")}/api/performance/query-optimization?database=${selectedDatabase}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setQueries(data.queries || []);
+          setDatabases(data.databases || []);
+          setRecommendations(data.recommendations || []);
+          success('Query optimization data loaded successfully');
+          return; // Exit early on success
+        } else if (response.status === 429) {
+          console.log('Rate limited, using fallback data');
+          setUsingFallbackData(true);
+        } else {
+          console.log(`API error ${response.status}, using fallback data`);
+          setUsingFallbackData(true);
+        }
       }
     } catch (err) {
       console.error('Failed to fetch query optimization data:', err);

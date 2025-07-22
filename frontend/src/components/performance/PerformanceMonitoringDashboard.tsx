@@ -86,7 +86,7 @@ interface PerformanceMonitoringDashboardProps {
 const PerformanceMonitoringDashboard: React.FC<PerformanceMonitoringDashboardProps> = ({
   className = '',
   autoRefresh = true,
-  refreshInterval = 30000
+  refreshInterval = 300000 // 5 minutes instead of 30 seconds
 }) => {
   const [metrics, setMetrics] = useState<PerformanceMetric[]>([]);
   const [systemHealth, setSystemHealth] = useState<SystemHealth | null>(null);
@@ -114,26 +114,33 @@ const PerformanceMonitoringDashboard: React.FC<PerformanceMonitoringDashboardPro
                    localStorage.getItem('token');
 
       if (!token) {
-        throw new Error('No authentication token found');
-      }
-
-      // Fetch comprehensive performance monitoring data from database-driven API
-      const response = await fetch(`${replaceApiUrl("")}/api/performance/monitoring-dashboard`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setMetrics(data.metrics || []);
-        setSystemHealth(data.systemHealth || null);
-        setAlerts(data.alerts || []);
-        setOptimizations(data.optimizations || []);
-        success('Performance monitoring data loaded successfully');
+        console.log('No authentication token found, using fallback data');
+        setUsingFallbackData(true);
+        // Don't throw error, just use fallback data
       } else {
-        throw new Error(`Failed to fetch performance monitoring data: ${response.status} ${response.statusText}`);
+        // Fetch comprehensive performance monitoring data from database-driven API
+        const response = await fetch(`${replaceApiUrl("")}/api/performance/monitoring-dashboard`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setMetrics(data.metrics || []);
+          setSystemHealth(data.systemHealth || null);
+          setAlerts(data.alerts || []);
+          setOptimizations(data.optimizations || []);
+          success('Performance monitoring data loaded successfully');
+          return; // Exit early on success
+        } else if (response.status === 429) {
+          console.log('Rate limited, using fallback data');
+          setUsingFallbackData(true);
+        } else {
+          console.log(`API error ${response.status}, using fallback data`);
+          setUsingFallbackData(true);
+        }
       }
     } catch (err) {
       console.error('Failed to fetch performance monitoring data:', err);
