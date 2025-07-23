@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/router';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
@@ -6,7 +7,7 @@ import {
   BarChart3, TrendingUp, Users, Activity, Clock, Globe,
   Smartphone, Monitor, Zap, Database, Server, Wifi,
   Eye, Download, RefreshCw, Filter, Calendar, Settings,
-  ArrowUp, ArrowDown, Minus, AlertTriangle, CheckCircle
+  ArrowUp, ArrowDown, Minus, AlertTriangle, CheckCircle, Home
 } from 'lucide-react';
 import {
   useAnalyticsDashboardData,
@@ -90,6 +91,7 @@ interface FeatureAnalytics {
 }
 
 export const PlatformAnalyticsDashboard: React.FC = () => {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<'overview' | 'usage' | 'performance' | 'features' | 'insights' | 'optimization'>('overview');
   const [timeRange, setTimeRange] = useState('7d');
   const [selectedMetric, setSelectedMetric] = useState('users');
@@ -641,6 +643,15 @@ export const PlatformAnalyticsDashboard: React.FC = () => {
           <p className="text-gray-600">Advanced analytics for platform usage and optimization</p>
         </div>
         <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => router.push('/dashboard')}
+            className="flex items-center gap-2"
+          >
+            <Home className="h-4 w-4" />
+            Home
+          </Button>
           <select
             value={timeRange}
             onChange={(e) => setTimeRange(e.target.value)}

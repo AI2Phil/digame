@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/router';
 import {
   Box,
   Card,
@@ -49,7 +50,8 @@ import {
   ExpandMore as ExpandMoreIcon,
   Lightbulb as LightbulbIcon,
   Settings as SettingsIcon,
-  Refresh as RefreshIcon
+  Refresh as RefreshIcon,
+  Home as HomeIcon
 } from '@mui/icons-material';
 import { Line } from 'react-chartjs-2';
 import { performanceApi, DashboardData, PerformanceOptimization } from '../../services/performanceApi';
@@ -79,6 +81,7 @@ interface CurrentMetrics {
 }
 
 const RealTimePerformanceMonitor: React.FC = () => {
+  const router = useRouter();
   const [isMonitoring, setIsMonitoring] = useState(false);
   const [currentMetrics, setCurrentMetrics] = useState<CurrentMetrics | null>(null);
   const [metricHistory, setMetricHistory] = useState<MetricHistory>({});
@@ -517,6 +520,14 @@ const RealTimePerformanceMonitor: React.FC = () => {
           </Typography>
         </Box>
         <Box display="flex" alignItems="center" gap={2}>
+          <Button
+            variant="outlined"
+            startIcon={<HomeIcon />}
+            onClick={() => router.push('/dashboard')}
+            sx={{ mr: 1 }}
+          >
+            Dashboard
+          </Button>
           <FormControlLabel
             control={
               <Switch

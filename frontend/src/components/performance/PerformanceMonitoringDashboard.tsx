@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { apiClient, replaceApiUrl } from '../../lib/api-config';
+import { useRouter } from 'next/router';
 
 import {
   Activity,
@@ -22,7 +23,8 @@ import {
   PieChart,
   LineChart,
   Bell,
-  Filter
+  Filter,
+  Home
 } from 'lucide-react';
 import { useToastHelpers } from '../ui/Toaster';
 import UserExperienceTracking from './UserExperienceTracking';
@@ -88,6 +90,7 @@ const PerformanceMonitoringDashboard: React.FC<PerformanceMonitoringDashboardPro
   autoRefresh = true,
   refreshInterval = 300000 // 5 minutes instead of 30 seconds
 }) => {
+  const router = useRouter();
   const [metrics, setMetrics] = useState<PerformanceMetric[]>([]);
   const [systemHealth, setSystemHealth] = useState<SystemHealth | null>(null);
   const [alerts, setAlerts] = useState<PerformanceAlert[]>([]);
@@ -105,7 +108,13 @@ const PerformanceMonitoringDashboard: React.FC<PerformanceMonitoringDashboardPro
     try {
       setLoading(true);
       setError(null);
-      setUsingFallbackData(false);
+
+      // If already using fallback data, skip API calls entirely
+      if (usingFallbackData) {
+        console.log('Already using fallback data, skipping API call');
+        setLoading(false);
+        return;
+      }
 
       // Try multiple possible token keys for better compatibility
       const token = sessionStorage.getItem('accessToken') ||
@@ -528,6 +537,14 @@ const PerformanceMonitoringDashboard: React.FC<PerformanceMonitoringDashboardPro
             </div>
           </div>
           <div className="flex items-center space-x-3">
+            <button
+              onClick={() => router.push('/dashboard')}
+              className="flex items-center space-x-2 px-3 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
+              title="Back to Dashboard"
+            >
+              <Home className="w-4 h-4" />
+              <span className="text-sm">Dashboard</span>
+            </button>
             <div className="flex items-center space-x-2">
               <span className="text-sm text-gray-600">Auto-optimize:</span>
               <button

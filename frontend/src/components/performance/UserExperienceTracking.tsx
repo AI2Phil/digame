@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { apiClient, replaceApiUrl } from '../../lib/api-config';
+import { useRouter } from 'next/router';
 
 import {
   Clock,
@@ -14,7 +15,8 @@ import {
   AlertTriangle,
   CheckCircle,
   BarChart3,
-  Activity
+  Activity,
+  Home
 } from 'lucide-react';
 import { useToastHelpers } from '../ui/Toaster';
 
@@ -66,6 +68,7 @@ const UserExperienceTracking: React.FC<UserExperienceTrackingProps> = ({
   autoRefresh = true,
   refreshInterval = 300000 // 5 minutes instead of 30 seconds
 }) => {
+  const router = useRouter();
   const [metrics, setMetrics] = useState<PerformanceMetric[]>([]);
   const [sessions, setSessions] = useState<UserSession[]>([]);
   const [pagePerformance, setPagePerformance] = useState<PagePerformance[]>([]);
@@ -168,7 +171,13 @@ const UserExperienceTracking: React.FC<UserExperienceTrackingProps> = ({
     try {
       setLoading(true);
       setError(null);
-      setUsingFallbackData(false);
+
+      // If already using fallback data, skip API calls entirely
+      if (usingFallbackData) {
+        console.log('Already using fallback data, skipping API call');
+        setLoading(false);
+        return;
+      }
 
       // Try multiple possible token keys for better compatibility
       const token = sessionStorage.getItem('accessToken') ||
@@ -470,6 +479,14 @@ const UserExperienceTracking: React.FC<UserExperienceTrackingProps> = ({
             </div>
           </div>
           <div className="flex items-center space-x-3">
+            <button
+              onClick={() => router.push('/dashboard')}
+              className="flex items-center space-x-2 px-3 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
+              title="Back to Dashboard"
+            >
+              <Home className="w-4 h-4" />
+              <span className="text-sm">Dashboard</span>
+            </button>
             <select
               value={selectedTimeRange}
               onChange={(e) => setSelectedTimeRange(e.target.value)}

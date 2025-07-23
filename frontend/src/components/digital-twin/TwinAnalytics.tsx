@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/router';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
@@ -12,7 +13,8 @@ import {
   Brain,
   RefreshCw,
   Calendar,
-  Zap
+  Zap,
+  Home
 } from 'lucide-react';
 import { digitalTwinApi } from '../../services/digitalTwinApi';
 
@@ -36,6 +38,7 @@ interface AnalyticsData {
 }
 
 export const TwinAnalytics: React.FC<TwinAnalyticsProps> = ({ twinId, twin }) => {
+  const router = useRouter();
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [timeRange, setTimeRange] = useState('7'); // days
@@ -199,6 +202,15 @@ export const TwinAnalytics: React.FC<TwinAnalyticsProps> = ({ twinId, twin }) =>
           <p className="text-gray-600">Insights from your digital twin's learning</p>
         </div>
         <div className="flex items-center space-x-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => router.push('/dashboard')}
+            className="flex items-center gap-2"
+          >
+            <Home className="h-4 w-4" />
+            Home
+          </Button>
           <select
             value={timeRange}
             onChange={(e) => setTimeRange(e.target.value)}

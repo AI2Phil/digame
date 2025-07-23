@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useRouter } from 'next/router';
 import { teamApi } from '../../services/api/teamApi';
 import {
   Card,
@@ -933,6 +934,20 @@ const AdvancedTeamAnalytics = () => {
       <Card className="mb-6">
         <CardContent className="p-6">
           <div className="flex items-center space-x-4">
+            <Button
+              variant="outline"
+              onClick={() => {
+                if (typeof window !== 'undefined') {
+                  const router = require('next/router').useRouter();
+                  router.push('/dashboard');
+                }
+              }}
+              className="flex items-center gap-2"
+            >
+              <Home className="h-4 w-4" />
+              Home
+            </Button>
+            
             <Select
               value={selectedTeam}
               onChange={setSelectedTeam}

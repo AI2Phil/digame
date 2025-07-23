@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/router';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
@@ -16,11 +17,11 @@ import {
   Filler
 } from 'chart.js';
 import { Line, Bar, Doughnut, Scatter } from 'react-chartjs-2';
-import { 
-  TrendingUp, TrendingDown, DollarSign, Users, 
+import {
+  TrendingUp, TrendingDown, DollarSign, Users,
   AlertTriangle, Target, Calendar, Download,
   RefreshCw, Filter, Eye, BarChart3, PieChart,
-  Activity, Zap, Clock, ArrowUpRight, ArrowDownRight
+  Activity, Zap, Clock, ArrowUpRight, ArrowDownRight, Home
 } from 'lucide-react';
 
 ChartJS.register(
@@ -103,6 +104,7 @@ interface AnomalyDetection {
 }
 
 export const RevenueAnalyticsDashboard: React.FC = () => {
+  const router = useRouter();
   const [metrics, setMetrics] = useState<RevenueMetrics | null>(null);
   const [predictions, setPredictions] = useState<RevenuePrediction[]>([]);
   const [churnAnalysis, setChurnAnalysis] = useState<ChurnAnalysis | null>(null);
@@ -412,6 +414,15 @@ export const RevenueAnalyticsDashboard: React.FC = () => {
           <p className="text-gray-600 mt-1">Advanced revenue insights and predictions</p>
         </div>
         <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => router.push('/dashboard')}
+            className="flex items-center gap-2"
+          >
+            <Home className="h-4 w-4" />
+            Home
+          </Button>
           <select
             value={timeframe}
             onChange={(e) => setTimeframe(e.target.value)}
