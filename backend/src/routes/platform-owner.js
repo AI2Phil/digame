@@ -1182,5 +1182,195 @@ router.get('/dashboard', (req, res) => {
     dashboard_data: dashboardData
   });
 });
+// API v1 Platform endpoints (to match frontend expectations)
+// Platform Overview endpoint
+router.get('/overview', (req, res) => {
+  const overviewData = {
+    overview: {
+      total_tenants: 45,
+      active_tenants: 42,
+      total_users: 1247,
+      active_users: 892,
+      estimated_mrr: 15420,
+      api_calls_today: 45678,
+      total_storage_gb: 2.4
+    },
+    subscription_breakdown: {
+      free: 234,
+      individual_pro: 567,
+      team: 389,
+      enterprise: 57
+    }
+  };
+
+  res.json({
+    success: true,
+    data: overviewData
+  });
+});
+
+// Platform Health endpoint
+router.get('/health', (req, res) => {
+  const healthData = {
+    overall_status: 'healthy',
+    health_score: 95,
+    metrics_summary: {
+      healthy: 8,
+      warning: 2,
+      critical: 0
+    }
+  };
+
+  res.json({
+    success: true,
+    data: healthData
+  });
+});
+
+// Platform Revenue Analytics endpoint
+router.get('/analytics/revenue', (req, res) => {
+  const revenueData = {
+    summary: {
+      total_mrr: 15420,
+      total_subscribers: 1013,
+      average_revenue_per_user: 15.23
+    },
+    mrr_by_tier: [
+      { tier: 'free', mrr: 0 },
+      { tier: 'individual_pro', mrr: 5670 },
+      { tier: 'team', mrr: 7780 },
+      { tier: 'enterprise', mrr: 1970 }
+    ]
+  };
+
+  res.json({
+    success: true,
+    data: revenueData
+  });
+});
+
+// Platform Tenants endpoint
+router.get('/tenants', (req, res) => {
+  const { limit = 10 } = req.query;
+  
+  const mockTenants = [
+    {
+      id: 1,
+      name: 'Acme Corporation',
+      slug: 'acme-corp',
+      subscription_tier: 'enterprise',
+      current_users: 45,
+      max_users: 100,
+      created_at: '2024-01-15T10:30:00Z'
+    },
+    {
+      id: 2,
+      name: 'TechStart Inc',
+      slug: 'techstart-inc',
+      subscription_tier: 'team',
+      current_users: 12,
+      max_users: 25,
+      created_at: '2024-01-20T14:15:00Z'
+    },
+    {
+      id: 3,
+      name: 'Digital Solutions',
+      slug: 'digital-solutions',
+      subscription_tier: 'individual_pro',
+      current_users: 3,
+      max_users: 5,
+      created_at: '2024-01-22T09:45:00Z'
+    },
+    {
+      id: 4,
+      name: 'Innovation Labs',
+      slug: 'innovation-labs',
+      subscription_tier: 'team',
+      current_users: 18,
+      max_users: 25,
+      created_at: '2024-01-25T16:20:00Z'
+    },
+    {
+      id: 5,
+      name: 'Global Enterprises',
+      slug: 'global-enterprises',
+      subscription_tier: 'enterprise',
+      current_users: 78,
+      max_users: 200,
+      created_at: '2024-01-28T11:10:00Z'
+    }
+  ];
+
+  const limitedTenants = mockTenants.slice(0, parseInt(limit));
+
+  res.json({
+    success: true,
+    data: {
+      tenants: limitedTenants,
+      total: mockTenants.length,
+      limit: parseInt(limit)
+    }
+  });
+});
+
+// Platform Users endpoint
+router.get('/users', (req, res) => {
+  const { limit = 10 } = req.query;
+  
+  const mockUsers = [
+    {
+      id: 1,
+      username: 'john.doe',
+      email: 'john.doe@acme.com',
+      subscription_tier: 'enterprise',
+      is_active: true,
+      last_login: '2024-01-30T08:30:00Z'
+    },
+    {
+      id: 2,
+      username: 'jane.smith',
+      email: 'jane.smith@techstart.com',
+      subscription_tier: 'team',
+      is_active: true,
+      last_login: '2024-01-30T09:15:00Z'
+    },
+    {
+      id: 3,
+      username: 'mike.wilson',
+      email: 'mike.wilson@digital.com',
+      subscription_tier: 'individual_pro',
+      is_active: true,
+      last_login: '2024-01-29T14:20:00Z'
+    },
+    {
+      id: 4,
+      username: 'sarah.johnson',
+      email: 'sarah.johnson@innovation.com',
+      subscription_tier: 'team',
+      is_active: false,
+      last_login: '2024-01-25T10:45:00Z'
+    },
+    {
+      id: 5,
+      username: 'david.brown',
+      email: 'david.brown@global.com',
+      subscription_tier: 'enterprise',
+      is_active: true,
+      last_login: '2024-01-30T07:50:00Z'
+    }
+  ];
+
+  const limitedUsers = mockUsers.slice(0, parseInt(limit));
+
+  res.json({
+    success: true,
+    data: {
+      users: limitedUsers,
+      total: mockUsers.length,
+      limit: parseInt(limit)
+    }
+  });
+});
+
 
 module.exports = router;

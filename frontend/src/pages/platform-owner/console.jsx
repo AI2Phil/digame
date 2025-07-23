@@ -109,35 +109,43 @@ const PlatformOwnerConsolePage = () => {
   const fetchPlatformOverview = async () => {
     try {
       setLoading(true);
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001';
+      // Get the correct token from storage (matching AuthContext)
+      const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken');
+      
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
       const [overviewResponse, healthResponse, revenueResponse, tenantsResponse, usersResponse] =
         await Promise.all([
-          fetch('/api/v1/platform/overview', {
+          fetch(`${apiUrl}/api/v1/platform/overview`, {
             headers: {
-              Authorization: `Bearer ${localStorage.getItem('token')}`,
+              Authorization: `Bearer ${token}`,
               'Content-Type': 'application/json',
             },
           }),
-          fetch('/api/v1/platform/health', {
+          fetch(`${apiUrl}/api/v1/platform/health`, {
             headers: {
-              Authorization: `Bearer ${localStorage.getItem('token')}`,
+              Authorization: `Bearer ${token}`,
               'Content-Type': 'application/json',
             },
           }).catch(() => ({ ok: false })),
-          fetch('/api/v1/platform/analytics/revenue', {
+          fetch(`${apiUrl}/api/v1/platform/analytics/revenue`, {
             headers: {
-              Authorization: `Bearer ${localStorage.getItem('token')}`,
+              Authorization: `Bearer ${token}`,
               'Content-Type': 'application/json',
             },
           }).catch(() => ({ ok: false })),
-          fetch('/api/v1/platform/tenants?limit=10', {
+          fetch(`${apiUrl}/api/v1/platform/tenants?limit=10`, {
             headers: {
-              Authorization: `Bearer ${localStorage.getItem('token')}`,
+              Authorization: `Bearer ${token}`,
               'Content-Type': 'application/json',
             },
           }).catch(() => ({ ok: false })),
-          fetch('/api/v1/platform/users?limit=10', {
+          fetch(`${apiUrl}/api/v1/platform/users?limit=10`, {
             headers: {
-              Authorization: `Bearer ${localStorage.getItem('token')}`,
+              Authorization: `Bearer ${token}`,
               'Content-Type': 'application/json',
             },
           }).catch(() => ({ ok: false })),

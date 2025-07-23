@@ -172,6 +172,7 @@ app.use('/api/workflow-automation', workflowAutomationRoutes);
 app.use('/api/integration-hub', integrationHubRoutes);
 app.use('/api/digital-twin', digitalTwinHubRoutes);
 app.use('/platform-owner', platformOwnerRoutes);
+app.use('/api/v1/platform', platformOwnerRoutes);
 app.use('/digital-twin', digitalTwinRoutes);
 app.use('/workflow', workflowRoutes);
 app.use('/team', teamCollaborationRoutes);

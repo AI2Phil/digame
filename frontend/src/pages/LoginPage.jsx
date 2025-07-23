@@ -218,6 +218,19 @@ const LoginPage = () => {
             <CardContent className="space-y-3">
               <div className="grid gap-2 text-sm">
                 <button
+                  onClick={() => setFormData({ email: 'philip.a.oshea@gmail.com', password: 'Dalk3y1306', rememberMe: false })}
+                  disabled={isLoading}
+                  className="flex justify-between items-center p-3 glassmorphic-input rounded-lg hover:bg-white/20 transition-all cursor-pointer disabled:opacity-50 border-2 border-yellow-400/30"
+                >
+                  <div>
+                    <span className="font-medium text-white">philip.a.oshea@gmail.com</span>
+                    <span className="text-gray-300 ml-2">/ Dalk3y1306</span>
+                  </div>
+                  <Badge variant="default" className="text-xs bg-yellow-500/20 text-yellow-300 border-yellow-400/30">
+                    Platform Owner
+                  </Badge>
+                </button>
+                <button
                   onClick={() => handleDemoLogin('demo')}
                   disabled={isLoading}
                   className="flex justify-between items-center p-3 glassmorphic-input rounded-lg hover:bg-white/20 transition-all cursor-pointer disabled:opacity-50"
